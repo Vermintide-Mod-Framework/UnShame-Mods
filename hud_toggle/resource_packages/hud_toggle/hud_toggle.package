@@ -1,0 +1,11 @@
+mod =  [
+	"hud_toggle"
+]
+
+package = [
+	"resource_packages/hud_toggle/hud_toggle"
+]
+
+lua = [
+	"scripts/mods/hud_toggle/hud_toggle"
+]
