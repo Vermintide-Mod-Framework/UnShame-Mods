@@ -467,8 +467,9 @@ mod:hook("DamageIndicatorGui.update", function(func, self, ...)
 end)
 
 
--- ##########################################################
--- ################### Script ###############################
+--[[
+	Startup
+--]]
 
 -- Add option to mod settings menu (args: 1 = widget table, 2 = presence of checkbox in mod settings, 3 = descriptive name, 4 = description)
 mod:create_options(options_widgets, true, "HUD Toggle", "Toggle elements of the HUD")
@@ -477,5 +478,3 @@ mod:create_options(options_widgets, true, "HUD Toggle", "Toggle elements of the 
 if mod:is_suspended() then
 	mod.suspended()
 end
-
--- ##########################################################
