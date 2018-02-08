@@ -44,37 +44,41 @@ if not exist "%STINGRAY_EXE%" (
 
 :: Iterate through all the subdirectories (assuming all of them are bundle projects; ignoring .git and .temp folders)
 for /f "tokens=*" %%D in ('dir "." /a:d /b') do (
-  if /i not "%%~nxD"==".git" (
-    if /i not "%%~nxD"==".temp" (
-      :: Show the name of current directory
-      echo ------------------------------------------------------------------------------------------------
-      echo %%D
-      echo ------------------------------------------------------------------------------------------------
-      
-      :: Get needed dir pathes for current project
-      SET SOURCE_DIR=%%D
-      SET TEMP_DIR=.temp\%%D
-      SET DATA_DIR=!TEMP_DIR!\compile
-      SET BUILD_DIR=!TEMP_DIR!\bundle
-      
-      :: Create Stingray compiler parameters
-      SET STINGRAY_PARAMS=--compile-for win32
-      SET STINGRAY_PARAMS=!STINGRAY_PARAMS! --source-dir "!SOURCE_DIR!"
-      SET STINGRAY_PARAMS=!STINGRAY_PARAMS! --data-dir "!DATA_DIR!"
-      SET STINGRAY_PARAMS=!STINGRAY_PARAMS! --bundle-dir "!BUILD_DIR!"
-      
-      :: Execute
-      !STINGRAY_EXE! !STINGRAY_PARAMS!
-      
-      :: Display processed bundle contents
-      type !DATA_DIR!\processed_bundles.csv 2>nul
-      echo.
-      
-      :: Rename bundle file (use its project folder name)
-      ren "!BUILD_DIR!\*." %%D
-      
-      :: Copy compiled mods to mods directory
-      move /y "!BUILD_DIR!\*." "%MODS_DIR%" 1>nul
+  if /i not "%%~nxD"=="node_modules" (
+    if /i not "%%~nxD"=="%%%%template" (
+      if /i not "%%~nxD"==".git" (
+        if /i not "%%~nxD"==".temp" (
+          :: Show the name of current directory
+          echo ------------------------------------------------------------------------------------------------
+          echo %%D
+          echo ------------------------------------------------------------------------------------------------
+          
+          :: Get needed dir pathes for current project
+          SET SOURCE_DIR=%%D
+          SET TEMP_DIR=.temp\%%D
+          SET DATA_DIR=!TEMP_DIR!\compile
+          SET BUILD_DIR=!TEMP_DIR!\bundle
+          
+          :: Create Stingray compiler parameters
+          SET STINGRAY_PARAMS=--compile-for win32
+          SET STINGRAY_PARAMS=!STINGRAY_PARAMS! --source-dir "!SOURCE_DIR!"
+          SET STINGRAY_PARAMS=!STINGRAY_PARAMS! --data-dir "!DATA_DIR!"
+          SET STINGRAY_PARAMS=!STINGRAY_PARAMS! --bundle-dir "!BUILD_DIR!"
+          
+          :: Execute
+          !STINGRAY_EXE! !STINGRAY_PARAMS!
+          
+          :: Display processed bundle contents
+          type !DATA_DIR!\processed_bundles.csv 2>nul
+          echo.
+          
+          :: Rename bundle file (use its project folder name)
+          ren "!BUILD_DIR!\*." %%D
+          
+          :: Copy compiled mods to mods directory
+          move /y "!BUILD_DIR!\*." "%MODS_DIR%" 1>nul
+        )
+      )
     )
   )
 )
