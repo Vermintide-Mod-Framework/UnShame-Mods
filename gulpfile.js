@@ -8,7 +8,6 @@ const
 	merge = require('merge-stream'),
 	replace = require('gulp-replace'),
 	rename = require('gulp-rename'),
-	file = require('gulp-file'),
 	child_process = require('child_process');
 
 const stingrayExe = 'E:/SteamLibrary/steamapps/common/Warhammer End Times Vermintide Mod Tools/bin/stingray_win64_dev_x64.exe';
