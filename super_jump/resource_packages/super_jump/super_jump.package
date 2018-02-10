@@ -1,0 +1,11 @@
+mod =  [
+	"super_jump"
+]
+
+package = [
+	"resource_packages/super_jump/super_jump"
+]
+
+lua = [
+	"scripts/mods/super_jump/super_jump"
+]
