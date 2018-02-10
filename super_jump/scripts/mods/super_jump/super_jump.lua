@@ -20,7 +20,7 @@ end)
 
 mod.suspended = function()
 	script_data.use_super_jumps = false
-	mod:echo("You feel grounded again")
+	--mod:echo("You feel grounded again")
 	mod:disable_all_hooks()
 end
 

@@ -68,15 +68,7 @@ for /f "tokens=*" %%D in ('dir "." /a:d /b') do (
           :: Execute
           !STINGRAY_EXE! !STINGRAY_PARAMS!
           
-          :: Display processed bundle contents
-          type !DATA_DIR!\processed_bundles.csv 2>nul
-          echo.
           
-          :: Rename bundle file (use its project folder name)
-          ren "!BUILD_DIR!\*." %%D
-          
-          :: Copy compiled mods to mods directory
-          move /y "!BUILD_DIR!\*." "%MODS_DIR%" 1>nul
         )
       )
     )
