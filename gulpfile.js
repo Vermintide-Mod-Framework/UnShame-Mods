@@ -103,6 +103,7 @@ gulp.task('build', (cb) => {
 gulp.task('watch', (cb) => {
 	let {modNames, verbose, leaveTemp} = getBuildParams(process.argv);
 	modNames.forEach((modName) => {
+		console.log('Watching ', modName, '...');
 		gulp.watch(modName, buildMod.bind(null, modName, !leaveTemp, verbose));
 	})
 	return cb();
@@ -122,7 +123,7 @@ function getBuildParams(pargv) {
 	let verbose = argv.verbose || false;
 	let leaveTemp = argv.t || argv.temp || false;
 	let modNames = argv.m || argv.mod || argv.mods || '';
-	if(!modNames) {
+	if(!modNames || typeof modNames != 'string') {
 		modNames = getFolders('./', ignoredDirs);
 	}
 	else{
