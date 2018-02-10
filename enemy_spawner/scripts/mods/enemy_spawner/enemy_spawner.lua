@@ -84,6 +84,15 @@ function mod.switch_breed()
 end
 
 --[[
+	Callbacks
+--]]
+mod.suspended = function()
+end
+
+mod.unsuspended = function()
+end
+
+--[[
 	Execution
 --]] 
 
