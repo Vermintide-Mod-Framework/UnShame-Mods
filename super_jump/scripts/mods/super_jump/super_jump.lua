@@ -20,7 +20,7 @@ end)
 
 mod.suspended = function()
 	script_data.use_super_jumps = false
-	--mod:echo("You feel grounded again")
+	mod:echo("You feel grounded again")
 	mod:disable_all_hooks()
 end
 
@@ -37,9 +37,10 @@ end
 -- Add option to mod settings menu (args: 1 = widget table, 2 = presence of checkbox in mod settings, 3 = descriptive name, 4 = description)
 mod:create_options({}, true, "super_jump", "super_jump description")
 
-script_data.use_super_jumps = true
-
 -- Check for suspend setting
 if mod:is_suspended() then
-	mod.suspended()
+	script_data.use_super_jumps = false
+	mod:disable_all_hooks()
+else
+	script_data.use_super_jumps = true
 end
