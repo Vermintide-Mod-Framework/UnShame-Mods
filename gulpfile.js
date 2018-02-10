@@ -10,9 +10,13 @@ const
 	rename = require('gulp-rename'),
 	child_process = require('child_process');
 
+// CHANGE THESE:
+// Paths to stingray executable and the folder to copy mods to
 const stingrayExe = 'E:/SteamLibrary/steamapps/common/Warhammer End Times Vermintide Mod Tools/bin/stingray_win64_dev_x64.exe';
 const modsDir = 'E:/SteamLibrary/steamapps/common/Warhammer End Times Vermintide/bundle/mods';
 
+// CHANGE THESE maybe:
+// Folders that will be ignored when building/watching all mods
 const ignoredDirs = [
 	'%%template',
 	'.git',
@@ -20,9 +24,12 @@ const ignoredDirs = [
 	'node_modules'
 ];
 
+// Probably don't CHANGE THESE:
+// These will be replaced in the template mod when using running task
 const temp = "%%template";
 const tempAuthor = "%%author";
 
+// Folders with scripts and resources
 const resDir = '/resource_packages/';
 const scriptDir = '/scripts/mods/';
 const renameDirs = [
@@ -30,7 +37,10 @@ const renameDirs = [
 	scriptDir
 ];
 
+// Folders with static files
 const coreSrc = [path.join(temp, '/core/**/*')];
+
+// Folders with mod specific files
 const modSrc = [
 	path.join(temp, resDir, temp, temp + '.package'),
 	path.join(temp, scriptDir, temp, temp + '.lua'),			
@@ -38,6 +48,8 @@ const modSrc = [
 	path.join(temp, '/*')	
 ];
 
+// Creates a copy of the template mod and renames it to the provided name
+// gulp create -m mod_name [-a Author]
 gulp.task('create', (cb) => {
 	let argv = minimist(process.argv);
 	let modName = argv.m || argv.mod || '';
@@ -65,6 +77,10 @@ gulp.task('create', (cb) => {
 	return merge(corePipe, modPipe);
 });
 
+// Builds specified mods and copies the bundles to the game folder
+// gulp build [-m "mod1; mod2;mod3"] [--verbose] [-t] 
+// --verbose - prints stingray console output even on successful build
+// -t - doesn't delete .temp folder before building
 gulp.task('build', (cb) => {
 	let {modNames, verbose, leaveTemp} = getBuildParams(process.argv);
 
@@ -82,6 +98,8 @@ gulp.task('build', (cb) => {
 	promise.then(() => cb());
 });
 
+// Watches for changes in specified mods and builds them whenever they occur
+// gulp watch [-m "mod1; mod2;mod3"] [--verbose] [-t] 
 gulp.task('watch', (cb) => {
 	let {modNames, verbose, leaveTemp} = getBuildParams(process.argv);
 	modNames.forEach((modName) => {
@@ -90,6 +108,15 @@ gulp.task('watch', (cb) => {
 	return cb();
 });
 
+// TODO: task to add scripts to existing mods
+gulp.task('add', (cb) => {
+	return cb();
+});
+
+
+//////////////
+
+// Returns [-m "mod1; mod2;mod3"] [--verbose] [-t] params
 function getBuildParams(pargv) {
 	let argv = minimist(pargv);
 	let verbose = argv.verbose || false;
@@ -104,10 +131,7 @@ function getBuildParams(pargv) {
 	return {modNames, verbose, leaveTemp};
 }
 
-gulp.task('add', (cb) => {
-	return cb();
-});
-
+// Returns an array of folders in dir, except the ones in second param
 function getFolders(dir, except) {
 	return fs.readdirSync(dir)
 		.filter(function(fileName) {
@@ -115,7 +139,7 @@ function getFolders(dir, except) {
 		});
 };
 
-
+// Builds modName, optionally deleting its .temp folder, and copies it to the modsDir
 function buildMod(modName, removeTemp = true, verbose = false) {
 	return new Promise((resolve) => {
 		console.log('Building ', modName);
@@ -141,6 +165,7 @@ function buildMod(modName, removeTemp = true, verbose = false) {
 	});
 }
 
+// Actually builds the mod, copies it to the modsDir
 function _buildMod(modName, resolve, verbose = false) {
 	let tempDir = path.join('.temp', modName);
 	let dataDir = path.join(tempDir, 'compile');
@@ -193,6 +218,7 @@ function _buildMod(modName, resolve, verbose = false) {
 	});
 }
 
+// Actually copies the mod to the modsDir
 function moveMod(modName, buildDir, modsDir, resolve) {
 	gulp.src([
 			buildDir + '/*([0-f])', 
@@ -217,6 +243,7 @@ function moveMod(modName, buildDir, modsDir, resolve) {
 		});
 }
 
+// Removes trailing /n
 function rmn(str) {
 	str = String(str);
 	if(str[str.length - 1] == '\n'){
