@@ -143,6 +143,7 @@ function mod.apply_settings()
 	mod.hud_set = false
 	mod.camera_set = false
 	mod.outlines_set = false
+	mod.should_suspend = false
 end
 
 function mod.check_visibility()
@@ -208,6 +209,7 @@ end
 
 mod.unsuspended = function()
 	mod:enable_all_hooks()
+	mod.apply_settings()
 end
 
 
