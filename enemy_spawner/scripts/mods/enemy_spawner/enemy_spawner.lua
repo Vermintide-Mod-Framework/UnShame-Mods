@@ -1,5 +1,5 @@
 --[[
-	Author: UnShame	
+	Author: IAmLupo	
 --]]
 
 local mod = get_mod("enemy_spawner")
