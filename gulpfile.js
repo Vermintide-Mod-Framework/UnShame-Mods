@@ -88,7 +88,7 @@ gulp.task('build', (cb) => {
 	modNames.forEach(modName => console.log('- ' + modName));
 	console.log();
 
-	var promise = Promise.resolve();	
+	let promise = Promise.resolve();	
 	modNames.forEach(modName => {
 		if(modName){
 	    	promise = promise.then(() => buildMod(modName, !leaveTemp, verbose));
@@ -195,13 +195,13 @@ function _buildMod(modName, resolve, verbose = false) {
 		}
 	});
 
+	let exitCode = 0;
 	stingray.on('close', (code) => {
 		if(code){
 			if(!verbose){
-				console.error(rmn(log));
+				//console.error(rmn(log));
 			}
-			console.error('Building failed with code: ' + code + '\n');
-			return resolve();
+			exitCode = code;
 		}	    
 	    fs.readFile(
 	    	path.join(dataDir, 'processed_bundles.csv'), 
@@ -212,11 +212,27 @@ function _buildMod(modName, resolve, verbose = false) {
 		    		console.error('Failed to read processed_bundles.csv' + '\n');
 		    		return resolve(err);
 		    	}
-		    	console.log(rmn(data));
-		    	moveMod(modName, buildDir, modsDir, resolve);
+		    	outputFailedBundles(data, modName);
+		    	if(exitCode){
+					console.error('Building failed with code: ' + code + '. Please check your scripts for syntax errors.\n');
+					return resolve()
+		    	}
+			    moveMod(modName, buildDir, modsDir, resolve);
 	    	}
 	    );
 	});
+}
+
+// Outputs built files which are empty
+function outputFailedBundles(data, modName) {
+	let bundles = rmn(data).split('\n');
+	bundles.splice(0, 1);
+	bundles.forEach(line => {
+		let bundle = line.split(', ');
+		if(bundle[3] == 0) {
+			console.log('Failed to build %s/%s.%s', modName, bundle[1].replace(/"/g, ''), bundle[2].replace(/"/g, ''));
+		}
+	})
 }
 
 // Actually copies the mod to the modsDir
