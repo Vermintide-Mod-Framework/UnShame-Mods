@@ -11,31 +11,38 @@ local enlarge_heavily = 3
 mod.options_widgets = {
 	-- Crosshair color
 	{
-		["setting_name"] = "color_main_red",
-		["widget_type"] = "numeric",
-		["text"] = "Crosshair Red Value",
-		["tooltip"] = "Crosshair Red Value\n" ..
-					"Changes the red color value of your crosshair.",
-		["range"] = {0, 255},
-		["default_value"] = 255,
-	},
-	{
-		["setting_name"] = "color_main_green",
-		["widget_type"] = "numeric",
-		["text"] = "Crosshair Green Value",
-		["tooltip"] = "Crosshair Green Value\n" ..
-					"Changes the green color value of your crosshair.",
-		["range"] = {0, 255},
-		["default_value"] = 255,
-	},
-	{
-		["setting_name"] = "color_main_blue",
-		["widget_type"] = "numeric",
-		["text"] = "Crosshair Blue Value",
-		["tooltip"] = "Crosshair Blue Value\n" ..
-					"Changes the blue color value of your crosshair.",
-		["range"] = {0, 255},
-		["default_value"] = 255,
+		["setting_name"] = "crosshair_group",
+		["widget_type"] = "group",
+		["text"] = "Crosshair Color",
+		["sub_widgets"] = {			
+			{
+				["setting_name"] = "color_main_red",
+				["widget_type"] = "numeric",
+				["text"] = "Red",
+				["tooltip"] = "Crosshair Red Value\n" ..
+							"Changes the red color value of your crosshair.",
+				["range"] = {0, 255},
+				["default_value"] = 255,
+			},
+			{
+				["setting_name"] = "color_main_green",
+				["widget_type"] = "numeric",
+				["text"] = "Green",
+				["tooltip"] = "Crosshair Green Value\n" ..
+							"Changes the green color value of your crosshair.",
+				["range"] = {0, 255},
+				["default_value"] = 255,
+			},
+			{
+				["setting_name"] = "color_main_blue",
+				["widget_type"] = "numeric",
+				["text"] = "Blue",
+				["tooltip"] = "Crosshair Blue Value\n" ..
+							"Changes the blue color value of your crosshair.",
+				["range"] = {0, 255},
+				["default_value"] = 255,
+			},
+		}
 	},
 
 	-- HS Indicator
@@ -50,7 +57,7 @@ mod.options_widgets = {
 			{
 				["setting_name"] = "color_hs_red",
 				["widget_type"] = "numeric",
-				["text"] = "Headshot Marker Red Value",
+				["text"] = "Red",
 				["tooltip"] = "Headshot Marker Red Value\n" ..
 							"Changes the red color value of your headshot marker.",
 				["range"] = {0, 255},
@@ -59,7 +66,7 @@ mod.options_widgets = {
 			{
 				["setting_name"] = "color_hs_green",
 				["widget_type"] = "numeric",
-				["text"] = "Headshot Marker Green Value",
+				["text"] = "Green",
 				["tooltip"] = "Headshot Marker Green Value\n" ..
 							"Changes the green color value of your headshot marker.",
 				["range"] = {0, 255},
@@ -68,7 +75,7 @@ mod.options_widgets = {
 			{
 				["setting_name"] = "color_hs_blue",
 				["widget_type"] = "numeric",
-				["text"] = "Headshot Marker Blue Value",
+				["text"] = "Blue",
 				["tooltip"] = "Headshot Marker Blue Value\n" ..
 							"Changes the blue color value of headshot marker.",
 				["range"] = {0, 255},
@@ -80,16 +87,16 @@ mod.options_widgets = {
 	-- Enlarge
 	{
 		["setting_name"] = "enlarge",
-		["widget_type"] = "stepper",
-		["text"] = "Enlarge",
-		["tooltip"] = "Enlarge\n" ..
+		["widget_type"] = "dropdown",
+		["text"] = "Crosshair Size",
+		["tooltip"] = "Crosshair Size\n" ..
 				"Increases the size of your crosshair.",
 		["options"] = {
-			{text = "Off", value = enlarge_off},
-			{text = "Slightly", value = enlarge_slightly},
-			{text = "Heavily", value = enlarge_heavily},
+			{text = "Normal (Small)", value = enlarge_off},
+			{text = "Medium", value = enlarge_slightly},
+			{text = "Large", value = enlarge_heavily},
 		},
-		["default_value"] = "Off"
+		["default_value"] = "Normal"
 	},
 
 	-- Dot
@@ -238,6 +245,21 @@ local function populate_defaults(crosshair_ui)
 			crosshair_left = table.clone(crosshair_ui.ui_scenegraph.crosshair_left.size),
 			crosshair_right = table.clone(crosshair_ui.ui_scenegraph.crosshair_right.size),
 		}
+	end
+end
+
+local function reset_defaults(crosshair_ui)
+	
+	if not mod.default_sizes then return end
+
+	for k,v in pairs(mod.default_sizes) do
+		for i,v in ipairs(mod.default_sizes[k]) do
+		  crosshair_ui.ui_scenegraph[k].size[i] = v
+		end
+	end
+
+	for i,v in ipairs(mod.default_sizes.crosshair_dot) do
+		crosshair_ui.ui_scenegraph.crosshair_dot.size[i] = v
 	end
 end
 
@@ -425,11 +447,18 @@ end)
 --]] 
 
 mod.suspended = function()
-	mod:disable_all_hooks()
+	mod.disable_all_hooks()
 end
 
 mod.unsuspended = function()
 	mod:enable_all_hooks()
+end
+
+mod.unload = function()
+	local ingame_ui = Managers.matchmaking and  Managers.matchmaking.ingame_ui
+	local crosshair_ui = ingame_ui and ingame_ui.ingame_hud and ingame_ui.ingame_hud.crosshair
+	if not crosshair_ui then return end
+	reset_defaults(crosshair_ui)
 end
 
 
