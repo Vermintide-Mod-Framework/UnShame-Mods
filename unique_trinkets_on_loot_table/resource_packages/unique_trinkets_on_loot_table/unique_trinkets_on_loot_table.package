@@ -1,0 +1,11 @@
+mod =  [
+	"unique_trinkets_on_loot_table"
+]
+
+package = [
+	"resource_packages/unique_trinkets_on_loot_table/unique_trinkets_on_loot_table"
+]
+
+lua = [
+	"scripts/mods/unique_trinkets_on_loot_table/unique_trinkets_on_loot_table"
+]
