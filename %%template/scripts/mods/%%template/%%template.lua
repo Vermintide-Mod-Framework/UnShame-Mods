@@ -6,10 +6,10 @@ local mod = get_mod("%%template")
 
 mod.options_widgets = {
 	{
-		["setting_name"] = "stepper",
-		["widget_type"] = "stepper",
-		["text"] = "Stepper",
-		["tooltip"] = "Stepper\n" ..
+		["setting_name"] = "dropdown",
+		["widget_type"] = "dropdown",
+		["text"] = "dropdown",
+		["tooltip"] = "dropdown\n" ..
 			"Line_1\n\n" ..
 			"Line_2\n\n" ..
 			"Line_3",
