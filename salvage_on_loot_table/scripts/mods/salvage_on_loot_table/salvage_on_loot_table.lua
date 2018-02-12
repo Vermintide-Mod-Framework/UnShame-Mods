@@ -236,7 +236,7 @@ end
 -- ##### Start ########################################################################################################
 -- ####################################################################################################################
 
-mod:create_options(options_widgets, true, "Loot Table: Salvage Item", "Adds a button to salvage items right on the loot table at the end of a game.")
+mod:create_options(options_widgets, true, "Loot Table: Salvage Loot", "Adds a button to salvage items right on the loot table at the end of a game.")
 
 -- Check for suspend setting
 if mod:is_suspended() then
