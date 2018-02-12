@@ -1,0 +1,11 @@
+mod =  [
+	"lock_traits"
+]
+
+package = [
+	"resource_packages/lock_traits/lock_traits"
+]
+
+lua = [
+	"scripts/mods/lock_traits/lock_traits"
+]
