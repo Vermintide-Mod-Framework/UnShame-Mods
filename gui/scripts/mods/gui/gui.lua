@@ -15,6 +15,10 @@ local function table_has_item(t, val)
     return false
 end
 
+local function dummy_func()
+
+end
+
 -- ################################################################################################################
 -- ##### Input keymap #############################################################################################
 -- ################################################################################################################
@@ -49,20 +53,77 @@ local ColorHelper = {
 -- ################################################################################################################
 gui.theme = "default"
 
+
+gui.adjust_window_position_to_fit = function(position)
+	position = gui.adjust_position_to_fit(position)
+
+	local screen_w, screen_h = UIResolution()
+	local scale = UIResolutionScale()
+	local ui_w = 1920*scale
+	local ui_h = 1080*scale
+
+	position = {
+		position[1] + (screen_w - ui_w)/2,
+		position[2] + (screen_h - ui_h)/2
+	}
+
+	--gui:echo(position[1], position[2])
+
+	return position
+end
+
+gui.adjust_position_to_fit = function(position)
+	if not position then return {0, 0} end
+
+	local scale = UIResolutionScale()
+
+	position = {
+		position[1] * scale,
+		position[2] * scale
+	}
+
+	--gui:echo(position[1], position[2])
+
+	return position
+end
+
+gui.adjust_size_to_fit = function(size)
+	if not size then return {0, 0} end
+
+	local scale = UIResolutionScale()
+
+	size = {
+		size[1] * scale,
+		size[2] * scale
+	}
+
+	--gui:echo(size[1], size[2])
+
+	return size
+end
+
 -- ################################################################################################################
 -- ##### Create containers ########################################################################################
 -- ################################################################################################################
 --[[
 	Create window
 ]]--
-gui.create_window = function(name, position, size, controls, on_hover_enter)
+gui.create_window = function(name, position, size, controls, on_hover_enter, scale_to_fit)
+
 	-- Create window
+	position = position or {0, 0}
+	if scale_to_fit then
+		position = gui.adjust_window_position_to_fit(position)
+		size = gui.adjust_size_to_fit(size)
+	end
+
 	local window = table.clone(gui.controls.window)
 	window:set("name", name or "name")
-	window:set("position", position or {0, 0})
+	window:set("position", position)
 	window:set("size", size or {0, 0})
 	window:set("controls", controls or {})
-	window:set("on_hover_enter", on_hover_enter)
+	window:set("on_hover_enter", on_hover_enter or dummy_func)
+	window:set("scale_to_fit", scale_to_fit or false)
 
 	-- Add window to list
 	gui.windows:add_window(window)
@@ -653,6 +714,7 @@ gui.controls = {
 		controls = {},
 		visible = true,
 		transparent = false,
+		scale_to_fit = false,
 		
 		-- ################################################################################################################
 		-- ##### Init #####################################################################################################
@@ -804,7 +866,12 @@ gui.controls = {
 			Create control
 		--]]
 		create_control = function(self, name, position, size, _type, anchor)
-		
+			
+
+			if self.scale_to_fit then
+				position = gui.adjust_position_to_fit(position)
+				size = gui.adjust_size_to_fit(size)
+			end
 			-- Create control
 			local control = table.clone(gui.controls.control)
 			control.name = name or "name"
