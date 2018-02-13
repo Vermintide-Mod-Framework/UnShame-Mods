@@ -136,7 +136,7 @@ function mod.unlock_trait()
 	local trait_name = mod.trait_reroll_page.selected_trait_name
 	local trait_index = mod.trait_reroll_page.selected_trait_index
 	if trait_name and table.has_item(mod.locked_traits, trait_name) then
-		table.remove(mod.locked_traits, table_index_of(mod.locked_traits, trait_name))
+		table.remove(mod.locked_traits, table.index_of(mod.locked_traits, trait_name))
 	end
 	if trait_index ~= nil then
 		mod.highlight_trait(trait_index, 0)
@@ -188,7 +188,7 @@ function mod.create_window()
 
 	--mod:echo(tostring(window_position[1]) .. " " .. tostring(window_position[2]))
 
-	mod.window = get_mod("gui").create_window("lock_traits", window_position, window_size, nil, function() end, true)
+	mod.window = get_mod("gui").create_window("lock_traits", window_position, window_size)
 	if not mod.reroll_info then
 
 		local trait_is_locked = mod.has_traits(mod.locked_traits, selected_trait)
