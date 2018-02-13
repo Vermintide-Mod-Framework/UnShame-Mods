@@ -17,7 +17,7 @@ local function create_window()
 	window = get_mod("gui").create_window("test", window_position, window_size, nil, function() end, true)
 
 	window:create_title("title", "Window Title")
-	window:create_resizer("resizer")
+	--window:create_resizer("resizer")
 	window:create_close_button("close")
 
 	window:create_button("button", {10, 50}, {150, 30}, "Test Button", function() mod:echo("Test Button") end)

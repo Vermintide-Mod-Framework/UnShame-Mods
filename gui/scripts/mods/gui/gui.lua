@@ -811,7 +811,7 @@ gui.widgets = {
 		--[[
 			Create resizer
 		--]]
-		create_resizer = function(self, name, size)
+		--[[create_resizer = function(self, name, size)
 			-- Base widget
 			local widget = self:create_widget(name, nil, size, "resizer")
 			-- Set attributes
@@ -819,7 +819,7 @@ gui.widgets = {
 			-- Add widget
 			self:add_widget(widget)
 			return widget
-		end,
+		end,--]]
 		--[[
 			Create close button
 		--]]
