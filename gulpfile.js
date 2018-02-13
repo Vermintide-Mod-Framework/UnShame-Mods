@@ -104,7 +104,7 @@ gulp.task('watch', (cb) => {
 	let {modNames, verbose, leaveTemp} = getBuildParams(process.argv);
 	modNames.forEach((modName) => {
 		console.log('Watching ', modName, '...');
-		gulp.watch(modName, buildMod.bind(null, modName, !leaveTemp, verbose));
+		gulp.watch([modName, '!' + modName + '/*.tmp'], buildMod.bind(null, modName, !leaveTemp, verbose));
 	})
 	return cb();
 });
