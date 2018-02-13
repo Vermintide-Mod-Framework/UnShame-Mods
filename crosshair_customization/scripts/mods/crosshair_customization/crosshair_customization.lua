@@ -1,5 +1,5 @@
 --[[
-	Author: Grundlid	
+	Author: Grundlid
 --]]
 
 local mod = get_mod("crosshair_customization")
@@ -51,15 +51,15 @@ mod.options_widgets = {
 		["widget_type"] = "checkbox",
 		["text"] = "Headshot Indicator",
 		["tooltip"] = "Headshot Indicator\n" ..
-					"Adds a marker to the crosshair on headshots.",
+					"Adds an indicator to the crosshair on headshots.",
 		["default_value"] = false,
 		["sub_widgets"] = {			
 			{
 				["setting_name"] = "color_hs_red",
 				["widget_type"] = "numeric",
 				["text"] = "Red",
-				["tooltip"] = "Headshot Marker Red Value\n" ..
-							"Changes the red color value of your headshot marker.",
+				["tooltip"] = "Headshot Indicator Red Value\n" ..
+							"Changes the red color value of your headshot indicator.",
 				["range"] = {0, 255},
 				["default_value"] = 255,
 			},
@@ -67,8 +67,8 @@ mod.options_widgets = {
 				["setting_name"] = "color_hs_green",
 				["widget_type"] = "numeric",
 				["text"] = "Green",
-				["tooltip"] = "Headshot Marker Green Value\n" ..
-							"Changes the green color value of your headshot marker.",
+				["tooltip"] = "Headshot Indicator Green Value\n" ..
+							"Changes the green color value of your headshot indicator.",
 				["range"] = {0, 255},
 				["default_value"] = 255,
 			},
@@ -76,8 +76,8 @@ mod.options_widgets = {
 				["setting_name"] = "color_hs_blue",
 				["widget_type"] = "numeric",
 				["text"] = "Blue",
-				["tooltip"] = "Headshot Marker Blue Value\n" ..
-							"Changes the blue color value of headshot marker.",
+				["tooltip"] = "Headshot Indicator Blue Value\n" ..
+							"Changes the blue color value of headshot indicator.",
 				["range"] = {0, 255},
 				["default_value"] = 255,
 			},
@@ -103,17 +103,17 @@ mod.options_widgets = {
 	{
 		["setting_name"] = "dot_only",
 		["widget_type"] = "checkbox",
-		["text"] = "Dot Only",
-		["tooltip"] = "Dot Only\n" ..
+		["text"] = "Dot Crosshair Only",
+		["tooltip"] = "Dot Crosshair Only\n" ..
 					"Forces the crosshair to remain as only a dot, even with ranged weapons.",
 		["default_value"] = false
 	},
 	{
 		["setting_name"] = "no_melee_dot",
 		["widget_type"] = "checkbox",
-		["text"] = "No Melee Dot",
-		["tooltip"] = "No Melee Dot\n" ..
-					"Disables the dot when you have your melee equipped.",
+		["text"] = "No Melee Crosshair",
+		["tooltip"] = "No Melee Crosshair\n" ..
+					"Disables the dot crosshair when you have your melee equipped.",
 		["default_value"] = false
 	},
 }
@@ -236,6 +236,12 @@ local widget_definitions = {
 	Functions
 --]] 
 
+local function get_crosshair_ui()
+	local ingame_ui = Managers.matchmaking and  Managers.matchmaking.ingame_ui
+	local crosshair_ui = ingame_ui and ingame_ui.ingame_hud and ingame_ui.ingame_hud.crosshair
+	return crosshair_ui or nil
+end
+
 local function populate_defaults(crosshair_ui)
 	if not mod.default_sizes then
 		mod.default_sizes = {
@@ -248,41 +254,31 @@ local function populate_defaults(crosshair_ui)
 	end
 end
 
-local function reset_defaults(crosshair_ui)
-	
-	if not mod.default_sizes then return end
-
-	for k,v in pairs(mod.default_sizes) do
-		for i,v in ipairs(mod.default_sizes[k]) do
-		  crosshair_ui.ui_scenegraph[k].size[i] = v
-		end
-	end
-
-	for i,v in ipairs(mod.default_sizes.crosshair_dot) do
-		crosshair_ui.ui_scenegraph.crosshair_dot.size[i] = v
-	end
+local function get_crosshair_color()
+	return {
+		main = {255, mod:get('color_main_red'), mod:get('color_main_green'), mod:get('color_main_blue')},
+		hs = {255, mod:get('color_hs_red'), mod:get('color_hs_green'), mod:get('color_hs_blue')}
+	}
 end
 
-local function change_crosshair_color(crosshair_ui)
-    local main_color = {255, mod:get('color_main_red'), mod:get('color_main_green'), mod:get('color_main_blue')}
-    
-    crosshair_ui.crosshair_dot.style.color = table.clone(main_color)
-    crosshair_ui.crosshair_up.style.color = table.clone(main_color)
-	crosshair_ui.crosshair_down.style.color = table.clone(main_color)
-	crosshair_ui.crosshair_left.style.color = table.clone(main_color)
-	crosshair_ui.crosshair_right.style.color = table.clone(main_color)
+local function change_crosshair_color(crosshair_ui, color)
+
+    crosshair_ui.crosshair_dot.style.color = table.clone(color.main)
+    crosshair_ui.crosshair_up.style.color = table.clone(color.main)
+	crosshair_ui.crosshair_down.style.color = table.clone(color.main)
+	crosshair_ui.crosshair_left.style.color = table.clone(color.main)
+	crosshair_ui.crosshair_right.style.color = table.clone(color.main)
 
 	if not crosshair_ui.hit_marker_animations[1] then
 		for i,v in ipairs(crosshair_ui.hit_markers) do
-		  v.style.rotating_texture.color = table.clone(main_color)
+		  v.style.rotating_texture.color = table.clone(color.main)
 		  v.style.rotating_texture.color[1] = 0
 		end
 	end
 
 	if mod.headshot_widgets[1] and not mod.headshot_animations[1] then
-        local hs_color = {255, mod:get('color_hs_red'), mod:get('color_hs_green'), mod:get('color_hs_blue')}
 		for i = 1, 4 do
-			mod.headshot_widgets[i].style.rotating_texture.color = table.clone(hs_color)
+			mod.headshot_widgets[i].style.rotating_texture.color = table.clone(color.hs)
 			mod.headshot_widgets[i].style.rotating_texture.color[1] = 0
 		end
 	end
@@ -309,6 +305,23 @@ local function change_crosshair_scale(crosshair_ui)
 	for i,v in ipairs(mod.default_sizes.crosshair_dot) do
 		crosshair_ui.ui_scenegraph.crosshair_dot.size[i] = v * crosshair_dot_scale
 	end
+end
+
+local function reset_defaults(crosshair_ui)
+	
+	if not mod.default_sizes then return end
+
+	for k,v in pairs(mod.default_sizes) do
+		for i,v in ipairs(mod.default_sizes[k]) do
+		  crosshair_ui.ui_scenegraph[k].size[i] = v
+		end
+	end
+
+	for i,v in ipairs(mod.default_sizes.crosshair_dot) do
+		crosshair_ui.ui_scenegraph.crosshair_dot.size[i] = v
+	end
+
+	change_crosshair_color(crosshair_ui, {main = {255, 255, 255, 255}, hs = {255, 255, 255, 255}})
 end
 
 --[[
@@ -363,7 +376,7 @@ end)
 mod:hook("CrosshairUI.draw_dot_style_crosshair", function(func, self, ...)
 	populate_defaults(self)
 	change_crosshair_scale(self)
-	change_crosshair_color(self)
+	change_crosshair_color(self, get_crosshair_color())
     
     if mod:get('no_melee_dot') then
         self.crosshair_dot.style.color[1] = 0;
@@ -375,13 +388,13 @@ end)
 mod:hook("CrosshairUI.draw_default_style_crosshair", function(func, self, ...)
 	populate_defaults(self)
 	change_crosshair_scale(self)
-	change_crosshair_color(self)
+	change_crosshair_color(self, get_crosshair_color())
     
     if mod:get('dot_only') then
-        crosshair_ui.crosshair_up.style.color[1] = 0
-        crosshair_ui.crosshair_down.style.color[1] = 0
-        crosshair_ui.crosshair_left.style.color[1] = 0
-        crosshair_ui.crosshair_right.style.color[1] = 0
+        self.crosshair_up.style.color[1] = 0
+        self.crosshair_down.style.color[1] = 0
+        self.crosshair_left.style.color[1] = 0
+        self.crosshair_right.style.color[1] = 0
 	end
 
     return func(self, ...)
@@ -447,7 +460,11 @@ end)
 --]] 
 
 mod.suspended = function()
-	mod.disable_all_hooks()
+	local crosshair_ui = get_crosshair_ui()
+	if crosshair_ui then
+		reset_defaults(crosshair_ui)
+	end
+	mod:disable_all_hooks()
 end
 
 mod.unsuspended = function()
@@ -455,8 +472,7 @@ mod.unsuspended = function()
 end
 
 mod.unload = function()
-	local ingame_ui = Managers.matchmaking and  Managers.matchmaking.ingame_ui
-	local crosshair_ui = ingame_ui and ingame_ui.ingame_hud and ingame_ui.ingame_hud.crosshair
+	local crosshair_ui = get_crosshair_ui()
 	if not crosshair_ui then return end
 	reset_defaults(crosshair_ui)
 end
