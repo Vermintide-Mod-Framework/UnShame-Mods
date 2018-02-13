@@ -5,29 +5,67 @@
 local gui = get_mod("gui")
 local basic_gui = get_mod("basic_gui")
 
-local function table_has_item(t, val)
-    for index, value in ipairs(t) do
-        if value == val then
-            return true
-        end
-    end
+-- ################################################################################################################
+-- ##### UTF8 #####################################################################################################
+-- ################################################################################################################
+local UTF8 = {
+	-- UTF-8 Reference:
+	-- 0xxxxxxx - 1 byte UTF-8 codepoint (ASCII character)
+	-- 110yyyxx - First byte of a 2 byte UTF-8 codepoint
+	-- 1110yyyy - First byte of a 3 byte UTF-8 codepoint
+	-- 11110zzz - First byte of a 4 byte UTF-8 codepoint
+	-- 10xxxxxx - Inner byte of a multi-byte UTF-8 codepoint
+	 
+	chsize = function(self, char)
+		if not char then
+			return 0
+		elseif char > 240 then
+			return 4
+		elseif char > 225 then
+			return 3
+		elseif char > 192 then
+			return 2
+		else
+			return 1
+		end
+	end,
+	 
+	-- This function can return a substring of a UTF-8 string, properly handling
+	-- UTF-8 codepoints.  Rather than taking a start index and optionally an end
+	-- index, it takes the string, the starting character, and the number of
+	-- characters to select from the string.
+	 
+	utf8sub = function(self, str, startChar, numChars)
+		local startIndex = 1
+		while startChar > 1 do
+			local char = string.byte(str, startIndex)
+			startIndex = startIndex + self:chsize(char)
+			startChar = startChar - 1
+		end
 
-    return false
-end
+		local currentIndex = startIndex
 
-local function dummy_func()
+		while numChars > 0 and currentIndex <= #str do
+			local char = string.byte(str, currentIndex)
+			currentIndex = currentIndex + self:chsize(char)
+			numChars = numChars -1
+		end
+		return str:sub(startIndex, currentIndex - 1)
+	end,
+}
 
-end
 
 -- ################################################################################################################
 -- ##### Input keymap #############################################################################################
 -- ################################################################################################################
-UI_KEY_MAP = {
+MOD_GUI_KEY_MAP = {
 	win32 = {
-		["backspace"] = {"keyboard", "backspace", "held"}, ["enter"] = {"keyboard", "enter", "pressed"}, ["esc"] = {"keyboard", "esc", "pressed"},
+		["backspace"] = {"keyboard", "backspace", "held"}, 
+		["enter"] = {"keyboard", "enter", "pressed"}, 
+		["esc"] = {"keyboard", "esc", "pressed"},
 	},
 }
-UI_KEY_MAP.xb1 = UI_KEY_MAP.win32
+MOD_GUI_KEY_MAP.xb1 = MOD_GUI_KEY_MAP.win32
 local ui_special_keys = {"space", "<", ">"}
 
 -- ################################################################################################################
@@ -53,9 +91,11 @@ local ColorHelper = {
 -- ################################################################################################################
 gui.theme = "default"
 
+gui.width = 1920
+gui.height = 1080
 
-gui.adjust_window_position_to_fit = function(position)
-	position = gui.adjust_position_to_fit(position)
+gui.adjust_to_fit_position_and_scale = function(position)
+	position = gui.adjust_to_fit_scale(position)
 
 	local screen_w, screen_h = UIResolution()
 	local scale = UIResolutionScale()
@@ -72,7 +112,7 @@ gui.adjust_window_position_to_fit = function(position)
 	return position
 end
 
-gui.adjust_position_to_fit = function(position)
+gui.adjust_to_fit_scale = function(position)
 	if not position then return {0, 0} end
 
 	local scale = UIResolutionScale()
@@ -87,43 +127,23 @@ gui.adjust_position_to_fit = function(position)
 	return position
 end
 
-gui.adjust_size_to_fit = function(size)
-	if not size then return {0, 0} end
-
-	local scale = UIResolutionScale()
-
-	size = {
-		size[1] * scale,
-		size[2] * scale
-	}
-
-	--gui:echo(size[1], size[2])
-
-	return size
-end
-
 -- ################################################################################################################
 -- ##### Create containers ########################################################################################
 -- ################################################################################################################
 --[[
 	Create window
 ]]--
-gui.create_window = function(name, position, size, controls, on_hover_enter, scale_to_fit)
+gui.create_window = function(name, position, size)
 
 	-- Create window
-	position = position or {0, 0}
-	if scale_to_fit then
-		position = gui.adjust_window_position_to_fit(position)
-		size = gui.adjust_size_to_fit(size)
-	end
+	position = gui.adjust_to_fit_position_and_scale(position)
+	size = gui.adjust_to_fit_scale(size)
 
-	local window = table.clone(gui.controls.window)
+	local window = table.clone(gui.widgets.window)
 	window:set("name", name or "name")
 	window:set("position", position)
 	window:set("size", size or {0, 0})
-	window:set("controls", controls or {})
-	window:set("on_hover_enter", on_hover_enter or dummy_func)
-	window:set("scale_to_fit", scale_to_fit or false)
+	window:set("original_size", size or {0, 0})
 
 	-- Add window to list
 	gui.windows:add_window(window)
@@ -137,7 +157,10 @@ end
 --[[
 	Update
 ]]--
-gui.update = function()
+gui._update = function(dt)
+	-- Update timers
+	gui.timers:update(dt)
+
 	gui.input:check()
 	
 	-- Click
@@ -154,6 +177,11 @@ gui.update = function()
 	-- Update windows
 	gui.windows:update()
 end
+
+gui:hook("MatchmakingManager.update", function(func, self, dt, t)
+	func(self, dt, t)
+	gui._update(dt)
+end)
 
 -- ################################################################################################################
 -- ##### Common functions #########################################################################################
@@ -325,7 +353,7 @@ gui.timers = {
 		name = nil,
 		rate = 100,
 		enabled = false,
-		timestamp = nil,
+		time_passed = 0,
 		params = nil,
 		
 		-- ##### Methods ##############################################################################
@@ -354,14 +382,15 @@ gui.timers = {
 		--[[
 			Update
 		]]--
-		update = function(self, t)
-			if self.timestamp and self.enabled then
-				if t - self.timestamp >= self.rate / 1000 then
+		update = function(self, dt)
+			if self.enabled then
+				self.time_passed = self.time_passed + dt
+				if self.time_passed >= self.rate / 1000 then
 					self:tick()
-					self.timestamp = t
+					self.time_passed = 0
 				end
 			else
-				self.timestamp = t
+				self.time_passed = 0
 			end
 		end,
 		
@@ -376,7 +405,7 @@ gui.timers = {
 		Create timer
 	]]--
 	create_timer = function(self, name, rate, enabled, on_tick, ...) --, wait)
-		if not table_has_item(self.items, name) then
+		if not table.has_item(self.items, name) then
 			local new_timer = table.clone(self.template)
 			new_timer.name = name or "timer_" .. tostring(#self.items+1)
 			new_timer.rate = rate or new_timer.rate
@@ -392,9 +421,9 @@ gui.timers = {
 	--[[
 		Update timers
 	]]--
-	update = function(self, t)
+	update = function(self, dt)
 		for name, timer in pairs(self.items) do
-			timer:update(t)
+			timer:update(dt)
 		end
 	end,
 }
@@ -408,11 +437,11 @@ gui.input = {
 		Check and create input system
 	]]--
 	check = function(self)
-		if not Managers.input:get_input_service("ModsUI") then
-			Managers.input:create_input_service("ModsUI", "UI_KEY_MAP")
-			Managers.input:map_device_to_service("ModsUI", "keyboard")
-			Managers.input:map_device_to_service("ModsUI", "mouse")
-			Managers.input:map_device_to_service("ModsUI", "gamepad")
+		if not Managers.input:get_input_service("mod_gui") then
+			Managers.input:create_input_service("mod_gui", "MOD_GUI_KEY_MAP")
+			Managers.input:map_device_to_service("mod_gui", "keyboard")
+			Managers.input:map_device_to_service("mod_gui", "mouse")
+			Managers.input:map_device_to_service("mod_gui", "gamepad")
 		end
 	end,
 	--[[
@@ -471,7 +500,7 @@ gui.fonts = {
 		Create font
 	]]--
 	create = function(self, name, font, size, material, dynamic_size)
-		if not table_has_item(self.fonts, name) then
+		if not table.has_item(self.fonts, name) then
 			local new_font = table.clone(self.template)
 			new_font.font = font or new_font.font
 			new_font.material = material or new_font.material
@@ -509,63 +538,63 @@ gui.anchor = {
 		"fill",
 	},
 	bottom_left = {
-		position = function(window, control)
-			local x = window.position[1] + control.offset[1]
-			local y = window.position[2] + control.offset[2]
-			return {x, y}, control.size
+		position = function(window, widget)
+			local x = window.position[1] + widget.offset[1]
+			local y = window.position[2] + widget.offset[2]
+			return {x, y}, widget.size
 		end,
 	},
 	center_left = {
-		position = function(window, control)
-			local x = window.position[1] + control.offset[1]
-			local y = window.position[2] + window.size[2]/2 - control.size[2]/2
-			return {x, y}, control.size
+		position = function(window, widget)
+			local x = window.position[1] + widget.offset[1]
+			local y = window.position[2] + window.size[2]/2 - widget.size[2]/2
+			return {x, y}, widget.size
 		end,
 	},
 	top_left = {
-		position = function(window, control)
-			local x = window.position[1] + control.offset[1]
-			local y = window.position[2] + window.size[2] - control.offset[2] - control.size[2]
-			return {x, y}, control.size
+		position = function(window, widget)
+			local x = window.position[1] + widget.offset[1]
+			local y = window.position[2] + window.size[2] - widget.offset[2] - widget.size[2]
+			return {x, y}, widget.size
 		end,
 	},
 	middle_top = {
-		position = function(window, control)
-			local x = window.position[1] + window.size[1]/2 - control.size[1]/2
-			local y = window.position[2] + window.size[2] - control.offset[2] - control.size[2]
-			return {x, y}, control.size
+		position = function(window, widget)
+			local x = window.position[1] + window.size[1]/2 - widget.size[1]/2
+			local y = window.position[2] + window.size[2] - widget.offset[2] - widget.size[2]
+			return {x, y}, widget.size
 		end,
 	},
 	top_right = {
-		position = function(window, control)
-			local x = window.position[1] + window.size[1] - control.offset[1] - control.size[1]
-			local y = window.position[2] + window.size[2] - control.offset[2] - control.size[2]
-			return {x, y}, control.size
+		position = function(window, widget)
+			local x = window.position[1] + window.size[1] - widget.offset[1] - widget.size[1]
+			local y = window.position[2] + window.size[2] - widget.offset[2] - widget.size[2]
+			return {x, y}, widget.size
 		end,
 	},
 	center_right = {
-		position = function(window, control)
-			local x = window.position[1] + window.size[1] - control.offset[1] - control.size[1]
-			local y = window.position[2] + window.size[2]/2 - control.size[2]/2
-			return {x, y}, control.size
+		position = function(window, widget)
+			local x = window.position[1] + window.size[1] - widget.offset[1] - widget.size[1]
+			local y = window.position[2] + window.size[2]/2 - widget.size[2]/2
+			return {x, y}, widget.size
 		end,
 	},
 	bottom_right = {
-		position = function(window, control)
-			local x = window.position[1] + window.size[1] - control.offset[1] - control.size[1]
-			local y = window.position[2] + control.offset[2]
-			return {x, y}, control.size
+		position = function(window, widget)
+			local x = window.position[1] + window.size[1] - widget.offset[1] - widget.size[1]
+			local y = window.position[2] + widget.offset[2]
+			return {x, y}, widget.size
 		end,
 	},
 	middle_bottom = {
-		position = function(window, control)
-			local x = window.position[1] + window.size[1]/2 - control.size[1]/2
-			local y = window.position[2] + control.offset[2]
-			return {x, y}, control.size
+		position = function(window, widget)
+			local x = window.position[1] + window.size[1]/2 - widget.size[1]/2
+			local y = window.position[2] + widget.offset[2]
+			return {x, y}, widget.size
 		end,
 	},
 	fill = {
-		position = function(window, control)
+		position = function(window, widget)
 			return {window.position[1], window.position[2]}, {window.size[1], window.size[2]}
 		end,
 	},
@@ -694,14 +723,15 @@ gui.text_alignment = {
 }
 
 -- ################################################################################################################
--- ##### Controls #################################################################################################
+-- ##### widgets #################################################################################################
 -- ################################################################################################################
-gui.controls = {
+gui.widgets = {
 
 	window = {
 		name = "",
 		position = {0, 0},
 		size = {0, 0},
+		original_size = {0, 0},
 		initialized = false,
 		hovered = false,
 		cursor = {0, 0},
@@ -711,10 +741,9 @@ gui.controls = {
 		resize_offset = {0, 0},
 		resize_origin = {0, 0},
 		z_order = 0,
-		controls = {},
+		widgets = {},
 		visible = true,
 		transparent = false,
-		scale_to_fit = false,
 		
 		-- ################################################################################################################
 		-- ##### Init #####################################################################################################
@@ -749,151 +778,157 @@ gui.controls = {
 		end,
 		
 		-- ################################################################################################################
-		-- ##### Create controls ##########################################################################################
+		-- ##### Create widgets ##########################################################################################
 		-- ################################################################################################################
 		--[[
 			Create title bar
 		--]]
 		create_title = function(self, name, text, height)
-			-- Base control
-			local control = self:create_control(name, nil, nil, "title")
+			-- Base widget
+			local widget = self:create_widget(name, nil, nil, "title")
 			-- Set attributes
-			control:set("text", text or "")
-			control:set("height", height or gui.themes[gui.theme].title.height)
-			-- Add control
-			self:add_control(control)
-			return control
+			widget:set("text", text or "")
+			widget:set("height", height or gui.themes[gui.theme].title.height)
+			-- Add widget
+			self:add_widget(widget)
+			return widget
 		end,
 		--[[
 			Create button
 		--]]
-		create_button = function(self, name, position, size, text, on_click, anchor, param)
-			-- Base control
-			local control = self:create_control(name, position, size, "button", anchor)
+		create_button = function(self, name, position, size, text, on_click, anchor)
+			-- Base widget
+			local widget = self:create_widget(name, position, size, "button", anchor)
 			-- Set attributes
-			control:set("text", text or "")
-			control:set("on_click", on_click)
-			control:set("param", param)
-			-- Add control
-			self:add_control(control)
-			return control
+			widget:set("text", text or "")
+			if on_click then
+				widget:set("on_click", on_click)
+			end
+			-- Add widget
+			self:add_widget(widget)
+			return widget
 		end,
 		--[[
 			Create resizer
 		--]]
 		create_resizer = function(self, name, size)
-			-- Base control
-			local control = self:create_control(name, nil, size, "resizer")
+			-- Base widget
+			local widget = self:create_widget(name, nil, size, "resizer")
 			-- Set attributes
-			control:set("size", size or gui.themes[gui.theme].resizer.size)
-			-- Add control
-			self:add_control(control)
-			return control
+			widget:set("size", size or gui.themes[gui.theme].resizer.size)
+			-- Add widget
+			self:add_widget(widget)
+			return widget
 		end,
 		--[[
 			Create close button
 		--]]
 		create_close_button = function(self, name)
-			local control = self:create_control(name, {5, 0}, {25, 25}, "close_button", gui.anchor.styles.top_right)
-			control:set("text", "X")
-			self:add_control(control)
-			return control
+			local widget = self:create_widget(name, {5, 0}, {25, 25}, "close_button", gui.anchor.styles.top_right)
+			widget:set("text", "X")
+			self:add_widget(widget)
+			return widget
 		end,
 		--[[
 			Create textbox
 		--]]
-		create_textbox = function(self, name, position, size, text, watermark, on_text_changed)
-			local control = self:create_control(name, position, size, "textbox")
-			control:set("text", text or "")
-			control:set("watermark", watermark or "")
-			control:set("on_text_changed", on_text_changed)
-			self:add_control(control)
-			return control
+		create_textbox = function(self, name, position, size, text, placeholder, on_text_changed)
+			local widget = self:create_widget(name, position, size, "textbox")
+			widget:set("text", text or "")
+			widget:set("placeholder", placeholder or "")
+			if on_text_changed then
+				widget:set("on_text_changed", on_text_changed)
+			end
+			self:add_widget(widget)
+			return widget
 		end,
 		--[[
 			Create checkbox
 		--]]
 		create_checkbox = function(self, name, position, size, text, value, on_value_changed)
-			local control = self:create_control(name, position, size, "checkbox")
-			control:set("text", text or "")
-			control:set("value", value or false)
-			control:set("on_value_changed", on_value_changed)
-			self:add_control(control)
-			return control
+			local widget = self:create_widget(name, position, size, "checkbox")
+			widget:set("text", text or "")
+			widget:set("value", value or false)
+			if on_value_changed then
+				widget:set("on_value_changed", on_value_changed)
+			end
+			self:add_widget(widget)
+			return widget
 		end,
 		--[[
 			Create label
 		--]]
 		create_label = function(self, name, position, size, text)
-			local control = self:create_control(name, position, size, "label")
-			control:set("text", text or "")
-			self:add_control(control)
-			return control
+			local widget = self:create_widget(name, position, size, "label")
+			widget:set("text", text or "")
+			self:add_widget(widget)
+			return widget
 		end,
 		--[[
-			Create control
+			Create widget
 		--]]
 		create_dropdown = function(self, name, position, size, options, selected_index, on_index_changed, show_items_num)
-			local control = self:create_control(name, position, size, "dropdown")
-			--local control.controls = {}
-			control:set("text", "")
-			control:set("options", {})
-			control:set("index", selected_index)
+			local widget = self:create_widget(name, position, size, "dropdown")
+			--local widget.widgets = {}
+			widget:set("text", "")
+			widget:set("options", {})
+			widget:set("index", selected_index)
 			--table.sort(options)
-			safe_pcall(function()
+			gui:pcall(function()
 			for text, index in pairs(options) do
-				local sub_control = self:create_dropdown_item(name, index, control, text)
-				gui:echo("--")
-				gui:echo(tostring(index))
-				control.options[#control.options+1] = sub_control
+				local sub_widget = self:create_dropdown_item(name, index, widget, text)
+				-- gui:echo("--")
+				-- gui:echo(tostring(index))
+				widget.options[#widget.options+1] = sub_widget
 			end
 			end)
-			control:set("show_items_num", show_items_num or 2)
-			control:set("on_index_changed", on_index_changed)
-			self:add_control(control)
-			return control
+			widget:set("show_items_num", show_items_num or 2)
+			if on_index_changed then
+				widget:set("on_index_changed", on_index_changed)
+			end
+			self:add_widget(widget)
+			return widget
 		end,
 		create_dropdown_item = function(self, name, index, parent, text)
-			local control = self:create_control(name.."_option_"..text, {0, 0}, {0, 0}, "dropdown_item")
-			control:set("text", text or "")
-			control:set("index", index)
-			control:set("parent", parent)
-			control:set("anchor", nil)
-			control:set("z_order", 1)
-			return control
+			local widget = self:create_widget(name.."_option_"..text, {0, 0}, {0, 0}, "dropdown_item")
+			widget:set("text", text or "")
+			widget:set("index", index)
+			widget:set("parent", parent)
+			widget:set("anchor", nil)
+			widget:set("z_order", 1)
+			return widget
 		end,
 		--[[
-			Create control
+			Create widget
 		--]]
-		create_control = function(self, name, position, size, _type, anchor)
+		create_widget = function(self, name, position, size, _type, anchor)
 			
 
-			if self.scale_to_fit then
-				position = gui.adjust_position_to_fit(position)
-				size = gui.adjust_size_to_fit(size)
-			end
-			-- Create control
-			local control = table.clone(gui.controls.control)
-			control.name = name or "name"
-			control.position = position or {0, 0}
-			control.offset = control.position
-			control.size = size or {0, 0}
-			control._type = _type or "button"
-			control.window = self
+			position = gui.adjust_to_fit_scale(position)
+			size = gui.adjust_to_fit_scale(size)
+			
+			-- Create widget
+			local widget = table.clone(gui.widgets.widget)
+			widget.name = name or "name"
+			widget.position = position or {0, 0}
+			widget.offset = widget.position
+			widget.size = size or {0, 0}
+			widget._type = _type or "button"
+			widget.window = self
 			-- Anchor
-			control.anchor = anchor or "bottom_left"
+			widget.anchor = anchor or "bottom_left"
 			-- Setup functions and theme
-			control:setup()
+			widget:setup()
 
-			return control
+			return widget
 		end,
 		--[[
-			Add control to list
+			Add widget to list
 		--]]
-		add_control = function(self, control)
-			self:inc_z_orders(#self.controls)
-			control.z_order = 1
-			self.controls[#self.controls+1] = control
+		add_widget = function(self, widget)
+			self:inc_z_orders(#self.widgets)
+			widget.z_order = 1
+			self.widgets[#self.widgets+1] = widget
 		end,
 		
 		-- ################################################################################################################
@@ -909,10 +944,10 @@ gui.controls = {
 			-- Theme
 			self:refresh_theme()
 			
-			-- Init controls
-			if #self.controls > 0 then
-				for _, control in pairs(self.controls) do
-					control:init()
+			-- Init widgets
+			if #self.widgets > 0 then
+				for _, widget in pairs(self.widgets) do
+					widget:init()
 				end
 			end
 			
@@ -934,6 +969,7 @@ gui.controls = {
 			Destroy window
 		--]]
 		destroy = function(self)
+			self:before_destroy()
 			gui.windows:dec_z_orders(self.z_order)
 			table.remove(gui.windows.list, self:window_index())
 		end,
@@ -942,9 +978,9 @@ gui.controls = {
 		--]]
 		inc_z_orders = function(self, changed_z)
 			for z=changed_z, 1, -1 do
-				for _, control in pairs(self.controls) do
-					if control.z_order == z then
-						control.z_order = control.z_order + 1
+				for _, widget in pairs(self.widgets) do
+					if widget.z_order == z then
+						widget.z_order = widget.z_order + 1
 					end
 				end
 			end
@@ -953,11 +989,11 @@ gui.controls = {
 			Decrease z orders
 		--]]
 		dec_z_orders = function(self, changed_z)
-			--for z=changed_z, #self.controls do
-			for z=changed_z+1, #self.controls do
-				for _, control in pairs(self.controls) do
-					if control.z_order == z then
-						control.z_order = control.z_order - 1
+			--for z=changed_z, #self.widgets do
+			for z=changed_z+1, #self.widgets do
+				for _, widget in pairs(self.widgets) do
+					if widget.z_order == z then
+						widget.z_order = widget.z_order - 1
 					end
 				end
 			end
@@ -973,8 +1009,8 @@ gui.controls = {
 			Unfocus window
 		--]]
 		unfocus = function(self)
-			for _, control in pairs(self.controls) do
-				control:unfocus()
+			for _, widget in pairs(self.widgets) do
+				widget:unfocus()
 			end
 			self:on_unfocus()
 		end,
@@ -1007,14 +1043,14 @@ gui.controls = {
 		click = function(self, position)
 			--self:focus()
 			local clicked = false
-			for z=1, #self.controls do
-				for _, control in pairs(self.controls) do
-					if control.z_order == z then
-						if not gui.point_in_bounds(position, control:extended_bounds()) then
-							control:unfocus()
+			for z=1, #self.widgets do
+				for _, widget in pairs(self.widgets) do
+					if widget.z_order == z then
+						if not gui.point_in_bounds(position, widget:extended_bounds()) then
+							widget:unfocus()
 						end
-						if not clicked and gui.point_in_bounds(position, control:extended_bounds()) then
-							control:click()
+						if not clicked and gui.point_in_bounds(position, widget:extended_bounds()) then
+							widget:click()
 							clicked = true
 						end
 					end
@@ -1028,14 +1064,14 @@ gui.controls = {
 		release = function(self, position)
 			self:focus()
 			local released = false
-			for z=1, #self.controls do
-				for _, control in pairs(self.controls) do
-					if control.z_order == z then
-						if not gui.point_in_bounds(position, control:extended_bounds()) then
-							control:unfocus()
+			for z=1, #self.widgets do
+				for _, widget in pairs(self.widgets) do
+					if widget.z_order == z then
+						if not gui.point_in_bounds(position, widget:extended_bounds()) then
+							widget:unfocus()
 						end
-						if not released and gui.point_in_bounds(position, control:extended_bounds()) then
-							control:release()
+						if not released and gui.point_in_bounds(position, widget:extended_bounds()) then
+							widget:release()
 							released = true
 						end
 					end
@@ -1107,6 +1143,11 @@ gui.controls = {
 		--]]
 		on_resize = function(self)
 		end,
+		--[[
+			Before window is destroyed
+		--]]
+		before_destroy = function(self)
+		end,
 		
 		-- ################################################################################################################
 		-- ##### Attributes ###############################################################################################
@@ -1134,8 +1175,8 @@ gui.controls = {
 		end,
 		extended_bounds = function(self)
 			local bounds = self:bounds()
-			for _, control in pairs(self.controls) do
-				local cbounds = control:extended_bounds()
+			for _, widget in pairs(self.widgets) do
+				local cbounds = widget:extended_bounds()
 				if cbounds[1] < bounds[1] then bounds[1] = cbounds[1] end
 				if cbounds[2] > bounds[2] then bounds[2] = cbounds[2] end
 				if cbounds[3] < bounds[3] then bounds[3] = cbounds[3] end
@@ -1143,14 +1184,19 @@ gui.controls = {
 			end
 			return bounds
 		end,
-		control_bounds = function(self)
+		widget_bounds = function(self, exclude_resizer)
 			local bounds = {}
-			for _, control in pairs(self.controls) do
-				local cbounds = control:extended_bounds()
-				if not bounds[1] or cbounds[1] < bounds[1] then bounds[1] = cbounds[1] end
-				if not bounds[2] or cbounds[2] > bounds[2] then bounds[2] = cbounds[2] end
-				if not bounds[3] or cbounds[3] < bounds[3] then bounds[3] = cbounds[3] end
-				if not bounds[4] or cbounds[4] > bounds[4] then bounds[4] = cbounds[4] end
+
+			for _, widget in pairs(self.widgets) do
+				if exclude_resizer and widget._type == "resizer" then
+					return {0, 0, 0, 0}
+				else
+					local cbounds = widget:extended_bounds()
+					if not bounds[1] or cbounds[1] < bounds[1] then bounds[1] = cbounds[1] end
+					if not bounds[2] or cbounds[2] > bounds[2] then bounds[2] = cbounds[2] end
+					if not bounds[3] or cbounds[3] < bounds[3] then bounds[3] = cbounds[3] end
+					if not bounds[4] or cbounds[4] > bounds[4] then bounds[4] = cbounds[4] end
+				end
 			end
 			return bounds
 		end,
@@ -1161,12 +1207,12 @@ gui.controls = {
 			return 800 + (#gui.windows.list - self.z_order)
 		end,
 		--[[
-			Get control by name
+			Get widget by name
 		--]]
-		get_control = function(self, name)
-			for _, control in pairs(self.controls) do
-				if control.name == name then
-					return control
+		get_widget = function(self, name)
+			for _, widget in pairs(self.widgets) do
+				if widget.name == name then
+					return widget
 				end
 			end
 			return nil
@@ -1188,8 +1234,8 @@ gui.controls = {
 					self:drag(cursor)
 					-- Resize
 					self:resize(cursor)
-					-- Update controls
-					self:update_controls()
+					-- Update widgets
+					self:update_widgets()
 				end
 				self:after_update()
 			end
@@ -1212,30 +1258,30 @@ gui.controls = {
 					cursor[1] - self.resize_origin[1] + self.resize_offset[1], 
 					self.resize_origin[2] - cursor[2] + self.resize_offset[2],
 				}
-				if new_size[1] < 100 then new_size[1] = 100 end
-				if new_size[2] < 100 then new_size[2] = 100 end
+				if new_size[1] < self.original_size[1] then new_size[1] = self.original_size[1] end
+				if new_size[2] < self.original_size[2] then new_size[2] = self.original_size[2] end
 				self.size = new_size
-				local control_bounds = self:control_bounds()
-				if self.size[1] < control_bounds[2] - control_bounds[1] then
-					self.size[1] = control_bounds[2] - control_bounds[1]
+				local widget_bounds = self:widget_bounds(true)
+				if self.size[1] < widget_bounds[2] - widget_bounds[1] then
+					self.size[1] = widget_bounds[2] - widget_bounds[1]
 				end
-				if self.size[2] < control_bounds[4] - control_bounds[3] then
-					self.size[2] = control_bounds[4] - control_bounds[3]
+				if self.size[2] < widget_bounds[4] - widget_bounds[3] then
+					self.size[2] = widget_bounds[4] - widget_bounds[3]
 				end
 				self.position = {self.position[1], self.resize_origin[2] - new_size[2]}
 				self:on_resize()
 			end
 		end,
 		--[[
-			Update controls
+			Update widgets
 		--]]
-		update_controls = function(self)
-			if #self.controls > 0 then
+		update_widgets = function(self)
+			if #self.widgets > 0 then
 				local catched = false
-				for z=1, #self.controls do
-					for _, control in pairs(self.controls) do
-						if control.z_order == z and not catched then
-							catched = control:update()
+				for z=1, #self.widgets do
+					for _, widget in pairs(self.widgets) do
+						if widget.z_order == z and not catched then
+							catched = widget:update()
 						end
 					end
 				end
@@ -1249,7 +1295,7 @@ gui.controls = {
 			if not self.visible then return end
 			self:render_shadow()
 			self:render_background()
-			self:render_controls()
+			self:render_widgets()
 		end,
 		--[[
 			Render window
@@ -1274,27 +1320,27 @@ gui.controls = {
 			-- Render
 			for i=1, layers do
 				local color = Color((cv[1]/layers)*i, cv[2], cv[3], cv[4])
-				local gui = layers-i
-				basic_gui.rect(self.position[1]+gui-border, self.position[2]-gui-border, self:position_z(),
-					self.size[1]-gui*2+border*2, self.size[2]+gui*2+border*2, color)
+				local layer = layers-i
+				basic_gui.rect(self.position[1]+layer-border, self.position[2]-layer-border, self:position_z(),
+					self.size[1]-layer*2+border*2, self.size[2]+layer*2+border*2, color)
 			end
 			for i=1, layers do
 				local color = Color((cv[1]/layers)*i, cv[2], cv[3], cv[4])
-				local gui = layers-i
-				basic_gui.rect(self.position[1]-gui-border, self.position[2]+gui-border, self:position_z(),
-					self.size[1]+gui*2+border*2, self.size[2]-gui*2+border*2, color)
+				local layer = layers-i
+				basic_gui.rect(self.position[1]-layer-border, self.position[2]+layer-border, self:position_z(),
+					self.size[1]+layer*2+border*2, self.size[2]-layer*2+border*2, color)
 			end
 		end,
 		--[[
-			Render controls
+			Render widgets
 		--]]
-		render_controls = function(self)
+		render_widgets = function(self)
 			if not self.visible then return end
-			if #self.controls > 0 then
-				for z=#self.controls, 1, -1 do
-					for _, control in pairs(self.controls) do
-						if control.z_order == z and control.visible then
-							control:render()
+			if #self.widgets > 0 then
+				for z=#self.widgets, 1, -1 do
+					for _, widget in pairs(self.widgets) do
+						if widget.z_order == z and widget.visible then
+							widget:render()
 						end
 					end
 				end
@@ -1303,7 +1349,7 @@ gui.controls = {
 
 	},
 	
-	control = {
+	widget = {
 		name = "",
 		position = {0, 0},
 		size = {0, 0},
@@ -1317,7 +1363,7 @@ gui.controls = {
 		theme = {},
 		
 		-- ################################################################################################################
-		-- ##### Control Methods ##########################################################################################
+		-- ##### widget Methods ##########################################################################################
 		-- ################################################################################################################
 		--[[
 			Initialize
@@ -1400,21 +1446,21 @@ gui.controls = {
 			end
 		end,
 		--[[
-			Setup control
+			Setup widget
 		--]]
 		setup = function(self)
-			-- Copy control specific functions
-			local control_element = gui.controls[self._type]
-			if control_element then self:copy_control_element(control_element) end
+			-- Copy widget specific functions
+			local widget_element = gui.widgets[self._type]
+			if widget_element then self:copy_widget_element(widget_element) end
 			-- Refresh theme
 			self:refresh_theme()
 		end,
 		--[[
-			Copy control element
+			Copy widget element
 		--]]
-		copy_control_element = function(self, control_element)
+		copy_widget_element = function(self, widget_element)
 			-- Go through elements
-			for key, element in pairs(control_element) do
+			for key, element in pairs(widget_element) do
 				if type(element) == "function" then
 					-- If function save callback to original function
 					if self[key] then self[key.."_base"] = self[key] end
@@ -1438,7 +1484,7 @@ gui.controls = {
 			if self.disabled or not self.visible then return end
 			-- Mouse position
 			local cursor = gui.mouse.cursor()
-			-- Set control position via anchor
+			-- Set widget position via anchor
 			if self.anchor then
 				self.position, self.size = gui.anchor[self.anchor].position(self.window, self)
 			end
@@ -1487,16 +1533,16 @@ gui.controls = {
 				local cv = self.theme.shadow.color
 				-- Render
 				for i=1, layers do
-					local gui = layers-i
+					local layer = layers-i
 					local color = Color((cv[1]/layers)*i, cv[2], cv[3], cv[4])
-					basic_gui.rect(self.position[1]+gui-border, self.position[2]-gui-border, self:position_z(),
-						self.size[1]-gui*2+border*2, self.size[2]+gui*2+border*2, color)
+					basic_gui.rect(self.position[1]+layer-border, self.position[2]-layer-border, self:position_z(),
+						self.size[1]-layer*2+border*2, self.size[2]+layer*2+border*2, color)
 				end
 				for i=1, layers do
-					local gui = layers-i
+					local layer = layers-i
 					local color = Color((cv[1]/layers)*i, cv[2], cv[3], cv[4])
-					basic_gui.rect(self.position[1]-gui-border, self.position[2]+gui-border, self:position_z(),
-						self.size[1]+gui*2+border*2, self.size[2]-gui*2+border*2, color)
+					basic_gui.rect(self.position[1]-layer-border, self.position[2]+layer-border, self:position_z(),
+						self.size[1]+layer*2+border*2, self.size[2]-layer*2+border*2, color)
 				end
 			end
 		end,
@@ -1561,7 +1607,7 @@ gui.controls = {
 			Position Z
 		--]]
 		position_z = function(self)
-			return self.window:position_z() + (#self.window.controls - self.z_order)
+			return self.window:position_z() + (#self.window.widgets - self.z_order)
 		end,
 		-- ################################################################################################################
 		-- ##### Events ###################################################################################################
@@ -1595,7 +1641,7 @@ gui.controls = {
 	
 	title = {
 		-- ################################################################################################################
-		-- ##### Control overrides ########################################################################################
+		-- ##### widget overrides ########################################################################################
 		-- ################################################################################################################
 		--[[
 			Init override
@@ -1699,7 +1745,7 @@ gui.controls = {
 	
 	resizer = {
 		-- ################################################################################################################
-		-- ##### Control overrides ########################################################################################
+		-- ##### widget overrides ########################################################################################
 		-- ################################################################################################################
 		--[[
 			Init override
@@ -1816,7 +1862,7 @@ gui.controls = {
 	
 	close_button = {
 		-- ################################################################################################################
-		-- ##### Control overrides ########################################################################################
+		-- ##### widget overrides ########################################################################################
 		-- ################################################################################################################
 		--[[
 			Init override
@@ -1841,7 +1887,7 @@ gui.controls = {
 
 	textbox = {
 		-- ################################################################################################################
-		-- ##### Control overrides ########################################################################################
+		-- ##### widget overrides ########################################################################################
 		-- ################################################################################################################
 		--[[
 			Init override
@@ -1857,7 +1903,7 @@ gui.controls = {
 			}
 			-- Input timer
 			self.input = {
-				timer = gui.timers:create_timer(self.name .. "_input_timer", 100, true, self.on_input_timer, self),
+				--[[timer = gui.timers:create_timer(self.name .. "_input_timer", 100, true, self.on_input_timer, self),--]]
 				ready = true,
 			}
 		end,
@@ -1877,9 +1923,9 @@ gui.controls = {
 		--]]
 		text_changed = function(self)
 			-- Disable input
-			self.input.ready = false
+			--self.input.ready = false
 			-- Enable input timer
-			self.input.timer.enabled = true
+			--self.input.timer.enabled = true
 			-- Trigger event
 			self:on_text_changed()
 		end,
@@ -1922,12 +1968,12 @@ gui.controls = {
 		--[[
 			Input timer
 		--]]
-		on_input_timer = function(self, textbox)
+		--[[on_input_timer = function(self, textbox)
 			-- Disable timer
 			self.enabled = false
 			-- Accept input
 			textbox.input.ready = true
-		end,
+		end,--]]
 		-- ################################################################################################################
 		-- ##### Cycle overrides ##########################################################################################
 		-- ################################################################################################################
@@ -1942,17 +1988,18 @@ gui.controls = {
 			-- Input
 			if self.has_focus then
 				-- Get input service
-				Managers.input:device_unblock_service("keyboard", 1, "ModsUI")
-				local input_service = Managers.input:get_service("ModsUI")
+				Managers.input:device_unblock_service("keyboard", 1, "mod_gui")
+				local input_service = Managers.input:get_service("mod_gui")
 				-- Check input and timer
 				if input_service and self.input.ready then
 					-- Get keystrokes
 					local keystrokes = stingray.Keyboard.keystrokes()
 					-- Check keystrokes
 					for _, key in pairs(keystrokes) do
+						print(key)
 						if type(key) == "string" then
 							-- If string check if special key
-							if not table_has_item(ui_special_keys, key) then
+							if not table.has_item(ui_special_keys, key) then
 								-- Oridinary printable character
 								self.text = self.text .. key
 								-- Trigger changed
@@ -1964,7 +2011,7 @@ gui.controls = {
 								self:text_changed()
 							end
 						else
-							-- If not string it's control key
+							-- If not string it's widget key
 							if input_service:get("backspace") then
 								-- Handle backspace - remove last character
 								if string.len(self.text) >= 1 then
@@ -2005,7 +2052,7 @@ gui.controls = {
 			-- Visible
 			if not self.visible then return end
 			-- Get current theme color
-			local color = ColorHelper.unbox(self.theme.color_watermark)
+			local color = ColorHelper.unbox(self.theme.color_placeholder)
 			if self.clicked then
 				color = ColorHelper.unbox(self.theme.color_text_clicked)
 			elseif self.hovered and #self.text > 0 then
@@ -2016,7 +2063,7 @@ gui.controls = {
 			-- Get text
 			local text = self.text or ""
 			if not self.has_focus then
-				text = #self.text > 0 and self.text or self.watermark or ""
+				text = #self.text > 0 and self.text or self.placeholder or ""
 			end
 			-- Get font
 			--local font = self.theme.font
@@ -2076,7 +2123,7 @@ gui.controls = {
 			self:on_value_changed()
 		end,
 		-- ################################################################################################################
-		-- ##### Control overrides ########################################################################################
+		-- ##### widget overrides ########################################################################################
 		-- ################################################################################################################
 		--[[
 			Release override
@@ -2178,7 +2225,7 @@ gui.controls = {
 			Select index
 		--]]
 		select_index = function(self, index)
-			-- Check options  ( options are dropdown_item controls )
+			-- Check options  ( options are dropdown_item widgets )
 			if self.options and #self.options >= index then
 				-- Set index
 				self.index = index
@@ -2213,7 +2260,7 @@ gui.controls = {
 			return results
 		end,
 		-- ################################################################################################################
-		-- ##### Control overrides ########################################################################################
+		-- ##### widget overrides ########################################################################################
 		-- ################################################################################################################
 		--[[
 			Init override
@@ -2361,7 +2408,7 @@ gui.controls = {
 	
 	dropdown_item = {
 		-- ################################################################################################################
-		-- ##### Control overrides ########################################################################################
+		-- ##### widget overrides ########################################################################################
 		-- ################################################################################################################
 		--[[
 			Release override
@@ -2394,8 +2441,8 @@ gui.controls = {
 -- ##### Themes ###################################################################################################
 -- ################################################################################################################
 gui.themes = {
-	-- Define a "default" theme element with common values for every control
-	-- Define specific elements with a control name to overwrite default settings
+	-- Define a "default" theme element with common values for every widget
+	-- Define specific elements with a widget name to overwrite default settings
 	-- Default theme
 	default = {
 		-- default theme element
@@ -2446,7 +2493,7 @@ gui.themes = {
 			size = {25, 25},
 		},
 		textbox = {
-			color_watermark = ColorHelper.box(50, 255, 255, 255),
+			color_placeholder = ColorHelper.box(50, 255, 255, 255),
 			color_input_cursor = ColorHelper.box(100, 255, 255, 255),
 			text_alignment = "middle_left",
 		},
@@ -2479,53 +2526,4 @@ gui.themes = {
 -- ################################################################################################################
 gui.fonts:create("default", "hell_shark", 22)
 gui.fonts:create("hell_shark", "hell_shark", 22, nil, true)
-
--- ################################################################################################################
--- ##### UTF8 #####################################################################################################
--- ################################################################################################################
-local UTF8 = {
-	-- UTF-8 Reference:
-	-- 0xxxxxxx - 1 byte UTF-8 codepoint (ASCII character)
-	-- 110yyyxx - First byte of a 2 byte UTF-8 codepoint
-	-- 1110yyyy - First byte of a 3 byte UTF-8 codepoint
-	-- 11110zzz - First byte of a 4 byte UTF-8 codepoint
-	-- 10xxxxxx - Inner byte of a multi-byte UTF-8 codepoint
-	 
-	chsize = function(self, char)
-		if not char then
-			return 0
-		elseif char > 240 then
-			return 4
-		elseif char > 225 then
-			return 3
-		elseif char > 192 then
-			return 2
-		else
-			return 1
-		end
-	end,
-	 
-	-- This function can return a substring of a UTF-8 string, properly handling
-	-- UTF-8 codepoints.  Rather than taking a start index and optionally an end
-	-- index, it takes the string, the starting character, and the number of
-	-- characters to select from the string.
-	 
-	utf8sub = function(self, str, startChar, numChars)
-		local startIndex = 1
-		while startChar > 1 do
-			local char = string.byte(str, startIndex)
-			startIndex = startIndex + self:chsize(char)
-			startChar = startChar - 1
-		end
-
-		local currentIndex = startIndex
-
-		while numChars > 0 and currentIndex <= #str do
-			local char = string.byte(str, currentIndex)
-			currentIndex = currentIndex + self:chsize(char)
-			numChars = numChars -1
-		end
-		return str:sub(startIndex, currentIndex - 1)
-	end,
-}
 

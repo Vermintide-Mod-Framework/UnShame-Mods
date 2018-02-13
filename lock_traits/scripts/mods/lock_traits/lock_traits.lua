@@ -6,29 +6,6 @@
 
 local mod = get_mod("lock_traits")
 
--- Returns index of object o in table t or nil if t doesn't have o
-local function table_index_of(t, o)
-	if type(t) ~= "table" then
-		return nil
-	end
-	for i,v in ipairs(t) do
-		if o == v then
-			return i
-		end
-	end
-	return nil
-end
-
-local function table_has_item(t, val)
-    for index, value in ipairs(t) do
-        if value == val then
-            return true
-        end
-    end
-
-    return false
-end
-
 -- Reroll page object - most likely will be found when an item is added to the wheel
 mod.trait_reroll_page = nil 
 
@@ -144,7 +121,7 @@ end
 function mod.lock_trait()
 	local trait_name = mod.trait_reroll_page.selected_trait_name
 	local trait_index = mod.trait_reroll_page.selected_trait_index
-	if trait_name and #mod.locked_traits < 2 and not table_has_item(mod.locked_traits, trait_name) then
+	if trait_name and #mod.locked_traits < 2 and not table.has_item(mod.locked_traits, trait_name) then
 		mod.locked_traits[#mod.locked_traits + 1] = trait_name
 	end
 	if trait_index ~= nil then
@@ -158,7 +135,7 @@ end
 function mod.unlock_trait()
 	local trait_name = mod.trait_reroll_page.selected_trait_name
 	local trait_index = mod.trait_reroll_page.selected_trait_index
-	if trait_name and table_has_item(mod.locked_traits, trait_name) then
+	if trait_name and table.has_item(mod.locked_traits, trait_name) then
 		table.remove(mod.locked_traits, table_index_of(mod.locked_traits, trait_name))
 	end
 	if trait_index ~= nil then
@@ -206,14 +183,12 @@ function mod.create_window()
 
 	if not selected_trait and not mod.reroll_info then return end
 
-	local ui_w = 1920
-	local ui_h = 1080
 	local window_size = {0, 0}
 	local window_position = {0, 0}
 
 	--mod:echo(tostring(window_position[1]) .. " " .. tostring(window_position[2]))
 
-	mod.window = get_mod("gui").create_window(mod_name, window_position, window_size, nil, function() end, true)
+	mod.window = get_mod("gui").create_window("lock_traits", window_position, window_size, nil, function() end, true)
 	if not mod.reroll_info then
 
 		local trait_is_locked = mod.has_traits(mod.locked_traits, selected_trait)
@@ -227,6 +202,8 @@ function mod.create_window()
 
 		local button = mod.window:create_button("lock_traits_lock_unlock", button_position, button_size, button_text)
 		button:set("on_click", trait_is_locked and mod.unlock_trait or mod.lock_trait)
+
+		local textbox = mod.window:create_textbox("txt_search", {100, 100}, {100, 20}, "Test", "Search ...", function(self)	end)
 	else
 		local label_size = {100, 35}
 		local label_position = {192, 443}
