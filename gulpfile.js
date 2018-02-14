@@ -11,9 +11,9 @@ const
 	child_process = require('child_process');
 
 // CHANGE THESE:
-// Paths to stingray executable and the folder to copy mods to
-const stingrayExe = 'E:/SteamLibrary/steamapps/common/Warhammer End Times Vermintide Mod Tools/bin/stingray_win64_dev_x64.exe';
-const modsDir = 'E:/SteamLibrary/steamapps/common/Warhammer End Times Vermintide/bundle/mods';
+// Fallback paths to stingray executable and the folder to copy mods to
+let fallbackStingrayExe = 'E:/SteamLibrary/steamapps/common/Warhammer End Times Vermintide Mod Tools/bin/stingray_win64_dev_x64.exe';
+let fallbackModsDir = 'E:/SteamLibrary/steamapps/common/Warhammer End Times Vermintide/bundle/mods';
 
 // CHANGE THESE maybe:
 // Folders that will be ignored when building/watching all mods
@@ -50,7 +50,7 @@ const modSrc = [
 
 // Creates a copy of the template mod and renames it to the provided name
 // gulp create -m mod_name [-a Author]
-gulp.task('create', (cb) => {
+gulp.task('create', (callback) => {
 	let argv = minimist(process.argv);
 	let modName = argv.m || argv.mod || '';
 	let authorName = argv.a || argv.author || '';
@@ -81,41 +81,112 @@ gulp.task('create', (cb) => {
 // gulp build [-m "mod1; mod2;mod3"] [--verbose] [-t] 
 // --verbose - prints stingray console output even on successful build
 // -t - doesn't delete .temp folder before building
-gulp.task('build', (cb) => {
+gulp.task('build', (callback) => {
+
 	let {modNames, verbose, leaveTemp} = getBuildParams(process.argv);
 
 	console.log('Mods to build:');
 	modNames.forEach(modName => console.log('- ' + modName));
 	console.log();
 
-	let promise = Promise.resolve();	
-	modNames.forEach(modName => {
-		if(modName){
-	    	promise = promise.then(() => buildMod(modName, !leaveTemp, verbose));
-		}
-	});
+	getPaths().then(paths => {
 
-	promise.then(() => cb());
+		let promise = Promise.resolve();	
+		modNames.forEach(modName => {
+			if(modName){
+		    	promise = promise.then(() => buildMod(paths, modName, !leaveTemp, verbose));
+			}
+		});
+		return promise;
+	})
+	.then(() => callback());
 });
 
 // Watches for changes in specified mods and builds them whenever they occur
 // gulp watch [-m "mod1; mod2;mod3"] [--verbose] [-t] 
-gulp.task('watch', (cb) => {
+gulp.task('watch', (callback) => {
 	let {modNames, verbose, leaveTemp} = getBuildParams(process.argv);
-	modNames.forEach((modName) => {
-		console.log('Watching ', modName, '...');
-		gulp.watch([modName, '!' + modName + '/*.tmp'], buildMod.bind(null, modName, !leaveTemp, verbose));
-	})
-	return cb();
-});
-
-// TODO: task to add scripts to existing mods
-gulp.task('add', (cb) => {
-	return cb();
+	getPaths().then(paths => {
+		modNames.forEach((modName) => {
+			console.log('Watching ', modName, '...');
+			gulp.watch([modName, '!' + modName + '/*.tmp'], buildMod.bind(null, paths, modName, !leaveTemp, verbose));
+		})
+		return callback();
+	});
 });
 
 
 //////////////
+
+// Returns a promise with specified registry entry value
+function getRegistryValue(key, value) {
+
+	return new Promise((resolve, reject) => {
+
+		let spawn = child_process.spawn(
+			'REG',
+			['QUERY', key, '/v', value],
+			{windowsVerbatimArguments: true}
+		);
+
+		let result = "";
+
+		spawn.stdout.on('data', (data) => {
+			result += String(data);
+		});
+
+		spawn.on('error', (err) => {
+			reject(err);
+		});
+
+		spawn.on('close', (code) => {
+			if(code || !result){
+				reject(code);
+				return;
+			}
+			try{
+				result = result.split('\r\n')[2].split('    ')[3];
+			}
+			catch(e){
+				reject();
+			}
+			resolve(result)
+		});
+	});
+}
+
+// Returns a promise with paths to mods dir and stingray exe
+function getPaths(){
+	return new Promise((resolve, reject) => {
+		let appKey = '"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Steam App 235540"';
+		let sdkKey = '"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Steam App 718610"';
+		let value = '"InstallLocation"';
+
+		let modsDir = fallbackModsDir;
+		let stingrayExe = fallbackStingrayExe;
+		getRegistryValue(appKey, value)
+			.catch(err => {
+				console.log('Vermintide directory not found, using fallback.');
+			})
+			.then(appPath => {
+				if(appPath) {
+					modsDir = path.join(appPath, 'bundle/mods');
+				}
+				return getRegistryValue(sdkKey, value);
+			})
+			.catch(err => {
+				console.log('Vermintide mod SDK directory not found, using fallback.');
+			})
+			.then(appPath => {
+				if(appPath) {
+					stingrayExe = path.join(appPath, 'bin/stingray_win64_dev_x64.exe');
+				}
+				console.log('Mods directory:', modsDir);
+				console.log('Stingray executable:', stingrayExe)
+				resolve({modsDir, stingrayExe});
+			})
+	});
+}
 
 // Returns [-m "mod1; mod2;mod3"] [--verbose] [-t] params
 function getBuildParams(pargv) {
@@ -141,7 +212,7 @@ function getFolders(dir, except) {
 };
 
 // Builds modName, optionally deleting its .temp folder, and copies it to the modsDir
-function buildMod(modName, removeTemp = true, verbose = false) {
+function buildMod(paths, modName, removeTemp = true, verbose = false) {
 	return new Promise((resolve) => {
 		console.log('Building ', modName);
 		let tempPath = path.join('.temp', modName);
@@ -154,20 +225,20 @@ function buildMod(modName, removeTemp = true, verbose = false) {
 					return resolve(err);
 				}
 				console.log('Removed ', tempPath);
-				_buildMod(modName, resolve, verbose);
+				_buildMod(paths, modName, resolve, verbose);
 			});
 		}
 		else {
 			if(tempExists) {
 				console.log('.temp folder found and will be overwritten');
 			}
-			_buildMod(modName, resolve, verbose);
+			_buildMod(paths, modName, resolve, verbose);
 		}
 	});
 }
 
 // Actually builds the mod, copies it to the modsDir
-function _buildMod(modName, resolve, verbose = false) {
+function _buildMod(paths, modName, resolve, verbose = false) {
 	let tempDir = path.join('.temp', modName);
 	let dataDir = path.join(tempDir, 'compile');
 	let buildDir = path.join(tempDir, 'bundle');
@@ -181,7 +252,7 @@ function _buildMod(modName, resolve, verbose = false) {
 
 	let log = '';
 	let stingray = child_process.spawn(
-		stingrayExe, 
+		paths.stingrayExe, 
 		stingrayParams, 
 		{windowsVerbatimArguments: true} // fucking WHY???
 	);
@@ -193,6 +264,12 @@ function _buildMod(modName, resolve, verbose = false) {
 		else{
 			log += data;
 		}
+	});
+
+	stingray.on('error', (err) => {
+		console.log(rmn(err));
+		console.log("Building failed.\n");
+		resolve();
 	});
 
 	let exitCode = 0;
@@ -217,7 +294,7 @@ function _buildMod(modName, resolve, verbose = false) {
 					console.error('Building failed with code: ' + code + '. Please check your scripts for syntax errors.\n');
 					return resolve()
 		    	}
-			    moveMod(modName, buildDir, modsDir, resolve);
+			    moveMod(modName, buildDir, paths.modsDir, resolve);
 	    	}
 	    );
 	});

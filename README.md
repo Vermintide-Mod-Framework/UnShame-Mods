@@ -2,10 +2,10 @@
 
 I made a few gulp tasks to ease the pain of creating and rebuilding mods.  
 
-For now, paths must be specified by hand in gulpfile.js: 
+Required paths are acquired from the registry, but fallback values can be specified by hand in gulpfile.js: 
 	
-	const stingrayExe = // <Vermintide mod tools folder>/bin/stingray_win64_dev_x64.exe
-	const modsDir = // <Vermintide folder>/bundle/mods
+	const fallbackStingrayExe = // <Vermintide mod tools folder>/bin/stingray_win64_dev_x64.exe
+	const fallbackModsDir = // <Vermintide folder>/bundle/mods
 
 Node.js must be installed.  
 Run npm (included in node.js) to install dependencies:
