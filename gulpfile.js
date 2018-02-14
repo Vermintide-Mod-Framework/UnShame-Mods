@@ -110,7 +110,7 @@ gulp.task('watch', (callback) => {
 		modNames.forEach((modName) => {
 			console.log('Watching ', modName, '...');
 			gulp.watch([modName, '!' + modName + '/*.tmp'], buildMod.bind(null, paths, modName, !leaveTemp, verbose));
-		})
+		});
 		return callback();
 	});
 });
@@ -150,7 +150,7 @@ function getRegistryValue(key, value) {
 			catch(e){
 				reject();
 			}
-			resolve(result)
+			resolve(result);
 		});
 	});
 }
@@ -182,9 +182,9 @@ function getPaths(){
 					stingrayExe = path.join(appPath, 'bin/stingray_win64_dev_x64.exe');
 				}
 				console.log('Mods directory:', modsDir);
-				console.log('Stingray executable:', stingrayExe)
+				console.log('Stingray executable:', stingrayExe);
 				resolve({modsDir, stingrayExe});
-			})
+			});
 	});
 }
 
@@ -209,7 +209,7 @@ function getFolders(dir, except) {
 		.filter(function(fileName) {
 			return fs.statSync(path.join(dir, fileName)).isDirectory() && (!except || !except.includes(fileName));
 		});
-};
+}
 
 // Builds modName, optionally deleting its .temp folder, and copies it to the modsDir
 function buildMod(paths, modName, removeTemp = true, verbose = false) {
@@ -292,7 +292,7 @@ function _buildMod(paths, modName, resolve, verbose = false) {
 		    	outputFailedBundles(data, modName);
 		    	if(exitCode){
 					console.error('Building failed with code: ' + code + '. Please check your scripts for syntax errors.\n');
-					return resolve()
+					return resolve();
 		    	}
 			    moveMod(modName, buildDir, paths.modsDir, resolve);
 	    	}
@@ -309,7 +309,7 @@ function outputFailedBundles(data, modName) {
 		if(bundle[3] == 0) {
 			console.log('Failed to build %s/%s.%s', modName, bundle[1].replace(/"/g, ''), bundle[2].replace(/"/g, ''));
 		}
-	})
+	});
 }
 
 // Actually copies the mod to the modsDir
