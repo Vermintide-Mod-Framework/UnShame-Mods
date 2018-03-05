@@ -205,16 +205,16 @@ end
 	Callback 
 --]]
 
-mod.setting_changed = function(setting_name)
+mod.on_setting_changed = function(setting_name)
 	mod.apply_settings()
 	return
 end
 
-mod.suspended = function()
+mod.on_disabled = function()
 	mod.should_suspend = true
 end
 
-mod.unsuspended = function()
+mod.on_enabled = function()
 	mod:enable_all_hooks()
 	mod.apply_settings()
 end
@@ -483,7 +483,4 @@ end)
 -- Add option to mod settings menu (args: 1 = widget table, 2 = presence of checkbox in mod settings, 3 = descriptive name, 4 = description)
 mod:create_options(options_widgets, true, "HUD Toggle", "Toggle elements of the HUD")
 
--- Check for suspend setting
-if mod:is_suspended() then
-	mod.suspended()
-end
+mod:init_state()

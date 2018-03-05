@@ -33,9 +33,8 @@ function mod.get_item_id_from_key(key)
 	local item = ItemMasterList[key]
 	local item_id_list = ScriptBackendItem.get_items(item.can_wield[1], item.slot_type)
 
-	for i, backend_id in ipairs(item_id_list) do
+	for _, backend_id in ipairs(item_id_list) do
 		local other_key = ScriptBackendItem.get_key(backend_id)
-		local item_data = ItemMasterList[other_key]
 
 		if other_key == key and backend_id ~= 0 then
 			return backend_id
@@ -59,7 +58,7 @@ function mod.get_missing_item_key(slot, rarity, key)
 	local item_id_list = {}
 	for _, profile in ipairs(profiles) do
 		local item_id_list_profile = ScriptBackendItem.get_items(profile, slot)
-		for __, backend_id in ipairs(item_id_list_profile) do
+		for _, backend_id in ipairs(item_id_list_profile) do
 			item_id_list[#item_id_list + 1] = backend_id
 		end
 	end
@@ -67,7 +66,7 @@ function mod.get_missing_item_key(slot, rarity, key)
 
 	-- Get item data for all relevant items
 	local items = {}
-	for i, backend_id in ipairs(item_id_list) do
+	for _, backend_id in ipairs(item_id_list) do
 		local other_key = ScriptBackendItem.get_key(backend_id)
 		local item_data = ItemMasterList[other_key]
 		if item_data.rarity == rarity and (not item_data.dlc or Managers.unlock:is_dlc_unlocked(item_data.dlc)) then
@@ -149,11 +148,11 @@ end)
 	Callback
 --]] 
 
-mod.suspended = function()
+mod.on_disabled = function()
 	mod:disable_all_hooks()
 end
 
-mod.unsuspended = function()
+mod.on_enabled = function()
 	mod:enable_all_hooks()
 end
 
@@ -164,7 +163,4 @@ end
 -- Add option to mod settings menu (args: 1 = widget table, 2 = presence of checkbox in mod settings, 3 = descriptive name, 4 = description)
 mod:create_options({}, true, "Loot Table: Unique Trinkets", "You may no longer get copies of trinkets (and hats!) you already own from the loot table at the end of a level, unless you've got them all.")
 
--- Check for suspend setting
-if mod:is_suspended() then
-	mod.suspended()
-end
+mod:init_state()
