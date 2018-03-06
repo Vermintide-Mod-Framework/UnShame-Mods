@@ -7,5 +7,6 @@ package = [
 ]
 
 lua = [
-	"scripts/mods/lock_traits/lock_traits"
+	"scripts/mods/lock_traits/*",
+	"localization/*"
 ]

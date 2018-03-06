@@ -292,7 +292,7 @@ basic_gui.text_height = function(text, font, font_size)
 	return text_height
 end
 
-basic_gui.game_state_changed = function(status, state)
+basic_gui.on_game_state_changed = function(status, state)
 	if status == "enter" and state == "StateIngame" then
 		basic_gui.init()
 	end
