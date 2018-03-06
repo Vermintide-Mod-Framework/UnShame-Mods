@@ -200,12 +200,12 @@ function mod.update_widgets()
 			mod.visible_widgets.lock_button = mod.widgets.lock_button
 			mod.widgets.lock_button.content.button_hotspot.disabled = true
 			local rarity = mod.reroll_page.active_item_data.rarity
-			mod.widgets.lock_button.content.tooltip_text = mod:localize(rarity == "unique" and "button_lock_veteran_tooltip" or "button_lock_all_tooltip") or "NONE"
+			mod.widgets.lock_button.content.tooltip_text = mod:localize(rarity == "unique" and "button_lock_veteran_tooltip" or "button_lock_all_tooltip")
 			return
 		end
 		
-		mod.widgets.lock_button.content.text_field = mod:localize(trait_is_locked and "button_unlock_text" or "button_lock_text") or "NONE"
-		mod.widgets.lock_button.content.tooltip_text = mod:localize(trait_is_locked and "button_unlock_tooltip" or "button_lock_tooltip") or "NONE"
+		mod.widgets.lock_button.content.text_field = mod:localize(trait_is_locked and "button_unlock_text" or "button_lock_text")
+		mod.widgets.lock_button.content.tooltip_text = mod:localize(trait_is_locked and "button_unlock_tooltip" or "button_lock_tooltip")
 
 		mod.lock_button_callback = trait_is_locked and mod.unlock_trait or mod.lock_trait
 
@@ -222,7 +222,7 @@ end
 -- Destroys the window
 function mod.reset_widgets()
 	mod.visible_widgets.lock_button = nil
-	mod.widgets.lock_button.content.text_field = mod:localize("button_lock_text") or "NONE"
+	mod.widgets.lock_button.content.text_field = mod:localize("button_lock_text")
 	mod.visible_widgets.reroll_stats = nil
 end
 
@@ -321,9 +321,9 @@ mod:hook("ForgeLogic.reroll_traits", function (func, self, backend_id, item_is_e
 	local old_item_key = item_data.key
 	local new_item_key = nil
 
-	mod.reroll_info = tostring(#all_of_item_type) .. " " .. (mod:localize("info_combinations_found") or "NONE")
+	mod.reroll_info = tostring(#all_of_item_type) .. " " .. (mod:localize("info_combinations_found"))
 	if re_rerolled then 
-		mod.reroll_info = (mod:localize("info_no_combinations_found") or "NONE") .. " " .. mod.reroll_info .. "."	
+		mod.reroll_info = (mod:localize("info_no_combinations_found")) .. " " .. mod.reroll_info .. "."	
 		mod.reset(false, true)
 	end
 
