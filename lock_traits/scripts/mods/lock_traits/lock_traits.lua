@@ -475,10 +475,9 @@ end)
 
 mod.setup_reroll_page()
 
---[[mod:create_options(
-	mod.options_widgets,
-	true,
-	"Shrine: Lock Traits",
-	"Adds a button to the Shrine of Solace's Offer page to lock selected traits before rerolling.\n"..
-	"This way you are guaranteed to get an item with desired traits."
-)--]]
+mod:initialize_data({
+	name = "Shrine: Lock Traits",
+	description = "Adds a button to the Shrine of Solace's Offer page to lock selected traits before rerolling.\n" ..
+	"This way you are guaranteed to get an item with desired traits.",
+	is_togglable = false
+})

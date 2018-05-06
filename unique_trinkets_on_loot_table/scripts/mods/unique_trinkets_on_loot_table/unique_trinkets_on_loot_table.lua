@@ -160,7 +160,8 @@ end
 	Execution
 --]] 
 
--- Add option to mod settings menu (args: 1 = widget table, 2 = presence of checkbox in mod settings, 3 = descriptive name, 4 = description)
-mod:create_options({}, true, "Loot Table: Unique Trinkets", "You may no longer get copies of trinkets (and hats!) you already own from the loot table at the end of a level, unless you've got them all.")
-
-mod:init_state()
+mod:initialize_data({
+	name = "Loot Table: Unique Trinkets",
+	description = "You may no longer get copies of trinkets (and hats!) you already own from the loot table at the end of a level, unless you've got them all.",
+	is_togglable = true
+})

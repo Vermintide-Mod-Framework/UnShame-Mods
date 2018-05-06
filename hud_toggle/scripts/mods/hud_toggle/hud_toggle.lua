@@ -129,7 +129,7 @@ end
 
 function mod.set_all_settings(value)
 	mod.visible = value
-	for i,v in ipairs(setting_strings) do
+	for i, _ in ipairs(setting_strings) do
 		mod:set(setting_strings[i], not not value, false)
 	end
 	mod.apply_settings()
@@ -155,7 +155,7 @@ end
 
 function mod.check_visibility()
 	local visible = true
-	for i,v in ipairs(setting_strings) do
+	for _, v in ipairs(setting_strings) do
 		local value = mod:get(v)
 		if not value then
 			visible = false
@@ -202,7 +202,7 @@ end
 
 
 --[[
-	Callback 
+	Callback
 --]]
 
 mod.on_setting_changed = function(setting_name)
@@ -407,7 +407,7 @@ mod:hook("OutlineSystem.update", function(func, self, ...)
 	local current_index = self.current_index
 	local units = self.units
 
-	for i = 1, checks_per_frame, 1 do
+	for _ = 1, checks_per_frame, 1 do
 		current_index = current_index + 1
 
 		if not units[current_index] then
@@ -480,7 +480,9 @@ end)
 	Startup
 --]]
 
--- Add option to mod settings menu (args: 1 = widget table, 2 = presence of checkbox in mod settings, 3 = descriptive name, 4 = description)
-mod:create_options(options_widgets, true, "HUD Toggle", "Toggle elements of the HUD")
-
-mod:init_state()
+mod:initialize_data({
+	name = "HUD Toggle",
+	description = "Toggle elements of the HUD",
+	is_togglable = true,
+	options_widgets = options_widgets
+})
