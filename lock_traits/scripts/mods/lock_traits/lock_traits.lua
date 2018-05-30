@@ -11,7 +11,7 @@ local definitions = mod:dofile("scripts/mods/lock_traits/lock_traits_definitions
 local widget_definitions = definitions.new_widget_definitions
 
 -- Reroll page object - most likely will be found when an item is added to the wheel
-mod.reroll_page = nil 
+mod.reroll_page = nil
 
 -- Currently locked traits by key
 mod.locked_traits = {}
@@ -51,12 +51,12 @@ end
 
 -- Copies and modifies reroll page animations to prevent locked traits from being un-highlighted
 function mod.setup_animations()
-	
+
 	local animation_definitions = mod.reroll_page.ui_animator.animation_definitions
 
 	animation_definitions[mod.animation_name_fade_in] = table.create_copy(animation_definitions[mod.animation_name_fade_in], animation_definitions.fade_in_window_1_corner_glow)
 	animation_definitions[mod.animation_name_fade_out] = table.create_copy(animation_definitions[mod.animation_name_fade_out], animation_definitions.fade_out_window_1_corner_glow)
-	
+
 	animation_definitions[mod.animation_name_fade_in][3].update = function (ui_scenegraph, scenegraph_definition, widgets, local_progress, params)
 		local alpha = local_progress*255
 		for i = 1, 4, 1 do
@@ -118,11 +118,11 @@ end
 
 -- Returns true if the item is exotic or rare and there's at least two unlocked traits
 function mod.can_lock_traits()
-	return 
-		mod.reroll_page.active_item_data and 
+	return
+		mod.reroll_page.active_item_data and
 		mod.reroll_page.active_item_data.rarity and
 		(mod.reroll_page.active_item_data.rarity == "exotic" or mod.reroll_page.active_item_data.rarity == "rare") and
-		mod.reroll_page.active_item_data.traits and 
+		mod.reroll_page.active_item_data.traits and
 		#mod.reroll_page.active_item_data.traits - 1 > #mod.locked_traits
 end
 
@@ -189,8 +189,8 @@ function mod.update_widgets()
 	local selected_trait = mod.reroll_page.selected_trait_name
 	--mod:echo(selected_trait)
 
-	if not selected_trait and not mod.reroll_info then 
-		return 
+	if not selected_trait and not mod.reroll_info then
+		return
 	end
 
 	if not mod.reroll_info then
@@ -203,7 +203,7 @@ function mod.update_widgets()
 			mod.widgets.lock_button.content.tooltip_text = mod:localize(rarity == "unique" and "button_lock_veteran_tooltip" or "button_lock_all_tooltip")
 			return
 		end
-		
+
 		mod.widgets.lock_button.content.text_field = mod:localize(trait_is_locked and "button_unlock_text" or "button_lock_text")
 		mod.widgets.lock_button.content.tooltip_text = mod:localize(trait_is_locked and "button_unlock_tooltip" or "button_lock_tooltip")
 
@@ -238,7 +238,7 @@ function mod.reset(should_reset_widgets, leave_info)
 	if not leave_info then
 		mod.reroll_info = nil
 	end
-	if should_reset_widgets then 
+	if should_reset_widgets then
 		mod.reset_widgets()
 	end
 end
@@ -258,8 +258,8 @@ end
 mod:hook("AltarTraitRollUI.update", function (func, ...)
 	func(...)
 	if (
-		mod.reroll_page and mod.reroll_page.active and 
-		mod.widgets.lock_button.content.button_hotspot.on_release and 
+		mod.reroll_page and mod.reroll_page.active and
+		mod.widgets.lock_button.content.button_hotspot.on_release and
 		not	mod.widgets.lock_button.content.button_hotspot.disabled
 	) then
 		mod.lock_button_callback()
@@ -322,8 +322,8 @@ mod:hook("ForgeLogic.reroll_traits", function (func, self, backend_id, item_is_e
 	local new_item_key = nil
 
 	mod.reroll_info = tostring(#all_of_item_type) .. " " .. (mod:localize("info_combinations_found"))
-	if re_rerolled then 
-		mod.reroll_info = (mod:localize("info_no_combinations_found")) .. " " .. mod.reroll_info .. "."	
+	if re_rerolled then
+		mod.reroll_info = (mod:localize("info_no_combinations_found")) .. " " .. mod.reroll_info .. "."
 		mod.reset(false, true)
 	end
 
@@ -350,7 +350,7 @@ mod:hook("ForgeLogic.reroll_traits", function (func, self, backend_id, item_is_e
 
 	Managers.backend:commit()
 
-	return 
+	return
 end)
 
 -- Recreate window when selecting a trait
@@ -436,7 +436,7 @@ mod:hook("AltarTraitRollUI._on_preview_window_1_button_hovered", function (func,
 	local preview_window_1_button = self.widgets_by_name.preview_window_1_button
 	preview_window_1_button.content.disable_input_icon = false
 
-	return 
+	return
 end)
 mod:hook("AltarTraitRollUI._on_preview_window_2_button_hovered", function (func, self)
 	local params = {
@@ -452,7 +452,7 @@ mod:hook("AltarTraitRollUI._on_preview_window_2_button_hovered", function (func,
 	local preview_window_2_button = self.widgets_by_name.preview_window_2_button
 	preview_window_2_button.content.disable_input_icon = false
 
-	return 
+	return
 end)
 mod:hook("AltarTraitRollUI._on_preview_window_1_button_hover_exit", function (func, self)
 	local params = {
@@ -470,14 +470,7 @@ mod:hook("AltarTraitRollUI._on_preview_window_1_button_hover_exit", function (fu
 	local preview_window_1_button = self.widgets_by_name.preview_window_1_button
 	preview_window_1_button.content.disable_input_icon = true
 
-	return 
+	return
 end)
 
 mod.setup_reroll_page()
-
-mod:initialize_data({
-	name = "Shrine: Lock Traits",
-	description = "Adds a button to the Shrine of Solace's Offer page to lock selected traits before rerolling.\n" ..
-	"This way you are guaranteed to get an item with desired traits.",
-	is_togglable = false
-})

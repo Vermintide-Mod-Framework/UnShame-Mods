@@ -1,14 +1,13 @@
-local directory_name = "hud_toggle"
-local file_name = "hud_toggle"
-
-local main_script_path = "scripts/mods/"..directory_name.."/"..file_name
-
 return {
 	run = function()
-		local mod = new_mod(file_name)
-		mod:initialize(main_script_path)
+		local mod_resources = {
+			mod_script       = "scripts/mods/hud_toggle/hud_toggle",
+			mod_data         = "scripts/mods/hud_toggle/hud_toggle_data",
+			mod_localization = "scripts/mods/hud_toggle/hud_toggle_localization"
+		}
+		new_mod("hud_toggle", mod_resources)
 	end,
 	packages = {
-		"resource_packages/"..directory_name.."/"..file_name
-	},
+		"resource_packages/hud_toggle/hud_toggle"
+	}
 }

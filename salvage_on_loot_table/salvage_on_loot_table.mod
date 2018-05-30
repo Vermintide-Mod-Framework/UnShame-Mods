@@ -1,17 +1,13 @@
-local directory_name = "salvage_on_loot_table"
-local file_name = "salvage_on_loot_table"
-
-local main_script_path = "scripts/mods/"..directory_name.."/"..file_name
-
-print("'"..file_name.."' Mod loading...")
-
-local ret = {
+return {
 	run = function()
-		local mod = new_mod(file_name)
-		mod:dofile(main_script_path)
+		local mod_resources = {
+			mod_script       = "scripts/mods/salvage_on_loot_table/salvage_on_loot_table",
+			mod_data         = "scripts/mods/salvage_on_loot_table/salvage_on_loot_table_data",
+			mod_localization = "scripts/mods/salvage_on_loot_table/salvage_on_loot_table_localization"
+		}
+		new_mod("salvage_on_loot_table", mod_resources)
 	end,
 	packages = {
-		"resource_packages/"..directory_name.."/"..file_name
-	},
+		"resource_packages/salvage_on_loot_table/salvage_on_loot_table"
+	}
 }
-return ret

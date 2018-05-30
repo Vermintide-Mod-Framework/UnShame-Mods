@@ -1,4 +1,8 @@
 return {
+	mod_description = {
+		en = "Adds a button to the Shrine of Solace's Offer page to lock selected traits before rerolling.\n" ..
+		"This way you are guaranteed to get an item with desired traits."
+	},
 	button_unlock_text = {
 		en = "Unlock"
 	},

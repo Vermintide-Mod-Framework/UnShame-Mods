@@ -12,7 +12,7 @@ function mod.get_missing_item(key, id)
 	local slot_type = item.slot_type
 	local rarity = item.rarity
 
-	if slot_type == "trinket" or slot_type == "hat" and rarity == "exotic" then 
+	if slot_type == "trinket" or slot_type == "hat" and rarity == "exotic" then
 		local new_key = mod.get_missing_item_key(slot_type, rarity, key)
 		if new_key and new_key ~= key then
 			--EchoConsole(new_key)
@@ -111,7 +111,7 @@ end
 
 --[[
 	Hooks
---]] 
+--]]
 
 -- Replace reward trinkets and exotic hats that the player already owns with ones he doesn't have yet
 mod:hook("EndOfLevelUI.update_dice_rolling_results", function(func, self, dt)
@@ -146,7 +146,7 @@ end)
 
 --[[
 	Callback
---]] 
+--]]
 
 mod.on_disabled = function()
 	mod:disable_all_hooks()
@@ -155,13 +155,3 @@ end
 mod.on_enabled = function()
 	mod:enable_all_hooks()
 end
-
---[[
-	Execution
---]] 
-
-mod:initialize_data({
-	name = "Loot Table: Unique Trinkets",
-	description = "You may no longer get copies of trinkets (and hats!) you already own from the loot table at the end of a level, unless you've got them all.",
-	is_togglable = true
-})

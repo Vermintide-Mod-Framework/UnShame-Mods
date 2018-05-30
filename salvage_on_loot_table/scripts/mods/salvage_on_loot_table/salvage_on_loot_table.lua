@@ -1,31 +1,8 @@
 --[[
-	Author: IAmLupo	
+	Author: IAmLupo
 --]]
 
 local mod = get_mod("salvage_on_loot_table")
-
-local localization = {
-	["active_text"] = "Salvage on Loottable",
-	["active_tooltip"] = "Enables you to salvage on loottable on end of a roll dices event.",
-	["roll_button_text"] = "Keep",
-	["salvage_button_text"] = "Salvage",
-	["popup_text"] = "Popup",
-	["popup_tooltip"] = "Show popup message to accept or decline to salvage.",
-	["popup_title"] = "Salvage",
-	["popup_text2"] = "Do you really want to salvage this item?",
-}
-
-local options_widgets = {
-	{
-		["setting_name"] = "popup",
-		["widget_type"] = "checkbox",
-		["text"] = localization["popup_text"],
-		["tooltip"] = localization["popup_text"] .. "\n" ..
-			localization["popup_tooltip"],
-		["value_type"] = "boolean",
-		["default_value"] = false,
-	}
-}
 
 mod.ui_scenegraph = {
 	root = {
@@ -76,7 +53,7 @@ mod.popup = {
 }
 
 mod.permanent = {
-	
+
 }
 
 -- ####################################################################################################################
@@ -92,10 +69,10 @@ mod.create_renderer = function()
 			"material", "materials/ui/ui_1080p_level_images",
 			"material", "materials/fonts/gw_fonts"
 		),
-		
+
 		ui_scenegraph = mod.permanent.ui_scenegraph or UISceneGraph.init_scenegraph(mod.ui_scenegraph),
-	
-	
+
+
 		widgets =  mod.permanent.salvage_button or {
 			salvage_button = UIWidget.init(UIWidgets.create_dice_game_button("salvage_button"))
 		}
@@ -107,21 +84,21 @@ mod.draw_widgets = function(reward_ui, dt)
 		local ui_renderer = mod.permanent.ui_renderer
 		local ui_scenegraph = mod.permanent.ui_scenegraph
 		local input_service = Managers.input:get_service("reward_ui")
-		
+
 		UIRenderer.begin_pass(ui_renderer, ui_scenegraph, input_service, dt, "root")
-		
+
 		-- Roll button
 		reward_ui.ui_scenegraph.roll_button.position[1] = -200
-		reward_ui.roll_button_widget.content.text_field = localization["roll_button_text"]
-		
+		reward_ui.roll_button_widget.content.text_field = mod:localize("roll_button_text")
+
 		-- Salvage button
 		local salvage_button = mod.permanent.widgets.salvage_button
-		salvage_button.content.text_field = localization["salvage_button_text"]
+		salvage_button.content.text_field = mod:localize("salvage_button_text")
 		if salvage_button.content.button_hotspot.on_release then
 			if mod:get("popup") then
 				mod.popup.popup_id = Managers.popup:queue_popup(
-					localization["popup_text2"],
-					localization["popup_title"],
+					mod:localize("popup_text2"),
+					mod:localize("popup_title"),
 					"accept", "Yes",
 					"decline", "No"
 				)
@@ -130,9 +107,9 @@ mod.draw_widgets = function(reward_ui, dt)
 				mod.salvage_accept(reward_ui)
 			end
 		end
-		
+
 		UIRenderer.draw_widget(ui_renderer, salvage_button)
-		
+
 		UIRenderer.end_pass(ui_renderer)
 	end)
 end
@@ -145,7 +122,7 @@ mod.salvage_accept = function(reward_ui)
 		local item = ItemMasterList[item_key]
 		local item_type = Localize(item.item_type)
 		local message = "Melted " .. item_type .. " and gained " .. number_of_tokens .. " tokens."
-		
+
 		mod:echo(message)
 	end
 
@@ -157,7 +134,7 @@ end
 -- ####################################################################################################################
 mod:hook("RewardUI.update", function (func, self, dt)
 	func(self, dt)
-	
+
 	if self.transition_name == "present_reward" then
 		if not self.is_complete then
 			if not self.ui_dice_animations.animate_reward_info then
@@ -171,16 +148,16 @@ end)
 
 mod:hook("MatchmakingManager.update", function(func, self, dt, t)
 	func(self, dt, t)
-	
+
 	mod:pcall(function()
 		if mod.popup.popup_id then
 			local result = Managers.popup:query_result(mod.popup.popup_id)
-			
+
 			if result then
 				Managers.popup:cancel_popup(mod.popup.popup_id)
 
 				mod.popup.popup_id = nil
-				
+
 				if result == "accept" then
 					mod.salvage_accept(mod.popup.reward_ui)
 				end
@@ -213,32 +190,20 @@ end)
 
 --[[
 	Callback
---]] 
+--]]
 
 -- Call when governing settings checkbox is unchecked
-mod.suspended = function()
+mod.on_disabled = function()
 	mod:disable_all_hooks()
 end
 
 -- Call when governing settings checkbox is checked
-mod.unsuspended = function()
+mod.on_enabled = function()
 	mod:enable_all_hooks()
 end
 
-mod.game_state_changed = function(status, state)
+mod.on_game_state_changed = function(status, state)
 	if status == "enter" and state == "StateIngame" then
 		mod.create_renderer()
 	end
-end
-
-
--- ####################################################################################################################
--- ##### Start ########################################################################################################
--- ####################################################################################################################
-
-mod:create_options(options_widgets, true, "Loot Table: Salvage Loot", "Adds a button to salvage items right on the loot table at the end of a game.")
-
--- Check for suspend setting
-if mod:is_suspended() then
-	mod.suspended()
 end

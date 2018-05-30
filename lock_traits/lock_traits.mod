@@ -1,8 +1,11 @@
 return {
 	run = function()
-		local mod = new_mod("lock_traits")
-		mod:localization("localization/lock_traits")
-		mod:initialize("scripts/mods/lock_traits/lock_traits")
+		local mod_resources = {
+			mod_script       = "scripts/mods/lock_traits/lock_traits",
+			mod_data         = "scripts/mods/lock_traits/lock_traits_data",
+			mod_localization = "scripts/mods/lock_traits/lock_traits_localization"
+		}
+  	new_mod("lock_traits", mod_resources)
 	end,
 	packages = {
 		"resource_packages/lock_traits/lock_traits"

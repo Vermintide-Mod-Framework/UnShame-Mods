@@ -1,14 +1,13 @@
-local directory_name = "unique_trinkets_on_loot_table"
-local file_name = "unique_trinkets_on_loot_table"
-
-local main_script_path = "scripts/mods/"..directory_name.."/"..file_name
-
 return {
 	run = function()
-		local mod = new_mod(file_name)
-		mod:initialize(main_script_path)
+		local mod_resources = {
+			mod_script       = "scripts/mods/unique_trinkets_on_loot_table/unique_trinkets_on_loot_table",
+			mod_data         = "scripts/mods/unique_trinkets_on_loot_table/unique_trinkets_on_loot_table_data",
+			mod_localization = "scripts/mods/unique_trinkets_on_loot_table/unique_trinkets_on_loot_table_localization"
+		}
+		new_mod("unique_trinkets_on_loot_table", mod_resources)
 	end,
 	packages = {
-		"resource_packages/"..directory_name.."/"..file_name
-	},
+		"resource_packages/unique_trinkets_on_loot_table/unique_trinkets_on_loot_table"
+	}
 }

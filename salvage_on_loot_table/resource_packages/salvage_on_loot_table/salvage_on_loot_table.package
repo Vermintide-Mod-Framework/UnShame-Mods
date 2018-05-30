@@ -7,5 +7,5 @@ package = [
 ]
 
 lua = [
-	"scripts/mods/salvage_on_loot_table/salvage_on_loot_table"
+	"scripts/mods/salvage_on_loot_table/*"
 ]

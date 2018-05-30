@@ -14,97 +14,6 @@ local setting_strings = {
 	"WEAPON"
 }
 
-local options_widgets = {
-	{
-		["setting_name"] = "toggle_group",
-		["widget_type"] = "group",
-		["text"] = "Toggle Elements",
-		["sub_widgets"] = {
-			--[[ELEMENTS = ]]{
-				["setting_name"] = setting_strings[1],
-				["widget_type"] = "checkbox",
-				["text"] = "HUD Elements",
-				["tooltip"] = "HUD Elements\n" ..
-					"Whether to display HUD elements like equipment, health bars, stamina and overcharge.",
-				["default_value"] = true,
-			},
-			--[[OBJECTIVES = ]]{
-				["setting_name"] = setting_strings[2],
-				["widget_type"] = "checkbox",
-				["text"] = "Objectives",
-				["tooltip"] = "Objectives\n" ..
-					"Whether to display objective banner, markers and button prompts.",
-				["default_value"] = true,
-			},
-			--[[OUTLINES = ]]{
-				["setting_name"] = setting_strings[3],
-				["widget_type"] = "checkbox",
-				["text"] = "Outlines",
-				["tooltip"] = "Outlines\n" ..
-					"Whether to display player, object and item outlines.\n" ..
-					"Overrides Player Outlines Always On setting.",
-				["default_value"] = true,
-			},
-			--[[CROSSHAIR = ]]{
-				["setting_name"] = setting_strings[4],
-				["widget_type"] = "checkbox",
-				["text"] = "Crosshair",
-				["tooltip"] = "Crosshair\n" ..
-					"Whether to display crosshair.",
-				["default_value"] = true,
-			},
-			--[[PING = ]]{
-				["setting_name"] = setting_strings[5],
-				["widget_type"] = "checkbox",
-				["text"] = "Ping",
-				["tooltip"] = "Ping\n" ..
-					"Whether enemies, players and items can be pinged.",
-				["default_value"] = true,
-			},
-			--[[FEEDBACK = ]]{
-				["setting_name"] = setting_strings[6],
-				["widget_type"] = "checkbox",
-				["text"] = "Feedback",
-				["tooltip"] = "Feedback\n" ..
-					"Whether damage indicators, special kills and assists are shown.\n",
-				["default_value"] = true,
-			},
-			--[[WEAPON = ]]{
-				["setting_name"] = setting_strings[7],
-				["widget_type"] = "checkbox",
-				["text"] = "Weapon Model",
-				["tooltip"] = "Weapon Model\n" ..
-					"Whether to display weapon model and hands.",
-				["default_value"] = true,
-			},
-		},
-	},
-
-	{
-		["setting_name"] = "hud_toggle",
-		["widget_type"] = "keybind",
-		["text"] = "Toggle All",
-		["default_value"] = {},
-		["action"] = "toggle"
-	},
-	{
-		["setting_name"] = "hud_more",
-		["widget_type"] = "keybind",
-		["text"] = "Show More",
-		["tooltip"] = "Show more HUD elements",
-		["default_value"] = {},
-		["action"] = "more"
-	},
-	{
-		["setting_name"] = "hud_less",
-		["widget_type"] = "keybind",
-		["text"] = "Show Less",
-		["tooltip"] = "Show fewer HUD elements",
-		["default_value"] = {},
-		["action"] = "less"
-	}
-}
-
 
 --[[
 	Flags
@@ -122,7 +31,7 @@ mod.mode = 0
 ]]--
 
 function mod.set_setting_i(i, value)
-	if setting_strings[i] then 
+	if setting_strings[i] then
 		mod:set(setting_strings[i], value)
 	end
 end
@@ -181,7 +90,7 @@ end
 function mod.more()
 	local mode = mod.mode
 	local decrease = mode == 6 and 2 or 1
-	if mode <= 0 then decrease = 0 end	
+	if mode <= 0 then decrease = 0 end
 	for i = mode - decrease + 1, #setting_strings do
 		mod.set_setting_i(i, true)
 	end
@@ -230,7 +139,7 @@ mod:hook("IngameHud.set_visible", function(func, self, orig_visible)
 	if mod:get("ELEMENTS") then
 		return func(self, orig_visible)
 	end
-	
+
 	local visible = false
 	if self.player_inventory_ui then
 		self.player_inventory_ui:set_visible(visible)
@@ -358,7 +267,7 @@ end)
 --Hiding hands and weapon
 mod:hook("PlayerUnitFirstPerson.update", function (func, self, unit, input, dt, context, t)
 	func(self, unit, input, dt, context, t)
-	
+
 	if not mod:get("WEAPON") and not mod.should_suspend then
 		self.inventory_extension:show_first_person_inventory(false)
 		self.inventory_extension:show_first_person_inventory_lights(false)
@@ -371,7 +280,7 @@ mod:hook("PlayerUnitFirstPerson.update", function (func, self, unit, input, dt, 
 		if not first_person_system or not first_person_system.first_person_mode then return end
 
 		local mod_third_person = get_mod("ThirdPerson")
-		local is_third_person_mod = mod_third_person and not mod_third_person:is_suspended()
+		local is_third_person_mod = mod_third_person and mod_third_person:is_enabled()
 		local is_first_person = first_person_system.first_person_mode and not is_third_person_mod
 
 
@@ -396,11 +305,11 @@ mod:hook("OutlineSystem.update", function(func, self, ...)
 	end
 
 	if #self.units == 0 then
-		return 
+		return
 	end
 
 	if script_data.disable_outlines then
-		return 
+		return
 	end
 
 	local checks_per_frame = 4
@@ -474,15 +383,3 @@ mod:hook("DamageIndicatorGui.update", function(func, self, ...)
 		return func(self, ...)
 	end
 end)
-
-
---[[
-	Startup
---]]
-
-mod:initialize_data({
-	name = "HUD Toggle",
-	description = "Toggle elements of the HUD",
-	is_togglable = true,
-	options_widgets = options_widgets
-})
