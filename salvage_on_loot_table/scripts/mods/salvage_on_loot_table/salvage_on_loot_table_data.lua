@@ -9,8 +9,7 @@ return {
       ["setting_name"] = "popup",
       ["widget_type"] = "checkbox",
       ["text"] = mod:localize("popup_text"),
-      ["tooltip"] = mod:localize("popup_text") .. "\n" ..
-        mod:localize("popup_tooltip"),
+      ["tooltip"] = mod:localize("popup_tooltip"),
       ["value_type"] = "boolean",
       ["default_value"] = false,
     }

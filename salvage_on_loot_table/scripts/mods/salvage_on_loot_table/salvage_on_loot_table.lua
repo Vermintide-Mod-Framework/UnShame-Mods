@@ -132,8 +132,7 @@ end
 -- ####################################################################################################################
 -- ##### Hook #########################################################################################################
 -- ####################################################################################################################
-mod:hook("RewardUI.update", function (func, self, dt)
-	func(self, dt)
+mod:hook_safe(RewardUI, "update", function (self, dt)
 
 	if self.transition_name == "present_reward" then
 		if not self.is_complete then
@@ -146,24 +145,22 @@ mod:hook("RewardUI.update", function (func, self, dt)
 	end
 end)
 
-mod:hook("MatchmakingManager.update", function(func, self, dt, t)
-	func(self, dt, t)
+mod:hook_safe(MatchmakingManager, "update", function(self)
 
-	mod:pcall(function()
-		if mod.popup.popup_id then
-			local result = Managers.popup:query_result(mod.popup.popup_id)
 
-			if result then
-				Managers.popup:cancel_popup(mod.popup.popup_id)
+	if mod.popup.popup_id then
+		local result = Managers.popup:query_result(mod.popup.popup_id)
 
-				mod.popup.popup_id = nil
+		if result then
+			Managers.popup:cancel_popup(mod.popup.popup_id)
 
-				if result == "accept" then
-					mod.salvage_accept(mod.popup.reward_ui)
-				end
+			mod.popup.popup_id = nil
+
+			if result == "accept" then
+				mod.salvage_accept(mod.popup.reward_ui)
 			end
 		end
-	end)
+	end
 end)
 
 -- ####################################################################################################################
@@ -181,7 +178,7 @@ end)
 VoteTemplates.vote_for_level.duration = 3600
 
 -- Force the reward_ui to never continui by itself
-mod:hook("RewardUI.update_continue_timer", function (func, self, dt)
+mod:hook(RewardUI, "update_continue_timer", function (func, self, dt)
 	func(self, dt)
 	self.continue_timer = 1337
 	return false
@@ -191,16 +188,6 @@ end)
 --[[
 	Callback
 --]]
-
--- Call when governing settings checkbox is unchecked
-mod.on_disabled = function()
-	mod:disable_all_hooks()
-end
-
--- Call when governing settings checkbox is checked
-mod.on_enabled = function()
-	mod:enable_all_hooks()
-end
 
 mod.on_game_state_changed = function(status, state)
 	if status == "enter" and state == "StateIngame" then
