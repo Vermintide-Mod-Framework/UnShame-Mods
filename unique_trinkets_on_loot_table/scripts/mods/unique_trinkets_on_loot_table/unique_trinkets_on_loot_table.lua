@@ -114,7 +114,7 @@ end
 --]]
 
 -- Replace reward trinkets and exotic hats that the player already owns with ones he doesn't have yet
-mod:hook("EndOfLevelUI.update_dice_rolling_results", function(func, self, dt)
+mod:hook_origin(EndOfLevelUI, "update_dice_rolling_results", function(self, dt)
 
 	local level_dice_roller = self.level_dice_roller
 
@@ -143,15 +143,3 @@ mod:hook("EndOfLevelUI.update_dice_rolling_results", function(func, self, dt)
 
 	return self.successes and self.dice_simulation_complete
 end)
-
---[[
-	Callback
---]]
-
-mod.on_disabled = function()
-	mod:disable_all_hooks()
-end
-
-mod.on_enabled = function()
-	mod:enable_all_hooks()
-end
