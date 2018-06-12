@@ -24,24 +24,21 @@ return {
           ["setting_name"] = setting_strings[1],
           ["widget_type"] = "checkbox",
           ["text"] = "HUD Elements",
-          ["tooltip"] = "HUD Elements\n" ..
-            "Whether to display HUD elements like equipment, health bars, stamina and overcharge.",
+          ["tooltip"] = "Whether to display HUD elements like equipment, health bars, stamina and overcharge.",
           ["default_value"] = true,
         },
         --[[OBJECTIVES = ]]{
           ["setting_name"] = setting_strings[2],
           ["widget_type"] = "checkbox",
           ["text"] = "Objectives",
-          ["tooltip"] = "Objectives\n" ..
-            "Whether to display objective banner, markers and button prompts.",
+          ["tooltip"] = "Whether to display objective banner, markers and button prompts.",
           ["default_value"] = true,
         },
         --[[OUTLINES = ]]{
           ["setting_name"] = setting_strings[3],
           ["widget_type"] = "checkbox",
           ["text"] = "Outlines",
-          ["tooltip"] = "Outlines\n" ..
-            "Whether to display player, object and item outlines.\n" ..
+          ["tooltip"] = "Whether to display player, object and item outlines.\n" ..
             "Overrides Player Outlines Always On setting.",
           ["default_value"] = true,
         },
@@ -49,32 +46,28 @@ return {
           ["setting_name"] = setting_strings[4],
           ["widget_type"] = "checkbox",
           ["text"] = "Crosshair",
-          ["tooltip"] = "Crosshair\n" ..
-            "Whether to display crosshair.",
+          ["tooltip"] = "Whether to display crosshair.",
           ["default_value"] = true,
         },
         --[[PING = ]]{
           ["setting_name"] = setting_strings[5],
           ["widget_type"] = "checkbox",
           ["text"] = "Ping",
-          ["tooltip"] = "Ping\n" ..
-            "Whether enemies, players and items can be pinged.",
+          ["tooltip"] = "Whether enemies, players and items can be pinged.",
           ["default_value"] = true,
         },
         --[[FEEDBACK = ]]{
           ["setting_name"] = setting_strings[6],
           ["widget_type"] = "checkbox",
           ["text"] = "Feedback",
-          ["tooltip"] = "Feedback\n" ..
-            "Whether damage indicators, special kills and assists are shown.\n",
+          ["tooltip"] = "Whether damage indicators, special kills and assists are shown.\n",
           ["default_value"] = true,
         },
         --[[WEAPON = ]]{
           ["setting_name"] = setting_strings[7],
           ["widget_type"] = "checkbox",
           ["text"] = "Weapon Model",
-          ["tooltip"] = "Weapon Model\n" ..
-            "Whether to display weapon model and hands.",
+          ["tooltip"] = "Whether to display weapon model and hands.",
           ["default_value"] = true,
         },
       },

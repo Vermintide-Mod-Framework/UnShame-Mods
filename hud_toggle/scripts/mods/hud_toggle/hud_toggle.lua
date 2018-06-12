@@ -120,11 +120,11 @@ mod.on_setting_changed = function(setting_name)
 end
 
 mod.on_disabled = function()
+	mod:enable_all_hooks()
 	mod.should_suspend = true
 end
 
 mod.on_enabled = function()
-	mod:enable_all_hooks()
 	mod.apply_settings()
 end
 
@@ -134,7 +134,7 @@ end
 ]]--
 
 --Altering hud toggle function
-mod:hook("IngameHud.set_visible", function(func, self, orig_visible)
+mod:hook(IngameHud, "set_visible", function(func, self, orig_visible)
 
 	if mod:get("ELEMENTS") then
 		return func(self, orig_visible)
@@ -194,8 +194,7 @@ mod:hook("IngameHud.set_visible", function(func, self, orig_visible)
 end)
 
 --Hiding things that might show up later
-mod:hook("IngameUI.update", function(func, self, ...)
-	func(self, ...)
+mod:hook_safe(IngameUI, "update", function(self)
 	if not mod.hud_set then
 		if self.ingame_hud and self.ingame_hud.set_visible then
 			self.ingame_hud:set_visible(self, mod:get("ELEMENTS"))
@@ -208,56 +207,56 @@ mod:hook("IngameUI.update", function(func, self, ...)
 end)
 
 --Hiding contracts log
-mod:hook("ContractLogUI.update", function (func, ...)
+mod:hook(ContractLogUI, "update", function (func, ...)
 	if mod:get("ELEMENTS") then
 		return func(...)
 	end
 end)
 
 --Hiding stamina
-mod:hook("FatigueUI.update", function (func, ...)
+mod:hook(FatigueUI, "update", function (func, ...)
 	if mod:get("ELEMENTS") then
 		return func(...)
 	end
 end)
 
 --Hiding overcharge bar
-mod:hook("OverchargeBarUI.update", function (func, ...)
+mod:hook(OverchargeBarUI, "update", function (func, ...)
 	if mod:get("ELEMENTS") then
 		return func(...)
 	end
 end)
 
 --Area indicators (?)
-mod:hook("AreaIndicatorUI.update", function (func, ...)
+mod:hook(AreaIndicatorUI, "update", function (func, ...)
 	if mod:get("OBJECTIVES") then
 		return func(...)
 	end
 end)
 
 --Hiding interaction prompts
-mod:hook("InteractionUI.update", function (func, ...)
+mod:hook(InteractionUI, "update", function (func, ...)
 	if mod:get("OBJECTIVES") then
 		return func(...)
 	end
 end)
 
 --Mission objectives
-mod:hook("MissionObjectiveUI.update", function (func, ...)
+mod:hook(MissionObjectiveUI, "update", function (func, ...)
 	if mod:get("OBJECTIVES") then
 		return func(...)
 	end
 end)
 
 --Tutorial UI (?)
-mod:hook("TutorialUI.update", function (func, ...)
+mod:hook(TutorialUI, "update", function (func, ...)
 	if mod:get("OBJECTIVES") then
 		return func(...)
 	end
 end)
 
 --Hiding crosshair
-mod:hook("CrosshairUI.update", function(func, self, ...)
+mod:hook(CrosshairUI, "update", function(func, self, ...)
 	if mod:get("CROSSHAIR") then
 		return func(self, ...)
 	end
@@ -265,8 +264,7 @@ end)
 
 
 --Hiding hands and weapon
-mod:hook("PlayerUnitFirstPerson.update", function (func, self, unit, input, dt, context, t)
-	func(self, unit, input, dt, context, t)
+mod:hook_safe(PlayerUnitFirstPerson, "update", function (self)
 
 	if not mod:get("WEAPON") and not mod.should_suspend then
 		self.inventory_extension:show_first_person_inventory(false)
@@ -298,7 +296,7 @@ mod:hook("PlayerUnitFirstPerson.update", function (func, self, unit, input, dt, 
 end)
 
 --Hiding outlines
-mod:hook("OutlineSystem.update", function(func, self, ...)
+mod:hook(OutlineSystem, "update", function(func, self, ...)
 
 	if mod:get("OUTLINES") then
 		return func(self, ...)
@@ -357,28 +355,28 @@ mod:hook("OutlineSystem.update", function(func, self, ...)
 end)
 
 --Disabling ping
-mod:hook("ContextAwarePingExtension.update", function (func, ...)
+mod:hook(ContextAwarePingExtension, "update", function (func, ...)
 	if mod:get("PING") then
 		return func(...)
 	end
 end)
 
 --Disabling positive reinforcement
-mod:hook("PositiveReinforcementUI.update", function (func, ...)
+mod:hook(PositiveReinforcementUI, "update", function (func, ...)
 	if mod:get("FEEDBACK") then
 		return func(...)
 	end
 end)
 
 --Hiding subtitles
-mod:hook("SubtitleGui.update", function(func, self, ...)
+mod:hook(SubtitleGui, "update", function(func, self, ...)
 	if mod:get("FEEDBACK") then
 		return func(self, ...)
 	end
 end)
 
 --Hide damage indicators
-mod:hook("DamageIndicatorGui.update", function(func, self, ...)
+mod:hook(DamageIndicatorGui, "update", function(func, self, ...)
 	if mod:get("FEEDBACK") then
 		return func(self, ...)
 	end
