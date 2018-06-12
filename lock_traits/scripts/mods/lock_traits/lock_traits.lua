@@ -255,8 +255,7 @@ function mod.modify_reroll_cost(cost)
 	end
 end
 
-mod:hook("AltarTraitRollUI.update", function (func, ...)
-	func(...)
+mod:hook_safe(AltarTraitRollUI, "update", function ()
 	if (
 		mod.reroll_page and mod.reroll_page.active and
 		mod.widgets.lock_button.content.button_hotspot.on_release and
@@ -266,8 +265,7 @@ mod:hook("AltarTraitRollUI.update", function (func, ...)
 	end
 end)
 
-mod:hook("AltarTraitRollUI.draw", function (func, self, dt)
-	func(self, dt)
+mod:hook_safe(AltarTraitRollUI, "draw", function (self, dt)
 
 	if mod.ui_scenegraph then
 		local ui_top_renderer = self.ui_top_renderer
@@ -284,7 +282,7 @@ mod:hook("AltarTraitRollUI.draw", function (func, self, dt)
 end)
 
 -- Adding trait filters when rerolling
-mod:hook("ForgeLogic.reroll_traits", function (func, self, backend_id, item_is_equipped)
+mod:hook(ForgeLogic, "reroll_traits", function (func, self, backend_id, item_is_equipped)
 
 	local item_info = ScriptBackendItem.get_item_from_id(backend_id)
 	local item_data = ItemMasterList[item_info.key]
@@ -354,14 +352,13 @@ mod:hook("ForgeLogic.reroll_traits", function (func, self, backend_id, item_is_e
 end)
 
 -- Recreate window when selecting a trait
-mod:hook("AltarTraitRollUI._set_selected_trait", function (func, self, selected_index)
+mod:hook_safe(AltarTraitRollUI, "_set_selected_trait", function ()
 	--mod:echo("_set_selected_trait " .. tostring(selected_index))
-	func(self, selected_index)
 	mod.update_widgets()
 end)
 
 -- Clear locked traits when a new item is selected
-mod:hook("AltarTraitRollUI.add_item", function (func, self, ...)
+mod:hook(AltarTraitRollUI, "add_item", function (func, self, ...)
 	--mod:echo("add_item")
 	if not mod.reroll_page then
 		mod.setup_reroll_page()
@@ -371,7 +368,7 @@ mod:hook("AltarTraitRollUI.add_item", function (func, self, ...)
 end)
 
 -- Clear locked traits and destroy window when the wheel is emptied
-mod:hook("AltarTraitRollUI.remove_item", function (func, self, ...)
+mod:hook(AltarTraitRollUI, "remove_item", function (func, self, ...)
 	--mod:echo("remove_item")
 	if not mod.reroll_page then
 		mod.setup_reroll_page()
@@ -381,32 +378,27 @@ mod:hook("AltarTraitRollUI.remove_item", function (func, self, ...)
 end)
 
 -- Clear locked traits and destroy window on exit
-mod:hook("AltarView.exit", function (func, ...)
-	func(...)
+mod:hook_safe(AltarView, "exit", function ()
 	mod.reset(true)
 end)
 
-mod:hook("AltarView.on_enter", function (func, ...)
-	func(...)
+mod:hook_safe(AltarView, "on_enter", function ()
 	mod.reset(true)
 end)
 
 -- Rehighlighting locked traits
-mod:hook("AltarTraitRollUI._clear_new_trait_slots", function (func, ...)
-	func(...)
+mod:hook_safe(AltarTraitRollUI, "_clear_new_trait_slots", function ()
 	mod.highlight_locked_traits()
 end)
-mod:hook("AltarTraitRollUI._set_glow_enabled_for_traits", function (func, ...)
-	func(...)
+mod:hook_safe(AltarTraitRollUI, "_set_glow_enabled_for_traits", function ()
 	mod.highlight_locked_traits()
 end)
-mod:hook("AltarTraitRollUI._instant_fade_out_traits_options_glow", function (func, ...)
-	func(...)
+mod:hook_safe(AltarTraitRollUI, "_instant_fade_out_traits_options_glow", function ()
 	mod.highlight_locked_traits()
 end)
 
 -- Returns increased reroll cost based on locked traits
-mod:hook("AltarTraitRollUI._get_upgrade_cost", function (func, self)
+mod:hook_origin(AltarTraitRollUI, "_get_upgrade_cost", function (self)
 	local item_data = self.active_item_data
 
 	if item_data then
@@ -422,7 +414,7 @@ mod:hook("AltarTraitRollUI._get_upgrade_cost", function (func, self)
 end)
 
 -- Play modified animations instead of standard ones
-mod:hook("AltarTraitRollUI._on_preview_window_1_button_hovered", function (func, self)
+mod:hook_origin(AltarTraitRollUI, "_on_preview_window_1_button_hovered", function (self)
 	local params = {
 		wwise_world = self.wwise_world
 	}
@@ -435,10 +427,8 @@ mod:hook("AltarTraitRollUI._on_preview_window_1_button_hovered", function (func,
 	self.trait_window_selection_index = 1
 	local preview_window_1_button = self.widgets_by_name.preview_window_1_button
 	preview_window_1_button.content.disable_input_icon = false
-
-	return
 end)
-mod:hook("AltarTraitRollUI._on_preview_window_2_button_hovered", function (func, self)
+mod:hook_origin(AltarTraitRollUI, "_on_preview_window_2_button_hovered", function (self)
 	local params = {
 		wwise_world = self.wwise_world
 	}
@@ -451,10 +441,8 @@ mod:hook("AltarTraitRollUI._on_preview_window_2_button_hovered", function (func,
 	self.trait_window_selection_index = 2
 	local preview_window_2_button = self.widgets_by_name.preview_window_2_button
 	preview_window_2_button.content.disable_input_icon = false
-
-	return
 end)
-mod:hook("AltarTraitRollUI._on_preview_window_1_button_hover_exit", function (func, self)
+mod:hook_origin(AltarTraitRollUI, "_on_preview_window_1_button_hover_exit", function (self)
 	local params = {
 		wwise_world = self.wwise_world
 	}
@@ -469,8 +457,6 @@ mod:hook("AltarTraitRollUI._on_preview_window_1_button_hover_exit", function (fu
 
 	local preview_window_1_button = self.widgets_by_name.preview_window_1_button
 	preview_window_1_button.content.disable_input_icon = true
-
-	return
 end)
 
 mod.setup_reroll_page()
