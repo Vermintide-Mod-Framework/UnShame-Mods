@@ -1,0 +1,26 @@
+{
+	"mods_dir": "mods",
+	"temp_dir": "",
+	"game": 2,
+	"game_id1": "235540",
+	"game_id2": "552500",
+	"tools_id1": "718610",
+	"tools_id2": "866060",
+	"fallback_tools_dir1": "C:/Program Files (x86)/Steam/steamapps/common/Warhammer End Times Vermintide Mod Tools/",
+	"fallback_tools_dir2": "C:/Program Files (x86)/Steam/steamapps/common/Vermintide 2 SDK/",
+	"fallback_steamapps_dir1": "C:/Program Files (x86)/Steam/steamapps/",
+	"fallback_steamapps_dir2": "C:/Program Files (x86)/Steam/steamapps/",
+	"use_fallback": false,
+	"bundle_extension1": "",
+	"bundle_extension2": ".mod_bundle",
+	"template_dir": ".template-vmf",
+	"template_preview_image": "item_preview.jpg",
+	"template_core_files": [
+		"core/**"
+	],
+	"ignored_dirs": [
+		".git",
+		".temp"
+	],
+	"ignore_build_errors": false
+}

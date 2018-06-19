@@ -1,0 +1,11 @@
+mod = [
+	"huntsman_fix"
+]
+
+package = [
+	"resource_packages/huntsman_fix/huntsman_fix"
+]
+
+lua = [
+	"scripts/mods/huntsman_fix/*"
+]
