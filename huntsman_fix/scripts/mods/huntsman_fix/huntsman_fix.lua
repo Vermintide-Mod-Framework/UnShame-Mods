@@ -150,7 +150,11 @@ mod:hook_origin(BuffExtension, "add_buff", function (self, template_name, params
 	local buff_template = BuffTemplates[template_name]
 	local buffs = buff_template.buffs
 	local start_time = Managers.time:time("game")
-	local id = self.id
+    local id = self.id
+    
+    -- We need to know if at least one buff has been added
+    local buff_added = false
+    
 	local world = self.world
 
 	for i, sub_buff_template in ipairs(buffs) do
@@ -328,7 +332,10 @@ mod:hook_origin(BuffExtension, "add_buff", function (self, template_name, params
 				buff.delayed_buff_name = delayed_buff_name
 			end
 
-			self._buffs[#self._buffs + 1] = buff
+            self._buffs[#self._buffs + 1] = buff
+            
+            -- Remember that a buff has been added
+			buff_added = true
 		until true
 	end
 
@@ -346,19 +353,22 @@ mod:hook_origin(BuffExtension, "add_buff", function (self, template_name, params
 
 	local continuous_effect = buff_template.continuous_effect
 
-    if continuous_effect then
+    -- Don't add an effect if no buffs were added - we can't remove it if we do
+	if continuous_effect and buff_added then
 		self._continuous_screen_effects[id] = self:_play_screen_effect(continuous_effect)
 	end
 
 	local deactivation_effect = buff_template.deactivation_effect
 
-	if deactivation_effect then
+    -- Don't add an effect if no buffs were added - we can't play it if we do
+	if deactivation_effect and buff_added then
 		self._deactivation_screen_effects[id] = deactivation_effect
 	end
 
 	local deactivation_sound = buff_template.deactivation_sound
 
-	if deactivation_sound then
+    -- Don't add a sound if no buffs were added - we can't play it if we do
+	if deactivation_sound and buff_added then
 		self._deactivation_sounds[id] = deactivation_sound
 	end
 
