@@ -346,7 +346,10 @@ mod:hook_origin(BuffExtension, "add_buff", function (self, template_name, params
 
 	local continuous_effect = buff_template.continuous_effect
 
-    if continuous_effect then
+    if continuous_effect 
+        -- Check that a continuous effect isn't already playing
+        and not self._continuous_screen_effects[id]
+    then
 		self._continuous_screen_effects[id] = self:_play_screen_effect(continuous_effect)
 	end
 
