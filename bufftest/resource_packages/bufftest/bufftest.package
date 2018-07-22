@@ -1,0 +1,11 @@
+mod = [
+	"bufftest"
+]
+
+package = [
+	"resource_packages/bufftest/bufftest"
+]
+
+lua = [
+	"scripts/mods/bufftest/*"
+]

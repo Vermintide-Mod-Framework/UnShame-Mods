@@ -1,0 +1,11 @@
+mod = [
+	"nethash"
+]
+
+package = [
+	"resource_packages/nethash/nethash"
+]
+
+lua = [
+	"scripts/mods/nethash/*"
+]

@@ -1,0 +1,11 @@
+mod = [
+	"aidings_fix"
+]
+
+package = [
+	"resource_packages/aidings_fix/aidings_fix"
+]
+
+lua = [
+	"scripts/mods/aidings_fix/*"
+]
