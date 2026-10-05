@@ -106,60 +106,9 @@ local BALL_GRAVITY_SETTINGS = "drake_pistols"
 -- Registration of new named data (must exist on every peer in the same order,
 -- everyone in the game needs the mod)
 
-local function register_network_lookup(lookup_name, key)
-	local lookup = NetworkLookup[lookup_name]
-
-	if rawget(lookup, key) then
-		return
-	end
-
-	local index = #lookup + 1
-
-	lookup[index] = key
-	lookup[key] = index
-end
-
-local function register_damage_profile(name, source_name, modify)
-	local profile = table.clone(DamageProfileTemplates[source_name])
-
-	profile.name = name
-
-	if modify then
-		modify(profile)
-	end
-
-	-- Mirrors the _no_damage variants generated in damage_profile_templates.lua,
-	-- explosions fall back to them when the target is immune
-	local no_damage_name = name .. "_no_damage"
-	local no_damage_profile = table.clone(profile)
-
-	no_damage_profile.name = no_damage_name
-
-	if no_damage_profile.targets then
-		for _, target in ipairs(no_damage_profile.targets) do
-			if target.power_distribution then
-				target.power_distribution.attack = 0
-			end
-		end
-	end
-
-	if no_damage_profile.default_target.power_distribution then
-		no_damage_profile.default_target.power_distribution.attack = 0
-	end
-
-	DamageProfileTemplates[name] = profile
-	DamageProfileTemplates[no_damage_name] = no_damage_profile
-
-	register_network_lookup("damage_profiles", name)
-	register_network_lookup("damage_profiles", no_damage_name)
-end
-
-local function register_explosion_template(name, template)
-	template.name = name
-	ExplosionTemplates[name] = template
-
-	register_network_lookup("explosion_templates", name)
-end
+local registration = mod:dofile("scripts/mods/unreal_tournament/registration")
+local register_damage_profile = registration.register_damage_profile
+local register_explosion_template = registration.register_explosion_template
 
 -- Spread: the beam is hitscan and should hit exactly where the crosshair is
 
@@ -178,29 +127,10 @@ SpreadTemplates.ut_shock_beam = table.clone(SpreadTemplates.handgun)
 zero_numbers(SpreadTemplates.ut_shock_beam)
 
 -- Damage profiles
--- Damage scales linearly with the power distribution, armor modifiers and range falloff of the
--- profile, so the beam and the explosions share those and only differ in the power factor.
--- Everything is flat (no range falloff), like in UT, and there is no burning.
+-- The beam and the explosions share the armor modifiers and only differ in the power factor, see
+-- registration.lua.
 
-local BEAM_ARMOR_MODIFIER = table.clone(DamageProfileTemplates.beam_shot.armor_modifier_near)
-
-local function make_flat(profile, attack_power, impact_power)
-	local target = profile.default_target
-
-	target.power_distribution = {
-		attack = attack_power,
-		impact = impact_power,
-	}
-	target.power_distribution_near = nil
-	target.power_distribution_far = nil
-	target.range_modifier_settings = nil
-	target.dot_template_name = nil
-	target.dot_balefire_variant = nil
-
-	profile.armor_modifier = table.clone(BEAM_ARMOR_MODIFIER)
-	profile.armor_modifier_near = nil
-	profile.armor_modifier_far = nil
-end
+local make_flat = registration.make_flat
 
 local function register_explosion_damage_profiles(name, damage_multiplier)
 	local function modify(profile)
@@ -669,21 +599,7 @@ local function find_ball_hit_by_beam(physics_world, owner_unit, origin, directio
 end
 
 local function apply_combo_self_damage(owner_unit, position, item_name)
-	local explosion = ExplosionTemplates.ut_shock_combo_explosion.explosion
-	local body_position = POSITION_LOOKUP[owner_unit] + Vector3.up() * 0.9
-	local offset = body_position - position
-	local distance = Vector3.length(offset)
-	local full_radius = explosion.max_damage_radius
-	local falloff_range = explosion.radius - full_radius
-
-	if distance >= explosion.radius or not HEALTH_ALIVE[owner_unit] then
-		return
-	end
-
-	local factor = distance <= full_radius and 1 or 1 - (distance - full_radius) / falloff_range
-	local direction = distance > 0.01 and offset * (1 / distance) or Vector3.up()
-
-	DamageUtils.add_damage_network(owner_unit, owner_unit, CONFIG.combo_self_damage * factor, "torso", "drakegun", position, direction, item_name, nil, owner_unit, nil, nil, false, nil, nil, nil, nil, nil, 1)
+	registration.apply_explosion_self_damage(owner_unit, position, item_name, ExplosionTemplates.ut_shock_combo_explosion.explosion, CONFIG.combo_self_damage)
 end
 
 local function detonate_ball(projectile_unit, owner_unit)
@@ -967,9 +883,17 @@ local function update_implosions()
 	end
 end
 
+-- Explosions of the weapons are run by their names, on every peer (one hook for all of them)
+mod.explosion_callbacks = mod.explosion_callbacks or {}
+mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_position)
+	start_implosion(world, impact_position)
+end
+
 mod:hook_safe(DamageUtils, "create_explosion", function (world, attacker_unit, impact_position, rotation, explosion_template)
-	if explosion_template.name == "ut_shock_combo_explosion" then
-		start_implosion(world, impact_position)
+	local callback = mod.explosion_callbacks[explosion_template.name]
+
+	if callback then
+		callback(world, impact_position, rotation)
 	end
 end)
 
