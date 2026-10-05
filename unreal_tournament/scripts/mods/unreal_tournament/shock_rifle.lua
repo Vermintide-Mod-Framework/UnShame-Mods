@@ -31,7 +31,7 @@ local CONFIG = {
 	trail_width = 0.3,
 	-- Ball
 	ball_speed = 1400, -- throw_trajectory divides by 100, so this is 14 m/s (walking is ~4-5 m/s)
-	ball_radius = 0.5, -- impact sphere
+	ball_radius = 0.2, -- impact sphere, how easily the ball hits things (unrelated to the beam hitting it)
 	ball_visual_scale = 3, -- size multiplier of the projectile unit
 	ball_charge_level = 0.99, -- drives the projectile scale; kept under 1 to avoid "full charge" procs
 	ball_lifetime = 5,
