@@ -79,8 +79,8 @@ local CONFIG = {
 	-- Lock-on, like UT's: keep the crosshair on an enemy for lock_required_time and the rockets fired after that
 	-- home in on it, using the game's true flight projectiles (the position of those is synced, so everyone sees
 	-- them home in). The lock is lost after unlock_required_time off the enemy, and by firing. (UT: 1.25 s, 0.5 s,
-	-- the target has to be within 0.996 of the aim, which is 5 degrees, and 8000 uu away.) Rockets of a spiral
-	-- salvo don't home in.
+	-- the target has to be within 0.996 of the aim, which is 5 degrees, and 8000 uu away.) The rockets of a spiral
+	-- salvo start in their ring and home in too, which takes them out of the flock.
 	lock_range = 50, -- m
 	lock_aim_dot = 0.995, -- how close to the aim the enemy has to be, 1 is exactly
 	lock_keep_dot = 0.95, -- how far from the aim an enemy that is locked can be without it counting as being off it (18 degrees)
@@ -614,7 +614,8 @@ local function update_flocks(dt)
 		for _, member in ipairs(flock.members) do
 			local locomotion_extension = Unit.alive(member.unit) and ScriptUnit.has_extension(member.unit, "projectile_locomotion_system")
 
-			if locomotion_extension and not locomotion_extension.stopped then
+			-- (a rocket that homes in is steered by that, it leaves the flock)
+			if locomotion_extension and not locomotion_extension.stopped and not locomotion_extension.true_flight_template then
 				if not member.velocity then
 					local direction = Vector3.normalize(Vector3.flat(locomotion_extension.target_vector_boxed:unbox())) * math.cos(locomotion_extension.radians) + Vector3(0, 0, math.sin(locomotion_extension.radians))
 					local speed = locomotion_extension.speed / 100
@@ -757,8 +758,9 @@ local function wielding_rocket_launcher(unit)
 	return is_rocket_launcher_enabled() and wielded and (wielded.template or wielded.data and wielded.data.template) == TEMPLATE_NAME
 end
 
--- The enemy closest to the aim that is in front of it, close enough to it and not behind a wall. The enemy
--- that is the target already (current_target) is kept while it is within the wider lock_keep_dot of the aim.
+-- The enemy closest to the aim that is in front of it, close enough to it and not behind a wall. If there is none
+-- on the aim, the enemy that is the target already (current_target) is kept while it is within the wider
+-- lock_keep_dot of the aim.
 local function pick_lock_candidate(unit, first_person_extension, current_target)
 	local side = Managers.state.side.side_by_unit[unit]
 	local origin = first_person_extension:current_position()
@@ -801,7 +803,9 @@ local function pick_lock_candidate(unit, first_person_extension, current_target)
 		end
 	end
 
-	return kept_unit or best_unit
+	-- An enemy that is on the aim wins, whether it is the target or not: the target is only held on to (kept_unit)
+	-- while there isn't one, so the lock moves to another enemy as soon as the aim is on it.
+	return best_unit or kept_unit
 end
 
 -- The red outline of the game's target marking, what the true flight bow puts on the enemy it is aimed at
@@ -932,7 +936,7 @@ mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, pos
 		local sub_actions = template and template.actions[action_name]
 		local action = sub_actions and sub_actions[sub_action_name]
 
-		if action and action.ut_rocket and not action.ut_rocket_spiral then
+		if action and action.ut_rocket then
 			state.fired = true
 
 			-- a true flight projectile is given the direction it is fired in, not the flat part of it
