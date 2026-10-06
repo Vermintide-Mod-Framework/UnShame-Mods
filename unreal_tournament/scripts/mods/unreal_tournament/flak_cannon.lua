@@ -448,8 +448,20 @@ end)
 
 -- The explosion of the shell: the chunks. This runs where the shell's impact is handled, which is
 -- on the machine of the player who fired it.
+-- (Other weapons with explosions register callbacks by name in mod.aoe_callbacks, the action says
+-- which: a function can be hooked once.)
+mod.aoe_callbacks = mod.aoe_callbacks or {}
+mod.init_callbacks = mod.init_callbacks or {}
+
 mod:hook_safe(PlayerProjectileUnitExtension, "do_aoe", function (self, aoe_data, position)
 	local action = self._current_action
+	local callback = action and action.ut_aoe_callback and mod.aoe_callbacks[action.ut_aoe_callback]
+
+	if callback then
+		callback(self, aoe_data, position)
+
+		return
+	end
 
 	if not action or not action.ut_flak_shell or self._ut_flak_exploded then
 		return
@@ -626,6 +638,14 @@ for _, extension_class in ipairs({
 			self._num_additional_penetrations = action.impact_data.max_bounces
 			self._ut_flak_spawn_t = Managers.time:time("game")
 		end
+
+		-- (hooks of init for other weapons are registered by name in mod.init_callbacks, the action says
+		-- which: a function can be hooked once)
+		local callback = action and action.ut_init_callback and mod.init_callbacks[action.ut_init_callback]
+
+		if callback then
+			callback(self)
+		end
 	end)
 
 	mod:hook(extension_class, "hit_enemy", function (func, self, impact_data, hit_unit, hit_position, hit_direction, ...)
@@ -715,6 +735,11 @@ mod.on_unload = function (...)
 		previous_on_unload(...)
 	end
 
+	table.clear(ragdoll_throws)
+	effects.clear()
+end
+
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(ragdoll_throws)
 	effects.clear()
 end
