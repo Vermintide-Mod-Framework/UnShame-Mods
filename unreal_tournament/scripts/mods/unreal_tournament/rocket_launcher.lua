@@ -20,6 +20,12 @@ local impact_power_for = registration.impact_power_for
 local TEMPLATE_NAME = "repeating_crossbow_template_1"
 local SPIRAL_ACTION = "zoomed_shot_spiral" -- the sub action of the salvo that is a spiral
 
+-- The weapon can be switched off in the settings: the crossbow is then the game's own again (the weapon
+-- the player holds changes when it is wielded again)
+local function is_rocket_launcher_enabled()
+	return mod:get("ut_weapons") ~= false and mod:get("rocket_launcher") ~= false
+end
+
 register_network_lookup("sub_actions", SPIRAL_ACTION)
 
 local CONFIG = {
@@ -675,89 +681,6 @@ local function update_flocks(dt)
 	end
 end
 
--- Chat commands to find the sound of loading
---   /ut_sound <event>     plays one of the game's sound events (without a position, like the HUD's)
---   /ut_flow <event>      triggers a flow event of your first-person unit (the game plays the sounds of
---                         handling a weapon this way)
---   /ut_sound_next        plays the next sound of a list of candidates, tells what it was
---   /ut_sound_use <name>  makes a sound event the sound of loading (/ut_sound_use flow <name> for a flow event)
-local SOUND_CANDIDATES = {
-	"hud_player_buff_shield_activate",
-	"hud_player_buff_shield_deactivate",
-	"hud_player_buff_shield_down",
-	"hud_player_buff_backstab",
-	"hud_player_buff_headshot",
-	"hud_player_buff_regen_stamina",
-	"hud_gameplay_stance_deactivate",
-	"Play_hud_headshot",
-	"Play_hud_ability_ready",
-	"Play_skulls_event_buff_on",
-	"Play_skulls_event_buff_off",
-	"talent_power_swing",
-	"enemy_hit_medium",
-	"enemy_hit_heavy",
-	"career_ability_priest_cast_t1",
-	"play_gui_equipment_button",
-	"play_gui_equipment_inventory_next_click",
-	"play_gui_equipment_selection_click",
-	"play_gui_equipment_equip",
-	"play_gui_equipment_power_level_increase",
-}
-local next_candidate = 1
-
-local function local_first_person()
-	local player = Managers.player:local_player()
-	local unit = player and player.player_unit
-	local extension = unit and ScriptUnit.has_extension(unit, "first_person_system")
-
-	return unit, extension
-end
-
-local function play_sound_event(event_name)
-	local _, first_person_extension = local_first_person()
-
-	if first_person_extension then
-		first_person_extension:play_hud_sound_event(event_name)
-	end
-end
-
-mod:command("ut_sound", "Plays a sound event of the game", function (event_name)
-	if event_name then
-		play_sound_event(event_name)
-	end
-end)
-
-mod:command("ut_flow", "Triggers a flow event of your first-person unit", function (event_name)
-	local _, first_person_extension = local_first_person()
-
-	if event_name and first_person_extension then
-		Unit.flow_event(first_person_extension:get_first_person_unit(), event_name)
-	end
-end)
-
-mod:command("ut_sound_next", "Plays the next sound of a list of candidates for the sound of loading", function ()
-	local event_name = SOUND_CANDIDATES[next_candidate]
-
-	mod:echo("%d/%d: %s", next_candidate, #SOUND_CANDIDATES, event_name)
-	play_sound_event(event_name)
-
-	next_candidate = next_candidate % #SOUND_CANDIDATES + 1
-end)
-
-mod:command("ut_sound_use", "Makes a sound event the sound of loading (ut_sound_use flow <event> for a flow event)", function (first, second)
-	if first == "flow" and second then
-		CONFIG.load_flow_event = second
-		CONFIG.load_sound_event = false
-	elseif first then
-		CONFIG.load_sound_event = first
-		CONFIG.load_flow_event = false
-	else
-		return
-	end
-
-	mod:echo("the sound of loading: %s", tostring(CONFIG.load_sound_event or CONFIG.load_flow_event))
-end)
-
 -- Lock-on. The game's true flight projectiles: a template (the settings, with an id that goes over the
 -- network) and the movement towards the target, a method of the projectile's locomotion extension that is
 -- named by the template.
@@ -831,7 +754,7 @@ local function wielding_rocket_launcher(unit)
 	local wielded = equipment and equipment.wielded
 
 	-- (the item data is the entry of the item master list, or has it as data)
-	return wielded and (wielded.template or wielded.data and wielded.data.template) == TEMPLATE_NAME
+	return is_rocket_launcher_enabled() and wielded and (wielded.template or wielded.data and wielded.data.template) == TEMPLATE_NAME
 end
 
 -- The enemy closest to the aim that is in front of it, close enough to it and not behind a wall. The enemy
@@ -918,7 +841,7 @@ local function reset_lock(state)
 end
 
 local function update_lock_on(t)
-	local player = Managers.player:local_player()
+	local player = Managers.player:local_player_safe()
 	local unit = player and player.player_unit
 
 	-- the lock of a unit that is gone, or of a weapon that isn't wielded
@@ -1082,7 +1005,8 @@ local function create_pips()
 end
 
 mod:hook_safe(CrosshairUI, "_draw_kill_confirm", function (self, dt, t, ui_renderer)
-	local player_unit = Managers.player:local_player().player_unit
+	local player = Managers.player:local_player_safe()
+	local player_unit = player and player.player_unit
 	local lock = player_unit and locks[player_unit]
 
 	-- locked on: the crosshair gets arrows around it
@@ -1220,7 +1144,9 @@ mod.on_enabled = function (...)
 		previous_on_enabled(...)
 	end
 
-	apply_rocket_launcher()
+	if is_rocket_launcher_enabled() then
+		apply_rocket_launcher()
+	end
 end
 
 mod.on_disabled = function (...)
@@ -1229,6 +1155,22 @@ mod.on_disabled = function (...)
 	end
 
 	restore_crossbow()
+end
+
+local previous_on_setting_changed = mod.on_setting_changed
+
+mod.on_setting_changed = function (setting_id, ...)
+	if previous_on_setting_changed then
+		previous_on_setting_changed(setting_id, ...)
+	end
+
+	if setting_id == "rocket_launcher" or setting_id == "ut_weapons" then
+		if is_rocket_launcher_enabled() then
+			apply_rocket_launcher()
+		else
+			restore_crossbow()
+		end
+	end
 end
 
 mod.update = function (dt, ...)

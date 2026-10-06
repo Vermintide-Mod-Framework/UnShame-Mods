@@ -1070,18 +1070,44 @@ local function unload_ball_package()
 	end
 end
 
-mod.on_enabled = function ()
+-- The weapon can be switched off in the settings: the staff is then the game's own again (the weapon the
+-- player holds changes when it is wielded again)
+local function is_shock_rifle_enabled()
+	return mod:get("ut_weapons") ~= false and mod:get("shock_rifle") ~= false
+end
+
+local function enable_shock_rifle()
 	load_ball_package()
 	apply_shock_rifle()
 end
 
-mod.on_disabled = function ()
+local function disable_shock_rifle()
 	restore_beam_staff()
 	clear_trails()
 	table.clear(pending_poses)
 	clear_implosions()
 	clear_timed_effects()
 	unload_ball_package()
+end
+
+mod.on_enabled = function ()
+	if is_shock_rifle_enabled() then
+		enable_shock_rifle()
+	end
+end
+
+mod.on_disabled = function ()
+	disable_shock_rifle()
+end
+
+mod.on_setting_changed = function (setting_id)
+	if setting_id == "shock_rifle" or setting_id == "ut_weapons" then
+		if is_shock_rifle_enabled() then
+			enable_shock_rifle()
+		else
+			disable_shock_rifle()
+		end
+	end
 end
 
 mod.on_unload = function ()
@@ -1111,7 +1137,7 @@ mod:hook_safe(SimpleInventoryExtension, "_wield_slot", function (self, equipment
 
 	local item_template = BackendUtils.get_item_template(slot_data.item_data)
 
-	if item_template.name ~= TEMPLATE_NAME then
+	if item_template.name ~= TEMPLATE_NAME or not is_shock_rifle_enabled() then
 		return
 	end
 

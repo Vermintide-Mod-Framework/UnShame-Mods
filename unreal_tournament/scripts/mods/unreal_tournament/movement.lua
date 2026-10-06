@@ -45,9 +45,15 @@ local CONFIG = {
 	double_jump_apex_speed = 1.7, -- m/s, it is allowed while the vertical speed is within this of zero
 }
 
+-- The Movement option: all of the movement of this file can be switched off, the hooks then do what the
+-- game does
+local function is_movement_enabled()
+	return mod:get("ut_movement") ~= false
+end
+
 -- The Multidodge option: no limits on dodging
 local function is_multidodge()
-	return mod:get("multidodge")
+	return is_movement_enabled() and mod:get("multidodge")
 end
 
 -- What happened in the air since the player last was on the ground, per unit:
@@ -110,6 +116,10 @@ end
 -- movement settings when it starts, so they are changed for the duration of that.
 -- (One hook for both, the game has had trouble with more than one on the same function.)
 mod:hook(PlayerCharacterStateJumping, "on_enter", function (func, self, unit, input, dt, context, t, previous_state, ...)
+	if not is_movement_enabled() then
+		return func(self, unit, input, dt, context, t, previous_state, ...)
+	end
+
 	if previous_state ~= "falling" then
 		reset_air_state(self, unit)
 	end
@@ -133,6 +143,10 @@ end)
 local FORWARD_TAP = "move_forward_pressed"
 
 mod:hook(CharacterStateHelper, "check_to_start_dodge", function (func, unit, input_extension, status_extension, t)
+	if not is_movement_enabled() then
+		return func(unit, input_extension, status_extension, t)
+	end
+
 	-- no dodging while crouching (the jump key then uncrouches and jumps), or right after
 	-- landing from a dodge
 	if status_extension:is_crouching() or dodge_unlocked_t[unit] and t < dodge_unlocked_t[unit] and not is_multidodge() then
@@ -185,6 +199,10 @@ end)
 -- hands over to falling when the player isn't on the ground), so the horizontal speed of the dodge
 -- has to be given as well.
 mod:hook_safe(PlayerCharacterStateDodging, "on_enter", function (self, unit, input, dt, context, t)
+	if not is_movement_enabled() then
+		return
+	end
+
 	local locomotion_extension = self.locomotion_extension
 	local first_person_extension = self.first_person_extension
 	local flat_rotation = Quaternion.look(Vector3.flat(Quaternion.forward(first_person_extension:current_rotation())), Vector3.up())
@@ -215,6 +233,10 @@ end)
 -- speed of the dodge launch away at once. It is allowed to keep its speed (steering still works).
 -- The speed it is given is how much the player can steer, which is scaled for the air control.
 mod:hook(CharacterStateHelper, "move_in_air", function (func, first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
+	if not is_movement_enabled() then
+		return func(first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
+	end
+
 	local state = air_state[unit]
 	local speed_before = state and state.keep_speed and Vector3.length(Vector3.flat(locomotion_extension:current_velocity()))
 
@@ -453,13 +475,13 @@ end
 
 -- A jump key press that dodged off a wall isn't a double jump as well
 mod:hook_safe(PlayerCharacterStateJumping, "update", function (self, unit, input, dt, context, t)
-	if not try_wall_dodge(self, unit, t) then
+	if is_movement_enabled() and not try_wall_dodge(self, unit, t) then
 		try_double_jump(self, unit, t)
 	end
 end)
 
 mod:hook_safe(PlayerCharacterStateFalling, "update", function (self, unit, input, dt, context, t)
-	if not try_wall_dodge(self, unit, t) then
+	if is_movement_enabled() and not try_wall_dodge(self, unit, t) then
 		try_double_jump(self, unit, t)
 	end
 end)
@@ -469,6 +491,10 @@ end)
 -- duration of the update, other code changes the player's gravity scale too (levels, effects)
 -- and sees its own value.
 mod:hook(PlayerUnitLocomotionExtension, "update_script_driven_movement", function (func, self, ...)
+	if not is_movement_enabled() then
+		return func(self, ...)
+	end
+
 	local gravity_scale = self._script_driven_gravity_scale
 
 	self._script_driven_gravity_scale = gravity_scale * CONFIG.gravity_multiplier
@@ -494,7 +520,9 @@ end)
 -- No fall damage. The game takes the next landing's damage away when this is set, it asks for it
 -- every time the player lands (and is then also without the hard landing shake of the camera)
 mod:hook(GenericStatusExtension, "update_falling", function (func, self, ...)
-	self.ignore_next_fall_damage = true
+	if is_movement_enabled() then
+		self.ignore_next_fall_damage = true
+	end
 
 	return func(self, ...)
 end)
@@ -540,7 +568,7 @@ end
 mod:hook(CharacterStateHelper, "move_on_ground", function (func, first_person_extension, input_extension, locomotion_extension, local_move_direction, speed, unit, ...)
 	func(first_person_extension, input_extension, locomotion_extension, local_move_direction, speed, unit, ...)
 
-	if not ScriptUnit.extension(unit, "status_system"):is_crouching() then
+	if not is_movement_enabled() or not ScriptUnit.extension(unit, "status_system"):is_crouching() then
 		return
 	end
 
@@ -572,4 +600,140 @@ mod:hook(CharacterStateHelper, "move_on_ground", function (func, first_person_ex
 	end
 
 	locomotion_extension:set_wanted_velocity(allowed)
+end)
+
+-- The barriers option: with it on, each of the barriers that is on (invisible walls, kill zones, ledges) is
+-- taken away.
+local function is_barrier_removed(setting_id)
+	return mod:get("no_barriers") and mod:get(setting_id) ~= false
+end
+
+-- Invisible walls: the player's movement collides with the level through a collision profile (a "mover filter"),
+-- and the level's walls that keep heroes in belong to groups that the heroes' profile collides with and the
+-- dark pact players' profile doesn't (the game has a separate group of blockers for each of them). With the option
+-- on the player moves with the dark pact players' profile. This is for the player's own character, and it
+-- changes nothing in the level.
+local INVISIBLE_WALL_MOVER_FILTER = "filter_player_mover_pactsworn"
+
+local function is_passing_invisible_walls()
+	return is_barrier_removed("no_invisible_walls")
+end
+
+-- The filter the game would use while a mode (a ladder, ...) isn't in the way is the locomotion's default one, it
+-- is changed for the duration of the call that sets the filter
+mod:hook(PlayerUnitLocomotionExtension, "set_mover_filter_property", function (func, self, ...)
+	local default_filter = self._default_mover_filter
+
+	if is_passing_invisible_walls() and self.player and not self.player.remote then
+		self._default_mover_filter = INVISIBLE_WALL_MOVER_FILTER
+	end
+
+	func(self, ...)
+
+	self._default_mover_filter = default_filter
+end)
+
+-- The filter is set again when the option is changed, and when the player's unit is new
+local applied_unit
+local applied_enabled = false
+
+local function update_mover_filter()
+	local player = Managers.player:local_player_safe()
+	local unit = player and player.player_unit
+
+	if not unit or not Unit.alive(unit) then
+		applied_unit = nil
+		applied_enabled = false
+
+		return
+	end
+
+	local enabled = not not is_passing_invisible_walls()
+
+	if applied_unit == unit and applied_enabled == enabled then
+		return
+	end
+
+	local locomotion_extension = ScriptUnit.has_extension(unit, "locomotion_system")
+	local modes = locomotion_extension and locomotion_extension._mover_modes
+
+	if modes then
+		-- sets the filter for the modes the player is in now
+		locomotion_extension:set_mover_filter_property("ladder", modes.ladder)
+
+		applied_unit = unit
+		applied_enabled = enabled
+	end
+end
+
+local previous_update = mod.update
+local previous_on_unload = mod.on_unload
+local previous_on_disabled = mod.on_disabled
+
+mod.update = function (dt, ...)
+	if previous_update then
+		previous_update(dt, ...)
+	end
+
+	update_mover_filter()
+end
+
+-- (the game's own filter is back when the mod is reloaded or switched off)
+mod.on_unload = function (...)
+	if previous_on_unload then
+		previous_on_unload(...)
+	end
+
+	applied_unit = nil
+end
+
+mod.on_disabled = function (...)
+	if previous_on_disabled then
+		previous_on_disabled(...)
+	end
+
+	update_mover_filter()
+end
+
+local previous_on_setting_changed = mod.on_setting_changed
+
+mod.on_setting_changed = function (setting_id, ...)
+	if previous_on_setting_changed then
+		previous_on_setting_changed(setting_id, ...)
+	end
+
+	if setting_id == "no_barriers" or setting_id == "no_invisible_walls" then
+		applied_unit = nil
+	end
+end
+
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	applied_unit = nil
+	applied_enabled = false
+end
+
+-- Kill zones: entering one kills the player, the health extension is told about it
+mod:hook(PlayerUnitHealthExtension, "entered_kill_volume", function (func, self, ...)
+	if is_barrier_removed("no_kill_zones") then
+		return
+	end
+
+	return func(self, ...)
+end)
+
+-- Ledges: the player hangs from the ledge they fall past, until they are pulled up
+mod:hook(CharacterStateHelper, "is_ledge_hanging", function (func, ...)
+	if is_barrier_removed("no_ledges") then
+		return false
+	end
+
+	return func(...)
+end)
+
+mod:hook(CharacterStateHelper, "will_be_ledge_hanging", function (func, ...)
+	if is_barrier_removed("no_ledges") then
+		return false
+	end
+
+	return func(...)
 end)

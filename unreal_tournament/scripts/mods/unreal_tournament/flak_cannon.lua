@@ -19,6 +19,9 @@ local TEMPLATE_NAME = "blunderbuss_template_1"
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
+	-- The blunderbuss's own ammo (16, with 1 in the clip) and reload time (1.5 s) are changed by these factors
+	ammo_multiplier = 1.33,
+	reload_time_multiplier = 0.75,
 	-- Flak chunk
 	chunk_count = 9, -- FlakFire.ProjPerFire
 	chunk_spread_degrees = 4, -- "tight", FlakFire.Spread is about 7.7 degrees
@@ -33,13 +36,14 @@ local CONFIG = {
 	-- than that for every chunk. A chunk also goes through enemies, every enemy it goes through
 	-- uses up one of its bounces, and the other way round: a chunk has this many in all.
 	chunk_extra_bounces = 2,
-	chunk_damage = 8.7, -- in UT2004's units, 45 is the shock rifle's beam. UT has 13 with a 90 explosion, scaled with it (60)
+	chunk_damage = 11, -- in UT2004's units, 45 is the shock rifle's beam. UT has 13 with a 90 explosion, 8.7 was it scaled with the explosion's 60
 	-- UT2004: after its first second a chunk loses 5 damage per second of its 13, but not below 5
-	-- (FlakChunk.DamageAtten). The same share of chunk_damage here.
+	-- (FlakChunk.DamageAtten). The same share of chunk_damage here, with a slower loss: it begins later, is slower
+	-- and stops higher.
 	chunk_ut_damage = 13,
-	chunk_damage_decay = 5, -- per second
-	chunk_damage_decay_delay = 1, -- seconds
-	chunk_damage_min = 5,
+	chunk_damage_decay = 2, -- per second (UT: 5)
+	chunk_damage_decay_delay = 1.5, -- seconds (UT: 1)
+	chunk_damage_min = 8, -- (UT: 5)
 	-- Knockback of a chunk: how hard it staggers what it hits, (the beam's impact power is 0.3, a
 	-- shotgun pellet's is 0.3 up close and 0.15 far away). It falls off with the distance between the
 	-- player and the target, from the near value up to the start, to the far value from the end.
@@ -64,6 +68,24 @@ local CONFIG = {
 	shell_lifetime = 6,
 	shell_radius = 0.2, -- m
 	shell_damage = 60, -- the damage of the explosion
+	-- The multipliers of the explosion's damage and stagger per armor type: unarmored, armored, monsters, players,
+	-- berserkers, super armor
+	shell_armor_attack = {
+		1,
+		1,
+		1.5,
+		1,
+		1,
+		0.5,
+	},
+	shell_armor_impact = {
+		1,
+		1,
+		1,
+		1,
+		1,
+		0.5,
+	},
 	shell_explosion_radius_uu = 150, -- FlakShell: 220, it was reduced
 	-- The explosion hurts the player who fired the shell: this much at the center, falling off like
 	-- the explosion's damage does (the combo of the shock rifle, which is twice the damage, is 100)
@@ -73,8 +95,7 @@ local CONFIG = {
 	shell_chunk_cone_degrees = 88, -- the chunks go up to this far from the direction of the shell, in yaw and pitch
 	shell_chunk_start_offset = 0.2, -- m back from the explosion, so the chunks start in front of the wall
 	-- The visual of the explosion: these effects are played together, each that is loaded for the
-	-- weapon's character (the others are skipped). Some effects ignore the scale. Use the chat command
-	-- /ut_flak_fx to see which of the game's effects are available.
+	-- weapon's character (the others are skipped). Some effects ignore the scale.
 	shell_explosion_effects = {
 		{
 			name = "fx/wpnfx_frag_grenade_impact",
@@ -183,6 +204,11 @@ end)
 
 local function modify_explosion_profile(profile)
 	make_flat(profile, attack_power_for(CONFIG.shell_damage), impact_power_for(CONFIG.shell_damage))
+
+	-- the game's own multipliers for this are 0 against super armor (chaos warriors), the explosion would do
+	-- nothing to them
+	profile.armor_modifier.attack = table.clone(CONFIG.shell_armor_attack)
+	profile.armor_modifier.impact = table.clone(CONFIG.shell_armor_impact)
 end
 
 register_damage_profile("ut_flak_shell_explosion", "fireball_charged_explosion", modify_explosion_profile)
@@ -326,6 +352,11 @@ local function restore_blunderbuss()
 		template.required_projectile_unit_templates[name] = original.required_projectile_unit_templates[name]
 	end
 
+	-- (a patch from before the ammo was changed has none saved)
+	for key, value in pairs(original.ammo_data or {}) do
+		template.ammo_data[key] = value
+	end
+
 	persistent.original = nil
 end
 
@@ -344,6 +375,10 @@ local function apply_flak_cannon()
 		action_one_default = actions.action_one.default,
 		action_two_default = actions.action_two.default,
 		required_projectile_unit_templates = {},
+		ammo_data = {
+			max_ammo = template.ammo_data.max_ammo,
+			reload_time = template.ammo_data.reload_time,
+		},
 	}
 
 	for _, name in ipairs(PROJECTILE_UNIT_TEMPLATES) do
@@ -351,6 +386,9 @@ local function apply_flak_cannon()
 	end
 
 	persistent.original = original
+
+	template.ammo_data.max_ammo = math.floor(original.ammo_data.max_ammo * CONFIG.ammo_multiplier + 0.5)
+	template.ammo_data.reload_time = original.ammo_data.reload_time * CONFIG.reload_time_multiplier
 
 	local primary = table.clone(original.action_one_default)
 
@@ -496,32 +534,6 @@ mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position)
 		effects.play(world, effect.name, position + Vector3(0, 0, effect.offset), effect.scale)
 	end
 end
-
--- /ut_flak_fx lists the effects of the explosion, /ut_flak_fx all every explosion effect of the
--- game that is loaded
-mod:command("ut_flak_fx", "Lists which of the explosion effects of the flak cannon are loaded, 'all' lists every one the game has", function (which)
-	if which == "all" then
-		local names = {}
-
-		for _, template in pairs(ExplosionTemplates) do
-			local name = template.explosion and template.explosion.effect_name
-
-			if name and not names[name] and effects.is_available(name) then
-				names[name] = true
-				names[#names + 1] = name
-			end
-		end
-
-		table.sort(names)
-		mod:echo("%d loaded: %s", #names, table.concat(names, ", "))
-
-		return
-	end
-
-	for _, effect in ipairs(CONFIG.shell_explosion_effects) do
-		mod:echo("%s: %s", effect.name, effects.is_available(effect.name) and "available" or "not loaded")
-	end
-end)
 
 -- A chunk keeps part of its speed when it bounces, and a bounce uses up one of the enemies it can go
 -- through
@@ -744,13 +756,21 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	effects.clear()
 end
 
+-- The weapon can be switched off in the settings: the blunderbuss is then the game's own again (the weapon
+-- the player holds changes when it is wielded again)
+local function is_flak_cannon_enabled()
+	return mod:get("ut_weapons") ~= false and mod:get("flak_cannon") ~= false
+end
+
 mod.on_enabled = function (...)
 	if previous_on_enabled then
 		previous_on_enabled(...)
 	end
 
-	load_projectile_packages()
-	apply_flak_cannon()
+	if is_flak_cannon_enabled() then
+		load_projectile_packages()
+		apply_flak_cannon()
+	end
 end
 
 mod.on_disabled = function (...)
@@ -760,4 +780,22 @@ mod.on_disabled = function (...)
 
 	restore_blunderbuss()
 	unload_projectile_packages()
+end
+
+local previous_on_setting_changed = mod.on_setting_changed
+
+mod.on_setting_changed = function (setting_id, ...)
+	if previous_on_setting_changed then
+		previous_on_setting_changed(setting_id, ...)
+	end
+
+	if setting_id == "flak_cannon" or setting_id == "ut_weapons" then
+		if is_flak_cannon_enabled() then
+			load_projectile_packages()
+			apply_flak_cannon()
+		else
+			restore_blunderbuss()
+			unload_projectile_packages()
+		end
+	end
 end
