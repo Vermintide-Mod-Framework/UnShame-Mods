@@ -30,7 +30,8 @@ local CONFIG = {
 	glob_max_flight = 4, -- seconds until a glob that hit nothing bursts
 	glob_fizzle_time = 1.5, -- seconds a glob stays after it has hit something, for its trail to fade out
 	glob_end_delay = 0.5, -- seconds after the hit that the glob's effects are told to end
-	glob_damage = 25, -- in UT2004's units, 45 is the shock rifle's beam
+	glob_direct_damage = 8, -- in UT2004's units, 45 is the shock rifle's beam: what the glob does to what it hits
+	glob_damage = 10, -- what the burst of the glob does (in the radius, to what the glob hit too)
 	glob_burst_radius = 1.5, -- m
 	-- Puddles. A glob is 1 goo. A puddle's radius is that of a glob's puddle for its first goo and grows with
 	-- the square root of it (its area goes with the goo), up to puddle_radius_max. It lasts a glob's time and a
@@ -96,10 +97,11 @@ local CONFIG = {
 	puddle_effect_radius_share = 0.35,
 	puddle_effect_spacing = 0.9, -- m between the particles
 	-- Overheating, in the Drakegun's own units (it overheats at 30): a glob is this much, a full charge is
-	-- this much by the time it is full (the shot that follows doesn't add any). Balanced against the Shock
-	-- Rifle's, whose beam is 4 every 0.7 seconds (5.7 a second, a combo is 12 more): a glob every 0.45 seconds
-	-- is 7.8 a second, a bit more for the burst and the puddle it brings, and the charge is 5.5 a second.
-	glob_overcharge = 3.5,
+	-- this much by the time it is full (the shot that follows costs nothing more). Balanced against the
+	-- Shock Rifle's, whose beam is 4 every 0.7 seconds (5.7 a second, a combo is 12 more): a glob every 0.45
+	-- seconds is 5.6 a second, and the charge is 5.5 a second. (The game takes the heat off again 1.3 a second,
+	-- from 0.25 seconds after the last of it.)
+	glob_overcharge = 2.5,
 	charged_overcharge = 11,
 	-- The sounds, events of the game's: the Sienna's fireball and geiser for the shots (the shots' have to be
 	-- in the game's NetworkLookup of sound events, the others are not sent), the fire grenade's explosion and
@@ -108,7 +110,6 @@ local CONFIG = {
 	charged_fire_sound = "player_combat_weapon_staff_geiser_fire",
 	burst_sound = "fireball_big_hit",
 	charged_burst_sound = "player_combat_weapon_fire_grenade_explosion",
-	impact_sound = "fireball_big_hit",
 	charged_impact_sound = "player_combat_weapon_fire_grenade_explosion",
 	-- The look of the burst: these effects are played together, each that is loaded for the weapon's character
 	-- (the others are skipped)
@@ -119,11 +120,10 @@ local CONFIG = {
 			offset = 0,
 		},
 	},
-	-- The impact: a glob that hits an enemy sets off a blast of its own on top of the burst (the burst's
-	-- radius and the puddle are the same). The charged glob's is as big as it is charged.
-	impact_damage = 15,
-	impact_radius = 3, -- m
-	charged_impact_damage = 40,
+	-- The impact: the charged glob, when it hits an enemy, sets off a blast of its own on top of the burst. It is
+	-- as big as the glob is charged. (The primary has none: a direct hit is the burst.)
+	impact_radius = 3, -- m (the smallest the charged one's gets)
+	charged_impact_damage = 20,
 	charged_impact_radius = 8,
 	impact_effects = {
 		{
@@ -141,9 +141,41 @@ overcharge_values.ut_bio_glob = CONFIG.glob_overcharge
 local CHARGE_HEAT_INTERVAL = 0.2
 overcharge_values.ut_bio_charging = CONFIG.charged_overcharge * CHARGE_HEAT_INTERVAL / CONFIG.charge_time
 
--- Damage profiles: the direct hit of a glob only staggers, its damage is the burst (like the shock ball)
+-- The multipliers of the damage and the stagger per armor type: unarmored, armored, monsters, players, berserkers,
+-- super armor (the game's own for these explosions are 0 against super armor, which is what chaos warriors have:
+-- they would take nothing; the damage is low to begin with, so super armor takes it whole, stagger half)
+local ARMOR_ATTACK = {
+	1,
+	0.8,
+	1.5,
+	1,
+	1,
+	1,
+}
+local ARMOR_IMPACT = {
+	1,
+	0.8,
+	1,
+	1,
+	1,
+	0.5,
+}
+
+local function set_armor_modifiers(profile)
+	profile.armor_modifier.attack = table.clone(ARMOR_ATTACK)
+	profile.armor_modifier.impact = table.clone(ARMOR_IMPACT)
+	-- (critical hits go by their own multipliers)
+	profile.critical_strike = {
+		attack_armor_power_modifer = table.clone(ARMOR_ATTACK),
+		impact_armor_power_modifer = table.clone(ARMOR_IMPACT),
+	}
+end
+
+-- Damage profiles: the direct hit of a glob does glob_direct_damage and staggers, and it is the part of the hit
+-- that headshots count for (a burst has no hit zone). The rest of the damage is the burst.
 register_damage_profile("ut_bio_glob", "staff_fireball", function (profile)
-	make_flat(profile, 0, impact_power_for(CONFIG.glob_damage))
+	make_flat(profile, attack_power_for(CONFIG.glob_direct_damage), impact_power_for(CONFIG.glob_direct_damage))
+	set_armor_modifiers(profile)
 
 	profile.cleave_distribution = {
 		attack = 0.01,
@@ -188,6 +220,7 @@ registration.register_network_lookup("buff_templates", CONFIG.puddle_dot)
 local function burst_profiles(name, damage)
 	local function modify(profile)
 		make_flat(profile, attack_power_for(damage), impact_power_for(damage))
+		set_armor_modifiers(profile)
 	end
 
 	register_damage_profile(name, "fireball_charged_explosion", modify)
@@ -197,7 +230,6 @@ end
 burst_profiles("ut_bio_burst", CONFIG.glob_damage)
 burst_profiles("ut_bio_charged_burst", CONFIG.charged_glob_damage)
 burst_profiles("ut_bio_child_burst", CONFIG.child_damage)
-burst_profiles("ut_bio_impact", CONFIG.impact_damage)
 burst_profiles("ut_bio_charged_impact", CONFIG.charged_impact_damage)
 
 -- Explosion templates. The burst of a glob is only the blast, the goo it brings goes to the puddle (see Puddles
@@ -267,7 +299,6 @@ local function impact_template(profile_name, sound_event_name, radius_min, radiu
 	}
 end
 
-register_explosion_template("ut_bio_impact", impact_template("ut_bio_impact", CONFIG.impact_sound, CONFIG.impact_radius, CONFIG.impact_radius))
 register_explosion_template("ut_bio_charged_impact", impact_template("ut_bio_charged_impact", CONFIG.charged_impact_sound, CONFIG.impact_radius, CONFIG.charged_impact_radius))
 
 -- The look of the burst and of the impact, on every peer (the explosion's callback is run for everyone who sees it)
@@ -289,7 +320,6 @@ end
 
 mod.explosion_callbacks.ut_bio_burst = play_burst_effects
 mod.explosion_callbacks.ut_bio_charged_burst = play_burst_effects
-mod.explosion_callbacks.ut_bio_impact = play_impact_effects
 mod.explosion_callbacks.ut_bio_charged_impact = play_impact_effects
 
 -- Weapon template
@@ -347,7 +377,6 @@ local function build_glob_action()
 		ut_bio_glob = true,
 		ut_aoe_callback = "ut_bio_glob",
 		ut_bio_goo = 1,
-		ut_bio_impact_template = "ut_bio_impact",
 		ut_hit_enemy_callback = "ut_bio_glob",
 		speed = CONFIG.glob_speed,
 		total_time = CONFIG.fire_interval,
@@ -685,6 +714,33 @@ local function make_puddle_area(puddle, t)
 end
 
 -- The burst of a puddle: a blast that is as big as the goo was, and the small globs
+-- The game sorts what an explosion hits by their positions in POSITION_LOOKUP. The mods' update runs before the
+-- game's own, where those positions are the last frame's, which the game has let go stale (a "Stale Vector3", it
+-- breaks the explosion). Those are given their real position for the duration of the call.
+local function with_valid_positions(func, ...)
+	local fixed = {}
+
+	for unit, position in pairs(POSITION_LOOKUP) do
+		if Script.type_name(position) ~= "Vector3" then
+			fixed[unit] = position
+		end
+	end
+
+	for unit in pairs(fixed) do
+		POSITION_LOOKUP[unit] = Unit.alive(unit) and Unit.world_position(unit, 0) or nil
+	end
+
+	local ok, error_message = pcall(func, ...)
+
+	for unit, position in pairs(fixed) do
+		POSITION_LOOKUP[unit] = Unit.alive(unit) and position or nil
+	end
+
+	if not ok then
+		error(error_message, 0)
+	end
+end
+
 -- (with final, the puddle is gone after it, nothing of it stays)
 local function burst_puddle(puddle, t, final)
 	remove_puddle_area(puddle)
@@ -694,7 +750,7 @@ local function burst_puddle(puddle, t, final)
 	local position = puddle.position:unbox()
 	local power_level = context.base_power * math.max(CONFIG.glob_damage / CONFIG.charged_glob_damage, goo_scale)
 
-	DamageUtils.create_explosion(context.world, context.owner_unit, position, Quaternion.identity(), ExplosionTemplates.ut_bio_charged_burst, goo_scale, context.item_name, true, false, context.owner_unit, power_level, context.is_critical_strike, context.owner_unit)
+	with_valid_positions(DamageUtils.create_explosion, context.world, context.owner_unit, position, Quaternion.identity(), ExplosionTemplates.ut_bio_charged_burst, goo_scale, context.item_name, true, false, context.owner_unit, power_level, context.is_critical_strike, context.owner_unit)
 
 	for _, effect in ipairs(CONFIG.burst_effects) do
 		effects.play(context.world, effect.name, position + Vector3(0, 0, 0.5), math.lerp(CONFIG.puddle_burst_effect_scale, CONFIG.puddle_burst_effect_scale_max, goo_scale))
@@ -793,7 +849,12 @@ local function update_puddles(t)
 	for i = #puddles, 1, -1 do
 		local puddle = puddles[i]
 
-		if t >= puddle.expires then
+		if not Unit.alive(puddle.context.owner_unit) then
+			-- (the player's unit is gone, a hero was changed or the level left: nothing can be made for it, the game
+			-- breaks on a projectile that has no owner)
+			remove_puddle_area(puddle)
+			table.remove(puddles, i)
+		elseif t >= puddle.expires then
 			-- a puddle that goes out with nothing stepped into it bursts (and is gone), unless it is too small
 			table.remove(puddles, i)
 
@@ -938,15 +999,17 @@ local function apply_bio_rifle()
 	actions.action_one.default = glob
 	actions.action_one.shoot_charged = charged
 
-	-- the charge: the glob is fired when the button is let go (and still when the primary is pressed)
+	-- the charge: the glob is fired when the button is let go (and when the primary is pressed, the game's own chain)
 	local charge = table.clone(original.action_two_default)
 
 	charge.charge_time = CONFIG.charge_time
 	-- (the release the glob waits for has to be one after the charge started)
 	charge.enter_function = enter_function
-	-- the charge makes the weapon hot as it goes, the shot itself doesn't
+	-- the charge makes the weapon hot as it goes
 	charge.overcharge_interval = CHARGE_HEAT_INTERVAL
 	charge.overcharge_type = "ut_bio_charging"
+	-- (Kept from the Drakegun's own charge, remove_overcharge_on_interrupt: a full charge adds almost no more heat, so
+	-- it can be held at full without overheating, and some of the heat is taken back if the charge is cancelled.)
 	charge.allowed_chain_actions[#charge.allowed_chain_actions + 1] = {
 		action = "action_one",
 		auto_chain = true,

@@ -87,8 +87,12 @@ local CONFIG = {
 	implosion_blast_up = 5, -- m/s added upwards
 	implosion_delay = 0.6, -- seconds after the blast before bodies start being pulled in
 	implosion_duration = 0.6,
-	implosion_speed = 10, -- m/s the bodies are pulled in with
-	implosion_stop_distance = 0.6, -- bodies this close to the center are left alone
+	-- The pull is a gravity: it speeds the bodies up toward the center (their own speed is kept), they go through
+	-- it and fly off on the other side when the pull ends. It softens close to the center so there is no
+	-- sudden stop or kick.
+	implosion_pull = 90, -- m/s^2
+	implosion_pull_softening = 1, -- m, the pull is weaker than this close to the center
+	implosion_max_speed = 30, -- m/s
 	-- Overcharge: the regular shots cost this much of what the staff's own shots do, and the
 	-- combo costs this many shots' worth of the beam on top of the beam shot that set it off
 	-- (UT2004 ShockProjectile.ComboAmmoCost = 3, on top of the beam's own 1 ammo).
@@ -667,7 +671,7 @@ end
 
 local PACKAGE_REFERENCE_NAME = "unreal_tournament"
 
--- Combo implosion: after the blast, ragdolls of whatever died get pulled in to the center.
+-- Combo implosion: after the blast, ragdolls of whatever died get pulled toward the center, and go past it.
 -- This runs on every peer (create_explosion is called on all of them for networked explosions),
 -- ragdoll physics is simulated locally on each.
 
@@ -835,6 +839,8 @@ local function start_implosion(world, position)
 	implosions[#implosions + 1] = {
 		position = Vector3Box(position),
 		blasted = {},
+		-- the way each body was from the center when it was first pulled, and if it has been past it
+		pulled = {},
 		radius = radius,
 		rings_created = 0,
 		start_t = Managers.time:time("game"),
@@ -843,7 +849,18 @@ local function start_implosion(world, position)
 	}
 end
 
-local function pull_ragdoll(unit, center)
+-- Where a ragdoll is (its first dynamic actor), nil if it isn't one yet
+local function ragdoll_position(unit)
+	for i = 0, Unit.num_actors(unit) - 1 do
+		local actor = Unit.actor(unit, i)
+
+		if actor and Actor.is_dynamic(actor) then
+			return Actor.position(actor)
+		end
+	end
+end
+
+local function pull_ragdoll(unit, center, dt)
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 
@@ -851,10 +868,15 @@ local function pull_ragdoll(unit, center)
 		if actor and Actor.is_dynamic(actor) then
 			local offset = center - Actor.position(actor)
 			local distance = Vector3.length(offset)
+			local pull = offset * (CONFIG.implosion_pull / math.max(distance, CONFIG.implosion_pull_softening))
+			local velocity = Actor.velocity(actor) + pull * dt
+			local speed = Vector3.length(velocity)
 
-			if distance > CONFIG.implosion_stop_distance then
-				Actor.set_velocity(actor, offset * (CONFIG.implosion_speed / distance))
+			if speed > CONFIG.implosion_max_speed then
+				velocity = velocity * (CONFIG.implosion_max_speed / speed)
 			end
+
+			Actor.set_velocity(actor, velocity)
 		end
 	end
 end
@@ -888,7 +910,7 @@ local function clear_implosions()
 	end
 end
 
-local function update_implosions()
+local function update_implosions(dt)
 	local t = Managers.time:time("game")
 	local ring_count = CONFIG.implosion_ring_count
 	local ring_interval = CONFIG.implosion_duration / ring_count
@@ -925,7 +947,30 @@ local function update_implosions()
 				if not Unit.alive(unit) then
 					implosion.units[unit] = nil
 				elseif not HEALTH_ALIVE[unit] then
-					pull_ragdoll(unit, center)
+					-- A body that has gone past the center is let go, it is not pulled back
+					local body_position = ragdoll_position(unit)
+
+					if body_position then
+						local offset = body_position - center
+						local state = implosion.pulled[unit]
+
+						if not state then
+							local distance = Vector3.length(offset)
+
+							state = {
+								direction = Vector3Box(distance > 0.01 and offset * (1 / distance) or Vector3.up()),
+							}
+							implosion.pulled[unit] = state
+						end
+
+						if not state.passed and Vector3.dot(offset, state.direction:unbox()) < 0 then
+							state.passed = true
+						end
+
+						if not state.passed then
+							pull_ragdoll(unit, center, dt)
+						end
+					end
 				end
 			end
 		end
@@ -1017,7 +1062,7 @@ end
 
 mod.update = function (dt)
 	update_pending_poses(dt)
-	update_implosions()
+	update_implosions(dt)
 	update_timed_effects(dt)
 
 	for i = #trails, 1, -1 do
