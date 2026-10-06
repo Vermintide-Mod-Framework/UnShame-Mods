@@ -38,6 +38,51 @@ return {
 	no_ledges_description = {
 		en = "You no longer hang from ledges when you fall past them.",
 	},
+	gameplay = {
+		en = "Gameplay",
+	},
+	auto_revive = {
+		en = "Auto Revive",
+	},
+	auto_revive_description = {
+		en = "When you're knocked down you get back up on your own after 3 seconds, and can't be hurt for 2 more.",
+	},
+	no_bots = {
+		en = "No Bots",
+	},
+	no_bots_description = {
+		en = "Bots no longer fill the empty places in your party.",
+	},
+	forgiving_disablers = {
+		en = "Forgiving Disablers",
+	},
+	forgiving_disablers_description = {
+		en = "Disablers let go of their victim after 2 seconds.",
+	},
+	auto_restart = {
+		en = "Auto Restart",
+	},
+	auto_restart_description = {
+		en = "A level you lose starts again instead of sending you back to the keep.",
+	},
+	ammo_pickups = {
+		en = "Ammo Pickups",
+	},
+	ammo_pickups_description = {
+		en = "How many ammo pickups a level has. Applies to levels you host, from the next one you start.",
+	},
+	ammo_pickups_normal = {
+		en = "Normal",
+	},
+	ammo_pickups_more = {
+		en = "1.5x",
+	},
+	ammo_pickups_double = {
+		en = "2x",
+	},
+	ammo_pickups_triple = {
+		en = "3x",
+	},
 	ut_weapons = {
 		en = "Weapons",
 	},

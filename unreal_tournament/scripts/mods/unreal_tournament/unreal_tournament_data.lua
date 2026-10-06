@@ -9,6 +9,28 @@ return {
 	options = {
 		widgets = {
 			{
+				setting_id = "ut_weapons",
+				type = "checkbox",
+				default_value = true,
+				sub_widgets = {
+					{
+						setting_id = "shock_rifle",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "flak_cannon",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "rocket_launcher",
+						type = "checkbox",
+						default_value = true,
+					},
+				},
+			},
+			{
 				setting_id = "ut_movement",
 				type = "checkbox",
 				default_value = true,
@@ -43,24 +65,51 @@ return {
 				},
 			},
 			{
-				setting_id = "ut_weapons",
-				type = "checkbox",
-				default_value = true,
+				setting_id = "gameplay",
+				type = "group",
 				sub_widgets = {
 					{
-						setting_id = "shock_rifle",
-						type = "checkbox",
-						default_value = true,
+						setting_id = "ammo_pickups",
+						type = "dropdown",
+						default_value = 1,
+						options = {
+							{
+								text = "ammo_pickups_normal",
+								value = 1,
+							},
+							{
+								text = "ammo_pickups_more",
+								value = 1.5,
+							},
+							{
+								text = "ammo_pickups_double",
+								value = 2,
+							},
+							{
+								text = "ammo_pickups_triple",
+								value = 3,
+							},
+						},
 					},
 					{
-						setting_id = "flak_cannon",
+						setting_id = "auto_revive",
 						type = "checkbox",
-						default_value = true,
+						default_value = false,
 					},
 					{
-						setting_id = "rocket_launcher",
+						setting_id = "no_bots",
 						type = "checkbox",
-						default_value = true,
+						default_value = false,
+					},
+					{
+						setting_id = "forgiving_disablers",
+						type = "checkbox",
+						default_value = false,
+					},
+					{
+						setting_id = "auto_restart",
+						type = "checkbox",
+						default_value = false,
 					},
 				},
 			},

@@ -104,7 +104,7 @@ end
 -- is applied directly: max_damage at the center of the explosion, falling off in the same way as
 -- the explosion's damage does (explosion is the "explosion" table of the explosion template).
 registration.apply_explosion_self_damage = function (owner_unit, position, item_name, explosion, max_damage)
-	local body_position = POSITION_LOOKUP[owner_unit] + Vector3.up() * 0.9
+	local body_position = Unit.world_position(owner_unit, 0) + Vector3.up() * 0.9
 	local offset = body_position - position
 	local distance = Vector3.length(offset)
 	local full_radius = explosion.max_damage_radius
