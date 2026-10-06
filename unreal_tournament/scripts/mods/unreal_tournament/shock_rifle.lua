@@ -53,6 +53,9 @@ local CONFIG = {
 	-- Friendly fire is scaled to nothing on lower difficulties, so damage to yourself from the
 	-- combo is applied separately: this much at the center, falling off like the explosion
 	combo_self_damage = 100,
+	-- The ball's own explosion hurts the shooter as well, in the same way (half of the ball's damage in UT's
+	-- numbers, like the combo's is half of its damage)
+	ball_self_damage = 18,
 	-- Combo visuals: the blast first throws out a ring, then everything that died gets pulled
 	-- back to the center, like in UT. Only effects the game already ships can be used, they are
 	-- skipped if the game hasn't loaded them.
@@ -137,15 +140,15 @@ local make_flat = registration.make_flat
 -- have, it would do next to nothing to them)
 local ARMOR_ATTACK = {
 	1,
-	1,
+	0.8,
 	1.5,
 	1,
 	1,
-	0.6,
+	0.5,
 }
 local ARMOR_IMPACT = {
 	1,
-	1,
+	0.8,
 	1,
 	1,
 	1,
@@ -200,7 +203,7 @@ register_explosion_template("ut_shock_ball_explosion", {
 		damage_profile = "ut_shock_ball_explosion",
 		damage_profile_glance = "ut_shock_ball_explosion_glance",
 		effect_name = "fx/wpnfx_fireball_charged_impact_remap",
-		-- the ball's own explosion doesn't hurt the shooter, only the combo does
+		-- the shooter is hurt separately, see ball_self_damage
 		ignore_attacker_unit = true,
 		max_damage_radius = CONFIG.explosion_full_damage_radius,
 		radius = CONFIG.ball_explosion_radius_uu * CONFIG.meters_per_uu,
@@ -417,6 +420,7 @@ local function build_ball_action()
 		speed = CONFIG.ball_speed,
 		total_time = BALL_TOTAL_TIME,
 		ut_shock_ball = true,
+		ut_aoe_callback = "shock_ball",
 		allowed_chain_actions = allowed_chain_actions(fire_chain_entries("action_two", "action_one", BALL_TO_BALL, BALL_TO_BEAM), 0.3, 0.3),
 		enter_function = function (attacker_unit, input_extension, remaining_time, weapon_extension)
 			input_extension:clear_input_buffer()
@@ -628,6 +632,19 @@ end
 
 local function apply_combo_self_damage(owner_unit, position, item_name)
 	registration.apply_explosion_self_damage(owner_unit, position, item_name, ExplosionTemplates.ut_shock_combo_explosion.explosion, CONFIG.combo_self_damage)
+end
+
+-- The ball's own explosion hurts the shooter. (The do_aoe of the ball is also what makes the combo go off:
+-- that one is told apart by the explosion it is given.)
+mod.aoe_callbacks = mod.aoe_callbacks or {}
+mod.aoe_callbacks.shock_ball = function (self, aoe_data, position)
+	if aoe_data ~= ExplosionTemplates.ut_shock_ball_explosion or self._ut_shock_ball_exploded then
+		return
+	end
+
+	self._ut_shock_ball_exploded = true
+
+	registration.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_shock_ball_explosion.explosion, CONFIG.ball_self_damage)
 end
 
 local function detonate_ball(projectile_unit, owner_unit)
