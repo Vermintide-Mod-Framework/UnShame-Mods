@@ -94,6 +94,10 @@ local CONFIG = {
 	-- (UT2004 ShockProjectile.ComboAmmoCost = 3, on top of the beam's own 1 ammo).
 	overcharge_scale = 0.5,
 	combo_overcharge_multiplier = 3,
+	-- Overheating the weapon sets off a combo at the player (the shooter isn't hurt by it, the game's overheating
+	-- explosion does that). It has no shot to take a power level from, so it is given one.
+	overheat_combo_height = 1, -- m above the player
+	overheat_combo_power_level = 500,
 }
 
 -- Overcharge costs, derived from the staff's own values
@@ -1074,6 +1078,39 @@ end
 -- player holds changes when it is wielded again)
 local function is_shock_rifle_enabled()
 	return mod:get("ut_weapons") ~= false and mod:get("shock_rifle") ~= false
+end
+
+-- The overheating explosion of a weapon (the game's own hurts the player, and is kept) is told to the weapon's
+-- callback in mod.overheat_callbacks, by its template: a function can be hooked once. The shock rifle's is the combo:
+-- the whole of it, the blast and the pulling in of what died.
+mod.overheat_callbacks = mod.overheat_callbacks or {}
+
+mod:hook_safe(PlayerCharacterStateOverchargeExploding, "explode", function (self)
+	if self.inside_inn then
+		return
+	end
+
+	local inventory_extension = self.inventory_extension
+	local slot_name = inventory_extension:get_wielded_slot_name()
+	local slot_data = slot_name and inventory_extension:get_slot_data(slot_name)
+	local item_data = slot_data and slot_data.item_data
+	local callback = item_data and mod.overheat_callbacks[item_data.template]
+
+	if callback then
+		callback(self, item_data)
+	end
+end)
+
+mod.overheat_callbacks[TEMPLATE_NAME] = function (state, item_data)
+	if not is_shock_rifle_enabled() then
+		return
+	end
+
+	local unit = state.unit
+	local position = Unit.world_position(unit, 0) + Vector3(0, 0, CONFIG.overheat_combo_height)
+
+	-- (through the area damage system, which also tells the other peers and applies the damage on the server)
+	Managers.state.entity:system("area_damage_system"):create_explosion(unit, position, Quaternion.identity(), "ut_shock_combo_explosion", 1, item_data.name, CONFIG.overheat_combo_power_level, false, unit)
 end
 
 local function enable_shock_rifle()

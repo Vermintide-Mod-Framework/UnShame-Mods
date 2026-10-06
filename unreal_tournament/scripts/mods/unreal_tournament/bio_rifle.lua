@@ -1,9 +1,13 @@
 local mod = get_mod("unreal_tournament")
 
 -- Bio Rifle: replaces the Drakegun's (Bardin) actions in place, like the other weapons do.
---   LMB: a glob of goo, lobbed. It bursts where it lands and leaves a burning puddle.
---   RMB (held): charges a bigger glob, fired on release. The bigger the charge, the bigger the burst and the
---               puddle. (UT2004: XWeapons/BioRifle, BioGlob.)
+--   LMB: a glob of goo, lobbed. It bursts where it lands and adds to the burning puddle there.
+--   RMB (held): charges a bigger glob, fired on release. The bigger the charge, the more goo is in it.
+--               (UT2004: XWeapons/BioRifle, BioGlob.)
+-- Puddles are made of goo: every glob that lands adds its goo to the puddle under it (a puddle grows as it
+-- gets more goo). A puddle bursts into small globs, thrown out in a short arc, that make puddles of their own
+-- where they land, when it gets too much goo or when something steps into it. The charged glob landing counts
+-- as stepping: it bursts the puddle it lands in, or makes, however much goo there is.
 -- Overheating takes the place of ammo: the Drakegun's own.
 
 local registration = mod:dofile("scripts/mods/unreal_tournament/registration")
@@ -28,17 +32,45 @@ local CONFIG = {
 	glob_end_delay = 0.5, -- seconds after the hit that the glob's effects are told to end
 	glob_damage = 25, -- in UT2004's units, 45 is the shock rifle's beam
 	glob_burst_radius = 1.5, -- m
+	-- Puddles. A glob is 1 goo. A puddle's radius is that of a glob's puddle for its first goo and grows with
+	-- the square root of it (its area goes with the goo), up to puddle_radius_max. It lasts a glob's time and a
+	-- little more for every goo more, and every glob that lands in it starts the time again. A glob lands in a
+	-- puddle if it is closer to its center than the radius and puddle_merge_margin.
 	glob_puddle_radius = 1.2, -- m
 	glob_puddle_duration = 4, -- seconds
-	-- Charged: the charge level (0 to 1) goes from the primary's numbers to these. The big glob leaves the
-	-- puddle of a regular one (glob_puddle_radius, glob_puddle_duration) and, when it bursts, throws smaller
-	-- globs in a small arc to random directions, each of which makes a puddle where it lands. The more charge,
-	-- the more of them.
+	puddle_radius_max = 4, -- m
+	puddle_duration_per_goo = 1, -- seconds
+	puddle_duration_max = 8, -- seconds
+	puddle_merge_margin = 0.5, -- m
+	puddle_merge_height = 1.5, -- m
+	-- A puddle holds less goo than burst_goo: with that much it bursts (it bursts too when something steps into it).
+	-- The small globs it throws have child_goo_min goo each and take the goo it has, less burst_goo_loss and the goo
+	-- that stays (burst_goo_left, at most burst_goo_left_max: the globs it throws can land back in it, and burst it
+	-- again): the bursts, if they come after each other, die out.
+	burst_goo = 7,
+	step_burst_goo = 3, -- a puddle with less goo than this is walked through (the alt fire still bursts it)
+	burst_goo_loss = 0.2,
+	burst_goo_left = 0.2, -- the share of its goo that a puddle that bursts keeps
+	burst_goo_left_max = 1.5,
+	child_goo_min = 1,
+	-- The weapon's overheating explosion throws overheat_glob_count small globs from the player, each with a random
+	-- amount of goo from child_goo_min to child_goo_max (the goo is the scale of the projectile, 0 to 1, between
+	-- the two).
+	overheat_glob_count = 20,
+	child_goo_max = 3,
+	big_puddle_goo = 3, -- a puddle with this much goo looks like the charged glob's (charged_puddle_effect)
+	-- Charged: the charge level (0 to 1) goes from the primary's numbers to these. The goo of the glob goes from
+	-- charged_goo_min to charged_goo (it bursts the puddle it lands in whatever the goo), and the power of a puddle's
+	-- burst goes with the goo it had: from the primary's glob_damage to charged_glob_damage and the radius from
+	-- glob_burst_radius to charged_burst_radius, at charged_goo.
 	charge_time = 2, -- seconds to a full charge
 	charged_glob_speed = 3000,
+	charged_goo_min = 6,
+	charged_goo = 15,
 	charged_glob_damage = 70,
 	charged_burst_radius = 4,
-	child_count_min = 2,
+	puddle_burst_effect_scale = 3, -- the size of the burst of a puddle, relative to that of a glob's, at its least and at its most
+	puddle_burst_effect_scale_max = 7,
 	child_count_max = 14,
 	child_speed_min = 800, -- m/s * 100
 	child_speed_max = 1200,
@@ -49,8 +81,6 @@ local CONFIG = {
 	child_max_flight = 3, -- seconds until a small glob that hit nothing bursts
 	child_damage = 12,
 	child_burst_radius = 1, -- m
-	child_puddle_radius = 1, -- m
-	child_puddle_duration = 4, -- seconds
 	-- The puddle burns (a damage over time of the game's), and looks like the ground the fire grenade leaves: the
 	-- effect is put along the ground in the radius of the puddle, each of its particles being this share of it.
 	-- The puddle burns whoever stands in it for as long as it lasts: it puts a burn on them every
@@ -170,9 +200,10 @@ burst_profiles("ut_bio_child_burst", CONFIG.child_damage)
 burst_profiles("ut_bio_impact", CONFIG.impact_damage)
 burst_profiles("ut_bio_charged_impact", CONFIG.charged_impact_damage)
 
--- Explosion templates: the burst, and the puddle it leaves (the aoe of the template). The charged one has a
--- radius that goes with the charge level (the scale of the projectile).
-local function burst_template(burst_profile_name, sound_event_name, puddle_effect, radius_min, radius_max, puddle_radius, puddle_duration)
+-- Explosion templates. The burst of a glob is only the blast, the goo it brings goes to the puddle (see Puddles
+-- below). The burst of a puddle with too much goo, ut_bio_charged_burst, has a radius (and a power) that goes
+-- with the goo it had: it is made with the goo as the scale of the explosion, 0 to 1.
+local function burst_template(burst_profile_name, sound_event_name, radius_min, radius_max)
 	return {
 		explosion = {
 			alert_enemies = true,
@@ -187,25 +218,34 @@ local function burst_template(burst_profile_name, sound_event_name, puddle_effec
 			sound_event_name = sound_event_name,
 			use_attacker_power_level = true,
 		},
-		aoe = {
-			area_damage_template = "explosion_template_aoe",
-			attack_template = "fire_grenade_dot",
-			damage_interval = CONFIG.puddle_damage_interval,
-			dot_template_name = CONFIG.puddle_dot,
-			duration = puddle_duration,
-			radius = puddle_radius,
-			nav_mesh_effect = {
-				particle_name = puddle_effect,
-				particle_radius = puddle_radius * CONFIG.puddle_effect_radius_share,
-				particle_spacing = CONFIG.puddle_effect_spacing,
-			},
-		},
 	}
 end
 
-register_explosion_template("ut_bio_burst", burst_template("ut_bio_burst", CONFIG.burst_sound, CONFIG.puddle_effect, CONFIG.glob_burst_radius, CONFIG.glob_burst_radius, CONFIG.glob_puddle_radius, CONFIG.glob_puddle_duration))
-register_explosion_template("ut_bio_charged_burst", burst_template("ut_bio_charged_burst", CONFIG.charged_burst_sound, CONFIG.charged_puddle_effect, CONFIG.glob_burst_radius, CONFIG.charged_burst_radius, CONFIG.glob_puddle_radius, CONFIG.glob_puddle_duration))
-register_explosion_template("ut_bio_child_burst", burst_template("ut_bio_child_burst", CONFIG.burst_sound, CONFIG.puddle_effect, CONFIG.child_burst_radius, CONFIG.child_burst_radius, CONFIG.child_puddle_radius, CONFIG.child_puddle_duration))
+register_explosion_template("ut_bio_burst", burst_template("ut_bio_burst", CONFIG.burst_sound, CONFIG.glob_burst_radius, CONFIG.glob_burst_radius))
+register_explosion_template("ut_bio_charged_burst", burst_template("ut_bio_charged_burst", CONFIG.charged_burst_sound, CONFIG.glob_burst_radius, CONFIG.charged_burst_radius))
+register_explosion_template("ut_bio_child_burst", burst_template("ut_bio_child_burst", CONFIG.burst_sound, CONFIG.child_burst_radius, CONFIG.child_burst_radius))
+
+-- What the charged glob bursts with: nothing, it has the goo to burst the puddle it makes (a template is what
+-- tells the globs' bursts apart)
+register_explosion_template("ut_bio_charged_glob", {})
+
+-- The puddle: the area that burns whoever is in it. Its radius and duration, and the look of it, are
+-- those of the puddle that is made.
+register_explosion_template("ut_bio_puddle", {
+	aoe = {
+		area_damage_template = "explosion_template_aoe",
+		attack_template = "fire_grenade_dot",
+		damage_interval = CONFIG.puddle_damage_interval,
+		dot_template_name = CONFIG.puddle_dot,
+		duration = CONFIG.glob_puddle_duration,
+		radius = CONFIG.glob_puddle_radius,
+		nav_mesh_effect = {
+			particle_name = CONFIG.puddle_effect,
+			particle_radius = CONFIG.glob_puddle_radius * CONFIG.puddle_effect_radius_share,
+			particle_spacing = CONFIG.puddle_effect_spacing,
+		},
+	},
+})
 
 -- The impact: only the blast, the burst that goes with it leaves the puddle. Its radius goes with the charge
 -- like the charged burst's does.
@@ -305,6 +345,8 @@ local function build_glob_action()
 		kind = "charged_projectile",
 		overcharge_type = "ut_bio_glob",
 		ut_bio_glob = true,
+		ut_aoe_callback = "ut_bio_glob",
+		ut_bio_goo = 1,
 		ut_bio_impact_template = "ut_bio_impact",
 		ut_hit_enemy_callback = "ut_bio_glob",
 		speed = CONFIG.glob_speed,
@@ -380,7 +422,10 @@ local function build_charged_action()
 		ut_bio_glob = true,
 		ut_bio_impact_template = "ut_bio_charged_impact",
 		ut_hit_enemy_callback = "ut_bio_glob",
-		ut_aoe_callback = "ut_bio_charged",
+		ut_aoe_callback = "ut_bio_glob",
+		-- (the goo of the glob goes with its charge, see goo_of)
+		ut_bio_goo_by_charge = true,
+		ut_bio_bursts_puddle = true,
 		-- (the damage of an uncharged glob is the primary's, the full charge's is the charged one's)
 		scale_power_level = CONFIG.glob_damage / CONFIG.charged_glob_damage,
 		total_time = 0.8,
@@ -414,11 +459,11 @@ local function build_charged_action()
 		enter_function = enter_function,
 		projectile_info = projectile_info,
 		impact_data = {
-			aoe = ExplosionTemplates.ut_bio_charged_burst,
+			aoe = ExplosionTemplates.ut_bio_charged_glob,
 			damage_profile = "ut_bio_glob",
 		},
 		timed_data = {
-			aoe = ExplosionTemplates.ut_bio_charged_burst,
+			aoe = ExplosionTemplates.ut_bio_charged_glob,
 			life_time = CONFIG.glob_max_flight,
 		},
 		recoil_settings = {
@@ -442,7 +487,12 @@ local function build_child_action()
 
 	return {
 		kind = "charged_projectile",
+		ut_aoe_callback = "ut_bio_glob",
 		ut_bio_glob = true,
+		ut_bio_goo_range = {
+			CONFIG.child_goo_min,
+			CONFIG.child_goo_max,
+		},
 		speed = CONFIG.child_speed_min,
 		total_time = 1,
 		allowed_chain_actions = {},
@@ -508,8 +558,8 @@ local function update_delayed_ends(t)
 	end
 end
 
--- The way out of the wall, floor or ceiling the charged glob hits is told to the glob before its burst is made
--- (the game gives the burst only the place)
+-- The way out of the wall, floor or ceiling a glob hits is told to the glob before its burst is made (the game
+-- gives the burst only the place)
 for _, function_name in ipairs({
 	"hit_level_unit",
 	"hit_non_level_unit",
@@ -517,7 +567,7 @@ for _, function_name in ipairs({
 	mod:hook(PlayerProjectileUnitExtension, function_name, function (func, self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
 		local action = self._current_action
 
-		if action and action.ut_aoe_callback == "ut_bio_charged" and hit_normal then
+		if action and action.ut_aoe_callback == "ut_bio_glob" and hit_normal then
 			self._ut_bio_hit_normal = Vector3Box(hit_normal)
 		end
 
@@ -525,31 +575,16 @@ for _, function_name in ipairs({
 	end)
 end
 
--- When the charged glob bursts, smaller globs are thrown out of it in a small arc, in random directions. They
--- are projectiles of the weapon's own action (CHILD_SUB_ACTION), spawned like a shot is: the more the glob was
--- charged, the more of them. (The burst is told apart from the impact of the glob on an enemy, which also goes
--- through do_aoe, by its template.)
-mod.aoe_callbacks = mod.aoe_callbacks or {}
-mod.aoe_callbacks.ut_bio_charged = function (self, aoe_data, position)
-	if aoe_data ~= ExplosionTemplates.ut_bio_charged_burst or self._ut_bio_children then
-		return
-	end
-
-	self._ut_bio_children = true
-
-	local charge = math.clamp(self.scale or 1, 0, 1)
-	local count = math.floor(math.lerp(CONFIG.child_count_min, CONFIG.child_count_max, charge) + 0.5)
-	-- Away from the surface the glob burst on: up from a floor, down from a ceiling, out from a wall (up when it
-	-- burst in the air or on an enemy)
-	local normal_box = self._ut_bio_hit_normal
-	local normal = normal_box and normal_box:unbox() or Vector3.up()
+-- Smaller globs are thrown out of a puddle that bursts, or out of the player when the weapon overheats, in a
+-- small arc, in random directions. They are projectiles of the weapon's own action (CHILD_SUB_ACTION), spawned like
+-- a shot is: away from the surface the puddle is on, up from a floor, down from a ceiling, out from a wall.
+-- shot: { owner_unit, item_name, item_template_name, is_critical_strike }. With random_goo each glob has a random
+-- amount of goo (child_goo_min to child_goo_max), without it child_goo_min.
+local function throw_children(shot, position, normal, count, power_level, random_goo)
 	local start = position + normal * CONFIG.child_start_height
-	local lookup_data = self.action_lookup_data
 	local helper_axis = math.abs(normal.z) < 0.9 and Vector3.up() or Vector3.right()
 	local tangent_a = Vector3.normalize(Vector3.cross(normal, helper_axis))
 	local tangent_b = Vector3.cross(normal, tangent_a)
-	-- (the power the glob would have uncharged: the small globs have their own damage)
-	local power_level = self.power_level / math.max(self._current_action.scale_power_level or 1, self.charge_level or 0)
 
 	for _ = 1, count do
 		local around = math.random() * math.pi * 2
@@ -570,8 +605,239 @@ mod.aoe_callbacks.ut_bio_charged = function (self, aoe_data, position)
 
 		local angle = math.radians_to_degrees(math.asin(math.clamp(direction.z, -1, 1)))
 
-		ActionUtils.spawn_player_projectile(self._owner_unit, start, Quaternion.look(direction), 100, angle, target_vector, speed, self.item_name, lookup_data.item_template_name, CHILD_ACTION_NAME, CHILD_SUB_ACTION, self._is_critical_strike, power_level)
+		-- (the goo of the small glob is its scale, from child_goo_min at 0 to child_goo_max at 100)
+		local goo_scale = random_goo and math.floor(math.random() * 100 + 0.5) or 0
+
+		ActionUtils.spawn_player_projectile(shot.owner_unit, start, Quaternion.look(direction), goo_scale, angle, target_vector, speed, shot.item_name, shot.item_template_name, CHILD_ACTION_NAME, CHILD_SUB_ACTION, shot.is_critical_strike, power_level)
 	end
+end
+
+-- Puddles. Where a glob bursts it adds its goo to the puddle there (or makes one), and a puddle with too much
+-- goo bursts into small globs. The puddles are kept here by the game that has the enemies, the host's, where
+-- the areas that burn are made. A puddle's area (area damage unit) is made again with every goo that is added,
+-- for the radius it has then (the old one stops, its effects fade on their own).
+local puddles = {} -- { position, normal (Vector3Boxes), goo, expires = the time it dries up, unit = its area }
+
+local function puddle_radius(goo)
+	return math.min(CONFIG.glob_puddle_radius * math.sqrt(goo), CONFIG.puddle_radius_max)
+end
+
+local function puddle_duration(goo)
+	return math.min(CONFIG.glob_puddle_duration + (goo - 1) * CONFIG.puddle_duration_per_goo, CONFIG.puddle_duration_max)
+end
+
+local function remove_puddle_area(puddle)
+	if puddle.unit and Unit.alive(puddle.unit) then
+		Managers.state.unit_spawner:mark_for_deletion(puddle.unit)
+	end
+
+	puddle.unit = nil
+end
+
+-- Whoever is in the puddle: the players (and bots) and the enemies in its radius, as a set. Stepping into a puddle
+-- is being in it when it wasn't a moment ago (what was in it when it was made or grew isn't stepping in).
+local query_units = {}
+
+local function units_inside(puddle)
+	local inside = {}
+	local position = puddle.position:unbox()
+	local radius = puddle_radius(puddle.goo)
+	local side = Managers.state.side:get_side_from_name("heroes")
+
+	if not side then
+		return inside
+	end
+
+	for _, unit in ipairs(side.PLAYER_AND_BOT_UNITS) do
+		if Unit.alive(unit) and HEALTH_ALIVE[unit] and Vector3.distance(Unit.world_position(unit, 0), position) < radius then
+			inside[unit] = true
+		end
+	end
+
+	local num_units = AiUtils.broadphase_query(position, radius, query_units, side.enemy_broadphase_categories)
+
+	for i = 1, num_units do
+		local unit = query_units[i]
+
+		if HEALTH_ALIVE[unit] then
+			inside[unit] = true
+		end
+	end
+
+	return inside
+end
+
+-- The area of the puddle for the goo it has. puddle.context is what the glob that made the puddle was:
+-- { world, owner_unit, item_name, item_template_name, is_critical_strike, base_power }
+local function make_puddle_area(puddle, t)
+	remove_puddle_area(puddle)
+
+	local context = puddle.context
+	local radius = puddle_radius(puddle.goo)
+	local template = table.clone(ExplosionTemplates.ut_bio_puddle)
+	local nav_mesh_effect = template.aoe.nav_mesh_effect
+
+	nav_mesh_effect.particle_name = puddle.goo >= CONFIG.big_puddle_goo and CONFIG.charged_puddle_effect or CONFIG.puddle_effect
+	nav_mesh_effect.particle_radius = radius * CONFIG.puddle_effect_radius_share
+
+	puddle.unit = DamageUtils.create_aoe(context.world, context.owner_unit, puddle.position:unbox(), context.item_name, template, radius, math.max(puddle.expires - t, 1))
+	puddle.inside = units_inside(puddle)
+end
+
+-- The burst of a puddle: a blast that is as big as the goo was, and the small globs
+-- (with final, the puddle is gone after it, nothing of it stays)
+local function burst_puddle(puddle, t, final)
+	remove_puddle_area(puddle)
+
+	local context = puddle.context
+	local goo_scale = math.clamp(puddle.goo / CONFIG.charged_goo, 0, 1)
+	local position = puddle.position:unbox()
+	local power_level = context.base_power * math.max(CONFIG.glob_damage / CONFIG.charged_glob_damage, goo_scale)
+
+	DamageUtils.create_explosion(context.world, context.owner_unit, position, Quaternion.identity(), ExplosionTemplates.ut_bio_charged_burst, goo_scale, context.item_name, true, false, context.owner_unit, power_level, context.is_critical_strike, context.owner_unit)
+
+	for _, effect in ipairs(CONFIG.burst_effects) do
+		effects.play(context.world, effect.name, position + Vector3(0, 0, 0.5), math.lerp(CONFIG.puddle_burst_effect_scale, CONFIG.puddle_burst_effect_scale_max, goo_scale))
+	end
+
+	local kept_goo = final and 0 or math.min(puddle.goo * CONFIG.burst_goo_left, CONFIG.burst_goo_left_max)
+	local count = math.clamp(math.floor((puddle.goo * (1 - CONFIG.burst_goo_loss) - kept_goo) / CONFIG.child_goo_min), 0, CONFIG.child_count_max)
+
+	throw_children(context, position, puddle.normal:unbox(), count, context.base_power)
+
+	if final then
+		return
+	end
+
+	-- some of the puddle stays where it was
+	puddle.goo = kept_goo
+	puddle.expires = t + puddle_duration(puddle.goo)
+
+	make_puddle_area(puddle, t)
+end
+
+local function goo_of(self)
+	local action = self._current_action
+
+	if action.ut_bio_goo_by_charge then
+		return math.lerp(CONFIG.charged_goo_min, CONFIG.charged_goo, math.clamp(self.scale or 1, 0, 1))
+	end
+
+	if action.ut_bio_goo_range then
+		return math.lerp(action.ut_bio_goo_range[1], action.ut_bio_goo_range[2], math.clamp(self.scale or 0, 0, 1))
+	end
+
+	return action.ut_bio_goo or 1
+end
+
+local function add_goo(self, position)
+	if not self._is_server then
+		return
+	end
+
+	local t = Managers.time:time("game")
+
+	-- the puddle the glob lands in: the nearest one that it is inside of (and that hasn't gone out, see update_puddles)
+	local puddle
+	local nearest = math.huge
+
+	for _, other in ipairs(puddles) do
+		local offset = other.position:unbox() - position
+		local distance = Vector3.length(Vector3.flat(offset))
+
+		if t < other.expires and distance < puddle_radius(other.goo) + CONFIG.puddle_merge_margin and math.abs(offset.z) < CONFIG.puddle_merge_height and distance < nearest then
+			puddle = other
+			nearest = distance
+		end
+	end
+
+	if puddle then
+		puddle.goo = puddle.goo + goo_of(self)
+	else
+		local normal_box = self._ut_bio_hit_normal
+
+		puddle = {
+			context = {
+				-- (the power of the glob, the power it would have had uncharged)
+				base_power = self.power_level / math.max(self._current_action.scale_power_level or 1, self.charge_level or 0),
+				is_critical_strike = self._is_critical_strike,
+				item_name = self.item_name,
+				item_template_name = self.action_lookup_data.item_template_name,
+				owner_unit = self._owner_unit,
+				world = self._world,
+			},
+			goo = goo_of(self),
+			normal = Vector3Box(normal_box and normal_box:unbox() or Vector3.up()),
+			position = Vector3Box(position),
+		}
+		puddles[#puddles + 1] = puddle
+	end
+
+	puddle.expires = t + puddle_duration(puddle.goo)
+
+	-- A puddle bursts when it has too much goo, and when something steps into it: the glob of the alt fire is
+	-- that, it bursts the puddle it lands in however much goo there is.
+	if puddle.goo >= CONFIG.burst_goo or self._current_action.ut_bio_bursts_puddle then
+		burst_puddle(puddle, t)
+	else
+		make_puddle_area(puddle, t)
+	end
+end
+
+-- Whatever steps into a puddle bursts it
+local function update_puddles(t)
+	if not Managers.player.is_server then
+		return
+	end
+
+	for i = #puddles, 1, -1 do
+		local puddle = puddles[i]
+
+		if t >= puddle.expires then
+			-- a puddle that goes out with nothing stepped into it bursts (and is gone), unless it is too small
+			table.remove(puddles, i)
+
+			if puddle.goo >= CONFIG.step_burst_goo then
+				burst_puddle(puddle, t, true)
+			end
+		elseif puddle.inside then
+			local inside = units_inside(puddle)
+			local stepped_in = false
+
+			for unit in pairs(inside) do
+				if not puddle.inside[unit] then
+					stepped_in = true
+
+					break
+				end
+			end
+
+			puddle.inside = inside
+
+			if stepped_in and puddle.goo >= CONFIG.step_burst_goo then
+				burst_puddle(puddle, t)
+			end
+		end
+	end
+end
+
+-- The bursts of the globs add their goo (the impact of a glob on an enemy, which also goes through do_aoe, is not
+-- one, and neither is the burst of a puddle)
+local GOO_BURSTS = {
+	[ExplosionTemplates.ut_bio_burst] = true,
+	[ExplosionTemplates.ut_bio_charged_glob] = true,
+	[ExplosionTemplates.ut_bio_child_burst] = true,
+}
+
+mod.aoe_callbacks = mod.aoe_callbacks or {}
+mod.aoe_callbacks.ut_bio_glob = function (self, aoe_data, position)
+	if not GOO_BURSTS[aoe_data] or self._ut_bio_goo_added then
+		return
+	end
+
+	self._ut_bio_goo_added = true
+
+	add_goo(self, position)
 end
 
 -- A glob that hits an enemy sets off the impact (once, however many it hits on its way)
@@ -729,6 +995,26 @@ local function is_bio_rifle_enabled()
 	return mod:get("ut_weapons") ~= false and mod:get("bio_rifle") ~= false
 end
 
+-- The overheating explosion of the weapon (the game's own is kept, and hurts the player) throws small globs, with
+-- random amounts of goo, out of the player. (It is told by the hook of the Shock Rifle's file, see
+-- mod.overheat_callbacks.)
+mod.overheat_callbacks = mod.overheat_callbacks or {}
+mod.overheat_callbacks[TEMPLATE_NAME] = function (state, item_data)
+	if not is_bio_rifle_enabled() then
+		return
+	end
+
+	local unit = state.unit
+	local shot = {
+		is_critical_strike = false,
+		item_name = item_data.name,
+		item_template_name = TEMPLATE_NAME,
+		owner_unit = unit,
+	}
+
+	throw_children(shot, Unit.world_position(unit, 0) + Vector3(0, 0, 1.5), Vector3.up(), CONFIG.overheat_glob_count, BURN_REFERENCE_POWER_LEVEL, true)
+end
+
 local previous_on_enabled = mod.on_enabled
 local previous_on_disabled = mod.on_disabled
 local previous_on_setting_changed = mod.on_setting_changed
@@ -777,6 +1063,7 @@ mod.update = function (dt, ...)
 	end
 
 	update_delayed_ends(Managers.time:time("game"))
+	update_puddles(Managers.time:time("game"))
 	effects.update(dt)
 end
 
@@ -786,10 +1073,12 @@ mod.on_unload = function (...)
 	end
 
 	table.clear(delayed_ends)
+	table.clear(puddles)
 	effects.clear()
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(delayed_ends)
+	table.clear(puddles)
 	effects.clear()
 end

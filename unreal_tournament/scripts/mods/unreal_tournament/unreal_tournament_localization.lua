@@ -105,7 +105,7 @@ return {
 		en = "Bio Rifle",
 	},
 	bio_rifle_description = {
-		en = "Replaces the Drakegun. Lobs globs that burst and leave a burning puddle. Hold alt fire to charge a glob that bursts into more globs.",
+		en = "Replaces the Drakegun. Lobs globs that make burning puddles. Globs that land in a puddle grow it. A puddle that gets too big, or that anything steps into, bursts into more globs. Hold alt fire for a glob that bursts a puddle as it lands.",
 	},
 	rocket_launcher = {
 		en = "Rocket Launcher",
