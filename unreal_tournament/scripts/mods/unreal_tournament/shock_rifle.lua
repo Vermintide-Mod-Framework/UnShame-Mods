@@ -132,9 +132,35 @@ zero_numbers(SpreadTemplates.ut_shock_beam)
 
 local make_flat = registration.make_flat
 
+-- The multipliers of the damage and the stagger per armor type: unarmored, armored, monsters, players,
+-- berserkers, super armor (the game's own for beams is 0 against super armor, which is what chaos warriors
+-- have, it would do next to nothing to them)
+local ARMOR_ATTACK = {
+	1,
+	1,
+	1.5,
+	1,
+	1,
+	0.6,
+}
+local ARMOR_IMPACT = {
+	1,
+	1,
+	1,
+	1,
+	1,
+	0.5,
+}
+
+local function set_armor_modifiers(profile)
+	profile.armor_modifier.attack = table.clone(ARMOR_ATTACK)
+	profile.armor_modifier.impact = table.clone(ARMOR_IMPACT)
+end
+
 local function register_explosion_damage_profiles(name, damage_multiplier)
 	local function modify(profile)
 		make_flat(profile, CONFIG.beam_attack_power * damage_multiplier, CONFIG.beam_impact_power * damage_multiplier)
+		set_armor_modifiers(profile)
 	end
 
 	register_damage_profile(name, "fireball_charged_explosion", modify)
@@ -143,8 +169,7 @@ end
 
 register_damage_profile("ut_shock_beam", "beam_shot", function (profile)
 	make_flat(profile, CONFIG.beam_attack_power, CONFIG.beam_impact_power)
-
-	profile.no_headshot_boost = true
+	set_armor_modifiers(profile)
 end)
 -- The ball's direct hit deals no damage of its own: like in UT the damage is the explosion,
 -- which is at full strength for whatever the ball hits. The direct hit only staggers.
@@ -166,6 +191,8 @@ register_explosion_damage_profiles("ut_shock_combo_explosion", CONFIG.combo_dama
 -- independent of it as well.
 
 register_explosion_template("ut_shock_ball_explosion", {
+	-- shields don't block the explosion (see the hook of create_explosion)
+	ut_penetrates_shields = true,
 	explosion = {
 		alert_enemies = true,
 		alert_enemies_radius = 10,
@@ -182,6 +209,7 @@ register_explosion_template("ut_shock_ball_explosion", {
 	},
 })
 register_explosion_template("ut_shock_combo_explosion", {
+	ut_penetrates_shields = true,
 	explosion = {
 		alert_enemies = true,
 		alert_enemies_radius = 30,
@@ -889,7 +917,30 @@ mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_posit
 	start_implosion(world, impact_position)
 end
 
-mod:hook_safe(DamageUtils, "create_explosion", function (world, attacker_unit, impact_position, rotation, explosion_template)
+-- Explosions that go through shields: the game asks AiUtils.attack_is_shield_blocked for every enemy in
+-- an explosion, which is answered "not blocked" while the explosion of such a template is being made.
+local penetrating_explosion = false
+
+mod:hook(AiUtils, "attack_is_shield_blocked", function (func, ...)
+	if penetrating_explosion then
+		return false
+	end
+
+	return func(...)
+end)
+
+mod:hook(DamageUtils, "create_explosion", function (func, world, attacker_unit, impact_position, rotation, explosion_template, ...)
+	penetrating_explosion = not not explosion_template.ut_penetrates_shields
+
+	-- (an error mustn't leave the flag set)
+	local ok, error_message = pcall(func, world, attacker_unit, impact_position, rotation, explosion_template, ...)
+
+	penetrating_explosion = false
+
+	if not ok then
+		error(error_message, 0)
+	end
+
 	local callback = mod.explosion_callbacks[explosion_template.name]
 
 	if callback then
@@ -1018,6 +1069,12 @@ end
 
 mod.on_unload = function ()
 	-- A mod reload keeps the patched template, the next load re-applies it
+	clear_trails()
+	clear_implosions()
+	clear_timed_effects()
+end
+
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	clear_trails()
 	clear_implosions()
 	clear_timed_effects()
