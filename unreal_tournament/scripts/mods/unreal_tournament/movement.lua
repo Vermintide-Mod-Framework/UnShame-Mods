@@ -491,6 +491,14 @@ mod:hook(GenericStatusExtension, "add_dodge_cooldown", function (func, self, ...
 	return func(self, ...)
 end)
 
+-- No fall damage. The game takes the next landing's damage away when this is set, it asks for it
+-- every time the player lands (and is then also without the hard landing shake of the camera)
+mod:hook(GenericStatusExtension, "update_falling", function (func, self, ...)
+	self.ignore_next_fall_damage = true
+
+	return func(self, ...)
+end)
+
 -- Crouching: no walking off ledges (UT2004: crouching and walking pawns stay on ledges), unless the
 -- game is keeping the player crouched
 -- A step is blocked when there is no ground in the direction the player is moving in. Moving
