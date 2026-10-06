@@ -5,17 +5,19 @@ local mod = get_mod("unreal_tournament")
 -- pickups are still put where the level has places for them, so a level with few places can't get as many as
 -- the setting says. Only the host's game decides what a level gets.
 
+local AMMO_MULTIPLIER = 4
+
 local function scale(amount, multiplier)
 	return math.ceil(amount * multiplier)
 end
 
 mod:hook(MutatorHandler, "pickup_settings_updated_settings", function (func, self, pickup_settings)
 	local updated_settings = func(self, pickup_settings)
-	local multiplier = mod:get("ammo_pickups") or 1
-
-	if not updated_settings or multiplier <= 1 then
+	if not updated_settings or not mod:get("more_ammo_pickups") then
 		return updated_settings
 	end
+
+	local multiplier = AMMO_MULTIPLIER
 
 	-- (what the game gives back is a copy, it is changed in place)
 	local ammo = updated_settings.ammo

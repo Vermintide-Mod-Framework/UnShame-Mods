@@ -737,3 +737,108 @@ mod:hook(CharacterStateHelper, "will_be_ledge_hanging", function (func, ...)
 
 	return func(...)
 end)
+
+-- Momentum damage: melee hits do more damage the faster the player is moving. No bonus up to min_speed (about
+-- running speed, the game's is 4 m/s), rising to damage_bonus more damage at full_speed (a dodge launch is 9 m/s at
+-- most), and going on rising above it. The damage of a melee hit comes from the power level the attacker sends
+-- with it, which is what is scaled, for the hit and for the prediction of it.
+local MOMENTUM = {
+	min_speed = 4.5, -- m/s
+	full_speed = 9, -- m/s
+	damage_bonus = 0.25, -- the bonus at full_speed: 0.25 is 25% more damage
+}
+
+-- How much of the bonus at full_speed the speed gives: 0 up to min_speed, 1 at full_speed and no limit above it
+local function momentum_share(speed)
+	return math.max((speed - MOMENTUM.min_speed) / (MOMENTUM.full_speed - MOMENTUM.min_speed), 0)
+end
+
+-- Grace: the speed counts for momentum_grace seconds after it is lost, so that slowing down (a hit, the end of a
+-- dodge) doesn't take the bonus away at once. The player's fastest recent speed is kept for that long (it is
+-- looked at while the player moves, for the local player's unit).
+MOMENTUM.grace = 0.1 -- seconds
+
+local recent = {
+	speed = 0,
+	t = 0,
+}
+
+local function update_recent_speed()
+	local player = Managers.player:local_player_safe()
+	local unit = player and player.player_unit
+	local locomotion_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "locomotion_system")
+
+	if not locomotion_extension then
+		recent.unit = nil
+
+		return
+	end
+
+	local t = Managers.time:time("game")
+	local speed = Vector3.length(locomotion_extension:current_velocity())
+
+	if recent.unit ~= unit or speed >= recent.speed or t - recent.t > MOMENTUM.grace then
+		recent.unit = unit
+		recent.speed = speed
+		recent.t = t
+	end
+end
+
+-- How fast the unit is moving, counting the speed it had a moment ago
+local function momentum_speed(unit, locomotion_extension)
+	local speed = Vector3.length(locomotion_extension:current_velocity())
+
+	if recent.unit == unit and Managers.time:time("game") - recent.t <= MOMENTUM.grace then
+		speed = math.max(speed, recent.speed)
+	end
+
+	return speed
+end
+
+local momentum_previous_update = mod.update
+
+mod.update = function (dt, ...)
+	if momentum_previous_update then
+		momentum_previous_update(dt, ...)
+	end
+
+	update_recent_speed()
+end
+
+local function momentum_damage_multiplier(owner_unit)
+	if not is_movement_enabled() or not mod:get("momentum_damage") then
+		return 1
+	end
+
+	local locomotion_extension = Unit.alive(owner_unit) and ScriptUnit.has_extension(owner_unit, "locomotion_system")
+
+	if not locomotion_extension then
+		return 1
+	end
+
+	local speed = momentum_speed(owner_unit, locomotion_extension)
+	local share = momentum_share(speed)
+
+	return 1 + MOMENTUM.damage_bonus * share
+end
+
+mod:hook(ActionSweep, "_send_attack_hit", function (func, self, t, damage_source_id, attacker_unit_id, hit_unit_id, hit_zone_id, hit_position, attack_direction, damage_profile_id, ...)
+	local num_args = select("#", ...)
+	local args = {
+		...,
+	}
+
+	for i = 1, num_args - 1 do
+		if args[i] == "power_level" then
+			args[i + 1] = args[i + 1] * momentum_damage_multiplier(self.owner_unit)
+
+			break
+		end
+	end
+
+	return func(self, t, damage_source_id, attacker_unit_id, hit_unit_id, hit_zone_id, hit_position, attack_direction, damage_profile_id, unpack(args, 1, num_args))
+end)
+
+mod:hook(ActionSweep, "_play_character_impact", function (func, self, is_server, attacker_unit, hit_unit, breed, hit_position, hit_zone_name, current_action, damage_profile, target_index, power_level, ...)
+	return func(self, is_server, attacker_unit, hit_unit, breed, hit_position, hit_zone_name, current_action, damage_profile, target_index, power_level * momentum_damage_multiplier(attacker_unit), ...)
+end)

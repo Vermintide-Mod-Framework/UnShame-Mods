@@ -14,29 +14,35 @@ return {
 	multidodge_description = {
 		en = "Dodge as often as you like, in the air and off walls.",
 	},
+	momentum_damage = {
+		en = "Momentum Damage",
+	},
+	momentum_damage_description = {
+		en = "Melee hits do more damage the faster you move.",
+	},
 	no_barriers = {
 		en = "Remove Barriers",
 	},
 	no_barriers_description = {
-		en = "Takes away what keeps you in bounds. Choose which below.",
+		en = "Takes away most of what keeps you in bounds. Choose which below.",
 	},
 	no_invisible_walls = {
 		en = "Invisible Walls",
 	},
 	no_invisible_walls_description = {
-		en = "Removes the invisible walls that stop you from climbing back up after a drop.",
+		en = "Removes most of the invisible walls that stop you from climbing back up after a drop.",
 	},
 	no_kill_zones = {
 		en = "Kill Zones",
 	},
 	no_kill_zones_description = {
-		en = "You are no longer killed for falling out of the level or entering a kill zone.",
+		en = "You are no longer killed for falling out of the level or entering most kill zones.",
 	},
 	no_ledges = {
 		en = "Ledges",
 	},
 	no_ledges_description = {
-		en = "You no longer hang from ledges when you fall past them.",
+		en = "You no longer hang from most ledges when you fall past them.",
 	},
 	gameplay = {
 		en = "Gameplay",
@@ -65,23 +71,11 @@ return {
 	auto_restart_description = {
 		en = "A level you lose starts again instead of sending you back to the keep.",
 	},
-	ammo_pickups = {
-		en = "Ammo Pickups",
+	more_ammo_pickups = {
+		en = "More Ammo Pickups",
 	},
-	ammo_pickups_description = {
-		en = "How many ammo pickups a level has. Applies to levels you host, from the next one you start.",
-	},
-	ammo_pickups_normal = {
-		en = "Normal",
-	},
-	ammo_pickups_more = {
-		en = "1.5x",
-	},
-	ammo_pickups_double = {
-		en = "2x",
-	},
-	ammo_pickups_triple = {
-		en = "3x",
+	more_ammo_pickups_description = {
+		en = "Levels have more ammo pickups. Applies to levels you host, from the next one you start.",
 	},
 	ut_weapons = {
 		en = "Weapons",
@@ -93,24 +87,24 @@ return {
 		en = "Shock Rifle",
 	},
 	shock_rifle_description = {
-		en = "Replaces the Beam Staff. An instant beam and a slow shock ball. Hit the ball with the beam for a huge explosion.",
+		en = "Replaces the Beam Staff. Primary fires an instant beam, alt fire a slow shock ball. Shoot the ball with the beam for a huge combo explosion. Overheating sets one off too.",
 	},
 	flak_cannon = {
 		en = "Flak Cannon",
 	},
 	flak_cannon_description = {
-		en = "Replaces the Blunderbuss. A tight spread of bouncing flak, and a shell that bursts into shrapnel.",
+		en = "Replaces the Blunderbuss. Primary fires a tight spread of flak that bounces off walls. Alt fire lobs a shell that bursts into shrapnel when it hits.",
 	},
 	bio_rifle = {
 		en = "Bio Rifle",
 	},
 	bio_rifle_description = {
-		en = "Replaces the Drakegun. Lobs globs that make burning puddles. Globs that land in a puddle grow it. A puddle that gets too big, or that anything steps into, bursts into more globs. Hold alt fire for a glob that bursts a puddle as it lands.",
+		en = "Replaces the Drakegun. Lobs globs that leave burning puddles. More globs grow a puddle, and a puddle that gets too big, or that anything steps into, bursts into more globs. Alt fire charges a glob that bursts a puddle as it lands. Overheating sprays globs.",
 	},
 	rocket_launcher = {
 		en = "Rocket Launcher",
 	},
 	rocket_launcher_description = {
-		en = "Replaces the Repeating Crossbow. Fire a rocket, or hold alt fire to load up to three and lock on to enemies.",
+		en = "Replaces the Repeating Crossbow. Primary fires a rocket. Hold alt fire to load up to three, keep your aim on an enemy to lock on, and release to fire. Press primary while loading to fire them in a spiral instead of a line.",
 	},
 }

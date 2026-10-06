@@ -61,12 +61,14 @@ local CONFIG = {
 	child_goo_max = 3,
 	big_puddle_goo = 3, -- a puddle with this much goo looks like the charged glob's (charged_puddle_effect)
 	-- Charged: the charge level (0 to 1) goes from the primary's numbers to these. The goo of the glob goes from
-	-- charged_goo_min to charged_goo (it bursts the puddle it lands in whatever the goo), and the power of a puddle's
-	-- burst goes with the goo it had: from the primary's glob_damage to charged_glob_damage and the radius from
-	-- glob_burst_radius to charged_burst_radius, at charged_goo.
+	-- charged_goo_min, at the charge where it can first be fired (min_fire_time), to charged_goo, at a full charge
+	-- (it bursts the puddle it lands in whatever the goo), by the same curve as the heat of the charge
+	-- (charge_heat_curve). The power of a puddle's burst goes with the goo it had: from the primary's glob_damage to
+	-- charged_glob_damage and the radius from glob_burst_radius to charged_burst_radius, at charged_goo.
 	charge_time = 2, -- seconds to a full charge
+	min_fire_time = 0.3, -- seconds into the charge that the glob can be fired: that is the bottom of the goo
 	charged_glob_speed = 3000,
-	charged_goo_min = 6,
+	charged_goo_min = 3,
 	charged_goo = 15,
 	charged_glob_damage = 70,
 	charged_burst_radius = 4,
@@ -99,10 +101,12 @@ local CONFIG = {
 	-- Overheating, in the Drakegun's own units (it overheats at 30): a glob is this much, a full charge is
 	-- this much by the time it is full (the shot that follows costs nothing more). Balanced against the
 	-- Shock Rifle's, whose beam is 4 every 0.7 seconds (5.7 a second, a combo is 12 more): a glob every 0.45
-	-- seconds is 5.6 a second, and the charge is 5.5 a second. (The game takes the heat off again 1.3 a second,
-	-- from 0.25 seconds after the last of it.)
+	-- seconds is 5.6 a second. (The game takes the heat off again 1.3 a second, from 0.25 seconds after the last
+	-- of it.)
 	glob_overcharge = 2.5,
-	charged_overcharge = 11,
+	charged_overcharge = 15,
+	-- How front-loaded the heat of the charge is: 1 is even, the higher the more of it comes at the start
+	charge_heat_curve = 2,
 	-- The sounds, events of the game's: the Sienna's fireball and geiser for the shots (the shots' have to be
 	-- in the game's NetworkLookup of sound events, the others are not sent), the fire grenade's explosion and
 	-- the fireball's hit for the bursts and the impacts
@@ -139,7 +143,37 @@ local overcharge_values = PlayerUnitStatusSettings.overcharge_values
 overcharge_values.ut_bio_glob = CONFIG.glob_overcharge
 -- (added every CHARGE_HEAT_INTERVAL seconds while charging, together they are charged_overcharge)
 local CHARGE_HEAT_INTERVAL = 0.2
-overcharge_values.ut_bio_charging = CONFIG.charged_overcharge * CHARGE_HEAT_INTERVAL / CONFIG.charge_time
+local CHARGE_STEP = CHARGE_HEAT_INTERVAL / CONFIG.charge_time -- the charge (0 to 1) between two additions
+overcharge_values.ut_bio_charging = CONFIG.charged_overcharge * CHARGE_STEP
+
+-- The heat of the charge goes up fast at first and slows down: the heat made by the time the charge is c (0 to 1)
+-- is charged_overcharge * (1 - (1 - c)^charge_heat_curve). The game adds the same amount every time, so each
+-- addition is scaled to what the curve makes in the step it ends. (The charge the player has is kept here by the
+-- charge action.)
+local charge_levels = {}
+
+local function charge_heat_progress(charge_level)
+	return 1 - (1 - math.clamp(charge_level, 0, 1)) ^ CONFIG.charge_heat_curve
+end
+
+mod:hook_safe(ActionCharge, "client_owner_post_update", function (self)
+	if self.current_action and self.current_action.ut_bio_charge then
+		charge_levels[self.owner_unit] = self.charge_level
+	end
+end)
+
+mod:hook(PlayerUnitOverchargeExtension, "add_charge", function (func, self, overcharge_amount, charge_level, overcharge_type)
+	if overcharge_type == "ut_bio_charging" then
+		local level = charge_levels[self.unit] or 0
+
+		-- (once the charge is full the game adds next to nothing, that is left alone)
+		if level < 1 then
+			overcharge_amount = overcharge_amount * (charge_heat_progress(level) - charge_heat_progress(level - CHARGE_STEP)) / CHARGE_STEP
+		end
+	end
+
+	return func(self, overcharge_amount, charge_level, overcharge_type)
+end)
 
 -- The multipliers of the damage and the stagger per armor type: unarmored, armored, monsters, players, berserkers,
 -- super armor (the game's own for these explosions are 0 against super armor, which is what chaos warriors have:
@@ -776,7 +810,11 @@ local function goo_of(self)
 	local action = self._current_action
 
 	if action.ut_bio_goo_by_charge then
-		return math.lerp(CONFIG.charged_goo_min, CONFIG.charged_goo, math.clamp(self.scale or 1, 0, 1))
+		-- (the goo goes from charged_goo_min at the charge where the glob can first be fired, not from zero)
+		local first_charge = CONFIG.min_fire_time / CONFIG.charge_time
+		local progress = math.clamp(((self.scale or 1) - first_charge) / (1 - first_charge), 0, 1)
+
+		return math.lerp(CONFIG.charged_goo_min, CONFIG.charged_goo, charge_heat_progress(progress))
 	end
 
 	if action.ut_bio_goo_range then
@@ -1007,6 +1045,7 @@ local function apply_bio_rifle()
 	charge.enter_function = enter_function
 	-- the charge makes the weapon hot as it goes
 	charge.overcharge_interval = CHARGE_HEAT_INTERVAL
+	charge.ut_bio_charge = true
 	charge.overcharge_type = "ut_bio_charging"
 	-- (Kept from the Drakegun's own charge, remove_overcharge_on_interrupt: a full charge adds almost no more heat, so
 	-- it can be held at full without overheating, and some of the heat is taken back if the charge is cancelled.)
@@ -1014,7 +1053,7 @@ local function apply_bio_rifle()
 		action = "action_one",
 		auto_chain = true,
 		release_required = "action_two_hold",
-		start_time = 0.3,
+		start_time = CONFIG.min_fire_time,
 		sub_action = "shoot_charged",
 	}
 	actions.action_two.default = charge
@@ -1137,11 +1176,13 @@ mod.on_unload = function (...)
 
 	table.clear(delayed_ends)
 	table.clear(puddles)
+	table.clear(charge_levels)
 	effects.clear()
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(delayed_ends)
 	table.clear(puddles)
+	table.clear(charge_levels)
 	effects.clear()
 end

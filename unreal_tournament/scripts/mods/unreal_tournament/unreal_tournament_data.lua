@@ -45,6 +45,11 @@ return {
 						type = "checkbox",
 						default_value = false,
 					},
+					{
+						setting_id = "momentum_damage",
+						type = "checkbox",
+						default_value = false,
+					},
 				},
 			},
 			{
@@ -74,27 +79,9 @@ return {
 				type = "group",
 				sub_widgets = {
 					{
-						setting_id = "ammo_pickups",
-						type = "dropdown",
-						default_value = 1,
-						options = {
-							{
-								text = "ammo_pickups_normal",
-								value = 1,
-							},
-							{
-								text = "ammo_pickups_more",
-								value = 1.5,
-							},
-							{
-								text = "ammo_pickups_double",
-								value = 2,
-							},
-							{
-								text = "ammo_pickups_triple",
-								value = 3,
-							},
-						},
+						setting_id = "more_ammo_pickups",
+						type = "checkbox",
+						default_value = false,
 					},
 					{
 						setting_id = "auto_revive",
