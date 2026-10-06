@@ -490,6 +490,7 @@ end)
 -- which: a function can be hooked once.)
 mod.aoe_callbacks = mod.aoe_callbacks or {}
 mod.init_callbacks = mod.init_callbacks or {}
+mod.hit_enemy_callbacks = mod.hit_enemy_callbacks or {}
 
 mod:hook_safe(PlayerProjectileUnitExtension, "do_aoe", function (self, aoe_data, position)
 	local action = self._current_action
@@ -686,6 +687,14 @@ for _, extension_class in ipairs({
 		func(self, impact_data, hit_unit, hit_position, hit_direction, ...)
 
 		self.power_level = power_level
+
+		-- (hooks of hit_enemy for other weapons are registered by name in mod.hit_enemy_callbacks, the action
+		-- says which; only the projectiles of the player who fired are told, the others get it from the network)
+		local hit_callback = action and action.ut_hit_enemy_callback and extension_class == PlayerProjectileUnitExtension and mod.hit_enemy_callbacks[action.ut_hit_enemy_callback]
+
+		if hit_callback then
+			hit_callback(self, hit_unit, hit_position)
+		end
 
 		if action and action.ut_flak_chunk and not AiUtils.attack_is_shield_blocked(hit_unit, self._owner_unit, nil, hit_direction) then
 			add_ragdoll_throw(hit_unit, self._owner_unit, hit_position, hit_direction)

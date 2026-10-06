@@ -28,6 +28,11 @@ return {
 						type = "checkbox",
 						default_value = true,
 					},
+					{
+						setting_id = "bio_rifle",
+						type = "checkbox",
+						default_value = true,
+					},
 				},
 			},
 			{

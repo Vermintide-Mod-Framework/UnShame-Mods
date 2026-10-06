@@ -101,6 +101,12 @@ return {
 	flak_cannon_description = {
 		en = "Replaces the Blunderbuss. A tight spread of bouncing flak, and a shell that bursts into shrapnel.",
 	},
+	bio_rifle = {
+		en = "Bio Rifle",
+	},
+	bio_rifle_description = {
+		en = "Replaces the Drakegun. Lobs globs that burst and leave a burning puddle. Hold alt fire to charge a glob that bursts into more globs.",
+	},
 	rocket_launcher = {
 		en = "Rocket Launcher",
 	},

@@ -16,6 +16,7 @@ end
 mod:dofile("scripts/mods/unreal_tournament/shock_rifle")
 mod:dofile("scripts/mods/unreal_tournament/flak_cannon")
 mod:dofile("scripts/mods/unreal_tournament/rocket_launcher")
+mod:dofile("scripts/mods/unreal_tournament/bio_rifle")
 mod:dofile("scripts/mods/unreal_tournament/movement")
 mod:dofile("scripts/mods/unreal_tournament/pickups")
 mod:dofile("scripts/mods/unreal_tournament/gameplay")
