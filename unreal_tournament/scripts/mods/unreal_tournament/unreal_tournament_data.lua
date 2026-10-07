@@ -33,6 +33,11 @@ return {
 						type = "checkbox",
 						default_value = true,
 					},
+					{
+						setting_id = "link_gun",
+						type = "checkbox",
+						default_value = true,
+					},
 				},
 			},
 			{

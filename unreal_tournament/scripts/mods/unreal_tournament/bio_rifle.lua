@@ -156,13 +156,16 @@ local function charge_heat_progress(charge_level)
 	return 1 - (1 - math.clamp(charge_level, 0, 1)) ^ CONFIG.charge_heat_curve
 end
 
-mod:hook_safe(ActionCharge, "client_owner_post_update", function (self)
-	if self.current_action and self.current_action.ut_bio_charge then
-		charge_levels[self.owner_unit] = self.charge_level
-	end
-end)
+mod.charge_update_callbacks.bio = function (self)
+	charge_levels[self.owner_unit] = self.charge_level
+end
 
 mod:hook(PlayerUnitOverchargeExtension, "add_charge", function (func, self, overcharge_amount, charge_level, overcharge_type)
+	-- (the Link Gun's beam only costs heat while it is on an enemy, or on an ally who is attacking)
+	if overcharge_type == "ut_link_beam" and mod.link_beam_is_free and mod.link_beam_is_free(self.unit) then
+		return
+	end
+
 	if overcharge_type == "ut_bio_charging" then
 		local level = charge_levels[self.unit] or 0
 
@@ -775,6 +778,9 @@ local function with_valid_positions(func, ...)
 	end
 end
 
+-- (the Link Gun's stagger needs it too)
+mod.with_valid_positions = with_valid_positions
+
 -- (with final, the puddle is gone after it, nothing of it stays)
 local function burst_puddle(puddle, t, final)
 	remove_puddle_area(puddle)
@@ -1045,7 +1051,7 @@ local function apply_bio_rifle()
 	charge.enter_function = enter_function
 	-- the charge makes the weapon hot as it goes
 	charge.overcharge_interval = CHARGE_HEAT_INTERVAL
-	charge.ut_bio_charge = true
+	charge.ut_charge_callback = "bio"
 	charge.overcharge_type = "ut_bio_charging"
 	-- (Kept from the Drakegun's own charge, remove_overcharge_on_interrupt: a full charge adds almost no more heat, so
 	-- it can be held at full without overheating, and some of the heat is taken back if the charge is cancelled.)

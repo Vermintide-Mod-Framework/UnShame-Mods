@@ -101,6 +101,12 @@ return {
 	bio_rifle_description = {
 		en = "Replaces the Drakegun. Lobs globs that leave burning puddles. More globs grow a puddle, and a puddle that gets too big, or that anything steps into, bursts into more globs. Alt fire charges a glob that bursts a puddle as it lands. Overheating sprays globs.",
 	},
+	link_gun = {
+		en = "Link Gun",
+	},
+	link_gun_description = {
+		en = "Replaces the Deepwood Staff. Primary fires stunning bolts. Alt fire links to what you aim at: an enemy is held and follows your aim, heavy ones slower, and an ally does more damage.",
+	},
 	rocket_launcher = {
 		en = "Rocket Launcher",
 	},

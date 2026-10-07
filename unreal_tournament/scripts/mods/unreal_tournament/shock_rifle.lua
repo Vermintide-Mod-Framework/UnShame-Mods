@@ -1205,7 +1205,7 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	clear_timed_effects()
 end
 
-mod:hook_safe(SimpleInventoryExtension, "_wield_slot", function (self, equipment, slot_data, unit_1p)
+mod.wield_callbacks.shock = function (self, equipment, slot_data, unit_1p)
 	if not CONFIG.idle_pose_event or not slot_data then
 		return
 	end
@@ -1231,7 +1231,7 @@ mod:hook_safe(SimpleInventoryExtension, "_wield_slot", function (self, equipment
 	schedule(CONFIG.idle_pose_delay, is_valid, function ()
 		enter_idle_pose(first_person_extension, unit_1p, is_valid, CONFIG.idle_pose_wield_slow_delay)
 	end)
-end)
+end
 
 mod:hook_safe(ActionHandgun, "client_owner_start_action", function (self, new_action)
 	self._ut_combo_checked = not new_action.ut_shock_beam

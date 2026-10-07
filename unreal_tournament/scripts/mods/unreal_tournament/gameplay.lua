@@ -73,7 +73,8 @@ local function release_player(disabler_unit, player_unit, t)
 	-- (the big ones can only be staggered by the strongest kind)
 	local stagger_type = breed.boss_staggers and stagger_types.explosion or stagger_types.heavy
 
-	AiUtils.stagger(disabler_unit, blackboard, player_unit, direction, 1, stagger_type, STAGGER_DURATION, nil, t, 1, true, false)
+	-- (the game's statistics look at the positions of the units in a stagger, this runs before the game has made them current)
+	mod.with_valid_positions(AiUtils.stagger, disabler_unit, blackboard, player_unit, direction, 1, stagger_type, STAGGER_DURATION, nil, t, 1, true, false)
 end
 
 local function update_forgiving_disablers(t)
