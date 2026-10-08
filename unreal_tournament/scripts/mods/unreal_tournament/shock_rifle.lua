@@ -108,7 +108,7 @@ local CONFIG = {
 local overcharge_values = PlayerUnitStatusSettings.overcharge_values
 
 overcharge_values.ut_shock_beam = overcharge_values.beam_staff_sniper * CONFIG.overcharge_scale
-overcharge_values.ut_shock_ball = overcharge_values.fireball_basic * CONFIG.overcharge_scale
+overcharge_values.ut_shock_ball = overcharge_values.ut_shock_beam
 
 -- Gravity of 0 is already defined by the game (used by the drake pistols), reusing it avoids
 -- having to extend NetworkLookup.projectile_gravity_settings
