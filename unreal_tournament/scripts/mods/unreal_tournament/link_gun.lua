@@ -22,6 +22,7 @@ local CONFIG = {
 	-- in it.
 	idle_pose_event = "attack_charge_fireball",
 	idle_pose_delay = 0.4,
+	transition_pose_delay = 0.5, -- seconds after the weapons are shown again, after a ladder or the like, that the stance is entered again
 	damage_recovery_delay = 0.5, -- seconds after damage that the stance is entered again (the reaction plays until then)
 	-- The right arm isn't shown: this node of the first person unit is scaled to this (0 would break the skinning)
 	hidden_arm_nodes = {
@@ -70,6 +71,7 @@ local CONFIG = {
 	bolt_link_node = "j_leftweaponattach",
 	bolt_forward_offset = 0.6, -- m ahead of the node
 	bolt_stagger_power = 0.6,
+	bolt_damage_scale = 1.6, -- how much more damage a bolt does than the staff's thorns did
 	-- Beam (UT: TraceRange 1100 uu, 1.5 times that while linked; here the link holds until the beam is let go, or the
 	-- target is further away than that)
 	beam_range = 22, -- m
@@ -79,6 +81,7 @@ local CONFIG = {
 	beam_overcharge_interval = 0.25,
 	-- Ally: the damage it does is this much more while linked, the buff is kept up every buff_refresh seconds
 	ally_damage_bonus = 0.5,
+	ally_thp_multiplier = 2, -- the temporary health a linked ally gets from their attacks
 	ally_buff_duration = 0.6, -- seconds
 	ally_buff_refresh = 0.25, -- seconds
 	bot_target_range = 80, -- m, how far from a linked bot the enemy it is made to attack can be
@@ -135,11 +138,8 @@ local CONFIG = {
 	-- (the game's own interaction), tried again after supply_retry seconds.
 	supply_aim_dot = 0.98,
 	supply_retry = 0.6, -- seconds
-	-- Doors: yanking one opens it, or closes it. The aim has to pass through the box of the door, made door_aim_scale
-	-- times as big, and wider the further away it is (door_aim_slack meters for every meter of distance, a chest
-	-- far away is small to aim at). The beam ends in the middle of the door or chest.
-	door_aim_scale = 1.3,
-	door_aim_slack = 0.12,
+	-- Doors and chests: yanking a door opens it, or closes it. The aim has to be on the door or the chest itself. The beam
+	-- ends in the middle of it. A door that is broken or a chest that is opened isn't linked.
 	-- The outline of an enemy that is held (alpha, red, green, blue)
 	held_outline_color = {255, 60, 230, 190},
 	-- Yanking costs heat on top of the heat of the beam: yank_free_overcharge for freeing an enemy from a vortex or a
@@ -224,6 +224,10 @@ if has_staff then
 
 		target.power_distribution_near.impact = CONFIG.bolt_stagger_power
 		target.power_distribution_far.impact = CONFIG.bolt_stagger_power
+
+		-- (stronger than the thorns were)
+		target.power_distribution_near.attack = target.power_distribution_near.attack * CONFIG.bolt_damage_scale
+		target.power_distribution_far.attack = target.power_distribution_far.attack * CONFIG.bolt_damage_scale
 
 		-- (the bolts poison, as the beam does)
 		target.dot_template_name = CONFIG.dot_template
@@ -959,46 +963,84 @@ local function mesh_center(mesh)
 	return Matrix4x4.translation(pose), math.max(half_extents.x, half_extents.y, half_extents.z)
 end
 
--- The places of a door or a chest that the aim can be on, and the beam ends on: the middle of its biggest mesh (the
--- door itself, not the frame or the hinges), or the middle of the box of the unit if it has none
-local function openable_points(unit)
-	local best_mesh, best_position, best_size
+-- The boxes of a door or a chest that the aim can be on: the box of its biggest mesh (the door itself, not the frame or
+-- the hinges; it moves with the door), and for a chest the box of the unit too, which doesn't move. Each has the mesh it
+-- is of, if it is of one (the beam ends in the middle of that).
+local function openable_boxes(unit, with_unit_box)
+	local boxes = {}
+	local best_mesh, best_pose, best_half, best_size
 
 	for i = 0, Unit.num_meshes(unit) - 1 do
 		local mesh = Unit.mesh(unit, i)
-		local position, size
+		local ok, pose, half_extents
 
 		if mesh then
-			position, size = mesh_center(mesh)
+			ok, pose, half_extents = pcall(Mesh.box, mesh)
 		end
 
-		if position and (not best_size or size > best_size) then
-			best_mesh = mesh
-			best_position = position
-			best_size = size
+		if ok and pose then
+			local size = math.max(half_extents.x, half_extents.y, half_extents.z)
+
+			if not best_size or size > best_size then
+				best_mesh = mesh
+				best_pose = pose
+				best_half = half_extents
+				best_size = size
+			end
 		end
 	end
 
-	local pose, half_extents = Unit.box(unit)
-
 	if best_mesh then
-		return {
-			{
-				actor = best_mesh,
-				position = best_position,
-				-- (as big as the biggest of the mesh and the unit: the aim has to be on the thing, not on its middle)
-				size = math.max(best_size, half_extents.x, half_extents.y, half_extents.z),
-			},
+		boxes[#boxes + 1] = {
+			half = best_half,
+			mesh = best_mesh,
+			pose = best_pose,
 		}
 	end
 
+	if with_unit_box or not best_mesh then
+		local pose, half_extents = Unit.box(unit)
 
-	return {
-		{
-			position = Matrix4x4.translation(pose),
-			size = math.max(half_extents.x, half_extents.y, half_extents.z),
-		},
-	}
+		boxes[#boxes + 1] = {
+			half = half_extents,
+			pose = pose,
+		}
+	end
+
+	return boxes
+end
+
+-- How far along the aim it hits a box (a pose and half sizes), or nil if it doesn't: the box is what is seen, not a ball
+-- around its middle
+local function ray_hits_box(origin, aim, pose, half)
+	local inverse = Matrix4x4.inverse(pose)
+	local from = Matrix4x4.transform(inverse, origin)
+	local direction = Matrix4x4.transform(inverse, origin + aim) - from
+	local near, far = 0, math.huge
+	local origins = {from.x, from.y, from.z}
+	local directions = {direction.x, direction.y, direction.z}
+	local halves = {half.x, half.y, half.z}
+
+	for axis = 1, 3 do
+		local o, d, h = origins[axis], directions[axis], halves[axis]
+
+		if math.abs(d) < 0.000001 then
+			if math.abs(o) > h then
+				return nil
+			end
+		else
+			local t1, t2 = (-h - o) / d, (h - o) / d
+
+			near = math.max(near, math.min(t1, t2))
+			far = math.min(far, math.max(t1, t2))
+
+			if near > far then
+				return nil
+			end
+		end
+	end
+
+	return near
 end
 
 -- What the aim is on, closest to it: an enemy that can be held or an ally, and failing those an object with a body
@@ -1095,14 +1137,18 @@ local function find_target(owner_unit, physics_world, origin, aim)
 			end
 		end
 
-		-- Doors and chests are as big as they are: the aim has to pass through the box of the door (a bit wider), not
-		-- near the point it is placed at (its hinge, on the ground)
+		-- Doors and chests: the aim has to be on the thing, on the box of what is seen (the nearest one that it hits)
 		if not best_unit then
-			local best_off_axis
-			local openables = {}
+			local best_distance
+			local openables = {} -- the unit: is it a chest
 
 			for unit in pairs(Managers.state.entity:get_entities("DoorExtension")) do
-				openables[#openables + 1] = unit
+				local door_extension = ScriptUnit.has_extension(unit, "door_system")
+
+				-- (a door that is broken is done with)
+				if door_extension and not door_extension.dead then
+					openables[unit] = false
+				end
 			end
 
 			for unit in pairs(Managers.state.entity:get_entities("GenericUnitInteractableExtension")) do
@@ -1110,30 +1156,22 @@ local function find_target(owner_unit, physics_world, origin, aim)
 				local interactable_extension = ScriptUnit.has_extension(unit, "interactable_system")
 
 				if Unit.get_data(unit, "interaction_data", "interaction_type") == "chest" and not Unit.get_data(unit, "interaction_data", "used") and interactable_extension and interactable_extension:is_enabled() then
-					openables[#openables + 1] = unit
+					openables[unit] = true
 				end
 			end
 
-			for _, unit in ipairs(openables) do
+			for unit, is_chest in pairs(openables) do
 				if Unit.alive(unit) then
-					-- (where the door is seen now: the box of the unit doesn't move when it opens)
-					local points = openable_points(unit)
+					local boxes = openable_boxes(unit, is_chest)
 
-					for i = 1, #points do
-						local center = points[i].position
-						local radius = points[i].size * CONFIG.door_aim_scale
-						local offset = center - origin
-						local along = Vector3.dot(aim, offset)
+					for i = 1, #boxes do
+						local distance = ray_hits_box(origin, aim, boxes[i].pose, boxes[i].half)
 
-						if along > 0.1 and along <= range + radius then
-							local off_axis = Vector3.length(offset - aim * along)
-
-							if off_axis <= radius + along * CONFIG.door_aim_slack and (not best_off_axis or off_axis < best_off_axis) and has_line_of_sight(physics_world, origin, center, points[i].size + 0.5) then
-								best_unit = unit
-								best_kind = "openable"
-								best_off_axis = off_axis
-								best_actor = points[i].actor
-							end
+						if distance and distance <= range and (not best_distance or distance < best_distance) and has_line_of_sight(physics_world, origin, origin + aim * distance) then
+							best_unit = unit
+							best_kind = "openable"
+							best_distance = distance
+							best_actor = boxes[i].mesh
 						end
 					end
 				end
@@ -1800,6 +1838,26 @@ local function show_ally_buff(state, world, t)
 	end
 end
 
+-- The temporary health an ally gets from their attacks (the game's heals that come from procs of hits and kills: the
+-- leech of talents and weapons) is doubled while they are linked. The host works out the heals, where the buff is.
+local THP_FROM_ATTACKS = {
+	heal_from_proc = true,
+	leech = true,
+	proc = true,
+}
+
+mod:hook(DamageUtils, "heal_network", function (func, healed_unit, healer_unit, heal_amount, heal_type, ...)
+	if THP_FROM_ATTACKS[heal_type] and Unit.alive(healed_unit) then
+		local buff_extension = ScriptUnit.has_extension(healed_unit, "buff_system")
+
+		if buff_extension and buff_extension:has_buff_type(ALLY_BUFF) then
+			heal_amount = heal_amount * CONFIG.ally_thp_multiplier
+		end
+	end
+
+	return func(healed_unit, healer_unit, heal_amount, heal_type, ...)
+end)
+
 -- A bot that is linked attacks the nearest enemy: the bots' own urgent target (what they attack first, from where they
 -- are, as they do with a boss) is set to it. (Not the priority target: that is always about an ally that is held, and the bot
 -- code looks for the ally.) The game works the urgent targets out again every frame, and takes this one away, so it is set
@@ -2193,6 +2251,38 @@ local function yank_enemy(state, owner_unit)
 	state.yank = true
 end
 
+-- Getting someone up by a yank is the game's own result of the interaction (what the game does when it is over), but
+-- the other half is the animation of the one who is got up, which the interaction plays itself (the fall of being knocked
+-- down is only left with it), and the state of the one who is got up isn't always ready to take the result when it is
+-- given (in the middle of going down, say): it is given again, a few times, until it has taken it.
+local pending_rescues = {} -- the unit: { kind, owner, next_t, tries }
+
+local function give_rescue(unit, kind, owner_unit)
+	if kind == "revive" then
+		StatusUtils.set_revived_network(unit, true, owner_unit)
+	else
+		StatusUtils.set_pulled_up_network(unit, true, owner_unit)
+	end
+
+	CharacterStateHelper.play_animation_event(unit, "revive_complete")
+end
+
+local function update_pending_rescues(t)
+	for unit, pending in pairs(pending_rescues) do
+		local status_extension = Unit.alive(unit) and ScriptUnit.has_extension(unit, "status_system")
+		local still_waiting = status_extension and (pending.kind == "revive" and status_extension:is_knocked_down() or pending.kind == "pull_up" and status_extension:get_is_ledge_hanging())
+
+		if not still_waiting or pending.tries >= 4 then
+			pending_rescues[unit] = nil
+		elseif t >= pending.next_t then
+			pending.tries = pending.tries + 1
+			pending.next_t = t + 0.5
+
+			give_rescue(unit, pending.kind, pending.owner)
+		end
+	end
+end
+
 -- Yanking a player or a bot: freed from what holds them, a disabler or a vortex; pulled up from a ledge; got up
 -- from being knocked down; else launched at the owner (the state of being launched by the game's monsters). All at
 -- a cost, the launch at a big one.
@@ -2224,17 +2314,23 @@ local function yank_ally(state, owner_unit, t)
 
 	local disabler_unit = status_extension:get_disabler_unit()
 
-	if disabler_unit and mod.release_player_from_disabler then
+	if status_extension:is_hanging_from_hook() then
+		-- (hung up on a hook by a pack master: let down, as the game's interaction does)
+		StatusUtils.set_grabbed_by_pack_master_network("pack_master_dropping", unit, true, nil)
+		add_heat(owner_unit, CONFIG.yank_free_overcharge)
+	elseif disabler_unit and mod.release_player_from_disabler then
 		mod.release_player_from_disabler(disabler_unit, unit, t)
 		add_heat(owner_unit, CONFIG.yank_free_overcharge)
 	elseif status_extension:is_in_vortex() then
 		StatusUtils.set_in_vortex_network(unit, false, nil)
 		add_heat(owner_unit, CONFIG.yank_free_overcharge)
 	elseif status_extension:get_is_ledge_hanging() then
-		StatusUtils.set_pulled_up_network(unit, true, owner_unit)
+		give_rescue(unit, "pull_up", owner_unit)
+		pending_rescues[unit] = {kind = "pull_up", owner = owner_unit, next_t = t + 0.5, tries = 0}
 		add_heat(owner_unit, CONFIG.yank_rescue_overcharge)
 	elseif status_extension:is_knocked_down() then
-		StatusUtils.set_revived_network(unit, true, owner_unit)
+		give_rescue(unit, "revive", owner_unit)
+		pending_rescues[unit] = {kind = "revive", owner = owner_unit, next_t = t + 0.5, tries = 0}
 		add_heat(owner_unit, CONFIG.yank_rescue_overcharge)
 	elseif not status_extension:is_disabled() then
 		local flat = Vector3.flat(Unit.world_position(owner_unit, 0) - Unit.world_position(unit, 0))
@@ -2492,6 +2588,23 @@ mod.wield_callbacks.link = function (self, equipment, slot_data, unit_1p)
 	end)
 end
 
+-- The first person weapons are hidden for a while by the game's transitions (ladders, interactions that are seen from the
+-- third person, ledges, being knocked down, vortexes, being launched) and shown again when they are over, and the staff
+-- is back in the idle of the game, not in the stance: it is entered again a moment after they are shown.
+if PlayerUnitFirstPerson then
+	mod:hook_safe(PlayerUnitFirstPerson, "unhide_weapons", function (self)
+		if hand.first_person_extension ~= self or not pose.is_valid or not pose.is_valid() or not table.is_empty(self.hide_weapon_reasons) then
+			return
+		end
+
+		pose.entered = false
+
+		pose.schedule(CONFIG.transition_pose_delay, pose.is_valid, function ()
+			pose.enter(pose.unit_1p)
+		end)
+	end)
+end
+
 local previous_on_enabled = mod.on_enabled
 local previous_on_disabled = mod.on_disabled
 local previous_on_setting_changed = mod.on_setting_changed
@@ -2505,6 +2618,10 @@ mod.update = function (dt, ...)
 
 	pose.update(dt)
 	hand.update()
+
+	if next(pending_rescues) then
+		update_pending_rescues(Managers.time:time("game"))
+	end
 	update_bolts()
 end
 

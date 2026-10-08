@@ -87,30 +87,30 @@ return {
 		en = "Shock Rifle",
 	},
 	shock_rifle_description = {
-		en = "Replaces the Beam Staff. Primary fires an instant beam, alt fire a slow shock ball. Shoot the ball with the beam for a huge combo explosion. Overheating sets one off too.",
+		en = "Sienna (Pyromancer, Battle Wizard, Unchained). Replaces the Beam Staff. Primary fires an instant beam, alt fire a slow shock ball. Shoot the ball with the beam for a huge combo explosion. Overheating sets one off too.",
 	},
 	flak_cannon = {
 		en = "Flak Cannon",
 	},
 	flak_cannon_description = {
-		en = "Replaces the Blunderbuss. Primary fires a tight spread of flak that bounces off walls. Alt fire lobs a shell that bursts into shrapnel when it hits.",
+		en = "Kruber (Mercenary, Huntsman, Foot Knight). Replaces the Blunderbuss. Primary fires a tight spread of flak that bounces off walls. Alt fire lobs a shell that bursts into shrapnel when it hits.",
 	},
 	bio_rifle = {
 		en = "Bio Rifle",
 	},
 	bio_rifle_description = {
-		en = "Replaces the Drakegun. Lobs globs that leave burning puddles. More globs grow a puddle, and a puddle that gets too big, or that anything steps into, bursts into more globs. Alt fire charges a glob that bursts a puddle as it lands. Overheating sprays globs.",
+		en = "Bardin (Ironbreaker). Replaces the Drakegun. Lobs globs that leave burning puddles. More globs grow a puddle, and a puddle that gets too big, or that anything steps into, bursts into more globs. Alt fire charges a glob that bursts a puddle as it lands. Overheating sprays globs.",
 	},
 	link_gun = {
 		en = "Link Gun",
 	},
 	link_gun_description = {
-		en = "Replaces the Deepwood Staff. Primary fires stunning bolts. Alt fire links to what you aim at: an enemy is held and follows your aim, heavy ones slower, and an ally does more damage.",
+		en = "Kerillian (Sister of the Thorn). Replaces the Deepwood Staff. Primary fires poisonous, stunning bolts. Hold alt fire to link to what you aim at, and press primary while linked to yank it. Try it on enemies, allies, and anything that looks interesting.",
 	},
 	rocket_launcher = {
 		en = "Rocket Launcher",
 	},
 	rocket_launcher_description = {
-		en = "Replaces the Repeating Crossbow. Primary fires a rocket. Hold alt fire to load up to three, keep your aim on an enemy to lock on, and release to fire. Press primary while loading to fire them in a spiral instead of a line.",
+		en = "Saltzpyre (Witch Hunter Captain, Bounty Hunter, Zealot). Replaces the Repeating Crossbow. Primary fires a rocket. Hold alt fire to load up to three, keep your aim on an enemy to lock on, and release to fire. Press primary while loading to fire them in a spiral instead of a line.",
 	},
 }
