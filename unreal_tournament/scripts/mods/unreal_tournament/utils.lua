@@ -36,6 +36,29 @@ function utils.with_valid_positions(func, ...)
 	end
 end
 
+-- The unit that holds a player now, if one does. The game's own get_disabler_unit can't be used for this: the unit that
+-- grabbed a player (a Chaos Spawn, say) stays in their status after they are let go, and comes first in the game's
+-- order, so it would be found again for a later grab by another disabler. Only what the status says is going on counts.
+function utils.get_disabler(status_extension)
+	local disabler_unit
+
+	if status_extension:is_grabbed_by_tentacle() then
+		disabler_unit = status_extension.grabbed_by_tentacle_unit
+	elseif status_extension:is_pounced_down() then
+		disabler_unit = status_extension:get_pouncer_unit()
+	elseif status_extension:is_grabbed_by_chaos_spawn() then
+		disabler_unit = status_extension.grabbed_by_chaos_spawn_unit
+	elseif status_extension:is_grabbed_by_pack_master() then
+		disabler_unit = status_extension:get_pack_master_grabber()
+	elseif status_extension:is_grabbed_by_corruptor() then
+		disabler_unit = status_extension.corruptor_unit
+	end
+
+	if disabler_unit and Unit.alive(disabler_unit) then
+		return disabler_unit
+	end
+end
+
 -- Lets a player go from the disabler that holds them: the disabler is staggered, which takes its behavior away from the
 -- hold, and that frees the player. The host's game does this, it is where the enemies are.
 function utils.release_from_disabler(disabler_unit, player_unit, t, stagger_duration)

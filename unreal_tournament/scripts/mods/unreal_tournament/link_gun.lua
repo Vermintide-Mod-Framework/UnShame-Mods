@@ -2141,7 +2141,7 @@ local function yank_ally(state, owner_unit, t)
 		return
 	end
 
-	local disabler_unit = status_extension:get_disabler_unit()
+	local disabler_unit = utils.get_disabler(status_extension)
 
 	if status_extension:is_hanging_from_hook() then
 		-- (hung up on a hook by a pack master: let down, as the game's interaction does)

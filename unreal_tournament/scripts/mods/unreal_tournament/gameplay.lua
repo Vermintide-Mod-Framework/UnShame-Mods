@@ -101,9 +101,10 @@ mod:hook(MutatorHandler, "pickup_settings_updated_settings", function (func, sel
 end)
 
 -- Forgiving Disablers: a player who has been held by a disabler for disable_time seconds is let go of. The
--- disabler is staggered, which takes its behavior away from the hold, and that frees the player. A disabler
--- that holds on gets staggered again after the same time. The host's game does this, it is where the enemies are.
-local disabled_since = {} -- the player's unit: { disabler = the unit holding them, t = since when }
+-- disabler is staggered, which takes its behavior away from the hold, and that frees the player. It is
+-- staggered once for a hold: one that holds on after it isn't staggered again (that would only keep it stunned). The
+-- host's game does this, it is where the enemies are.
+local disabled_since = {} -- the player's unit: { disabler = the unit holding them, t = since when, released = it was staggered }
 
 local function update_forgiving_disablers(t)
 	if not t or not is_option_on("forgiving_disablers") then
@@ -122,7 +123,7 @@ local function update_forgiving_disablers(t)
 
 	for _, player_unit in ipairs(side.PLAYER_AND_BOT_UNITS) do
 		local status_extension = Unit.alive(player_unit) and ScriptUnit.has_extension(player_unit, "status_system")
-		local disabler_unit = status_extension and status_extension:get_disabler_unit()
+		local disabler_unit = status_extension and utils.get_disabler(status_extension)
 		local state = disabled_since[player_unit]
 
 		if not disabler_unit then
@@ -132,8 +133,8 @@ local function update_forgiving_disablers(t)
 				disabler = disabler_unit,
 				t = t,
 			}
-		elseif t - state.t >= CONFIG.disable_time then
-			state.t = t
+		elseif not state.released and t - state.t >= CONFIG.disable_time then
+			state.released = true
 
 			utils.release_from_disabler(disabler_unit, player_unit, t, CONFIG.stagger_duration)
 		end
