@@ -8,6 +8,11 @@ local mod = get_mod("unreal_tournament")
 local TEMPLATE_NAME = "staff_blast_beam_template_1"
 
 local CONFIG = {
+	-- The multipliers of the damage and the stagger per armor type: unarmored, armored, monsters, players, berserkers,
+	-- super armor (the game's own for beams is 0 against super armor, which is what chaos warriors have, it would do
+	-- next to nothing to them)
+	armor_attack = {1, 0.8, 1.5, 1, 1, 0.5},
+	armor_impact = {1, 0.8, 1, 1, 1, 0.5},
 	-- Idle pose: the raised pose of the beam staff's continuous beam (without its zoom) is used
 	-- as the default pose. Set idle_pose_event to nil to keep the regular staff pose.
 	idle_pose_event = "attack_shoot_beam_start",
@@ -117,9 +122,10 @@ local BALL_GRAVITY_SETTINGS = "drake_pistols"
 -- Registration of new named data (must exist on every peer in the same order,
 -- everyone in the game needs the mod)
 
-local registration = mod:dofile("scripts/mods/unreal_tournament/registration")
-local register_damage_profile = registration.register_damage_profile
-local register_explosion_template = registration.register_explosion_template
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local effects = mod.effects
+local register_damage_profile = utils.register_damage_profile
+local register_explosion_template = utils.register_explosion_template
 
 -- Spread: the beam is hitscan and should hit exactly where the crosshair is
 
@@ -139,33 +145,12 @@ zero_numbers(SpreadTemplates.ut_shock_beam)
 
 -- Damage profiles
 -- The beam and the explosions share the armor modifiers and only differ in the power factor, see
--- registration.lua.
+-- utils.lua.
 
-local make_flat = registration.make_flat
-
--- The multipliers of the damage and the stagger per armor type: unarmored, armored, monsters, players,
--- berserkers, super armor (the game's own for beams is 0 against super armor, which is what chaos warriors
--- have, it would do next to nothing to them)
-local ARMOR_ATTACK = {
-	1,
-	0.8,
-	1.5,
-	1,
-	1,
-	0.5,
-}
-local ARMOR_IMPACT = {
-	1,
-	0.8,
-	1,
-	1,
-	1,
-	0.5,
-}
+local make_flat = utils.make_flat
 
 local function set_armor_modifiers(profile)
-	profile.armor_modifier.attack = table.clone(ARMOR_ATTACK)
-	profile.armor_modifier.impact = table.clone(ARMOR_IMPACT)
+	utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact)
 end
 
 local function register_explosion_damage_profiles(name, damage_multiplier)
@@ -247,15 +232,8 @@ register_explosion_template("ut_shock_combo_explosion", {
 
 -- Delayed pose events: the animation event is only sent while is_valid() still holds,
 -- so nothing is sent if the weapon was swapped or another action started in the meantime
-local pending_poses = {}
-
-local function schedule(delay, is_valid, callback)
-	pending_poses[#pending_poses + 1] = {
-		callback = callback,
-		is_valid = is_valid,
-		time_left = delay,
-	}
-end
+local scheduler = utils.delayed_events()
+local schedule = scheduler.schedule
 
 -- attack_speed is the animation speed variable the weapon animations are played with,
 -- every action sets it again when it starts
@@ -389,7 +367,7 @@ local function build_beam_action()
 		allowed_chain_actions = allowed_chain_actions(fire_chain_entries("action_one", "action_two", BEAM_TO_BEAM, BEAM_TO_BALL), 0.2, 0.2),
 		enter_function = function (attacker_unit, input_extension, remaining_time, weapon_extension)
 			input_extension:clear_input_buffer()
-			table.clear(pending_poses)
+			scheduler.clear()
 			schedule_pose_return(weapon_extension, action, CONFIG.beam_pose_return_time)
 
 			return input_extension:reset_release_input()
@@ -432,7 +410,7 @@ local function build_ball_action()
 		allowed_chain_actions = allowed_chain_actions(fire_chain_entries("action_two", "action_one", BALL_TO_BALL, BALL_TO_BEAM), 0.3, 0.3),
 		enter_function = function (attacker_unit, input_extension, remaining_time, weapon_extension)
 			input_extension:clear_input_buffer()
-			table.clear(pending_poses)
+			scheduler.clear()
 			schedule_pose_return(weapon_extension, action, CONFIG.ball_pose_return_time)
 
 			return input_extension:reset_release_input()
@@ -455,23 +433,12 @@ local function build_ball_action()
 	return action
 end
 
-local function set_lookup_data(actions)
-	for action_name, sub_actions in pairs(actions) do
-		for sub_action_name, sub_action in pairs(sub_actions) do
-			sub_action.lookup_data = {
-				item_template_name = TEMPLATE_NAME,
-				action_name = action_name,
-				sub_action_name = sub_action_name,
-			}
-		end
-	end
-end
 
 -- The staff template is shared game state, so it is patched in place and every
--- touched value is saved to be put back on disable. The saved values live in a persistent
--- table so that a mod reload doesn't mistake the patched template for the vanilla one.
+-- touched value is saved to be put back on disable, and when the mod is unloaded (a reload would
+-- mistake the patched template for the vanilla one).
 
-local persistent = mod:persistent_table("shock_rifle")
+local saved = {}
 local ATTACK_META_DATA_FIELDS = {
 	"can_charge_shot",
 	"charged_attack_action_name",
@@ -480,7 +447,7 @@ local ATTACK_META_DATA_FIELDS = {
 }
 
 local function restore_beam_staff()
-	local original = persistent.original
+	local original = saved.original
 	local template = rawget(Weapons, TEMPLATE_NAME)
 
 	if not original or not template then
@@ -503,7 +470,7 @@ local function restore_beam_staff()
 	template.tooltip_detail = original.tooltip_detail
 	template.required_projectile_unit_templates.fireball_charged = original.ball_projectile_units_required
 
-	persistent.original = nil
+	saved.original = nil
 end
 
 local function apply_shock_rifle()
@@ -534,7 +501,7 @@ local function apply_shock_rifle()
 		original.attack_meta_data[field] = attack_meta_data[field]
 	end
 
-	persistent.original = original
+	saved.original = original
 
 	-- Only the two fire modes are replaced, everything else (wield, inspect, reload,
 	-- career actions) and changes other mods made to it stay untouched
@@ -545,17 +512,17 @@ local function apply_shock_rifle()
 		default = build_ball_action(),
 	}
 
-	set_lookup_data({
+	utils.set_actions_lookup_data({
 		action_one = actions.action_one,
 		action_two = actions.action_two,
-	})
+	}, TEMPLATE_NAME)
 
 	-- The vent/reload action also returns to the raised pose when it ends (its end event is
 	-- skipped when it is interrupted, see its anim_end_event_condition_func)
 	actions.weapon_reload.default.anim_end_event = CONFIG.idle_pose_event or original.reload_anim_end_event
 	-- Venting right after wielding: the raise to the pose would play over the heat release
 	actions.weapon_reload.default.enter_function = function (...)
-		table.clear(pending_poses)
+		scheduler.clear()
 
 		if original.reload_enter_function then
 			return original.reload_enter_function(...)
@@ -639,12 +606,11 @@ local function find_ball_hit_by_beam(physics_world, owner_unit, origin, directio
 end
 
 local function apply_combo_self_damage(owner_unit, position, item_name)
-	registration.apply_explosion_self_damage(owner_unit, position, item_name, ExplosionTemplates.ut_shock_combo_explosion.explosion, CONFIG.combo_self_damage)
+	utils.apply_explosion_self_damage(owner_unit, position, item_name, ExplosionTemplates.ut_shock_combo_explosion.explosion, CONFIG.combo_self_damage)
 end
 
 -- The ball's own explosion hurts the shooter. (The do_aoe of the ball is also what makes the combo go off:
 -- that one is told apart by the explosion it is given.)
-mod.aoe_callbacks = mod.aoe_callbacks or {}
 mod.aoe_callbacks.shock_ball = function (self, aoe_data, position)
 	if aoe_data ~= ExplosionTemplates.ut_shock_ball_explosion or self._ut_shock_ball_exploded then
 		return
@@ -652,7 +618,7 @@ mod.aoe_callbacks.shock_ball = function (self, aoe_data, position)
 
 	self._ut_shock_ball_exploded = true
 
-	registration.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_shock_ball_explosion.explosion, CONFIG.ball_self_damage)
+	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_shock_ball_explosion.explosion, CONFIG.ball_self_damage)
 end
 
 local function detonate_ball(projectile_unit, owner_unit)
@@ -669,101 +635,17 @@ local function detonate_ball(projectile_unit, owner_unit)
 	extension:stop()
 end
 
-local PACKAGE_REFERENCE_NAME = "unreal_tournament"
-
 -- Combo implosion: after the blast, ragdolls of whatever died get pulled toward the center, and go past it.
 -- This runs on every peer (create_explosion is called on all of them for networked explosions),
 -- ragdoll physics is simulated locally on each.
 
 local implosions = {}
 
-local function is_effect_available(effect_name)
-	local ok, available = pcall(Application.can_get, "particles", effect_name)
-
-	return ok and available
-end
-
-local function create_effect(world, effect_name, position, rotation)
-	if is_effect_available(effect_name) then
-		World.create_particles(world, effect_name, position, rotation or Quaternion.identity())
-	end
-end
-
--- Particle effects are scaled by linking them to a unit with a scale, so effects that need
--- a size get an invisible helper unit.
-local FX_UNIT_NAME = "units/hub_elements/empty"
-
-local function spawn_fx_unit(position, scale)
-	local unit = Managers.state.unit_spawner:spawn_local_unit(FX_UNIT_NAME, position, Quaternion.identity())
-
-	Unit.set_local_scale(unit, 0, Vector3(scale, scale, scale))
-
-	return unit
-end
-
-local function delete_fx_unit(unit)
-	if unit and Unit.alive(unit) then
-		Managers.state.unit_spawner:mark_for_deletion(unit)
-	end
-end
-
--- policy: what happens to the effect when the unit is deleted, "stop" (stops spawning, the
--- particles already out fade on their own) or "destroy"
-local function link_effect(world, effect_name, unit, rotation, policy)
-	local effect_id = World.create_particles(world, effect_name, POSITION_LOOKUP[unit])
-
-	World.link_particles(world, effect_id, unit, 0, Matrix4x4.from_quaternion(rotation), policy)
-
-	return effect_id
-end
-
--- Scaled effects are destroyed after a while, in case they would never end
-local timed_effects = {}
-local TIMED_EFFECT_LIFETIME = 3
-
-local function create_timed_effect(world, effect_name, position, scale, rotation)
-	local unit = spawn_fx_unit(position, scale)
-
-	timed_effects[#timed_effects + 1] = {
-		age = 0,
-		effect_id = link_effect(world, effect_name, unit, rotation or Quaternion.identity(), "stop"),
-		unit = unit,
-		world = world,
-	}
-end
-
-local function destroy_timed_effect(effect)
-	-- the effect or the world may already be gone
-	pcall(World.destroy_particles, effect.world, effect.effect_id)
-	delete_fx_unit(effect.unit)
-end
-
-local function update_timed_effects(dt)
-	for i = #timed_effects, 1, -1 do
-		local effect = timed_effects[i]
-
-		effect.age = effect.age + dt
-
-		if effect.age >= TIMED_EFFECT_LIFETIME then
-			destroy_timed_effect(effect)
-			table.remove(timed_effects, i)
-		end
-	end
-end
-
-local function clear_timed_effects()
-	for i = #timed_effects, 1, -1 do
-		destroy_timed_effect(timed_effects[i])
-
-		timed_effects[i] = nil
-	end
-end
-
 local function create_fire_sphere(world, position)
 	local effect_name = CONFIG.combo_fire_sphere_effect
 
-	if effect_name and is_effect_available(effect_name) then
-		create_timed_effect(world, effect_name, position + Vector3(0, 0, CONFIG.combo_fire_sphere_offset), CONFIG.combo_fire_sphere_scale)
+	if effect_name then
+		effects.play(world, effect_name, position + Vector3(0, 0, CONFIG.combo_fire_sphere_offset), CONFIG.combo_fire_sphere_scale)
 	end
 end
 
@@ -786,14 +668,14 @@ local function create_ring_shell(world, position)
 	local rotations = ring_rotations()
 
 	for i = 1, #rotations do
-		create_effect(world, CONFIG.combo_ring_effect, ring_position, rotations[i])
+		effects.create(world, CONFIG.combo_ring_effect, ring_position, rotations[i])
 	end
 end
 
 -- One ring of the implosion, at the given scale. The effects are created with their scale
--- already set, see create_timed_effect.
+-- already set, see effects.play.
 local function create_implosion_ring(world, position, scale)
-	if not CONFIG.combo_ring_effect or not is_effect_available(CONFIG.combo_ring_effect) then
+	if not CONFIG.combo_ring_effect then
 		return
 	end
 
@@ -801,39 +683,22 @@ local function create_implosion_ring(world, position, scale)
 	local rotations = ring_rotations()
 
 	for i = 1, #rotations do
-		create_timed_effect(world, CONFIG.combo_ring_effect, ring_position, scale, rotations[i])
+		effects.play(world, CONFIG.combo_ring_effect, ring_position, scale, rotations[i])
 	end
-end
-
-local function units_in_radius(world, position, radius)
-	local physics_world = World.physics_world(world)
-	local actors, num_actors = PhysicsWorld.immediate_overlap(physics_world, "shape", "sphere", "position", position, "size", radius, "collision_filter", "filter_explosion_overlap")
-	local units = {}
-
-	for i = 1, num_actors do
-		local unit = Actor.unit(actors[i])
-		local breed = unit and Unit.alive(unit) and AiUtils.unit_breed(unit)
-
-		if breed and not breed.is_player then
-			units[unit] = true
-		end
-	end
-
-	return units
 end
 
 local function start_implosion(world, position)
 	local radius = ExplosionTemplates.ut_shock_combo_explosion.explosion.radius
 
 	if CONFIG.combo_flash_effect then
-		create_effect(world, CONFIG.combo_flash_effect, position + Vector3(0, 0, CONFIG.combo_flash_offset))
+		effects.create(world, CONFIG.combo_flash_effect, position + Vector3(0, 0, CONFIG.combo_flash_offset))
 	end
 
 	create_fire_sphere(world, position)
 	create_ring_shell(world, position)
 
 	if CONFIG.combo_shockwave_extra_effect then
-		create_effect(world, CONFIG.combo_shockwave_extra_effect, position + Vector3(0, 0, CONFIG.combo_shockwave_extra_offset))
+		effects.create(world, CONFIG.combo_shockwave_extra_effect, position + Vector3(0, 0, CONFIG.combo_shockwave_extra_offset))
 	end
 
 	implosions[#implosions + 1] = {
@@ -844,7 +709,7 @@ local function start_implosion(world, position)
 		radius = radius,
 		rings_created = 0,
 		start_t = Managers.time:time("game"),
-		units = units_in_radius(world, position, radius),
+		units = utils.units_in_radius(world, position, radius),
 		world = world,
 	}
 end
@@ -881,29 +746,6 @@ local function pull_ragdoll(unit, center, dt)
 	end
 end
 
--- Throws a ragdoll away from the center, returns true once it was (the ragdoll has to have
--- started, before that its actors are driven by animation)
-local function blast_ragdoll(unit, center, radius)
-	local thrown = false
-
-	for i = 0, Unit.num_actors(unit) - 1 do
-		local actor = Unit.actor(unit, i)
-
-		if actor and Actor.is_dynamic(actor) then
-			local offset = Actor.position(actor) - center
-			local distance = Vector3.length(offset)
-			local direction = distance > 0.01 and offset * (1 / distance) or Vector3.up()
-			local speed = CONFIG.implosion_blast_speed * math.lerp(1, 0.5, math.clamp(distance / radius, 0, 1))
-
-			Actor.set_velocity(actor, direction * speed + Vector3(0, 0, CONFIG.implosion_blast_up))
-
-			thrown = true
-		end
-	end
-
-	return thrown
-end
-
 local function clear_implosions()
 	for i = #implosions, 1, -1 do
 		implosions[i] = nil
@@ -927,7 +769,7 @@ local function update_implosions(dt)
 			for unit in pairs(implosion.units) do
 				if not Unit.alive(unit) then
 					implosion.units[unit] = nil
-				elseif not HEALTH_ALIVE[unit] and not implosion.blasted[unit] and blast_ragdoll(unit, center, implosion.radius) then
+				elseif not HEALTH_ALIVE[unit] and not implosion.blasted[unit] and utils.blast_ragdoll(unit, center, implosion.radius, CONFIG.implosion_blast_speed, CONFIG.implosion_blast_up) then
 					implosion.blasted[unit] = true
 				end
 			end
@@ -978,41 +820,9 @@ local function update_implosions(dt)
 end
 
 -- Explosions of the weapons are run by their names, on every peer (one hook for all of them)
-mod.explosion_callbacks = mod.explosion_callbacks or {}
 mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_position)
 	start_implosion(world, impact_position)
 end
-
--- Explosions that go through shields: the game asks AiUtils.attack_is_shield_blocked for every enemy in
--- an explosion, which is answered "not blocked" while the explosion of such a template is being made.
-local penetrating_explosion = false
-
-mod:hook(AiUtils, "attack_is_shield_blocked", function (func, ...)
-	if penetrating_explosion then
-		return false
-	end
-
-	return func(...)
-end)
-
-mod:hook(DamageUtils, "create_explosion", function (func, world, attacker_unit, impact_position, rotation, explosion_template, ...)
-	penetrating_explosion = not not explosion_template.ut_penetrates_shields
-
-	-- (an error mustn't leave the flag set)
-	local ok, error_message = pcall(func, world, attacker_unit, impact_position, rotation, explosion_template, ...)
-
-	penetrating_explosion = false
-
-	if not ok then
-		error(error_message, 0)
-	end
-
-	local callback = mod.explosion_callbacks[explosion_template.name]
-
-	if callback then
-		callback(world, impact_position, rotation)
-	end
-end)
 
 -- Beam trail: the staff's own beam particle, stretched from the muzzle to the hit point
 -- and shrunk to nothing over trail_duration
@@ -1044,26 +854,9 @@ local function spawn_trail(action, origin, direction)
 	}
 end
 
-local function update_pending_poses(dt)
-	for i = #pending_poses, 1, -1 do
-		local pending = pending_poses[i]
-
-		pending.time_left = pending.time_left - dt
-
-		if pending.time_left <= 0 then
-			table.remove(pending_poses, i)
-
-			if pending.is_valid() then
-				pending.callback()
-			end
-		end
-	end
-end
-
-mod.update = function (dt)
-	update_pending_poses(dt)
+mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
+	scheduler.update(dt)
 	update_implosions(dt)
-	update_timed_effects(dt)
 
 	for i = #trails, 1, -1 do
 		local trail = trails[i]
@@ -1093,61 +886,12 @@ end
 -- before this mod patched the template, and spawning an unloaded projectile unit crashes
 -- the game. So the mod holds its own reference to the ball's unit while enabled.
 
-local function load_ball_package()
-	if persistent.ball_package or not Managers.package then
-		return
-	end
+local packages = utils.package_holder("unreal_tournament")
 
-	local package_name = ProjectileUnits.fireball_charged.projectile_unit_name
-
-	Managers.package:load(package_name, PACKAGE_REFERENCE_NAME)
-
-	persistent.ball_package = package_name
-end
-
-local function unload_ball_package()
-	local package_name = persistent.ball_package
-
-	if not package_name then
-		return
-	end
-
-	persistent.ball_package = nil
-
-	if Managers.package then
-		pcall(Managers.package.unload, Managers.package, package_name, PACKAGE_REFERENCE_NAME)
-	end
-end
-
--- The weapon can be switched off in the settings: the staff is then the game's own again (the weapon the
--- player holds changes when it is wielded again)
-local function is_shock_rifle_enabled()
-	return mod:get("ut_weapons") ~= false and mod:get("shock_rifle") ~= false
-end
-
--- The overheating explosion of a weapon (the game's own hurts the player, and is kept) is told to the weapon's
--- callback in mod.overheat_callbacks, by its template: a function can be hooked once. The shock rifle's is the combo:
--- the whole of it, the blast and the pulling in of what died.
-mod.overheat_callbacks = mod.overheat_callbacks or {}
-
-mod:hook_safe(PlayerCharacterStateOverchargeExploding, "explode", function (self)
-	if self.inside_inn then
-		return
-	end
-
-	local inventory_extension = self.inventory_extension
-	local slot_name = inventory_extension:get_wielded_slot_name()
-	local slot_data = slot_name and inventory_extension:get_slot_data(slot_name)
-	local item_data = slot_data and slot_data.item_data
-	local callback = item_data and mod.overheat_callbacks[item_data.template]
-
-	if callback then
-		callback(self, item_data)
-	end
-end)
-
+-- The overheating explosion (the game's own hurts the player, and is kept): the combo, the whole of it, the blast and
+-- the pulling in of what died.
 mod.overheat_callbacks[TEMPLATE_NAME] = function (state, item_data)
-	if not is_shock_rifle_enabled() then
+	if not utils.is_weapon_enabled("shock_rifle") then
 		return
 	end
 
@@ -1158,51 +902,29 @@ mod.overheat_callbacks[TEMPLATE_NAME] = function (state, item_data)
 	Managers.state.entity:system("area_damage_system"):create_explosion(unit, position, Quaternion.identity(), "ut_shock_combo_explosion", 1, item_data.name, CONFIG.overheat_combo_power_level, false, unit)
 end
 
+-- The weapon's package list is built when the staff's packages are loaded, which may be before this mod patched the
+-- template, and spawning an unloaded projectile unit crashes the game. So the mod holds its own reference to the
+-- ball's unit while enabled.
 local function enable_shock_rifle()
-	load_ball_package()
+	packages.load_projectile_units({"fireball_charged"})
 	apply_shock_rifle()
 end
 
+-- (the weapon can be switched off in the settings: the staff is then the game's own again, the weapon the player
+-- holds changes when it is wielded again)
 local function disable_shock_rifle()
 	restore_beam_staff()
 	clear_trails()
-	table.clear(pending_poses)
+	scheduler.clear()
 	clear_implosions()
-	clear_timed_effects()
-	unload_ball_package()
+	packages.unload()
 end
 
-mod.on_enabled = function ()
-	if is_shock_rifle_enabled() then
-		enable_shock_rifle()
-	end
-end
-
-mod.on_disabled = function ()
-	disable_shock_rifle()
-end
-
-mod.on_setting_changed = function (setting_id)
-	if setting_id == "shock_rifle" or setting_id == "ut_weapons" then
-		if is_shock_rifle_enabled() then
-			enable_shock_rifle()
-		else
-			disable_shock_rifle()
-		end
-	end
-end
-
-mod.on_unload = function ()
-	-- A mod reload keeps the patched template, the next load re-applies it
-	clear_trails()
-	clear_implosions()
-	clear_timed_effects()
-end
+utils.register_weapon("shock_rifle", enable_shock_rifle, disable_shock_rifle)
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	clear_trails()
 	clear_implosions()
-	clear_timed_effects()
 end
 
 mod.wield_callbacks.shock = function (self, equipment, slot_data, unit_1p)
@@ -1219,7 +941,7 @@ mod.wield_callbacks.shock = function (self, equipment, slot_data, unit_1p)
 
 	local item_template = BackendUtils.get_item_template(slot_data.item_data)
 
-	if item_template.name ~= TEMPLATE_NAME or not is_shock_rifle_enabled() then
+	if item_template.name ~= TEMPLATE_NAME or not utils.is_weapon_enabled("shock_rifle") then
 		return
 	end
 
@@ -1227,7 +949,7 @@ mod.wield_callbacks.shock = function (self, equipment, slot_data, unit_1p)
 		return equipment.wielded == slot_data.item_data
 	end
 
-	table.clear(pending_poses)
+	scheduler.clear()
 	schedule(CONFIG.idle_pose_delay, is_valid, function ()
 		enter_idle_pose(first_person_extension, unit_1p, is_valid, CONFIG.idle_pose_wield_slow_delay)
 	end)

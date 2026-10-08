@@ -43,6 +43,17 @@ local CONFIG = {
 	-- 29% of its jump speed (340 uu/s), the same share of this game's jump gives the window.
 	double_jump_speed = 5, -- m/s, the upward speed it gives, a regular jump is 4.25 * jump_speed_multiplier
 	double_jump_apex_speed = 1.7, -- m/s, it is allowed while the vertical speed is within this of zero
+	-- A wall is found by sweeping a sphere of this radius sideways at these heights above the feet
+	wall_sweep_heights = {0.3, 0.9, 1.5}, -- m
+	wall_sweep_radius = 0.25, -- m
+	-- Momentum damage: melee hits do more damage the faster the player is moving. No bonus up to momentum_min_speed
+	-- (about running speed, the game's is 4 m/s), rising to momentum_damage_bonus more damage at momentum_full_speed (a
+	-- dodge launch is 9 m/s at most), and going on rising above it. The speed counts for momentum_grace seconds after it
+	-- is lost, so that slowing down (a hit, the end of a dodge) doesn't take the bonus away at once.
+	momentum_min_speed = 4.5, -- m/s
+	momentum_full_speed = 9, -- m/s
+	momentum_damage_bonus = 0.25, -- the bonus at full speed: 0.25 is 25% more damage
+	momentum_grace = 0.1, -- seconds
 }
 
 -- The Movement option: all of the movement of this file can be switched off, the hooks then do what the
@@ -337,22 +348,16 @@ local WALL_FILTERS = {
 	"filter_player_mover",
 	"filter_player_ray_projectile_static_only",
 }
-local WALL_SWEEP_HEIGHTS = {
-	0.3,
-	0.9,
-	1.5,
-}
-local WALL_SWEEP_RADIUS = 0.25
 
 -- Returns if there is a wall in the given direction
 local function find_wall(physics_world, position, direction)
 	local found_hit
 
 	for i = 1, #WALL_FILTERS do
-		for j = 1, #WALL_SWEEP_HEIGHTS do
-			local from = position + Vector3(0, 0, WALL_SWEEP_HEIGHTS[j])
+		for j = 1, #CONFIG.wall_sweep_heights do
+			local from = position + Vector3(0, 0, CONFIG.wall_sweep_heights[j])
 			local to = from + direction * CONFIG.wall_dodge_reach
-			local result = PhysicsWorld.linear_sphere_sweep(physics_world, from, to, WALL_SWEEP_RADIUS, 5, "collision_filter", WALL_FILTERS[i])
+			local result = PhysicsWorld.linear_sphere_sweep(physics_world, from, to, CONFIG.wall_sweep_radius, 5, "collision_filter", WALL_FILTERS[i])
 			local num_hits = result and #result or 0
 			local wall_hit
 
@@ -666,42 +671,20 @@ local function update_mover_filter()
 	end
 end
 
-local previous_update = mod.update
-local previous_on_unload = mod.on_unload
-local previous_on_disabled = mod.on_disabled
-
-mod.update = function (dt, ...)
-	if previous_update then
-		previous_update(dt, ...)
-	end
-
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	update_mover_filter()
 end
 
 -- (the game's own filter is back when the mod is reloaded or switched off)
-mod.on_unload = function (...)
-	if previous_on_unload then
-		previous_on_unload(...)
-	end
-
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 	applied_unit = nil
 end
 
-mod.on_disabled = function (...)
-	if previous_on_disabled then
-		previous_on_disabled(...)
-	end
-
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = function ()
 	update_mover_filter()
 end
 
-local previous_on_setting_changed = mod.on_setting_changed
-
-mod.on_setting_changed = function (setting_id, ...)
-	if previous_on_setting_changed then
-		previous_on_setting_changed(setting_id, ...)
-	end
-
+mod.setting_changed_callbacks[#mod.setting_changed_callbacks + 1] = function (setting_id)
 	if setting_id == "no_barriers" or setting_id == "no_invisible_walls" then
 		applied_unit = nil
 	end
@@ -738,25 +721,16 @@ mod:hook(CharacterStateHelper, "will_be_ledge_hanging", function (func, ...)
 	return func(...)
 end)
 
--- Momentum damage: melee hits do more damage the faster the player is moving. No bonus up to min_speed (about
--- running speed, the game's is 4 m/s), rising to damage_bonus more damage at full_speed (a dodge launch is 9 m/s at
--- most), and going on rising above it. The damage of a melee hit comes from the power level the attacker sends
+-- Momentum damage (see momentum_* in CONFIG). The damage of a melee hit comes from the power level the attacker sends
 -- with it, which is what is scaled, for the hit and for the prediction of it.
-local MOMENTUM = {
-	min_speed = 4.5, -- m/s
-	full_speed = 9, -- m/s
-	damage_bonus = 0.25, -- the bonus at full_speed: 0.25 is 25% more damage
-}
 
--- How much of the bonus at full_speed the speed gives: 0 up to min_speed, 1 at full_speed and no limit above it
+-- How much of the bonus at full speed the speed gives: 0 up to min speed, 1 at full speed and no limit above it
 local function momentum_share(speed)
-	return math.max((speed - MOMENTUM.min_speed) / (MOMENTUM.full_speed - MOMENTUM.min_speed), 0)
+	return math.max((speed - CONFIG.momentum_min_speed) / (CONFIG.momentum_full_speed - CONFIG.momentum_min_speed), 0)
 end
 
--- Grace: the speed counts for momentum_grace seconds after it is lost, so that slowing down (a hit, the end of a
--- dodge) doesn't take the bonus away at once. The player's fastest recent speed is kept for that long (it is
--- looked at while the player moves, for the local player's unit).
-MOMENTUM.grace = 0.1 -- seconds
+-- Grace: the player's fastest recent speed is kept for momentum_grace seconds (it is looked at while the player
+-- moves, for the local player's unit).
 
 local recent = {
 	speed = 0,
@@ -777,7 +751,7 @@ local function update_recent_speed()
 	local t = Managers.time:time("game")
 	local speed = Vector3.length(locomotion_extension:current_velocity())
 
-	if recent.unit ~= unit or speed >= recent.speed or t - recent.t > MOMENTUM.grace then
+	if recent.unit ~= unit or speed >= recent.speed or t - recent.t > CONFIG.momentum_grace then
 		recent.unit = unit
 		recent.speed = speed
 		recent.t = t
@@ -788,20 +762,14 @@ end
 local function momentum_speed(unit, locomotion_extension)
 	local speed = Vector3.length(locomotion_extension:current_velocity())
 
-	if recent.unit == unit and Managers.time:time("game") - recent.t <= MOMENTUM.grace then
+	if recent.unit == unit and Managers.time:time("game") - recent.t <= CONFIG.momentum_grace then
 		speed = math.max(speed, recent.speed)
 	end
 
 	return speed
 end
 
-local momentum_previous_update = mod.update
-
-mod.update = function (dt, ...)
-	if momentum_previous_update then
-		momentum_previous_update(dt, ...)
-	end
-
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	update_recent_speed()
 end
 
@@ -819,7 +787,7 @@ local function momentum_damage_multiplier(owner_unit)
 	local speed = momentum_speed(owner_unit, locomotion_extension)
 	local share = momentum_share(speed)
 
-	return 1 + MOMENTUM.damage_bonus * share
+	return 1 + CONFIG.momentum_damage_bonus * share
 end
 
 mod:hook(ActionSweep, "_send_attack_hit", function (func, self, t, damage_source_id, attacker_unit_id, hit_unit_id, hit_zone_id, hit_position, attack_direction, damage_profile_id, ...)

@@ -9,8 +9,9 @@ local mod = get_mod("unreal_tournament")
 -- What happens to enemies is done by the game that has them, the host's. The beam is only drawn for the player
 -- who holds it.
 
-local registration = mod:dofile("scripts/mods/unreal_tournament/registration")
-local register_damage_profile = registration.register_damage_profile
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local with_valid_positions = utils.with_valid_positions
+local register_damage_profile = utils.register_damage_profile
 
 local stagger_types = require("scripts/utils/stagger_types")
 
@@ -84,8 +85,15 @@ local CONFIG = {
 	ally_thp_multiplier = 2, -- the temporary health a linked ally gets from their attacks
 	ally_buff_duration = 0.6, -- seconds
 	ally_buff_refresh = 0.25, -- seconds
-	bot_target_range = 80, -- m, how far from a linked bot the enemy it is made to attack can be
+	bot_target_range = 80,
+	bot_rescan_interval = 0.5, -- seconds, between looks for an enemy for a linked bot that has none near -- m, how far from a linked bot the enemy it is made to attack can be
 	throw_wall_margin = 0.6, -- m, how far from a wall a yanked enemy that hit it lands
+	throw_wall_height = 0.9, -- m above the feet of a yanked enemy, the height that a wall is looked for at
+	openable_reach_margin = 10, -- m past the reach of the beam that a door or a chest can still be looked at (they are big)
+	rescue_retry_interval = 0.5, -- seconds between the times that a yank gives a rescue again, until it has taken
+	rescue_max_tries = 4,
+	beam_aim_curve_gain = 1.3, -- what the aim bows the first half of the beam by, on top of beam_aim_curve
+	beam_hang_share = 0.7, -- how much of what hangs and lags a beam bends the first half by
 	ally_effect = "fx/thornsister_buff", -- what is seen on an ally that is linked, a burst again every ally_effect_interval
 	ally_effect_interval = 0.8, -- seconds
 	ally_attack_grace = 0.5, -- seconds the beam still costs heat after the ally's attack
@@ -109,16 +117,15 @@ local CONFIG = {
 	weight_exponent = 0.5,
 	max_mass = 30,
 	stagger_duration = 1.5,
+	disabler_stagger_duration = 2, -- seconds a disabler is staggered for when a yank frees a player from it
 	restagger_interval = 1,
 	-- A linked enemy (and a monster) is poisoned: the game's own poison of poisoned arrows, dot_template, at
 	-- dot_power_level (what its damage scales with), applied again every dot_interval seconds, which keeps it up
-	-- while it is linked. What can't have a buff takes dot_damage of dot_damage_type straight to its health instead.
+	-- while it is linked.
 	dot_template = "arrow_poison_dot",
 	dot_power_level = 500,
 	dot_interval = 1,
 	dot_overcharge = 1, -- heat of every application of it, on top of the heat of the beam
-	dot_damage = 2,
-	dot_damage_type = "damage_over_time",
 	dot_damage_source = "we_life_staff",
 	-- A monster, an enemy too big to be held, is linked but not held: once it has moved monster_move_distance from
 	-- where it was when it was linked, or the owner tries to yank it, the owner is launched towards it (the state of
@@ -160,15 +167,13 @@ local CONFIG = {
 	-- The beam: drawn as a curve (a cubic Bezier) from the staff to what it is on. A held enemy hangs it by
 	-- its weight (sag_per_weight a meter per meter of beam, per unit of weight, at most sag_max), and bends it
 	-- by how far the enemy is behind where it is being moved to (lag_bend).
-	staff_end_node = "fx_muzzle", -- the node at the end of the staff unit, where the beam and the bolts start (the hand's node if it has none)
-	-- The beam effect is drawn with the field of view of the staff in the hands, not of the world (vertical, degrees:
-	-- the world's is read from the camera, every frame, world_fov is for when that fails). Measured from where the beam
-	-- ended on screenshots, with a world fov of 85: the end was seen about 2.1 times as far from the middle of the screen
-	-- as the target.
+	staff_end_node = "fx_muzzle", -- the node at the end of the staff unit, where the beam and the bolts start
+	-- The beam effect is drawn with the field of view of the staff in the hands, not of the world (vertical, degrees: the
+	-- world's is read from the camera, every frame). Measured from where the beam ended on screenshots, with a world fov of
+	-- 85: the end was seen about 2.1 times as far from the middle of the screen as the target.
 	effect_fov = 47.5,
-	world_fov = 85,
 	beam_aim_curve = 0.3, -- how far the beam bows towards the aim, as a share of its length at most: 0 is a straight line
-	beam_segment_length = 0.2, -- m, about how far apart the points of the beam are (the particles, and the pieces of the lines)
+	beam_segment_length = 0.2, -- m, about how far apart the points of the beam are (the particles)
 	beam_min_segments = 2,
 	beam_max_segments = 100,
 	beam_sprite_copies = 3, -- how many copies of the effect at every point: the more, the denser the beam
@@ -176,37 +181,9 @@ local CONFIG = {
 	sag_max = 2.5, -- m
 	lag_bend = 0.5,
 	lag_bend_max = 1.5, -- m
-	beam_thickness = 0.012, -- m, the lines are a few around its path
-	-- The beam is drawn with the first of these particle effects that is loaded: a copy of it at every point of the
-	-- curve (they have no settings, so they are only placed), the Thornsister's own, green. The lines are the
-	-- fallback.
-	beam_sprite_effects = {
-		"fx/lifestaff_idle",
-	},
-	beam_color = {
-		255,
-		90,
-		255,
-		120,
-	},
-	ally_beam_color = {
-		255,
-		255,
-		210,
-		60,
-	},
-	object_beam_color = {
-		255,
-		200,
-		255,
-		230,
-	},
-	held_beam_color = {
-		255,
-		190,
-		255,
-		190,
-	},
+	-- The beam is drawn with a copy of this particle effect at every point of the curve (it has no settings, so it is only
+	-- placed), the Thornsister's own, green.
+	beam_effect = "fx/lifestaff_idle",
 }
 
 local overcharge_values = PlayerUnitStatusSettings.overcharge_values
@@ -250,36 +227,23 @@ BuffTemplates[ALLY_BUFF] = {
 	},
 }
 
-registration.register_network_lookup("buff_templates", ALLY_BUFF)
+utils.register_network_lookup("buff_templates", ALLY_BUFF)
 
 -- Weapon template
 -- The template is shared game state: it is patched in place, what is touched is saved to be put back on disable.
--- The saved values are in a persistent table, so that a mod reload doesn't take the patched template for the
--- original.
-local persistent = mod:persistent_table("link_gun")
-
--- (an earlier load of the mod wrapped the game's animation event function for logging: it is put back)
-if persistent.animation_event then
-	Unit.animation_event = persistent.animation_event
-	persistent.animation_event = nil
-end
+-- It is put back when the mod is unloaded too (a reload would take the patched template for the original).
+local saved = {}
 
 -- The default stance. Delayed pose events: the animation event is only sent while is_valid() still holds, so
 -- nothing is sent if the weapon was swapped or another action started in the meantime.
 local pose = {}
-local pending_poses = {}
+local scheduler = utils.delayed_events()
 
-function pose.schedule(delay, is_valid, callback)
-	pending_poses[#pending_poses + 1] = {
-		callback = callback,
-		is_valid = is_valid,
-		time_left = delay,
-	}
-end
+pose.schedule = scheduler.schedule
 
 -- (the staff isn't idle while an action runs, every action calls this when it starts)
 function pose.clear()
-	table.clear(pending_poses)
+	scheduler.clear()
 
 	pose.waiting = nil
 	pose.recovering = false
@@ -446,19 +410,7 @@ function pose.update(dt)
 		end
 	end
 
-	for i = #pending_poses, 1, -1 do
-		local pending = pending_poses[i]
-
-		pending.time_left = pending.time_left - dt
-
-		if pending.time_left <= 0 then
-			table.remove(pending_poses, i)
-
-			if pending.is_valid() then
-				pending.callback()
-			end
-		end
-	end
+	scheduler.update(dt)
 end
 
 -- The end of the staff itself (it moves with the animations), if the unit has the node
@@ -511,7 +463,6 @@ end)
 -- together with the starting point, by what keeps the bolt where it is. Every peer does this for the bolts it has.
 local bolts = {}
 
-mod.init_callbacks = mod.init_callbacks or {}
 mod.init_callbacks.link_bolt = function (extension)
 	bolts[#bolts + 1] = extension._projectile_unit
 end
@@ -541,7 +492,7 @@ local function update_bolts()
 end
 
 local function restore_staff()
-	local original = persistent.original
+	local original = saved.original
 	local template = rawget(Weapons, TEMPLATE_NAME)
 
 	if not original or not template then
@@ -550,62 +501,35 @@ local function restore_staff()
 
 	local actions = template.actions
 
-	if original.primary_actions then
-		for name, saved in pairs(original.primary_actions) do
-			local action = actions.action_one[name]
+	for name, saved in pairs(original.primary_actions) do
+		local action = actions.action_one[name]
 
-			-- (what the mod added is taken away, what it changed put back)
-			for key in pairs(action) do
-				if saved.fields[key] == nil then
-					action[key] = nil
-				end
+		-- (what the mod added is taken away, what it changed put back)
+		for key in pairs(action) do
+			if saved.fields[key] == nil then
+				action[key] = nil
 			end
-
-			for key, value in pairs(saved.fields) do
-				action[key] = value
-			end
-
-			action.impact_data.damage_profile = saved.damage_profile
 		end
 
-		actions.weapon_reload.default.anim_end_event = original.reload_anim_end_event
-		actions.weapon_reload.default.enter_function = original.reload_enter_function
-		actions.weapon_reload.default.finish_function = original.reload_finish_function
-
-		if actions.action_inspect and actions.action_inspect.action_inspect_hold then
-			actions.action_inspect.action_inspect_hold.anim_end_event = original.inspect_anim_end_event
-			actions.action_inspect.action_inspect_hold.enter_function = original.inspect_enter_function
-		end
-	elseif original.primary then
-		-- (what an earlier load of the mod saved, from before the bolts)
-		for _, name in ipairs({
-			"default",
-			"default_chain",
-		}) do
-			local action = actions.action_one[name]
-			local saved = original.primary[name]
-
-			action.impact_data.damage_profile = saved.damage_profile
-			action.anim_event = saved.anim_event
-			action.anim_end_event = saved.anim_end_event
-			action.enter_function = saved.enter_function
-			action.finish_function = saved.finish_function
-			action.on_shoot_particle_fx = saved.on_shoot_particle_fx
-			action.ut_link_primary = nil
+		for key, value in pairs(saved.fields) do
+			action[key] = value
 		end
 
-		actions.weapon_reload.default.anim_end_event = original.reload_anim_end_event
-		actions.weapon_reload.default.enter_function = original.reload_enter_function
-		actions.weapon_reload.default.finish_function = original.reload_finish_function
-	else
-		-- (what an earlier load of the mod saved, from before the stance was added)
-		actions.action_one.default.impact_data.damage_profile = original.default_damage_profile
-		actions.action_one.default_chain.impact_data.damage_profile = original.chain_damage_profile
+		action.impact_data.damage_profile = saved.damage_profile
 	end
+
+	actions.weapon_reload.default.anim_end_event = original.reload_anim_end_event
+	actions.weapon_reload.default.enter_function = original.reload_enter_function
+	actions.weapon_reload.default.finish_function = original.reload_finish_function
+
+	local inspect = actions.action_inspect.action_inspect_hold
+
+	inspect.anim_end_event = original.inspect_anim_end_event
+	inspect.enter_function = original.inspect_enter_function
 
 	actions.action_two.default = original.action_two_default
 
-	persistent.original = nil
+	saved.original = nil
 end
 
 local function apply_link_gun()
@@ -641,7 +565,7 @@ local function apply_link_gun()
 		}
 	end
 
-	persistent.original = original
+	saved.original = original
 
 	-- The thorns: one bolt at a time, again and again while the button is held, a stunning one that speeds up. The
 	-- shot has no animation of its own (the staff stays in its stance, the hand doesn't cast).
@@ -753,11 +677,7 @@ local function apply_link_gun()
 	beam.overcharge_interval = CONFIG.beam_overcharge_interval
 	beam.overcharge_type = "ut_link_beam"
 	beam.ut_charge_callback = "link"
-	beam.lookup_data = {
-		item_template_name = TEMPLATE_NAME,
-		action_name = "action_two",
-		sub_action_name = "default",
-	}
+	utils.set_lookup_data(beam, TEMPLATE_NAME, "action_two", "default")
 
 	-- (primary doesn't start an action while the beam is held: it yanks the enemy that is linked, in the callback below)
 	local chains = {}
@@ -778,6 +698,7 @@ end
 local ai_units = {}
 local states = {} -- per unit that holds the beam: what it is linked to, and its line object
 local bot_targets = {} -- a bot that is linked: the enemy it is made to attack
+local bot_scan_after = {} -- a bot that had no enemy near: when to look again
 
 -- The middle of a character: its spine, else the nearest the model has to one (the target dummies have none by the
 -- name of the others'), else the middle of its box. The first node of a unit is where it is placed, which isn't on
@@ -998,7 +919,7 @@ local function openable_boxes(unit, with_unit_box)
 		}
 	end
 
-	if with_unit_box or not best_mesh then
+	if with_unit_box then
 		local pose, half_extents = Unit.box(unit)
 
 		boxes[#boxes + 1] = {
@@ -1012,36 +933,50 @@ end
 
 -- How far along the aim it hits a box (a pose and half sizes), or nil if it doesn't: the box is what is seen, not a ball
 -- around its middle
+-- (one axis of it: where the ray is inside the slab of this half size, narrowing near and far; nil if it never is)
+local function slab(o, d, h, near, far)
+	if math.abs(d) < 0.000001 then
+		if math.abs(o) > h then
+			return nil
+		end
+
+		return near, far
+	end
+
+	local t1, t2 = (-h - o) / d, (h - o) / d
+
+	near = math.max(near, math.min(t1, t2))
+	far = math.min(far, math.max(t1, t2))
+
+	if near > far then
+		return nil
+	end
+
+	return near, far
+end
+
 local function ray_hits_box(origin, aim, pose, half)
 	local inverse = Matrix4x4.inverse(pose)
 	local from = Matrix4x4.transform(inverse, origin)
 	local direction = Matrix4x4.transform(inverse, origin + aim) - from
-	local near, far = 0, math.huge
-	local origins = {from.x, from.y, from.z}
-	local directions = {direction.x, direction.y, direction.z}
-	local halves = {half.x, half.y, half.z}
+	local near, far = slab(from.x, direction.x, half.x, 0, math.huge)
 
-	for axis = 1, 3 do
-		local o, d, h = origins[axis], directions[axis], halves[axis]
-
-		if math.abs(d) < 0.000001 then
-			if math.abs(o) > h then
-				return nil
-			end
-		else
-			local t1, t2 = (-h - o) / d, (h - o) / d
-
-			near = math.max(near, math.min(t1, t2))
-			far = math.min(far, math.max(t1, t2))
-
-			if near > far then
-				return nil
-			end
-		end
+	if not near then
+		return nil
 	end
+
+	near, far = slab(from.y, direction.y, half.y, near, far)
+
+	if not near then
+		return nil
+	end
+
+	near = slab(from.z, direction.z, half.z, near, far)
 
 	return near
 end
+
+local openables = {} -- the doors and the chests near enough: the unit, is it a chest
 
 -- What the aim is on, closest to it: an enemy that can be held or an ally, and failing those an object with a body
 -- that moves (a ragdoll). Returns the unit and what it is, and for an object its body and how far it is.
@@ -1131,32 +1066,41 @@ local function find_target(owner_unit, physics_world, origin, aim)
 	if not best_unit then
 		best_dot = math.min(best_dot, CONFIG.supply_aim_dot)
 
+		-- (what is further than the beam reaches, with room for how big a door is, isn't looked at: this runs every frame that
+		-- nothing is linked, and the boxes of a door are worked out from its meshes)
+		local reach_squared = (range + CONFIG.openable_reach_margin) * (range + CONFIG.openable_reach_margin)
+
+		table.clear(openables)
+
+		-- (one pass over the interactables: the supplies are considered, the chests kept for below)
 		for unit in pairs(Managers.state.entity:get_entities("GenericUnitInteractableExtension")) do
-			if Unit.alive(unit) and is_supply(unit) then
-				consider(unit, "supply")
+			local position = POSITION_LOOKUP[unit] or Unit.world_position(unit, 0)
+
+			if position and Vector3.distance_squared(position, origin) <= reach_squared and Unit.alive(unit) then
+				if is_supply(unit) then
+					consider(unit, "supply")
+				elseif Unit.get_data(unit, "interaction_data", "interaction_type") == "chest" and not Unit.get_data(unit, "interaction_data", "used") then
+					-- (a chest that has been opened is done with: the game marks it used, and takes the interaction away)
+					local interactable_extension = ScriptUnit.has_extension(unit, "interactable_system")
+
+					if interactable_extension and interactable_extension:is_enabled() then
+						openables[unit] = true
+					end
+				end
 			end
 		end
 
 		-- Doors and chests: the aim has to be on the thing, on the box of what is seen (the nearest one that it hits)
 		if not best_unit then
 			local best_distance
-			local openables = {} -- the unit: is it a chest
 
 			for unit in pairs(Managers.state.entity:get_entities("DoorExtension")) do
-				local door_extension = ScriptUnit.has_extension(unit, "door_system")
+				local position = POSITION_LOOKUP[unit] or Unit.world_position(unit, 0)
+				local door_extension = position and Vector3.distance_squared(position, origin) <= reach_squared and ScriptUnit.has_extension(unit, "door_system")
 
 				-- (a door that is broken is done with)
 				if door_extension and not door_extension.dead then
 					openables[unit] = false
-				end
-			end
-
-			for unit in pairs(Managers.state.entity:get_entities("GenericUnitInteractableExtension")) do
-				-- (a chest that has been opened is done with: the game marks it used, and takes the interaction away)
-				local interactable_extension = ScriptUnit.has_extension(unit, "interactable_system")
-
-				if Unit.get_data(unit, "interaction_data", "interaction_type") == "chest" and not Unit.get_data(unit, "interaction_data", "used") and interactable_extension and interactable_extension:is_enabled() then
-					openables[unit] = true
 				end
 			end
 
@@ -1387,7 +1331,7 @@ local function update_throw(state, t, physics_world)
 	local distance = Vector3.length(offset)
 
 	if distance > 0.01 then
-		local chest = Vector3(0, 0, 0.9)
+		local chest = Vector3(0, 0, CONFIG.throw_wall_height)
 		local direction = offset * (1 / distance)
 		local hit, hit_position = PhysicsWorld.immediate_raycast(physics_world, previous + chest, direction, distance + CONFIG.throw_wall_margin, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
 
@@ -1450,29 +1394,10 @@ local HELD_OUTLINE = {
 	},
 }
 
-local function clear_held_outline(state)
-	local extension = state.outline_extension
-
-	if extension then
-		-- (the enemy may be gone)
-		pcall(extension.remove_outline, extension, state.outline_id)
-
-		state.outline_extension = nil
-		state.outline_id = nil
-	end
-end
+local clear_held_outline = utils.clear_outline
 
 local function add_held_outline(state)
-	if state.outline_extension or not Unit.alive(state.target) then
-		return
-	end
-
-	local extension = ScriptUnit.has_extension(state.target, "outline_system")
-
-	if extension then
-		state.outline_extension = extension
-		state.outline_id = extension:add_outline(HELD_OUTLINE)
-	end
+	utils.add_outline(state, state.target, HELD_OUTLINE)
 end
 
 local function release_target(state)
@@ -1732,7 +1657,7 @@ local function hold_enemy(state, owner_unit, t, dt, aim, physics_world)
 		if blackboard then
 			-- (the game's statistics look at the positions of the units in the stagger, the mods' update runs before
 			-- the game has made them current)
-			mod.with_valid_positions(AiUtils.stagger, unit, blackboard, owner_unit, direction, 1, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
+			with_valid_positions(AiUtils.stagger, unit, blackboard, owner_unit, direction, 1, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
 		end
 	end
 end
@@ -1768,8 +1693,8 @@ for _, extension_class in ipairs({GenericHealthExtension, TrainingDummyHealthExt
 end
 
 -- The beam only costs heat while it is linked to an enemy, or to an ally while they attack (and for
--- ally_attack_grace seconds after): asked by the game's add_charge, in bio_rifle.lua, for the beam's heat.
-mod.link_beam_is_free = function (owner_unit)
+-- ally_attack_grace seconds after): told to the game's add_charge, for the beam's heat (see mod.overcharge_callbacks)
+local function link_beam_is_free(owner_unit)
 	local state = states[owner_unit]
 
 	if not state or not state.target then
@@ -1785,6 +1710,12 @@ mod.link_beam_is_free = function (owner_unit)
 	end
 
 	return Managers.time:time("game") - (state.ally_attack_t or -math.huge) > CONFIG.ally_attack_grace
+end
+
+mod.overcharge_callbacks.ut_link_beam = function (self, overcharge_amount)
+	if not link_beam_is_free(self.unit) then
+		return overcharge_amount
+	end
 end
 
 -- The damage over time of a linked enemy
@@ -1804,15 +1735,9 @@ local function damage_enemy(state, owner_unit, t)
 		overcharge_extension:add_charge(CONFIG.dot_overcharge, nil, "ut_link_dot")
 	end
 
-	if ScriptUnit.has_extension(unit, "buff_system") then
-		-- The game's own poison, the one of poisoned arrows and the like: a buff on the enemy that does the damage over
-		-- time and shows it as poisoned. It is applied again every dot_interval, which keeps it up while it is linked.
-		Dots.poison_dot(CONFIG.dot_template, nil, nil, CONFIG.dot_power_level, unit, owner_unit, "torso", CONFIG.dot_damage_source, 1, false, owner_unit)
-	else
-		-- (what can't have a buff takes the damage directly; the game's statistics look at the positions of the
-		-- units in a hit, the mods' update runs before the game has made them current)
-		mod.with_valid_positions(DamageUtils.add_damage_network, unit, owner_unit, CONFIG.dot_damage, "torso", CONFIG.dot_damage_type, chest_position(unit), Vector3.up(), CONFIG.dot_damage_source, nil, owner_unit)
-	end
+	-- The game's own poison, the one of poisoned arrows and the like: a buff on the enemy that does the damage over
+	-- time and shows it as poisoned. It is applied again every dot_interval, which keeps it up while it is linked.
+	Dots.poison_dot(CONFIG.dot_template, nil, nil, CONFIG.dot_power_level, unit, owner_unit, "torso", CONFIG.dot_damage_source, 1, false, owner_unit)
 end
 
 -- The look of the buff: the Thornsister's own buff effect (what she gets when health is converted), a burst at the ally that
@@ -1824,18 +1749,10 @@ local function show_ally_buff(state, world, t)
 
 	state.next_ally_effect_t = t + CONFIG.ally_effect_interval
 
-	local ok_loaded, loaded = pcall(Application.can_get, "particles", CONFIG.ally_effect)
-
-	if not ok_loaded or not loaded then
-		return
-	end
-
 	local unit = state.target
 	local effect_id = World.create_particles(world, CONFIG.ally_effect, Unit.world_position(unit, 0), Quaternion.identity())
 
-	if Unit.has_node(unit, "root_point") then
-		World.link_particles(world, effect_id, unit, Unit.node(unit, "root_point"), Matrix4x4.identity(), "stop")
-	end
+	World.link_particles(world, effect_id, unit, Unit.node(unit, "root_point"), Matrix4x4.identity(), "stop")
 end
 
 -- The temporary health an ally gets from their attacks (the game's heals that come from procs of hits and kills: the
@@ -1875,6 +1792,19 @@ local function apply_bot_target(bot_unit, enemy)
 end
 
 local function force_bot_target(bot_unit)
+	-- (a bot that has the enemy it is made to attack, and it is alive, keeps it: no looking for another)
+	local current = bot_targets[bot_unit]
+
+	if current and HEALTH_ALIVE[current] then
+		apply_bot_target(bot_unit, current)
+
+		return
+	end
+
+	if (bot_scan_after[bot_unit] or 0) > Managers.time:time("game") then
+		return
+	end
+
 	local player = Managers.player:owner(bot_unit)
 	local position = POSITION_LOOKUP[bot_unit]
 
@@ -1904,6 +1834,9 @@ local function force_bot_target(bot_unit)
 
 	if nearest then
 		apply_bot_target(bot_unit, nearest)
+	else
+		-- (nothing to attack near it: looked again in a moment, not every frame)
+		bot_scan_after[bot_unit] = Managers.time:time("game") + CONFIG.bot_rescan_interval
 	end
 end
 
@@ -1940,7 +1873,7 @@ local function boost_ally(state, owner_unit, t)
 	})
 end
 
--- The beam, as lines: a curve from the staff to the end of it, a few lines around it for the thickness
+-- The beam is a curve from the staff to the end of it (a cubic Bezier)
 local function bezier(p0, p1, p2, p3, s)
 	local a = p0 * ((1 - s) * (1 - s) * (1 - s))
 	local b = p1 * (3 * (1 - s) * (1 - s) * s)
@@ -1950,57 +1883,8 @@ local function bezier(p0, p1, p2, p3, s)
 	return a + b + c + d
 end
 
--- Where the beam starts: ahead of the left hand's node, where the bolts start (the staff is in the hand). If the
--- model doesn't have the node, ahead of the eye and to the left.
-local function staff_position(owner_unit, first_person_extension, origin, rotation)
-	-- the end of the staff itself, it moves with the animation (the yank swings it)
-	local staff_end = staff_end_position(owner_unit)
-
-	if staff_end then
-		return staff_end
-	end
-
-	local unit_1p = first_person_extension:get_first_person_unit()
-
-	if unit_1p and Unit.has_node(unit_1p, CONFIG.bolt_link_node) then
-		local node_position = Unit.world_position(unit_1p, Unit.node(unit_1p, CONFIG.bolt_link_node))
-
-		return node_position + Quaternion.forward(Unit.world_rotation(unit_1p, 0)) * CONFIG.bolt_forward_offset
-	end
-
-	return origin + Quaternion.forward(rotation) * 0.6 - Quaternion.right(rotation) * 0.25 - Quaternion.up(rotation) * 0.25
-end
-
--- The beam as particles: the game's own beam particle (the one of the beam staff's trail, stretched by a variable that is
--- its width and length) for every piece of the curve, made new every frame and gone the next, so it is always as
--- it starts. The first of the effects that is loaded and has the variable; the lines are used if there is none.
-local sprite
-
-local function find_sprite(world)
-	if sprite then
-		local ok_loaded, loaded = pcall(Application.can_get, "particles", sprite.name)
-
-		if ok_loaded and loaded then
-			return sprite
-		end
-
-		sprite = nil
-	end
-
-	-- (the first of the effects that is loaded)
-	for _, name in ipairs(CONFIG.beam_sprite_effects) do
-		local ok_loaded, loaded = pcall(Application.can_get, "particles", name)
-
-		if ok_loaded and loaded then
-			sprite = {
-				name = name,
-			}
-
-			return sprite
-		end
-	end
-end
-
+-- The beam as particles: a copy of the effect at every point of the curve, placed every frame and kept until the beam
+-- ends, the effects are animated and one that is made again every so often is seen at its start, where it isn't there.
 local function destroy_sprites(state)
 	if state.sprite_ids and state.world then
 		for _, effect_id in ipairs(state.sprite_ids) do
@@ -2009,11 +1893,15 @@ local function destroy_sprites(state)
 	end
 
 	state.sprite_ids = nil
+	state.world = nil
 end
 
--- The copies are made when the beam starts (and as it gets longer), and moved every frame until it ends: the effects
--- are animated, one that is made again every so often is seen at its start, where it isn't there.
-local function draw_sprites(state, world, found, points)
+-- The points of the beam, and the points as they are seen: kept, not made every frame
+local beam_points = {}
+local seen_points = {}
+
+-- (the first `count` of the points)
+local function draw_sprites(state, world, points, count)
 	local ids = state.sprite_ids
 
 	if not ids then
@@ -2025,10 +1913,10 @@ local function draw_sprites(state, world, found, points)
 
 	-- (beam_sprite_copies copies of the effect at every point of the curve: a longer beam gets more, a shorter one fewer)
 	local copies = CONFIG.beam_sprite_copies
-	local wanted = (#points - 1) * copies
+	local wanted = (count - 1) * copies
 
 	for i = #ids + 1, wanted do
-		ids[i] = World.create_particles(world, found.name, points[math.floor((i - 1) / copies) + 2], Quaternion.identity())
+		ids[i] = World.create_particles(world, CONFIG.beam_effect, points[math.floor((i - 1) / copies) + 2], Quaternion.identity())
 	end
 
 	for i = #ids, wanted + 1, -1 do
@@ -2039,11 +1927,11 @@ local function draw_sprites(state, world, found, points)
 
 	-- (all looking along the line from the staff to the end, not along the curve: the particles of the effect move along the
 	-- way it faces, they flow towards the staff and not past the end)
-	local offset = points[#points] - points[1]
+	local offset = points[count] - points[1]
 	local length = Vector3.length(offset)
 	local rotation = length > 0.001 and Quaternion.look(offset * (1 / length)) or Quaternion.identity()
 
-	for i = 2, #points do
+	for i = 2, count do
 		local to = points[i]
 
 		for copy = 1, copies do
@@ -2052,20 +1940,7 @@ local function draw_sprites(state, world, found, points)
 	end
 end
 
-local function draw_beam(state, world, camera_position, start_position, rotation, end_position, weight, lag, color_values)
-	local found = find_sprite(world)
-	local line_object = state.line_object
-
-	if not found then
-		if not line_object then
-			line_object = World.create_line_object(world)
-			state.line_object = line_object
-			state.world = world
-		end
-
-		LineObject.reset(line_object)
-	end
-
+local function draw_beam(state, world, camera_position, start_position, rotation, end_position, weight, lag)
 	local right = Quaternion.right(rotation)
 	local up = Quaternion.up(rotation)
 	local length = Vector3.length(end_position - start_position)
@@ -2081,7 +1956,7 @@ local function draw_beam(state, world, camera_position, start_position, rotation
 		local aim = Quaternion.forward(rotation)
 		local sideways = aim - direction * Vector3.dot(aim, direction)
 
-		first_control = first_control + sideways * (length * CONFIG.beam_aim_curve * 1.3)
+		first_control = first_control + sideways * (length * CONFIG.beam_aim_curve * CONFIG.beam_aim_curve_gain)
 	end
 
 	local sag = weight and math.min(CONFIG.sag_max, CONFIG.sag_per_weight * weight * length) or 0
@@ -2093,81 +1968,35 @@ local function draw_beam(state, world, camera_position, start_position, rotation
 		bend = Vector3.normalize(bend) * CONFIG.lag_bend_max
 	end
 
-	first_control = first_control + (bend - Vector3.up() * sag) * 0.7
-	local color = Color(color_values[1], color_values[2], color_values[3], color_values[4])
-	local thickness = CONFIG.beam_thickness
-	local offsets = {
-		Vector3.zero(),
-		right * thickness,
-		right * -thickness,
-		up * thickness,
-		up * -thickness,
-	}
-	local previous = start_position
-	local points = {start_position}
+	first_control = first_control + (bend - Vector3.up() * sag) * CONFIG.beam_hang_share
 
 	-- (a point about every beam_segment_length of the beam, so a longer one has more particles)
 	local segments = math.clamp(math.ceil(length / CONFIG.beam_segment_length), CONFIG.beam_min_segments, CONFIG.beam_max_segments)
 
+	beam_points[1] = start_position
+
 	for i = 1, segments do
-		local point = bezier(start_position, first_control, second_control, end_position, i / segments)
-
-		points[#points + 1] = point
-
-		if not found then
-			for _, offset in ipairs(offsets) do
-				LineObject.add_line(line_object, color, previous + offset, point + offset)
-			end
-		end
-
-		previous = point
+		beam_points[i + 1] = bezier(start_position, first_control, second_control, end_position, i / segments)
 	end
 
-	if found then
-		-- The effect is drawn like the staff in the hands is, with a narrower field of view than the world: a point of the
-		-- world is seen further from the middle of the screen (by the ratio of the two) than where it is. The beam starts at
-		-- the staff, which is drawn the same way, and ends in the world: the points are pulled towards the aim, the more
-		-- the further along the beam they are, so that the end is seen on the target.
-		local world_fov = CONFIG.world_fov
+	local count = segments + 1
 
-		if Managers.state.camera then
-			local ok, fov = pcall(Managers.state.camera.fov, Managers.state.camera, "player_1")
+	-- The effect is drawn like the staff in the hands is, with a narrower field of view than the world: a point of the
+	-- world is seen further from the middle of the screen (by the ratio of the two) than where it is. The beam starts at
+	-- the staff, which is drawn the same way, and ends in the world: the points are pulled towards the aim, the more
+	-- the further along the beam they are, so that the end is seen on the target.
+	local world_fov = math.deg(Managers.state.camera:fov("player_1"))
+	local scale = math.tan(math.rad(CONFIG.effect_fov) / 2) / math.tan(math.rad(world_fov) / 2)
+	local forward = Quaternion.forward(rotation)
 
-			if ok and fov then
-				world_fov = math.deg(fov)
-			end
-		end
+	for i = 1, count do
+		local offset = beam_points[i] - camera_position
+		local factor = 1 + (scale - 1) * ((i - 1) / math.max(count - 1, 1))
 
-		local scale = math.tan(math.rad(CONFIG.effect_fov) / 2) / math.tan(math.rad(world_fov) / 2)
-		local forward = Quaternion.forward(rotation)
-		local seen = {}
-
-		for i = 1, #points do
-			local offset = points[i] - camera_position
-			local factor = 1 + (scale - 1) * ((i - 1) / math.max(#points - 1, 1))
-
-			seen[i] = camera_position + right * (Vector3.dot(offset, right) * factor) + up * (Vector3.dot(offset, up) * factor) + forward * Vector3.dot(offset, forward)
-		end
-
-		draw_sprites(state, world, found, seen)
-	else
-		LineObject.dispatch(world, line_object)
-	end
-end
-
-local function destroy_line_object(state)
-	destroy_sprites(state)
-
-	if state.line_object and state.world then
-		-- (what was dispatched stays drawn until the line object is dispatched again, so it is emptied and
-		-- dispatched before it goes, the world may be gone)
-		pcall(LineObject.reset, state.line_object)
-		pcall(LineObject.dispatch, state.world, state.line_object)
-		pcall(World.destroy_line_object, state.world, state.line_object)
+		seen_points[i] = camera_position + right * (Vector3.dot(offset, right) * factor) + up * (Vector3.dot(offset, up) * factor) + forward * Vector3.dot(offset, forward)
 	end
 
-	state.line_object = nil
-	state.world = nil
+	draw_sprites(state, world, seen_points, count)
 end
 
 local function end_beam(owner_unit)
@@ -2176,7 +2005,7 @@ local function end_beam(owner_unit)
 	if state then
 		finish_throw(state)
 		clear_held_outline(state)
-		destroy_line_object(state)
+		destroy_sprites(state)
 
 		if state.target then
 			bot_targets[state.target] = nil
@@ -2272,11 +2101,11 @@ local function update_pending_rescues(t)
 		local status_extension = Unit.alive(unit) and ScriptUnit.has_extension(unit, "status_system")
 		local still_waiting = status_extension and (pending.kind == "revive" and status_extension:is_knocked_down() or pending.kind == "pull_up" and status_extension:get_is_ledge_hanging())
 
-		if not still_waiting or pending.tries >= 4 then
+		if not still_waiting or pending.tries >= CONFIG.rescue_max_tries then
 			pending_rescues[unit] = nil
 		elseif t >= pending.next_t then
 			pending.tries = pending.tries + 1
-			pending.next_t = t + 0.5
+			pending.next_t = t + CONFIG.rescue_retry_interval
 
 			give_rescue(unit, pending.kind, pending.owner)
 		end
@@ -2318,19 +2147,19 @@ local function yank_ally(state, owner_unit, t)
 		-- (hung up on a hook by a pack master: let down, as the game's interaction does)
 		StatusUtils.set_grabbed_by_pack_master_network("pack_master_dropping", unit, true, nil)
 		add_heat(owner_unit, CONFIG.yank_free_overcharge)
-	elseif disabler_unit and mod.release_player_from_disabler then
-		mod.release_player_from_disabler(disabler_unit, unit, t)
+	elseif disabler_unit then
+		utils.release_from_disabler(disabler_unit, unit, t, CONFIG.disabler_stagger_duration)
 		add_heat(owner_unit, CONFIG.yank_free_overcharge)
 	elseif status_extension:is_in_vortex() then
 		StatusUtils.set_in_vortex_network(unit, false, nil)
 		add_heat(owner_unit, CONFIG.yank_free_overcharge)
 	elseif status_extension:get_is_ledge_hanging() then
 		give_rescue(unit, "pull_up", owner_unit)
-		pending_rescues[unit] = {kind = "pull_up", owner = owner_unit, next_t = t + 0.5, tries = 0}
+		pending_rescues[unit] = {kind = "pull_up", owner = owner_unit, next_t = t + CONFIG.rescue_retry_interval, tries = 0}
 		add_heat(owner_unit, CONFIG.yank_rescue_overcharge)
 	elseif status_extension:is_knocked_down() then
 		give_rescue(unit, "revive", owner_unit)
-		pending_rescues[unit] = {kind = "revive", owner = owner_unit, next_t = t + 0.5, tries = 0}
+		pending_rescues[unit] = {kind = "revive", owner = owner_unit, next_t = t + CONFIG.rescue_retry_interval, tries = 0}
 		add_heat(owner_unit, CONFIG.yank_rescue_overcharge)
 	elseif not status_extension:is_disabled() then
 		local flat = Vector3.flat(Unit.world_position(owner_unit, 0) - Unit.world_position(unit, 0))
@@ -2350,7 +2179,7 @@ local function yank_openable(state, owner_unit, t)
 
 	if door_extension and door_extension.interacted_with then
 		-- (the door looks at the position of whoever opens it, the mods' update runs before the game has made them current)
-		mod.with_valid_positions(door_extension.interacted_with, door_extension, owner_unit)
+		with_valid_positions(door_extension.interacted_with, door_extension, owner_unit)
 		add_heat(owner_unit, CONFIG.yank_door_overcharge)
 	else
 		local interactor_extension, interaction_type = supply_interaction(owner_unit, state.target)
@@ -2473,7 +2302,7 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 							blackboard.stagger_prohibited = nil
 							leave_climb(blackboard)
 
-							mod.with_valid_positions(AiUtils.stagger, state.target, blackboard, owner_unit, Vector3.normalize(Vector3.flat(Unit.world_position(owner_unit, 0) - Unit.world_position(state.target, 0)) + Vector3(0.001, 0, 0)), 1, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
+							with_valid_positions(AiUtils.stagger, state.target, blackboard, owner_unit, Vector3.normalize(Vector3.flat(Unit.world_position(owner_unit, 0) - Unit.world_position(state.target, 0)) + Vector3(0.001, 0, 0)), 1, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
 						end
 					end
 
@@ -2491,11 +2320,8 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 
 	-- the end of the beam: what it is linked to, or where it hits
 	local end_position
-	local color = CONFIG.beam_color
 
-	if state.target and Unit.alive(state.target) then
-		color = ((state.kind == "enemy" or state.kind == "monster") and CONFIG.held_beam_color) or ((state.kind == "object" or state.kind == "supply" or state.kind == "openable") and CONFIG.object_beam_color) or CONFIG.ally_beam_color
-	else
+	if not (state.target and Unit.alive(state.target)) then
 		local range = CONFIG.beam_range
 		local hit, hit_position = PhysicsWorld.immediate_raycast(physics_world, origin, aim, range, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
 
@@ -2503,18 +2329,22 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 	end
 
 	-- (drawn when the world has been updated, see draw_pending_beams: the target and the staff have moved by then, the
-	-- beam drawn here would be a frame behind them)
-	state.pending_draw = {
-		color = color,
-		end_position = end_position,
-		first_person_extension = first_person_extension,
-		lag = state.kind == "enemy" and state.lag and state.lag:unbox() or nil,
-		origin = origin,
-		owner_unit = owner_unit,
-		rotation = rotation,
-		weight = state.kind == "enemy" and state.weight or nil,
-		world = world,
-	}
+	-- beam drawn here would be a frame behind them. The table is kept, and filled in again.)
+	local pending = state.pending_draw
+
+	if not pending then
+		pending = {}
+		state.pending_draw = pending
+	end
+
+	pending.ready = true
+	pending.end_position = end_position
+	pending.lag = state.kind == "enemy" and state.lag and state.lag:unbox() or nil
+	pending.origin = origin
+	pending.owner_unit = owner_unit
+	pending.rotation = rotation
+	pending.weight = state.kind == "enemy" and state.weight or nil
+	pending.world = world
 end
 
 -- The beams are drawn after the units have been updated, from where the staff and what it is linked to are now
@@ -2522,8 +2352,8 @@ function mod.draw_pending_beams()
 	for _, state in pairs(states) do
 		local pending = state.pending_draw
 
-		if pending then
-			state.pending_draw = nil
+		if pending and pending.ready then
+			pending.ready = false
 
 			local end_position = pending.end_position
 
@@ -2531,8 +2361,10 @@ function mod.draw_pending_beams()
 				end_position = state.target and Unit.alive(state.target) and target_position(state)
 			end
 
-			if end_position and Unit.alive(pending.owner_unit) then
-				draw_beam(state, pending.world, pending.origin, staff_position(pending.owner_unit, pending.first_person_extension, pending.origin, pending.rotation), pending.rotation, end_position, pending.weight, pending.lag, pending.color)
+			local start_position = Unit.alive(pending.owner_unit) and staff_end_position(pending.owner_unit)
+
+			if end_position and start_position then
+				draw_beam(state, pending.world, pending.origin, start_position, pending.rotation, end_position, pending.weight, pending.lag)
 			end
 		end
 	end
@@ -2547,11 +2379,6 @@ mod:hook_safe(ActionCharge, "finish", function (self)
 	end
 end)
 
--- Enabling and disabling
-local function is_link_gun_enabled()
-	return mod:get("ut_weapons") ~= false and mod:get("link_gun") ~= false
-end
-
 -- Wielding the staff: the stance is entered after a moment
 mod.wield_callbacks.link = function (self, equipment, slot_data, unit_1p)
 	if not slot_data then
@@ -2565,7 +2392,7 @@ mod.wield_callbacks.link = function (self, equipment, slot_data, unit_1p)
 
 	local item_template = BackendUtils.get_item_template(slot_data.item_data)
 
-	if item_template.name ~= TEMPLATE_NAME or not is_link_gun_enabled() or not has_staff then
+	if item_template.name ~= TEMPLATE_NAME or not utils.is_weapon_enabled("link_gun") or not has_staff then
 		return
 	end
 
@@ -2605,34 +2432,15 @@ if PlayerUnitFirstPerson then
 	end)
 end
 
-local previous_on_enabled = mod.on_enabled
-local previous_on_disabled = mod.on_disabled
-local previous_on_setting_changed = mod.on_setting_changed
-local previous_on_unload = mod.on_unload
-local previous_update = mod.update
-
-mod.update = function (dt, ...)
-	if previous_update then
-		previous_update(dt, ...)
-	end
-
+mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	pose.update(dt)
 	hand.update()
 
 	if next(pending_rescues) then
 		update_pending_rescues(Managers.time:time("game"))
 	end
+
 	update_bolts()
-end
-
-mod.on_enabled = function (...)
-	if previous_on_enabled then
-		previous_on_enabled(...)
-	end
-
-	if is_link_gun_enabled() then
-		apply_link_gun()
-	end
 end
 
 local function clear_beams()
@@ -2647,42 +2455,13 @@ local function clear_beams()
 	pose.is_valid = nil
 	hand.show()
 	table.clear(bolts)
-
-	-- (the variable of the particle belongs to the world, which is another one in the next level)
-	sprite = nil
 end
 
-mod.on_disabled = function (...)
-	if previous_on_disabled then
-		previous_on_disabled(...)
-	end
-
+-- Enabling and disabling (the weapon can be switched off in the settings: the staff is then the game's own again)
+utils.register_weapon("link_gun", apply_link_gun, function ()
 	clear_beams()
 	restore_staff()
-end
-
-mod.on_setting_changed = function (setting_id, ...)
-	if previous_on_setting_changed then
-		previous_on_setting_changed(setting_id, ...)
-	end
-
-	if setting_id == "link_gun" or setting_id == "ut_weapons" then
-		if is_link_gun_enabled() then
-			apply_link_gun()
-		else
-			clear_beams()
-			restore_staff()
-		end
-	end
-end
-
-mod.on_unload = function (...)
-	if previous_on_unload then
-		previous_on_unload(...)
-	end
-
-	clear_beams()
-end
+end)
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	clear_beams()

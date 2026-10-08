@@ -4,6 +4,14 @@ local mod = get_mod("unreal_tournament")
 -- characters and weapons that use them, playing one that isn't loaded crashes the game, so an
 -- effect is only played when it is available.
 
+local CONFIG = {
+	-- Particle effects are scaled by linking them to a unit with a scale, so effects that need
+	-- a size get an invisible helper unit. Some effects ignore the scale.
+	fx_unit_name = "units/hub_elements/empty",
+	-- Scaled effects are destroyed after a while, in case they would never end
+	timed_effect_lifetime = 3, -- seconds
+}
+
 local effects = {}
 
 effects.is_available = function (effect_name)
@@ -12,12 +20,16 @@ effects.is_available = function (effect_name)
 	return ok and available
 end
 
--- Particle effects are scaled by linking them to a unit with a scale, so effects that need
--- a size get an invisible helper unit. Some effects ignore the scale.
-local FX_UNIT_NAME = "units/hub_elements/empty"
+-- Plays the effect as it is (at its own size) if it is available, returns if it was
+effects.create = function (world, effect_name, position, rotation)
+	if not effects.is_available(effect_name) then
+		return false
+	end
 
--- Scaled effects are destroyed after a while, in case they would never end
-local TIMED_EFFECT_LIFETIME = 3
+	World.create_particles(world, effect_name, position, rotation or Quaternion.identity())
+
+	return true
+end
 
 local timed_effects = {}
 
@@ -38,7 +50,7 @@ effects.play = function (world, effect_name, position, scale, rotation)
 
 	rotation = rotation or Quaternion.identity()
 
-	local unit = Managers.state.unit_spawner:spawn_local_unit(FX_UNIT_NAME, position, Quaternion.identity())
+	local unit = Managers.state.unit_spawner:spawn_local_unit(CONFIG.fx_unit_name, position, Quaternion.identity())
 
 	Unit.set_local_scale(unit, 0, Vector3(scale, scale, scale))
 
@@ -63,7 +75,7 @@ effects.update = function (dt)
 
 		effect.age = effect.age + dt
 
-		if effect.age >= TIMED_EFFECT_LIFETIME then
+		if effect.age >= CONFIG.timed_effect_lifetime then
 			destroy_timed_effect(effect)
 			table.remove(timed_effects, i)
 		end
@@ -77,5 +89,10 @@ effects.clear = function ()
 		timed_effects[i] = nil
 	end
 end
+
+-- (loaded once, by unreal_tournament.lua: the effects are kept here, and updated and cleared here, not by each weapon)
+mod.update_callbacks[#mod.update_callbacks + 1] = effects.update
+mod.unload_callbacks[#mod.unload_callbacks + 1] = effects.clear
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = effects.clear
 
 return effects

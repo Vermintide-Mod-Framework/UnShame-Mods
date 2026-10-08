@@ -13,37 +13,46 @@ mod.on_game_state_changed = function (status, state_name)
 	end
 end
 
--- The charge actions of the weapons that are patched (the Bio Rifle's charge, the Link Gun's beam) are told about
--- every frame they are held, by name: a function can be hooked once. The action says which callback in
--- ut_charge_callback.
-mod.charge_update_callbacks = {}
+-- What the files do when the mod is enabled, disabled, reloaded, updated, or a setting changes: the game's calls to the mod
+-- go to each of these lists, in the order the files are loaded. A file adds its own function to the list it wants:
+--   mod.update_callbacks[#mod.update_callbacks + 1] = function (dt) ... end
+mod.enabled_callbacks = {}
+mod.disabled_callbacks = {}
+mod.setting_changed_callbacks = {}
+mod.update_callbacks = {}
+mod.unload_callbacks = {}
 
-mod:hook_safe(ActionCharge, "client_owner_post_update", function (self, dt, t, world)
-	local action = self.current_action
-	local callback = action and action.ut_charge_callback and mod.charge_update_callbacks[action.ut_charge_callback]
-
-	if callback then
-		callback(self, dt, t, world)
+local function call_all(callbacks, ...)
+	for i = 1, #callbacks do
+		callbacks[i](...)
 	end
-end)
+end
 
--- What the weapons do when they are wielded (their default stance), by name: a function can be hooked once. Each
--- is called with what the game gives _wield_slot and looks at the weapon itself. Only for the player's own
--- character: the bots and the other players wield weapons through the same function, and what the weapons do
--- here is with the player's own first person view.
-mod.wield_callbacks = {}
+mod.on_enabled = function (...)
+	call_all(mod.enabled_callbacks, ...)
+end
 
-mod:hook_safe(SimpleInventoryExtension, "_wield_slot", function (self, equipment, slot_data, unit_1p)
-	local local_player = Managers.player and Managers.player:local_player()
+mod.on_disabled = function (...)
+	call_all(mod.disabled_callbacks, ...)
+end
 
-	if not local_player or local_player.player_unit ~= self._unit then
-		return
-	end
+mod.on_setting_changed = function (...)
+	call_all(mod.setting_changed_callbacks, ...)
+end
 
-	for _, callback in pairs(mod.wield_callbacks) do
-		callback(self, equipment, slot_data, unit_1p)
-	end
-end)
+mod.update = function (...)
+	call_all(mod.update_callbacks, ...)
+end
+
+mod.on_unload = function (...)
+	call_all(mod.unload_callbacks, ...)
+end
+
+-- The hooks of the game's functions that the weapons share, and the tables of callbacks they run
+mod:dofile("scripts/mods/unreal_tournament/hooks")
+
+-- The scaled particle effects of the weapons, the one copy of them
+mod.effects = mod:dofile("scripts/mods/unreal_tournament/effects")
 
 mod:dofile("scripts/mods/unreal_tournament/shock_rifle")
 mod:dofile("scripts/mods/unreal_tournament/flak_cannon")
@@ -51,5 +60,4 @@ mod:dofile("scripts/mods/unreal_tournament/rocket_launcher")
 mod:dofile("scripts/mods/unreal_tournament/bio_rifle")
 mod:dofile("scripts/mods/unreal_tournament/link_gun")
 mod:dofile("scripts/mods/unreal_tournament/movement")
-mod:dofile("scripts/mods/unreal_tournament/pickups")
 mod:dofile("scripts/mods/unreal_tournament/gameplay")

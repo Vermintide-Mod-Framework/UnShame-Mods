@@ -6,14 +6,14 @@ local mod = get_mod("unreal_tournament")
 --   RMB: a lobbed shell that explodes when it hits something and throws flak chunks in all directions.
 -- Ammo, reload, recoil and the sounds of the shot are the blunderbuss's own.
 
-local registration = mod:dofile("scripts/mods/unreal_tournament/registration")
-local effects = mod:dofile("scripts/mods/unreal_tournament/effects")
-local register_damage_profile = registration.register_damage_profile
-local register_explosion_template = registration.register_explosion_template
-local register_network_lookup = registration.register_network_lookup
-local make_flat = registration.make_flat
-local attack_power_for = registration.attack_power_for
-local impact_power_for = registration.impact_power_for
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local effects = mod.effects
+local register_damage_profile = utils.register_damage_profile
+local register_explosion_template = utils.register_explosion_template
+local register_network_lookup = utils.register_network_lookup
+local make_flat = utils.make_flat
+local attack_power_for = utils.attack_power_for
+local impact_power_for = utils.impact_power_for
 
 local TEMPLATE_NAME = "blunderbuss_template_1"
 
@@ -35,6 +35,10 @@ local CONFIG = {
 	-- UT2004: 25% of the chunks bounce twice, 50% once and 25% not at all. This many bounces more
 	-- than that for every chunk. A chunk also goes through enemies, every enemy it goes through
 	-- uses up one of its bounces, and the other way round: a chunk has this many in all.
+	-- The multipliers of a chunk per armor type (unarmored, armored, monsters, players, berserkers, super armor)
+	chunk_armor_attack = {1, 1.25, 1.5, 1, 1, 0.5},
+	chunk_armor_impact = {1, 1, 1, 1, 1, 0.25},
+	chunk_bounces = 2, -- the most bounces a chunk has in UT2004
 	chunk_extra_bounces = 2,
 	chunk_damage = 11, -- in UT2004's units, 45 is the shock rifle's beam. UT has 13 with a 90 explosion, 8.7 was it scaled with the explosion's 60
 	-- UT2004: after its first second a chunk loses 5 damage per second of its 13, but not below 5
@@ -119,10 +123,9 @@ local CONFIG = {
 -- The chunks belong to the primary action, the shell to the secondary one.
 local CHUNK_ACTION_NAME = "action_one"
 local SHELL_ACTION_NAME = "action_two"
-local UT_MAX_BOUNCES = 2
 local CHUNK_ACTIONS = {} -- the chunk that bounces n times is CHUNK_ACTIONS[n + 1]
 
-for bounces = 0, UT_MAX_BOUNCES + CONFIG.chunk_extra_bounces do
+for bounces = 0, CONFIG.chunk_bounces + CONFIG.chunk_extra_bounces do
 	CHUNK_ACTIONS[bounces + 1] = "ut_flak_chunk_" .. bounces
 end
 local SHELL_ACTION = "ut_flak_shell"
@@ -137,36 +140,11 @@ register_network_lookup("sub_actions", SHELL_ACTION)
 -- A chunk stops at the first enemy it hits, the direct hit of the shell only staggers: its damage is the
 -- explosion, which is at full strength for whatever the shell hits (like in UT).
 
--- The multipliers per armor type (unarmored, armored, monsters, players, berserkers, super armor)
-local ARMOR_PIERCING_ATTACK = {
-	1,
-	1.25,
-	1.5,
-	1,
-	1,
-	0.5,
-}
-local ARMOR_PIERCING_IMPACT = {
-	1,
-	1,
-	1,
-	1,
-	1,
-	0.25,
-}
-
 register_damage_profile("ut_flak_chunk", "staff_fireball", function (profile)
 	make_flat(profile, attack_power_for(CONFIG.chunk_damage), impact_power_for(CONFIG.chunk_damage))
 
 	-- armor piercing: armored enemies take more damage than unarmored ones (critical hits too)
-	profile.armor_modifier = {
-		attack = table.clone(ARMOR_PIERCING_ATTACK),
-		impact = table.clone(ARMOR_PIERCING_IMPACT),
-	}
-	profile.critical_strike = {
-		attack_armor_power_modifer = table.clone(ARMOR_PIERCING_ATTACK),
-		impact_armor_power_modifer = table.clone(ARMOR_PIERCING_IMPACT),
-	}
+	utils.set_armor_modifiers(profile, CONFIG.chunk_armor_attack, CONFIG.chunk_armor_impact, true)
 
 	-- knockback that falls off: the damage is the same at any distance, the impact is not. This is
 	-- how the game does the falloff of shotguns, with the shotgun's way of staggering.
@@ -251,6 +229,8 @@ local function build_chunk_action(max_bounces)
 		hit_effect = "shotgun_bullet_impact",
 		kind = "charged_projectile",
 		ut_flak_chunk = true,
+		ut_hit_enemy_callback = "ut_flak_chunk",
+		ut_init_callback = "ut_flak_chunk",
 		projectile_info = projectile_info,
 		impact_data = {
 			bounce_on_level_units = true,
@@ -279,6 +259,7 @@ local function build_shell_action()
 	return {
 		hit_effect = "bullet_critical_impact",
 		kind = "charged_projectile",
+		ut_aoe_callback = "ut_flak_shell",
 		ut_flak_shell = true,
 		projectile_info = projectile_info,
 		impact_data = {
@@ -308,29 +289,17 @@ local function build_shell_launcher(primary)
 	return action
 end
 
-local function set_lookup_data(actions)
-	for action_name, sub_actions in pairs(actions) do
-		for sub_action_name, sub_action in pairs(sub_actions) do
-			sub_action.lookup_data = {
-				item_template_name = TEMPLATE_NAME,
-				action_name = action_name,
-				sub_action_name = sub_action_name,
-			}
-		end
-	end
-end
-
 -- The template is shared game state: it is patched in place, what is touched is saved to be put
--- back on disable. The saved values are in a persistent table, so that a mod reload doesn't take
--- the patched template for the original.
-local persistent = mod:persistent_table("flak_cannon")
+-- back on disable, and when the mod is unloaded (a reload would take the patched template for the original).
+local saved = {}
+
 local PROJECTILE_UNIT_TEMPLATES = {
 	"drake_pistol_shot",
 	"grenade",
 }
 
 local function restore_blunderbuss()
-	local original = persistent.original
+	local original = saved.original
 	local template = rawget(Weapons, TEMPLATE_NAME)
 
 	if not original or not template then
@@ -357,7 +326,7 @@ local function restore_blunderbuss()
 		template.ammo_data[key] = value
 	end
 
-	persistent.original = nil
+	saved.original = nil
 end
 
 local function apply_flak_cannon()
@@ -385,7 +354,7 @@ local function apply_flak_cannon()
 		original.required_projectile_unit_templates[name] = template.required_projectile_unit_templates[name]
 	end
 
-	persistent.original = original
+	saved.original = original
 
 	template.ammo_data.max_ammo = math.floor(original.ammo_data.max_ammo * CONFIG.ammo_multiplier + 0.5)
 	template.ammo_data.reload_time = original.ammo_data.reload_time * CONFIG.reload_time_multiplier
@@ -404,10 +373,10 @@ local function apply_flak_cannon()
 
 	actions[SHELL_ACTION_NAME][SHELL_ACTION] = build_shell_action()
 
-	set_lookup_data({
+	utils.set_actions_lookup_data({
 		action_one = actions.action_one,
 		action_two = actions.action_two,
-	})
+	}, TEMPLATE_NAME)
 
 	-- the projectile units have to be loaded when the weapon is wielded
 	for _, name in ipairs(PROJECTILE_UNIT_TEMPLATES) do
@@ -486,23 +455,8 @@ end)
 
 -- The explosion of the shell: the chunks. This runs where the shell's impact is handled, which is
 -- on the machine of the player who fired it.
--- (Other weapons with explosions register callbacks by name in mod.aoe_callbacks, the action says
--- which: a function can be hooked once.)
-mod.aoe_callbacks = mod.aoe_callbacks or {}
-mod.init_callbacks = mod.init_callbacks or {}
-mod.hit_enemy_callbacks = mod.hit_enemy_callbacks or {}
-
-mod:hook_safe(PlayerProjectileUnitExtension, "do_aoe", function (self, aoe_data, position)
-	local action = self._current_action
-	local callback = action and action.ut_aoe_callback and mod.aoe_callbacks[action.ut_aoe_callback]
-
-	if callback then
-		callback(self, aoe_data, position)
-
-		return
-	end
-
-	if not action or not action.ut_flak_shell or self._ut_flak_exploded then
+mod.aoe_callbacks.ut_flak_shell = function (self, aoe_data, position)
+	if self._ut_flak_exploded then
 		return
 	end
 
@@ -521,15 +475,14 @@ mod:hook_safe(PlayerProjectileUnitExtension, "do_aoe", function (self, aoe_data,
 		power_level = self.power_level,
 	}
 
-	registration.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_flak_shell_explosion.explosion, CONFIG.shell_self_damage)
+	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_flak_shell_explosion.explosion, CONFIG.shell_self_damage)
 
 	for _ = 1, CONFIG.shell_chunk_count do
 		spawn_projectile(shot, start, burst_rotation(rotation, math.degrees_to_radians(CONFIG.shell_chunk_cone_degrees)), CHUNK_ACTION_NAME, random_chunk_action(), CONFIG.chunk_speed)
 	end
-end)
+end
 
 -- The look of the explosion, on every peer: the explosion's callback is run for everyone who sees it
-mod.explosion_callbacks = mod.explosion_callbacks or {}
 mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position)
 	for _, effect in ipairs(CONFIG.shell_explosion_effects) do
 		effects.play(world, effect.name, position + Vector3(0, 0, effect.offset), effect.scale)
@@ -640,171 +593,70 @@ end
 -- bounces (impact_data.max_bounces) and the enemies it goes through (_num_additional_penetrations)
 -- separately. The chunk goes through as many enemies as it bounces, and going through an enemy is
 -- counted as a bounce. Players who didn't fire the chunk have the same code for it.
-for _, extension_class in ipairs({
-	PlayerProjectileUnitExtension,
-	PlayerProjectileHuskExtension,
-}) do
-	mod:hook_safe(extension_class, "init", function (self)
-		local action = self._current_action
-
-		if action and action.ut_flak_chunk then
-			self._num_additional_penetrations = action.impact_data.max_bounces
-			self._ut_flak_spawn_t = Managers.time:time("game")
-		end
-
-		-- (hooks of init for other weapons are registered by name in mod.init_callbacks, the action says
-		-- which: a function can be hooked once)
-		local callback = action and action.ut_init_callback and mod.init_callbacks[action.ut_init_callback]
-
-		if callback then
-			callback(self)
-		end
-	end)
-
-	mod:hook(extension_class, "hit_enemy", function (func, self, impact_data, hit_unit, hit_position, hit_direction, ...)
-		local action = self._current_action
-
-		-- armor stops a chunk (after it did its damage): the game stops a projectile that has
-		-- nothing left to go through
-		if action and action.ut_flak_chunk and stops_chunk(self, hit_unit, hit_direction) then
-			self._num_additional_penetrations = 0
-		end
-
-		local penetrations_before = self._num_additional_penetrations
-
-		-- the damage (and the knockback) of a chunk decays with its age. The power level is what
-		-- the game reads for a hit, so it is scaled for the duration of it.
-		local power_level = self.power_level
-		local spawn_t = self._ut_flak_spawn_t
-
-		if action and action.ut_flak_chunk and power_level and spawn_t then
-			local age = Managers.time:time("game") - spawn_t
-			local damage = math.max(CONFIG.chunk_damage_min, CONFIG.chunk_ut_damage - CONFIG.chunk_damage_decay * math.max(0, age - CONFIG.chunk_damage_decay_delay))
-
-			self.power_level = power_level * damage / CONFIG.chunk_ut_damage
-		end
-
-		func(self, impact_data, hit_unit, hit_position, hit_direction, ...)
-
-		self.power_level = power_level
-
-		-- (hooks of hit_enemy for other weapons are registered by name in mod.hit_enemy_callbacks, the action
-		-- says which; only the projectiles of the player who fired are told, the others get it from the network)
-		local hit_callback = action and action.ut_hit_enemy_callback and extension_class == PlayerProjectileUnitExtension and mod.hit_enemy_callbacks[action.ut_hit_enemy_callback]
-
-		if hit_callback then
-			hit_callback(self, hit_unit, hit_position)
-		end
-
-		if action and action.ut_flak_chunk and not AiUtils.attack_is_shield_blocked(hit_unit, self._owner_unit, nil, hit_direction) then
-			add_ragdoll_throw(hit_unit, self._owner_unit, hit_position, hit_direction)
-		end
-
-		if action and action.ut_flak_chunk and self._num_additional_penetrations < penetrations_before then
-			self._num_bounces = self._num_bounces + penetrations_before - self._num_additional_penetrations
-		end
-	end)
+mod.init_callbacks.ut_flak_chunk = function (self)
+	self._num_additional_penetrations = self._current_action.impact_data.max_bounces
+	self._ut_flak_spawn_t = Managers.time:time("game")
 end
 
--- Enabling and disabling. The Shock Rifle's file has set these already, they are extended.
-local PACKAGE_REFERENCE_NAME = "unreal_tournament_flak"
-
-local function load_projectile_packages()
-	persistent.packages = persistent.packages or {}
-
-	if not Managers.package then
-		return
+mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_data, hit_unit, hit_position, hit_direction, ...)
+	-- armor stops a chunk (after it did its damage): the game stops a projectile that has
+	-- nothing left to go through
+	if stops_chunk(self, hit_unit, hit_direction) then
+		self._num_additional_penetrations = 0
 	end
 
-	for _, name in ipairs(PROJECTILE_UNIT_TEMPLATES) do
-		local package_name = ProjectileUnits[name].projectile_unit_name
+	local penetrations_before = self._num_additional_penetrations
 
-		if not persistent.packages[package_name] then
-			Managers.package:load(package_name, PACKAGE_REFERENCE_NAME)
+	-- the damage (and the knockback) of a chunk decays with its age. The power level is what
+	-- the game reads for a hit, so it is scaled for the duration of it.
+	local power_level = self.power_level
+	local spawn_t = self._ut_flak_spawn_t
 
-			persistent.packages[package_name] = true
-		end
+	if power_level and spawn_t then
+		local age = Managers.time:time("game") - spawn_t
+		local damage = math.max(CONFIG.chunk_damage_min, CONFIG.chunk_ut_damage - CONFIG.chunk_damage_decay * math.max(0, age - CONFIG.chunk_damage_decay_delay))
+
+		self.power_level = power_level * damage / CONFIG.chunk_ut_damage
+	end
+
+	func(self, impact_data, hit_unit, hit_position, hit_direction, ...)
+
+	self.power_level = power_level
+
+	if not AiUtils.attack_is_shield_blocked(hit_unit, self._owner_unit, nil, hit_direction) then
+		add_ragdoll_throw(hit_unit, self._owner_unit, hit_position, hit_direction)
+	end
+
+	if self._num_additional_penetrations < penetrations_before then
+		self._num_bounces = self._num_bounces + penetrations_before - self._num_additional_penetrations
 	end
 end
 
-local function unload_projectile_packages()
-	for package_name in pairs(persistent.packages or {}) do
-		persistent.packages[package_name] = nil
+-- The mod holds its own references to the units of the projectiles while the weapon is enabled
+local packages = utils.package_holder("unreal_tournament_flak")
 
-		if Managers.package then
-			pcall(Managers.package.unload, Managers.package, package_name, PACKAGE_REFERENCE_NAME)
-		end
-	end
+local function enable_flak_cannon()
+	packages.load_projectile_units(PROJECTILE_UNIT_TEMPLATES)
+	apply_flak_cannon()
 end
 
-local previous_on_enabled = mod.on_enabled
-local previous_on_disabled = mod.on_disabled
-local previous_update = mod.update
-local previous_on_unload = mod.on_unload
+-- (the weapon can be switched off in the settings: the blunderbuss is then the game's own again, the weapon the player
+-- holds changes when it is wielded again)
+local function disable_flak_cannon()
+	restore_blunderbuss()
+	packages.unload()
+end
 
-mod.update = function (dt, ...)
-	if previous_update then
-		previous_update(dt, ...)
-	end
+utils.register_weapon("flak_cannon", enable_flak_cannon, disable_flak_cannon)
 
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	update_ragdoll_throws()
-	effects.update(dt)
 end
 
-mod.on_unload = function (...)
-	if previous_on_unload then
-		previous_on_unload(...)
-	end
-
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 	table.clear(ragdoll_throws)
-	effects.clear()
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(ragdoll_throws)
-	effects.clear()
-end
-
--- The weapon can be switched off in the settings: the blunderbuss is then the game's own again (the weapon
--- the player holds changes when it is wielded again)
-local function is_flak_cannon_enabled()
-	return mod:get("ut_weapons") ~= false and mod:get("flak_cannon") ~= false
-end
-
-mod.on_enabled = function (...)
-	if previous_on_enabled then
-		previous_on_enabled(...)
-	end
-
-	if is_flak_cannon_enabled() then
-		load_projectile_packages()
-		apply_flak_cannon()
-	end
-end
-
-mod.on_disabled = function (...)
-	if previous_on_disabled then
-		previous_on_disabled(...)
-	end
-
-	restore_blunderbuss()
-	unload_projectile_packages()
-end
-
-local previous_on_setting_changed = mod.on_setting_changed
-
-mod.on_setting_changed = function (setting_id, ...)
-	if previous_on_setting_changed then
-		previous_on_setting_changed(setting_id, ...)
-	end
-
-	if setting_id == "flak_cannon" or setting_id == "ut_weapons" then
-		if is_flak_cannon_enabled() then
-			load_projectile_packages()
-			apply_flak_cannon()
-		else
-			restore_blunderbuss()
-			unload_projectile_packages()
-		end
-	end
 end

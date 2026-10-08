@@ -8,23 +8,17 @@ local mod = get_mod("unreal_tournament")
 --               LMB then fires them all in a line.
 -- Ammo and reload are the crossbow's own.
 
-local registration = mod:dofile("scripts/mods/unreal_tournament/registration")
-local effects = mod:dofile("scripts/mods/unreal_tournament/effects")
-local register_damage_profile = registration.register_damage_profile
-local register_explosion_template = registration.register_explosion_template
-local register_network_lookup = registration.register_network_lookup
-local make_flat = registration.make_flat
-local attack_power_for = registration.attack_power_for
-local impact_power_for = registration.impact_power_for
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local effects = mod.effects
+local register_damage_profile = utils.register_damage_profile
+local register_explosion_template = utils.register_explosion_template
+local register_network_lookup = utils.register_network_lookup
+local make_flat = utils.make_flat
+local attack_power_for = utils.attack_power_for
+local impact_power_for = utils.impact_power_for
 
 local TEMPLATE_NAME = "repeating_crossbow_template_1"
 local SPIRAL_ACTION = "zoomed_shot_spiral" -- the sub action of the salvo that is a spiral
-
--- The weapon can be switched off in the settings: the crossbow is then the game's own again (the weapon
--- the player holds changes when it is wielded again)
-local function is_rocket_launcher_enabled()
-	return mod:get("ut_weapons") ~= false and mod:get("rocket_launcher") ~= false
-end
 
 register_network_lookup("sub_actions", SPIRAL_ACTION)
 
@@ -259,12 +253,11 @@ local needs_release = setmetatable({}, {
 })
 
 -- The template is shared game state: it is patched in place, what is touched is saved to be put
--- back on disable. The saved values are in a persistent table, so that a mod reload doesn't take
--- the patched template for the original.
-local persistent = mod:persistent_table("rocket_launcher")
+-- back on disable, and when the mod is unloaded (a reload would take the patched template for the original).
+local saved = {}
 
 local function restore_crossbow()
-	local original = persistent.original
+	local original = saved.original
 	local template = rawget(Weapons, TEMPLATE_NAME)
 
 	if not original or not template then
@@ -283,7 +276,7 @@ local function restore_crossbow()
 		template.ammo_data[key] = value
 	end
 
-	persistent.original = nil
+	saved.original = nil
 end
 
 local function apply_rocket_launcher()
@@ -308,7 +301,7 @@ local function apply_rocket_launcher()
 		},
 	}
 
-	persistent.original = original
+	saved.original = original
 
 	template.ammo_data.ammo_per_clip = CONFIG.ammo_per_clip
 	template.ammo_data.ammo_per_reload = CONFIG.ammo_per_clip
@@ -552,7 +545,6 @@ local latest_flock = setmetatable({}, {
 	__mode = "k",
 })
 
-mod.init_callbacks = mod.init_callbacks or {}
 mod.init_callbacks.rocket = function (extension)
 	local action = extension._current_action
 
@@ -755,7 +747,7 @@ local function wielding_rocket_launcher(unit)
 	local wielded = equipment and equipment.wielded
 
 	-- (the item data is the entry of the item master list, or has it as data)
-	return is_rocket_launcher_enabled() and wielded and (wielded.template or wielded.data and wielded.data.template) == TEMPLATE_NAME
+	return utils.is_weapon_enabled("rocket_launcher") and wielded and (wielded.template or wielded.data and wielded.data.template) == TEMPLATE_NAME
 end
 
 -- The enemy closest to the aim that is in front of it, close enough to it and not behind a wall. If there is none
@@ -809,28 +801,11 @@ local function pick_lock_candidate(unit, first_person_extension, current_target)
 end
 
 -- The red outline of the game's target marking, what the true flight bow puts on the enemy it is aimed at
-local function clear_lock_outline(state)
-	local extension = state.outline_extension
-
-	if extension then
-		-- the enemy may be gone
-		pcall(extension.remove_outline, extension, state.outline_id)
-
-		state.outline_extension = nil
-		state.outline_id = nil
-	end
-end
+local clear_lock_outline = utils.clear_outline
 
 local function add_lock_outline(state)
-	if not CONFIG.lock_outline or state.outline_extension or not ALIVE[state.target] then
-		return
-	end
-
-	local extension = ScriptUnit.has_extension(state.target, "outline_system")
-
-	if extension then
-		state.outline_extension = extension
-		state.outline_id = extension:add_outline(OutlineSettings.templates.target_enemy)
+	if CONFIG.lock_outline then
+		utils.add_outline(state, state.target, OutlineSettings.templates.target_enemy)
 	end
 end
 
@@ -1043,8 +1018,7 @@ mod:hook_safe(CrosshairUI, "_draw_kill_confirm", function (self, dt, t, ui_rende
 	end
 end)
 
--- The explosion hurts the player: the flak cannon's hook of do_aoe runs the callbacks of the actions
-mod.aoe_callbacks = mod.aoe_callbacks or {}
+-- The explosion hurts the player (the callbacks of the actions are run by the hook of do_aoe in hooks.lua)
 mod.aoe_callbacks.rocket = function (self, aoe_data, position)
 	if self._ut_rocket_exploded then
 		return
@@ -1052,52 +1026,13 @@ mod.aoe_callbacks.rocket = function (self, aoe_data, position)
 
 	self._ut_rocket_exploded = true
 
-	registration.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_rocket_explosion.explosion, CONFIG.rocket_self_damage)
+	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_rocket_explosion.explosion, CONFIG.rocket_self_damage)
 end
 
 -- Bodies thrown by the explosion. Runs on every peer, the physics of ragdolls is local. The units
 -- near the explosion are collected when it goes off, the ones that die are thrown once their
 -- ragdoll has started (before that the actors are driven by animation).
 local blasts = {}
-
-local function units_in_radius(world, position, radius)
-	local physics_world = World.physics_world(world)
-	local actors, num_actors = PhysicsWorld.immediate_overlap(physics_world, "shape", "sphere", "position", position, "size", radius, "collision_filter", "filter_explosion_overlap")
-	local units = {}
-
-	for i = 1, num_actors do
-		local unit = Actor.unit(actors[i])
-		local breed = unit and Unit.alive(unit) and AiUtils.unit_breed(unit)
-
-		if breed and not breed.is_player then
-			units[unit] = true
-		end
-	end
-
-	return units
-end
-
--- Returns true once the body was thrown
-local function blast_ragdoll(unit, center, radius)
-	local thrown = false
-
-	for i = 0, Unit.num_actors(unit) - 1 do
-		local actor = Unit.actor(unit, i)
-
-		if actor and Actor.is_dynamic(actor) then
-			local offset = Actor.position(actor) - center
-			local distance = Vector3.length(offset)
-			local direction = distance > 0.01 and offset * (1 / distance) or Vector3.up()
-			local speed = CONFIG.ragdoll_speed * math.lerp(1, 0.5, math.clamp(distance / radius, 0, 1))
-
-			Actor.set_velocity(actor, direction * speed + Vector3(0, 0, CONFIG.ragdoll_up))
-
-			thrown = true
-		end
-	end
-
-	return thrown
-end
 
 local function update_blasts()
 	local t = Managers.time:time("game")
@@ -1109,7 +1044,7 @@ local function update_blasts()
 		for unit in pairs(blast.units) do
 			if not Unit.alive(unit) then
 				blast.units[unit] = nil
-			elseif not HEALTH_ALIVE[unit] and blast_ragdoll(unit, center, blast.radius) then
+			elseif not HEALTH_ALIVE[unit] and utils.blast_ragdoll(unit, center, blast.radius, CONFIG.ragdoll_speed, CONFIG.ragdoll_up) then
 				blast.units[unit] = nil
 			end
 		end
@@ -1121,7 +1056,6 @@ local function update_blasts()
 end
 
 -- The look of the explosion, on every peer: the explosion's callback is run for everyone who sees it
-mod.explosion_callbacks = mod.explosion_callbacks or {}
 mod.explosion_callbacks.ut_rocket_explosion = function (world, position)
 	for _, effect in ipairs(CONFIG.explosion_effects) do
 		effects.play(world, effect.name, position + Vector3(0, 0, effect.offset), effect.scale)
@@ -1133,67 +1067,22 @@ mod.explosion_callbacks.ut_rocket_explosion = function (world, position)
 		position = Vector3Box(position),
 		radius = radius,
 		t = Managers.time:time("game"),
-		units = units_in_radius(world, position, radius),
+		units = utils.units_in_radius(world, position, radius),
 	}
 end
 
--- Enabling and disabling. The files before this one have set these already, they are extended.
-local previous_on_enabled = mod.on_enabled
-local previous_on_disabled = mod.on_disabled
-local previous_update = mod.update
-local previous_on_unload = mod.on_unload
+-- Enabling and disabling (the weapon can be switched off in the settings: the crossbow is then the game's own again, the
+-- weapon the player holds changes when it is wielded again)
+utils.register_weapon("rocket_launcher", apply_rocket_launcher, restore_crossbow)
 
-mod.on_enabled = function (...)
-	if previous_on_enabled then
-		previous_on_enabled(...)
-	end
-
-	if is_rocket_launcher_enabled() then
-		apply_rocket_launcher()
-	end
-end
-
-mod.on_disabled = function (...)
-	if previous_on_disabled then
-		previous_on_disabled(...)
-	end
-
-	restore_crossbow()
-end
-
-local previous_on_setting_changed = mod.on_setting_changed
-
-mod.on_setting_changed = function (setting_id, ...)
-	if previous_on_setting_changed then
-		previous_on_setting_changed(setting_id, ...)
-	end
-
-	if setting_id == "rocket_launcher" or setting_id == "ut_weapons" then
-		if is_rocket_launcher_enabled() then
-			apply_rocket_launcher()
-		else
-			restore_crossbow()
-		end
-	end
-end
-
-mod.update = function (dt, ...)
-	if previous_update then
-		previous_update(dt, ...)
-	end
-
+mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	update_blasts()
 	update_flocks(dt)
 	update_lock_on(Managers.time:time("game"))
 	update_loading(Managers.time:time("game"))
-	effects.update(dt)
 end
 
-mod.on_unload = function (...)
-	if previous_on_unload then
-		previous_on_unload(...)
-	end
-
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 	table.clear(blasts)
 	table.clear(flocks)
 
@@ -1203,7 +1092,6 @@ mod.on_unload = function (...)
 
 	table.clear(locks)
 	table.clear(loading)
-	effects.clear()
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
@@ -1217,5 +1105,4 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(locks)
 	table.clear(loading)
 	table.clear(needs_release)
-	effects.clear()
 end

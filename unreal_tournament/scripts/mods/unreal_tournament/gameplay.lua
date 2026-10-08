@@ -1,8 +1,20 @@
 local mod = get_mod("unreal_tournament")
 
-local stagger_types = require("scripts/utils/stagger_types")
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
--- Gameplay options. (The ammo pickups are in pickups.lua.)
+-- Gameplay options
+local CONFIG = {
+	-- More Ammo Pickups: how many times as many ammo pickups a level gets
+	ammo_multiplier = 4,
+	-- Forgiving Disablers: a player who has been held by a disabler for disable_time seconds is let go of, the disabler is
+	-- staggered for stagger_duration
+	disable_time = 2, -- seconds
+	stagger_duration = 2, -- seconds
+	-- Auto Revive: a player who has been knocked down for self_revive_time seconds gets up, and can't be hurt for
+	-- self_revive_invulnerable_time after
+	self_revive_time = 3, -- seconds
+	self_revive_invulnerable_time = 2, -- seconds
+}
 
 -- No Bots: the game modes have a flag that says there are no bots, and clear the ones there are when it is
 -- set. It is set for the duration of the call that handles the bots.
@@ -52,33 +64,41 @@ mod:hook(GameModeAdventure, "evaluate_end_conditions", function (func, self, ...
 	return ended, reason, reason_data
 end)
 
--- Forgiving Disablers: a player who has been held by a disabler for DISABLE_TIME seconds is let go of. The
--- disabler is staggered, which takes its behavior away from the hold, and that frees the player. A disabler
--- that holds on gets staggered again after the same time. The host's game does this, it is where the enemies are.
-local DISABLE_TIME = 2 -- seconds
-local STAGGER_DURATION = 2 -- seconds
-local disabled_since = {} -- the player's unit: { disabler = the unit holding them, t = since when }
-
-local function release_player(disabler_unit, player_unit, t)
-	local blackboard = BLACKBOARDS[disabler_unit]
-	local breed = blackboard and blackboard.breed
-
-	if not breed then
-		return
-	end
-
-	local away = Vector3.flat(Unit.world_position(disabler_unit, 0) - Unit.world_position(player_unit, 0))
-	local direction = Vector3.length(away) > 0.01 and Vector3.normalize(away) or Vector3.forward()
-
-	-- (the big ones can only be staggered by the strongest kind)
-	local stagger_type = breed.boss_staggers and stagger_types.explosion or stagger_types.heavy
-
-	-- (the game's statistics look at the positions of the units in a stagger, this runs before the game has made them current)
-	mod.with_valid_positions(AiUtils.stagger, disabler_unit, blackboard, player_unit, direction, 1, stagger_type, STAGGER_DURATION, nil, t, 1, true, false)
+-- More Ammo Pickups: the game works out how many pickups of each kind a level gets (its settings for the
+-- difficulty, with the multipliers of the mutators that are on), and this scales the ammo among them. The
+-- pickups are still put where the level has places for them, so a level with few places can't get as many as
+-- the setting says. Only the host's game decides what a level gets.
+local function scale(amount, multiplier)
+	return math.ceil(amount * multiplier)
 end
 
--- (the Link Gun frees a player the same way, when it yanks them)
-mod.release_player_from_disabler = release_player
+mod:hook(MutatorHandler, "pickup_settings_updated_settings", function (func, self, pickup_settings)
+	local updated_settings = func(self, pickup_settings)
+
+	if not updated_settings or not mod:get("more_ammo_pickups") then
+		return updated_settings
+	end
+
+	local multiplier = CONFIG.ammo_multiplier
+
+	-- (what the game gives back is a copy, it is changed in place)
+	local ammo = updated_settings.ammo
+
+	if type(ammo) == "table" then
+		for pickup_name, amount in pairs(ammo) do
+			ammo[pickup_name] = scale(amount, multiplier)
+		end
+	elseif type(ammo) == "number" then
+		updated_settings.ammo = scale(ammo, multiplier)
+	end
+
+	return updated_settings
+end)
+
+-- Forgiving Disablers: a player who has been held by a disabler for disable_time seconds is let go of. The
+-- disabler is staggered, which takes its behavior away from the hold, and that frees the player. A disabler
+-- that holds on gets staggered again after the same time. The host's game does this, it is where the enemies are.
+local disabled_since = {} -- the player's unit: { disabler = the unit holding them, t = since when }
 
 local function update_forgiving_disablers(t)
 	if not t or not mod:get("forgiving_disablers") then
@@ -107,19 +127,17 @@ local function update_forgiving_disablers(t)
 				disabler = disabler_unit,
 				t = t,
 			}
-		elseif t - state.t >= DISABLE_TIME then
+		elseif t - state.t >= CONFIG.disable_time then
 			state.t = t
 
-			release_player(disabler_unit, player_unit, t)
+			utils.release_from_disabler(disabler_unit, player_unit, t, CONFIG.stagger_duration)
 		end
 	end
 end
 
--- Auto Revive: a player who has been knocked down for SELF_REVIVE_TIME seconds gets back up, every time. Not
+-- Auto Revive: a player who has been knocked down for self_revive_time seconds gets back up, every time. Not
 -- while something is holding them (the disabler first, see Forgiving Disablers). The host's game does this, it
 -- is where the revives are decided.
-local SELF_REVIVE_TIME = 3 -- seconds
-local SELF_REVIVE_INVULNERABLE_TIME = 2 -- seconds of not taking damage after getting up
 local SELF_REVIVE_BUFF = "ut_self_revive_invulnerability"
 local knocked_down_since = {} -- the player's unit: since when
 
@@ -128,7 +146,7 @@ local knocked_down_since = {} -- the player's unit: since when
 BuffTemplates[SELF_REVIVE_BUFF] = {
 	buffs = {
 		{
-			duration = SELF_REVIVE_INVULNERABLE_TIME,
+			duration = CONFIG.self_revive_invulnerable_time,
 			max_stacks = 1,
 			name = SELF_REVIVE_BUFF,
 			refresh_durations = true,
@@ -139,7 +157,7 @@ BuffTemplates[SELF_REVIVE_BUFF] = {
 	},
 }
 
-mod:dofile("scripts/mods/unreal_tournament/registration").register_network_lookup("buff_templates", SELF_REVIVE_BUFF)
+utils.register_network_lookup("buff_templates", SELF_REVIVE_BUFF)
 
 local function update_self_revive(t)
 	if not t or not mod:get("auto_revive") then
@@ -165,7 +183,7 @@ local function update_self_revive(t)
 			knocked_down_since[player_unit] = nil
 		elseif not knocked_down_since[player_unit] then
 			knocked_down_since[player_unit] = t
-		elseif t - knocked_down_since[player_unit] >= SELF_REVIVE_TIME then
+		elseif t - knocked_down_since[player_unit] >= CONFIG.self_revive_time then
 			knocked_down_since[player_unit] = nil
 
 			StatusUtils.set_revived_network(player_unit, true, player_unit)
@@ -175,13 +193,7 @@ local function update_self_revive(t)
 	end
 end
 
-local previous_update = mod.update
-
-mod.update = function (dt, ...)
-	if previous_update then
-		previous_update(dt, ...)
-	end
-
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	local t = Managers.time:time("game")
 
 	update_forgiving_disablers(t)

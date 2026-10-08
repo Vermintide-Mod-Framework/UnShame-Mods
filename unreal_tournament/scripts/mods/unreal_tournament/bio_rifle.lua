@@ -10,13 +10,14 @@ local mod = get_mod("unreal_tournament")
 -- as stepping: it bursts the puddle it lands in, or makes, however much goo there is.
 -- Overheating takes the place of ammo: the Drakegun's own.
 
-local registration = mod:dofile("scripts/mods/unreal_tournament/registration")
-local effects = mod:dofile("scripts/mods/unreal_tournament/effects")
-local register_damage_profile = registration.register_damage_profile
-local register_explosion_template = registration.register_explosion_template
-local make_flat = registration.make_flat
-local attack_power_for = registration.attack_power_for
-local impact_power_for = registration.impact_power_for
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local effects = mod.effects
+local with_valid_positions = utils.with_valid_positions
+local register_damage_profile = utils.register_damage_profile
+local register_explosion_template = utils.register_explosion_template
+local make_flat = utils.make_flat
+local attack_power_for = utils.attack_power_for
+local impact_power_for = utils.impact_power_for
 
 local TEMPLATE_NAME = "drakegun_template_1"
 
@@ -107,6 +108,14 @@ local CONFIG = {
 	charged_overcharge = 15,
 	-- How front-loaded the heat of the charge is: 1 is even, the higher the more of it comes at the start
 	charge_heat_curve = 2,
+	charge_heat_interval = 0.2, -- seconds between the additions of heat while charging
+	-- The multipliers of the damage and the stagger per armor type: unarmored, armored, monsters, players, berserkers,
+	-- super armor (the game's own for these explosions are 0 against super armor, which is what chaos warriors have:
+	-- they would take nothing; the damage is low to begin with, so super armor takes it whole, stagger half)
+	armor_attack = {1, 0.8, 1.5, 1, 1, 1},
+	armor_impact = {1, 0.8, 1, 1, 1, 0.5},
+	-- A burn ticks at the game's default power level (195), what the weapons' profiles are measured against is about 500
+	burn_reference_power_level = 500,
 	-- The sounds, events of the game's: the Sienna's fireball and geiser for the shots (the shots' have to be
 	-- in the game's NetworkLookup of sound events, the others are not sent), the fire grenade's explosion and
 	-- the fireball's hit for the bursts and the impacts
@@ -141,9 +150,8 @@ local CONFIG = {
 local overcharge_values = PlayerUnitStatusSettings.overcharge_values
 
 overcharge_values.ut_bio_glob = CONFIG.glob_overcharge
--- (added every CHARGE_HEAT_INTERVAL seconds while charging, together they are charged_overcharge)
-local CHARGE_HEAT_INTERVAL = 0.2
-local CHARGE_STEP = CHARGE_HEAT_INTERVAL / CONFIG.charge_time -- the charge (0 to 1) between two additions
+-- (added every charge_heat_interval seconds while charging, together they are charged_overcharge)
+local CHARGE_STEP = CONFIG.charge_heat_interval / CONFIG.charge_time -- the charge (0 to 1) between two additions
 overcharge_values.ut_bio_charging = CONFIG.charged_overcharge * CHARGE_STEP
 
 -- The heat of the charge goes up fast at first and slows down: the heat made by the time the charge is c (0 to 1)
@@ -160,52 +168,19 @@ mod.charge_update_callbacks.bio = function (self)
 	charge_levels[self.owner_unit] = self.charge_level
 end
 
-mod:hook(PlayerUnitOverchargeExtension, "add_charge", function (func, self, overcharge_amount, charge_level, overcharge_type)
-	-- (the Link Gun's beam only costs heat while it is on an enemy, or on an ally who is attacking)
-	if overcharge_type == "ut_link_beam" and mod.link_beam_is_free and mod.link_beam_is_free(self.unit) then
-		return
+mod.overcharge_callbacks.ut_bio_charging = function (self, overcharge_amount)
+	local level = charge_levels[self.unit] or 0
+
+	-- (once the charge is full the game adds next to nothing, that is left alone)
+	if level < 1 then
+		overcharge_amount = overcharge_amount * (charge_heat_progress(level) - charge_heat_progress(level - CHARGE_STEP)) / CHARGE_STEP
 	end
 
-	if overcharge_type == "ut_bio_charging" then
-		local level = charge_levels[self.unit] or 0
-
-		-- (once the charge is full the game adds next to nothing, that is left alone)
-		if level < 1 then
-			overcharge_amount = overcharge_amount * (charge_heat_progress(level) - charge_heat_progress(level - CHARGE_STEP)) / CHARGE_STEP
-		end
-	end
-
-	return func(self, overcharge_amount, charge_level, overcharge_type)
-end)
-
--- The multipliers of the damage and the stagger per armor type: unarmored, armored, monsters, players, berserkers,
--- super armor (the game's own for these explosions are 0 against super armor, which is what chaos warriors have:
--- they would take nothing; the damage is low to begin with, so super armor takes it whole, stagger half)
-local ARMOR_ATTACK = {
-	1,
-	0.8,
-	1.5,
-	1,
-	1,
-	1,
-}
-local ARMOR_IMPACT = {
-	1,
-	0.8,
-	1,
-	1,
-	1,
-	0.5,
-}
+	return overcharge_amount
+end
 
 local function set_armor_modifiers(profile)
-	profile.armor_modifier.attack = table.clone(ARMOR_ATTACK)
-	profile.armor_modifier.impact = table.clone(ARMOR_IMPACT)
-	-- (critical hits go by their own multipliers)
-	profile.critical_strike = {
-		attack_armor_power_modifer = table.clone(ARMOR_ATTACK),
-		impact_armor_power_modifer = table.clone(ARMOR_IMPACT),
-	}
+	utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact, true)
 end
 
 -- Damage profiles: the direct hit of a glob does glob_direct_damage and staggers, and it is the part of the hit
@@ -220,13 +195,11 @@ register_damage_profile("ut_bio_glob", "staff_fireball", function (profile)
 	}
 end)
 
--- The burn of the puddle: the game's burning dot with a power of its own. A burn ticks at the game's default
--- power level (195, what the weapons' profiles are measured against is about 500).
-local BURN_REFERENCE_POWER_LEVEL = 500
+-- The burn of the puddle: the game's burning dot with a power of its own (see burn_reference_power_level).
 
 register_damage_profile(CONFIG.puddle_dot, "burning_dot", function (profile)
 	profile.default_target.power_distribution = {
-		attack = attack_power_for(CONFIG.puddle_tick_damage) * BURN_REFERENCE_POWER_LEVEL / DefaultPowerLevel,
+		attack = attack_power_for(CONFIG.puddle_tick_damage) * CONFIG.burn_reference_power_level / DefaultPowerLevel,
 		impact = 0,
 	}
 end)
@@ -252,7 +225,7 @@ BuffTemplates[CONFIG.puddle_dot] = {
 }
 
 DotTypeLookup[CONFIG.puddle_dot] = "burning_dot"
-registration.register_network_lookup("buff_templates", CONFIG.puddle_dot)
+utils.register_network_lookup("buff_templates", CONFIG.puddle_dot)
 
 local function burst_profiles(name, damage)
 	local function modify(profile)
@@ -339,8 +312,6 @@ end
 register_explosion_template("ut_bio_charged_impact", impact_template("ut_bio_charged_impact", CONFIG.charged_impact_sound, CONFIG.impact_radius, CONFIG.charged_impact_radius))
 
 -- The look of the burst and of the impact, on every peer (the explosion's callback is run for everyone who sees it)
-mod.explosion_callbacks = mod.explosion_callbacks or {}
-
 local function play_effects(effect_list, world, position)
 	for _, effect in ipairs(effect_list) do
 		effects.play(world, effect.name, position + Vector3(0, 0, effect.offset), effect.scale)
@@ -376,9 +347,9 @@ local CHILD_SUB_ACTION = "ut_bio_child"
 local CHILD_GRAVITY_SETTINGS = "ut_bio_child"
 
 ProjectileGravitySettings[CHILD_GRAVITY_SETTINGS] = CONFIG.child_gravity
-registration.register_network_lookup("projectile_gravity_settings", CHILD_GRAVITY_SETTINGS)
+utils.register_network_lookup("projectile_gravity_settings", CHILD_GRAVITY_SETTINGS)
 
-registration.register_network_lookup("sub_actions", CHILD_SUB_ACTION)
+utils.register_network_lookup("sub_actions", CHILD_SUB_ACTION)
 
 local function enter_function(attacker_unit, input_extension)
 	input_extension:clear_input_buffer()
@@ -574,12 +545,10 @@ local function build_child_action()
 	}
 end
 
--- After a projectile has hit something the game keeps its unit for a short time (0.3 seconds) before taking it
--- away, so that its trail can fade out. That is cut short for the trail of the globs, the unit is kept
--- glob_fizzle_time seconds.
+-- After a projectile has hit something the game keeps its unit for a short time before taking it away, so that its
+-- trail can fade out. For the globs the unit is kept glob_fizzle_time seconds instead.
 -- The game also tells the unit that the projectile has ended the moment it hits, which ends its effects
 -- at once. For the globs that signal is held back and sent glob_end_delay seconds later.
-local GAME_DELETION_GRACE = 0.3
 local delayed_ends = {} -- the projectile's unit: when to tell it that it has ended
 
 mod:hook(PlayerProjectileUnitExtension, "stop", function (func, self, ...)
@@ -751,36 +720,6 @@ local function make_puddle_area(puddle, t)
 end
 
 -- The burst of a puddle: a blast that is as big as the goo was, and the small globs
--- The game sorts what an explosion hits by their positions in POSITION_LOOKUP. The mods' update runs before the
--- game's own, where those positions are the last frame's, which the game has let go stale (a "Stale Vector3", it
--- breaks the explosion). Those are given their real position for the duration of the call.
-local function with_valid_positions(func, ...)
-	local fixed = {}
-
-	for unit, position in pairs(POSITION_LOOKUP) do
-		if Script.type_name(position) ~= "Vector3" then
-			fixed[unit] = position
-		end
-	end
-
-	for unit in pairs(fixed) do
-		POSITION_LOOKUP[unit] = Unit.alive(unit) and Unit.world_position(unit, 0) or nil
-	end
-
-	local ok, error_message = pcall(func, ...)
-
-	for unit, position in pairs(fixed) do
-		POSITION_LOOKUP[unit] = Unit.alive(unit) and position or nil
-	end
-
-	if not ok then
-		error(error_message, 0)
-	end
-end
-
--- (the Link Gun's stagger needs it too)
-mod.with_valid_positions = with_valid_positions
-
 -- (with final, the puddle is gone after it, nothing of it stays)
 local function burst_puddle(puddle, t, final)
 	remove_puddle_area(puddle)
@@ -934,7 +873,6 @@ local GOO_BURSTS = {
 	[ExplosionTemplates.ut_bio_child_burst] = true,
 }
 
-mod.aoe_callbacks = mod.aoe_callbacks or {}
 mod.aoe_callbacks.ut_bio_glob = function (self, aoe_data, position)
 	if not GOO_BURSTS[aoe_data] or self._ut_bio_goo_added then
 		return
@@ -946,8 +884,14 @@ mod.aoe_callbacks.ut_bio_glob = function (self, aoe_data, position)
 end
 
 -- A glob that hits an enemy sets off the impact (once, however many it hits on its way)
-mod.hit_enemy_callbacks = mod.hit_enemy_callbacks or {}
-mod.hit_enemy_callbacks.ut_bio_glob = function (self, hit_unit, hit_position)
+mod.hit_enemy_callbacks.ut_bio_glob = function (func, self, is_owner, impact_data, hit_unit, hit_position, ...)
+	func(self, impact_data, hit_unit, hit_position, ...)
+
+	-- (only the projectile of the player who fired: the other peers get the impact from the network)
+	if not is_owner then
+		return
+	end
+
 	local template_name = self._current_action.ut_bio_impact_template
 
 	if template_name and not self._ut_bio_impact then
@@ -962,17 +906,16 @@ mod:hook_safe(PlayerProjectileUnitExtension, "mark_for_deletion", function (self
 
 	if action and action.ut_bio_glob and self._deletion_time and not self._ut_bio_fizzle then
 		self._ut_bio_fizzle = true
-		self._deletion_time = self._deletion_time - GAME_DELETION_GRACE + CONFIG.glob_fizzle_time
+		self._deletion_time = Managers.time:time("game") + CONFIG.glob_fizzle_time
 	end
 end)
 
 -- The template is shared game state: it is patched in place, what is touched is saved to be put
--- back on disable. The saved values are in a persistent table, so that a mod reload doesn't take
--- the patched template for the original.
-local persistent = mod:persistent_table("bio_rifle")
+-- back on disable, and when the mod is unloaded (a reload would take the patched template for the original).
+local saved = {}
 
 local function restore_drakegun()
-	local original = persistent.original
+	local original = saved.original
 	local template = rawget(Weapons, TEMPLATE_NAME)
 
 	if not original or not template then
@@ -990,15 +933,7 @@ local function restore_drakegun()
 		template.required_projectile_unit_templates[name] = original.required_projectile_unit_templates[name]
 	end
 
-	persistent.original = nil
-end
-
-local function set_lookup_data(action, action_name, sub_action_name)
-	action.lookup_data = {
-		item_template_name = TEMPLATE_NAME,
-		action_name = action_name,
-		sub_action_name = sub_action_name,
-	}
+	saved.original = nil
 end
 
 local function apply_bio_rifle()
@@ -1026,17 +961,17 @@ local function apply_bio_rifle()
 		template.required_projectile_unit_templates[name] = true
 	end
 
-	persistent.original = original
+	saved.original = original
 
 	local glob = build_glob_action()
 	local charged = build_charged_action()
 
-	set_lookup_data(glob, "action_one", "default")
-	set_lookup_data(charged, "action_one", "shoot_charged")
+	utils.set_lookup_data(glob, TEMPLATE_NAME, "action_one", "default")
+	utils.set_lookup_data(charged, TEMPLATE_NAME, "action_one", "shoot_charged")
 
 	local child = build_child_action()
 
-	set_lookup_data(child, CHILD_ACTION_NAME, CHILD_SUB_ACTION)
+	utils.set_lookup_data(child, TEMPLATE_NAME, CHILD_ACTION_NAME, CHILD_SUB_ACTION)
 
 	actions[CHILD_ACTION_NAME][CHILD_SUB_ACTION] = child
 
@@ -1050,7 +985,7 @@ local function apply_bio_rifle()
 	-- (the release the glob waits for has to be one after the charge started)
 	charge.enter_function = enter_function
 	-- the charge makes the weapon hot as it goes
-	charge.overcharge_interval = CHARGE_HEAT_INTERVAL
+	charge.overcharge_interval = CONFIG.charge_heat_interval
 	charge.ut_charge_callback = "bio"
 	charge.overcharge_type = "ut_bio_charging"
 	-- (Kept from the Drakegun's own charge, remove_overcharge_on_interrupt: a full charge adds almost no more heat, so
@@ -1065,50 +1000,27 @@ local function apply_bio_rifle()
 	actions.action_two.default = charge
 end
 
--- Projectile units are only loaded with the characters that use them (a projectile that is spawned unloaded
--- crashes the game), so the mod holds its own references to the units of the globs while enabled.
-local PACKAGE_REFERENCE_NAME = "unreal_tournament_bio"
+-- The mod holds its own references to the units of the globs while the weapon is enabled
+local packages = utils.package_holder("unreal_tournament_bio")
 
-local function load_projectile_packages()
-	persistent.packages = persistent.packages or {}
-
-	if not Managers.package then
-		return
-	end
-
-	for _, name in ipairs(PROJECTILE_UNIT_TEMPLATES) do
-		local package_name = ProjectileUnits[name].projectile_unit_name
-
-		if not persistent.packages[package_name] then
-			Managers.package:load(package_name, PACKAGE_REFERENCE_NAME)
-
-			persistent.packages[package_name] = true
-		end
-	end
+local function enable_bio_rifle()
+	packages.load_projectile_units(PROJECTILE_UNIT_TEMPLATES)
+	apply_bio_rifle()
 end
 
-local function unload_projectile_packages()
-	for package_name in pairs(persistent.packages or {}) do
-		persistent.packages[package_name] = nil
-
-		if Managers.package then
-			pcall(Managers.package.unload, Managers.package, package_name, PACKAGE_REFERENCE_NAME)
-		end
-	end
+-- (the weapon can be switched off in the settings: the drakegun is then the game's own again, the weapon the player
+-- holds changes when it is wielded again)
+local function disable_bio_rifle()
+	restore_drakegun()
+	packages.unload()
 end
 
--- The weapon can be switched off in the settings: the drakegun is then the game's own again (the weapon the
--- player holds changes when it is wielded again)
-local function is_bio_rifle_enabled()
-	return mod:get("ut_weapons") ~= false and mod:get("bio_rifle") ~= false
-end
+utils.register_weapon("bio_rifle", enable_bio_rifle, disable_bio_rifle)
 
 -- The overheating explosion of the weapon (the game's own is kept, and hurts the player) throws small globs, with
--- random amounts of goo, out of the player. (It is told by the hook of the Shock Rifle's file, see
--- mod.overheat_callbacks.)
-mod.overheat_callbacks = mod.overheat_callbacks or {}
+-- random amounts of goo, out of the player. (It is told by the hook in hooks.lua.)
 mod.overheat_callbacks[TEMPLATE_NAME] = function (state, item_data)
-	if not is_bio_rifle_enabled() then
+	if not utils.is_weapon_enabled("bio_rifle") then
 		return
 	end
 
@@ -1120,75 +1032,22 @@ mod.overheat_callbacks[TEMPLATE_NAME] = function (state, item_data)
 		owner_unit = unit,
 	}
 
-	throw_children(shot, Unit.world_position(unit, 0) + Vector3(0, 0, 1.5), Vector3.up(), CONFIG.overheat_glob_count, BURN_REFERENCE_POWER_LEVEL, true)
+	throw_children(shot, Unit.world_position(unit, 0) + Vector3(0, 0, 1.5), Vector3.up(), CONFIG.overheat_glob_count, CONFIG.burn_reference_power_level, true)
 end
 
-local previous_on_enabled = mod.on_enabled
-local previous_on_disabled = mod.on_disabled
-local previous_on_setting_changed = mod.on_setting_changed
-local previous_update = mod.update
-local previous_on_unload = mod.on_unload
-
-mod.on_enabled = function (...)
-	if previous_on_enabled then
-		previous_on_enabled(...)
-	end
-
-	if is_bio_rifle_enabled() then
-		load_projectile_packages()
-		apply_bio_rifle()
-	end
-end
-
-mod.on_disabled = function (...)
-	if previous_on_disabled then
-		previous_on_disabled(...)
-	end
-
-	restore_drakegun()
-	unload_projectile_packages()
-end
-
-mod.on_setting_changed = function (setting_id, ...)
-	if previous_on_setting_changed then
-		previous_on_setting_changed(setting_id, ...)
-	end
-
-	if setting_id == "bio_rifle" or setting_id == "ut_weapons" then
-		if is_bio_rifle_enabled() then
-			load_projectile_packages()
-			apply_bio_rifle()
-		else
-			restore_drakegun()
-			unload_projectile_packages()
-		end
-	end
-end
-
-mod.update = function (dt, ...)
-	if previous_update then
-		previous_update(dt, ...)
-	end
-
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	update_delayed_ends(Managers.time:time("game"))
 	update_puddles(Managers.time:time("game"))
-	effects.update(dt)
 end
 
-mod.on_unload = function (...)
-	if previous_on_unload then
-		previous_on_unload(...)
-	end
-
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 	table.clear(delayed_ends)
 	table.clear(puddles)
 	table.clear(charge_levels)
-	effects.clear()
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(delayed_ends)
 	table.clear(puddles)
 	table.clear(charge_levels)
-	effects.clear()
 end
