@@ -77,6 +77,9 @@ local function release_player(disabler_unit, player_unit, t)
 	mod.with_valid_positions(AiUtils.stagger, disabler_unit, blackboard, player_unit, direction, 1, stagger_type, STAGGER_DURATION, nil, t, 1, true, false)
 end
 
+-- (the Link Gun frees a player the same way, when it yanks them)
+mod.release_player_from_disabler = release_player
+
 local function update_forgiving_disablers(t)
 	if not t or not mod:get("forgiving_disablers") then
 		table.clear(disabled_since)

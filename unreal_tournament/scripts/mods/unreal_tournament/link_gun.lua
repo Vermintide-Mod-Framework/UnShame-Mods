@@ -81,6 +81,10 @@ local CONFIG = {
 	ally_damage_bonus = 0.5,
 	ally_buff_duration = 0.6, -- seconds
 	ally_buff_refresh = 0.25, -- seconds
+	bot_target_range = 80, -- m, how far from a linked bot the enemy it is made to attack can be
+	throw_wall_margin = 0.6, -- m, how far from a wall a yanked enemy that hit it lands
+	ally_effect = "fx/thornsister_buff", -- what is seen on an ally that is linked, a burst again every ally_effect_interval
+	ally_effect_interval = 0.8, -- seconds
 	ally_attack_grace = 0.5, -- seconds the beam still costs heat after the ally's attack
 	-- Enemy: it is held (staggered over and over, stagger_duration, every restagger_interval) and moved over the
 	-- ground, towards the point the aim is on at the distance it was linked at, hold_speed m/s for the lightest, less
@@ -124,32 +128,61 @@ local CONFIG = {
 	monster_pull_max_speed = 20, -- m/s
 	monster_pull_up_speed = 5, -- m/s
 	monster_link_cooldown = 2, -- seconds
-	-- Supplies: when nothing living is linked, a supply (a pickup) that the aim is on, within supply_aim_dot, is
-	-- linked if the owner can pick it up: it is pulled to them at supply_pull_speed, to supply_pull_height above
-	-- their feet, and picked up when it is within supply_pickup_distance of that. Tried again after supply_retry
-	-- seconds.
+	-- What is picked to link to is the most important of what the aim is on, in this order: living things (enemies,
+	-- monsters, players and bots), supplies and doors (within supply_aim_dot of the aim, they are small or thin),
+	-- objects. What is linked stays linked until the beam is let go.
+	-- Supplies (pickups) that the owner can pick up stay where they are while they are linked. Yanking one picks it up
+	-- (the game's own interaction), tried again after supply_retry seconds.
 	supply_aim_dot = 0.98,
-	supply_pull_speed = 12, -- m/s
-	supply_pull_height = 1, -- m
-	supply_pickup_distance = 0.7, -- m
 	supply_retry = 0.6, -- seconds
-	-- Objects: when nothing living is linked, a ragdoll or another object with a body that moves is held (no
-	-- damage, living things come first). It is held in the air where the aim is, the body that was linked is given
-	-- object_pull per second of the way to there as speed, at most object_max_speed.
+	-- Doors: yanking one opens it, or closes it. The aim has to pass through the box of the door, made door_aim_scale
+	-- times as big, and wider the further away it is (door_aim_slack meters for every meter of distance, a chest
+	-- far away is small to aim at). The beam ends in the middle of the door or chest.
+	door_aim_scale = 1.3,
+	door_aim_slack = 0.12,
+	-- The outline of an enemy that is held (alpha, red, green, blue)
+	held_outline_color = {255, 60, 230, 190},
+	-- Yanking costs heat on top of the heat of the beam: yank_free_overcharge for freeing an enemy from a vortex or a
+	-- player from a disabler or a vortex, yank_rescue_overcharge for pulling a player up from a ledge or getting them
+	-- up from being knocked down, yank_player_overcharge for launching a player (or a bot) at the owner,
+	-- yank_door_overcharge for a door or a chest.
+	yank_free_overcharge = 8,
+	yank_rescue_overcharge = 10,
+	yank_player_overcharge = 25,
+	bot_yank_cost_scale = 0.1, -- yanking a bot costs this much of what yanking a player does (the cost is for griefing)
+	yank_door_overcharge = 2,
+	-- Objects: when nothing else is picked, a ragdoll or another object with a body that moves is held (no damage). It
+	-- is held in the air where the aim is, the body that was linked is given object_pull per second of the way to
+	-- there as speed, at most object_max_speed. An enemy that dies while it is held is held on as a corpse.
 	object_collision_filter = "filter_explosion_overlap",
-	object_release_dot = 0.998, -- how exactly the aim has to be on something living for an object that is held to be let go for it
 	object_pull = 20,
 	object_max_speed = 35, -- m/s
-	-- The beam: drawn as a curve (a quadratic Bezier) from the staff to what it is on. A held enemy hangs it by
+	-- The beam: drawn as a curve (a cubic Bezier) from the staff to what it is on. A held enemy hangs it by
 	-- its weight (sag_per_weight a meter per meter of beam, per unit of weight, at most sag_max), and bends it
 	-- by how far the enemy is behind where it is being moved to (lag_bend).
 	staff_end_node = "fx_muzzle", -- the node at the end of the staff unit, where the beam and the bolts start (the hand's node if it has none)
+	-- The beam effect is drawn with the field of view of the staff in the hands, not of the world (vertical, degrees:
+	-- the world's is read from the camera, every frame, world_fov is for when that fails). Measured from where the beam
+	-- ended on screenshots, with a world fov of 85: the end was seen about 2.1 times as far from the middle of the screen
+	-- as the target.
+	effect_fov = 47.5,
+	world_fov = 85,
 	beam_aim_curve = 0.3, -- how far the beam bows towards the aim, as a share of its length at most: 0 is a straight line
-	beam_segments = 16,
+	beam_segment_length = 0.2, -- m, about how far apart the points of the beam are (the particles, and the pieces of the lines)
+	beam_min_segments = 2,
+	beam_max_segments = 100,
+	beam_sprite_copies = 3, -- how many copies of the effect at every point: the more, the denser the beam
 	sag_per_weight = 0.015,
 	sag_max = 2.5, -- m
 	lag_bend = 0.5,
-	beam_thickness = 0.012, -- m, the beam is a few lines around its path
+	lag_bend_max = 1.5, -- m
+	beam_thickness = 0.012, -- m, the lines are a few around its path
+	-- The beam is drawn with the first of these particle effects that is loaded: a copy of it at every point of the
+	-- curve (they have no settings, so they are only placed), the Thornsister's own, green. The lines are the
+	-- fallback.
+	beam_sprite_effects = {
+		"fx/lifestaff_idle",
+	},
 	beam_color = {
 		255,
 		90,
@@ -191,6 +224,9 @@ if has_staff then
 
 		target.power_distribution_near.impact = CONFIG.bolt_stagger_power
 		target.power_distribution_far.impact = CONFIG.bolt_stagger_power
+
+		-- (the bolts poison, as the beam does)
+		target.dot_template_name = CONFIG.dot_template
 	end)
 end
 
@@ -336,17 +372,54 @@ end
 
 mod:hook_safe(TransportationSystem, "world_updated", function (self, world)
 	hand.apply(world)
+
+	if mod.draw_pending_beams then
+		mod.draw_pending_beams()
+	end
 end)
+
+local IGNORED_DAMAGE_TYPES = {
+	aoe_poison_dot = true,
+	arrow_poison_dot = true,
+	buff = true,
+	buff_shared_medpack = true,
+	buff_shared_medpack_temp_health = true,
+	burninating = true,
+	damage_over_time = true,
+	gas = true,
+	heal = true,
+	health_degen = true,
+	level = true,
+	life_drain = true,
+	life_tap = true,
+	plague_ground = true,
+	poison = true,
+	temporary_health_degen = true,
+	volume_generic_dot = true,
+	vomit_ground = true,
+	warpfire_ground = true,
+	wounded_dot = true,
+}
 
 function pose.update(dt)
 	-- Taking damage plays a reaction that takes the staff out of the stance: it is entered again after it
 	local health_extension = pose.health_extension
 
 	if health_extension and pose.is_valid and pose.is_valid() and not pose.recovering then
-		local damage_datas, num_damages = health_extension:recent_damages()
+		-- (the extension can be one that is gone, after a death or at the end of a level: it is then let go of)
+		local ok, damage_datas, num_damages = pcall(health_extension.recent_damages, health_extension)
+
+		if not ok then
+			pose.health_extension = nil
+			num_damages = 0
+		end
 
 		for i = 1, num_damages / DamageDataIndex.STRIDE do
-			if damage_datas[(i - 1) * DamageDataIndex.STRIDE + DamageDataIndex.DAMAGE_AMOUNT] > 0 then
+			local offset = (i - 1) * DamageDataIndex.STRIDE
+
+			-- (damage that is only a tick of something that goes on, the degrading of temporary health, poison, burning,
+			-- doesn't play a reaction: the ones that the game's interactions don't mind either)
+			if damage_datas[offset + DamageDataIndex.DAMAGE_AMOUNT] > 0 and not IGNORED_DAMAGE_TYPES[damage_datas[offset + DamageDataIndex.DAMAGE_TYPE]] then
 				pose.recovering = true
 				pose.entered = false
 
@@ -494,6 +567,11 @@ local function restore_staff()
 		actions.weapon_reload.default.anim_end_event = original.reload_anim_end_event
 		actions.weapon_reload.default.enter_function = original.reload_enter_function
 		actions.weapon_reload.default.finish_function = original.reload_finish_function
+
+		if actions.action_inspect and actions.action_inspect.action_inspect_hold then
+			actions.action_inspect.action_inspect_hold.anim_end_event = original.inspect_anim_end_event
+			actions.action_inspect.action_inspect_hold.enter_function = original.inspect_enter_function
+		end
 	elseif original.primary then
 		-- (what an earlier load of the mod saved, from before the bolts)
 		for _, name in ipairs({
@@ -620,6 +698,22 @@ local function apply_link_gun()
 		end
 	end
 
+	-- Inspecting ends in the stance too (the end event of the game takes the staff to its own idle)
+	local inspect = actions.action_inspect.action_inspect_hold
+
+	original.inspect_anim_end_event = inspect.anim_end_event
+	original.inspect_enter_function = inspect.enter_function
+	inspect.anim_end_event = CONFIG.idle_pose_event
+	inspect.enter_function = function (...)
+		pose.clear()
+
+		pose.entered = true
+
+		if original.inspect_enter_function then
+			return original.inspect_enter_function(...)
+		end
+	end
+
 	-- Venting also ends in the stance (venting right after wielding: the raise to the stance would play over it)
 	reload.anim_end_event = CONFIG.idle_pose_event
 	reload.enter_function = function (...)
@@ -679,11 +773,23 @@ end
 -- The beam
 local ai_units = {}
 local states = {} -- per unit that holds the beam: what it is linked to, and its line object
+local bot_targets = {} -- a bot that is linked: the enemy it is made to attack
+
+-- The middle of a character: its spine, else the nearest the model has to one (the target dummies have none by the
+-- name of the others'), else the middle of its box. The first node of a unit is where it is placed, which isn't on
+-- the model of everything.
+local CHEST_NODES = {"c_spine", "j_spine1", "j_spine", "j_neck", "j_head"}
 
 local function chest_position(unit)
-	local node = Unit.has_node(unit, "c_spine") and Unit.node(unit, "c_spine") or 0
+	for i = 1, #CHEST_NODES do
+		if Unit.has_node(unit, CHEST_NODES[i]) then
+			return Unit.world_position(unit, Unit.node(unit, CHEST_NODES[i]))
+		end
+	end
 
-	return Unit.world_position(unit, node)
+	local pose = Unit.box(unit)
+
+	return Matrix4x4.translation(pose)
 end
 
 local function breed_mass(breed)
@@ -709,6 +815,13 @@ local function is_alive(unit)
 	return health_extension ~= nil and health_extension:is_alive()
 end
 
+-- A player (or bot) who is dead and waiting for someone to set them free
+local function is_awaiting_rescue(unit)
+	local status_extension = Unit.alive(unit) and ScriptUnit.has_extension(unit, "status_system")
+
+	return status_extension ~= nil and status_extension ~= false and status_extension:is_ready_for_assisted_respawn() == true
+end
+
 local function enemy_weight(unit)
 	local breed = is_alive(unit) and AiUtils.unit_breed(unit)
 
@@ -732,7 +845,9 @@ local function is_monster(unit)
 	return breed ~= nil and breed ~= false and not breed.is_player and breed.race ~= "dummy" and enemy_weight(unit) == nil
 end
 
-local function has_line_of_sight(physics_world, origin, target_position)
+-- (the target is seen if nothing is in the way until within tolerance of it: for a big thing like a chest, whose middle is
+-- inside it, the tolerance is how far its surface is from there)
+local function has_line_of_sight(physics_world, origin, target_position, tolerance)
 	local offset = target_position - origin
 	local distance = Vector3.length(offset)
 
@@ -742,15 +857,26 @@ local function has_line_of_sight(physics_world, origin, target_position)
 
 	local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world, origin, offset * (1 / distance), distance, "closest", "collision_filter", "filter_ai_line_of_sight_check")
 
-	return not hit or hit_distance > distance - 0.5
+	return not hit or hit_distance > distance - (tolerance or 0.5)
 end
 
--- What is an object: a ragdoll, a barrel, anything that is not a character that is alive (a target dummy is an
--- object when it can't be held as an enemy, which it is first)
+-- A supply: a pickup that is picked up, not moved about. A pickup that has a health of its own is a barrel.
+local function is_supply(unit)
+	return ScriptUnit.has_extension(unit, "pickup_system") ~= nil and ScriptUnit.has_extension(unit, "health_system") == nil
+end
+
+-- What is an object: a ragdoll, a barrel, anything that is not a character that is alive (the target dummies are
+-- characters: they are linked as enemies, not moved about as objects)
 local function is_object(unit)
 	local breed = AiUtils.unit_breed(unit)
 
-	if breed and (breed.is_player or (breed.race ~= "dummy" and is_alive(unit))) then
+	if breed and (breed.is_player or breed.race == "dummy" or is_alive(unit)) then
+		return false
+	end
+
+	-- (supplies and doors are linked as what they are, picked up and opened, not moved about; a barrel is a pickup with a
+	-- health of its own, it is moved about)
+	if is_supply(unit) or ScriptUnit.has_extension(unit, "door_system") then
 		return false
 	end
 
@@ -821,13 +947,67 @@ local function preserve_corpse(unit)
 	}
 end
 
+-- Where a mesh of a door or a chest is now: the middle of its box, and how big it is. The meshes move with the door
+-- when it opens (the box of the unit stays where the closed door was, and its bodies aren't where it is seen).
+local function mesh_center(mesh)
+	local ok, pose, half_extents = pcall(Mesh.box, mesh)
+
+	if not ok or not pose then
+		return nil
+	end
+
+	return Matrix4x4.translation(pose), math.max(half_extents.x, half_extents.y, half_extents.z)
+end
+
+-- The places of a door or a chest that the aim can be on, and the beam ends on: the middle of its biggest mesh (the
+-- door itself, not the frame or the hinges), or the middle of the box of the unit if it has none
+local function openable_points(unit)
+	local best_mesh, best_position, best_size
+
+	for i = 0, Unit.num_meshes(unit) - 1 do
+		local mesh = Unit.mesh(unit, i)
+		local position, size
+
+		if mesh then
+			position, size = mesh_center(mesh)
+		end
+
+		if position and (not best_size or size > best_size) then
+			best_mesh = mesh
+			best_position = position
+			best_size = size
+		end
+	end
+
+	local pose, half_extents = Unit.box(unit)
+
+	if best_mesh then
+		return {
+			{
+				actor = best_mesh,
+				position = best_position,
+				-- (as big as the biggest of the mesh and the unit: the aim has to be on the thing, not on its middle)
+				size = math.max(best_size, half_extents.x, half_extents.y, half_extents.z),
+			},
+		}
+	end
+
+
+	return {
+		{
+			position = Matrix4x4.translation(pose),
+			size = math.max(half_extents.x, half_extents.y, half_extents.z),
+		},
+	}
+end
+
 -- What the aim is on, closest to it: an enemy that can be held or an ally, and failing those an object with a body
 -- that moves (a ragdoll). Returns the unit and what it is, and for an object its body and how far it is.
-local function find_target(owner_unit, physics_world, origin, aim, min_dot)
+local function find_target(owner_unit, physics_world, origin, aim)
 	local side = Managers.state.side.side_by_unit[owner_unit]
 	local range = CONFIG.beam_range
-	local best_unit, best_kind
-	local best_dot = min_dot or CONFIG.aim_dot
+	local best_unit, best_kind, best_actor
+	local best_dot = CONFIG.aim_dot
 
 	local function consider(unit, kind)
 		local offset = chest_position(unit) - origin
@@ -881,19 +1061,88 @@ local function find_target(owner_unit, physics_world, origin, aim, min_dot)
 		end
 	end
 
-	-- Nothing living: supplies (what can be picked up), a little more forgiving of the aim, they are small
+	-- A player waiting to be set free (the game leaves them out of the lists of the side, they aren't alive yet)
+	for _, player in pairs(Managers.player:human_and_bot_players()) do
+		local unit = player.player_unit
+
+		if unit and unit ~= owner_unit and is_awaiting_rescue(unit) then
+			consider(unit, "ally")
+		end
+	end
+
+	-- The necromancer's skeletons are friendlies too: they are units of the heroes' side that the AI looks after
+	if heroes then
+		count = AiUtils.broadphase_query(origin + aim * (range / 2), range / 2 + 2, ai_units, heroes.broadphase_category)
+
+		for i = 1, count do
+			local unit = ai_units[i]
+			local breed = HEALTH_ALIVE[unit] and AiUtils.unit_breed(unit)
+
+			if breed and not breed.is_player and string.find(breed.name or "", "^pet_") then
+				consider(unit, "ally")
+			end
+		end
+	end
+
+	-- Nothing living: supplies (what can be picked up) and doors, a little more forgiving of the aim, they are small
+	-- or thin
 	if not best_unit then
 		best_dot = math.min(best_dot, CONFIG.supply_aim_dot)
 
 		for unit in pairs(Managers.state.entity:get_entities("GenericUnitInteractableExtension")) do
-			if Unit.alive(unit) and ScriptUnit.has_extension(unit, "pickup_system") then
+			if Unit.alive(unit) and is_supply(unit) then
 				consider(unit, "supply")
+			end
+		end
+
+		-- Doors and chests are as big as they are: the aim has to pass through the box of the door (a bit wider), not
+		-- near the point it is placed at (its hinge, on the ground)
+		if not best_unit then
+			local best_off_axis
+			local openables = {}
+
+			for unit in pairs(Managers.state.entity:get_entities("DoorExtension")) do
+				openables[#openables + 1] = unit
+			end
+
+			for unit in pairs(Managers.state.entity:get_entities("GenericUnitInteractableExtension")) do
+				-- (a chest that has been opened is done with: the game marks it used, and takes the interaction away)
+				local interactable_extension = ScriptUnit.has_extension(unit, "interactable_system")
+
+				if Unit.get_data(unit, "interaction_data", "interaction_type") == "chest" and not Unit.get_data(unit, "interaction_data", "used") and interactable_extension and interactable_extension:is_enabled() then
+					openables[#openables + 1] = unit
+				end
+			end
+
+			for _, unit in ipairs(openables) do
+				if Unit.alive(unit) then
+					-- (where the door is seen now: the box of the unit doesn't move when it opens)
+					local points = openable_points(unit)
+
+					for i = 1, #points do
+						local center = points[i].position
+						local radius = points[i].size * CONFIG.door_aim_scale
+						local offset = center - origin
+						local along = Vector3.dot(aim, offset)
+
+						if along > 0.1 and along <= range + radius then
+							local off_axis = Vector3.length(offset - aim * along)
+
+							if off_axis <= radius + along * CONFIG.door_aim_slack and (not best_off_axis or off_axis < best_off_axis) and has_line_of_sight(physics_world, origin, center, points[i].size + 0.5) then
+								best_unit = unit
+								best_kind = "openable"
+								best_off_axis = off_axis
+								best_actor = points[i].actor
+							end
+						end
+					end
+				end
 			end
 		end
 	end
 
 	if best_unit then
-		return best_unit, best_kind
+		return best_unit, best_kind, best_actor
 	end
 
 	-- Nothing living: a ragdoll or another object with a body that moves, the first one the aim is on
@@ -942,47 +1191,58 @@ local function supply_interaction(owner_unit, pickup)
 	end
 end
 
--- A supply that is linked is pulled to the owner, and picked up when it is there: the owner starts the game's
--- interaction with it, which has the game do all of it (the checks, the inventory, the sounds, the removal of the
--- pickup). The interaction is held by the button of the beam, which is down. Returns true when it is done.
-local function pull_supply(state, owner_unit, dt)
-	local pickup = state.target
-	local goal = Unit.world_position(owner_unit, 0) + Vector3(0, 0, CONFIG.supply_pull_height)
-	local offset = goal - Unit.world_position(pickup, 0)
-	local distance = Vector3.length(offset)
-
-	if distance <= CONFIG.supply_pickup_distance then
-		local interactor_extension, interaction_type = supply_interaction(owner_unit, pickup)
-
-		if interactor_extension then
-			interactor_extension:start_interaction("action_two_hold", pickup, interaction_type)
+-- Puts a body somewhere (used for the objects that physics doesn't drive, which are moved by the script)
+local function place_body(pickup, body, position, rotation)
+	-- (a body that can't be teleported is moved by moving its unit)
+	if body and pcall(Actor.teleport_position, body, position) then
+		if rotation then
+			Actor.teleport_rotation(body, rotation)
 		end
 
-		return true
-	end
-
-	local position = Unit.world_position(pickup, 0) + offset * (math.min(distance, CONFIG.supply_pull_speed * dt) / distance)
-	local actor = Unit.actor(pickup, "throw")
-
-	if actor and Actor.is_physical(actor) then
-		Actor.teleport_position(actor, position)
-		Actor.set_velocity(actor, Vector3.zero())
+		if Actor.is_physical(body) then
+			Actor.set_velocity(body, Vector3.zero())
+			Actor.set_angular_velocity(body, Vector3.zero())
+		end
 	else
 		Unit.set_local_position(pickup, 0, position)
+
+		if rotation then
+			Unit.set_local_rotation(pickup, 0, rotation)
+		end
+	end
+end
+
+-- A supply that is linked stays where it is, and is picked up when it is yanked: the game's own interaction, which the
+-- owner starts, and which has the game do all of it (the checks, the inventory, the sounds, the removal of the
+-- pickup). It is held by the button of the beam, which is down.
+local function pick_up_supply(state, owner_unit, t)
+	local pickup = state.target
+	local interactor_extension, interaction_type = supply_interaction(owner_unit, pickup)
+
+	if interactor_extension then
+		interactor_extension:start_interaction("action_two_hold", pickup, interaction_type)
 	end
 
-	return false
+	-- (the link is over, and doesn't come back to the same pickup while it is being picked up)
+	state.picked_up = true
+	state.link_block_until = t + CONFIG.supply_retry
 end
 
 -- The throw of a held enemy (primary): an arc from where it is to in front of the owner. An AI unit is moved by the
 -- script for the flight (script driven, it would be put back on the navmesh by the game otherwise) and gets its own
 -- movement and the ground back where it lands.
+local throwing_units = {} -- the units that are in the air of a throw
+
 local function finish_throw(state)
 	local thrown = state.throw
 
 	state.throw = nil
 
 	local unit = state.target
+
+	if unit then
+		throwing_units[unit] = nil
+	end
 
 	if not thrown or not unit or not Unit.alive(unit) then
 		return
@@ -995,7 +1255,7 @@ local function finish_throw(state)
 	if locomotion_extension and locomotion_extension.teleport_to and HEALTH_ALIVE[unit] then
 		local land = thrown.land:unbox()
 		local nav_world = Managers.state.entity:system("ai_system"):nav_world()
-		local on_navmesh, altitude = GwNavQueries.triangle_from_position(nav_world, land, 1.5, 2)
+		local on_navmesh, altitude = GwNavQueries.triangle_from_position(nav_world, land, 4, 4)
 
 		if on_navmesh then
 			land.z = altitude
@@ -1007,25 +1267,43 @@ local function finish_throw(state)
 	end
 end
 
-local function start_throw(state, owner_unit, t, physics_world)
+-- The yank of an enemy, simply: it lands where the owner is, on the navmesh, and flies there in a straight line, with
+-- a lift that is only for looks. The landing is the nearest place of the navmesh to where it would be in front of
+-- the owner (taken from far above or below, so it doesn't matter where the owner is in height), or else the place
+-- of the navmesh the owner stands on. What is in between is checked as it flies (update_throw): a wall ends the flight.
+local function start_throw(state, owner_unit, t)
 	local unit = state.target
 	local locomotion_extension = ScriptUnit.has_extension(unit, "locomotion_system")
 	local is_ai = locomotion_extension ~= nil and locomotion_extension.teleport_to ~= nil
 	local current = Unit.world_position(unit, 0)
 	local aim_flat = state.flat_aim and state.flat_aim:unbox() or Vector3.forward()
 	local owner_position = Unit.world_position(owner_unit, 0)
-	local nav_world = is_ai and Managers.state.entity:system("ai_system"):nav_world() or nil
+	local land = owner_position + aim_flat * CONFIG.yank_min_distance
 
-	-- (where it lands: in front of the owner, and if that isn't walkable, as at a ledge, nearer to them)
-	local land
+	-- (what isn't an AI unit, a target dummy, lands where it is: there is no navmesh to look for)
+	if is_ai then
+		local nav_world = Managers.state.entity:system("ai_system"):nav_world()
+		local owner_locomotion_extension = ScriptUnit.has_extension(owner_unit, "locomotion_system")
+		local candidates = {
+			land,
+			owner_position,
+			owner_locomotion_extension and owner_locomotion_extension.last_position_on_navmesh and owner_locomotion_extension:last_position_on_navmesh() or nil,
+		}
 
-	for _, landing_distance in ipairs({CONFIG.yank_min_distance, CONFIG.yank_min_distance * 0.6, CONFIG.yank_min_distance * 0.25, 0}) do
-		local candidate = owner_position + aim_flat * landing_distance
+		land = nil
 
-		if not nav_world or GwNavQueries.triangle_from_position(nav_world, candidate, 1.5, 2) then
-			land = candidate
+		for i = 1, 3 do
+			local candidate = candidates[i]
 
-			break
+			if candidate then
+				local on_navmesh, altitude = GwNavQueries.triangle_from_position(nav_world, candidate, 4, 4)
+
+				if on_navmesh then
+					land = Vector3(candidate.x, candidate.y, altitude)
+
+					break
+				end
+			end
 		end
 	end
 
@@ -1035,35 +1313,21 @@ local function start_throw(state, owner_unit, t, physics_world)
 		return
 	end
 
-	local distance = Vector3.length(land - current)
 	local lift = math.max(0.5, CONFIG.throw_height / state.weight)
-
-	-- (no throw through a wall: the arc is checked, from the enemy up to the top of it and down to where it lands,
-	-- so that it goes over the edge of a ledge, and when it can't it is pulled in along the ground, as it is held)
-	local height = Vector3(0, 0, 1)
-	local apex = (current + land) * 0.5 + Vector3(0, 0, lift + 1)
-	local points = {current + height, apex, land + height}
-
-	for i = 1, #points - 1 do
-		local ray_offset = points[i + 1] - points[i]
-		local ray_distance = Vector3.length(ray_offset)
-
-		if ray_distance > 0.01 and PhysicsWorld.immediate_raycast(physics_world, points[i], ray_offset * (1 / ray_distance), ray_distance, "closest", "collision_filter", "filter_player_ray_projectile_static_only") then
-			state.hold_distance = CONFIG.yank_min_distance
-
-			return
-		end
-	end
+	local distance = Vector3.length(land - current)
 
 	if state.throw then
 		finish_throw(state)
 	end
+
+	throwing_units[unit] = true
 
 	state.throw = {
 		duration = math.clamp(distance / (CONFIG.yank_speed / state.weight), CONFIG.throw_min_duration, CONFIG.throw_max_duration),
 		land = Vector3Box(land),
 		lift = lift,
 		movement_type = is_ai and locomotion_extension.movement_type or nil,
+		previous = Vector3Box(current),
 		start = Vector3Box(current),
 		t0 = t,
 	}
@@ -1071,12 +1335,37 @@ local function start_throw(state, owner_unit, t, physics_world)
 end
 
 -- true while it is in the air
-local function update_throw(state, t)
+local function update_throw(state, t, physics_world)
 	local thrown = state.throw
 	local unit = state.target
 	local progress = math.clamp((t - thrown.t0) / thrown.duration, 0, 1)
 	local position = Vector3.lerp(thrown.start:unbox(), thrown.land:unbox(), progress) + Vector3(0, 0, thrown.lift * 4 * progress * (1 - progress))
 	local locomotion_extension = ScriptUnit.has_extension(unit, "locomotion_system")
+
+	-- A wall on the way from where it was a frame ago (at the height of the chest) ends the flight there: it lands on the
+	-- navmesh a little before the wall
+	local previous = thrown.previous:unbox()
+	local offset = position - previous
+	local distance = Vector3.length(offset)
+
+	if distance > 0.01 then
+		local chest = Vector3(0, 0, 0.9)
+		local direction = offset * (1 / distance)
+		local hit, hit_position = PhysicsWorld.immediate_raycast(physics_world, previous + chest, direction, distance + CONFIG.throw_wall_margin, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
+
+		if hit then
+			local nav_world = Managers.state.entity:system("ai_system"):nav_world()
+			local stop = hit_position - direction * CONFIG.throw_wall_margin - chest
+			local on_navmesh = GwNavQueries.triangle_from_position(nav_world, stop, 4, 4)
+
+			thrown.land = Vector3Box(on_navmesh and stop or previous)
+			finish_throw(state)
+
+			return false
+		end
+	end
+
+	thrown.previous:store(position)
 
 	if locomotion_extension and locomotion_extension.teleport_to then
 		locomotion_extension:set_movement_type("script_driven")
@@ -1094,8 +1383,67 @@ local function update_throw(state, t)
 	return true
 end
 
+-- A unit that is in the fall of the game while it is thrown (the game sees it falling) is moved by the script, which takes
+-- its mover away, and the fall looks for the mover to see if it has landed. It waits while it is in the air of the throw,
+-- and when the throw is over, the fall is over: left to wait for a mover it doesn't get back, the unit would hang in the
+-- air in its falling pose.
+local fall_action = rawget(_G, "BTFallAction")
+
+if fall_action then
+	mod:hook(fall_action, "run", function (func, self, unit, ...)
+		if not Unit.mover(unit) then
+			return throwing_units[unit] and "running" or "done"
+		end
+
+		return func(self, unit, ...)
+	end)
+end
+
+-- The outline of an enemy that is held, in the teal of the beam: the game's outline of marked targets, with a color of
+-- its own
+local HELD_OUTLINE = {
+	method = "always",
+	priority = 16,
+	flag = "outline_unit", -- (the game's flag of an outline that isn't seen through walls)
+	outline_color = {
+		pulsate = false,
+		pulse_multiplier = 0,
+		color = CONFIG.held_outline_color,
+	},
+}
+
+local function clear_held_outline(state)
+	local extension = state.outline_extension
+
+	if extension then
+		-- (the enemy may be gone)
+		pcall(extension.remove_outline, extension, state.outline_id)
+
+		state.outline_extension = nil
+		state.outline_id = nil
+	end
+end
+
+local function add_held_outline(state)
+	if state.outline_extension or not Unit.alive(state.target) then
+		return
+	end
+
+	local extension = ScriptUnit.has_extension(state.target, "outline_system")
+
+	if extension then
+		state.outline_extension = extension
+		state.outline_id = extension:add_outline(HELD_OUTLINE)
+	end
+end
+
 local function release_target(state)
 	finish_throw(state)
+	clear_held_outline(state)
+
+	if state.target then
+		bot_targets[state.target] = nil
+	end
 
 	state.target = nil
 	state.kind = nil
@@ -1108,6 +1456,25 @@ end
 local function target_position(state)
 	if state.kind == "object" then
 		return state.actor and Actor.position(state.actor) or Unit.world_position(state.target, 0)
+	elseif state.kind == "openable" then
+		-- (the mesh of the door or chest that was linked, it moves with the door when it opens: not the point the unit is
+		-- placed at, its hinge, and not the box of the unit, which stays where the closed door was)
+		if state.actor then
+			local position = mesh_center(state.actor)
+
+			if position then
+				return position
+			end
+		end
+
+		local pose = Unit.box(state.target)
+
+		return Matrix4x4.translation(pose)
+	elseif state.kind == "supply" then
+		-- (the middle of the model: the unit is placed at one point of it, not the middle)
+		local pose = Unit.box(state.target)
+
+		return Matrix4x4.translation(pose)
 	end
 
 	return chest_position(state.target)
@@ -1120,6 +1487,30 @@ local function refresh_object(state)
 
 	if not Unit.alive(unit) then
 		state.actor = nil
+
+		return
+	end
+
+	-- (a corpse that had no ragdoll when it was linked: the body nearest to the chest, once it has them)
+	if not state.node_index then
+		local chest = chest_position(unit)
+		local nearest_actor, nearest_distance
+
+		for i = 0, Unit.num_actors(unit) - 1 do
+			local actor = Unit.actor(unit, i)
+
+			if actor and Actor.is_physical(actor) then
+				local distance = Vector3.distance(Actor.position(actor), chest)
+
+				if not nearest_actor or distance < nearest_distance then
+					nearest_actor = actor
+					nearest_distance = distance
+				end
+			end
+		end
+
+		state.actor = nearest_actor
+		state.node_index = nearest_actor and Actor.node(nearest_actor) or nil
 
 		return
 	end
@@ -1151,11 +1542,11 @@ end
 local function is_link_valid(state, origin)
 	local target = state.target
 
-	if state.kind == "object" or state.kind == "supply" then
+	if state.kind == "object" or state.kind == "supply" or state.kind == "openable" then
 		if not Unit.alive(target) then
 			return false
 		end
-	elseif not is_alive(target) then
+	elseif not is_alive(target) and not is_awaiting_rescue(target) then
 		return false
 	end
 
@@ -1178,14 +1569,14 @@ local function hold_object(state, aim, origin, dt)
 		velocity = velocity * (CONFIG.object_max_speed / speed)
 	end
 
-	if state.actor then
-		-- The body that was linked is given the speed, the rest of a ragdoll hangs from it: gravity and the speed of
-		-- the limbs act on them as they would. (A ragdoll that has lain a while is put to sleep by the game: its
-		-- bodies are woken while it is held. A body that is driven by animation, a corpse that hasn't started to
-		-- ragdoll, isn't physical: it waits.)
-		local actor = state.actor
-		local unit = state.target
+	local actor = state.actor
+	local unit = state.target
 
+	if state.corpse then
+		-- A corpse. The body that was linked is given the speed, the rest of a ragdoll hangs from it: gravity and the
+		-- speed of the limbs act on them as they would. (A ragdoll that has lain a while is put to sleep by the game:
+		-- its bodies are woken while it is held. A body that is driven by animation, a corpse that hasn't started to
+		-- ragdoll, isn't physical: it waits.)
 		-- The game freezes a ragdoll that has settled: its bodies are made kinematic, and a kinematic body doesn't
 		-- take a speed. A ragdoll that is held is thawed, once.
 		if not state.thawed then
@@ -1208,24 +1599,30 @@ local function hold_object(state, aim, origin, dt)
 			end
 		end
 
-		if Actor.is_physical(actor) then
+		if actor and Actor.is_physical(actor) then
 			Actor.set_velocity(actor, velocity)
 		end
-
-		-- TEMPORARY (log only): once a second, what the held body does with the speed it is given
-		if Managers.time:time("game") >= (state.next_object_log_t or 0) then
-			state.next_object_log_t = Managers.time:time("game") + 1
-
-			mod:info("[object] holding: bone %s physical=%s sleeping=%s set_speed=%.1f speed_now=%.1f distance_to_wanted=%.1f", tostring(state.node_index), tostring(Actor.is_physical(actor)), tostring(Actor.is_sleeping(actor)), Vector3.length(velocity), Vector3.length(Actor.velocity(actor)), Vector3.length(wanted - Actor.position(actor)))
+	elseif actor and Actor.is_physical(actor) then
+		-- Another object that physics drives: it takes the speed.
+		if Actor.is_sleeping(actor) then
+			Actor.wake_up(actor)
 		end
-	elseif state.moves_unit then
-		-- a body that isn't driven by physics (a barrel that stays where it is put) goes with its unit
-		local unit = state.target
 
-		Unit.set_local_position(unit, 0, Unit.local_position(unit, 0) + velocity * dt)
+		Actor.set_velocity(actor, velocity)
+	else
+		-- An object that physics doesn't drive (a barrel that is where it is put) is moved by the script, and stays
+		-- where it is when it is let go.
+		place_body(unit, actor, target_position(state) + velocity * dt)
 	end
+end
 
-	-- (what has just died has no ragdoll yet: it is held, and moves once it has one)
+-- A unit that is climbing a ledge is made to leave the climb: the game's climb action gives up when what it was started
+-- for (the unit being in combat or not) isn't what it is now, and puts the unit's movement and gravity back as they
+-- were. Stuck in the climb, a unit that is moved away stays in its climbing pose, in the air.
+local function leave_climb(blackboard)
+	if blackboard.climb_state ~= nil or blackboard.is_climbing then
+		blackboard.climb_action_in_combat = {}
+	end
 end
 
 -- Moves an enemy that is linked towards where the aim is, over the ground, and keeps it stunned
@@ -1233,7 +1630,6 @@ local function hold_enemy(state, owner_unit, t, dt, aim, physics_world)
 	local unit = state.target
 	local locomotion_extension = ScriptUnit.has_extension(unit, "locomotion_system")
 	local is_ai = locomotion_extension ~= nil and locomotion_extension.teleport_to ~= nil
-
 	local flat_aim = Vector3.flat(aim)
 	local flat_length = Vector3.length(flat_aim)
 
@@ -1246,17 +1642,18 @@ local function hold_enemy(state, owner_unit, t, dt, aim, physics_world)
 	if state.yank then
 		state.yank = nil
 
-		start_throw(state, owner_unit, t, physics_world)
+		start_throw(state, owner_unit, t)
 	end
 
-	local throwing = state.throw ~= nil and update_throw(state, t)
+	local throwing = state.throw ~= nil and update_throw(state, t, physics_world)
 	local owner_position = Unit.world_position(owner_unit, 0)
 	local wanted = owner_position + (state.flat_aim and state.flat_aim:unbox() or Vector3.forward()) * state.hold_distance
 	local current = Unit.world_position(unit, 0)
 	local delta = Vector3.flat(wanted - current)
 	local distance = Vector3.length(delta)
 
-	state.lag = Vector3Box(delta)
+	-- (a target dummy doesn't lag, it isn't moved)
+	state.lag = is_ai and Vector3Box(delta) or nil
 
 	if not throwing and distance > 0.05 then
 		local step = math.min(distance, speed / state.weight * dt)
@@ -1272,16 +1669,20 @@ local function hold_enemy(state, owner_unit, t, dt, aim, physics_world)
 
 				locomotion_extension:teleport_to(new_position)
 			end
-		else
-			-- A unit that isn't an AI one, a target dummy, is moved as it is along the ground it stands on, and not
-			-- through a wall
-			local height = Vector3(0, 0, 1)
-			local blocked = PhysicsWorld.immediate_raycast(physics_world, current + height, delta * (1 / distance), step + 0.5, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
-
-			if not blocked then
-				Unit.set_local_position(unit, 0, new_position)
-			end
 		end
+		-- (a target dummy is not an AI unit, it stands where it is: it is linked and damaged, not moved about, the
+		-- beam stays on it wherever the aim goes)
+	end
+
+	-- (climbing a ledge forbids being staggered, and keeps the unit in the climb and its animation: a held enemy is let
+	-- out of it, the stagger takes it out of the climb)
+	local held_blackboard = BLACKBOARDS[unit]
+
+	if held_blackboard and (held_blackboard.stagger_prohibited or held_blackboard.climb_state) then
+		held_blackboard.stagger_prohibited = nil
+		state.next_stagger_t = nil
+
+		leave_climb(held_blackboard)
 	end
 
 	if t >= (state.next_stagger_t or 0) then
@@ -1341,7 +1742,7 @@ mod.link_beam_is_free = function (owner_unit)
 		return false
 	end
 
-	if state.kind == "object" or state.kind == "supply" then
+	if state.kind == "object" or state.kind == "supply" or state.kind == "openable" then
 		return true
 	end
 
@@ -1376,10 +1777,98 @@ local function damage_enemy(state, owner_unit, t)
 	end
 end
 
+-- The look of the buff: the Thornsister's own buff effect (what she gets when health is converted), a burst at the ally that
+-- follows them, again every ally_effect_interval seconds while they are linked
+local function show_ally_buff(state, world, t)
+	if t < (state.next_ally_effect_t or 0) or not world or not Unit.alive(state.target) then
+		return
+	end
+
+	state.next_ally_effect_t = t + CONFIG.ally_effect_interval
+
+	local ok_loaded, loaded = pcall(Application.can_get, "particles", CONFIG.ally_effect)
+
+	if not ok_loaded or not loaded then
+		return
+	end
+
+	local unit = state.target
+	local effect_id = World.create_particles(world, CONFIG.ally_effect, Unit.world_position(unit, 0), Quaternion.identity())
+
+	if Unit.has_node(unit, "root_point") then
+		World.link_particles(world, effect_id, unit, Unit.node(unit, "root_point"), Matrix4x4.identity(), "stop")
+	end
+end
+
+-- A bot that is linked attacks the nearest enemy: the bots' own urgent target (what they attack first, from where they
+-- are, as they do with a boss) is set to it. (Not the priority target: that is always about an ally that is held, and the bot
+-- code looks for the ally.) The game works the urgent targets out again every frame, and takes this one away, so it is set
+-- again after that, below.
+local function apply_bot_target(bot_unit, enemy)
+	local blackboard = BLACKBOARDS[bot_unit]
+	local from = POSITION_LOOKUP[bot_unit]
+	local to = POSITION_LOOKUP[enemy]
+
+	if blackboard and from and to then
+		blackboard.urgent_target_enemy = enemy
+		blackboard.urgent_target_distance = Vector3.length(to - from)
+		blackboard.revive_with_urgent_target = false
+	end
+end
+
+local function force_bot_target(bot_unit)
+	local player = Managers.player:owner(bot_unit)
+	local position = POSITION_LOOKUP[bot_unit]
+
+	if not player or not player.bot_player or not position then
+		return
+	end
+
+	local side = Managers.state.side.side_by_unit[bot_unit]
+	local count = AiUtils.broadphase_query(position, CONFIG.bot_target_range, ai_units, side and side.enemy_broadphase_categories)
+	local nearest, nearest_distance
+
+	for i = 1, count do
+		local unit = ai_units[i]
+		local breed = HEALTH_ALIVE[unit] and AiUtils.unit_breed(unit)
+
+		if breed and not breed.is_player and breed.race ~= "dummy" then
+			local distance = Vector3.distance_squared(POSITION_LOOKUP[unit], position)
+
+			if not nearest_distance or distance < nearest_distance then
+				nearest = unit
+				nearest_distance = distance
+			end
+		end
+	end
+
+	bot_targets[bot_unit] = nearest
+
+	if nearest then
+		apply_bot_target(bot_unit, nearest)
+	end
+end
+
+if rawget(_G, "AIBotGroupSystem") then
+	mod:hook_safe(AIBotGroupSystem, "_update_urgent_targets", function (self)
+		for bot_unit, enemy in pairs(bot_targets) do
+			if HEALTH_ALIVE[bot_unit] and HEALTH_ALIVE[enemy] then
+				apply_bot_target(bot_unit, enemy)
+			else
+				bot_targets[bot_unit] = nil
+			end
+		end
+	end)
+end
+
 local function boost_ally(state, owner_unit, t)
 	if is_ally_attacking(state.target) then
 		state.ally_attack_t = t
 	end
+
+	force_bot_target(state.target)
+
+	show_ally_buff(state, state.callback_world, t)
 
 	if t < (state.next_buff_t or 0) then
 		return
@@ -1394,12 +1883,13 @@ local function boost_ally(state, owner_unit, t)
 end
 
 -- The beam, as lines: a curve from the staff to the end of it, a few lines around it for the thickness
-local function bezier(p0, p1, p2, s)
-	local a = p0 * ((1 - s) * (1 - s))
-	local b = p1 * (2 * (1 - s) * s)
-	local c = p2 * (s * s)
+local function bezier(p0, p1, p2, p3, s)
+	local a = p0 * ((1 - s) * (1 - s) * (1 - s))
+	local b = p1 * (3 * (1 - s) * (1 - s) * s)
+	local c = p2 * (3 * (1 - s) * s * s)
+	local d = p3 * (s * s * s)
 
-	return a + b + c
+	return a + b + c + d
 end
 
 -- Where the beam starts: ahead of the left hand's node, where the bolts start (the staff is in the hand). If the
@@ -1423,36 +1913,129 @@ local function staff_position(owner_unit, first_person_extension, origin, rotati
 	return origin + Quaternion.forward(rotation) * 0.6 - Quaternion.right(rotation) * 0.25 - Quaternion.up(rotation) * 0.25
 end
 
-local function draw_beam(state, world, start_position, rotation, end_position, weight, lag, color_values)
-	local line_object = state.line_object
+-- The beam as particles: the game's own beam particle (the one of the beam staff's trail, stretched by a variable that is
+-- its width and length) for every piece of the curve, made new every frame and gone the next, so it is always as
+-- it starts. The first of the effects that is loaded and has the variable; the lines are used if there is none.
+local sprite
 
-	if not line_object then
-		line_object = World.create_line_object(world)
-		state.line_object = line_object
-		state.world = world
+local function find_sprite(world)
+	if sprite then
+		local ok_loaded, loaded = pcall(Application.can_get, "particles", sprite.name)
+
+		if ok_loaded and loaded then
+			return sprite
+		end
+
+		sprite = nil
 	end
 
-	LineObject.reset(line_object)
+	-- (the first of the effects that is loaded)
+	for _, name in ipairs(CONFIG.beam_sprite_effects) do
+		local ok_loaded, loaded = pcall(Application.can_get, "particles", name)
+
+		if ok_loaded and loaded then
+			sprite = {
+				name = name,
+			}
+
+			return sprite
+		end
+	end
+end
+
+local function destroy_sprites(state)
+	if state.sprite_ids and state.world then
+		for _, effect_id in ipairs(state.sprite_ids) do
+			pcall(World.destroy_particles, state.world, effect_id)
+		end
+	end
+
+	state.sprite_ids = nil
+end
+
+-- The copies are made when the beam starts (and as it gets longer), and moved every frame until it ends: the effects
+-- are animated, one that is made again every so often is seen at its start, where it isn't there.
+local function draw_sprites(state, world, found, points)
+	local ids = state.sprite_ids
+
+	if not ids then
+		ids = {}
+		state.sprite_ids = ids
+	end
+
+	state.world = world
+
+	-- (beam_sprite_copies copies of the effect at every point of the curve: a longer beam gets more, a shorter one fewer)
+	local copies = CONFIG.beam_sprite_copies
+	local wanted = (#points - 1) * copies
+
+	for i = #ids + 1, wanted do
+		ids[i] = World.create_particles(world, found.name, points[math.floor((i - 1) / copies) + 2], Quaternion.identity())
+	end
+
+	for i = #ids, wanted + 1, -1 do
+		pcall(World.destroy_particles, world, ids[i])
+
+		ids[i] = nil
+	end
+
+	-- (all looking along the line from the staff to the end, not along the curve: the particles of the effect move along the
+	-- way it faces, they flow towards the staff and not past the end)
+	local offset = points[#points] - points[1]
+	local length = Vector3.length(offset)
+	local rotation = length > 0.001 and Quaternion.look(offset * (1 / length)) or Quaternion.identity()
+
+	for i = 2, #points do
+		local to = points[i]
+
+		for copy = 1, copies do
+			World.move_particles(world, ids[(i - 2) * copies + copy], to, rotation)
+		end
+	end
+end
+
+local function draw_beam(state, world, camera_position, start_position, rotation, end_position, weight, lag, color_values)
+	local found = find_sprite(world)
+	local line_object = state.line_object
+
+	if not found then
+		if not line_object then
+			line_object = World.create_line_object(world)
+			state.line_object = line_object
+			state.world = world
+		end
+
+		LineObject.reset(line_object)
+	end
 
 	local right = Quaternion.right(rotation)
 	local up = Quaternion.up(rotation)
 	local length = Vector3.length(end_position - start_position)
-	local middle = (start_position + end_position) * 0.5
-	-- (the beam bows towards the aim: the middle is pushed by the part of the aim that is sideways to the way to the
-	-- target, by up to beam_aim_curve of the length, so it is straight when the target is right on the aim and a
-	-- gentle bow when it isn't, never a hook)
-	local curved_middle = middle
+	-- (the beam leaves the staff bowed towards the aim and arrives at the target straight on, the way from the staff to
+	-- the target: the part of the aim that is sideways to that way pushes the start of the curve, by up to
+	-- beam_aim_curve of the length, so it is straight when the target is right on the aim and a gentle bow when it
+	-- isn't, never a hook; the end of the effect points at the target, not past it)
+	local first_control = start_position + (end_position - start_position) * (1 / 3)
+	local second_control = start_position + (end_position - start_position) * (2 / 3)
 
 	if length > 0.01 then
 		local direction = (end_position - start_position) * (1 / length)
 		local aim = Quaternion.forward(rotation)
 		local sideways = aim - direction * Vector3.dot(aim, direction)
 
-		curved_middle = middle + sideways * (length * CONFIG.beam_aim_curve)
+		first_control = first_control + sideways * (length * CONFIG.beam_aim_curve * 1.3)
 	end
+
 	local sag = weight and math.min(CONFIG.sag_max, CONFIG.sag_per_weight * weight * length) or 0
 	local bend = lag and lag * CONFIG.lag_bend or Vector3.zero()
-	local control = curved_middle - Vector3.up() * sag + bend
+	-- (what hangs or lags bends the first half only: the beam still arrives at the target straight on; and it is never bent
+	-- by more than lag_bend_max, an enemy that is far from where the aim is, held by something else, isn't a bend of
+	-- the whole beam)
+	if Vector3.length(bend) > CONFIG.lag_bend_max then
+		bend = Vector3.normalize(bend) * CONFIG.lag_bend_max
+	end
+
+	first_control = first_control + (bend - Vector3.up() * sag) * 0.7
 	local color = Color(color_values[1], color_values[2], color_values[3], color_values[4])
 	local thickness = CONFIG.beam_thickness
 	local offsets = {
@@ -1463,21 +2046,60 @@ local function draw_beam(state, world, start_position, rotation, end_position, w
 		up * -thickness,
 	}
 	local previous = start_position
+	local points = {start_position}
 
-	for i = 1, CONFIG.beam_segments do
-		local point = bezier(start_position, control, end_position, i / CONFIG.beam_segments)
+	-- (a point about every beam_segment_length of the beam, so a longer one has more particles)
+	local segments = math.clamp(math.ceil(length / CONFIG.beam_segment_length), CONFIG.beam_min_segments, CONFIG.beam_max_segments)
 
-		for _, offset in ipairs(offsets) do
-			LineObject.add_line(line_object, color, previous + offset, point + offset)
+	for i = 1, segments do
+		local point = bezier(start_position, first_control, second_control, end_position, i / segments)
+
+		points[#points + 1] = point
+
+		if not found then
+			for _, offset in ipairs(offsets) do
+				LineObject.add_line(line_object, color, previous + offset, point + offset)
+			end
 		end
 
 		previous = point
 	end
 
-	LineObject.dispatch(world, line_object)
+	if found then
+		-- The effect is drawn like the staff in the hands is, with a narrower field of view than the world: a point of the
+		-- world is seen further from the middle of the screen (by the ratio of the two) than where it is. The beam starts at
+		-- the staff, which is drawn the same way, and ends in the world: the points are pulled towards the aim, the more
+		-- the further along the beam they are, so that the end is seen on the target.
+		local world_fov = CONFIG.world_fov
+
+		if Managers.state.camera then
+			local ok, fov = pcall(Managers.state.camera.fov, Managers.state.camera, "player_1")
+
+			if ok and fov then
+				world_fov = math.deg(fov)
+			end
+		end
+
+		local scale = math.tan(math.rad(CONFIG.effect_fov) / 2) / math.tan(math.rad(world_fov) / 2)
+		local forward = Quaternion.forward(rotation)
+		local seen = {}
+
+		for i = 1, #points do
+			local offset = points[i] - camera_position
+			local factor = 1 + (scale - 1) * ((i - 1) / math.max(#points - 1, 1))
+
+			seen[i] = camera_position + right * (Vector3.dot(offset, right) * factor) + up * (Vector3.dot(offset, up) * factor) + forward * Vector3.dot(offset, forward)
+		end
+
+		draw_sprites(state, world, found, seen)
+	else
+		LineObject.dispatch(world, line_object)
+	end
 end
 
 local function destroy_line_object(state)
+	destroy_sprites(state)
+
 	if state.line_object and state.world then
 		-- (what was dispatched stays drawn until the line object is dispatched again, so it is emptied and
 		-- dispatched before it goes, the world may be gone)
@@ -1495,9 +2117,157 @@ local function end_beam(owner_unit)
 
 	if state then
 		finish_throw(state)
+		clear_held_outline(state)
 		destroy_line_object(state)
 
+		if state.target then
+			bot_targets[state.target] = nil
+		end
+
 		states[owner_unit] = nil
+	end
+end
+
+-- What is linked to
+local function link_target(state, owner_unit, unit, kind, actor, object_distance)
+	state.target = unit
+	state.kind = kind
+	state.actor = actor
+	state.weight = kind == "enemy" and enemy_weight(unit) or nil
+	state.next_stagger_t = nil
+	state.next_buff_t = nil
+	state.next_dot_t = nil
+	state.hold_distance = math.clamp(Vector3.length(Vector3.flat(Unit.world_position(unit, 0) - Unit.world_position(owner_unit, 0))), CONFIG.hold_min_distance, CONFIG.beam_range)
+
+	if kind == "enemy" or kind == "monster" or kind == "supply" or kind == "openable" or kind == "object" then
+		add_held_outline(state)
+	end
+
+	if kind == "monster" then
+		state.monster_start = Vector3Box(Unit.world_position(unit, 0))
+	elseif kind == "object" then
+		state.hold_distance = math.clamp(object_distance, CONFIG.yank_min_distance, CONFIG.beam_range)
+		state.node_index = Actor.node(actor)
+		state.thawed = false
+		state.corpse = AiUtils.unit_breed(unit) ~= nil
+
+		if state.corpse then
+			preserve_corpse(unit)
+		end
+	end
+end
+
+-- Yanking is pressing primary, once for every press: held down it isn't one
+local function yank_pressed(state, owner_unit)
+	local input_extension = ScriptUnit.has_extension(owner_unit, "input_system")
+	local down = input_extension ~= nil and input_extension:get("action_one_hold") == true
+	local pressed = down and not state.yank_was_down
+
+	state.yank_was_down = down
+
+	return pressed
+end
+
+-- Heat on top of the heat of the beam
+local function add_heat(owner_unit, amount)
+	local overcharge_extension = ScriptUnit.has_extension(owner_unit, "overcharge_system")
+
+	if overcharge_extension and amount > 0 then
+		overcharge_extension:add_charge(amount, nil, "ut_link_yank")
+	end
+end
+
+-- Yanking an enemy: out of a vortex if it is in one (at a cost), else it is thrown to the owner
+local function yank_enemy(state, owner_unit)
+	local blackboard = BLACKBOARDS[state.target]
+
+	if blackboard and blackboard.in_vortex then
+		blackboard.in_vortex = false
+		blackboard.thornsister_vortex = nil
+
+		add_heat(owner_unit, CONFIG.yank_free_overcharge)
+
+		return
+	end
+
+	state.yank = true
+end
+
+-- Yanking a player or a bot: freed from what holds them, a disabler or a vortex; pulled up from a ledge; got up
+-- from being knocked down; else launched at the owner (the state of being launched by the game's monsters). All at
+-- a cost, the launch at a big one.
+local function yank_ally(state, owner_unit, t)
+	local unit = state.target
+	local status_extension = ScriptUnit.has_extension(unit, "status_system")
+
+	-- (the cost is high so that it isn't used to grief other players: a bot can't be griefed, it costs much less)
+	local player = Managers.player:owner(unit)
+	local cost_scale = player and player.bot_player and CONFIG.bot_yank_cost_scale or 1
+
+	local game_add_heat = add_heat
+
+	local function add_heat(owner, amount)
+		return game_add_heat(owner, amount * cost_scale)
+	end
+
+	-- (waiting to be set free: the game's own way of doing it, with the owner as the one who did)
+	if status_extension and status_extension:is_ready_for_assisted_respawn() then
+		StatusUtils.set_respawned_network(unit, true, owner_unit)
+		add_heat(owner_unit, CONFIG.yank_rescue_overcharge)
+
+		return
+	end
+
+	if not status_extension or status_extension:is_dead() then
+		return
+	end
+
+	local disabler_unit = status_extension:get_disabler_unit()
+
+	if disabler_unit and mod.release_player_from_disabler then
+		mod.release_player_from_disabler(disabler_unit, unit, t)
+		add_heat(owner_unit, CONFIG.yank_free_overcharge)
+	elseif status_extension:is_in_vortex() then
+		StatusUtils.set_in_vortex_network(unit, false, nil)
+		add_heat(owner_unit, CONFIG.yank_free_overcharge)
+	elseif status_extension:get_is_ledge_hanging() then
+		StatusUtils.set_pulled_up_network(unit, true, owner_unit)
+		add_heat(owner_unit, CONFIG.yank_rescue_overcharge)
+	elseif status_extension:is_knocked_down() then
+		StatusUtils.set_revived_network(unit, true, owner_unit)
+		add_heat(owner_unit, CONFIG.yank_rescue_overcharge)
+	elseif not status_extension:is_disabled() then
+		local flat = Vector3.flat(Unit.world_position(owner_unit, 0) - Unit.world_position(unit, 0))
+		local distance = Vector3.length(flat)
+		local direction = distance > 0.1 and flat * (1 / distance) or Vector3.forward()
+		local velocity = direction * math.clamp(distance * CONFIG.monster_pull_per_meter, CONFIG.monster_pull_min_speed, CONFIG.monster_pull_max_speed)
+
+		Vector3.set_z(velocity, CONFIG.monster_pull_up_speed)
+		StatusUtils.set_catapulted_network(unit, true, velocity)
+		add_heat(owner_unit, CONFIG.yank_player_overcharge)
+	end
+end
+
+-- Yanking a door opens it, or closes it; a chest is opened by the game's own interaction, as a supply is picked up
+local function yank_openable(state, owner_unit, t)
+	local door_extension = ScriptUnit.has_extension(state.target, "door_system")
+
+	if door_extension and door_extension.interacted_with then
+		-- (the door looks at the position of whoever opens it, the mods' update runs before the game has made them current)
+		mod.with_valid_positions(door_extension.interacted_with, door_extension, owner_unit)
+		add_heat(owner_unit, CONFIG.yank_door_overcharge)
+	else
+		local interactor_extension, interaction_type = supply_interaction(owner_unit, state.target)
+
+		if interactor_extension then
+			interactor_extension:start_interaction("action_two_hold", state.target, interaction_type)
+			add_heat(owner_unit, CONFIG.yank_door_overcharge)
+
+			-- (the link is over, and doesn't come back while the chest is being opened)
+			release_target(state)
+
+			state.link_block_until = t + CONFIG.supply_retry
+		end
 	end
 end
 
@@ -1516,6 +2286,8 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 	local aim = Quaternion.forward(rotation)
 	local physics_world = self.physics_world
 
+	state.callback_world = world
+
 	if Managers.player.is_server then
 		if state.target and state.kind == "object" then
 			refresh_object(state)
@@ -1525,94 +2297,45 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 			release_target(state)
 		end
 
-		-- (what is living comes first: an object that is held is let go for it as soon as the aim is on it)
-		local unit, kind, actor, object_distance
+		-- What is linked stays linked, until the beam is let go: what is picked is the most important of what the aim
+		-- is on (living things, supplies, doors, objects), and only when nothing is linked.
+		if not state.target and t >= (state.link_block_until or 0) then
+			local unit, kind, actor, object_distance = find_target(owner_unit, physics_world, origin, aim)
 
-		if (state.kind == "object" or not state.target) and t >= (state.link_block_until or 0) then
-			unit, kind, actor, object_distance = find_target(owner_unit, physics_world, origin, aim, state.kind == "object" and CONFIG.object_release_dot or nil)
+			-- A supply is only linked if the owner can pick it up
+			if unit and kind == "supply" and not supply_interaction(owner_unit, unit) then
+				state.link_block_until = t + CONFIG.supply_retry
 
-			-- (only for something living: an object that is held stays when the aim finds nothing, or another object)
-			if state.kind == "object" and (kind == "enemy" or kind == "ally") then
-				release_target(state)
-			elseif state.target then
 				unit = nil
 			end
-		end
 
-		-- A supply is only linked if the owner can pick it up
-		if unit and kind == "supply" and not state.target and not supply_interaction(owner_unit, unit) then
-			state.link_block_until = t + CONFIG.supply_retry
-
-			unit = nil
-		end
-
-		if unit and not state.target then
-			state.target = unit
-			state.kind = kind
-
-			if kind == "monster" then
-				state.monster_start = Vector3Box(Unit.world_position(unit, 0))
-			end
-			state.actor = actor
-			state.weight = kind == "enemy" and enemy_weight(unit) or nil
-			state.next_stagger_t = nil
-			state.next_buff_t = nil
-			state.next_dot_t = nil
-
-			if kind == "object" then
-				state.hold_distance = math.clamp(object_distance, CONFIG.yank_min_distance, CONFIG.beam_range)
-				state.node_index = Actor.node(actor)
-				state.thawed = false
-
-				preserve_corpse(unit)
-				state.moves_unit = not Actor.is_dynamic(actor) and AiUtils.unit_breed(unit) == nil
-
-				-- TEMPORARY (log only)
-				local dynamic_count = 0
-
-				for i = 0, Unit.num_actors(unit) - 1 do
-					local body = Unit.actor(unit, i)
-
-					if body and Actor.is_dynamic(body) then
-						dynamic_count = dynamic_count + 1
-					end
-				end
-
-				local breed = AiUtils.unit_breed(unit)
-
-				mod:info("[object] linked: breed=%s actors=%d dynamic=%d hit_dynamic=%s hit_static=%s distance=%.1f moves_unit=%s", tostring(breed and breed.name), Unit.num_actors(unit), dynamic_count, tostring(Actor.is_dynamic(actor)), tostring(Actor.is_static(actor)), object_distance, tostring(state.moves_unit))
-
-				-- (the bodies of the bone that was hit, what each is)
-				for i = 0, Unit.num_actors(unit) - 1 do
-					local body = Unit.actor(unit, i)
-
-					if body and Actor.node(body) == state.node_index then
-						mod:info("[object]   body %d of the bone %s: physical=%s dynamic=%s static=%s sleeping=%s is_hit=%s", i, tostring(state.node_index), tostring(Actor.is_physical(body)), tostring(Actor.is_dynamic(body)), tostring(Actor.is_static(body)), tostring(Actor.is_sleeping(body)), tostring(body == actor))
-					end
-				end
-			else
-				state.hold_distance = math.clamp(Vector3.length(Vector3.flat(Unit.world_position(unit, 0) - Unit.world_position(owner_unit, 0))), CONFIG.hold_min_distance, CONFIG.beam_range)
+			if unit then
+				link_target(state, owner_unit, unit, kind, actor, object_distance)
 			end
 		end
+
+		-- Yanking: pressing primary, once for every press (the button being held isn't one). Looked at every frame, linked
+		-- or not, so that a press is only one that happens after the button was up.
+		local yanked = yank_pressed(state, owner_unit)
 
 		if state.target then
-			if state.kind == "supply" then
-				if pull_supply(state, owner_unit, dt) then
-					release_target(state)
+			if yanked and not pose.locked_out() then
+				Unit.animation_event(first_person_extension:get_first_person_unit(), CONFIG.yank_animation_event)
+			end
 
-					state.link_block_until = t + CONFIG.supply_retry
+			if state.kind == "supply" then
+				if yanked then
+					pick_up_supply(state, owner_unit, t)
+					release_target(state)
+				end
+			elseif state.kind == "openable" then
+				if yanked then
+					yank_openable(state, owner_unit, t)
 				end
 			elseif state.kind == "monster" then
-				-- (a monster is too big to be held: the beam stays on it, and when it moves the owner is launched
-				-- towards it and the link is over)
-				-- Trying to yank it does the same at once.
+				-- (a monster is too big to be held: the beam stays on it, and when it moves, or it is yanked, the
+				-- owner is launched towards it and the link is over)
 				local moved = Vector3.length(Vector3.flat(Unit.world_position(state.target, 0) - state.monster_start:unbox()))
-				local input_extension = ScriptUnit.has_extension(owner_unit, "input_system")
-				local yanked = input_extension ~= nil and input_extension:get("action_one")
-
-				if yanked and not pose.locked_out() then
-					Unit.animation_event(first_person_extension:get_first_person_unit(), CONFIG.yank_animation_event)
-				end
 
 				if yanked or moved >= CONFIG.monster_move_distance then
 					launch_towards_monster(state, owner_unit, state.target, t)
@@ -1621,31 +2344,50 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 					damage_enemy(state, owner_unit, t)
 				end
 			elseif state.kind == "object" then
-				local input_extension = ScriptUnit.has_extension(owner_unit, "input_system")
-
-				if input_extension and input_extension:get("action_one") then
-					state.yank = true
-
-					if not pose.locked_out() then
-						Unit.animation_event(first_person_extension:get_first_person_unit(), CONFIG.yank_animation_event)
-					end
-				end
+				state.yank = state.yank or yanked
 
 				hold_object(state, aim, origin, dt)
 			elseif state.kind == "enemy" then
-				local input_extension = ScriptUnit.has_extension(owner_unit, "input_system")
-
-				if input_extension and input_extension:get("action_one") then
-					state.yank = true
-
-					if not pose.locked_out() then
-						Unit.animation_event(first_person_extension:get_first_person_unit(), CONFIG.yank_animation_event)
-					end
+				if yanked then
+					yank_enemy(state, owner_unit)
 				end
 
 				hold_enemy(state, owner_unit, t, dt, aim, physics_world)
 				damage_enemy(state, owner_unit, t)
 			else
+				local breed = AiUtils.unit_breed(state.target)
+
+				if breed and not breed.is_player then
+					-- (a skeleton: an AI unit, it is thrown to the owner like an enemy is)
+					local flat_aim = Vector3.flat(aim)
+
+					if Vector3.length(flat_aim) > 0.1 then
+						state.flat_aim = Vector3Box(Vector3.normalize(flat_aim))
+					end
+
+					if yanked then
+						state.weight = state.weight or 1
+
+						start_throw(state, owner_unit, t)
+
+						-- (let out of a climb, as a held enemy is: it can't be staggered in one, and the stagger takes it out)
+						local blackboard = BLACKBOARDS[state.target]
+
+						if blackboard and state.throw then
+							blackboard.stagger_prohibited = nil
+							leave_climb(blackboard)
+
+							mod.with_valid_positions(AiUtils.stagger, state.target, blackboard, owner_unit, Vector3.normalize(Vector3.flat(Unit.world_position(owner_unit, 0) - Unit.world_position(state.target, 0)) + Vector3(0.001, 0, 0)), 1, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
+						end
+					end
+
+					if state.throw then
+						update_throw(state, t, physics_world)
+					end
+				elseif yanked then
+					yank_ally(state, owner_unit, t)
+				end
+
 				boost_ally(state, owner_unit, t)
 			end
 		end
@@ -1656,8 +2398,7 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 	local color = CONFIG.beam_color
 
 	if state.target and Unit.alive(state.target) then
-		end_position = target_position(state)
-		color = ((state.kind == "enemy" or state.kind == "monster") and CONFIG.held_beam_color) or ((state.kind == "object" or state.kind == "supply") and CONFIG.object_beam_color) or CONFIG.ally_beam_color
+		color = ((state.kind == "enemy" or state.kind == "monster") and CONFIG.held_beam_color) or ((state.kind == "object" or state.kind == "supply" or state.kind == "openable") and CONFIG.object_beam_color) or CONFIG.ally_beam_color
 	else
 		local range = CONFIG.beam_range
 		local hit, hit_position = PhysicsWorld.immediate_raycast(physics_world, origin, aim, range, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
@@ -1665,9 +2406,40 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		end_position = hit and hit_position or origin + aim * range
 	end
 
-	local lag = state.kind == "enemy" and state.lag and state.lag:unbox() or nil
+	-- (drawn when the world has been updated, see draw_pending_beams: the target and the staff have moved by then, the
+	-- beam drawn here would be a frame behind them)
+	state.pending_draw = {
+		color = color,
+		end_position = end_position,
+		first_person_extension = first_person_extension,
+		lag = state.kind == "enemy" and state.lag and state.lag:unbox() or nil,
+		origin = origin,
+		owner_unit = owner_unit,
+		rotation = rotation,
+		weight = state.kind == "enemy" and state.weight or nil,
+		world = world,
+	}
+end
 
-	draw_beam(state, world, staff_position(owner_unit, first_person_extension, origin, rotation), rotation, end_position, state.kind == "enemy" and state.weight or nil, lag, color)
+-- The beams are drawn after the units have been updated, from where the staff and what it is linked to are now
+function mod.draw_pending_beams()
+	for _, state in pairs(states) do
+		local pending = state.pending_draw
+
+		if pending then
+			state.pending_draw = nil
+
+			local end_position = pending.end_position
+
+			if not end_position then
+				end_position = state.target and Unit.alive(state.target) and target_position(state)
+			end
+
+			if end_position and Unit.alive(pending.owner_unit) then
+				draw_beam(state, pending.world, pending.origin, staff_position(pending.owner_unit, pending.first_person_extension, pending.origin, pending.rotation), pending.rotation, end_position, pending.weight, pending.lag, pending.color)
+			end
+		end
+	end
 end
 
 -- The beam ends when the button is let go (or it is left for something else)
@@ -1753,8 +2525,14 @@ local function clear_beams()
 
 	restore_corpse()
 	pose.clear()
+	pose.health_extension = nil
+	pose.overcharge_extension = nil
+	pose.is_valid = nil
 	hand.show()
 	table.clear(bolts)
+
+	-- (the variable of the particle belongs to the world, which is another one in the next level)
+	sprite = nil
 end
 
 mod.on_disabled = function (...)
