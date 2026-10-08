@@ -81,7 +81,8 @@ return {
 			},
 			{
 				setting_id = "gameplay",
-				type = "group",
+				type = "checkbox",
+				default_value = false,
 				sub_widgets = {
 					{
 						setting_id = "more_ammo_pickups",

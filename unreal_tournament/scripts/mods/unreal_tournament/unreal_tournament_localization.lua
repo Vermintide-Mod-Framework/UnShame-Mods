@@ -6,13 +6,13 @@ return {
 		en = "Movement",
 	},
 	ut_movement_description = {
-		en = "Dodge jumps, wall dodges, a double jump, heavier gravity and no fall damage.",
+		en = "Dodge jumps, wall dodges, a double jump, heavier gravity and no fall damage. Recommended: turn Double Tap Dodge on in the game's settings, and rebind Jump/Dodge to Jump Only.",
 	},
 	multidodge = {
 		en = "Multidodge",
 	},
 	multidodge_description = {
-		en = "Dodge as often as you like, in the air and off walls.",
+		en = "No limits on dodging: no cooldown, and you can wall dodge again and again, each wall dodge gives the double jump back. You still need a wall to dodge off in the air.",
 	},
 	momentum_damage = {
 		en = "Momentum Damage",
@@ -24,19 +24,19 @@ return {
 		en = "Remove Barriers",
 	},
 	no_barriers_description = {
-		en = "Takes away most of what keeps you in bounds. Choose which below.",
+		en = "Takes away most of what keeps you in bounds, to let you explore more of the levels with the extra movement. Choose which below.",
 	},
 	no_invisible_walls = {
 		en = "Invisible Walls",
 	},
 	no_invisible_walls_description = {
-		en = "Removes most of the invisible walls that stop you from climbing back up after a drop.",
+		en = "Removes most of the invisible walls that keep you from reaching places the developers didn't intend for you to reach.",
 	},
 	no_kill_zones = {
 		en = "Kill Zones",
 	},
 	no_kill_zones_description = {
-		en = "You are no longer killed for falling out of the level or entering most kill zones.",
+		en = "You are no longer killed for entering the kill zones of a level.",
 	},
 	no_ledges = {
 		en = "Ledges",
@@ -46,6 +46,9 @@ return {
 	},
 	gameplay = {
 		en = "Gameplay",
+	},
+	gameplay_description = {
+		en = "Miscellaneous options to make the game easier or more convenient.",
 	},
 	auto_revive = {
 		en = "Auto Revive",
@@ -87,7 +90,7 @@ return {
 		en = "Shock Rifle",
 	},
 	shock_rifle_description = {
-		en = "Sienna (Pyromancer, Battle Wizard, Unchained). Replaces the Beam Staff. Primary fires an instant beam, alt fire a slow shock ball. Shoot the ball with the beam for a huge combo explosion. Overheating sets one off too.",
+		en = "Sienna (Pyromancer, Battle Wizard, Unchained). Replaces the Beam Staff. Primary fires an instant beam, alt fire a slow shock ball. Shoot the ball with the beam for a huge combo explosion.",
 	},
 	flak_cannon = {
 		en = "Flak Cannon",
@@ -99,7 +102,7 @@ return {
 		en = "Bio Rifle",
 	},
 	bio_rifle_description = {
-		en = "Bardin (Ironbreaker). Replaces the Drakegun. Lobs globs that leave burning puddles. More globs grow a puddle, and a puddle that gets too big, or that anything steps into, bursts into more globs. Alt fire charges a glob that bursts a puddle as it lands. Overheating sprays globs.",
+		en = "Bardin (Ironbreaker). Replaces the Drakegun. Lobs globs that leave burning puddles. More globs grow a puddle, and a puddle that gets too big, or that anything steps into, bursts into more globs. Alt fire charges a glob that bursts a puddle as it lands.",
 	},
 	link_gun = {
 		en = "Link Gun",

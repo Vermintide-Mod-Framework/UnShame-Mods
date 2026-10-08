@@ -68,7 +68,7 @@ local CONFIG = {
 	chunk_ragdoll_window = 1.5, -- seconds a body has to start ragdolling after it was hit
 	-- Shell
 	shell_speed = 2400, -- FlakShell.Speed 1200 uu/s = 24 m/s
-	shell_lob_degrees = 10.6, -- the shell is tossed up, FlakShell.TossZ 225 uu/s is this angle
+	shell_lob_degrees = 5.3, -- how far up the shell is tossed from the aim (UT's FlakShell.TossZ 225 uu/s is 10.6, this is half)
 	shell_lifetime = 6,
 	shell_radius = 0.2, -- m
 	shell_damage = 60, -- the damage of the explosion

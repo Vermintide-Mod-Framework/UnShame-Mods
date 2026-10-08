@@ -5,7 +5,7 @@ local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 -- Gameplay options
 local CONFIG = {
 	-- More Ammo Pickups: how many times as many ammo pickups a level gets
-	ammo_multiplier = 4,
+	ammo_multiplier = 8,
 	-- Forgiving Disablers: a player who has been held by a disabler for disable_time seconds is let go of, the disabler is
 	-- staggered for stagger_duration
 	disable_time = 2, -- seconds
@@ -15,6 +15,11 @@ local CONFIG = {
 	self_revive_time = 3, -- seconds
 	self_revive_invulnerable_time = 2, -- seconds
 }
+
+-- If an option is on: its own checkbox, and the Gameplay checkbox above all of them
+local function is_option_on(setting_id)
+	return mod:get("gameplay") and mod:get(setting_id)
+end
 
 -- No Bots: the game modes have a flag that says there are no bots, and clear the ones there are when it is
 -- set. It is set for the duration of the call that handles the bots.
@@ -29,7 +34,7 @@ for _, game_mode_name in ipairs({
 		mod:hook(game_mode, "_handle_bots", function (func, self, ...)
 			local bots_disabled = script_data.ai_bots_disabled
 
-			if mod:get("no_bots") then
+			if is_option_on("no_bots") then
 				script_data.ai_bots_disabled = true
 			end
 
@@ -45,7 +50,7 @@ local adventure_spawning = rawget(_G, "AdventureSpawning")
 
 if adventure_spawning then
 	mod:hook(adventure_spawning, "force_update_spawn_positions", function (func, ...)
-		if not mod:get("no_bots") then
+		if not is_option_on("no_bots") then
 			return func(...)
 		end
 
@@ -57,7 +62,7 @@ end
 mod:hook(GameModeAdventure, "evaluate_end_conditions", function (func, self, ...)
 	local ended, reason, reason_data = func(self, ...)
 
-	if ended and reason == "lost" and mod:get("auto_restart") then
+	if ended and reason == "lost" and is_option_on("auto_restart") then
 		return ended, "reload", reason_data
 	end
 
@@ -75,7 +80,7 @@ end
 mod:hook(MutatorHandler, "pickup_settings_updated_settings", function (func, self, pickup_settings)
 	local updated_settings = func(self, pickup_settings)
 
-	if not updated_settings or not mod:get("more_ammo_pickups") then
+	if not updated_settings or not is_option_on("more_ammo_pickups") then
 		return updated_settings
 	end
 
@@ -101,7 +106,7 @@ end)
 local disabled_since = {} -- the player's unit: { disabler = the unit holding them, t = since when }
 
 local function update_forgiving_disablers(t)
-	if not t or not mod:get("forgiving_disablers") then
+	if not t or not is_option_on("forgiving_disablers") then
 		table.clear(disabled_since)
 
 		return
@@ -160,7 +165,7 @@ BuffTemplates[SELF_REVIVE_BUFF] = {
 utils.register_network_lookup("buff_templates", SELF_REVIVE_BUFF)
 
 local function update_self_revive(t)
-	if not t or not mod:get("auto_revive") then
+	if not t or not is_option_on("auto_revive") then
 		table.clear(knocked_down_since)
 
 		return
