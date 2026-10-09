@@ -2385,12 +2385,6 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		state.next_beam_send = t + CONFIG.beam_send_interval
 		state.beam_sent = true
 
-		if Application.time_since_launch() - (mod.link_report_sent or 0) > 2 then
-			mod.link_report_sent = Application.time_since_launch()
-
-			mod:echo("link beam sent")
-		end
-
 		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z)
 	end
 end
@@ -2411,12 +2405,6 @@ end
 
 mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z)
 	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
-
-	if Application.time_since_launch() - (mod.link_report_received or 0) > 2 then
-		mod.link_report_received = Application.time_since_launch()
-
-		mod:echo("link beam received: unit %s", tostring(owner_unit))
-	end
 
 	if not owner_unit then
 		return
@@ -2447,7 +2435,7 @@ local function remote_staff_end(owner_unit)
 	local equipment = inventory_extension and inventory_extension:equipment()
 
 	if not equipment then
-		return nil, "no equipment"
+		return nil
 	end
 
 	for _, staff_unit in ipairs({equipment.left_hand_wielded_unit_3p, equipment.right_hand_wielded_unit_3p}) do
@@ -2455,8 +2443,6 @@ local function remote_staff_end(owner_unit)
 			return Unit.world_position(staff_unit, Unit.node(staff_unit, CONFIG.staff_end_node))
 		end
 	end
-
-	return nil, "no staff with a node"
 end
 
 local function draw_remote_beams()
@@ -2464,15 +2450,9 @@ local function draw_remote_beams()
 	local world = Managers.world:world("level_world")
 
 	for owner_unit, beam in pairs(remote_beams) do
-		local start_position, reason = remote_staff_end(owner_unit)
+		local start_position = remote_staff_end(owner_unit)
 
 		if not start_position or now - beam.received > CONFIG.remote_beam_timeout or not effects.is_available(CONFIG.beam_effect) then
-			if now - (mod.link_report or 0) > 2 then
-				mod.link_report = now
-
-				mod:echo("link beam dropped: %s, timeout %s, effect %s", tostring(reason), tostring(now - beam.received > CONFIG.remote_beam_timeout), tostring(effects.is_available(CONFIG.beam_effect)))
-			end
-
 			remove_remote_beam(owner_unit)
 		else
 			local target = beam.end_position:unbox()
