@@ -1953,7 +1953,7 @@ end
 -- ended the link, a beam that is let go of, an ally that was swapped for another or that left, the beam of a player that has
 -- gone, is taken care of. They are synced: the ally's own game works out what they do with them.
 local ally_buffs = {} -- { [the ally that is linked] = the id of the buff with no duration }
-local fading_ally_buffs = {} -- { [the ally that was] = { id of the timed buff, when it runs out } }
+local fading_ally_buffs = {} -- { [the ally that was] = the id of the timed buff }
 
 local function add_ally_buff(unit, owner_unit, template_name)
 	return Managers.state.entity:system("buff_system"):add_buff_synced(unit, template_name, BuffSyncType.All, {
@@ -1969,7 +1969,7 @@ end
 
 local linked_allies = {} -- (the allies that are linked this frame, and by whom: kept, filled in again)
 
-local function update_ally_buffs(t)
+local function update_ally_buffs()
 	table.clear(linked_allies)
 
 	for owner_unit, state in pairs(states) do
@@ -1979,14 +1979,14 @@ local function update_ally_buffs(t)
 			linked_allies[unit] = owner_unit
 
 			if not ally_buffs[unit] then
-				local fading = fading_ally_buffs[unit]
+				-- (the timed buff that was running out is taken away, the one with no duration takes its place: if it has run
+				-- out already there is nothing to take away)
+				if fading_ally_buffs[unit] then
+					remove_ally_buff(unit, fading_ally_buffs[unit])
 
-				-- (the timed buff that was running out is taken away: the one with no duration takes its place)
-				if fading and t < fading.until_t then
-					remove_ally_buff(unit, fading.id)
+					fading_ally_buffs[unit] = nil
 				end
 
-				fading_ally_buffs[unit] = nil
 				ally_buffs[unit] = add_ally_buff(unit, owner_unit, ALLY_BUFF)
 			end
 		end
@@ -1996,18 +1996,8 @@ local function update_ally_buffs(t)
 		if not linked_allies[unit] then
 			remove_ally_buff(unit, buff_id)
 
-			fading_ally_buffs[unit] = {
-				id = add_ally_buff(unit, nil, ALLY_BUFF_FADING),
-				until_t = t + CONFIG.ally_buff_linger,
-			}
+			fading_ally_buffs[unit] = add_ally_buff(unit, nil, ALLY_BUFF_FADING)
 			ally_buffs[unit] = nil
-		end
-	end
-
-	-- (the timed buffs that have run out are forgotten, their ids are not looked at any more)
-	for unit, fading in pairs(fading_ally_buffs) do
-		if t >= fading.until_t then
-			fading_ally_buffs[unit] = nil
 		end
 	end
 end
@@ -2903,7 +2893,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 		update_remote_inputs(dt, t)
 
 		if Managers.player.is_server then
-			update_ally_buffs(t)
+			update_ally_buffs()
 		end
 	end
 
