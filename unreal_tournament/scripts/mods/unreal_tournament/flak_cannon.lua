@@ -478,6 +478,7 @@ mod:hook(GenericAmmoUserExtension, "start_reload_animation", function (func, sel
 	func(self, reload_time)
 
 	if reload_event then
+		mod:echo("flak 3p reload: %s at %.2fx", tostring(reload_event), original.ammo_data.reload_time / reload_time * CONFIG.reload_3p_speed_scale)
 		Managers.state.network:anim_event_with_variable_float(self.owner_unit, reload_event, "attack_speed", original.ammo_data.reload_time / reload_time * CONFIG.reload_3p_speed_scale)
 	end
 end)
