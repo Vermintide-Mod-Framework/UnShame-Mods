@@ -1807,6 +1807,12 @@ end
 mod:network_register("ut_link_ally_effect", function (_, target_go_id)
 	local unit = Managers.state.unit_storage:unit(target_go_id)
 
+	if Application.time_since_launch() - (mod.ally_effect_report or 0) > 2 then
+		mod.ally_effect_report = Application.time_since_launch()
+
+		mod:echo("ally effect: unit %s, available %s", tostring(unit), tostring(effects.is_available(CONFIG.ally_effect)))
+	end
+
 	if unit and Unit.alive(unit) then
 		play_ally_effect(Managers.world:world("level_world"), unit)
 	end
