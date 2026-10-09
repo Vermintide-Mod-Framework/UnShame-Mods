@@ -883,6 +883,8 @@ end
 -- The puddles belong to the host (it has the enemies and makes the areas that burn). A glob of the host adds its goo
 -- there; the glob of a client bursts on the client's machine, which tells the host.
 mod:network_register("ut_bio_goo", function (_, owner_go_id, item_name, is_critical_strike, base_power, x, y, z, normal_x, normal_y, normal_z, goo, bursts_puddle)
+	mod:echo("bio goo received: host %s, owner %s, goo %s", tostring(Managers.player.is_server), tostring(owner_go_id), tostring(goo))
+
 	if not Managers.player.is_server then
 		return
 	end
@@ -890,6 +892,8 @@ mod:network_register("ut_bio_goo", function (_, owner_go_id, item_name, is_criti
 	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
 
 	if not owner_unit or not Unit.alive(owner_unit) then
+		mod:echo("bio goo: no owner unit")
+
 		return
 	end
 
@@ -914,6 +918,7 @@ local function add_goo(self, position)
 	local base_power = self.power_level / math.max(self._current_action.scale_power_level or 1, self.charge_level or 0)
 
 	if not self._is_server then
+		mod:echo("bio goo sent: goo %s", tostring(goo))
 		mod:network_send("ut_bio_goo", "others", Managers.state.unit_storage:go_id(self._owner_unit), self.item_name, self._is_critical_strike or false, base_power, position.x, position.y, position.z, normal.x, normal.y, normal.z, goo, bursts_puddle)
 
 		return
