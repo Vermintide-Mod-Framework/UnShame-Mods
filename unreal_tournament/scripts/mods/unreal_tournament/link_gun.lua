@@ -269,6 +269,8 @@ function pose.enter(unit_1p)
 	pose.entered = true
 
 	Unit.animation_event(unit_1p, CONFIG.idle_pose_event)
+	-- (the others see the stance too: the event is sent to the third person unit, the game doesn't send it for this)
+	Managers.state.network:anim_event(pose.owner_unit, CONFIG.idle_pose_event)
 end
 
 -- The right arm is hidden from when the staff is wielded until anything else is: the node of its shoulder in the
@@ -2407,6 +2409,7 @@ mod.wield_callbacks.link = function (self, equipment, slot_data, unit_1p)
 	pose.overcharge_extension = ScriptUnit.has_extension(self._unit, "overcharge_system")
 	pose.health_extension = ScriptUnit.has_extension(self._unit, "health_system")
 	pose.is_valid = is_valid
+	pose.owner_unit = self._unit
 	pose.unit_1p = unit_1p
 	pose.recovering = false
 
