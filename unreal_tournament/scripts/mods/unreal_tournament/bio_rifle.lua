@@ -719,6 +719,17 @@ local function make_puddle_area(puddle, t)
 	puddle.inside = units_inside(puddle)
 end
 
+local function play_puddle_burst_effects(world, position, goo_scale)
+	for _, effect in ipairs(CONFIG.burst_effects) do
+		effects.play(world, effect.name, position + Vector3(0, 0, 0.5), math.lerp(CONFIG.puddle_burst_effect_scale, CONFIG.puddle_burst_effect_scale_max, goo_scale))
+	end
+end
+
+-- (the burst is seen by everyone: the host tells the others)
+mod:network_register("ut_bio_puddle_burst", function (_, x, y, z, goo_scale)
+	play_puddle_burst_effects(Managers.world:world("level_world"), Vector3(x, y, z), goo_scale)
+end)
+
 -- The burst of a puddle: a blast that is as big as the goo was, and the small globs
 -- (with final, the puddle is gone after it, nothing of it stays)
 local function burst_puddle(puddle, t, final)
@@ -731,9 +742,8 @@ local function burst_puddle(puddle, t, final)
 
 	with_valid_positions(DamageUtils.create_explosion, context.world, context.owner_unit, position, Quaternion.identity(), ExplosionTemplates.ut_bio_charged_burst, goo_scale, context.item_name, true, false, context.owner_unit, power_level, context.is_critical_strike, context.owner_unit)
 
-	for _, effect in ipairs(CONFIG.burst_effects) do
-		effects.play(context.world, effect.name, position + Vector3(0, 0, 0.5), math.lerp(CONFIG.puddle_burst_effect_scale, CONFIG.puddle_burst_effect_scale_max, goo_scale))
-	end
+	play_puddle_burst_effects(context.world, position, goo_scale)
+	mod:network_send("ut_bio_puddle_burst", "others", position.x, position.y, position.z, goo_scale)
 
 	local kept_goo = final and 0 or math.min(puddle.goo * CONFIG.burst_goo_left, CONFIG.burst_goo_left_max)
 	local count = math.clamp(math.floor((puddle.goo * (1 - CONFIG.burst_goo_loss) - kept_goo) / CONFIG.child_goo_min), 0, CONFIG.child_count_max)
@@ -769,11 +779,8 @@ local function goo_of(self)
 	return action.ut_bio_goo or 1
 end
 
-local function add_goo(self, position)
-	if not self._is_server then
-		return
-	end
-
+-- Adds goo to the puddles (on the host). context is what the glob that makes the puddle was, see make_puddle_area.
+local function add_goo_to_puddles(context, position, normal, goo, bursts_puddle)
 	local t = Managers.time:time("game")
 
 	-- the puddle the glob lands in: the nearest one that it is inside of (and that hasn't gone out, see update_puddles)
@@ -791,22 +798,12 @@ local function add_goo(self, position)
 	end
 
 	if puddle then
-		puddle.goo = puddle.goo + goo_of(self)
+		puddle.goo = puddle.goo + goo
 	else
-		local normal_box = self._ut_bio_hit_normal
-
 		puddle = {
-			context = {
-				-- (the power of the glob, the power it would have had uncharged)
-				base_power = self.power_level / math.max(self._current_action.scale_power_level or 1, self.charge_level or 0),
-				is_critical_strike = self._is_critical_strike,
-				item_name = self.item_name,
-				item_template_name = self.action_lookup_data.item_template_name,
-				owner_unit = self._owner_unit,
-				world = self._world,
-			},
-			goo = goo_of(self),
-			normal = Vector3Box(normal_box and normal_box:unbox() or Vector3.up()),
+			context = context,
+			goo = goo,
+			normal = Vector3Box(normal),
 			position = Vector3Box(position),
 		}
 		puddles[#puddles + 1] = puddle
@@ -816,11 +813,60 @@ local function add_goo(self, position)
 
 	-- A puddle bursts when it has too much goo, and when something steps into it: the glob of the alt fire is
 	-- that, it bursts the puddle it lands in however much goo there is.
-	if puddle.goo >= CONFIG.burst_goo or self._current_action.ut_bio_bursts_puddle then
+	if puddle.goo >= CONFIG.burst_goo or bursts_puddle then
 		burst_puddle(puddle, t)
 	else
 		make_puddle_area(puddle, t)
 	end
+end
+
+-- The puddles belong to the host (it has the enemies and makes the areas that burn). A glob of the host adds its goo
+-- there; the glob of a client bursts on the client's machine, which tells the host.
+mod:network_register("ut_bio_goo", function (_, owner_go_id, item_name, is_critical_strike, base_power, x, y, z, normal_x, normal_y, normal_z, goo, bursts_puddle)
+	if not Managers.player.is_server then
+		return
+	end
+
+	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
+
+	if not owner_unit or not Unit.alive(owner_unit) then
+		return
+	end
+
+	local context = {
+		base_power = base_power,
+		is_critical_strike = is_critical_strike,
+		item_name = item_name,
+		item_template_name = TEMPLATE_NAME,
+		owner_unit = owner_unit,
+		world = Managers.world:world("level_world"),
+	}
+
+	add_goo_to_puddles(context, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), goo, bursts_puddle)
+end)
+
+local function add_goo(self, position)
+	local normal_box = self._ut_bio_hit_normal
+	local normal = normal_box and normal_box:unbox() or Vector3.up()
+	local goo = goo_of(self)
+	local bursts_puddle = self._current_action.ut_bio_bursts_puddle or false
+	-- (the power of the glob, the power it would have had uncharged)
+	local base_power = self.power_level / math.max(self._current_action.scale_power_level or 1, self.charge_level or 0)
+
+	if not self._is_server then
+		mod:network_send("ut_bio_goo", "others", Managers.state.unit_storage:go_id(self._owner_unit), self.item_name, self._is_critical_strike or false, base_power, position.x, position.y, position.z, normal.x, normal.y, normal.z, goo, bursts_puddle)
+
+		return
+	end
+
+	add_goo_to_puddles({
+		base_power = base_power,
+		is_critical_strike = self._is_critical_strike,
+		item_name = self.item_name,
+		item_template_name = self.action_lookup_data.item_template_name,
+		owner_unit = self._owner_unit,
+		world = self._world,
+	}, position, normal, goo, bursts_puddle)
 end
 
 -- Whatever steps into a puddle bursts it
