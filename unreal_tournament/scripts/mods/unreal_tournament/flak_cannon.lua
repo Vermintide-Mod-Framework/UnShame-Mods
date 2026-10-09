@@ -22,6 +22,7 @@ local CONFIG = {
 	-- The blunderbuss's own ammo (16, with 1 in the clip) and reload time (1.5 s) are changed by these factors
 	ammo_multiplier = 1.33,
 	reload_time_multiplier = 0.75,
+	reload_3p_speed_scale = 5, -- (exaggerated to see whether the third person reload follows the speed)
 	-- Flak chunk
 	chunk_count = 9, -- FlakFire.ProjPerFire
 	chunk_spread_degrees = 4, -- "tight", FlakFire.Spread is about 7.7 degrees
@@ -477,7 +478,7 @@ mod:hook(GenericAmmoUserExtension, "start_reload_animation", function (func, sel
 	func(self, reload_time)
 
 	if reload_event then
-		Managers.state.network:anim_event_with_variable_float(self.owner_unit, reload_event, "attack_speed", original.ammo_data.reload_time / reload_time)
+		Managers.state.network:anim_event_with_variable_float(self.owner_unit, reload_event, "attack_speed", original.ammo_data.reload_time / reload_time * CONFIG.reload_3p_speed_scale)
 	end
 end)
 
