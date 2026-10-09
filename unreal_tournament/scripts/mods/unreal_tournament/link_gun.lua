@@ -159,7 +159,8 @@ local CONFIG = {
 	yank_free_overcharge = 8,
 	yank_rescue_overcharge = 10,
 	yank_player_overcharge = -1,
-	bot_yank_cost_scale = 0.1, -- yanking a bot costs this much of what yanking a player does (the cost is for griefing)
+	yank_bot_overcharge = 25, -- launching a bot, before bot_yank_cost_scale
+	bot_yank_cost_scale = 0.1, -- yanking a bot costs this much of what the cost says (the cost is for griefing)
 	yank_door_overcharge = 2,
 	-- Objects: when nothing else is picked, a ragdoll or another object with a body that moves is held (no damage). It
 	-- is held in the air where the aim is, the body that was linked is given object_pull per second of the way to
@@ -2269,7 +2270,7 @@ local function yank_ally(state, owner_unit, t)
 
 		Vector3.set_z(velocity, CONFIG.monster_pull_up_speed)
 		StatusUtils.set_catapulted_network(unit, true, velocity)
-		add_heat(owner_unit, CONFIG.yank_player_overcharge)
+		add_heat(owner_unit, player and player.bot_player and CONFIG.yank_bot_overcharge or CONFIG.yank_player_overcharge)
 	end
 end
 
