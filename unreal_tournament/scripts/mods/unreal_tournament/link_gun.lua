@@ -191,9 +191,6 @@ local CONFIG = {
 	beam_send_interval = 0.05, -- seconds
 	remote_beam_smoothing = 20,
 	remote_beam_timeout = 0.5, -- seconds
-	-- The node at the end of the staff of the third person is partway up the staff (0.69 m from its root): the beam starts this
-	-- much further, along the staff
-	remote_beam_start_extension = 0.4, -- m
 }
 
 local overcharge_values = PlayerUnitStatusSettings.overcharge_values
@@ -2451,13 +2448,7 @@ local function remote_staff_end(owner_unit)
 
 	for _, staff_unit in ipairs({equipment.left_hand_wielded_unit_3p, equipment.right_hand_wielded_unit_3p}) do
 		if Unit.alive(staff_unit) and Unit.has_node(staff_unit, CONFIG.staff_end_node) then
-			-- (the node is partway up the staff of the third person: the beam starts further along the staff, away from the root)
-			local root = Unit.world_position(staff_unit, 0)
-			local node_position = Unit.world_position(staff_unit, Unit.node(staff_unit, CONFIG.staff_end_node))
-			local along = node_position - root
-			local length = Vector3.length(along)
-
-			return length > 0.001 and node_position + along * (CONFIG.remote_beam_start_extension / length) or node_position
+			return Unit.world_position(staff_unit, Unit.node(staff_unit, CONFIG.staff_end_node))
 		end
 	end
 
