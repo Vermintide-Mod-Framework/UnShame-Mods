@@ -1910,10 +1910,11 @@ end
 
 -- The beam as particles: a copy of the effect at every point of the curve, placed every frame and kept until the beam
 -- ends, the effects are animated and one that is made again every so often is seen at its start, where it isn't there.
+-- When it ends they stop spawning particles and what is out fades on its own, instead of vanishing at once.
 local function destroy_sprites(state)
 	if state.sprite_ids and state.world then
 		for _, effect_id in ipairs(state.sprite_ids) do
-			pcall(World.destroy_particles, state.world, effect_id)
+			pcall(World.stop_spawning_particles, state.world, effect_id)
 		end
 	end
 
