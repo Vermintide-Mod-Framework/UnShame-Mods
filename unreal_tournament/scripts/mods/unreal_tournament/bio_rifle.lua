@@ -99,6 +99,9 @@ local CONFIG = {
 	charged_puddle_effect = "fx/wpnfx_fire_grenade_impact_remains_remap", -- the fire grenade's ground in another color
 	puddle_effect_radius_share = 0.35,
 	puddle_effect_spacing = 0.9, -- m between the particles
+	-- The other players get the look of a puddle from its template (the game sends the name of the template, not the
+	-- effect), so there is a template for each of this many sizes of puddle between the glob's and the biggest.
+	puddle_look_steps = 12,
 	-- Overheating, in the Drakegun's own units (it overheats at 30): a glob is this much, a full charge is
 	-- this much by the time it is full (the shot that follows costs nothing more). Balanced against the
 	-- Shock Rifle's, whose beam is 4 every 0.7 seconds (5.7 a second, a combo is 12 more): a glob every 0.45
@@ -271,23 +274,36 @@ register_explosion_template("ut_bio_child_burst", burst_template("ut_bio_child_b
 -- tells the globs' bursts apart)
 register_explosion_template("ut_bio_charged_glob", {})
 
--- The puddle: the area that burns whoever is in it. Its radius and duration, and the look of it, are
--- those of the puddle that is made.
-register_explosion_template("ut_bio_puddle", {
-	aoe = {
-		area_damage_template = "explosion_template_aoe",
-		attack_template = "fire_grenade_dot",
-		damage_interval = CONFIG.puddle_damage_interval,
-		dot_template_name = CONFIG.puddle_dot,
-		duration = CONFIG.glob_puddle_duration,
-		radius = CONFIG.glob_puddle_radius,
-		nav_mesh_effect = {
-			particle_name = CONFIG.puddle_effect,
-			particle_radius = CONFIG.glob_puddle_radius * CONFIG.puddle_effect_radius_share,
-			particle_spacing = CONFIG.puddle_effect_spacing,
-		},
-	},
-})
+-- The puddle: the area that burns whoever is in it. Its radius and duration are those of the puddle that is made, the
+-- look of it (the particles, which are the size of its radius) is that of the template: one for each of the sizes
+-- a puddle can have, each in the two looks (see puddle_look_steps).
+local function puddle_template_name(step, charged)
+	return "ut_bio_puddle_" .. step .. (charged and "_charged" or "")
+end
+
+local function puddle_look_radius(step)
+	return math.lerp(CONFIG.glob_puddle_radius, CONFIG.puddle_radius_max, step / CONFIG.puddle_look_steps)
+end
+
+for step = 0, CONFIG.puddle_look_steps do
+	for _, charged in ipairs({false, true}) do
+		register_explosion_template(puddle_template_name(step, charged), {
+			aoe = {
+				area_damage_template = "explosion_template_aoe",
+				attack_template = "fire_grenade_dot",
+				damage_interval = CONFIG.puddle_damage_interval,
+				dot_template_name = CONFIG.puddle_dot,
+				duration = CONFIG.glob_puddle_duration,
+				radius = puddle_look_radius(step),
+				nav_mesh_effect = {
+					particle_name = charged and CONFIG.charged_puddle_effect or CONFIG.puddle_effect,
+					particle_radius = puddle_look_radius(step) * CONFIG.puddle_effect_radius_share,
+					particle_spacing = CONFIG.puddle_effect_spacing,
+				},
+			},
+		})
+	end
+end
 
 -- The impact: only the blast, the burst that goes with it leaves the puddle. Its radius goes with the charge
 -- like the charged burst's does.
@@ -709,11 +725,9 @@ local function make_puddle_area(puddle, t)
 
 	local context = puddle.context
 	local radius = puddle_radius(puddle.goo)
-	local template = table.clone(ExplosionTemplates.ut_bio_puddle)
-	local nav_mesh_effect = template.aoe.nav_mesh_effect
-
-	nav_mesh_effect.particle_name = puddle.goo >= CONFIG.big_puddle_goo and CONFIG.charged_puddle_effect or CONFIG.puddle_effect
-	nav_mesh_effect.particle_radius = radius * CONFIG.puddle_effect_radius_share
+	-- (the template of the size nearest to the radius gives the look)
+	local step = math.round((radius - CONFIG.glob_puddle_radius) / (CONFIG.puddle_radius_max - CONFIG.glob_puddle_radius) * CONFIG.puddle_look_steps)
+	local template = ExplosionTemplates[puddle_template_name(math.clamp(step, 0, CONFIG.puddle_look_steps), puddle.goo >= CONFIG.big_puddle_goo)]
 
 	puddle.unit = DamageUtils.create_aoe(context.world, context.owner_unit, puddle.position:unbox(), context.item_name, template, radius, math.max(puddle.expires - t, 1))
 	puddle.inside = units_inside(puddle)
