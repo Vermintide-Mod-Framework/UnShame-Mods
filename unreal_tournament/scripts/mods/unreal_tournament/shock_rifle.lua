@@ -876,7 +876,8 @@ mod:network_register("ut_shock_trail", function (_, owner_go_id, x, y, z)
 	local unit = Managers.state.unit_storage:unit(owner_go_id)
 	local inventory_extension = unit and ScriptUnit.has_extension(unit, "inventory_system")
 	local equipment = inventory_extension and inventory_extension:equipment()
-	local weapon_unit = equipment and (equipment.left_hand_wielded_unit_3p or equipment.right_hand_wielded_unit_3p)
+	-- (the staff is the right hand's unit, the left hand's is the effect of the fireball: the game's own beam looks for it the same way)
+	local weapon_unit = equipment and (equipment.right_hand_wielded_unit_3p or equipment.left_hand_wielded_unit_3p)
 
 	if not weapon_unit or not Unit.alive(weapon_unit) then
 		return
