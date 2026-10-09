@@ -191,8 +191,6 @@ local CONFIG = {
 	beam_send_interval = 0.05, -- seconds
 	remote_beam_smoothing = 20,
 	remote_beam_timeout = 0.5, -- seconds
-	-- What the others see: the staff's own effect of the third person (its thorn's trail), drawn in the world
-	remote_beam_effect = "fx/lifestaff_trail_3p",
 }
 
 local overcharge_values = PlayerUnitStatusSettings.overcharge_values
@@ -2464,11 +2462,11 @@ local function draw_remote_beams()
 	for owner_unit, beam in pairs(remote_beams) do
 		local start_position, reason = remote_staff_end(owner_unit)
 
-		if not start_position or now - beam.received > CONFIG.remote_beam_timeout or not effects.is_available(CONFIG.remote_beam_effect) then
+		if not start_position or now - beam.received > CONFIG.remote_beam_timeout or not effects.is_available(CONFIG.beam_effect) then
 			if now - (mod.link_report or 0) > 2 then
 				mod.link_report = now
 
-				mod:echo("link beam dropped: %s, timeout %s, effect %s", tostring(reason), tostring(now - beam.received > CONFIG.remote_beam_timeout), tostring(effects.is_available(CONFIG.remote_beam_effect)))
+				mod:echo("link beam dropped: %s, timeout %s, effect %s", tostring(reason), tostring(now - beam.received > CONFIG.remote_beam_timeout), tostring(effects.is_available(CONFIG.beam_effect)))
 			end
 
 			remove_remote_beam(owner_unit)
@@ -2484,13 +2482,23 @@ local function draw_remote_beams()
 			-- (a straight line, a point about every beam_segment_length of it)
 			local segments = math.clamp(math.ceil(Vector3.length(shown - start_position) / CONFIG.beam_segment_length), CONFIG.beam_min_segments, CONFIG.beam_max_segments)
 
-			-- (in the world, with the effect of the third person: the effect of the first person is drawn with the field of
-			-- view of the staff in the hands, which is not where the world is seen from the other side of the screen)
+			-- The effect is drawn with the field of view of the staff in the hands, not of the world: every point of the beam is
+			-- moved toward the middle of the screen by the ratio of the two, so that it is seen where it is
+			local camera_manager = Managers.state.camera
+			local camera_position = camera_manager:camera_position("player_1")
+			local camera_rotation = camera_manager:camera_rotation("player_1")
+			local right = Quaternion.right(camera_rotation)
+			local up = Quaternion.up(camera_rotation)
+			local forward = Quaternion.forward(camera_rotation)
+			local scale = math.tan(math.rad(mod:get("link_beam_fov")) / 2) / math.tan(camera_manager:fov("player_1") / 2)
+
 			for i = 0, segments do
-				remote_points[i + 1] = start_position + (shown - start_position) * (i / segments)
+				local offset = start_position + (shown - start_position) * (i / segments) - camera_position
+
+				remote_points[i + 1] = camera_position + right * (Vector3.dot(offset, right) * scale) + up * (Vector3.dot(offset, up) * scale) + forward * Vector3.dot(offset, forward)
 			end
 
-			draw_sprites(beam, world, CONFIG.remote_beam_effect, remote_points, segments + 1)
+			draw_sprites(beam, world, CONFIG.beam_effect, remote_points, segments + 1)
 		end
 	end
 end
