@@ -109,6 +109,11 @@ return {
 						type = "checkbox",
 						default_value = false,
 					},
+					{
+						setting_id = "no_friendly_fire",
+						type = "checkbox",
+						default_value = false,
+					},
 				},
 			},
 		},

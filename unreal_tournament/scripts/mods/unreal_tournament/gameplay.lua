@@ -58,6 +58,35 @@ if adventure_spawning then
 	end)
 end
 
+-- No Friendly Fire: the damage a player does to an ally (not to themselves) is dropped where it is handed to the game,
+-- on the machine of whoever deals it and on the host that applies it. The damage to a player goes through
+-- add_damage_network_player, the damage to anything else (and damage over time) through add_damage_network.
+local function is_friendly_fire(attacker_unit, target_unit)
+	if not is_option_on("no_friendly_fire") or not attacker_unit or attacker_unit == target_unit then
+		return false
+	end
+
+	local breed = Unit.alive(attacker_unit) and Unit.get_data(attacker_unit, "breed")
+
+	return breed and breed.is_player and Managers.state.side:is_ally(attacker_unit, target_unit)
+end
+
+mod:hook(DamageUtils, "add_damage_network", function (func, attacked_unit, attacker_unit, ...)
+	if is_friendly_fire(attacker_unit, attacked_unit) then
+		return 0
+	end
+
+	return func(attacked_unit, attacker_unit, ...)
+end)
+
+mod:hook(DamageUtils, "add_damage_network_player", function (func, damage_profile, target_index, power_level, hit_unit, attacker_unit, ...)
+	if is_friendly_fire(attacker_unit, hit_unit) then
+		return 0
+	end
+
+	return func(damage_profile, target_index, power_level, hit_unit, attacker_unit, ...)
+end)
+
 -- Auto Restart: a level that is lost starts again, instead of going back to the keep
 mod:hook(GameModeAdventure, "evaluate_end_conditions", function (func, self, ...)
 	local ended, reason, reason_data = func(self, ...)

@@ -74,6 +74,12 @@ return {
 	auto_restart_description = {
 		en = "A level you lose starts again instead of sending you back to the keep.",
 	},
+	no_friendly_fire = {
+		en = "No Friendly Fire",
+	},
+	no_friendly_fire_description = {
+		en = "You and your allies can't hurt each other, whatever the difficulty or game mode.",
+	},
 	more_ammo_pickups = {
 		en = "More Ammo Pickups",
 	},
