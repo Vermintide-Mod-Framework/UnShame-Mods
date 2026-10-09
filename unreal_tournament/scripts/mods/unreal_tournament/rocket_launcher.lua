@@ -742,12 +742,7 @@ end
 local locks = {}
 
 local function wielding_rocket_launcher(unit)
-	local inventory_extension = ScriptUnit.has_extension(unit, "inventory_system")
-	local equipment = inventory_extension and inventory_extension:equipment()
-	local wielded = equipment and equipment.wielded
-
-	-- (the item data is the entry of the item master list, or has it as data)
-	return utils.is_weapon_enabled("rocket_launcher") and wielded and (wielded.template or wielded.data and wielded.data.template) == TEMPLATE_NAME
+	return utils.is_weapon_enabled("rocket_launcher") and utils.wielded_template_name(unit) == TEMPLATE_NAME
 end
 
 -- The enemy closest to the aim that is in front of it, close enough to it and not behind a wall. If there is none

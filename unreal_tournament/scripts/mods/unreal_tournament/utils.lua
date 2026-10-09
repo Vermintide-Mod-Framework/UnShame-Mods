@@ -254,6 +254,16 @@ function utils.blast_ragdoll(unit, center, radius, speed, up)
 	return thrown
 end
 
+-- The name of the template of the weapon a unit has wielded, if it has one
+function utils.wielded_template_name(unit)
+	local inventory_extension = ScriptUnit.has_extension(unit, "inventory_system")
+	local equipment = inventory_extension and inventory_extension:equipment()
+	local wielded = equipment and equipment.wielded
+
+	-- (the item data is the entry of the item master list, or has it as data)
+	return wielded and (wielded.template or wielded.data and wielded.data.template)
+end
+
 -- Actions of a weapon
 
 -- The lookup data of an action: the game tells the other peers which action a projectile came from by it
