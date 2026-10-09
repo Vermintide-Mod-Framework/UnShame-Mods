@@ -1807,12 +1807,6 @@ end
 mod:network_register("ut_link_ally_effect", function (_, target_go_id)
 	local unit = Managers.state.unit_storage:unit(target_go_id)
 
-	if Application.time_since_launch() - (mod.ally_effect_report or 0) > 2 then
-		mod.ally_effect_report = Application.time_since_launch()
-
-		mod:echo("ally effect: unit %s, available %s", tostring(unit), tostring(effects.is_available(CONFIG.ally_effect)))
-	end
-
 	if unit and Unit.alive(unit) then
 		play_ally_effect(Managers.world:world("level_world"), unit)
 	end
@@ -2024,9 +2018,10 @@ local function draw_sprites(state, world, effect_name, points, count, random_rol
 	end
 end
 
-local function draw_beam(state, world, camera_position, start_position, rotation, end_position, weight, lag)
-	local right = Quaternion.right(rotation)
-	local up = Quaternion.up(rotation)
+-- The points of the beam, in the first of `points` and after it, as a curve from the start to the end; returns how many there
+-- are. aim is the way the holder is aiming, weight what hangs from the beam and lag how far what is held is behind where it
+-- is being moved to (nothing for neither).
+local function beam_curve(points, start_position, end_position, aim, weight, lag, segment_length)
 	local length = Vector3.length(end_position - start_position)
 	-- (the beam leaves the staff bowed towards the aim and arrives at the target straight on, the way from the staff to
 	-- the target: the part of the aim that is sideways to that way pushes the start of the curve, by up to
@@ -2037,7 +2032,6 @@ local function draw_beam(state, world, camera_position, start_position, rotation
 
 	if length > 0.01 then
 		local direction = (end_position - start_position) * (1 / length)
-		local aim = Quaternion.forward(rotation)
 		local sideways = aim - direction * Vector3.dot(aim, direction)
 
 		first_control = first_control + sideways * (length * CONFIG.beam_aim_curve * CONFIG.beam_aim_curve_gain)
@@ -2054,16 +2048,22 @@ local function draw_beam(state, world, camera_position, start_position, rotation
 
 	first_control = first_control + (bend - Vector3.up() * sag) * CONFIG.beam_hang_share
 
-	-- (a point about every beam_segment_length of the beam, so a longer one has more particles)
-	local segments = math.clamp(math.ceil(length / CONFIG.beam_segment_length), CONFIG.beam_min_segments, CONFIG.beam_max_segments)
+	-- (a point about every segment_length of the beam, so a longer one has more particles)
+	local segments = math.clamp(math.ceil(length / segment_length), CONFIG.beam_min_segments, CONFIG.beam_max_segments)
 
-	beam_points[1] = start_position
+	points[1] = start_position
 
 	for i = 1, segments do
-		beam_points[i + 1] = bezier(start_position, first_control, second_control, end_position, i / segments)
+		points[i + 1] = bezier(start_position, first_control, second_control, end_position, i / segments)
 	end
 
-	local count = segments + 1
+	return segments + 1
+end
+
+local function draw_beam(state, world, camera_position, start_position, rotation, end_position, weight, lag)
+	local right = Quaternion.right(rotation)
+	local up = Quaternion.up(rotation)
+	local count = beam_curve(beam_points, start_position, end_position, Quaternion.forward(rotation), weight, lag, CONFIG.beam_segment_length)
 
 	-- The effect is drawn like the staff in the hands is, with a narrower field of view than the world: a point of the
 	-- world is seen further from the middle of the screen (by the ratio of the two) than where it is. The beam starts at
@@ -2621,12 +2621,16 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		state.next_beam_send = t + CONFIG.beam_send_interval
 		state.beam_sent = true
 
-		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z)
+		-- (with what bends it: the aim, and what hangs from it and lags behind, 0 and nothing for none)
+		local lag = pending.lag or Vector3.zero()
+
+		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z, aim.x, aim.y, aim.z, pending.weight or 0, lag.x, lag.y, lag.z)
 	end
 end
 
 -- The beams of the other players: where each ends, as it was told, and what is drawn, which follows it
-local remote_beams = {} -- { [the unit of the player] = { sprite_ids, world, end_position, shown, received, drawn_at } }
+local remote_beams = {} -- { [the unit of the player] = { sprite_ids, world, end_position, aim, weight, lag, shown, received, drawn_at } }
+local remote_world_points = {} -- the points of a beam, and the same as they are drawn
 local remote_points = {}
 
 local function remove_remote_beam(owner_unit)
@@ -2639,7 +2643,7 @@ local function remove_remote_beam(owner_unit)
 	end
 end
 
-mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z)
+mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, weight, lag_x, lag_y, lag_z)
 	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
 
 	if not owner_unit then
@@ -2654,6 +2658,9 @@ mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z)
 	end
 
 	beam.end_position = Vector3Box(Vector3(x, y, z))
+	beam.aim = Vector3Box(Vector3(aim_x, aim_y, aim_z))
+	beam.weight = weight > 0 and weight or nil
+	beam.lag = Vector3Box(Vector3(lag_x, lag_y, lag_z))
 	beam.received = Application.time_since_launch()
 end)
 
