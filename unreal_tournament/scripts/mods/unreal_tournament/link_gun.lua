@@ -6,10 +6,12 @@ local mod = get_mod("unreal_tournament")
 --   RMB (held): the link beam. What the aim is on is linked to: an ally does more damage for as long as the link
 --               lasts (UT's link, a teammate), an enemy is held where it is and follows the aim along the
 --               ground, a heavy one slower, with the beam hanging more.
--- What happens to enemies is done by the game that has them, the host's. The beam is only drawn for the player
--- who holds it.
+-- What happens to enemies is done by the game that has them, the host's. The beam is drawn for the player who holds it,
+-- as a curve from the staff in the hands; the player tells the others where it ends, and they draw a straight one from
+-- the staff of the player's character.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local effects = mod.effects
 local with_valid_positions = utils.with_valid_positions
 local register_damage_profile = utils.register_damage_profile
 
@@ -184,6 +186,11 @@ local CONFIG = {
 	-- The beam is drawn with a copy of this particle effect at every point of the curve (it has no settings, so it is only
 	-- placed), the Thornsister's own, green.
 	beam_effect = "fx/lifestaff_idle",
+	-- The others: the end of the beam is told to them this often, and what they draw follows it (the share of the way to it
+	-- covered in a second is 1 - e^-smoothing); a beam that has not been heard of for the timeout is over
+	beam_send_interval = 0.05, -- seconds
+	remote_beam_smoothing = 20,
+	remote_beam_timeout = 0.5, -- seconds
 }
 
 local overcharge_values = PlayerUnitStatusSettings.overcharge_values
@@ -2006,6 +2013,13 @@ local function end_beam(owner_unit)
 	local state = states[owner_unit]
 
 	if state then
+		-- (the others stop drawing it)
+		local owner_go_id = state.beam_sent and Unit.alive(owner_unit) and Managers.state.unit_storage:go_id(owner_unit)
+
+		if owner_go_id then
+			mod:network_send("ut_link_beam_end", "others", owner_go_id)
+		end
+
 		finish_throw(state)
 		clear_held_outline(state)
 		destroy_sprites(state)
@@ -2348,10 +2362,106 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 	pending.rotation = rotation
 	pending.weight = state.kind == "enemy" and state.weight or nil
 	pending.world = world
+
+	-- the others are told where it ends
+	local send_position = end_position or state.target and Unit.alive(state.target) and target_position(state)
+
+	if send_position and t >= (state.next_beam_send or 0) then
+		state.next_beam_send = t + CONFIG.beam_send_interval
+		state.beam_sent = true
+
+		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z)
+	end
+end
+
+-- The beams of the other players: where each ends, as it was told, and what is drawn, which follows it
+local remote_beams = {} -- { [the unit of the player] = { sprite_ids, world, end_position, shown, received, drawn_at } }
+local remote_points = {}
+
+local function remove_remote_beam(owner_unit)
+	local beam = remote_beams[owner_unit]
+
+	if beam then
+		destroy_sprites(beam)
+
+		remote_beams[owner_unit] = nil
+	end
+end
+
+mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z)
+	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
+
+	if not owner_unit then
+		return
+	end
+
+	local beam = remote_beams[owner_unit]
+
+	if not beam then
+		beam = {}
+		remote_beams[owner_unit] = beam
+	end
+
+	beam.end_position = Vector3Box(Vector3(x, y, z))
+	beam.received = Application.time_since_launch()
+end)
+
+mod:network_register("ut_link_beam_end", function (_, owner_go_id)
+	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
+
+	if owner_unit then
+		remove_remote_beam(owner_unit)
+	end
+end)
+
+-- The staff of the player's character (the right hand's unit, the left hand's is the effect of the fireball), with the node
+-- the beam starts at
+local function remote_staff_end(owner_unit)
+	local inventory_extension = ScriptUnit.has_extension(owner_unit, "inventory_system")
+	local equipment = inventory_extension and inventory_extension:equipment()
+	local staff_unit = equipment and (equipment.right_hand_wielded_unit_3p or equipment.left_hand_wielded_unit_3p)
+
+	if staff_unit and Unit.alive(staff_unit) and Unit.has_node(staff_unit, CONFIG.staff_end_node) then
+		return Unit.world_position(staff_unit, Unit.node(staff_unit, CONFIG.staff_end_node))
+	end
+end
+
+local function draw_remote_beams()
+	local now = Application.time_since_launch()
+	local world = Managers.world:world("level_world")
+
+	for owner_unit, beam in pairs(remote_beams) do
+		local start_position = Unit.alive(owner_unit) and remote_staff_end(owner_unit)
+
+		if not start_position or now - beam.received > CONFIG.remote_beam_timeout or not effects.is_available(CONFIG.beam_effect) then
+			remove_remote_beam(owner_unit)
+		else
+			local target = beam.end_position:unbox()
+			local shown = beam.shown and beam.shown:unbox() or target
+			local blend = 1 - math.exp(-CONFIG.remote_beam_smoothing * (now - (beam.drawn_at or now)))
+
+			shown = shown + (target - shown) * blend
+			beam.shown = Vector3Box(shown)
+			beam.drawn_at = now
+
+			-- (a straight line, a point about every beam_segment_length of it)
+			local segments = math.clamp(math.ceil(Vector3.length(shown - start_position) / CONFIG.beam_segment_length), CONFIG.beam_min_segments, CONFIG.beam_max_segments)
+
+			remote_points[1] = start_position
+
+			for i = 1, segments do
+				remote_points[i + 1] = start_position + (shown - start_position) * (i / segments)
+			end
+
+			draw_sprites(beam, world, remote_points, segments + 1)
+		end
+	end
 end
 
 -- The beams are drawn after the units have been updated, from where the staff and what it is linked to are now
 function mod.draw_pending_beams()
+	draw_remote_beams()
+
 	for _, state in pairs(states) do
 		local pending = state.pending_draw
 
@@ -2450,6 +2560,10 @@ end
 local function clear_beams()
 	for owner_unit in pairs(states) do
 		end_beam(owner_unit)
+	end
+
+	for owner_unit in pairs(remote_beams) do
+		remove_remote_beam(owner_unit)
 	end
 
 	restore_corpse()
