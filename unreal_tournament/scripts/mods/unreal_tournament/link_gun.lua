@@ -1791,7 +1791,27 @@ local function damage_enemy(state, owner_unit, t)
 end
 
 -- The look of the buff: the Thornsister's own buff effect (what she gets when health is converted), a burst at the ally that
--- follows them, again every ally_effect_interval seconds while they are linked
+-- follows them, again every ally_effect_interval seconds while they are linked. Everyone sees it: the host, which makes the
+-- link work, tells the others each time.
+local function play_ally_effect(world, unit)
+	-- (an effect that isn't loaded crashes the game)
+	if not effects.is_available(CONFIG.ally_effect) then
+		return
+	end
+
+	local effect_id = World.create_particles(world, CONFIG.ally_effect, Unit.world_position(unit, 0), Quaternion.identity())
+
+	World.link_particles(world, effect_id, unit, Unit.node(unit, "root_point"), Matrix4x4.identity(), "stop")
+end
+
+mod:network_register("ut_link_ally_effect", function (_, target_go_id)
+	local unit = Managers.state.unit_storage:unit(target_go_id)
+
+	if unit and Unit.alive(unit) then
+		play_ally_effect(Managers.world:world("level_world"), unit)
+	end
+end)
+
 local function show_ally_buff(state, world, t)
 	if t < (state.next_ally_effect_t or 0) or not world or not Unit.alive(state.target) then
 		return
@@ -1799,10 +1819,8 @@ local function show_ally_buff(state, world, t)
 
 	state.next_ally_effect_t = t + CONFIG.ally_effect_interval
 
-	local unit = state.target
-	local effect_id = World.create_particles(world, CONFIG.ally_effect, Unit.world_position(unit, 0), Quaternion.identity())
-
-	World.link_particles(world, effect_id, unit, Unit.node(unit, "root_point"), Matrix4x4.identity(), "stop")
+	play_ally_effect(world, state.target)
+	mod:network_send("ut_link_ally_effect", "others", Managers.state.unit_storage:go_id(state.target))
 end
 
 -- The temporary health an ally gets from their attacks (the game's heals that come from procs of hits and kills: the
