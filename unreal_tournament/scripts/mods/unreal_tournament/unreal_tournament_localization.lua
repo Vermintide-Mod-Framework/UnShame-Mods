@@ -74,12 +74,6 @@ return {
 	auto_restart_description = {
 		en = "A level you lose starts again instead of sending you back to the keep.",
 	},
-	link_beam_fov = {
-		en = "Link Beam FOV (testing)",
-	},
-	link_beam_fov_description = {
-		en = "The field of view the Link Gun's beam effect is drawn with when you see someone else's beam, for finding the value that lines it up.",
-	},
 	no_friendly_fire = {
 		en = "No Friendly Fire",
 	},
