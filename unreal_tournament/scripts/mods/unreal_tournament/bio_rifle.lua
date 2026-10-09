@@ -97,11 +97,9 @@ local CONFIG = {
 	puddle_tick_damage = 6, -- in UT2004's units, per tick
 	puddle_effect = "fx/wpnfx_lamp_oil_remains", -- the game's burning lamp oil
 	charged_puddle_effect = "fx/wpnfx_fire_grenade_impact_remains_remap", -- the fire grenade's ground in another color
-	puddle_effect_radius_share = 0.35,
-	puddle_effect_spacing = 0.9, -- m between the particles
-	-- The other players get the look of a puddle from its template (the game sends the name of the template, not the
-	-- effect), so there is a template for each of this many sizes of puddle between the glob's and the biggest.
-	puddle_look_steps = 12,
+	-- The effect is one fire emitter, scaled to the radius of the puddle (the game's own area effect puts a fixed emitter at
+	-- the center and adds more of them in rings as the radius grows). This is the radius of the effect at its own size.
+	puddle_effect_natural_radius = 2, -- m
 	-- Overheating, in the Drakegun's own units (it overheats at 30): a glob is this much, a full charge is
 	-- this much by the time it is full (the shot that follows costs nothing more). Balanced against the
 	-- Shock Rifle's, whose beam is 4 every 0.7 seconds (5.7 a second, a combo is 12 more): a glob every 0.45
@@ -274,36 +272,18 @@ register_explosion_template("ut_bio_child_burst", burst_template("ut_bio_child_b
 -- tells the globs' bursts apart)
 register_explosion_template("ut_bio_charged_glob", {})
 
--- The puddle: the area that burns whoever is in it. Its radius and duration are those of the puddle that is made, the
--- look of it (the particles, which are the size of its radius) is that of the template: one for each of the sizes
--- a puddle can have, each in the two looks (see puddle_look_steps).
-local function puddle_template_name(step, charged)
-	return "ut_bio_puddle_" .. step .. (charged and "_charged" or "")
-end
-
-local function puddle_look_radius(step)
-	return math.lerp(CONFIG.glob_puddle_radius, CONFIG.puddle_radius_max, step / CONFIG.puddle_look_steps)
-end
-
-for step = 0, CONFIG.puddle_look_steps do
-	for _, charged in ipairs({false, true}) do
-		register_explosion_template(puddle_template_name(step, charged), {
-			aoe = {
-				area_damage_template = "explosion_template_aoe",
-				attack_template = "fire_grenade_dot",
-				damage_interval = CONFIG.puddle_damage_interval,
-				dot_template_name = CONFIG.puddle_dot,
-				duration = CONFIG.glob_puddle_duration,
-				radius = puddle_look_radius(step),
-				nav_mesh_effect = {
-					particle_name = charged and CONFIG.charged_puddle_effect or CONFIG.puddle_effect,
-					particle_radius = puddle_look_radius(step) * CONFIG.puddle_effect_radius_share,
-					particle_spacing = CONFIG.puddle_effect_spacing,
-				},
-			},
-		})
-	end
-end
+-- The puddle: the area that burns whoever is in it. Its radius and duration are those of the puddle that is made.
+-- It has no look of its own, the puddle's fire is played by the mod (see the visuals below).
+register_explosion_template("ut_bio_puddle", {
+	aoe = {
+		area_damage_template = "explosion_template_aoe",
+		attack_template = "fire_grenade_dot",
+		damage_interval = CONFIG.puddle_damage_interval,
+		dot_template_name = CONFIG.puddle_dot,
+		duration = CONFIG.glob_puddle_duration,
+		radius = CONFIG.glob_puddle_radius,
+	},
+})
 
 -- The impact: only the blast, the burst that goes with it leaves the puddle. Its radius goes with the charge
 -- like the charged burst's does.
@@ -667,7 +647,8 @@ end
 -- goo bursts into small globs. The puddles are kept here by the game that has the enemies, the host's, where
 -- the areas that burn are made. A puddle's area (area damage unit) is made again with every goo that is added,
 -- for the radius it has then (the old one stops, its effects fade on their own).
-local puddles = {} -- { position, normal (Vector3Boxes), goo, expires = the time it dries up, unit = its area }
+local puddles = {} -- { id, position, normal (Vector3Boxes), goo, expires = the time it dries up, unit = its area }
+local next_puddle_id = 0
 
 local function puddle_radius(goo)
 	return math.min(CONFIG.glob_puddle_radius * math.sqrt(goo), CONFIG.puddle_radius_max)
@@ -718,6 +699,63 @@ local function units_inside(puddle)
 	return inside
 end
 
+-- The fire of a puddle, on every machine: the host plays it and tells the others (the game's own look of an area can't
+-- be told to the others, and doesn't grow with the area). It is one effect, scaled to the radius, that is played again
+-- when the puddle grows.
+local visuals = {} -- { [the id of the puddle] = { effect, expires } }
+
+local function stop_visual(id)
+	local visual = visuals[id]
+
+	if visual then
+		visuals[id] = nil
+
+		effects.stop(visual.effect)
+	end
+end
+
+local function show_visual(id, world, position, radius, charged, duration)
+	stop_visual(id)
+
+	local effect = effects.start(world, charged and CONFIG.charged_puddle_effect or CONFIG.puddle_effect, position, radius / CONFIG.puddle_effect_natural_radius)
+
+	if effect then
+		visuals[id] = {
+			effect = effect,
+			expires = Managers.time:time("game") + duration,
+		}
+	end
+end
+
+local function update_visuals(t)
+	for id, visual in pairs(visuals) do
+		if t >= visual.expires then
+			stop_visual(id)
+		end
+	end
+end
+
+local function clear_visuals()
+	for id, visual in pairs(visuals) do
+		effects.destroy(visual.effect)
+
+		visuals[id] = nil
+	end
+end
+
+mod:network_register("ut_bio_puddle_look", function (_, id, x, y, z, radius, charged, duration)
+	show_visual(id, Managers.world:world("level_world"), Vector3(x, y, z), radius, charged, duration)
+end)
+
+mod:network_register("ut_bio_puddle_end", function (_, id)
+	stop_visual(id)
+end)
+
+local function end_puddle_visual(puddle)
+	stop_visual(puddle.id)
+	mod:network_send("ut_bio_puddle_end", "others", puddle.id)
+end
+
 -- The area of the puddle for the goo it has. puddle.context is what the glob that made the puddle was:
 -- { world, owner_unit, item_name, item_template_name, is_critical_strike, base_power }
 local function make_puddle_area(puddle, t)
@@ -725,12 +763,15 @@ local function make_puddle_area(puddle, t)
 
 	local context = puddle.context
 	local radius = puddle_radius(puddle.goo)
-	-- (the template of the size nearest to the radius gives the look)
-	local step = math.round((radius - CONFIG.glob_puddle_radius) / (CONFIG.puddle_radius_max - CONFIG.glob_puddle_radius) * CONFIG.puddle_look_steps)
-	local template = ExplosionTemplates[puddle_template_name(math.clamp(step, 0, CONFIG.puddle_look_steps), puddle.goo >= CONFIG.big_puddle_goo)]
+	local position = puddle.position:unbox()
+	local duration = math.max(puddle.expires - t, 1)
+	local charged = puddle.goo >= CONFIG.big_puddle_goo
 
-	puddle.unit = DamageUtils.create_aoe(context.world, context.owner_unit, puddle.position:unbox(), context.item_name, template, radius, math.max(puddle.expires - t, 1))
+	puddle.unit = DamageUtils.create_aoe(context.world, context.owner_unit, position, context.item_name, ExplosionTemplates.ut_bio_puddle, radius, duration)
 	puddle.inside = units_inside(puddle)
+
+	show_visual(puddle.id, context.world, position, radius, charged, duration)
+	mod:network_send("ut_bio_puddle_look", "others", puddle.id, position.x, position.y, position.z, radius, charged, duration)
 end
 
 local function play_puddle_burst_effects(world, position, goo_scale)
@@ -765,6 +806,8 @@ local function burst_puddle(puddle, t, final)
 	throw_children(context, position, puddle.normal:unbox(), count, context.base_power)
 
 	if final then
+		end_puddle_visual(puddle)
+
 		return
 	end
 
@@ -814,9 +857,12 @@ local function add_goo_to_puddles(context, position, normal, goo, bursts_puddle)
 	if puddle then
 		puddle.goo = puddle.goo + goo
 	else
+		next_puddle_id = next_puddle_id + 1
+
 		puddle = {
 			context = context,
 			goo = goo,
+			id = next_puddle_id,
 			normal = Vector3Box(normal),
 			position = Vector3Box(position),
 		}
@@ -896,6 +942,7 @@ local function update_puddles(t)
 			-- (the player's unit is gone, a hero was changed or the level left: nothing can be made for it, the game
 			-- breaks on a projectile that has no owner)
 			remove_puddle_area(puddle)
+			end_puddle_visual(puddle)
 			table.remove(puddles, i)
 		elseif t >= puddle.expires then
 			-- a puddle that goes out with nothing stepped into it bursts (and is gone), unless it is too small
@@ -1096,18 +1143,24 @@ mod.overheat_callbacks[TEMPLATE_NAME] = function (state, item_data)
 end
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
-	update_delayed_ends(Managers.time:time("game"))
-	update_puddles(Managers.time:time("game"))
+	-- (there is no game time outside of a level)
+	local t = Managers.time:time("game")
+
+	if not t then
+		return
+	end
+
+	update_delayed_ends(t)
+	update_puddles(t)
+	update_visuals(t)
 end
 
-mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+local function clear_all()
 	table.clear(delayed_ends)
 	table.clear(puddles)
 	table.clear(charge_levels)
+	clear_visuals()
 end
 
-mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
-	table.clear(delayed_ends)
-	table.clear(puddles)
-	table.clear(charge_levels)
-end
+mod.unload_callbacks[#mod.unload_callbacks + 1] = clear_all
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = clear_all

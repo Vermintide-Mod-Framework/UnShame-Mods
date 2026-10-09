@@ -42,10 +42,11 @@ local function destroy_timed_effect(effect)
 	end
 end
 
--- Plays the effect at the scale if it is available, returns if it was
-effects.play = function (world, effect_name, position, scale, rotation)
+-- Starts the effect at the scale if it is available and returns it (or nothing if it isn't). It goes on until
+-- effects.stop (or effects.destroy).
+effects.start = function (world, effect_name, position, scale, rotation)
 	if not effects.is_available(effect_name) then
-		return false
+		return nil
 	end
 
 	rotation = rotation or Quaternion.identity()
@@ -59,12 +60,33 @@ effects.play = function (world, effect_name, position, scale, rotation)
 	-- "stop": when the unit is deleted the effect stops spawning and the particles already out fade on their own
 	World.link_particles(world, effect_id, unit, 0, Matrix4x4.from_quaternion(rotation), "stop")
 
-	timed_effects[#timed_effects + 1] = {
-		age = 0,
+	return {
 		effect_id = effect_id,
 		unit = unit,
 		world = world,
 	}
+end
+
+-- Stops the effect from spawning more, what is out fades on its own
+effects.stop = function (effect)
+	if Unit.alive(effect.unit) then
+		Managers.state.unit_spawner:mark_for_deletion(effect.unit)
+	end
+end
+
+-- Takes the effect away at once
+effects.destroy = destroy_timed_effect
+
+-- Plays the effect at the scale if it is available, returns if it was
+effects.play = function (world, effect_name, position, scale, rotation)
+	local effect = effects.start(world, effect_name, position, scale, rotation)
+
+	if not effect then
+		return false
+	end
+
+	effect.age = 0
+	timed_effects[#timed_effects + 1] = effect
 
 	return true
 end
