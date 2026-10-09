@@ -22,6 +22,7 @@ local CONFIG = {
 	-- The blunderbuss's own ammo (16, with 1 in the clip) and reload time (1.5 s) are changed by these factors
 	ammo_multiplier = 1.33,
 	reload_time_multiplier = 0.75,
+	reload_3p_speed_scale = 5, -- (exaggerated to see whether the third person reload follows the speed)
 	-- Flak chunk
 	chunk_count = 9, -- FlakFire.ProjPerFire
 	chunk_spread_degrees = 4, -- "tight", FlakFire.Spread is about 7.7 degrees
@@ -450,6 +451,35 @@ mod:hook(ActionShotgun, "_shoot", function (func, self, num_shots_total, num_sho
 
 			spawn_projectile(shot, position, lobbed_rotation, SHELL_ACTION_NAME, SHELL_ACTION, CONFIG.shell_speed)
 		end
+	end
+end)
+
+-- The faster reload in the third person: the game speeds up the first person reload only (a variable of the first person
+-- animation) and tells the others to play the reload at its normal speed. The reload event is sent again with the speed
+-- the game's own third person weapon animations take, "attack_speed".
+mod:hook(GenericAmmoUserExtension, "start_reload_animation", function (func, self, reload_time)
+	local original = saved.original
+
+	if not original or utils.wielded_template_name(self.owner_unit) ~= TEMPLATE_NAME then
+		return func(self, reload_time)
+	end
+
+	-- (the event the game is about to play, picked the same way as it picks it)
+	local reload_event = self._reload_event
+
+	if self.reloaded_from_zero_ammo then
+		reload_event = self._no_ammo_reload_event or reload_event
+	elseif self._ammo_per_clip - self._current_ammo == 1 or self._available_ammo == 1 then
+		reload_event = self._last_reload_event
+	end
+
+	reload_event = self._override_reload_anim or reload_event
+
+	func(self, reload_time)
+
+	if reload_event then
+		mod:echo("flak 3p reload: %s at %.2fx", tostring(reload_event), original.ammo_data.reload_time / reload_time * CONFIG.reload_3p_speed_scale)
+		Managers.state.network:anim_event_with_variable_float(self.owner_unit, reload_event, "attack_speed", original.ammo_data.reload_time / reload_time * CONFIG.reload_3p_speed_scale)
 	end
 end)
 
