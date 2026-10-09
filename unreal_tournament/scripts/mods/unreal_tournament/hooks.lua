@@ -156,3 +156,33 @@ mod:hook(PlayerUnitOverchargeExtension, "add_charge", function (func, self, over
 
 	return func(self, overcharge_amount, charge_level, overcharge_type, ...)
 end)
+
+-- The mod framework sends the mod's network messages only to the players on its list of players that have the framework.
+-- When a level is loaded the game removes the players and adds them again, and the framework can take a player off its
+-- list after it has put them back, so that the messages of the mod (the Shock Rifle's beam for the others, the Bio Rifle's
+-- goo of a client) go nowhere until the mod is reloaded. A moment after the players change, after the last change,
+-- the framework is asked to ping everyone again, which puts the players back on the list on both sides.
+local FRAMEWORK_PING_DELAY = 1 -- seconds
+
+local framework_ping_timer -- seconds until the framework is asked to ping, nothing when it is not waiting
+
+local function ask_framework_to_ping()
+	framework_ping_timer = FRAMEWORK_PING_DELAY
+end
+
+mod:hook_safe(PlayerManager, "add_remote_player", ask_framework_to_ping)
+mod:hook_safe(PlayerManager, "remove_player", ask_framework_to_ping)
+
+mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
+	if not framework_ping_timer then
+		return
+	end
+
+	framework_ping_timer = framework_ping_timer - dt
+
+	if framework_ping_timer <= 0 then
+		framework_ping_timer = nil
+
+		get_mod("VMF").ping_vmf_users()
+	end
+end
