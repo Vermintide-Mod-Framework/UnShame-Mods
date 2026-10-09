@@ -60,5 +60,6 @@ mod:dofile("scripts/mods/unreal_tournament/link_gun")
 mod:dofile("scripts/mods/unreal_tournament/movement")
 mod:dofile("scripts/mods/unreal_tournament/gameplay")
 
--- (seen in the chat each time the mod is loaded or reloaded, to know which build is running)
-mod:echo("Unreal Tournament loaded")
+-- (seen in the chat each time the mod is loaded or reloaded, to know which build is running: the number is the count of
+-- commits of the repository, which goes up by one with every change)
+mod:echo("Unreal Tournament loaded (build 99)")
