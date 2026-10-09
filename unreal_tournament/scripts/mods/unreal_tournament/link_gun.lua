@@ -82,12 +82,10 @@ local CONFIG = {
 	aim_dot = 0.985, -- how close to the aim a target has to be to be linked to, 1 is exactly
 	beam_overcharge = 0.8, -- heat, added every beam_overcharge_interval seconds while the beam is held
 	beam_overcharge_interval = 0.25,
-	-- Ally: the damage it does is this much more while linked, the buff is kept up every buff_refresh seconds
+	-- Ally: the damage it does is this much more while linked, the buff lasts until the link is over
 	ally_damage_bonus = 0.5,
 	ally_thp_multiplier = 2, -- the temporary health a linked ally gets from their attacks
-	ally_buff_duration = 0.6, -- seconds
 	ally_buff_icon = "kerillian_thornsister_avatar", -- the icon of the buff in the buff bar of the ally
-	ally_buff_refresh = 0.25, -- seconds
 	bot_target_range = 80,
 	bot_rescan_interval = 0.5, -- seconds, between looks for an enemy for a linked bot that has none near -- m, how far from a linked bot the enemy it is made to attack can be
 	throw_wall_margin = 0.6, -- m, how far from a wall a yanked enemy that hit it lands
@@ -234,13 +232,12 @@ local ALLY_BUFF = "ut_link_damage_boost"
 BuffTemplates[ALLY_BUFF] = {
 	buffs = {
 		{
-			duration = CONFIG.ally_buff_duration,
-			-- (the icon of the buff bar: the Thornsister's own, as the buffs she gives have)
+			-- (no duration: it is there until it is taken away, which is when the link is over, and the buff bar shows no
+			-- timer on its icon, which is the Thornsister's own as the buffs she gives have)
 			icon = CONFIG.ally_buff_icon,
 			max_stacks = 1,
 			multiplier = CONFIG.ally_damage_bonus,
 			name = ALLY_BUFF,
-			refresh_durations = true,
 			stat_buff = "power_level",
 		},
 	},
@@ -1433,9 +1430,22 @@ local function add_held_outline(state)
 	utils.add_outline(state, state.target, HELD_OUTLINE)
 end
 
+-- The buff an ally has while linked is taken away when the link is over (it is synced: the ally's game loses it too)
+local function remove_ally_buff(state)
+	local buff_unit = state.ally_buff_unit
+
+	if buff_unit and Unit.alive(buff_unit) then
+		Managers.state.entity:system("buff_system"):remove_buff_synced(buff_unit, state.ally_buff_id)
+	end
+
+	state.ally_buff_unit = nil
+	state.ally_buff_id = nil
+end
+
 local function release_target(state)
 	finish_throw(state)
 	clear_held_outline(state)
+	remove_ally_buff(state)
 
 	if state.target then
 		bot_targets[state.target] = nil
@@ -1939,16 +1949,13 @@ local function boost_ally(state, owner_unit, t)
 
 	show_ally_buff(state, state.callback_world, t)
 
-	if t < (state.next_buff_t or 0) then
-		return
+	-- Given once, when the link starts (synced, the ally's own game works out what they do)
+	if not state.ally_buff_id then
+		state.ally_buff_unit = state.target
+		state.ally_buff_id = Managers.state.entity:system("buff_system"):add_buff_synced(state.target, ALLY_BUFF, BuffSyncType.All, {
+			attacker_unit = owner_unit,
+		})
 	end
-
-	state.next_buff_t = t + CONFIG.ally_buff_refresh
-
-	-- (synced, the ally's own game works out what they do)
-	Managers.state.entity:system("buff_system"):add_buff_synced(state.target, ALLY_BUFF, BuffSyncType.All, {
-		attacker_unit = owner_unit,
-	})
 end
 
 -- The beam is a curve from the staff to the end of it (a cubic Bezier)
@@ -2110,6 +2117,7 @@ local function end_beam(owner_unit)
 
 		finish_throw(state)
 		clear_held_outline(state)
+		remove_ally_buff(state)
 		destroy_sprites(state)
 
 		if state.target then
@@ -2127,7 +2135,6 @@ local function link_target(state, owner_unit, unit, kind, actor, object_distance
 	state.actor = actor
 	state.weight = kind == "enemy" and enemy_weight(unit) or nil
 	state.next_stagger_t = nil
-	state.next_buff_t = nil
 	state.next_dot_t = nil
 	state.hold_distance = math.clamp(Vector3.length(Vector3.flat(Unit.world_position(unit, 0) - Unit.world_position(owner_unit, 0))), CONFIG.hold_min_distance, CONFIG.beam_range)
 
