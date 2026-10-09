@@ -86,6 +86,7 @@ local CONFIG = {
 	ally_damage_bonus = 0.5,
 	ally_thp_multiplier = 2, -- the temporary health a linked ally gets from their attacks
 	ally_buff_duration = 0.6, -- seconds
+	ally_buff_icon = "kerillian_thornsister_avatar", -- the icon of the buff in the buff bar of the ally
 	ally_buff_refresh = 0.25, -- seconds
 	bot_target_range = 80,
 	bot_rescan_interval = 0.5, -- seconds, between looks for an enemy for a linked bot that has none near -- m, how far from a linked bot the enemy it is made to attack can be
@@ -175,7 +176,7 @@ local CONFIG = {
 	-- 85: the end was seen about 2.1 times as far from the middle of the screen as the target.
 	effect_fov = 47.5,
 	beam_aim_curve = 0.3, -- how far the beam bows towards the aim, as a share of its length at most: 0 is a straight line
-	beam_segment_length = 0.2, -- m, about how far apart the points of the beam are (the particles)
+	beam_segment_length = 0.15, -- m, about how far apart the points of the beam are (the particles)
 	beam_min_segments = 2,
 	beam_max_segments = 100,
 	beam_sprite_copies = 3, -- how many copies of the effect at every point: the more, the denser the beam
@@ -195,7 +196,6 @@ local CONFIG = {
 	-- and how long the host goes on with a beam it has heard nothing of
 	remote_link_kinds = {ally = true},
 	remote_input_timeout = 0.5, -- seconds
-	remote_beam_segment_length = 0.15, -- m, beam_segment_length for the beam that is seen from the outside (it looks sparser there)
 	-- The field of view (vertical, degrees) the effect of a beam that is seen from the outside is drawn with: found by eye with a
 	-- world field of view of 65, the beam is then where it is seen. (effect_fov, above, is the staff in the hands seen from the
 	-- holder's side: they are not the same.)
@@ -234,6 +234,8 @@ BuffTemplates[ALLY_BUFF] = {
 	buffs = {
 		{
 			duration = CONFIG.ally_buff_duration,
+			-- (the icon of the buff bar: the Thornsister's own, as the buffs she gives have)
+			icon = CONFIG.ally_buff_icon,
 			max_stacks = 1,
 			multiplier = CONFIG.ally_damage_bonus,
 			name = ALLY_BUFF,
@@ -1970,9 +1972,9 @@ end
 local beam_points = {}
 local seen_points = {}
 
--- (the first `count` of the points. With random_roll every copy is turned about the way the beam goes, by an angle of its own
--- that it keeps, so that the copies don't all look the same)
-local function draw_sprites(state, world, effect_name, points, count, random_roll)
+-- (the first `count` of the points. Every copy is turned about the way the beam goes, by an angle of its own that it
+-- keeps, so that the copies don't all look the same)
+local function draw_sprites(state, world, effect_name, points, count)
 	local ids = state.sprite_ids
 
 	if not ids then
@@ -1991,7 +1993,7 @@ local function draw_sprites(state, world, effect_name, points, count, random_rol
 
 	for i = #ids + 1, wanted do
 		ids[i] = World.create_particles(world, effect_name, points[math.floor((i - 1) / copies) + 2], Quaternion.identity())
-		rolls[i] = random_roll and math.random() * math.pi * 2 or 0
+		rolls[i] = math.random() * math.pi * 2
 	end
 
 	for i = #ids, wanted + 1, -1 do
@@ -2013,7 +2015,7 @@ local function draw_sprites(state, world, effect_name, points, count, random_rol
 		for copy = 1, copies do
 			local index = (i - 2) * copies + copy
 
-			World.move_particles(world, ids[index], to, random_roll and Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3.forward(), rolls[index])) or rotation)
+			World.move_particles(world, ids[index], to, Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3.forward(), rolls[index])))
 		end
 	end
 end
@@ -2700,14 +2702,21 @@ local function draw_remote_beams()
 		else
 			local target = beam.end_position:unbox()
 			local shown = beam.shown and beam.shown:unbox() or target
+			local shown_aim = beam.shown_aim and beam.shown_aim:unbox() or beam.aim:unbox()
+			local shown_lag = beam.shown_lag and beam.shown_lag:unbox() or beam.lag:unbox()
 			local blend = 1 - math.exp(-CONFIG.remote_beam_smoothing * (now - (beam.drawn_at or now)))
 
+			-- (what is drawn follows what was told: the end, the aim and the lag, which come every beam_send_interval)
 			shown = shown + (target - shown) * blend
+			shown_aim = shown_aim + (beam.aim:unbox() - shown_aim) * blend
+			shown_lag = shown_lag + (beam.lag:unbox() - shown_lag) * blend
 			beam.shown = Vector3Box(shown)
+			beam.shown_aim = Vector3Box(shown_aim)
+			beam.shown_lag = Vector3Box(shown_lag)
 			beam.drawn_at = now
 
-			-- (a straight line, a point about every remote_beam_segment_length of it)
-			local segments = math.clamp(math.ceil(Vector3.length(shown - start_position) / CONFIG.remote_beam_segment_length), CONFIG.beam_min_segments, CONFIG.beam_max_segments)
+			-- (curved as the holder's is)
+			local count = beam_curve(remote_world_points, start_position, shown, Vector3.normalize(shown_aim), beam.weight, shown_lag, CONFIG.beam_segment_length)
 
 			-- The effect is drawn with the field of view of the staff in the hands, not of the world: every point of the beam is
 			-- moved toward the middle of the screen by the ratio of the two, so that it is seen where it is
@@ -2719,13 +2728,13 @@ local function draw_remote_beams()
 			local forward = Quaternion.forward(camera_rotation)
 			local scale = math.tan(math.rad(CONFIG.remote_effect_fov) / 2) / math.tan(camera_manager:fov("player_1") / 2)
 
-			for i = 0, segments do
-				local offset = start_position + (shown - start_position) * (i / segments) - camera_position
+			for i = 1, count do
+				local offset = remote_world_points[i] - camera_position
 
-				remote_points[i + 1] = camera_position + right * (Vector3.dot(offset, right) * scale) + up * (Vector3.dot(offset, up) * scale) + forward * Vector3.dot(offset, forward)
+				remote_points[i] = camera_position + right * (Vector3.dot(offset, right) * scale) + up * (Vector3.dot(offset, up) * scale) + forward * Vector3.dot(offset, forward)
 			end
 
-			draw_sprites(beam, world, CONFIG.beam_effect, remote_points, segments + 1, true)
+			draw_sprites(beam, world, CONFIG.beam_effect, remote_points, count)
 		end
 	end
 end
