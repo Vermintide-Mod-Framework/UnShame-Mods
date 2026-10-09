@@ -155,10 +155,10 @@ local CONFIG = {
 	-- Yanking costs heat on top of the heat of the beam: yank_free_overcharge for freeing an enemy from a vortex or a
 	-- player from a disabler or a vortex, yank_rescue_overcharge for pulling a player up from a ledge or getting them
 	-- up from being knocked down, yank_player_overcharge for launching a player (or a bot) at the owner,
-	-- yank_door_overcharge for a door or a chest.
+	-- yank_door_overcharge for a door or a chest. (A negative cost is a share of the whole bar: -1 is all of it.)
 	yank_free_overcharge = 8,
 	yank_rescue_overcharge = 10,
-	yank_player_overcharge = 25,
+	yank_player_overcharge = -1,
 	bot_yank_cost_scale = 0.1, -- yanking a bot costs this much of what yanking a player does (the cost is for griefing)
 	yank_door_overcharge = 2,
 	-- Objects: when nothing else is picked, a ragdoll or another object with a body that moves is held (no damage). It
@@ -1758,8 +1758,15 @@ local function charge_owner(owner_unit, amount, overcharge_type)
 	if owner_player.local_player then
 		local overcharge_extension = ScriptUnit.has_extension(owner_unit, "overcharge_system")
 
-		if overcharge_extension and amount > 0 then
-			overcharge_extension:add_charge(amount, nil, overcharge_type)
+		if overcharge_extension then
+			-- (a negative amount is a share of the whole bar, which is how much that holds depends on the staff and the buffs)
+			if amount < 0 then
+				amount = -amount * overcharge_extension:get_max_value()
+			end
+
+			if amount > 0 then
+				overcharge_extension:add_charge(amount, nil, overcharge_type)
+			end
 		end
 	else
 		mod:network_send("ut_link_heat", owner_player.peer_id, amount, overcharge_type)
