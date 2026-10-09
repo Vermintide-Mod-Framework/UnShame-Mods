@@ -2370,6 +2370,12 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		state.next_beam_send = t + CONFIG.beam_send_interval
 		state.beam_sent = true
 
+		if Application.time_since_launch() - (mod.link_report_sent or 0) > 2 then
+			mod.link_report_sent = Application.time_since_launch()
+
+			mod:echo("link beam sent")
+		end
+
 		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z)
 	end
 end
@@ -2390,6 +2396,12 @@ end
 
 mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z)
 	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
+
+	if Application.time_since_launch() - (mod.link_report_received or 0) > 2 then
+		mod.link_report_received = Application.time_since_launch()
+
+		mod:echo("link beam received: unit %s", tostring(owner_unit))
+	end
 
 	if not owner_unit then
 		return
@@ -2414,16 +2426,22 @@ mod:network_register("ut_link_beam_end", function (_, owner_go_id)
 	end
 end)
 
--- The staff of the player's character (the right hand's unit, the left hand's is the effect of the fireball), with the node
--- the beam starts at
+-- The end of the staff of the player's character: the one of the two hands' units that has the node the beam starts at
 local function remote_staff_end(owner_unit)
 	local inventory_extension = ScriptUnit.has_extension(owner_unit, "inventory_system")
 	local equipment = inventory_extension and inventory_extension:equipment()
-	local staff_unit = equipment and (equipment.right_hand_wielded_unit_3p or equipment.left_hand_wielded_unit_3p)
 
-	if staff_unit and Unit.alive(staff_unit) and Unit.has_node(staff_unit, CONFIG.staff_end_node) then
-		return Unit.world_position(staff_unit, Unit.node(staff_unit, CONFIG.staff_end_node))
+	if not equipment then
+		return nil, "no equipment"
 	end
+
+	for _, staff_unit in ipairs({equipment.left_hand_wielded_unit_3p, equipment.right_hand_wielded_unit_3p}) do
+		if Unit.alive(staff_unit) and Unit.has_node(staff_unit, CONFIG.staff_end_node) then
+			return Unit.world_position(staff_unit, Unit.node(staff_unit, CONFIG.staff_end_node))
+		end
+	end
+
+	return nil, "no staff with a node"
 end
 
 local function draw_remote_beams()
@@ -2431,9 +2449,15 @@ local function draw_remote_beams()
 	local world = Managers.world:world("level_world")
 
 	for owner_unit, beam in pairs(remote_beams) do
-		local start_position = Unit.alive(owner_unit) and remote_staff_end(owner_unit)
+		local start_position, reason = remote_staff_end(owner_unit)
 
 		if not start_position or now - beam.received > CONFIG.remote_beam_timeout or not effects.is_available(CONFIG.beam_effect) then
+			if now - (mod.link_report or 0) > 2 then
+				mod.link_report = now
+
+				mod:echo("link beam dropped: %s, timeout %s, effect %s", tostring(reason), tostring(now - beam.received > CONFIG.remote_beam_timeout), tostring(effects.is_available(CONFIG.beam_effect)))
+			end
+
 			remove_remote_beam(owner_unit)
 		else
 			local target = beam.end_position:unbox()
