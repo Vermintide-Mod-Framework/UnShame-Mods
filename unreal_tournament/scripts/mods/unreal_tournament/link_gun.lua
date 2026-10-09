@@ -542,9 +542,14 @@ local function restore_staff()
 	saved.original = nil
 end
 
--- The beam effect of the staff is in the package of the Thornsister, which the game only loads for the one who plays her:
--- the mod holds a reference to it while the weapon is enabled, so that the others can draw the beam.
+-- The beam effect of the staff comes with the packages that the game only loads for the one who plays the Thornsister (for
+-- the others it loads the staff of the third person only): the mod holds a reference to the staff in the hands and to
+-- the Thornsister's while the weapon is enabled, so that the others can draw the beam.
 local packages = utils.package_holder("unreal_tournament_link")
+local BEAM_PACKAGES = {
+	"units/weapons/player/wpn_we_life_staff_01/wpn_we_life_staff_01",
+	"resource_packages/careers/we_thornsister",
+}
 
 local function apply_link_gun()
 	local template = rawget(Weapons, TEMPLATE_NAME)
@@ -553,7 +558,7 @@ local function apply_link_gun()
 		return
 	end
 
-	packages.load({"resource_packages/careers/we_thornsister"})
+	packages.load(BEAM_PACKAGES)
 
 	-- Already applied by a previous load of this mod, start over from the original
 	restore_staff()
