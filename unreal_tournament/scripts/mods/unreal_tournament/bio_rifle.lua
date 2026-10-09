@@ -914,6 +914,7 @@ local function add_goo(self, position)
 	local base_power = self.power_level / math.max(self._current_action.scale_power_level or 1, self.charge_level or 0)
 
 	if not self._is_server then
+		mod:echo("bio goo sent: owner %s", tostring(Managers.state.unit_storage:go_id(self._owner_unit)))
 		mod:network_send("ut_bio_goo", "others", Managers.state.unit_storage:go_id(self._owner_unit), self.item_name, self._is_critical_strike or false, base_power, position.x, position.y, position.z, normal.x, normal.y, normal.z, goo, bursts_puddle)
 
 		return
@@ -981,6 +982,8 @@ local GOO_BURSTS = {
 }
 
 mod.aoe_callbacks.ut_bio_glob = function (self, aoe_data, position)
+	mod:echo("bio burst: known %s, name %s, added %s, host %s", tostring(GOO_BURSTS[aoe_data]), tostring(aoe_data and aoe_data.name), tostring(self._ut_bio_goo_added), tostring(self._is_server))
+
 	if not GOO_BURSTS[aoe_data] or self._ut_bio_goo_added then
 		return
 	end
