@@ -2393,7 +2393,6 @@ end
 
 -- The beams of the other players: where each ends, as it was told, and what is drawn, which follows it
 local remote_beams = {} -- { [the unit of the player] = { sprite_ids, world, end_position, shown, received, drawn_at } }
-local remote_points = {}
 
 local function remove_remote_beam(owner_unit)
 	local beam = remote_beams[owner_unit]
@@ -2482,13 +2481,24 @@ local function draw_remote_beams()
 			-- (a straight line, a point about every beam_segment_length of it)
 			local segments = math.clamp(math.ceil(Vector3.length(shown - start_position) / CONFIG.beam_segment_length), CONFIG.beam_min_segments, CONFIG.beam_max_segments)
 
-			remote_points[1] = start_position
+			-- The effect is drawn with the field of view of the staff in the hands, the viewer's, not of the world: every point
+			-- of the beam is pushed away from the middle of the screen by the ratio of the two, so that it is seen where it is
+			-- (the beam of the holder is drawn the same way, see draw_beam, where only the start is where the staff is seen)
+			local camera_manager = Managers.state.camera
+			local camera_position = camera_manager:camera_position("player_1")
+			local camera_rotation = camera_manager:camera_rotation("player_1")
+			local right = Quaternion.right(camera_rotation)
+			local up = Quaternion.up(camera_rotation)
+			local forward = Quaternion.forward(camera_rotation)
+			local scale = math.tan(math.rad(CONFIG.effect_fov) / 2) / math.tan(camera_manager:fov("player_1") / 2)
 
-			for i = 1, segments do
-				remote_points[i + 1] = start_position + (shown - start_position) * (i / segments)
+			for i = 0, segments do
+				local offset = start_position + (shown - start_position) * (i / segments) - camera_position
+
+				seen_points[i + 1] = camera_position + right * (Vector3.dot(offset, right) * scale) + up * (Vector3.dot(offset, up) * scale) + forward * Vector3.dot(offset, forward)
 			end
 
-			draw_sprites(beam, world, remote_points, segments + 1)
+			draw_sprites(beam, world, seen_points, segments + 1)
 		end
 	end
 end
