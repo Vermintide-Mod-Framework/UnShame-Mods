@@ -228,23 +228,32 @@ if has_staff then
 end
 
 -- The buff an ally gets while linked. The buffs go over the network by name, everyone in the game needs the mod.
+-- There are two of it, see update_ally_buffs: one with no duration while the link lasts (the buff bar shows its icon with no
+-- timer) and one with a duration for after it, which shows the timer. They have the same name, which is how the buff bar
+-- tells buffs apart: it is one icon that gets its timer. The icon is the Thornsister's own, as the buffs she gives have.
 local ALLY_BUFF = "ut_link_damage_boost"
+local ALLY_BUFF_FADING = "ut_link_damage_boost_fading"
 
-BuffTemplates[ALLY_BUFF] = {
-	buffs = {
-		{
-			-- (no duration: it is there until it is taken away, see update_ally_buffs, and the buff bar shows no timer on its
-			-- icon, which is the Thornsister's own as the buffs she gives have)
-			icon = CONFIG.ally_buff_icon,
-			max_stacks = 1,
-			multiplier = CONFIG.ally_damage_bonus,
-			name = ALLY_BUFF,
-			stat_buff = "power_level",
+local function ally_buff_template(duration)
+	return {
+		buffs = {
+			{
+				duration = duration,
+				icon = CONFIG.ally_buff_icon,
+				max_stacks = 1,
+				multiplier = CONFIG.ally_damage_bonus,
+				name = ALLY_BUFF,
+				stat_buff = "power_level",
+			},
 		},
-	},
-}
+	}
+end
+
+BuffTemplates[ALLY_BUFF] = ally_buff_template(nil)
+BuffTemplates[ALLY_BUFF_FADING] = ally_buff_template(CONFIG.ally_buff_linger)
 
 utils.register_network_lookup("buff_templates", ALLY_BUFF)
+utils.register_network_lookup("buff_templates", ALLY_BUFF_FADING)
 
 -- Weapon template
 -- The template is shared game state: it is patched in place, what is touched is saved to be put back on disable.
@@ -1938,45 +1947,66 @@ local function boost_ally(state, owner_unit, t)
 	show_ally_buff(state, state.callback_world, t)
 end
 
--- The buff of the allies that are linked, looked at every frame by the host: an ally that is linked has it (given when they
--- are first seen linked), and loses it ally_buff_linger seconds after the last time they were. Whatever ended the link, a beam
--- that is let go of, an ally that was swapped for another or that left, the beam of a player that has gone, is taken care of.
--- It is synced: the ally's own game works out what they do with it, and loses it as well.
-local ally_buffs = {} -- { [the ally] = { id of the buff, when they were last linked } }
+-- The buff of the allies that are linked, looked at every frame by the host: an ally that is linked has the buff with no
+-- duration, and when they are not linked any more it is swapped for the one that lasts ally_buff_linger seconds, which runs
+-- out by itself. Whatever ended the link, a beam that is let go of, an ally that was swapped for another or that left, the
+-- beam of a player that has gone, is taken care of. They are synced: the ally's own game works out what they do with them.
+local ally_buffs = {} -- { [the ally] = { id of the buff, fading (the one with the duration), until (when that runs out) } }
+
+local function add_ally_buff(unit, owner_unit, template_name)
+	return Managers.state.entity:system("buff_system"):add_buff_synced(unit, template_name, BuffSyncType.All, {
+		attacker_unit = owner_unit,
+	})
+end
 
 local function remove_ally_buff(unit, entry)
 	if Unit.alive(unit) then
 		Managers.state.entity:system("buff_system"):remove_buff_synced(unit, entry.id)
 	end
-
-	ally_buffs[unit] = nil
 end
 
+local linked_allies = {} -- (the allies that are linked this frame, and by whom: kept, filled in again)
+
 local function update_ally_buffs(t)
+	table.clear(linked_allies)
+
 	for owner_unit, state in pairs(states) do
 		local unit = state.kind == "ally" and state.target
 
 		if unit and Unit.alive(unit) then
-			local entry = ally_buffs[unit]
-
-			if not entry then
-				entry = {
-					id = Managers.state.entity:system("buff_system"):add_buff_synced(unit, ALLY_BUFF, BuffSyncType.All, {
-						attacker_unit = owner_unit,
-					}),
-				}
-				ally_buffs[unit] = entry
-			end
-
-			entry.linked_t = t
+			linked_allies[unit] = owner_unit
 		end
 	end
 
+	-- Linked: the buff with no duration (instead of the one that was running out, if it was)
+	for unit, owner_unit in pairs(linked_allies) do
+		local entry = ally_buffs[unit]
+
+		if not entry or entry.fading then
+			if entry then
+				remove_ally_buff(unit, entry)
+			end
+
+			ally_buffs[unit] = {id = add_ally_buff(unit, owner_unit, ALLY_BUFF)}
+		end
+	end
+
+	-- Not linked any more: the one that runs out, and forgotten when it has
 	for unit, entry in pairs(ally_buffs) do
 		if not Unit.alive(unit) then
 			ally_buffs[unit] = nil
-		elseif t - entry.linked_t > CONFIG.ally_buff_linger then
-			remove_ally_buff(unit, entry)
+		elseif not linked_allies[unit] then
+			if not entry.fading then
+				remove_ally_buff(unit, entry)
+
+				ally_buffs[unit] = {
+					fading = true,
+					id = add_ally_buff(unit, nil, ALLY_BUFF_FADING),
+					until_t = t + CONFIG.ally_buff_linger,
+				}
+			elseif t >= entry.until_t then
+				ally_buffs[unit] = nil
+			end
 		end
 	end
 end
@@ -2900,6 +2930,8 @@ local function clear_beams()
 	for unit, entry in pairs(ally_buffs) do
 		remove_ally_buff(unit, entry)
 	end
+
+	table.clear(ally_buffs)
 
 	restore_corpse()
 	pose.clear()
