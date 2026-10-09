@@ -1947,57 +1947,60 @@ local function boost_ally(state, owner_unit, t)
 	show_ally_buff(state, state.callback_world, t)
 end
 
--- The buff of the allies that are linked, looked at every frame by the host: an ally that is linked has the buff with no
--- duration (and not the timed one, if they have it); one that has it and is not linked any more gets the one that lasts
--- ally_buff_linger seconds instead, which runs out by itself; one that has the timed buff or none is left alone. Whatever
--- ended the link, a beam that is let go of, an ally that was swapped for another or that left, the beam of a player that has
--- gone, is taken care of. They are synced: the ally's own game works out what they do with them.
-local ally_buffs = {} -- { [the ally that is linked] = the id of the buff with no duration }
-local fading_ally_buffs = {} -- { [the ally that was] = the id of the timed buff }
-
+-- The buff of the allies, looked at every frame by the host, for every unit that has buffs, by asking it what it has: one
+-- that is linked has the buff with no duration (and not the timed one, if they have it); one that has it and is not linked any
+-- more gets the one that lasts ally_buff_linger seconds instead, which runs out by itself; one that has the timed buff or none
+-- is left alone. Whatever ended the link, a beam that is let go of, an ally that was swapped for another or that left, the beam
+-- of a player that has gone, is taken care of. They are synced: the ally's own game works out what they do with them.
 local function add_ally_buff(unit, owner_unit, template_name)
-	return Managers.state.entity:system("buff_system"):add_buff_synced(unit, template_name, BuffSyncType.All, {
+	Managers.state.entity:system("buff_system"):add_buff_synced(unit, template_name, BuffSyncType.All, {
 		attacker_unit = owner_unit,
 	})
 end
 
-local function remove_ally_buff(unit, buff_id)
-	if Unit.alive(unit) then
-		Managers.state.entity:system("buff_system"):remove_buff_synced(unit, buff_id)
+local function remove_ally_buff(unit, buff)
+	Managers.state.entity:system("buff_system"):remove_buff_synced(unit, buff.id)
+end
+
+-- Who has the unit linked, if anyone
+local function linked_by(unit)
+	for owner_unit, state in pairs(states) do
+		if state.kind == "ally" and state.target == unit then
+			return owner_unit
+		end
 	end
 end
 
-local linked_allies = {} -- (the allies that are linked this frame, and by whom: kept, filled in again)
-
 local function update_ally_buffs()
-	table.clear(linked_allies)
+	for unit, buff_extension in pairs(Managers.state.entity:get_entities("BuffExtension")) do
+		-- (both buffs have the one name, which is the type of the buff: a timed one has a duration)
+		local buff = buff_extension:get_buff_type(ALLY_BUFF)
+		local owner_unit = linked_by(unit)
 
-	for owner_unit, state in pairs(states) do
-		local unit = state.kind == "ally" and state.target
-
-		if unit and Unit.alive(unit) then
-			linked_allies[unit] = owner_unit
-
-			if not ally_buffs[unit] then
-				-- (the timed buff that was running out is taken away, the one with no duration takes its place: if it has run
-				-- out already there is nothing to take away)
-				if fading_ally_buffs[unit] then
-					remove_ally_buff(unit, fading_ally_buffs[unit])
-
-					fading_ally_buffs[unit] = nil
+		if owner_unit then
+			if not buff or buff.duration then
+				if buff then
+					remove_ally_buff(unit, buff)
 				end
 
-				ally_buffs[unit] = add_ally_buff(unit, owner_unit, ALLY_BUFF)
+				add_ally_buff(unit, owner_unit, ALLY_BUFF)
 			end
+		elseif buff and not buff.duration then
+			remove_ally_buff(unit, buff)
+			add_ally_buff(unit, nil, ALLY_BUFF_FADING)
 		end
 	end
+end
 
-	for unit, buff_id in pairs(ally_buffs) do
-		if not linked_allies[unit] then
-			remove_ally_buff(unit, buff_id)
+-- (all of them taken away, when the beams are cleared)
+local function clear_ally_buffs()
+	for unit, buff_extension in pairs(Managers.state.entity:get_entities("BuffExtension")) do
+		local buff = buff_extension:get_buff_type(ALLY_BUFF)
 
-			fading_ally_buffs[unit] = add_ally_buff(unit, nil, ALLY_BUFF_FADING)
-			ally_buffs[unit] = nil
+		while buff do
+			remove_ally_buff(unit, buff)
+
+			buff = buff_extension:get_buff_type(ALLY_BUFF)
 		end
 	end
 end
@@ -2918,12 +2921,9 @@ local function clear_beams()
 
 	table.clear(remote_inputs)
 
-	for unit, buff_id in pairs(ally_buffs) do
-		remove_ally_buff(unit, buff_id)
+	if Managers.player.is_server then
+		clear_ally_buffs()
 	end
-
-	table.clear(ally_buffs)
-	table.clear(fading_ally_buffs)
 
 	restore_corpse()
 	pose.clear()
