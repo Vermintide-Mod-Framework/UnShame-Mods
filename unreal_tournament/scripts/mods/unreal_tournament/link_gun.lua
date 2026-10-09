@@ -1944,6 +1944,7 @@ local function destroy_sprites(state)
 	end
 
 	state.sprite_ids = nil
+	state.sprite_rolls = nil
 	state.world = nil
 end
 
@@ -1951,14 +1952,18 @@ end
 local beam_points = {}
 local seen_points = {}
 
--- (the first `count` of the points)
-local function draw_sprites(state, world, effect_name, points, count)
+-- (the first `count` of the points. With random_roll every copy is turned about the way the beam goes, by an angle of its own
+-- that it keeps, so that the copies don't all look the same)
+local function draw_sprites(state, world, effect_name, points, count, random_roll)
 	local ids = state.sprite_ids
 
 	if not ids then
 		ids = {}
 		state.sprite_ids = ids
+		state.sprite_rolls = {}
 	end
+
+	local rolls = state.sprite_rolls
 
 	state.world = world
 
@@ -1968,12 +1973,14 @@ local function draw_sprites(state, world, effect_name, points, count)
 
 	for i = #ids + 1, wanted do
 		ids[i] = World.create_particles(world, effect_name, points[math.floor((i - 1) / copies) + 2], Quaternion.identity())
+		rolls[i] = random_roll and math.random() * math.pi * 2 or 0
 	end
 
 	for i = #ids, wanted + 1, -1 do
 		pcall(World.destroy_particles, world, ids[i])
 
 		ids[i] = nil
+		rolls[i] = nil
 	end
 
 	-- (all looking along the line from the staff to the end, not along the curve: the particles of the effect move along the
@@ -1986,7 +1993,9 @@ local function draw_sprites(state, world, effect_name, points, count)
 		local to = points[i]
 
 		for copy = 1, copies do
-			World.move_particles(world, ids[(i - 2) * copies + copy], to, rotation)
+			local index = (i - 2) * copies + copy
+
+			World.move_particles(world, ids[index], to, random_roll and Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3.forward(), rolls[index])) or rotation)
 		end
 	end
 end
@@ -2685,7 +2694,7 @@ local function draw_remote_beams()
 				remote_points[i + 1] = camera_position + right * (Vector3.dot(offset, right) * scale) + up * (Vector3.dot(offset, up) * scale) + forward * Vector3.dot(offset, forward)
 			end
 
-			draw_sprites(beam, world, CONFIG.beam_effect, remote_points, segments + 1)
+			draw_sprites(beam, world, CONFIG.beam_effect, remote_points, segments + 1, true)
 		end
 	end
 end
