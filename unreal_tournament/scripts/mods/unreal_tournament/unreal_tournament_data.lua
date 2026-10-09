@@ -119,7 +119,7 @@ return {
 			{
 				setting_id = "link_beam_fov",
 				type = "numeric",
-				default_value = 47.5,
+				default_value = 57.6,
 				range = {10, 120},
 				decimals_number = 1,
 			},

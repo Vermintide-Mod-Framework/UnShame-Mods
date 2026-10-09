@@ -2591,7 +2591,22 @@ if PlayerUnitFirstPerson then
 	end)
 end
 
+-- Finding the field of view to compensate for the beams of others: with a beam in sight the scroll of the mouse (the keys of
+-- the next and the previous weapon) changes it by a step and the chat says what it is
+local function tune_remote_beam_fov()
+	local service = next(remote_beams) and Managers.input and Managers.input:get_service("Player")
+	local direction = service and (service:get("wield_prev") and 1 or service:get("wield_next") and -1)
+
+	if direction then
+		local fov = math.clamp(mod:get("link_beam_fov") + direction * 0.1, 10, 120)
+
+		mod:set("link_beam_fov", fov)
+		mod:echo("link beam fov %.1f (world %.1f)", fov, math.deg(Managers.state.camera:fov("player_1")))
+	end
+end
+
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
+	tune_remote_beam_fov()
 	pose.update(dt)
 	hand.update()
 
