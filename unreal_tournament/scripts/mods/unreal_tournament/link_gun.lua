@@ -191,6 +191,11 @@ local CONFIG = {
 	beam_send_interval = 0.05, -- seconds
 	remote_beam_smoothing = 20,
 	remote_beam_timeout = 0.5, -- seconds
+	-- The beams of players that are not the host: what they can link to (the host works what it does out from what they say),
+	-- and how long the host goes on with a beam it has heard nothing of
+	remote_link_kinds = {ally = true},
+	remote_input_timeout = 0.5, -- seconds
+	remote_beam_segment_length = 0.15, -- m, beam_segment_length for the beam that is seen from the outside (it looks sparser there)
 	-- The field of view (vertical, degrees) the effect of a beam that is seen from the outside is drawn with: found by eye with a
 	-- world field of view of 65, the beam is then where it is seen. (effect_fov, above, is the staff in the hands seen from the
 	-- holder's side: they are not the same.)
@@ -1743,6 +1748,30 @@ mod.overcharge_callbacks.ut_link_beam = function (self, overcharge_amount)
 	end
 end
 
+-- Heat is the owner's, added on the owner's machine: the host, which works out what the beam does to what it is linked to
+-- for the beams of the others, tells the owner's game to add it
+local function charge_owner(owner_unit, amount, overcharge_type)
+	local owner_player = Managers.player:owner(owner_unit)
+
+	if owner_player.local_player then
+		local overcharge_extension = ScriptUnit.has_extension(owner_unit, "overcharge_system")
+
+		if overcharge_extension and amount > 0 then
+			overcharge_extension:add_charge(amount, nil, overcharge_type)
+		end
+	else
+		mod:network_send("ut_link_heat", owner_player.peer_id, amount, overcharge_type)
+	end
+end
+
+mod:network_register("ut_link_heat", function (_, amount, overcharge_type)
+	local owner_unit = Managers.player:local_player().player_unit
+
+	if owner_unit then
+		charge_owner(owner_unit, amount, overcharge_type)
+	end
+end)
+
 -- The damage over time of a linked enemy
 local function damage_enemy(state, owner_unit, t)
 	if t < (state.next_dot_t or 0) then
@@ -1754,11 +1783,7 @@ local function damage_enemy(state, owner_unit, t)
 	local unit = state.target
 
 	-- (every application costs heat)
-	local overcharge_extension = ScriptUnit.has_extension(owner_unit, "overcharge_system")
-
-	if overcharge_extension then
-		overcharge_extension:add_charge(CONFIG.dot_overcharge, nil, "ut_link_dot")
-	end
+	charge_owner(owner_unit, CONFIG.dot_overcharge, "ut_link_dot")
 
 	-- The game's own poison, the one of poisoned arrows and the like: a buff on the enemy that does the damage over
 	-- time and shows it as poisoned. It is applied again every dot_interval, which keeps it up while it is linked.
@@ -2029,11 +2054,15 @@ local function end_beam(owner_unit)
 	local state = states[owner_unit]
 
 	if state then
-		-- (the others stop drawing it)
-		local owner_go_id = state.beam_sent and Unit.alive(owner_unit) and Managers.state.unit_storage:go_id(owner_unit)
+		-- (the others stop drawing it, and the host stops doing what the link does if it is the one that does)
+		local owner_go_id = (state.beam_sent or state.input_sent) and Unit.alive(owner_unit) and Managers.state.unit_storage:go_id(owner_unit)
 
 		if owner_go_id then
 			mod:network_send("ut_link_beam_end", "others", owner_go_id)
+
+			if state.input_sent then
+				mod:network_send("ut_link_input_end", "others", owner_go_id)
+			end
 		end
 
 		finish_throw(state)
@@ -2090,11 +2119,7 @@ end
 
 -- Heat on top of the heat of the beam
 local function add_heat(owner_unit, amount)
-	local overcharge_extension = ScriptUnit.has_extension(owner_unit, "overcharge_system")
-
-	if overcharge_extension and amount > 0 then
-		overcharge_extension:add_charge(amount, nil, "ut_link_yank")
-	end
+	charge_owner(owner_unit, amount, "ut_link_yank")
 end
 
 -- Yanking an enemy: out of a vortex if it is in one (at a cost), else it is thrown to the owner
@@ -2229,6 +2254,252 @@ local function yank_openable(state, owner_unit, t)
 	end
 end
 
+-- What is linked to is chosen by the player who holds the beam, from what they see: the host's own beam picks it here,
+-- the beam of someone else is picked by their game, which tells the host (see the inputs of the others below).
+-- allowed_kinds limits what can be linked, nothing for everything.
+local function select_target(state, owner_unit, origin, aim, t, physics_world, allowed_kinds)
+	if state.target and state.kind == "object" then
+		refresh_object(state)
+	end
+
+	if state.target and not is_link_valid(state, origin) then
+		release_target(state)
+	end
+
+	-- What is linked stays linked, until the beam is let go: what is picked is the most important of what the aim
+	-- is on (living things, supplies, doors, objects), and only when nothing is linked.
+	if not state.target and t >= (state.link_block_until or 0) then
+		local unit, kind, actor, object_distance = find_target(owner_unit, physics_world, origin, aim)
+
+		-- A supply is only linked if the owner can pick it up
+		if unit and kind == "supply" and not supply_interaction(owner_unit, unit) then
+			state.link_block_until = t + CONFIG.supply_retry
+
+			unit = nil
+		end
+
+		if unit and (not allowed_kinds or allowed_kinds[kind]) then
+			link_target(state, owner_unit, unit, kind, actor, object_distance)
+		end
+	end
+end
+
+-- What happens while a beam is linked, done by the host, which has the enemies, the allies and the objects. It works from
+-- where the owner's eye is, where it is aimed, and whether primary was pressed since the last frame (a yank): the owner's
+-- own when the owner is the host, what the owner's game sends when it isn't (see the inputs of the others below).
+local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_world)
+	if not state.target then
+		return
+	end
+
+	if state.kind == "supply" then
+		if yanked then
+			pick_up_supply(state, owner_unit, t)
+			release_target(state)
+		end
+	elseif state.kind == "openable" then
+		if yanked then
+			yank_openable(state, owner_unit, t)
+		end
+	elseif state.kind == "monster" then
+		-- (a monster is too big to be held: the beam stays on it, and when it moves, or it is yanked, the
+		-- owner is launched towards it and the link is over)
+		local moved = Vector3.length(Vector3.flat(Unit.world_position(state.target, 0) - state.monster_start:unbox()))
+
+		if yanked or moved >= CONFIG.monster_move_distance then
+			launch_towards_monster(state, owner_unit, state.target, t)
+			release_target(state)
+		else
+			damage_enemy(state, owner_unit, t)
+		end
+	elseif state.kind == "object" then
+		state.yank = state.yank or yanked
+
+		hold_object(state, aim, origin, dt)
+	elseif state.kind == "enemy" then
+		if yanked then
+			yank_enemy(state, owner_unit)
+		end
+
+		hold_enemy(state, owner_unit, t, dt, aim, physics_world)
+		damage_enemy(state, owner_unit, t)
+	else
+		local breed = AiUtils.unit_breed(state.target)
+
+		if breed and not breed.is_player then
+			-- (a skeleton: an AI unit, it is thrown to the owner like an enemy is)
+			local flat_aim = Vector3.flat(aim)
+
+			if Vector3.length(flat_aim) > 0.1 then
+				state.flat_aim = Vector3Box(Vector3.normalize(flat_aim))
+			end
+
+			if yanked then
+				state.weight = state.weight or 1
+
+				start_throw(state, owner_unit, t)
+
+				-- (let out of a climb, as a held enemy is: it can't be staggered in one, and the stagger takes it out)
+				local blackboard = BLACKBOARDS[state.target]
+
+				if blackboard and state.throw then
+					blackboard.stagger_prohibited = nil
+					leave_climb(blackboard)
+
+					with_valid_positions(AiUtils.stagger, state.target, blackboard, owner_unit, Vector3.normalize(Vector3.flat(Unit.world_position(owner_unit, 0) - Unit.world_position(state.target, 0)) + Vector3(0.001, 0, 0)), 1, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
+				end
+			end
+
+			if state.throw then
+				update_throw(state, t, physics_world)
+			end
+		elseif yanked then
+			yank_ally(state, owner_unit, t)
+		end
+
+		boost_ally(state, owner_unit, t)
+	end
+end
+
+-- Whoever holds a beam on a machine that isn't the host picks what it is linked to, from what they see (so that what they see
+-- is what is linked), and tells the host, with where the eye is and where it is aimed (the host holds an enemy where the aim
+-- is) and when primary is pressed. The host checks the choice and does what the link does, and tells the owner's game when
+-- the link is over on its side, when an ally attacks (the beam costs heat then) and the heat that the link costs.
+local remote_inputs = {} -- on the host, for every owner that is not the host: { origin, aim (Vector3Boxes), yanked, received, link_request }
+
+local function remote_input(owner_go_id)
+	local owner_unit = Managers.player.is_server and Managers.state.unit_storage:unit(owner_go_id)
+
+	if not owner_unit then
+		return nil
+	end
+
+	local input = remote_inputs[owner_unit]
+
+	if not input then
+		input = {received = Application.time_since_launch()}
+		remote_inputs[owner_unit] = input
+	end
+
+	return input, owner_unit
+end
+
+mod:network_register("ut_link_input", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, yanked)
+	local input = remote_input(owner_go_id)
+
+	if input then
+		input.origin = Vector3Box(Vector3(x, y, z))
+		input.aim = Vector3Box(Vector3(aim_x, aim_y, aim_z))
+		-- (a yank that arrives is kept until the host has handled it, the next input doesn't take it back)
+		input.yanked = input.yanked or yanked
+		input.received = Application.time_since_launch()
+	end
+end)
+
+-- What the owner has linked to (nothing if the game object is 0)
+mod:network_register("ut_link_target", function (_, owner_go_id, target_go_id, kind)
+	local input = remote_input(owner_go_id)
+
+	if input then
+		input.link_request = {kind = kind, target_go_id = target_go_id}
+	end
+end)
+
+mod:network_register("ut_link_input_end", function (_, owner_go_id)
+	local owner_unit = Managers.player.is_server and Managers.state.unit_storage:unit(owner_go_id)
+
+	if owner_unit then
+		remote_inputs[owner_unit] = nil
+
+		end_beam(owner_unit)
+	end
+end)
+
+-- What the host tells the owner: the link is over (the one to that game object, if it is still the one the owner has), and an
+-- ally that is linked is attacking
+mod:network_register("ut_link_released", function (_, target_go_id)
+	local owner_unit = Managers.player:local_player().player_unit
+	local state = owner_unit and states[owner_unit]
+
+	if state and state.target and Unit.alive(state.target) and Managers.state.unit_storage:go_id(state.target) == target_go_id then
+		release_target(state)
+	end
+end)
+
+mod:network_register("ut_link_ally_attack", function ()
+	local owner_unit = Managers.player:local_player().player_unit
+	local state = owner_unit and states[owner_unit]
+
+	if state then
+		state.ally_attack_t = Managers.time:time("game")
+	end
+end)
+
+-- The beams of the others that the host runs: what they do is what a beam of the host's does, from their inputs
+local function update_remote_inputs(dt, t)
+	if not next(remote_inputs) then
+		return
+	end
+
+	local now = Application.time_since_launch()
+	local world = Managers.world:world("level_world")
+	local physics_world = World.physics_world(world)
+
+	for owner_unit, input in pairs(remote_inputs) do
+		if not Unit.alive(owner_unit) or now - input.received > CONFIG.remote_input_timeout then
+			remote_inputs[owner_unit] = nil
+
+			end_beam(owner_unit)
+		elseif input.origin then
+			local state = states[owner_unit]
+
+			if not state then
+				state = {}
+				states[owner_unit] = state
+			end
+
+			local owner_peer_id = Managers.player:owner(owner_unit).peer_id
+			local origin = input.origin:unbox()
+			local yanked = input.yanked
+			local request = input.link_request
+
+			input.yanked = false
+			input.link_request = nil
+			state.callback_world = world
+
+			-- What the owner has linked to: let go of what was linked, and link what they say if it is something that can be
+			if request then
+				release_target(state)
+
+				local unit = request.target_go_id > 0 and Managers.state.unit_storage:unit(request.target_go_id)
+
+				if unit and Unit.alive(unit) and CONFIG.remote_link_kinds[request.kind] then
+					link_target(state, owner_unit, unit, request.kind)
+
+					state.target_go_id = request.target_go_id
+				end
+			end
+
+			-- The link is over if what is linked is gone or too far: the owner is told
+			if state.target and not is_link_valid(state, origin) then
+				release_target(state)
+
+				mod:network_send("ut_link_released", owner_peer_id, state.target_go_id)
+			end
+
+			run_link(state, owner_unit, origin, input.aim:unbox(), yanked, dt, t, physics_world)
+
+			-- An ally that attacks makes the beam cost heat, which is the owner's
+			if state.kind == "ally" and state.ally_attack_t ~= state.noticed_ally_attack_t and t >= (state.next_ally_notice_t or 0) then
+				state.noticed_ally_attack_t = state.ally_attack_t
+				state.next_ally_notice_t = t + CONFIG.beam_send_interval
+
+				mod:network_send("ut_link_ally_attack", owner_peer_id)
+			end
+		end
+	end
+end
+
 mod.charge_update_callbacks.link = function (self, dt, t, world)
 	local owner_unit = self.owner_unit
 	local state = states[owner_unit]
@@ -2246,108 +2517,39 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 
 	state.callback_world = world
 
+	-- Yanking: pressing primary, once for every press (the button being held isn't one). Looked at every frame, linked
+	-- or not, so that a press is only one that happens after the button was up.
+	local yanked = yank_pressed(state, owner_unit)
+
+	if yanked and state.target and not pose.locked_out() then
+		Unit.animation_event(first_person_extension:get_first_person_unit(), CONFIG.yank_animation_event)
+	end
+
 	if Managers.player.is_server then
-		if state.target and state.kind == "object" then
-			refresh_object(state)
+		select_target(state, owner_unit, origin, aim, t, physics_world)
+		run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_world)
+	else
+		select_target(state, owner_unit, origin, aim, t, physics_world, CONFIG.remote_link_kinds)
+
+		-- The host is told what is linked when it changes, and where the eye is and where it is aimed (a yank at once, the rest
+		-- every beam_send_interval)
+		if state.target ~= state.sent_target then
+			state.sent_target = state.target
+
+			local target_go_id = state.target and Unit.alive(state.target) and Managers.state.unit_storage:go_id(state.target) or 0
+
+			mod:network_send("ut_link_target", "others", Managers.state.unit_storage:go_id(owner_unit), target_go_id, state.kind or "")
 		end
 
-		if state.target and not is_link_valid(state, origin) then
-			release_target(state)
-		end
+		state.yank_unsent = state.yank_unsent or yanked
 
-		-- What is linked stays linked, until the beam is let go: what is picked is the most important of what the aim
-		-- is on (living things, supplies, doors, objects), and only when nothing is linked.
-		if not state.target and t >= (state.link_block_until or 0) then
-			local unit, kind, actor, object_distance = find_target(owner_unit, physics_world, origin, aim)
+		if state.yank_unsent or t >= (state.next_input_send or 0) then
+			state.next_input_send = t + CONFIG.beam_send_interval
+			state.input_sent = true
 
-			-- A supply is only linked if the owner can pick it up
-			if unit and kind == "supply" and not supply_interaction(owner_unit, unit) then
-				state.link_block_until = t + CONFIG.supply_retry
+			mod:network_send("ut_link_input", "others", Managers.state.unit_storage:go_id(owner_unit), origin.x, origin.y, origin.z, aim.x, aim.y, aim.z, state.yank_unsent)
 
-				unit = nil
-			end
-
-			if unit then
-				link_target(state, owner_unit, unit, kind, actor, object_distance)
-			end
-		end
-
-		-- Yanking: pressing primary, once for every press (the button being held isn't one). Looked at every frame, linked
-		-- or not, so that a press is only one that happens after the button was up.
-		local yanked = yank_pressed(state, owner_unit)
-
-		if state.target then
-			if yanked and not pose.locked_out() then
-				Unit.animation_event(first_person_extension:get_first_person_unit(), CONFIG.yank_animation_event)
-			end
-
-			if state.kind == "supply" then
-				if yanked then
-					pick_up_supply(state, owner_unit, t)
-					release_target(state)
-				end
-			elseif state.kind == "openable" then
-				if yanked then
-					yank_openable(state, owner_unit, t)
-				end
-			elseif state.kind == "monster" then
-				-- (a monster is too big to be held: the beam stays on it, and when it moves, or it is yanked, the
-				-- owner is launched towards it and the link is over)
-				local moved = Vector3.length(Vector3.flat(Unit.world_position(state.target, 0) - state.monster_start:unbox()))
-
-				if yanked or moved >= CONFIG.monster_move_distance then
-					launch_towards_monster(state, owner_unit, state.target, t)
-					release_target(state)
-				else
-					damage_enemy(state, owner_unit, t)
-				end
-			elseif state.kind == "object" then
-				state.yank = state.yank or yanked
-
-				hold_object(state, aim, origin, dt)
-			elseif state.kind == "enemy" then
-				if yanked then
-					yank_enemy(state, owner_unit)
-				end
-
-				hold_enemy(state, owner_unit, t, dt, aim, physics_world)
-				damage_enemy(state, owner_unit, t)
-			else
-				local breed = AiUtils.unit_breed(state.target)
-
-				if breed and not breed.is_player then
-					-- (a skeleton: an AI unit, it is thrown to the owner like an enemy is)
-					local flat_aim = Vector3.flat(aim)
-
-					if Vector3.length(flat_aim) > 0.1 then
-						state.flat_aim = Vector3Box(Vector3.normalize(flat_aim))
-					end
-
-					if yanked then
-						state.weight = state.weight or 1
-
-						start_throw(state, owner_unit, t)
-
-						-- (let out of a climb, as a held enemy is: it can't be staggered in one, and the stagger takes it out)
-						local blackboard = BLACKBOARDS[state.target]
-
-						if blackboard and state.throw then
-							blackboard.stagger_prohibited = nil
-							leave_climb(blackboard)
-
-							with_valid_positions(AiUtils.stagger, state.target, blackboard, owner_unit, Vector3.normalize(Vector3.flat(Unit.world_position(owner_unit, 0) - Unit.world_position(state.target, 0)) + Vector3(0.001, 0, 0)), 1, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
-						end
-					end
-
-					if state.throw then
-						update_throw(state, t, physics_world)
-					end
-				elseif yanked then
-					yank_ally(state, owner_unit, t)
-				end
-
-				boost_ally(state, owner_unit, t)
-			end
+			state.yank_unsent = false
 		end
 	end
 
@@ -2464,8 +2666,8 @@ local function draw_remote_beams()
 			beam.shown = Vector3Box(shown)
 			beam.drawn_at = now
 
-			-- (a straight line, a point about every beam_segment_length of it)
-			local segments = math.clamp(math.ceil(Vector3.length(shown - start_position) / CONFIG.beam_segment_length), CONFIG.beam_min_segments, CONFIG.beam_max_segments)
+			-- (a straight line, a point about every remote_beam_segment_length of it)
+			local segments = math.clamp(math.ceil(Vector3.length(shown - start_position) / CONFIG.remote_beam_segment_length), CONFIG.beam_min_segments, CONFIG.beam_max_segments)
 
 			-- The effect is drawn with the field of view of the staff in the hands, not of the world: every point of the beam is
 			-- moved toward the middle of the screen by the ratio of the two, so that it is seen where it is
@@ -2577,6 +2779,13 @@ if PlayerUnitFirstPerson then
 end
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
+	-- (there is no game time outside of a level)
+	local t = Managers.time:time("game")
+
+	if t then
+		update_remote_inputs(dt, t)
+	end
+
 	pose.update(dt)
 	hand.update()
 
@@ -2595,6 +2804,8 @@ local function clear_beams()
 	for owner_unit in pairs(remote_beams) do
 		remove_remote_beam(owner_unit)
 	end
+
+	table.clear(remote_inputs)
 
 	restore_corpse()
 	pose.clear()
