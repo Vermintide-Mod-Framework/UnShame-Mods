@@ -82,9 +82,10 @@ local CONFIG = {
 	aim_dot = 0.985, -- how close to the aim a target has to be to be linked to, 1 is exactly
 	beam_overcharge = 0.8, -- heat, added every beam_overcharge_interval seconds while the beam is held
 	beam_overcharge_interval = 0.25,
-	-- Ally: the damage it does is this much more while linked, the buff lasts until the link is over
+	-- Ally: the damage it does is this much more while linked, the buff is there until ally_buff_linger seconds after the link
 	ally_damage_bonus = 0.5,
 	ally_thp_multiplier = 2, -- the temporary health a linked ally gets from their attacks
+	ally_buff_linger = 0.6, -- seconds
 	ally_buff_icon = "kerillian_thornsister_avatar", -- the icon of the buff in the buff bar of the ally
 	bot_target_range = 80,
 	bot_rescan_interval = 0.5, -- seconds, between looks for an enemy for a linked bot that has none near -- m, how far from a linked bot the enemy it is made to attack can be
@@ -232,8 +233,8 @@ local ALLY_BUFF = "ut_link_damage_boost"
 BuffTemplates[ALLY_BUFF] = {
 	buffs = {
 		{
-			-- (no duration: it is there until it is taken away, which is when the link is over, and the buff bar shows no
-			-- timer on its icon, which is the Thornsister's own as the buffs she gives have)
+			-- (no duration: it is there until it is taken away, see update_ally_buffs, and the buff bar shows no timer on its
+			-- icon, which is the Thornsister's own as the buffs she gives have)
 			icon = CONFIG.ally_buff_icon,
 			max_stacks = 1,
 			multiplier = CONFIG.ally_damage_bonus,
@@ -1430,22 +1431,9 @@ local function add_held_outline(state)
 	utils.add_outline(state, state.target, HELD_OUTLINE)
 end
 
--- The buff an ally has while linked is taken away when the link is over (it is synced: the ally's game loses it too)
-local function remove_ally_buff(state)
-	local buff_unit = state.ally_buff_unit
-
-	if buff_unit and Unit.alive(buff_unit) then
-		Managers.state.entity:system("buff_system"):remove_buff_synced(buff_unit, state.ally_buff_id)
-	end
-
-	state.ally_buff_unit = nil
-	state.ally_buff_id = nil
-end
-
 local function release_target(state)
 	finish_throw(state)
 	clear_held_outline(state)
-	remove_ally_buff(state)
 
 	if state.target then
 		bot_targets[state.target] = nil
@@ -1948,13 +1936,48 @@ local function boost_ally(state, owner_unit, t)
 	force_bot_target(state.target)
 
 	show_ally_buff(state, state.callback_world, t)
+end
 
-	-- Given once, when the link starts (synced, the ally's own game works out what they do)
-	if not state.ally_buff_id then
-		state.ally_buff_unit = state.target
-		state.ally_buff_id = Managers.state.entity:system("buff_system"):add_buff_synced(state.target, ALLY_BUFF, BuffSyncType.All, {
-			attacker_unit = owner_unit,
-		})
+-- The buff of the allies that are linked, looked at every frame by the host: an ally that is linked has it (given when they
+-- are first seen linked), and loses it ally_buff_linger seconds after the last time they were. Whatever ended the link, a beam
+-- that is let go of, an ally that was swapped for another or that left, the beam of a player that has gone, is taken care of.
+-- It is synced: the ally's own game works out what they do with it, and loses it as well.
+local ally_buffs = {} -- { [the ally] = { id of the buff, when they were last linked } }
+
+local function remove_ally_buff(unit, entry)
+	if Unit.alive(unit) then
+		Managers.state.entity:system("buff_system"):remove_buff_synced(unit, entry.id)
+	end
+
+	ally_buffs[unit] = nil
+end
+
+local function update_ally_buffs(t)
+	for owner_unit, state in pairs(states) do
+		local unit = state.kind == "ally" and state.target
+
+		if unit and Unit.alive(unit) then
+			local entry = ally_buffs[unit]
+
+			if not entry then
+				entry = {
+					id = Managers.state.entity:system("buff_system"):add_buff_synced(unit, ALLY_BUFF, BuffSyncType.All, {
+						attacker_unit = owner_unit,
+					}),
+				}
+				ally_buffs[unit] = entry
+			end
+
+			entry.linked_t = t
+		end
+	end
+
+	for unit, entry in pairs(ally_buffs) do
+		if not Unit.alive(unit) then
+			ally_buffs[unit] = nil
+		elseif t - entry.linked_t > CONFIG.ally_buff_linger then
+			remove_ally_buff(unit, entry)
+		end
 	end
 end
 
@@ -2117,7 +2140,6 @@ local function end_beam(owner_unit)
 
 		finish_throw(state)
 		clear_held_outline(state)
-		remove_ally_buff(state)
 		destroy_sprites(state)
 
 		if state.target then
@@ -2848,6 +2870,10 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 
 	if t then
 		update_remote_inputs(dt, t)
+
+		if Managers.player.is_server then
+			update_ally_buffs(t)
+		end
 	end
 
 	pose.update(dt)
@@ -2870,6 +2896,10 @@ local function clear_beams()
 	end
 
 	table.clear(remote_inputs)
+
+	for unit, entry in pairs(ally_buffs) do
+		remove_ally_buff(unit, entry)
+	end
 
 	restore_corpse()
 	pose.clear()
