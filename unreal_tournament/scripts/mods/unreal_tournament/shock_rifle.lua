@@ -32,6 +32,7 @@ local CONFIG = {
 	beam_fire_time = 0, -- delay between pressing fire and the shot
 	beam_range = 60, -- trail length when the beam doesn't hit anything
 	trail_effect = "fx/wpnfx_staff_beam_trail_remap",
+	trail_effect_3p = "fx/wpnfx_staff_beam_trail_3p_remap", -- what the other players see of the beam
 	trail_duration = 0.45,
 	trail_width = 0.3,
 	-- Ball
@@ -249,6 +250,10 @@ end
 
 local function enter_idle_pose(first_person_extension, unit_1p, is_valid, slow_delay)
 	Unit.animation_event(unit_1p, CONFIG.idle_pose_event)
+
+	-- (the other players see the character in it too: the shot of the beam is an animation that follows from it, and
+	-- without it the character is back in the idle of the staff after every shot)
+	Managers.state.network:anim_event(first_person_extension.unit, CONFIG.idle_pose_event)
 	slow_down_idle_pose(first_person_extension, is_valid, slow_delay)
 end
 
@@ -834,16 +839,15 @@ local function destroy_trail(trail)
 	pcall(World.destroy_particles, trail.world, trail.effect_id)
 end
 
-local function spawn_trail(action, origin, direction)
-	local world = action.world
-	local physics_world = action.physics_world
-	local result = PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
-	local end_position = result and result[#result][1] or origin + direction * CONFIG.beam_range
-	local weapon_unit = action.weapon_unit
-	local muzzle_position = Unit.world_position(weapon_unit, Unit.node(weapon_unit, "fx_muzzle"))
+local function create_trail(world, effect_name, muzzle_position, end_position)
+	-- (an effect that isn't loaded crashes the game)
+	if not effects.is_available(effect_name) then
+		return
+	end
+
 	local trail_direction = Vector3.normalize(muzzle_position - end_position)
-	local effect_id = World.create_particles(world, CONFIG.trail_effect, end_position, Quaternion.look(trail_direction))
-	local length_variable_id = World.find_particles_variable(world, CONFIG.trail_effect, "trail_length")
+	local effect_id = World.create_particles(world, effect_name, end_position, Quaternion.look(trail_direction))
+	local length_variable_id = World.find_particles_variable(world, effect_name, "trail_length")
 
 	trails[#trails + 1] = {
 		age = 0,
@@ -853,6 +857,35 @@ local function spawn_trail(action, origin, direction)
 		world = world,
 	}
 end
+
+-- The beam of the player who fires: the trail, and the end of it is told to the other players, who see it from the
+-- staff of the player's character
+local function spawn_trail(action, origin, direction)
+	local physics_world = action.physics_world
+	local result = PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
+	local end_position = result and result[#result][1] or origin + direction * CONFIG.beam_range
+	local weapon_unit = action.weapon_unit
+	local muzzle_position = Unit.world_position(weapon_unit, Unit.node(weapon_unit, "fx_muzzle"))
+
+	create_trail(action.world, CONFIG.trail_effect, muzzle_position, end_position)
+
+	mod:network_send("ut_shock_trail", "others", Managers.state.unit_storage:go_id(action.owner_unit), end_position.x, end_position.y, end_position.z)
+end
+
+mod:network_register("ut_shock_trail", function (_, owner_go_id, x, y, z)
+	local unit = Managers.state.unit_storage:unit(owner_go_id)
+	local inventory_extension = unit and ScriptUnit.has_extension(unit, "inventory_system")
+	local equipment = inventory_extension and inventory_extension:equipment()
+	local weapon_unit = equipment and (equipment.left_hand_wielded_unit_3p or equipment.right_hand_wielded_unit_3p)
+
+	if not weapon_unit or not Unit.alive(weapon_unit) then
+		return
+	end
+
+	local muzzle_position = Unit.world_position(weapon_unit, Unit.node(weapon_unit, "fx_muzzle"))
+
+	create_trail(Managers.world:world("level_world"), CONFIG.trail_effect_3p, muzzle_position, Vector3(x, y, z))
+end)
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	scheduler.update(dt)
