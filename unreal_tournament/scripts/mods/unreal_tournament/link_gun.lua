@@ -258,9 +258,10 @@ function pose.locked_out()
 end
 
 -- (an action that starts before the stance was entered enters it itself, the shots have no animation of their own)
-function pose.enter(unit_1p)
+function pose.enter(unit_1p, owner_unit)
 	if pose.locked_out() then
 		pose.waiting = unit_1p
+		pose.waiting_owner = owner_unit
 
 		return
 	end
@@ -270,7 +271,7 @@ function pose.enter(unit_1p)
 
 	Unit.animation_event(unit_1p, CONFIG.idle_pose_event)
 	-- (the others see the stance too: the event is sent to the third person unit, the game doesn't send it for this)
-	Managers.state.network:anim_event(pose.owner_unit, CONFIG.idle_pose_event)
+	Managers.state.network:anim_event(owner_unit, CONFIG.idle_pose_event)
 end
 
 -- The right arm is hidden from when the staff is wielded until anything else is: the node of its shoulder in the
@@ -396,7 +397,7 @@ function pose.update(dt)
 				pose.schedule(CONFIG.damage_recovery_delay, pose.is_valid, function ()
 					pose.recovering = false
 
-					pose.enter(pose.unit_1p)
+					pose.enter(pose.unit_1p, pose.owner_unit)
 				end)
 
 				break
@@ -408,7 +409,7 @@ function pose.update(dt)
 		if not pose.is_valid or not pose.is_valid() then
 			pose.waiting = nil
 		elseif not pose.locked_out() then
-			pose.enter(pose.waiting)
+			pose.enter(pose.waiting, pose.waiting_owner)
 		end
 	end
 
@@ -619,7 +620,7 @@ local function apply_link_gun()
 			if not pose.entered then
 				local weapon_extension = select(4, ...)
 
-				pose.enter(weapon_extension.first_person_extension:get_first_person_unit())
+				pose.enter(weapon_extension.first_person_extension:get_first_person_unit(), (...))
 			end
 
 			if saved.enter_function then
@@ -668,7 +669,7 @@ local function apply_link_gun()
 		pose.clear()
 
 		if not pose.entered then
-			pose.enter(weapon_extension.first_person_extension:get_first_person_unit())
+			pose.enter(weapon_extension.first_person_extension:get_first_person_unit(), attacker_unit)
 		end
 
 		input_extension:reset_release_input()
@@ -2414,7 +2415,7 @@ mod.wield_callbacks.link = function (self, equipment, slot_data, unit_1p)
 	pose.recovering = false
 
 	pose.schedule(CONFIG.idle_pose_delay, is_valid, function ()
-		pose.enter(unit_1p)
+		pose.enter(unit_1p, pose.owner_unit)
 	end)
 end
 
@@ -2430,7 +2431,7 @@ if PlayerUnitFirstPerson then
 		pose.entered = false
 
 		pose.schedule(CONFIG.transition_pose_delay, pose.is_valid, function ()
-			pose.enter(pose.unit_1p)
+			pose.enter(pose.unit_1p, pose.owner_unit)
 		end)
 	end)
 end
