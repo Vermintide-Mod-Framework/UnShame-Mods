@@ -2446,6 +2446,29 @@ local function remote_staff_end(owner_unit)
 		return nil, "no equipment"
 	end
 
+	if not mod.link_nodes_reported then
+		mod.link_nodes_reported = true
+
+		for name, staff_unit in pairs({left = equipment.left_hand_wielded_unit_3p, right = equipment.right_hand_wielded_unit_3p}) do
+			if Unit.alive(staff_unit) then
+				local found = {}
+				local root = Unit.world_position(staff_unit, 0)
+
+				for _, node_name in ipairs({"fx_muzzle", "fx_01", "j_tip", "fx_right_muzzle", "fx_left_muzzle"}) do
+					if Unit.has_node(staff_unit, node_name) then
+						local offset = Unit.world_position(staff_unit, Unit.node(staff_unit, node_name)) - root
+
+						found[#found + 1] = string.format("%s (%.2f %.2f %.2f)", node_name, offset.x, offset.y, offset.z)
+					end
+				end
+
+				mod:echo("link staff %s: %s", name, table.concat(found, ", "))
+			else
+				mod:echo("link staff %s: none", name)
+			end
+		end
+	end
+
 	for _, staff_unit in ipairs({equipment.left_hand_wielded_unit_3p, equipment.right_hand_wielded_unit_3p}) do
 		if Unit.alive(staff_unit) and Unit.has_node(staff_unit, CONFIG.staff_end_node) then
 			return Unit.world_position(staff_unit, Unit.node(staff_unit, CONFIG.staff_end_node))
