@@ -3066,6 +3066,13 @@ mod:network_register("ut_link_simple_damage", function (_, object_id, x, y, z, d
 	end
 end)
 
+-- Until when an owner can't yank or link anything, after an interaction was started for them: starting one stops the weapon's action
+-- (the game stops the actions of the weapons while a player interacts), which ends the beam and its state, and the beam starts
+-- again with a new state while the buttons are still down, in which the button of the yank that is still held is a new press
+-- on the door that is still in front of it: the door was opened and closed, and the heat was paid, once for each, until the
+-- button was let go of. The state is gone, so this is kept by the owner.
+local interaction_block = setmetatable({}, {__mode = "k"}) -- { [the unit of the owner] = the time it ends }
+
 -- Yanking a door opens it, or closes it, a chest is opened, a lever is used: all by the game's own interaction, as a supply is picked
 -- up, for the host and for the others the same. The game sends it to every machine, each toggles its door once, and it lets one
 -- player at a time interact with a door (a door that is toggled by the script on one machine only, or twice at once by two
@@ -3081,6 +3088,7 @@ local function yank_openable(state, owner_unit, t)
 		release_target(state)
 
 		state.link_block_until = t + CONFIG.supply_retry
+		interaction_block[owner_unit] = t + CONFIG.supply_retry
 	elseif is_breakable(state.target) then
 		break_down(state, owner_unit, t)
 	end
@@ -3505,6 +3513,12 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 	-- Yanking: pressing primary, once for every press (the button being held isn't one). Looked at every frame, linked
 	-- or not, so that a press is only one that happens after the button was up.
 	local yanked = yank_pressed(state, owner_unit)
+
+	-- (nothing after an interaction was started for the owner, see interaction_block: a press is only one that this beam has seen)
+	if (interaction_block[owner_unit] or 0) > t then
+		yanked = false
+		state.link_block_until = math.max(state.link_block_until or 0, interaction_block[owner_unit])
+	end
 
 	if yanked and state.target and not pose.locked_out() then
 		Unit.animation_event(first_person_extension:get_first_person_unit(), CONFIG.yank_animation_event)
