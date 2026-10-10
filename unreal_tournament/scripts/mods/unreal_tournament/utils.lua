@@ -36,6 +36,14 @@ function utils.with_valid_positions(func, ...)
 	end
 end
 
+-- Whether a unit is the character of the player who is playing on this machine. The bots that the host has use the same weapons and
+-- run the same hooks of them, and are not played through first person arms: what is done to the arms of a player's weapon isn't to be.
+function utils.is_local_player_unit(unit)
+	local local_player = Managers.player and Managers.player:local_player()
+
+	return local_player ~= nil and local_player.player_unit == unit
+end
+
 -- Whether the animations of a player's character are the weapon's to play: not while the game plays its own (hanging off a ledge,
 -- being knocked down, dead). The weapons' stance is an animation event that is sent to the character that others see too, and
 -- sent in the middle of one of those it replaces the animation of the state. (Only these: the status of being disabled is

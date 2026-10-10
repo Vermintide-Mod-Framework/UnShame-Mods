@@ -251,7 +251,7 @@ end
 local function enter_idle_pose(first_person_extension, unit_1p, is_valid, slow_delay)
 	-- (only while the rifle is what is wielded: the event is not one of the animations of another weapon, which is what the arms
 	-- and the character play after a swap, and an event that an animation graph doesn't have is an error of the game's)
-	if utils.wielded_template_name(first_person_extension.unit) ~= TEMPLATE_NAME then
+	if not utils.is_local_player_unit(first_person_extension.unit) or utils.wielded_template_name(first_person_extension.unit) ~= TEMPLATE_NAME then
 		return
 	end
 
