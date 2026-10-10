@@ -1020,13 +1020,15 @@ end
 
 local openables = {} -- the doors and the chests near enough: the unit, is it a chest
 
--- What the aim is on, closest to it: an enemy that can be held or an ally, and failing those an object with a body
--- that moves (a ragdoll). Returns the unit and what it is, and for an object its body and how far it is.
+-- What the aim is on: an ally if there is one, else the enemy that can be held that is closest to it, and failing those an
+-- object with a body that moves (a ragdoll). Returns the unit and what it is, and for an object its body and how far it is.
 local function find_target(owner_unit, physics_world, origin, aim)
 	local side = Managers.state.side.side_by_unit[owner_unit]
 	local range = CONFIG.beam_range
 	local best_unit, best_kind, best_actor
 	local best_dot = CONFIG.aim_dot
+	local best_ally_unit
+	local best_ally_dot = CONFIG.aim_dot
 
 	local function consider(unit, kind)
 		local offset = chest_position(unit) - origin
@@ -1038,7 +1040,13 @@ local function find_target(owner_unit, physics_world, origin, aim)
 
 		local dot = Vector3.dot(aim, offset * (1 / distance))
 
-		if dot > best_dot and has_line_of_sight(physics_world, origin, chest_position(unit)) then
+		-- (the allies are looked at apart, they come before everything else)
+		if kind == "ally" then
+			if dot > best_ally_dot and has_line_of_sight(physics_world, origin, chest_position(unit)) then
+				best_ally_unit = unit
+				best_ally_dot = dot
+			end
+		elseif dot > best_dot and has_line_of_sight(physics_world, origin, chest_position(unit)) then
 			best_unit = unit
 			best_kind = kind
 			best_dot = dot
@@ -1101,6 +1109,11 @@ local function find_target(owner_unit, physics_world, origin, aim)
 				consider(unit, "ally")
 			end
 		end
+	end
+
+	-- An ally that is on the aim is linked, before an enemy or anything else, whatever is closer to the aim
+	if best_ally_unit then
+		return best_ally_unit, "ally"
 	end
 
 	-- Nothing living: supplies (what can be picked up) and doors, a little more forgiving of the aim, they are small
