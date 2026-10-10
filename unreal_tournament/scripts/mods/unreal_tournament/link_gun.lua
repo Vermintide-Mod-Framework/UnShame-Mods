@@ -2040,6 +2040,14 @@ local function hold_object(state, aim, origin, dt)
 		state.hold_distance = CONFIG.yank_min_distance
 	end
 
+	if not state.reported then
+		state.reported = true
+
+		local body = held_actor(state)
+
+		mod:echo("DEBUG hold object: %s networked=%s corpse=%s bodies=%d actor=%s physical=%s dynamic=%s static=%s sleeping=%s kinematic=%s", tostring(state.target), tostring(is_networked_object(state.target)), tostring(state.corpse), Unit.num_actors(state.target), tostring(body ~= nil), tostring(body ~= nil and Actor.is_physical(body)), tostring(body ~= nil and Actor.is_dynamic(body)), tostring(body ~= nil and Actor.is_static(body)), tostring(body ~= nil and Actor.is_sleeping(body)), tostring(body ~= nil and Actor.is_kinematic ~= nil and Actor.is_kinematic(body)))
+	end
+
 	local wanted = origin + aim * state.hold_distance
 	local velocity = (wanted - target_position(state)) * CONFIG.object_pull
 	local speed = Vector3.length(velocity)
