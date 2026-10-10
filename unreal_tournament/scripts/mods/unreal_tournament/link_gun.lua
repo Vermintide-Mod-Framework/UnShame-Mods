@@ -1453,7 +1453,8 @@ local function find_target(owner_unit, physics_world, origin, aim)
 
 		-- The things that are broken down, the units with a health that aren't characters (the characters have a blackboard, which
 		-- is looked at first, there are many of them)
-		for unit in pairs(Managers.state.entity:get_entities("GenericHealthExtension")) do
+		-- (every kind of health extension: the things that are shot at in the level, a lantern that hangs, have kinds of their own)
+		for unit in pairs(Managers.state.entity:system("health_system").unit_extensions) do
 			if not BLACKBOARDS[unit] and Unit.alive(unit) then
 				local position = POSITION_LOOKUP[unit] or Unit.world_position(unit, 0)
 
