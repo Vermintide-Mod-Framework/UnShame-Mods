@@ -3,12 +3,26 @@ local mod = get_mod("unreal_tournament")
 -- Link Gun: replaces the Deepwood Staff's (the Thornsister's, the template staff_life) actions in place.
 -- The numbers are from UT2004 (XWeapons/LinkFire, LinkAltFire, LinkProjectile, LinkBeamEffect).
 --   LMB: the staff's burst of thorns, which stun as well as hurt.
---   RMB (held): the link beam. What the aim is on is linked to: an ally does more damage for as long as the link
---               lasts (UT's link, a teammate), an enemy is held where it is and follows the aim along the
---               ground, a heavy one slower, with the beam hanging more.
--- What happens to enemies is done by the game that has them, the host's. The beam is drawn for the player who holds it,
--- as a curve from the staff in the hands; the player tells the others where it ends, and they draw a straight one from
--- the staff of the player's character.
+--   RMB (held): the link beam. What the aim is on is linked to, one thing at a time, and stays linked until the beam is let go.
+--               What is chosen: an ally first (a player, a bot, a necromancer's pet less so), else an enemy (a special before
+--               another elite before the rest), a monster, and failing those what is not alive: a pickup, a door, a chest, a
+--               lever or another interaction of the game, a thing that can be broken down, a ragdoll or another object that is moved
+--               by physics. An open door is only linked when there is nothing else.
+--               What the link does: an ally does more damage and gets their stamina back faster for as long as it lasts (UT's
+--               link, a teammate); an enemy is poisoned and held where the aim is, it follows the aim along the
+--               ground (staggered over and over), a heavy one slower, with the beam hanging more; a monster is too big to be held:
+--               it launches the owner to it; the rest is held in the air, or stays where it is.
+--   Primary while linked (a yank): an enemy is thrown, the way the game lets one out of the Thornsister's vortex, to land in front of
+--               the owner (pushed instead, if it is near or the game doesn't put it in a vortex), out of a vortex if it is in one; an
+--               ally is freed from what holds them, got up, pulled up from a ledge, or launched to the owner, at a cost in heat (the
+--               whole bar for a player); an object is pulled to the owner, and what a shot would bring down (a lantern) comes down;
+--               a pickup is picked up, a door opened or closed, a chest or a lever used, a barricade broken.
+-- Who does what: the player who holds the beam picks what is linked, from what they see. What depends on the machine of the
+-- player (their pickups, doors, chests, interactions, the objects of the level, the heat of the staff) is done by their own game,
+-- and what happens to the enemies, the allies and the networked objects is done by the game that has them, the host's, which is told
+-- what is linked and where the player aims. The beam is drawn for the player who holds it, as a curve from the staff in the hands;
+-- the player tells the others where it ends, and they draw it from the staff of the player's character, and hear a drone while
+-- something is linked and a gust for every yank.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local effects = mod.effects
