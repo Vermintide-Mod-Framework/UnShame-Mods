@@ -84,6 +84,7 @@ local CONFIG = {
 	beam_overcharge_interval = 0.25,
 	-- Ally: the damage it does is this much more while linked, the buff is there until ally_buff_linger seconds after the link
 	ally_damage_bonus = 0.5,
+	ally_stamina_regen_bonus = 1, -- and the stamina it gets back is this much more (and the delay before it starts, less)
 	ally_thp_multiplier = 2, -- the temporary health a linked ally gets from their attacks
 	ally_buff_linger = 0.6, -- seconds
 	ally_buff_icon = "kerillian_thornsister_avatar", -- the icon of the buff in the buff bar of the ally
@@ -254,7 +255,7 @@ if has_staff then
 	end)
 end
 
--- The buff an ally gets while linked. The buffs go over the network by name, everyone in the game needs the mod.
+-- The buff an ally gets while linked, more damage and faster stamina. The buffs go over the network by name, everyone in the game needs the mod.
 -- There are two of it, see update_ally_buffs: one with no duration while the link lasts (the buff bar shows its icon with no
 -- timer) and one with a duration for after it, which shows the timer. They have the same name, which is how the buff bar
 -- tells buffs apart: it is one icon that gets its timer. The icon is the Thornsister's own, as the buffs she gives have.
@@ -273,6 +274,14 @@ local function ally_buff_template(duration)
 				-- (the damage that is dealt, not the power level: the game scales a power level on a curve, and caps it by
 				-- difficulty, so that more of it is little more damage for a player)
 				stat_buff = "damage_dealt",
+			},
+			{
+				duration = duration,
+				max_stacks = 1,
+				multiplier = CONFIG.ally_stamina_regen_bonus,
+				-- (a name of its own: the stacks are counted by name; no icon, the one buff shows)
+				name = ALLY_BUFF .. "_stamina",
+				stat_buff = "fatigue_regen",
 			},
 		},
 	}
