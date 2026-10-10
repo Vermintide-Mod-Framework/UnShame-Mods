@@ -3062,30 +3062,23 @@ mod:network_register("ut_link_simple_damage", function (_, object_id, x, y, z, d
 	end
 end)
 
--- Yanking a door opens it, or closes it; a chest is opened by the game's own interaction, as a supply is picked up. A door
--- is only opened like that by the host: for the others it is the game's interaction too, which the game sends to the others
--- (a door that is opened on the machine of someone who is not the host would not be opened for anyone else).
+-- Yanking a door opens it, or closes it, a chest is opened, a lever is used: all by the game's own interaction, as a supply is picked
+-- up, for the host and for the others the same. The game sends it to every machine, each toggles its door once, and it lets one
+-- player at a time interact with a door (a door that is toggled by the script on one machine only, or twice at once by two
+-- players, is a different door on each).
 local function yank_openable(state, owner_unit, t)
-	local door_extension = ScriptUnit.has_extension(state.target, "door_system")
+	local interactor_extension, interaction_type = supply_interaction(owner_unit, state.target)
 
-	if is_door(state.target) and Managers.player.is_server then
-		-- (the door looks at the position of whoever opens it, the mods' update runs before the game has made them current)
-		with_valid_positions(door_extension.interacted_with, door_extension, owner_unit)
+	if interactor_extension then
+		interactor_extension:start_interaction("action_two_hold", state.target, interaction_type)
 		add_heat(owner_unit, CONFIG.yank_door_overcharge)
-	else
-		local interactor_extension, interaction_type = supply_interaction(owner_unit, state.target)
 
-		if interactor_extension then
-			interactor_extension:start_interaction("action_two_hold", state.target, interaction_type)
-			add_heat(owner_unit, CONFIG.yank_door_overcharge)
+		-- (the link is over, and doesn't come back while the chest is being opened)
+		release_target(state)
 
-			-- (the link is over, and doesn't come back while the chest is being opened)
-			release_target(state)
-
-			state.link_block_until = t + CONFIG.supply_retry
-		elseif is_breakable(state.target) then
-			break_down(state, owner_unit, t)
-		end
+		state.link_block_until = t + CONFIG.supply_retry
+	elseif is_breakable(state.target) then
+		break_down(state, owner_unit, t)
 	end
 end
 
