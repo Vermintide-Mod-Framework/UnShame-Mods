@@ -2908,13 +2908,13 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		-- (with what bends it: the aim, and what hangs from it and lags behind, 0 and nothing for none)
 		local lag = pending.lag or Vector3.zero()
 
-		-- (and, for a ragdoll or an object that is held, which one (its id), where the eye is and how far in front of it it is
-		-- held, to hold it the same way on their machines, 0 for none)
+		-- (and, for a ragdoll or an object that is held, which one (its id) and the bone of the body that is held, where the eye
+		-- is and how far in front of it it is held, to hold it the same way on their machines, 0 for none)
 		local is_object_held = state.kind == "object" and Unit.alive(state.target)
 		local hold_distance = is_object_held and state.hold_distance or 0
 		local object_id = is_object_held and object_id_of(state.target) or 0
 
-		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z, aim.x, aim.y, aim.z, pending.weight or 0, lag.x, lag.y, lag.z, origin.x, origin.y, origin.z, hold_distance, object_id)
+		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z, aim.x, aim.y, aim.z, pending.weight or 0, lag.x, lag.y, lag.z, origin.x, origin.y, origin.z, hold_distance, object_id, state.node_index or -1)
 	end
 end
 
@@ -2933,7 +2933,7 @@ local function remove_remote_beam(owner_unit)
 	end
 end
 
-mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, weight, lag_x, lag_y, lag_z, origin_x, origin_y, origin_z, hold_distance, object_id)
+mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, weight, lag_x, lag_y, lag_z, origin_x, origin_y, origin_z, hold_distance, object_id, node_index)
 	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
 
 	if not owner_unit then
@@ -2954,14 +2954,15 @@ mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, a
 	beam.origin = Vector3Box(Vector3(origin_x, origin_y, origin_z))
 	beam.hold_distance = hold_distance > 0 and object_id > 0 and hold_distance or nil
 	beam.object_id = object_id
+	beam.node_index = node_index >= 0 and node_index or nil
 	beam.received = Application.time_since_launch()
 end)
 
 -- A ragdoll or an object that is held by someone else is held on this machine too, by the same code, from the eye and aim
 -- of the holder that are sent. This machine's copy of it is told by its id (the ragdolls don't lie in the same places on the
--- machines), and the body of it that is held is the one nearest to its chest, looked for every frame (the copies don't have the
--- same parts, a limb can be missing on one and not on another): the copies are not the same, they are all held at the same
--- place. The holder's own game does what it always did.
+-- machines), and the body of it that is held is the one of the bone that the holder holds, or the one nearest to its chest
+-- where this copy hasn't got it (the copies don't have the same parts, a limb can be missing on one and not on another): the
+-- copies are not the same, they are all held at the same place. The holder's own game does what it always did.
 local function update_object_mirrors(dt)
 	if not next(remote_beams) then
 		return
@@ -3009,10 +3010,18 @@ local function update_object_mirrors(dt)
 
 			if mirror then
 				mirror.hold_distance = beam.hold_distance
-				-- (no bone is kept: the body nearest to the chest is the one that is held, whatever this copy has)
-				mirror.node_index = nil
+				-- (the body of the bone that the holder holds, and if this copy hasn't got that one, a limb is missing, the one
+				-- nearest to the chest)
+				mirror.node_index = beam.node_index
 
 				refresh_object(mirror)
+
+				if not mirror.actor then
+					mirror.node_index = nil
+
+					refresh_object(mirror)
+				end
+
 				hold_object(mirror, beam.aim:unbox(), beam.origin:unbox(), dt)
 			end
 		end
