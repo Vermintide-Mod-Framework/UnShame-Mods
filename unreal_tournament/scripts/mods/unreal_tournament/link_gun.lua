@@ -194,7 +194,7 @@ local CONFIG = {
 	remote_beam_timeout = 0.5, -- seconds
 	-- The beams of players that are not the host: what they can link to (the host works what it does out from what they say),
 	-- and how long the host goes on with a beam it has heard nothing of
-	remote_link_kinds = {ally = true, enemy = true},
+	remote_link_kinds = {ally = true, enemy = true, monster = true},
 	remote_input_timeout = 0.5, -- seconds
 	-- The field of view (vertical, degrees) the effect of a beam that is seen from the outside is drawn with: found by eye with a
 	-- world field of view of 65, the beam is then where it is seen. (effect_fov, above, is the staff in the hands seen from the
@@ -2599,12 +2599,15 @@ end)
 
 -- What the host tells the owner: the link is over (the one to that game object, if it is still the one the owner has), and an
 -- ally that is linked is attacking
-mod:network_register("ut_link_released", function (_, target_go_id)
+mod:network_register("ut_link_released", function (_, target_go_id, block_seconds)
 	local owner_unit = Managers.player:local_player().player_unit
 	local state = owner_unit and states[owner_unit]
 
 	if state and state.target and Unit.alive(state.target) and Managers.state.unit_storage:go_id(state.target) == target_go_id then
 		release_target(state)
+
+		-- (not linked again at once, if the host says it can't be: after a monster has pulled the owner to it)
+		state.link_block_until = Managers.time:time("game") + block_seconds
 	end
 end)
 
@@ -2666,23 +2669,32 @@ local function update_remote_inputs(dt, t)
 			if request then
 				release_target(state)
 
+				state.target_go_id = nil
+
 				local unit = request.target_go_id > 0 and Managers.state.unit_storage:unit(request.target_go_id)
 
-				if unit and Unit.alive(unit) and CONFIG.remote_link_kinds[request.kind] then
+				-- (not while a link is blocked, which is what a monster does after pulling the owner to it)
+				if unit and Unit.alive(unit) and CONFIG.remote_link_kinds[request.kind] and t >= (state.link_block_until or 0) then
 					link_target(state, owner_unit, unit, request.kind)
 
 					state.target_go_id = request.target_go_id
 				end
 			end
 
-			-- The link is over if what is linked is gone or too far: the owner is told
+			-- The link is over if what is linked is gone or too far
 			if state.target and not is_link_valid(state, origin) then
 				release_target(state)
-
-				mod:network_send("ut_link_released", owner_peer_id, state.target_go_id)
 			end
 
 			run_link(state, owner_unit, origin, input.aim:unbox(), yanked, dt, t, physics_world)
+
+			-- A link that the host has ended (for any of the reasons) is told to the owner, with how long it can't be made
+			-- again, if it is blocked
+			if not state.target and state.target_go_id then
+				mod:network_send("ut_link_released", owner_peer_id, state.target_go_id, math.max((state.link_block_until or 0) - t, 0))
+
+				state.target_go_id = nil
+			end
 
 			-- An ally that attacks makes the beam cost heat, which is the owner's
 			if state.kind == "ally" and state.ally_attack_t ~= state.noticed_ally_attack_t and t >= (state.next_ally_notice_t or 0) then
