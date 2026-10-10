@@ -219,6 +219,7 @@ local CONFIG = {
 	-- further than anchored_distance from where it is pulled to, anchor_check_delay seconds after the yank
 	anchor_check_delay = 0.4, -- seconds
 	anchored_distance = 1, -- m
+	pet_hold_distance = 2.5, -- m, how far in front of the owner a pet that is picked up floats
 	object_pull = 20,
 	object_max_speed = 35, -- m/s
 	-- The beam: drawn as a curve (a cubic Bezier) from the staff to what it is on. A held enemy hangs it by
@@ -1732,33 +1733,78 @@ local function is_staggered(blackboard)
 	return blackboard.stagger ~= nil and blackboard.stagger ~= false and blackboard.stagger ~= 0
 end
 
--- A pet (the necromancer's skeleton) has no stagger and isn't put in a vortex, so it can't be pushed or thrown: a yank puts it down
--- beside the owner, yank_min_distance in front of them, as if it were picked up and set there.
-local function place_pet(state, owner_unit)
-	local unit = state.target
-	local locomotion_extension = ScriptUnit.has_extension(unit, "locomotion_system")
-	local aim_flat = state.flat_aim and state.flat_aim:unbox() or Vector3.forward()
-	local place = throw_landing(owner_unit, aim_flat, CONFIG.yank_min_distance)
 
-	if not place or not locomotion_extension or not locomotion_extension.teleport_to then
+-- A pet (the necromancer's skeleton) has no stagger and isn't put in a vortex, so it can't be pushed or thrown: a yank picks it up, it
+-- floats in front of the owner, where the aim is, until it is put down by another yank or the beam is let go. It is moved the way
+-- the game moves a unit that is carried (the transported action: the navigation is off, the movement is by the script, and the
+-- unit and its navigation bot are put where it is wanted, every frame), and put down the way that action ends: on the navmesh, with
+-- the navigation on, where it was going forgotten.
+local function hold_pet(state, origin, aim)
+	local unit = state.target
+	local blackboard = BLACKBOARDS[unit]
+	local locomotion_extension = blackboard and blackboard.locomotion_extension
+	local navigation_extension = blackboard and blackboard.navigation_extension
+
+	if not locomotion_extension or not navigation_extension then
 		return
 	end
 
-	-- A unit that walks the navmesh is put somewhere the way the game does it (see the end of the transported action): its navigation bot
-	-- has a position of its own, which the unit is put back to by its locomotion if it isn't moved as well, and what it was going to
-	-- is not where it goes from here.
-	local blackboard = BLACKBOARDS[unit]
+	local position = origin + aim * CONFIG.pet_hold_distance
+
+	if not state.pet_floating then
+		state.pet_floating = true
+
+		LocomotionUtils.set_animation_driven_movement(unit, false, false, false, true)
+		Managers.state.network:anim_event(unit, "idle")
+	end
+
+	-- (every frame: what the behavior does on its turn is put back by it)
+	navigation_extension:set_enabled(false)
+	locomotion_extension:set_wanted_velocity(Vector3.zero())
+	locomotion_extension:set_movement_type("script_driven")
+	locomotion_extension:set_affected_by_gravity(false)
+	navigation_extension:set_navbot_position(position)
+	locomotion_extension:teleport_to(position)
+end
+
+local function put_down_pet(state, owner_unit)
+	if not state.pet_floating then
+		return
+	end
+
+	state.pet_floating = nil
+
+	local unit = state.target
+	local blackboard = Unit.alive(unit) and BLACKBOARDS[unit]
+	local locomotion_extension = blackboard and blackboard.locomotion_extension
 	local navigation_extension = blackboard and blackboard.navigation_extension
 
-	if navigation_extension then
-		navigation_extension:set_navbot_position(place)
+	if not locomotion_extension or not navigation_extension then
+		return
+	end
+
+	-- (on the navmesh: in front of the owner at an arm's length if the owner is there to say, else below where it floats)
+	local place
+	local aim_flat = state.flat_aim and state.flat_aim:unbox() or Vector3.forward()
+
+	if owner_unit and Unit.alive(owner_unit) then
+		place = throw_landing(owner_unit, aim_flat, CONFIG.yank_min_distance)
+	end
+
+	if not place then
+		local position = Unit.world_position(unit, 0)
+		local on_navmesh, altitude = GwNavQueries.triangle_from_position(Managers.state.entity:system("ai_system"):nav_world(), position, 30, 30)
+
+		place = on_navmesh and Vector3(position.x, position.y, altitude) or position
 	end
 
 	locomotion_extension:teleport_to(place)
-
-	if navigation_extension then
-		navigation_extension:reset_destination(place)
-	end
+	navigation_extension:set_navbot_position(place)
+	navigation_extension:set_enabled(true)
+	navigation_extension:reset_destination(place)
+	locomotion_extension:set_movement_type("snap_to_navmesh")
+	locomotion_extension:set_affected_by_gravity(true)
+	LocomotionUtils.set_animation_driven_movement(unit, false)
 end
 
 -- A push towards the owner instead of a throw, for an enemy that is near enough for one to be too much, and for one that the
@@ -1956,6 +2002,7 @@ end
 
 local function release_target(state)
 	finish_throw(state)
+	put_down_pet(state, nil)
 	clear_held_outline(state)
 
 	if state.target then
@@ -2710,6 +2757,7 @@ local function end_beam(owner_unit)
 		end
 
 		finish_throw(state)
+		put_down_pet(state, owner_unit)
 		clear_held_outline(state)
 		destroy_sprites(state)
 		stop_drone(owner_unit)
@@ -3148,15 +3196,17 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 		local breed = AiUtils.unit_breed(state.target)
 
 		if breed and not breed.is_player then
-			-- (a skeleton: an AI unit that is a pet, it is put down beside the owner)
+			-- (a skeleton: an AI unit that is a pet, a yank picks it up, and another puts it down)
 			local flat_aim = Vector3.flat(aim)
 
 			if Vector3.length(flat_aim) > 0.1 then
 				state.flat_aim = Vector3Box(Vector3.normalize(flat_aim))
 			end
 
-			if yanked then
-				place_pet(state, owner_unit)
+			if yanked and state.pet_floating then
+				put_down_pet(state, owner_unit)
+			elseif yanked or state.pet_floating then
+				hold_pet(state, origin, aim)
 			end
 		elseif yanked then
 			yank_ally(state, owner_unit, t)
