@@ -166,8 +166,8 @@ local CONFIG = {
 	-- there as speed, at most object_max_speed. An enemy that dies while it is held is held on as a corpse.
 	object_collision_filter = "filter_explosion_overlap",
 	-- A ragdoll or object that someone else holds and this machine can't tell by its id is the one that is nearest, within
-	-- object_search_radius, to where it is for them, looked for every object_search_interval seconds
-	object_search_radius = 3, -- m
+	-- object_search_radius, to where it lay for them when they linked it, looked for every object_search_interval seconds
+	object_search_radius = 6, -- m
 	object_search_interval = 0.1,
 	object_pull = 20,
 	object_max_speed = 35, -- m/s
@@ -1086,7 +1086,7 @@ end
 -- The ragdoll or object nearest to a place, within a radius: the unit. For the machine of someone else when it has no copy it
 -- can tell by the id of what is held there.
 local function find_object_near(physics_world, position, radius)
-	local actors, num_actors = PhysicsWorld.immediate_overlap(physics_world, "shape", "sphere", "position", position, "size", radius, "types", "dynamics", "collision_filter", CONFIG.object_collision_filter)
+	local actors, num_actors = PhysicsWorld.immediate_overlap(physics_world, "shape", "sphere", "position", position, "size", radius, "types", "both", "collision_filter", CONFIG.object_collision_filter)
 	local nearest_unit
 	local nearest_distance
 
@@ -1639,7 +1639,9 @@ end
 
 -- The body of an object that is held is looked for again every frame: a body that has just died is driven by its
 -- animation, and its ragdoll bodies are other ones when it starts
-local function refresh_object(state)
+-- With allow_any a body that physics doesn't drive is taken when there is none that it does (the copy of a ragdoll on another
+-- machine that the game has frozen, which is held all the same: it is thawed when it is held)
+local function refresh_object(state, allow_any)
 	local unit = state.target
 
 	if not Unit.alive(unit) then
@@ -1652,20 +1654,27 @@ local function refresh_object(state)
 	if not state.node_index then
 		local chest = chest_position(unit)
 		local nearest_actor, nearest_distance
+		local any_actor, any_distance
 
 		for i = 0, Unit.num_actors(unit) - 1 do
 			local actor = Unit.actor(unit, i)
 
-			if actor and Actor.is_physical(actor) then
+			if actor and not Actor.is_static(actor) then
 				local distance = Vector3.distance(Actor.position(actor), chest)
 
-				if not nearest_actor or distance < nearest_distance then
+				if Actor.is_physical(actor) and (not nearest_actor or distance < nearest_distance) then
 					nearest_actor = actor
 					nearest_distance = distance
+				end
+
+				if allow_any and (not any_actor or distance < any_distance) then
+					any_actor = actor
+					any_distance = distance
 				end
 			end
 		end
 
+		nearest_actor = nearest_actor or any_actor
 		state.actor = nearest_actor
 		state.node_index = nearest_actor and Actor.node(nearest_actor) or nil
 
@@ -2348,6 +2357,8 @@ local function link_target(state, owner_unit, unit, kind, actor, object_distance
 	elseif kind == "object" then
 		state.hold_distance = math.clamp(object_distance, CONFIG.yank_min_distance, CONFIG.beam_range)
 		state.node_index = Actor.node(actor)
+		-- (where it lay when it was linked: the others look for their copy of it there, it is not there for long)
+		state.link_position = Vector3Box(Actor.position(actor))
 		state.thawed = false
 		state.corpse = AiUtils.unit_breed(unit) ~= nil
 
@@ -2913,8 +2924,9 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		local is_object_held = state.kind == "object" and Unit.alive(state.target)
 		local hold_distance = is_object_held and state.hold_distance or 0
 		local object_id = is_object_held and object_id_of(state.target) or 0
+		local linked_at = is_object_held and state.link_position and state.link_position:unbox() or Vector3.zero()
 
-		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z, aim.x, aim.y, aim.z, pending.weight or 0, lag.x, lag.y, lag.z, origin.x, origin.y, origin.z, hold_distance, object_id, state.node_index or -1)
+		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z, aim.x, aim.y, aim.z, pending.weight or 0, lag.x, lag.y, lag.z, origin.x, origin.y, origin.z, hold_distance, object_id, state.node_index or -1, linked_at.x, linked_at.y, linked_at.z)
 	end
 end
 
@@ -2933,7 +2945,7 @@ local function remove_remote_beam(owner_unit)
 	end
 end
 
-mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, weight, lag_x, lag_y, lag_z, origin_x, origin_y, origin_z, hold_distance, object_id, node_index)
+mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, weight, lag_x, lag_y, lag_z, origin_x, origin_y, origin_z, hold_distance, object_id, node_index, linked_x, linked_y, linked_z)
 	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
 
 	if not owner_unit then
@@ -2955,6 +2967,7 @@ mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, a
 	beam.hold_distance = hold_distance > 0 and object_id > 0 and hold_distance or nil
 	beam.object_id = object_id
 	beam.node_index = node_index >= 0 and node_index or nil
+	beam.link_position = Vector3Box(Vector3(linked_x, linked_y, linked_z))
 	beam.received = Application.time_since_launch()
 end)
 
@@ -2989,7 +3002,7 @@ local function update_object_mirrors(dt)
 				if not unit and now >= (beam.next_object_search or 0) then
 					beam.next_object_search = now + CONFIG.object_search_interval
 
-					unit = find_object_near(physics_world, beam.end_position:unbox(), CONFIG.object_search_radius)
+					unit = find_object_near(physics_world, beam.link_position:unbox(), CONFIG.object_search_radius)
 				end
 
 				if unit and Unit.alive(unit) then
@@ -3014,12 +3027,12 @@ local function update_object_mirrors(dt)
 				-- nearest to the chest)
 				mirror.node_index = beam.node_index
 
-				refresh_object(mirror)
+				refresh_object(mirror, true)
 
 				if not mirror.actor then
 					mirror.node_index = nil
 
-					refresh_object(mirror)
+					refresh_object(mirror, true)
 				end
 
 				hold_object(mirror, beam.aim:unbox(), beam.origin:unbox(), dt)
