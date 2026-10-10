@@ -195,6 +195,9 @@ local CONFIG = {
 	-- The beams of players that are not the host: what they can link to (the host works what it does out from what they say),
 	-- and how long the host goes on with a beam it has heard nothing of
 	remote_link_kinds = {ally = true, enemy = true, monster = true},
+	-- What a player that is not the host links to and does everything with themselves, the host has nothing to do with it:
+	-- what depends on their own interactions and on the ragdolls and objects of their own game
+	local_link_kinds = {object = true, openable = true, supply = true},
 	remote_input_timeout = 0.5, -- seconds
 	-- The field of view (vertical, degrees) the effect of a beam that is seen from the outside is drawn with: found by eye with a
 	-- world field of view of 65, the beam is then where it is seen. (effect_fov, above, is the staff in the hands seen from the
@@ -2408,11 +2411,13 @@ local function yank_ally(state, owner_unit, t)
 	end
 end
 
--- Yanking a door opens it, or closes it; a chest is opened by the game's own interaction, as a supply is picked up
+-- Yanking a door opens it, or closes it; a chest is opened by the game's own interaction, as a supply is picked up. A door
+-- is only opened like that by the host: for the others it is the game's interaction too, which the game sends to the others
+-- (a door that is opened on the machine of someone who is not the host would not be opened for anyone else).
 local function yank_openable(state, owner_unit, t)
 	local door_extension = ScriptUnit.has_extension(state.target, "door_system")
 
-	if door_extension and door_extension.interacted_with then
+	if door_extension and door_extension.interacted_with and Managers.player.is_server then
 		-- (the door looks at the position of whoever opens it, the mods' update runs before the game has made them current)
 		with_valid_positions(door_extension.interacted_with, door_extension, owner_unit)
 		add_heat(owner_unit, CONFIG.yank_door_overcharge)
@@ -2745,16 +2750,25 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		select_target(state, owner_unit, origin, aim, t, physics_world)
 		run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_world)
 	else
-		select_target(state, owner_unit, origin, aim, t, physics_world, CONFIG.remote_link_kinds)
+		select_target(state, owner_unit, origin, aim, t, physics_world)
 
-		-- The host is told what is linked when it changes, and where the eye is and where it is aimed (a yank at once, the rest
-		-- every beam_send_interval)
-		if state.target ~= state.sent_target then
-			state.sent_target = state.target
+		local own_kind = CONFIG.local_link_kinds[state.kind]
 
-			local target_go_id = state.target and Unit.alive(state.target) and Managers.state.unit_storage:go_id(state.target) or 0
+		-- What is linked is done by this game itself if it is one of the kinds that depend on it, else it is the host's
+		if own_kind then
+			run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_world)
+		end
 
-			mod:network_send("ut_link_target", "others", Managers.state.unit_storage:go_id(owner_unit), target_go_id, state.kind or "")
+		-- The host is told what is linked when it changes (what it does something for), and where the eye is and where it is
+		-- aimed (a yank at once, the rest every beam_send_interval)
+		local hosts_target = not own_kind and state.target or nil
+
+		if hosts_target ~= state.sent_target then
+			state.sent_target = hosts_target
+
+			local target_go_id = hosts_target and Unit.alive(hosts_target) and Managers.state.unit_storage:go_id(hosts_target) or 0
+
+			mod:network_send("ut_link_target", "others", Managers.state.unit_storage:go_id(owner_unit), target_go_id, hosts_target and state.kind or "")
 		end
 
 		-- A yank of an enemy throws it to the owner: where it lands is worked out here, from where the owner is and aims now,
