@@ -2236,6 +2236,17 @@ mod:network_register("ut_link_heat", function (_, amount, overcharge_type)
 	end
 end)
 
+-- The critters (the rats and the other ambient animals) aren't poisoned, by the beam or the bolts (both use the staff's damage source)
+mod:hook(Dots, "poison_dot", function (func, dot_template_name, damage_profile, target_index, power_level, target_unit, attacker_unit, hit_zone_name, damage_source, ...)
+	local breed = AiUtils.unit_breed(target_unit)
+
+	if damage_source == CONFIG.dot_damage_source and breed and breed.race == "critter" then
+		return false
+	end
+
+	return func(dot_template_name, damage_profile, target_index, power_level, target_unit, attacker_unit, hit_zone_name, damage_source, ...)
+end)
+
 -- The damage over time of a linked enemy
 local function damage_enemy(state, owner_unit, t)
 	if t < (state.next_dot_t or 0) then
