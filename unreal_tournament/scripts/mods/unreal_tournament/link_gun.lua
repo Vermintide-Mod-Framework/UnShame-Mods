@@ -118,7 +118,7 @@ local CONFIG = {
 	-- How far in front of you a thrown enemy is aimed to land (it goes on a little after it lands). Where there is no navmesh there
 	-- (past a ledge) it lands on the ground that is found by looking down from throw_ground_lift above your feet, at most
 	-- throw_ground_depth deep, and dies there
-	throw_land_distance = 8, -- m
+	throw_land_distance = 5.5, -- m
 	throw_ground_lift = 1, -- m
 	throw_ground_depth = 40, -- m
 	throw_min_duration = 0.35,
