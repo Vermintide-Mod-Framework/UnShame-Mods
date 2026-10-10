@@ -108,13 +108,14 @@ local CONFIG = {
 	hold_stagger_min = 0.05,
 	hold_stagger_max = 3,
 	hold_min_distance = 2.5, -- m
-	-- Primary while an enemy is held throws it to land in front of you, yank_min_distance from you, the way the game lets
+	-- Primary while an enemy is held throws it to land in front of you, throw_land_distance from you, the way the game lets
 	-- an enemy out of the Thornsister's vortex: the flight lasts as long as the distance takes at yank_speed (the same
 	-- weight rule as the hold, at least throw_min_duration and at most throw_max_duration), and is a real one, with
 	-- gravity and the walls. The behavior of the enemy puts it on the navmesh where it lands, an enemy that lands where
 	-- there is none dies.
 	yank_speed = 30, -- m/s
 	yank_min_distance = 1.5, -- m
+	throw_land_distance = 3, -- m, how far in front of you a thrown enemy is aimed to land (it goes on a little after it lands)
 	throw_min_duration = 0.35,
 	throw_max_duration = 1.2,
 	-- The enemy takes up the vortex on its next turn: a throw that hasn't begun after throw_enter_timeout seconds is called
@@ -1502,7 +1503,7 @@ local function throw_landing(owner_unit, aim_flat)
 	local owner_position = Unit.world_position(owner_unit, 0)
 	local owner_locomotion_extension = ScriptUnit.has_extension(owner_unit, "locomotion_system")
 	local candidates = {
-		owner_position + aim_flat * CONFIG.yank_min_distance,
+		owner_position + aim_flat * CONFIG.throw_land_distance,
 		owner_position,
 		-- (the game only keeps this on the host)
 		Managers.player.is_server and owner_locomotion_extension and owner_locomotion_extension.last_position_on_navmesh and owner_locomotion_extension:last_position_on_navmesh() or nil,
