@@ -3807,6 +3807,16 @@ mod:hook_safe(ActionCharge, "finish", function (self)
 end)
 
 -- Wielding the staff: the stance is entered after a moment
+-- Hanging off a ledge: the stance is ended in the character the others see, which is in it as the character's idle, under the
+-- animations of hanging (it is entered again when the weapons are shown after, see unhide_weapons below)
+mod.ledge_hang_callbacks.link = function (unit)
+	if utils.is_weapon_enabled("link_gun") and utils.wielded_template_name(unit) == TEMPLATE_NAME then
+		pose.entered = false
+
+		Managers.state.network:anim_event(unit, "attack_finished")
+	end
+end
+
 mod.wield_callbacks.link = function (self, equipment, slot_data, unit_1p)
 	if not slot_data then
 		return

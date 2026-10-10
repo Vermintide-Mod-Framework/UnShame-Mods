@@ -138,6 +138,18 @@ mod:hook_safe(SimpleInventoryExtension, "_wield_slot", function (self, equipment
 	end
 end)
 
+-- What the weapons do when the character starts to hang off a ledge (the game plays the animations of hanging, and the stance a
+-- weapon keeps the character in with an animation event of its own is still there under them: it is to be ended). Each is called with
+-- the unit of the character, for the player's own character only (the state of the other players' characters is theirs).
+--   mod.ledge_hang_callbacks[name] = function (unit)
+mod.ledge_hang_callbacks = {}
+
+mod:hook_safe(PlayerCharacterStateLedgeHanging, "on_enter", function (self)
+	for _, callback in pairs(mod.ledge_hang_callbacks) do
+		callback(self.unit)
+	end
+end)
+
 -- The heat the weapons are given, by the type of overcharge the game is adding (the id of the weapon's own value):
 --   mod.overcharge_callbacks[type] = function (overcharge_extension, amount, charge_level)
 --       returns the amount to add instead, or nil to add nothing

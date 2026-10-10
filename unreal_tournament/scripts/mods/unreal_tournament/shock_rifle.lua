@@ -966,6 +966,14 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	clear_implosions()
 end
 
+-- Hanging off a ledge: the stance is ended in the character the others see, which is in it as the character's idle, under the
+-- animations of hanging
+mod.ledge_hang_callbacks.shock = function (unit)
+	if CONFIG.idle_pose_event and utils.is_weapon_enabled("shock_rifle") and utils.wielded_template_name(unit) == TEMPLATE_NAME then
+		Managers.state.network:anim_event(unit, "attack_finished")
+	end
+end
+
 mod.wield_callbacks.shock = function (self, equipment, slot_data, unit_1p)
 	if not CONFIG.idle_pose_event or not slot_data then
 		return
