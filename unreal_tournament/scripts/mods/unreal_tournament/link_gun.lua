@@ -15,7 +15,7 @@ local mod = get_mod("unreal_tournament")
 --   Primary while linked (a yank): an enemy is thrown, the way the game lets one out of the Thornsister's vortex, to land in front of
 --               the owner (pushed instead, if it is near or the game doesn't put it in a vortex), out of a vortex if it is in one; an
 --               ally is freed from what holds them, got up, pulled up from a ledge, or launched to the owner, at a cost in heat (the
---               whole bar for a player), a pet is killed (it can't be moved); an object is pulled to the owner, and what a shot would bring down (a lantern) comes down;
+--               whole bar for a player), a critter (a rat) is killed (it has no stagger and isn't put in a vortex); an object is pulled to the owner, and what a shot would bring down (a lantern) comes down;
 --               a pickup is picked up, a door opened or closed, a chest or a lever used, a barricade broken.
 -- Who does what: the player who holds the beam picks what is linked, from what they see. What depends on the machine of the
 -- player (their pickups, doors, chests, interactions, the objects of the level, the heat of the staff) is done by their own game,
@@ -3108,6 +3108,17 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 		refresh_object(state)
 		hold_object(state, aim, origin, dt)
 	elseif state.kind == "enemy" then
+		local breed = AiUtils.unit_breed(state.target)
+
+		-- A critter (a rat that runs about the level) has no stagger and isn't put in a vortex, it can neither be pushed nor thrown: a
+		-- yank kills it, by itself, the game's own kill of a unit (not damage that the owner does)
+		if yanked and breed and breed.race == "critter" then
+			AiUtils.kill_unit(state.target)
+			release_target(state)
+
+			return
+		end
+
 		if yanked then
 			yank_enemy(state, owner_unit)
 		end
@@ -3118,11 +3129,29 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 		local breed = AiUtils.unit_breed(state.target)
 
 		if breed and not breed.is_player then
-			-- (a skeleton: an AI unit that is a pet, it has no stagger and isn't put in a vortex, so a yank kills it: by itself, the
-			-- game's own kill of a unit, so that it isn't damage that an ally does)
-			if yanked then
-				AiUtils.kill_unit(state.target)
-				release_target(state)
+			-- (a skeleton: an AI unit, it is thrown to the owner like an enemy is)
+			local flat_aim = Vector3.flat(aim)
+
+			if Vector3.length(flat_aim) > 0.1 then
+				state.flat_aim = Vector3Box(Vector3.normalize(flat_aim))
+			end
+
+			-- (not one that is already in the air of a throw)
+			if yanked and not state.throw then
+				state.weight = state.weight or 1
+
+				start_throw(state, owner_unit, t)
+
+				-- (let out of a climb, as a held enemy is: the vortex it is put in takes it out of the behavior of climbing)
+				local blackboard = BLACKBOARDS[state.target]
+
+				if blackboard and state.throw then
+					leave_climb(blackboard)
+				end
+			end
+
+			if state.throw then
+				update_throw(state, t)
 			end
 		elseif yanked then
 			yank_ally(state, owner_unit, t)
