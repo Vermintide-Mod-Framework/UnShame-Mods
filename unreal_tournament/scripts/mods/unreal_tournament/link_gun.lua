@@ -2076,16 +2076,17 @@ local function hold_object(state, aim, origin, dt)
 	local actor = state.actor
 	local unit = state.target
 
-	-- The game freezes what has settled, a ragdoll or a prop (a bottle): its bodies are made kinematic, and a kinematic body doesn't
-	-- take a speed, and is only moved by putting it somewhere, through the floor, which is where it is left when it is let go. What is
-	-- held is thawed, once, and then moved by physics like the rest (not a networked unit, a barrel: the host's, kept where it is put).
+	-- The game freezes a ragdoll that has settled: its bodies are made kinematic, and a kinematic body doesn't take a speed. A
+	-- ragdoll that is held is thawed, once, and then moved by physics like the rest. Not a prop: the kinematic bodies of a prop are what
+	-- it is fixed by (a corpse that hangs from its hinge, a lantern), and thawing them takes it off its hinge. A prop is held by the body
+	-- that is linked, which is already one that physics drives. (Not a networked unit, a barrel: the host's, kept where it is put.)
 	if not state.thawed and (state.corpse or not is_networked_object(unit)) then
 		state.thawed = true
 
 		for i = 0, Unit.num_actors(unit) - 1 do
 			local body = Unit.actor(unit, i)
 
-			if body and Actor.is_dynamic(body) and not Actor.is_physical(body) then
+			if state.corpse and body and Actor.is_dynamic(body) and not Actor.is_physical(body) then
 				Actor.set_kinematic(body, false)
 			end
 
