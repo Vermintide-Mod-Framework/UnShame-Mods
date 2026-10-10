@@ -165,6 +165,10 @@ local CONFIG = {
 	-- is held in the air where the aim is, the body that was linked is given object_pull per second of the way to
 	-- there as speed, at most object_max_speed. An enemy that dies while it is held is held on as a corpse.
 	object_collision_filter = "filter_explosion_overlap",
+	-- A ragdoll or object that someone else holds and this machine can't tell by its id is the one that is nearest, within
+	-- object_search_radius, to where it is for them, looked for every object_search_interval seconds
+	object_search_radius = 3, -- m
+	object_search_interval = 0.1,
 	object_pull = 20,
 	object_max_speed = 35, -- m/s
 	-- The beam: drawn as a curve (a cubic Bezier) from the staff to what it is on. A held enemy hangs it by
@@ -1077,6 +1081,30 @@ local function find_object(owner_unit, physics_world, origin, aim)
 			end
 		end
 	end
+end
+
+-- The ragdoll or object nearest to a place, within a radius: the unit. For the machine of someone else when it has no copy it
+-- can tell by the id of what is held there.
+local function find_object_near(physics_world, position, radius)
+	local actors, num_actors = PhysicsWorld.immediate_overlap(physics_world, "shape", "sphere", "position", position, "size", radius, "types", "dynamics", "collision_filter", CONFIG.object_collision_filter)
+	local nearest_unit
+	local nearest_distance
+
+	for i = 1, num_actors or 0 do
+		local actor = actors[i]
+		local unit = actor and Actor.unit(actor)
+
+		if unit and not Actor.is_static(actor) and is_object(unit) then
+			local distance = Vector3.distance(Actor.position(actor), position)
+
+			if not nearest_distance or distance < nearest_distance then
+				nearest_unit = unit
+				nearest_distance = distance
+			end
+		end
+	end
+
+	return nearest_unit
 end
 
 -- What the aim is on: an ally if there is one, else the enemy that can be held that is closest to it, and failing those an
@@ -2939,6 +2967,9 @@ local function update_object_mirrors(dt)
 		return
 	end
 
+	local now = Application.time_since_launch()
+	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+
 	for _, beam in pairs(remote_beams) do
 		local mirror = beam.mirror
 
@@ -2951,6 +2982,14 @@ local function update_object_mirrors(dt)
 		if beam.hold_distance then
 			if not mirror then
 				local unit = object_unit_of(beam.object_id)
+
+				-- (a copy this machine can't tell by the id: the ragdoll or object that is near where the holder has it, looked
+				-- for every object_search_interval, not every frame)
+				if not unit and now >= (beam.next_object_search or 0) then
+					beam.next_object_search = now + CONFIG.object_search_interval
+
+					unit = find_object_near(physics_world, beam.end_position:unbox(), CONFIG.object_search_radius)
+				end
 
 				if unit and Unit.alive(unit) then
 					mirror = {
