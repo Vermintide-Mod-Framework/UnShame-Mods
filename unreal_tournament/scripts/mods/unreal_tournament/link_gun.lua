@@ -207,9 +207,9 @@ local CONFIG = {
 	-- 85: the end was seen about 2.1 times as far from the middle of the screen as the target.
 	effect_fov = 47.5,
 	beam_aim_curve = 0.3, -- how far the beam bows towards the aim, as a share of its length at most: 0 is a straight line
-	beam_segment_length = 0.15, -- m, about how far apart the points of the beam are (the particles)
+	beam_segment_length = 0.1, -- m, about how far apart the points of the beam are (the particles)
 	beam_min_segments = 2,
-	beam_max_segments = 100,
+	beam_max_segments = 220,
 	beam_sprite_copies = 1, -- how many copies of the effect at every point: the more, the denser the beam
 	sag_per_weight = 0.015,
 	sag_max = 2.5, -- m
