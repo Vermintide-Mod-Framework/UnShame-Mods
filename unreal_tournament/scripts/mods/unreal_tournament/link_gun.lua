@@ -1271,6 +1271,7 @@ local function interaction_is_offered(physics_world, origin, aim, unit, range)
 end
 
 local openables = {} -- the doors, the chests, the levers and the things to break near enough: the unit, does the aim look at its box too
+local open_doors = {} -- the doors of them that are open
 local interactables = {} -- the ones of them that are interactions of the game: only the ones the game would offer are linked
 
 -- A ragdoll or another object with a body that moves, the first one the aim is on (a wall in the way ends the search):
@@ -1444,6 +1445,10 @@ local function find_target(owner_unit, physics_world, origin, aim)
 	-- (how far along the aim the door or chest is, for below)
 	local best_distance
 
+	-- An open door is linked when there is nothing else the aim is on, an object, a chest, a lever: the nearest one (it is closed by
+	-- yanking it, which is seldom what is wanted when it is in the way of something else)
+	local open_door_unit, open_door_distance, open_door_actor
+
 	-- Nothing living: supplies (what can be picked up) and doors, a little more forgiving of the aim, they are small
 	-- or thin
 	if not best_unit then
@@ -1455,6 +1460,7 @@ local function find_target(owner_unit, physics_world, origin, aim)
 
 		table.clear(openables)
 		table.clear(interactables)
+		table.clear(open_doors)
 
 		-- (one pass over the interactables: the supplies are considered, the chests kept for below)
 		for unit in pairs(Managers.state.entity:get_entities("GenericUnitInteractableExtension")) do
@@ -1493,6 +1499,7 @@ local function find_target(owner_unit, physics_world, origin, aim)
 				-- (a door that is broken is done with)
 				if door_extension and not door_extension.dead then
 					openables[unit] = false
+					open_doors[unit] = door_extension:is_open() or nil
 				end
 			end
 
@@ -1503,7 +1510,13 @@ local function find_target(owner_unit, physics_world, origin, aim)
 					for i = 1, #boxes do
 						local distance = ray_hits_box(origin, aim, boxes[i].pose, boxes[i].half * CONFIG.openable_box_scale)
 
-						if distance and distance <= range and (not best_distance or distance < best_distance) and has_line_of_sight(physics_world, origin, origin + aim * distance) and (not interactables[unit] or interaction_is_offered(physics_world, origin, aim, unit, range)) then
+						if open_doors[unit] then
+							if distance and distance <= range and (not open_door_distance or distance < open_door_distance) and has_line_of_sight(physics_world, origin, origin + aim * distance) then
+								open_door_unit = unit
+								open_door_distance = distance
+								open_door_actor = boxes[i].mesh
+							end
+						elseif distance and distance <= range and (not best_distance or distance < best_distance) and has_line_of_sight(physics_world, origin, origin + aim * distance) and (not interactables[unit] or interaction_is_offered(physics_world, origin, aim, unit, range)) then
 							best_unit = unit
 							best_kind = "openable"
 							best_distance = distance
@@ -1525,6 +1538,10 @@ local function find_target(owner_unit, physics_world, origin, aim)
 
 	if unit then
 		return unit, "object", actor, distance
+	end
+
+	if open_door_unit then
+		return open_door_unit, "openable", open_door_actor
 	end
 end
 
