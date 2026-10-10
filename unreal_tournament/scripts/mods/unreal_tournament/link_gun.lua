@@ -2872,6 +2872,16 @@ end
 -- What the game does when a shot hits a unit that has no health (not only one placed in the level, some are spawned by it): it sets
 -- what it says about the hit as flow variables of the unit and gives it the flow event, which the level answers (a lantern comes
 -- down)
+local function give_simple_damage(unit, actor, position, direction)
+	Unit.set_flow_variable(unit, "hit_actor", actor)
+	Unit.set_flow_variable(unit, "hit_direction", direction)
+	Unit.set_flow_variable(unit, "hit_position", position)
+	Unit.flow_event(unit, "lua_simple_damage")
+end
+
+-- (the flow event is the machine's own: a prop that is not a networked unit is on every machine, and what happens to it happens
+-- on the machine that gives the event. The others are told what was hit, by its id, or where it is where it has none, and
+-- give it too.)
 local function simple_damage(state, owner_unit)
 	local unit = state.target
 
@@ -2882,11 +2892,43 @@ local function simple_damage(state, owner_unit)
 	local position = Actor.position(state.actor)
 	local direction = Vector3.normalize(position - Unit.world_position(owner_unit, 0))
 
-	Unit.set_flow_variable(unit, "hit_actor", state.actor)
-	Unit.set_flow_variable(unit, "hit_direction", direction)
-	Unit.set_flow_variable(unit, "hit_position", position)
-	Unit.flow_event(unit, "lua_simple_damage")
+	give_simple_damage(unit, state.actor, position, direction)
+	mod:network_send("ut_link_simple_damage", "others", object_id_of(unit), position.x, position.y, position.z, direction.x, direction.y, direction.z)
 end
+
+mod:network_register("ut_link_simple_damage", function (_, object_id, x, y, z, direction_x, direction_y, direction_z)
+	local position = Vector3(x, y, z)
+	local unit = object_unit_of(object_id)
+
+	-- (a prop that has no id on this machine: the one that is where the owner hit it)
+	if not unit then
+		unit = find_object_near(World.get_data(Managers.world:world("level_world"), "physics_world"), position, CONFIG.object_search_radius)
+	end
+
+	if not unit or not Unit.alive(unit) then
+		return
+	end
+
+	-- (the body of it that is nearest to where it was hit)
+	local nearest_actor, nearest_distance
+
+	for i = 0, Unit.num_actors(unit) - 1 do
+		local actor = Unit.actor(unit, i)
+
+		if actor then
+			local distance = Vector3.distance(Actor.position(actor), position)
+
+			if not nearest_distance or distance < nearest_distance then
+				nearest_actor = actor
+				nearest_distance = distance
+			end
+		end
+	end
+
+	if nearest_actor then
+		give_simple_damage(unit, nearest_actor, position, Vector3(direction_x, direction_y, direction_z))
+	end
+end)
 
 -- Yanking a door opens it, or closes it; a chest is opened by the game's own interaction, as a supply is picked up. A door
 -- is only opened like that by the host: for the others it is the game's interaction too, which the game sends to the others
