@@ -940,7 +940,8 @@ end
 local function enemy_weight(unit)
 	local breed = is_alive(unit) and AiUtils.unit_breed(unit)
 
-	if not breed or breed.is_player or breed.boss_staggers then
+	-- (a boss is not held, whether it can be staggered or not: the lords, who can, are held no more than the monsters are)
+	if not breed or breed.is_player or breed.boss or breed.boss_staggers then
 		return nil
 	end
 
