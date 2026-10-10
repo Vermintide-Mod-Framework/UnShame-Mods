@@ -1285,6 +1285,9 @@ local function finish_throw(state)
 		return
 	end
 
+	-- (the other machines stop moving it along the arc)
+	mod:network_send("ut_link_throw_end", "others", Managers.state.unit_storage:go_id(unit))
+
 	local locomotion_extension = ScriptUnit.has_extension(unit, "locomotion_system")
 
 	-- (not a unit that has died in the air: the game has taken its locomotion down, putting it back in the updates of
@@ -1379,6 +1382,12 @@ local function start_throw(state, owner_unit, t)
 		t0 = t,
 	}
 	state.hold_distance = CONFIG.yank_min_distance
+
+	-- The other machines are told, they move the unit along the arc themselves: what they would see of it is the game's
+	-- smoothing between the positions the host sends, which makes it jump from where it was to where it lands
+	local thrown = state.throw
+
+	mod:network_send("ut_link_throw", "others", Managers.state.unit_storage:go_id(unit), current.x, current.y, current.z, land.x, land.y, land.z, thrown.lift, thrown.duration)
 end
 
 -- true while it is in the air
@@ -1429,6 +1438,51 @@ local function update_throw(state, t, physics_world)
 
 	return true
 end
+
+-- The throw as the other machines see it: the host moves the unit, and what they get of it is the position it sends from time
+-- to time, which the game smooths between: a thrown unit is seen to jump to where it lands. They are told when a throw starts
+-- and ends, and move their copy of the unit along the same arc themselves, after the game has moved it (see update_throw).
+local client_throws = {} -- { [the unit] = { start, land (Vector3Boxes), lift, duration, t0 } }
+
+mod:network_register("ut_link_throw", function (_, unit_go_id, start_x, start_y, start_z, land_x, land_y, land_z, lift, duration)
+	local unit = not Managers.player.is_server and Managers.state.unit_storage:unit(unit_go_id)
+
+	if unit then
+		client_throws[unit] = {
+			duration = duration,
+			land = Vector3Box(Vector3(land_x, land_y, land_z)),
+			lift = lift,
+			start = Vector3Box(Vector3(start_x, start_y, start_z)),
+			t0 = Managers.time:time("game"),
+		}
+	end
+end)
+
+mod:network_register("ut_link_throw_end", function (_, unit_go_id)
+	local unit = Managers.state.unit_storage:unit(unit_go_id)
+
+	if unit then
+		client_throws[unit] = nil
+	end
+end)
+
+mod:hook_safe(LocomotionTemplates.AiHuskLocomotionExtension, "update", function ()
+	if not next(client_throws) then
+		return
+	end
+
+	local t = Managers.time:time("game")
+
+	for unit, thrown in pairs(client_throws) do
+		local progress = (t - thrown.t0) / thrown.duration
+
+		if not Unit.alive(unit) or progress >= 1 then
+			client_throws[unit] = nil
+		else
+			Unit.set_local_position(unit, 0, Vector3.lerp(thrown.start:unbox(), thrown.land:unbox(), progress) + Vector3(0, 0, thrown.lift * 4 * progress * (1 - progress)))
+		end
+	end
+end)
 
 -- A unit that is in the fall of the game while it is thrown (the game sees it falling) is moved by the script, which takes
 -- its mover away, and the fall looks for the mover to see if it has landed. It waits while it is in the air of the throw,
@@ -2989,6 +3043,7 @@ local function clear_beams()
 	end
 
 	table.clear(remote_inputs)
+	table.clear(client_throws)
 
 	if Managers.player.is_server then
 		clear_ally_buffs()
