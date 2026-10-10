@@ -168,6 +168,8 @@ local CONFIG = {
 	yank_bot_overcharge = 25, -- launching a bot, before bot_yank_cost_scale
 	bot_yank_cost_scale = 0.1, -- yanking a bot costs this much of what the cost says (the cost is for griefing)
 	yank_door_overcharge = 2,
+	-- A unit that is yanked out of a vortex can't be pulled into one for this long
+	vortex_immunity = 3, -- seconds
 	-- Objects: when nothing else is picked, a ragdoll or another object with a body that moves is held (no damage). It
 	-- is held in the air where the aim is, the body that was linked is given object_pull per second of the way to
 	-- there as speed, at most object_max_speed. An enemy that dies while it is held is held on as a corpse.
@@ -2340,7 +2342,49 @@ local function add_heat(owner_unit, amount)
 	charge_owner(owner_unit, amount, "ut_link_yank")
 end
 
--- Yanking an enemy: out of a vortex if it is in one (at a cost), else it is thrown to the owner
+-- A unit that is yanked out of a vortex isn't pulled into one for vortex_immunity seconds, or it would be, at once, while it is
+-- yanked: the vortices don't let one that is immune in (a player, a unit of the AI), and the time is when it ends.
+local vortex_immunity = setmetatable({}, {__mode = "k"}) -- { [the unit] = the time it ends }
+
+local function is_vortex_immune(unit)
+	local ends = vortex_immunity[unit]
+
+	return ends ~= nil and Managers.time:time("game") < ends
+end
+
+mod:hook(StatusUtils, "set_in_vortex_network", function (func, affected_unit, in_vortex, ...)
+	-- (a player is put in a vortex by this, and the vortex goes on to the next if it is not)
+	if in_vortex and is_vortex_immune(affected_unit) then
+		return false
+	end
+
+	return func(affected_unit, in_vortex, ...)
+end)
+
+-- The enemies that are outside a vortex are pulled in by it if they are near: the ones that are immune are marked as inside it
+-- while it looks for them, so that it doesn't
+if rawget(_G, "VortexExtension") then
+	mod:hook(VortexExtension, "_update_attract_outside_ai", function (func, self, vortex_data, ...)
+		local ai_units_inside = vortex_data.ai_units_inside
+		local immune = FrameTable.alloc_table()
+
+		for unit in pairs(vortex_immunity) do
+			if Unit.alive(unit) and not ai_units_inside[unit] and is_vortex_immune(unit) then
+				ai_units_inside[unit] = true
+				immune[#immune + 1] = unit
+			end
+		end
+
+		func(self, vortex_data, ...)
+
+		for i = 1, #immune do
+			ai_units_inside[immune[i]] = nil
+		end
+	end)
+end
+
+-- Yanking an enemy: out of a vortex if it is in one (at a cost, and it is immune to vortices for a time), else it is thrown to
+-- the owner
 local function yank_enemy(state, owner_unit)
 	-- (an enemy that is already in the air of a throw isn't thrown again, nor is it in a vortex of the game's)
 	if state.throw then
@@ -2352,6 +2396,9 @@ local function yank_enemy(state, owner_unit)
 	if blackboard and blackboard.in_vortex then
 		blackboard.in_vortex = false
 		blackboard.thornsister_vortex = nil
+		-- (the vortex it was in lets it go: it takes a unit that has landed out of the ones it holds, and no longer controls it)
+		blackboard.in_vortex_state = "landed"
+		vortex_immunity[state.target] = Managers.time:time("game") + CONFIG.vortex_immunity
 
 		add_heat(owner_unit, CONFIG.yank_free_overcharge)
 
@@ -2433,6 +2480,7 @@ local function yank_ally(state, owner_unit, t)
 		add_heat(owner_unit, CONFIG.yank_free_overcharge)
 	elseif status_extension:is_in_vortex() then
 		StatusUtils.set_in_vortex_network(unit, false, nil)
+		vortex_immunity[unit] = Managers.time:time("game") + CONFIG.vortex_immunity
 		add_heat(owner_unit, CONFIG.yank_free_overcharge)
 	elseif status_extension:get_is_ledge_hanging() then
 		give_rescue(unit, "pull_up", owner_unit)
