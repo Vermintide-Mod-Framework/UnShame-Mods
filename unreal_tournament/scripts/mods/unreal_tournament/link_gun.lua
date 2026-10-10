@@ -117,6 +117,7 @@ local CONFIG = {
 	-- off, and one in the air that is not over throw_land_timeout seconds after it should be lets the enemy out of the vortex
 	throw_enter_timeout = 0.6,
 	throw_land_timeout = 3,
+	throw_lift = 0.4, -- m, the enemy is lifted this high before it is let out of the vortex, it is not on the ground then
 	yank_animation_event = "attack_charge_fireball", -- the alt fire's own animation, played again every yank
 	reference_mass = 1.5, -- a clan rat's
 	weight_exponent = 0.5,
@@ -1457,26 +1458,12 @@ local function update_throw(state, t)
 	end
 
 	if thrown.phase == "entering" then
-		-- The behavior has taken the unit up when it is in the vortex (its first turn is done): it is then let out of it, with
-		-- the velocity of a ballistic flight to where it lands that lasts the duration, and the behavior flies it from there
+		-- The behavior has taken the unit up when it is in the vortex (its first turn is done): it is lifted off the ground, the
+		-- behavior lands a unit as soon as it sees the ground under it, and it is let out on the next turn
 		if blackboard.in_vortex_state == "in_vortex" then
-			local delta = thrown.land:unbox() - Unit.world_position(unit, 0)
-			local flight = thrown.duration
-			local velocity = Vector3(delta.x / flight, delta.y / flight, delta.z / flight + 0.5 * THROW_GRAVITY * flight)
-			local locomotion_extension = blackboard.locomotion_extension
+			blackboard.locomotion_extension:teleport_to(Unit.world_position(unit, 0) + Vector3(0, 0, CONFIG.throw_lift))
 
-			locomotion_extension:set_wanted_velocity(velocity)
-			locomotion_extension:set_affected_by_gravity(true)
-			locomotion_extension:set_movement_type("constrained_by_mover")
-
-			local ejected_from_vortex = blackboard.ejected_from_vortex or Vector3Box()
-
-			ejected_from_vortex:store(velocity)
-
-			blackboard.ejected_from_vortex = ejected_from_vortex
-			blackboard.in_vortex_state = "ejected_from_vortex"
-			thrown.phase = "flying"
-			thrown.flying_since = t
+			thrown.phase = "lifted"
 		elseif t - thrown.started > CONFIG.throw_enter_timeout then
 			finish_throw(state)
 
@@ -1484,6 +1471,38 @@ local function update_throw(state, t)
 		end
 
 		return true
+	end
+
+	-- It is let out of the vortex, with the velocity of a ballistic flight to where it lands that lasts the duration, and the
+	-- behavior flies it from there
+	if thrown.phase == "lifted" then
+		local delta = thrown.land:unbox() - Unit.world_position(unit, 0)
+		local flight = thrown.duration
+		local velocity = Vector3(delta.x / flight, delta.y / flight, delta.z / flight + 0.5 * THROW_GRAVITY * flight)
+		local locomotion_extension = blackboard.locomotion_extension
+
+		locomotion_extension:set_wanted_velocity(velocity)
+		locomotion_extension:set_affected_by_gravity(true)
+		locomotion_extension:set_movement_type("constrained_by_mover")
+
+		local ejected_from_vortex = blackboard.ejected_from_vortex or Vector3Box()
+
+		ejected_from_vortex:store(velocity)
+
+		blackboard.ejected_from_vortex = ejected_from_vortex
+		blackboard.in_vortex_state = "ejected_from_vortex"
+		thrown.phase = "flying"
+		thrown.flying_since = t
+
+		return true
+	end
+
+	-- When it is down the behavior keeps the velocity that it had for as long as it plays the landing, which is far for a
+	-- throw: the unit stops where it landed
+	if blackboard.in_vortex_state == "waiting_to_land" and not thrown.landed then
+		thrown.landed = true
+
+		blackboard.locomotion_extension:set_wanted_velocity(Vector3.zero())
 	end
 
 	-- In the air: until the behavior has landed it and the unit has left the vortex (if it has not, after a long while, it
