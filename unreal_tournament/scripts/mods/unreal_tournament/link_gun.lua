@@ -115,7 +115,12 @@ local CONFIG = {
 	-- there is none dies.
 	yank_speed = 30, -- m/s
 	yank_min_distance = 1.5, -- m
-	throw_land_distance = 3, -- m, how far in front of you a thrown enemy is aimed to land (it goes on a little after it lands)
+	-- How far in front of you a thrown enemy is aimed to land (it goes on a little after it lands). Where there is no navmesh there
+	-- (past a ledge) it lands on the ground that is found by looking down from throw_ground_lift above your feet, at most
+	-- throw_ground_depth deep, and dies there
+	throw_land_distance = 8, -- m
+	throw_ground_lift = 1, -- m
+	throw_ground_depth = 40, -- m
 	throw_min_duration = 0.35,
 	throw_max_duration = 1.2,
 	-- The enemy takes up the vortex on its next turn: a throw that hasn't begun after throw_enter_timeout seconds is called
@@ -1502,8 +1507,9 @@ local function throw_landing(owner_unit, aim_flat)
 	local nav_world = Managers.state.entity:system("ai_system"):nav_world()
 	local owner_position = Unit.world_position(owner_unit, 0)
 	local owner_locomotion_extension = ScriptUnit.has_extension(owner_unit, "locomotion_system")
+	local in_front = owner_position + aim_flat * CONFIG.throw_land_distance
 	local candidates = {
-		owner_position + aim_flat * CONFIG.throw_land_distance,
+		in_front,
 		owner_position,
 		-- (the game only keeps this on the host)
 		Managers.player.is_server and owner_locomotion_extension and owner_locomotion_extension.last_position_on_navmesh and owner_locomotion_extension:last_position_on_navmesh() or nil,
@@ -1517,6 +1523,18 @@ local function throw_landing(owner_unit, aim_flat)
 
 			if on_navmesh then
 				return Vector3(candidate.x, candidate.y, altitude)
+			end
+		end
+
+		-- Where there is no navmesh in front (past a ledge) it lands on the ground, wherever that is, the enemy that lands where
+		-- there is no navmesh dies: it is thrown off the ledge
+		if i == 1 then
+			local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+			local from = Vector3(in_front.x, in_front.y, owner_position.z + CONFIG.throw_ground_lift)
+			local hit, ground = PhysicsWorld.immediate_raycast(physics_world, from, Vector3.down(), CONFIG.throw_ground_depth, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
+
+			if hit then
+				return ground
 			end
 		end
 	end
