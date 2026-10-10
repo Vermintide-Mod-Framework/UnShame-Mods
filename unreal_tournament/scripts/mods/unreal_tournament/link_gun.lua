@@ -120,6 +120,12 @@ local CONFIG = {
 	-- off, and one in the air that is not over throw_land_timeout seconds after it should be lets the enemy out of the vortex
 	throw_enter_timeout = 0.6,
 	throw_land_timeout = 3,
+	-- An enemy that is nearer than throw_min_distance to where it would land, or that dies when it lands (the skeletons and
+	-- the zombies), is staggered towards there instead: yank_stagger_per_meter of the distance as the length, at most
+	-- yank_stagger_max
+	throw_min_distance = 4, -- m
+	yank_stagger_per_meter = 1,
+	yank_stagger_max = 4,
 	throw_lift = 0.4, -- m, the enemy is lifted this high before it is let out of the vortex, it is not on the ground then
 	yank_animation_event = "attack_charge_fireball", -- the alt fire's own animation, played again every yank
 	reference_mass = 1.5, -- a clan rat's
@@ -207,7 +213,7 @@ local CONFIG = {
 	remote_beam_timeout = 0.5, -- seconds
 	-- The beams of players that are not the host: what they can link to (the host works what it does out from what they say),
 	-- and how long the host goes on with a beam it has heard nothing of
-	remote_link_kinds = {ally = true, enemy = true, monster = true},
+	remote_link_kinds = {ally = true, enemy = true, monster = true, object = true},
 	-- What a player that is not the host links to and does everything with themselves, the host has nothing to do with it:
 	-- what depends on their own interactions and on the ragdolls and objects of their own game
 	local_link_kinds = {object = true, openable = true, supply = true},
@@ -897,6 +903,13 @@ local function object_id_of(unit)
 	return ok and level_index and -1 - level_index or 0
 end
 
+-- An object that is a networked unit (a barrel), whose position is the host's: the host holds it, from what the holder says, and
+-- everybody sees it move as they see any networked unit move. A ragdoll and a prop of the level are each machine's own, they are
+-- held by each machine itself (see update_object_mirrors).
+local function is_networked_object(unit)
+	return Managers.state.unit_storage:go_id(unit) ~= nil and AiUtils.unit_breed(unit) == nil
+end
+
 local function object_unit_of(object_id)
 	if object_id < 0 then
 		return Level.unit_by_index(LevelHelper:current_level(Managers.world:world("level_world")), -1 - object_id)
@@ -977,8 +990,8 @@ local function preserve_corpse(unit)
 	}
 end
 
--- Where a mesh of a door or a chest is now: the middle of its box, and how big it is. The meshes move with the door
--- when it opens (the box of the unit stays where the closed door was, and its bodies aren't where it is seen).
+-- Where a mesh of a door or a chest is: the middle of its box, and how big it is. (A door doesn't move when it opens, the game
+-- turns its collision on and off, so this is the same wherever it is looked at from, and when.)
 local function mesh_center(mesh)
 	local ok, pose, half_extents = pcall(Mesh.box, mesh)
 
@@ -990,8 +1003,8 @@ local function mesh_center(mesh)
 end
 
 -- The boxes of a door or a chest that the aim can be on: the box of its biggest mesh (the door itself, not the frame or
--- the hinges; it moves with the door), and for a chest the box of the unit too, which doesn't move. Each has the mesh it
--- is of, if it is of one (the beam ends in the middle of that).
+-- the hinges), and for a chest the box of the unit too. Each has the mesh it is of, if it is of one (the beam ends in the
+-- middle of that).
 local function openable_boxes(unit, with_unit_box)
 	local boxes = {}
 	local best_mesh, best_pose, best_half, best_size
@@ -1142,7 +1155,8 @@ local function find_target(owner_unit, physics_world, origin, aim)
 	local best_ally_unit
 	local best_ally_dot = CONFIG.aim_dot
 
-	local function consider(unit, kind)
+	-- (unprioritized: an ally that is looked at with the enemies, the necromancer's skeletons are not before them)
+	local function consider(unit, kind, unprioritized)
 		local offset = chest_position(unit) - origin
 		local distance = Vector3.length(offset)
 
@@ -1153,7 +1167,7 @@ local function find_target(owner_unit, physics_world, origin, aim)
 		local dot = Vector3.dot(aim, offset * (1 / distance))
 
 		-- (the allies are looked at apart, they come before everything else)
-		if kind == "ally" then
+		if kind == "ally" and not unprioritized then
 			if dot > best_ally_dot and has_line_of_sight(physics_world, origin, chest_position(unit)) then
 				best_ally_unit = unit
 				best_ally_dot = dot
@@ -1218,7 +1232,7 @@ local function find_target(owner_unit, physics_world, origin, aim)
 			local breed = HEALTH_ALIVE[unit] and AiUtils.unit_breed(unit)
 
 			if breed and not breed.is_player and string.find(breed.name or "", "^pet_") then
-				consider(unit, "ally")
+				consider(unit, "ally", true)
 			end
 		end
 	end
@@ -1392,7 +1406,6 @@ local function finish_throw(state)
 
 		if blackboard then
 			blackboard.in_vortex = false
-			blackboard.thornsister_vortex = nil
 		end
 	end
 end
@@ -1424,6 +1437,23 @@ local function throw_landing(owner_unit, aim_flat)
 	end
 end
 
+-- A push towards the owner instead of a throw, for an enemy that is near enough for one to be too much, and for one that dies
+-- when it lands from one (the skeletons, the zombies): it is staggered towards the place it would have landed in, as far as
+-- the distance to it says
+local function stagger_towards(state, owner_unit, t, blackboard, place)
+	local unit = state.target
+	local delta = Vector3.flat(place - Unit.world_position(unit, 0))
+	local distance = Vector3.length(delta)
+	local direction = distance > 0.01 and delta * (1 / distance) or Vector3.forward()
+	local length = math.clamp(distance * CONFIG.yank_stagger_per_meter / state.weight, CONFIG.hold_stagger_min, CONFIG.yank_stagger_max)
+
+	-- (the game's statistics look at the positions of the units in the stagger, the mods' update runs before the game has
+	-- made them current)
+	with_valid_positions(AiUtils.stagger, unit, blackboard, owner_unit, direction, length, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
+
+	state.next_stagger_t = t + CONFIG.restagger_interval
+end
+
 local function start_throw(state, owner_unit, t)
 	local unit = state.target
 	local blackboard = BLACKBOARDS[unit]
@@ -1444,7 +1474,15 @@ local function start_throw(state, owner_unit, t)
 
 	state.yank_land = nil
 
-	if not land or Vector3.length(land - Unit.world_position(unit, 0)) < 0.5 then
+	-- Not thrown: one that dies when it lands is pushed, wherever it is, and so is one that is near (the distance of a throw to
+	-- there isn't worth it)
+	if blackboard.breed.die_on_vortex_land or land and Vector3.length(land - Unit.world_position(unit, 0)) < CONFIG.throw_min_distance then
+		stagger_towards(state, owner_unit, t, blackboard, land or Unit.world_position(owner_unit, 0))
+
+		return
+	end
+
+	if not land then
 		return
 	end
 
@@ -1452,10 +1490,11 @@ local function start_throw(state, owner_unit, t)
 		finish_throw(state)
 	end
 
-	-- The unit is put in the vortex (the behavior takes it up on its next turn, see update_throw)
+	-- The unit is put in the vortex (the behavior takes it up on its next turn, see update_throw). Not as the Thornsister's
+	-- vortex: the behavior sets a unit that has landed from the others to be driven by its animation, which stays where it
+	-- is, and doesn't slide on with the speed of the throw
 	blackboard.in_vortex_state = "in_vortex_init"
 	blackboard.in_vortex = true
-	blackboard.thornsister_vortex = true
 
 	state.throw = {
 		duration = math.clamp(Vector3.length(land - Unit.world_position(unit, 0)) / (CONFIG.yank_speed / state.weight), CONFIG.throw_min_duration, CONFIG.throw_max_duration),
@@ -1597,19 +1636,9 @@ local function target_position(state)
 	if state.kind == "object" then
 		return state.actor and Actor.position(state.actor) or Unit.world_position(state.target, 0)
 	elseif state.kind == "openable" then
-		-- (the mesh of the door or chest that was linked, it moves with the door when it opens: not the point the unit is
-		-- placed at, its hinge, and not the box of the unit, which stays where the closed door was)
-		if state.actor then
-			local position = mesh_center(state.actor)
-
-			if position then
-				return position
-			end
-		end
-
-		local pose = Unit.box(state.target)
-
-		return Matrix4x4.translation(pose)
+		-- (the middle of the mesh of the door or chest that was linked, worked out when it was: not the point the unit is
+		-- placed at, its hinge)
+		return state.openable_position:unbox()
 	elseif state.kind == "supply" then
 		-- (the middle of the model: the unit is placed at one point of it, not the middle)
 		local pose = Unit.box(state.target)
@@ -2328,11 +2357,14 @@ local function link_target(state, owner_unit, unit, kind, actor, object_distance
 
 	if kind == "monster" then
 		state.monster_start = Vector3Box(Unit.world_position(unit, 0))
+	elseif kind == "openable" then
+		state.openable_position = Vector3Box(actor and mesh_center(actor) or Matrix4x4.translation(Unit.box(unit)))
 	elseif kind == "object" then
 		state.hold_distance = math.clamp(object_distance, CONFIG.yank_min_distance, CONFIG.beam_range)
-		state.node_index = Actor.node(actor)
+		-- (no body when the host links what the owner's game has picked, it is looked for from the unit)
+		state.node_index = actor and Actor.node(actor) or nil
 		-- (where it lay when it was linked: the others look for their copy of it there, it is not there for long)
-		state.link_position = Vector3Box(Actor.position(actor))
+		state.link_position = actor and Vector3Box(Actor.position(actor)) or Vector3Box(Unit.world_position(unit, 0))
 		state.thawed = false
 		state.corpse = AiUtils.unit_breed(unit) ~= nil
 
@@ -2506,7 +2538,8 @@ local function yank_ally(state, owner_unit, t)
 		give_rescue(unit, "revive", owner_unit)
 		pending_rescues[unit] = {kind = "revive", owner = owner_unit, next_t = t + CONFIG.rescue_retry_interval, tries = 0}
 		add_heat(owner_unit, CONFIG.yank_rescue_overcharge)
-	elseif not status_extension:is_disabled() then
+	elseif not status_extension:is_disabled() and not status_extension:is_catapulted() then
+		-- (not one that is already flying to the owner)
 		local flat = Vector3.flat(Unit.world_position(owner_unit, 0) - Unit.world_position(unit, 0))
 		local distance = Vector3.length(flat)
 		local direction = distance > 0.1 and flat * (1 / distance) or Vector3.forward()
@@ -2602,8 +2635,12 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 			damage_enemy(state, owner_unit, t)
 		end
 	elseif state.kind == "object" then
-		state.yank = state.yank or yanked
+		-- (not an object that is already being pulled in: it is held where a yank would hold it)
+		state.yank = state.yank or yanked and state.hold_distance > CONFIG.yank_min_distance
 
+		-- (the body that is held is looked for every frame: the host's own beam does it when it picks, a beam of someone
+		-- else that the host holds an object for doesn't)
+		refresh_object(state)
 		hold_object(state, aim, origin, dt)
 	elseif state.kind == "enemy" then
 		if yanked then
@@ -2623,7 +2660,8 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 				state.flat_aim = Vector3Box(Vector3.normalize(flat_aim))
 			end
 
-			if yanked then
+			-- (not one that is already in the air of a throw)
+			if yanked and not state.throw then
 				state.weight = state.weight or 1
 
 				start_throw(state, owner_unit, t)
@@ -2688,11 +2726,11 @@ mod:network_register("ut_link_input", function (_, owner_go_id, x, y, z, aim_x, 
 end)
 
 -- What the owner has linked to (nothing if the game object is 0)
-mod:network_register("ut_link_target", function (_, owner_go_id, target_go_id, kind)
+mod:network_register("ut_link_target", function (_, owner_go_id, target_go_id, kind, hold_distance)
 	local input = remote_input(owner_go_id)
 
 	if input then
-		input.link_request = {kind = kind, target_go_id = target_go_id}
+		input.link_request = {hold_distance = hold_distance, kind = kind, target_go_id = target_go_id}
 	end
 end)
 
@@ -2784,7 +2822,7 @@ local function update_remote_inputs(dt, t)
 
 				-- (not while a link is blocked, which is what a monster does after pulling the owner to it)
 				if unit and Unit.alive(unit) and CONFIG.remote_link_kinds[request.kind] and t >= (state.link_block_until or 0) then
-					link_target(state, owner_unit, unit, request.kind)
+					link_target(state, owner_unit, unit, request.kind, nil, request.hold_distance)
 
 					state.target_go_id = request.target_go_id
 				end
@@ -2856,7 +2894,8 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 	else
 		select_target(state, owner_unit, origin, aim, t, physics_world)
 
-		local own_kind = CONFIG.local_link_kinds[state.kind]
+		-- (an object that is a networked unit is the host's, whatever its kind says: the other objects are this game's own)
+		local own_kind = CONFIG.local_link_kinds[state.kind] and not (state.kind == "object" and is_networked_object(state.target))
 
 		-- What is linked is done by this game itself if it is one of the kinds that depend on it, else it is the host's
 		if own_kind then
@@ -2872,7 +2911,7 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 
 			local target_go_id = hosts_target and Unit.alive(hosts_target) and Managers.state.unit_storage:go_id(hosts_target) or 0
 
-			mod:network_send("ut_link_target", "others", Managers.state.unit_storage:go_id(owner_unit), target_go_id, hosts_target and state.kind or "")
+			mod:network_send("ut_link_target", "others", Managers.state.unit_storage:go_id(owner_unit), target_go_id, hosts_target and state.kind or "", hosts_target and state.hold_distance or 0)
 		end
 
 		-- A yank of an enemy throws it to the owner: where it lands is worked out here, from where the owner is and aims now,
@@ -2943,7 +2982,8 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 
 		-- (and, for a ragdoll or an object that is held, which one (its id) and the bone of the body that is held, where the eye
 		-- is and how far in front of it it is held, to hold it the same way on their machines, 0 for none)
-		local is_object_held = state.kind == "object" and Unit.alive(state.target)
+		-- (not an object that is a networked unit: the host holds that one, it isn't held on each machine)
+		local is_object_held = state.kind == "object" and Unit.alive(state.target) and not is_networked_object(state.target)
 		local hold_distance = is_object_held and state.hold_distance or 0
 		local object_id = is_object_held and object_id_of(state.target) or 0
 		local linked_at = is_object_held and state.link_position and state.link_position:unbox() or Vector3.zero()
