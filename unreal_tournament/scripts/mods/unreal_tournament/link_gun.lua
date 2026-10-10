@@ -853,6 +853,37 @@ local function is_object(unit)
 	return true
 end
 
+-- Every machine has the units that die, and they are the same ones, but a ragdoll is simulated by each machine alone: they
+-- don't lie in the same place. What a corpse can be told by is the id of the game object its unit had when it was alive, which
+-- is kept as the unit is put among the corpses (the game takes the id away after that). A held ragdoll or object is told to
+-- the others by it.
+local corpse_ids = setmetatable({}, {__mode = "k"}) -- { [the unit] = the id }
+local corpse_units = {} -- { [the id] = the unit }
+
+mod:hook_safe(UnitSpawner, "push_unit_to_death_watch_list", function (self, unit)
+	local go_id = Managers.state.unit_storage:go_id(unit)
+
+	if go_id then
+		corpse_ids[unit] = go_id
+		corpse_units[go_id] = unit
+	end
+end)
+
+-- The id of a ragdoll or an object that is held (a corpse's, or the one an object that is alive has), and the unit of an id
+local function object_id_of(unit)
+	return corpse_ids[unit] or Managers.state.unit_storage:go_id(unit)
+end
+
+local function object_unit_of(object_id)
+	local unit = corpse_units[object_id]
+
+	if unit and Unit.alive(unit) then
+		return unit
+	end
+
+	return Managers.state.unit_storage:unit(object_id)
+end
+
 -- The corpse that is held, or was held last, isn't removed: the game removes the oldest of the corpses it has in its
 -- death watch list when there are too many, so the corpse is taken out of that list, and put back (as the newest)
 -- when another one is held or the mod is cleared.
@@ -1024,8 +1055,7 @@ end
 local openables = {} -- the doors and the chests near enough: the unit, is it a chest
 
 -- A ragdoll or another object with a body that moves, the first one the aim is on (a wall in the way ends the search):
--- the unit, its body and how far it is. The machines of the others look for it too, with the eye and aim of the one who
--- holds it, to hold the same one.
+-- the unit, its body and how far it is.
 local function find_object(owner_unit, physics_world, origin, aim)
 	local range = CONFIG.beam_range
 
@@ -2850,11 +2880,13 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		-- (with what bends it: the aim, and what hangs from it and lags behind, 0 and nothing for none)
 		local lag = pending.lag or Vector3.zero()
 
-		-- (and, for a ragdoll or an object that is held, where the eye is and how far in front of it it is held, to hold it the
-		-- same way on their machines, 0 for none)
-		local hold_distance = state.kind == "object" and state.hold_distance or 0
+		-- (and, for a ragdoll or an object that is held, which one (its id, and the bone of the body that is held), where the eye
+		-- is and how far in front of it it is held, to hold it the same way on their machines, 0 for none)
+		local is_object_held = state.kind == "object" and Unit.alive(state.target)
+		local hold_distance = is_object_held and state.hold_distance or 0
+		local object_id = is_object_held and object_id_of(state.target) or 0
 
-		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z, aim.x, aim.y, aim.z, pending.weight or 0, lag.x, lag.y, lag.z, origin.x, origin.y, origin.z, hold_distance)
+		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z, aim.x, aim.y, aim.z, pending.weight or 0, lag.x, lag.y, lag.z, origin.x, origin.y, origin.z, hold_distance, object_id, state.node_index or -1)
 	end
 end
 
@@ -2873,7 +2905,7 @@ local function remove_remote_beam(owner_unit)
 	end
 end
 
-mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, weight, lag_x, lag_y, lag_z, origin_x, origin_y, origin_z, hold_distance)
+mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, weight, lag_x, lag_y, lag_z, origin_x, origin_y, origin_z, hold_distance, object_id, node_index)
 	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
 
 	if not owner_unit then
@@ -2892,42 +2924,40 @@ mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, a
 	beam.weight = weight > 0 and weight or nil
 	beam.lag = Vector3Box(Vector3(lag_x, lag_y, lag_z))
 	beam.origin = Vector3Box(Vector3(origin_x, origin_y, origin_z))
-	beam.hold_distance = hold_distance > 0 and hold_distance or nil
+	beam.hold_distance = hold_distance > 0 and object_id > 0 and hold_distance or nil
+	beam.object_id = object_id
+	beam.node_index = node_index >= 0 and node_index or nil
 	beam.received = Application.time_since_launch()
 end)
 
 -- A ragdoll or an object that is held by someone else is held on this machine too, by the same code, from the eye and aim
--- of the holder that are sent: this machine's copy of it is the one that is looked for (the same ray), the copies are not
--- the same ones, they are all held at the same place. The holder's own game does what it always did.
+-- of the holder that are sent. This machine's copy of it is told by its id (the ragdolls don't lie in the same places on the
+-- machines), and the body of it that is held by the bone of it: the copies are not the same, they are all held at the same
+-- place. The holder's own game does what it always did.
 local function update_object_mirrors(dt)
 	if not next(remote_beams) then
 		return
 	end
 
-	local now = Application.time_since_launch()
-	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
-
-	for owner_unit, beam in pairs(remote_beams) do
+	for _, beam in pairs(remote_beams) do
 		local mirror = beam.mirror
 
-		if not beam.hold_distance or mirror and not Unit.alive(mirror.target) then
+		-- (nothing held, another one held, or one that is gone from this machine)
+		if not beam.hold_distance or mirror and (mirror.object_id ~= beam.object_id or not Unit.alive(mirror.target)) then
+			mirror = nil
 			beam.mirror = nil
-		else
-			local origin = beam.origin:unbox()
-			local aim = beam.aim:unbox()
+		end
 
-			if not mirror and now >= (beam.next_object_search or 0) then
-				-- (looked for again in a moment if there is nothing, not every frame)
-				beam.next_object_search = now + CONFIG.beam_send_interval
+		if beam.hold_distance then
+			if not mirror then
+				local unit = object_unit_of(beam.object_id)
 
-				local unit, actor = find_object(owner_unit, physics_world, origin, aim)
-
-				if unit then
+				if unit and Unit.alive(unit) then
 					mirror = {
-						actor = actor,
 						corpse = AiUtils.unit_breed(unit) ~= nil,
 						kind = "object",
-						node_index = Actor.node(actor),
+						node_index = beam.node_index,
+						object_id = beam.object_id,
 						target = unit,
 						thawed = false,
 					}
@@ -2943,7 +2973,7 @@ local function update_object_mirrors(dt)
 				mirror.hold_distance = beam.hold_distance
 
 				refresh_object(mirror)
-				hold_object(mirror, aim, origin, dt)
+				hold_object(mirror, beam.aim:unbox(), beam.origin:unbox(), dt)
 			end
 		end
 	end
@@ -3144,6 +3174,7 @@ local function clear_beams()
 
 	table.clear(remote_inputs)
 	table.clear(client_throws)
+	table.clear(corpse_units)
 
 	if Managers.player.is_server then
 		clear_ally_buffs()
