@@ -144,7 +144,7 @@ local CONFIG = {
 	-- An enemy that is nearer than throw_min_distance to where it would land, or that the game doesn't put in a vortex (the
 	-- leech and the sorcerers), is staggered towards there instead: yank_stagger_per_meter of the distance as the length, at
 	-- most yank_stagger_max
-	throw_min_distance = 1.5, -- m
+	throw_min_distance = 4, -- m
 	yank_stagger_per_meter = 1,
 	yank_stagger_max = 4,
 	throw_lift = 0.4, -- m, the enemy is lifted this high before it is let out of the vortex, it is not on the ground then
@@ -3613,12 +3613,20 @@ if PlayerUnitFirstPerson then
 	end)
 end
 
+-- The beams of the others are run by the host from the weapon system's update, where its own beam is run (the actions of the
+-- weapons are updated there), and not from the mod's update, which is before every system of the game: the order of the systems
+-- matters to a throw. The behavior of an enemy (the AI system, which comes before the weapons) goes on from what it finds when
+-- it is updated, and the locomotion (which comes after) moves the unit by the velocity it was given: a throw that is set up
+-- before the AI system is seen by the behavior while the unit has not moved yet, which lands it where it is.
+mod:hook_safe(WeaponSystem, "update", function (self, context, t)
+	update_remote_inputs(context.dt, t)
+end)
+
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	-- (there is no game time outside of a level)
 	local t = Managers.time:time("game")
 
 	if t then
-		update_remote_inputs(dt, t)
 		update_object_mirrors(dt)
 
 		if Managers.player.is_server then
