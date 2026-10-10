@@ -1023,6 +1023,32 @@ end
 
 local openables = {} -- the doors and the chests near enough: the unit, is it a chest
 
+-- A ragdoll or another object with a body that moves, the first one the aim is on (a wall in the way ends the search):
+-- the unit, its body and how far it is. The machines of the others look for it too, with the eye and aim of the one who
+-- holds it, to hold the same one.
+local function find_object(owner_unit, physics_world, origin, aim)
+	local range = CONFIG.beam_range
+
+	PhysicsWorld.prepare_actors_for_raycast(physics_world, origin, aim, 0.01, 0.5, range * range)
+
+	local hits = PhysicsWorld.immediate_raycast(physics_world, origin, aim, range, "all", "collision_filter", CONFIG.object_collision_filter)
+
+	for i = 1, hits and #hits or 0 do
+		local hit = hits[i]
+		local actor = hit[4]
+		local unit = actor and Actor.unit(actor)
+
+		if unit and unit ~= owner_unit then
+			if not Actor.is_static(actor) and is_object(unit) then
+				return unit, actor, hit[2]
+			elseif Actor.is_static(actor) then
+				-- (a wall in the way ends the search, characters are skipped)
+				break
+			end
+		end
+	end
+end
+
 -- What the aim is on: an ally if there is one, else the enemy that can be held that is closest to it, and failing those an
 -- object with a body that moves (a ragdoll). Returns the unit and what it is, and for an object its body and how far it is.
 local function find_target(owner_unit, physics_world, origin, aim)
@@ -1186,23 +1212,10 @@ local function find_target(owner_unit, physics_world, origin, aim)
 	end
 
 	-- Nothing living: a ragdoll or another object with a body that moves, the first one the aim is on
-	PhysicsWorld.prepare_actors_for_raycast(physics_world, origin, aim, 0.01, 0.5, range * range)
+	local unit, actor, distance = find_object(owner_unit, physics_world, origin, aim)
 
-	local hits = PhysicsWorld.immediate_raycast(physics_world, origin, aim, range, "all", "collision_filter", CONFIG.object_collision_filter)
-
-	for i = 1, hits and #hits or 0 do
-		local hit = hits[i]
-		local actor = hit[4]
-		local unit = actor and Actor.unit(actor)
-
-		if unit and unit ~= owner_unit then
-			if not Actor.is_static(actor) and is_object(unit) then
-				return unit, "object", actor, hit[2]
-			elseif Actor.is_static(actor) then
-				-- (a wall in the way ends the search, characters are skipped)
-				break
-			end
-		end
+	if unit then
+		return unit, "object", actor, distance
 	end
 end
 
@@ -2837,7 +2850,11 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		-- (with what bends it: the aim, and what hangs from it and lags behind, 0 and nothing for none)
 		local lag = pending.lag or Vector3.zero()
 
-		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z, aim.x, aim.y, aim.z, pending.weight or 0, lag.x, lag.y, lag.z)
+		-- (and, for a ragdoll or an object that is held, where the eye is and how far in front of it it is held, to hold it the
+		-- same way on their machines, 0 for none)
+		local hold_distance = state.kind == "object" and state.hold_distance or 0
+
+		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z, aim.x, aim.y, aim.z, pending.weight or 0, lag.x, lag.y, lag.z, origin.x, origin.y, origin.z, hold_distance)
 	end
 end
 
@@ -2856,7 +2873,7 @@ local function remove_remote_beam(owner_unit)
 	end
 end
 
-mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, weight, lag_x, lag_y, lag_z)
+mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, weight, lag_x, lag_y, lag_z, origin_x, origin_y, origin_z, hold_distance)
 	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
 
 	if not owner_unit then
@@ -2874,8 +2891,63 @@ mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, a
 	beam.aim = Vector3Box(Vector3(aim_x, aim_y, aim_z))
 	beam.weight = weight > 0 and weight or nil
 	beam.lag = Vector3Box(Vector3(lag_x, lag_y, lag_z))
+	beam.origin = Vector3Box(Vector3(origin_x, origin_y, origin_z))
+	beam.hold_distance = hold_distance > 0 and hold_distance or nil
 	beam.received = Application.time_since_launch()
 end)
+
+-- A ragdoll or an object that is held by someone else is held on this machine too, by the same code, from the eye and aim
+-- of the holder that are sent: this machine's copy of it is the one that is looked for (the same ray), the copies are not
+-- the same ones, they are all held at the same place. The holder's own game does what it always did.
+local function update_object_mirrors(dt)
+	if not next(remote_beams) then
+		return
+	end
+
+	local now = Application.time_since_launch()
+	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+
+	for owner_unit, beam in pairs(remote_beams) do
+		local mirror = beam.mirror
+
+		if not beam.hold_distance or mirror and not Unit.alive(mirror.target) then
+			beam.mirror = nil
+		else
+			local origin = beam.origin:unbox()
+			local aim = beam.aim:unbox()
+
+			if not mirror and now >= (beam.next_object_search or 0) then
+				-- (looked for again in a moment if there is nothing, not every frame)
+				beam.next_object_search = now + CONFIG.beam_send_interval
+
+				local unit, actor = find_object(owner_unit, physics_world, origin, aim)
+
+				if unit then
+					mirror = {
+						actor = actor,
+						corpse = AiUtils.unit_breed(unit) ~= nil,
+						kind = "object",
+						node_index = Actor.node(actor),
+						target = unit,
+						thawed = false,
+					}
+					beam.mirror = mirror
+
+					if mirror.corpse then
+						preserve_corpse(unit)
+					end
+				end
+			end
+
+			if mirror then
+				mirror.hold_distance = beam.hold_distance
+
+				refresh_object(mirror)
+				hold_object(mirror, aim, origin, dt)
+			end
+		end
+	end
+end
 
 mod:network_register("ut_link_beam_end", function (_, owner_go_id)
 	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
@@ -3044,6 +3116,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 
 	if t then
 		update_remote_inputs(dt, t)
+		update_object_mirrors(dt)
 
 		if Managers.player.is_server then
 			update_ally_buffs()
