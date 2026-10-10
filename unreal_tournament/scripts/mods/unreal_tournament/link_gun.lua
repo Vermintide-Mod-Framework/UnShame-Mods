@@ -15,7 +15,7 @@ local mod = get_mod("unreal_tournament")
 --   Primary while linked (a yank): an enemy is thrown, the way the game lets one out of the Thornsister's vortex, to land in front of
 --               the owner (pushed instead, if it is near or the game doesn't put it in a vortex), out of a vortex if it is in one; an
 --               ally is freed from what holds them, got up, pulled up from a ledge, or launched to the owner, at a cost in heat (the
---               whole bar for a player); an object is pulled to the owner, and what a shot would bring down (a lantern) comes down;
+--               whole bar for a player), a pet is put down beside the owner; an object is pulled to the owner, and what a shot would bring down (a lantern) comes down;
 --               a pickup is picked up, a door opened or closed, a chest or a lever used, a barricade broken.
 -- Who does what: the player who holds the beam picks what is linked, from what they see. What depends on the machine of the
 -- player (their pickups, doors, chests, interactions, the objects of the level, the heat of the staff) is done by their own game,
@@ -1672,11 +1672,12 @@ end
 -- Where a unit that is thrown lands: in front of the owner, on the navmesh where there is one near, else on the owner, else
 -- where the owner last stood on it (nothing if there is none). The owner's game works it out for the beam of a player that is
 -- not the host, from where they are and where they aim, what the host sees of them is a little behind.
-local function throw_landing(owner_unit, aim_flat)
+-- (reach is how far in front of the owner, throw_land_distance if it is not given)
+local function throw_landing(owner_unit, aim_flat, reach)
 	local nav_world = Managers.state.entity:system("ai_system"):nav_world()
 	local owner_position = Unit.world_position(owner_unit, 0)
 	local owner_locomotion_extension = ScriptUnit.has_extension(owner_unit, "locomotion_system")
-	local in_front = owner_position + aim_flat * CONFIG.throw_land_distance
+	local in_front = owner_position + aim_flat * (reach or CONFIG.throw_land_distance)
 	local candidates = {
 		in_front,
 		owner_position,
@@ -1729,6 +1730,29 @@ local function is_staggered(blackboard)
 	end
 
 	return blackboard.stagger ~= nil and blackboard.stagger ~= false and blackboard.stagger ~= 0
+end
+
+-- A pet (the necromancer's skeleton) has no stagger and isn't put in a vortex, so it can't be pushed or thrown: a yank puts it down
+-- beside the owner, yank_min_distance in front of them, as if it were picked up and set there.
+local function place_pet(state, owner_unit)
+	local unit = state.target
+	local locomotion_extension = ScriptUnit.has_extension(unit, "locomotion_system")
+	local aim_flat = state.flat_aim and state.flat_aim:unbox() or Vector3.forward()
+	local place = throw_landing(owner_unit, aim_flat, CONFIG.yank_min_distance)
+
+	if not place or not locomotion_extension or not locomotion_extension.teleport_to then
+		return
+	end
+
+	locomotion_extension:teleport_to(place)
+
+	-- (it was on its way somewhere: the way it was going is not the way from here)
+	local blackboard = BLACKBOARDS[unit]
+	local navigation_extension = blackboard and blackboard.navigation_extension
+
+	if navigation_extension and navigation_extension.reset_destination then
+		navigation_extension:reset_destination()
+	end
 end
 
 -- A push towards the owner instead of a throw, for an enemy that is near enough for one to be too much, and for one that the
@@ -3118,29 +3142,15 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 		local breed = AiUtils.unit_breed(state.target)
 
 		if breed and not breed.is_player then
-			-- (a skeleton: an AI unit, it is thrown to the owner like an enemy is)
+			-- (a skeleton: an AI unit that is a pet, it is put down beside the owner)
 			local flat_aim = Vector3.flat(aim)
 
 			if Vector3.length(flat_aim) > 0.1 then
 				state.flat_aim = Vector3Box(Vector3.normalize(flat_aim))
 			end
 
-			-- (not one that is already in the air of a throw)
-			if yanked and not state.throw then
-				state.weight = state.weight or 1
-
-				start_throw(state, owner_unit, t)
-
-				-- (let out of a climb, as a held enemy is: the vortex it is put in takes it out of the behavior of climbing)
-				local blackboard = BLACKBOARDS[state.target]
-
-				if blackboard and state.throw then
-					leave_climb(blackboard)
-				end
-			end
-
-			if state.throw then
-				update_throw(state, t)
+			if yanked then
+				place_pet(state, owner_unit)
 			end
 		elseif yanked then
 			yank_ally(state, owner_unit, t)
