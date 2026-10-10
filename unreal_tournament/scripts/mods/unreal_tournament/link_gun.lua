@@ -1321,7 +1321,8 @@ local function throw_landing(owner_unit, aim_flat)
 	local candidates = {
 		owner_position + aim_flat * CONFIG.yank_min_distance,
 		owner_position,
-		owner_locomotion_extension and owner_locomotion_extension.last_position_on_navmesh and owner_locomotion_extension:last_position_on_navmesh() or nil,
+		-- (the game only keeps this on the host)
+		Managers.player.is_server and owner_locomotion_extension and owner_locomotion_extension.last_position_on_navmesh and owner_locomotion_extension:last_position_on_navmesh() or nil,
 	}
 
 	for i = 1, 3 do
