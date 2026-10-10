@@ -219,6 +219,9 @@ local CONFIG = {
 	-- further than anchored_distance from where it is pulled to, anchor_check_delay seconds after the yank
 	anchor_check_delay = 0.4, -- seconds
 	anchored_distance = 1, -- m
+	-- A yank of something to break down (a barricade) deals its health in break_hits blows, break_hit_interval seconds apart
+	break_hits = 4,
+	break_hit_interval = 0.15, -- seconds
 	object_pull = 20,
 	object_max_speed = 35, -- m/s
 	-- The beam: drawn as a curve (a cubic Bezier) from the staff to what it is on. A held enemy hangs it by
@@ -2914,18 +2917,52 @@ local function yank_ally(state, owner_unit, t)
 	end
 end
 
--- Something to break down (see is_breakable): all of its health is dealt as damage, as the game deals the damage of a hit to a
--- thing in the level (the game sends it to the host when this isn't the host)
+-- Something to break down (see is_breakable): its health is dealt as damage in break_hits blows, break_hit_interval seconds apart,
+-- as the game deals the damage of a hit to a thing in the level (the game sends it to the host when this isn't the host). The
+-- level answers each blow (the flow event of a hit, with the health that is left) and a thing that breaks in stages shows them: one
+-- blow that takes all of it has the level go from whole to gone.
 local function break_down(state, owner_unit, t)
+	state.break_hits = CONFIG.break_hits
+	state.break_next_t = t
+
+	add_heat(owner_unit, CONFIG.yank_door_overcharge)
+end
+
+local function update_break(state, owner_unit, t)
+	if t < state.break_next_t then
+		return
+	end
+
 	local unit = state.target
-	local health_extension = ScriptUnit.extension(unit, "health_system")
+	local health_extension = Unit.alive(unit) and ScriptUnit.has_extension(unit, "health_system")
+
+	if not health_extension or not health_extension:is_alive() then
+		state.break_hits = nil
+
+		release_target(state)
+
+		state.link_block_until = t + CONFIG.supply_retry
+
+		return
+	end
+
 	local direction = Vector3.normalize(Unit.world_position(unit, 0) - Unit.world_position(owner_unit, 0))
 
-	DamageUtils.add_damage_network(unit, owner_unit, health_extension:current_health(), "full", "destructible_level_object_hit", nil, direction, CONFIG.dot_damage_source, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 1)
-	add_heat(owner_unit, CONFIG.yank_door_overcharge)
-	release_target(state)
+	-- (the share of what is left, all of it with the last blow)
+	local damage = health_extension:current_health() / state.break_hits
 
-	state.link_block_until = t + CONFIG.supply_retry
+	state.break_hits = state.break_hits - 1
+	state.break_next_t = t + CONFIG.break_hit_interval
+
+	DamageUtils.add_damage_network(unit, owner_unit, damage, "full", "destructible_level_object_hit", nil, direction, CONFIG.dot_damage_source, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 1)
+
+	if state.break_hits <= 0 then
+		state.break_hits = nil
+
+		release_target(state)
+
+		state.link_block_until = t + CONFIG.supply_retry
+	end
 end
 
 -- What the game does when a shot hits a unit that has no health (not only one placed in the level, some are spawned by it): it sets
@@ -3053,6 +3090,13 @@ end
 -- own when the owner is the host, what the owner's game sends when it isn't (see the inputs of the others below).
 local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_world)
 	if not state.target then
+		return
+	end
+
+	-- (something that is being broken down is only that, until it is done)
+	if state.break_hits then
+		update_break(state, owner_unit, t)
+
 		return
 	end
 
