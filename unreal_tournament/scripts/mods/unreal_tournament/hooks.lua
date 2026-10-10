@@ -186,22 +186,3 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 		get_mod("VMF").ping_vmf_users()
 	end
 end
-
--- (temporary: which caller of the broadphase passes a position that isn't one, the trace is said in the chat)
-local last_broadphase_report = 0
-
-mod:hook(AiUtils, "broadphase_query", function (func, ...)
-	local ok, result = pcall(func, ...)
-
-	if not ok then
-		if Application.time_since_launch() - last_broadphase_report > 5 then
-			last_broadphase_report = Application.time_since_launch()
-
-			mod:echo("broadphase_query failed: %s", debug.traceback(tostring(result), 2))
-		end
-
-		error(result, 0)
-	end
-
-	return result
-end)

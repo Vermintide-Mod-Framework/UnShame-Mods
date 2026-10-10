@@ -194,7 +194,7 @@ local CONFIG = {
 	remote_beam_timeout = 0.5, -- seconds
 	-- The beams of players that are not the host: what they can link to (the host works what it does out from what they say),
 	-- and how long the host goes on with a beam it has heard nothing of
-	remote_link_kinds = {ally = true},
+	remote_link_kinds = {ally = true, enemy = true},
 	remote_input_timeout = 0.5, -- seconds
 	-- The field of view (vertical, degrees) the effect of a beam that is seen from the outside is drawn with: found by eye with a
 	-- world field of view of 65, the beam is then where it is seen. (effect_fov, above, is the staff in the hands seen from the
@@ -2547,6 +2547,16 @@ mod:network_register("ut_link_ally_attack", function ()
 	end
 end)
 
+-- How far an enemy that is held is behind where it is being moved to, which the host works out: it bends the beam
+mod:network_register("ut_link_lag", function (_, x, y, z)
+	local owner_unit = Managers.player:local_player().player_unit
+	local state = owner_unit and states[owner_unit]
+
+	if state then
+		state.lag = Vector3Box(Vector3(x, y, z))
+	end
+end)
+
 -- The beams of the others that the host runs: what they do is what a beam of the host's does, from their inputs
 local function update_remote_inputs(dt, t)
 	if not next(remote_inputs) then
@@ -2607,6 +2617,15 @@ local function update_remote_inputs(dt, t)
 				state.next_ally_notice_t = t + CONFIG.beam_send_interval
 
 				mod:network_send("ut_link_ally_attack", owner_peer_id)
+			end
+
+			-- An enemy that is held lags behind the aim, the owner's beam bends by it
+			if state.kind == "enemy" and state.lag and t >= (state.next_lag_notice_t or 0) then
+				state.next_lag_notice_t = t + CONFIG.beam_send_interval
+
+				local lag = state.lag:unbox()
+
+				mod:network_send("ut_link_lag", owner_peer_id, lag.x, lag.y, lag.z)
 			end
 		end
 	end
