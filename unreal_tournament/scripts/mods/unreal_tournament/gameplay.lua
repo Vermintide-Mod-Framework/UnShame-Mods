@@ -272,6 +272,69 @@ local KEEP_UNLOCKS = {
 			dlc_survival_ruins = 99,
 		}
 	end,
+	-- The queries of the leader of the party, the same kind (their value is the answer): how many acts are done, the difficulty of
+	-- the levels and of the bosses (the rank of the hardest difficulty), the level of the hero, what has been crafted, the
+	-- achievements. The ownership of the game's DLCs is not touched: what is owned is owned.
+	flow_query_leader_num_acts_completed = function ()
+		return {
+			value = table.size(GameActs),
+		}
+	end,
+	flow_query_leader_completed_difficulty = function ()
+		return {
+			value = 5,
+		}
+	end,
+	flow_query_leader_completed_dlc_difficulty = function ()
+		return {
+			value = 5,
+		}
+	end,
+	flow_query_leader_completed_all_dlc_levels = function ()
+		return {
+			value = true,
+		}
+	end,
+	flow_query_leader_completed_exalted_champion_difficulty = function ()
+		return {
+			value = 8,
+		}
+	end,
+	flow_query_leader_completed_exalted_sorcerer_difficulty = function ()
+		return {
+			value = 8,
+		}
+	end,
+	flow_query_leader_completed_grey_seer_difficulty = function ()
+		return {
+			value = 8,
+		}
+	end,
+	flow_query_leader_completed_storm_vermin_warlord_difficulty = function ()
+		return {
+			value = 8,
+		}
+	end,
+	flow_query_leader_hero_level = function ()
+		return {
+			value = 30,
+		}
+	end,
+	flow_query_leader_num_crafted_items = function ()
+		return {
+			value = 99,
+		}
+	end,
+	flow_query_leader_achievement_completed = function ()
+		return {
+			value = true,
+		}
+	end,
+	flow_query_local_player_achievement_completed = function ()
+		return {
+			value = true,
+		}
+	end,
 }
 
 for name, unlocked in pairs(KEEP_UNLOCKS) do
