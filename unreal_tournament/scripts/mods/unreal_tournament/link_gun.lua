@@ -1750,9 +1750,12 @@ local function start_throw(state, owner_unit, t)
 	end
 
 	-- (the place the owner's game has worked out, if it has sent one)
+	local from_owner = state.yank_land ~= nil
 	local land = state.yank_land and state.yank_land:unbox() or throw_landing(owner_unit, aim_flat)
 
 	state.yank_land = nil
+
+	mod:echo("DEBUG throw: land_from_owner=%s land=%s vortexable=%s distance=%s in_vortex=%s staggered=%s", tostring(from_owner), tostring(land ~= nil), tostring(blackboard.breed.vortexable), land and string.format("%.1f", Vector3.length(land - Unit.world_position(unit, 0))) or "-", tostring(blackboard.in_vortex), tostring(blackboard.stagger))
 
 	-- Not thrown: one that the game doesn't put in a vortex (the leech, the sorcerers: it may not do what a vortex takes of it,
 	-- or not live through it) is pushed, wherever it is, and so is one that is near (the distance of a throw to there isn't
@@ -1806,6 +1809,8 @@ local function update_throw(state, t)
 
 			thrown.phase = "lifted"
 		elseif t - thrown.started > CONFIG.throw_enter_timeout then
+			mod:echo("DEBUG throw called off: never entered the vortex (state=%s)", tostring(blackboard.in_vortex_state))
+
 			finish_throw(state)
 
 			return false
