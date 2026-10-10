@@ -1182,8 +1182,11 @@ local function is_door(unit)
 end
 
 -- A lever, a button, a chest, anything the game lets a player interact with (not a pickup, those are supplies, and not a door)
-local function is_interactable(unit)
-	local interaction_type = Unit.get_data(unit, "interaction_data", "interaction_type")
+local function is_interactable(unit, owner_unit)
+	local interactable_extension = ScriptUnit.has_extension(unit, "interactable_system")
+
+	-- (the type the game goes by is the extension's, the data is what it started as)
+	local interaction_type = interactable_extension and interactable_extension:interaction_type()
 
 	-- (a unit with nothing to see is only a place that the game has the interaction at, a character that is talked to has one next to
 	-- them: it isn't linked, there is nothing to look at)
@@ -1195,9 +1198,20 @@ local function is_interactable(unit)
 		return false
 	end
 
-	local interactable_extension = ScriptUnit.has_extension(unit, "interactable_system")
+	if not interactable_extension:is_enabled() then
+		return false
+	end
 
-	return interactable_extension ~= nil and interactable_extension:is_enabled()
+	-- What the game does to offer an interaction: the owner is able to do it now (or it says why it can't, which it shows)
+	local interactor_extension = ScriptUnit.has_extension(owner_unit, "interactor_system")
+
+	if not interactor_extension then
+		return false
+	end
+
+	local can_interact, fail_reason = interactor_extension:can_interact(unit, interaction_type)
+
+	return can_interact or fail_reason ~= nil
 end
 
 -- A thing in the level that is broken down by hitting it, a barricade, a window, a crate: a unit placed in the level that has a
@@ -1217,7 +1231,27 @@ local function is_breakable(unit)
 	return not Unit.get_data(unit, "no_damage_from_players") and not Unit.get_data(unit, "filter_damage_source") and Unit.get_data(unit, "allow_ranged_damage") ~= false
 end
 
+-- Whether the game would offer the interaction with a unit to someone looking along the aim: the way it looks, a ray with the
+-- filter of the interactions that hits an actor of the unit (the one the unit names, if it names one). An interaction that
+-- is disabled in the level (the characters of the keep that stand at another place, say) has no actor to hit, and isn't offered
+-- by the game, but is still an interactable that is enabled.
+local function interaction_is_offered(physics_world, origin, aim, unit, range)
+	local hits = PhysicsWorld.immediate_raycast(physics_world, origin, aim, range, "all", "collision_filter", "filter_ray_interaction")
+	local interact_actor = Unit.get_data(unit, "interaction_data", "interact_actor")
+
+	for i = 1, hits and #hits or 0 do
+		local actor = hits[i][4]
+
+		if actor and Actor.unit(actor) == unit and (not interact_actor or Unit.actor(unit, interact_actor) == actor) then
+			return true
+		end
+	end
+
+	return false
+end
+
 local openables = {} -- the doors, the chests, the levers and the things to break near enough: the unit, does the aim look at its box too
+local interactables = {} -- the ones of them that are interactions of the game: only the ones the game would offer are linked
 
 -- A ragdoll or another object with a body that moves, the first one the aim is on (a wall in the way ends the search):
 -- the unit, its body and how far it is.
@@ -1400,6 +1434,7 @@ local function find_target(owner_unit, physics_world, origin, aim)
 		local reach_squared = (range + CONFIG.openable_reach_margin) * (range + CONFIG.openable_reach_margin)
 
 		table.clear(openables)
+		table.clear(interactables)
 
 		-- (one pass over the interactables: the supplies are considered, the chests kept for below)
 		for unit in pairs(Managers.state.entity:get_entities("GenericUnitInteractableExtension")) do
@@ -1408,9 +1443,10 @@ local function find_target(owner_unit, physics_world, origin, aim)
 			if position and Vector3.distance_squared(position, origin) <= reach_squared and Unit.alive(unit) then
 				if is_supply(unit) then
 					consider(unit, "supply")
-				elseif is_interactable(unit) then
+				elseif is_interactable(unit, owner_unit) then
 					-- (a chest that has been opened is done with: the game marks it used, and takes the interaction away)
 					openables[unit] = true
+					interactables[unit] = true
 				end
 			end
 		end
@@ -1446,7 +1482,7 @@ local function find_target(owner_unit, physics_world, origin, aim)
 					for i = 1, #boxes do
 						local distance = ray_hits_box(origin, aim, boxes[i].pose, boxes[i].half * CONFIG.openable_box_scale)
 
-						if distance and distance <= range and (not best_distance or distance < best_distance) and has_line_of_sight(physics_world, origin, origin + aim * distance) then
+						if distance and distance <= range and (not best_distance or distance < best_distance) and has_line_of_sight(physics_world, origin, origin + aim * distance) and (not interactables[unit] or interaction_is_offered(physics_world, origin, aim, unit, range)) then
 							best_unit = unit
 							best_kind = "openable"
 							best_distance = distance
