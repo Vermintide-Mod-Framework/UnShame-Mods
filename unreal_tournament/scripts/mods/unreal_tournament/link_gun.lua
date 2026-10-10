@@ -1881,8 +1881,8 @@ end)
 -- again after that, below.
 local function apply_bot_target(bot_unit, enemy)
 	local blackboard = BLACKBOARDS[bot_unit]
-	local from = POSITION_LOOKUP[bot_unit]
-	local to = POSITION_LOOKUP[enemy]
+	local from = Unit.alive(bot_unit) and Unit.world_position(bot_unit, 0)
+	local to = Unit.alive(enemy) and Unit.world_position(enemy, 0)
 
 	if blackboard and from and to then
 		blackboard.urgent_target_enemy = enemy
@@ -1906,7 +1906,8 @@ local function force_bot_target(bot_unit)
 	end
 
 	local player = Managers.player:owner(bot_unit)
-	local position = POSITION_LOOKUP[bot_unit]
+	-- (the position is read from the unit: the bot's entry of POSITION_LOOKUP isn't a vector the broadphase takes)
+	local position = Unit.alive(bot_unit) and Unit.world_position(bot_unit, 0)
 
 	if not player or not player.bot_player or not position then
 		return
@@ -1921,7 +1922,7 @@ local function force_bot_target(bot_unit)
 		local breed = HEALTH_ALIVE[unit] and AiUtils.unit_breed(unit)
 
 		if breed and not breed.is_player and breed.race ~= "dummy" then
-			local distance = Vector3.distance_squared(POSITION_LOOKUP[unit], position)
+			local distance = Vector3.distance_squared(Unit.world_position(unit, 0), position)
 
 			if not nearest_distance or distance < nearest_distance then
 				nearest = unit
