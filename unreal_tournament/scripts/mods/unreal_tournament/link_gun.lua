@@ -1162,7 +1162,56 @@ local function ray_hits_box(origin, aim, pose, half)
 	return near
 end
 
-local openables = {} -- the doors and the chests near enough: the unit, is it a chest
+-- Interactions of the game that are done to people, not to things in the level (they aren't linked: they are the game's own
+-- between players)
+local PEOPLE_INTERACTIONS = {
+	assisted_respawn = true,
+	give_item = true,
+	heal = true,
+	player_generic = true,
+	pull_up = true,
+	release_from_hook = true,
+	revive = true,
+}
+
+-- A door is opened (by the door system's own interacted_with), not broken, whatever health it has
+local function is_door(unit)
+	local door_extension = ScriptUnit.has_extension(unit, "door_system")
+
+	return door_extension ~= nil and door_extension.interacted_with ~= nil
+end
+
+-- A lever, a button, a chest, anything the game lets a player interact with (not a pickup, those are supplies, and not a door)
+local function is_interactable(unit)
+	local interaction_type = Unit.get_data(unit, "interaction_data", "interaction_type")
+
+	if not interaction_type or PEOPLE_INTERACTIONS[interaction_type] or not InteractionDefinitions[interaction_type] or Unit.get_data(unit, "interaction_data", "used") or is_door(unit) then
+		return false
+	end
+
+	local interactable_extension = ScriptUnit.has_extension(unit, "interactable_system")
+
+	return interactable_extension ~= nil and interactable_extension:is_enabled()
+end
+
+-- A thing in the level that is broken down by hitting it, a barricade, a window, a crate: a unit placed in the level that has a
+-- health and isn't a character, a door (doors are opened, not broken, whatever health they have) or anything that is interacted with,
+-- and that the game lets players hurt (with this kind of attack)
+local function is_breakable(unit)
+	local health_extension = ScriptUnit.has_extension(unit, "health_system")
+
+	if not health_extension or not health_extension:is_alive() or not Managers.state.network:level_object_id(unit) then
+		return false
+	end
+
+	if is_door(unit) or ScriptUnit.has_extension(unit, "interactable_system") or AiUtils.unit_breed(unit) then
+		return false
+	end
+
+	return not Unit.get_data(unit, "no_damage_from_players") and not Unit.get_data(unit, "filter_damage_source") and Unit.get_data(unit, "allow_ranged_damage") ~= false
+end
+
+local openables = {} -- the doors, the chests, the levers and the things to break near enough: the unit, does the aim look at its box too
 
 -- A ragdoll or another object with a body that moves, the first one the aim is on (a wall in the way ends the search):
 -- the unit, its body and how far it is.
@@ -1353,13 +1402,21 @@ local function find_target(owner_unit, physics_world, origin, aim)
 			if position and Vector3.distance_squared(position, origin) <= reach_squared and Unit.alive(unit) then
 				if is_supply(unit) then
 					consider(unit, "supply")
-				elseif Unit.get_data(unit, "interaction_data", "interaction_type") == "chest" and not Unit.get_data(unit, "interaction_data", "used") then
+				elseif is_interactable(unit) then
 					-- (a chest that has been opened is done with: the game marks it used, and takes the interaction away)
-					local interactable_extension = ScriptUnit.has_extension(unit, "interactable_system")
+					openables[unit] = true
+				end
+			end
+		end
 
-					if interactable_extension and interactable_extension:is_enabled() then
-						openables[unit] = true
-					end
+		-- The things that are broken down, the units with a health that aren't characters (the characters have a blackboard, which
+		-- is looked at first, there are many of them)
+		for unit in pairs(Managers.state.entity:get_entities("GenericHealthExtension")) do
+			if not BLACKBOARDS[unit] and Unit.alive(unit) then
+				local position = POSITION_LOOKUP[unit] or Unit.world_position(unit, 0)
+
+				if Vector3.distance_squared(position, origin) <= reach_squared and is_breakable(unit) then
+					openables[unit] = true
 				end
 			end
 		end
@@ -2707,6 +2764,18 @@ local function yank_openable(state, owner_unit, t)
 			add_heat(owner_unit, CONFIG.yank_door_overcharge)
 
 			-- (the link is over, and doesn't come back while the chest is being opened)
+			release_target(state)
+
+			state.link_block_until = t + CONFIG.supply_retry
+		elseif is_breakable(state.target) then
+			-- Something to break down: all of its health is dealt as damage, as the game deals the damage of a hit to a thing in the
+			-- level (the game sends it to the host when this isn't the host)
+			local unit = state.target
+			local health_extension = ScriptUnit.extension(unit, "health_system")
+			local direction = Vector3.normalize(Unit.world_position(unit, 0) - Unit.world_position(owner_unit, 0))
+
+			DamageUtils.add_damage_network(unit, owner_unit, health_extension:current_health(), "full", "destructible_level_object_hit", nil, direction, CONFIG.dot_damage_source, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 1)
+			add_heat(owner_unit, CONFIG.yank_door_overcharge)
 			release_target(state)
 
 			state.link_block_until = t + CONFIG.supply_retry
