@@ -15,8 +15,9 @@ local mod = get_mod("unreal_tournament")
 --   Primary while linked (a yank): an enemy is thrown, the way the game lets one out of the Thornsister's vortex, to land in front of
 --               the owner (pushed instead, if it is near or the game doesn't put it in a vortex), out of a vortex if it is in one; an
 --               ally is freed from what holds them, got up, pulled up from a ledge, or launched to the owner, at a cost in heat (the
---               whole bar for a player), a critter (a rat) is killed (it has no stagger and isn't put in a vortex); an object is pulled to the owner, and what a shot would bring down (a lantern) comes down;
---               a pickup is picked up, a door opened or closed, a chest or a lever used, a barricade broken.
+--               whole bar for a player); a critter (a rat) is killed, it has no stagger and isn't put in a vortex; an object is
+--               pulled to the owner, and what hangs and is held to something (a lantern) is hit, which brings it down; a pickup is
+--               picked up, a door opened or closed, a chest or a lever used, a barricade broken (in a few blows).
 -- Who does what: the player who holds the beam picks what is linked, from what they see. What depends on the machine of the
 -- player (their pickups, doors, chests, interactions, the objects of the level, the heat of the staff) is done by their own game,
 -- and what happens to the enemies, the allies and the networked objects is done by the game that has them, the host's, which is told
