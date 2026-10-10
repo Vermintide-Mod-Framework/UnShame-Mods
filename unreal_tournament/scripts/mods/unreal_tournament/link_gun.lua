@@ -2789,6 +2789,20 @@ local function yank_ally(state, owner_unit, t)
 	end
 end
 
+-- Something to break down (see is_breakable): all of its health is dealt as damage, as the game deals the damage of a hit to a
+-- thing in the level (the game sends it to the host when this isn't the host)
+local function break_down(state, owner_unit, t)
+	local unit = state.target
+	local health_extension = ScriptUnit.extension(unit, "health_system")
+	local direction = Vector3.normalize(Unit.world_position(unit, 0) - Unit.world_position(owner_unit, 0))
+
+	DamageUtils.add_damage_network(unit, owner_unit, health_extension:current_health(), "full", "destructible_level_object_hit", nil, direction, CONFIG.dot_damage_source, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 1)
+	add_heat(owner_unit, CONFIG.yank_door_overcharge)
+	release_target(state)
+
+	state.link_block_until = t + CONFIG.supply_retry
+end
+
 -- Yanking a door opens it, or closes it; a chest is opened by the game's own interaction, as a supply is picked up. A door
 -- is only opened like that by the host: for the others it is the game's interaction too, which the game sends to the others
 -- (a door that is opened on the machine of someone who is not the host would not be opened for anyone else).
@@ -2811,17 +2825,7 @@ local function yank_openable(state, owner_unit, t)
 
 			state.link_block_until = t + CONFIG.supply_retry
 		elseif is_breakable(state.target) then
-			-- Something to break down: all of its health is dealt as damage, as the game deals the damage of a hit to a thing in the
-			-- level (the game sends it to the host when this isn't the host)
-			local unit = state.target
-			local health_extension = ScriptUnit.extension(unit, "health_system")
-			local direction = Vector3.normalize(Unit.world_position(unit, 0) - Unit.world_position(owner_unit, 0))
-
-			DamageUtils.add_damage_network(unit, owner_unit, health_extension:current_health(), "full", "destructible_level_object_hit", nil, direction, CONFIG.dot_damage_source, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 1)
-			add_heat(owner_unit, CONFIG.yank_door_overcharge)
-			release_target(state)
-
-			state.link_block_until = t + CONFIG.supply_retry
+			break_down(state, owner_unit, t)
 		end
 	end
 end
@@ -2884,6 +2888,10 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 		else
 			damage_enemy(state, owner_unit, t)
 		end
+	elseif state.kind == "object" and yanked and is_breakable(state.target) then
+		-- (an object that is something to break down, a lantern that hangs, is a body that physics moves, and is linked as one: a
+		-- yank breaks it, which is what shooting it does)
+		break_down(state, owner_unit, t)
 	elseif state.kind == "object" then
 		-- (not an object that is already being pulled in: it is held where a yank would hold it)
 		state.yank = state.yank or yanked and state.hold_distance > CONFIG.yank_min_distance
