@@ -114,11 +114,6 @@ return {
 						type = "checkbox",
 						default_value = false,
 					},
-					{
-						setting_id = "unlock_keep",
-						type = "checkbox",
-						default_value = false,
-					},
 				},
 			},
 		},
