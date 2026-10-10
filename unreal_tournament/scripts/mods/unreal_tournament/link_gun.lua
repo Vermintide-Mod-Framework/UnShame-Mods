@@ -89,8 +89,6 @@ local CONFIG = {
 	ally_buff_icon = "kerillian_thornsister_avatar", -- the icon of the buff in the buff bar of the ally
 	bot_target_range = 80,
 	bot_rescan_interval = 0.5, -- seconds, between looks for an enemy for a linked bot that has none near -- m, how far from a linked bot the enemy it is made to attack can be
-	throw_wall_margin = 0.6, -- m, how far from a wall a yanked enemy that hit it lands
-	throw_wall_height = 0.9, -- m above the feet of a yanked enemy, the height that a wall is looked for at
 	openable_reach_margin = 10, -- m past the reach of the beam that a door or a chest can still be looked at (they are big)
 	openable_box_scale = 0.7, -- the share of the size of the box of a door or a chest that the aim has to be on
 	rescue_retry_interval = 0.5, -- seconds between the times that a yank gives a rescue again, until it has taken
@@ -106,15 +104,19 @@ local CONFIG = {
 	-- max_mass can't be held, and neither can the big monsters and bosses.
 	hold_speed = 9,
 	hold_min_distance = 2.5, -- m
-	-- Primary while an enemy is held lifts it and throws it to land in front of you, yank_min_distance from you,
-	-- along an arc: it travels at yank_speed (the same weight rule as hold_speed, the flight is at least
-	-- throw_min_duration and at most throw_max_duration) and rises throw_height (less by weight, at least 0.5). It
-	-- is not thrown through walls or off the navmesh.
+	-- Primary while an enemy is held throws it to land in front of you, yank_min_distance from you, the way the game lets
+	-- an enemy out of the Thornsister's vortex: the flight lasts as long as the distance takes at yank_speed (the same
+	-- weight rule as hold_speed, at least throw_min_duration and at most throw_max_duration), and is a real one, with
+	-- gravity and the walls. The behavior of the enemy puts it on the navmesh where it lands, an enemy that lands where
+	-- there is none dies.
 	yank_speed = 30, -- m/s
 	yank_min_distance = 1.5, -- m
-	throw_height = 3, -- m
 	throw_min_duration = 0.35,
 	throw_max_duration = 1.2,
+	-- The enemy takes up the vortex on its next turn: a throw that hasn't begun after throw_enter_timeout seconds is called
+	-- off, and one in the air that is not over throw_land_timeout seconds after it should be lets the enemy out of the vortex
+	throw_enter_timeout = 0.6,
+	throw_land_timeout = 3,
 	yank_animation_event = "attack_charge_fireball", -- the alt fire's own animation, played again every yank
 	reference_mass = 1.5, -- a clan rat's
 	weight_exponent = 0.5,
@@ -1342,10 +1344,13 @@ local function pick_up_supply(state, owner_unit, t)
 	state.link_block_until = t + CONFIG.supply_retry
 end
 
--- The throw of a held enemy (primary): an arc from where it is to in front of the owner. An AI unit is moved by the
--- script for the flight (script driven, it would be put back on the navmesh by the game otherwise) and gets its own
--- movement and the ground back where it lands.
-local throwing_units = {} -- the units that are in the air of a throw
+-- The throw of a held enemy (primary): it is put in the state the game puts an enemy in when it is let out of the Thornsister's
+-- vortex, which is the behavior tree's own action for being in one (it moves the unit by script, with no navigation), and
+-- given the velocity that takes it to where it lands. Its own behavior flies it, with the game's gravity, and the walls, puts it
+-- on the navmesh when it is down and plays its landing, as it does for any enemy that is let out of a vortex. The game moves it
+-- as it moves any enemy, so the other machines see it fly without being told by the mod. What isn't an AI unit (a target dummy)
+-- isn't thrown, it isn't moved when it is held either.
+local THROW_GRAVITY = 9.82 -- the game's own, in the action of the vortex
 
 local function finish_throw(state)
 	local thrown = state.throw
@@ -1354,40 +1359,22 @@ local function finish_throw(state)
 
 	local unit = state.target
 
-	if unit then
-		throwing_units[unit] = nil
-	end
-
 	if not thrown or not unit or not Unit.alive(unit) then
 		return
 	end
 
-	-- (the other machines stop moving it along the arc)
-	mod:network_send("ut_link_throw_end", "others", Managers.state.unit_storage:go_id(unit))
+	-- A throw that has not begun is called off: the unit is let out of the action it was put in. One that is in the air goes
+	-- on, and lands by itself.
+	if thrown.phase == "entering" then
+		local blackboard = BLACKBOARDS[unit]
 
-	local locomotion_extension = ScriptUnit.has_extension(unit, "locomotion_system")
-
-	-- (not a unit that has died in the air: the game has taken its locomotion down, putting it back in the updates of
-	-- the locomotion crashes the game)
-	if locomotion_extension and locomotion_extension.teleport_to and HEALTH_ALIVE[unit] then
-		local land = thrown.land:unbox()
-		local nav_world = Managers.state.entity:system("ai_system"):nav_world()
-		local on_navmesh, altitude = GwNavQueries.triangle_from_position(nav_world, land, 4, 4)
-
-		if on_navmesh then
-			land.z = altitude
-
-			locomotion_extension:teleport_to(land)
+		if blackboard then
+			blackboard.in_vortex = false
+			blackboard.thornsister_vortex = nil
 		end
-
-		locomotion_extension:set_movement_type(thrown.movement_type or "snap_to_navmesh")
 	end
 end
 
--- The yank of an enemy, simply: it lands where the owner is, on the navmesh, and flies there in a straight line, with
--- a lift that is only for looks. The landing is the nearest place of the navmesh to where it would be in front of
--- the owner (taken from far above or below, so it doesn't matter where the owner is in height), or else the place
--- of the navmesh the owner stands on. What is in between is checked as it flies (update_throw): a wall ends the flight.
 -- Where a unit that is thrown lands: in front of the owner, on the navmesh where there is one near, else on the owner, else
 -- where the owner last stood on it (nothing if there is none). The owner's game works it out for the beam of a player that is
 -- not the host, from where they are and where they aim, what the host sees of them is a little behind.
@@ -1417,99 +1404,99 @@ end
 
 local function start_throw(state, owner_unit, t)
 	local unit = state.target
+	local blackboard = BLACKBOARDS[unit]
 	local locomotion_extension = ScriptUnit.has_extension(unit, "locomotion_system")
-	local is_ai = locomotion_extension ~= nil and locomotion_extension.teleport_to ~= nil
-	local current = Unit.world_position(unit, 0)
 	local aim_flat = state.flat_aim and state.flat_aim:unbox() or Vector3.forward()
-	-- (a place the owner has worked out, if the owner's game has sent one)
-	local land = state.yank_land and state.yank_land:unbox()
 
-	state.yank_land = nil
+	state.hold_distance = CONFIG.yank_min_distance
 
-	if not land then
-		if is_ai then
-			land = throw_landing(owner_unit, aim_flat)
-		else
-			-- (what isn't an AI unit, a target dummy, lands where it is: there is no navmesh to look for)
-			land = Unit.world_position(owner_unit, 0) + aim_flat * CONFIG.yank_min_distance
-		end
-	end
-
-	if not land or Vector3.length(land - current) < 0.5 then
-		state.hold_distance = CONFIG.yank_min_distance
+	-- (a unit that isn't an AI one, a target dummy, isn't thrown)
+	if not blackboard or not locomotion_extension or not locomotion_extension.teleport_to then
+		state.yank_land = nil
 
 		return
 	end
 
-	local lift = math.max(0.5, CONFIG.throw_height / state.weight)
-	local distance = Vector3.length(land - current)
+	-- (the place the owner's game has worked out, if it has sent one)
+	local land = state.yank_land and state.yank_land:unbox() or throw_landing(owner_unit, aim_flat)
+
+	state.yank_land = nil
+
+	if not land or Vector3.length(land - Unit.world_position(unit, 0)) < 0.5 then
+		return
+	end
 
 	if state.throw then
 		finish_throw(state)
 	end
 
-	throwing_units[unit] = true
+	-- The unit is put in the vortex (the behavior takes it up on its next turn, see update_throw)
+	blackboard.in_vortex_state = "in_vortex_init"
+	blackboard.in_vortex = true
+	blackboard.thornsister_vortex = true
 
 	state.throw = {
-		duration = math.clamp(distance / (CONFIG.yank_speed / state.weight), CONFIG.throw_min_duration, CONFIG.throw_max_duration),
+		duration = math.clamp(Vector3.length(land - Unit.world_position(unit, 0)) / (CONFIG.yank_speed / state.weight), CONFIG.throw_min_duration, CONFIG.throw_max_duration),
 		land = Vector3Box(land),
-		lift = lift,
-		movement_type = is_ai and locomotion_extension.movement_type or nil,
-		previous = Vector3Box(current),
-		start = Vector3Box(current),
-		t0 = t,
+		phase = "entering",
+		started = t,
 	}
-	state.hold_distance = CONFIG.yank_min_distance
-
-	-- The other machines are told, they move the unit along the arc themselves: what they would see of it is the game's
-	-- smoothing between the positions the host sends, which makes it jump from where it was to where it lands
-	local thrown = state.throw
-
-	mod:network_send("ut_link_throw", "others", Managers.state.unit_storage:go_id(unit), current.x, current.y, current.z, land.x, land.y, land.z, thrown.lift, thrown.duration)
 end
 
--- true while it is in the air
-local function update_throw(state, t, physics_world)
+-- true while it is in the air (or about to be)
+local function update_throw(state, t)
 	local thrown = state.throw
 	local unit = state.target
-	local progress = math.clamp((t - thrown.t0) / thrown.duration, 0, 1)
-	local position = Vector3.lerp(thrown.start:unbox(), thrown.land:unbox(), progress) + Vector3(0, 0, thrown.lift * 4 * progress * (1 - progress))
-	local locomotion_extension = ScriptUnit.has_extension(unit, "locomotion_system")
+	local blackboard = BLACKBOARDS[unit]
 
-	-- A wall on the way from where it was a frame ago (at the height of the chest) ends the flight there: it lands on the
-	-- navmesh a little before the wall
-	local previous = thrown.previous:unbox()
-	local offset = position - previous
-	local distance = Vector3.length(offset)
+	-- (a unit that has died in the air, or is gone, is the game's)
+	if not Unit.alive(unit) or not blackboard or not HEALTH_ALIVE[unit] then
+		finish_throw(state)
 
-	if distance > 0.01 then
-		local chest = Vector3(0, 0, CONFIG.throw_wall_height)
-		local direction = offset * (1 / distance)
-		local hit, hit_position = PhysicsWorld.immediate_raycast(physics_world, previous + chest, direction, distance + CONFIG.throw_wall_margin, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
+		return false
+	end
 
-		if hit then
-			local nav_world = Managers.state.entity:system("ai_system"):nav_world()
-			local stop = hit_position - direction * CONFIG.throw_wall_margin - chest
-			local on_navmesh = GwNavQueries.triangle_from_position(nav_world, stop, 4, 4)
+	if thrown.phase == "entering" then
+		-- The behavior has taken the unit up when it is in the vortex (its first turn is done): it is then let out of it, with
+		-- the velocity of a ballistic flight to where it lands that lasts the duration, and the behavior flies it from there
+		if blackboard.in_vortex_state == "in_vortex" then
+			local delta = thrown.land:unbox() - Unit.world_position(unit, 0)
+			local flight = thrown.duration
+			local velocity = Vector3(delta.x / flight, delta.y / flight, delta.z / flight + 0.5 * THROW_GRAVITY * flight)
+			local locomotion_extension = blackboard.locomotion_extension
 
-			thrown.land = Vector3Box(on_navmesh and stop or previous)
+			locomotion_extension:set_wanted_velocity(velocity)
+			locomotion_extension:set_affected_by_gravity(true)
+			locomotion_extension:set_movement_type("constrained_by_mover")
+
+			local ejected_from_vortex = blackboard.ejected_from_vortex or Vector3Box()
+
+			ejected_from_vortex:store(velocity)
+
+			blackboard.ejected_from_vortex = ejected_from_vortex
+			blackboard.in_vortex_state = "ejected_from_vortex"
+			thrown.phase = "flying"
+			thrown.flying_since = t
+		elseif t - thrown.started > CONFIG.throw_enter_timeout then
 			finish_throw(state)
 
 			return false
 		end
+
+		return true
 	end
 
-	thrown.previous:store(position)
+	-- In the air: until the behavior has landed it and the unit has left the vortex (if it has not, after a long while, it
+	-- is let out of it)
+	if not blackboard.in_vortex then
+		state.throw = nil
 
-	if locomotion_extension and locomotion_extension.teleport_to then
-		locomotion_extension:set_movement_type("script_driven")
-		locomotion_extension:teleport_to(position)
-	else
-		Unit.set_local_position(unit, 0, position)
+		return false
 	end
 
-	if progress >= 1 then
-		finish_throw(state)
+	if t - thrown.flying_since > thrown.duration + CONFIG.throw_land_timeout then
+		blackboard.in_vortex = false
+		state.throw = nil
 
 		return false
 	end
@@ -1517,61 +1504,14 @@ local function update_throw(state, t, physics_world)
 	return true
 end
 
--- The throw as the other machines see it: the host moves the unit, and what they get of it is the position it sends from time
--- to time, which the game smooths between: a thrown unit is seen to jump to where it lands. They are told when a throw starts
--- and ends, and move their copy of the unit along the same arc themselves, after the game has moved it (see update_throw).
-local client_throws = {} -- { [the unit] = { start, land (Vector3Boxes), lift, duration, t0 } }
-
-mod:network_register("ut_link_throw", function (_, unit_go_id, start_x, start_y, start_z, land_x, land_y, land_z, lift, duration)
-	local unit = not Managers.player.is_server and Managers.state.unit_storage:unit(unit_go_id)
-
-	if unit then
-		client_throws[unit] = {
-			duration = duration,
-			land = Vector3Box(Vector3(land_x, land_y, land_z)),
-			lift = lift,
-			start = Vector3Box(Vector3(start_x, start_y, start_z)),
-			t0 = Managers.time:time("game"),
-		}
-	end
-end)
-
-mod:network_register("ut_link_throw_end", function (_, unit_go_id)
-	local unit = Managers.state.unit_storage:unit(unit_go_id)
-
-	if unit then
-		client_throws[unit] = nil
-	end
-end)
-
-mod:hook_safe(LocomotionTemplates.AiHuskLocomotionExtension, "update", function ()
-	if not next(client_throws) then
-		return
-	end
-
-	local t = Managers.time:time("game")
-
-	for unit, thrown in pairs(client_throws) do
-		local progress = (t - thrown.t0) / thrown.duration
-
-		if not Unit.alive(unit) or progress >= 1 then
-			client_throws[unit] = nil
-		else
-			Unit.set_local_position(unit, 0, Vector3.lerp(thrown.start:unbox(), thrown.land:unbox(), progress) + Vector3(0, 0, thrown.lift * 4 * progress * (1 - progress)))
-		end
-	end
-end)
-
--- A unit that is in the fall of the game while it is thrown (the game sees it falling) is moved by the script, which takes
--- its mover away, and the fall looks for the mover to see if it has landed. It waits while it is in the air of the throw,
--- and when the throw is over, the fall is over: left to wait for a mover it doesn't get back, the unit would hang in the
--- air in its falling pose.
+-- A unit that is in the fall of the game while it is held has no mover (it is moved by the script, which takes it away), and
+-- the fall looks for the mover to see if it has landed: it is done, or the unit would hang in the air in its falling pose.
 local fall_action = rawget(_G, "BTFallAction")
 
 if fall_action then
 	mod:hook(fall_action, "run", function (func, self, unit, ...)
 		if not Unit.mover(unit) then
-			return throwing_units[unit] and "running" or "done"
+			return "done"
 		end
 
 		return func(self, unit, ...)
@@ -1814,7 +1754,7 @@ local function hold_enemy(state, owner_unit, t, dt, aim, physics_world)
 		start_throw(state, owner_unit, t)
 	end
 
-	local throwing = state.throw ~= nil and update_throw(state, t, physics_world)
+	local throwing = state.throw ~= nil and update_throw(state, t)
 	local owner_position = Unit.world_position(owner_unit, 0)
 	local wanted = owner_position + (state.flat_aim and state.flat_aim:unbox() or Vector3.forward()) * state.hold_distance
 	local current = Unit.world_position(unit, 0)
@@ -1841,6 +1781,11 @@ local function hold_enemy(state, owner_unit, t, dt, aim, physics_world)
 		end
 		-- (a target dummy is not an AI unit, it stands where it is: it is linked and damaged, not moved about, the
 		-- beam stays on it wherever the aim goes)
+	end
+
+	-- (not while it is thrown: the vortex it is in forbids being staggered, and the behavior flies and lands it)
+	if throwing then
+		return
 	end
 
 	-- (climbing a ledge forbids being staggered, and keeps the unit in the climb and its animation: a held enemy is let
@@ -2389,6 +2334,11 @@ end
 
 -- Yanking an enemy: out of a vortex if it is in one (at a cost), else it is thrown to the owner
 local function yank_enemy(state, owner_unit)
+	-- (an enemy that is already in the air of a throw isn't thrown again, nor is it in a vortex of the game's)
+	if state.throw then
+		return
+	end
+
 	local blackboard = BLACKBOARDS[state.target]
 
 	if blackboard and blackboard.in_vortex then
@@ -2606,19 +2556,16 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 
 				start_throw(state, owner_unit, t)
 
-				-- (let out of a climb, as a held enemy is: it can't be staggered in one, and the stagger takes it out)
+				-- (let out of a climb, as a held enemy is: the vortex it is put in takes it out of the behavior of climbing)
 				local blackboard = BLACKBOARDS[state.target]
 
 				if blackboard and state.throw then
-					blackboard.stagger_prohibited = nil
 					leave_climb(blackboard)
-
-					with_valid_positions(AiUtils.stagger, state.target, blackboard, owner_unit, Vector3.normalize(Vector3.flat(Unit.world_position(owner_unit, 0) - Unit.world_position(state.target, 0)) + Vector3(0.001, 0, 0)), 1, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
 				end
 			end
 
 			if state.throw then
-				update_throw(state, t, physics_world)
+				update_throw(state, t)
 			end
 		elseif yanked then
 			yank_ally(state, owner_unit, t)
@@ -3238,7 +3185,6 @@ local function clear_beams()
 	end
 
 	table.clear(remote_inputs)
-	table.clear(client_throws)
 	table.clear(corpse_units)
 
 	if Managers.player.is_server then
