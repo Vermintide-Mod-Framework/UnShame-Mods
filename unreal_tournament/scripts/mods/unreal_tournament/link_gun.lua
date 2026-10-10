@@ -1213,11 +1213,13 @@ local PEOPLE_INTERACTIONS = {
 	revive = true,
 }
 
--- A door is opened (by the door system's own interacted_with), not broken, whatever health it has
+-- A door is opened (by the door system's own interacted_with), not broken, whatever health it has. A unit of the door system that
+-- players can't interact with (a barricade that the enemies break down: it has a health and the door's extension and no interaction)
+-- isn't one.
 local function is_door(unit)
 	local door_extension = ScriptUnit.has_extension(unit, "door_system")
 
-	return door_extension ~= nil and door_extension.interacted_with ~= nil
+	return door_extension ~= nil and door_extension.interacted_with ~= nil and ScriptUnit.has_extension(unit, "interactable_system") ~= nil
 end
 
 -- A lever, a button, a chest, anything the game lets a player interact with (not a pickup, those are supplies, and not a door)
@@ -1267,7 +1269,11 @@ local function is_breakable(unit)
 		return false
 	end
 
-	return not Unit.get_data(unit, "no_damage_from_players") and not Unit.get_data(unit, "filter_damage_source") and Unit.get_data(unit, "allow_ranged_damage") ~= false
+	-- (a barricade of the door system says it takes no ranged damage, which is a shot: the enemies and a melee hit break it, a yank
+	-- is dealt like a melee hit)
+	local is_barricade = ScriptUnit.has_extension(unit, "door_system") ~= nil
+
+	return not Unit.get_data(unit, "no_damage_from_players") and not Unit.get_data(unit, "filter_damage_source") and (is_barricade or Unit.get_data(unit, "allow_ranged_damage") ~= false)
 end
 
 -- Whether the game would offer the interaction with a unit to someone looking along the aim: the way it looks, a ray with the
@@ -2910,8 +2916,6 @@ local function break_down(state, owner_unit, t)
 	local health_extension = ScriptUnit.extension(unit, "health_system")
 	local direction = Vector3.normalize(Unit.world_position(unit, 0) - Unit.world_position(owner_unit, 0))
 
-	mod:echo("DEBUG break down: health=%.1f of %.1f, alive=%s", health_extension:current_health(), health_extension:get_max_health(), tostring(health_extension:is_alive()))
-
 	DamageUtils.add_damage_network(unit, owner_unit, health_extension:current_health(), "full", "destructible_level_object_hit", nil, direction, CONFIG.dot_damage_source, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 1)
 	add_heat(owner_unit, CONFIG.yank_door_overcharge)
 	release_target(state)
@@ -2925,7 +2929,7 @@ end
 local function yank_openable(state, owner_unit, t)
 	local door_extension = ScriptUnit.has_extension(state.target, "door_system")
 
-	if door_extension and door_extension.interacted_with and Managers.player.is_server then
+	if is_door(state.target) and Managers.player.is_server then
 		-- (the door looks at the position of whoever opens it, the mods' update runs before the game has made them current)
 		with_valid_positions(door_extension.interacted_with, door_extension, owner_unit)
 		add_heat(owner_unit, CONFIG.yank_door_overcharge)
@@ -2942,12 +2946,6 @@ local function yank_openable(state, owner_unit, t)
 			state.link_block_until = t + CONFIG.supply_retry
 		elseif is_breakable(state.target) then
 			break_down(state, owner_unit, t)
-		else
-			local unit = state.target
-			local door_extension_of_unit = ScriptUnit.has_extension(unit, "door_system")
-			local health_extension = ScriptUnit.has_extension(unit, "health_system")
-
-			mod:echo("DEBUG yank openable, not breakable: health=%s alive=%s level_id=%s door=%s interactable=%s breed=%s no_player_damage=%s filter=%s allow_ranged=%s door_system=%s", tostring(health_extension ~= nil), tostring(health_extension ~= nil and health_extension:is_alive()), tostring(Managers.state.network:level_object_id(unit)), tostring(is_door(unit)), tostring(ScriptUnit.has_extension(unit, "interactable_system") ~= nil), tostring(AiUtils.unit_breed(unit)), tostring(Unit.get_data(unit, "no_damage_from_players")), tostring(Unit.get_data(unit, "filter_damage_source")), tostring(Unit.get_data(unit, "allow_ranged_damage")), tostring(door_extension_of_unit ~= nil))
 		end
 	end
 end
