@@ -211,6 +211,10 @@ local CONFIG = {
 	-- object_search_radius, to where it lay for them when they linked it, looked for every object_search_interval seconds
 	object_search_radius = 6, -- m
 	object_search_interval = 0.1,
+	-- A networked object (a barrel) is moved by the host, and on the other machines it is a copy that moves by itself, which the game
+	-- corrects only now and then: the host tells them where it is every beam_send_interval while it is held, and for
+	-- barrel_settle_time seconds after, and they move their copy there
+	barrel_settle_time = 3, -- seconds
 	object_pull = 20,
 	object_max_speed = 35, -- m/s
 	-- The beam: drawn as a curve (a cubic Bezier) from the staff to what it is on. A held enemy hangs it by
@@ -1897,12 +1901,22 @@ local function add_held_outline(state)
 	utils.add_outline(state, state.target, HELD_OUTLINE)
 end
 
+-- The networked objects (a barrel) that the host has let go of and goes on telling the others the pose of until they are at rest
+local barrel_settling = {} -- { unit, stop_at }
+
 local function release_target(state)
 	finish_throw(state)
 	clear_held_outline(state)
 
 	if state.target then
 		bot_targets[state.target] = nil
+	end
+
+	if Managers.player.is_server and state.kind == "object" and state.target and Unit.alive(state.target) and is_networked_object(state.target) then
+		barrel_settling[#barrel_settling + 1] = {
+			stop_at = Application.time_since_launch() + CONFIG.barrel_settle_time,
+			unit = state.target,
+		}
 	end
 
 	state.target = nil
@@ -3463,6 +3477,72 @@ local function update_object_mirrors(dt)
 	end
 end
 
+-- A networked object that the host holds (a barrel) is a copy on the other machines that moves by its own physics and is only put
+-- right by the game now and then: the host tells them its pose while it holds it and a little after it lets it go, and they move
+-- their copy there, smoothly (the copy's own locomotion has a way of being put somewhere, which is used).
+local barrel_poses = {} -- on the others: { [game object id] = { position, rotation, received } }
+
+mod:network_register("ut_link_barrel_pose", function (_, go_id, px, py, pz, qx, qy, qz, qw)
+	barrel_poses[go_id] = {
+		position = Vector3Box(Vector3(px, py, pz)),
+		received = Application.time_since_launch(),
+		rotation = QuaternionBox(Quaternion.from_elements(qx, qy, qz, qw)),
+	}
+end)
+
+local function send_barrel_pose(unit, actor)
+	local pose = actor and Actor.pose(actor) or Unit.world_pose(unit, 0)
+	local position = Matrix4x4.translation(pose)
+	local qx, qy, qz, qw = Quaternion.to_elements(Matrix4x4.rotation(pose))
+
+	mod:network_send("ut_link_barrel_pose", "others", Managers.state.unit_storage:go_id(unit), position.x, position.y, position.z, qx, qy, qz, qw)
+end
+
+local function update_barrel_poses(dt)
+	local now = Application.time_since_launch()
+
+	if Managers.player.is_server then
+		for _, state in pairs(states) do
+			if state.kind == "object" and state.target and Unit.alive(state.target) and is_networked_object(state.target) and now >= (state.next_pose_send or 0) then
+				state.next_pose_send = now + CONFIG.beam_send_interval
+
+				send_barrel_pose(state.target, held_actor(state))
+			end
+		end
+
+		for i = #barrel_settling, 1, -1 do
+			local entry = barrel_settling[i]
+
+			if not Unit.alive(entry.unit) or now >= entry.stop_at then
+				table.remove(barrel_settling, i)
+			elseif now >= (entry.next_send or 0) then
+				entry.next_send = now + CONFIG.beam_send_interval
+
+				send_barrel_pose(entry.unit, nil)
+			end
+		end
+
+		return
+	end
+
+	local blend = 1 - math.exp(-CONFIG.remote_beam_smoothing * dt)
+
+	for go_id, entry in pairs(barrel_poses) do
+		local unit = Managers.state.unit_storage:unit(go_id)
+		local locomotion_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "projectile_locomotion_system")
+
+		if not locomotion_extension or not locomotion_extension.teleport or now - entry.received > CONFIG.barrel_settle_time then
+			barrel_poses[go_id] = nil
+		else
+			local pose = Unit.world_pose(unit, 0)
+			local position = Matrix4x4.translation(pose)
+			local rotation = Matrix4x4.rotation(pose)
+
+			locomotion_extension:teleport(position + (entry.position:unbox() - position) * blend, Quaternion.lerp(rotation, entry.rotation:unbox(), blend))
+		end
+	end
+end
+
 mod:network_register("ut_link_beam_end", function (_, owner_go_id)
 	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
 
@@ -3641,6 +3721,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 
 	if t then
 		update_object_mirrors(dt)
+		update_barrel_poses(dt)
 
 		if Managers.player.is_server then
 			update_ally_buffs()
@@ -3675,6 +3756,8 @@ local function clear_beams()
 
 	table.clear(remote_inputs)
 	table.clear(corpse_units)
+	table.clear(barrel_settling)
+	table.clear(barrel_poses)
 
 	if Managers.player.is_server then
 		clear_ally_buffs()
