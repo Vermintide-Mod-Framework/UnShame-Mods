@@ -112,14 +112,14 @@ for _, state in ipairs({
 	end)
 end
 
--- Climbing or hanging: the next time in the air is a new one
-for _, state in ipairs({
-	PlayerCharacterStateClimbingLadder,
-	PlayerCharacterStateLedgeHanging,
-}) do
-	mod:hook_safe(state, "on_enter", function (self, unit)
-		reset_air_state(self, unit)
-	end)
+-- Climbing or hanging: the next time in the air is a new one (hanging is told by the shared hook of the ledge, see hooks.lua: a
+-- function is hooked once)
+mod:hook_safe(PlayerCharacterStateClimbingLadder, "on_enter", function (self, unit)
+	reset_air_state(self, unit)
+end)
+
+mod.ledge_hang_callbacks.movement = function (unit)
+	reset_air_state(nil, unit)
 end
 
 -- Jumping: a jump from the ground starts a new time in the air (jumping out of falling doesn't
