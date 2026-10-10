@@ -2500,13 +2500,31 @@ local function first_stack(stacks, timed)
 	end
 end
 
+-- (temporary: who is who in the chat, and what is said about a unit only when it changes)
+local link_names = {}
+local logged_links = {}
+
+local function unit_name(unit)
+	local player = Managers.player:owner(unit)
+
+	if player then
+		return (player.bot_player and "bot " or "player ") .. tostring(player:name())
+	end
+
+	local breed = AiUtils.unit_breed(unit)
+
+	return breed and breed.name or tostring(unit)
+end
+
 local function update_ally_buffs()
 	table.clear(link_counts)
+	table.clear(link_names)
 
 	for owner_unit, state in pairs(states) do
 		if state.kind == "ally" and state.target then
 			link_counts[state.target] = (link_counts[state.target] or 0) + 1
 			link_owners[state.target] = owner_unit
+			link_names[state.target] = (link_names[state.target] and link_names[state.target] .. ", " or "") .. unit_name(owner_unit)
 		end
 	end
 
@@ -2526,6 +2544,15 @@ local function update_ally_buffs()
 				if stacks[i].duration == nil then
 					num_permanent = num_permanent + 1
 				end
+			end
+
+			-- (temporary: said when the number of beams, or of the stacks, changes)
+			local summary = string.format("linked by %d (%s): stacks %d, wanted %d, timed %s", link_counts[unit] or 0, link_names[unit] or "-", num_permanent, wanted, tostring(timed ~= nil))
+
+			if logged_links[unit] ~= summary then
+				logged_links[unit] = summary
+
+				mod:echo("DEBUG %s %s", unit_name(unit), summary)
 			end
 
 			if wanted > 0 and timed then
