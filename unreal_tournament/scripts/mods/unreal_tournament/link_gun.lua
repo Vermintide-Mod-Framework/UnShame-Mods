@@ -1522,6 +1522,28 @@ local function throw_landing(owner_unit, aim_flat)
 	end
 end
 
+-- The shield warrior (the bulwark) takes a stagger in its own way: the value of a stagger is added to a count that it keeps
+-- (that runs down with time), and the stagger only plays when the value is what its shield blocks at the least, which a value of 1
+-- is not; the count it leaves in blackboard.stagger isn't the stagger that plays, blackboard.stagger_activated is. For it
+-- the value is twice the least (the count of its hits is halved for a ranged one), and a stagger plays while it is activated.
+local function stagger_value(blackboard)
+	local tweaks = blackboard.breed.stagger_difficulty_tweak_index
+
+	if not tweaks then
+		return 1
+	end
+
+	return tweaks[Managers.state.difficulty:get_difficulty_rank()].shield_block_threshold * 2
+end
+
+local function is_staggered(blackboard)
+	if blackboard.breed.stagger_difficulty_tweak_index then
+		return blackboard.stagger_activated == true
+	end
+
+	return blackboard.stagger ~= nil and blackboard.stagger ~= false and blackboard.stagger ~= 0
+end
+
 -- A push towards the owner instead of a throw, for an enemy that is near enough for one to be too much, and for one that the
 -- game doesn't put in a vortex (the leech, the sorcerers): it is staggered towards the place it would have landed in, as far as
 -- the distance to it says
@@ -1534,7 +1556,7 @@ local function stagger_towards(state, owner_unit, t, blackboard, place)
 
 	-- (the game's statistics look at the positions of the units in the stagger, the mods' update runs before the game has
 	-- made them current)
-	with_valid_positions(AiUtils.stagger, unit, blackboard, owner_unit, direction, length, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
+	with_valid_positions(AiUtils.stagger, unit, blackboard, owner_unit, direction, length, stagger_types.heavy, CONFIG.stagger_duration, nil, t, stagger_value(blackboard), true, false)
 
 	state.next_stagger_t = t + CONFIG.restagger_interval
 end
@@ -1939,9 +1961,7 @@ local function hold_enemy(state, owner_unit, t, dt, aim, physics_world)
 	-- Staggered again when the stagger it has is over (the game counts them in the blackboard and the behavior ends it: a
 	-- stagger that is given while one plays starts it over, in the middle of its animation)
 	local blackboard = BLACKBOARDS[unit]
-	local is_staggered = blackboard and blackboard.stagger and blackboard.stagger ~= 0
-
-	if blackboard and not is_staggered and t >= (state.next_stagger_t or 0) then
+	if blackboard and not is_staggered(blackboard) and t >= (state.next_stagger_t or 0) then
 		state.next_stagger_t = t + CONFIG.restagger_interval
 
 		local direction = distance > 0.01 and Vector3.normalize(delta) or Vector3.forward()
@@ -1952,7 +1972,7 @@ local function hold_enemy(state, owner_unit, t, dt, aim, physics_world)
 
 		-- (the game's statistics look at the positions of the units in the stagger, the mods' update runs before the game
 		-- has made them current)
-		with_valid_positions(AiUtils.stagger, unit, blackboard, owner_unit, direction, length, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
+		with_valid_positions(AiUtils.stagger, unit, blackboard, owner_unit, direction, length, stagger_types.heavy, CONFIG.stagger_duration, nil, t, stagger_value(blackboard), true, false)
 	end
 end
 
