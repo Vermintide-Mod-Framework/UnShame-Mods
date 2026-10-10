@@ -337,10 +337,18 @@ local KEEP_UNLOCKS = {
 	end,
 }
 
+local reported = {}
+
 for name, unlocked in pairs(KEEP_UNLOCKS) do
 	if rawget(_G, name) then
 		mod:hook(_G, name, function (func, ...)
 			if is_option_on("unlock_keep") then
+				if not reported[name] then
+					reported[name] = true
+
+					mod:echo("DEBUG unlock keep: %s was asked", name)
+				end
+
 				return unlocked()
 			end
 
