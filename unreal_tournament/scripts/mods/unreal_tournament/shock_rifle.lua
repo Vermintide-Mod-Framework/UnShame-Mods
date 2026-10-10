@@ -574,14 +574,10 @@ end
 
 -- Shock combo: a beam passing through a live shock ball detonates it
 
-local function find_ball_hit_by_beam(physics_world, owner_unit, origin, direction)
+-- The balls of every player count, the shooter's and those of the others (on this machine the others' are copies, the unit that is
+-- theirs is on their machine)
+local function find_ball_hit_by_beam(physics_world, origin, direction)
 	local projectile_system = Managers.state.entity:system("projectile_system")
-	local owner_projectiles = projectile_system.player_projectile_units[owner_unit]
-
-	if not owner_projectiles then
-		return nil
-	end
-
 	local wall_distance = CONFIG.combo_max_range
 	local wall_hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world, origin, direction, CONFIG.combo_max_range, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
 
@@ -591,22 +587,25 @@ local function find_ball_hit_by_beam(physics_world, owner_unit, origin, directio
 
 	local best_unit, best_distance
 
-	for projectile_unit, _ in pairs(owner_projectiles) do
-		local extension = Unit.alive(projectile_unit) and ScriptUnit.has_extension(projectile_unit, "projectile_system")
-		local action = extension and extension._current_action
+	for _, projectiles in pairs(projectile_system.player_projectile_units) do
+		for projectile_unit, _ in pairs(projectiles) do
+			local extension = Unit.alive(projectile_unit) and ScriptUnit.has_extension(projectile_unit, "projectile_system")
+			local action = extension and extension._current_action
 
-		if action and action.ut_shock_ball and not extension:are_impacts_stopped() then
-			local ball_position = POSITION_LOOKUP[projectile_unit]
-			local to_ball = ball_position - origin
-			local along = Vector3.dot(to_ball, direction)
+			-- (a ball that has hit something has its impacts stopped, the field is the same on the unit and on its copy)
+			if action and action.ut_shock_ball and not extension._stop_impacts then
+				local ball_position = POSITION_LOOKUP[projectile_unit]
+				local to_ball = ball_position - origin
+				local along = Vector3.dot(to_ball, direction)
 
-			if along > 0 and along < wall_distance then
-				local closest_point = origin + direction * along
-				local miss_distance = Vector3.length(ball_position - closest_point)
+				if along > 0 and along < wall_distance then
+					local closest_point = origin + direction * along
+					local miss_distance = Vector3.length(ball_position - closest_point)
 
-				if miss_distance <= CONFIG.combo_pick_radius and (not best_distance or along < best_distance) then
-					best_unit = projectile_unit
-					best_distance = along
+					if miss_distance <= CONFIG.combo_pick_radius and (not best_distance or along < best_distance) then
+						best_unit = projectile_unit
+						best_distance = along
+					end
 				end
 			end
 		end
@@ -631,15 +630,42 @@ mod.aoe_callbacks.shock_ball = function (self, aoe_data, position)
 	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_shock_ball_explosion.explosion, CONFIG.ball_self_damage)
 end
 
-local function detonate_ball(projectile_unit, owner_unit)
+-- The ball of another player is a copy on this machine: the combo is the shooter's (it goes through the area damage system, which
+-- applies the damage on the server, with the shooter as who does it), and the player whose ball it is is told to end it on their
+-- machine, where it flies.
+mod:network_register("ut_shock_ball_stop", function (_, ball_go_id)
+	local ball_unit = Managers.state.unit_storage:unit(ball_go_id)
+	local extension = ball_unit and Unit.alive(ball_unit) and ScriptUnit.has_extension(ball_unit, "projectile_system")
+
+	-- (only the unit that is theirs: the copies can't be told to)
+	if extension and extension.are_impacts_stopped then
+		extension:stop()
+	end
+end)
+
+local function detonate_ball(projectile_unit, shooter_unit)
 	local extension = ScriptUnit.extension(projectile_unit, "projectile_system")
 	local position = POSITION_LOOKUP[projectile_unit]
+	local ball_owner_unit = extension._owner_unit
 
-	-- network_sync makes the explosion go through the area damage system, which also applies damage on the server
-	extension:do_aoe(ExplosionTemplates.ut_shock_combo_explosion, position, true)
-	apply_combo_self_damage(owner_unit, position, extension.item_name)
+	if ball_owner_unit == shooter_unit then
+		-- network_sync makes the explosion go through the area damage system, which also applies damage on the server
+		extension:do_aoe(ExplosionTemplates.ut_shock_combo_explosion, position, true)
+	else
+		local rotation = Unit.local_rotation(projectile_unit, 0)
 
-	local overcharge_extension = ScriptUnit.extension(owner_unit, "overcharge_system")
+		Managers.state.entity:system("area_damage_system"):create_explosion(shooter_unit, position, rotation, ExplosionTemplates.ut_shock_combo_explosion.name, extension.scale, extension.item_name, extension.power_level, extension._is_critical_strike, shooter_unit)
+
+		local ball_owner = Managers.player:owner(ball_owner_unit)
+
+		if ball_owner then
+			mod:network_send("ut_shock_ball_stop", ball_owner.peer_id, Managers.state.unit_storage:go_id(projectile_unit))
+		end
+	end
+
+	apply_combo_self_damage(shooter_unit, position, extension.item_name)
+
+	local overcharge_extension = ScriptUnit.extension(shooter_unit, "overcharge_system")
 
 	overcharge_extension:add_charge(overcharge_values.ut_shock_beam * CONFIG.combo_overcharge_multiplier)
 	extension:stop()
@@ -1020,7 +1046,7 @@ mod:hook_safe(ActionHandgun, "client_owner_post_update", function (self)
 
 	spawn_trail(self, origin, direction)
 
-	local ball_unit = find_ball_hit_by_beam(self.physics_world, owner_unit, origin, direction)
+	local ball_unit = find_ball_hit_by_beam(self.physics_world, origin, direction)
 
 	if ball_unit then
 		detonate_ball(ball_unit, owner_unit)

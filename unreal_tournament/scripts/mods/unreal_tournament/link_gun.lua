@@ -99,6 +99,7 @@ local CONFIG = {
 	beam_overcharge_interval = 0.25,
 	-- Ally: the damage it does is this much more while linked, the buff is there until ally_buff_linger seconds after the link
 	ally_damage_bonus = 0.5,
+	ally_buff_max_stacks = 4, -- the buff stacks, once for each Link Gun that has the ally linked (the party has four)
 	ally_stamina_regen_bonus = 1, -- and the stamina it gets back is this much more (and the delay before it starts, less)
 	ally_thp_multiplier = 2, -- the temporary health a linked ally gets from their attacks
 	ally_buff_linger = 0.6, -- seconds
@@ -301,7 +302,8 @@ local function ally_buff_template(duration)
 			{
 				duration = duration,
 				icon = CONFIG.ally_buff_icon,
-				max_stacks = 1,
+				-- (one for every Link Gun that has them linked: they stack, see update_ally_buffs)
+				max_stacks = CONFIG.ally_buff_max_stacks,
 				multiplier = CONFIG.ally_damage_bonus,
 				name = ALLY_BUFF,
 				-- (the damage that is dealt, not the power level: the game scales a power level on a curve, and caps it by
@@ -310,7 +312,7 @@ local function ally_buff_template(duration)
 			},
 			{
 				duration = duration,
-				max_stacks = 1,
+				max_stacks = CONFIG.ally_buff_max_stacks,
 				multiplier = CONFIG.ally_stamina_regen_bonus,
 				-- (a name of its own: the stacks are counted by name; no icon, the one buff shows)
 				name = ALLY_BUFF .. "_stamina",
@@ -2469,10 +2471,12 @@ local function boost_ally(state, owner_unit, t)
 end
 
 -- The buff of the allies, looked at every frame by the host, for every unit that has buffs, by asking it what it has: one
--- that is linked has the buff with no duration (and not the timed one, if they have it); one that has it and is not linked any
--- more gets the one that lasts ally_buff_linger seconds instead, which runs out by itself; one that has the timed buff or none
+-- that is linked has as many of the buff with no duration as there are Link Guns that have it linked (at most
+-- ally_buff_max_stacks, and none of the timed one); one that has more of them than that loses one, and the last one is
+-- exchanged for the one that lasts ally_buff_linger seconds, which runs out by itself; one that has the timed buff or none
 -- is left alone. Whatever ended the link, a beam that is let go of, an ally that was swapped for another or that left, the beam
--- of a player that has gone, is taken care of. They are synced: the ally's own game works out what they do with them.
+-- of a player that has gone, is taken care of. They are synced: the ally's own game works out what they do with them. One change
+-- a frame for a unit, it gets there in a few.
 local function add_ally_buff(unit, owner_unit, template_name)
 	Managers.state.entity:system("buff_system"):add_buff_synced(unit, template_name, BuffSyncType.All, {
 		attacker_unit = owner_unit,
@@ -2483,32 +2487,58 @@ local function remove_ally_buff(unit, buff)
 	Managers.state.entity:system("buff_system"):remove_buff_synced(unit, buff.id)
 end
 
--- Who has the unit linked, if anyone
-local function linked_by(unit)
-	for owner_unit, state in pairs(states) do
-		if state.kind == "ally" and state.target == unit then
-			return owner_unit
+-- Who has each unit linked: how many do, and one of them
+local link_counts = {} -- { [the unit that is linked] = number of beams }
+local link_owners = {} -- { [the unit that is linked] = the unit of one that holds a beam on it }
+
+-- (the first of the buffs of the unit that has a duration, or the first that has none)
+local function first_stack(stacks, timed)
+	for i = 1, #stacks do
+		if (stacks[i].duration ~= nil) == timed then
+			return stacks[i]
 		end
 	end
 end
 
 local function update_ally_buffs()
+	table.clear(link_counts)
+
+	for owner_unit, state in pairs(states) do
+		if state.kind == "ally" and state.target then
+			link_counts[state.target] = (link_counts[state.target] or 0) + 1
+			link_owners[state.target] = owner_unit
+		end
+	end
+
 	for unit, buff_extension in pairs(Managers.state.entity:get_entities("BuffExtension")) do
-		-- (both buffs have the one name, which is the type of the buff: a timed one has a duration)
-		local buff = buff_extension:get_buff_type(ALLY_BUFF)
-		local owner_unit = linked_by(unit)
+		-- (the buffs of the allies have the one name, which is the type of the buff, a timed one has a duration)
+		local stacks = buff_extension:get_stacking_buff(ALLY_BUFF)
+		local wanted = math.min(link_counts[unit] or 0, CONFIG.ally_buff_max_stacks)
 
-		if owner_unit then
-			if not buff or buff.duration then
-				if buff then
-					remove_ally_buff(unit, buff)
+		if stacks or wanted > 0 then
+			stacks = stacks or {}
+
+			local timed = first_stack(stacks, true)
+			local permanent = first_stack(stacks, false)
+			local num_permanent = 0
+
+			for i = 1, #stacks do
+				if stacks[i].duration == nil then
+					num_permanent = num_permanent + 1
 				end
-
-				add_ally_buff(unit, owner_unit, ALLY_BUFF)
 			end
-		elseif buff and not buff.duration then
-			remove_ally_buff(unit, buff)
-			add_ally_buff(unit, nil, ALLY_BUFF_FADING)
+
+			if wanted > 0 and timed then
+				remove_ally_buff(unit, timed)
+			elseif num_permanent < wanted then
+				add_ally_buff(unit, link_owners[unit], ALLY_BUFF)
+			elseif num_permanent > wanted then
+				remove_ally_buff(unit, permanent)
+
+				if wanted == 0 and num_permanent == 1 then
+					add_ally_buff(unit, nil, ALLY_BUFF_FADING)
+				end
+			end
 		end
 	end
 end
