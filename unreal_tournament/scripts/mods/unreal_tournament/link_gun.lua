@@ -128,6 +128,11 @@ local CONFIG = {
 	yank_stagger_max = 4,
 	throw_lift = 0.4, -- m, the enemy is lifted this high before it is let out of the vortex, it is not on the ground then
 	yank_animation_event = "attack_charge_fireball", -- the alt fire's own animation, played again every yank
+	-- The sounds, events of the game's (heard from the player who holds the beam, by everyone): a drone while something is linked
+	-- (the wind of the Sister of the Thorn's vortex, which has a start and a stop) and a whoosh for every yank
+	link_sound_start = "weapon_life_staff_thorn_lift_wind_loop_start",
+	link_sound_stop = "weapon_life_staff_thorn_lift_wind_loop_end",
+	yank_sound = "Play_enemy_sorcerer_tentacle_foley_grab_swing",
 	reference_mass = 1.5, -- a clan rat's
 	weight_exponent = 0.5,
 	max_mass = 30,
@@ -757,6 +762,54 @@ local function apply_link_gun()
 	actions.action_two.default = beam
 end
 
+
+-- The sounds: the drone of a link is started when something is linked and stopped when it is not (by the unit of the player who
+-- holds the beam, on every machine), the whoosh of a yank is played once
+local drones = {} -- { [the unit of the player] = { wwise_world, source } }
+
+local function stop_drone(owner_unit)
+	local drone = drones[owner_unit]
+
+	if drone then
+		drones[owner_unit] = nil
+
+		WwiseWorld.trigger_event(drone.wwise_world, CONFIG.link_sound_stop, drone.source)
+	end
+end
+
+local function set_drone(owner_unit, linked)
+	if not linked then
+		stop_drone(owner_unit)
+	elseif not drones[owner_unit] then
+		local wwise_world = Managers.world:wwise_world(Managers.world:world("level_world"))
+		local source = WwiseWorld.make_auto_source(wwise_world, owner_unit)
+
+		WwiseWorld.trigger_event(wwise_world, CONFIG.link_sound_start, source)
+
+		drones[owner_unit] = {source = source, wwise_world = wwise_world}
+	end
+end
+
+local function play_yank_sound(owner_unit)
+	WwiseUtils.trigger_unit_event(Managers.world:world("level_world"), CONFIG.yank_sound, owner_unit)
+end
+
+mod:network_register("ut_link_yank", function (_, owner_go_id)
+	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
+
+	if owner_unit then
+		play_yank_sound(owner_unit)
+	end
+end)
+
+-- (a player who is gone has their sound go with them)
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	for owner_unit in pairs(drones) do
+		if not Unit.alive(owner_unit) then
+			drones[owner_unit] = nil
+		end
+	end
+end
 
 -- The beam
 local ai_units = {}
@@ -2357,6 +2410,7 @@ local function end_beam(owner_unit)
 		finish_throw(state)
 		clear_held_outline(state)
 		destroy_sprites(state)
+		stop_drone(owner_unit)
 
 		if state.target then
 			bot_targets[state.target] = nil
@@ -2911,6 +2965,8 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 
 	if yanked and state.target and not pose.locked_out() then
 		Unit.animation_event(first_person_extension:get_first_person_unit(), CONFIG.yank_animation_event)
+		play_yank_sound(owner_unit)
+		mod:network_send("ut_link_yank", "others", Managers.state.unit_storage:go_id(owner_unit))
 	end
 
 	if Managers.player.is_server then
@@ -2967,10 +3023,14 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		end
 	end
 
+	local linked = state.target ~= nil and Unit.alive(state.target)
+
+	set_drone(owner_unit, linked)
+
 	-- the end of the beam: what it is linked to, or where it hits
 	local end_position
 
-	if not (state.target and Unit.alive(state.target)) then
+	if not linked then
 		local range = CONFIG.beam_range
 		local hit, hit_position = PhysicsWorld.immediate_raycast(physics_world, origin, aim, range, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
 
@@ -3013,7 +3073,7 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		local object_id = is_object_held and object_id_of(state.target) or 0
 		local linked_at = is_object_held and state.link_position and state.link_position:unbox() or Vector3.zero()
 
-		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z, aim.x, aim.y, aim.z, pending.weight or 0, lag.x, lag.y, lag.z, origin.x, origin.y, origin.z, hold_distance, object_id, state.node_index or -1, linked_at.x, linked_at.y, linked_at.z)
+		mod:network_send("ut_link_beam", "others", Managers.state.unit_storage:go_id(owner_unit), send_position.x, send_position.y, send_position.z, aim.x, aim.y, aim.z, pending.weight or 0, lag.x, lag.y, lag.z, origin.x, origin.y, origin.z, hold_distance, object_id, state.node_index or -1, linked_at.x, linked_at.y, linked_at.z, linked)
 	end
 end
 
@@ -3027,12 +3087,13 @@ local function remove_remote_beam(owner_unit)
 
 	if beam then
 		destroy_sprites(beam)
+		stop_drone(owner_unit)
 
 		remote_beams[owner_unit] = nil
 	end
 end
 
-mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, weight, lag_x, lag_y, lag_z, origin_x, origin_y, origin_z, hold_distance, object_id, node_index, linked_x, linked_y, linked_z)
+mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, weight, lag_x, lag_y, lag_z, origin_x, origin_y, origin_z, hold_distance, object_id, node_index, linked_x, linked_y, linked_z, linked)
 	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
 
 	if not owner_unit then
@@ -3055,6 +3116,7 @@ mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, a
 	beam.object_id = object_id
 	beam.node_index = node_index >= 0 and node_index or nil
 	beam.link_position = Vector3Box(Vector3(linked_x, linked_y, linked_z))
+	beam.linked = linked
 	beam.received = Application.time_since_launch()
 end)
 
@@ -3162,6 +3224,8 @@ local function draw_remote_beams()
 		if not start_position or now - beam.received > CONFIG.remote_beam_timeout or not effects.is_available(CONFIG.beam_effect) then
 			remove_remote_beam(owner_unit)
 		else
+			set_drone(owner_unit, beam.linked)
+
 			local target = beam.end_position:unbox()
 			local shown = beam.shown and beam.shown:unbox() or target
 			local shown_aim = beam.shown_aim and beam.shown_aim:unbox() or beam.aim:unbox()
