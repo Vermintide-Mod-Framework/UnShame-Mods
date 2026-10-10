@@ -1911,11 +1911,31 @@ local function release_target(state)
 	state.actor = nil
 end
 
+-- The body of an object that is held, if the unit still has it: a body is gone when the unit changes (a lantern that is broken
+-- has others), and the one that was kept is then not one that can be asked anything until the object is looked at again.
+local function held_actor(state)
+	local actor = state.actor
+
+	if not actor then
+		return nil
+	end
+
+	for i = 0, Unit.num_actors(state.target) - 1 do
+		if Unit.actor(state.target, i) == actor then
+			return actor
+		end
+	end
+
+	return nil
+end
+
 -- Where the beam ends: on the chest of a character, on the body of an object (on its unit while it has none that
 -- physics drives)
 local function target_position(state)
 	if state.kind == "object" then
-		return state.actor and Actor.position(state.actor) or Unit.world_position(state.target, 0)
+		local actor = held_actor(state)
+
+		return actor and Actor.position(actor) or Unit.world_position(state.target, 0)
 	elseif state.kind == "openable" then
 		-- (the middle of the mesh of the door or chest that was linked, worked out when it was: not the point the unit is
 		-- placed at, its hinge)
@@ -2886,14 +2906,16 @@ end
 local function simple_damage(state, owner_unit)
 	local unit = state.target
 
-	if ScriptUnit.has_extension(unit, "health_system") or Unit.get_data(unit, "allow_ranged_damage") == false or not state.actor then
+	local actor = held_actor(state)
+
+	if ScriptUnit.has_extension(unit, "health_system") or Unit.get_data(unit, "allow_ranged_damage") == false or not actor then
 		return
 	end
 
-	local position = Actor.position(state.actor)
+	local position = Actor.position(actor)
 	local direction = Vector3.normalize(position - Unit.world_position(owner_unit, 0))
 
-	give_simple_damage(unit, state.actor, position, direction)
+	give_simple_damage(unit, actor, position, direction)
 	mod:network_send("ut_link_simple_damage", "others", object_id_of(unit), position.x, position.y, position.z, direction.x, direction.y, direction.z)
 end
 
