@@ -2910,6 +2910,8 @@ local function break_down(state, owner_unit, t)
 	local health_extension = ScriptUnit.extension(unit, "health_system")
 	local direction = Vector3.normalize(Unit.world_position(unit, 0) - Unit.world_position(owner_unit, 0))
 
+	mod:echo("DEBUG break down: health=%.1f of %.1f, alive=%s", health_extension:current_health(), health_extension:get_max_health(), tostring(health_extension:is_alive()))
+
 	DamageUtils.add_damage_network(unit, owner_unit, health_extension:current_health(), "full", "destructible_level_object_hit", nil, direction, CONFIG.dot_damage_source, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 1)
 	add_heat(owner_unit, CONFIG.yank_door_overcharge)
 	release_target(state)
@@ -2940,6 +2942,12 @@ local function yank_openable(state, owner_unit, t)
 			state.link_block_until = t + CONFIG.supply_retry
 		elseif is_breakable(state.target) then
 			break_down(state, owner_unit, t)
+		else
+			local unit = state.target
+			local door_extension_of_unit = ScriptUnit.has_extension(unit, "door_system")
+			local health_extension = ScriptUnit.has_extension(unit, "health_system")
+
+			mod:echo("DEBUG yank openable, not breakable: health=%s alive=%s level_id=%s door=%s interactable=%s breed=%s no_player_damage=%s filter=%s allow_ranged=%s door_system=%s", tostring(health_extension ~= nil), tostring(health_extension ~= nil and health_extension:is_alive()), tostring(Managers.state.network:level_object_id(unit)), tostring(is_door(unit)), tostring(ScriptUnit.has_extension(unit, "interactable_system") ~= nil), tostring(AiUtils.unit_breed(unit)), tostring(Unit.get_data(unit, "no_damage_from_players")), tostring(Unit.get_data(unit, "filter_damage_source")), tostring(Unit.get_data(unit, "allow_ranged_damage")), tostring(door_extension_of_unit ~= nil))
 		end
 	end
 end
