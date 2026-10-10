@@ -243,7 +243,9 @@ local function ally_buff_template(duration)
 				max_stacks = 1,
 				multiplier = CONFIG.ally_damage_bonus,
 				name = ALLY_BUFF,
-				stat_buff = "power_level",
+				-- (the damage that is dealt, not the power level: the game scales a power level on a curve, and caps it by
+				-- difficulty, so that more of it is little more damage for a player)
+				stat_buff = "damage_dealt",
 			},
 		},
 	}
