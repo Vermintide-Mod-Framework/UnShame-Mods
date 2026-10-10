@@ -3113,6 +3113,11 @@ local function select_target(state, owner_unit, origin, aim, t, physics_world, a
 			unit = nil
 		end
 
+		-- (not the prop that someone else took from this beam, until it is let go of, see run_link)
+		if unit and unit == state.avoid_unit then
+			unit = nil
+		end
+
 		if unit and (not allowed_kinds or allowed_kinds[kind]) then
 			link_target(state, owner_unit, unit, kind, actor, object_distance)
 		end
@@ -3239,6 +3244,10 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 		if state.corpse or object_hold_counts(state.target, owner_unit, now) then
 			hold_object(state, aim, origin, dt)
 		else
+			-- (let go of, and not linked again by this beam: it would take it back at once, and the two would take it from each
+			-- other every frame, until the beam is let go of and pressed again)
+			state.avoid_unit = state.target
+
 			release_target(state)
 		end
 	elseif state.kind == "enemy" then
@@ -3361,6 +3370,12 @@ mod:network_register("ut_link_released", function (_, target_go_id, block_second
 	local state = owner_unit and states[owner_unit]
 
 	if state and state.target and Unit.alive(state.target) and Managers.state.unit_storage:go_id(state.target) == target_go_id then
+		-- (a networked prop, a barrel, that someone else took from this beam by linking it later: not linked again by it until the beam is
+		-- let go of, or the two would take it from each other every frame)
+		if state.kind == "object" then
+			state.avoid_unit = state.target
+		end
+
 		release_target(state)
 
 		-- (not linked again at once, if the host says it can't be: after a monster has pulled the owner to it)
