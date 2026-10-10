@@ -1255,7 +1255,7 @@ end
 
 -- A thing in the level that is broken down by hitting it, a barricade, a window, a crate: a unit placed in the level that has a
 -- health and isn't a character, a door (doors are opened, not broken, whatever health they have) or anything that is interacted with,
--- and that the game lets players hurt (with this kind of attack)
+-- and that the game lets players hurt (a prop that only a melee hit breaks says it takes no ranged damage, a yank is not a shot)
 local function is_breakable(unit)
 	local health_extension = ScriptUnit.has_extension(unit, "health_system")
 
@@ -1267,7 +1267,7 @@ local function is_breakable(unit)
 		return false
 	end
 
-	return not Unit.get_data(unit, "no_damage_from_players") and not Unit.get_data(unit, "filter_damage_source") and Unit.get_data(unit, "allow_ranged_damage") ~= false
+	return not Unit.get_data(unit, "no_damage_from_players") and not Unit.get_data(unit, "filter_damage_source")
 end
 
 -- Whether the game would offer the interaction with a unit to someone looking along the aim: the way it looks, a ray with the
