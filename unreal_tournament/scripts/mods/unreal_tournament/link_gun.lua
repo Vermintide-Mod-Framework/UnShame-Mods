@@ -120,9 +120,9 @@ local CONFIG = {
 	-- off, and one in the air that is not over throw_land_timeout seconds after it should be lets the enemy out of the vortex
 	throw_enter_timeout = 0.6,
 	throw_land_timeout = 3,
-	-- An enemy that is nearer than throw_min_distance to where it would land, or that dies when it lands (the skeletons and
-	-- the zombies), is staggered towards there instead: yank_stagger_per_meter of the distance as the length, at most
-	-- yank_stagger_max
+	-- An enemy that is nearer than throw_min_distance to where it would land, or that the game doesn't put in a vortex (the
+	-- leech and the sorcerers), is staggered towards there instead: yank_stagger_per_meter of the distance as the length, at
+	-- most yank_stagger_max
 	throw_min_distance = 4, -- m
 	yank_stagger_per_meter = 1,
 	yank_stagger_max = 4,
@@ -1437,8 +1437,8 @@ local function throw_landing(owner_unit, aim_flat)
 	end
 end
 
--- A push towards the owner instead of a throw, for an enemy that is near enough for one to be too much, and for one that dies
--- when it lands from one (the skeletons, the zombies): it is staggered towards the place it would have landed in, as far as
+-- A push towards the owner instead of a throw, for an enemy that is near enough for one to be too much, and for one that the
+-- game doesn't put in a vortex (the leech, the sorcerers): it is staggered towards the place it would have landed in, as far as
 -- the distance to it says
 local function stagger_towards(state, owner_unit, t, blackboard, place)
 	local unit = state.target
@@ -1474,9 +1474,10 @@ local function start_throw(state, owner_unit, t)
 
 	state.yank_land = nil
 
-	-- Not thrown: one that dies when it lands is pushed, wherever it is, and so is one that is near (the distance of a throw to
-	-- there isn't worth it)
-	if blackboard.breed.die_on_vortex_land or land and Vector3.length(land - Unit.world_position(unit, 0)) < CONFIG.throw_min_distance then
+	-- Not thrown: one that the game doesn't put in a vortex (the leech, the sorcerers: it may not do what a vortex takes of it,
+	-- or not live through it) is pushed, wherever it is, and so is one that is near (the distance of a throw to there isn't
+	-- worth it)
+	if not blackboard.breed.vortexable or land and Vector3.length(land - Unit.world_position(unit, 0)) < CONFIG.throw_min_distance then
 		stagger_towards(state, owner_unit, t, blackboard, land or Unit.world_position(owner_unit, 0))
 
 		return
