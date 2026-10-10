@@ -2524,7 +2524,11 @@ local function update_ally_buffs()
 		if state.kind == "ally" and state.target then
 			link_counts[state.target] = (link_counts[state.target] or 0) + 1
 			link_owners[state.target] = owner_unit
-			link_names[state.target] = (link_names[state.target] and link_names[state.target] .. ", " or "") .. unit_name(owner_unit)
+			-- (a beam that is held by the one that it is on: the two have each other linked)
+			local target_state = states[state.target]
+			local mutual = target_state and target_state.kind == "ally" and target_state.target == owner_unit
+
+			link_names[state.target] = (link_names[state.target] and link_names[state.target] .. ", " or "") .. unit_name(owner_unit) .. (mutual and " (linked back)" or "")
 		end
 	end
 
