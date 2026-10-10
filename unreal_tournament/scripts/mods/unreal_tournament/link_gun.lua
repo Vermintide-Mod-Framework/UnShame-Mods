@@ -211,6 +211,10 @@ local CONFIG = {
 	-- object_search_radius, to where it lay for them when they linked it, looked for every object_search_interval seconds
 	object_search_radius = 6, -- m
 	object_search_interval = 0.1,
+	-- A yank of an object that has no health is only a hit that brings it down (a lantern) if it is held to something: it is
+	-- further than anchored_distance from where it is pulled to, anchor_check_delay seconds after the yank
+	anchor_check_delay = 0.4, -- seconds
+	anchored_distance = 1, -- m
 	object_pull = 20,
 	object_max_speed = 35, -- m/s
 	-- The beam: drawn as a curve (a cubic Bezier) from the staff to what it is on. A held enemy hangs it by
@@ -3052,9 +3056,21 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 	elseif state.kind == "object" then
 		-- A thing in the level that is hit by what is shot at it, and has no health, a lantern that hangs: the level itself does what
 		-- is to be done when it is hit, from the flow event that the game gives it when a shot hits it, which says where and
-		-- from where it was
+		-- from where it was. Only for what is held to something: a yank pulls the object to the owner, and a free one (a bottle, which
+		-- breaks when it is hit) comes, while one that is hung stays where the chain lets it be, which is looked at
+		-- anchor_check_delay seconds after the yank.
 		if yanked then
-			simple_damage(state, owner_unit)
+			state.anchor_check_t = t + CONFIG.anchor_check_delay
+		end
+
+		if state.anchor_check_t and t >= state.anchor_check_t then
+			state.anchor_check_t = nil
+
+			local actor = held_actor(state)
+
+			if actor and Vector3.distance(Actor.position(actor), origin + aim * state.hold_distance) > CONFIG.anchored_distance then
+				simple_damage(state, owner_unit)
+			end
 		end
 
 		-- (not an object that is already being pulled in: it is held where a yank would hold it)
