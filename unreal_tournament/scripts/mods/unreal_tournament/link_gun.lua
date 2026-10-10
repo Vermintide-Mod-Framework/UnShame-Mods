@@ -218,9 +218,6 @@ local CONFIG = {
 	-- The beam is drawn with a copy of this particle effect at every point of the curve (it has no settings, so it is only
 	-- placed), the Thornsister's own, green.
 	beam_effect = "fx/lifestaff_idle",
-	-- How big each copy is, 1 is the effect's own size (it is scaled by a unit it is linked to, see effects.lua), for the beam
-	-- in the hands and the one that is seen on the others
-	beam_scale = 0.7,
 	-- The others: the end of the beam is told to them this often, and what they draw follows it (the share of the way to it
 	-- covered in a second is 1 - e^-smoothing); a beam that has not been heard of for the timeout is over
 	beam_send_interval = 0.05, -- seconds
@@ -2415,10 +2412,9 @@ end
 -- ends, the effects are animated and one that is made again every so often is seen at its start, where it isn't there.
 -- When it ends they stop spawning particles and what is out fades on its own, instead of vanishing at once.
 local function destroy_sprites(state)
-	if state.sprite_ids then
-		-- (the copies are the scaled effects, each on a unit of its own: the unit going stops the effect spawning)
-		for _, effect in ipairs(state.sprite_ids) do
-			effects.stop(effect)
+	if state.sprite_ids and state.world then
+		for _, effect_id in ipairs(state.sprite_ids) do
+			pcall(World.stop_spawning_particles, state.world, effect_id)
 		end
 	end
 
@@ -2451,25 +2447,16 @@ local function draw_sprites(state, world, effect_name, points, count)
 	local wanted = (count - 1) * copies
 
 	for i = #ids + 1, wanted do
-		local effect = effects.start(world, effect_name, points[math.floor((i - 1) / copies) + 2], CONFIG.beam_scale)
-
-		if not effect then
-			break
-		end
-
-		ids[i] = effect
+		ids[i] = World.create_particles(world, effect_name, points[math.floor((i - 1) / copies) + 2], Quaternion.identity())
 		rolls[i] = math.random() * math.pi * 2
 	end
 
 	for i = #ids, wanted + 1, -1 do
-		effects.destroy(ids[i])
+		pcall(World.destroy_particles, world, ids[i])
 
 		ids[i] = nil
 		rolls[i] = nil
 	end
-
-	-- (an effect that isn't available isn't drawn: there are fewer than wanted)
-	count = math.min(count, math.floor(#ids / copies) + 1)
 
 	-- (all looking along the line from the staff to the end, not along the curve: the particles of the effect move along the
 	-- way it faces, they flow towards the staff and not past the end)
@@ -2483,10 +2470,7 @@ local function draw_sprites(state, world, effect_name, points, count)
 		for copy = 1, copies do
 			local index = (i - 2) * copies + copy
 
-			local unit = ids[index].unit
-
-			Unit.set_local_position(unit, 0, to)
-			Unit.set_local_rotation(unit, 0, Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3.forward(), rolls[index])))
+			World.move_particles(world, ids[index], to, Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3.forward(), rolls[index])))
 		end
 	end
 end
