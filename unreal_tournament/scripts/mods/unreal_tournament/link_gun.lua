@@ -2497,6 +2497,17 @@ mod:hook(StatusUtils, "set_in_vortex_network", function (func, affected_unit, in
 	return func(affected_unit, in_vortex, ...)
 end)
 
+-- A player or a bot that is immune is not a target of a vortex at all: the vortex pulls the ones that are not in it towards it
+-- (and holds the ones it thinks it has), which setting them in it again being refused doesn't stop. A vortex lets go of a unit that
+-- stops being a target, and so does the state of being in one.
+mod:hook(GenericStatusExtension, "is_valid_vortex_target", function (func, self, ...)
+	if is_vortex_immune(self.unit) then
+		return false
+	end
+
+	return func(self, ...)
+end)
+
 -- The enemies that are outside a vortex are pulled in by it if they are near: the ones that are immune are marked as inside it
 -- while it looks for them, so that it doesn't
 if rawget(_G, "VortexExtension") then
