@@ -1185,8 +1185,9 @@ end
 local function is_interactable(unit)
 	local interaction_type = Unit.get_data(unit, "interaction_data", "interaction_type")
 
-	-- (the keep's are the menus of it, they have invisible units placed about: only chests are linked there)
-	if global_is_inside_inn and interaction_type ~= "chest" then
+	-- (a unit with nothing to see is only a place that the game has the interaction at, a character that is talked to has one next to
+	-- them: it isn't linked, there is nothing to look at)
+	if Unit.num_meshes(unit) == 0 then
 		return false
 	end
 
