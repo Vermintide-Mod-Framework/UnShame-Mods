@@ -144,7 +144,7 @@ local CONFIG = {
 	-- An enemy that is nearer than throw_min_distance to where it would land, or that the game doesn't put in a vortex (the
 	-- leech and the sorcerers), is staggered towards there instead: yank_stagger_per_meter of the distance as the length, at
 	-- most yank_stagger_max
-	throw_min_distance = 4, -- m
+	throw_min_distance = 1.5, -- m
 	yank_stagger_per_meter = 1,
 	yank_stagger_max = 4,
 	throw_lift = 0.4, -- m, the enemy is lifted this high before it is let out of the vortex, it is not on the ground then
