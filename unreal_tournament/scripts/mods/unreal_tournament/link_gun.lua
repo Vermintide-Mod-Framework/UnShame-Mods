@@ -1904,6 +1904,16 @@ end
 -- The networked objects (a barrel) that the host has let go of and goes on telling the others the pose of until they are at rest
 local barrel_settling = {} -- { unit, stop_at }
 
+-- (called when what is held is let go of, by the target being released or by the beam ending)
+local function track_released_object(state)
+	if Managers.player.is_server and state.kind == "object" and state.target and Unit.alive(state.target) and is_networked_object(state.target) then
+		barrel_settling[#barrel_settling + 1] = {
+			stop_at = Application.time_since_launch() + CONFIG.barrel_settle_time,
+			unit = state.target,
+		}
+	end
+end
+
 local function release_target(state)
 	finish_throw(state)
 	clear_held_outline(state)
@@ -1912,12 +1922,7 @@ local function release_target(state)
 		bot_targets[state.target] = nil
 	end
 
-	if Managers.player.is_server and state.kind == "object" and state.target and Unit.alive(state.target) and is_networked_object(state.target) then
-		barrel_settling[#barrel_settling + 1] = {
-			stop_at = Application.time_since_launch() + CONFIG.barrel_settle_time,
-			unit = state.target,
-		}
-	end
+	track_released_object(state)
 
 	state.target = nil
 	state.kind = nil
@@ -2667,6 +2672,7 @@ local function end_beam(owner_unit)
 		clear_held_outline(state)
 		destroy_sprites(state)
 		stop_drone(owner_unit)
+		track_released_object(state)
 
 		if state.target then
 			bot_targets[state.target] = nil
