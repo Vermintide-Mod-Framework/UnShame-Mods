@@ -141,9 +141,10 @@ local CONFIG = {
 	-- off, and one in the air that is not over throw_land_timeout seconds after it should be lets the enemy out of the vortex
 	throw_enter_timeout = 0.6,
 	throw_land_timeout = 3,
-	-- An enemy that is nearer than throw_min_distance to where it would land, or that the game doesn't put in a vortex (the
-	-- leech and the sorcerers), is staggered towards there instead: yank_stagger_per_meter of the distance as the length, at
-	-- most yank_stagger_max
+	-- An enemy that is nearer than throw_min_distance to where it would land (held about that far in front of you) is thrown on
+	-- along the aim, that far past where it is, instead (staggered towards the first place if there is no place there). One that the
+	-- game doesn't put in a vortex (the leech and the sorcerers) is staggered towards where it would land instead:
+	-- yank_stagger_per_meter of the distance as the length, at most yank_stagger_max
 	throw_min_distance = 4, -- m
 	yank_stagger_per_meter = 1,
 	yank_stagger_max = 4,
@@ -1658,11 +1659,12 @@ end
 -- Where a unit that is thrown lands: in front of the owner, on the navmesh where there is one near, else on the owner, else
 -- where the owner last stood on it (nothing if there is none). The owner's game works it out for the beam of a player that is
 -- not the host, from where they are and where they aim, what the host sees of them is a little behind.
-local function throw_landing(owner_unit, aim_flat)
+-- (reach is how far in front of the owner, throw_land_distance if it is not given)
+local function throw_landing(owner_unit, aim_flat, reach)
 	local nav_world = Managers.state.entity:system("ai_system"):nav_world()
 	local owner_position = Unit.world_position(owner_unit, 0)
 	local owner_locomotion_extension = ScriptUnit.has_extension(owner_unit, "locomotion_system")
-	local in_front = owner_position + aim_flat * CONFIG.throw_land_distance
+	local in_front = owner_position + aim_flat * (reach or CONFIG.throw_land_distance)
 	local candidates = {
 		in_front,
 		owner_position,
@@ -1750,12 +1752,17 @@ local function start_throw(state, owner_unit, t)
 	end
 
 	-- (the place the owner's game has worked out, if it has sent one)
-	local from_owner = state.yank_land ~= nil
 	local land = state.yank_land and state.yank_land:unbox() or throw_landing(owner_unit, aim_flat)
 
 	state.yank_land = nil
 
-	mod:echo("DEBUG throw: land_from_owner=%s land=%s vortexable=%s distance=%s in_vortex=%s staggered=%s", tostring(from_owner), tostring(land ~= nil), tostring(blackboard.breed.vortexable), land and string.format("%.1f", Vector3.length(land - Unit.world_position(unit, 0))) or "-", tostring(blackboard.in_vortex), tostring(blackboard.stagger))
+	-- An enemy that is held where it would land (held about that far in front of the owner, the usual) isn't pushed a hand's width:
+	-- it is thrown on along the aim, throw_min_distance past where it is, which is also how it goes off a ledge beside the owner
+	if land and blackboard.breed.vortexable and Vector3.length(land - Unit.world_position(unit, 0)) < CONFIG.throw_min_distance then
+		local owner_to_enemy = Vector3.length(Vector3.flat(Unit.world_position(unit, 0) - Unit.world_position(owner_unit, 0)))
+
+		land = throw_landing(owner_unit, aim_flat, owner_to_enemy + CONFIG.throw_min_distance) or land
+	end
 
 	-- Not thrown: one that the game doesn't put in a vortex (the leech, the sorcerers: it may not do what a vortex takes of it,
 	-- or not live through it) is pushed, wherever it is, and so is one that is near (the distance of a throw to there isn't
@@ -1809,8 +1816,6 @@ local function update_throw(state, t)
 
 			thrown.phase = "lifted"
 		elseif t - thrown.started > CONFIG.throw_enter_timeout then
-			mod:echo("DEBUG throw called off: never entered the vortex (state=%s)", tostring(blackboard.in_vortex_state))
-
 			finish_throw(state)
 
 			return false
