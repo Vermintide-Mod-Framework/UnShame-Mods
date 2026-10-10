@@ -3527,17 +3527,6 @@ local function update_object_mirrors(dt)
 					refresh_object(mirror, true)
 				end
 
-				-- A prop of this machine that is not where it lay for the holder when they linked it (it has been awake, moving, and
-				-- is not at rest as theirs is, it can be anywhere, below the floor) is put there first, with no speed
-				if not mirror.placed and mirror.actor and not mirror.corpse then
-					mirror.placed = true
-
-					local lay = beam.link_position:unbox()
-
-					mod:echo("DEBUG prop is %.2f m from where it lay for the holder", Vector3.distance(Actor.position(mirror.actor), lay))
-					place_body(mirror.target, mirror.actor, lay)
-				end
-
 				hold_object(mirror, beam.aim:unbox(), beam.origin:unbox(), dt)
 			end
 		end
