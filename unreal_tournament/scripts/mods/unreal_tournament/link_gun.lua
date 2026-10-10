@@ -15,7 +15,7 @@ local mod = get_mod("unreal_tournament")
 --   Primary while linked (a yank): an enemy is thrown, the way the game lets one out of the Thornsister's vortex, to land in front of
 --               the owner (pushed instead, if it is near or the game doesn't put it in a vortex), out of a vortex if it is in one; an
 --               ally is freed from what holds them, got up, pulled up from a ledge, or launched to the owner, at a cost in heat (the
---               whole bar for a player); an object is pulled to the owner (what hangs, a lantern, comes off its hinge by being held);
+--               whole bar for a player); an object is pulled to the owner, and what a shot would bring down (a lantern) comes down;
 --               a pickup is picked up, a door opened or closed, a chest or a lever used, a barricade broken.
 -- Who does what: the player who holds the beam picks what is linked, from what they see. What depends on the machine of the
 -- player (their pickups, doors, chests, interactions, the objects of the level, the heat of the staff) is done by their own game,
@@ -215,6 +215,10 @@ local CONFIG = {
 	-- corrects only now and then: the host tells them where it is every beam_send_interval while it is held, and for
 	-- barrel_settle_time seconds after, and they move their copy there
 	barrel_settle_time = 3, -- seconds
+	-- A yank of an object that has no health is only a hit that brings it down (a lantern) if it is held to something: it is
+	-- further than anchored_distance from where it is pulled to, anchor_check_delay seconds after the yank
+	anchor_check_delay = 0.4, -- seconds
+	anchored_distance = 1, -- m
 	object_pull = 20,
 	object_max_speed = 35, -- m/s
 	-- The beam: drawn as a curve (a cubic Bezier) from the staff to what it is on. A held enemy hangs it by
@@ -1507,7 +1511,7 @@ local function find_target(owner_unit, physics_world, origin, aim)
 
 		-- The things that are broken down, the units with a health that aren't characters (the characters have a blackboard, which
 		-- is looked at first, there are many of them)
-		-- (every kind of health extension: the things that are shot at in the level have kinds of their own)
+		-- (every kind of health extension: the things that are shot at in the level, a lantern that hangs, have kinds of their own)
 		for unit in pairs(Managers.state.entity:system("health_system").unit_extensions) do
 			if not BLACKBOARDS[unit] and Unit.alive(unit) then
 				local position = POSITION_LOOKUP[unit] or Unit.world_position(unit, 0)
@@ -2924,6 +2928,69 @@ local function break_down(state, owner_unit, t)
 	state.link_block_until = t + CONFIG.supply_retry
 end
 
+-- What the game does when a shot hits a unit that has no health (not only one placed in the level, some are spawned by it): it sets
+-- what it says about the hit as flow variables of the unit and gives it the flow event, which the level answers (a lantern comes
+-- down)
+local function give_simple_damage(unit, actor, position, direction)
+	Unit.set_flow_variable(unit, "hit_actor", actor)
+	Unit.set_flow_variable(unit, "hit_direction", direction)
+	Unit.set_flow_variable(unit, "hit_position", position)
+	Unit.flow_event(unit, "lua_simple_damage")
+end
+
+-- (the flow event is the machine's own: a prop that is not a networked unit is on every machine, and what happens to it happens
+-- on the machine that gives the event. The others are told what was hit, by its id, or where it is where it has none, and
+-- give it too.)
+local function simple_damage(state, owner_unit)
+	local unit = state.target
+
+	local actor = held_actor(state)
+
+	if ScriptUnit.has_extension(unit, "health_system") or Unit.get_data(unit, "allow_ranged_damage") == false or not actor then
+		return
+	end
+
+	local position = Actor.position(actor)
+	local direction = Vector3.normalize(position - Unit.world_position(owner_unit, 0))
+
+	give_simple_damage(unit, actor, position, direction)
+	mod:network_send("ut_link_simple_damage", "others", object_id_of(unit), position.x, position.y, position.z, direction.x, direction.y, direction.z)
+end
+
+mod:network_register("ut_link_simple_damage", function (_, object_id, x, y, z, direction_x, direction_y, direction_z)
+	local position = Vector3(x, y, z)
+	local unit = object_unit_of(object_id)
+
+	-- (a prop that has no id on this machine: the one that is where the owner hit it)
+	if not unit then
+		unit = find_object_near(World.get_data(Managers.world:world("level_world"), "physics_world"), position, CONFIG.object_search_radius)
+	end
+
+	if not unit or not Unit.alive(unit) then
+		return
+	end
+
+	-- (the body of it that is nearest to where it was hit)
+	local nearest_actor, nearest_distance
+
+	for i = 0, Unit.num_actors(unit) - 1 do
+		local actor = Unit.actor(unit, i)
+
+		if actor then
+			local distance = Vector3.distance(Actor.position(actor), position)
+
+			if not nearest_distance or distance < nearest_distance then
+				nearest_actor = actor
+				nearest_distance = distance
+			end
+		end
+	end
+
+	if nearest_actor then
+		give_simple_damage(unit, nearest_actor, position, Vector3(direction_x, direction_y, direction_z))
+	end
+end)
+
 -- Yanking a door opens it, or closes it; a chest is opened by the game's own interaction, as a supply is picked up. A door
 -- is only opened like that by the host: for the others it is the game's interaction too, which the game sends to the others
 -- (a door that is opened on the machine of someone who is not the host would not be opened for anyone else).
@@ -3010,10 +3077,29 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 			damage_enemy(state, owner_unit, t)
 		end
 	elseif state.kind == "object" and yanked and is_breakable(state.target) then
-		-- (an object that is something to break down, with a health, is a body that physics moves too, and is linked as one: a
+		-- (an object that is something to break down, a lantern that hangs, is a body that physics moves, and is linked as one: a
 		-- yank breaks it, which is what shooting it does)
 		break_down(state, owner_unit, t)
 	elseif state.kind == "object" then
+		-- A thing in the level that is hit by what is shot at it, and has no health, a lantern that hangs: the level itself does what
+		-- is to be done when it is hit, from the flow event that the game gives it when a shot hits it, which says where and
+		-- from where it was. Only for what is held to something: a yank pulls the object to the owner, and a free one (a bottle, which
+		-- breaks when it is hit) comes, while one that is hung stays where the chain lets it be, which is looked at
+		-- anchor_check_delay seconds after the yank.
+		if yanked then
+			state.anchor_check_t = t + CONFIG.anchor_check_delay
+		end
+
+		if state.anchor_check_t and t >= state.anchor_check_t then
+			state.anchor_check_t = nil
+
+			local actor = held_actor(state)
+
+			if actor and Vector3.distance(Actor.position(actor), origin + aim * state.hold_distance) > CONFIG.anchored_distance then
+				simple_damage(state, owner_unit)
+			end
+		end
+
 		-- (not an object that is already being pulled in: it is held where a yank would hold it)
 		state.yank = state.yank or yanked and state.hold_distance > CONFIG.yank_min_distance
 
