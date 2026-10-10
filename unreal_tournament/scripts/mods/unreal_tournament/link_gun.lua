@@ -213,7 +213,10 @@ local CONFIG = {
 	object_search_interval = 0.1,
 	object_pull = 20,
 	object_max_speed = 35, -- m/s
-	object_wall_margin = 0.2, -- m, how far in front of the world (a floor, a wall) between an object and where it is held it is held
+	-- A prop that is held (a bottle, not a ragdoll) is moved by physics only on the machine of the one who holds it, and the others
+	-- are told where it is: their own copy of it may have no floor to stand on (they are far from it), and falls. It is told while it
+	-- is held and after it is let go, until it is at rest or object_settle_time seconds have passed.
+	object_settle_time = 4, -- seconds
 	-- The beam: drawn as a curve (a cubic Bezier) from the staff to what it is on. A held enemy hangs it by
 	-- its weight (sag_per_weight a meter per meter of beam, per unit of weight, at most sag_max), and bends it
 	-- by how far the enemy is behind where it is being moved to (lag_bend).
@@ -1898,12 +1901,26 @@ local function add_held_outline(state)
 	utils.add_outline(state, state.target, HELD_OUTLINE)
 end
 
+-- The props (not ragdolls) that this machine has let go of and are still told to the others until they are at rest, see
+-- object_settle_time, and the number that tells one that was held from another to them
+local settling = {} -- { unit, node_index, serial, stop_at }
+local object_pose_serial = 0
+
 local function release_target(state)
 	finish_throw(state)
 	clear_held_outline(state)
 
 	if state.target then
 		bot_targets[state.target] = nil
+	end
+
+	if state.kind == "object" and not state.corpse and state.target and Unit.alive(state.target) and not is_networked_object(state.target) then
+		settling[#settling + 1] = {
+			node_index = state.node_index,
+			serial = state.pose_serial,
+			stop_at = Application.time_since_launch() + CONFIG.object_settle_time,
+			unit = state.target,
+		}
 	end
 
 	state.target = nil
@@ -2041,24 +2058,8 @@ local function hold_object(state, aim, origin, dt)
 		state.hold_distance = CONFIG.yank_min_distance
 	end
 
-	-- Where it is held is not past the world: the speed it is given takes it there in a step or two, and a thin floor doesn't stop what
-	-- is driven into it fast enough (the machine that holds the beam has the floor stop the object, the others have it go through)
-	local current = target_position(state)
 	local wanted = origin + aim * state.hold_distance
-	local to_wanted = wanted - current
-	local distance_to_wanted = Vector3.length(to_wanted)
-
-	if distance_to_wanted > 0.01 then
-		local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
-		local direction = to_wanted * (1 / distance_to_wanted)
-		local hit, hit_position = PhysicsWorld.immediate_raycast(physics_world, current, direction, distance_to_wanted, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
-
-		if hit then
-			wanted = hit_position - direction * CONFIG.object_wall_margin
-		end
-	end
-
-	local velocity = (wanted - current) * CONFIG.object_pull
+	local velocity = (wanted - target_position(state)) * CONFIG.object_pull
 	local speed = Vector3.length(velocity)
 
 	if speed > CONFIG.object_max_speed then
@@ -2698,6 +2699,8 @@ local function link_target(state, owner_unit, unit, kind, actor, object_distance
 		state.link_position = actor and Vector3Box(Actor.position(actor)) or Vector3Box(Unit.world_position(unit, 0))
 		state.thawed = false
 		state.corpse = AiUtils.unit_breed(unit) ~= nil
+		object_pose_serial = object_pose_serial + 1
+		state.pose_serial = object_pose_serial
 
 		if state.corpse then
 			preserve_corpse(unit)
@@ -3523,7 +3526,8 @@ local function update_object_mirrors(dt)
 				end
 			end
 
-			if mirror then
+			-- (only a ragdoll is held here: a prop is moved to where its holder's copy is, see update_object_poses)
+			if mirror and mirror.corpse then
 				mirror.hold_distance = beam.hold_distance
 				-- (the body of the bone that the holder holds, and if this copy hasn't got that one, a limb is missing, the one
 				-- nearest to the chest)
@@ -3538,6 +3542,147 @@ local function update_object_mirrors(dt)
 				end
 
 				hold_object(mirror, beam.aim:unbox(), beam.origin:unbox(), dt)
+			end
+		end
+	end
+end
+
+-- A prop that someone holds is moved by physics on their machine only, and is told to the others: where it is, as a pose, while it is
+-- held and after it is let go until it is at rest. Their copy of it follows (a copy on a machine far from it may have no floor, it
+-- would fall through it when let go), and is frozen where the pose says it came to rest.
+-- The body of a prop that is the one of the bone that was held, else the first that physics can move
+local function prop_body(unit, node_index)
+	local fallback
+
+	for i = 0, Unit.num_actors(unit) - 1 do
+		local actor = Unit.actor(unit, i)
+
+		if actor and not Actor.is_static(actor) then
+			if node_index and Actor.node(actor) == node_index then
+				return actor
+			end
+
+			fallback = fallback or actor
+		end
+	end
+
+	return fallback
+end
+
+local function send_prop_pose(unit, node_index, serial, settled)
+	local actor = prop_body(unit, node_index)
+
+	if not actor then
+		return false
+	end
+
+	local pose = Actor.pose(actor)
+	local position = Matrix4x4.translation(pose)
+	local x, y, z, w = Quaternion.to_elements(Matrix4x4.rotation(pose))
+
+	mod:network_send("ut_link_object_pose", "others", Network.peer_id(), serial, object_id_of(unit), position.x, position.y, position.z, x, y, z, w, settled)
+
+	return true
+end
+
+local prop_poses = {} -- on the machines that are told: { [holder .. serial] = { unit, actor_index, position, rotation, settled, received } }
+
+mod:network_register("ut_link_object_pose", function (_, holder, serial, object_id, px, py, pz, qx, qy, qz, qw, settled)
+	local key = tostring(holder) .. "/" .. tostring(serial)
+	local entry = prop_poses[key]
+	local position = Vector3(px, py, pz)
+
+	-- (the copy that this machine has of it: by its id, or the one that is where the holder has it, which is told the first time and kept)
+	if not entry then
+		local unit = object_unit_of(object_id)
+
+		if not unit then
+			unit = find_object_near(World.get_data(Managers.world:world("level_world"), "physics_world"), position, CONFIG.object_search_radius)
+		end
+
+		if not unit or not Unit.alive(unit) then
+			return
+		end
+
+		entry = {unit = unit}
+		prop_poses[key] = entry
+	end
+
+	entry.position = Vector3Box(position)
+	entry.rotation = QuaternionBox(Quaternion.from_elements(qx, qy, qz, qw))
+	entry.settled = settled
+	entry.received = Application.time_since_launch()
+end)
+
+local function update_object_poses(dt)
+	local now = Application.time_since_launch()
+
+	-- What this machine holds or has let go is told to the others
+	for _, state in pairs(states) do
+		if state.kind == "object" and not state.corpse and state.target and Unit.alive(state.target) and not is_networked_object(state.target) and now >= (state.next_pose_send or 0) then
+			state.next_pose_send = now + CONFIG.beam_send_interval
+
+			send_prop_pose(state.target, state.node_index, state.pose_serial, false)
+		end
+	end
+
+	for i = #settling, 1, -1 do
+		local entry = settling[i]
+		local actor = Unit.alive(entry.unit) and prop_body(entry.unit, entry.node_index)
+
+		if not actor then
+			table.remove(settling, i)
+		else
+			local at_rest = Actor.is_sleeping(actor) or now >= entry.stop_at
+
+			if at_rest or now >= (entry.next_send or 0) then
+				entry.next_send = now + CONFIG.beam_send_interval
+
+				send_prop_pose(entry.unit, entry.node_index, entry.serial, at_rest)
+			end
+
+			if at_rest then
+				table.remove(settling, i)
+			end
+		end
+	end
+
+	-- What this machine is told: its copy of it is moved there, smoothly (the poses come every beam_send_interval), and frozen when it
+	-- is at rest
+	local blend = 1 - math.exp(-CONFIG.remote_beam_smoothing * dt)
+
+	for key, entry in pairs(prop_poses) do
+		local actor = Unit.alive(entry.unit) and prop_body(entry.unit, nil)
+
+		if not actor or now - entry.received > CONFIG.object_settle_time then
+			prop_poses[key] = nil
+		else
+			local pose = Actor.pose(actor)
+			local target_position = entry.position:unbox()
+			local target_rotation = entry.rotation:unbox()
+			local position = Matrix4x4.translation(pose)
+			local rotation = Matrix4x4.rotation(pose)
+
+			if entry.settled then
+				position = target_position
+				rotation = target_rotation
+			else
+				position = position + (target_position - position) * blend
+				rotation = Quaternion.lerp(rotation, target_rotation, blend)
+			end
+
+			Actor.teleport_pose(actor, Matrix4x4.from_quaternion_position(rotation, position))
+
+			if Actor.is_physical(actor) then
+				Actor.set_velocity(actor, Vector3.zero())
+				Actor.set_angular_velocity(actor, Vector3.zero())
+			end
+
+			if entry.settled then
+				-- (it stays where it came to rest: with no floor of its own it would fall)
+				Actor.set_kinematic(actor, true)
+
+				prop_poses[key] = nil
 			end
 		end
 	end
@@ -3721,6 +3866,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 
 	if t then
 		update_object_mirrors(dt)
+		update_object_poses(dt)
 
 		if Managers.player.is_server then
 			update_ally_buffs()
@@ -3755,6 +3901,8 @@ local function clear_beams()
 
 	table.clear(remote_inputs)
 	table.clear(corpse_units)
+	table.clear(settling)
+	table.clear(prop_poses)
 
 	if Managers.player.is_server then
 		clear_ally_buffs()
