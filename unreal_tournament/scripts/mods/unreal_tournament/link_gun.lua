@@ -344,7 +344,8 @@ end
 
 -- (an action that starts before the stance was entered enters it itself, the shots have no animation of their own)
 function pose.enter(unit_1p, owner_unit)
-	if pose.locked_out() then
+	-- (also while the game plays an animation of its own, hanging off a ledge, say: it is entered when that is over)
+	if pose.locked_out() or not utils.character_animation_is_free(owner_unit) then
 		pose.waiting = unit_1p
 		pose.waiting_owner = owner_unit
 
@@ -493,7 +494,7 @@ function pose.update(dt)
 	if pose.waiting then
 		if not pose.is_valid or not pose.is_valid() then
 			pose.waiting = nil
-		elseif not pose.locked_out() then
+		elseif not pose.locked_out() and Unit.alive(pose.waiting_owner) and utils.character_animation_is_free(pose.waiting_owner) then
 			pose.enter(pose.waiting, pose.waiting_owner)
 		end
 	end

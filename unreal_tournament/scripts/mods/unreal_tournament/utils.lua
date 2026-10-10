@@ -36,6 +36,15 @@ function utils.with_valid_positions(func, ...)
 	end
 end
 
+-- Whether the animations of a player's character are the weapon's to play: not while the game plays its own (hanging off a ledge,
+-- being knocked down, held by a disabler, being in a vortex, dead). The weapons' stance is an animation event that is sent to
+-- the character that others see too, and sent in the middle of one of those it replaces the animation of the state.
+function utils.character_animation_is_free(unit)
+	local status_extension = ScriptUnit.has_extension(unit, "status_system")
+
+	return status_extension == nil or not status_extension:is_disabled()
+end
+
 -- The unit that holds a player now, if one does. The game's own get_disabler_unit can't be used for this: the unit that
 -- grabbed a player (a Chaos Spawn, say) stays in their status after they are let go, and comes first in the game's
 -- order, so it would be found again for a later grab by another disabler. Only what the status says is going on counts.

@@ -249,6 +249,11 @@ local function slow_down_idle_pose(first_person_extension, is_valid, delay)
 end
 
 local function enter_idle_pose(first_person_extension, unit_1p, is_valid, slow_delay)
+	-- (not while the game plays an animation of its own, hanging off a ledge, say: the event would replace it)
+	if not utils.character_animation_is_free(first_person_extension.unit) then
+		return
+	end
+
 	Unit.animation_event(unit_1p, CONFIG.idle_pose_event)
 
 	-- (the other players see the character in it too: the shot of the beam is an animation that follows from it, and
