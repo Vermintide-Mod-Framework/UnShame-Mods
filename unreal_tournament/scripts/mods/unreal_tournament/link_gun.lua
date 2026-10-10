@@ -1744,14 +1744,20 @@ local function place_pet(state, owner_unit)
 		return
 	end
 
-	locomotion_extension:teleport_to(place)
-
-	-- (it was on its way somewhere: the way it was going is not the way from here)
+	-- A unit that walks the navmesh is put somewhere the way the game does it (see the end of the transported action): its navigation bot
+	-- has a position of its own, which the unit is put back to by its locomotion if it isn't moved as well, and what it was going to
+	-- is not where it goes from here.
 	local blackboard = BLACKBOARDS[unit]
 	local navigation_extension = blackboard and blackboard.navigation_extension
 
-	if navigation_extension and navigation_extension.reset_destination then
-		navigation_extension:reset_destination()
+	if navigation_extension then
+		navigation_extension:set_navbot_position(place)
+	end
+
+	locomotion_extension:teleport_to(place)
+
+	if navigation_extension then
+		navigation_extension:reset_destination(place)
 	end
 end
 
