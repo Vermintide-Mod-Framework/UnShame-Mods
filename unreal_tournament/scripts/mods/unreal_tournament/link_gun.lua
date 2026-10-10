@@ -2803,6 +2803,24 @@ local function break_down(state, owner_unit, t)
 	state.link_block_until = t + CONFIG.supply_retry
 end
 
+-- What the game does when a shot hits a unit of the level that has no health: it sets what it says about the hit as flow
+-- variables of the unit and gives it the flow event, which the level answers (a lantern comes down)
+local function simple_damage(state, owner_unit)
+	local unit = state.target
+
+	if ScriptUnit.has_extension(unit, "health_system") or not Managers.state.network:level_object_id(unit) or Unit.get_data(unit, "allow_ranged_damage") == false or not state.actor then
+		return
+	end
+
+	local position = Actor.position(state.actor)
+	local direction = Vector3.normalize(position - Unit.world_position(owner_unit, 0))
+
+	Unit.set_flow_variable(unit, "hit_actor", state.actor)
+	Unit.set_flow_variable(unit, "hit_direction", direction)
+	Unit.set_flow_variable(unit, "hit_position", position)
+	Unit.flow_event(unit, "lua_simple_damage")
+end
+
 -- Yanking a door opens it, or closes it; a chest is opened by the game's own interaction, as a supply is picked up. A door
 -- is only opened like that by the host: for the others it is the game's interaction too, which the game sends to the others
 -- (a door that is opened on the machine of someone who is not the host would not be opened for anyone else).
@@ -2893,6 +2911,13 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 		-- yank breaks it, which is what shooting it does)
 		break_down(state, owner_unit, t)
 	elseif state.kind == "object" then
+		-- A thing in the level that is hit by what is shot at it, and has no health, a lantern that hangs: the level itself does what
+		-- is to be done when it is hit, from the flow event that the game gives it when a shot hits it, which says where and
+		-- from where it was
+		if yanked then
+			simple_damage(state, owner_unit)
+		end
+
 		-- (not an object that is already being pulled in: it is held where a yank would hold it)
 		state.yank = state.yank or yanked and state.hold_distance > CONFIG.yank_min_distance
 
