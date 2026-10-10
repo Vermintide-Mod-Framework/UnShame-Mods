@@ -37,12 +37,13 @@ function utils.with_valid_positions(func, ...)
 end
 
 -- Whether the animations of a player's character are the weapon's to play: not while the game plays its own (hanging off a ledge,
--- being knocked down, held by a disabler, being in a vortex, dead). The weapons' stance is an animation event that is sent to
--- the character that others see too, and sent in the middle of one of those it replaces the animation of the state.
+-- being knocked down, dead). The weapons' stance is an animation event that is sent to the character that others see too, and
+-- sent in the middle of one of those it replaces the animation of the state. (Only these: the status of being disabled is
+-- wider, and holds in states where the stance is wanted.)
 function utils.character_animation_is_free(unit)
 	local status_extension = ScriptUnit.has_extension(unit, "status_system")
 
-	return status_extension == nil or not status_extension:is_disabled()
+	return status_extension == nil or not (status_extension:get_is_ledge_hanging() or status_extension:is_knocked_down() or status_extension:is_dead())
 end
 
 -- The unit that holds a player now, if one does. The game's own get_disabler_unit can't be used for this: the unit that
