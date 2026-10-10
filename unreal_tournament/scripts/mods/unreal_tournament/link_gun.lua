@@ -1145,15 +1145,32 @@ local function find_object_near(physics_world, position, radius)
 	return nearest_unit
 end
 
--- What the aim is on: an ally if there is one, else the enemy that can be held that is closest to it, and failing those an
+-- What the aim is on: an ally if there is one, else an enemy that can be held (a special before another elite before the
+-- rest, and of the same kind the one that is closest to the aim), and failing those an
 -- object with a body that moves (a ragdoll). Returns the unit and what it is, and for an object its body and how far it is.
 local function find_target(owner_unit, physics_world, origin, aim)
 	local side = Managers.state.side.side_by_unit[owner_unit]
 	local range = CONFIG.beam_range
 	local best_unit, best_kind, best_actor
-	local best_dot = CONFIG.aim_dot
+	local best_dot, best_tier
+	local aim_dot_limit = CONFIG.aim_dot -- (how near the aim a unit has to be, a unit that is smaller is looked at with less)
 	local best_ally_unit
 	local best_ally_dot = CONFIG.aim_dot
+
+	-- What an enemy is before another, when both are on the aim: the specials first, then the other elites (what is
+	-- worth more of the heavier things than the rest), then the rest (the common enemies, the monsters, the skeletons of the
+	-- necromancer). Of the same kind it is the one closest to the aim.
+	local function tier_of(unit, kind)
+		local breed = kind == "enemy" and AiUtils.unit_breed(unit)
+
+		if breed and breed.special then
+			return 1
+		elseif breed and breed.elite then
+			return 2
+		end
+
+		return 3
+	end
 
 	-- (unprioritized: an ally that is looked at with the enemies, the necromancer's skeletons are not before them)
 	local function consider(unit, kind, unprioritized)
@@ -1172,10 +1189,15 @@ local function find_target(owner_unit, physics_world, origin, aim)
 				best_ally_unit = unit
 				best_ally_dot = dot
 			end
-		elseif dot > best_dot and has_line_of_sight(physics_world, origin, chest_position(unit)) then
-			best_unit = unit
-			best_kind = kind
-			best_dot = dot
+		else
+			local tier = tier_of(unit, kind)
+
+			if dot > aim_dot_limit and (not best_unit or tier < best_tier or tier == best_tier and dot > best_dot) and has_line_of_sight(physics_world, origin, chest_position(unit)) then
+				best_unit = unit
+				best_kind = kind
+				best_dot = dot
+				best_tier = tier
+			end
 		end
 	end
 
@@ -1248,7 +1270,7 @@ local function find_target(owner_unit, physics_world, origin, aim)
 	-- Nothing living: supplies (what can be picked up) and doors, a little more forgiving of the aim, they are small
 	-- or thin
 	if not best_unit then
-		best_dot = math.min(best_dot, CONFIG.supply_aim_dot)
+		aim_dot_limit = math.min(aim_dot_limit, CONFIG.supply_aim_dot)
 
 		-- (what is further than the beam reaches, with room for how big a door is, isn't looked at: this runs every frame that
 		-- nothing is linked, and the boxes of a door are worked out from its meshes)
