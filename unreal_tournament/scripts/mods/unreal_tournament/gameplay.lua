@@ -239,3 +239,62 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(disabled_since)
 	table.clear(knocked_down_since)
 end
+
+-- Unlock Keep: the keep's levels ask the game what the account has finished (the flow scripts call these functions, by name),
+-- and what is locked on a new account is open when they are told it is all done. Only what the keep is told, nothing is saved.
+-- Each is a function the flow scripts call that returns a table of values; what the mod answers is what a finished account
+-- gives. The hardest difficulty is 5 for a level, and a wave count that nothing reaches is as many waves as can be asked for.
+local KEEP_UNLOCKS = {
+	flow_callback_check_progression_unlocked = function ()
+		return {
+			is_locked = false,
+			is_unlocked = true,
+		}
+	end,
+	flow_callback_get_completed_game_difficulty = function ()
+		return {
+			completed_difficulty = 5,
+		}
+	end,
+	flow_callback_get_completed_drachenfels_difficulty = function ()
+		return {
+			completed_difficulty = 5,
+		}
+	end,
+	flow_callback_get_completed_dwarf_levels_difficulty = function ()
+		return {
+			completed_difficulty = 5,
+		}
+	end,
+	flow_callback_get_completed_survival_waves = function ()
+		return {
+			dlc_survival_magnus = 99,
+			dlc_survival_ruins = 99,
+		}
+	end,
+}
+
+for name, unlocked in pairs(KEEP_UNLOCKS) do
+	if rawget(_G, name) then
+		mod:hook(_G, name, function (func, ...)
+			if is_option_on("unlock_keep") then
+				return unlocked()
+			end
+
+			return func(...)
+		end)
+	end
+end
+
+-- (the last level played is shown in the keep as won: the level it was is the game's)
+if rawget(_G, "flow_callback_get_last_level_played") then
+	mod:hook(_G, "flow_callback_get_last_level_played", function (func, ...)
+		local result = func(...)
+
+		if is_option_on("unlock_keep") then
+			result.won = true
+		end
+
+		return result
+	end)
+end

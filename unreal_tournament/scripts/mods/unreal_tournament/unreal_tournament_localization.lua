@@ -80,6 +80,12 @@ return {
 	no_friendly_fire_description = {
 		en = "You and your allies can't hurt each other, whatever the difficulty or game mode.",
 	},
+	unlock_keep = {
+		en = "Unlock Keep",
+	},
+	unlock_keep_description = {
+		en = "The keep is told that you have finished everything, which opens what a new account has locked there. Nothing is saved to your account. Takes effect the next time you enter the keep.",
+	},
 	more_ammo_pickups = {
 		en = "More Ammo Pickups",
 	},
