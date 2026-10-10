@@ -213,6 +213,7 @@ local CONFIG = {
 	object_search_interval = 0.1,
 	object_pull = 20,
 	object_max_speed = 35, -- m/s
+	object_wall_margin = 0.2, -- m, how far in front of the world (a floor, a wall) between an object and where it is held it is held
 	-- The beam: drawn as a curve (a cubic Bezier) from the staff to what it is on. A held enemy hangs it by
 	-- its weight (sag_per_weight a meter per meter of beam, per unit of weight, at most sag_max), and bends it
 	-- by how far the enemy is behind where it is being moved to (lag_bend).
@@ -2040,16 +2041,24 @@ local function hold_object(state, aim, origin, dt)
 		state.hold_distance = CONFIG.yank_min_distance
 	end
 
-	if not state.reported then
-		state.reported = true
+	-- Where it is held is not past the world: the speed it is given takes it there in a step or two, and a thin floor doesn't stop what
+	-- is driven into it fast enough (the machine that holds the beam has the floor stop the object, the others have it go through)
+	local current = target_position(state)
+	local wanted = origin + aim * state.hold_distance
+	local to_wanted = wanted - current
+	local distance_to_wanted = Vector3.length(to_wanted)
 
-		local body = held_actor(state)
+	if distance_to_wanted > 0.01 then
+		local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+		local direction = to_wanted * (1 / distance_to_wanted)
+		local hit, hit_position = PhysicsWorld.immediate_raycast(physics_world, current, direction, distance_to_wanted, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
 
-		mod:echo("DEBUG hold object: %s networked=%s corpse=%s bodies=%d actor=%s physical=%s dynamic=%s static=%s sleeping=%s kinematic=%s", tostring(state.target), tostring(is_networked_object(state.target)), tostring(state.corpse), Unit.num_actors(state.target), tostring(body ~= nil), tostring(body ~= nil and Actor.is_physical(body)), tostring(body ~= nil and Actor.is_dynamic(body)), tostring(body ~= nil and Actor.is_static(body)), tostring(body ~= nil and Actor.is_sleeping(body)), tostring(body ~= nil and Actor.is_kinematic ~= nil and Actor.is_kinematic(body)))
+		if hit then
+			wanted = hit_position - direction * CONFIG.object_wall_margin
+		end
 	end
 
-	local wanted = origin + aim * state.hold_distance
-	local velocity = (wanted - target_position(state)) * CONFIG.object_pull
+	local velocity = (wanted - current) * CONFIG.object_pull
 	local speed = Vector3.length(velocity)
 
 	if speed > CONFIG.object_max_speed then
