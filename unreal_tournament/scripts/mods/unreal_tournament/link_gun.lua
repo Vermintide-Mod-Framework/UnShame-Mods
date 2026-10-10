@@ -1271,7 +1271,9 @@ local function interaction_is_offered(physics_world, origin, aim, unit, range)
 end
 
 local openables = {} -- the doors, the chests, the levers and the things to break near enough: the unit, does the aim look at its box too
-local open_doors = {} -- the doors of them that are open
+-- (these three are scratch tables, cleared and filled again every time find_target looks: nothing is remembered between looks, so
+-- what the game says now is what is used, a door that someone else opens is open for the next look)
+local open_doors = {} -- the doors of them that the game says are open
 local interactables = {} -- the ones of them that are interactions of the game: only the ones the game would offer are linked
 
 -- A ragdoll or another object with a body that moves, the first one the aim is on (a wall in the way ends the search):
@@ -1445,8 +1447,9 @@ local function find_target(owner_unit, physics_world, origin, aim)
 	-- (how far along the aim the door or chest is, for below)
 	local best_distance
 
-	-- An open door is linked when there is nothing else the aim is on, an object, a chest, a lever: the nearest one (it is closed by
-	-- yanking it, which is seldom what is wanted when it is in the way of something else)
+	-- An open door (as the game says it is now, door_extension:is_open(), asked in every look) is linked when there is nothing
+	-- else the aim is on, an object, a chest, a lever: the nearest one (it is closed by yanking it, which is seldom what is
+	-- wanted when it is in the way of something else)
 	local open_door_unit, open_door_distance, open_door_actor
 
 	-- Nothing living: supplies (what can be picked up) and doors, a little more forgiving of the aim, they are small
