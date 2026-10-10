@@ -325,6 +325,22 @@ local KEEP_UNLOCKS = {
 			value = 99,
 		}
 	end,
+	-- The persistent statistics that a level's flow asks for by name (the levels completed, say: the training grounds' way out is
+	-- open once the tutorial is done): a number that is more than any of them is, whatever the name is
+	flow_query_leader_get_persistant_stat = function (params)
+		mod:echo("DEBUG unlock keep: stat asked %s", tostring(params and params.stat_name))
+
+		return {
+			value = 99,
+		}
+	end,
+	flow_query_local_player_get_persistant_stat = function (params)
+		mod:echo("DEBUG unlock keep: stat asked %s", tostring(params and params.stat_name))
+
+		return {
+			value = 99,
+		}
+	end,
 	flow_query_leader_achievement_completed = function ()
 		return {
 			value = true,
@@ -349,7 +365,7 @@ for name, unlocked in pairs(KEEP_UNLOCKS) do
 					mod:echo("DEBUG unlock keep: %s was asked", name)
 				end
 
-				return unlocked()
+				return unlocked(...)
 			end
 
 			return func(...)
