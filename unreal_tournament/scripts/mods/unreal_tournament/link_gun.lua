@@ -1185,6 +1185,11 @@ end
 local function is_interactable(unit)
 	local interaction_type = Unit.get_data(unit, "interaction_data", "interaction_type")
 
+	-- (the keep's are the menus of it, they have invisible units placed about: only chests are linked there)
+	if global_is_inside_inn and interaction_type ~= "chest" then
+		return false
+	end
+
 	if not interaction_type or PEOPLE_INTERACTIONS[interaction_type] or not InteractionDefinitions[interaction_type] or Unit.get_data(unit, "interaction_data", "used") or is_door(unit) then
 		return false
 	end
