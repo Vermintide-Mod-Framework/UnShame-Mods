@@ -1308,39 +1308,49 @@ end
 -- a lift that is only for looks. The landing is the nearest place of the navmesh to where it would be in front of
 -- the owner (taken from far above or below, so it doesn't matter where the owner is in height), or else the place
 -- of the navmesh the owner stands on. What is in between is checked as it flies (update_throw): a wall ends the flight.
+-- Where a unit that is thrown lands: in front of the owner, on the navmesh where there is one near, else on the owner, else
+-- where the owner last stood on it (nothing if there is none). The owner's game works it out for the beam of a player that is
+-- not the host, from where they are and where they aim, what the host sees of them is a little behind.
+local function throw_landing(owner_unit, aim_flat)
+	local nav_world = Managers.state.entity:system("ai_system"):nav_world()
+	local owner_position = Unit.world_position(owner_unit, 0)
+	local owner_locomotion_extension = ScriptUnit.has_extension(owner_unit, "locomotion_system")
+	local candidates = {
+		owner_position + aim_flat * CONFIG.yank_min_distance,
+		owner_position,
+		owner_locomotion_extension and owner_locomotion_extension.last_position_on_navmesh and owner_locomotion_extension:last_position_on_navmesh() or nil,
+	}
+
+	for i = 1, 3 do
+		local candidate = candidates[i]
+
+		if candidate then
+			local on_navmesh, altitude = GwNavQueries.triangle_from_position(nav_world, candidate, 4, 4)
+
+			if on_navmesh then
+				return Vector3(candidate.x, candidate.y, altitude)
+			end
+		end
+	end
+end
+
 local function start_throw(state, owner_unit, t)
 	local unit = state.target
 	local locomotion_extension = ScriptUnit.has_extension(unit, "locomotion_system")
 	local is_ai = locomotion_extension ~= nil and locomotion_extension.teleport_to ~= nil
 	local current = Unit.world_position(unit, 0)
 	local aim_flat = state.flat_aim and state.flat_aim:unbox() or Vector3.forward()
-	local owner_position = Unit.world_position(owner_unit, 0)
-	local land = owner_position + aim_flat * CONFIG.yank_min_distance
+	-- (a place the owner has worked out, if the owner's game has sent one)
+	local land = state.yank_land and state.yank_land:unbox()
 
-	-- (what isn't an AI unit, a target dummy, lands where it is: there is no navmesh to look for)
-	if is_ai then
-		local nav_world = Managers.state.entity:system("ai_system"):nav_world()
-		local owner_locomotion_extension = ScriptUnit.has_extension(owner_unit, "locomotion_system")
-		local candidates = {
-			land,
-			owner_position,
-			owner_locomotion_extension and owner_locomotion_extension.last_position_on_navmesh and owner_locomotion_extension:last_position_on_navmesh() or nil,
-		}
+	state.yank_land = nil
 
-		land = nil
-
-		for i = 1, 3 do
-			local candidate = candidates[i]
-
-			if candidate then
-				local on_navmesh, altitude = GwNavQueries.triangle_from_position(nav_world, candidate, 4, 4)
-
-				if on_navmesh then
-					land = Vector3(candidate.x, candidate.y, altitude)
-
-					break
-				end
-			end
+	if not land then
+		if is_ai then
+			land = throw_landing(owner_unit, aim_flat)
+		else
+			-- (what isn't an AI unit, a target dummy, lands where it is: there is no navmesh to look for)
+			land = Unit.world_position(owner_unit, 0) + aim_flat * CONFIG.yank_min_distance
 		end
 	end
 
@@ -2496,14 +2506,19 @@ local function remote_input(owner_go_id)
 	return input, owner_unit
 end
 
-mod:network_register("ut_link_input", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, yanked)
+mod:network_register("ut_link_input", function (_, owner_go_id, x, y, z, aim_x, aim_y, aim_z, yanked, has_land, land_x, land_y, land_z)
 	local input = remote_input(owner_go_id)
 
 	if input then
 		input.origin = Vector3Box(Vector3(x, y, z))
 		input.aim = Vector3Box(Vector3(aim_x, aim_y, aim_z))
-		-- (a yank that arrives is kept until the host has handled it, the next input doesn't take it back)
-		input.yanked = input.yanked or yanked
+		-- (a yank that arrives is kept until the host has handled it, the next input doesn't take it back, and with it the
+		-- place that a thrown unit lands in, if the owner has worked one out)
+		if yanked then
+			input.yanked = true
+			input.yank_land = has_land and Vector3Box(Vector3(land_x, land_y, land_z)) or nil
+		end
+
 		input.received = Application.time_since_launch()
 	end
 end)
@@ -2585,7 +2600,10 @@ local function update_remote_inputs(dt, t)
 			local yanked = input.yanked
 			local request = input.link_request
 
+			-- (where a thrown unit lands, as the owner works it out: used when the throw starts)
+			state.yank_land = yanked and input.yank_land or nil
 			input.yanked = false
+			input.yank_land = nil
 			input.link_request = nil
 			state.callback_world = world
 
@@ -2672,15 +2690,31 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 			mod:network_send("ut_link_target", "others", Managers.state.unit_storage:go_id(owner_unit), target_go_id, state.kind or "")
 		end
 
+		-- A yank of an enemy throws it to the owner: where it lands is worked out here, from where the owner is and aims now,
+		-- and goes with the yank (the host moves the enemy, but what it sees of the owner is a little behind)
+		if yanked and state.kind == "enemy" then
+			local flat_aim = Vector3.flat(aim)
+
+			if Vector3.length(flat_aim) > 0.1 then
+				local land = throw_landing(owner_unit, Vector3.normalize(flat_aim))
+
+				state.yank_land_unsent = land and Vector3Box(land) or nil
+			end
+		end
+
 		state.yank_unsent = state.yank_unsent or yanked
 
 		if state.yank_unsent or t >= (state.next_input_send or 0) then
 			state.next_input_send = t + CONFIG.beam_send_interval
 			state.input_sent = true
 
-			mod:network_send("ut_link_input", "others", Managers.state.unit_storage:go_id(owner_unit), origin.x, origin.y, origin.z, aim.x, aim.y, aim.z, state.yank_unsent)
+			local land_box = state.yank_unsent and state.yank_land_unsent
+			local land = land_box and land_box:unbox() or Vector3.zero()
+
+			mod:network_send("ut_link_input", "others", Managers.state.unit_storage:go_id(owner_unit), origin.x, origin.y, origin.z, aim.x, aim.y, aim.z, state.yank_unsent, land_box and true or false, land.x, land.y, land.z)
 
 			state.yank_unsent = false
+			state.yank_land_unsent = nil
 		end
 	end
 
