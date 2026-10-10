@@ -2908,6 +2908,8 @@ local function yank_ally(state, owner_unit, t)
 	-- (waiting to be set free: the game's own way of doing it, with the owner as the one who did)
 	if status_extension and status_extension:is_ready_for_assisted_respawn() then
 		StatusUtils.set_respawned_network(unit, true, owner_unit)
+		-- (what the game's interaction records of it as well: the rescue is the owner's)
+		StatisticsUtil.register_assisted_respawn(owner_unit, unit, Managers.player:statistics_db())
 		add_heat(owner_unit, CONFIG.yank_rescue_overcharge)
 
 		return
@@ -2932,10 +2934,12 @@ local function yank_ally(state, owner_unit, t)
 		add_heat(owner_unit, CONFIG.yank_free_overcharge)
 	elseif status_extension:get_is_ledge_hanging() then
 		give_rescue(unit, "pull_up", owner_unit)
+		StatisticsUtil.register_pull_up(owner_unit, unit, Managers.player:statistics_db())
 		pending_rescues[unit] = {kind = "pull_up", owner = owner_unit, next_t = t + CONFIG.rescue_retry_interval, tries = 0}
 		add_heat(owner_unit, CONFIG.yank_rescue_overcharge)
 	elseif status_extension:is_knocked_down() then
 		give_rescue(unit, "revive", owner_unit)
+		StatisticsUtil.register_revive(owner_unit, unit, Managers.player:statistics_db())
 		pending_rescues[unit] = {kind = "revive", owner = owner_unit, next_t = t + CONFIG.rescue_retry_interval, tries = 0}
 		add_heat(owner_unit, CONFIG.yank_rescue_overcharge)
 	elseif not status_extension:is_disabled() and not status_extension:is_catapulted() then
