@@ -92,6 +92,7 @@ local CONFIG = {
 	throw_wall_margin = 0.6, -- m, how far from a wall a yanked enemy that hit it lands
 	throw_wall_height = 0.9, -- m above the feet of a yanked enemy, the height that a wall is looked for at
 	openable_reach_margin = 10, -- m past the reach of the beam that a door or a chest can still be looked at (they are big)
+	openable_box_scale = 0.7, -- the share of the size of the box of a door or a chest that the aim has to be on
 	rescue_retry_interval = 0.5, -- seconds between the times that a yank gives a rescue again, until it has taken
 	rescue_max_tries = 4,
 	beam_aim_curve_gain = 1.3, -- what the aim bows the first half of the beam by, on top of beam_aim_curve
@@ -1203,6 +1204,9 @@ local function find_target(owner_unit, physics_world, origin, aim)
 		return best_ally_unit, "ally"
 	end
 
+	-- (how far along the aim the door or chest is, for below)
+	local best_distance
+
 	-- Nothing living: supplies (what can be picked up) and doors, a little more forgiving of the aim, they are small
 	-- or thin
 	if not best_unit then
@@ -1234,8 +1238,6 @@ local function find_target(owner_unit, physics_world, origin, aim)
 
 		-- Doors and chests: the aim has to be on the thing, on the box of what is seen (the nearest one that it hits)
 		if not best_unit then
-			local best_distance
-
 			for unit in pairs(Managers.state.entity:get_entities("DoorExtension")) do
 				local position = POSITION_LOOKUP[unit] or Unit.world_position(unit, 0)
 				local door_extension = position and Vector3.distance_squared(position, origin) <= reach_squared and ScriptUnit.has_extension(unit, "door_system")
@@ -1251,7 +1253,7 @@ local function find_target(owner_unit, physics_world, origin, aim)
 					local boxes = openable_boxes(unit, is_chest)
 
 					for i = 1, #boxes do
-						local distance = ray_hits_box(origin, aim, boxes[i].pose, boxes[i].half)
+						local distance = ray_hits_box(origin, aim, boxes[i].pose, boxes[i].half * CONFIG.openable_box_scale)
 
 						if distance and distance <= range and (not best_distance or distance < best_distance) and has_line_of_sight(physics_world, origin, origin + aim * distance) then
 							best_unit = unit
@@ -1265,12 +1267,13 @@ local function find_target(owner_unit, physics_world, origin, aim)
 		end
 	end
 
-	if best_unit then
+	-- A ragdoll or another object with a body that moves, the first one the aim is on (a door or a chest is not taken over one
+	-- that is nearer along the aim: their boxes are big)
+	local unit, actor, distance = find_object(owner_unit, physics_world, origin, aim)
+
+	if best_unit and not (best_kind == "openable" and unit and distance < best_distance) then
 		return best_unit, best_kind, best_actor
 	end
-
-	-- Nothing living: a ragdoll or another object with a body that moves, the first one the aim is on
-	local unit, actor, distance = find_object(owner_unit, physics_world, origin, aim)
 
 	if unit then
 		return unit, "object", actor, distance
