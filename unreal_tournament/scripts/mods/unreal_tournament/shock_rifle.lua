@@ -574,8 +574,9 @@ end
 
 -- Shock combo: a beam passing through a live shock ball detonates it
 
--- The balls of every player count, the shooter's and those of the others (on this machine the others' are copies, the unit that is
--- theirs is on their machine)
+-- The balls of every player count, the shooter's and those of the others. The system keeps a list of the projectiles that this
+-- machine made (the shooter's); the others' are copies of units that are on their machines, and are found among the extensions of
+-- the copies.
 local function find_ball_hit_by_beam(physics_world, origin, direction)
 	local projectile_system = Managers.state.entity:system("projectile_system")
 	local wall_distance = CONFIG.combo_max_range
@@ -587,28 +588,39 @@ local function find_ball_hit_by_beam(physics_world, origin, direction)
 
 	local best_unit, best_distance
 
-	for _, projectiles in pairs(projectile_system.player_projectile_units) do
-		for projectile_unit, _ in pairs(projectiles) do
-			local extension = Unit.alive(projectile_unit) and ScriptUnit.has_extension(projectile_unit, "projectile_system")
-			local action = extension and extension._current_action
+	local function consider(projectile_unit, extension)
+		local action = Unit.alive(projectile_unit) and extension._current_action
 
-			-- (a ball that has hit something has its impacts stopped, the field is the same on the unit and on its copy)
-			if action and action.ut_shock_ball and not extension._stop_impacts then
-				local ball_position = POSITION_LOOKUP[projectile_unit]
-				local to_ball = ball_position - origin
-				local along = Vector3.dot(to_ball, direction)
+		-- (a ball that has hit something has its impacts stopped, the field is the same on the unit and on its copy)
+		if action and action.ut_shock_ball and not extension._stop_impacts then
+			local ball_position = POSITION_LOOKUP[projectile_unit]
+			local to_ball = ball_position - origin
+			local along = Vector3.dot(to_ball, direction)
 
-				if along > 0 and along < wall_distance then
-					local closest_point = origin + direction * along
-					local miss_distance = Vector3.length(ball_position - closest_point)
+			if along > 0 and along < wall_distance then
+				local closest_point = origin + direction * along
+				local miss_distance = Vector3.length(ball_position - closest_point)
 
-					if miss_distance <= CONFIG.combo_pick_radius and (not best_distance or along < best_distance) then
-						best_unit = projectile_unit
-						best_distance = along
-					end
+				if miss_distance <= CONFIG.combo_pick_radius and (not best_distance or along < best_distance) then
+					best_unit = projectile_unit
+					best_distance = along
 				end
 			end
 		end
+	end
+
+	for _, projectiles in pairs(projectile_system.player_projectile_units) do
+		for projectile_unit, _ in pairs(projectiles) do
+			local extension = Unit.alive(projectile_unit) and ScriptUnit.has_extension(projectile_unit, "projectile_system")
+
+			if extension then
+				consider(projectile_unit, extension)
+			end
+		end
+	end
+
+	for projectile_unit, extension in pairs(Managers.state.entity:get_entities("PlayerProjectileHuskExtension")) do
+		consider(projectile_unit, extension)
 	end
 
 	return best_unit
