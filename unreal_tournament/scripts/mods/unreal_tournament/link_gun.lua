@@ -882,12 +882,28 @@ mod:hook_safe(UnitSpawner, "push_unit_to_death_watch_list", function (self, unit
 	end
 end)
 
--- The id of a ragdoll or an object that is held (a corpse's, or the one an object that is alive has), and the unit of an id
+-- The id of a ragdoll or an object that is held, and the unit of an id: a corpse's, or the game object id of an object that
+-- is a networked unit (a barrel), and for what is placed in the level, a prop, the number of it in the level, which is the same
+-- on every machine, made negative (-1 - the number). 0 is none: it is looked for by where it lay.
 local function object_id_of(unit)
-	return corpse_ids[unit] or Managers.state.unit_storage:go_id(unit)
+	local id = corpse_ids[unit] or Managers.state.unit_storage:go_id(unit)
+
+	if id then
+		return id
+	end
+
+	local ok, level_index = pcall(Level.unit_index, LevelHelper:current_level(Managers.world:world("level_world")), unit)
+
+	return ok and level_index and -1 - level_index or 0
 end
 
 local function object_unit_of(object_id)
+	if object_id < 0 then
+		return Level.unit_by_index(LevelHelper:current_level(Managers.world:world("level_world")), -1 - object_id)
+	elseif object_id == 0 then
+		return nil
+	end
+
 	local unit = corpse_units[object_id]
 
 	if unit and Unit.alive(unit) then
@@ -2970,7 +2986,7 @@ mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, a
 	beam.weight = weight > 0 and weight or nil
 	beam.lag = Vector3Box(Vector3(lag_x, lag_y, lag_z))
 	beam.origin = Vector3Box(Vector3(origin_x, origin_y, origin_z))
-	beam.hold_distance = hold_distance > 0 and object_id > 0 and hold_distance or nil
+	beam.hold_distance = hold_distance > 0 and hold_distance or nil
 	beam.object_id = object_id
 	beam.node_index = node_index >= 0 and node_index or nil
 	beam.link_position = Vector3Box(Vector3(linked_x, linked_y, linked_z))
