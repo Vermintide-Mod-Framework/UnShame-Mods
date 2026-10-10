@@ -224,6 +224,7 @@ local CONFIG = {
 	-- A yank of something to break down (a barricade) deals its health in break_hits blows, break_hit_interval seconds apart
 	break_hits = 4,
 	break_hit_interval = 0.15, -- seconds
+	object_holder_timeout = 0.3, -- seconds, a holder of a prop that has not been seen holding it for this long doesn't count
 	object_pull = 20,
 	object_max_speed = 35, -- m/s
 	-- The beam: drawn as a curve (a cubic Bezier) from the staff to what it is on. A held enemy hangs it by
@@ -2752,6 +2753,8 @@ local function link_target(state, owner_unit, unit, kind, actor, object_distance
 		-- (where it lay when it was linked: the others look for their copy of it there, it is not there for long)
 		state.link_position = actor and Vector3Box(Actor.position(actor)) or Vector3Box(Unit.world_position(unit, 0))
 		state.thawed = false
+		-- (when it was linked: of two that hold a prop, the one that linked it last has it)
+		state.link_time = Application.time_since_launch()
 		state.corpse = AiUtils.unit_breed(unit) ~= nil
 
 		if state.corpse then
@@ -3116,6 +3119,51 @@ local function select_target(state, owner_unit, origin, aim, t, physics_world, a
 	end
 end
 
+-- Who holds a prop (not a ragdoll) on this machine: its own beam, and the copies it has of the beams of the others, each with when
+-- it was last seen holding it and since when. The prop is moved by every hold of every machine that has it, and when there is more
+-- than one they pull it different ways, and each machine has its own hold win: whoever linked it last takes it (they steal the link,
+-- the one that had it is let go of), on every machine; two that linked it in the same moment, the one whose character has the lowest
+-- game object id.
+local object_holders = {} -- { [the unit of the prop] = { [the unit of the holder] = { seen, since } } }
+
+local function note_object_holder(unit, owner_unit, now, since)
+	local holders = object_holders[unit]
+
+	if not holders then
+		holders = {}
+		object_holders[unit] = holders
+	end
+
+	local holder = holders[owner_unit]
+
+	if not holder then
+		holder = {}
+		holders[owner_unit] = holder
+	end
+
+	holder.seen = now
+	holder.since = since
+end
+
+local function object_hold_counts(unit, owner_unit, now)
+	local holders = object_holders[unit]
+	local unit_storage = Managers.state.unit_storage
+	local own_since = holders[owner_unit].since
+	local own_id = unit_storage:go_id(owner_unit)
+
+	for other_unit, holder in pairs(holders) do
+		if other_unit ~= owner_unit then
+			if not Unit.alive(other_unit) or now - holder.seen > CONFIG.object_holder_timeout then
+				holders[other_unit] = nil
+			elseif holder.since > own_since or holder.since == own_since and unit_storage:go_id(other_unit) < own_id then
+				return false
+			end
+		end
+	end
+
+	return true
+end
+
 -- What happens while a beam is linked, done by the host, which has the enemies, the allies and the objects. It works from
 -- where the owner's eye is, where it is aimed, and whether primary was pressed since the last frame (a yank): the owner's
 -- own when the owner is the host, what the owner's game sends when it isn't (see the inputs of the others below).
@@ -3181,7 +3229,18 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 		-- (the body that is held is looked for every frame: the host's own beam does it when it picks, a beam of someone
 		-- else that the host holds an object for doesn't)
 		refresh_object(state)
-		hold_object(state, aim, origin, dt)
+
+		-- (a prop that more than one beam holds is moved by one of them, the same one on every machine: the last to link it, who takes
+		-- it from the one that had it)
+		local now = Application.time_since_launch()
+
+		note_object_holder(state.target, owner_unit, now, state.link_time or now)
+
+		if state.corpse or object_hold_counts(state.target, owner_unit, now) then
+			hold_object(state, aim, origin, dt)
+		else
+			release_target(state)
+		end
 	elseif state.kind == "enemy" then
 		local breed = AiUtils.unit_breed(state.target)
 
@@ -3605,7 +3664,7 @@ local function update_object_mirrors(dt)
 	local now = Application.time_since_launch()
 	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
 
-	for _, beam in pairs(remote_beams) do
+	for beam_owner_unit, beam in pairs(remote_beams) do
 		local mirror = beam.mirror
 
 		-- (nothing held, another one held, or one that is gone from this machine)
@@ -3631,6 +3690,7 @@ local function update_object_mirrors(dt)
 						corpse = AiUtils.unit_breed(unit) ~= nil,
 						kind = "object",
 						object_id = beam.object_id,
+						since = now,
 						target = unit,
 						thawed = false,
 					}
@@ -3656,7 +3716,12 @@ local function update_object_mirrors(dt)
 					refresh_object(mirror, true)
 				end
 
-				hold_object(mirror, beam.aim:unbox(), beam.origin:unbox(), dt)
+				-- (a prop that this machine's own beam or another's holds as well is moved by the one that counts, see object_hold_counts)
+				note_object_holder(mirror.target, beam_owner_unit, now, mirror.since)
+
+				if mirror.corpse or object_hold_counts(mirror.target, beam_owner_unit, now) then
+					hold_object(mirror, beam.aim:unbox(), beam.origin:unbox(), dt)
+				end
 			end
 		end
 	end
@@ -3951,6 +4016,7 @@ local function clear_beams()
 
 	table.clear(remote_inputs)
 	table.clear(corpse_units)
+	table.clear(object_holders)
 	table.clear(barrel_settling)
 	table.clear(barrel_poses)
 
