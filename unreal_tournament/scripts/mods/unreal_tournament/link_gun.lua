@@ -135,11 +135,12 @@ local CONFIG = {
 	yank_stagger_max = 4,
 	throw_lift = 0.4, -- m, the enemy is lifted this high before it is let out of the vortex, it is not on the ground then
 	yank_animation_event = "attack_charge_fireball", -- the alt fire's own animation, played again every yank
-	-- The sounds, events of the game's (heard from the player who holds the beam, by everyone): a drone while something is linked
-	-- (the wind of the Sister of the Thorn's vortex, which has a start and a stop) and a whoosh for every yank
+	-- The sounds, events of the game's (heard from the player who holds the beam, by everyone): the wind of the Sister of the
+	-- Thorn's vortex, which has a start and a stop. A drone while something is linked, and for every yank a short gust of it, on a
+	-- source of its own (the stop of a source ends all that plays on it), for yank_sound_duration seconds
 	link_sound_start = "weapon_life_staff_thorn_lift_wind_loop_start",
 	link_sound_stop = "weapon_life_staff_thorn_lift_wind_loop_end",
-	yank_sound = "Play_enemy_sorcerer_tentacle_foley_grab_swing",
+	yank_sound_duration = 0.6,
 	reference_mass = 1.5, -- a clan rat's
 	weight_exponent = 0.5,
 	max_mass = 30,
@@ -805,8 +806,16 @@ local function set_drone(owner_unit, linked)
 	end
 end
 
+local yank_sounds = {} -- the gusts that are playing: { wwise_world, source, stop_at }
+
 local function play_yank_sound(owner_unit)
-	WwiseUtils.trigger_unit_event(Managers.world:world("level_world"), CONFIG.yank_sound, owner_unit)
+	local _, source, wwise_world = WwiseUtils.trigger_position_event(Managers.world:world("level_world"), CONFIG.link_sound_start, Unit.world_position(owner_unit, 0))
+
+	yank_sounds[#yank_sounds + 1] = {
+		source = source,
+		stop_at = Application.time_since_launch() + CONFIG.yank_sound_duration,
+		wwise_world = wwise_world,
+	}
 end
 
 mod:network_register("ut_link_yank", function (_, owner_go_id)
@@ -817,11 +826,22 @@ mod:network_register("ut_link_yank", function (_, owner_go_id)
 	end
 end)
 
--- (a player who is gone has their sound go with them)
+-- (a player who is gone has their sound go with them; a gust is stopped when its time is up)
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	for owner_unit in pairs(drones) do
 		if not Unit.alive(owner_unit) then
 			drones[owner_unit] = nil
+		end
+	end
+
+	local now = Application.time_since_launch()
+
+	for i = #yank_sounds, 1, -1 do
+		local gust = yank_sounds[i]
+
+		if now >= gust.stop_at then
+			WwiseWorld.trigger_event(gust.wwise_world, CONFIG.link_sound_stop, gust.source)
+			table.remove(yank_sounds, i)
 		end
 	end
 end
@@ -3588,6 +3608,13 @@ local function clear_beams()
 
 	for owner_unit in pairs(remote_beams) do
 		remove_remote_beam(owner_unit)
+	end
+
+	-- (the gusts that are still playing are stopped now: after the level, their world is gone)
+	for i = #yank_sounds, 1, -1 do
+		WwiseWorld.trigger_event(yank_sounds[i].wwise_world, CONFIG.link_sound_stop, yank_sounds[i].source)
+
+		yank_sounds[i] = nil
 	end
 
 	table.clear(remote_inputs)
