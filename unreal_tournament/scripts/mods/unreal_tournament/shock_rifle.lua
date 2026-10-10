@@ -249,6 +249,12 @@ local function slow_down_idle_pose(first_person_extension, is_valid, delay)
 end
 
 local function enter_idle_pose(first_person_extension, unit_1p, is_valid, slow_delay)
+	-- (only while the rifle is what is wielded: the event is not one of the animations of another weapon, which is what the arms
+	-- and the character play after a swap, and an event that an animation graph doesn't have is an error of the game's)
+	if utils.wielded_template_name(first_person_extension.unit) ~= TEMPLATE_NAME then
+		return
+	end
+
 	-- (not while the game plays an animation of its own, hanging off a ledge, say: the event would replace it)
 	if not utils.character_animation_is_free(first_person_extension.unit) then
 		return

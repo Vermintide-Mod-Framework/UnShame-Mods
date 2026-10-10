@@ -359,6 +359,14 @@ end
 
 -- (an action that starts before the stance was entered enters it itself, the shots have no animation of their own)
 function pose.enter(unit_1p, owner_unit)
+	-- (only while the staff is what is wielded: the event is not one of the animations of another weapon, which is what the arms and
+	-- the character play after a swap, and an event that an animation graph doesn't have is an error of the game's)
+	if utils.wielded_template_name(owner_unit) ~= TEMPLATE_NAME then
+		pose.waiting = nil
+
+		return
+	end
+
 	-- (also while the game plays an animation of its own, hanging off a ledge, say: it is entered when that is over)
 	if pose.locked_out() or not utils.character_animation_is_free(owner_unit) then
 		pose.waiting = unit_1p
@@ -3520,7 +3528,7 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		state.link_block_until = math.max(state.link_block_until or 0, interaction_block[owner_unit])
 	end
 
-	if yanked and state.target and not pose.locked_out() then
+	if yanked and state.target and not pose.locked_out() and utils.wielded_template_name(owner_unit) == TEMPLATE_NAME then
 		Unit.animation_event(first_person_extension:get_first_person_unit(), CONFIG.yank_animation_event)
 		play_yank_sound(owner_unit)
 		mod:network_send("ut_link_yank", "others", Managers.state.unit_storage:go_id(owner_unit))
