@@ -98,15 +98,18 @@ local CONFIG = {
 	ally_effect = "fx/thornsister_buff", -- what is seen on an ally that is linked, a burst again every ally_effect_interval
 	ally_effect_interval = 0.8, -- seconds
 	ally_attack_grace = 0.5, -- seconds the beam still costs heat after the ally's attack
-	-- Enemy: it is held (staggered over and over, stagger_duration, every restagger_interval) and moved over the
-	-- ground, towards the point the aim is on at the distance it was linked at, hold_speed m/s for the lightest, less
-	-- by weight: speed = hold_speed / (mass / reference_mass) ^ weight_exponent. Enemies with a mass of more than
-	-- max_mass can't be held, and neither can the big monsters and bosses.
-	hold_speed = 9,
+	-- Enemy: it is held by being staggered over and over (stagger_duration, every restagger_interval), the way the point the
+	-- aim is on is, at the distance it was linked at: the stagger moves it over the ground by its length, hold_stagger_per_meter
+	-- of the distance to there (at least hold_stagger_min, at most hold_stagger_max), less for a heavy enemy by
+	-- (mass / reference_mass) ^ weight_exponent. Enemies with a mass of more than max_mass can't be held, and neither can
+	-- the big monsters and bosses.
+	hold_stagger_per_meter = 0.5,
+	hold_stagger_min = 0.05,
+	hold_stagger_max = 3,
 	hold_min_distance = 2.5, -- m
 	-- Primary while an enemy is held throws it to land in front of you, yank_min_distance from you, the way the game lets
 	-- an enemy out of the Thornsister's vortex: the flight lasts as long as the distance takes at yank_speed (the same
-	-- weight rule as hold_speed, at least throw_min_duration and at most throw_max_duration), and is a real one, with
+	-- weight rule as the hold, at least throw_min_duration and at most throw_max_duration), and is a real one, with
 	-- gravity and the walls. The behavior of the enemy puts it on the navmesh where it lands, an enemy that lands where
 	-- there is none dies.
 	yank_speed = 30, -- m/s
@@ -124,7 +127,7 @@ local CONFIG = {
 	max_mass = 30,
 	stagger_duration = 1.5,
 	disabler_stagger_duration = 2, -- seconds a disabler is staggered for when a yank frees a player from it
-	restagger_interval = 1,
+	restagger_interval = 0.4,
 	-- A linked enemy (and a monster) is poisoned: the game's own poison of poisoned arrows, dot_template, at
 	-- dot_power_level (what its damage scales with), applied again every dot_interval seconds, which keeps it up
 	-- while it is linked.
@@ -1765,8 +1768,6 @@ local function hold_enemy(state, owner_unit, t, dt, aim, physics_world)
 		state.flat_aim = Vector3Box(flat_aim * (1 / flat_length))
 	end
 
-	local speed = CONFIG.hold_speed
-
 	if state.yank then
 		state.yank = nil
 
@@ -1783,24 +1784,8 @@ local function hold_enemy(state, owner_unit, t, dt, aim, physics_world)
 	-- (a target dummy doesn't lag, it isn't moved)
 	state.lag = is_ai and Vector3Box(delta) or nil
 
-	if not throwing and distance > 0.05 then
-		local step = math.min(distance, speed / state.weight * dt)
-		local new_position = current + delta * (step / distance)
-
-		if is_ai then
-			local nav_world = Managers.state.entity:system("ai_system"):nav_world()
-			local on_navmesh, altitude = GwNavQueries.triangle_from_position(nav_world, new_position, 1.5, 2)
-
-			-- (it doesn't leave the navmesh: that is the walls and the drops)
-			if on_navmesh then
-				new_position.z = altitude
-
-				locomotion_extension:teleport_to(new_position)
-			end
-		end
-		-- (a target dummy is not an AI unit, it stands where it is: it is linked and damaged, not moved about, the
-		-- beam stays on it wherever the aim goes)
-	end
+	-- (a target dummy is not an AI unit, it stands where it is: it is linked and damaged, not moved about, the beam stays on
+	-- it wherever the aim goes)
 
 	-- (not while it is thrown: the vortex it is in forbids being staggered, and the behavior flies and lands it)
 	if throwing then
@@ -1822,12 +1807,16 @@ local function hold_enemy(state, owner_unit, t, dt, aim, physics_world)
 		state.next_stagger_t = t + CONFIG.restagger_interval
 
 		local blackboard = BLACKBOARDS[unit]
-		local direction = Vector3.length(delta) > 0.01 and Vector3.normalize(delta) or Vector3.forward()
+		local direction = distance > 0.01 and Vector3.normalize(delta) or Vector3.forward()
+		-- (the stagger is what moves it: the game moves a staggered enemy over the ground, as far as the length says, the way it
+		-- is pushed, with the walls and the navmesh in the way, and the other machines see it do it. How far it needs to go
+		-- is the length, less for a heavy one)
+		local length = math.clamp(distance * CONFIG.hold_stagger_per_meter / state.weight, CONFIG.hold_stagger_min, CONFIG.hold_stagger_max)
 
 		if blackboard then
 			-- (the game's statistics look at the positions of the units in the stagger, the mods' update runs before
 			-- the game has made them current)
-			with_valid_positions(AiUtils.stagger, unit, blackboard, owner_unit, direction, 1, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
+			with_valid_positions(AiUtils.stagger, unit, blackboard, owner_unit, direction, length, stagger_types.heavy, CONFIG.stagger_duration, nil, t, 1, true, false)
 		end
 	end
 end
