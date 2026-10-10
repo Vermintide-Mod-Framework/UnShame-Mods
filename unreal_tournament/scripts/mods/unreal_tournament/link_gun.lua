@@ -2825,6 +2825,8 @@ end
 -- is only opened like that by the host: for the others it is the game's interaction too, which the game sends to the others
 -- (a door that is opened on the machine of someone who is not the host would not be opened for anyone else).
 local function yank_openable(state, owner_unit, t)
+	mod:echo("DEBUG yank openable: %s health=%s breakable=%s interactable=%s", Unit.debug_name and Unit.debug_name(state.target) or tostring(state.target), tostring(ScriptUnit.has_extension(state.target, "health_system") ~= nil), tostring(is_breakable(state.target)), tostring(ScriptUnit.has_extension(state.target, "interactable_system") ~= nil))
+
 	local door_extension = ScriptUnit.has_extension(state.target, "door_system")
 
 	if door_extension and door_extension.interacted_with and Managers.player.is_server then
@@ -2906,7 +2908,7 @@ local function run_link(state, owner_unit, origin, aim, yanked, dt, t, physics_w
 		else
 			damage_enemy(state, owner_unit, t)
 		end
-	elseif state.kind == "object" and yanked and is_breakable(state.target) then
+	elseif state.kind == "object" and yanked and mod:echo("DEBUG yank object: %s health=%s level_id=%s breakable=%s allow_ranged=%s no_player_damage=%s filter=%s interactable=%s actor=%s static=%s", Unit.debug_name and Unit.debug_name(state.target) or tostring(state.target), tostring(ScriptUnit.has_extension(state.target, "health_system") ~= nil), tostring(Managers.state.network:level_object_id(state.target)), tostring(is_breakable(state.target)), tostring(Unit.get_data(state.target, "allow_ranged_damage")), tostring(Unit.get_data(state.target, "no_damage_from_players")), tostring(Unit.get_data(state.target, "filter_damage_source")), tostring(ScriptUnit.has_extension(state.target, "interactable_system") ~= nil), tostring(state.actor ~= nil), tostring(state.actor ~= nil and Actor.is_static(state.actor))) == nil and is_breakable(state.target) then
 		-- (an object that is something to break down, a lantern that hangs, is a body that physics moves, and is linked as one: a
 		-- yank breaks it, which is what shooting it does)
 		break_down(state, owner_unit, t)
