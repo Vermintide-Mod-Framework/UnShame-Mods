@@ -55,6 +55,9 @@ mod.effects = mod:dofile("scripts/mods/unreal_tournament/effects")
 -- The particles of the weapon skins (UT2004's effects), the one copy of them
 mod.skin_particles = mod:dofile("scripts/mods/unreal_tournament/skin_particles")
 
+-- What the skins of the weapons have in common (a weapon's own file calls mod.weapon_skin.new with what is its own)
+mod.weapon_skin = mod:dofile("scripts/mods/unreal_tournament/weapon_skin")
+
 mod:dofile("scripts/mods/unreal_tournament/shock_rifle")
 mod:dofile("scripts/mods/unreal_tournament/shock_rifle_skin")
 mod:dofile("scripts/mods/unreal_tournament/flak_cannon")
@@ -67,5 +70,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- (seen in the chat each time the mod is loaded or reloaded, to know which build is running: the number is the count of
 -- commits of the repository, which goes up by one with every change). Only with the developer mode of the mod framework on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 274)")
+	mod:echo("Unreal Tournament loaded (build 275)")
 end
