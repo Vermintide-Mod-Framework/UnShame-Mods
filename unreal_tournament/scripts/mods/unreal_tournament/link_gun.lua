@@ -3929,13 +3929,13 @@ function mod.draw_pending_beams()
 end
 
 -- The beam ends when the button is let go (or it is left for something else)
-mod:hook_safe(ActionCharge, "finish", function (self)
+mod.charge_finish_callbacks.link = function (self)
 	local action = self.current_action
 
 	if action and action.ut_charge_callback == "link" then
 		end_beam(self.owner_unit)
 	end
-end)
+end
 
 -- Wielding the staff: the stance is entered after a moment
 -- Hanging off a ledge: the stance is ended in the character the others see, which is in it as the character's idle, under the
