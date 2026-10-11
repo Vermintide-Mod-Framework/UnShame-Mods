@@ -168,7 +168,7 @@ local CONFIG = {
 	sphere_fill_intensity = 0.2,
 	-- Which of the effects of the combo are drawn (the game's rings, shock_rifle.lua's, are not these)
 	combo_shown = {
-		core = false,
+		core = true,
 		flares = false,
 		flash = false,
 		scorch = false,
