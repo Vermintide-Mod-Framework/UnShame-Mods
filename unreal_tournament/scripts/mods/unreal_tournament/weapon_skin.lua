@@ -132,7 +132,10 @@ local function new(def)
 	end
 
 	function self.play_sound_at(event, position)
-		WwiseUtils.trigger_position_event(Managers.world:world("level_world"), event, position)
+		local id = WwiseUtils.trigger_position_event(Managers.world:world("level_world"), event, position)
+
+		-- (no id means the engine did not play it: the event is not in a loaded bank)
+		self.debug("sound %s at %s: id %s", event, tostring(position), tostring(id))
 	end
 
 	local function local_first_person()
