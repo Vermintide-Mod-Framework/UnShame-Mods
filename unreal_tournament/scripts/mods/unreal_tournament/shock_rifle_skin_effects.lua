@@ -725,9 +725,8 @@ local function combo_wiggles(position)
 	end
 
 	for _ = 1, CONFIG.combo_wiggle_count do
-		-- (ShockComboWiggles is an emitter of discs (PT_Disc): flat, all facing the same way (UT's x, the emitter is not turned), not sprites that face
-		-- the camera: seen from the side they are lines)
-		particles.disc({
+		-- (ShockComboWiggles is an emitter of PT_Disc, which UT draws square to the view, as a sprite: fixed to one way they were seen as lines)
+		particles.sprite({
 			attenuation = 0.3,
 			color = {
 				0.35,
@@ -736,7 +735,6 @@ local function combo_wiggles(position)
 			},
 			drag = 0.8,
 			life = CONFIG.combo_wiggle_life,
-			normal = Vector3(0, 1, 0),
 			position = position,
 			size = CONFIG.combo_wiggle_size * UNIT,
 			texture = "shock_sparkle",
