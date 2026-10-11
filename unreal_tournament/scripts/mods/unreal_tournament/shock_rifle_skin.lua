@@ -182,10 +182,10 @@ skin_api = mod.weapon_skin.new({
 	-- /skin shock_rifle set inspect_pose_yaw <degrees> and the others)
 	inspect_pose_right = -2,
 	inspect_pose_forward = -4,
-	inspect_pose_up = 0,
+	inspect_pose_up = 10,
 	inspect_pose_roll = 0,
-	inspect_pose_pitch = 0,
-	inspect_pose_yaw = 80,
+	inspect_pose_pitch = 12,
+	inspect_pose_yaw = 65,
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
