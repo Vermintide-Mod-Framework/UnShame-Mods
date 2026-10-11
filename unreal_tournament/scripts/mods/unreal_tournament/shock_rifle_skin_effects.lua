@@ -68,12 +68,11 @@ local CONFIG = {
 	ball_spark_intensity = 0.5,
 	ball_spark_life = 0.35,
 	ball_spark_fade_in = 0.1,
-	ball_spark_fade_out = 0.3,
+	ball_spark_fade_out = 0.1,
 	ball_spark_interval = 0.025,
-	-- Units a second, the speed of a spark in a direction of any kind (UT's StartVelocityRange is 70 in each axis, which takes a spark about 6 units
-	-- out). A spark goes out a quarter of its life times that: 250 takes it about 22 units out, to the edge of the core of the ball and not away
-	-- from it (800 sent them 70 units away, as dots in the air, which UT's ball does not have)
-	ball_spark_speed = 250,
+	-- Units a second, the speed of a spark in a random direction: it moves out from the center of the ball for its whole life, so it ends up
+	-- speed * life units away (UT's own sparks move out and back at 70 per axis)
+	ball_spark_speed = 150,
 	-- ShockProjectile's explosion: ShockExplosionCore
 	explosion_core_size = 40,
 	explosion_core_growth = 100,
@@ -501,8 +500,7 @@ function fx.update_ball(ball, dt)
 	while ball.spark_time <= 0 do
 		ball.spark_time = ball.spark_time + CONFIG.ball_spark_interval
 
-		-- (a spark of UT goes out from the ball at a velocity of its own, in each axis, which is scaled down to the opposite of it over its life
-		-- (VelocityScale), so that it goes out and comes back to the ball, which it moves with: it is where the ball is and how far it has gone)
+		-- (a spark moves out from the ball at a constant velocity in a random direction; its position is the ball's plus how far it has gone)
 		local velocity = Vector3Box(random_direction() * (CONFIG.ball_spark_speed * UNIT))
 		local started = Managers.time:time("game")
 
@@ -519,7 +517,7 @@ function fx.update_ball(ball, dt)
 
 				local age = Managers.time:time("game") - started
 
-				return position + velocity:unbox() * (age - age * age / CONFIG.ball_spark_life)
+				return position + velocity:unbox() * age
 			end,
 			intensity = CONFIG.ball_spark_intensity,
 			life = CONFIG.ball_spark_life,
