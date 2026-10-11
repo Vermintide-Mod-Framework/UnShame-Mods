@@ -24,6 +24,8 @@ local CONFIG = {
 	-- The chamber is a shader graph that makes the flowing gel itself (tools/asset_conversion/make_chamber_material.py); this is the
 	-- light of it when the glow is all there (it is lit by itself, as UT's shader has its diffuse as its self illumination)
 	chamber_intensity = 1,
+	-- The bar of the heat between its thresholds (ShockControl's color, R192 G0 B255, the one of the liquid; the game's is orange)
+	overcharge_bar_color = { 192, 0, 255 },
 	shot_flash = 0.9, -- how much brighter the liquid is just after a shot, times how bright it is (it has settled by the time of the next shot)
 	vent_pulse_speed = 14, -- radians per second, of the brightness of the liquid while the heat is vented
 	vent_pulse_swing = 0.3, -- how much brighter and dimmer than it is, times that
@@ -361,3 +363,25 @@ mod.charge_finish_callbacks.shock_skin = function (action, reason)
 		skin_api.debug("vent over (%s)", reason)
 	end
 end
+
+-- The bar of the heat is orange between its thresholds for every Sienna: with the Shock Rifle it is purple, as its liquid is (the colors
+-- of the bar are the game's own, set each frame after it has worked out the fraction, so this follows it)
+mod:hook_safe(OverchargeBarUI, "set_charge_bar_fraction", function (self, player, _, min_threshold_fraction, max_threshold_fraction)
+	if not utils.is_weapon_enabled(SETTING_ID) or utils.wielded_template_name(player.player_unit) ~= TEMPLATE_NAME then
+		return
+	end
+
+	local fraction = self.charge_bar.content.internal_gradient_threshold
+
+	if fraction <= min_threshold_fraction or fraction > max_threshold_fraction then
+		return
+	end
+
+	local style = self.charge_bar.style
+	local color = CONFIG.overcharge_bar_color
+
+	for i = 1, 3 do
+		style.bar_1.color[i + 1] = color[i]
+		style.icon.color[i + 1] = color[i]
+	end
+end)
