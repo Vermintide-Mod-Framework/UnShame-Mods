@@ -57,7 +57,7 @@ local CONFIG = {
 	-- The ring of the game's own effect (Kruber's shockwave), which bends the light behind it: the effects of the skin can't, so one of them
 	-- (all three ways about, as a sphere) is played where the combo goes off, as big as combo_distortion_scale times the effect's own size
 	combo_ring_effect = "fx/chr_kruber_shockwave",
-	combo_distortion_scale = 1,
+	combo_distortion_scale = 0.7,
 	combo_ring_height = 1, -- meters: how high above the origin of the ring effect its ring is (it is made to be played at a character's feet)
 	-- Bodies are thrown away from the blast first: whatever has died (and started to ragdoll) in
 	-- the first implosion_delay seconds gets thrown once, then everything is pulled back in.
