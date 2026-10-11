@@ -41,10 +41,6 @@ local last_kill_time = -math.huge
 local playing_id -- of the announcement that is playing
 local message -- { text, size, time }: the text on the screen
 
-local function is_enabled()
-	return mod:get("announcer") and mod:get("multi_kills")
-end
-
 -- A kill of the player's own: the enemy that died was last hurt by them (the game's own statistics tell kills the same way)
 local function is_local_kill(victim_unit)
 	local health_extension = ScriptUnit.has_extension(victim_unit, "health_system")
@@ -82,13 +78,11 @@ end
 local function announce(multi_kill_level)
 	local announcement = CONFIG.levels[math.min(multi_kill_level, #CONFIG.levels)]
 
-	if mod:get("multi_kill_text") then
-		message = {
-			size = CONFIG.font_sizes[font_size_index(multi_kill_level)],
-			text = announcement.text,
-			time = Managers.time:time("game"),
-		}
-	end
+	message = {
+		size = CONFIG.font_sizes[font_size_index(multi_kill_level)],
+		text = announcement.text,
+		time = Managers.time:time("game"),
+	}
 
 	local wwise_world = Managers.world:wwise_world(Managers.world:world("level_world"))
 
@@ -101,7 +95,7 @@ local function announce(multi_kill_level)
 end
 
 mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit)
-	if not is_enabled() or not is_local_kill(victim_unit) then
+	if not mod:get("announcer") or not is_local_kill(victim_unit) then
 		return
 	end
 

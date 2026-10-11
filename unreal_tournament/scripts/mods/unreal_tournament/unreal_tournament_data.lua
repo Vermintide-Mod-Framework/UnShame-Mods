@@ -66,18 +66,6 @@ return {
 				setting_id = "announcer",
 				type = "checkbox",
 				default_value = false,
-				sub_widgets = {
-					{
-						setting_id = "multi_kills",
-						type = "checkbox",
-						default_value = true,
-					},
-					{
-						setting_id = "multi_kill_text",
-						type = "checkbox",
-						default_value = true,
-					},
-				},
 			},
 			{
 				setting_id = "no_barriers",
