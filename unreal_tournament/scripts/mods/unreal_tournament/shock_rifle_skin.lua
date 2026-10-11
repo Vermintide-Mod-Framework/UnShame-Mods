@@ -289,7 +289,13 @@ end
 skin_api.take_over_sound("weapon_staff_fire_beam_end_shot", "ut_shock_fire")
 skin_api.take_over_sound("player_combat_weapon_staff_fireball_fire", "ut_shock_alt_fire")
 
-mod.skin_explosion_callbacks.ut_shock_ball_explosion = function (world, position)
+-- The flash of the staff's fireball is in its animation: while the skin is on the animation of the ball's shot is not played on the player's
+-- own first person unit (the model of the skin plays UT's, with its own flash)
+mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
+	return skin_api.enabled() and event == "attack_shoot_fireball"
+end
+
+mod.skin_explosion_callbacks.ut_shock_ball_explosion =function (world, position)
 	if skin_api.enabled() then
 		fx.ball_explosion(position)
 		skin_api.play_sound_at("ut_shock_explosion_3d", position)
