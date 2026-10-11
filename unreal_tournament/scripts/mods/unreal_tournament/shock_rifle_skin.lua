@@ -185,6 +185,8 @@ skin_api = mod.weapon_skin.new({
 	on_create = function (skin)
 		skin.cooldown = 1
 		skin.cooldown_end = 0
+
+		skin_api.play_sound("ut_shock_select")
 	end,
 	on_update = update_chamber,
 	on_update_always = update_balls,
