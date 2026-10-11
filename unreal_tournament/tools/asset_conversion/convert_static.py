@@ -6,7 +6,7 @@ import sys, os, subprocess
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.dirname(__file__))
-from convert_weapon import read_tga, write_png, TEXTURE_TEMPLATE, MATERIAL_TEMPLATE, MATERIAL_PARENTS
+from convert_weapon import read_tga, write_png, TEXTURE_TEMPLATE, material_text
 
 # pskx: the mesh; materials: the texture (tga) and kind of each material of it; scale: meters a UT unit of the mesh is as it is drawn
 # (the DrawScale of its actor is in it: a pickup of the weapon in the hand is 0.011, 0.02 meters a unit and 0.55)
@@ -56,6 +56,6 @@ def main():
         w, h, rows = read_tga(export + '/' + tga)
         write_png('%s/%s.png' % (REPO, texture), w, h, rows)
         open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
-        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(MATERIAL_TEMPLATE % (MATERIAL_PARENTS[kind], texture, texture))
+        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(material_text(kind, texture))
 
 main()

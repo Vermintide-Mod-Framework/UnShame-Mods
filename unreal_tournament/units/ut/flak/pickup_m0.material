@@ -1,30 +1,13 @@
 material_contexts = {
 	surface_material = ""
 }
-parent_material = "core/stingray_renderer/shader_import/standard"
+parent_material = "units/ut/weapon_unlit"
 textures = {
 	color_map = "units/ut/flak/pickup_flak3rdperson"
-	emissive_map = "units/ut/flak/pickup_flak3rdperson"
 }
 variables = {
-	use_color_map = {
+	brightness = {
 		type = "scalar"
 		value = 1
-	}
-	use_emissive_map = {
-		type = "scalar"
-		value = 1
-	}
-	emissive = {
-		type = "vector3"
-		value = [
-			0.8
-			0.8
-			0.8
-		]
-	}
-	emissive_intensity = {
-		type = "scalar"
-		value = 3
 	}
 }
