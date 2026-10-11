@@ -23,6 +23,12 @@ STATICS = {
         'scale': 0.28,
         'unit': 'units/ut/flak/chunk',
     },
+    'link_pickup': {
+        'pskx': 'WeaponStaticMesh/StaticMesh/LinkGunPickup.pskx',
+        'materials': [('WeaponSkins/Texture/LinkTex0.tga', 'opaque')],
+        'scale': 0.012,
+        'unit': 'units/ut/link/pickup',
+    },
     'bio_pickup': {
         'pskx': 'WeaponStaticMesh/StaticMesh/BioRiflePickup.pskx',
         'materials': [('WeaponSkins/Texture/BioRifleTex0.tga', 'opaque'), ('WeaponSkins/Texture/BioRifleGlass0.tga', 'alpha', 0.5)],

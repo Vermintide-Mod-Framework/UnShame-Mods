@@ -527,6 +527,15 @@ end
 
 -- The end of the staff itself (it moves with the animations), if the unit has the node
 local function staff_end_position(owner_unit)
+	-- (with the skin it is the end of the barrel of the model, or of the mesh in the hand)
+	if utils.is_weapon_skin_enabled("link_gun") then
+		local position = mod.link_beam_callbacks.start_position(owner_unit)
+
+		if position then
+			return position
+		end
+	end
+
 	local inventory_extension = ScriptUnit.has_extension(owner_unit, "inventory_system")
 	local equipment = inventory_extension and inventory_extension:equipment()
 	local staff_unit = equipment and (equipment.left_hand_wielded_unit or equipment.right_hand_wielded_unit)
@@ -734,6 +743,8 @@ local function apply_link_gun()
 		action.speed = CONFIG.bolt_speed * 100
 		action.total_time = CONFIG.bolt_fire_interval
 		action.ut_init_callback = "link_bolt"
+		action.ut_init_flow_event_filter = "link"
+		action.ut_skin_init_callback = "link_bolt"
 		action.enter_function = function (...)
 			pose.clear()
 
@@ -2598,6 +2609,13 @@ local seen_points = {}
 -- (the first `count` of the points. Every copy is turned about the way the beam goes, by an angle of its own that it
 -- keeps, so that the copies don't all look the same)
 local function draw_sprites(state, world, effect_name, points, count)
+	-- (with the skin the skin draws it)
+	if utils.is_weapon_skin_enabled("link_gun") then
+		mod.link_beam_callbacks.draw(state, points, count)
+
+		return
+	end
+
 	local ids = state.sprite_ids
 
 	if not ids then
@@ -2695,7 +2713,8 @@ local function draw_beam(state, world, camera_position, start_position, rotation
 	-- the staff, which is drawn the same way, and ends in the world: the points are pulled towards the aim, the more
 	-- the further along the beam they are, so that the end is seen on the target.
 	local world_fov = math.deg(Managers.state.camera:fov("player_1"))
-	local scale = math.tan(math.rad(CONFIG.effect_fov) / 2) / math.tan(math.rad(world_fov) / 2)
+	-- (not with the skin: the model is placed so that what it draws is seen where it is, and its particles are the world's)
+	local scale = utils.is_weapon_skin_enabled("link_gun") and 1 or math.tan(math.rad(CONFIG.effect_fov) / 2) / math.tan(math.rad(world_fov) / 2)
 	local forward = Quaternion.forward(rotation)
 
 	for i = 1, count do
@@ -3838,6 +3857,14 @@ end)
 
 -- The end of the staff of the player's character: the one of the two hands' units that has the node the beam starts at
 local function remote_staff_end(owner_unit)
+	if utils.is_weapon_skin_enabled("link_gun") then
+		local position = mod.link_beam_callbacks.start_position(owner_unit)
+
+		if position then
+			return position
+		end
+	end
+
 	local inventory_extension = ScriptUnit.has_extension(owner_unit, "inventory_system")
 	local equipment = inventory_extension and inventory_extension:equipment()
 
@@ -3859,7 +3886,7 @@ local function draw_remote_beams()
 	for owner_unit, beam in pairs(remote_beams) do
 		local start_position = remote_staff_end(owner_unit)
 
-		if not start_position or now - beam.received > CONFIG.remote_beam_timeout or not effects.is_available(CONFIG.beam_effect) then
+		if not start_position or now - beam.received > CONFIG.remote_beam_timeout or (not utils.is_weapon_skin_enabled("link_gun") and not effects.is_available(CONFIG.beam_effect)) then
 			remove_remote_beam(owner_unit)
 		else
 			set_drone(owner_unit, beam.linked)
@@ -3890,7 +3917,7 @@ local function draw_remote_beams()
 			local right = Quaternion.right(camera_rotation)
 			local up = Quaternion.up(camera_rotation)
 			local forward = Quaternion.forward(camera_rotation)
-			local scale = math.tan(math.rad(CONFIG.remote_effect_fov) / 2) / math.tan(camera_manager:fov("player_1") / 2)
+			local scale = utils.is_weapon_skin_enabled("link_gun") and 1 or math.tan(math.rad(CONFIG.remote_effect_fov) / 2) / math.tan(camera_manager:fov("player_1") / 2)
 
 			for i = 1, count do
 				local offset = remote_world_points[i] - camera_position

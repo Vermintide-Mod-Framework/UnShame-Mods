@@ -161,6 +161,12 @@ mod:hook(PlayerUnitFirstPerson, "play_hud_sound_event", function (func, self, ev
 	return func(self, event, wwise_source_id, play_on_husk)
 end)
 
+-- What the Link Gun's skin does with the beam (the game's own look of it is made of effects of the Sister's staff): where the beam starts
+-- (the muzzle of the model, or of the mesh in the hand of the character; nothing if it is not the skin's to say) and how it is drawn
+--   mod.link_beam_callbacks.start_position = function (owner_unit)
+--   mod.link_beam_callbacks.draw = function (state, points, count, is_linked)    (the points are the curve, in the first `count`)
+mod.link_beam_callbacks = {}
+
 -- What the Bio Rifle's skin draws of its puddles (the game's own look of them is a fire, which the skin takes away): the puddle of an id
 -- is shown at a place, for a time, as big as the radius, and ends
 --   mod.puddle_visual_callbacks.show = function (id, position, radius, charged, duration)

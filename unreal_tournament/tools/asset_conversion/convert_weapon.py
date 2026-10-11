@@ -156,6 +156,19 @@ WEAPONS['bio'] = {
     'lua': 'scripts/mods/unreal_tournament/bio_rifle_skin_animations.lua',
 }
 
+WEAPONS['link'] = {
+    'psk': 'NewWeapons2004/SkeletalMesh/FatLinkGun.psk',
+    'psa': 'NewWeapons2004/MeshAnimation/LinkGun.psa',
+    # the body, the glowing parts (the shader pans the green power texture over it), the glass
+    'materials': [('UT2004Weapons/Texture/FatLinkGunTex0.tga', 'opaque'), ('UT2004Weapons/Texture/LinkPowerGreen.tga', 'alpha', 0.7),
+                  ('UT2004Weapons/Texture/LinkPowerGreen.tga', 'alpha', 0.25)],
+    'scale': 0.0125,
+    'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
+    'locators': ['bone flashA'],
+    'unit': 'units/ut/link/link_gun',
+    'lua': 'scripts/mods/unreal_tournament/link_gun_skin_animations.lua',
+}
+
 MATERIAL_TEMPLATES = {
     'opaque': '''material_contexts = {
 	surface_material = ""
@@ -428,9 +441,13 @@ def main():
         frame_base = frame * n_key_bones
         wq, wp = [], []
         for b in range(bc):
-            o = (frame_base + bone_index_in_anim[b]) * ks
-            p_a = struct.unpack_from('<3f', keys, o)
-            q_a = struct.unpack_from('<4f', keys, o + 12)
+            if b in bone_index_in_anim:
+                o = (frame_base + bone_index_in_anim[b]) * ks
+                p_a = struct.unpack_from('<3f', keys, o)
+                q_a = struct.unpack_from('<4f', keys, o + 12)
+            else:
+                # (a bone that the animation doesn't have stays as it is in the mesh)
+                p_a, q_a = ref_p[b], ref_q[b]
             if (b == 0 and convention[0]) or (b > 0 and conj_children):
                 q_a = qconj(q_a)
             if parents[b] < 0:
