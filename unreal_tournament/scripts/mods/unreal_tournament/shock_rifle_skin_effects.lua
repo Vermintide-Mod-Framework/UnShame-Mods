@@ -68,9 +68,9 @@ local CONFIG = {
 	ball_spark_fade_out = 0.3,
 	ball_spark_interval = 0.025,
 	-- Units a second, the speed of a spark in a direction of any kind (UT's StartVelocityRange is 70 in each axis, which takes a spark about 6 units
-	-- out: it is seen leaving the ball in UT, so it is further here). A spark goes out a quarter of its life times that, 0.35 s: about 70 units,
-	-- and the sprite of the ball (ball_sprite_size) is 90 units across, so it is out of it
-	ball_spark_speed = 800,
+	-- out). A spark goes out a quarter of its life times that: 250 takes it about 22 units out, to the edge of the core of the ball and not away
+	-- from it (800 sent them 70 units away, as dots in the air, which UT's ball does not have)
+	ball_spark_speed = 250,
 	-- ShockProjectile's explosion: ShockExplosionCore
 	explosion_core_size = 40,
 	explosion_core_growth = 100,
