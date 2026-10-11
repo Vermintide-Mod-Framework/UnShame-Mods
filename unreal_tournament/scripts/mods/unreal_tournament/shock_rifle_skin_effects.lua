@@ -80,10 +80,10 @@ local CONFIG = {
 	explosion_core_life = 1,
 	-- The dynamic lights of the ball and of its explosion (LightHue 195 and LightSaturation 85, of 255 each, make this purple). UT's LightRadius
 	-- is 4 for the ball and 5 for the explosion, of 25 units each; the explosion's light is gone at 0.5 s, and gets dimmer until then
-	light_color = { 0.86, 0.67, 1 },
-	ball_light_intensity = 3,
+	light_color = { 0.7, 0.4, 1 },
+	ball_light_intensity = 1.5,
 	ball_light_falloff = 2, -- meters
-	explosion_light_intensity = 6,
+	explosion_light_intensity = 3,
 	explosion_light_falloff = 2.5,
 	explosion_light_life = 0.5,
 	-- ShockExplosion: a dark sphere (EffectsSphere144, 48 units in radius, drawn here with the smoother sphere of the combo, 126.7 in radius) that
