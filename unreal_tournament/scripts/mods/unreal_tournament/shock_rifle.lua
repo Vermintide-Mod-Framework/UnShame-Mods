@@ -202,12 +202,18 @@ register_explosion_template("ut_shock_combo_explosion", {
 })
 
 -- The hit effect of the beam: what it does to what it hits (the sound, the particles and the decals of the material, by the material of
--- what is hit) is nothing, the skin draws the impact. The game sends the name of it to the other peers when the beam hits something that is
--- not an enemy's (a wall, a prop, a training dummy), so it has to be in the lookup of names; a mapping with nothing in it does nothing.
--- (set, not added with MaterialEffectMappingsUtility.add, which is an error for a name that is there: the mod is loaded again on a reload)
-MaterialEffectMappings.ut_shock_impact = {}
+-- what is hit) is nothing, the skin draws the impact. The game wants a name for it when the beam hits something that is not an enemy's (a
+-- wall, a prop, a training dummy), and sends it to the other peers by its number in a lookup of names, which is full (a name added to it is
+-- an error: too many entries), so the effect with this name is not played, nor sent.
+local NO_HIT_EFFECT = "ut_shock_impact"
 
-utils.register_network_lookup("surface_material_effects", "ut_shock_impact")
+mod:hook(EffectHelper, "play_surface_material_effects", function (func, effect_name, ...)
+	if effect_name == NO_HIT_EFFECT then
+		return
+	end
+
+	return func(effect_name, ...)
+end)
 
 -- Weapon template
 
@@ -296,8 +302,8 @@ local function build_beam_action()
 		fire_sound_event = "weapon_staff_fire_beam_end_shot",
 		fire_time = CONFIG.beam_fire_time,
 		headshot_multiplier = 2,
-		-- (the beam must have one, see ut_shock_impact)
-		hit_effect = "ut_shock_impact",
+		-- (the beam must have one, see NO_HIT_EFFECT)
+		hit_effect = NO_HIT_EFFECT,
 		is_spell = true,
 		kind = "handgun",
 		overcharge_type = "ut_shock_beam",
