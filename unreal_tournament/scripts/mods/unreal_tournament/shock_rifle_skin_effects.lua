@@ -154,6 +154,13 @@ local CONFIG = {
 		in_style = "linear",
 		out_style = "linear",
 	},
+	-- (UT's sphere is mostly see through, with its bright band of bolts: the body is a little of this, and what is behind it shows through)
+	sphere_fill_color = {
+		0.45,
+		0.3,
+		1,
+	},
+	sphere_fill_intensity = 0.2,
 	-- How much of the sphere's bolts show at the most, 1 being UT's (the bolts are a strip of lightning that sweeps over the sphere: the blue band)
 	sphere_opacity = 0.35,
 	combo_scorch_size = 260,
@@ -519,6 +526,24 @@ local function combo_meshes(position)
 	local vortex_scale = CONFIG.vortex_scale_interp
 	local vortex_fade = CONFIG.vortex_fade_interp
 
+	-- (the body of the sphere: a little purple that what is behind it shows through; blended, not added: added to the flash and the core that
+	-- are in it, a solid color is blown out to white and pink)
+	particles.mesh({
+		additive = 0,
+		brightness = function (fraction)
+			return interpolate(sphere_fade, fraction)
+		end,
+		color = CONFIG.sphere_fill_color,
+		intensity = CONFIG.sphere_fill_intensity,
+		life = life,
+		position = position,
+		rotation = Quaternion.identity(),
+		scale = function (fraction)
+			return interpolate(sphere_scale, fraction) * CONFIG.sphere_scale
+		end,
+		texture = "shock_solid",
+		unit = "units/ut/fx/sphere",
+	})
 	particles.mesh({
 		additive = 0,
 		brightness = function (fraction)
