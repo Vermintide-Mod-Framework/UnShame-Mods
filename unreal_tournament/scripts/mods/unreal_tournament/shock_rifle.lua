@@ -507,12 +507,30 @@ end
 -- The balls of every player count, the shooter's and those of the others. The system keeps a list of the projectiles that this
 -- machine made (the shooter's); the others' are copies of units that are on their machines, and are found among the extensions of
 -- the copies.
--- What the beam hits first, of the hits of its ray (nearest first): the shooter's own hitbox, which the ray starts in, is not one. The beam
--- stops there, as UT's trace does.
+-- What the beam hits first, of the hits of its ray (nearest first), by the rule of the game's own Beam Staff (ActionBeam): the shooter's own
+-- hitbox, which the ray starts in, is not one, nor is a hit on the "afro" zone of an enemy (a much bigger hit zone than the enemy itself),
+-- nor a hit on someone who is not to be hurt. The beam stops there, as UT's trace does.
 local function first_beam_hit(hits, owner_unit)
+	local allow_friendly_fire = DamageUtils.allow_friendly_fire_ranged(Managers.state.difficulty:get_difficulty_settings(), Managers.player:owner(owner_unit))
+
 	for i = 1, #(hits or {}) do
-		if Actor.unit(hits[i][4]) ~= owner_unit then
-			return hits[i]
+		local hit_actor = hits[i][4]
+		local hit_unit
+
+		hit_unit, hit_actor = ActionUtils.redirect_shield_hit(Actor.unit(hit_actor), hit_actor)
+
+		if hit_unit ~= owner_unit then
+			local breed = Unit.get_data(hit_unit, "breed")
+
+			if not breed then
+				return hits[i]
+			end
+
+			local is_enemy = DamageUtils.is_enemy(owner_unit, hit_unit)
+
+			if (allow_friendly_fire and breed.is_player or is_enemy) and breed.hit_zones_lookup[Actor.node(hit_actor)].name ~= "afro" then
+				return hits[i]
+			end
 		end
 	end
 end
@@ -918,7 +936,8 @@ mod.handgun_update_callbacks.shock = function (self)
 	-- The beam ends at the first thing it hits, or at a ball it gets to before that (which goes off), or goes on (the vector of no length is the
 	-- way the surface faces when there is none)
 	local ball_unit, ball_distance = find_ball_hit_by_beam(origin, direction, hit and hit[2])
-	local end_position = hit and hit[1] or origin + direction * CONFIG.beam_range
+	-- (a little short of what it hits, as the game's own beam is)
+	local end_position = hit and hit[1] - direction * 0.15 or origin + direction * CONFIG.beam_range
 	local hit_normal = hit and hit[3] or Vector3.zero()
 
 	if ball_unit then
