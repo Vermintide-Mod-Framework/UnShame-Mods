@@ -13,14 +13,14 @@ OUT = REPO + '/wwise/unreal_tournament'
 
 # The sounds: event name, wav, if it is heard from where it is (3D) or from the head, volume in dB
 SOUNDS = [
-    ('ut_shock_fire', 'BShockRifleFire', False, -18),
-    ('ut_shock_alt_fire', 'BShockRifleAltFire', False, -18),
-    ('ut_shock_select', 'SwitchToShockRifle', False, -20),
-    ('ut_shock_fire_3d', 'BShockRifleFire', True, -18),
-    ('ut_shock_alt_fire_3d', 'BShockRifleAltFire', True, -18),
-    ('ut_shock_projectile_3d', 'ShockRifleProjectile', True, -26),
-    ('ut_shock_explosion_3d', 'ShockRifleExplosion', True, -16),
-    ('ut_shock_combo_3d', 'ShockComboFire', True, -16),
+    ('ut_shock_fire', 'BShockRifleFire', False, -22),
+    ('ut_shock_alt_fire', 'BShockRifleAltFire', False, -22),
+    ('ut_shock_select', 'SwitchToShockRifle', False, -24),
+    ('ut_shock_fire_3d', 'BShockRifleFire', True, -22),
+    ('ut_shock_alt_fire_3d', 'BShockRifleAltFire', True, -22),
+    ('ut_shock_projectile_3d', 'ShockRifleProjectile', True, -30),
+    ('ut_shock_explosion_3d', 'ShockRifleExplosion', True, -20),
+    ('ut_shock_combo_3d', 'ShockComboFire', True, -20),
 ]
 
 def fnv1(name):
