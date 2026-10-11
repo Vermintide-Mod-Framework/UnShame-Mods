@@ -105,8 +105,7 @@ local function update_balls(dt)
 			local position = ball.follow()
 
 			if position then
-				skin_api.play_sound_at("ut_shock_projectile_3d", position)
-
+				-- TEST: the ball's loop is dropped, to hear whether it cuts the combo's sound
 				ball.sound_time = CONFIG.projectile_sound_seconds
 			end
 		end
