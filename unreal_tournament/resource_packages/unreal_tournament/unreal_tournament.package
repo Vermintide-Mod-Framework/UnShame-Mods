@@ -21,7 +21,7 @@ unit = [
 ]
 
 material = [
-	"units/ut/shock_rifle_power_*"
+	"units/ut/shock_rifle_power"
 	"units/ut/flak/*"
 	"units/ut/fx/fx_*"
 ]

@@ -5,8 +5,9 @@ local mod = get_mod("unreal_tournament")
 -- the Shock Rifle's: the chamber, the shots, the beam, the ball, the explosion and the combo. The gameplay is shock_rifle.lua's, this only
 -- draws it differently, and is told what happens through the hook tables of hooks.lua.
 --
--- The animations are UT's (Pickup, Idle, Fire, AltFire), the chamber's gel flows (a flipbook of the texture, the pan, the stretch and
--- the colour of ShockPowerShader), and the glow comes back after a shot as long as it is until the next one (ShockRifle.RenderOverlays).
+-- The animations are UT's (Pickup, Idle, Fire, AltFire), the chamber's gel flows (the rotation, the stretch, the pan and the colour of
+-- ShockPowerShader, in the shader graph of the chamber), and the glow comes back after a shot as long as it is until the next one
+-- (ShockRifle.RenderOverlays).
 -- The game's effects of the Shock Rifle (the fireball, its explosion, the beam's trail) are not made while the skin is on.
 --
 -- The assets were made with unreal_tournament/tools/asset_conversion.
@@ -19,11 +20,8 @@ local TEMPLATE_NAME = "staff_blast_beam_template_1"
 local SETTING_ID = "shock_rifle"
 
 local CONFIG = {
-	-- The chamber: the frames of the gel (tools/asset_conversion/make_anim_assets.py), how long they take to go round, and the
-	-- light of the chamber when the glow is all there (it is lit by itself, as UT's shader has its diffuse as its self illumination)
-	gel_material_format = "units/ut/shock_rifle_power_%02d",
-	gel_frame_count = 200, -- (20 a second: the pan is slow, so the steps are smaller than a pixel)
-	gel_loop_seconds = 10,
+	-- The chamber is a shader graph that makes the flowing gel itself (tools/asset_conversion/make_chamber_material.py); this is the
+	-- light of it when the glow is all there (it is lit by itself, as UT's shader has its diffuse as its self illumination)
 	chamber_intensity = 1,
 	vent_pulse_speed = 14, -- radians per second, of the glow while the heat is vented
 	projectile_sound_seconds = 1.795, -- how long the sound of the ball (ShockRifleProjectile) is
@@ -72,18 +70,8 @@ end
 
 -- Every frame
 
--- The chamber: the frame of the gel, and the glow
+-- The chamber: the glow
 local function update_chamber(skin, dt)
-	skin.gel_time = (skin.gel_time + dt) % CONFIG.gel_loop_seconds
-
-	local frame = math.floor(skin.gel_time / CONFIG.gel_loop_seconds * CONFIG.gel_frame_count) % CONFIG.gel_frame_count
-
-	if frame ~= skin.gel_frame then
-		skin.gel_frame = frame
-
-		Unit.set_material(skin.unit, "m_power", string.format(CONFIG.gel_material_format, frame))
-	end
-
 	-- (a shock rifle in UT hasn't the glow of its chamber after it has fired, and gets it back as the time to the next shot goes)
 	local charge = 1 - math.clamp((skin.cooldown_end - Managers.time:time("game")) / skin.cooldown, 0, 1)
 
@@ -152,9 +140,6 @@ skin_api = mod.weapon_skin.new({
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
 		unit_name = "units/ut/shock_pickup",
-		materials = {
-			m_power = "units/ut/shock_rifle_power_00",
-		},
 		hand_node = "j_rightweaponattach",
 		meters_per_unit = 0.011,
 		scale = 0.5,
@@ -171,7 +156,6 @@ skin_api = mod.weapon_skin.new({
 	on_create = function (skin)
 		skin.cooldown = 1
 		skin.cooldown_end = 0
-		skin.gel_time = 0
 	end,
 	on_update = update_chamber,
 	on_update_always = update_balls,

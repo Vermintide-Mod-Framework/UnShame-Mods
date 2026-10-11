@@ -1,9 +1,0 @@
-material_contexts = {
-	surface_material = ""
-}
-parent_material = "units/ut/fx/particle"
-textures = {
-	texture_map = "units/ut/shock_gel_75"
-}
-variables = {
-}
