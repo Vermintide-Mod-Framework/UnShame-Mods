@@ -417,7 +417,8 @@ function fx.beam(start, stop, normal)
 	end
 end
 
--- The ball: what makes it up, made as it goes. A ball is { follow, ... }, follow gives where the ball is (nothing once it is gone).
+-- The flying ball: new_ball creates its long-lived sprites, update_ball spawns the short-lived ones (core, flares, sparks) every frame.
+-- `follow` is a function that returns the ball's position, or nil once the ball is gone.
 function fx.new_ball(follow)
 	-- (the projectile of UT is a sprite of its own: shock_core_low at DrawScale, all there as long as the ball lives)
 	-- (UT draws it with a light of its own that makes it solid; layers of it add up to the same)
