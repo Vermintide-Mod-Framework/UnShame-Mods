@@ -73,10 +73,7 @@ local function new(def)
 		if Unit.alive(character) and utils.wielded_template_name(character) == CONFIG.template then
 			for _, game_unit in ipairs(entry.units) do
 				if Unit.alive(game_unit) then
-					if game_unit ~= entry.staff then
-						Unit.flow_event(game_unit, "lua_wield")
-					end
-
+					Unit.flow_event(game_unit, "lua_wield")
 					Unit.set_unit_visibility(game_unit, third_person.shows_weapon(character))
 				end
 			end
@@ -98,11 +95,10 @@ local function new(def)
 			world = world,
 		}
 
-		-- (the effects of the game's units, a flame at the hand of the Beam Staff, are put out as the game does when it unwields)
+		-- (the effects of the game's units, the flame of the Beam Staff, are put out as the game does when it unwields: the units are only
+		-- hidden, and the effects of a unit are not hidden with it)
 		for _, game_unit in ipairs(units) do
-			if game_unit ~= staff then
-				Unit.flow_event(game_unit, "lua_unwield")
-			end
+			Unit.flow_event(game_unit, "lua_unwield")
 		end
 
 		Unit.set_unit_visibility(unit, false)
@@ -216,7 +212,7 @@ local function new(def)
 		end
 
 		for _, game_unit in ipairs(entry.units) do
-			if game_unit ~= entry.staff and Unit.alive(game_unit) then
+			if Unit.alive(game_unit) then
 				Unit.flow_event(game_unit, "lua_unwield")
 			end
 		end
@@ -292,13 +288,16 @@ local function new(def)
 end
 
 -- The game shows the character's weapons again (the view is changed to the third person, a ladder is let go of, ...)
-mod:hook_safe(SimpleInventoryExtension, "show_third_person_inventory", function (self, show)
-	if show then
-		for _, third_person in ipairs(instances) do
-			third_person.put_out_flames(self._unit)
+-- (the player's own character, and the other characters, which have an inventory of their own)
+for _, inventory_class in ipairs({ SimpleInventoryExtension, SimpleHuskInventoryExtension }) do
+	mod:hook_safe(inventory_class, "show_third_person_inventory", function (self, show)
+		if show then
+			for _, third_person in ipairs(instances) do
+				third_person.put_out_flames(self._unit)
+			end
 		end
-	end
-end)
+	end)
+end
 
 return {
 	new = new,
