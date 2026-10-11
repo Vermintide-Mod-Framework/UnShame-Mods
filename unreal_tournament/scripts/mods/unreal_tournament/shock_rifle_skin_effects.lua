@@ -67,7 +67,7 @@ local CONFIG = {
 	ball_spark_fade_in = 0.1,
 	ball_spark_fade_out = 0.3,
 	ball_spark_interval = 0.025,
-	ball_spark_distance = 25, -- units
+	ball_spark_speed = 70, -- units a second, in each axis, StartVelocityRange
 	-- ShockProjectile's explosion: ShockExplosionCore
 	explosion_core_size = 40,
 	explosion_core_growth = 100,
@@ -458,8 +458,10 @@ function fx.update_ball(ball, dt)
 	while ball.spark_time <= 0 do
 		ball.spark_time = ball.spark_time + CONFIG.ball_spark_interval
 
-		-- (the sparks come in to the ball from around it)
-		local offset = Vector3Box(random_direction() * (CONFIG.ball_spark_distance * UNIT))
+		-- (a spark of UT goes out from the ball at a velocity of its own, in each axis, which is scaled down to the opposite of it over its life
+		-- (VelocityScale), so that it goes out and comes back to the ball, which it moves with: it is where the ball is and how far it has gone)
+		local velocity = Vector3Box(Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1) * (CONFIG.ball_spark_speed * UNIT))
+		local started = Managers.time:time("game")
 
 		particles.sprite({
 			color = WHITE,
@@ -468,7 +470,13 @@ function fx.update_ball(ball, dt)
 			follow = function ()
 				local position = ball.follow()
 
-				return position and position + offset:unbox()
+				if not position then
+					return nil
+				end
+
+				local age = Managers.time:time("game") - started
+
+				return position + velocity:unbox() * (age - age * age / CONFIG.ball_spark_life)
 			end,
 			life = CONFIG.ball_spark_life,
 			size = CONFIG.ball_spark_size * UNIT,
