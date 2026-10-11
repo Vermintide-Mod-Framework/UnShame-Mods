@@ -67,7 +67,10 @@ local CONFIG = {
 	ball_spark_fade_in = 0.1,
 	ball_spark_fade_out = 0.3,
 	ball_spark_interval = 0.025,
-	ball_spark_speed = 400, -- units a second, in each axis (UT's StartVelocityRange is 70, which takes a spark about 6 units out: it is seen leaving the ball in UT, so it is further here)
+	-- Units a second, the speed of a spark in a direction of any kind (UT's StartVelocityRange is 70 in each axis, which takes a spark about 6 units
+	-- out: it is seen leaving the ball in UT, so it is further here). A spark goes out a quarter of its life times that, 0.35 s: about 70 units,
+	-- and the sprite of the ball (ball_sprite_size) is 90 units across, so it is out of it
+	ball_spark_speed = 800,
 	-- ShockProjectile's explosion: ShockExplosionCore
 	explosion_core_size = 40,
 	explosion_core_growth = 100,
@@ -113,7 +116,7 @@ local CONFIG = {
 	-- them there is that UT gives them) and ComboDecal (the mark on the floor, as big as combo_scorch_size, if there is a floor within
 	-- combo_scorch_reach below the combo)
 	mesh_life = 1,
-	sphere_scale = 2.7, -- how many times the mesh (EffectsSphere144, 47 units in radius) is the sphere of UT (Editor.TexPropSphere, 128)
+	sphere_scale = 3.2, -- how many times the mesh (EffectsSphere144, 47 units in radius) is the sphere of UT (Editor.TexPropSphere, 128)
 	sphere_scale_interp = {
 		start = 0.1,
 		mid = 0.8,
@@ -132,12 +135,13 @@ local CONFIG = {
 		in_style = "linear",
 		out_style = "linear",
 	},
-	sphere_intensity = 0.8,
+	sphere_intensity = 1.6,
 	sphere_color = {
 		0.55,
-		0.45,
+		0.65,
 		1,
 	},
+	sphere_spin = 0.6, -- turns a second about an axis of any kind (the bolts of its texture are a strip that UT pans across it)
 	vortex_scale_interp = {
 		start = 0.4,
 		mid = 1.6,
@@ -159,8 +163,8 @@ local CONFIG = {
 	vortex_frames = 56, -- the frames of ShockVortexMesh, and how many of them the unit has (every vortex_frame_step)
 	vortex_frame_step = 3,
 	vortex_color = {
-		0.7,
-		0.55,
+		0.5,
+		0.65,
 		1,
 	},
 	combo_scorch_size = 260,
@@ -460,7 +464,7 @@ function fx.update_ball(ball, dt)
 
 		-- (a spark of UT goes out from the ball at a velocity of its own, in each axis, which is scaled down to the opposite of it over its life
 		-- (VelocityScale), so that it goes out and comes back to the ball, which it moves with: it is where the ball is and how far it has gone)
-		local velocity = Vector3Box(Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1) * (CONFIG.ball_spark_speed * UNIT))
+		local velocity = Vector3Box(random_direction() * (CONFIG.ball_spark_speed * UNIT))
 		local started = Managers.time:time("game")
 
 		particles.sprite({
@@ -520,6 +524,8 @@ local function combo_meshes(position)
 		scale = function (fraction)
 			return interpolate(sphere_scale, fraction) * CONFIG.sphere_scale
 		end,
+		spin = CONFIG.sphere_spin,
+		spin_axis = random_direction(),
 		texture = "shock_electricity",
 		unit = "units/ut/fx/sphere",
 	})
