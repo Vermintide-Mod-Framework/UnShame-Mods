@@ -85,7 +85,6 @@ local multi_kill_level = 0 -- UnrealPlayer.MultiKillLevel
 local last_kill_time = -math.huge
 local spree = 0 -- Pawn.Spree
 local call_out_kills = {} -- by name: how many of the kills of each
-local combo_victims = {} -- the enemies that were in a shock combo: { [unit] = true }
 local first_blood_taken = false
 local last_sound_time = -math.huge
 local playing_id -- of the announcement that is playing
@@ -178,12 +177,13 @@ local function announce_spree(kills)
 end
 
 -- A kill that counts for a call out (DamageType.IncrementKills): the call out comes a moment after the kill that makes the number
-local function count_call_out(name)
+local function count_call_out(name, kills)
 	local call_out = CONFIG.call_outs[name]
+	local before = call_out_kills[name] or 0
 
-	call_out_kills[name] = (call_out_kills[name] or 0) + 1
+	call_out_kills[name] = before + kills
 
-	if call_out_kills[name] == call_out.kills * CONFIG.call_out_multiplier then
+	if before < call_out.kills * CONFIG.call_out_multiplier and call_out_kills[name] >= call_out.kills * CONFIG.call_out_multiplier then
 		delayed[#delayed + 1] = {
 			event = call_out.event,
 			time = Managers.time:time("game") + CONFIG.call_out_delay,
@@ -194,7 +194,7 @@ end
 local function announce_head_shot()
 	show("head_shot", CONFIG.head_shot.text, 2)
 	play(CONFIG.head_shot.event, false)
-	count_call_out("head_hunter")
+	count_call_out("head_hunter", 1)
 end
 
 -- If the shot that killed was a ranged one (how the game's own statistics tell: by the type of the attack, or the slot of the weapon when
@@ -218,10 +218,6 @@ local function is_killed_by(weapon, damage_data)
 	return item ~= nil and item.template == weapon.template and utils.is_weapon_enabled(weapon.setting)
 end
 
--- A kill of the Shock Rifle of an enemy that was in a combo (the damage of the combo is instant, there is no more to it)
-local function is_combo_kill(victim_unit, damage_data)
-	return combo_victims[victim_unit] == true and is_killed_by(CONFIG.shock_rifle, damage_data)
-end
 
 mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_data)
 	if not mod:get("announcer") then
@@ -271,20 +267,34 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 	end
 
 	if is_killed_by(CONFIG.flak_cannon, damage_data) then
-		count_call_out("flak_monkey")
-	end
-
-	if is_combo_kill(victim_unit, damage_data) then
-		count_call_out("combo_whore")
+		count_call_out("flak_monkey", 1)
 	end
 end)
 
--- The enemies that are in a shock combo as it goes off are marked (the Shock Rifle tells it: it makes the combo)
-mod.shock_combo_callbacks.announcer = function (_, units)
-	for unit in pairs(units) do
-		combo_victims[unit] = true
+-- The kills of a shock combo: the Shock Rifle tells which enemies it killed (the host, which applies the damage, knows), and the host tells
+-- the player whose combo it was if that is not itself
+mod.shock_combo_callbacks.announcer = function (attacker_unit, killed_units)
+	if #killed_units == 0 then
+		return
+	end
+
+	local attacker = Managers.player:owner(attacker_unit)
+
+	-- (the setting is each player's own: the one whose combo it was is the one who has it)
+	if attacker == Managers.player:local_player() then
+		if mod:get("announcer") then
+			count_call_out("combo_whore", #killed_units)
+		end
+	elseif attacker and not attacker.bot_player then
+		mod:network_send("ut_combo_kills", attacker.peer_id, #killed_units)
 	end
 end
+
+mod:network_register("ut_combo_kills", function (_, kills)
+	if mod:get("announcer") then
+		count_call_out("combo_whore", kills)
+	end
+end)
 
 -- What ends a spree, and starts the count of the call outs again: an enemy hurts the player. Their own weapons (and the overcharge) and their
 -- allies' don't: the one who hurts is the unit that did it, an enemy is a unit that has a breed that is not a player's
@@ -363,7 +373,6 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	playing_id = nil
 
 	table.clear(call_out_kills)
-	table.clear(combo_victims)
 	table.clear(delayed)
 	table.clear(messages)
 end

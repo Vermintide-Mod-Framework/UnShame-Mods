@@ -760,7 +760,7 @@ local function start_implosion(world, position)
 		end
 	end
 
-	local implosion = {
+	implosions[#implosions + 1] = {
 		position = Vector3Box(position),
 		blasted = {},
 		-- the way each body was from the center when it was first pulled, and if it has been past it
@@ -771,10 +771,6 @@ local function start_implosion(world, position)
 		units = utils.units_in_radius(world, position, radius),
 		world = world,
 	}
-
-	implosions[#implosions + 1] = implosion
-
-	return implosion
 end
 
 -- Where a ragdoll is (its first dynamic actor), nil if it isn't one yet
@@ -883,11 +879,36 @@ local function update_implosions(dt)
 end
 
 -- Explosions of the weapons are run by their names, on every peer (one hook for all of them)
-mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_position)
-	local implosion = start_implosion(world, impact_position)
+-- The enemies that are alive in the combo as it goes off: the combo's damage is instant (and it is the host that applies it), so those of
+-- them that are not alive after it were killed by it
+mod.explosion_before_callbacks.ut_shock_combo_explosion = function (world, impact_position, attacker_unit)
+	local alive = {}
+
+	for unit in pairs(utils.units_in_radius(world, impact_position, ExplosionTemplates.ut_shock_combo_explosion.explosion.radius)) do
+		if HEALTH_ALIVE[unit] then
+			alive[#alive + 1] = unit
+		end
+	end
+
+	return {
+		alive = alive,
+		attacker_unit = attacker_unit,
+	}
+end
+
+mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_position, _, before)
+	start_implosion(world, impact_position)
+
+	local killed = {}
+
+	for _, unit in ipairs(before.alive) do
+		if not HEALTH_ALIVE[unit] then
+			killed[#killed + 1] = unit
+		end
+	end
 
 	for _, callback in pairs(mod.shock_combo_callbacks) do
-		callback(impact_position, implosion.units)
+		callback(before.attacker_unit, killed)
 	end
 end
 

@@ -89,10 +89,13 @@ for _, extension_class in ipairs({
 end
 
 -- Explosions, by the name of the explosion template:
---   mod.explosion_callbacks[template name] = function (world, position, rotation)
+--   mod.explosion_before_callbacks[template name] = function (world, position, attacker_unit)
+--       before an explosion is made, on every peer: what it returns is given to the one after
+--   mod.explosion_callbacks[template name] = function (world, position, rotation, before)
 --       after an explosion is made, on every peer
 -- A template that says ut_penetrates_shields goes through shields: the game asks AiUtils.attack_is_shield_blocked for
 -- every enemy in an explosion, which is answered "not blocked" while the explosion of such a template is being made.
+mod.explosion_before_callbacks = {}
 mod.explosion_callbacks = {}
 
 local penetrating_explosion = false
@@ -108,6 +111,9 @@ end)
 mod:hook(DamageUtils, "create_explosion", function (func, world, attacker_unit, impact_position, rotation, explosion_template, ...)
 	penetrating_explosion = not not explosion_template.ut_penetrates_shields
 
+	local before_callback = mod.explosion_before_callbacks[explosion_template.name]
+	local before = before_callback and before_callback(world, impact_position, attacker_unit)
+
 	-- (an error mustn't leave the flag set)
 	local ok, error_message = pcall(func, world, attacker_unit, impact_position, rotation, explosion_template, ...)
 
@@ -120,7 +126,7 @@ mod:hook(DamageUtils, "create_explosion", function (func, world, attacker_unit, 
 	local callback = mod.explosion_callbacks[explosion_template.name]
 
 	if callback then
-		callback(world, impact_position, rotation)
+		callback(world, impact_position, rotation, before)
 	end
 
 	callback = mod.skin_explosion_callbacks[explosion_template.name]
@@ -140,9 +146,9 @@ mod.skin_explosion_callbacks = {}
 --   mod.shock_beam_callbacks[name] = function (owner_unit, start_position, end_position, hit_normal)
 mod.shock_beam_callbacks = {}
 
--- A shock combo goes off (on every peer, as the explosion is made): where, and the enemies that are in it ({ [unit] = true }, the
--- implosion that follows takes units out of it as it is done with them: a callback that keeps them copies them)
---   mod.shock_combo_callbacks[name] = function (position, units)
+-- A shock combo has gone off (on every peer, as the explosion is made): the one who made it, and the enemies that it killed (a list of
+-- units: the combo's damage is applied by the host, and it is the host that tells, the others get an empty list)
+--   mod.shock_combo_callbacks[name] = function (attacker_unit, killed_units)
 mod.shock_combo_callbacks = {}
 
 -- The sounds a weapon's action plays for its player (the shot's, which the game plays and tells the others of), by the name of
