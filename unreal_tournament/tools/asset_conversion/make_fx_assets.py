@@ -54,8 +54,6 @@ TEXTURES = {
 
 # A texture that is made from another: name -> (the exported tga, what is made of its pixels (r, g, b, a) -> (r, g, b, a))
 DERIVED = {
-    # (all white: a sphere that is filled with its color, whatever its texture coordinates)
-    'shock_solid': ('XEffectMat/Texture/shock_core.tga', lambda r, g, b, a: (255, 255, 255, 255)),
 }
 
 def read_tga(path):

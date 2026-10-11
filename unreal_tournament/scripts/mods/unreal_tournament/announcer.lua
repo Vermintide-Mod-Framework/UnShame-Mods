@@ -77,7 +77,7 @@ local CONFIG = {
 	-- FirstBloodMessage is red). The size is one of those of FontSize, in pixels at 1080 high
 	messages = {
 		multi_kill = { y = 0.242, color = { 255, 0, 0 } },
-		head_shot = { y = 0.1, color = { 255, 0, 0 } },
+		head_shot = { y = 0.14, color = { 255, 0, 0 } },
 		critical = { y = 0.83, color = { 255, 255, 255 } },
 	},
 	text_life = 3, -- seconds

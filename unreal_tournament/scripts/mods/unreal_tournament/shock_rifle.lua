@@ -46,21 +46,12 @@ local CONFIG = {
 	-- The ball's own explosion hurts the shooter as well, in the same way (half of the ball's damage in UT's
 	-- numbers, like the combo's is half of its damage)
 	ball_self_damage = 18,
-	-- Combo: the blast (the skin draws it) is followed by everything that died being pulled back to the
-	-- center, like in UT. Only effects the game already ships can be used, they are skipped if the game
-	-- hasn't loaded them.
-	-- The implosion rings: particle effects can't be played backwards and their scale can't be
-	-- changed while they play, so the implosion is a series of rings, each created smaller than
-	-- the last, spread over implosion_duration. The scales are relative to the effect's normal size.
-	implosion_ring_count = 4,
-	implosion_ring_start_scale = 1.5,
-	implosion_ring_end_scale = 0.3,
-	implosion_rings = false, -- the series of rings above is off for now
-	-- The ring of the game's own effect (Kruber's shockwave), which bends the light behind it: the effects of the skin can't, so one of them
-	-- is played where the combo goes off, turned to face the player, as big as combo_distortion_scale times the effect's own size
+	-- Combo: the blast (the skin draws it) is followed by everything that died being pulled back to the center, like in UT.
+	-- The ring of the game's own effect (Kruber's shockwave) bends the light behind it, which the skin's effects can't do. One ring is played
+	-- where the combo goes off, turned to face the player, combo_distortion_scale times the effect's own size.
 	combo_ring_effect = "fx/chr_kruber_shockwave",
 	combo_distortion_scale = 0.7,
-	combo_ring_height = 1, -- meters: how high above the origin of the ring effect its ring is (it is made to be played at a character's feet)
+	combo_ring_height = 1, -- meters: how high above the effect's origin its ring is (it is made to be played at a character's feet)
 	-- Bodies are thrown away from the blast first: whatever has died (and started to ragdoll) in
 	-- the first implosion_delay seconds gets thrown once, then everything is pulled back in.
 	implosion_blast_speed = 14, -- m/s, a little less for bodies far from the center
@@ -207,11 +198,10 @@ register_explosion_template("ut_shock_combo_explosion", {
 	},
 })
 
--- The hit effect of the beam: what it does to what it hits (the sound, the particles and the decals of the material, by the material of
--- what is hit) is nothing, the skin draws the impact. The game wants a name for it when the beam hits something that is not an enemy's (a
--- wall, a prop, a training dummy), and sends it to the other peers by its number in a lookup of names, which is full (a name added to it is
--- an error: too many entries), so the effect with this name is not played, nor sent (it is the one that sends that looks the name up). The
--- same goes for what is hit that is an enemy (the "skinned" ones: flesh, armor), which has its own pair of functions.
+-- The beam's hit effect does nothing (the game would play the sound, particles and decals of the material it hits): the skin draws the
+-- impact. The game still wants a name for it, and sends the name to the other peers as its number in a lookup of names. That lookup is
+-- full (adding a name is an error: too many entries), so an effect with this name is neither played nor sent. Walls and props and enemies
+-- (the "skinned" ones: flesh, armor) each have their own pair of functions, so all four are hooked.
 local NO_HIT_EFFECT = "ut_shock_impact"
 
 for _, function_name in ipairs({
@@ -316,7 +306,7 @@ local function build_beam_action()
 		fire_sound_event = "weapon_staff_fire_beam_end_shot",
 		fire_time = CONFIG.beam_fire_time,
 		headshot_multiplier = 2,
-		-- (the beam must have one, see NO_HIT_EFFECT)
+		-- (the beam must have a hit effect, see NO_HIT_EFFECT)
 		hit_effect = NO_HIT_EFFECT,
 		is_spell = true,
 		kind = "handgun",
@@ -358,7 +348,7 @@ local function build_ball_action()
 		fire_sound_on_husk = true,
 		fire_time = CONFIG.ball_fire_time,
 		forced_charge_level = CONFIG.ball_charge_level,
-		-- (the game starts a charged projectile at the player's eye: UT's ProjSpawnOffset puts the ball ahead of it, and a little to the right)
+		-- The game starts a charged projectile at the player's eye. UT's ProjSpawnOffset puts the ball ahead of it, and a little to the right.
 		fire_pos_rot = function (_, first_person_unit)
 			local position = Unit.world_position(first_person_unit, 0)
 			local rotation = Unit.local_rotation(first_person_unit, 0)
@@ -368,7 +358,8 @@ local function build_ball_action()
 
 			return position, rotation
 		end,
-		-- (no hit_effect: the game's fire of a fireball hitting something, the skin draws the impact of the ball, see skin_explosion_callbacks)
+		-- (no hit_effect: it would play the game's fire of a fireball that hits something. The skin draws the ball's impact, see
+		-- skin_explosion_callbacks.)
 		is_spell = true,
 		kind = "charged_projectile",
 		overcharge_type = "ut_shock_ball",
@@ -402,10 +393,8 @@ local function build_ball_action()
 	return action
 end
 
-
--- The staff template is shared game state, so it is patched in place and every
--- touched value is saved to be put back on disable, and when the mod is unloaded (a reload would
--- mistake the patched template for the vanilla one).
+-- The staff template is shared game state, so it is patched in place and every touched value is saved, to be put back when the weapon is
+-- disabled and when the mod is unloaded (a reload would mistake the patched template for the vanilla one).
 
 local saved = {}
 local ATTACK_META_DATA_FIELDS = {
@@ -504,12 +493,9 @@ end
 
 -- Shock combo: a beam passing through a live shock ball detonates it
 
--- The balls of every player count, the shooter's and those of the others. The system keeps a list of the projectiles that this
--- machine made (the shooter's); the others' are copies of units that are on their machines, and are found among the extensions of
--- the copies.
 -- What the beam hits first, of the hits of its ray (nearest first), by the rule of the game's own Beam Staff (ActionBeam): the shooter's own
--- hitbox, which the ray starts in, is not one, nor is a hit on the "afro" zone of an enemy (a much bigger hit zone than the enemy itself),
--- nor a hit on someone who is not to be hurt. The beam stops there, as UT's trace does.
+-- hitbox, which the ray starts in, is not one, nor is a hit on an enemy's "afro" zone (a much bigger hit zone than the enemy itself), nor
+-- a hit on someone who is not to be hurt. The beam stops there, as UT's trace does.
 local function first_beam_hit(hits, owner_unit)
 	local allow_friendly_fire = DamageUtils.allow_friendly_fire_ranged(Managers.state.difficulty:get_difficulty_settings(), Managers.player:owner(owner_unit))
 
@@ -536,7 +522,9 @@ local function first_beam_hit(hits, owner_unit)
 end
 
 -- The ball the beam gets to before it hits anything (blocker_distance is how far it goes: to the first thing it hits), and how far along
--- the beam it is
+-- the beam it is. The balls of every player count, the shooter's and the others'. The projectile system keeps a list of the projectiles
+-- this machine made (the shooter's); the others' are copies of units that are on their machines, and are found among the extensions of
+-- the copies.
 local function find_ball_hit_by_beam(origin, direction, blocker_distance)
 	local projectile_system = Managers.state.entity:system("projectile_system")
 	local wall_distance = blocker_distance or CONFIG.combo_max_range
@@ -545,7 +533,7 @@ local function find_ball_hit_by_beam(origin, direction, blocker_distance)
 	local function consider(projectile_unit, extension)
 		local action = Unit.alive(projectile_unit) and extension._current_action
 
-		-- (a ball that has hit something has its impacts stopped, the field is the same on the unit and on its copy)
+		-- (a ball that has hit something has its impacts stopped; the field is the same on the unit and on its copy)
 		if action and action.ut_shock_ball and not extension._stop_impacts then
 			local ball_position = POSITION_LOOKUP[projectile_unit]
 			local to_ball = ball_position - origin
@@ -596,14 +584,13 @@ mod.aoe_callbacks.shock_ball = function (self, aoe_data, position)
 	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_shock_ball_explosion.explosion, CONFIG.ball_self_damage)
 end
 
--- The ball of another player is a copy on this machine: the combo is the shooter's (it goes through the area damage system, which
--- applies the damage on the server, with the shooter as who does it), and the player whose ball it is is told to end it on their
--- machine, where it flies.
+-- Another player's ball is a copy on this machine. The combo is the shooter's: it goes through the area damage system, which applies the
+-- damage on the server with the shooter as the attacker. The player whose ball it is is told to end it on their machine, where it flies.
 mod:network_register("ut_shock_ball_stop", function (_, ball_go_id)
 	local ball_unit = Managers.state.unit_storage:unit(ball_go_id)
 	local extension = ball_unit and Unit.alive(ball_unit) and ScriptUnit.has_extension(ball_unit, "projectile_system")
 
-	-- (only the unit that is theirs: the copies can't be told to)
+	-- (only the real unit can be told to stop, not its copies)
 	if extension and extension.are_impacts_stopped then
 		extension:stop()
 	end
@@ -643,57 +630,19 @@ end
 
 local implosions = {}
 
--- Vectors and quaternions are temporary objects and can't be kept around between frames,
--- so the ring orientations are created when needed
-local function ring_rotations()
-	return {
-		Quaternion.identity(),
-		Quaternion.axis_angle(Vector3(1, 0, 0), math.pi / 2),
-		Quaternion.axis_angle(Vector3(0, 1, 0), math.pi / 2),
-	}
-end
-
--- A ring (all three ways about) at the given scale. The effects are created with their scale
--- already set, see effects.play.
-local function create_rings(world, position, scale)
-	if not CONFIG.combo_ring_effect then
-		return
-	end
-
-	local rotations = ring_rotations()
-
-	-- (the effect's ring is above its origin: the origin of each is set so that the ring of it is about the center, and the ring is turned
-	-- about the origin, so its height is turned with it, and made as big as the scale is)
-	for i = 1, #rotations do
-		local ring_position = position - Quaternion.rotate(rotations[i], Vector3(0, 0, CONFIG.combo_ring_height * scale))
-
-		effects.play(world, CONFIG.combo_ring_effect, ring_position, scale, rotations[i])
-	end
-end
-
--- One ring of the implosion
-local function create_implosion_ring(world, position, scale)
-	if CONFIG.implosion_rings then
-		create_rings(world, position, scale)
-	end
-end
-
 local function start_implosion(world, position)
 	local radius = ExplosionTemplates.ut_shock_combo_explosion.explosion.radius
 
-	-- (the ring that bends the light, as the combo goes off: one, turned to face the player as it starts, which is seen from the front)
-	if CONFIG.combo_ring_effect then
-		effects.play_facing(world, CONFIG.combo_ring_effect, position, CONFIG.combo_distortion_scale, CONFIG.combo_ring_height)
-	end
+	-- The ring that bends the light as the combo goes off: turned to face the player as it starts, so it is seen from the front
+	effects.play_facing(world, CONFIG.combo_ring_effect, position, CONFIG.combo_distortion_scale, CONFIG.combo_ring_height)
 
 	-- (the skin draws the explosion, see skin_explosion_callbacks)
 	implosions[#implosions + 1] = {
 		position = Vector3Box(position),
 		blasted = {},
-		-- the way each body was from the center when it was first pulled, and if it has been past it
+		-- the direction each body was from the center when it was first pulled, and whether it has gone past the center
 		pulled = {},
 		radius = radius,
-		rings_created = 0,
 		start_t = Managers.time:time("game"),
 		units = utils.units_in_radius(world, position, radius),
 		world = world,
@@ -740,8 +689,6 @@ end
 
 local function update_implosions(dt)
 	local t = Managers.time:time("game")
-	local ring_count = CONFIG.implosion_ring_count
-	local ring_interval = CONFIG.implosion_duration / ring_count
 
 	for i = #implosions, 1, -1 do
 		local implosion = implosions[i]
@@ -759,18 +706,8 @@ local function update_implosions(dt)
 					implosion.blasted[unit] = true
 				end
 			end
-		elseif age >= CONFIG.implosion_delay then
-			-- rings, each smaller than the last, spread over the duration
-			local rings_due = math.min(math.floor((age - CONFIG.implosion_delay) / ring_interval) + 1, ring_count)
-
-			while implosion.rings_created < rings_due do
-				local progress = ring_count > 1 and implosion.rings_created / (ring_count - 1) or 1
-
-				create_implosion_ring(implosion.world, center, math.lerp(CONFIG.implosion_ring_start_scale, CONFIG.implosion_ring_end_scale, progress))
-
-				implosion.rings_created = implosion.rings_created + 1
-			end
-
+		else
+			-- pull phase: what died is pulled back to the center
 			for unit in pairs(implosion.units) do
 				if not Unit.alive(unit) then
 					implosion.units[unit] = nil
@@ -874,10 +811,6 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	update_implosions(dt)
 end
 
--- The weapon's package list is built when the staff's packages are loaded, which may be
--- before this mod patched the template, and spawning an unloaded projectile unit crashes
--- the game. So the mod holds its own reference to the ball's unit while enabled.
-
 local packages = utils.package_holder("unreal_tournament")
 
 -- The overheating explosion (the game's own hurts the player, and is kept): the combo, the whole of it, the blast and
@@ -894,9 +827,8 @@ mod.overheat_callbacks[TEMPLATE_NAME] = function (state, item_data)
 	Managers.state.entity:system("area_damage_system"):create_explosion(unit, position, Quaternion.identity(), "ut_shock_combo_explosion", 1, item_data.name, CONFIG.overheat_combo_power_level, false, unit)
 end
 
--- The weapon's package list is built when the staff's packages are loaded, which may be before this mod patched the
--- template, and spawning an unloaded projectile unit crashes the game. So the mod holds its own reference to the
--- ball's unit while enabled.
+-- The weapon's package list is built when the staff's packages are loaded, which may be before this mod patched the template, and
+-- spawning a projectile unit that is not loaded crashes the game. So the mod holds its own reference to the ball's unit while enabled.
 local function enable_shock_rifle()
 	packages.load_projectile_units({"fireball_charged"})
 	apply_shock_rifle()
@@ -959,11 +891,7 @@ mod:hook(DamageUtils, "process_projectile_hit", function (func, world, damage_so
 		local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
 		local origin = first_person_extension and first_person_extension:get_projectile_start_position_rotation()
 		local hit = first_beam_hit(raycast_result, owner_unit)
-		local _, ball_distance = nil, nil
-
-		if origin then
-			_, ball_distance = find_ball_hit_by_beam(origin, direction, hit and hit[2])
-		end
+		local ball_distance = origin and select(2, find_ball_hit_by_beam(origin, direction, hit and hit[2]))
 
 		if ball_distance then
 			local before_ball = {}

@@ -1,23 +1,39 @@
 local mod = get_mod("unreal_tournament")
 
--- The effects of the Shock Rifle's skin: what UT2004's own shows (XEffects: ShockMuzFlash, ShockBeamEffect, ShockImpact*,
--- ShockBall, ShockExplosionCore, ShockCombo*), drawn with the particles of skin_particles.lua. UT's sizes, speeds and times are
--- used as they are, in UT units; the textures are the game's own, converted (tools/asset_conversion/make_fx_assets.py).
--- The meshes of the effects are the coil of the beam and the sphere and the vortex of the combo (units/ut/fx, tools/asset_conversion/make_fx_meshes.py).
+-- The effects of the Shock Rifle's skin: what UT2004's own rifle shows (XEffects: ShockMuzFlash, ShockBeamEffect, ShockImpact*, ShockBall,
+-- ShockExplosion*, ShockCombo*), drawn with the particles of skin_particles.lua. UT's sizes, speeds and times are used as they are, in
+-- UT units. The textures are the game's own, converted (tools/asset_conversion/make_fx_assets.py). The meshes (units/ut/fx, made by
+-- tools/asset_conversion/make_fx_meshes.py) are the beam's coil and the combo's sphere and vortex.
 --
--- The functions are called by shock_rifle_skin.lua, which knows when and where.
+-- shock_rifle_skin.lua calls these functions: it knows when and where an effect happens.
 
 local particles = mod.skin_particles
 
 local CONFIG = {
-	-- How many meters a UT unit is in the world (the same as the Shock Rifle's own, a player is 88 units high)
+	-- How many meters a UT unit is in the world (the same as in shock_rifle.lua: a player is 88 units high)
 	meters_per_unit = 0.02,
-	-- ShockBeamEffect: the beam is made of pieces of mRegenDist, of width mSizeRange, it lasts LifeSpan
+
+	-- Beam (ShockBeamEffect): pieces of beam_piece_length, beam_width wide, that last beam_life
 	beam_piece_length = 150,
 	beam_width = 36,
 	beam_life = 0.75,
 	beam_attenuation = 0.1,
-	-- ShockImpactFlare, ShockImpactRing, ShockExplosionCore, ShockImpactScorch
+	-- Beam coil (ShockBeamCoil): a piece of the coil mesh (30 units long) every coil_piece_length along the beam, scaled coil_length_scale
+	-- along it and coil_radius_scale across times a size from coil_size (mSizeRange), turning about the beam coil_spin turns a second
+	-- (mSpinRange 32000 of 65536). coil_color is how bright it is (mColorRange 50 of 255, a little brighter here).
+	coil_piece_length = 90,
+	coil_length_scale = 3,
+	coil_radius_scale = 15,
+	coil_size = {
+		0.3,
+		0.6,
+	},
+	coil_spin = 32000 / 65536,
+	coil_color = 0.3,
+	coil_life = 0.75,
+	coil_max_pieces = 30,
+
+	-- What the beam makes where it hits a surface (ShockImpactFlare, ShockImpactRing, the core, ShockImpactScorch)
 	impact_flare_count = 3,
 	impact_flare_size = {
 		50,
@@ -34,7 +50,8 @@ local CONFIG = {
 	impact_core_offset = 8, -- units from the surface
 	scorch_size = 64,
 	scorch_life = 2.2,
-	-- ShockMuzFlash (the sparkle of the beam), ShockBeamMuzFlash, ShockProjMuzFlash (the flash of the ball)
+
+	-- Muzzle flashes: the beam's sparkle and flash (ShockMuzFlash, ShockBeamMuzFlash) and the ball's (ShockProjMuzFlash)
 	muzzle_sparkle_size = 50,
 	muzzle_sparkle_growth = 50,
 	muzzle_sparkle_life = 0.5,
@@ -46,15 +63,19 @@ local CONFIG = {
 		60,
 	},
 	ball_flash_life = 0.2,
-	-- ShockBall: the emitters of the ball: the core, the flares, and the sparks that gather on it
-	ball_sprite_size = 90, -- ShockProjectile: DrawScale 0.7 of the 128 units of the texture
-	ball_sprite_life = 10, -- its LifeSpan
+
+	-- The flying ball (ShockProjectile and ShockBall). The ball itself is a sprite that lasts as long as the ball does: ball_sprite_layers
+	-- of them added up, each turning its own way (up to ball_sprite_spin turns a second) so that the spikes of the texture move. Under
+	-- them is a purple glow, because the texture alone is a dark disc with a rim, which is seen as a ring.
+	ball_sprite_size = 90, -- DrawScale 0.7 of the texture's 128 units
+	ball_sprite_life = 10, -- the projectile's LifeSpan
 	ball_sprite_layers = 3,
-	-- (FadeInEndTime and FadeOutStartTime of each: it is all there between, and the next core comes as one ends)
-	ball_fill_size = 85, -- units across: as big as the rim of the texture of the ball is
+	ball_sprite_spin = 0.3,
+	ball_fill_size = 85,
 	ball_fill_intensity = 1.5,
-	ball_sprite_spin = 0.3, -- turns a second, the most a layer of the ball's sprite turns either way
-	ball_core_size = 45, -- (UT's is 45 by 65 with UniformSize, which takes the 45 for both)
+	-- ShockBall's emitters. A particle is fully there from fade_in until fade_out (UT's FadeInEndTime and FadeOutStartTime), and a new core
+	-- starts every interval.
+	ball_core_size = 45, -- UT's is 45 by 65 with UniformSize, which takes the 45 for both
 	ball_core_life = 0.35,
 	ball_core_interval = 0.35,
 	ball_core_fade_in = 0.05,
@@ -70,53 +91,53 @@ local CONFIG = {
 	ball_spark_fade_in = 0.1,
 	ball_spark_fade_out = 0.3,
 	ball_spark_interval = 0.025,
-	-- Units a second, the speed of a spark in a direction of any kind (UT's StartVelocityRange is 70 in each axis, which takes a spark about 6 units
-	-- out). A spark goes out a quarter of its life times that: 250 takes it about 22 units out, to the edge of the core of the ball and not away
-	-- from it (800 sent them 70 units away, as dots in the air, which UT's ball does not have)
+	-- Units a second, the speed of a spark in a random direction. A spark goes out and comes back, so it gets a quarter of its life times
+	-- this far from the ball: 250 is about 22 units, the edge of the ball's core. (UT's StartVelocityRange is only 70, which is about
+	-- 6 units; 800 sent the sparks 70 units away, as dots in the air, which UT's ball does not have.)
 	ball_spark_speed = 250,
-	-- ShockProjectile's explosion: ShockExplosionCore
+
+	-- The ball's explosion: ShockExplosionCore, and ShockExplosion's dark sphere. The sphere is EffectsSphere144 (48 units in radius) in UT; it
+	-- is drawn with the combo's smoother sphere mesh (sphere_mesh_radius units in radius). It starts at explosion_sphere_size times its radius,
+	-- grows explosion_sphere_growth of that a second, and is at its darkest explosion_sphere_attenuation of the way through its life.
 	explosion_core_size = 40,
 	explosion_core_growth = 100,
 	explosion_core_life = 1,
-	-- The dynamic lights of the ball and of its explosion (LightHue 195 and LightSaturation 85, of 255 each, make this purple). UT's LightRadius
-	-- is 4 for the ball and 5 for the explosion, of 25 units each; the explosion's light is gone at 0.5 s, and gets dimmer until then
+	explosion_sphere_life = 0.6,
+	explosion_sphere_size = 0.6,
+	explosion_sphere_growth = 1.2,
+	explosion_sphere_attenuation = 0.3,
+	explosion_sphere_darkness = 0.2, -- UT's gray of 100 of 255 is 0.39: it is fainter here
+	explosion_sphere_radius = 48,
+	sphere_mesh_radius = 126.7,
+
+	-- Lights. UT's lights have hue 195 (of 255) and saturation 85-180, which is purple. LightRadius is in steps of 25 units: 4 for the ball
+	-- and for the rifle's shot, 5 for the ball's explosion (gone at 0.5 s, dimming), 10 for the combo. The combo has two lights: the
+	-- combo's own (on for the 0.9 s that it waits) and the flash's, which is more saturated and lasts 0.3 s.
 	light_color = { 0.7, 0.4, 1 },
 	ball_light_intensity = 1.5,
 	ball_light_falloff = 2, -- meters
 	explosion_light_intensity = 3,
 	explosion_light_falloff = 2.5,
 	explosion_light_life = 0.5,
-	-- The light of a shot at the muzzle (ShockRifle's LightRadius is 4, 0.15 s)
 	fire_light_intensity = 1.5,
 	fire_light_falloff = 2,
 	fire_light_life = 0.15,
-	-- The lights of the combo: ShockCombo's (on for the 0.9 s that it waits, hue 195 and saturation 100) and ShockComboFlash's (0.3 s, saturation
-	-- 180), both of LightRadius 10, which is 5 m
-	combo_flash_light_color = { 0.55, 0.2, 1 },
 	combo_light_intensity = 2,
 	combo_light_falloff = 5,
 	combo_light_life = 0.9,
+	combo_flash_light_color = { 0.55, 0.2, 1 },
 	combo_flash_light_intensity = 2,
 	combo_flash_light_life = 0.3,
-	-- ShockExplosion: a dark sphere (EffectsSphere144, 48 units in radius, drawn here with the smoother sphere of the combo, 126.7 in radius) that
-	-- is 0.6 of its size at first and grows 1.2 of it a second; it is at its darkest 0.3 of its life in
-	explosion_sphere_life = 0.6,
-	explosion_sphere_size = 0.6,
-	explosion_sphere_growth = 1.2,
-	explosion_sphere_attenuation = 0.3,
-	explosion_sphere_darkness = 0.2, -- (UT's gray of 100 of 255 is 0.39: it is fainter here)
-	explosion_sphere_radius = 48,
-	sphere_mesh_radius = 126.7,
-	-- ShockCombo and the effects it makes
+
+	-- The combo (ShockCombo and what it spawns)
 	combo_core_size = 50,
 	combo_core_growth = 400,
 	combo_core_life = 1.5,
-	combo_flare_count = 5,
 	combo_flare_size = 85,
 	combo_flare_growth = 260,
 	combo_flare_life = 0.5,
 	combo_flare_rate = 5, -- a second
-	combo_flare_time = 0.9, -- how long they come, then the two big ones
+	combo_flare_time = 0.9, -- how long they come: then there are two big ones
 	combo_big_flare_size = 150,
 	combo_big_flare_growth = -500,
 	combo_big_flare_life = 0.3,
@@ -127,37 +148,29 @@ local CONFIG = {
 	combo_ring_growth = 500,
 	combo_ring_life = 0.5,
 	combo_ring_attenuation = 0.4,
+	-- The wiggles (ShockComboWiggles): UT's mSizeRange is 120 and its mSpeedRange 300, but a sprite's size is its radius there, so they look
+	-- twice as big in UT; they are subtler, and do not go as far as that speed makes them
 	combo_wiggle_count = 25,
-	combo_wiggle_size = 240, -- (UT's mSizeRange is 120: they look twice as big in UT, as a sprite's size is its radius there)
-	combo_wiggle_intensity = 0.4, -- (and subtler)
-	combo_wiggle_speed = 150, -- (UT's mSpeedRange is 300: they do not go as far in UT as that makes them)
+	combo_wiggle_size = 240,
+	combo_wiggle_intensity = 0.4,
+	combo_wiggle_speed = 150,
 	combo_wiggle_life = 0.75,
-	-- ShockBeamCoil: pieces of the coil mesh (30 long, units/ut/fx/coil) along the beam every coil_piece_length, scaled coil_length_scale along
-	-- it and coil_radius_scale across times a size of coil_size (mSizeRange), turning about the beam coil_spin turns a second (mSpinRange 32000
-	-- of 65536), as dim as mColorRange says (50 of 255, made a little brighter here), for coil_life
-	coil_piece_length = 90,
-	coil_length_scale = 3,
-	coil_radius_scale = 15,
-	coil_size = {
-		0.3,
-		0.6,
-	},
-	coil_spin = 32000 / 65536,
-	coil_color = 0.3,
-	coil_life = 0.75,
-	coil_max_pieces = 30,
-	-- ShockComboSphereDark and ShockComboVortex (MeshEffects, they last mesh_life, with the interpolations of their scale and of how much of
-	-- them there is that UT gives them) (UT's ComboDecal, the mark on the floor, is not made: a flat disc is no good on anything but a flat floor,
-	-- and the game's own effects that leave a mark are whole effects)
+
+	-- The two meshes of the combo (ShockComboSphereDark, ShockComboVortex) are MeshEffects: they last mesh_life, and UT gives them
+	-- interpolations of how big they are (scale) and how much of them there is (fade), see interpolate below.
 	mesh_life = 1,
-	-- (how many times the mesh is the sphere of UT: the mesh is UT's own, Editor.TexPropSphere)
+	-- How many times the mesh (UT's own Editor.TexPropSphere) is the sphere of UT
 	sphere_scale = 1,
-	-- The tint of the bolts (they are blue and white in their texture)
+	-- The sphere is mostly see through, with a bright band of bolts (lightning that sweeps over it) that is all of it that shows. The tint
+	-- of the bolts, which are blue and white in their texture:
 	sphere_color = {
 		0.55,
 		0.65,
 		1,
 	},
+	-- How much of the bolts and of the vortex (the jagged ring of lines that faces the camera) show at the most, 1 being UT's
+	sphere_opacity = 1,
+	vortex_opacity = 2.5,
 	sphere_scale_interp = {
 		start = 0.1,
 		mid = 0.8,
@@ -194,30 +207,8 @@ local CONFIG = {
 		in_style = "linear",
 		out_style = "linear",
 	},
-	-- (UT's sphere is mostly see through, with its bright band of bolts: the body is a little of this, and what is behind it shows through)
-	sphere_fill_color = {
-		0.45,
-		0.3,
-		1,
-	},
-	sphere_fill_intensity = 0.2,
-	-- Which of the effects of the combo are drawn (the game's rings, shock_rifle.lua's, are not these)
-	combo_shown = {
-		core = true,
-		flares = true,
-		flash = true,
-		lights = true,
-		ring = true,
-		sphere_body = false,
-		sphere_bolts = true,
-		vortex = true,
-		wiggles = true,
-	},
-	-- How much of the vortex (the jagged ring of lines that faces the camera) shows at the most, 1 being UT's
-	vortex_opacity = 2.5,
-	-- How much of the sphere's bolts show at the most, 1 being UT's (the bolts are a strip of lightning that sweeps over the sphere: the blue band)
-	sphere_opacity = 1,
-	-- Turns a second of what spins (UT's mSpinRange is in the units of its own)
+
+	-- Turns a second of what spins (UT's mSpinRange is in units of its own)
 	spin = 0.3,
 }
 
@@ -225,7 +216,7 @@ local UNIT = CONFIG.meters_per_unit
 
 local fx = {}
 
--- (the colors the textures are not as they are)
+-- Colors for textures that are not used as they are
 local WHITE = {
 	1,
 	1,
@@ -255,8 +246,8 @@ local function random_spin()
 	return (math.random() * 2 - 1) * CONFIG.spin
 end
 
--- UT's MeshEffect.InterpInterp: a value that goes from start to mid over in_time of the life of the effect (0 to 1), stays there until
--- out_time, and goes to finish from there, by the style of each
+-- UT's MeshEffect.InterpInterp: a value that goes from start to mid over the first in_time of the effect's life (0 to 1), stays there until
+-- out_time, and goes to finish from there, in the style of each
 local function interpolate(interp, t)
 	local function style_value(style, u, from, to, going_in)
 		if style == "linear" then
@@ -283,7 +274,7 @@ local function interpolate(interp, t)
 	return style_value(interp.out_style, (t - interp.out_time) / (1 - interp.out_time), interp.mid, interp.finish, false)
 end
 
--- UT's RotRand(): a random pitch and a random yaw, and no roll (it is only with bRoll), which turns the pole of a sphere any way
+-- UT's RotRand(): a random pitch and a random yaw, and no roll, which turns the pole of a sphere any way
 local function random_rotation()
 	local pitch = Quaternion.axis_angle(Vector3(0, 1, 0), math.random() * math.pi * 2)
 	local yaw = Quaternion.axis_angle(Vector3(0, 0, 1), math.random() * math.pi * 2)
@@ -291,15 +282,18 @@ local function random_rotation()
 	return Quaternion.multiply(yaw, pitch)
 end
 
--- Muzzle flashes: follow gives where the muzzle is, scale how many meters a UT unit is there (the model of the gun is drawn
--- at a scale of its own)
+-- The brightness of a light that does not dim (a steady light of UT's)
+local function steady()
+	return 1
+end
 
--- (UT lights the weapon for 0.15 s with each shot, the beam's and the ball's: xWeaponAttachment.WeaponLight)
+-- Muzzle flashes. `follow` is a function that returns where the muzzle is, `scale` is how many meters a UT unit is there (the gun's model
+-- is drawn at a scale of its own).
+
+-- UT lights the weapon for 0.15 s with each shot, the beam's and the ball's (xWeaponAttachment.WeaponLight)
 local function fire_light(follow)
 	particles.light({
-		brightness = function ()
-			return 1
-		end,
+		brightness = steady,
 		color = CONFIG.light_color,
 		falloff = CONFIG.fire_light_falloff,
 		follow = follow,
@@ -348,7 +342,7 @@ function fx.ball_muzzle_flash(follow, scale)
 	end
 end
 
--- What a beam hits: the flares, the ring, the core and the scorch mark, where the surface faces the way normal says
+-- What a beam makes where it hits a surface that faces the way `normal` says: flares, a ring, a core and a scorch mark
 local function impact(position, normal)
 	local lifted = position + normal * (2 * UNIT)
 
@@ -397,7 +391,7 @@ local function impact(position, normal)
 	})
 end
 
--- The coil of the beam (ShockBeamCoil): pieces of a turning mesh along it
+-- The beam's coil (ShockBeamCoil): pieces of a turning mesh along it
 local function coil(start, stop)
 	local along = stop - start
 	local length = Vector3.length(along)
@@ -408,9 +402,9 @@ local function coil(start, stop)
 	local count = math.min(CONFIG.coil_max_pieces, math.ceil(length / piece_length))
 
 	for i = 0, count - 1 do
-		-- (the scale is made each time it is asked for: a vector can't be kept from one frame to the next)
+		-- (a vector can't be kept from one frame to the next, so the scale is made each time it is asked for)
 		local radius = CONFIG.coil_radius_scale * between(CONFIG.coil_size)
-		-- (the last piece is as long as what is left of the beam, so that it does not go on past where the beam ends: through a ball that it hits)
+		-- The last piece is only as long as what is left of the beam, so that the coil does not go on past the end of the beam
 		local piece_scale = CONFIG.coil_length_scale * math.min(1, (length - i * piece_length) / piece_length)
 
 		particles.mesh({
@@ -436,7 +430,7 @@ local function coil(start, stop)
 	end
 end
 
--- The beam, from start to stop, and what it hits there if it hits a surface (normal is the vector of no length if it doesn't)
+-- The beam, from `start` to `stop`, and what it hits there if it hits a surface (`normal` is the vector of no length if it doesn't)
 function fx.beam(start, stop, normal)
 	local along = stop - start
 	local length = Vector3.length(along)
@@ -465,13 +459,11 @@ function fx.beam(start, stop, normal)
 	end
 end
 
--- The flying ball: new_ball creates its long-lived sprites, update_ball spawns the short-lived ones (core, flares, sparks) every frame.
--- `follow` is a function that returns the ball's position, or nil once the ball is gone.
+-- The flying ball: new_ball makes the particles that last as long as the ball, update_ball makes the short-lived ones (the core, the flares
+-- and the sparks) as it goes. `follow` is a function that returns the ball's position, or nothing once the ball is gone.
 function fx.new_ball(follow)
 	particles.light({
-		brightness = function ()
-			return 1
-		end,
+		brightness = steady,
 		color = CONFIG.light_color,
 		falloff = CONFIG.ball_light_falloff,
 		follow = follow,
@@ -479,10 +471,6 @@ function fx.new_ball(follow)
 		life = CONFIG.ball_sprite_life,
 	})
 
-	-- (the projectile of UT is a sprite of its own: shock_core_low at DrawScale, all there as long as the ball lives)
-	-- (UT draws it with a light of its own that makes it solid; layers of it add up to the same)
-	-- (the texture of the ball is a dark disc with a rim and a bright middle, which on its own is seen as a ring: the sphere is filled with a
-	-- purple glow under it)
 	particles.sprite({
 		color = PURPLE,
 		fade_in = 0,
@@ -500,8 +488,6 @@ function fx.new_ball(follow)
 			follow = follow,
 			life = CONFIG.ball_sprite_life,
 			size = CONFIG.ball_sprite_size * UNIT,
-			-- (each layer turns its own way, so that the spikes of the texture move: made once and still, they stood out against the ones that
-			-- UT makes again every 0.35 s)
 			spin = (math.random() * 2 - 1) * CONFIG.ball_sprite_spin,
 			texture = "shock_core_low",
 		})
@@ -515,7 +501,7 @@ function fx.new_ball(follow)
 	}
 end
 
--- (false when the ball is gone)
+-- Returns false when the ball is gone
 function fx.update_ball(ball, dt)
 	local position = ball.follow()
 
@@ -560,8 +546,8 @@ function fx.update_ball(ball, dt)
 	while ball.spark_time <= 0 do
 		ball.spark_time = ball.spark_time + CONFIG.ball_spark_interval
 
-		-- (a spark of UT goes out from the ball at a velocity of its own, in each axis, which is scaled down to the opposite of it over its life
-		-- (VelocityScale), so that it goes out and comes back to the ball, which it moves with: it is where the ball is and how far it has gone)
+		-- A spark goes out from the ball in a random direction at a velocity that is scaled down to the opposite of itself over the spark's life
+		-- (VelocityScale), so it goes out and comes back to the ball, which it moves with
 		local velocity = Vector3Box(random_direction() * (CONFIG.ball_spark_speed * UNIT))
 		local started = Managers.time:time("game")
 
@@ -590,7 +576,7 @@ function fx.update_ball(ball, dt)
 	return true
 end
 
--- The ball hits something and goes off (ShockExplosionCore and ShockExplosion's dark sphere)
+-- The ball hits something and goes off: a light, the dark sphere (ShockExplosion) and the core (ShockExplosionCore)
 function fx.ball_explosion(position)
 	local life = CONFIG.explosion_sphere_life
 
@@ -604,7 +590,7 @@ function fx.ball_explosion(position)
 
 	particles.mesh({
 		additive = 0,
-		-- (UT fades it in until attenuation of its life and out after it)
+		-- (UT brings it in until explosion_sphere_attenuation of its life, and out after that)
 		brightness = function (fraction)
 			if fraction < CONFIG.explosion_sphere_attenuation then
 				return fraction / CONFIG.explosion_sphere_attenuation
@@ -636,96 +622,46 @@ function fx.ball_explosion(position)
 	})
 end
 
--- The two meshes of the combo, as UT has them (MeshEffect: how big they are and how much of them there is are interpolated over mesh_life; the
--- materials pan their textures themselves, see tools/asset_conversion/make_combo_materials.py):
---   ShockComboSphereDark: a sphere (turned any way) with the bolts that pan along it, which are all there is of it: the rest is see through
+-- The combo's two meshes, as UT has them (the materials pan their textures themselves, see tools/asset_conversion/make_combo_materials.py):
+--   ShockComboSphereDark: a sphere (turned any way) with the bolts that pan along it
 --   ShockComboVortex: a flat disc that always faces the camera, with lines that pan along it in a band
-local function combo_sphere_body(position)
-	if not CONFIG.combo_shown.sphere_body then
-		return
-	end
-
-	local life = CONFIG.mesh_life
-	local sphere_scale = CONFIG.sphere_scale_interp
-	local sphere_fade = CONFIG.sphere_fade_interp
-
-	-- (the body of the sphere: a little purple that what is behind it shows through; blended, not added: added to the flash and the core that
-	-- are in it, a solid color is blown out to white and pink)
-	particles.mesh({
-		additive = 0,
-		brightness = function (fraction)
-			return interpolate(sphere_fade, fraction)
-		end,
-		color = CONFIG.sphere_fill_color,
-		intensity = CONFIG.sphere_fill_intensity,
-		life = life,
-		position = position,
-		rotation = Quaternion.identity(),
-		scale = function (fraction)
-			return interpolate(sphere_scale, fraction) * CONFIG.sphere_scale
-		end,
-		texture = "shock_solid",
-		unit = "units/ut/fx/sphere",
-	})
-end
-
 local function combo_sphere_bolts(position)
-	if not CONFIG.combo_shown.sphere_bolts then
-		return
-	end
-
-	local life = CONFIG.mesh_life
-	local sphere_scale = CONFIG.sphere_scale_interp
-	local sphere_fade = CONFIG.sphere_fade_interp
-
 	particles.mesh({
 		additive = 1,
 		brightness = function (fraction)
-			return interpolate(sphere_fade, fraction) * CONFIG.sphere_opacity
+			return interpolate(CONFIG.sphere_fade_interp, fraction) * CONFIG.sphere_opacity
 		end,
 		color = CONFIG.sphere_color,
-		life = life,
+		life = CONFIG.mesh_life,
 		material = "units/ut/fx/fx_combo_sphere",
 		position = position,
 		rotation = random_rotation(),
 		scale = function (fraction)
-			return interpolate(sphere_scale, fraction) * CONFIG.sphere_scale
+			return interpolate(CONFIG.sphere_scale_interp, fraction) * CONFIG.sphere_scale
 		end,
 		unit = "units/ut/fx/sphere",
 	})
 end
 
 local function combo_vortex(position)
-	if not CONFIG.combo_shown.vortex then
-		return
-	end
-
-	local life = CONFIG.mesh_life
-	local vortex_scale = CONFIG.vortex_scale_interp
-	local vortex_fade = CONFIG.vortex_fade_interp
-
 	particles.mesh({
 		additive = 1,
 		brightness = function (fraction)
-			return interpolate(vortex_fade, fraction) * CONFIG.vortex_opacity
+			return interpolate(CONFIG.vortex_fade_interp, fraction) * CONFIG.vortex_opacity
 		end,
 		face_camera = true,
-		life = life,
+		life = CONFIG.mesh_life,
 		material = "units/ut/fx/fx_combo_vortex",
 		position = position,
 		rotation = Quaternion.identity(),
 		scale = function (fraction)
-			return interpolate(vortex_scale, fraction)
+			return interpolate(CONFIG.vortex_scale_interp, fraction)
 		end,
 		unit = "units/ut/fx/vortex",
 	})
 end
 
 local function combo_ring(position)
-	if not CONFIG.combo_shown.ring then
-		return
-	end
-
 	particles.sprite({
 		attenuation = CONFIG.combo_ring_attenuation,
 		color = WHITE,
@@ -739,10 +675,6 @@ local function combo_ring(position)
 end
 
 local function combo_core(position)
-	if not CONFIG.combo_shown.core then
-		return
-	end
-
 	particles.sprite({
 		attenuation = 0,
 		color = WHITE,
@@ -755,14 +687,6 @@ local function combo_core(position)
 end
 
 local function combo_lights(position)
-	if not CONFIG.combo_shown.lights then
-		return
-	end
-
-	local function steady()
-		return 1
-	end
-
 	particles.light({
 		brightness = steady,
 		color = CONFIG.light_color,
@@ -771,8 +695,6 @@ local function combo_lights(position)
 		life = CONFIG.combo_light_life,
 		position = position,
 	})
-
-	-- (the flash's own light is a more saturated purple)
 	particles.light({
 		brightness = steady,
 		color = CONFIG.combo_flash_light_color,
@@ -784,10 +706,6 @@ local function combo_lights(position)
 end
 
 local function combo_flash(position)
-	if not CONFIG.combo_shown.flash then
-		return
-	end
-
 	particles.sprite({
 		attenuation = 0.5,
 		color = WHITE,
@@ -800,12 +718,8 @@ local function combo_flash(position)
 	})
 end
 
+-- Flares come at combo_flare_rate until combo_flare_time, then two big ones come that shrink away
 local function combo_flares(position)
-	if not CONFIG.combo_shown.flares then
-		return
-	end
-
-	-- The flares come at a rate until combo_flare_time, then there are two big ones that shrink away
 	local flares = math.floor(CONFIG.combo_flare_rate * CONFIG.combo_flare_time)
 
 	for i = 0, flares - 1 do
@@ -838,12 +752,8 @@ local function combo_flares(position)
 end
 
 local function combo_wiggles(position)
-	if not CONFIG.combo_shown.wiggles then
-		return
-	end
-
 	for _ = 1, CONFIG.combo_wiggle_count do
-		-- (ShockComboWiggles is an emitter of PT_Disc, which UT draws square to the view, as a sprite: fixed to one way they were seen as lines)
+		-- (ShockComboWiggles' particles are discs that UT draws square to the view, as sprites: fixed in one direction they looked like lines)
 		particles.sprite({
 			attenuation = 0.3,
 			color = {
@@ -862,8 +772,8 @@ local function combo_wiggles(position)
 	end
 end
 
--- The combo (ShockCombo: the core, the ring, the flares, the flash and the wiggles, the sphere and the vortex, the mark on the floor), each of
--- which is shown or not by CONFIG.combo_shown
+-- The combo (ShockCombo): the ring, the core, the flash, the lights, the flares, the wiggles, the sphere and the vortex. (UT's ComboDecal, the
+-- mark on the floor, is not made: a flat disc only works on a flat floor, and the game's own effects that leave a mark are whole effects.)
 function fx.combo(position)
 	combo_ring(position)
 	combo_core(position)
@@ -871,7 +781,6 @@ function fx.combo(position)
 	combo_lights(position)
 	combo_flares(position)
 	combo_wiggles(position)
-	combo_sphere_body(position)
 	combo_sphere_bolts(position)
 	combo_vortex(position)
 end

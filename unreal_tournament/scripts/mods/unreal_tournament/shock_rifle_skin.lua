@@ -1,15 +1,15 @@
 local mod = get_mod("unreal_tournament")
 
--- Shock Rifle skin: the Shock Rifle is UT2004's, in the player's own first person view and in the hand of every character (it has no
--- other look: the Weapon Skins setting is for the other weapons, see utils.is_weapon_skin_enabled). The model, its placement and
--- animations, the bob and the third person are weapon_skin.lua's; this file is what is the Shock Rifle's: the chamber, the shots, the beam,
--- the ball, the explosion and the combo. The gameplay is shock_rifle.lua's, this only draws it, and is told what happens through the hook
--- tables of hooks.lua.
+-- The Shock Rifle's skin: the Shock Rifle is UT2004's, in the player's own first person view and in the hand of every character. It has no
+-- other look: the Weapon Skins setting is for the other weapons (see utils.is_weapon_skin_enabled).
 --
--- The animations are UT's (Pickup, Idle, Fire, AltFire), the chamber's gel flows (the rotation, the stretch, the pan and the colour of
--- ShockPowerShader, in the shader graph of the chamber), and the glow comes back after a shot as long as it is until the next one
--- (ShockRifle.RenderOverlays).
--- The game's effects of the Shock Rifle (the fireball, its explosion, the beam's trail) are not made.
+-- The model, its placement, its animations, the bob and the third person are weapon_skin.lua's. This file is what is the Shock Rifle's own:
+-- the chamber, the shots, the beam, the ball, the explosion and the combo. The gameplay is shock_rifle.lua's: this only draws it, and is told
+-- what happens through the hook tables of hooks.lua.
+--
+-- The animations are UT's (Pickup, Idle, Fire, AltFire). The chamber's gel flows as UT's does (the rotation, the stretch, the pan and the
+-- colour of ShockPowerShader, in the chamber's shader graph), and its glow comes back after a shot as the time to the next one goes
+-- (ShockRifle.RenderOverlays). The game's own effects of the staff (the fireball, its explosion, the beam's trail) are not made.
 --
 -- The assets were made with unreal_tournament/tools/asset_conversion.
 
@@ -21,25 +21,25 @@ local TEMPLATE_NAME = "staff_blast_beam_template_1"
 local SETTING_ID = "shock_rifle"
 
 local CONFIG = {
-	-- The chamber is a shader graph that makes the flowing gel itself (tools/asset_conversion/make_chamber_material.py); this is the
-	-- light of it when the glow is all there (it is lit by itself, as UT's shader has its diffuse as its self illumination)
+	-- The chamber is a shader graph that makes the flowing gel itself (tools/asset_conversion/make_chamber_material.py). This is how bright it
+	-- is when its glow is all there: it lights itself, as UT's shader uses its diffuse as its self illumination.
 	chamber_intensity = 1,
-	-- The bar of the heat between its thresholds (ShockControl's color, R192 G0 B255, the one of the liquid; the game's is orange)
+	-- The color of the overcharge bar between its thresholds (ShockControl's color, R192 G0 B255, the liquid's; the game's is orange)
 	overcharge_bar_color = { 192, 0, 255 },
-	shot_flash = 0.9, -- how much brighter the liquid is just after a shot, times how bright it is (it has settled by the time of the next shot)
-	vent_pulse_speed = 14, -- radians per second, of the brightness of the liquid while the heat is vented
+	shot_flash = 0.9, -- how much brighter the liquid is just after a shot, times how bright it is (it has settled by the next shot)
+	vent_pulse_speed = 14, -- radians per second, of the liquid's brightness while the heat is vented
 	vent_pulse_swing = 0.3, -- how much brighter and dimmer than it is, times that
-	-- Overheating (the game's overcharge explosion, which lasts a few seconds before it goes off): the liquid of the chamber pulses fast
-	-- between how bright it is and brighter, and the model is held sideways (alt_pose_* of the definition below)
+	-- Overheating (the game's overcharge explosion, which lasts a few seconds before it goes off): the liquid pulses fast between its
+	-- brightness and brighter, and the model is held sideways (the alt_pose_* of the definition below)
 	overheat_pulse_speed = 45, -- radians per second
 	overheat_brightness_min = 1, -- times how bright it is
 	overheat_brightness_max = 2.2,
 	alt_pose_speed = 6, -- how fast the model moves to the sideways pose and back, per second
-	-- Inspecting (UT2004 has no animation of it): the rifle is brought in and turned to show its side, and sways slowly while the key is held
+	-- Inspecting (UT2004 has no animation for it): the rifle is brought in and turned to show its side, and sways slowly while the key is held
 	inspect_pose_speed = 5, -- how fast the model moves to the pose and back, per second
 	inspect_sway = 5, -- degrees of yaw each way
 	inspect_sway_speed = 1.8, -- radians per second
-	projectile_sound_seconds = 1.795, -- how long the sound of the ball (ShockRifleProjectile) is
+	projectile_sound_seconds = 1.795, -- how long the ball's sound (ShockRifleProjectile) is
 	-- How fast each shot's animation plays (WeaponFire.FireAnimRate: ShockProjFire says 1.5, ShockBeamFire leaves the default 1)
 	fire_animation_rates = {
 		Fire = 1,
@@ -49,21 +49,17 @@ local CONFIG = {
 
 local skin_api
 
--- The balls of the Shock Rifle that are flying (of every player's, as this machine sees them): what makes up the ball of
--- UT is made as it goes (shock_rifle_skin_effects)
+-- The balls that are flying (every player's, as this machine sees them). What makes up a ball is made as it goes, see shock_rifle_skin_effects.
 local balls = {}
 
--- Every frame
-
--- The chamber: the glow
+-- Every frame: the chamber's glow
 local function update_chamber(skin, dt)
-	-- (a shock rifle in UT hasn't the glow of its chamber after it has fired, and gets it back as the time to the next shot goes: here the
-	-- liquid flashes brighter as the shot goes and settles back as the time to the next one goes, it does not go away)
+	-- In UT the chamber has no glow after a shot and gets it back as the time to the next shot goes. Here the liquid flashes brighter at the
+	-- shot and settles back as the time to the next one goes: it never goes away.
 	local since_shot = math.clamp((skin.cooldown_end - Managers.time:time("game")) / skin.cooldown, 0, 1)
-	-- (how bright the liquid is, which also pulses while the heat is vented and while the weapon overheats: the liquid is always all
-	-- there, it does not go away with a pulse or a shot)
 	local brightness = 1 + CONFIG.shot_flash * since_shot * since_shot
 
+	-- It also pulses while the heat is vented
 	if skin.venting then
 		skin.vent_time = skin.vent_time + dt
 		brightness = brightness * (1 + CONFIG.vent_pulse_swing * math.sin(skin.vent_time * CONFIG.vent_pulse_speed))
@@ -73,10 +69,10 @@ local function update_chamber(skin, dt)
 	local status_extension = first_person_extension and ScriptUnit.has_extension(first_person_extension.unit, "status_system")
 	local overheating = status_extension ~= nil and status_extension:is_overcharge_exploding()
 
-	-- (the model goes to the sideways pose while it overheats, and comes back after)
+	-- The model goes to the sideways pose while it overheats, and comes back after
 	skin.alt_pose = (skin.alt_pose or 0) + ((overheating and 1 or 0) - (skin.alt_pose or 0)) * math.min(1, CONFIG.alt_pose_speed * dt)
 
-	-- (the inspect pose, and the sway it turns the rifle with)
+	-- The inspect pose, and the sway the rifle is turned with in it
 	skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
 	skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
 	skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
@@ -86,7 +82,7 @@ local function update_chamber(skin, dt)
 
 		local pulse = 0.5 + 0.5 * math.sin(skin.overheat_time * CONFIG.overheat_pulse_speed)
 
-		-- (as bright as it gets, however long it has been since the last shot)
+		-- As bright as it gets, however long it has been since the last shot
 		brightness = CONFIG.overheat_brightness_min + (CONFIG.overheat_brightness_max - CONFIG.overheat_brightness_min) * pulse
 	else
 		skin.overheat_time = 0
@@ -102,7 +98,7 @@ local function update_balls(dt)
 	for i = #balls, 1, -1 do
 		local ball = balls[i]
 
-		-- (the sound of the ball is a loop in UT: it is played again as it ends, from where the ball is)
+		-- The ball's sound is a loop in UT: it is played again as it ends, from where the ball is
 		ball.sound_time = (ball.sound_time or 0) - dt
 
 		if ball.sound_time <= 0 then
@@ -133,12 +129,12 @@ skin_api = mod.weapon_skin.new({
 		animations = animations,
 	},
 	muzzle_node = "tip",
-	-- The model was converted at this many meters per UT unit (tools/asset_conversion/psk2bsi.py), the distance scale is how many
-	-- meters of forward are a UT unit of it in the view
+	-- The model was converted at this many meters per UT unit (tools/asset_conversion/psk2bsi.py). The distance scale is how many meters of
+	-- forward a UT unit of it is in the view.
 	model_meters_per_unit = 0.0125,
 	meters_per_unit = 0.01,
-	-- ShockRifle.uc. The field of view UT draws the weapon with, horizontal, is fitted to a screenshot of UT2004 (the features of
-	-- the model land within about 10 pixels of it) with small weapons off
+	-- From ShockRifle.uc. The (horizontal) field of view UT draws the weapon with is fitted to a screenshot of UT2004, with small weapons
+	-- off: the model's features land within about 10 pixels of it.
 	display_fov = 70,
 	field_of_view = math.rad(86.5),
 	draw_scale = 0.7,
@@ -146,19 +142,19 @@ skin_api = mod.weapon_skin.new({
 	offset_right = 8,
 	offset_up = -2,
 	pivot_pitch = -1000 / 65536 * 360, -- PlayerViewPivot, degrees (negative is down)
-	-- Weapon bob (Pawn.CheckBob and Pawn.WeaponBob): both the sway and how fast it goes follow the speed of the player, as they do in
-	-- UT (it is none when standing still). Bob is Pawn.Bob, which is 0.01 at most there: that is too much in this game's view, so a
-	-- third of it is used. The damping is ShockRifle.BobDamping
+	-- Weapon bob (Pawn.CheckBob and Pawn.WeaponBob): the sway and its speed both follow the player's speed, as in UT (there is none when
+	-- standing still). Bob is Pawn.Bob, 0.01 at most there, which is too much in this game's view: a third of it is used. The damping is
+	-- ShockRifle.BobDamping.
 	bob = 0.0035,
 	bob_damping = 1.8,
-	-- Held sideways while it overheats (a guess, /skin shock_rifle set alt_pose_roll <degrees> and the others to try)
+	-- Held sideways while it overheats (a guess: /skin shock_rifle set alt_pose_roll <degrees>, and the others, to try)
 	alt_pose_roll = 35,
 	alt_pose_right = 4,
 	alt_pose_forward = 0,
 	alt_pose_up = -3,
-	-- Held across the view, level, the muzzle to the left, as the game's own weapons are inspected: its left side is shown (a guess,
-	-- /skin shock_rifle set inspect_pose_yaw <degrees> and the others)
-	-- (further away, and its top turned to the view: from below it shows the underside, which UT's model has no faces for)
+	-- Held across the view, level, with the muzzle to the left, as the game's own weapons are inspected, which shows its left side (a guess:
+	-- /skin shock_rifle set inspect_pose_yaw <degrees>, and the others, to try). It is held further away, with its top turned to the view:
+	-- from below it shows its underside, which UT's model has no faces for.
 	inspect_pose_right = -2,
 	inspect_pose_forward = 6,
 	inspect_pose_up = 2,
@@ -197,8 +193,7 @@ skin_api = mod.weapon_skin.new({
 
 local third_person = skin_api.third_person
 
--- The shots (the animation plays as the action of the shot starts, and the glow comes back by the time the next one can
--- be fired)
+-- The shots: the animation plays as the shot's action starts, and the glow comes back by the time the next shot can be fired
 local function shot(action, new_action, animation_name)
 	local skin = skin_api.state()
 
@@ -211,8 +206,7 @@ local function shot(action, new_action, animation_name)
 
 	skin_api.play(animation_name, skin_api.animation_duration(animation_name) / CONFIG.fire_animation_rates[animation_name])
 
-	-- (the flash follows the muzzle of the model: it is the skin that follows the first person unit; in a third person view it
-	-- is the mesh in the character's hand)
+	-- The flash follows the model's muzzle: the skin follows the first person unit. In a third person view it is the mesh in the character's hand.
 	local owner_unit = action.owner_unit
 	local in_third_person = third_person.shows_weapon(owner_unit)
 	local function follow()
@@ -243,15 +237,15 @@ mod.charged_projectile_start_callbacks.shock_skin = function (action, new_action
 	end
 end
 
--- The beam, of the player who plays (from the muzzle of the model) and of the others (from the mesh in the hand)
+-- The beam, of the player who plays (from the model's muzzle) and of the others (from the mesh in the hand)
 mod.shock_beam_callbacks.skin = function (owner_unit, start_position, end_position, hit_normal)
 	local is_local = utils.is_local_player_unit(owner_unit)
 
 	if is_local and skin_api.state() and not third_person.shows_weapon(owner_unit) then
 		start_position = skin_api.muzzle_position() or start_position
 	else
-		-- (the character is seen holding the mesh: the beam starts at the end of its barrel, and the flash of the shot is made
-		-- here for the others, the player's own is made when the shot starts)
+		-- The character is seen holding the mesh: the beam starts at the end of its barrel. The shot's flash is made here for the others;
+		-- the player's own is made when the shot starts.
 		start_position = third_person.muzzle_position(owner_unit) or start_position
 
 		if not is_local then
@@ -262,15 +256,15 @@ mod.shock_beam_callbacks.skin = function (owner_unit, start_position, end_positi
 	end
 
 	if not is_local then
-		-- (the shot of the player is heard from the head, see take_over_sound)
+		-- (the player's own shot is heard from the head, see take_over_sound)
 		skin_api.play_sound_at("ut_shock_fire_3d", start_position)
 	end
 
 	fx.beam(start_position, end_position, hit_normal)
 end
 
--- The ball (every player's, on every machine): the game's own fireball is not started (the unit's effects are made by the
--- events the game sends it as the projectile is made), and the ball of UT is drawn where it is
+-- The ball (every player's, on every machine). The game's own fireball is not started: its effects are made by the flow events that the game
+-- sends the unit as the projectile is made, and those are filtered out. UT's ball is drawn where the projectile is.
 local FIREBALL_FLOW_EVENTS = {
 	lua_projectile_init = true,
 	lua_trail = true,
@@ -308,19 +302,19 @@ mod.init_callbacks.shock_ball = function (projectile)
 	skin_api.debug("ball")
 end
 
--- The shots of the player, which the game plays for the weapon and tells the others of (they hear them from the shot, see
--- shock_beam_callbacks and init_callbacks): the sounds of the staff are not played, the ones of UT are, from the head
+-- The player's own shots, which the game plays for the weapon and tells the others about (the others hear them from the shot, see
+-- shock_beam_callbacks and init_callbacks): the staff's sounds are not played, UT's are, from the head
 skin_api.take_over_sound("weapon_staff_fire_beam_end_shot", "ut_shock_fire")
 skin_api.take_over_sound("player_combat_weapon_staff_fireball_fire", "ut_shock_alt_fire")
 
--- The flash of the staff's fireball is in its animation: while the skin is on the animation of the ball's shot is not played on the player's
--- own first person unit (the model of the skin plays UT's, with its own flash). The same goes for the animation of venting the heat, which
--- has the puff of steam of the staff in it, coming off where the game's own staff is held, not off the model of the skin.
+-- The staff's fireball flash is in its animation, so while the skin is on, the ball's shot animation is not played on the player's own first
+-- person unit (the skin's model plays UT's, with its own flash). The same goes for the animation of venting the heat: it has the staff's
+-- puff of steam in it, which comes off where the game's staff is held, not off the skin's model.
 mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return skin_api.enabled() and (event == "attack_shoot_fireball" or event == "cooldown_start")
 end
 
-mod.skin_explosion_callbacks.ut_shock_ball_explosion =function (world, position)
+mod.skin_explosion_callbacks.ut_shock_ball_explosion = function (world, position)
 	if skin_api.enabled() then
 		fx.ball_explosion(position)
 		skin_api.play_sound_at("ut_shock_explosion_3d", position)
@@ -336,7 +330,7 @@ mod.skin_explosion_callbacks.ut_shock_combo_explosion = function (world, positio
 	end
 end
 
--- The inspect is the game's own action, held with the key: the rifle is turned to show its side as long as it lasts
+-- Inspecting is the game's own action, held with the key: the rifle is turned to show its side as long as it lasts
 mod.inspect_callbacks.shock_skin = function (action, started)
 	local skin = skin_api.state()
 
@@ -345,7 +339,7 @@ mod.inspect_callbacks.shock_skin = function (action, started)
 	end
 end
 
--- Venting the heat is the game's own action, a UT2004 Shock Rifle has none: the glow of the chamber pulses while it lasts
+-- Venting the heat is the game's own action (a UT2004 Shock Rifle has none): the chamber's glow pulses while it lasts
 mod.charge_start_callbacks.shock_skin = function (action, new_action)
 	local skin = skin_api.state()
 
@@ -367,8 +361,8 @@ mod.charge_finish_callbacks.shock_skin = function (action, reason)
 	end
 end
 
--- The bar of the heat is orange between its thresholds for every Sienna: with the Shock Rifle it is purple, as its liquid is (the colors
--- of the bar are the game's own, set each frame after it has worked out the fraction, so this follows it)
+-- The overcharge bar is orange between its thresholds for every Sienna: with the Shock Rifle it is purple, like its liquid. The bar's colors
+-- are the game's own, set every frame after it has worked out the fraction, so this follows it.
 mod:hook_safe(OverchargeBarUI, "set_charge_bar_fraction", function (self, player, _, min_threshold_fraction, max_threshold_fraction)
 	if not utils.is_weapon_enabled(SETTING_ID) or utils.wielded_template_name(player.player_unit) ~= TEMPLATE_NAME then
 		return
