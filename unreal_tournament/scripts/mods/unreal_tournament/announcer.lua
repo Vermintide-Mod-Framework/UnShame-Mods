@@ -63,9 +63,6 @@ local CONFIG = {
 	-- game's own weapon that has it)
 	flak_cannon = { setting = "flak_cannon", template = "blunderbuss_template_1" },
 	shock_rifle = { setting = "shock_rifle", template = "staff_blast_beam_template_1" },
-	-- A kill of the Shock Rifle is one of a combo if the enemy was in the combo when it went off and dies within this long after (the
-	-- death comes from the host a moment after the blast)
-	combo_window = 1, -- seconds
 	-- PlayerController.PlayRewardAnnouncement: an announcement that is not forced is not played if one has been played in the last second
 	unforced_gap = 1, -- seconds
 	-- The words (LocalMessage): where they are on the screen (PosY of each message, from the top), how long they last (Lifetime) and how they
@@ -88,7 +85,7 @@ local multi_kill_level = 0 -- UnrealPlayer.MultiKillLevel
 local last_kill_time = -math.huge
 local spree = 0 -- Pawn.Spree
 local call_out_kills = {} -- by name: how many of the kills of each
-local combo_victims = {} -- the enemies that were in a shock combo: { [unit] = when }
+local combo_victims = {} -- the enemies that were in a shock combo: { [unit] = true }
 local first_blood_taken = false
 local last_sound_time = -math.huge
 local playing_id -- of the announcement that is playing
@@ -221,10 +218,9 @@ local function is_killed_by(weapon, damage_data)
 	return item ~= nil and item.template == weapon.template and utils.is_weapon_enabled(weapon.setting)
 end
 
-local function is_combo_kill(victim_unit, damage_data, now)
-	local when = combo_victims[victim_unit]
-
-	return when ~= nil and now - when <= CONFIG.combo_window and is_killed_by(CONFIG.shock_rifle, damage_data)
+-- A kill of the Shock Rifle of an enemy that was in a combo (the damage of the combo is instant, there is no more to it)
+local function is_combo_kill(victim_unit, damage_data)
+	return combo_victims[victim_unit] == true and is_killed_by(CONFIG.shock_rifle, damage_data)
 end
 
 mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_data)
@@ -278,23 +274,15 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 		count_call_out("flak_monkey")
 	end
 
-	if is_combo_kill(victim_unit, damage_data, now) then
+	if is_combo_kill(victim_unit, damage_data) then
 		count_call_out("combo_whore")
 	end
 end)
 
--- The enemies that are in a shock combo as it goes off are marked, with the time (the Shock Rifle tells it: it makes the combo)
+-- The enemies that are in a shock combo as it goes off are marked (the Shock Rifle tells it: it makes the combo)
 mod.shock_combo_callbacks.announcer = function (_, units)
-	local now = Managers.time:time("game")
-
-	for unit, when in pairs(combo_victims) do
-		if now - when > CONFIG.combo_window then
-			combo_victims[unit] = nil
-		end
-	end
-
 	for unit in pairs(units) do
-		combo_victims[unit] = now
+		combo_victims[unit] = true
 	end
 end
 
