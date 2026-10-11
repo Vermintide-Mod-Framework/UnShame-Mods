@@ -67,7 +67,7 @@ local CONFIG = {
 	ball_spark_fade_in = 0.1,
 	ball_spark_fade_out = 0.3,
 	ball_spark_interval = 0.025,
-	ball_spark_speed = 70, -- units a second, in each axis, StartVelocityRange
+	ball_spark_speed = 400, -- units a second, in each axis (UT's StartVelocityRange is 70, which takes a spark about 6 units out: it is seen leaving the ball in UT, so it is further here)
 	-- ShockProjectile's explosion: ShockExplosionCore
 	explosion_core_size = 40,
 	explosion_core_growth = 100,
