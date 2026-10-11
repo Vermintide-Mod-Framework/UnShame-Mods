@@ -486,9 +486,17 @@ local function new(def)
 		local size = CONFIG.draw_scale / CONFIG.model_meters_per_unit
 		local rotation = Quaternion.multiply(pivot, Quaternion.from_elements(pose[1], pose[2], pose[3], pose[4]))
 
-		Unit.set_local_position(skin.unit, 0, position)
-		Unit.set_local_rotation(skin.unit, 0, rotation)
-		Unit.set_local_scale(skin.unit, 0, Vector3(size * across_scale, size * forward_scale, size * across_scale))
+		-- The model's pose is the turn, then the scale of the view (across, forward, across): a scale that is applied after the turn, in the
+		-- axes of the view (a node's own scale is applied before it, in the axes of the model, which is the same only when the model is
+		-- not turned: the Flak Cannon lies sideways and is turned by its pivot). The images of the model's axes are the columns of the turn,
+		-- each scaled by the view.
+		local function image(axis)
+			return Vector3(axis.x * across_scale, axis.y * forward_scale, axis.z * across_scale) * size
+		end
+
+		local right, forward, up = image(Quaternion.right(rotation)), image(Quaternion.forward(rotation)), image(Quaternion.up(rotation))
+
+		Unit.set_local_pose(skin.unit, 0, Matrix4x4(right.x, right.y, right.z, forward.x, forward.y, forward.z, up.x, up.y, up.z, position.x, position.y, position.z))
 
 		-- (the other bones are against the root's move, in the meters of the mesh)
 		for b = 2, bone_count do
