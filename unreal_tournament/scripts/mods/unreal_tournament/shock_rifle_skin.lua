@@ -183,7 +183,7 @@ skin_api = mod.weapon_skin.new({
 	-- (further away, and its top turned to the view: from below it shows the underside, which UT's model has no faces for)
 	inspect_pose_right = -2,
 	inspect_pose_forward = 6,
-	inspect_pose_up = 8,
+	inspect_pose_up = 5,
 	inspect_pose_roll = -20,
 	inspect_pose_pitch = 6,
 	inspect_pose_yaw = 65,
