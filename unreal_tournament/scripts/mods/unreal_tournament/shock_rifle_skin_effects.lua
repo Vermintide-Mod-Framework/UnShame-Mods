@@ -86,6 +86,14 @@ local CONFIG = {
 	explosion_light_intensity = 3,
 	explosion_light_falloff = 2.5,
 	explosion_light_life = 0.5,
+	-- The lights of the combo: ShockCombo's (on for the 0.9 s that it waits, hue 195 and saturation 100) and ShockComboFlash's (0.3 s, saturation
+	-- 180), both of LightRadius 10, which is 5 m
+	combo_flash_light_color = { 0.55, 0.2, 1 },
+	combo_light_intensity = 2,
+	combo_light_falloff = 5,
+	combo_light_life = 0.9,
+	combo_flash_light_intensity = 2,
+	combo_flash_light_life = 0.3,
 	-- ShockExplosion: a dark sphere (EffectsSphere144, 48 units in radius, drawn here with the smoother sphere of the combo, 126.7 in radius) that
 	-- is 0.6 of its size at first and grows 1.2 of it a second; it is at its darkest 0.3 of its life in
 	explosion_sphere_life = 0.6,
@@ -194,6 +202,7 @@ local CONFIG = {
 		core = true,
 		flares = true,
 		flash = true,
+		lights = true,
 		ring = true,
 		sphere_body = false,
 		sphere_bolts = true,
@@ -723,6 +732,35 @@ local function combo_core(position)
 	})
 end
 
+local function combo_lights(position)
+	if not CONFIG.combo_shown.lights then
+		return
+	end
+
+	local function steady()
+		return 1
+	end
+
+	particles.light({
+		brightness = steady,
+		color = CONFIG.light_color,
+		falloff = CONFIG.combo_light_falloff,
+		intensity = CONFIG.combo_light_intensity,
+		life = CONFIG.combo_light_life,
+		position = position,
+	})
+
+	-- (the flash's own light is a more saturated purple)
+	particles.light({
+		brightness = steady,
+		color = CONFIG.combo_flash_light_color,
+		falloff = CONFIG.combo_light_falloff,
+		intensity = CONFIG.combo_flash_light_intensity,
+		life = CONFIG.combo_flash_light_life,
+		position = position,
+	})
+end
+
 local function combo_flash(position)
 	if not CONFIG.combo_shown.flash then
 		return
@@ -808,6 +846,7 @@ function fx.combo(position)
 	combo_ring(position)
 	combo_core(position)
 	combo_flash(position)
+	combo_lights(position)
 	combo_flares(position)
 	combo_wiggles(position)
 	combo_sphere_body(position)
