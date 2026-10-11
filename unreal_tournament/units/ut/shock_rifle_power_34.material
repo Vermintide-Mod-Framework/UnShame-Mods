@@ -1,17 +1,9 @@
 material_contexts = {
 	surface_material = ""
 }
-parent_material = "core/stingray_renderer/shader_import/standard_transparent"
+parent_material = "units/ut/fx/particle"
 textures = {
-	color_map = "units/ut/shock_gel_34"
+	texture_map = "units/ut/shock_gel_34"
 }
 variables = {
-	use_color_map = {
-		type = "scalar"
-		value = 1
-	}
-	opacity = {
-		type = "scalar"
-		value = 1
-	}
 }

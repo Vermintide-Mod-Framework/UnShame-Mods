@@ -46,11 +46,11 @@ local CONFIG = {
 	-- Seconds in which one animation blends into the next
 	blend_time = 0.1,
 	-- The chamber: the frames of the gel (tools/asset_conversion/make_anim_assets.py), how long they take to go round, and the
-	-- opacity of the chamber when the glow is all there
+	-- light of the chamber when the glow is all there (it is lit by itself, as UT's shader has its diffuse as its self illumination)
 	gel_material_format = "units/ut/shock_rifle_power_%02d",
 	gel_frame_count = 200, -- (20 a second: the pan is slow, so the steps are smaller than a pixel)
 	gel_loop_seconds = 10,
-	chamber_opacity = 1,
+	chamber_intensity = 1,
 	vent_pulse_speed = 14, -- radians per second, of the glow while the heat is vented
 	-- Weapon bob (UT2004 Pawn.CheckBob and Pawn.WeaponBob, in UT units): both the sway and how fast it goes follow the speed
 	-- of the player, as they do in UT (it is none when standing still). Bob is Pawn.Bob, which is 0.01 at most there: that is
@@ -562,7 +562,7 @@ local function update_chamber(dt)
 		charge = charge * (0.55 + 0.45 * math.sin(skin.vent_time * CONFIG.vent_pulse_speed))
 	end
 
-	Material.set_scalar(Mesh.material(Unit.mesh(skin.unit, "g_shock_1"), "m_power"), "opacity", CONFIG.chamber_opacity * charge)
+	Material.set_scalar(Mesh.material(Unit.mesh(skin.unit, "g_shock_1"), "m_power"), "intensity", CONFIG.chamber_intensity * charge)
 end
 
 -- Weapon bob (Pawn.CheckBob, Pawn.WeaponBob), in UT units: (right, up)
