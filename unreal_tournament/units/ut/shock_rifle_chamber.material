@@ -252,7 +252,7 @@ shader = {
 		{
 			destination = {
 				connector_id = "c5823c75-4ae5-4c71-b070-315fa4d03e8e"
-				instance_id = "c0de0000-0000-4000-8000-000000000026"
+				instance_id = "c0de0000-0000-4000-8000-000000000027"
 			}
 			source = {
 				instance_id = "c0de0000-0000-4000-8000-000000000025"
@@ -260,7 +260,7 @@ shader = {
 		}
 		{
 			destination = {
-				connector_id = "f72597c4-7487-419a-affb-df690e6582e1"
+				connector_id = "242d1648-a626-445b-9534-bccec094112f"
 				instance_id = "c0de0000-0000-4000-8000-000000000027"
 			}
 			source = {
@@ -269,7 +269,7 @@ shader = {
 		}
 		{
 			destination = {
-				connector_id = "6cebb808-14e4-45d6-9816-3838b1f6f4c7"
+				connector_id = "c5823c75-4ae5-4c71-b070-315fa4d03e8e"
 				instance_id = "c0de0000-0000-4000-8000-000000000028"
 			}
 			source = {
@@ -278,11 +278,29 @@ shader = {
 		}
 		{
 			destination = {
-				connector_id = "447b3fe2-c820-4511-a923-b38b0f6c9fe6"
+				connector_id = "f72597c4-7487-419a-affb-df690e6582e1"
 				instance_id = "c0de0000-0000-4000-8000-000000000029"
 			}
 			source = {
 				instance_id = "c0de0000-0000-4000-8000-000000000028"
+			}
+		}
+		{
+			destination = {
+				connector_id = "6cebb808-14e4-45d6-9816-3838b1f6f4c7"
+				instance_id = "c0de0000-0000-4000-8000-000000000030"
+			}
+			source = {
+				instance_id = "c0de0000-0000-4000-8000-000000000029"
+			}
+		}
+		{
+			destination = {
+				connector_id = "447b3fe2-c820-4511-a923-b38b0f6c9fe6"
+				instance_id = "c0de0000-0000-4000-8000-000000000031"
+			}
+			source = {
+				instance_id = "c0de0000-0000-4000-8000-000000000030"
 			}
 		}
 		{
@@ -291,7 +309,7 @@ shader = {
 				instance_id = "c0de0000-0000-4000-8000-000000000001"
 			}
 			source = {
-				instance_id = "c0de0000-0000-4000-8000-000000000029"
+				instance_id = "c0de0000-0000-4000-8000-000000000031"
 			}
 		}
 		{
@@ -422,7 +440,7 @@ shader = {
 		{
 			connector_id = "242d1648-a626-445b-9534-bccec094112f"
 			id = "c0de0000-0000-4000-8000-000000001014"
-			instance_id = "c0de0000-0000-4000-8000-000000000026"
+			instance_id = "c0de0000-0000-4000-8000-000000000028"
 			value = [
 				1.5
 			]
@@ -430,7 +448,7 @@ shader = {
 		{
 			connector_id = "0806db0d-2c4a-43ca-99cc-f5a2f036a8e8"
 			id = "c0de0000-0000-4000-8000-000000001015"
-			instance_id = "c0de0000-0000-4000-8000-000000000027"
+			instance_id = "c0de0000-0000-4000-8000-000000000029"
 			value = [
 				0.12
 			]
@@ -438,7 +456,7 @@ shader = {
 		{
 			connector_id = "e16267f4-8b4e-4079-b13d-f380cfd386ec"
 			id = "c0de0000-0000-4000-8000-000000001016"
-			instance_id = "c0de0000-0000-4000-8000-000000000029"
+			instance_id = "c0de0000-0000-4000-8000-000000000031"
 			value = [
 				2.2
 			]
@@ -943,6 +961,17 @@ shader = {
 				0
 			]
 			export = {
+				material_variable = {
+					display_name = "Brightness"
+					name = "brightness"
+					type = "float"
+					ui = {
+						max = 100
+						min = 0
+						step = 0.001
+					}
+					value = 1
+				}
 			}
 			id = "c0de0000-0000-4000-8000-000000000026"
 			options = [
@@ -953,7 +982,8 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/shader_nodes/mul"
+			title = "Brightness"
+			type = "core/shader_nodes/material_variable"
 		}
 		{
 			content_size = [
@@ -971,7 +1001,7 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/shader_nodes/add"
+			type = "core/shader_nodes/mul"
 		}
 		{
 			content_size = [
@@ -989,7 +1019,7 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/shader_nodes/saturate"
+			type = "core/shader_nodes/mul"
 		}
 		{
 			content_size = [
@@ -1007,6 +1037,42 @@ shader = {
 			]
 			samplers = {
 			}
+			type = "core/shader_nodes/add"
+		}
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+			}
+			id = "c0de0000-0000-4000-8000-000000000030"
+			options = [
+			]
+			position = [
+				1500
+				800
+			]
+			samplers = {
+			}
+			type = "core/shader_nodes/saturate"
+		}
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+			}
+			id = "c0de0000-0000-4000-8000-000000000031"
+			options = [
+			]
+			position = [
+				0
+				1000
+			]
+			samplers = {
+			}
 			type = "core/shader_nodes/power"
 		}
 	]
@@ -1015,6 +1081,10 @@ shader = {
 textures = {
 }
 variables = {
+	brightness = {
+		type = "scalar"
+		value = 1
+	}
 	intensity = {
 		type = "scalar"
 		value = 1

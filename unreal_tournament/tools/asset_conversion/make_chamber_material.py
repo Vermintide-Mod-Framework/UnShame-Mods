@@ -143,10 +143,16 @@ add_node('blend', 'core/shader_nodes/lerp')
 connect('modulated', 'blend', IN_LERP_A)
 connect('glass', 'blend', IN_LERP_B, 'rgb')
 connect('glass_weight', 'blend', IN_LERP_W)
+# (the "brightness": how bright the liquid is, which the skin makes pulse while the weapon overheats or vents, without the liquid going
+# away: it is not the intensity, which is how much of it there is)
+add_node('brightness', 'core/shader_nodes/material_variable', export=variable('brightness', 'Brightness', 'float', 1), title='Brightness')
+add_node('brightened', 'core/shader_nodes/mul')
+connect('blend', 'brightened', IN_MUL_A)
+connect('brightness', 'brightened', IN_MUL_B)
 # UT does its sums on gamma colours and shows them as they are: the result (at most 1) is made the light that is shown as it
 # (the reflection of the cube map, which UT adds, is not here: a gain and a lift in its place, for the light it adds)
 add_node('gain', 'core/shader_nodes/mul')
-connect('blend', 'gain', IN_MUL_A)
+connect('brightened', 'gain', IN_MUL_A)
 constant('gain', IN_MUL_B, 1.5)
 add_node('lift', 'core/shader_nodes/add')
 connect('gain', 'lift', IN_ADD_A)
@@ -183,7 +189,7 @@ for n, (node_id, node_type, options, export, samplers, title) in enumerate(nodes
     if title:
         text += '\t\t\ttitle = "%s"\n' % title
     text += '\t\t\ttype = "%s"\n\t\t}\n' % node_type
-text += '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n}\n'
+text += '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tbrightness = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n}\n'
 open(UNITS + '/shock_rifle_chamber.material', 'w', newline='\n').write(text)
 # (the textures are bound by a material derived from the graph, as the materials of the effects are)
 open(UNITS + '/shock_rifle_power.material', 'w', newline='\n').write('''material_contexts = {

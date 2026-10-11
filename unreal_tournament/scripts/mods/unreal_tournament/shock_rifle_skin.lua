@@ -24,12 +24,13 @@ local CONFIG = {
 	-- The chamber is a shader graph that makes the flowing gel itself (tools/asset_conversion/make_chamber_material.py); this is the
 	-- light of it when the glow is all there (it is lit by itself, as UT's shader has its diffuse as its self illumination)
 	chamber_intensity = 1,
-	vent_pulse_speed = 14, -- radians per second, of the glow while the heat is vented
-	-- Overheating (the game's overcharge explosion, which lasts a few seconds before it goes off): the chamber pulses fast and bright, and the
-	-- model is held sideways (alt_pose_* of the definition below)
+	vent_pulse_speed = 14, -- radians per second, of the brightness of the liquid while the heat is vented
+	vent_pulse_swing = 0.3, -- how much brighter and dimmer than it is, times that
+	-- Overheating (the game's overcharge explosion, which lasts a few seconds before it goes off): the liquid of the chamber pulses fast
+	-- between how bright it is and brighter, and the model is held sideways (alt_pose_* of the definition below)
 	overheat_pulse_speed = 45, -- radians per second
-	overheat_pulse_floor = 0.2, -- how dim the glow gets between pulses
-	overheat_peak = 1.6, -- how bright it is at a pulse, times the glow when all there
+	overheat_brightness_min = 1, -- times how bright it is
+	overheat_brightness_max = 2.2,
 	alt_pose_speed = 6, -- how fast the model moves to the sideways pose and back, per second
 	-- Inspecting (UT2004 has no animation of it): the rifle is brought in and turned to show its side, and sways slowly while the key is held
 	inspect_pose_speed = 5, -- how fast the model moves to the pose and back, per second
@@ -55,10 +56,13 @@ local balls = {}
 local function update_chamber(skin, dt)
 	-- (a shock rifle in UT hasn't the glow of its chamber after it has fired, and gets it back as the time to the next shot goes)
 	local charge = 1 - math.clamp((skin.cooldown_end - Managers.time:time("game")) / skin.cooldown, 0, 1)
+	-- (how bright the liquid is, which pulses while the heat is vented and while the weapon overheats: it is not how much of it there is,
+	-- which is the charge, the liquid does not go away with a pulse)
+	local brightness = 1
 
 	if skin.venting then
 		skin.vent_time = skin.vent_time + dt
-		charge = charge * (0.55 + 0.45 * math.sin(skin.vent_time * CONFIG.vent_pulse_speed))
+		brightness = 1 + CONFIG.vent_pulse_swing * math.sin(skin.vent_time * CONFIG.vent_pulse_speed)
 	end
 
 	local first_person_extension = skin_api.local_first_person()
@@ -78,12 +82,17 @@ local function update_chamber(skin, dt)
 
 		local pulse = 0.5 + 0.5 * math.sin(skin.overheat_time * CONFIG.overheat_pulse_speed)
 
-		charge = CONFIG.overheat_peak * (CONFIG.overheat_pulse_floor + (1 - CONFIG.overheat_pulse_floor) * pulse)
+		-- (all of the liquid is there, however long it has been since the last shot)
+		charge = 1
+		brightness = CONFIG.overheat_brightness_min + (CONFIG.overheat_brightness_max - CONFIG.overheat_brightness_min) * pulse
 	else
 		skin.overheat_time = 0
 	end
 
-	Material.set_scalar(Mesh.material(Unit.mesh(skin.unit, "g_shock_1"), "m_power"), "intensity", CONFIG.chamber_intensity * charge)
+	local material = Mesh.material(Unit.mesh(skin.unit, "g_shock_1"), "m_power")
+
+	Material.set_scalar(material, "intensity", CONFIG.chamber_intensity * charge)
+	Material.set_scalar(material, "brightness", brightness)
 end
 
 local function update_balls(dt)
