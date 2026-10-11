@@ -161,6 +161,16 @@ local CONFIG = {
 		1,
 	},
 	sphere_fill_intensity = 0.2,
+	-- Which of the effects of the combo are drawn (the game's rings, shock_rifle.lua's, are not these)
+	combo_shown = {
+		core = false,
+		flares = false,
+		flash = false,
+		scorch = false,
+		sphere = false,
+		vortex = false,
+		wiggles = false,
+	},
 	-- How much of the vortex (the jagged ring of lines that faces the camera) shows at the most, 1 being UT's
 	vortex_opacity = 0.35,
 	-- How much of the sphere's bolts show at the most, 1 being UT's (the bolts are a strip of lightning that sweeps over the sphere: the blue band)
@@ -521,12 +531,14 @@ end
 -- materials pan their textures themselves, see tools/asset_conversion/make_combo_materials.py):
 --   ShockComboSphereDark: a sphere (turned any way) with the bolts that pan along it, which are all there is of it: the rest is see through
 --   ShockComboVortex: a flat disc that always faces the camera, with lines that pan along it in a band
-local function combo_meshes(position)
+local function combo_sphere(position)
+	if not CONFIG.combo_shown.sphere then
+		return
+	end
+
 	local life = CONFIG.mesh_life
 	local sphere_scale = CONFIG.sphere_scale_interp
 	local sphere_fade = CONFIG.sphere_fade_interp
-	local vortex_scale = CONFIG.vortex_scale_interp
-	local vortex_fade = CONFIG.vortex_fade_interp
 
 	-- (the body of the sphere: a little purple that what is behind it shows through; blended, not added: added to the flash and the core that
 	-- are in it, a solid color is blown out to white and pink)
@@ -560,6 +572,17 @@ local function combo_meshes(position)
 		end,
 		unit = "units/ut/fx/sphere",
 	})
+end
+
+local function combo_vortex(position)
+	if not CONFIG.combo_shown.vortex then
+		return
+	end
+
+	local life = CONFIG.mesh_life
+	local vortex_scale = CONFIG.vortex_scale_interp
+	local vortex_fade = CONFIG.vortex_fade_interp
+
 	particles.mesh({
 		additive = 0,
 		brightness = function (fraction)
@@ -579,6 +602,10 @@ end
 
 -- The mark of the combo on the floor (ComboDecal) if there is a floor below it
 local function combo_scorch(position)
+	if not CONFIG.combo_shown.scorch then
+		return
+	end
+
 	local world = Managers.world:world("level_world")
 	local hit, hit_position, _, normal = PhysicsWorld.immediate_raycast(World.get_data(world, "physics_world"), position, Vector3(0, 0, -1), CONFIG.combo_scorch_reach * UNIT, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
 
@@ -600,8 +627,11 @@ local function combo_scorch(position)
 	})
 end
 
--- The combo (ShockCombo: the core, the ring, the flares, the flash and the wiggles, the sphere and the vortex, the mark on the floor)
-function fx.combo(position)
+local function combo_core(position)
+	if not CONFIG.combo_shown.core then
+		return
+	end
+
 	particles.sprite({
 		attenuation = 0,
 		color = WHITE,
@@ -611,6 +641,13 @@ function fx.combo(position)
 		size = CONFIG.combo_core_size * UNIT,
 		texture = "shock_core",
 	})
+end
+
+local function combo_flash(position)
+	if not CONFIG.combo_shown.flash then
+		return
+	end
+
 	particles.sprite({
 		attenuation = 0.5,
 		color = WHITE,
@@ -621,6 +658,12 @@ function fx.combo(position)
 		spin = random_spin(),
 		texture = "shock_combo_flash",
 	})
+end
+
+local function combo_flares(position)
+	if not CONFIG.combo_shown.flares then
+		return
+	end
 
 	-- The flares come at a rate until combo_flare_time, then there are two big ones that shrink away
 	local flares = math.floor(CONFIG.combo_flare_rate * CONFIG.combo_flare_time)
@@ -652,6 +695,12 @@ function fx.combo(position)
 			texture = "shock_flare_a",
 		})
 	end
+end
+
+local function combo_wiggles(position)
+	if not CONFIG.combo_shown.wiggles then
+		return
+	end
 
 	for _ = 1, CONFIG.combo_wiggle_count do
 		-- (ShockComboWiggles is an emitter of discs (PT_Disc): flat, all facing the same way (UT's x, the emitter is not turned), not sprites that face
@@ -672,8 +721,17 @@ function fx.combo(position)
 			velocity = random_direction() * (CONFIG.combo_wiggle_speed * UNIT),
 		})
 	end
+end
 
-	combo_meshes(position)
+-- The combo (ShockCombo: the core, the ring, the flares, the flash and the wiggles, the sphere and the vortex, the mark on the floor), each of
+-- which is shown or not by CONFIG.combo_shown
+function fx.combo(position)
+	combo_core(position)
+	combo_flash(position)
+	combo_flares(position)
+	combo_wiggles(position)
+	combo_sphere(position)
+	combo_vortex(position)
 	combo_scorch(position)
 end
 
