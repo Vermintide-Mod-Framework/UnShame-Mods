@@ -3,8 +3,7 @@ local mod = get_mod("unreal_tournament")
 -- The effects of the Shock Rifle's skin: what UT2004's own shows (XEffects: ShockMuzFlash, ShockBeamEffect, ShockImpact*,
 -- ShockBall, ShockExplosionCore, ShockCombo*), drawn with the particles of skin_particles.lua. UT's sizes, speeds and times are
 -- used as they are, in UT units; the textures are the game's own, converted (tools/asset_conversion/make_fx_assets.py).
--- The meshes of the effects are the coil of the beam and the dark sphere of the combo (units/ut/fx, tools/asset_conversion/make_fx_meshes.py);
--- the vortex of the combo is not made, it is a flat disc that is seen as rings.
+-- The meshes of the effects are the coil of the beam and the sphere and the vortex of the combo (units/ut/fx, tools/asset_conversion/make_fx_meshes.py).
 --
 -- The functions are called by shock_rifle_skin.lua, which knows when and where.
 
@@ -116,7 +115,9 @@ local CONFIG = {
 	-- them there is that UT gives them) and ComboDecal (the mark on the floor, as big as combo_scorch_size, if there is a floor within
 	-- combo_scorch_reach below the combo)
 	mesh_life = 1,
-	sphere_scale = 3.2, -- how many times the mesh (EffectsSphere144, 47 units in radius) is the sphere of UT (Editor.TexPropSphere, 128)
+	-- (how many times the mesh (EffectsSphere144, 47 units in radius) is the sphere of UT (Editor.TexPropSphere, which is not in the export: 128
+	-- units in radius, a guess))
+	sphere_scale = 2.73,
 	sphere_scale_interp = {
 		start = 0.1,
 		mid = 0.8,
@@ -135,20 +136,24 @@ local CONFIG = {
 		in_style = "linear",
 		out_style = "linear",
 	},
-	sphere_intensity = 1.8,
-	sphere_color = {
-		0.55,
-		0.65,
-		1,
+	vortex_scale_interp = {
+		start = 0.4,
+		mid = 1.6,
+		finish = 0.2,
+		in_time = 0.4,
+		out_time = 0.4,
+		in_style = "inv_exp",
+		out_style = "inv_exp",
 	},
-	-- (UT's sphere is mostly see through, with its bright band of bolts: the body is a little of this, and what is behind it shows through)
-	sphere_fill_color = {
-		0.45,
-		0.3,
-		1,
+	vortex_fade_interp = {
+		start = 0,
+		mid = 1,
+		finish = 0,
+		in_time = 0,
+		out_time = 0.9,
+		in_style = "linear",
+		out_style = "linear",
 	},
-	sphere_fill_intensity = 0.2,
-	sphere_spin = 0.6, -- turns a second about an axis of any kind (the bolts of its texture are a strip that UT pans across it)
 	combo_scorch_size = 260,
 	combo_scorch_life = 6,
 	combo_scorch_reach = 120,
@@ -501,51 +506,46 @@ function fx.ball_explosion(position)
 	})
 end
 
--- The sphere of the combo (ShockComboSphereDark, a MeshEffect): it grows and goes. (There are only spheres in UT's combo, no rings: the
--- vortex mesh it also has is a flat disc that was seen as rings, and is not made.)
+-- The two meshes of the combo, as UT has them (MeshEffect: how big they are and how much of them there is are interpolated over mesh_life; the
+-- materials pan their textures themselves, see tools/asset_conversion/make_combo_materials.py):
+--   ShockComboSphereDark: a sphere (turned any way) with the bolts that pan along it, which are all there is of it: the rest is see through
+--   ShockComboVortex: a flat disc that always faces the camera, with lines that pan along it in a band
 local function combo_meshes(position)
 	local life = CONFIG.mesh_life
 	local sphere_scale = CONFIG.sphere_scale_interp
 	local sphere_fade = CONFIG.sphere_fade_interp
+	local vortex_scale = CONFIG.vortex_scale_interp
+	local vortex_fade = CONFIG.vortex_fade_interp
 
-	-- (the texture of the bolts is a strip, which on the sphere is seen as a ring about it: the whole sphere is purple, the bolts are over it)
-	-- (blended, not added: added to the flash and the core that are in it, a solid color is blown out to white and pink)
 	particles.mesh({
 		additive = 0,
 		brightness = function (fraction)
 			return interpolate(sphere_fade, fraction)
 		end,
-		color = CONFIG.sphere_fill_color,
-		intensity = CONFIG.sphere_fill_intensity,
 		life = life,
-		position = position,
-		rotation = Quaternion.identity(),
-		scale = function (fraction)
-			return interpolate(sphere_scale, fraction) * CONFIG.sphere_scale
-		end,
-		texture = "shock_solid",
-		unit = "units/ut/fx/sphere",
-	})
-
-	particles.mesh({
-		additive = 1,
-		brightness = function (fraction)
-			return interpolate(sphere_fade, fraction)
-		end,
-		color = CONFIG.sphere_color,
-		intensity = CONFIG.sphere_intensity,
-		life = life,
+		material = "units/ut/fx/fx_combo_sphere",
 		position = position,
 		rotation = random_rotation(),
 		scale = function (fraction)
 			return interpolate(sphere_scale, fraction) * CONFIG.sphere_scale
 		end,
-		spin = CONFIG.sphere_spin,
-		spin_axis = random_direction(),
-		texture = "shock_electricity",
 		unit = "units/ut/fx/sphere",
 	})
-
+	particles.mesh({
+		additive = 0,
+		brightness = function (fraction)
+			return interpolate(vortex_fade, fraction)
+		end,
+		face_camera = true,
+		life = life,
+		material = "units/ut/fx/fx_combo_vortex",
+		position = position,
+		rotation = Quaternion.identity(),
+		scale = function (fraction)
+			return interpolate(vortex_scale, fraction)
+		end,
+		unit = "units/ut/fx/vortex",
+	})
 end
 
 -- The mark of the combo on the floor (ComboDecal) if there is a floor below it

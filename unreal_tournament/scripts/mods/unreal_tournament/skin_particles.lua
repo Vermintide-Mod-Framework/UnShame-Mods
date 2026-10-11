@@ -6,7 +6,7 @@ local mod = get_mod("unreal_tournament")
 -- adds its color), moved, turned, scaled and faded every frame. The units are reused.
 --
 -- A spec is a table (positions are in meters, the colors are 0 to 1, the times are seconds):
---   texture: the name of the texture (shock_core, ...)
+--   texture: the name of the texture (shock_core, ...); material: the name of a material of its own instead (a mesh's)
 --   life: how long it lasts
 --   size, growth: the size of the sprite and how much it changes in a second (a negative growth shrinks it)
 --   color: { r, g, b }, intensity: the most light it gives (1 is the texture as it is)
@@ -84,7 +84,7 @@ local function add(kind, spec)
 
 	local world = Managers.world:world("level_world")
 	local entry = acquire(world, spec.unit or UNIT_NAME)
-	local material = MATERIAL_FORMAT:format(spec.texture)
+	local material = spec.material or MATERIAL_FORMAT:format(spec.texture)
 
 	if entry.material ~= material then
 		entry.material = material
