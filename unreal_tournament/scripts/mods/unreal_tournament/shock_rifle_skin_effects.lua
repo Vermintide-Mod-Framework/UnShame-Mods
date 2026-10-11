@@ -135,18 +135,19 @@ local CONFIG = {
 		in_style = "linear",
 		out_style = "linear",
 	},
-	sphere_intensity = 1,
+	sphere_intensity = 1.8,
 	sphere_color = {
 		0.55,
 		0.65,
 		1,
 	},
+	-- (UT's sphere is mostly see through, with its bright band of bolts: the body is a little of this, and what is behind it shows through)
 	sphere_fill_color = {
-		0.4,
-		0.15,
-		0.9,
+		0.45,
+		0.3,
+		1,
 	},
-	sphere_fill_intensity = 0.6, -- how much of the sphere is the color, the rest is what is behind it
+	sphere_fill_intensity = 0.2,
 	sphere_spin = 0.6, -- turns a second about an axis of any kind (the bolts of its texture are a strip that UT pans across it)
 	combo_scorch_size = 260,
 	combo_scorch_life = 6,
