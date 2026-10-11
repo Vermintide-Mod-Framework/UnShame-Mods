@@ -210,10 +210,16 @@ register_explosion_template("ut_shock_combo_explosion", {
 -- The hit effect of the beam: what it does to what it hits (the sound, the particles and the decals of the material, by the material of
 -- what is hit) is nothing, the skin draws the impact. The game wants a name for it when the beam hits something that is not an enemy's (a
 -- wall, a prop, a training dummy), and sends it to the other peers by its number in a lookup of names, which is full (a name added to it is
--- an error: too many entries), so the effect with this name is not played, nor sent (it is the one that sends that looks the name up).
+-- an error: too many entries), so the effect with this name is not played, nor sent (it is the one that sends that looks the name up). The
+-- same goes for what is hit that is an enemy (the "skinned" ones: flesh, armor), which has its own pair of functions.
 local NO_HIT_EFFECT = "ut_shock_impact"
 
-for _, function_name in ipairs({ "play_surface_material_effects", "remote_play_surface_material_effects" }) do
+for _, function_name in ipairs({
+	"play_surface_material_effects",
+	"remote_play_surface_material_effects",
+	"play_skinned_surface_material_effects",
+	"remote_play_skinned_surface_material_effects",
+}) do
 	mod:hook(EffectHelper, function_name, function (func, effect_name, ...)
 		if effect_name == NO_HIT_EFFECT then
 			return
