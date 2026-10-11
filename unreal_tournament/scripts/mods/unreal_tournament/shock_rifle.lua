@@ -50,7 +50,7 @@ local CONFIG = {
 	-- The implosion rings: particle effects can't be played backwards and their scale can't be
 	-- changed while they play, so the implosion is a series of rings, each created smaller than
 	-- the last, spread over implosion_duration. The scales are relative to the effect's normal size.
-	implosion_ring_count = 4,
+	implosion_ring_count = 2, -- (the effect's opacity can't be set, the more of them there are, the less see through the rings are)
 	implosion_ring_start_scale = 1.5,
 	implosion_ring_end_scale = 0.3,
 	combo_ring_effect = "fx/chr_kruber_shockwave",
