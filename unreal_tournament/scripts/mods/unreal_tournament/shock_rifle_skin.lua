@@ -623,7 +623,6 @@ function place(fp)
 	Unit.set_local_position(skin.unit, 0, position)
 	Unit.set_local_rotation(skin.unit, 0, rotation)
 	Unit.set_local_scale(skin.unit, 0, Vector3(size * across_scale, size * forward_scale, size * across_scale))
-	World.update_unit(skin.world, skin.unit)
 
 	-- (a UT unit of the model, across: what is drawn on it is as big as the model is)
 	skin.unit_scale = CONFIG.draw_scale * across_scale

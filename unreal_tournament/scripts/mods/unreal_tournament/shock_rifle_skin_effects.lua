@@ -50,6 +50,7 @@ local CONFIG = {
 	-- ShockBall: the emitters of the ball: the core, the flares, and the sparks that gather on it
 	ball_sprite_size = 90, -- ShockProjectile: DrawScale 0.7 of the 128 units of the texture
 	ball_sprite_life = 10, -- its LifeSpan
+	ball_sprite_layers = 3,
 	-- (FadeInEndTime and FadeOutStartTime of each: it is all there between, and the next core comes as one ends)
 	ball_core_size = 55,
 	ball_core_life = 0.35,
@@ -250,14 +251,17 @@ end
 -- The ball: what makes it up, made as it goes. A ball is { follow, ... }, follow gives where the ball is (nothing once it is gone).
 function fx.new_ball(follow)
 	-- (the projectile of UT is a sprite of its own: shock_core_low at DrawScale, all there as long as the ball lives)
-	particles.sprite({
-		color = WHITE,
-		fade_in = 0,
-		follow = follow,
-		life = CONFIG.ball_sprite_life,
-		size = CONFIG.ball_sprite_size * UNIT,
-		texture = "shock_core_low",
-	})
+	-- (UT draws it with a light of its own that makes it solid; layers of it add up to the same)
+	for _ = 1, CONFIG.ball_sprite_layers do
+		particles.sprite({
+			color = WHITE,
+			fade_in = 0,
+			follow = follow,
+			life = CONFIG.ball_sprite_life,
+			size = CONFIG.ball_sprite_size * UNIT,
+			texture = "shock_core_low",
+		})
+	end
 
 	return {
 		core_time = 0,

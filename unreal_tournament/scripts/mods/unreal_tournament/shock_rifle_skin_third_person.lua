@@ -58,7 +58,6 @@ local function place(entry)
 
 	Unit.set_local_position(entry.unit, 0, -Quaternion.rotate(rotation, grip))
 	Unit.set_local_rotation(entry.unit, 0, rotation)
-	World.update_unit(entry.world, entry.unit)
 end
 
 local function detach(character)
