@@ -423,6 +423,11 @@ function utils.is_weapon_enabled(setting_id)
 	return mod:get("ut_weapons") ~= false and mod:get(setting_id) ~= false
 end
 
+-- If a weapon is switched on in the settings and the look of UT2004's is wanted for it (the Weapon Skins checkbox)
+function utils.is_weapon_skin_enabled(setting_id)
+	return utils.is_weapon_enabled(setting_id) and mod:get("weapon_skins") == true
+end
+
 -- A weapon that the settings can switch off: enable() makes it what the mod makes it, disable() gives the game its own
 -- weapon back (and takes back what enable has loaded). It is enabled when the mod is, disabled when the mod is, enabled
 -- or disabled when the settings change, and given back when the mod is unloaded.

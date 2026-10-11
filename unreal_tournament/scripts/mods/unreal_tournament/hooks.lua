@@ -120,21 +120,105 @@ mod:hook_safe(ActionCharge, "client_owner_post_update", function (self, dt, t, w
 	end
 end)
 
--- What the weapons do when they are wielded (their default stance). Each is called with what the game gives _wield_slot
--- and looks at the weapon itself. Only for the player's own character: the bots and the other players wield weapons
--- through the same function, and what the weapons do here is with the player's own first person view.
+-- What the weapons do when any charge action starts or ends (the venting of overcharge is one of those, and is the game's own
+-- action), by name, for the player or the bot that owns the action:
+--   mod.charge_start_callbacks[name] = function (action_charge, new_action)
+--   mod.charge_finish_callbacks[name] = function (action_charge, reason)
+mod.charge_start_callbacks = {}
+mod.charge_finish_callbacks = {}
+
+mod:hook_safe(ActionCharge, "client_owner_start_action", function (self, new_action)
+	for _, callback in pairs(mod.charge_start_callbacks) do
+		callback(self, new_action)
+	end
+end)
+
+mod:hook_safe(ActionCharge, "finish", function (self, reason)
+	for _, callback in pairs(mod.charge_finish_callbacks) do
+		callback(self, reason)
+	end
+end)
+
+-- What the weapons do when they are wielded (their default stance) and when they are put away. Each is called with what the
+-- game gives _wield_slot and looks at the weapon itself. Only for the player's own character: the bots and the other players
+-- wield weapons through the same function, and what the weapons do here is with the player's own first person view.
+--   mod.unwield_callbacks[name] = function (inventory_extension, equipment, previous_item_data, slot_data)
+--       before the swap, with what is wielded still the previous one (nothing, if there was no weapon wielded); slot_data
+--       is what is wielded next, nothing if nothing is
 --   mod.wield_callbacks[name] = function (inventory_extension, equipment, slot_data, unit_1p)
+--       after it
+mod.unwield_callbacks = {}
 mod.wield_callbacks = {}
 
-mod:hook_safe(SimpleInventoryExtension, "_wield_slot", function (self, equipment, slot_data, unit_1p)
+mod:hook(SimpleInventoryExtension, "_wield_slot", function (func, self, equipment, slot_data, unit_1p, ...)
 	local local_player = Managers.player and Managers.player:local_player()
+	local is_local_player = local_player and local_player.player_unit == self._unit
 
-	if not local_player or local_player.player_unit ~= self._unit then
-		return
+	if is_local_player then
+		local previous_item_data = equipment.wielded
+
+		for _, callback in pairs(mod.unwield_callbacks) do
+			callback(self, equipment, previous_item_data, slot_data)
+		end
 	end
 
-	for _, callback in pairs(mod.wield_callbacks) do
-		callback(self, equipment, slot_data, unit_1p)
+	func(self, equipment, slot_data, unit_1p, ...)
+
+	if is_local_player then
+		for _, callback in pairs(mod.wield_callbacks) do
+			callback(self, equipment, slot_data, unit_1p)
+		end
+	end
+end)
+
+-- The shots of the weapons that are patched (the Shock Rifle's), by name:
+--   mod.handgun_start_callbacks[name] = function (action_handgun, new_action)
+--   mod.handgun_update_callbacks[name] = function (action_handgun)
+--   mod.charged_projectile_start_callbacks[name] = function (action_charged_projectile, new_action)
+-- They are called on the machine of whoever owns the action: the player who plays, and the host for its bots.
+mod.handgun_start_callbacks = {}
+mod.handgun_update_callbacks = {}
+mod.charged_projectile_start_callbacks = {}
+
+mod:hook_safe(ActionHandgun, "client_owner_start_action", function (self, new_action)
+	for _, callback in pairs(mod.handgun_start_callbacks) do
+		callback(self, new_action)
+	end
+end)
+
+mod:hook_safe(ActionHandgun, "client_owner_post_update", function (self)
+	for _, callback in pairs(mod.handgun_update_callbacks) do
+		callback(self)
+	end
+end)
+
+mod:hook_safe(ActionChargedProjectile, "client_owner_start_action", function (self, new_action)
+	for _, callback in pairs(mod.charged_projectile_start_callbacks) do
+		callback(self, new_action)
+	end
+end)
+
+-- Before the first person view of a character is taken down (the character dies, the level ends): what a weapon has linked to
+-- it has to be let go of first
+--   mod.first_person_destroy_callbacks[name] = function (first_person_extension)
+mod.first_person_destroy_callbacks = {}
+
+mod:hook(PlayerUnitFirstPerson, "destroy", function (func, self, ...)
+	for _, callback in pairs(mod.first_person_destroy_callbacks) do
+		callback(self)
+	end
+
+	return func(self, ...)
+end)
+
+-- What is done to what the player sees just before the frame is drawn, after the game has updated everything of it (the game
+-- shows the units of its own weapon and arms again at its own times, which a mod's update, that runs first, can't beat)
+--   mod.pre_render_callbacks[name] = function ()
+mod.pre_render_callbacks = {}
+
+mod:hook_safe(StateIngame, "pre_render", function ()
+	for _, callback in pairs(mod.pre_render_callbacks) do
+		callback()
 	end
 end)
 

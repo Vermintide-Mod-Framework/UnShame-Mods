@@ -72,7 +72,7 @@ for name, rate, first, num in anims:
     lines.append('\t\t},')
     lines.append('\t},')
 lines.append('}')
-open(REPO + '/scripts/mods/unreal_tournament/asset_test_animations.lua', 'w', newline='\n').write('\n'.join(lines) + '\n')
+open(REPO + '/scripts/mods/unreal_tournament/shock_rifle_skin_animations.lua', 'w', newline='\n').write('\n'.join(lines) + '\n')
 print('animations', [(a[0], a[3]) for a in anims])
 
 # ---------------------------------------------------------------- gel flipbook

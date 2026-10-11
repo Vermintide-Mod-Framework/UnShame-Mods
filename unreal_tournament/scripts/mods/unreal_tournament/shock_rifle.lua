@@ -1046,11 +1046,11 @@ mod.wield_callbacks.shock = function (self, equipment, slot_data, unit_1p)
 	end)
 end
 
-mod:hook_safe(ActionHandgun, "client_owner_start_action", function (self, new_action)
+mod.handgun_start_callbacks.shock = function (self, new_action)
 	self._ut_combo_checked = not new_action.ut_shock_beam
-end)
+end
 
-mod:hook_safe(ActionHandgun, "client_owner_post_update", function (self)
+mod.handgun_update_callbacks.shock = function (self)
 	if self._ut_combo_checked or self.state == "waiting_to_shoot" then
 		return
 	end
@@ -1069,4 +1069,4 @@ mod:hook_safe(ActionHandgun, "client_owner_post_update", function (self)
 	if ball_unit then
 		detonate_ball(ball_unit, owner_unit)
 	end
-end)
+end

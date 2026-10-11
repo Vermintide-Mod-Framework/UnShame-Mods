@@ -38,6 +38,11 @@ return {
 						type = "checkbox",
 						default_value = true,
 					},
+					{
+						setting_id = "weapon_skins",
+						type = "checkbox",
+						default_value = false,
+					},
 				},
 			},
 			{

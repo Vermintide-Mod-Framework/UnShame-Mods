@@ -53,13 +53,13 @@ mod:dofile("scripts/mods/unreal_tournament/hooks")
 mod.effects = mod:dofile("scripts/mods/unreal_tournament/effects")
 
 mod:dofile("scripts/mods/unreal_tournament/shock_rifle")
+mod:dofile("scripts/mods/unreal_tournament/shock_rifle_skin")
 mod:dofile("scripts/mods/unreal_tournament/flak_cannon")
 mod:dofile("scripts/mods/unreal_tournament/rocket_launcher")
 mod:dofile("scripts/mods/unreal_tournament/bio_rifle")
 mod:dofile("scripts/mods/unreal_tournament/link_gun")
 mod:dofile("scripts/mods/unreal_tournament/movement")
 mod:dofile("scripts/mods/unreal_tournament/gameplay")
-mod:dofile("scripts/mods/unreal_tournament/asset_test")
 
 -- (seen in the chat each time the mod is loaded or reloaded, to know which build is running: the number is the count of
 -- commits of the repository, which goes up by one with every change). Only with the developer mode of the mod framework on.

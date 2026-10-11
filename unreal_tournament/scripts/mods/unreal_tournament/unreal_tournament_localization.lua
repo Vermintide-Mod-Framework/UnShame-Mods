@@ -122,4 +122,10 @@ return {
 	rocket_launcher_description = {
 		en = "Saltzpyre (Witch Hunter Captain, Bounty Hunter, Zealot). Replaces the Repeating Crossbow. Primary fires a rocket. Hold alt fire to load up to three, keep your aim on an enemy to lock on, and release to fire. Press primary while loading to fire them in a spiral instead of a line.",
 	},
+	weapon_skins = {
+		en = "Weapon Skins",
+	},
+	weapon_skins_description = {
+		en = "The weapons look and sound like Unreal Tournament 2004's: the Shock Rifle, so far. What the others see of you depends on their own setting.",
+	},
 }
