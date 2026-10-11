@@ -94,7 +94,8 @@ local CONFIG = {
 	combo_flash_growth = 500,
 	combo_flash_life = 0.25,
 	combo_wiggle_count = 25,
-	combo_wiggle_size = 120,
+	combo_wiggle_size = 240, -- (UT's mSizeRange is 120: they look twice as big in UT, as a sprite's size is its radius there)
+	combo_wiggle_intensity = 0.4, -- (and subtler)
 	combo_wiggle_speed = 300,
 	combo_wiggle_life = 0.75,
 	-- ShockBeamCoil: pieces of the coil mesh (30 long, units/ut/fx/coil) along the beam every coil_piece_length, scaled coil_length_scale along
@@ -734,6 +735,7 @@ local function combo_wiggles(position)
 				0.4,
 			},
 			drag = 0.8,
+			intensity = CONFIG.combo_wiggle_intensity,
 			life = CONFIG.combo_wiggle_life,
 			position = position,
 			size = CONFIG.combo_wiggle_size * UNIT,
