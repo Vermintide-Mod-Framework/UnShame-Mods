@@ -93,46 +93,28 @@ effects.play = function (world, effect_name, position, scale, rotation)
 	return true
 end
 
--- Plays an effect that is a ring in its own plane (at the height above its origin) so that the ring is always seen from the front, however
--- the player moves: the effect is turned to face the camera every frame, about position
+-- Plays an effect that is a ring in its own plane (at the height above its origin, at the scale) turned to face the camera as it starts, so that
+-- the ring is seen from the front (a ring that is playing is not turned: its direction is where it started), about the position
 effects.play_facing = function (world, effect_name, position, scale, height)
-	local effect = effects.start(world, effect_name, position, scale)
+	local camera_position, camera_rotation = utils.camera_pose()
 
-	if not effect then
+	if not camera_position then
 		return false
 	end
 
-	effect.age = 0
-	effect.facing = {
-		distance = height * scale,
-		position = Vector3Box(position),
-	}
-	timed_effects[#timed_effects + 1] = effect
-
-	return true
-end
-
-local function face_camera(effect, camera_rotation)
 	-- (its z axis is the way it faces: toward the camera)
-	local rotation = Quaternion.look(Quaternion.up(camera_rotation), -Quaternion.forward(camera_rotation))
+	local front = Vector3.normalize(camera_position - position)
+	local rotation = Quaternion.look(Quaternion.up(camera_rotation), front)
 
 	-- (the ring is above the origin of the effect, and turned about it: the origin is where it puts the ring about the position)
-	Unit.set_local_position(effect.unit, 0, effect.facing.position:unbox() - Quaternion.rotate(rotation, Vector3(0, 0, effect.facing.distance)))
-	Unit.set_local_rotation(effect.unit, 0, rotation)
-	World.update_unit(effect.world, effect.unit)
+	return effects.play(world, effect_name, position - Quaternion.rotate(rotation, Vector3(0, 0, height * scale)), scale, rotation)
 end
 
 effects.update = function (dt)
-	local _, camera_rotation = utils.camera_pose()
-
 	for i = #timed_effects, 1, -1 do
 		local effect = timed_effects[i]
 
 		effect.age = effect.age + dt
-
-		if effect.facing and camera_rotation and Unit.alive(effect.unit) then
-			face_camera(effect, camera_rotation)
-		end
 
 		if effect.age >= CONFIG.timed_effect_lifetime then
 			destroy_timed_effect(effect)

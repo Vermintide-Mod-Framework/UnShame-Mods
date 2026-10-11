@@ -645,7 +645,7 @@ end
 local function start_implosion(world, position)
 	local radius = ExplosionTemplates.ut_shock_combo_explosion.explosion.radius
 
-	-- (the ring that bends the light, as the combo goes off: one, turned to face the player, which is seen from the front whichever way the player is)
+	-- (the ring that bends the light, as the combo goes off: one, turned to face the player as it starts, which is seen from the front)
 	if CONFIG.combo_ring_effect then
 		effects.play_facing(world, CONFIG.combo_ring_effect, position, CONFIG.combo_distortion_scale, CONFIG.combo_ring_height)
 	end
