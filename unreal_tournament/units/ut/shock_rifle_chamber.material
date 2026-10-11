@@ -251,7 +251,7 @@ shader = {
 		}
 		{
 			destination = {
-				connector_id = "6cebb808-14e4-45d6-9816-3838b1f6f4c7"
+				connector_id = "c5823c75-4ae5-4c71-b070-315fa4d03e8e"
 				instance_id = "c0de0000-0000-4000-8000-000000000026"
 			}
 			source = {
@@ -260,7 +260,7 @@ shader = {
 		}
 		{
 			destination = {
-				connector_id = "447b3fe2-c820-4511-a923-b38b0f6c9fe6"
+				connector_id = "f72597c4-7487-419a-affb-df690e6582e1"
 				instance_id = "c0de0000-0000-4000-8000-000000000027"
 			}
 			source = {
@@ -269,11 +269,29 @@ shader = {
 		}
 		{
 			destination = {
+				connector_id = "6cebb808-14e4-45d6-9816-3838b1f6f4c7"
+				instance_id = "c0de0000-0000-4000-8000-000000000028"
+			}
+			source = {
+				instance_id = "c0de0000-0000-4000-8000-000000000027"
+			}
+		}
+		{
+			destination = {
+				connector_id = "447b3fe2-c820-4511-a923-b38b0f6c9fe6"
+				instance_id = "c0de0000-0000-4000-8000-000000000029"
+			}
+			source = {
+				instance_id = "c0de0000-0000-4000-8000-000000000028"
+			}
+		}
+		{
+			destination = {
 				connector_id = "aca690cb-6305-4a2f-bf3d-69183a493db3"
 				instance_id = "c0de0000-0000-4000-8000-000000000001"
 			}
 			source = {
-				instance_id = "c0de0000-0000-4000-8000-000000000027"
+				instance_id = "c0de0000-0000-4000-8000-000000000029"
 			}
 		}
 		{
@@ -402,16 +420,32 @@ shader = {
 			]
 		}
 		{
-			connector_id = "e16267f4-8b4e-4079-b13d-f380cfd386ec"
+			connector_id = "242d1648-a626-445b-9534-bccec094112f"
 			id = "c0de0000-0000-4000-8000-000000001014"
+			instance_id = "c0de0000-0000-4000-8000-000000000026"
+			value = [
+				1.5
+			]
+		}
+		{
+			connector_id = "0806db0d-2c4a-43ca-99cc-f5a2f036a8e8"
+			id = "c0de0000-0000-4000-8000-000000001015"
 			instance_id = "c0de0000-0000-4000-8000-000000000027"
+			value = [
+				0.12
+			]
+		}
+		{
+			connector_id = "e16267f4-8b4e-4079-b13d-f380cfd386ec"
+			id = "c0de0000-0000-4000-8000-000000001016"
+			instance_id = "c0de0000-0000-4000-8000-000000000029"
 			value = [
 				2.2
 			]
 		}
 		{
 			connector_id = "c9a30d71-a8ad-4b9e-aedf-d785ae7e301f"
-			id = "c0de0000-0000-4000-8000-000000001015"
+			id = "c0de0000-0000-4000-8000-000000001017"
 			instance_id = "c0de0000-0000-4000-8000-000000000001"
 			value = [
 				0
@@ -919,7 +953,7 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/shader_nodes/saturate"
+			type = "core/shader_nodes/mul"
 		}
 		{
 			content_size = [
@@ -933,6 +967,42 @@ shader = {
 			]
 			position = [
 				600
+				800
+			]
+			samplers = {
+			}
+			type = "core/shader_nodes/add"
+		}
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+			}
+			id = "c0de0000-0000-4000-8000-000000000028"
+			options = [
+			]
+			position = [
+				900
+				800
+			]
+			samplers = {
+			}
+			type = "core/shader_nodes/saturate"
+		}
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+			}
+			id = "c0de0000-0000-4000-8000-000000000029"
+			options = [
+			]
+			position = [
+				1200
 				800
 			]
 			samplers = {
