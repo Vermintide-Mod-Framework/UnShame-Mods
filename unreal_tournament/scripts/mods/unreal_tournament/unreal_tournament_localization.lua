@@ -24,7 +24,7 @@ return {
 		en = "Announcer",
 	},
 	announcer_description = {
-		en = "Unreal Tournament 2004's announcer calls out your kills with its voice and words. Critters and the weakest enemy of each race don't count.",
+		en = "Unreal Tournament 2004's announcer announces your kills. Critters and the weakest enemy of each race don't count.",
 	},
 	no_barriers = {
 		en = "Remove Barriers",
