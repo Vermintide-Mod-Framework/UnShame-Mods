@@ -282,6 +282,9 @@ local function build_beam_action()
 		fire_sound_event = "weapon_staff_fire_beam_end_shot",
 		fire_time = CONFIG.beam_fire_time,
 		headshot_multiplier = 2,
+		-- (the beam must have one: the game sends the name of it to the other peers when the beam hits something that is not a level's, a
+		-- training dummy, and a nil is an error of the network lookup that closes the game)
+		hit_effect = "fireball_impact",
 		is_spell = true,
 		kind = "handgun",
 		overcharge_type = "ut_shock_beam",
