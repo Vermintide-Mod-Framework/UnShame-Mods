@@ -3,7 +3,7 @@ import struct, math, zlib, os
 REPO = 'E:/Git/vmb/mods/unreal_tournament'
 SCRATCH = 'C:/Users/UnShame/AppData/Local/Temp/claude/E--Git-vmb-mods/070374a7-2283-43c8-bdec-22b0376758d1/scratchpad'
 OUT = SCRATCH + '/umodel/out3'
-FRAMES = 60          # gel flipbook frames
+FRAMES = 200         # gel flipbook frames
 LOOP_SECONDS = 10.0  # one loop of the pan; the oscillations are 5 s and 10 s
 SIZE = 128
 

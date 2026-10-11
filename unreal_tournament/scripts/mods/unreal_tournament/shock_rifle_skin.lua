@@ -48,7 +48,7 @@ local CONFIG = {
 	-- The chamber: the frames of the gel (tools/asset_conversion/make_anim_assets.py), how long they take to go round, and the
 	-- opacity of the chamber when the glow is all there
 	gel_material_format = "units/ut/shock_rifle_power_%02d",
-	gel_frame_count = 60,
+	gel_frame_count = 200, -- (20 a second: the pan is slow, so the steps are smaller than a pixel)
 	gel_loop_seconds = 10,
 	chamber_opacity = 0.6,
 	vent_pulse_speed = 14, -- radians per second, of the glow while the heat is vented
