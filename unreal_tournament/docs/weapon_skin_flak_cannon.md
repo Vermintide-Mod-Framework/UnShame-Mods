@@ -1,7 +1,7 @@
 # Weapon Skins: the UT2004 Flak Cannon
 
-Status: plan, then built in the order below. Branch `ut-weapon-skins`, local only, never pushed. The Shock Rifle's plan is
-`weapon_skins_plan.md`; this one also covers the groundwork the four weapons after it share (section 1).
+Status: plan, then built in the order below. Branch `ut-weapon-skins`, local only, never pushed. This one also covers the groundwork
+the four weapons after the Shock Rifle share (section 1).
 
 The Flak Cannon replaces Kruber's Blunderbuss (`blunderbuss_template_1`, `flak_cannon.lua`): LMB is the spread of flak chunks
 (`ActionShotgun._shoot`), RMB the lobbed shell (`charged_projectile`). The skin is the same setting, **Weapon Skins**, and
