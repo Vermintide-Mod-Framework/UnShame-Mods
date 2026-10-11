@@ -19,3 +19,7 @@ material = [
 	"units/ut/shock_rifle_power_*"
 	"units/ut/fx/fx_*"
 ]
+
+wwise_dep = [
+	"wwise/unreal_tournament/shock_rifle"
+]

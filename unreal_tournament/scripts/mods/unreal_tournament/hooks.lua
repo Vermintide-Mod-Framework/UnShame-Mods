@@ -12,8 +12,11 @@ local mod = get_mod("unreal_tournament")
 --   mod.hit_enemy_callbacks[action.ut_hit_enemy_callback] = function (func, projectile, is_owner, ...)
 --       wraps the hit of an enemy: it calls func(projectile, ...) itself, is_owner is if it is the projectile of the player
 --       who fired (the other peers get the hit from the network)
+--   mod.init_flow_event_filters[action.ut_init_flow_event_filter] = function (event_name)
+--       while a projectile is made, on every peer: true if the flow event the game sends to its unit is to be held back
 mod.aoe_callbacks = {}
 mod.init_callbacks = {}
+mod.init_flow_event_filters = {}
 mod.hit_enemy_callbacks = {}
 
 mod:hook_safe(PlayerProjectileUnitExtension, "do_aoe", function (self, aoe_data, position)
@@ -29,7 +32,31 @@ for _, extension_class in ipairs({
 	PlayerProjectileUnitExtension,
 	PlayerProjectileHuskExtension,
 }) do
-	mod:hook_safe(extension_class, "init", function (self)
+	mod:hook(extension_class, "init", function (func, self, ...)
+		local flow_event = Unit.flow_event
+
+		-- (the game's flow events of the unit, which start its effects, can be held back: the extension tells the unit when it
+		-- makes the projectile, and its action is known by then)
+		Unit.flow_event = function (unit, event_name, ...)
+			local action = self._current_action
+			local filter = action and action.ut_init_flow_event_filter and mod.init_flow_event_filters[action.ut_init_flow_event_filter]
+
+			if filter and unit == self._projectile_unit and filter(event_name) then
+				return
+			end
+
+			return flow_event(unit, event_name, ...)
+		end
+
+		-- (an error mustn't leave the function replaced)
+		local ok, error_message = pcall(func, self, ...)
+
+		Unit.flow_event = flow_event
+
+		if not ok then
+			error(error_message, 0)
+		end
+
 		local action = self._current_action
 		local callback = action and action.ut_init_callback and mod.init_callbacks[action.ut_init_callback]
 
@@ -101,6 +128,22 @@ mod.skin_explosion_callbacks = {}
 -- it): the one who fired, where the beam starts, where it ends and the way the surface it hits faces (nothing if it hit none)
 --   mod.shock_beam_callbacks[name] = function (owner_unit, start_position, end_position, hit_normal)
 mod.shock_beam_callbacks = {}
+
+-- The sounds a weapon's action plays for its player (the shot's, which the game plays and tells the others of), by the name of
+-- the game's event: a weapon's skin takes one over
+--   mod.hud_sound_callbacks[event name] = function (first_person_extension, play_on_husk)
+--       returns true if the sound is played by it instead
+mod.hud_sound_callbacks = {}
+
+mod:hook(PlayerUnitFirstPerson, "play_hud_sound_event", function (func, self, event, wwise_source_id, play_on_husk)
+	local callback = mod.hud_sound_callbacks[event]
+
+	if callback and callback(self, play_on_husk) then
+		return
+	end
+
+	return func(self, event, wwise_source_id, play_on_husk)
+end)
 
 -- The overheating of a weapon, by the template of the weapon (the game's own explosion hurts the player, and is kept):
 --   mod.overheat_callbacks[template] = function (state, item_data)

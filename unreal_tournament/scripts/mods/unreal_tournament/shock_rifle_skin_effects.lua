@@ -48,14 +48,21 @@ local CONFIG = {
 	},
 	ball_flash_life = 0.2,
 	-- ShockBall: the emitters of the ball: the core, the flares, and the sparks that gather on it
+	-- (FadeInEndTime and FadeOutStartTime of each: it is all there between, and the next core comes as one ends)
 	ball_core_size = 55,
 	ball_core_life = 0.35,
-	ball_core_interval = 0.3,
+	ball_core_interval = 0.35,
+	ball_core_fade_in = 0.05,
+	ball_core_fade_out = 0.32,
 	ball_flare_size = 60,
 	ball_flare_life = 0.4,
 	ball_flare_interval = 0.5,
+	ball_flare_fade_in = 0.25,
+	ball_flare_fade_out = 0.2,
 	ball_spark_size = 4.5,
 	ball_spark_life = 0.35,
+	ball_spark_fade_in = 0.1,
+	ball_spark_fade_out = 0.3,
 	ball_spark_interval = 0.025,
 	ball_spark_distance = 25, -- units
 	-- ShockProjectile's explosion: ShockExplosionCore
@@ -264,8 +271,9 @@ function fx.update_ball(ball, dt)
 		ball.core_time = CONFIG.ball_core_interval
 
 		particles.sprite({
-			attenuation = 0.143,
 			color = WHITE,
+			fade_in = CONFIG.ball_core_fade_in,
+			fade_out = CONFIG.ball_core_fade_out,
 			follow = ball.follow,
 			life = CONFIG.ball_core_life,
 			size = CONFIG.ball_core_size * UNIT,
@@ -278,8 +286,9 @@ function fx.update_ball(ball, dt)
 		ball.flare_time = CONFIG.ball_flare_interval
 
 		particles.sprite({
-			attenuation = 0.4,
 			color = WHITE,
+			fade_in = CONFIG.ball_flare_fade_in,
+			fade_out = CONFIG.ball_flare_fade_out,
 			follow = ball.follow,
 			life = CONFIG.ball_flare_life,
 			size = CONFIG.ball_flare_size * UNIT,
@@ -292,13 +301,16 @@ function fx.update_ball(ball, dt)
 		ball.spark_time = ball.spark_time + CONFIG.ball_spark_interval
 
 		-- (the sparks come in to the ball from around it)
-		local offset = random_direction() * (CONFIG.ball_spark_distance * UNIT)
+		local offset = Vector3Box(random_direction() * (CONFIG.ball_spark_distance * UNIT))
 
 		particles.sprite({
-			attenuation = 0.3,
 			color = WHITE,
+			fade_in = CONFIG.ball_spark_fade_in,
+			fade_out = CONFIG.ball_spark_fade_out,
 			follow = function ()
-				return ball.follow() and ball.follow() + offset
+				local position = ball.follow()
+
+				return position and position + offset:unbox()
 			end,
 			life = CONFIG.ball_spark_life,
 			size = CONFIG.ball_spark_size * UNIT,

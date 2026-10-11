@@ -424,6 +424,7 @@ local function build_ball_action()
 		ut_shock_ball = true,
 		ut_aoe_callback = "shock_ball",
 		ut_init_callback = "shock_ball",
+		ut_init_flow_event_filter = "shock_ball",
 		allowed_chain_actions = allowed_chain_actions(fire_chain_entries("action_two", "action_one", BALL_TO_BALL, BALL_TO_BEAM), 0.3, 0.3),
 		enter_function = function (attacker_unit, input_extension, remaining_time, weapon_extension)
 			input_extension:clear_input_buffer()

@@ -57,6 +57,8 @@ local CONFIG = {
 	-- runs at is taken to be UT's (GroundSpeed) at this game's own
 	bob = 0.0035,
 	bob_damping = 1.8,
+	projectile_sound_seconds = 1.795, -- how long the sound of the ball (ShockRifleProjectile) is
+	bob_smoothing = 10, -- per second, how fast the speed the bob follows catches up with the player's
 	ut_ground_speed = 440,
 }
 
@@ -67,7 +69,7 @@ local CONFIG = {
 --   cooldown_end, cooldown: when the glow is all back, and how long it took to come back
 --   venting, vent_time: the heat is being vented
 --   tip_node: the node of the model where the muzzle is, unit_scale: how many meters a UT unit of the model is in the world
---   gel_time, gel_frame, bob_time, walk_right, walk_up
+--   gel_time, gel_frame, bob_speed, bob_time, walk_right, walk_up
 local skin
 local debug_enabled = false
 
@@ -75,14 +77,27 @@ local debug_enabled = false
 -- UT is made as it goes. { effect = the ball of shock_rifle_skin_effects }
 local balls = {}
 
--- What the game's own effects of the Shock Rifle are taken away for while the skin is on: the explosion of the ball (the
--- skin draws it, see skin_explosion_callbacks)
-local explosion_effect_name
+-- What the game's own effects and sounds of the explosions are taken away for while the skin is on (the skin draws and plays
+-- them, see skin_explosion_callbacks): { template name, key of the explosion, what it was }
+local explosion_overrides = {
+	{ "ut_shock_ball_explosion", "effect_name" },
+	{ "ut_shock_ball_explosion", "sound_event_name" },
+	{ "ut_shock_combo_explosion", "sound_event_name" },
+}
 
 local function debug(text, ...)
 	if debug_enabled then
 		mod:echo("shock skin: " .. text, ...)
 	end
+end
+
+-- Sounds (the events are in the bank of tools/asset_conversion/make_bank.py): from the head of the player, or from a place
+local function play_sound(event)
+	WwiseWorld.trigger_event(Managers.world:wwise_world(Managers.world:world("level_world")), event)
+end
+
+local function play_sound_at(event, position)
+	WwiseUtils.trigger_position_event(Managers.world:world("level_world"), event, position)
 end
 
 local function local_first_person()
@@ -231,12 +246,16 @@ local function destroy(first_person_is_going)
 	debug("gone")
 end
 
+local place
+
 local function create(fp)
 	destroy()
 
 	local world = Managers.world:world("level_world")
 	local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
 
+	-- (a new unit has the pose of the file, a big model at the camera, until it is placed: it is not shown before that)
+	Unit.set_unit_visibility(unit, false)
 	-- The root of the first person unit is where the camera is, and it turns with it
 	AttachmentUtils.link(world, fp.first_person_unit, unit, {
 		{
@@ -246,6 +265,7 @@ local function create(fp)
 	})
 
 	skin = {
+		bob_speed = 0,
 		bob_time = 0,
 		cooldown = 1,
 		cooldown_end = 0,
@@ -262,20 +282,26 @@ local function create(fp)
 	fp:hide_weapons(HIDE_REASON, true)
 	hide_game_weapon(fp)
 	play("Pickup", wield_time())
+	play_sound("ut_shock_select")
+	place(fp)
+	Unit.set_unit_visibility(unit, game_shows_weapon(fp))
 end
 
 -- The game's own effect of the explosion of the ball is taken away while the skin is on, and given back when it is off
 local function apply_template_overrides()
-	local explosion = ExplosionTemplates.ut_shock_ball_explosion.explosion
+	local enabled = utils.is_weapon_skin_enabled(SETTING_ID)
 
-	if utils.is_weapon_skin_enabled(SETTING_ID) then
-		if explosion.effect_name then
-			explosion_effect_name = explosion.effect_name
-			explosion.effect_name = nil
+	for _, override in ipairs(explosion_overrides) do
+		local explosion = ExplosionTemplates[override[1]].explosion
+		local key = override[2]
+
+		if enabled and explosion[key] then
+			override[3] = explosion[key]
+			explosion[key] = nil
+		elseif not enabled and override[3] then
+			explosion[key] = override[3]
+			override[3] = nil
 		end
-	elseif explosion_effect_name then
-		explosion.effect_name = explosion_effect_name
-		explosion_effect_name = nil
 	end
 end
 
@@ -308,11 +334,11 @@ mod.enabled_callbacks[#mod.enabled_callbacks + 1] = refresh
 local function give_back()
 	destroy()
 
-	local explosion = ExplosionTemplates.ut_shock_ball_explosion.explosion
-
-	if explosion_effect_name then
-		explosion.effect_name = explosion_effect_name
-		explosion_effect_name = nil
+	for _, override in ipairs(explosion_overrides) do
+		if override[3] then
+			ExplosionTemplates[override[1]].explosion[override[2]] = override[3]
+			override[3] = nil
+		end
 	end
 end
 
@@ -385,13 +411,26 @@ end
 mod.shock_beam_callbacks.skin = function (owner_unit, start_position, end_position, hit_normal)
 	if skin and utils.is_local_player_unit(owner_unit) then
 		start_position = muzzle_position() or start_position
+	elseif not utils.is_local_player_unit(owner_unit) then
+		-- (the shot of the player is heard from the head, see hud_sound_callbacks)
+		play_sound_at("ut_shock_fire_3d", start_position)
 	end
 
 	fx.beam(start_position, end_position, hit_normal)
 end
 
--- The ball (every player's, on every machine): the game's own fireball is put out as it is made, and the ball of UT is drawn
--- where it is
+-- The ball (every player's, on every machine): the game's own fireball is not started (the unit's effects are made by the
+-- events the game sends it as the projectile is made), and the ball of UT is drawn where it is
+local FIREBALL_FLOW_EVENTS = {
+	lua_projectile_init = true,
+	lua_trail = true,
+	vfx_critical_strike = true,
+}
+
+mod.init_flow_event_filters.shock_ball = function (event_name)
+	return utils.is_weapon_skin_enabled(SETTING_ID) and FIREBALL_FLOW_EVENTS[event_name] == true
+end
+
 mod.init_callbacks.shock_ball = function (projectile)
 	if not utils.is_weapon_skin_enabled(SETTING_ID) then
 		return
@@ -400,8 +439,10 @@ mod.init_callbacks.shock_ball = function (projectile)
 	local unit = projectile._projectile_unit
 
 	Unit.set_unit_visibility(unit, false)
-	-- (what the unit does when the projectile is over: the effects of the flame it carries end)
-	Unit.flow_event(unit, "lua_projectile_end")
+
+	if not utils.is_local_player_unit(projectile._owner_unit) then
+		play_sound_at("ut_shock_alt_fire_3d", Unit.world_position(unit, 0))
+	end
 
 	balls[#balls + 1] = fx.new_ball(function ()
 		if Unit.alive(unit) and not projectile._stop_impacts then
@@ -412,15 +453,38 @@ mod.init_callbacks.shock_ball = function (projectile)
 	debug("ball")
 end
 
+-- The shots of the player, which the game plays for the weapon and tells the others of (they hear them from the shot, see
+-- shock_beam_callbacks and init_callbacks): the sounds of the staff are not played, the ones of UT are, from the head
+local function take_over_shot_sound(event)
+	return function (first_person_extension)
+		if not utils.is_weapon_skin_enabled(SETTING_ID) or not utils.is_local_player_unit(first_person_extension.unit) then
+			return false
+		end
+
+		if utils.wielded_template_name(first_person_extension.unit) ~= TEMPLATE_NAME then
+			return false
+		end
+
+		play_sound(event)
+
+		return true
+	end
+end
+
+mod.hud_sound_callbacks.weapon_staff_fire_beam_end_shot = take_over_shot_sound("ut_shock_fire")
+mod.hud_sound_callbacks.player_combat_weapon_staff_fireball_fire = take_over_shot_sound("ut_shock_alt_fire")
+
 mod.skin_explosion_callbacks.ut_shock_ball_explosion = function (world, position)
 	if utils.is_weapon_skin_enabled(SETTING_ID) then
 		fx.ball_explosion(position)
+		play_sound_at("ut_shock_explosion_3d", position)
 	end
 end
 
 mod.skin_explosion_callbacks.ut_shock_combo_explosion = function (world, position)
 	if utils.is_weapon_skin_enabled(SETTING_ID) then
 		fx.combo(position)
+		play_sound_at("ut_shock_combo_3d", position)
 
 		debug("combo")
 	end
@@ -475,15 +539,14 @@ local function update_bob(owner_unit, dt)
 	local move_speed = PlayerUnitMovementSettings.get_movement_settings_table(owner_unit).move_speed
 	local speed = Vector3.length(Vector3.flat(locomotion_extension:current_velocity())) / move_speed * CONFIG.ut_ground_speed
 
-	if locomotion_extension:is_on_ground() then
-		skin.bob_time = skin.bob_time + dt * (speed < 10 and 0.2 or 0.3 + 0.7 * speed / CONFIG.ut_ground_speed)
-		skin.walk_right = CONFIG.bob * speed * math.sin(8 * skin.bob_time)
-		skin.walk_up = speed > 10 and 0.75 * CONFIG.bob * speed * math.sin(16 * skin.bob_time) or 0
-	else
-		skin.bob_time = 0
-		skin.walk_right = skin.walk_right * (1 - math.min(1, 8 * dt))
-		skin.walk_up = skin.walk_up * (1 - math.min(1, 8 * dt))
-	end
+	-- (the speed the bob follows is smoothed, and none in the air: the velocity this game gives for a frame jumps about when the
+	-- player steps, lands or is pushed, and the phase of the sway is kept, so that the model doesn't jump with them)
+	local target_speed = locomotion_extension:is_on_ground() and speed or 0
+
+	skin.bob_speed = skin.bob_speed + (target_speed - skin.bob_speed) * math.min(1, CONFIG.bob_smoothing * dt)
+	skin.bob_time = skin.bob_time + dt * (skin.bob_speed < 10 and 0.2 or 0.3 + 0.7 * skin.bob_speed / CONFIG.ut_ground_speed)
+	skin.walk_right = CONFIG.bob * skin.bob_speed * math.sin(8 * skin.bob_time)
+	skin.walk_up = 0.75 * CONFIG.bob * skin.bob_speed * math.sin(16 * skin.bob_time)
 end
 
 local function update_animation(dt)
@@ -503,7 +566,7 @@ local function update_animation(dt)
 end
 
 -- Where the model is, and how it is turned and scaled, in the first person unit's root
-local function place(fp)
+function place(fp)
 	local resolution_width, resolution_height = Application.resolution()
 	local tangent_vertical = math.tan(Camera.vertical_fov(fp:camera()) / 2)
 	local across = tangent_vertical * resolution_width / resolution_height / math.tan(CONFIG.field_of_view / 2)
@@ -536,7 +599,22 @@ end
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	for i = #balls, 1, -1 do
-		if not fx.update_ball(balls[i], dt) then
+		local ball = balls[i]
+
+		-- (the sound of the ball is a loop in UT: it is played again as it ends, from where the ball is)
+		ball.sound_time = (ball.sound_time or 0) - dt
+
+		if ball.sound_time <= 0 then
+			local position = ball.follow()
+
+			if position then
+				play_sound_at("ut_shock_projectile_3d", position)
+
+				ball.sound_time = CONFIG.projectile_sound_seconds
+			end
+		end
+
+		if not fx.update_ball(ball, dt) then
 			table.remove(balls, i)
 		end
 	end

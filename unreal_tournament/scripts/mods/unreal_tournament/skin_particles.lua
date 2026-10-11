@@ -12,6 +12,8 @@ local mod = get_mod("unreal_tournament")
 --   color: { r, g, b }, intensity: the most light it gives (1 is the texture as it is)
 --   attenuation: UT's mAttenKa: how far into its life it is the brightest (0 is at the start), it fades in before that and
 --       out after it
+--   fade_in, fade_out: UT's FadeInEndTime and FadeOutStartTime, in seconds: it is all there from fade_in until fade_out (used
+--       instead of the attenuation)
 --   spin: turns per second (the angle it starts at is random)
 --   position: where it is; velocity, drag: where it goes and how fast that slows (per second); follow: a function that gives
 --       where it is now, nothing when it is to end
@@ -90,6 +92,8 @@ local function add(kind, spec)
 		},
 		drag = spec.drag or 0,
 		entry = entry,
+		fade_in = spec.fade_in,
+		fade_out = spec.fade_out,
 		follow = spec.follow,
 		growth = spec.growth or 0,
 		intensity = spec.intensity or 1,
@@ -145,6 +149,26 @@ local function fade(fraction, ka)
 	return (1 - fraction) / (1 - ka)
 end
 
+-- How bright a particle is at its age: by when it is all there and when it starts to go (UT's FadeInEndTime and
+-- FadeOutStartTime, which together multiply), or by the attenuation
+local function brightness(particle)
+	if not particle.fade_in and not particle.fade_out then
+		return math.max(0, fade(particle.age / particle.life, particle.attenuation))
+	end
+
+	local result = 1
+
+	if particle.fade_in and particle.age < particle.fade_in then
+		result = particle.age / particle.fade_in
+	end
+
+	if particle.fade_out and particle.age > particle.fade_out then
+		result = result * (particle.life - particle.age) / (particle.life - particle.fade_out)
+	end
+
+	return math.max(0, result)
+end
+
 -- A rotation whose z axis is the way the quad faces, and whose y axis is the way its top is (as near as can be)
 local function facing(front, top)
 	return Quaternion.look(top, front)
@@ -153,7 +177,7 @@ end
 local function place(particle, dt, camera_position, camera_rotation)
 	local unit = particle.entry.unit
 	local size = math.max(0, particle.size + particle.growth * particle.age)
-	local brightness = particle.intensity * math.max(0, fade(particle.age / particle.life, particle.attenuation))
+	local light = particle.intensity * brightness(particle)
 	local position, rotation, scale
 
 	if particle.follow then
@@ -207,7 +231,7 @@ local function place(particle, dt, camera_position, camera_rotation)
 	Unit.set_local_rotation(unit, 0, rotation)
 	Unit.set_local_scale(unit, 0, scale)
 	Unit.set_vector3_for_materials(unit, "tint", Vector3(particle.color[1], particle.color[2], particle.color[3]))
-	Unit.set_scalar_for_materials(unit, "intensity", brightness)
+	Unit.set_scalar_for_materials(unit, "intensity", light)
 	Unit.set_unit_visibility(unit, true)
 	World.update_unit(particle.world, unit)
 end
