@@ -84,7 +84,23 @@ mod:hook(DamageUtils, "create_explosion", function (func, world, attacker_unit, 
 	if callback then
 		callback(world, impact_position, rotation)
 	end
+
+	callback = mod.skin_explosion_callbacks[explosion_template.name]
+
+	if callback then
+		callback(world, impact_position, rotation)
+	end
 end)
+
+-- What the skins of the weapons show of an explosion, by the name of the template, on every peer, after the weapon's own
+-- (see explosion_callbacks): the weapon's skin draws the explosion that the game's own effect is taken away for
+--   mod.skin_explosion_callbacks[template name] = function (world, position, rotation)
+mod.skin_explosion_callbacks = {}
+
+-- What the Shock Rifle tells its skin of its beam (the machine of the shooter, and those of the others after the message of
+-- it): the one who fired, where the beam starts, where it ends and the way the surface it hits faces (nothing if it hit none)
+--   mod.shock_beam_callbacks[name] = function (owner_unit, start_position, end_position, hit_normal)
+mod.shock_beam_callbacks = {}
 
 -- The overheating of a weapon, by the template of the weapon (the game's own explosion hurts the player, and is kept):
 --   mod.overheat_callbacks[template] = function (state, item_data)

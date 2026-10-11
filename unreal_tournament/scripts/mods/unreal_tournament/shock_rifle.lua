@@ -423,6 +423,7 @@ local function build_ball_action()
 		total_time = BALL_TOTAL_TIME,
 		ut_shock_ball = true,
 		ut_aoe_callback = "shock_ball",
+		ut_init_callback = "shock_ball",
 		allowed_chain_actions = allowed_chain_actions(fire_chain_entries("action_two", "action_one", BALL_TO_BALL, BALL_TO_BEAM), 0.3, 0.3),
 		enter_function = function (attacker_unit, input_extension, remaining_time, weapon_extension)
 			input_extension:clear_input_buffer()
@@ -744,15 +745,18 @@ end
 local function start_implosion(world, position)
 	local radius = ExplosionTemplates.ut_shock_combo_explosion.explosion.radius
 
-	if CONFIG.combo_flash_effect then
-		effects.create(world, CONFIG.combo_flash_effect, position + Vector3(0, 0, CONFIG.combo_flash_offset))
-	end
+	-- (with the skin the skin draws the explosion, see skin_explosion_callbacks)
+	if not utils.is_weapon_skin_enabled("shock_rifle") then
+		if CONFIG.combo_flash_effect then
+			effects.create(world, CONFIG.combo_flash_effect, position + Vector3(0, 0, CONFIG.combo_flash_offset))
+		end
 
-	create_fire_sphere(world, position)
-	create_ring_shell(world, position)
+		create_fire_sphere(world, position)
+		create_ring_shell(world, position)
 
-	if CONFIG.combo_shockwave_extra_effect then
-		effects.create(world, CONFIG.combo_shockwave_extra_effect, position + Vector3(0, 0, CONFIG.combo_shockwave_extra_offset))
+		if CONFIG.combo_shockwave_extra_effect then
+			effects.create(world, CONFIG.combo_shockwave_extra_effect, position + Vector3(0, 0, CONFIG.combo_shockwave_extra_offset))
+		end
 	end
 
 	implosions[#implosions + 1] = {
@@ -912,16 +916,26 @@ end
 local function spawn_trail(action, origin, direction)
 	local physics_world = action.physics_world
 	local result = PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
-	local end_position = result and result[#result][1] or origin + direction * CONFIG.beam_range
+	local hit = result and result[#result]
+	local end_position = hit and hit[1] or origin + direction * CONFIG.beam_range
+	-- (the way the surface it hits faces: the vector of no length when it hits nothing)
+	local hit_normal = hit and hit[3] or Vector3.zero()
 	local weapon_unit = action.weapon_unit
 	local muzzle_position = Unit.world_position(weapon_unit, Unit.node(weapon_unit, "fx_muzzle"))
 
-	create_trail(action.world, CONFIG.trail_effect, muzzle_position, end_position)
+	-- (with the skin the skin draws it)
+	if utils.is_weapon_skin_enabled("shock_rifle") then
+		for _, callback in pairs(mod.shock_beam_callbacks) do
+			callback(action.owner_unit, muzzle_position, end_position, hit_normal)
+		end
+	else
+		create_trail(action.world, CONFIG.trail_effect, muzzle_position, end_position)
+	end
 
-	mod:network_send("ut_shock_trail", "others", Managers.state.unit_storage:go_id(action.owner_unit), end_position.x, end_position.y, end_position.z)
+	mod:network_send("ut_shock_trail", "others", Managers.state.unit_storage:go_id(action.owner_unit), end_position.x, end_position.y, end_position.z, hit_normal.x, hit_normal.y, hit_normal.z)
 end
 
-mod:network_register("ut_shock_trail", function (_, owner_go_id, x, y, z)
+mod:network_register("ut_shock_trail", function (_, owner_go_id, x, y, z, normal_x, normal_y, normal_z)
 	local unit = Managers.state.unit_storage:unit(owner_go_id)
 	local inventory_extension = unit and ScriptUnit.has_extension(unit, "inventory_system")
 	local equipment = inventory_extension and inventory_extension:equipment()
@@ -934,7 +948,13 @@ mod:network_register("ut_shock_trail", function (_, owner_go_id, x, y, z)
 
 	local muzzle_position = Unit.world_position(weapon_unit, Unit.node(weapon_unit, "fx_muzzle"))
 
-	create_trail(Managers.world:world("level_world"), CONFIG.trail_effect_3p, muzzle_position, Vector3(x, y, z))
+	if utils.is_weapon_skin_enabled("shock_rifle") then
+		for _, callback in pairs(mod.shock_beam_callbacks) do
+			callback(unit, muzzle_position, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z))
+		end
+	else
+		create_trail(Managers.world:world("level_world"), CONFIG.trail_effect_3p, muzzle_position, Vector3(x, y, z))
+	end
 end)
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)

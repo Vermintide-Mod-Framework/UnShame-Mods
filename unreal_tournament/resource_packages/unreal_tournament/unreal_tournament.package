@@ -12,8 +12,10 @@ lua = [
 
 unit = [
 	"units/ut/shock_rifle"
+	"units/ut/fx/quad"
 ]
 
 material = [
 	"units/ut/shock_rifle_power_*"
+	"units/ut/fx/fx_*"
 ]

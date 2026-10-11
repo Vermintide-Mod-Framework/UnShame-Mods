@@ -52,6 +52,9 @@ mod:dofile("scripts/mods/unreal_tournament/hooks")
 -- The scaled particle effects of the weapons, the one copy of them
 mod.effects = mod:dofile("scripts/mods/unreal_tournament/effects")
 
+-- The particles of the weapon skins (UT2004's effects), the one copy of them
+mod.skin_particles = mod:dofile("scripts/mods/unreal_tournament/skin_particles")
+
 mod:dofile("scripts/mods/unreal_tournament/shock_rifle")
 mod:dofile("scripts/mods/unreal_tournament/shock_rifle_skin")
 mod:dofile("scripts/mods/unreal_tournament/flak_cannon")

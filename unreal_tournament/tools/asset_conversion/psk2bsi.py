@@ -124,6 +124,26 @@ for mat in sorted(tris_by_mat):
                  % (name, name, identity))
     print('geometry', name, 'material', mat_names[mat], 'triangles', len(tris))
 
+# The second bone of the skeleton (the muzzle: 'tip' to UT) as a node of its own, where it is in the model (the root bone turns
+# the bone by its own rotation and moves it by its position)
+def qmul(a, b):
+    ax, ay, az, aw = a
+    bx, by, bz, bw = b
+    return (aw * bx + ax * bw + ay * bz - az * by, aw * by - ax * bz + ay * bw + az * bx,
+            aw * bz + ax * by - ay * bx + az * bw, aw * bw - ax * bx - ay * by - az * bz)
+
+rs, rc, rb = chunks['REFSKELT']
+if rc > 1:
+    root_q = struct.unpack_from('<4f', rb, 76)
+    root_p = struct.unpack_from('<3f', rb, 92)
+    child_p = struct.unpack_from('<3f', rb, rs + 92)
+    conj = (-root_q[0], -root_q[1], -root_q[2], root_q[3])
+    turned = qmul(qmul(root_q, (child_p[0], child_p[1], child_p[2], 0)), conj)[:3]
+    tip = tuple(turned[i] + root_p[i] for i in range(3))
+    tip_local = '1 0 0 0 0 1 0 0 0 0 1 0 %s %s %s 1' % (fl([-tip[1] * scale]), fl([tip[0] * scale]), fl([tip[2] * scale]))
+    nodes.append('\t\t\ttip = {\n\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t}\n' % tip_local)
+    print('tip (right, forward, up in UT units)', -tip[1], tip[0], tip[2])
+
 text = ('\ngeometries = {\n%s}\nnodes = {\n\troot = {\n\t\tchildren = {\n%s\t\t}\n\t\tlocal = [ %s ]\n\t}\n}\nsource_path = "psk2bsi"\n'
         % (''.join(geometries), ''.join(nodes), identity))
 raw = text.encode('latin1')

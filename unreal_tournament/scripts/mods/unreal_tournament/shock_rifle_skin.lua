@@ -21,6 +21,7 @@ local mod = get_mod("unreal_tournament")
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local animations = mod:dofile("scripts/mods/unreal_tournament/shock_rifle_skin_animations")
+local fx = mod:dofile("scripts/mods/unreal_tournament/shock_rifle_skin_effects")
 
 local TEMPLATE_NAME = "staff_blast_beam_template_1"
 local SETTING_ID = "shock_rifle"
@@ -50,10 +51,11 @@ local CONFIG = {
 	gel_loop_seconds = 10,
 	chamber_opacity = 0.6,
 	vent_pulse_speed = 14, -- radians per second, of the glow while the heat is vented
-	-- Weapon bob (UT2004 Pawn.CheckBob and Pawn.WeaponBob, in UT units): Bob is Pawn.Bob (clamped to 0.01), the damping is
-	-- ShockRifle.BobDamping, and the speed a player walks at is taken to be UT's (GroundSpeed) at the speed this game's
-	-- player does
-	bob = 0.01,
+	-- Weapon bob (UT2004 Pawn.CheckBob and Pawn.WeaponBob, in UT units): both the sway and how fast it goes follow the speed
+	-- of the player, as they do in UT (it is none when standing still). Bob is Pawn.Bob, which is 0.01 at most there: that is
+	-- too much in this game's view, so a third of it is used. The damping is ShockRifle.BobDamping, and the speed a player
+	-- runs at is taken to be UT's (GroundSpeed) at this game's own
+	bob = 0.0035,
 	bob_damping = 1.8,
 	ut_ground_speed = 440,
 }
@@ -64,9 +66,18 @@ local CONFIG = {
 --       as it is to), blend_from, blend_left: the pose it blends from
 --   cooldown_end, cooldown: when the glow is all back, and how long it took to come back
 --   venting, vent_time: the heat is being vented
+--   tip_node: the node of the model where the muzzle is, unit_scale: how many meters a UT unit of the model is in the world
 --   gel_time, gel_frame, bob_time, walk_right, walk_up
 local skin
 local debug_enabled = false
+
+-- The balls of the Shock Rifle that are flying (of every player's, as this machine sees them): what makes up the ball of
+-- UT is made as it goes. { effect = the ball of shock_rifle_skin_effects }
+local balls = {}
+
+-- What the game's own effects of the Shock Rifle are taken away for while the skin is on: the explosion of the ball (the
+-- skin draws it, see skin_explosion_callbacks)
+local explosion_effect_name
 
 local function debug(text, ...)
 	if debug_enabled then
@@ -83,6 +94,11 @@ end
 
 local function item_template_name(item_data)
 	return item_data and BackendUtils.get_item_template(item_data).name
+end
+
+-- Where the muzzle of the model is (the unit has to be alive: the skin goes before it)
+local function muzzle_position()
+	return skin and Unit.alive(skin.unit) and Unit.world_position(skin.unit, skin.tip_node) or nil
 end
 
 -- How long the game takes to wield a weapon: nothing can be done with the weapon for that long
@@ -234,6 +250,8 @@ local function create(fp)
 		cooldown = 1,
 		cooldown_end = 0,
 		gel_time = 0,
+		tip_node = Unit.node(unit, "tip"),
+		unit_scale = CONFIG.draw_scale * CONFIG.meters_per_unit,
 		walk_right = 0,
 		walk_up = 0,
 		world = world,
@@ -246,9 +264,26 @@ local function create(fp)
 	play("Pickup", wield_time())
 end
 
+-- The game's own effect of the explosion of the ball is taken away while the skin is on, and given back when it is off
+local function apply_template_overrides()
+	local explosion = ExplosionTemplates.ut_shock_ball_explosion.explosion
+
+	if utils.is_weapon_skin_enabled(SETTING_ID) then
+		if explosion.effect_name then
+			explosion_effect_name = explosion.effect_name
+			explosion.effect_name = nil
+		end
+	elseif explosion_effect_name then
+		explosion.effect_name = explosion_effect_name
+		explosion_effect_name = nil
+	end
+end
+
 -- Made when the setting or the weapon is switched, and when what is wielded is the Shock Rifle
 local function refresh()
 	local fp = local_first_person()
+
+	apply_template_overrides()
 
 	if not utils.is_weapon_skin_enabled(SETTING_ID) or not fp then
 		destroy()
@@ -268,13 +303,23 @@ mod.setting_changed_callbacks[#mod.setting_changed_callbacks + 1] = function (ch
 end
 
 mod.enabled_callbacks[#mod.enabled_callbacks + 1] = refresh
-mod.disabled_callbacks[#mod.disabled_callbacks + 1] = function ()
+
+-- (the mod is switched off or unloaded: the setting reads as it is, the game's effect is given back)
+local function give_back()
 	destroy()
+
+	local explosion = ExplosionTemplates.ut_shock_ball_explosion.explosion
+
+	if explosion_effect_name then
+		explosion.effect_name = explosion_effect_name
+		explosion_effect_name = nil
+	end
 end
-mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
-	destroy()
-end
+
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = give_back
+mod.unload_callbacks[#mod.unload_callbacks + 1] = give_back
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	table.clear(balls)
 	destroy(true)
 end
 
@@ -309,6 +354,18 @@ local function shot(action, new_action, animation_name)
 	skin.cooldown_end = Managers.time:time("game") + new_action.total_time
 
 	play(animation_name)
+
+	-- (the flash follows the muzzle of the model: it is the skin that follows the first person unit)
+	local current = skin
+	local function follow()
+		return skin == current and muzzle_position() or nil
+	end
+
+	if animation_name == "Fire" then
+		fx.beam_muzzle_flash(follow, skin.unit_scale)
+	else
+		fx.ball_muzzle_flash(follow, skin.unit_scale)
+	end
 end
 
 mod.handgun_start_callbacks.shock_skin = function (action, new_action)
@@ -320,6 +377,52 @@ end
 mod.charged_projectile_start_callbacks.shock_skin = function (action, new_action)
 	if new_action.ut_shock_ball then
 		shot(action, new_action, "AltFire")
+	end
+end
+
+-- The beam, of the player who plays (from the muzzle of the model) and of the others (from the staff's, until their model is
+-- drawn too)
+mod.shock_beam_callbacks.skin = function (owner_unit, start_position, end_position, hit_normal)
+	if skin and utils.is_local_player_unit(owner_unit) then
+		start_position = muzzle_position() or start_position
+	end
+
+	fx.beam(start_position, end_position, hit_normal)
+end
+
+-- The ball (every player's, on every machine): the game's own fireball is put out as it is made, and the ball of UT is drawn
+-- where it is
+mod.init_callbacks.shock_ball = function (projectile)
+	if not utils.is_weapon_skin_enabled(SETTING_ID) then
+		return
+	end
+
+	local unit = projectile._projectile_unit
+
+	Unit.set_unit_visibility(unit, false)
+	-- (what the unit does when the projectile is over: the effects of the flame it carries end)
+	Unit.flow_event(unit, "lua_projectile_end")
+
+	balls[#balls + 1] = fx.new_ball(function ()
+		if Unit.alive(unit) and not projectile._stop_impacts then
+			return Unit.world_position(unit, 0)
+		end
+	end)
+
+	debug("ball")
+end
+
+mod.skin_explosion_callbacks.ut_shock_ball_explosion = function (world, position)
+	if utils.is_weapon_skin_enabled(SETTING_ID) then
+		fx.ball_explosion(position)
+	end
+end
+
+mod.skin_explosion_callbacks.ut_shock_combo_explosion = function (world, position)
+	if utils.is_weapon_skin_enabled(SETTING_ID) then
+		fx.combo(position)
+
+		debug("combo")
 	end
 end
 
@@ -426,9 +529,18 @@ local function place(fp)
 	Unit.set_local_rotation(skin.unit, 0, rotation)
 	Unit.set_local_scale(skin.unit, 0, Vector3(size * across_scale, size * forward_scale, size * across_scale))
 	World.update_unit(skin.world, skin.unit)
+
+	-- (a UT unit of the model, across: what is drawn on it is as big as the model is)
+	skin.unit_scale = CONFIG.draw_scale * across_scale
 end
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
+	for i = #balls, 1, -1 do
+		if not fx.update_ball(balls[i], dt) then
+			table.remove(balls, i)
+		end
+	end
+
 	if not skin then
 		return
 	end
