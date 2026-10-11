@@ -150,8 +150,11 @@ for f in range(FRAMES):
             u = (i + 0.5) / SIZE
             v = (j + 0.5) / SIZE
             r, g, b_, a = sample(0.5 + (u - 0.5) * stretch_u, 0.5 + (v - 0.5) * stretch_v + pan)
-            lum = (0.3 * r + 0.59 * g + 0.11 * b_) * 1.6
-            row.extend((min(255, int(lum * TINT[0])), min(255, int(lum * TINT[1])), min(255, int(lum * TINT[2])), int(a)))
+            # (the chamber is lit by itself and adds its light: the whole of it glows, the streaks of the gel more, and the alpha of the
+            # texture, which is what the glass masks with in UT, is not used)
+            lum = (0.3 * r + 0.59 * g + 0.11 * b_) * 1.6 / 255
+            lum = 0.35 + 0.65 * min(1.0, lum)
+            row.extend((int(255 * lum * TINT[0]), int(255 * lum * TINT[1]), int(255 * lum * TINT[2]), 255))
         rows.append(row)
     name = 'shock_gel_%02d' % f
     png('%s/units/ut/%s.png' % (REPO, name), SIZE, SIZE, rows)
