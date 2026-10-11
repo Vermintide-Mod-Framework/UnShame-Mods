@@ -282,7 +282,6 @@ local function build_beam_action()
 		fire_sound_event = "weapon_staff_fire_beam_end_shot",
 		fire_time = CONFIG.beam_fire_time,
 		headshot_multiplier = 2,
-		hit_effect = "fireball_impact",
 		is_spell = true,
 		kind = "handgun",
 		overcharge_type = "ut_shock_beam",
@@ -323,7 +322,7 @@ local function build_ball_action()
 		fire_sound_on_husk = true,
 		fire_time = CONFIG.ball_fire_time,
 		forced_charge_level = CONFIG.ball_charge_level,
-		hit_effect = "fireball_impact",
+		-- (no hit_effect: the game's fire of a fireball hitting something, the skin draws the impact of the ball, see skin_explosion_callbacks)
 		is_spell = true,
 		kind = "charged_projectile",
 		overcharge_type = "ut_shock_ball",
