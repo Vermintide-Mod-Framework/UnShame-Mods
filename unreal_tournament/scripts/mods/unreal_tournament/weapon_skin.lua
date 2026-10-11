@@ -457,7 +457,9 @@ local function new(def)
 			local is_walking = ScriptUnit.extension(owner_unit, "input_system"):get("walk")
 			local top_speed = status_extension:is_crouching() and movement_settings.crouch_move_speed or is_walking and movement_settings.walk_move_speed or movement_settings.move_speed
 
-			speed = top_speed * status_extension:current_move_speed_multiplier() * state.current_movement_speed_scale / movement_settings.move_speed * CONFIG.ut_ground_speed
+			-- (the speeds of the player's own table are the ones that the buffs of an action change, venting the heat slows them: against the
+			-- speed of the game's settings, which they do not change, a slowed player is slower)
+			speed = top_speed * status_extension:current_move_speed_multiplier() * state.current_movement_speed_scale / PlayerUnitMovementSettings.move_speed * CONFIG.ut_ground_speed
 		end
 
 		-- (the speed the bob follows is smoothed, and the phase of the sway is kept, so that the model doesn't jump)
