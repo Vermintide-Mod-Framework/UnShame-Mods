@@ -142,19 +142,31 @@ mod.shock_beam_callbacks = {}
 
 -- The sounds a weapon's action plays for its player (the shot's, which the game plays and tells the others of), by the name of
 -- the game's event: a weapon's skin takes one over
---   mod.hud_sound_callbacks[event name] = function (first_person_extension, play_on_husk)
---       returns true if the sound is played by it instead
+--   mod.hud_sound_callbacks[event name][name of the skin] = function (first_person_extension, play_on_husk)
+--       returns true if the sound is played by it instead (the staffs' events are the ones of more than one weapon: each skin looks at
+--       what the player wields)
 mod.hud_sound_callbacks = {}
 
 mod:hook(PlayerUnitFirstPerson, "play_hud_sound_event", function (func, self, event, wwise_source_id, play_on_husk)
-	local callback = mod.hud_sound_callbacks[event]
+	local callbacks = mod.hud_sound_callbacks[event]
 
-	if callback and callback(self, play_on_husk) then
-		return
+	if callbacks then
+		for _, callback in pairs(callbacks) do
+			if callback(self, play_on_husk) then
+				return
+			end
+		end
 	end
 
 	return func(self, event, wwise_source_id, play_on_husk)
 end)
+
+-- What the Bio Rifle's skin draws of its puddles (the game's own look of them is a fire, which the skin takes away): the puddle of an id
+-- is shown at a place, for a time, as big as the radius, and ends
+--   mod.puddle_visual_callbacks.show = function (id, position, radius, charged, duration)
+--   mod.puddle_visual_callbacks.stop = function (id)
+--   mod.puddle_visual_callbacks.burst = function (position, goo_scale)   (a puddle bursts: goo_scale is how much goo, 0 to 1)
+mod.puddle_visual_callbacks = {}
 
 -- The overheating of a weapon, by the template of the weapon (the game's own explosion hurts the player, and is kept):
 --   mod.overheat_callbacks[template] = function (state, item_data)

@@ -399,7 +399,8 @@ local function new(def)
 	-- A sound of the game's that the player's own action plays (and tells the others of) is taken over by one of the skin's:
 	-- ut_event is the name of the event of the skin, a function that gives it, or nothing for none
 	function self.take_over_sound(game_event, ut_event)
-		mod.hud_sound_callbacks[game_event] = function (first_person_extension)
+		mod.hud_sound_callbacks[game_event] = mod.hud_sound_callbacks[game_event] or {}
+		mod.hud_sound_callbacks[game_event][CONFIG.id] = function (first_person_extension)
 			if not self.enabled() or not utils.is_local_player_unit(first_person_extension.unit) then
 				return false
 			end

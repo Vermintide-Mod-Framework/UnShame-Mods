@@ -1,0 +1,25 @@
+materials = {
+	m_0 = "units/ut/bio/bio_rifle_m0"
+	m_1 = "units/ut/bio/bio_rifle_m1"
+	m_2 = "units/ut/bio/bio_rifle_m2"
+}
+renderables = {
+	b_bone_weapon = {
+		always_keep = false
+		culling = "bounding_volume"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_plunger = {
+		always_keep = false
+		culling = "bounding_volume"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+}

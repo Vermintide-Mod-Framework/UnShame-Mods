@@ -72,6 +72,7 @@ mod:dofile("scripts/mods/unreal_tournament/flak_cannon_skin")
 mod:dofile("scripts/mods/unreal_tournament/rocket_launcher")
 mod:dofile("scripts/mods/unreal_tournament/rocket_launcher_skin")
 mod:dofile("scripts/mods/unreal_tournament/bio_rifle")
+mod:dofile("scripts/mods/unreal_tournament/bio_rifle_skin")
 mod:dofile("scripts/mods/unreal_tournament/link_gun")
 mod:dofile("scripts/mods/unreal_tournament/movement")
 mod:dofile("scripts/mods/unreal_tournament/gameplay")
@@ -79,5 +80,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- (seen in the chat each time the mod is loaded or reloaded, to know which build is running: the number is the count of
 -- commits of the repository, which goes up by one with every change). Only with the developer mode of the mod framework on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 293)")
+	mod:echo("Unreal Tournament loaded (build 294)")
 end

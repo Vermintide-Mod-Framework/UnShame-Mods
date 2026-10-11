@@ -32,6 +32,19 @@ TEXTURES = {
     'muzzle_white': 'XEffects/Texture/MuzFlashWhite_t.tga',
     'rocket_muzzle': 'XEffects/Texture/MuzFlashRocket_t.tga',
     'rocket_flare': 'XEffects/Texture/RocketFlare.tga',
+    # the Bio Rifle (the goo, the splat decal)
+    'bio_goop': 'XEffectMat/Texture/goop_green_a.tga',
+    'bio_splat': 'XEffects/Texture/xbiosplat.tga',
+    # the Link Gun (sparks, the flash, the beams, the rings, the splash of a plasma bolt)
+    'link_spark_green': 'XEffectMat/Texture/link_spark_green.tga',
+    'link_spark_yellow': 'XEffectMat/Texture/link_spark_yellow.tga',
+    'link_muz_green': 'XEffectMat/Texture/link_muz_green.tga',
+    'link_muz_yellow': 'XEffectMat/Texture/link_muz_yellow.tga',
+    'link_beam_green': 'XEffectMat/Texture/link_beam_green.tga',
+    'link_beam_yellow': 'XEffectMat/Texture/link_beam_yellow.tga',
+    'link_ring_green': 'XEffectMat/Texture/link_ring_green.tga',
+    'link_ring_yellow': 'XEffectMat/Texture/link_ring_yellow.tga',
+    'link_projectile_splash': 'XEffectMat/Texture/Link_projectile_splash.tga',
     'smoke': 'XEffects/Texture/SmokeAlphab_t.tga',
 }
 

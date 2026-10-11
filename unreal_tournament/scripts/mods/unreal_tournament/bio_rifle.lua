@@ -314,12 +314,17 @@ local function play_effects(effect_list, world, position)
 	end
 end
 
+-- (with the skin the skin draws them, see skin_explosion_callbacks)
 local function play_burst_effects(world, position)
-	play_effects(CONFIG.burst_effects, world, position)
+	if not utils.is_weapon_skin_enabled("bio_rifle") then
+		play_effects(CONFIG.burst_effects, world, position)
+	end
 end
 
 local function play_impact_effects(world, position)
-	play_effects(CONFIG.impact_effects, world, position)
+	if not utils.is_weapon_skin_enabled("bio_rifle") then
+		play_effects(CONFIG.impact_effects, world, position)
+	end
 end
 
 mod.explosion_callbacks.ut_bio_burst = play_burst_effects
@@ -380,6 +385,8 @@ local function build_glob_action()
 		overcharge_type = "ut_bio_glob",
 		ut_bio_glob = true,
 		ut_aoe_callback = "ut_bio_glob",
+		ut_init_flow_event_filter = "bio",
+		ut_skin_init_callback = "bio",
 		ut_bio_goo = 1,
 		ut_hit_enemy_callback = "ut_bio_glob",
 		speed = CONFIG.glob_speed,
@@ -453,6 +460,8 @@ local function build_charged_action()
 		speed = CONFIG.charged_glob_speed,
 		throw_up_this_much_in_target_direction = 0.1,
 		ut_bio_glob = true,
+		ut_init_flow_event_filter = "bio",
+		ut_skin_init_callback = "bio",
 		ut_bio_impact_template = "ut_bio_charged_impact",
 		ut_hit_enemy_callback = "ut_bio_glob",
 		ut_aoe_callback = "ut_bio_glob",
@@ -522,6 +531,8 @@ local function build_child_action()
 		kind = "charged_projectile",
 		ut_aoe_callback = "ut_bio_glob",
 		ut_bio_glob = true,
+		ut_init_flow_event_filter = "bio",
+		ut_skin_init_callback = "bio_child",
 		ut_bio_goo_range = {
 			CONFIG.child_goo_min,
 			CONFIG.child_goo_max,
@@ -712,10 +723,22 @@ local function stop_visual(id)
 
 		effects.stop(visual.effect)
 	end
+
+	-- (the skin's look of the puddle, if it has made one)
+	if mod.puddle_visual_callbacks.stop then
+		mod.puddle_visual_callbacks.stop(id)
+	end
 end
 
 local function show_visual(id, world, position, radius, charged, duration)
 	stop_visual(id)
+
+	-- (with the skin the skin draws it)
+	if utils.is_weapon_skin_enabled("bio_rifle") then
+		mod.puddle_visual_callbacks.show(id, position, radius, charged, duration)
+
+		return
+	end
 
 	local effect = effects.start(world, charged and CONFIG.charged_puddle_effect or CONFIG.puddle_effect, position, radius / CONFIG.puddle_effect_natural_radius)
 
@@ -775,6 +798,13 @@ local function make_puddle_area(puddle, t)
 end
 
 local function play_puddle_burst_effects(world, position, goo_scale)
+	-- (with the skin the skin draws it)
+	if utils.is_weapon_skin_enabled("bio_rifle") then
+		mod.puddle_visual_callbacks.burst(position, goo_scale)
+
+		return
+	end
+
 	for _, effect in ipairs(CONFIG.burst_effects) do
 		effects.play(world, effect.name, position + Vector3(0, 0, 0.5), math.lerp(CONFIG.puddle_burst_effect_scale, CONFIG.puddle_burst_effect_scale_max, goo_scale))
 	end

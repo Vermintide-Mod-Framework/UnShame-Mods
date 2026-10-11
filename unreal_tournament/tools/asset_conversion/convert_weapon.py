@@ -143,6 +143,19 @@ WEAPONS['rocket'] = {
     'lua': 'scripts/mods/unreal_tournament/rocket_launcher_skin_animations.lua',
 }
 
+WEAPONS['bio'] = {
+    'psk': 'Weapons/SkeletalMesh/BioRifle_1st.psk',
+    'psa': 'Weapons/MeshAnimation/BioRifle_1st.psa',
+    # the body, the glass of the tank, and what is in the tank (the bubbles)
+    'materials': [('WeaponSkins/Texture/BioRifleTex0.tga', 'opaque'), ('WeaponSkins/Texture/BioRifleGlass0.tga', 'alpha', 0.5),
+                  ('WeaponSkins/Texture/BRInnerBubbles.tga', 'alpha', 0.8)],
+    'scale': 0.0125,
+    'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire'), ('HOLD', 'Hold')],
+    'locators': ['Bone_Flash'],
+    'unit': 'units/ut/bio/bio_rifle',
+    'lua': 'scripts/mods/unreal_tournament/bio_rifle_skin_animations.lua',
+}
+
 MATERIAL_TEMPLATES = {
     'opaque': '''material_contexts = {
 	surface_material = ""
@@ -174,8 +187,14 @@ variables = {
 ''',
 }
 
-def material_text(kind, texture):
-    return MATERIAL_TEMPLATES[kind] % texture
+def material_text(kind, texture, opacity=None):
+    text = MATERIAL_TEMPLATES[kind] % texture
+
+    if opacity is not None:
+        # (a see through material: how much of it there is)
+        text = text.rstrip('\n').rstrip('}') + '\topacity = {\n\t\ttype = "scalar"\n\t\tvalue = %s\n\t}\n}\n' % opacity
+
+    return text
 
 def main():
     name, export = sys.argv[1], sys.argv[2]
@@ -368,7 +387,8 @@ def main():
     open('%s/%s.unit' % (REPO, cfg['unit']), 'w', newline='\n').write(unit_text)
     done_textures = {}
     for m in used_materials:
-        tga, kind = cfg['materials'][m]
+        tga, kind = cfg['materials'][m][:2]
+        opacity = cfg['materials'][m][2] if len(cfg['materials'][m]) > 2 else None
         tname = os.path.splitext(os.path.basename(tga))[0].lower()
         texture = '%s/%s_%s' % (unit_dir, unit_base, tname)
         if texture not in done_textures:
@@ -376,7 +396,7 @@ def main():
             write_png('%s/%s.png' % (REPO, texture), w, h, rows)
             open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
             done_textures[texture] = True
-        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture))
+        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture, opacity))
 
     # the animations: the pose of each bone (the root's move first: it is how the whole mesh is moved) against the mesh in its
     # reference pose, in the model's axes and UT units

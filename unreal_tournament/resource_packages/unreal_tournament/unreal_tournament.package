@@ -20,6 +20,8 @@ unit = [
 	"units/ut/rocket/rocket_launcher"
 	"units/ut/rocket/pickup"
 	"units/ut/rocket/projectile"
+	"units/ut/bio/bio_rifle"
+	"units/ut/bio/pickup"
 	"units/ut/fx/quad"
 ]
 
@@ -27,6 +29,7 @@ material = [
 	"units/ut/shock_rifle_power"
 	"units/ut/flak/*"
 	"units/ut/rocket/*"
+	"units/ut/bio/*"
 	"units/ut/fx/fx_*"
 ]
 
@@ -34,4 +37,5 @@ wwise_dep = [
 	"wwise/unreal_tournament/shock_rifle"
 	"wwise/unreal_tournament/flak_cannon"
 	"wwise/unreal_tournament/rocket_launcher"
+	"wwise/unreal_tournament/bio_rifle"
 ]

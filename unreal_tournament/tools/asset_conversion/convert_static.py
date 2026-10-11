@@ -23,6 +23,12 @@ STATICS = {
         'scale': 0.28,
         'unit': 'units/ut/flak/chunk',
     },
+    'bio_pickup': {
+        'pskx': 'WeaponStaticMesh/StaticMesh/BioRiflePickup.pskx',
+        'materials': [('WeaponSkins/Texture/BioRifleTex0.tga', 'opaque'), ('WeaponSkins/Texture/BioRifleGlass0.tga', 'alpha', 0.5)],
+        'scale': 0.012,
+        'unit': 'units/ut/bio/pickup',
+    },
     'rocket_pickup': {
         'pskx': 'WeaponStaticMesh/StaticMesh/RocketLauncherPickup.pskx',
         'materials': [('WeaponSkins/Texture/RocketTex0.tga', 'opaque')],
@@ -63,11 +69,13 @@ def main():
                       '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n') % (geometry, i)
     unit_text += '}\n'
     open('%s/%s.unit' % (REPO, cfg['unit']), 'w', newline='\n').write(unit_text)
-    for i, (tga, kind) in enumerate(cfg['materials']):
+    for i, material in enumerate(cfg['materials']):
+        tga, kind = material[:2]
+        opacity = material[2] if len(material) > 2 else None
         texture = '%s/%s_%s' % (unit_dir, unit_base, os.path.splitext(os.path.basename(tga))[0].lower())
         w, h, rows = read_tga(export + '/' + tga)
         write_png('%s/%s.png' % (REPO, texture), w, h, rows)
         open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
-        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(material_text(kind, texture))
+        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(material_text(kind, texture, opacity))
 
 main()
