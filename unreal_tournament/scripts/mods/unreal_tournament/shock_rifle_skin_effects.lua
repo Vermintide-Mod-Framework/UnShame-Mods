@@ -93,6 +93,10 @@ local CONFIG = {
 	combo_flash_size = 570,
 	combo_flash_growth = 500,
 	combo_flash_life = 0.25,
+	-- ShockComboExpRing: one ring sprite that grows from nothing
+	combo_ring_growth = 500,
+	combo_ring_life = 0.5,
+	combo_ring_attenuation = 0.4,
 	combo_wiggle_count = 25,
 	combo_wiggle_size = 240, -- (UT's mSizeRange is 120: they look twice as big in UT, as a sprite's size is its radius there)
 	combo_wiggle_intensity = 0.4, -- (and subtler)
@@ -169,14 +173,15 @@ local CONFIG = {
 	sphere_fill_intensity = 0.2,
 	-- Which of the effects of the combo are drawn (the game's rings, shock_rifle.lua's, are not these)
 	combo_shown = {
-		core = true,
-		flares = true,
-		flash = true,
+		core = false,
+		flares = false,
+		flash = false,
+		ring = true,
 		scorch = false,
 		sphere_body = false,
-		sphere_bolts = true,
-		vortex = false,
-		wiggles = true,
+		sphere_bolts = false,
+		vortex = true,
+		wiggles = false,
 	},
 	-- How much of the vortex (the jagged ring of lines that faces the camera) shows at the most, 1 being UT's
 	vortex_opacity = 0.35,
@@ -650,6 +655,23 @@ local function combo_scorch(position)
 	})
 end
 
+local function combo_ring(position)
+	if not CONFIG.combo_shown.ring then
+		return
+	end
+
+	particles.sprite({
+		attenuation = CONFIG.combo_ring_attenuation,
+		color = WHITE,
+		growth = CONFIG.combo_ring_growth * UNIT,
+		life = CONFIG.combo_ring_life,
+		position = position,
+		size = 0,
+		spin = random_spin(),
+		texture = "shock_ring_a",
+	})
+end
+
 local function combo_core(position)
 	if not CONFIG.combo_shown.core then
 		return
@@ -748,6 +770,7 @@ end
 -- The combo (ShockCombo: the core, the ring, the flares, the flash and the wiggles, the sphere and the vortex, the mark on the floor), each of
 -- which is shown or not by CONFIG.combo_shown
 function fx.combo(position)
+	combo_ring(position)
 	combo_core(position)
 	combo_flash(position)
 	combo_flares(position)
