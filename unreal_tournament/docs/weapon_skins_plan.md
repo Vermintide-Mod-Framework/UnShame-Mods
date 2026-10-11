@@ -1,6 +1,22 @@
 # Weapon Skins: the UT2004 Shock Rifle
 
-Status: waiting for sign-off. Branch `ut-weapon-skins`, local only, never pushed.
+Status: signed off and built (phases 0 to 4), in the game's hands for testing. Branch `ut-weapon-skins`, local only, never pushed.
+Where the plan below was changed while building it:
+
+- **No PutDown** (D4): the game has no animation of putting a weapon away, the model is gone as the weapon is put away.
+  The pickup lasts as long as the game's wield cooldown, a shot plays when its action starts. `asset_test.lua` is gone, its
+  work is in `shock_rifle_skin.lua` and its dev command (`/shockskin`).
+- **Effects** are `shock_rifle_skin_effects.lua` on the particle layer of `skin_particles.lua`; the ball also has the sprite
+  of the projectile of UT, which the emitters of `ShockBall` don't include.
+- **The game's own fireball** is not started while the skin is on: the flow events the projectile extension sends its unit as it
+  is made are held back (`mod.init_flow_event_filters`).
+- **Sounds** (D2) worked: the SDK compiles a bank made by hand (`tools/asset_conversion/make_bank.py`) when it is given the
+  formats its Wwise plugin reads (the `.wwise_bank` container with a record for each platform, a `.wwise_metadata` of the
+  events, a `.wwise_dep` keyed by the platform). The game's sounds of the shots are taken over by `mod.hud_sound_callbacks`.
+- **Third person** is `shock_rifle_skin_third_person.lua`: every character that is seen on this machine wielding the Shock
+  Rifle holds the pickup mesh, linked to the same node of the hand as the staff, which is hidden; how it sits is tuned in game
+  with `/shockskin 3p <forward> <right> <up> <yaw> <pitch> <roll>` (the values go into its `CONFIG`).
+- Not done: the equipment menus' preview (the staff's), and an own mesh for the left hand's effect unit of the Beam Staff.
 
 ## 1. What it is
 

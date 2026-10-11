@@ -12,6 +12,7 @@ lua = [
 
 unit = [
 	"units/ut/shock_rifle"
+	"units/ut/shock_pickup"
 	"units/ut/fx/quad"
 ]
 

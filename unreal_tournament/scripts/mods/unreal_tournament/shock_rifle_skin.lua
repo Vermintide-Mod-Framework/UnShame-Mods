@@ -22,6 +22,7 @@ local mod = get_mod("unreal_tournament")
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local animations = mod:dofile("scripts/mods/unreal_tournament/shock_rifle_skin_animations")
 local fx = mod:dofile("scripts/mods/unreal_tournament/shock_rifle_skin_effects")
+local third_person = mod:dofile("scripts/mods/unreal_tournament/shock_rifle_skin_third_person")
 
 local TEMPLATE_NAME = "staff_blast_beam_template_1"
 local SETTING_ID = "shock_rifle"
@@ -332,6 +333,7 @@ mod.enabled_callbacks[#mod.enabled_callbacks + 1] = refresh
 
 -- (the mod is switched off or unloaded: the setting reads as it is, the game's effect is given back)
 local function give_back()
+	third_person.clear()
 	destroy()
 
 	for _, override in ipairs(explosion_overrides) do
@@ -346,6 +348,7 @@ mod.disabled_callbacks[#mod.disabled_callbacks + 1] = give_back
 mod.unload_callbacks[#mod.unload_callbacks + 1] = give_back
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(balls)
+	third_person.clear()
 	destroy(true)
 end
 
@@ -381,16 +384,24 @@ local function shot(action, new_action, animation_name)
 
 	play(animation_name)
 
-	-- (the flash follows the muzzle of the model: it is the skin that follows the first person unit)
+	-- (the flash follows the muzzle of the model: it is the skin that follows the first person unit; in a third person view it
+	-- is the mesh in the character's hand)
+	local owner_unit = action.owner_unit
+	local in_third_person = third_person.shows_weapon(owner_unit)
 	local current = skin
 	local function follow()
+		if in_third_person then
+			return third_person.muzzle_position(owner_unit)
+		end
+
 		return skin == current and muzzle_position() or nil
 	end
+	local scale = in_third_person and third_person.meters_per_unit or skin.unit_scale
 
 	if animation_name == "Fire" then
-		fx.beam_muzzle_flash(follow, skin.unit_scale)
+		fx.beam_muzzle_flash(follow, scale)
 	else
-		fx.ball_muzzle_flash(follow, skin.unit_scale)
+		fx.ball_muzzle_flash(follow, scale)
 	end
 end
 
@@ -409,9 +420,25 @@ end
 -- The beam, of the player who plays (from the muzzle of the model) and of the others (from the staff's, until their model is
 -- drawn too)
 mod.shock_beam_callbacks.skin = function (owner_unit, start_position, end_position, hit_normal)
-	if skin and utils.is_local_player_unit(owner_unit) then
+	local is_local = utils.is_local_player_unit(owner_unit)
+
+	if is_local and skin and not third_person.shows_weapon(owner_unit) then
 		start_position = muzzle_position() or start_position
-	elseif not utils.is_local_player_unit(owner_unit) then
+	else
+		-- (the character is seen holding the mesh: the beam starts at the end of its barrel, and the flash of the shot is made
+		-- here for the others, the player's own is made when the shot starts)
+		local muzzle = third_person.muzzle_position(owner_unit)
+
+		start_position = muzzle or start_position
+
+		if not is_local then
+			fx.beam_muzzle_flash(function ()
+				return third_person.muzzle_position(owner_unit)
+			end, third_person.meters_per_unit)
+		end
+	end
+
+	if not is_local then
 		-- (the shot of the player is heard from the head, see hud_sound_callbacks)
 		play_sound_at("ut_shock_fire_3d", start_position)
 	end
@@ -440,8 +467,13 @@ mod.init_callbacks.shock_ball = function (projectile)
 
 	Unit.set_unit_visibility(unit, false)
 
-	if not utils.is_local_player_unit(projectile._owner_unit) then
+	local owner_unit = projectile._owner_unit
+
+	if not utils.is_local_player_unit(owner_unit) then
 		play_sound_at("ut_shock_alt_fire_3d", Unit.world_position(unit, 0))
+		fx.ball_muzzle_flash(function ()
+			return third_person.muzzle_position(owner_unit)
+		end, third_person.meters_per_unit)
 	end
 
 	balls[#balls + 1] = fx.new_ball(function ()
@@ -619,6 +651,8 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 		end
 	end
 
+	third_person.update()
+
 	if not skin then
 		return
 	end
@@ -640,6 +674,8 @@ end
 
 -- (the game shows its weapon and its arms again at times of its own, after the mod's update)
 mod.pre_render_callbacks.shock_skin = function ()
+	third_person.hide_staffs()
+
 	if skin then
 		local fp = local_first_person()
 
@@ -650,12 +686,14 @@ mod.pre_render_callbacks.shock_skin = function ()
 end
 
 -- Development: /shockskin debug prints what the skin does, /shockskin play <Pickup|Idle|Fire|AltFire> plays an animation
-mod:command("shockskin", "debug | play <animation> - the Shock Rifle skin", function (command, name)
+mod:command("shockskin", "debug | play <animation> | 3p <forward> <right> <up> <yaw> <pitch> <roll> - the Shock Rifle skin", function (command, name, ...)
 	if command == "debug" then
 		debug_enabled = not debug_enabled
 
 		mod:echo("shock skin: debug %s", debug_enabled and "on" or "off")
 	elseif command == "play" and skin and animations[name] then
 		play(name)
+	elseif command == "3p" then
+		third_person.tune(name, ...)
 	end
 end)
