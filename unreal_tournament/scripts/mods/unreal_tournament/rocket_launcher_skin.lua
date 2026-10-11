@@ -299,7 +299,8 @@ skin_api = mod.weapon_skin.new({
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
 		unit_name = "units/ut/rocket/pickup",
-		hand_node = "j_rightweaponattach",
+		-- (the game links the crossbow, the blunderbuss and the Drakegun to the left hand's node, AttachmentNodeLinking.repeating_crossbow)
+		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.009,
 		scale = 0.5,
 		grip_right = -55,
