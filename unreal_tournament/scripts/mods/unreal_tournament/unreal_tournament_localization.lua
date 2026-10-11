@@ -24,7 +24,7 @@ return {
 		en = "Announcer",
 	},
 	announcer_description = {
-		en = "Unreal Tournament 2004's announcer announces your kills.",
+		en = "Unreal Tournament 2004's announcer. Announces multi kills, killing sprees, head shots and more as you kill.",
 	},
 	no_barriers = {
 		en = "Remove Barriers",
