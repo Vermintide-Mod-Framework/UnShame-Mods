@@ -52,7 +52,7 @@ local CONFIG = {
 	ball_sprite_layers = 3,
 	-- (FadeInEndTime and FadeOutStartTime of each: it is all there between, and the next core comes as one ends)
 	ball_fill_size = 85, -- units across: as big as the rim of the texture of the ball is
-	ball_fill_intensity = 0.7,
+	ball_fill_intensity = 1.5,
 	ball_sprite_spin = 0.8, -- turns a second, the most a layer of the ball's sprite turns either way
 	ball_core_size = 55,
 	ball_core_life = 0.35,
@@ -65,7 +65,7 @@ local CONFIG = {
 	ball_flare_fade_in = 0.25,
 	ball_flare_fade_out = 0.2,
 	ball_spark_size = 26,
-	ball_spark_intensity = 0.5,
+	ball_spark_intensity = 0.25,
 	ball_spark_life = 0.35,
 	ball_spark_fade_in = 0.1,
 	ball_spark_fade_out = 0.3,
