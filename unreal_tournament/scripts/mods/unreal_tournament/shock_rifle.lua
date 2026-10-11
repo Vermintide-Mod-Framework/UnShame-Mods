@@ -54,7 +54,7 @@ local CONFIG = {
 	implosion_ring_start_scale = 1.5,
 	implosion_ring_end_scale = 0.3,
 	combo_ring_effect = "fx/chr_kruber_shockwave",
-	combo_ring_offset = -1, -- meters, moves the rings up (+) or down (-) from the center
+	combo_ring_height = 1, -- meters: how high above the origin of the ring effect its ring is (it is made to be played at a character's feet)
 	-- Bodies are thrown away from the blast first: whatever has died (and started to ragdoll) in
 	-- the first implosion_delay seconds gets thrown once, then everything is pulled back in.
 	implosion_blast_speed = 14, -- m/s, a little less for bodies far from the center
@@ -612,10 +612,13 @@ local function create_implosion_ring(world, position, scale)
 		return
 	end
 
-	local ring_position = position + Vector3(0, 0, CONFIG.combo_ring_offset)
 	local rotations = ring_rotations()
 
+	-- (the effect's ring is above its origin: the origin of each is set so that the ring of it is about the center, and the ring is turned
+	-- about the origin, so its height is turned with it, and made as big as the scale is)
 	for i = 1, #rotations do
+		local ring_position = position - Quaternion.rotate(rotations[i], Vector3(0, 0, CONFIG.combo_ring_height * scale))
+
 		effects.play(world, CONFIG.combo_ring_effect, ring_position, scale, rotations[i])
 	end
 end
