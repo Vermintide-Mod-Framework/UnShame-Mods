@@ -136,17 +136,35 @@ win32 = {
 }
 '''
 
+# (UT2004 lights the weapon in the hand brightly, whatever the level is: the texture is also an emissive map, which lifts the shade)
 MATERIAL_TEMPLATE = '''material_contexts = {
 	surface_material = ""
 }
 parent_material = "%s"
 textures = {
 	color_map = "%s"
+	emissive_map = "%s"
 }
 variables = {
 	use_color_map = {
 		type = "scalar"
 		value = 1
+	}
+	use_emissive_map = {
+		type = "scalar"
+		value = 1
+	}
+	emissive = {
+		type = "vector3"
+		value = [
+			0.8
+			0.8
+			0.8
+		]
+	}
+	emissive_intensity = {
+		type = "scalar"
+		value = 0.35
 	}
 }
 '''
@@ -347,7 +365,7 @@ def main():
             write_png('%s/%s.png' % (REPO, texture), w, h, rows)
             open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
             done_textures[texture] = True
-        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(MATERIAL_TEMPLATE % (MATERIAL_PARENTS[kind], texture))
+        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(MATERIAL_TEMPLATE % (MATERIAL_PARENTS[kind], texture, texture))
 
     # the animations: the pose of each bone (the root's move first: it is how the whole mesh is moved) against the mesh in its
     # reference pose, in the model's axes and UT units

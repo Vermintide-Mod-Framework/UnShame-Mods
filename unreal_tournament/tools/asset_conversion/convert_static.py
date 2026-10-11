@@ -56,6 +56,6 @@ def main():
         w, h, rows = read_tga(export + '/' + tga)
         write_png('%s/%s.png' % (REPO, texture), w, h, rows)
         open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
-        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(MATERIAL_TEMPLATE % (MATERIAL_PARENTS[kind], texture))
+        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(MATERIAL_TEMPLATE % (MATERIAL_PARENTS[kind], texture, texture))
 
 main()
