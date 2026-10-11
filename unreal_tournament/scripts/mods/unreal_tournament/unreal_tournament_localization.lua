@@ -24,7 +24,7 @@ return {
 		en = "Announcer",
 	},
 	announcer_description = {
-		en = "Voice lines for your kills and kill streaks, from Unreal Tournament 2004's announcer.",
+		en = "Unreal Tournament 2004's announcer. Kill quickly for multi kills, and keep killing without an enemy hurting you for killing sprees. Head shots, first blood, and lots of kills with head shots, the Flak Cannon or shock combos are called out too.",
 	},
 	no_barriers = {
 		en = "Remove Barriers",
