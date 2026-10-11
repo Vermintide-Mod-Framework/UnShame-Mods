@@ -231,6 +231,8 @@ local function build_chunk_action(max_bounces)
 		ut_flak_chunk = true,
 		ut_hit_enemy_callback = "ut_flak_chunk",
 		ut_init_callback = "ut_flak_chunk",
+		ut_init_flow_event_filter = "flak",
+		ut_skin_init_callback = "ut_flak_chunk",
 		projectile_info = projectile_info,
 		impact_data = {
 			bounce_on_level_units = true,
@@ -261,6 +263,8 @@ local function build_shell_action()
 		kind = "charged_projectile",
 		ut_aoe_callback = "ut_flak_shell",
 		ut_flak_shell = true,
+		ut_init_flow_event_filter = "flak",
+		ut_skin_init_callback = "ut_flak_shell",
 		projectile_info = projectile_info,
 		impact_data = {
 			aoe = ExplosionTemplates.ut_flak_shell_explosion,
@@ -484,6 +488,11 @@ end
 
 -- The look of the explosion, on every peer: the explosion's callback is run for everyone who sees it
 mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position)
+	-- (with the skin the skin draws it, see skin_explosion_callbacks)
+	if utils.is_weapon_skin_enabled("flak_cannon") then
+		return
+	end
+
 	for _, effect in ipairs(CONFIG.shell_explosion_effects) do
 		effects.play(world, effect.name, position + Vector3(0, 0, effect.offset), effect.scale)
 	end

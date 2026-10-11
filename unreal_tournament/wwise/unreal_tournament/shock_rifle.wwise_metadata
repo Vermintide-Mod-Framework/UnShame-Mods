@@ -1,3 +1,10 @@
 events = {
-	ut_shock_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.0 duration_max = 1.0 positioning = "2D" }
+	ut_shock_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.228 duration_max = 2.228 positioning = "2D" }
+	ut_shock_alt_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.753 duration_max = 1.753 positioning = "2D" }
+	ut_shock_select = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.790 duration_max = 0.790 positioning = "2D" }
+	ut_shock_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 2.228 duration_max = 2.228 positioning = "3D" }
+	ut_shock_alt_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 1.753 duration_max = 1.753 positioning = "3D" }
+	ut_shock_projectile_3d = { attenuation_max = 25 duration_type = "OneShot" duration_min = 1.795 duration_max = 1.795 positioning = "3D" }
+	ut_shock_explosion_3d = { attenuation_max = 50 duration_type = "OneShot" duration_min = 1.942 duration_max = 1.942 positioning = "3D" }
+	ut_shock_combo_3d = { attenuation_max = 60 duration_type = "OneShot" duration_min = 3.596 duration_max = 3.596 positioning = "3D" }
 }

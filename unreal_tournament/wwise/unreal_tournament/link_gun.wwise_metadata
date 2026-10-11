@@ -1,0 +1,9 @@
+events = {
+	ut_link_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.499 duration_max = 0.499 positioning = "2D" }
+	ut_link_beam = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.262 duration_max = 1.262 positioning = "2D" }
+	ut_link_linked = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.974 duration_max = 0.974 positioning = "2D" }
+	ut_link_select = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.298 duration_max = 1.298 positioning = "2D" }
+	ut_link_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 0.499 duration_max = 0.499 positioning = "3D" }
+	ut_link_beam_3d = { attenuation_max = 30 duration_type = "OneShot" duration_min = 1.262 duration_max = 1.262 positioning = "3D" }
+	ut_link_projectile_3d = { attenuation_max = 25 duration_type = "OneShot" duration_min = 0.998 duration_max = 0.998 positioning = "3D" }
+}

@@ -18,10 +18,12 @@ local mod = get_mod("unreal_tournament")
 --   position: where it is; velocity, drag: where it goes and how fast that slows (per second); follow: a function that gives
 --       where it is now, nothing when it is to end
 --   delay: seconds before it shows
+--   additive: 1 (the default) adds its color to the screen, 0 blends it as the transparency of its texture says (smoke)
 -- The kinds:
 --   particles.sprite(spec): faces the camera
 --   particles.disc(spec): lies on a surface, spec.normal is the way it faces
---   particles.beam(spec): from spec.from to spec.to, spec.size is how wide it is, and it faces the camera around its length
+--   particles.beam(spec): from spec.from to spec.to, spec.size is how wide it is, and it faces the camera around its length;
+--       spec.track, a function that gives from and to (nothing when it is to end), instead of the two points
 --
 -- (Vectors can't be kept from one frame to the next, so they are kept in boxes.)
 
@@ -29,7 +31,7 @@ local particles = {}
 
 local UNIT_NAME = "units/ut/fx/quad"
 local MATERIAL_FORMAT = "units/ut/fx/fx_%s"
-local MAX_PARTICLES = 200
+local MAX_PARTICLES = 400
 
 local active = {}
 local free = {} -- units that are not used, { unit, world, material }
@@ -96,7 +98,9 @@ local function add(kind, spec)
 		fade_out = spec.fade_out,
 		follow = spec.follow,
 		growth = spec.growth or 0,
+		additive = spec.additive or 1,
 		intensity = spec.intensity or 1,
+		track = spec.track,
 		kind = kind,
 		life = spec.life,
 		size = spec.size,
@@ -204,8 +208,20 @@ local function place(particle, dt, camera_position, camera_rotation)
 	end
 
 	if particle.kind == "beam" then
-		local from = particle.from:unbox()
-		local to = particle.to:unbox()
+		local from, to
+
+		if particle.track then
+			from, to = particle.track()
+
+			if not from then
+				particle.age = particle.life
+
+				return
+			end
+		else
+			from, to = particle.from:unbox(), particle.to:unbox()
+		end
+
 		local along = to - from
 		local length = Vector3.length(along)
 
@@ -232,6 +248,7 @@ local function place(particle, dt, camera_position, camera_rotation)
 	Unit.set_local_scale(unit, 0, scale)
 	Unit.set_vector3_for_materials(unit, "tint", Vector3(particle.color[1], particle.color[2], particle.color[3]))
 	Unit.set_scalar_for_materials(unit, "intensity", light)
+	Unit.set_scalar_for_materials(unit, "additive", particle.additive)
 	Unit.set_unit_visibility(unit, true)
 	World.update_unit(particle.world, unit)
 end

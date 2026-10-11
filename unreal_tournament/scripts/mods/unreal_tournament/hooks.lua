@@ -1,5 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+
 -- The hooks of the game's functions that more than one weapon needs. A function can be hooked once, so the weapons
 -- don't hook them: each hook here has a table of callbacks, and a weapon adds its function under a name. Most of them
 -- find it from what the shot or the weapon says (the name in the action, the template of the weapon).
@@ -14,9 +16,12 @@ local mod = get_mod("unreal_tournament")
 --       who fired (the other peers get the hit from the network)
 --   mod.init_flow_event_filters[action.ut_init_flow_event_filter] = function (event_name)
 --       while a projectile is made, on every peer: true if the flow event the game sends to its unit is to be held back
+--   mod.skin_init_callbacks[action.ut_skin_init_callback] = function (projectile)
+--       the same, for the weapon's skin (a projectile that has a callback of its own for its gameplay has one for its look as well)
 mod.aoe_callbacks = {}
 mod.init_callbacks = {}
 mod.init_flow_event_filters = {}
+mod.skin_init_callbacks = {}
 mod.hit_enemy_callbacks = {}
 
 mod:hook_safe(PlayerProjectileUnitExtension, "do_aoe", function (self, aoe_data, position)
@@ -59,6 +64,12 @@ for _, extension_class in ipairs({
 
 		local action = self._current_action
 		local callback = action and action.ut_init_callback and mod.init_callbacks[action.ut_init_callback]
+
+		if callback then
+			callback(self)
+		end
+
+		callback = action and action.ut_skin_init_callback and mod.skin_init_callbacks[action.ut_skin_init_callback]
 
 		if callback then
 			callback(self)
@@ -255,6 +266,34 @@ mod:hook_safe(ActionChargedProjectile, "client_owner_start_action", function (se
 	for _, callback in pairs(mod.charged_projectile_start_callbacks) do
 		callback(self, new_action)
 	end
+end)
+
+--   mod.shotgun_start_callbacks[name] = function (action_shotgun, new_action)
+mod.shotgun_start_callbacks = {}
+
+mod:hook_safe(ActionShotgun, "client_owner_start_action", function (self, new_action)
+	for _, callback in pairs(mod.shotgun_start_callbacks) do
+		callback(self, new_action)
+	end
+end)
+
+-- The animation events that the game plays on the player's own first person unit for a weapon, by the template of the weapon: some
+-- of the sounds of a weapon (the shot of the blunderbuss) are made by its animation, not by an event of Lua that can be taken over
+-- (hud_sound_callbacks), and the first person unit and the arms are not shown while a weapon's skin is
+--   mod.first_person_animation_filters[template] = function (event_name)
+--       true if the event is not to be played (for the player who has it, not the others, who are told by the third person events)
+mod.first_person_animation_filters = {}
+
+mod:hook(WeaponUnitExtension, "_play_1p_anim", function (func, self, event_1p, event, ...)
+	local owner_unit = self.owner_unit
+	local template_name = utils.wielded_template_name(owner_unit)
+	local filter = template_name and mod.first_person_animation_filters[template_name]
+
+	if filter and utils.is_local_player_unit(owner_unit) and filter(event) then
+		return
+	end
+
+	return func(self, event_1p, event, ...)
 end)
 
 -- Before the first person view of a character is taken down (the character dies, the level ends): what a weapon has linked to

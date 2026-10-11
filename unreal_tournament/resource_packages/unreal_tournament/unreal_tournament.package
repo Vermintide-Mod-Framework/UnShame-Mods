@@ -13,14 +13,20 @@ lua = [
 unit = [
 	"units/ut/shock_rifle"
 	"units/ut/shock_pickup"
+	"units/ut/flak/flak_cannon"
+	"units/ut/flak/pickup"
+	"units/ut/flak/chunk"
+	"units/ut/flak/shell"
 	"units/ut/fx/quad"
 ]
 
 material = [
 	"units/ut/shock_rifle_power_*"
+	"units/ut/flak/*"
 	"units/ut/fx/fx_*"
 ]
 
 wwise_dep = [
 	"wwise/unreal_tournament/shock_rifle"
+	"wwise/unreal_tournament/flak_cannon"
 ]

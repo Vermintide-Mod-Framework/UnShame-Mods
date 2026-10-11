@@ -24,6 +24,14 @@ TEXTURES = {
     'shock_elec_a': 'XEffectMat/Texture/Shock_Elec_a.tga',
     'shock_gradient_b': 'XEffectMat/Texture/shock_gradient_b.tga',
     'shock_beam': 'XWeapons_rc/Texture/ShockBeamTex.tga',
+    # the Flak Cannon (XEffects)
+    'flak_muzzle': 'XEffects/Texture/MuzFlashFlak_t.tga',
+    'flak_trail': 'XEffects/Texture/FlakTrailTex.tga',
+    'flak_explosion': 'XEffects/Texture/fexpt.tga',
+    'explosion_flash': 'XEffects/Texture/ExplosionFlashTex.tga',
+    'muzzle_white': 'XEffects/Texture/MuzFlashWhite_t.tga',
+    'rocket_muzzle': 'XEffects/Texture/MuzFlashRocket_t.tga',
+    'smoke': 'XEffects/Texture/SmokeAlphab_t.tga',
 }
 
 def read_tga(path):
@@ -102,8 +110,18 @@ variables = {
 }
 '''
 
+def find(tga):
+    # (out4 has the effects of the Shock Rifle, out9 those of the others: static meshes and the textures of XEffects)
+    for export in ('out4', 'out9'):
+        path = '%s/umodel/%s/%s' % (SCRATCH, export, tga)
+
+        if os.path.exists(path):
+            return path
+
+    raise FileNotFoundError(tga)
+
 for name, tga in TEXTURES.items():
-    w, h, rows = read_tga('%s/umodel/out4/%s' % (SCRATCH, tga))
+    w, h, rows = read_tga(find(tga))
     write_png('%s/%s.png' % (FX, name), w, h, rows)
     open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % {'name': name})
     open('%s/fx_%s.material' % (FX, name), 'w', newline='\n').write(MATERIAL_TEMPLATE % {'name': name})
