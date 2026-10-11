@@ -24,6 +24,7 @@ local CONFIG = {
 	-- The chamber is a shader graph that makes the flowing gel itself (tools/asset_conversion/make_chamber_material.py); this is the
 	-- light of it when the glow is all there (it is lit by itself, as UT's shader has its diffuse as its self illumination)
 	chamber_intensity = 1,
+	shot_dim = 0.2, -- how bright the liquid is just after a shot, times how bright it is (it is back by the time of the next shot)
 	vent_pulse_speed = 14, -- radians per second, of the brightness of the liquid while the heat is vented
 	vent_pulse_swing = 0.3, -- how much brighter and dimmer than it is, times that
 	-- Overheating (the game's overcharge explosion, which lasts a few seconds before it goes off): the liquid of the chamber pulses fast
@@ -54,15 +55,16 @@ local balls = {}
 
 -- The chamber: the glow
 local function update_chamber(skin, dt)
-	-- (a shock rifle in UT hasn't the glow of its chamber after it has fired, and gets it back as the time to the next shot goes)
+	-- (a shock rifle in UT hasn't the glow of its chamber after it has fired, and gets it back as the time to the next shot goes: here the
+	-- liquid is dimmer after a shot, and gets its brightness back, it does not go away)
 	local charge = 1 - math.clamp((skin.cooldown_end - Managers.time:time("game")) / skin.cooldown, 0, 1)
-	-- (how bright the liquid is, which pulses while the heat is vented and while the weapon overheats: it is not how much of it there is,
-	-- which is the charge, the liquid does not go away with a pulse)
-	local brightness = 1
+	-- (how bright the liquid is, which also pulses while the heat is vented and while the weapon overheats: the liquid is always all
+	-- there, it does not go away with a pulse or a shot)
+	local brightness = CONFIG.shot_dim + (1 - CONFIG.shot_dim) * charge
 
 	if skin.venting then
 		skin.vent_time = skin.vent_time + dt
-		brightness = 1 + CONFIG.vent_pulse_swing * math.sin(skin.vent_time * CONFIG.vent_pulse_speed)
+		brightness = brightness * (1 + CONFIG.vent_pulse_swing * math.sin(skin.vent_time * CONFIG.vent_pulse_speed))
 	end
 
 	local first_person_extension = skin_api.local_first_person()
@@ -82,8 +84,7 @@ local function update_chamber(skin, dt)
 
 		local pulse = 0.5 + 0.5 * math.sin(skin.overheat_time * CONFIG.overheat_pulse_speed)
 
-		-- (all of the liquid is there, however long it has been since the last shot)
-		charge = 1
+		-- (as bright as it gets, however long it has been since the last shot)
 		brightness = CONFIG.overheat_brightness_min + (CONFIG.overheat_brightness_max - CONFIG.overheat_brightness_min) * pulse
 	else
 		skin.overheat_time = 0
@@ -91,7 +92,7 @@ local function update_chamber(skin, dt)
 
 	local material = Mesh.material(Unit.mesh(skin.unit, "g_shock_1"), "m_power")
 
-	Material.set_scalar(material, "intensity", CONFIG.chamber_intensity * charge)
+	Material.set_scalar(material, "intensity", CONFIG.chamber_intensity)
 	Material.set_scalar(material, "brightness", brightness)
 end
 
