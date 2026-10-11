@@ -952,7 +952,17 @@ end
 local function spawn_trail(action, origin, direction)
 	local physics_world = action.physics_world
 	local result = PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
-	local hit = result and result[#result]
+	local hit
+
+	-- (the last of the hits that is not the shooter's own: the beam starts at their head, whose hitbox is in the hits, and a shot into the
+	-- sky would end there)
+	for i = #(result or {}), 1, -1 do
+		if Actor.unit(result[i][4]) ~= action.owner_unit then
+			hit = result[i]
+
+			break
+		end
+	end
 	local end_position = hit and hit[1] or origin + direction * CONFIG.beam_range
 	-- (the way the surface it hits faces: the vector of no length when it hits nothing)
 	local hit_normal = hit and hit[3] or Vector3.zero()
