@@ -24,6 +24,8 @@ local CONFIG = {
 	ball_charge_level = 0.99, -- drives the projectile scale; kept under 1 to avoid "full charge" procs
 	ball_lifetime = 10, -- UT2004 ShockProjectile.LifeSpan
 	ball_fire_rate = 0.6, -- UT2004 ShockProjFire.FireRate
+	ball_spawn_forward_uu = 24, -- UT2004 ShockProjFire.ProjSpawnOffset.X: how far ahead of the eye the ball starts
+	ball_spawn_right_uu = 8, -- ProjSpawnOffset.Y: and how far to the right
 	ball_fire_time = 0, -- the ball leaves as the button is pressed (ShockProjFire has no PreFireTime), like the beam
 	-- Combo
 	combo_pick_radius = 0.6, -- how close the beam has to pass to the ball's center
@@ -350,6 +352,16 @@ local function build_ball_action()
 		fire_sound_on_husk = true,
 		fire_time = CONFIG.ball_fire_time,
 		forced_charge_level = CONFIG.ball_charge_level,
+		-- (the game starts a charged projectile at the player's eye: UT's ProjSpawnOffset puts the ball ahead of it, and a little to the right)
+		fire_pos_rot = function (_, first_person_unit)
+			local position = Unit.world_position(first_person_unit, 0)
+			local rotation = Unit.local_rotation(first_person_unit, 0)
+
+			position = position + Quaternion.forward(rotation) * (CONFIG.ball_spawn_forward_uu * CONFIG.meters_per_uu)
+				+ Quaternion.right(rotation) * (CONFIG.ball_spawn_right_uu * CONFIG.meters_per_uu)
+
+			return position, rotation
+		end,
 		-- (no hit_effect: the game's fire of a fireball hitting something, the skin draws the impact of the ball, see skin_explosion_callbacks)
 		is_spell = true,
 		kind = "charged_projectile",
