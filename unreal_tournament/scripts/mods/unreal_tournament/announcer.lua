@@ -218,10 +218,10 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 	end
 end)
 
--- What ends a spree: an enemy hurts the player. Their own weapons (and the overcharge) and their allies' don't: the one who hurts is the
+-- What ends a spree, and the count of head shots for Head Hunter: an enemy hurts the player. Their own weapons (and the overcharge) and their allies' don't: the one who hurts is the
 -- unit that did it, an enemy is a unit that has a breed that is not a player's
 mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_unit, damage_amount, _, _, _, _, _, _, source_attacker_unit)
-	if spree == 0 or damage_amount <= 0 or not attacker_unit then
+	if (spree == 0 and head_shots == 0) or damage_amount <= 0 or not attacker_unit then
 		return
 	end
 
@@ -236,6 +236,7 @@ mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_
 
 	if breed and not breed.is_player then
 		spree = 0
+		head_shots = 0
 	end
 end)
 
