@@ -13,14 +13,14 @@ OUT = REPO + '/wwise/unreal_tournament'
 
 # The sounds: event name, wav, if it is heard from where it is (3D) or from the head, volume in dB
 SOUNDS = [
-    ('ut_shock_fire', 'BShockRifleFire', False, -6),
-    ('ut_shock_alt_fire', 'BShockRifleAltFire', False, -6),
-    ('ut_shock_select', 'SwitchToShockRifle', False, -6),
-    ('ut_shock_fire_3d', 'BShockRifleFire', True, -6),
-    ('ut_shock_alt_fire_3d', 'BShockRifleAltFire', True, -6),
-    ('ut_shock_projectile_3d', 'ShockRifleProjectile', True, -12),
-    ('ut_shock_explosion_3d', 'ShockRifleExplosion', True, -3),
-    ('ut_shock_combo_3d', 'ShockComboFire', True, -3),
+    ('ut_shock_fire', 'BShockRifleFire', False, -18),
+    ('ut_shock_alt_fire', 'BShockRifleAltFire', False, -18),
+    ('ut_shock_select', 'SwitchToShockRifle', False, -20),
+    ('ut_shock_fire_3d', 'BShockRifleFire', True, -18),
+    ('ut_shock_alt_fire_3d', 'BShockRifleAltFire', True, -18),
+    ('ut_shock_projectile_3d', 'ShockRifleProjectile', True, -26),
+    ('ut_shock_explosion_3d', 'ShockRifleExplosion', True, -16),
+    ('ut_shock_combo_3d', 'ShockComboFire', True, -16),
 ]
 
 def fnv1(name):
@@ -88,4 +88,7 @@ bank = b'BKHD' + struct.pack('<I', len(header)) + header + b'DIDX' + struct.pack
     b'DATA' + struct.pack('<I', len(data)) + data + b'HIRC' + struct.pack('<I', len(hirc)) + hirc
 os.makedirs(OUT, exist_ok=True)
 open(OUT + '/shock_rifle.bnk', 'wb').write(bank)
+# The source the SDK compiles into the wwise_bank resource: a version, then a record for each platform (its name in 32 bytes,
+# the length of the bank, the bank)
+open(OUT + '/shock_rifle.wwise_bank', 'wb').write(struct.pack('<I', 1) + b'win32'.ljust(32, b'\0') + struct.pack('<Q', len(bank)) + bank)
 print('wrote', OUT + '/shock_rifle.bnk', len(bank), 'bytes, bank id', hex(bank_id))
