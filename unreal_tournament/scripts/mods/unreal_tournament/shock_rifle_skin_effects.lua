@@ -3,7 +3,7 @@ local mod = get_mod("unreal_tournament")
 -- The effects of the Shock Rifle's skin: what UT2004's own shows (XEffects: ShockMuzFlash, ShockBeamEffect, ShockImpact*,
 -- ShockBall, ShockExplosionCore, ShockCombo*), drawn with the particles of skin_particles.lua. UT's sizes, speeds and times are
 -- used as they are, in UT units; the textures are the game's own, converted (tools/asset_conversion/make_fx_assets.py).
--- The meshes of the effects are the coil of the beam and the sphere of the combo (units/ut/fx, tools/asset_conversion/make_fx_meshes.py).
+-- The meshes of the effects are the coil of the beam and the sphere and the vortex of the combo (units/ut/fx, tools/asset_conversion/make_fx_meshes.py).
 --
 -- The functions are called by shock_rifle_skin.lua, which knows when and where.
 
@@ -133,6 +133,24 @@ local CONFIG = {
 		finish = 0,
 		in_time = 0.15,
 		out_time = 0.75,
+		in_style = "linear",
+		out_style = "linear",
+	},
+	vortex_scale_interp = {
+		start = 0.4,
+		mid = 1.6,
+		finish = 0.2,
+		in_time = 0.4,
+		out_time = 0.4,
+		in_style = "inv_exp",
+		out_style = "inv_exp",
+	},
+	vortex_fade_interp = {
+		start = 0,
+		mid = 1,
+		finish = 0,
+		in_time = 0,
+		out_time = 0.9,
 		in_style = "linear",
 		out_style = "linear",
 	},
@@ -490,13 +508,16 @@ function fx.ball_explosion(position)
 	})
 end
 
--- The sphere of the combo (ShockComboSphereDark, a MeshEffect: how big it is and how much of it there is are interpolated over mesh_life; the
--- material pans its texture itself, see tools/asset_conversion/make_combo_materials.py): a sphere (turned any way) with the bolts that pan
--- along it, which are all there is of it: the rest is see through. (UT's vortex, a disc with lines, is not made: it was seen as a blue ring.)
+-- The two meshes of the combo, as UT has them (MeshEffect: how big they are and how much of them there is are interpolated over mesh_life; the
+-- materials pan their textures themselves, see tools/asset_conversion/make_combo_materials.py):
+--   ShockComboSphereDark: a sphere (turned any way) with the bolts that pan along it, which are all there is of it: the rest is see through
+--   ShockComboVortex: a flat disc that always faces the camera, with lines that pan along it in a band
 local function combo_meshes(position)
 	local life = CONFIG.mesh_life
 	local sphere_scale = CONFIG.sphere_scale_interp
 	local sphere_fade = CONFIG.sphere_fade_interp
+	local vortex_scale = CONFIG.vortex_scale_interp
+	local vortex_fade = CONFIG.vortex_fade_interp
 
 	particles.mesh({
 		additive = 0,
@@ -511,6 +532,21 @@ local function combo_meshes(position)
 			return interpolate(sphere_scale, fraction) * CONFIG.sphere_scale
 		end,
 		unit = "units/ut/fx/sphere",
+	})
+	particles.mesh({
+		additive = 0,
+		brightness = function (fraction)
+			return interpolate(vortex_fade, fraction)
+		end,
+		face_camera = true,
+		life = life,
+		material = "units/ut/fx/fx_combo_vortex",
+		position = position,
+		rotation = Quaternion.identity(),
+		scale = function (fraction)
+			return interpolate(vortex_scale, fraction)
+		end,
+		unit = "units/ut/fx/vortex",
 	})
 end
 
