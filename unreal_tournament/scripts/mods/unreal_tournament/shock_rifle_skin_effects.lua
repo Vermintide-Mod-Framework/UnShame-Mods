@@ -136,6 +136,8 @@ local CONFIG = {
 		in_style = "linear",
 		out_style = "linear",
 	},
+	-- How much of the sphere's bolts show at the most, 1 being UT's (the bolts are a strip of lightning that sweeps over the sphere: the blue band)
+	sphere_opacity = 0.35,
 	combo_scorch_size = 260,
 	combo_scorch_life = 6,
 	combo_scorch_reach = 120,
@@ -499,7 +501,7 @@ local function combo_meshes(position)
 	particles.mesh({
 		additive = 0,
 		brightness = function (fraction)
-			return interpolate(sphere_fade, fraction)
+			return interpolate(sphere_fade, fraction) * CONFIG.sphere_opacity
 		end,
 		life = life,
 		material = "units/ut/fx/fx_combo_sphere",
