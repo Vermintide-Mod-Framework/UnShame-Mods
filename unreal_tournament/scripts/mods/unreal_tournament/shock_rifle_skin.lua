@@ -32,7 +32,7 @@ local CONFIG = {
 	alt_pose_speed = 6, -- how fast the model moves to the sideways pose and back, per second
 	-- Inspecting (UT2004 has no animation of it): the rifle is brought in and turned to show its side, and sways slowly while the key is held
 	inspect_pose_speed = 5, -- how fast the model moves to the pose and back, per second
-	inspect_sway = 12, -- degrees of yaw each way
+	inspect_sway = 5, -- degrees of yaw each way
 	inspect_sway_speed = 1.8, -- radians per second
 	projectile_sound_seconds = 1.795, -- how long the sound of the ball (ShockRifleProjectile) is
 	-- How fast each shot's animation plays (WeaponFire.FireAnimRate: ShockProjFire says 1.5, ShockBeamFire leaves the default 1)
@@ -178,13 +178,14 @@ skin_api = mod.weapon_skin.new({
 	alt_pose_right = 4,
 	alt_pose_forward = 0,
 	alt_pose_up = -3,
-	-- Brought in and turned to show its side while it is inspected (a guess, /skin shock_rifle set inspect_pose_roll <degrees> and the others)
-	inspect_pose_right = -4,
-	inspect_pose_forward = -3,
-	inspect_pose_up = 1,
-	inspect_pose_roll = -35,
-	inspect_pose_pitch = 12,
-	inspect_pose_yaw = 25,
+	-- Held across the view, level, the muzzle to the left, as the game's own weapons are inspected: its left side is shown (a guess,
+	-- /skin shock_rifle set inspect_pose_yaw <degrees> and the others)
+	inspect_pose_right = -2,
+	inspect_pose_forward = -4,
+	inspect_pose_up = 0,
+	inspect_pose_roll = 0,
+	inspect_pose_pitch = 0,
+	inspect_pose_yaw = 80,
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
