@@ -372,6 +372,18 @@ mod:hook(WeaponUnitExtension, "_play_1p_anim", function (func, self, event_1p, e
 	return func(self, event_1p, event, ...)
 end)
 
+-- (the events that the game plays itself, not as the animation of an action of the weapon: the one of venting the heat is made by its overcharge)
+mod:hook(PlayerUnitFirstPerson, "animation_event", function (func, self, event, ...)
+	local template_name = utils.wielded_template_name(self.unit)
+	local filter = template_name and mod.first_person_animation_filters[template_name]
+
+	if filter and utils.is_local_player_unit(self.unit) and filter(event) then
+		return
+	end
+
+	return func(self, event, ...)
+end)
+
 -- Before the first person view of a character is taken down (the character dies, the level ends): what a weapon has linked to
 -- it has to be let go of first
 --   mod.first_person_destroy_callbacks[name] = function (first_person_extension)
