@@ -24,7 +24,7 @@ return {
 		en = "Announcer",
 	},
 	announcer_description = {
-		en = "Unreal Tournament 2004's multi kill announcer. Kill again within a second and a half of your last kill, and keep going, to hear and see Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill and Holy Shit. Rats don't count.",
+		en = "Unreal Tournament 2004's multi kill announcer. Kill again within a second and a half of your last kill, and keep going, to hear and see Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill and Holy Shit.",
 	},
 	no_barriers = {
 		en = "Remove Barriers",

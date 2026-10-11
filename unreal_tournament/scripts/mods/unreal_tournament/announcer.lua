@@ -9,9 +9,8 @@ local CONFIG = {
 	-- UnrealPlayer.LogMultiKills: a kill counts as the next one of a multi kill if it comes this soon after the last one (UT has 4
 	-- seconds, a horde of this game dies faster than players do)
 	window = 1.5, -- seconds
-	-- What is not an enemy for it (a player is the kill of UT: the rats and the target dummies of this game are not one)
+	-- What is not an enemy for it (a player is the kill of UT: the target dummies of this game are not one)
 	ignored_races = {
-		critter = true,
 		dummy = true,
 	},
 	-- MultiKillMessage, by the level of the multi kill (1 is the second kill): its sound and its text; the last one is every level after it
