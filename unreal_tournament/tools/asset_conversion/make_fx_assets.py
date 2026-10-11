@@ -46,6 +46,16 @@ TEXTURES = {
     'link_ring_yellow': 'XEffectMat/Texture/link_ring_yellow.tga',
     'link_projectile_splash': 'XEffectMat/Texture/Link_projectile_splash.tga',
     'smoke': 'XEffects/Texture/SmokeAlphab_t.tga',
+    # the meshes of the combo and of the beam (ShockComboSphereDark's electricity, the others are above)
+    'shock_electricity': 'DeployableTex/Texture/C_T_Electricity_SG.tga',
+}
+
+# A texture that is made from another: name -> (the exported tga, what is made of its pixels (r, g, b, a) -> (r, g, b, a))
+# shock_combo_scorch: ComboDecal's SaDScorcht is the mark of a projector, gray where there is none and dark where it is: the mark is black, as
+# opaque as the texture is darker than gray
+DERIVED = {
+    'shock_combo_scorch': ('XEffects/Texture/SaDScorcht.tga',
+                           lambda r, g, b, a: (0, 0, 0, min(255, int(max(0, 128 - (r + g + b) / 3) * 2.2)))),
 }
 
 def read_tga(path):
@@ -126,7 +136,7 @@ variables = {
 
 def find(tga):
     # (out4 has the effects of the Shock Rifle, out9 those of the others: static meshes and the textures of XEffects)
-    for export in ('out4', 'out9'):
+    for export in ('out4', 'out9', 'out11'):
         path = '%s/umodel/%s/%s' % (SCRATCH, export, tga)
 
         if os.path.exists(path):
@@ -134,8 +144,25 @@ def find(tga):
 
     raise FileNotFoundError(tga)
 
-for name, tga in TEXTURES.items():
+def derived_rows(rows, make):
+    out = []
+
+    for row in rows:
+        pixels = bytearray(b'\0')
+
+        for i in range(1, len(row), 4):
+            pixels += bytes(make(row[i], row[i + 1], row[i + 2], row[i + 3]))
+
+        out.append(bytes(pixels))
+
+    return out
+
+for name, tga in list(TEXTURES.items()) + [(name, derived[0]) for name, derived in DERIVED.items()]:
     w, h, rows = read_tga(find(tga))
+
+    if name in DERIVED:
+        rows = derived_rows(rows, DERIVED[name][1])
+
     write_png('%s/%s.png' % (FX, name), w, h, rows)
     open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % {'name': name})
     open('%s/fx_%s.material' % (FX, name), 'w', newline='\n').write(MATERIAL_TEMPLATE % {'name': name})

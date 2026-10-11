@@ -1,0 +1,176 @@
+import struct, zlib, os, sys
+
+# Makes the units of the meshes of the Shock Rifle's effects, from the UModel export of XEffects (<scratch>/umodel/out11, see README.md):
+#   units/ut/fx/coil    ShockCoil: a prism that turns about the beam (static mesh, 30 long: ShockBeamCoil makes pieces of it along the beam)
+#   units/ut/fx/sphere  EffectsSphere144 (a static mesh), for ShockComboSphereDark
+#   units/ut/fx/vortex  ShockVortexMesh (a vertex mesh of UT's first format, .3d): its frames are meshes of their own in the unit, g_f00, g_f03 ...,
+#                       and the effect shows one of them at a time (a unit has no morphs to play)
+# They are made in meters, a UT unit being 0.02 m (as everything of the effects is), turned from UT's axes (x forward, y right, z up) to
+# this game's (x right, y forward, z up), which makes the mesh the other way round: the long axis of the coil is y, and the vortex lies in
+# the plane of x and y (ShockComboVortex is turned a quarter about its forward axis, which is what makes it lie flat).
+# One material slot, m_fx, as the quad of the particles has (units/ut/fx/quad): the effects set the material of the texture they want.
+# Usage: make_fx_meshes.py <scratch dir>
+
+SCRATCH = sys.argv[1]
+REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+FX = REPO + '/units/ut/fx'
+EXPORT = SCRATCH + '/umodel/out11/XEffects'
+UNIT = 0.02
+VORTEX_STEP = 3
+
+def chunks(path):
+    d = open(path, 'rb').read()
+    i = 0
+    out = {}
+
+    while i < len(d):
+        name = d[i:i + 20].split(b'\0')[0].decode()
+        flags, size, count = struct.unpack('<iii', d[i + 20:i + 32])
+        i += 32
+        out[name] = (size, count, d[i:i + size * count])
+        i += size * count
+
+    return out
+
+def static_mesh(path):
+    # (points, wedges: (point, u, v), triangles of wedges)
+    psk = chunks(path)
+    ps, pc, pb = psk['PNTS0000']
+    points = [struct.unpack_from('<3f', pb, i * ps) for i in range(pc)]
+    ws, wc, wb = psk['VTXW0000']
+    wedges = []
+
+    for i in range(wc):
+        point = struct.unpack_from('<H', wb, i * ws)[0] if ws == 16 else struct.unpack_from('<I', wb, i * ws)[0]
+        u, v = struct.unpack_from('<2f', wb, i * ws + 4)
+        wedges.append((point, u, v))
+
+    fs, fc, fb = psk['FACE0000']
+    triangles = [struct.unpack_from('<3H', fb, i * fs) for i in range(fc)]
+
+    return points, wedges, triangles
+
+def vertex_mesh(name):
+    # UT's first mesh format: <name>_d.3d has the polygons, <name>_a.3d the frames, a vertex of which is 11, 11 and 10 bits
+    d = open('%s/VertMesh/%s_d.3d' % (EXPORT, name), 'rb').read()
+    a = open('%s/VertMesh/%s_a.3d' % (EXPORT, name), 'rb').read()
+    polygons, vertices = struct.unpack('<HH', d[:4])
+    frames, frame_size = struct.unpack('<HH', a[:4])
+    assert frame_size == vertices * 4
+
+    triangles, uvs = [], []
+
+    for i in range(polygons):
+        o = 48 + i * 16
+        triangles.append(struct.unpack_from('<3H', d, o))
+        uvs.append([d[o + 8 + k] / 255.0 for k in range(6)])
+
+    def frame(index):
+        out = []
+
+        for k in range(vertices):
+            v = struct.unpack_from('<I', a, 4 + index * frame_size + k * 4)[0]
+            x, y, z = v & 0x7ff, (v >> 11) & 0x7ff, (v >> 22) & 0x3ff
+
+            if x >= 0x400:
+                x -= 0x800
+
+            if y >= 0x400:
+                y -= 0x800
+
+            if z >= 0x200:
+                z -= 0x400
+
+            out.append((x, y, z))
+
+        return out
+
+    return frames, triangles, uvs, frame
+
+def fl(values):
+    return ' '.join(repr(float(v)) if not float(v).is_integer() else str(int(v)) for v in values)
+
+def il(values):
+    return ' '.join(str(v) for v in values)
+
+def stream(name, ctype, stride, values, size):
+    return ('\t\t\t{\n\t\t\t\tchannels = [ {\n\t\t\t\t\t\tindex = 0\n\t\t\t\t\t\tname = "%s"\n\t\t\t\t\t\ttype = "%s"\n\t\t\t\t\t} ]\n'
+            '\t\t\t\tdata = [ %s ]\n\t\t\t\tsize = %d\n\t\t\t\tstride = %d\n\t\t\t}') % (name, ctype, fl(values), size, stride)
+
+def geometry(name, positions, position_index, uvs, uv_index):
+    # positions: the points (x, y, z in meters), position_index: the point of each corner, uvs: (u, v) for each uv, uv_index: for each corner
+    corners = len(position_index)
+    triangles = corners // 3
+    streams = [
+        stream('POSITION', 'CT_FLOAT3', 12, [c for p in positions for c in p], len(positions)),
+        stream('NORMAL', 'CT_FLOAT3', 12, [0, 0, 1], 1),
+        stream('TEXCOORD', 'CT_FLOAT2', 8, [c for uv in uvs for c in uv], len(uvs)),
+        stream('BINORMAL', 'CT_FLOAT3', 12, [0, 1, 0], 1),
+        stream('TANGENT', 'CT_FLOAT3', 12, [1, 0, 0], 1),
+    ]
+    index_streams = [position_index, [0] * corners, uv_index, [0] * corners, [0] * corners]
+
+    return ('\t%s = {\n\t\tindices = {\n\t\t\tsize = %d\n\t\t\tstreams = [ %s ]\n\t\t\ttype = "TRIANGLE_LIST"\n\t\t}\n'
+            '\t\tmaterials = [\n\t\t\t{\n\t\t\t\tname = "m_fx"\n\t\t\t\tprimitives = [ %s ]\n\t\t\t} ]\n\t\tsmoothing = [ %s ]\n'
+            '\t\tstreams = [\n%s ]\n\t}\n') % (name, corners, ' '.join('[ %s ]' % il(s) for s in index_streams),
+                                                il(range(triangles)), il([1] * triangles), '\n'.join(streams))
+
+IDENTITY = '1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1'
+
+def write_unit(unit_name, geometries, nodes):
+    # geometries: text of each, nodes: { node name: geometry name } (the renderables are keyed by the node)
+    text = '\ngeometries = {\n' + ''.join(geometries) + '}\nnodes = {\n\troot = {\n\t\tchildren = {\n'
+
+    for node, geometry_name in nodes.items():
+        text += '\t\t\t%s = {\n\t\t\t\tgeometries = [ "%s" ]\n\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t}\n' % (node, geometry_name, IDENTITY)
+
+    text += '\t\t}\n\t\tlocal = [ %s ]\n\t}\n}\nsource_path = "make_fx_meshes"\n' % IDENTITY
+    raw = text.encode('latin1')
+    open('%s/%s.bsi' % (FX, unit_name), 'wb').write(b'bsiz' + struct.pack('<I', len(raw)) + zlib.compress(raw))
+
+    renderables = ''.join('\t%s = {\n\t\talways_keep = false\n\t\tculling = "bounding_volume"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
+                          '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n' % node for node in nodes)
+    open('%s/%s.unit' % (FX, unit_name), 'w', newline='\n').write(
+        'materials = {\n\tm_fx = "units/ut/fx/fx_shock_sparkle"\n}\nrenderables = {\n%s}\n' % renderables)
+
+def to_game(point):
+    # (UT's x forward, y right, z up: this game's x right, y forward, z up)
+    return (point[1] * UNIT, point[0] * UNIT, point[2] * UNIT)
+
+def make_static(unit_name, mesh_file):
+    points, wedges, triangles = static_mesh('%s/StaticMesh/%s.pskx' % (EXPORT, mesh_file))
+    positions = [to_game(p) for p in points]
+    position_index = [wedges[w][0] for t in triangles for w in t]
+    uvs = [(u, 1.0 - v) for _, u, v in wedges]
+    uv_index = [w for t in triangles for w in t]
+
+    write_unit(unit_name, [geometry('g_mesh', positions, position_index, uvs, uv_index)], {'g_mesh': 'g_mesh'})
+    print(unit_name, len(points), 'points', len(triangles), 'triangles')
+
+def make_vortex(unit_name, mesh_name):
+    frames, triangles, polygon_uvs, frame = vertex_mesh(mesh_name)
+    position_index = [v for t in triangles for v in t]
+    uvs = [(polygon_uvs[i][2 * k], 1.0 - polygon_uvs[i][2 * k + 1]) for i in range(len(triangles)) for k in range(3)]
+    uv_index = list(range(len(uvs)))
+    shown = list(range(0, frames, VORTEX_STEP))
+
+    if shown[-1] != frames - 1:
+        shown.append(frames - 1)
+
+    geometries, nodes = [], {}
+
+    for index in shown:
+        # (ShockVortexMesh is scaled 1, 1, 2 by its mesh map; the effect is turned a quarter about its forward axis, so that it lies in the
+        # plane of x and y: what was up is now to the side)
+        positions = [(x * UNIT, z * 2 * UNIT, y * UNIT) for x, y, z in frame(index)]
+        name = 'g_f%02d' % index
+
+        geometries.append(geometry(name, positions, position_index, uvs, uv_index))
+        nodes[name] = name
+
+    write_unit(unit_name, geometries, nodes)
+    print(unit_name, len(shown), 'frames of', frames, len(triangles), 'triangles')
+
+make_static('coil', 'ShockCoil')
+make_static('sphere', 'EffectsSphere144')
+make_vortex('vortex', 'ShockVortexMesh')

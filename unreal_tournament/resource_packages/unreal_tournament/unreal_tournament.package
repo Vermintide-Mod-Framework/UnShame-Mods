@@ -25,6 +25,9 @@ unit = [
 	"units/ut/link/link_gun"
 	"units/ut/link/pickup"
 	"units/ut/fx/quad"
+	"units/ut/fx/coil"
+	"units/ut/fx/sphere"
+	"units/ut/fx/vortex"
 ]
 
 material = [

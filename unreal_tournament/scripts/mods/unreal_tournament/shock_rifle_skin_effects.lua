@@ -95,6 +95,77 @@ local CONFIG = {
 	combo_wiggle_size = 120,
 	combo_wiggle_speed = 300,
 	combo_wiggle_life = 0.75,
+	-- ShockBeamCoil: pieces of the coil mesh (30 long, units/ut/fx/coil) along the beam every coil_piece_length, scaled coil_length_scale along
+	-- it and coil_radius_scale across times a size of coil_size (mSizeRange), turning about the beam coil_spin turns a second (mSpinRange 32000
+	-- of 65536), as dim as mColorRange says (50 of 255, made a little brighter here), for coil_life
+	coil_piece_length = 90,
+	coil_length_scale = 3,
+	coil_radius_scale = 15,
+	coil_size = {
+		0.3,
+		0.6,
+	},
+	coil_spin = 32000 / 65536,
+	coil_color = 0.3,
+	coil_life = 0.75,
+	coil_max_pieces = 30,
+	-- ShockComboSphereDark and ShockComboVortex (MeshEffects, they last mesh_life, with the interpolations of their scale and of how much of
+	-- them there is that UT gives them) and ComboDecal (the mark on the floor, as big as combo_scorch_size, if there is a floor within
+	-- combo_scorch_reach below the combo)
+	mesh_life = 1,
+	sphere_scale = 2.7, -- how many times the mesh (EffectsSphere144, 47 units in radius) is the sphere of UT (Editor.TexPropSphere, 128)
+	sphere_scale_interp = {
+		start = 0.1,
+		mid = 0.8,
+		finish = 0,
+		in_time = 0.3,
+		out_time = 0.3,
+		in_style = "inv_exp",
+		out_style = "inv_exp",
+	},
+	sphere_fade_interp = {
+		start = 0,
+		mid = 1,
+		finish = 0,
+		in_time = 0.15,
+		out_time = 0.75,
+		in_style = "linear",
+		out_style = "linear",
+	},
+	sphere_intensity = 0.8,
+	sphere_color = {
+		0.55,
+		0.45,
+		1,
+	},
+	vortex_scale_interp = {
+		start = 0.4,
+		mid = 1.6,
+		finish = 0.2,
+		in_time = 0.4,
+		out_time = 0.4,
+		in_style = "inv_exp",
+		out_style = "inv_exp",
+	},
+	vortex_fade_interp = {
+		start = 0,
+		mid = 1,
+		finish = 0,
+		in_time = 0,
+		out_time = 0.9,
+		in_style = "linear",
+		out_style = "linear",
+	},
+	vortex_frames = 56, -- the frames of ShockVortexMesh, and how many of them the unit has (every vortex_frame_step)
+	vortex_frame_step = 3,
+	vortex_color = {
+		0.7,
+		0.55,
+		1,
+	},
+	combo_scorch_size = 260,
+	combo_scorch_life = 6,
+	combo_scorch_reach = 120,
 	-- Turns a second of what spins (UT's mSpinRange is in the units of its own)
 	spin = 0.3,
 }
@@ -131,6 +202,38 @@ end
 
 local function random_spin()
 	return (math.random() * 2 - 1) * CONFIG.spin
+end
+
+-- UT's MeshEffect.InterpInterp: a value that goes from start to mid over in_time of the life of the effect (0 to 1), stays there until
+-- out_time, and goes to finish from there, by the style of each
+local function interpolate(interp, t)
+	local function style_value(style, u, from, to, going_in)
+		if style == "linear" then
+			return from + (to - from) * u
+		elseif style == "exp" then
+			u = going_in and u * u * u or 1 - (1 - u) * (1 - u) * (1 - u)
+		elseif style == "inv_exp" then
+			u = going_in and 1 - (1 - u) * (1 - u) * (1 - u) or u * u * u
+		elseif style == "s" then
+			u = u * u * (3 - 2 * u)
+		else
+			return going_in and from or to
+		end
+
+		return from + (to - from) * u
+	end
+
+	if t < interp.in_time then
+		return style_value(interp.in_style, t / interp.in_time, interp.start, interp.mid, true)
+	elseif t <= interp.out_time then
+		return interp.mid
+	end
+
+	return style_value(interp.out_style, (t - interp.out_time) / (1 - interp.out_time), interp.mid, interp.finish, false)
+end
+
+local function random_rotation()
+	return Quaternion.axis_angle(random_direction(), math.random() * math.pi * 2)
 end
 
 -- Muzzle flashes: follow gives where the muzzle is, scale how many meters a UT unit is there (the model of the gun is drawn
@@ -221,12 +324,51 @@ local function impact(position, normal)
 	})
 end
 
+-- The coil of the beam (ShockBeamCoil): pieces of a turning mesh along it
+local function coil(start, stop)
+	local along = stop - start
+	local length = Vector3.length(along)
+	local direction = along * (1 / length)
+	local up = math.abs(Vector3.dot(direction, Vector3.up())) > 0.99 and Vector3.right() or Vector3.up()
+	local rotation = Quaternion.look(direction, up)
+	local piece_length = CONFIG.coil_piece_length * UNIT
+	local count = math.min(CONFIG.coil_max_pieces, math.ceil(length / piece_length))
+
+	for i = 0, count - 1 do
+		local size = between(CONFIG.coil_size)
+		local scale = Vector3(CONFIG.coil_radius_scale * size, CONFIG.coil_length_scale, CONFIG.coil_radius_scale * size)
+
+		particles.mesh({
+			brightness = function (fraction)
+				return 1 - fraction
+			end,
+			color = {
+				CONFIG.coil_color,
+				CONFIG.coil_color,
+				CONFIG.coil_color,
+			},
+			life = CONFIG.coil_life,
+			position = start + direction * (i * piece_length),
+			rotation = rotation,
+			scale = function ()
+				return scale
+			end,
+			spin = CONFIG.coil_spin,
+			spin_axis = Vector3(0, 1, 0),
+			texture = "shock_purple_line",
+			unit = "units/ut/fx/coil",
+		})
+	end
+end
+
 -- The beam, from start to stop, and what it hits there if it hits a surface (normal is the vector of no length if it doesn't)
 function fx.beam(start, stop, normal)
 	local along = stop - start
 	local length = Vector3.length(along)
 
 	if length > 0.01 then
+		coil(start, stop)
+
 		local piece_length = CONFIG.beam_piece_length * UNIT
 		local count = math.max(1, math.ceil(length / piece_length))
 
@@ -350,7 +492,94 @@ function fx.ball_explosion(position)
 	})
 end
 
--- The combo (ShockCombo: the core, the ring, the flares, the flash and the wiggles)
+-- The two meshes of the combo (ShockComboSphereDark and ShockComboVortex, MeshEffects): the sphere grows and goes, the vortex lies flat, grows
+-- and closes (the frames of its mesh are shown one after the other over its life)
+local function combo_meshes(position)
+	local life = CONFIG.mesh_life
+	local sphere_scale = CONFIG.sphere_scale_interp
+	local sphere_fade = CONFIG.sphere_fade_interp
+
+	particles.mesh({
+		additive = 1,
+		brightness = function (fraction)
+			return interpolate(sphere_fade, fraction)
+		end,
+		color = CONFIG.sphere_color,
+		intensity = CONFIG.sphere_intensity,
+		life = life,
+		position = position,
+		rotation = random_rotation(),
+		scale = function (fraction)
+			return interpolate(sphere_scale, fraction) * CONFIG.sphere_scale
+		end,
+		texture = "shock_electricity",
+		unit = "units/ut/fx/sphere",
+	})
+
+	local frames = {}
+
+	for index = 0, CONFIG.vortex_frames - 1, CONFIG.vortex_frame_step do
+		frames[#frames + 1] = string.format("g_f%02d", index)
+	end
+
+	if (CONFIG.vortex_frames - 1) % CONFIG.vortex_frame_step ~= 0 then
+		frames[#frames + 1] = string.format("g_f%02d", CONFIG.vortex_frames - 1)
+	end
+
+	local vortex_scale = CONFIG.vortex_scale_interp
+	local vortex_fade = CONFIG.vortex_fade_interp
+
+	particles.mesh({
+		brightness = function (fraction)
+			return interpolate(vortex_fade, fraction)
+		end,
+		color = CONFIG.vortex_color,
+		frame = function (fraction)
+			-- (the last of the frames that is shown at or before the one the life is at)
+			local index = math.min(math.floor(fraction * CONFIG.vortex_frames), CONFIG.vortex_frames - 1)
+
+			if index == CONFIG.vortex_frames - 1 then
+				return frames[#frames]
+			end
+
+			return string.format("g_f%02d", index - index % CONFIG.vortex_frame_step)
+		end,
+		frames = frames,
+		life = life,
+		position = position,
+		rotation = Quaternion.identity(),
+		scale = function (fraction)
+			return interpolate(vortex_scale, fraction)
+		end,
+		texture = "shock_elec_a",
+		unit = "units/ut/fx/vortex",
+	})
+end
+
+-- The mark of the combo on the floor (ComboDecal) if there is a floor below it
+local function combo_scorch(position)
+	local world = Managers.world:world("level_world")
+	local hit, hit_position, _, normal = PhysicsWorld.immediate_raycast(World.get_data(world, "physics_world"), position, Vector3(0, 0, -1), CONFIG.combo_scorch_reach * UNIT, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
+
+	if not hit then
+		return
+	end
+
+	particles.disc({
+		additive = 0,
+		color = WHITE,
+		fade_in = 0,
+		fade_out = CONFIG.combo_scorch_life - 2,
+		life = CONFIG.combo_scorch_life,
+		normal = normal,
+		position = hit_position + normal * 0.02,
+		size = CONFIG.combo_scorch_size * UNIT,
+		spin = 0,
+		texture = "shock_combo_scorch",
+	})
+end
+
+-- The combo (ShockCombo: the core, the ring, the flares, the flash and the wiggles, the sphere and the vortex, the mark on the floor)
 function fx.combo(position)
 	particles.sprite({
 		attenuation = 0,
@@ -429,6 +658,9 @@ function fx.combo(position)
 			velocity = random_direction() * (CONFIG.combo_wiggle_speed * UNIT),
 		})
 	end
+
+	combo_meshes(position)
+	combo_scorch(position)
 end
 
 return fx

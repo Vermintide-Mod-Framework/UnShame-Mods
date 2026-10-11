@@ -24,6 +24,11 @@ local mod = get_mod("unreal_tournament")
 --   particles.disc(spec): lies on a surface, spec.normal is the way it faces
 --   particles.beam(spec): from spec.from to spec.to, spec.size is how wide it is, and it faces the camera around its length;
 --       spec.track, a function that gives from and to (nothing when it is to end), instead of the two points
+--   particles.mesh(spec): a mesh (units/ut/fx/coil, sphere, vortex, made by tools/asset_conversion/make_fx_meshes.py) at spec.position,
+--       turned by spec.rotation (and about spec.spin_axis, a vector in the mesh's own axes, by spec.spin), spec.scale a function of how far
+--       into its life it is (0 to 1) that gives its scale (a number, or a vector in the mesh's axes), spec.brightness the same for how
+--       bright it is (instead of fade_in, fade_out and attenuation); spec.unit is the unit; spec.frames, the names of the meshes of a unit
+--       that has more than one, and spec.frame, a function of how far into its life it is that names the one that shows
 --
 -- (Vectors can't be kept from one frame to the next, so they are kept in boxes.)
 
@@ -34,7 +39,8 @@ local MATERIAL_FORMAT = "units/ut/fx/fx_%s"
 local MAX_PARTICLES = 400
 
 local active = {}
-local free = {} -- units that are not used, { unit, world, material }
+-- units that are not used, by the name of the unit: { unit, world, material, unit_name }
+local free = {}
 
 local function camera_pose()
 	local player = Managers.player and Managers.player:local_player()
@@ -47,15 +53,18 @@ local function camera_pose()
 	return camera_manager:camera_position(player.viewport_name), camera_manager:camera_rotation(player.viewport_name)
 end
 
-local function acquire(world)
-	local entry = table.remove(free)
+local function acquire(world, unit_name)
+	free[unit_name] = free[unit_name] or {}
+
+	local entry = table.remove(free[unit_name])
 
 	if entry and Unit.alive(entry.unit) and entry.world == world then
 		return entry
 	end
 
 	return {
-		unit = World.spawn_unit(world, UNIT_NAME, Vector3(0, 0, 0)),
+		unit = World.spawn_unit(world, unit_name, Vector3(0, 0, 0)),
+		unit_name = unit_name,
 		world = world,
 	}
 end
@@ -63,7 +72,9 @@ end
 local function release(particle)
 	Unit.set_unit_visibility(particle.entry.unit, false)
 
-	free[#free + 1] = particle.entry
+	local pool = free[particle.entry.unit_name]
+
+	pool[#pool + 1] = particle.entry
 end
 
 local function add(kind, spec)
@@ -72,7 +83,7 @@ local function add(kind, spec)
 	end
 
 	local world = Managers.world:world("level_world")
-	local entry = acquire(world)
+	local entry = acquire(world, spec.unit or UNIT_NAME)
 	local material = MATERIAL_FORMAT:format(spec.texture)
 
 	if entry.material ~= material then
@@ -97,6 +108,11 @@ local function add(kind, spec)
 		fade_in = spec.fade_in,
 		fade_out = spec.fade_out,
 		follow = spec.follow,
+		frame = spec.frame,
+		frames = spec.frames,
+		scale = spec.scale,
+		spin_axis = spec.spin_axis,
+		brightness_by = spec.brightness,
 		growth = spec.growth or 0,
 		additive = spec.additive or 1,
 		intensity = spec.intensity or 1,
@@ -120,6 +136,10 @@ local function add(kind, spec)
 		particle.normal = Vector3Box(spec.normal)
 	end
 
+	if spec.rotation then
+		particle.rotation = QuaternionBox(spec.rotation)
+	end
+
 	if spec.from then
 		particle.from = Vector3Box(spec.from)
 		particle.to = Vector3Box(spec.to)
@@ -138,6 +158,10 @@ end
 
 function particles.beam(spec)
 	add("beam", spec)
+end
+
+function particles.mesh(spec)
+	add("mesh", spec)
 end
 
 -- How bright a particle is a fraction of its life in (UT's attenuation: it comes up until ka, and goes down from there)
@@ -180,8 +204,9 @@ end
 
 local function place(particle, dt, camera_position, camera_rotation)
 	local unit = particle.entry.unit
-	local size = math.max(0, particle.size + particle.growth * particle.age)
-	local light = particle.intensity * brightness(particle)
+	local fraction = particle.age / particle.life
+	local size = particle.size and math.max(0, particle.size + particle.growth * particle.age)
+	local light = particle.intensity * (particle.brightness_by and particle.brightness_by(fraction) or brightness(particle))
 	local position, rotation, scale
 
 	if particle.follow then
@@ -207,7 +232,30 @@ local function place(particle, dt, camera_position, camera_rotation)
 		end
 	end
 
-	if particle.kind == "beam" then
+	if particle.kind == "mesh" then
+		-- (a mesh: where it is, turned as it is (and about its axis by its spin), scaled as its scale function says for how far into its life it
+		-- is, and showing the one of its frames that the frame function names)
+		local axis = particle.spin_axis or Vector3(0, 0, 1)
+
+		rotation = Quaternion.multiply(particle.rotation:unbox(), Quaternion.axis_angle(axis, particle.angle + particle.spin * particle.age))
+		scale = particle.scale(fraction)
+
+		if type(scale) == "number" then
+			scale = Vector3(scale, scale, scale)
+		end
+
+		if particle.frame then
+			local shown = particle.frame(fraction)
+
+			if shown ~= particle.shown then
+				for _, name in ipairs(particle.frames) do
+					Unit.set_mesh_visibility(unit, name, name == shown)
+				end
+
+				particle.shown = shown
+			end
+		end
+	elseif particle.kind == "beam" then
 		local from, to
 
 		if particle.track then
@@ -285,14 +333,16 @@ local function clear()
 		table.remove(active, i)
 	end
 
-	for i = #free, 1, -1 do
-		local entry = free[i]
+	for _, pool in pairs(free) do
+		for i = #pool, 1, -1 do
+			local entry = pool[i]
 
-		if Unit.alive(entry.unit) then
-			World.destroy_unit(entry.world, entry.unit)
+			if Unit.alive(entry.unit) then
+				World.destroy_unit(entry.world, entry.unit)
+			end
+
+			pool[i] = nil
 		end
-
-		free[i] = nil
 	end
 end
 
