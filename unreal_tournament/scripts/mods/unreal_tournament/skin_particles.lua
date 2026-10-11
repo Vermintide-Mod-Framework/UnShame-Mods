@@ -6,7 +6,8 @@ local mod = get_mod("unreal_tournament")
 -- adds its color), moved, turned, scaled and faded every frame. The units are reused.
 --
 -- A spec is a table (positions are in meters, the colors are 0 to 1, the times are seconds):
---   texture: the name of the texture (shock_core, ...); material: the name of a material of its own instead (a mesh's)
+--   texture: the name of the texture (shock_core, ...); material: the name of a material of its own instead (a mesh's, which is given its "age",
+--       how long the effect has been going, for its panning)
 --   life: how long it lasts
 --   size, growth: the size of the sprite and how much it changes in a second (a negative growth shrinks it)
 --   color: { r, g, b }, intensity: the most light it gives (1 is the texture as it is)
@@ -115,6 +116,7 @@ local function add(kind, spec)
 		brightness_by = spec.brightness,
 		growth = spec.growth or 0,
 		additive = spec.additive or 1,
+		own_material = spec.material ~= nil,
 		intensity = spec.intensity or 1,
 		track = spec.track,
 		kind = kind,
@@ -303,6 +305,12 @@ local function place(particle, dt, camera_position, camera_rotation)
 	Unit.set_vector3_for_materials(unit, "tint", Vector3(particle.color[1], particle.color[2], particle.color[3]))
 	Unit.set_scalar_for_materials(unit, "intensity", light)
 	Unit.set_scalar_for_materials(unit, "additive", particle.additive)
+
+	if particle.own_material then
+		-- (a material of its own pans its textures by how long the effect has been going)
+		Unit.set_scalar_for_materials(unit, "age", particle.age)
+	end
+
 	Unit.set_unit_visibility(unit, true)
 	World.update_unit(particle.world, unit)
 end

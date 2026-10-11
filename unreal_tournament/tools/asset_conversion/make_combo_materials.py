@@ -101,7 +101,8 @@ class Graph:
 def common(graph):
     graph.add('out', 'core/stingray_renderer/output_nodes/unlit_base', OUT_OPTIONS)
     graph.add('uv', 'core/shader_nodes/texture_coordinate0')
-    graph.add('time', 'core/shader_nodes/current_time')
+    # (the time of the panning is how long the effect has been going, set by the particle: UT's panners start with the effect, not with the game)
+    graph.add('time', 'core/shader_nodes/material_variable', export=float_variable('age', 'Age', 0), title='Age')
     graph.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
     graph.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
     # (blended by its opacity, not added: the effects of the particles set "additive" on all the materials of a unit, and this is 0 as it is)

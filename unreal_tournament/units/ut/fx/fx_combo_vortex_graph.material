@@ -215,6 +215,17 @@ shader = {
 				0
 			]
 			export = {
+				material_variable = {
+					display_name = "Age"
+					name = "age"
+					type = "float"
+					ui = {
+						max = 100
+						min = 0
+						step = 0.001
+					}
+					value = 0
+				}
 			}
 			id = "c0de0001-0000-4000-8000-000000000003"
 			options = [
@@ -225,7 +236,8 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/shader_nodes/current_time"
+			title = "Age"
+			type = "core/shader_nodes/material_variable"
 		}
 		{
 			content_size = [

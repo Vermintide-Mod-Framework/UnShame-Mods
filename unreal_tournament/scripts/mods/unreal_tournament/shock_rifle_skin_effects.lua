@@ -245,8 +245,12 @@ local function interpolate(interp, t)
 	return style_value(interp.out_style, (t - interp.out_time) / (1 - interp.out_time), interp.mid, interp.finish, false)
 end
 
+-- UT's RotRand(): a random pitch and a random yaw, and no roll (it is only with bRoll), which turns the pole of a sphere any way
 local function random_rotation()
-	return Quaternion.axis_angle(random_direction(), math.random() * math.pi * 2)
+	local pitch = Quaternion.axis_angle(Vector3(0, 1, 0), math.random() * math.pi * 2)
+	local yaw = Quaternion.axis_angle(Vector3(0, 0, 1), math.random() * math.pi * 2)
+
+	return Quaternion.multiply(yaw, pitch)
 end
 
 -- Muzzle flashes: follow gives where the muzzle is, scale how many meters a UT unit is there (the model of the gun is drawn
