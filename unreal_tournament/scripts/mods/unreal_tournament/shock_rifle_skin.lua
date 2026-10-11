@@ -24,6 +24,12 @@ local CONFIG = {
 	-- light of it when the glow is all there (it is lit by itself, as UT's shader has its diffuse as its self illumination)
 	chamber_intensity = 1,
 	vent_pulse_speed = 14, -- radians per second, of the glow while the heat is vented
+	-- Overheating (the game's overcharge explosion, which lasts a few seconds before it goes off): the chamber pulses fast and bright, and the
+	-- model is held sideways (alt_pose_* of the definition below)
+	overheat_pulse_speed = 45, -- radians per second
+	overheat_pulse_floor = 0.2, -- how dim the glow gets between pulses
+	overheat_peak = 1.6, -- how bright it is at a pulse, times the glow when all there
+	alt_pose_speed = 6, -- how fast the model moves to the sideways pose and back, per second
 	projectile_sound_seconds = 1.795, -- how long the sound of the ball (ShockRifleProjectile) is
 	-- How fast each shot's animation plays (WeaponFire.FireAnimRate: ShockProjFire says 1.5, ShockBeamFire leaves the default 1)
 	fire_animation_rates = {
@@ -85,6 +91,23 @@ local function update_chamber(skin, dt)
 		charge = charge * (0.55 + 0.45 * math.sin(skin.vent_time * CONFIG.vent_pulse_speed))
 	end
 
+	local first_person_extension = skin_api.local_first_person()
+	local status_extension = first_person_extension and ScriptUnit.has_extension(first_person_extension.unit, "status_system")
+	local overheating = status_extension ~= nil and status_extension:is_overcharge_exploding()
+
+	-- (the model goes to the sideways pose while it overheats, and comes back after)
+	skin.alt_pose = (skin.alt_pose or 0) + ((overheating and 1 or 0) - (skin.alt_pose or 0)) * math.min(1, CONFIG.alt_pose_speed * dt)
+
+	if overheating then
+		skin.overheat_time = (skin.overheat_time or 0) + dt
+
+		local pulse = 0.5 + 0.5 * math.sin(skin.overheat_time * CONFIG.overheat_pulse_speed)
+
+		charge = CONFIG.overheat_peak * (CONFIG.overheat_pulse_floor + (1 - CONFIG.overheat_pulse_floor) * pulse)
+	else
+		skin.overheat_time = 0
+	end
+
 	Material.set_scalar(Mesh.material(Unit.mesh(skin.unit, "g_shock_1"), "m_power"), "intensity", CONFIG.chamber_intensity * charge)
 end
 
@@ -141,6 +164,11 @@ skin_api = mod.weapon_skin.new({
 	-- third of it is used. The damping is ShockRifle.BobDamping
 	bob = 0.0035,
 	bob_damping = 1.8,
+	-- Held sideways while it overheats (a guess, /skin shock_rifle set alt_pose_roll <degrees> and the others to try)
+	alt_pose_roll = 35,
+	alt_pose_right = 4,
+	alt_pose_forward = 0,
+	alt_pose_up = -3,
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
