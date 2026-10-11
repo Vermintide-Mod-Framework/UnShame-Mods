@@ -335,8 +335,8 @@ local function coil(start, stop)
 	local count = math.min(CONFIG.coil_max_pieces, math.ceil(length / piece_length))
 
 	for i = 0, count - 1 do
-		local size = between(CONFIG.coil_size)
-		local scale = Vector3(CONFIG.coil_radius_scale * size, CONFIG.coil_length_scale, CONFIG.coil_radius_scale * size)
+		-- (the scale is made each time it is asked for: a vector can't be kept from one frame to the next)
+		local radius = CONFIG.coil_radius_scale * between(CONFIG.coil_size)
 
 		particles.mesh({
 			brightness = function (fraction)
@@ -351,7 +351,7 @@ local function coil(start, stop)
 			position = start + direction * (i * piece_length),
 			rotation = rotation,
 			scale = function ()
-				return scale
+				return Vector3(radius, CONFIG.coil_length_scale, radius)
 			end,
 			spin = CONFIG.coil_spin,
 			spin_axis = Vector3(0, 1, 0),

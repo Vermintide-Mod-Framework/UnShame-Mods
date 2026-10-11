@@ -111,7 +111,6 @@ local function add(kind, spec)
 		frame = spec.frame,
 		frames = spec.frames,
 		scale = spec.scale,
-		spin_axis = spec.spin_axis,
 		brightness_by = spec.brightness,
 		growth = spec.growth or 0,
 		additive = spec.additive or 1,
@@ -138,6 +137,10 @@ local function add(kind, spec)
 
 	if spec.rotation then
 		particle.rotation = QuaternionBox(spec.rotation)
+	end
+
+	if spec.spin_axis then
+		particle.spin_axis = Vector3Box(spec.spin_axis)
 	end
 
 	if spec.from then
@@ -235,7 +238,7 @@ local function place(particle, dt, camera_position, camera_rotation)
 	if particle.kind == "mesh" then
 		-- (a mesh: where it is, turned as it is (and about its axis by its spin), scaled as its scale function says for how far into its life it
 		-- is, and showing the one of its frames that the frame function names)
-		local axis = particle.spin_axis or Vector3(0, 0, 1)
+		local axis = particle.spin_axis and particle.spin_axis:unbox() or Vector3(0, 0, 1)
 
 		rotation = Quaternion.multiply(particle.rotation:unbox(), Quaternion.axis_angle(axis, particle.angle + particle.spin * particle.age))
 		scale = particle.scale(fraction)
