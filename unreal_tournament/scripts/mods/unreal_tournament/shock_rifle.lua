@@ -134,6 +134,12 @@ end
 
 register_damage_profile("ut_shock_beam", "beam_shot", function (profile)
 	make_flat(profile, CONFIG.beam_attack_power, CONFIG.beam_impact_power)
+
+	-- The beam stops at the first enemy it hits, as UT's trace does (the cleave is how many a shot can hurt)
+	profile.cleave_distribution = {
+		attack = 0.01,
+		impact = 0.01,
+	}
 	set_armor_modifiers(profile)
 end)
 -- The ball's direct hit deals no damage of its own: like in UT the damage is the explosion,
@@ -471,15 +477,21 @@ end
 -- The balls of every player count, the shooter's and those of the others. The system keeps a list of the projectiles that this
 -- machine made (the shooter's); the others' are copies of units that are on their machines, and are found among the extensions of
 -- the copies.
-local function find_ball_hit_by_beam(physics_world, origin, direction)
-	local projectile_system = Managers.state.entity:system("projectile_system")
-	local wall_distance = CONFIG.combo_max_range
-	local wall_hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world, origin, direction, CONFIG.combo_max_range, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
-
-	if wall_hit and hit_distance then
-		wall_distance = hit_distance
+-- What the beam hits first, of the hits of its ray (nearest first): the shooter's own hitbox, which the ray starts in, is not one. The beam
+-- stops there, as UT's trace does.
+local function first_beam_hit(hits, owner_unit)
+	for i = 1, #(hits or {}) do
+		if Actor.unit(hits[i][4]) ~= owner_unit then
+			return hits[i]
+		end
 	end
+end
 
+-- The ball the beam gets to before it hits anything (blocker_distance is how far it goes: to the first thing it hits), and how far along
+-- the beam it is
+local function find_ball_hit_by_beam(origin, direction, blocker_distance)
+	local projectile_system = Managers.state.entity:system("projectile_system")
+	local wall_distance = blocker_distance or CONFIG.combo_max_range
 	local best_unit, best_distance
 
 	local function consider(projectile_unit, extension)
@@ -517,7 +529,7 @@ local function find_ball_hit_by_beam(physics_world, origin, direction)
 		consider(projectile_unit, extension)
 	end
 
-	return best_unit
+	return best_unit, best_distance
 end
 
 local function apply_combo_self_damage(owner_unit, position, item_name)
@@ -766,23 +778,7 @@ end
 
 -- The beam of the player who fires (the skin draws it, see shock_beam_callbacks): where it ends is told to the other players, who see it
 -- from the staff of the player's character
-local function spawn_trail(action, origin, direction)
-	local physics_world = action.physics_world
-	local result = PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
-	local hit
-
-	-- (the last of the hits that is not the shooter's own: the beam starts at their head, whose hitbox is in the hits, and a shot into the
-	-- sky would end there)
-	for i = #(result or {}), 1, -1 do
-		if Actor.unit(result[i][4]) ~= action.owner_unit then
-			hit = result[i]
-
-			break
-		end
-	end
-	local end_position = hit and hit[1] or origin + direction * CONFIG.beam_range
-	-- (the way the surface it hits faces: the vector of no length when it hits nothing)
-	local hit_normal = hit and hit[3] or Vector3.zero()
+local function spawn_trail(action, end_position, hit_normal)
 	local weapon_unit = action.weapon_unit
 	local muzzle_position = Unit.world_position(weapon_unit, Unit.node(weapon_unit, "fx_muzzle"))
 
@@ -872,12 +868,51 @@ mod.handgun_update_callbacks.shock = function (self)
 	local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
 	local origin, rotation = first_person_extension:get_projectile_start_position_rotation()
 	local direction = Quaternion.forward(rotation)
+	local hits = PhysicsWorld.immediate_raycast_actors(self.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
+	local hit = first_beam_hit(hits, owner_unit)
+	-- The beam ends at the first thing it hits, or at a ball it gets to before that (which goes off), or goes on (the vector of no length is the
+	-- way the surface faces when there is none)
+	local ball_unit, ball_distance = find_ball_hit_by_beam(origin, direction, hit and hit[2])
+	local end_position = hit and hit[1] or origin + direction * CONFIG.beam_range
+	local hit_normal = hit and hit[3] or Vector3.zero()
 
-	spawn_trail(self, origin, direction)
+	if ball_unit then
+		end_position = origin + direction * ball_distance
+		hit_normal = Vector3.zero()
+	end
 
-	local ball_unit = find_ball_hit_by_beam(self.physics_world, origin, direction)
+	spawn_trail(self, end_position, hit_normal)
 
 	if ball_unit then
 		detonate_ball(ball_unit, owner_unit)
 	end
 end
+
+-- The damage of the beam goes no further than a ball it gets to (the ball goes off, the beam is spent): the hits of its ray from there on
+-- are not given to the game
+mod:hook(DamageUtils, "process_projectile_hit", function (func, world, damage_source, owner_unit, is_server, raycast_result, current_action, direction, ...)
+	if current_action.ut_shock_beam and raycast_result then
+		local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
+		local origin = first_person_extension and first_person_extension:get_projectile_start_position_rotation()
+		local hit = first_beam_hit(raycast_result, owner_unit)
+		local _, ball_distance = nil, nil
+
+		if origin then
+			_, ball_distance = find_ball_hit_by_beam(origin, direction, hit and hit[2])
+		end
+
+		if ball_distance then
+			local before_ball = {}
+
+			for i = 1, #raycast_result do
+				if raycast_result[i][2] < ball_distance then
+					before_ball[#before_ball + 1] = raycast_result[i]
+				end
+			end
+
+			raycast_result = before_ball
+		end
+	end
+
+	return func(world, damage_source, owner_unit, is_server, raycast_result, current_action, direction, ...)
+end)
