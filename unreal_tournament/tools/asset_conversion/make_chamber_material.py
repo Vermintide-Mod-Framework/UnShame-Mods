@@ -75,7 +75,8 @@ def variable(name, display, kind, value):
             % (display, name, kind, value))
 
 def sampler(slot):
-    return '\t\t\t\t%s = {\n\t\t\t\t\tdisplay_name = "%s"\n\t\t\t\t\tslot_name = "%s"\n\t\t\t\t}\n' % (slot, slot, slot)
+    # (the key of the sampler of a sample_texture node is always texture_map: the slot of the material is its slot_name)
+    return '\t\t\t\ttexture_map = {\n\t\t\t\t\tdisplay_name = "%s"\n\t\t\t\t\tslot_name = "%s"\n\t\t\t\t}\n' % (slot, slot)
 
 TWO_PI = 6.283185307
 

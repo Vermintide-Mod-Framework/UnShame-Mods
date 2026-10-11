@@ -723,7 +723,7 @@ shader = {
 				400
 			]
 			samplers = {
-				gel_map = {
+				texture_map = {
 					display_name = "gel_map"
 					slot_name = "gel_map"
 				}
@@ -803,7 +803,7 @@ shader = {
 				600
 			]
 			samplers = {
-				glass_map = {
+				texture_map = {
 					display_name = "glass_map"
 					slot_name = "glass_map"
 				}
