@@ -1,12 +1,12 @@
 material_contexts = {
 	surface_material = ""
 }
-parent_material = "units/ut/weapon_unlit"
+parent_material = "core/stingray_renderer/shader_import/standard"
 textures = {
 	color_map = "units/ut/flak/flak_cannon_flaktex1"
 }
 variables = {
-	brightness = {
+	use_color_map = {
 		type = "scalar"
 		value = 1
 	}

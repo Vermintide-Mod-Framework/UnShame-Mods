@@ -131,18 +131,17 @@ win32 = {
 }
 '''
 
-# (UT2004 lights the weapon in the hand brightly, whatever the level is, and the textures have their shading in them: the opaque
-# material is lit by itself, see make_weapon_unlit_material.py, times a brightness)
+# (the weapons are lit by the level, as the game's own are: brighter in the sun and dark in the shade)
 MATERIAL_TEMPLATES = {
     'opaque': '''material_contexts = {
 	surface_material = ""
 }
-parent_material = "units/ut/weapon_unlit"
+parent_material = "core/stingray_renderer/shader_import/standard"
 textures = {
 	color_map = "%s"
 }
 variables = {
-	brightness = {
+	use_color_map = {
 		type = "scalar"
 		value = 1
 	}
