@@ -35,7 +35,7 @@ local CONFIG = {
 	beam_impact_power = 0.3, -- same for stagger
 	combo_damage_multiplier = 200 / 45,
 	meters_per_uu = 0.02, -- Unreal unit to meters (a UT2004 player is ~88 uu / 1.8 m)
-	ball_explosion_radius_uu = 90, -- UT2004 ShockProjectile.DamageRadius is 150: 3 m here, which is a lot of a horde in a game of this scale
+	ball_explosion_radius_uu = 70, -- UT2004 ShockProjectile.DamageRadius is 150: 3 m here, which is a lot of a horde in a game of this scale
 	combo_explosion_radius_uu = 275,
 	explosion_full_damage_radius = 0.5, -- damage falls off linearly from here to the radius
 	-- Friendly fire is scaled to nothing on lower difficulties, so damage to yourself from the
