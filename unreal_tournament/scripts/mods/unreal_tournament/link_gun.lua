@@ -4083,7 +4083,8 @@ local function clear_beams()
 	table.clear(barrel_settling)
 	table.clear(barrel_poses)
 
-	if Managers.player.is_server then
+	-- (there is no player manager when the game is closing, or the mod is unloaded after it: the buffs are gone with it)
+	if Managers.player and Managers.player.is_server then
 		clear_ally_buffs()
 	end
 
