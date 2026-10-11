@@ -52,6 +52,8 @@ local CONFIG = {
 	ball_sprite_life = 10, -- its LifeSpan
 	ball_sprite_layers = 3,
 	-- (FadeInEndTime and FadeOutStartTime of each: it is all there between, and the next core comes as one ends)
+	ball_fill_size = 85, -- units across: as big as the rim of the texture of the ball is
+	ball_fill_intensity = 1.5,
 	ball_sprite_spin = 0.8, -- turns a second, the most a layer of the ball's sprite turns either way
 	ball_core_size = 55,
 	ball_core_life = 0.35,
@@ -371,6 +373,18 @@ end
 function fx.new_ball(follow)
 	-- (the projectile of UT is a sprite of its own: shock_core_low at DrawScale, all there as long as the ball lives)
 	-- (UT draws it with a light of its own that makes it solid; layers of it add up to the same)
+	-- (the texture of the ball is a dark disc with a rim and a bright middle, which on its own is seen as a ring: the sphere is filled with a
+	-- purple glow under it)
+	particles.sprite({
+		color = PURPLE,
+		fade_in = 0,
+		follow = follow,
+		intensity = CONFIG.ball_fill_intensity,
+		life = CONFIG.ball_sprite_life,
+		size = CONFIG.ball_fill_size * UNIT,
+		texture = "shock_mark_heat",
+	})
+
 	for _ = 1, CONFIG.ball_sprite_layers do
 		particles.sprite({
 			color = WHITE,
