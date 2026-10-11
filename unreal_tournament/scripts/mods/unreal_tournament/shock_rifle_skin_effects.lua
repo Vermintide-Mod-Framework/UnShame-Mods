@@ -67,8 +67,8 @@ local CONFIG = {
 	ball_spark_size = 26,
 	ball_spark_intensity = 0.5,
 	ball_spark_life = 0.35,
-	ball_spark_fade_in = 0.1,
-	ball_spark_fade_out = 0.1,
+	ball_spark_fade_in = 0.03,
+	ball_spark_fade_out = 0.05,
 	ball_spark_interval = 0.025,
 	-- Units a second, the speed of a spark in a random direction: it moves out from the center of the ball for its whole life, so it ends up
 	-- speed * life units away (UT's own sparks move out and back at 70 per axis)
