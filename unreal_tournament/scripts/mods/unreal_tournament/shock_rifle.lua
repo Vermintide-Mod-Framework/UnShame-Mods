@@ -1,16 +1,16 @@
 local mod = get_mod("unreal_tournament")
 
--- Shock Rifle: replaces the Beam Staff's (Sienna) actions in place.
---   LMB: instant hitscan beam
---   RMB: slow, straight-flying shock ball that explodes on impact
---   Hitting the ball with the beam detonates it in a large "shock combo" explosion
+-- The Shock Rifle's gameplay: it replaces the actions of the Beam Staff (Sienna's) in place.
+--   Left button: an instant hitscan beam
+--   Right button: a slow ball that flies straight and explodes on impact
+--   A beam that hits a ball detonates it in a large "shock combo" explosion
+-- The skin (shock_rifle_skin.lua) draws all of it; this file only does what it does to the game.
 
 local TEMPLATE_NAME = "staff_blast_beam_template_1"
 
 local CONFIG = {
-	-- The multipliers of the damage and the stagger per armor type: unarmored, armored, monsters, players, berserkers,
-	-- super armor (the game's own for beams is 0 against super armor, which is what chaos warriors have, it would do
-	-- next to nothing to them)
+	-- The multipliers of the damage and the stagger per armor type: unarmored, armored, monsters, players, berserkers, super armor.
+	-- (The game's own for beams is 0 against super armor, which chaos warriors have, so a beam would do next to nothing to them.)
 	armor_attack = {1, 0.8, 1.5, 1, 1, 0.5},
 	armor_impact = {1, 0.8, 1, 1, 1, 0.5},
 	-- Beam
@@ -30,9 +30,8 @@ local CONFIG = {
 	-- Combo
 	combo_pick_radius = 0.6, -- how close the beam has to pass to the ball's center
 	combo_max_range = 100,
-	-- Damage, relative values taken from UT2004 (XWeapons/ShockBeamFire.uc, ShockProjectile.uc):
-	-- beam 45, ball splash 45 (radius 150 uu), combo 200 (radius 275 uu).
-	-- The beam and the ball's splash are given the same damage, the combo is 200 / 45 times that.
+	-- Damage, relative values from UT2004 (XWeapons/ShockBeamFire.uc, ShockProjectile.uc): beam 45, ball splash 45 (radius 150 uu),
+	-- combo 200 (radius 275 uu). The beam and the ball's splash do the same damage, and the combo does 200 / 45 times that.
 	beam_attack_power = 0.7, -- multiplier on the weapon's power level, this is what sets the damage
 	beam_impact_power = 0.3, -- same for stagger
 	combo_damage_multiplier = 200 / 45,
@@ -40,11 +39,10 @@ local CONFIG = {
 	ball_explosion_radius_uu = 70, -- UT2004 ShockProjectile.DamageRadius is 150: 3 m here, which is a lot of a horde in a game of this scale
 	combo_explosion_radius_uu = 190, -- UT2004 ShockProjectile.ComboRadius is 275: 5.5 m here
 	explosion_full_damage_radius = 0.5, -- damage falls off linearly from here to the radius
-	-- Friendly fire is scaled to nothing on lower difficulties, so damage to yourself from the
-	-- combo is applied separately: this much at the center, falling off like the explosion
+	-- Friendly fire is scaled to nothing on lower difficulties, so the combo's damage to the shooter is applied separately: this much at the
+	-- center, falling off like the explosion
 	combo_self_damage = 100,
-	-- The ball's own explosion hurts the shooter as well, in the same way (half of the ball's damage in UT's
-	-- numbers, like the combo's is half of its damage)
+	-- The ball's explosion hurts the shooter too, in the same way (half of the ball's damage in UT's numbers, as the combo's is half of its)
 	ball_self_damage = 18,
 	-- Combo: the blast (the skin draws it) is followed by everything that died being pulled back to the center, like in UT.
 	-- The ring of the game's own effect (Kruber's shockwave) bends the light behind it, which the skin's effects can't do. One ring is played
@@ -52,25 +50,23 @@ local CONFIG = {
 	combo_ring_effect = "fx/chr_kruber_shockwave",
 	combo_distortion_scale = 0.7,
 	combo_ring_height = 1, -- meters: how high above the effect's origin its ring is (it is made to be played at a character's feet)
-	-- Bodies are thrown away from the blast first: whatever has died (and started to ragdoll) in
-	-- the first implosion_delay seconds gets thrown once, then everything is pulled back in.
+	-- Bodies are thrown away from the blast first: whatever has died (and started to ragdoll) in the first implosion_delay seconds is
+	-- thrown once, then everything is pulled back in.
 	implosion_blast_speed = 14, -- m/s, a little less for bodies far from the center
 	implosion_blast_up = 5, -- m/s added upwards
 	implosion_delay = 0.6, -- seconds after the blast before bodies start being pulled in
 	implosion_duration = 0.6,
-	-- The pull is a gravity: it speeds the bodies up toward the center (their own speed is kept), they go through
-	-- it and fly off on the other side when the pull ends. It softens close to the center so there is no
-	-- sudden stop or kick.
+	-- The pull is like gravity: it speeds the bodies up toward the center (they keep their own speed), and they go through the center and fly
+	-- off the other side when the pull ends. It softens near the center so there is no sudden stop or kick.
 	implosion_pull = 90, -- m/s^2
 	implosion_pull_softening = 1, -- m, the pull is weaker than this close to the center
 	implosion_max_speed = 30, -- m/s
-	-- Overcharge: the regular shots cost this much of what the staff's own shots do, and the
-	-- combo costs this many shots' worth of the beam on top of the beam shot that set it off
-	-- (UT2004 ShockProjectile.ComboAmmoCost = 3, on top of the beam's own 1 ammo).
+	-- Overcharge: a shot costs this much of what the staff's own shots do, and a combo costs this many beam shots on top of the beam shot
+	-- that set it off (UT2004 ShockProjectile.ComboAmmoCost = 3, on top of the beam's own 1 ammo).
 	overcharge_scale = 0.5,
 	combo_overcharge_multiplier = 3,
-	-- Overheating the weapon sets off a combo at the player (the shooter isn't hurt by it, the game's overheating
-	-- explosion does that). It has no shot to take a power level from, so it is given one.
+	-- Overheating the weapon sets off a combo at the player (it does not hurt the shooter: the game's overheating explosion does that). There
+	-- is no shot to take a power level from, so it is given one.
 	overheat_combo_height = 1, -- m above the player
 	overheat_combo_power_level = 500,
 }
@@ -81,12 +77,11 @@ local overcharge_values = PlayerUnitStatusSettings.overcharge_values
 overcharge_values.ut_shock_beam = overcharge_values.beam_staff_sniper * CONFIG.overcharge_scale
 overcharge_values.ut_shock_ball = overcharge_values.ut_shock_beam
 
--- Gravity of 0 is already defined by the game (used by the drake pistols), reusing it avoids
--- having to extend NetworkLookup.projectile_gravity_settings
+-- The game already defines a gravity of 0 (the drake pistols use it). Reusing it means NetworkLookup.projectile_gravity_settings does not
+-- have to be extended.
 local BALL_GRAVITY_SETTINGS = "drake_pistols"
 
--- Registration of new named data (must exist on every peer in the same order,
--- everyone in the game needs the mod)
+-- Registration of new named data (it must exist on every peer in the same order, so everyone in the game needs the mod)
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local effects = mod.effects
@@ -110,8 +105,7 @@ SpreadTemplates.ut_shock_beam = table.clone(SpreadTemplates.handgun)
 zero_numbers(SpreadTemplates.ut_shock_beam)
 
 -- Damage profiles
--- The beam and the explosions share the armor modifiers and only differ in the power factor, see
--- utils.lua.
+-- The beam and the explosions share the armor modifiers and only differ in their power factor (see utils.lua).
 
 local make_flat = utils.make_flat
 
@@ -139,8 +133,8 @@ register_damage_profile("ut_shock_beam", "beam_shot", function (profile)
 	}
 	set_armor_modifiers(profile)
 end)
--- The ball's direct hit deals no damage of its own: like in UT the damage is the explosion,
--- which is at full strength for whatever the ball hits. The direct hit only staggers.
+-- The ball's direct hit does no damage of its own: as in UT, the damage is the explosion, which is at full strength for whatever the ball
+-- hits. The direct hit only staggers.
 register_damage_profile("ut_shock_ball", "staff_fireball", function (profile)
 	make_flat(profile, 0, CONFIG.beam_impact_power)
 
@@ -154,9 +148,8 @@ register_explosion_damage_profiles("ut_shock_ball_explosion", 1)
 register_explosion_damage_profiles("ut_shock_combo_explosion", CONFIG.combo_damage_multiplier)
 
 -- Explosion templates
--- Plain `radius` is used (not radius_min/radius_max) because the explosion would otherwise
--- depend on the projectile's scale. attacker_power_level_offset = 1 makes the power level
--- independent of it as well.
+-- A plain `radius` is used (not radius_min/radius_max), which would make the explosion depend on the projectile's scale.
+-- attacker_power_level_offset = 1 makes the power level independent of it too.
 
 register_explosion_template("ut_shock_ball_explosion", {
 	-- shields don't block the explosion (see the hook of create_explosion)
@@ -167,8 +160,8 @@ register_explosion_template("ut_shock_ball_explosion", {
 		attacker_power_level_offset = 1,
 		damage_profile = "ut_shock_ball_explosion",
 		damage_profile_glance = "ut_shock_ball_explosion_glance",
-		-- (no effect and no sound of its own: the skin draws and plays them, see skin_explosion_callbacks)
-		-- the shooter is hurt separately, see ball_self_damage
+		-- (it has no effect or sound of its own: the skin draws and plays them, see skin_explosion_callbacks)
+		-- The shooter is hurt separately, see ball_self_damage
 		ignore_attacker_unit = true,
 		max_damage_radius = CONFIG.explosion_full_damage_radius,
 		radius = CONFIG.ball_explosion_radius_uu * CONFIG.meters_per_uu,
@@ -572,8 +565,8 @@ local function apply_combo_self_damage(owner_unit, position, item_name)
 	utils.apply_explosion_self_damage(owner_unit, position, item_name, ExplosionTemplates.ut_shock_combo_explosion.explosion, CONFIG.combo_self_damage)
 end
 
--- The ball's own explosion hurts the shooter. (The do_aoe of the ball is also what makes the combo go off:
--- that one is told apart by the explosion it is given.)
+-- The ball's explosion hurts the shooter. (The ball's do_aoe is also what makes the combo go off: the two are told apart by the explosion
+-- template they are given.)
 mod.aoe_callbacks.shock_ball = function (self, aoe_data, position)
 	if aoe_data ~= ExplosionTemplates.ut_shock_ball_explosion or self._ut_shock_ball_exploded then
 		return
@@ -624,9 +617,8 @@ local function detonate_ball(projectile_unit, shooter_unit)
 	extension:stop()
 end
 
--- Combo implosion: after the blast, ragdolls of whatever died get pulled toward the center, and go past it.
--- This runs on every peer (create_explosion is called on all of them for networked explosions),
--- ragdoll physics is simulated locally on each.
+-- Combo implosion: after the blast, the ragdolls of whatever died are pulled toward the center, and go past it. This runs on every peer
+-- (create_explosion is called on all of them for networked explosions), because ragdoll physics is simulated locally on each.
 
 local implosions = {}
 
@@ -742,9 +734,9 @@ local function update_implosions(dt)
 	end
 end
 
--- Explosions of the weapons are run by their names, on every peer (one hook for all of them)
--- The enemies that are alive in the combo as it goes off: the combo's damage is instant (and it is the host that applies it), so those of
--- them that are not alive after it were killed by it
+-- (the weapons' explosions are run by their names on every peer, through one hook for all of them)
+-- The enemies that are alive in the combo's radius as it goes off. The combo's damage is instant (and the host applies it), so those of
+-- them that are not alive after it were killed by it.
 mod.explosion_before_callbacks.ut_shock_combo_explosion = function (world, impact_position, attacker_unit)
 	local alive = {}
 
@@ -776,8 +768,8 @@ mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_posit
 	end
 end
 
--- The beam of the player who fires (the skin draws it, see shock_beam_callbacks): where it ends is told to the other players, who see it
--- from the staff of the player's character
+-- The beam of the player who fires (the skin draws it, see shock_beam_callbacks). Where it ends is told to the other players, who see it
+-- come from the staff of the player's character.
 local function spawn_trail(action, end_position, hit_normal)
 	local weapon_unit = action.weapon_unit
 	local muzzle_position = Unit.world_position(weapon_unit, Unit.node(weapon_unit, "fx_muzzle"))
@@ -793,7 +785,7 @@ mod:network_register("ut_shock_trail", function (_, owner_go_id, x, y, z, normal
 	local unit = Managers.state.unit_storage:unit(owner_go_id)
 	local inventory_extension = unit and ScriptUnit.has_extension(unit, "inventory_system")
 	local equipment = inventory_extension and inventory_extension:equipment()
-	-- (the staff is the right hand's unit, the left hand's is the effect of the fireball: the game's own beam looks for it the same way)
+	-- (the staff is the right hand's unit, the left hand's is the fireball's effect: the game's own beam looks for it the same way)
 	local weapon_unit = equipment and (equipment.right_hand_wielded_unit_3p or equipment.left_hand_wielded_unit_3p)
 
 	if not weapon_unit or not Unit.alive(weapon_unit) then
@@ -813,8 +805,8 @@ end
 
 local packages = utils.package_holder("unreal_tournament")
 
--- The overheating explosion (the game's own hurts the player, and is kept): the combo, the whole of it, the blast and
--- the pulling in of what died.
+-- The overheating explosion: the whole combo (the blast, and the pulling in of what died). The game's own overheating explosion hurts the
+-- player, and is kept.
 mod.overheat_callbacks[TEMPLATE_NAME] = function (state, item_data)
 	if not utils.is_weapon_enabled("shock_rifle") then
 		return
@@ -834,8 +826,8 @@ local function enable_shock_rifle()
 	apply_shock_rifle()
 end
 
--- (the weapon can be switched off in the settings: the staff is then the game's own again, the weapon the player
--- holds changes when it is wielded again)
+-- (the weapon can be switched off in the settings: the staff is then the game's own again; the weapon the player holds changes when it is
+-- wielded again)
 local function disable_shock_rifle()
 	restore_beam_staff()
 	clear_implosions()
@@ -865,8 +857,8 @@ mod.handgun_update_callbacks.shock = function (self)
 	local direction = Quaternion.forward(rotation)
 	local hits = PhysicsWorld.immediate_raycast_actors(self.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
 	local hit = first_beam_hit(hits, owner_unit)
-	-- The beam ends at the first thing it hits, or at a ball it gets to before that (which goes off), or goes on (the vector of no length is the
-	-- way the surface faces when there is none)
+	-- The beam ends at the first thing it hits, or at a ball it gets to before that (which goes off), or goes on to its range if it hits
+	-- nothing. The surface normal is the vector of no length when there is no surface.
 	local ball_unit, ball_distance = find_ball_hit_by_beam(origin, direction, hit and hit[2])
 	-- (a little short of what it hits, as the game's own beam is)
 	local end_position = hit and hit[1] - direction * 0.15 or origin + direction * CONFIG.beam_range
@@ -884,8 +876,8 @@ mod.handgun_update_callbacks.shock = function (self)
 	end
 end
 
--- The damage of the beam goes no further than a ball it gets to (the ball goes off, the beam is spent): the hits of its ray from there on
--- are not given to the game
+-- The beam's damage goes no further than a ball it gets to (the ball goes off and the beam is spent): the hits of its ray from there on are
+-- not given to the game.
 mod:hook(DamageUtils, "process_projectile_hit", function (func, world, damage_source, owner_unit, is_server, raycast_result, current_action, direction, ...)
 	if current_action.ut_shock_beam and raycast_result then
 		local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
