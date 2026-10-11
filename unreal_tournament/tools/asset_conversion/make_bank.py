@@ -27,6 +27,16 @@ WEAPONS = {
         ('ut_announcer_monster_kill', ANNOUNCER + 'MonsterKill_F', False, -18, 0),
         ('ut_announcer_ludicrous_kill', ANNOUNCER + 'LudicrousKill_F', False, -18, 0),
         ('ut_announcer_holy_shit', ANNOUNCER + 'HolyShit_F', False, -18, 0),
+        # (KillingSpreeMessage.SpreeSoundName, FirstBloodMessage, SpecialKillMessage and DamTypeSniperHeadShot's HeadHunter)
+        ('ut_announcer_killing_spree', ANNOUNCER + 'Killing_Spree', False, -18, 0),
+        ('ut_announcer_rampage', ANNOUNCER + 'Rampage', False, -18, 0),
+        ('ut_announcer_dominating', ANNOUNCER + 'Dominating', False, -18, 0),
+        ('ut_announcer_unstoppable', ANNOUNCER + 'Unstoppable', False, -18, 0),
+        ('ut_announcer_godlike', ANNOUNCER + 'GodLike', False, -18, 0),
+        ('ut_announcer_wicked_sick', ANNOUNCER + 'WhickedSick', False, -18, 0),
+        ('ut_announcer_first_blood', ANNOUNCER + 'first_blood', False, -18, 0),
+        ('ut_announcer_headshot', ANNOUNCER + 'Headshot', False, -18, 0),
+        ('ut_announcer_headhunter', ANNOUNCER + 'Headhunter', False, -18, 0),
     ],
     'shock_rifle': [
         ('ut_shock_fire', SHOCK + 'BShockRifleFire', False, -22, 0),

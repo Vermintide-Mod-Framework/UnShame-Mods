@@ -6,4 +6,13 @@ events = {
 	ut_announcer_monster_kill = { attenuation_max = 0 duration_type = "OneShot" duration_min = 5.093 duration_max = 5.093 positioning = "2D" }
 	ut_announcer_ludicrous_kill = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.722 duration_max = 2.722 positioning = "2D" }
 	ut_announcer_holy_shit = { attenuation_max = 0 duration_type = "OneShot" duration_min = 3.847 duration_max = 3.847 positioning = "2D" }
+	ut_announcer_killing_spree = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.279 duration_max = 2.279 positioning = "2D" }
+	ut_announcer_rampage = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.023 duration_max = 2.023 positioning = "2D" }
+	ut_announcer_dominating = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.698 duration_max = 1.698 positioning = "2D" }
+	ut_announcer_unstoppable = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.944 duration_max = 1.944 positioning = "2D" }
+	ut_announcer_godlike = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.744 duration_max = 1.744 positioning = "2D" }
+	ut_announcer_wicked_sick = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.522 duration_max = 2.522 positioning = "2D" }
+	ut_announcer_first_blood = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.294 duration_max = 2.294 positioning = "2D" }
+	ut_announcer_headshot = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.956 duration_max = 1.956 positioning = "2D" }
+	ut_announcer_headhunter = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.968 duration_max = 1.968 positioning = "2D" }
 }

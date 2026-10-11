@@ -1,9 +1,13 @@
 local mod = get_mod("unreal_tournament")
 
--- Announcer (the Announcer setting): UT2004's multi kill announcements. A kill of yours soon after your last one is a multi kill, and each
--- one in a row raises its level: Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill, Holy Shit
--- (UnrealPlayer.LogMultiKills counts them, MultiKillMessage says which sound and which text each level has, MaleAnnouncer is the voice).
--- The sounds are in a bank of their own (tools/asset_conversion/make_bank.py announcer).
+-- Announcer (the Announcer setting): UT2004's announcements of kills, with the voice of its male announcer (MaleAnnouncer) and the words on the
+-- screen. The sounds are in a bank of their own (tools/asset_conversion/make_bank.py announcer).
+--   Multi kills (UnrealPlayer.LogMultiKills, MultiKillMessage): a kill of yours soon after your last one is the next one of a multi kill, and each
+--     one in a row raises its level: Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill, Holy Shit.
+--   Killing sprees (DeathMatch.NotifySpree, KillingSpreeMessage): kills in a row without being hurt by an enemy: Killing Spree, Rampage,
+--     Dominating, Unstoppable, Godlike, Wicked Sick. What hurts you is an enemy's damage, not your own weapons, overcharge or your allies'.
+--   First blood (DeathMatch.ScoreKill, FirstBloodMessage): the first enemy to die in a level, if it was you who killed it.
+--   Head shots (DamTypeSniperHeadShot, SpecialKillMessage): a kill with a shot to the head, and Head Hunter after enough of them.
 
 local CONFIG = {
 	-- UnrealPlayer.LogMultiKills: a kill counts as the next one of a multi kill if it comes this soon after the last one (UT has 4
@@ -14,7 +18,7 @@ local CONFIG = {
 		dummy = true,
 	},
 	-- MultiKillMessage, by the level of the multi kill (1 is the second kill): its sound and its text; the last one is every level after it
-	levels = {
+	multi_kills = {
 		{ event = "ut_announcer_double_kill", text = "Double Kill!" },
 		{ event = "ut_announcer_multi_kill", text = "Multi Kill!" },
 		{ event = "ut_announcer_mega_kill", text = "Mega Kill!!" },
@@ -23,10 +27,32 @@ local CONFIG = {
 		{ event = "ut_announcer_ludicrous_kill", text = "L U D I C R O U S !!!" },
 		{ event = "ut_announcer_holy_shit", text = "H O L Y  S H I T !" },
 	},
-	-- The text (MultiKillMessage and LocalMessage): red, PosY down the screen, it lasts Lifetime and fades out at the end; the size is the
-	-- one of its FontSize (GetFontSize: 0 up to the 3rd level, 1 for the 4th, 3 for the 7th, 2 for the others), in pixels at 1080 high
-	text_color = { 255, 0, 0 },
-	text_position_y = 0.242,
+	-- KillingSpreeMessage, by the kills of the spree that UT makes it for, times this much (a horde is killed faster than players are)
+	spree_multiplier = 3,
+	sprees = {
+		{ kills = 5, event = "ut_announcer_killing_spree", text = "Killing Spree!" },
+		{ kills = 10, event = "ut_announcer_rampage", text = "Rampage!" },
+		{ kills = 15, event = "ut_announcer_dominating", text = "Dominating!" },
+		{ kills = 20, event = "ut_announcer_unstoppable", text = "Unstoppable!" },
+		{ kills = 25, event = "ut_announcer_godlike", text = "GODLIKE!" },
+		{ kills = 30, event = "ut_announcer_wicked_sick", text = "WICKED SICK!" },
+	},
+	-- (FirstBloodMessage: "<name> drew first blood!")
+	first_blood = { event = "ut_announcer_first_blood", text = "drew first blood!" },
+	head_shot = { event = "ut_announcer_headshot", text = "Head Shot!!" },
+	-- DamTypeSniperHeadShot: Head Hunter is announced at 15 head shots, a moment later (ClientDelayedAnnouncementNamed)
+	head_hunter = { event = "ut_announcer_headhunter", headshots = 15, delay = 1.5 },
+	head_hunter_multiplier = 3,
+	-- PlayerController.PlayRewardAnnouncement: an announcement that is not forced is not played if one has been played in the last second
+	unforced_gap = 1, -- seconds
+	-- The words (LocalMessage): where they are on the screen (PosY of each message, from the top), how long they last (Lifetime) and how they
+	-- fade out, and their colors (MultiKillMessage and SpecialKillMessage are red, CriticalEventPlus, which the sprees are, is white and
+	-- FirstBloodMessage is red). The size is one of those of FontSize, in pixels at 1080 high
+	messages = {
+		multi_kill = { y = 0.242, color = { 255, 0, 0 } },
+		head_shot = { y = 0.1, color = { 255, 0, 0 } },
+		critical = { y = 0.83, color = { 255, 255, 255 } },
+	},
 	text_life = 3, -- seconds
 	text_fade = 1, -- seconds, at the end of it
 	text_shadow = 2, -- pixels, of the shadow it is read by
@@ -35,53 +61,49 @@ local CONFIG = {
 	font_sizes = { 40, 52, 66, 84 },
 }
 
-local level = 0 -- UnrealPlayer.MultiKillLevel
+local multi_kill_level = 0 -- UnrealPlayer.MultiKillLevel
 local last_kill_time = -math.huge
+local spree = 0 -- Pawn.Spree
+local head_shots = 0
+local first_blood_taken = false
+local last_sound_time = -math.huge
 local playing_id -- of the announcement that is playing
-local message -- { text, size, time }: the text on the screen
+local delayed = {} -- { time = when, event = ... }
+local messages = {} -- by name (the places on the screen): { text, size, color, time }
 
--- A kill of the player's own: the enemy that died was last hurt by them (the game's own statistics tell kills the same way)
-local function is_local_kill(victim_unit)
+-- The player whose kill the death of an enemy was: the one that last hurt it (the game's own statistics tell kills the same way)
+local function killer_of(victim_unit)
 	local health_extension = ScriptUnit.has_extension(victim_unit, "health_system")
 	local damage_data = health_extension and health_extension.last_damage_data
-	local local_player = Managers.player:local_player()
+	local killer = damage_data and damage_data.attacker_unique_id and Managers.player:player_from_unique_id(damage_data.attacker_unique_id)
 
-	if not damage_data or not local_player or damage_data.attacker_unique_id ~= local_player:unique_id() then
-		return false
+	if not killer then
+		return nil
 	end
 
 	local breed = Unit.get_data(victim_unit, "breed")
 
 	if not breed or breed.is_player or CONFIG.ignored_races[breed.race] then
-		return false
+		return nil
 	end
 
 	local side_manager = Managers.state.side
 
-	return side_manager:is_enemy_by_side(damage_data.attacker_side, side_manager.side_by_unit[victim_unit])
-end
-
--- MultiKillMessage.GetFontSize
-local function font_size_index(multi_kill_level)
-	if multi_kill_level < 4 then
-		return 1
-	elseif multi_kill_level == 4 then
-		return 2
-	elseif multi_kill_level == 7 then
-		return 4
+	if not side_manager:is_enemy_by_side(damage_data.attacker_side, side_manager.side_by_unit[victim_unit]) then
+		return nil
 	end
 
-	return 3
+	return killer
 end
 
-local function announce(multi_kill_level)
-	local announcement = CONFIG.levels[math.min(multi_kill_level, #CONFIG.levels)]
+local function play(event, forced)
+	local now = Managers.time:time("game")
 
-	message = {
-		size = CONFIG.font_sizes[font_size_index(multi_kill_level)],
-		text = announcement.text,
-		time = Managers.time:time("game"),
-	}
+	if not forced and now - last_sound_time < CONFIG.unforced_gap then
+		return
+	end
+
+	last_sound_time = now
 
 	local wwise_world = Managers.world:wwise_world(Managers.world:world("level_world"))
 
@@ -90,57 +112,187 @@ local function announce(multi_kill_level)
 		WwiseWorld.stop_event(wwise_world, playing_id)
 	end
 
-	playing_id = WwiseWorld.trigger_event(wwise_world, announcement.event)
+	playing_id = WwiseWorld.trigger_event(wwise_world, event)
 end
 
-mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit)
-	if not mod:get("announcer") or not is_local_kill(victim_unit) then
+local function show(place, text, font_size_index, color)
+	local settings = CONFIG.messages[place]
+
+	messages[place] = {
+		color = color or settings.color,
+		size = CONFIG.font_sizes[font_size_index],
+		text = text,
+		time = Managers.time:time("game"),
+	}
+end
+
+-- MultiKillMessage.GetFontSize
+local function multi_kill_font_size(level)
+	if level < 4 then
+		return 1
+	elseif level == 4 then
+		return 2
+	elseif level == 7 then
+		return 4
+	end
+
+	return 3
+end
+
+local function announce_multi_kill(level)
+	local announcement = CONFIG.multi_kills[math.min(level, #CONFIG.multi_kills)]
+
+	show("multi_kill", announcement.text, multi_kill_font_size(level))
+	play(announcement.event, true)
+end
+
+local function announce_spree(kills)
+	for _, level in ipairs(CONFIG.sprees) do
+		if kills == level.kills * CONFIG.spree_multiplier then
+			-- (KillingSpreeMessage: the player's own is the size 2)
+			show("critical", level.text, 3)
+			play(level.event, true)
+		end
+	end
+end
+
+local function announce_head_shot(head_shot_kills)
+	show("head_shot", CONFIG.head_shot.text, 2)
+	play(CONFIG.head_shot.event, false)
+
+	if head_shot_kills == CONFIG.head_hunter.headshots * CONFIG.head_hunter_multiplier then
+		delayed[#delayed + 1] = {
+			event = CONFIG.head_hunter.event,
+			time = Managers.time:time("game") + CONFIG.head_hunter.delay,
+		}
+	end
+end
+
+mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_data)
+	if not mod:get("announcer") then
+		return
+	end
+
+	local killer = killer_of(victim_unit)
+
+	if not killer then
+		return
+	end
+
+	local is_local = killer == Managers.player:local_player()
+
+	-- (the first enemy that dies in the level, whoever kills it)
+	if not first_blood_taken then
+		first_blood_taken = true
+
+		if is_local then
+			show("critical", killer:name() .. " " .. CONFIG.first_blood.text, 2, { 255, 0, 0 })
+			play(CONFIG.first_blood.event, true)
+		end
+	end
+
+	if not is_local then
 		return
 	end
 
 	local now = Managers.time:time("game")
 
 	if now - last_kill_time < CONFIG.window then
-		level = level + 1
+		multi_kill_level = multi_kill_level + 1
 
-		announce(level)
+		announce_multi_kill(multi_kill_level)
 	else
-		level = 0
+		multi_kill_level = 0
 	end
 
 	last_kill_time = now
+	spree = spree + 1
+
+	announce_spree(spree)
+
+	-- (the zone of the shot that killed: the game's own statistics tell a head shot this way)
+	if damage_data[DamageDataIndex.HIT_ZONE] == "head" then
+		head_shots = head_shots + 1
+
+		announce_head_shot(head_shots)
+	end
 end)
 
--- The text, every frame, in the middle of the screen (the game's own user interface draws it, as it does its debug texts)
+-- What ends a spree: an enemy hurts the player. Their own weapons (and the overcharge) and their allies' don't: the one who hurts is the
+-- unit that did it, an enemy is a unit that has a breed that is not a player's
+mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_unit, damage_amount, _, _, _, _, _, _, source_attacker_unit)
+	if spree == 0 or damage_amount <= 0 or not attacker_unit then
+		return
+	end
+
+	local local_player = Managers.player:local_player()
+
+	if not local_player or self.unit ~= local_player.player_unit then
+		return
+	end
+
+	local source_unit = AiUtils.get_actual_attacker_unit(source_attacker_unit or attacker_unit)
+	local breed = Unit.alive(source_unit) and Unit.get_data(source_unit, "breed")
+
+	if breed and not breed.is_player then
+		spree = 0
+	end
+end)
+
+-- The announcements that come a moment after
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	if not delayed[1] then
+		return
+	end
+
+	local now = Managers.time:time("game")
+
+	for i = #delayed, 1, -1 do
+		if now >= delayed[i].time then
+			play(delayed[i].event, false)
+			table.remove(delayed, i)
+		end
+	end
+end
+
+-- The words, every frame (the game's own user interface draws them, as it does its debug texts)
 mod:hook_safe(IngameUI, "post_update", function (self)
-	if not message then
+	if not next(messages) then
 		return
 	end
 
-	local age = Managers.time:time("game") - message.time
-
-	if age >= CONFIG.text_life then
-		message = nil
-
-		return
-	end
-
+	local now = Managers.time:time("game")
 	local gui = self.ui_renderer.gui
 	local width, height = Application.resolution()
-	local size = message.size * height / 1080
-	local minimum, maximum = Gui.text_extents(gui, message.text, CONFIG.font_material, size)
-	local alpha = 255 * math.clamp((CONFIG.text_life - age) / CONFIG.text_fade, 0, 1)
-	local position = Vector3((width - (maximum.x - minimum.x)) / 2, height * (1 - CONFIG.text_position_y), 999)
-	local shadow = CONFIG.text_shadow * height / 1080
-	local red, green, blue = unpack(CONFIG.text_color)
 
-	Gui.text(gui, message.text, CONFIG.font_material, size, CONFIG.font_name, position + Vector3(shadow, -shadow, -1), Color(alpha, 0, 0, 0))
-	Gui.text(gui, message.text, CONFIG.font_material, size, CONFIG.font_name, position, Color(alpha, red, green, blue))
+	for place, message in pairs(messages) do
+		local age = now - message.time
+
+		if age >= CONFIG.text_life then
+			messages[place] = nil
+		else
+			local size = message.size * height / 1080
+			local minimum, maximum = Gui.text_extents(gui, message.text, CONFIG.font_material, size)
+			local alpha = 255 * math.clamp((CONFIG.text_life - age) / CONFIG.text_fade, 0, 1)
+			local position = Vector3((width - (maximum.x - minimum.x)) / 2, height * (1 - CONFIG.messages[place].y), 999)
+			local shadow = CONFIG.text_shadow * height / 1080
+			local red, green, blue = unpack(message.color)
+
+			Gui.text(gui, message.text, CONFIG.font_material, size, CONFIG.font_name, position + Vector3(shadow, -shadow, -1), Color(alpha, 0, 0, 0))
+			Gui.text(gui, message.text, CONFIG.font_material, size, CONFIG.font_name, position, Color(alpha, red, green, blue))
+		end
+	end
 end)
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
-	level = 0
+	multi_kill_level = 0
 	last_kill_time = -math.huge
+	spree = 0
+	head_shots = 0
+	first_blood_taken = false
+	last_sound_time = -math.huge
 	playing_id = nil
-	message = nil
+
+	table.clear(delayed)
+	table.clear(messages)
 end

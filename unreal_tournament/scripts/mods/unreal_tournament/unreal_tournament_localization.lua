@@ -24,7 +24,7 @@ return {
 		en = "Announcer",
 	},
 	announcer_description = {
-		en = "Unreal Tournament 2004's multi kill announcer. Kill again within a second and a half of your last kill, and keep going, to hear and see Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill and Holy Shit.",
+		en = "Unreal Tournament 2004's announcer. Kill again within a second and a half of your last kill, and keep going, for Double Kill up to Holy Shit. Kill 15, 30, 45... enemies without an enemy hurting you for Killing Spree up to Wicked Sick. Also First Blood, Head Shot and Head Hunter.",
 	},
 	no_barriers = {
 		en = "Remove Barriers",
