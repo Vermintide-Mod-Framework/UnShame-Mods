@@ -173,15 +173,15 @@ local CONFIG = {
 	sphere_fill_intensity = 0.2,
 	-- Which of the effects of the combo are drawn (the game's rings, shock_rifle.lua's, are not these)
 	combo_shown = {
-		core = false,
-		flares = false,
-		flash = false,
-		ring = false,
-		scorch = false,
+		core = true,
+		flares = true,
+		flash = true,
+		ring = true,
+		scorch = true,
 		sphere_body = false,
-		sphere_bolts = false,
+		sphere_bolts = true,
 		vortex = true,
-		wiggles = false,
+		wiggles = true,
 	},
 	-- How much of the vortex (the jagged ring of lines that faces the camera) shows at the most, 1 being UT's
 	vortex_opacity = 2.5,
