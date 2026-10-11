@@ -15,7 +15,19 @@ OUT = REPO + '/wwise/unreal_tournament'
 SHOCK = 'out5/WeaponSounds/Sound/'
 SOUNDS = 'out8/WeaponSounds/Sound/'
 NEW_SOUNDS = 'out8/NewWeaponSounds/Sound/'
+# (the male announcer pack of UT2004, the one its reward announcements are by default: umodel_64 -game=ut2 -export -sounds -out=out10
+# announcermale2k4. The names of the kills are the ones MultiKillMessage.KillSoundName has)
+ANNOUNCER = 'out10/announcermale2k4/Sound/'
 WEAPONS = {
+    'announcer': [
+        ('ut_announcer_double_kill', ANNOUNCER + 'Double_Kill', False, -18, 0),
+        ('ut_announcer_multi_kill', ANNOUNCER + 'MultiKill', False, -18, 0),
+        ('ut_announcer_mega_kill', ANNOUNCER + 'MegaKill', False, -18, 0),
+        ('ut_announcer_ultra_kill', ANNOUNCER + 'UltraKill', False, -18, 0),
+        ('ut_announcer_monster_kill', ANNOUNCER + 'MonsterKill_F', False, -18, 0),
+        ('ut_announcer_ludicrous_kill', ANNOUNCER + 'LudicrousKill_F', False, -18, 0),
+        ('ut_announcer_holy_shit', ANNOUNCER + 'HolyShit_F', False, -18, 0),
+    ],
     'shock_rifle': [
         ('ut_shock_fire', SHOCK + 'BShockRifleFire', False, -22, 0),
         ('ut_shock_alt_fire', SHOCK + 'BShockRifleAltFire', False, -22, 0),

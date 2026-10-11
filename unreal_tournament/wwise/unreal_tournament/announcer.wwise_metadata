@@ -1,0 +1,9 @@
+events = {
+	ut_announcer_double_kill = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.923 duration_max = 1.923 positioning = "2D" }
+	ut_announcer_multi_kill = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.192 duration_max = 2.192 positioning = "2D" }
+	ut_announcer_mega_kill = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.519 duration_max = 2.519 positioning = "2D" }
+	ut_announcer_ultra_kill = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.797 duration_max = 1.797 positioning = "2D" }
+	ut_announcer_monster_kill = { attenuation_max = 0 duration_type = "OneShot" duration_min = 5.093 duration_max = 5.093 positioning = "2D" }
+	ut_announcer_ludicrous_kill = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.722 duration_max = 2.722 positioning = "2D" }
+	ut_announcer_holy_shit = { attenuation_max = 0 duration_type = "OneShot" duration_min = 3.847 duration_max = 3.847 positioning = "2D" }
+}

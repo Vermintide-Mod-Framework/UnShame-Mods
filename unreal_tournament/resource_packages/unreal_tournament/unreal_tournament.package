@@ -42,4 +42,5 @@ wwise_dep = [
 	"wwise/unreal_tournament/rocket_launcher"
 	"wwise/unreal_tournament/bio_rifle"
 	"wwise/unreal_tournament/link_gun"
+	"wwise/unreal_tournament/announcer"
 ]

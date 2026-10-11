@@ -20,6 +20,18 @@ return {
 	momentum_damage_description = {
 		en = "Melee hits do more damage the faster you move.",
 	},
+	announcer = {
+		en = "Announcer",
+	},
+	announcer_description = {
+		en = "Unreal Tournament 2004's announcer.",
+	},
+	multi_kills = {
+		en = "Multi Kills",
+	},
+	multi_kills_description = {
+		en = "Kill again within 4 seconds of your last kill, and keep going, to hear Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill and Holy Shit. Rats don't count.",
+	},
 	no_barriers = {
 		en = "Remove Barriers",
 	},
@@ -126,6 +138,6 @@ return {
 		en = "Weapon Skins",
 	},
 	weapon_skins_description = {
-		en = "The weapons look and sound like Unreal Tournament 2004's: the Shock Rifle, so far. What the others see of you depends on their own setting.",
+		en = "The weapons look and sound like Unreal Tournament 2004's. What the others see of you depends on their own setting.",
 	},
 }
