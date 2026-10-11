@@ -155,7 +155,7 @@ local CONFIG = {
 		out_style = "linear",
 	},
 	-- How much of the vortex (the rings of lines) shows at the most, 1 being UT's
-	vortex_opacity = 0.35,
+	vortex_opacity = 0.15,
 	combo_scorch_size = 260,
 	combo_scorch_life = 6,
 	combo_scorch_reach = 120,
