@@ -2,7 +2,8 @@ import struct, zlib, os, sys
 
 # Makes the units of the meshes of the Shock Rifle's effects, from the UModel export of XEffects (<scratch>/umodel/out11, see README.md):
 #   units/ut/fx/coil    ShockCoil: a prism that turns about the beam (static mesh, 30 long: ShockBeamCoil makes pieces of it along the beam)
-#   units/ut/fx/sphere  EffectsSphere144 (a static mesh), for ShockComboSphereDark
+#   units/ut/fx/sphere  Editor.TexPropSphere (a static mesh of 960 triangles, 128 units in radius, from Editor.u: umodel -export "System/Editor.u" TexPropSphere,
+#                       into <scratch>/umodel/out13), the mesh of ShockComboSphereDark
 #   units/ut/fx/vortex  ShockVortexMesh (a vertex mesh of UT's first format, .3d), its first frame: a flat disc that faces the camera
 # They are made in meters, a UT unit being 0.02 m (as everything of the effects is), turned from UT's axes (x forward, y right, z up) to
 # this game's (x right, y forward, z up), which makes the mesh the other way round: the long axis of the coil is y.
@@ -134,8 +135,8 @@ def to_game(point):
     # (UT's x forward, y right, z up: this game's x right, y forward, z up)
     return (point[1] * UNIT, point[0] * UNIT, point[2] * UNIT)
 
-def make_static(unit_name, mesh_file):
-    points, wedges, triangles = static_mesh('%s/StaticMesh/%s.pskx' % (EXPORT, mesh_file))
+def make_static(unit_name, mesh_file, export=EXPORT):
+    points, wedges, triangles = static_mesh('%s/StaticMesh/%s.pskx' % (export, mesh_file))
     positions = [to_game(p) for p in points]
     position_index = [wedges[w][0] for t in triangles for w in t]
     uvs = [(u, 1.0 - v) for _, u, v in wedges]
@@ -158,5 +159,5 @@ def make_vortex(unit_name, mesh_name):
     print(unit_name, 'frame 0 of', frames, len(triangles), 'triangles')
 
 make_static('coil', 'ShockCoil')
-make_static('sphere', 'EffectsSphere144')
+make_static('sphere', 'TexPropSphere', SCRATCH + '/umodel/out13/Editor')
 make_vortex('vortex', 'ShockVortexMesh')

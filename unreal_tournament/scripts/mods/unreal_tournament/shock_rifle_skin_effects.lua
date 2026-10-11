@@ -115,9 +115,14 @@ local CONFIG = {
 	-- them there is that UT gives them) and ComboDecal (the mark on the floor, as big as combo_scorch_size, if there is a floor within
 	-- combo_scorch_reach below the combo)
 	mesh_life = 1,
-	-- (how many times the mesh (EffectsSphere144, 47 units in radius) is the sphere of UT (Editor.TexPropSphere, which is not in the export: 128
-	-- units in radius, a guess))
-	sphere_scale = 2.73,
+	-- (how many times the mesh is the sphere of UT: the mesh is UT's own, Editor.TexPropSphere)
+	sphere_scale = 1,
+	-- The tint of the bolts (they are blue and white in their texture)
+	sphere_color = {
+		0.55,
+		0.65,
+		1,
+	},
 	sphere_scale_interp = {
 		start = 0.1,
 		mid = 0.8,
@@ -580,6 +585,7 @@ local function combo_sphere_bolts(position)
 		brightness = function (fraction)
 			return interpolate(sphere_fade, fraction) * CONFIG.sphere_opacity
 		end,
+		color = CONFIG.sphere_color,
 		life = life,
 		material = "units/ut/fx/fx_combo_sphere",
 		position = position,
