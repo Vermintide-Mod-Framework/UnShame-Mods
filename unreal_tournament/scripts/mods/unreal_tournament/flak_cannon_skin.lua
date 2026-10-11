@@ -122,6 +122,15 @@ local function destroy_visual(visual)
 	end
 end
 
+-- All of them go with the level, and with the mod (a unit of the mod's package that is alive when the package is unloaded crashes the game)
+local function clear_visuals()
+	for i = #visuals, 1, -1 do
+		destroy_visual(visuals[i])
+	end
+
+	table.clear(visuals)
+end
+
 local function update_visuals(dt)
 	for i = #visuals, 1, -1 do
 		local visual = visuals[i]
@@ -285,14 +294,13 @@ skin_api = mod.weapon_skin.new({
 		skin_api.play_sound("ut_flak_select")
 	end,
 	on_refresh = apply_template_overrides,
-	on_give_back = give_back_overrides,
+	on_give_back = function ()
+		give_back_overrides()
+		clear_visuals()
+	end,
 	on_update_always = update_visuals,
 	on_level_exit = function ()
-		for i = #visuals, 1, -1 do
-			destroy_visual(visuals[i])
-		end
-
-		table.clear(visuals)
+		clear_visuals()
 		table.clear(last_remote_shot)
 	end,
 })

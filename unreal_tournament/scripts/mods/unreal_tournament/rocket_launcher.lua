@@ -376,7 +376,7 @@ local load_start_t = setmetatable({}, {
 -- The rockets loaded so far while loading (to tell when another one is), per unit
 local loading = {}
 
-mod:hook_safe(ActionAim, "client_owner_start_action", function (self, new_action, t)
+mod.aim_start_callbacks.rocket = function (self, new_action, t)
 	if new_action.ut_rocket_aim then
 		local ammo = self.ammo_extension and self.ammo_extension:current_ammo() or CONFIG.max_rockets
 
@@ -401,9 +401,9 @@ mod:hook_safe(ActionAim, "client_owner_start_action", function (self, new_action
 			start_t = t,
 		}
 	end
-end)
+end
 
-mod:hook_safe(ActionAim, "finish", function (self, reason)
+mod.aim_finish_callbacks.rocket = function (self, reason)
 	if self.current_action and self.current_action.ut_rocket_aim then
 		loading[self.owner_unit] = nil
 
@@ -413,7 +413,7 @@ mod:hook_safe(ActionAim, "finish", function (self, reason)
 			needs_release[self.owner_unit] = true
 		end
 	end
-end)
+end
 
 -- A reload that starts while the aiming button is down needs it released as well, whichever way the
 -- aiming was left for it. (For other weapons this does nothing, the flag is only read by the aiming of this one.)
@@ -515,7 +515,7 @@ local function fire_spiral(self, action, count)
 	end
 end
 
-mod:hook_safe(ActionCrossbow, "client_owner_start_action", function (self, new_action, t)
+mod.crossbow_start_callbacks.rocket = function (self, new_action, t)
 	if not new_action.ut_rocket_salvo then
 		return
 	end
@@ -533,7 +533,7 @@ mod:hook_safe(ActionCrossbow, "client_owner_start_action", function (self, new_a
 
 		self.num_projectiles = 0
 	end
-end)
+end
 
 -- The flock of a spiral salvo, RocketProj.Timer. The rockets that start together are a flock: every
 -- pull_interval seconds each is pulled back towards the direction it was fired in, and gets an acceleration

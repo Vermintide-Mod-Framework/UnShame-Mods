@@ -269,11 +269,35 @@ mod:hook_safe(ActionChargedProjectile, "client_owner_start_action", function (se
 end)
 
 --   mod.shotgun_start_callbacks[name] = function (action_shotgun, new_action)
+--   mod.crossbow_start_callbacks[name] = function (action_crossbow, new_action, t)
+--   mod.aim_start_callbacks[name] = function (action_aim, new_action, t)
+--   mod.aim_finish_callbacks[name] = function (action_aim, reason)
 mod.shotgun_start_callbacks = {}
+mod.crossbow_start_callbacks = {}
+mod.aim_start_callbacks = {}
+mod.aim_finish_callbacks = {}
 
 mod:hook_safe(ActionShotgun, "client_owner_start_action", function (self, new_action)
 	for _, callback in pairs(mod.shotgun_start_callbacks) do
 		callback(self, new_action)
+	end
+end)
+
+mod:hook_safe(ActionCrossbow, "client_owner_start_action", function (self, new_action, t)
+	for _, callback in pairs(mod.crossbow_start_callbacks) do
+		callback(self, new_action, t)
+	end
+end)
+
+mod:hook_safe(ActionAim, "client_owner_start_action", function (self, new_action, t)
+	for _, callback in pairs(mod.aim_start_callbacks) do
+		callback(self, new_action, t)
+	end
+end)
+
+mod:hook_safe(ActionAim, "finish", function (self, reason)
+	for _, callback in pairs(mod.aim_finish_callbacks) do
+		callback(self, reason)
 	end
 end)
 

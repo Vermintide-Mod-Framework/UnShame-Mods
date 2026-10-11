@@ -71,16 +71,10 @@ local function new(def)
 
 	local function attach(character, staff)
 		local world = Managers.world:world("level_world")
-		local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
 		local hand_node = Unit.node(character, CONFIG.hand_node)
+		local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
 
-		Unit.set_unit_visibility(unit, false)
-		World.link_unit(world, unit, 0, character, hand_node)
-
-		for slot, material in pairs(CONFIG.materials or {}) do
-			Unit.set_material(unit, slot, material)
-		end
-
+		-- (kept at once, so that the mesh is found and destroyed whatever happens next, see weapon_skin.lua)
 		attached[character] = {
 			character = character,
 			hand_node = hand_node,
@@ -88,6 +82,13 @@ local function new(def)
 			unit = unit,
 			world = world,
 		}
+
+		Unit.set_unit_visibility(unit, false)
+		World.link_unit(world, unit, 0, character, hand_node)
+
+		for slot, material in pairs(CONFIG.materials or {}) do
+			Unit.set_material(unit, slot, material)
+		end
 	end
 
 	-- The game's unit of a character if the skin is to replace it: the weapon is what it wields and the setting is on

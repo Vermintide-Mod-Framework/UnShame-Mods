@@ -297,23 +297,24 @@ local function new(def)
 			},
 		})
 
-		local nodes = {}
-
-		for b = 2, bone_count do
-			nodes[b] = Unit.node(unit, bones[b])
-		end
-
+		-- (the skin is kept before anything else is asked of the unit, so that a failure leaves it where destroy finds it: a unit of
+		-- the mod's package that is alive when the package is unloaded, with the mod being reloaded, crashes the game)
 		skin = {
 			bob_speed = 0,
 			bob_time = 0,
-			muzzle_node = Unit.node(unit, CONFIG.muzzle_node),
-			nodes = nodes,
+			nodes = {},
 			unit = unit,
 			unit_scale = CONFIG.draw_scale * CONFIG.meters_per_unit,
 			walk_right = 0,
 			walk_up = 0,
 			world = world,
 		}
+
+		for b = 2, bone_count do
+			skin.nodes[b] = Unit.node(unit, bones[b])
+		end
+
+		skin.muzzle_node = Unit.node(unit, CONFIG.muzzle_node)
 
 		if CONFIG.on_create then
 			CONFIG.on_create(skin)
