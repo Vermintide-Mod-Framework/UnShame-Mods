@@ -445,12 +445,23 @@ local function new(def)
 	-- Weapon bob (Pawn.CheckBob and Pawn.WeaponBob), in UT units: (right, up)
 	local function update_bob(owner_unit, dt)
 		local locomotion_extension = ScriptUnit.extension(owner_unit, "locomotion_system")
-		local move_speed = PlayerUnitMovementSettings.get_movement_settings_table(owner_unit).move_speed
-		local speed = Vector3.length(Vector3.flat(locomotion_extension:current_velocity())) / move_speed * CONFIG.ut_ground_speed
+		local movement_settings = PlayerUnitMovementSettings.get_movement_settings_table(owner_unit)
+		local state = ScriptUnit.extension(owner_unit, "character_state_machine_system").state_machine.state_current
+		local speed = 0
 
-		-- (the speed the bob follows is smoothed, and none in the air: the velocity this game gives for a frame jumps about when the
-		-- player steps, lands or is pushed, and the phase of the sway is kept, so that the model doesn't jump with them)
-		local target_speed = locomotion_extension:is_on_ground() and speed or 0
+		-- (the speed that the game's own walking state works out for the player, as it moves it: the top speed of how it walks (crouched, with the
+		-- walk key, or not), times what slows or quickens it and how far it has got up to it. It is not the velocity this game gives for a frame,
+		-- which jumps about when the player steps, lands or is pushed. The bob is none while the player is not walking on the ground)
+		if state.name == "walking" and locomotion_extension:is_on_ground() then
+			local status_extension = ScriptUnit.extension(owner_unit, "status_system")
+			local is_walking = ScriptUnit.extension(owner_unit, "input_system"):get("walk")
+			local top_speed = status_extension:is_crouching() and movement_settings.crouch_move_speed or is_walking and movement_settings.walk_move_speed or movement_settings.move_speed
+
+			speed = top_speed * status_extension:current_move_speed_multiplier() * state.current_movement_speed_scale / movement_settings.move_speed * CONFIG.ut_ground_speed
+		end
+
+		-- (the speed the bob follows is smoothed, and the phase of the sway is kept, so that the model doesn't jump)
+		local target_speed = speed
 
 		skin.bob_speed = skin.bob_speed + (target_speed - skin.bob_speed) * math.min(1, CONFIG.bob_smoothing * dt)
 		skin.bob_time = skin.bob_time + dt * (skin.bob_speed < 10 and 0.2 or 0.3 + 0.7 * skin.bob_speed / CONFIG.ut_ground_speed)
