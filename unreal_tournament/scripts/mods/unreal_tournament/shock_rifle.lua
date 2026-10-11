@@ -915,6 +915,16 @@ mod.handgun_update_callbacks.shock = function (self)
 	local direction = Quaternion.forward(rotation)
 	local hits = PhysicsWorld.immediate_raycast_actors(self.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
 	local hit = first_beam_hit(hits, owner_unit)
+
+	-- DEBUG: what the ray hits, nearest first (the beam ends at the first that is not the shooter's)
+	for i = 1, math.min(#(hits or {}), 6) do
+		local actor = hits[i][4]
+		local actor_unit = Actor.unit(actor)
+		local breed = AiUtils.unit_breed(actor_unit)
+
+		mod:echo("beam hit %d: %.2f m, unit %s, breed %s, actor node %s, dynamic %s", i, hits[i][2], tostring(Unit.debug_name(actor_unit)), tostring(breed and breed.name), tostring(Actor.node(actor)), tostring(Actor.is_dynamic(actor)))
+	end
+
 	-- The beam ends at the first thing it hits, or at a ball it gets to before that (which goes off), or goes on (the vector of no length is the
 	-- way the surface faces when there is none)
 	local ball_unit, ball_distance = find_ball_hit_by_beam(origin, direction, hit and hit[2])
