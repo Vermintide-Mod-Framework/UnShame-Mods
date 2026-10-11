@@ -45,16 +45,7 @@ local CONFIG = {
 	-- numbers, like the combo's is half of its damage)
 	ball_self_damage = 18,
 	-- Combo: the blast (the skin draws it) is followed by everything that died being pulled back to the
-	-- center, like in UT. Only effects the game already ships can be used, they are skipped if the game
-	-- hasn't loaded them.
-	-- The implosion rings: particle effects can't be played backwards and their scale can't be
-	-- changed while they play, so the implosion is a series of rings, each created smaller than
-	-- the last, spread over implosion_duration. The scales are relative to the effect's normal size.
-	implosion_ring_count = 4,
-	implosion_ring_start_scale = 1.5,
-	implosion_ring_end_scale = 0.3,
-	combo_ring_effect = "fx/chr_kruber_shockwave",
-	combo_ring_height = 1, -- meters: how high above the origin of the ring effect its ring is (it is made to be played at a character's feet)
+	-- center, like in UT.
 	-- Bodies are thrown away from the blast first: whatever has died (and started to ragdoll) in
 	-- the first implosion_delay seconds gets thrown once, then everything is pulled back in.
 	implosion_blast_speed = 14, -- m/s, a little less for bodies far from the center
@@ -92,7 +83,6 @@ local BALL_GRAVITY_SETTINGS = "drake_pistols"
 -- everyone in the game needs the mod)
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
-local effects = mod.effects
 local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template
 
@@ -595,34 +585,6 @@ end
 
 local implosions = {}
 
--- Vectors and quaternions are temporary objects and can't be kept around between frames,
--- so the ring orientations are created when needed
-local function ring_rotations()
-	return {
-		Quaternion.identity(),
-		Quaternion.axis_angle(Vector3(1, 0, 0), math.pi / 2),
-		Quaternion.axis_angle(Vector3(0, 1, 0), math.pi / 2),
-	}
-end
-
--- One ring of the implosion, at the given scale. The effects are created with their scale
--- already set, see effects.play.
-local function create_implosion_ring(world, position, scale)
-	if not CONFIG.combo_ring_effect then
-		return
-	end
-
-	local rotations = ring_rotations()
-
-	-- (the effect's ring is above its origin: the origin of each is set so that the ring of it is about the center, and the ring is turned
-	-- about the origin, so its height is turned with it, and made as big as the scale is)
-	for i = 1, #rotations do
-		local ring_position = position - Quaternion.rotate(rotations[i], Vector3(0, 0, CONFIG.combo_ring_height * scale))
-
-		effects.play(world, CONFIG.combo_ring_effect, ring_position, scale, rotations[i])
-	end
-end
-
 local function start_implosion(world, position)
 	local radius = ExplosionTemplates.ut_shock_combo_explosion.explosion.radius
 
@@ -633,7 +595,6 @@ local function start_implosion(world, position)
 		-- the way each body was from the center when it was first pulled, and if it has been past it
 		pulled = {},
 		radius = radius,
-		rings_created = 0,
 		start_t = Managers.time:time("game"),
 		units = utils.units_in_radius(world, position, radius),
 		world = world,
@@ -680,8 +641,6 @@ end
 
 local function update_implosions(dt)
 	local t = Managers.time:time("game")
-	local ring_count = CONFIG.implosion_ring_count
-	local ring_interval = CONFIG.implosion_duration / ring_count
 
 	for i = #implosions, 1, -1 do
 		local implosion = implosions[i]
@@ -700,17 +659,7 @@ local function update_implosions(dt)
 				end
 			end
 		elseif age >= CONFIG.implosion_delay then
-			-- rings, each smaller than the last, spread over the duration
-			local rings_due = math.min(math.floor((age - CONFIG.implosion_delay) / ring_interval) + 1, ring_count)
-
-			while implosion.rings_created < rings_due do
-				local progress = ring_count > 1 and implosion.rings_created / (ring_count - 1) or 1
-
-				create_implosion_ring(implosion.world, center, math.lerp(CONFIG.implosion_ring_start_scale, CONFIG.implosion_ring_end_scale, progress))
-
-				implosion.rings_created = implosion.rings_created + 1
-			end
-
+			-- the pull
 			for unit in pairs(implosion.units) do
 				if not Unit.alive(unit) then
 					implosion.units[unit] = nil

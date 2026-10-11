@@ -548,6 +548,8 @@ local function combo_meshes(position)
 			return interpolate(vortex_fade, fraction)
 		end,
 		color = CONFIG.vortex_color,
+		-- (ShockComboVortex is bAlwaysFaceCamera: its disc faces the view, so it is seen as a swirl, not from its edge as a ring)
+		face_camera = true,
 		frame = function (fraction)
 			-- (the last of the frames that is shown at or before the one the life is at)
 			local index = math.min(math.floor(fraction * CONFIG.vortex_frames), CONFIG.vortex_frames - 1)

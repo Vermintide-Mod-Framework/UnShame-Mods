@@ -25,7 +25,7 @@ local mod = get_mod("unreal_tournament")
 --   particles.beam(spec): from spec.from to spec.to, spec.size is how wide it is, and it faces the camera around its length;
 --       spec.track, a function that gives from and to (nothing when it is to end), instead of the two points
 --   particles.mesh(spec): a mesh (units/ut/fx/coil, sphere, vortex, made by tools/asset_conversion/make_fx_meshes.py) at spec.position,
---       turned by spec.rotation (and about spec.spin_axis, a vector in the mesh's own axes, by spec.spin), spec.scale a function of how far
+--       turned by spec.rotation (or facing the camera, with spec.face_camera, its z axis the way it faces) (and about spec.spin_axis, a vector in the mesh's own axes, by spec.spin), spec.scale a function of how far
 --       into its life it is (0 to 1) that gives its scale (a number, or a vector in the mesh's axes), spec.brightness the same for how
 --       bright it is (instead of fade_in, fade_out and attenuation); spec.unit is the unit; spec.frames, the names of the meshes of a unit
 --       that has more than one, and spec.frame, a function of how far into its life it is that names the one that shows
@@ -108,6 +108,7 @@ local function add(kind, spec)
 		fade_in = spec.fade_in,
 		fade_out = spec.fade_out,
 		follow = spec.follow,
+		face_camera = spec.face_camera,
 		frame = spec.frame,
 		frames = spec.frames,
 		scale = spec.scale,
@@ -239,8 +240,10 @@ local function place(particle, dt, camera_position, camera_rotation)
 		-- (a mesh: where it is, turned as it is (and about its axis by its spin), scaled as its scale function says for how far into its life it
 		-- is, and showing the one of its frames that the frame function names)
 		local axis = particle.spin_axis and particle.spin_axis:unbox() or Vector3(0, 0, 1)
+		-- (a mesh that always faces the camera, as UT's bAlwaysFaceCamera: its z axis is the way it faces, as a quad's)
+		local base = particle.face_camera and facing(-Quaternion.forward(camera_rotation), Quaternion.up(camera_rotation)) or particle.rotation:unbox()
 
-		rotation = Quaternion.multiply(particle.rotation:unbox(), Quaternion.axis_angle(axis, particle.angle + particle.spin * particle.age))
+		rotation = Quaternion.multiply(base, Quaternion.axis_angle(axis, particle.angle + particle.spin * particle.age))
 		scale = particle.scale(fraction)
 
 		if type(scale) == "number" then
