@@ -293,10 +293,20 @@ mod.init_callbacks.shock_ball = function (projectile)
 		end, third_person.meters_per_unit)
 	end
 
+	-- The ball is gone as soon as it has hit something. The game only notices a hit in its next update, by when the projectile has moved on a
+	-- frame (past the surface), so the impacts of the frame are looked at as well as the game's own stop.
+	local impact_extension = projectile._impact_extension
+
 	balls[#balls + 1] = fx.new_ball(function ()
-		if Unit.alive(unit) and not projectile._stop_impacts then
-			return Unit.world_position(unit, 0)
+		if not Unit.alive(unit) or projectile._stop_impacts then
+			return nil
 		end
+
+		if impact_extension and select(2, impact_extension:recent_impacts()) > 0 then
+			return nil
+		end
+
+		return Unit.world_position(unit, 0)
 	end)
 
 	skin_api.debug("ball")
