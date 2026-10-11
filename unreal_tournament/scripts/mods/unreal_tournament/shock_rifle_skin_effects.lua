@@ -53,13 +53,13 @@ local CONFIG = {
 	-- (FadeInEndTime and FadeOutStartTime of each: it is all there between, and the next core comes as one ends)
 	ball_fill_size = 85, -- units across: as big as the rim of the texture of the ball is
 	ball_fill_intensity = 1.5,
-	ball_sprite_spin = 0.8, -- turns a second, the most a layer of the ball's sprite turns either way
-	ball_core_size = 55,
+	ball_core_size = 45, -- (UT's is 45 by 65 with UniformSize, which takes the 45 for both)
 	ball_core_life = 0.35,
 	ball_core_interval = 0.35,
 	ball_core_fade_in = 0.05,
 	ball_core_fade_out = 0.32,
 	ball_flare_size = 60,
+	ball_flare_spin = { 0.1, 0.3 }, -- turns a second (SpinsPerSecondRange)
 	ball_flare_life = 0.4,
 	ball_flare_interval = 0.5,
 	ball_flare_fade_in = 0.25,
@@ -79,12 +79,12 @@ local CONFIG = {
 	explosion_core_growth = 100,
 	explosion_core_life = 1,
 	-- ShockExplosion: a dark sphere (EffectsSphere144, 48 units in radius, drawn here with the smoother sphere of the combo, 126.7 in radius) that
-	-- is 0.6 of its size at first and grows 1.2 of it a second; it is at its darkest 0.3 of its life in, and as dark as the gray of 100 of 255 is
+	-- is 0.6 of its size at first and grows 1.2 of it a second; it is at its darkest 0.3 of its life in
 	explosion_sphere_life = 0.6,
 	explosion_sphere_size = 0.6,
 	explosion_sphere_growth = 1.2,
 	explosion_sphere_attenuation = 0.3,
-	explosion_sphere_darkness = 100 / 255,
+	explosion_sphere_darkness = 0.75, -- (UT's gray of 100 of 255 is 0.39: more of it is seen here, where there is no light on it)
 	explosion_sphere_radius = 48,
 	sphere_mesh_radius = 126.7,
 	-- ShockCombo and the effects it makes
@@ -450,9 +450,6 @@ function fx.new_ball(follow)
 			follow = follow,
 			life = CONFIG.ball_sprite_life,
 			size = CONFIG.ball_sprite_size * UNIT,
-			-- (each layer turns its own way, so that the spikes of the texture move: made once and still, they stood out against the ones that
-			-- UT makes again every 0.35 s)
-			spin = (math.random() * 2 - 1) * CONFIG.ball_sprite_spin,
 			texture = "shock_core_low",
 		})
 	end
@@ -487,7 +484,6 @@ function fx.update_ball(ball, dt)
 			follow = ball.follow,
 			life = CONFIG.ball_core_life,
 			size = CONFIG.ball_core_size * UNIT,
-			spin = random_spin(),
 			texture = "shock_core_low",
 		})
 	end
@@ -502,7 +498,7 @@ function fx.update_ball(ball, dt)
 			follow = ball.follow,
 			life = CONFIG.ball_flare_life,
 			size = CONFIG.ball_flare_size * UNIT,
-			spin = random_spin(),
+			spin = between(CONFIG.ball_flare_spin),
 			texture = "shock_flare_a",
 		})
 	end
