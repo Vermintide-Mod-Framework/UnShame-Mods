@@ -102,6 +102,18 @@ SOUND_2D = bytes.fromhex('fc326800010001000096eb4b17401a04000000000037bcb7e20000
 SOUND_3D = bytes.fromhex('15a63e0001000100005626e50be44707000000000037bcb7e200000000000200460000e0c0a07e632b0003010000010000000000000000')
 ATTENUATION = bytes.fromhex('a07e632b00000000ffffffff010207000000000000000000090000000000004000000000040000000000c0406364ffbe0400000000006041de7952bf040000000000b8419d9074bf040000000000e041a4707dbf040000000000f041000080bf040000000000')
 
+def attenuation_object(attenuation_id, distance):
+    # The curve of the attenuation is made for 30 meters (the distances of its points, at these offsets of the object): a sound of another
+    # reach has the curve made longer or shorter, so that it can be heard as far as the reach of its definition says (the combo, 60, was heard
+    # up to 30 only)
+    body = bytearray(ATTENUATION)
+    body[0:4] = struct.pack('<I', attenuation_id)
+
+    for offset in (40, 52, 64, 76, 88):
+        body[offset:offset + 4] = struct.pack('<f', struct.unpack_from('<f', ATTENUATION, offset)[0] * distance / 30.0)
+
+    return bytes(body)
+
 def pcm_wem(path):
     d = open(path, 'rb').read()
     channels, rate = struct.unpack('<HI', d[22:24] + d[24:28])
@@ -125,8 +137,7 @@ def main():
     sounds = WEAPONS[weapon]
     bank_name = 'ut_' + weapon
     bank_id = fnv1(bank_name)
-    attenuation_id = fnv1(bank_name + '_attenuation')
-    objects = [(14, struct.pack('<I', attenuation_id) + ATTENUATION[4:])]
+    objects = []
     media = {}
     metadata = []
     for event, wav, is_3d, volume, distance in sounds:
@@ -139,6 +150,9 @@ def main():
         body[9:13] = struct.pack('<I', media_id)
         body[13:17] = struct.pack('<I', len(wem))
         if is_3d:
+            # (an attenuation of its own, of the reach the definition gives it)
+            attenuation_id = fnv1('ut_attenuation_' + event)
+            objects.append((14, attenuation_object(attenuation_id, distance)))
             body[33:37] = struct.pack('<f', volume)
             body[37:41] = struct.pack('<I', attenuation_id)
         else:
