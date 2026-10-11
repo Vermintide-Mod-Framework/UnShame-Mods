@@ -104,6 +104,14 @@ local function new(def)
 		Unit.set_unit_visibility(unit, false)
 		World.link_unit(world, unit, 0, character, hand_node)
 
+		-- The outline of the character (an ally's, for one) is put on the units that are linked to it when it changes, so a unit that is linked
+		-- after it was put on is outlined only when it is put on again: the game does this when a weapon is wielded.
+		local outline_extension = ScriptUnit.has_extension(character, "outline_system")
+
+		if outline_extension then
+			outline_extension:reapply_outline()
+		end
+
 		for slot, material in pairs(CONFIG.materials or {}) do
 			Unit.set_material(unit, slot, material)
 		end
