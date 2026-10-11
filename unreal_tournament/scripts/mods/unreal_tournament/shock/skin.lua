@@ -94,21 +94,7 @@ local function update_chamber(skin, dt)
 	Material.set_scalar(material, "brightness", brightness)
 end
 
--- TEST: sounds that are played a moment after the event that makes them: { time, event, position }
-local delayed_sounds = {}
-
 local function update_balls(dt)
-	for i = #delayed_sounds, 1, -1 do
-		local sound = delayed_sounds[i]
-
-		sound.time = sound.time - dt
-
-		if sound.time <= 0 then
-			skin_api.play_sound_at(sound.event, sound.position:unbox())
-			table.remove(delayed_sounds, i)
-		end
-	end
-
 	for i = #balls, 1, -1 do
 		local ball = balls[i]
 
@@ -348,8 +334,7 @@ end
 mod.skin_explosion_callbacks.ut_shock_combo_explosion = function (world, position)
 	if skin_api.enabled() then
 		fx.combo(position)
-		-- TEST: played 0.3 s later, to hear whether something at the moment of the explosion cuts it
-		delayed_sounds[#delayed_sounds + 1] = { time = 0.3, event = "ut_shock_combo_3d", position = Vector3Box(position) }
+		skin_api.play_sound_at("ut_shock_combo_3d", position)
 
 		skin_api.debug("combo")
 	end

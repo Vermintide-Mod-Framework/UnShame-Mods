@@ -49,7 +49,8 @@ WEAPONS = {
         ('ut_shock_alt_fire_3d', SHOCK + 'BShockRifleAltFire', True, -22, 40),
         ('ut_shock_projectile_3d', SHOCK + 'ShockRifleProjectile', True, -30, 25),
         ('ut_shock_explosion_3d', SHOCK + 'ShockRifleExplosion', True, -20, 50),
-        ('ut_shock_combo_3d', SHOCK + 'ShockComboFire', True, -20, 60),
+        # (louder than the other sounds of the rifle: it is played as the beam's shot is, and was lost under it)
+        ('ut_shock_combo_3d', SHOCK + 'ShockComboFire', True, -10, 60),
     ],
     'flak_cannon': [
         ('ut_flak_fire', SOUNDS + 'BFlakCannonFire', False, -22, 0),
