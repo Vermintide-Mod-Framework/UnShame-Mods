@@ -72,6 +72,11 @@ return {
 						type = "checkbox",
 						default_value = true,
 					},
+					{
+						setting_id = "multi_kill_text",
+						type = "checkbox",
+						default_value = true,
+					},
 				},
 			},
 			{

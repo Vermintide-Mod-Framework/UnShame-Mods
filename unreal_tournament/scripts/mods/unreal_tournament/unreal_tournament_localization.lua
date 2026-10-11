@@ -30,7 +30,13 @@ return {
 		en = "Multi Kills",
 	},
 	multi_kills_description = {
-		en = "Kill again within 4 seconds of your last kill, and keep going, to hear Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill and Holy Shit. Rats don't count.",
+		en = "Kill again within a second and a half of your last kill, and keep going, to hear Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill and Holy Shit. Rats don't count.",
+	},
+	multi_kill_text = {
+		en = "Multi Kill Text",
+	},
+	multi_kill_text_description = {
+		en = "Shows the name of the multi kill in the middle of the screen, as Unreal Tournament does.",
 	},
 	no_barriers = {
 		en = "Remove Barriers",
