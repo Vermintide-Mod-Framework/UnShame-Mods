@@ -52,10 +52,10 @@ local FIELD_OF_VIEW_FACTOR = 1.345
 local REFERENCE_ASPECT = 16 / 9
 
 -- The materials of the first person weapons are drawn with the game's custom FOV for weapons (see units/ut/weapon_standard.material), which
--- is the vertical field of view of the first person camera without the player's FOV setting applied (the camera's own is that times the
--- setting): the model is placed for the field of view it is drawn with, not the camera's. (65 is the first person camera's vertical_fov in
--- settings/camera_settings.lua.)
-local WEAPON_VERTICAL_FOV = math.rad(65)
+-- is a field of view of its own, not the camera's: the model is placed for the field of view it is drawn with. It is not known where the
+-- engine sets it (65, the first person camera's vertical_fov in settings/camera_settings.lua, drew the weapon about a third too big and too
+-- far out), so this is fitted to how the weapon looked before the change.
+local WEAPON_VERTICAL_FOV = math.rad(50)
 
 local function new(def)
 	local CONFIG = {
