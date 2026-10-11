@@ -28,7 +28,6 @@ local CONFIG = {
 	ball_spawn_right_uu = 8, -- ProjSpawnOffset.Y: and how far to the right
 	ball_fire_time = 0, -- the ball leaves as the button is pressed (ShockProjFire has no PreFireTime), like the beam
 	-- Combo
-	beam_body_margin = 0.3, -- meters: how far outside the box of an enemy's unit a hit of the beam still counts as a hit on it
 	combo_pick_radius = 0.6, -- how close the beam has to pass to the ball's center
 	combo_max_range = 100,
 	-- Damage, relative values taken from UT2004 (XWeapons/ShockBeamFire.uc, ShockProjectile.uc):
@@ -508,37 +507,14 @@ end
 -- The balls of every player count, the shooter's and those of the others. The system keeps a list of the projectiles that this
 -- machine made (the shooter's); the others' are copies of units that are on their machines, and are found among the extensions of
 -- the copies.
--- Whether a hit of the ray is on the body of what it hits: an enemy has actors that are much bigger than it (the ray hit one of a storm
--- vermin commander 3.5 m before it), so a hit on an enemy counts only inside the box of its unit, and a little around it
-local function hit_is_on_body(hit_unit, position)
-	if not AiUtils.unit_breed(hit_unit) then
-		return true
-	end
-
-	local pose, half_extents = Unit.box(hit_unit)
-	local local_position = Matrix4x4.transform(Matrix4x4.inverse(pose), position)
-	local margin = CONFIG.beam_body_margin
-
-	return math.abs(local_position.x) <= half_extents.x + margin
-		and math.abs(local_position.y) <= half_extents.y + margin
-		and math.abs(local_position.z) <= half_extents.z + margin
-end
-
--- The hits of the beam's ray (nearest first) that count: the shooter's own hitbox, which the ray starts in, is not one, nor are the hits
--- that are not on the body of an enemy. The beam stops at the first, as UT's trace does, and what the game does to what it hits is done to
--- these.
-local function beam_hits(hits, owner_unit)
-	local counted = {}
-
+-- What the beam hits first, of the hits of its ray (nearest first): the shooter's own hitbox, which the ray starts in, is not one. The beam
+-- stops there, as UT's trace does.
+local function first_beam_hit(hits, owner_unit)
 	for i = 1, #(hits or {}) do
-		local hit_unit = Actor.unit(hits[i][4])
-
-		if hit_unit ~= owner_unit and hit_is_on_body(hit_unit, hits[i][1]) then
-			counted[#counted + 1] = hits[i]
+		if Actor.unit(hits[i][4]) ~= owner_unit then
+			return hits[i]
 		end
 	end
-
-	return counted
 end
 
 -- The ball the beam gets to before it hits anything (blocker_distance is how far it goes: to the first thing it hits), and how far along
@@ -937,21 +913,8 @@ mod.handgun_update_callbacks.shock = function (self)
 	local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
 	local origin, rotation = first_person_extension:get_projectile_start_position_rotation()
 	local direction = Quaternion.forward(rotation)
-	local raw_hits = PhysicsWorld.immediate_raycast_actors(self.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
-
-	-- DEBUG: every hit of the ray: how far, what, where it is in the box of its unit, and whether it counts
-	for i = 1, math.min(#(raw_hits or {}), 6) do
-		local hit_unit = Actor.unit(raw_hits[i][4])
-		local pose, half_extents = Unit.box(hit_unit)
-		local p = Matrix4x4.transform(Matrix4x4.inverse(pose), raw_hits[i][1])
-		local unit_distance = Vector3.dot(POSITION_LOOKUP[hit_unit] or Vector3.zero(), direction) - Vector3.dot(origin, direction)
-
-		mod:echo("beam hit %d: %.2f m (its unit is at %.2f m), %s, in box %.2f %.2f %.2f of %.2f %.2f %.2f, counts %s", i, raw_hits[i][2], unit_distance, tostring(AiUtils.unit_breed(hit_unit) and AiUtils.unit_breed(hit_unit).name), p.x, p.y, p.z, half_extents.x, half_extents.y, half_extents.z, tostring(hit_unit ~= owner_unit and hit_is_on_body(hit_unit, raw_hits[i][1])))
-	end
-
-	local hits = beam_hits(raw_hits, owner_unit)
-	local hit = hits[1]
-
+	local hits = PhysicsWorld.immediate_raycast_actors(self.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
+	local hit = first_beam_hit(hits, owner_unit)
 	-- The beam ends at the first thing it hits, or at a ball it gets to before that (which goes off), or goes on (the vector of no length is the
 	-- way the surface faces when there is none)
 	local ball_unit, ball_distance = find_ball_hit_by_beam(origin, direction, hit and hit[2])
@@ -970,15 +933,13 @@ mod.handgun_update_callbacks.shock = function (self)
 	end
 end
 
--- The game is given the same hits of the beam as it is drawn to (see beam_hits), and its damage goes no further than a ball it gets to (the
--- ball goes off, the beam is spent): the hits of its ray from there on are not given to it
+-- The damage of the beam goes no further than a ball it gets to (the ball goes off, the beam is spent): the hits of its ray from there on
+-- are not given to the game
 mod:hook(DamageUtils, "process_projectile_hit", function (func, world, damage_source, owner_unit, is_server, raycast_result, current_action, direction, ...)
 	if current_action.ut_shock_beam and raycast_result then
-		raycast_result = beam_hits(raycast_result, owner_unit)
-
 		local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
 		local origin = first_person_extension and first_person_extension:get_projectile_start_position_rotation()
-		local hit = raycast_result[1]
+		local hit = first_beam_hit(raycast_result, owner_unit)
 		local _, ball_distance = nil, nil
 
 		if origin then
