@@ -365,6 +365,8 @@ local function coil(start, stop)
 	for i = 0, count - 1 do
 		-- (the scale is made each time it is asked for: a vector can't be kept from one frame to the next)
 		local radius = CONFIG.coil_radius_scale * between(CONFIG.coil_size)
+		-- (the last piece is as long as what is left of the beam, so that it does not go on past where the beam ends: through a ball that it hits)
+		local piece_scale = CONFIG.coil_length_scale * math.min(1, (length - i * piece_length) / piece_length)
 
 		particles.mesh({
 			brightness = function (fraction)
@@ -379,7 +381,7 @@ local function coil(start, stop)
 			position = start + direction * (i * piece_length),
 			rotation = rotation,
 			scale = function ()
-				return Vector3(radius, CONFIG.coil_length_scale, radius)
+				return Vector3(radius, piece_scale, radius)
 			end,
 			spin = CONFIG.coil_spin,
 			spin_axis = Vector3(0, 1, 0),
