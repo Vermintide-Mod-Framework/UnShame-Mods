@@ -40,9 +40,9 @@ local CONFIG = {
 	ball_radius = 0.2, -- impact sphere, how easily the ball hits things (unrelated to the beam hitting it)
 	ball_visual_scale = 3, -- size multiplier of the projectile unit
 	ball_charge_level = 0.99, -- drives the projectile scale; kept under 1 to avoid "full charge" procs
-	ball_lifetime = 5,
+	ball_lifetime = 10, -- UT2004 ShockProjectile.LifeSpan
 	ball_fire_rate = 0.6, -- UT2004 ShockProjFire.FireRate
-	ball_fire_time = 0.27,
+	ball_fire_time = 0, -- the ball leaves as the button is pressed (ShockProjFire has no PreFireTime), like the beam
 	-- Combo
 	combo_pick_radius = 0.6, -- how close the beam has to pass to the ball's center
 	combo_max_range = 100,

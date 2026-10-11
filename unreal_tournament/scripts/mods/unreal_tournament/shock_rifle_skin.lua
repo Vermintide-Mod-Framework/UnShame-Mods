@@ -25,6 +25,11 @@ local CONFIG = {
 	chamber_intensity = 1,
 	vent_pulse_speed = 14, -- radians per second, of the glow while the heat is vented
 	projectile_sound_seconds = 1.795, -- how long the sound of the ball (ShockRifleProjectile) is
+	-- How fast each shot's animation plays (WeaponFire.FireAnimRate: ShockProjFire says 1.5, ShockBeamFire leaves the default 1)
+	fire_animation_rates = {
+		Fire = 1,
+		AltFire = 1.5,
+	},
 }
 
 local skin_api
@@ -180,7 +185,7 @@ local function shot(action, new_action, animation_name)
 	skin.cooldown = new_action.total_time
 	skin.cooldown_end = Managers.time:time("game") + new_action.total_time
 
-	skin_api.play(animation_name)
+	skin_api.play(animation_name, skin_api.animation_duration(animation_name) / CONFIG.fire_animation_rates[animation_name])
 
 	-- (the flash follows the muzzle of the model: it is the skin that follows the first person unit; in a third person view it
 	-- is the mesh in the character's hand)
