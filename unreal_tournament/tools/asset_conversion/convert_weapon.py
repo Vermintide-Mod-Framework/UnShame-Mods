@@ -200,8 +200,14 @@ variables = {
 ''',
 }
 
-def material_text(kind, texture, opacity=None):
+def material_text(kind, texture, opacity=None, first_person=False):
     text = MATERIAL_TEMPLATES[kind] % texture
+
+    if first_person:
+        # (the material of a first person weapon is drawn with the game's custom FOV for weapons, as the game's own are, which is also what keeps
+        # the outlines of other players from being drawn over it: units/ut/weapon_standard.material and weapon_standard_transparent.material
+        # are the SDK's standard materials with that option on)
+        text = text.replace('core/stingray_renderer/shader_import/standard', 'units/ut/weapon_standard')
 
     if opacity is not None:
         # (a see through material: how much of it there is)
@@ -409,7 +415,7 @@ def main():
             write_png('%s/%s.png' % (REPO, texture), w, h, rows)
             open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
             done_textures[texture] = True
-        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture, opacity))
+        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture, opacity, first_person=True))
 
     # the animations: the pose of each bone (the root's move first: it is how the whole mesh is moved) against the mesh in its
     # reference pose, in the model's axes and UT units

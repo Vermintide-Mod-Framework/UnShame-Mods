@@ -1,7 +1,7 @@
 material_contexts = {
 	surface_material = ""
 }
-parent_material = "core/stingray_renderer/shader_import/standard_transparent"
+parent_material = "units/ut/weapon_standard_transparent"
 textures = {
 	color_map = "units/ut/bio/bio_rifle_biorifleglass0"
 }

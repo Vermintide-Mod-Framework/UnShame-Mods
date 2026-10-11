@@ -190,17 +190,29 @@ for n, (node_id, node_type, options, export, samplers, title) in enumerate(nodes
         text += '\t\t\ttitle = "%s"\n' % title
     text += '\t\t\ttype = "%s"\n\t\t}\n' % node_type
 text += '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tbrightness = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n}\n'
-open(UNITS + '/shock_rifle_chamber.material', 'w', newline='\n').write(text)
-# (the textures are bound by a material derived from the graph, as the materials of the effects are)
-open(UNITS + '/shock_rifle_power.material', 'w', newline='\n').write('''material_contexts = {
+# Two graphs: the chamber of the pickup (and of the character's hand), and the chamber of the first person rifle, which is drawn with the game's
+# custom FOV for weapons (the option HAS_CUSTOM_FOV of unlit_base), as the game's own first person weapons are: it is that option that makes the
+# outlines of other players not be drawn over it, see units/ut/weapon_standard.material.
+HAS_CUSTOM_FOV = 'b2556764-e8e9-47cf-9ecc-f53b5d5d73c7'
+last_option = '\t\t\t\t"%s"\n' % DISABLE_DEPTH_WRITE
+assert text.count(last_option) == 1
+variants = {
+    'shock_rifle_chamber': text,
+    'shock_rifle_fp_chamber': text.replace(last_option, last_option + '\t\t\t\t"%s"\n' % HAS_CUSTOM_FOV),
+}
+for name, graph_text in variants.items():
+    open('%s/%s.material' % (UNITS, name), 'w', newline='\n').write(graph_text)
+    # (the textures are bound by a material derived from the graph, as the materials of the effects are)
+    power_name = name.replace('chamber', 'power')
+    open('%s/%s.material' % (UNITS, power_name), 'w', newline='\n').write('''material_contexts = {
 	surface_material = ""
 }
-parent_material = "units/ut/shock/shock_rifle_chamber"
+parent_material = "units/ut/shock/%s"
 textures = {
 	gel_map = "units/ut/shock/shock_power_df"
 	glass_map = "units/ut/shock/shock_glass"
 }
 variables = {
 }
-''')
-print('wrote shock_rifle_chamber.material and shock_rifle_power.material,', len(nodes), 'nodes')
+''' % name)
+print('wrote the chamber and power materials of the pickup and of the first person rifle,', len(nodes), 'nodes')

@@ -32,6 +32,8 @@ unit = [
 ]
 
 material = [
+	"units/ut/weapon_standard"
+	"units/ut/weapon_standard_transparent"
 	"units/ut/shock/*"
 	"units/ut/flak/*"
 	"units/ut/rocket/*"
