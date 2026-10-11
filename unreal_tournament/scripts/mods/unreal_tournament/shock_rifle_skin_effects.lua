@@ -84,7 +84,7 @@ local CONFIG = {
 	explosion_sphere_size = 0.6,
 	explosion_sphere_growth = 1.2,
 	explosion_sphere_attenuation = 0.3,
-	explosion_sphere_darkness = 0.75, -- (UT's gray of 100 of 255 is 0.39: more of it is seen here, where there is no light on it)
+	explosion_sphere_darkness = 0.2, -- (UT's gray of 100 of 255 is 0.39: it is fainter here)
 	explosion_sphere_radius = 48,
 	sphere_mesh_radius = 126.7,
 	-- ShockCombo and the effects it makes
