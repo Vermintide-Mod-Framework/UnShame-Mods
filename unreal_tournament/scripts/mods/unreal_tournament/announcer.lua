@@ -21,7 +21,8 @@ local CONFIG = {
 	ignored_races = {
 		dummy = true,
 	},
-	-- The most basic enemy of each race: killing one counts for a multi kill, but it is not the kill that announces it (another enemy's is)
+	-- The most basic enemy of each race: killing one counts for a multi kill, but it is not the kill that announces it (another enemy's is),
+	-- and it does not count for a spree or a call out of a number of kills
 	silent_breeds = {
 		beastmen_ungor = true,
 		chaos_fanatic = true,
@@ -201,7 +202,11 @@ end
 local function announce_head_shot()
 	show("head_shot", CONFIG.head_shot.text, 2)
 	play(CONFIG.head_shot.event, false)
-	count_call_out("head_hunter", 1)
+end
+
+-- (the most basic enemies of each race don't count for a spree or a call out, and don't announce a multi kill)
+local function is_silent(unit)
+	return CONFIG.silent_breeds[Unit.get_data(unit, "breed").name] == true
 end
 
 -- If the shot that killed was a ranged one (how the game's own statistics tell: by the type of the attack, or the slot of the weapon when
@@ -254,11 +259,12 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 	end
 
 	local now = Managers.time:time("game")
+	local silent = is_silent(victim_unit)
 
 	if now - last_kill_time < CONFIG.window then
 		multi_kill_level = multi_kill_level + 1
 
-		if not CONFIG.silent_breeds[Unit.get_data(victim_unit, "breed").name] then
+		if not silent then
 			announce_multi_kill(multi_kill_level)
 		end
 	else
@@ -266,13 +272,24 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 	end
 
 	last_kill_time = now
+
+	-- (the zone of the shot that killed: the game's own statistics tell a head shot this way)
+	local is_head_shot = damage_data[DamageDataIndex.HIT_ZONE] == "head" and is_ranged_hit(damage_data)
+
+	if is_head_shot then
+		announce_head_shot()
+	end
+
+	if silent then
+		return
+	end
+
 	spree = spree + 1
 
 	announce_spree(spree)
 
-	-- (the zone of the shot that killed: the game's own statistics tell a head shot this way)
-	if damage_data[DamageDataIndex.HIT_ZONE] == "head" and is_ranged_hit(damage_data) then
-		announce_head_shot()
+	if is_head_shot then
+		count_call_out("head_hunter", 1)
 	end
 
 	if is_killed_by(CONFIG.flak_cannon, damage_data) then
@@ -283,7 +300,15 @@ end)
 -- The kills of a shock combo: the Shock Rifle tells which enemies it killed (the host, which applies the damage, knows), and the host tells
 -- the player whose combo it was if that is not itself
 mod.shock_combo_callbacks.announcer = function (attacker_unit, killed_units)
-	if #killed_units == 0 then
+	local kills = 0
+
+	for _, unit in ipairs(killed_units) do
+		if not is_silent(unit) then
+			kills = kills + 1
+		end
+	end
+
+	if kills == 0 then
 		return
 	end
 
@@ -292,10 +317,10 @@ mod.shock_combo_callbacks.announcer = function (attacker_unit, killed_units)
 	-- (the setting is each player's own: the one whose combo it was is the one who has it)
 	if attacker == Managers.player:local_player() then
 		if mod:get("announcer") then
-			count_call_out("combo_whore", #killed_units)
+			count_call_out("combo_whore", kills)
 		end
 	elseif attacker and not attacker.bot_player then
-		mod:network_send("ut_combo_kills", attacker.peer_id, #killed_units)
+		mod:network_send("ut_combo_kills", attacker.peer_id, kills)
 	end
 end
 
