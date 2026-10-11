@@ -164,7 +164,7 @@ variables = {
 	}
 	emissive_intensity = {
 		type = "scalar"
-		value = 0.7
+		value = 3
 	}
 }
 '''
