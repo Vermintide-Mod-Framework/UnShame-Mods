@@ -568,12 +568,14 @@ local function new(def)
 			CONFIG[name] = tonumber(value)
 
 			mod:echo("%s skin: %s is %s", CONFIG.name, name, tostring(CONFIG[name]))
+		elseif command == "report" then
+			third_person.report()
 		elseif command == "3p" and tonumber(value) then
 			third_person.set(name, tonumber(value))
 
 			mod:echo("%s skin, third person: %s is %s", CONFIG.name, name, value)
 		else
-			mod:echo("%s skin: debug | play <animation> | set <number> <value> | 3p <number> <value>", CONFIG.name)
+			mod:echo("%s skin: debug | report | play <animation> | set <number> <value> | 3p <number> <value>", CONFIG.name)
 		end
 	end
 
@@ -582,7 +584,7 @@ local function new(def)
 	return self
 end
 
-mod:command("skin", "<weapon> debug | play <animation> | set <number> <value> | 3p <number> <value> - the weapon skins", function (id, ...)
+mod:command("skin", "<weapon> debug | report | play <animation> | set <number> <value> | 3p <number> <value> - the weapon skins", function (id, ...)
 	local skin = id and skins[id]
 
 	if skin then

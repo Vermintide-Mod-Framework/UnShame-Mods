@@ -221,6 +221,46 @@ local function new(def)
 		end
 	end
 
+	-- Development: what every character holds, told in the chat: the scale of each unit of its weapons (the game's, in the first person and
+	-- the third), how far it is from the hand nodes, and the scale of the nodes, to see which one is off when a weapon is seen floating
+	function third_person.report()
+		local players = Managers.player and Managers.player:human_and_bot_players()
+
+		if not players then
+			return
+		end
+
+		local function scale_of(unit, node)
+			local pose = Unit.world_pose(unit, node or 0)
+
+			return Vector3.length(Matrix4x4.x(pose))
+		end
+
+		for _, player in pairs(players) do
+			local character = player.player_unit
+
+			if character and Unit.alive(character) and ScriptUnit.has_extension(character, "inventory_system") then
+				local equipment = ScriptUnit.extension(character, "inventory_system"):equipment()
+				local left_hand = Unit.has_node(character, "j_leftweaponattach") and Unit.node(character, "j_leftweaponattach")
+				local right_hand = Unit.has_node(character, "j_rightweaponattach") and Unit.node(character, "j_rightweaponattach")
+
+				mod:echo("%s (%s): wields %s, character scale %.2f, left hand %.2f, right hand %.2f%s", tostring(player:name()), player.bot_player and "bot" or "player", tostring(utils.wielded_template_name(character)), scale_of(character), left_hand and scale_of(character, left_hand) or -1, right_hand and scale_of(character, right_hand) or -1, attached[character] and ", holds the skin's mesh" or "")
+
+				for _, field in ipairs({"right_hand_wielded_unit_3p", "left_hand_wielded_unit_3p", "right_hand_wielded_unit", "left_hand_wielded_unit"}) do
+					local unit = equipment[field]
+
+					if unit and Unit.alive(unit) then
+						local position = Unit.world_position(unit, 0)
+						local to_left = left_hand and Vector3.length(position - Unit.world_position(character, left_hand)) or -1
+						local to_right = right_hand and Vector3.length(position - Unit.world_position(character, right_hand)) or -1
+
+						mod:echo("  %s: scale %.2f, %.2f m from the left hand, %.2f m from the right", field, scale_of(unit), to_left, to_right)
+					end
+				end
+			end
+		end
+	end
+
 	-- Development: sets a number of the definition (how the mesh sits in the hand) while playing
 	function third_person.set(key, value)
 		CONFIG[key] = value
