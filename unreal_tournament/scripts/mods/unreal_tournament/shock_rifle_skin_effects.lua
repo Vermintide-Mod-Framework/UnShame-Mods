@@ -64,7 +64,8 @@ local CONFIG = {
 	ball_flare_interval = 0.5,
 	ball_flare_fade_in = 0.25,
 	ball_flare_fade_out = 0.2,
-	ball_spark_size = 18,
+	ball_spark_size = 26,
+	ball_spark_intensity = 0.5,
 	ball_spark_life = 0.35,
 	ball_spark_fade_in = 0.1,
 	ball_spark_fade_out = 0.3,
@@ -520,6 +521,7 @@ function fx.update_ball(ball, dt)
 
 				return position + velocity:unbox() * (age - age * age / CONFIG.ball_spark_life)
 			end,
+			intensity = CONFIG.ball_spark_intensity,
 			life = CONFIG.ball_spark_life,
 			size = CONFIG.ball_spark_size * UNIT,
 			texture = "shock_core",
