@@ -685,7 +685,7 @@ mod.pre_render_callbacks.shock_skin = function ()
 end
 
 -- Development: /shockskin debug prints what the skin does, /shockskin play <Pickup|Idle|Fire|AltFire> plays an animation
-mod:command("shockskin", "debug | play <animation> | 3p <forward> <right> <up> <yaw> <pitch> <roll> - the Shock Rifle skin", function (command, name, ...)
+mod:command("shockskin", "debug | play <animation> | 3p <forward> <right> <up> <yaw> <pitch> <roll> <scale> - the Shock Rifle skin", function (command, name, ...)
 	if command == "debug" then
 		debug_enabled = not debug_enabled
 

@@ -24,6 +24,8 @@ local CONFIG = {
 	hand_node = "j_rightweaponattach",
 	muzzle_node = "fx_muzzle",
 	meters_per_unit = 0.011,
+	-- UT2004's pickup models are far bigger than the weapon in the hand is (they are made to be seen on the floor): this much of it
+	scale = 0.5,
 	-- The point of the mesh that is in the hand, in UT units from its origin (right, forward, up), and how the mesh is turned
 	-- from pointing where the staff does, degrees (yaw, pitch, roll)
 	grip_right = 0,
@@ -54,10 +56,11 @@ local function place(entry)
 
 	rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(math.rad(CONFIG.pitch), math.rad(CONFIG.roll), math.rad(CONFIG.yaw)))
 
-	local grip = Vector3(CONFIG.grip_right, CONFIG.grip_forward, CONFIG.grip_up) * CONFIG.meters_per_unit
+	local grip = Vector3(CONFIG.grip_right, CONFIG.grip_forward, CONFIG.grip_up) * module.meters_per_unit
 
 	Unit.set_local_position(entry.unit, 0, -Quaternion.rotate(rotation, grip))
 	Unit.set_local_rotation(entry.unit, 0, rotation)
+	Unit.set_local_scale(entry.unit, 0, Vector3(CONFIG.scale, CONFIG.scale, CONFIG.scale))
 end
 
 local function detach(character)
@@ -185,12 +188,13 @@ function module.muzzle_position(character)
 		return nil
 	end
 
-	local offset = Vector3(CONFIG.muzzle_right, CONFIG.muzzle_forward, CONFIG.muzzle_up) * CONFIG.meters_per_unit
+	local offset = Vector3(CONFIG.muzzle_right, CONFIG.muzzle_forward, CONFIG.muzzle_up) * module.meters_per_unit
 
 	return Unit.world_position(entry.unit, 0) + Quaternion.rotate(Unit.world_rotation(entry.unit, 0), offset)
 end
 
-module.meters_per_unit = CONFIG.meters_per_unit
+-- How many meters a UT unit of the mesh is as it is held (the flashes are made as big as the mesh is)
+module.meters_per_unit = CONFIG.meters_per_unit * CONFIG.scale
 
 -- All of them are given back (the setting is off, the mod is, the level is gone)
 function module.clear()
@@ -200,19 +204,21 @@ function module.clear()
 end
 
 -- Development: sets how the mesh sits in the hand and says it
-function module.tune(grip_forward, grip_right, grip_up, yaw, pitch, roll)
+function module.tune(grip_forward, grip_right, grip_up, yaw, pitch, roll, scale)
 	CONFIG.grip_forward = tonumber(grip_forward) or CONFIG.grip_forward
 	CONFIG.grip_right = tonumber(grip_right) or CONFIG.grip_right
 	CONFIG.grip_up = tonumber(grip_up) or CONFIG.grip_up
 	CONFIG.yaw = tonumber(yaw) or CONFIG.yaw
 	CONFIG.pitch = tonumber(pitch) or CONFIG.pitch
 	CONFIG.roll = tonumber(roll) or CONFIG.roll
+	CONFIG.scale = tonumber(scale) or CONFIG.scale
+	module.meters_per_unit = CONFIG.meters_per_unit * CONFIG.scale
 
 	for _, entry in pairs(attached) do
 		place(entry)
 	end
 
-	mod:echo("shock skin 3p: grip forward %.1f right %.1f up %.1f, yaw %.1f pitch %.1f roll %.1f", CONFIG.grip_forward, CONFIG.grip_right, CONFIG.grip_up, CONFIG.yaw, CONFIG.pitch, CONFIG.roll)
+	mod:echo("shock skin 3p: grip forward %.1f right %.1f up %.1f, yaw %.1f pitch %.1f roll %.1f, scale %.2f", CONFIG.grip_forward, CONFIG.grip_right, CONFIG.grip_up, CONFIG.yaw, CONFIG.pitch, CONFIG.roll, CONFIG.scale)
 end
 
 return module
