@@ -132,6 +132,6 @@ return {
 		en = "Weapon Skins",
 	},
 	weapon_skins_description = {
-		en = "The weapons look and sound like Unreal Tournament 2004's. What the others see of you depends on their own setting.",
+		en = "The Flak Cannon, Rocket Launcher, Bio Rifle and Link Gun look and sound like Unreal Tournament 2004's (the Shock Rifle always does). What the others see of you depends on their own setting.",
 	},
 }

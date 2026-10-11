@@ -13,28 +13,10 @@ local CONFIG = {
 	-- next to nothing to them)
 	armor_attack = {1, 0.8, 1.5, 1, 1, 0.5},
 	armor_impact = {1, 0.8, 1, 1, 1, 0.5},
-	-- Idle pose: the raised pose of the beam staff's continuous beam (without its zoom) is used
-	-- as the default pose. Set idle_pose_event to nil to keep the regular staff pose.
-	idle_pose_event = "attack_shoot_beam_start",
-	idle_pose_delay = 0.4, -- seconds after wielding before the pose is entered
-	-- The pose animation shakes, so once the pose is reached it is played at this speed
-	-- (1 = normal) to turn the shaking into slow, natural looking movement
-	idle_pose_speed = 0.15,
-	idle_pose_slow_delay = 0.35, -- seconds the raise animation gets to play at normal speed
-	idle_pose_wield_slow_delay = 3, -- same, after wielding (the raise is slower there)
-	-- The shot animations blend back to the regular idle pose when they finish, so the raised
-	-- pose is re-entered this many seconds after a shot instead of when the action ends
-	-- (beam_fire_rate / ball_fire_rate). Tune to the length of the shot animations.
-	beam_pose_return_time = 0.35,
-	ball_pose_return_time = 0.5,
 	-- Beam
 	beam_fire_rate = 0.7, -- UT2004 ShockBeamFire.FireRate
 	beam_fire_time = 0, -- delay between pressing fire and the shot
-	beam_range = 60, -- trail length when the beam doesn't hit anything
-	trail_effect = "fx/wpnfx_staff_beam_trail_remap",
-	trail_effect_3p = "fx/wpnfx_staff_beam_trail_3p_remap", -- what the other players see of the beam
-	trail_duration = 0.45,
-	trail_width = 0.3,
+	beam_range = 60, -- length of the beam when it doesn't hit anything
 	-- Ball
 	ball_speed = 1400, -- throw_trajectory divides by 100, so this is 14 m/s (walking is ~4-5 m/s)
 	ball_radius = 0.2, -- impact sphere, how easily the ball hits things (unrelated to the beam hitting it)
@@ -62,23 +44,9 @@ local CONFIG = {
 	-- The ball's own explosion hurts the shooter as well, in the same way (half of the ball's damage in UT's
 	-- numbers, like the combo's is half of its damage)
 	ball_self_damage = 18,
-	-- Combo visuals: the blast first throws out a ring, then everything that died gets pulled
-	-- back to the center, like in UT. Only effects the game already ships can be used, they are
-	-- skipped if the game hasn't loaded them.
-	-- The fire explosion at the center of the blast. Effects can only be made bigger or smaller
-	-- through the scale, they can't be sped up.
-	combo_fire_sphere_effect = "fx/wpnfx_staff_geiser_fire_large",
-	combo_fire_sphere_scale = 0.25, -- size relative to the effect's normal size
-	combo_flash_effect = "fx/wpnfx_fireball_charged_impact_remap", -- played with the fire explosion
-	-- The shockwave is the horizontal ring effect played three times in perpendicular
-	-- orientations to make a shell, with another effect played on top of it
-	combo_shockwave_extra_effect = "fx/brw_adept_skill_03",
-	-- Vertical offsets in meters (+ up, - down) of each part from the center of the explosion.
-	-- The shockwave effects were made to be played at a character's feet and have a height of
-	-- their own, which put the shockwave above the explosion.
-	combo_flash_offset = 0,
-	combo_fire_sphere_offset = 0,
-	combo_shockwave_extra_offset = -1,
+	-- Combo: the blast (the skin draws it) is followed by everything that died being pulled back to the
+	-- center, like in UT. Only effects the game already ships can be used, they are skipped if the game
+	-- hasn't loaded them.
 	-- The implosion rings: particle effects can't be played backwards and their scale can't be
 	-- changed while they play, so the implosion is a series of rings, each created smaller than
 	-- the last, spread over implosion_duration. The scales are relative to the effect's normal size.
@@ -196,12 +164,11 @@ register_explosion_template("ut_shock_ball_explosion", {
 		attacker_power_level_offset = 1,
 		damage_profile = "ut_shock_ball_explosion",
 		damage_profile_glance = "ut_shock_ball_explosion_glance",
-		effect_name = "fx/wpnfx_fireball_charged_impact_remap",
+		-- (no effect and no sound of its own: the skin draws and plays them, see skin_explosion_callbacks)
 		-- the shooter is hurt separately, see ball_self_damage
 		ignore_attacker_unit = true,
 		max_damage_radius = CONFIG.explosion_full_damage_radius,
 		radius = CONFIG.ball_explosion_radius_uu * CONFIG.meters_per_uu,
-		sound_event_name = "fireball_big_hit",
 		use_attacker_power_level = true,
 	},
 })
@@ -217,7 +184,6 @@ register_explosion_template("ut_shock_combo_explosion", {
 		ignore_attacker_unit = true,
 		max_damage_radius = CONFIG.explosion_full_damage_radius,
 		radius = CONFIG.combo_explosion_radius_uu * CONFIG.meters_per_uu,
-		sound_event_name = "fireball_big_hit",
 		use_attacker_power_level = true,
 		camera_effect = {
 			far_distance = 25,
@@ -230,68 +196,6 @@ register_explosion_template("ut_shock_combo_explosion", {
 })
 
 -- Weapon template
-
--- Delayed pose events: the animation event is only sent while is_valid() still holds,
--- so nothing is sent if the weapon was swapped or another action started in the meantime
-local scheduler = utils.delayed_events()
-local schedule = scheduler.schedule
-
--- attack_speed is the animation speed variable the weapon animations are played with,
--- every action sets it again when it starts
-local function set_animation_speed(first_person_extension, speed)
-	first_person_extension:animation_set_variable("attack_speed", speed)
-end
-
--- The raised pose of the stance is the staff's: the skin's rifle is held as UT2004's is, by the animations of the model, so the stance is not
--- entered, returned to or slowed down while the skin is on
-local function stance_enabled()
-	return CONFIG.idle_pose_event ~= nil and not utils.is_weapon_skin_enabled("shock_rifle")
-end
-
-local function slow_down_idle_pose(first_person_extension, is_valid, delay)
-	schedule(delay or CONFIG.idle_pose_slow_delay, is_valid, function ()
-		set_animation_speed(first_person_extension, CONFIG.idle_pose_speed)
-	end)
-end
-
-local function enter_idle_pose(first_person_extension, unit_1p, is_valid, slow_delay)
-	-- (only while the rifle is what is wielded: the event is not one of the animations of another weapon, which is what the arms
-	-- and the character play after a swap, and an event that an animation graph doesn't have is an error of the game's)
-	if not stance_enabled() or not utils.is_local_player_unit(first_person_extension.unit) or utils.wielded_template_name(first_person_extension.unit) ~= TEMPLATE_NAME then
-		return
-	end
-
-	-- (not while the game plays an animation of its own, hanging off a ledge, say: the event would replace it)
-	if not utils.character_animation_is_free(first_person_extension.unit) then
-		return
-	end
-
-	Unit.animation_event(unit_1p, CONFIG.idle_pose_event)
-
-	-- (the other players see the character in it too: the shot of the beam is an animation that follows from it, and
-	-- without it the character is back in the idle of the staff after every shot)
-	Managers.state.network:anim_event(first_person_extension.unit, CONFIG.idle_pose_event)
-	slow_down_idle_pose(first_person_extension, is_valid, slow_delay)
-end
-
--- Re-enters the pose after a shot, unless another action has started in the meantime
-local function schedule_pose_return(weapon_extension, action, delay)
-	if not stance_enabled() then
-		return
-	end
-
-	local function is_valid()
-		return weapon_extension.current_action_settings == action
-	end
-
-	schedule(delay, is_valid, function ()
-		enter_idle_pose(weapon_extension.first_person_extension, weapon_extension.first_person_unit, function ()
-			local current_action = weapon_extension.current_action_settings
-
-			return current_action == action or current_action == nil
-		end)
-	end)
-end
 
 -- Refire logic of UT2004 (WeaponFire / Weapon.StartFire / Weapon.ReadyToFire):
 --   * Each mode fires again FireRate seconds after its previous shot.
@@ -389,8 +293,6 @@ local function build_beam_action()
 		allowed_chain_actions = allowed_chain_actions(fire_chain_entries("action_one", "action_two", BEAM_TO_BEAM, BEAM_TO_BALL), 0.2, 0.2),
 		enter_function = function (attacker_unit, input_extension, remaining_time, weapon_extension)
 			input_extension:clear_input_buffer()
-			scheduler.clear()
-			schedule_pose_return(weapon_extension, action, CONFIG.beam_pose_return_time)
 
 			return input_extension:reset_release_input()
 		end,
@@ -434,8 +336,6 @@ local function build_ball_action()
 		allowed_chain_actions = allowed_chain_actions(fire_chain_entries("action_two", "action_one", BALL_TO_BALL, BALL_TO_BEAM), 0.3, 0.3),
 		enter_function = function (attacker_unit, input_extension, remaining_time, weapon_extension)
 			input_extension:clear_input_buffer()
-			scheduler.clear()
-			schedule_pose_return(weapon_extension, action, CONFIG.ball_pose_return_time)
 
 			return input_extension:reset_release_input()
 		end,
@@ -482,9 +382,6 @@ local function restore_beam_staff()
 
 	actions.action_one = original.action_one
 	actions.action_two = original.action_two
-	actions.weapon_reload.default.anim_end_event = original.reload_anim_end_event
-	actions.weapon_reload.default.finish_function = original.reload_finish_function
-	actions.weapon_reload.default.enter_function = original.reload_enter_function
 
 	for _, field in ipairs(ATTACK_META_DATA_FIELDS) do
 		template.attack_meta_data[field] = original.attack_meta_data[field]
@@ -512,9 +409,6 @@ local function apply_shock_rifle()
 	local original = {
 		action_one = actions.action_one,
 		action_two = actions.action_two,
-		reload_anim_end_event = actions.weapon_reload.default.anim_end_event,
-		reload_finish_function = actions.weapon_reload.default.finish_function,
-		reload_enter_function = actions.weapon_reload.default.enter_function,
 		attack_meta_data = {},
 		tooltip_compare = template.tooltip_compare,
 		tooltip_detail = template.tooltip_detail,
@@ -540,29 +434,6 @@ local function apply_shock_rifle()
 		action_one = actions.action_one,
 		action_two = actions.action_two,
 	}, TEMPLATE_NAME)
-
-	-- The vent/reload action also returns to the raised pose when it ends (its end event is
-	-- skipped when it is interrupted, see its anim_end_event_condition_func)
-	actions.weapon_reload.default.anim_end_event = stance_enabled() and CONFIG.idle_pose_event or original.reload_anim_end_event
-	-- Venting right after wielding: the raise to the pose would play over the heat release
-	actions.weapon_reload.default.enter_function = function (...)
-		scheduler.clear()
-
-		if original.reload_enter_function then
-			return original.reload_enter_function(...)
-		end
-	end
-	actions.weapon_reload.default.finish_function = function (owner_unit, reason, weapon_extension)
-		if original.reload_finish_function then
-			original.reload_finish_function(owner_unit, reason, weapon_extension)
-		end
-
-		if stance_enabled() and reason ~= "new_interupting_action" then
-			slow_down_idle_pose(weapon_extension.first_person_extension, function ()
-				return weapon_extension.current_action_settings == nil
-			end)
-		end
-	end
 
 	-- The bot AI and tooltips reference the removed charged/blast sub actions
 	attack_meta_data.can_charge_shot = false
@@ -703,14 +574,6 @@ end
 
 local implosions = {}
 
-local function create_fire_sphere(world, position)
-	local effect_name = CONFIG.combo_fire_sphere_effect
-
-	if effect_name then
-		effects.play(world, effect_name, position + Vector3(0, 0, CONFIG.combo_fire_sphere_offset), CONFIG.combo_fire_sphere_scale)
-	end
-end
-
 -- Vectors and quaternions are temporary objects and can't be kept around between frames,
 -- so the ring orientations are created when needed
 local function ring_rotations()
@@ -719,19 +582,6 @@ local function ring_rotations()
 		Quaternion.axis_angle(Vector3(1, 0, 0), math.pi / 2),
 		Quaternion.axis_angle(Vector3(0, 1, 0), math.pi / 2),
 	}
-end
-
-local function create_ring_shell(world, position)
-	if not CONFIG.combo_ring_effect then
-		return
-	end
-
-	local ring_position = position + Vector3(0, 0, CONFIG.combo_ring_offset)
-	local rotations = ring_rotations()
-
-	for i = 1, #rotations do
-		effects.create(world, CONFIG.combo_ring_effect, ring_position, rotations[i])
-	end
 end
 
 -- One ring of the implosion, at the given scale. The effects are created with their scale
@@ -752,20 +602,7 @@ end
 local function start_implosion(world, position)
 	local radius = ExplosionTemplates.ut_shock_combo_explosion.explosion.radius
 
-	-- (with the skin the skin draws the explosion, see skin_explosion_callbacks)
-	if not utils.is_weapon_skin_enabled("shock_rifle") then
-		if CONFIG.combo_flash_effect then
-			effects.create(world, CONFIG.combo_flash_effect, position + Vector3(0, 0, CONFIG.combo_flash_offset))
-		end
-
-		create_fire_sphere(world, position)
-		create_ring_shell(world, position)
-
-		if CONFIG.combo_shockwave_extra_effect then
-			effects.create(world, CONFIG.combo_shockwave_extra_effect, position + Vector3(0, 0, CONFIG.combo_shockwave_extra_offset))
-		end
-	end
-
+	-- (the skin draws the explosion, see skin_explosion_callbacks)
 	implosions[#implosions + 1] = {
 		position = Vector3Box(position),
 		blasted = {},
@@ -918,37 +755,8 @@ mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_posit
 	end
 end
 
--- Beam trail: the staff's own beam particle, stretched from the muzzle to the hit point
--- and shrunk to nothing over trail_duration
-
-local trails = {}
-
-local function destroy_trail(trail)
-	-- the world may already be gone (level transition)
-	pcall(World.destroy_particles, trail.world, trail.effect_id)
-end
-
-local function create_trail(world, effect_name, muzzle_position, end_position)
-	-- (an effect that isn't loaded crashes the game)
-	if not effects.is_available(effect_name) then
-		return
-	end
-
-	local trail_direction = Vector3.normalize(muzzle_position - end_position)
-	local effect_id = World.create_particles(world, effect_name, end_position, Quaternion.look(trail_direction))
-	local length_variable_id = World.find_particles_variable(world, effect_name, "trail_length")
-
-	trails[#trails + 1] = {
-		age = 0,
-		distance = Vector3.distance(muzzle_position, end_position),
-		effect_id = effect_id,
-		length_variable_id = length_variable_id,
-		world = world,
-	}
-end
-
--- The beam of the player who fires: the trail, and the end of it is told to the other players, who see it from the
--- staff of the player's character
+-- The beam of the player who fires (the skin draws it, see shock_beam_callbacks): where it ends is told to the other players, who see it
+-- from the staff of the player's character
 local function spawn_trail(action, origin, direction)
 	local physics_world = action.physics_world
 	local result = PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
@@ -969,13 +777,8 @@ local function spawn_trail(action, origin, direction)
 	local weapon_unit = action.weapon_unit
 	local muzzle_position = Unit.world_position(weapon_unit, Unit.node(weapon_unit, "fx_muzzle"))
 
-	-- (with the skin the skin draws it)
-	if utils.is_weapon_skin_enabled("shock_rifle") then
-		for _, callback in pairs(mod.shock_beam_callbacks) do
-			callback(action.owner_unit, muzzle_position, end_position, hit_normal)
-		end
-	else
-		create_trail(action.world, CONFIG.trail_effect, muzzle_position, end_position)
+	for _, callback in pairs(mod.shock_beam_callbacks) do
+		callback(action.owner_unit, muzzle_position, end_position, hit_normal)
 	end
 
 	mod:network_send("ut_shock_trail", "others", Managers.state.unit_storage:go_id(action.owner_unit), end_position.x, end_position.y, end_position.z, hit_normal.x, hit_normal.y, hit_normal.z)
@@ -994,41 +797,13 @@ mod:network_register("ut_shock_trail", function (_, owner_go_id, x, y, z, normal
 
 	local muzzle_position = Unit.world_position(weapon_unit, Unit.node(weapon_unit, "fx_muzzle"))
 
-	if utils.is_weapon_skin_enabled("shock_rifle") then
-		for _, callback in pairs(mod.shock_beam_callbacks) do
-			callback(unit, muzzle_position, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z))
-		end
-	else
-		create_trail(Managers.world:world("level_world"), CONFIG.trail_effect_3p, muzzle_position, Vector3(x, y, z))
+	for _, callback in pairs(mod.shock_beam_callbacks) do
+		callback(unit, muzzle_position, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z))
 	end
 end)
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
-	scheduler.update(dt)
 	update_implosions(dt)
-
-	for i = #trails, 1, -1 do
-		local trail = trails[i]
-
-		trail.age = trail.age + dt
-
-		local fade = 1 - trail.age / CONFIG.trail_duration
-
-		if fade <= 0 then
-			destroy_trail(trail)
-			table.remove(trails, i)
-		else
-			pcall(World.set_particles_variable, trail.world, trail.effect_id, trail.length_variable_id, Vector3(CONFIG.trail_width * fade * fade, trail.distance, 0))
-		end
-	end
-end
-
-local function clear_trails()
-	for i = #trails, 1, -1 do
-		destroy_trail(trails[i])
-
-		trails[i] = nil
-	end
 end
 
 -- The weapon's package list is built when the staff's packages are loaded, which may be
@@ -1063,60 +838,14 @@ end
 -- holds changes when it is wielded again)
 local function disable_shock_rifle()
 	restore_beam_staff()
-	clear_trails()
-	scheduler.clear()
 	clear_implosions()
 	packages.unload()
 end
 
 utils.register_weapon("shock_rifle", enable_shock_rifle, disable_shock_rifle)
 
--- (the end event of venting depends on the skin, which is put in the template as it is applied)
-mod.setting_changed_callbacks[#mod.setting_changed_callbacks + 1] = function (changed_setting_id)
-	if changed_setting_id == "weapon_skins" and utils.is_weapon_enabled("shock_rifle") then
-		enable_shock_rifle()
-	end
-end
-
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
-	clear_trails()
 	clear_implosions()
-end
-
--- Hanging off a ledge: the stance is ended in the character the others see, which is in it as the character's idle, under the
--- animations of hanging
-mod.ledge_hang_callbacks.shock = function (unit)
-	if stance_enabled() and utils.is_weapon_enabled("shock_rifle") and utils.wielded_template_name(unit) == TEMPLATE_NAME then
-		Managers.state.network:anim_event(unit, "attack_finished")
-	end
-end
-
-mod.wield_callbacks.shock = function (self, equipment, slot_data, unit_1p)
-	if not CONFIG.idle_pose_event or not slot_data then
-		return
-	end
-
-	local first_person_extension = self.first_person_extension
-
-	-- The slowed down animation speed must not leak into other weapons
-	if first_person_extension then
-		set_animation_speed(first_person_extension, 1)
-	end
-
-	local item_template = BackendUtils.get_item_template(slot_data.item_data)
-
-	if item_template.name ~= TEMPLATE_NAME or not utils.is_weapon_enabled("shock_rifle") or not stance_enabled() then
-		return
-	end
-
-	local function is_valid()
-		return equipment.wielded == slot_data.item_data
-	end
-
-	scheduler.clear()
-	schedule(CONFIG.idle_pose_delay, is_valid, function ()
-		enter_idle_pose(first_person_extension, unit_1p, is_valid, CONFIG.idle_pose_wield_slow_delay)
-	end)
 end
 
 mod.handgun_start_callbacks.shock = function (self, new_action)

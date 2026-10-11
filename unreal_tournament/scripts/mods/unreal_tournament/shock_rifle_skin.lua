@@ -1,14 +1,15 @@
 local mod = get_mod("unreal_tournament")
 
--- Shock Rifle skin (the Weapon Skins setting): the Shock Rifle is UT2004's, in the player's own first person view and in the hand of
--- every character. The model, its placement and animations, the bob and the third person are weapon_skin.lua's; this file is what is
--- the Shock Rifle's: the chamber, the shots, the beam, the ball, the explosion and the combo. The gameplay is shock_rifle.lua's, this only
--- draws it differently, and is told what happens through the hook tables of hooks.lua.
+-- Shock Rifle skin: the Shock Rifle is UT2004's, in the player's own first person view and in the hand of every character (it has no
+-- other look: the Weapon Skins setting is for the other weapons, see utils.is_weapon_skin_enabled). The model, its placement and
+-- animations, the bob and the third person are weapon_skin.lua's; this file is what is the Shock Rifle's: the chamber, the shots, the beam,
+-- the ball, the explosion and the combo. The gameplay is shock_rifle.lua's, this only draws it, and is told what happens through the hook
+-- tables of hooks.lua.
 --
 -- The animations are UT's (Pickup, Idle, Fire, AltFire), the chamber's gel flows (the rotation, the stretch, the pan and the colour of
 -- ShockPowerShader, in the shader graph of the chamber), and the glow comes back after a shot as long as it is until the next one
 -- (ShockRifle.RenderOverlays).
--- The game's effects of the Shock Rifle (the fireball, its explosion, the beam's trail) are not made while the skin is on.
+-- The game's effects of the Shock Rifle (the fireball, its explosion, the beam's trail) are not made.
 --
 -- The assets were made with unreal_tournament/tools/asset_conversion.
 
@@ -47,41 +48,6 @@ local skin_api
 -- The balls of the Shock Rifle that are flying (of every player's, as this machine sees them): what makes up the ball of
 -- UT is made as it goes (shock_rifle_skin_effects)
 local balls = {}
-
--- What the game's own effects and sounds of the explosions are taken away for while the skin is on (the skin draws and plays
--- them, see skin_explosion_callbacks): { template name, key of the explosion, what it was }
-local explosion_overrides = {
-	{ "ut_shock_ball_explosion", "effect_name" },
-	{ "ut_shock_ball_explosion", "sound_event_name" },
-	{ "ut_shock_combo_explosion", "sound_event_name" },
-}
-
--- The game's own effect of the explosion is taken away while the skin is on, and given back when it is off
-local function apply_template_overrides()
-	local enabled = skin_api.enabled()
-
-	for _, override in ipairs(explosion_overrides) do
-		local explosion = ExplosionTemplates[override[1]].explosion
-		local key = override[2]
-
-		if enabled and explosion[key] then
-			override[3] = explosion[key]
-			explosion[key] = nil
-		elseif not enabled and override[3] then
-			explosion[key] = override[3]
-			override[3] = nil
-		end
-	end
-end
-
-local function give_back_overrides()
-	for _, override in ipairs(explosion_overrides) do
-		if override[3] then
-			ExplosionTemplates[override[1]].explosion[override[2]] = override[3]
-			override[3] = nil
-		end
-	end
-end
 
 -- Every frame
 
@@ -210,8 +176,6 @@ skin_api = mod.weapon_skin.new({
 	end,
 	on_update = update_chamber,
 	on_update_always = update_balls,
-	on_refresh = apply_template_overrides,
-	on_give_back = give_back_overrides,
 	on_level_exit = function ()
 		table.clear(balls)
 	end,
