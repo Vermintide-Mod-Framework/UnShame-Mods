@@ -937,7 +937,19 @@ mod.handgun_update_callbacks.shock = function (self)
 	local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
 	local origin, rotation = first_person_extension:get_projectile_start_position_rotation()
 	local direction = Quaternion.forward(rotation)
-	local hits = beam_hits(PhysicsWorld.immediate_raycast_actors(self.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only"), owner_unit)
+	local raw_hits = PhysicsWorld.immediate_raycast_actors(self.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
+
+	-- DEBUG: every hit of the ray: how far, what, where it is in the box of its unit, and whether it counts
+	for i = 1, math.min(#(raw_hits or {}), 6) do
+		local hit_unit = Actor.unit(raw_hits[i][4])
+		local pose, half_extents = Unit.box(hit_unit)
+		local p = Matrix4x4.transform(Matrix4x4.inverse(pose), raw_hits[i][1])
+		local unit_distance = Vector3.dot(POSITION_LOOKUP[hit_unit] or Vector3.zero(), direction) - Vector3.dot(origin, direction)
+
+		mod:echo("beam hit %d: %.2f m (its unit is at %.2f m), %s, in box %.2f %.2f %.2f of %.2f %.2f %.2f, counts %s", i, raw_hits[i][2], unit_distance, tostring(AiUtils.unit_breed(hit_unit) and AiUtils.unit_breed(hit_unit).name), p.x, p.y, p.z, half_extents.x, half_extents.y, half_extents.z, tostring(hit_unit ~= owner_unit and hit_is_on_body(hit_unit, raw_hits[i][1])))
+	end
+
+	local hits = beam_hits(raw_hits, owner_unit)
 	local hit = hits[1]
 
 	-- The beam ends at the first thing it hits, or at a ball it gets to before that (which goes off), or goes on (the vector of no length is the
