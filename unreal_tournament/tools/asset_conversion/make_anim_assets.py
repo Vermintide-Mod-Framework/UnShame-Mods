@@ -56,6 +56,8 @@ lines = ['-- The root bone of the animations of the UT2004 Shock Rifle (NewWeapo
          '-- rotation of the mesh (x, y, z, w) and a move of it in UT units (right, forward, up): one row of the frames each.',
          '-- Made from the psa by make_anim_assets.py, never to be committed.', 'return {']
 for name, rate, first, num in anims:
+    if name == 'PutDown':
+        continue  # the game has no animation of putting a weapon down
     lines.append('\t%s = {' % name)
     lines.append('\t\trate = %g,' % rate)
     lines.append('\t\tframes = {')

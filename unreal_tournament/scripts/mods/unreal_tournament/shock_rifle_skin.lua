@@ -11,10 +11,11 @@ local mod = get_mod("unreal_tournament")
 -- view, at (c * right, forward, c * up) * k, where c is the ratio of the tangents of the half field of views across the screen
 -- and k is any distance scale: the gun is wider and taller across than it is long.
 --
--- The animations are UT's (Pickup, Idle, Fire, AltFire, PutDown), played with the timing of the game's: the pickup and the
--- put down last as long as the game's wield cooldown, a shot plays when the action of it starts. The chamber is UT's: the gel
--- flows (a flipbook of the texture, the pan, the stretch and the colour of ShockPowerShader), and the glow comes back after a
--- shot as long as it is until the next one (ShockRifle.RenderOverlays).
+-- The animations are UT's (Pickup, Idle, Fire, AltFire), played with the timing of the game's: the pickup lasts as long as the
+-- game's wield cooldown, a shot plays when the action of it starts. The game has no animation of putting a weapon down, so
+-- the model is gone as the weapon is put away. The chamber is UT's: the gel flows (a flipbook of the texture, the pan, the
+-- stretch and the colour of ShockPowerShader), and the glow comes back after a shot as long as it is until the next one
+-- (ShockRifle.RenderOverlays).
 --
 -- The assets were made with unreal_tournament/tools/asset_conversion.
 
@@ -61,7 +62,6 @@ local CONFIG = {
 --   world, unit: the model
 --   animation, time, speed: what is playing (the time is of the animation as it is in the file, speed makes it last as long
 --       as it is to), blend_from, blend_left: the pose it blends from
---   closing: it is being put down, the arms are the game's again
 --   cooldown_end, cooldown: when the glow is all back, and how long it took to come back
 --   venting, vent_time: the heat is being vented
 --   gel_time, gel_frame, bob_time, walk_right, walk_up
@@ -204,7 +204,7 @@ local function destroy(first_person_is_going)
 		World.destroy_unit(finished.world, finished.unit)
 	end
 
-	if not finished.closing and not first_person_is_going then
+	if not first_person_is_going then
 		local fp = local_first_person()
 
 		if fp then
@@ -244,14 +244,6 @@ local function create(fp)
 	fp:hide_weapons(HIDE_REASON, true)
 	hide_game_weapon(fp)
 	play("Pickup", wield_time())
-end
-
--- Put away: the game's arms are back for the weapon that comes next, and the model goes down
-local function close(fp)
-	skin.closing = true
-
-	show_game_weapon(fp)
-	play("PutDown", wield_time())
 end
 
 -- Made when the setting or the weapon is switched, and when what is wielded is the Shock Rifle
@@ -299,16 +291,17 @@ mod.wield_callbacks.shock_skin = function (inventory_extension, equipment, slot_
 	end
 end
 
+-- The weapon that is put away: the model is gone, the arms are the game's again for the weapon that comes next
 mod.unwield_callbacks.shock_skin = function (inventory_extension, equipment, previous_item_data)
-	if skin and not skin.closing and item_template_name(previous_item_data) == TEMPLATE_NAME then
-		close(inventory_extension.first_person_extension)
+	if skin and item_template_name(previous_item_data) == TEMPLATE_NAME then
+		destroy()
 	end
 end
 
 -- The shots (the animation plays as the action of the shot starts, and the glow comes back by the time the next one can
 -- be fired)
 local function shot(action, new_action, animation_name)
-	if not skin or skin.closing or not utils.is_local_player_unit(action.owner_unit) then
+	if not skin or not utils.is_local_player_unit(action.owner_unit) then
 		return
 	end
 
@@ -332,7 +325,7 @@ end
 
 -- Venting the heat is the game's own action, a UT2004 Shock Rifle has none: the glow of the chamber pulses while it lasts
 mod.charge_start_callbacks.shock_skin = function (action, new_action)
-	if skin and not skin.closing and new_action.vent_overcharge and utils.is_local_player_unit(action.owner_unit) then
+	if skin and new_action.vent_overcharge and utils.is_local_player_unit(action.owner_unit) then
 		skin.venting = true
 		skin.vent_time = 0
 
@@ -402,12 +395,6 @@ local function update_animation(dt)
 	if skin.animation == "Idle" then
 		skin.time = skin.time % duration
 	elseif skin.time >= duration then
-		if skin.closing then
-			destroy()
-
-			return
-		end
-
 		play("Idle")
 	end
 end
@@ -455,11 +442,6 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	end
 
 	update_animation(dt)
-
-	if not skin then
-		return
-	end
-
 	update_bob(fp.unit, dt)
 	update_chamber(dt)
 	Unit.set_unit_visibility(skin.unit, game_shows_weapon(fp))
@@ -468,7 +450,7 @@ end
 
 -- (the game shows its weapon and its arms again at times of its own, after the mod's update)
 mod.pre_render_callbacks.shock_skin = function ()
-	if skin and not skin.closing then
+	if skin then
 		local fp = local_first_person()
 
 		if fp then
@@ -477,7 +459,7 @@ mod.pre_render_callbacks.shock_skin = function ()
 	end
 end
 
--- Development: /shockskin debug prints what the skin does, /shockskin play <Pickup|Idle|Fire|AltFire|PutDown> plays an animation
+-- Development: /shockskin debug prints what the skin does, /shockskin play <Pickup|Idle|Fire|AltFire> plays an animation
 mod:command("shockskin", "debug | play <animation> - the Shock Rifle skin", function (command, name)
 	if command == "debug" then
 		debug_enabled = not debug_enabled
