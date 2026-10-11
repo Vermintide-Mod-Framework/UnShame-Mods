@@ -78,6 +78,14 @@ local CONFIG = {
 	explosion_core_size = 40,
 	explosion_core_growth = 100,
 	explosion_core_life = 1,
+	-- The dynamic lights of the ball and of its explosion (LightHue 195 and LightSaturation 85, of 255 each, make this purple). UT's LightRadius
+	-- is 4 for the ball and 5 for the explosion, of 25 units each; the explosion's light is gone at 0.5 s, and gets dimmer until then
+	light_color = { 0.86, 0.67, 1 },
+	ball_light_intensity = 3,
+	ball_light_falloff = 2, -- meters
+	explosion_light_intensity = 6,
+	explosion_light_falloff = 2.5,
+	explosion_light_life = 0.5,
 	-- ShockExplosion: a dark sphere (EffectsSphere144, 48 units in radius, drawn here with the smoother sphere of the combo, 126.7 in radius) that
 	-- is 0.6 of its size at first and grows 1.2 of it a second; it is at its darkest 0.3 of its life in
 	explosion_sphere_life = 0.6,
@@ -429,6 +437,17 @@ end
 -- The flying ball: new_ball creates its long-lived sprites, update_ball spawns the short-lived ones (core, flares, sparks) every frame.
 -- `follow` is a function that returns the ball's position, or nil once the ball is gone.
 function fx.new_ball(follow)
+	particles.light({
+		brightness = function ()
+			return 1
+		end,
+		color = CONFIG.light_color,
+		falloff = CONFIG.ball_light_falloff,
+		follow = follow,
+		intensity = CONFIG.ball_light_intensity,
+		life = CONFIG.ball_sprite_life,
+	})
+
 	-- (the projectile of UT is a sprite of its own: shock_core_low at DrawScale, all there as long as the ball lives)
 	-- (UT draws it with a light of its own that makes it solid; layers of it add up to the same)
 	-- (the texture of the ball is a dark disc with a rim and a bright middle, which on its own is seen as a ring: the sphere is filled with a
@@ -543,6 +562,14 @@ end
 -- The ball hits something and goes off (ShockExplosionCore and ShockExplosion's dark sphere)
 function fx.ball_explosion(position)
 	local life = CONFIG.explosion_sphere_life
+
+	particles.light({
+		color = CONFIG.light_color,
+		falloff = CONFIG.explosion_light_falloff,
+		intensity = CONFIG.explosion_light_intensity,
+		life = CONFIG.explosion_light_life,
+		position = position,
+	})
 
 	particles.mesh({
 		additive = 0,

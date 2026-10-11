@@ -20,9 +20,12 @@ local mod = get_mod("unreal_tournament")
 --       where it is now, nothing when it is to end
 --   delay: seconds before it shows
 --   additive: 1 (the default) adds its color to the screen, 0 blends it as the transparency of its texture says (smoke)
+--   falloff: how far a light reaches, in meters (particles.light only)
 -- The kinds:
 --   particles.sprite(spec): faces the camera
 --   particles.disc(spec): lies on a surface, spec.normal is the way it faces
+--   particles.light(spec): a point light (units/ut/fx/light) at spec.position or spec.follow, spec.color its color, spec.intensity how bright
+--       it is, spec.falloff how far it reaches; it fades as the other particles do
 --   particles.beam(spec): from spec.from to spec.to, spec.size is how wide it is, and it faces the camera around its length;
 --       spec.track, a function that gives from and to (nothing when it is to end), instead of the two points
 --   particles.mesh(spec): a mesh (units/ut/fx/coil, sphere, vortex, made by tools/asset_conversion/make_fx_meshes.py) at spec.position,
@@ -38,6 +41,7 @@ local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local particles = {}
 
 local UNIT_NAME = "units/ut/fx/quad"
+local LIGHT_UNIT_NAME = "units/ut/fx/light"
 local MATERIAL_FORMAT = "units/ut/fx/fx_%s"
 local MAX_PARTICLES = 400
 
@@ -62,7 +66,11 @@ local function acquire(world, unit_name)
 end
 
 local function release(particle)
-	Unit.set_unit_visibility(particle.entry.unit, false)
+	if particle.kind == "light" then
+		Light.set_enabled(particle.entry.light, false)
+	else
+		Unit.set_unit_visibility(particle.entry.unit, false)
+	end
 
 	local pool = free[particle.entry.unit_name]
 
@@ -75,16 +83,25 @@ local function add(kind, spec)
 	end
 
 	local world = Managers.world:world("level_world")
-	local entry = acquire(world, spec.unit or UNIT_NAME)
-	local material = spec.material or MATERIAL_FORMAT:format(spec.texture)
+	local entry = acquire(world, spec.unit or (kind == "light" and LIGHT_UNIT_NAME) or UNIT_NAME)
 
-	if entry.material ~= material then
-		entry.material = material
+	if kind == "light" then
+		entry.light = entry.light or Unit.light(entry.unit, "light")
 
-		Unit.set_material(entry.unit, "m_fx", material)
+		Light.set_falloff_start(entry.light, 0)
+		Light.set_falloff_end(entry.light, spec.falloff)
+		Light.set_enabled(entry.light, false)
+	else
+		local material = spec.material or MATERIAL_FORMAT:format(spec.texture)
+
+		if entry.material ~= material then
+			entry.material = material
+
+			Unit.set_material(entry.unit, "m_fx", material)
+		end
+
+		Unit.set_unit_visibility(entry.unit, false)
 	end
-
-	Unit.set_unit_visibility(entry.unit, false)
 
 	local particle = {
 		age = -(spec.delay or 0),
@@ -161,6 +178,10 @@ function particles.mesh(spec)
 	add("mesh", spec)
 end
 
+function particles.light(spec)
+	add("light", spec)
+end
+
 -- How bright a particle is a fraction of its life in (UT's attenuation: it comes up until ka, and goes down from there)
 local function fade(fraction, ka)
 	if ka <= 0 then
@@ -228,6 +249,16 @@ local function place(particle, dt, camera_position, camera_rotation)
 			particle.position:store(position)
 			particle.velocity:store(velocity * math.max(0, 1 - particle.drag * dt))
 		end
+	end
+
+	if particle.kind == "light" then
+		Unit.set_local_position(unit, 0, position)
+		Light.set_color(particle.entry.light, Vector3(particle.color[1], particle.color[2], particle.color[3]))
+		Light.set_intensity(particle.entry.light, light)
+		Light.set_enabled(particle.entry.light, true)
+		World.update_unit(particle.world, unit)
+
+		return
 	end
 
 	if particle.kind == "mesh" then

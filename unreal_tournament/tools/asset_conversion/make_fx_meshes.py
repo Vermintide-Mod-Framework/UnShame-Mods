@@ -158,6 +158,16 @@ def make_vortex(unit_name, mesh_name):
     write_unit(unit_name, [geometry('g_mesh', positions, position_index, uvs, uv_index)], {'g_mesh': 'g_mesh'})
     print(unit_name, 'frame 0 of', frames, len(triangles), 'triangles')
 
+def make_light(unit_name):
+    # A unit that is only a point light at its root (what UT's dynamic lights, LightType Steady, are: the effects set its color, brightness and
+    # reach, and move it)
+    write_unit(unit_name, [], {})
+    open('%s/%s.unit' % (FX, unit_name), 'w', newline='\n').write(
+        'lights = {\n\tlight = {\n\t\tcast_shadows = false\n\t\tcolor = [ 1 1 1 ]\n\t\tfalloff_end = 2\n\t\tfalloff_exponent = 1\n\t\tfalloff_start = 0\n'
+        '\t\tnode = "root"\n\t\ttype = "omni"\n\t\tvolumetric_intensity = 0\n\t}\n}\n')
+    print(unit_name, 'a light')
+
 make_static('coil', 'ShockCoil')
+make_light('light')
 make_static('sphere', 'TexPropSphere', SCRATCH + '/umodel/out13/Editor')
 make_vortex('vortex', 'ShockVortexMesh')
