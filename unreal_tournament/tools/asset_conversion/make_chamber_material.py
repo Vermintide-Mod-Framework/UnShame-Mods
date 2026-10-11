@@ -165,6 +165,18 @@ for n, (node_id, node_type, options, export, samplers, title) in enumerate(nodes
     if title:
         text += '\t\t\ttitle = "%s"\n' % title
     text += '\t\t\ttype = "%s"\n\t\t}\n' % node_type
-text += '\t]\n\tversion = 3\n}\ntextures = {\n\tgel_map = "units/ut/shock_power_df"\n\tglass_map = "units/ut/shock_glass"\n}\nvariables = {\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n}\n'
-open(UNITS + '/shock_rifle_power.material', 'w', newline='\n').write(text)
-print('wrote shock_rifle_power.material,', len(nodes), 'nodes')
+text += '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n}\n'
+open(UNITS + '/shock_rifle_chamber.material', 'w', newline='\n').write(text)
+# (the textures are bound by a material derived from the graph, as the materials of the effects are)
+open(UNITS + '/shock_rifle_power.material', 'w', newline='\n').write('''material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/shock_rifle_chamber"
+textures = {
+	gel_map = "units/ut/shock_power_df"
+	glass_map = "units/ut/shock_glass"
+}
+variables = {
+}
+''')
+print('wrote shock_rifle_chamber.material and shock_rifle_power.material,', len(nodes), 'nodes')
