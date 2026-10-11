@@ -167,7 +167,8 @@ local CONFIG = {
 		flares = false,
 		flash = false,
 		scorch = false,
-		sphere = true,
+		sphere_body = false,
+		sphere_bolts = true,
 		vortex = false,
 		wiggles = false,
 	},
@@ -531,8 +532,8 @@ end
 -- materials pan their textures themselves, see tools/asset_conversion/make_combo_materials.py):
 --   ShockComboSphereDark: a sphere (turned any way) with the bolts that pan along it, which are all there is of it: the rest is see through
 --   ShockComboVortex: a flat disc that always faces the camera, with lines that pan along it in a band
-local function combo_sphere(position)
-	if not CONFIG.combo_shown.sphere then
+local function combo_sphere_body(position)
+	if not CONFIG.combo_shown.sphere_body then
 		return
 	end
 
@@ -558,6 +559,17 @@ local function combo_sphere(position)
 		texture = "shock_solid",
 		unit = "units/ut/fx/sphere",
 	})
+end
+
+local function combo_sphere_bolts(position)
+	if not CONFIG.combo_shown.sphere_bolts then
+		return
+	end
+
+	local life = CONFIG.mesh_life
+	local sphere_scale = CONFIG.sphere_scale_interp
+	local sphere_fade = CONFIG.sphere_fade_interp
+
 	particles.mesh({
 		additive = 0,
 		brightness = function (fraction)
@@ -730,7 +742,8 @@ function fx.combo(position)
 	combo_flash(position)
 	combo_flares(position)
 	combo_wiggles(position)
-	combo_sphere(position)
+	combo_sphere_body(position)
+	combo_sphere_bolts(position)
 	combo_vortex(position)
 	combo_scorch(position)
 end
