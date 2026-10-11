@@ -24,7 +24,7 @@ return {
 		en = "Announcer",
 	},
 	announcer_description = {
-		en = "Unreal Tournament 2004's announcer. Kill quickly for multi kills, and keep killing without an enemy hurting you for killing sprees. Head shots, first blood, and lots of kills with head shots, the Flak Cannon or shock combos are called out too.",
+		en = "Unreal Tournament 2004's announcer. Kill again within a second and a half for a multi kill. Kill 15 enemies without an enemy hurting you for a killing spree, and keep going for more. Head shots and the first kill of a level are announced too. Get 45 kills with head shots, the Flak Cannon or shock combos, without being hurt, for a call out.",
 	},
 	no_barriers = {
 		en = "Remove Barriers",
