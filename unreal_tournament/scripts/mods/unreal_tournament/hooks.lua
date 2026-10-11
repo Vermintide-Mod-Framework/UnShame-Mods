@@ -140,6 +140,10 @@ mod.skin_explosion_callbacks = {}
 --   mod.shock_beam_callbacks[name] = function (owner_unit, start_position, end_position, hit_normal)
 mod.shock_beam_callbacks = {}
 
+-- A shock combo goes off (on every peer, as the explosion is made): where, and how far it reaches in meters
+--   mod.shock_combo_callbacks[name] = function (position, radius)
+mod.shock_combo_callbacks = {}
+
 -- The sounds a weapon's action plays for its player (the shot's, which the game plays and tells the others of), by the name of
 -- the game's event: a weapon's skin takes one over
 --   mod.hud_sound_callbacks[event name][name of the skin] = function (first_person_extension, play_on_husk)

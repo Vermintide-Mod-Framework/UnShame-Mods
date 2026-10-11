@@ -7,7 +7,11 @@ local mod = get_mod("unreal_tournament")
 --   Killing sprees (DeathMatch.NotifySpree, KillingSpreeMessage): kills in a row without being hurt by an enemy: Killing Spree, Rampage,
 --     Dominating, Unstoppable, Godlike, Wicked Sick. What hurts you is an enemy's damage, not your own weapons, overcharge or your allies'.
 --   First blood (DeathMatch.ScoreKill, FirstBloodMessage): the first enemy to die in a level, if it was you who killed it.
---   Head shots (DamTypeSniperHeadShot, SpecialKillMessage): a kill with a shot to the head, and Head Hunter after enough of them.
+--   Head shots (DamTypeSniperHeadShot, SpecialKillMessage): a kill with a ranged shot to the head.
+--   Call outs of a number of kills with a weapon (DamageType.IncrementKills): Head Hunter for head shots, Flak Monkey for kills with the Flak
+--     Cannon, Combo Whore for kills with a shock combo, a moment after the kill that makes the number.
+
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
 local CONFIG = {
 	-- UnrealPlayer.LogMultiKills: a kill counts as the next one of a multi kill if it comes this soon after the last one (UT has 4
@@ -40,9 +44,29 @@ local CONFIG = {
 	-- (FirstBloodMessage: "<name> drew first blood!")
 	first_blood = { event = "ut_announcer_first_blood", text = "drew first blood!" },
 	head_shot = { event = "ut_announcer_headshot", text = "Head Shot!!" },
-	-- DamTypeSniperHeadShot: Head Hunter is announced at 15 head shots, a moment later (ClientDelayedAnnouncementNamed)
-	head_hunter = { event = "ut_announcer_headhunter", headshots = 15, delay = 1.5 },
-	head_hunter_multiplier = 3,
+	-- (what is a ranged hit: the types of attack the game tells the shots of a ranged weapon by)
+	ranged_attack_types = {
+		instant_projectile = true,
+		heavy_instant_projectile = true,
+		projectile = true,
+	},
+	-- The call outs of a number of kills (the DamageTypes call ClientDelayedAnnouncementNamed at 15 of them, a moment later), times this
+	-- much: they start again when an enemy hurts the player, as a spree does
+	call_out_multiplier = 3,
+	call_out_delay = 1.5, -- seconds
+	call_outs = {
+		head_hunter = { event = "ut_announcer_headhunter", kills = 15 },
+		flak_monkey = { event = "ut_announcer_flak_monkey", kills = 15 },
+		combo_whore = { event = "ut_announcer_combo_whore", kills = 15 },
+	},
+	-- The weapons of the call outs: what the item that killed has as its template (the setting of the weapon must be on, or it is the
+	-- game's own weapon that has it)
+	flak_cannon = { setting = "flak_cannon", template = "blunderbuss_template_1" },
+	shock_rifle = { setting = "shock_rifle", template = "staff_blast_beam_template_1" },
+	-- A kill of the Shock Rifle is one of a combo if the enemy dies this soon after the combo goes off, and as close to it as how far it reaches
+	-- and this much more (the dead are thrown about by it)
+	combo_window = 0.5, -- seconds
+	combo_margin = 3, -- m
 	-- PlayerController.PlayRewardAnnouncement: an announcement that is not forced is not played if one has been played in the last second
 	unforced_gap = 1, -- seconds
 	-- The words (LocalMessage): where they are on the screen (PosY of each message, from the top), how long they last (Lifetime) and how they
@@ -64,7 +88,8 @@ local CONFIG = {
 local multi_kill_level = 0 -- UnrealPlayer.MultiKillLevel
 local last_kill_time = -math.huge
 local spree = 0 -- Pawn.Spree
-local head_shots = 0
+local call_out_kills = {} -- by name: how many of the kills of each
+local combo -- the last shock combo: { time, position (boxed), radius }
 local first_blood_taken = false
 local last_sound_time = -math.huge
 local playing_id -- of the announcement that is playing
@@ -156,16 +181,53 @@ local function announce_spree(kills)
 	end
 end
 
-local function announce_head_shot(head_shot_kills)
-	show("head_shot", CONFIG.head_shot.text, 2)
-	play(CONFIG.head_shot.event, false)
+-- A kill that counts for a call out (DamageType.IncrementKills): the call out comes a moment after the kill that makes the number
+local function count_call_out(name)
+	local call_out = CONFIG.call_outs[name]
 
-	if head_shot_kills == CONFIG.head_hunter.headshots * CONFIG.head_hunter_multiplier then
+	call_out_kills[name] = (call_out_kills[name] or 0) + 1
+
+	if call_out_kills[name] == call_out.kills * CONFIG.call_out_multiplier then
 		delayed[#delayed + 1] = {
-			event = CONFIG.head_hunter.event,
-			time = Managers.time:time("game") + CONFIG.head_hunter.delay,
+			event = call_out.event,
+			time = Managers.time:time("game") + CONFIG.call_out_delay,
 		}
 	end
+end
+
+local function announce_head_shot()
+	show("head_shot", CONFIG.head_shot.text, 2)
+	play(CONFIG.head_shot.event, false)
+	count_call_out("head_hunter")
+end
+
+-- If the shot that killed was a ranged one (how the game's own statistics tell: by the type of the attack, or the slot of the weapon when
+-- it says none)
+local function is_ranged_hit(damage_data)
+	local attack_type = damage_data[DamageDataIndex.ATTACK_TYPE]
+
+	if attack_type and attack_type ~= "n/a" then
+		return CONFIG.ranged_attack_types[attack_type] == true
+	end
+
+	local item = rawget(ItemMasterList, damage_data[DamageDataIndex.DAMAGE_SOURCE_NAME])
+
+	return item ~= nil and item.slot_type == "ranged"
+end
+
+-- If the item that killed is the weapon (and the weapon is the one of the mod, not the game's)
+local function is_killed_by(weapon, damage_data)
+	local item = rawget(ItemMasterList, damage_data[DamageDataIndex.DAMAGE_SOURCE_NAME])
+
+	return item ~= nil and item.template == weapon.template and utils.is_weapon_enabled(weapon.setting)
+end
+
+local function is_combo_kill(victim_unit, damage_data, now)
+	if not combo or now - combo.time > CONFIG.combo_window or not is_killed_by(CONFIG.shock_rifle, damage_data) then
+		return false
+	end
+
+	return Vector3.distance(Unit.world_position(victim_unit, 0), combo.position:unbox()) <= combo.radius + CONFIG.combo_margin
 end
 
 mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_data)
@@ -211,17 +273,32 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 	announce_spree(spree)
 
 	-- (the zone of the shot that killed: the game's own statistics tell a head shot this way)
-	if damage_data[DamageDataIndex.HIT_ZONE] == "head" then
-		head_shots = head_shots + 1
+	if damage_data[DamageDataIndex.HIT_ZONE] == "head" and is_ranged_hit(damage_data) then
+		announce_head_shot()
+	end
 
-		announce_head_shot(head_shots)
+	if is_killed_by(CONFIG.flak_cannon, damage_data) then
+		count_call_out("flak_monkey")
+	end
+
+	if is_combo_kill(victim_unit, damage_data, now) then
+		count_call_out("combo_whore")
 	end
 end)
 
--- What ends a spree, and the count of head shots for Head Hunter: an enemy hurts the player. Their own weapons (and the overcharge) and their allies' don't: the one who hurts is the
--- unit that did it, an enemy is a unit that has a breed that is not a player's
+-- Where and when the shock combos go off
+mod.shock_combo_callbacks.announcer = function (position, radius)
+	combo = {
+		position = Vector3Box(position),
+		radius = radius,
+		time = Managers.time:time("game"),
+	}
+end
+
+-- What ends a spree, and starts the count of the call outs again: an enemy hurts the player. Their own weapons (and the overcharge) and their
+-- allies' don't: the one who hurts is the unit that did it, an enemy is a unit that has a breed that is not a player's
 mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_unit, damage_amount, _, _, _, _, _, _, source_attacker_unit)
-	if (spree == 0 and head_shots == 0) or damage_amount <= 0 or not attacker_unit then
+	if (spree == 0 and next(call_out_kills) == nil) or damage_amount <= 0 or not attacker_unit then
 		return
 	end
 
@@ -236,7 +313,8 @@ mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_
 
 	if breed and not breed.is_player then
 		spree = 0
-		head_shots = 0
+
+		table.clear(call_out_kills)
 	end
 end)
 
@@ -289,11 +367,12 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	multi_kill_level = 0
 	last_kill_time = -math.huge
 	spree = 0
-	head_shots = 0
+	combo = nil
 	first_blood_taken = false
 	last_sound_time = -math.huge
 	playing_id = nil
 
+	table.clear(call_out_kills)
 	table.clear(delayed)
 	table.clear(messages)
 end

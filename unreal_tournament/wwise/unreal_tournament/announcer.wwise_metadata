@@ -15,4 +15,6 @@ events = {
 	ut_announcer_first_blood = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.294 duration_max = 2.294 positioning = "2D" }
 	ut_announcer_headshot = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.956 duration_max = 1.956 positioning = "2D" }
 	ut_announcer_headhunter = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.968 duration_max = 1.968 positioning = "2D" }
+	ut_announcer_flak_monkey = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.487 duration_max = 2.487 positioning = "2D" }
+	ut_announcer_combo_whore = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.990 duration_max = 1.990 positioning = "2D" }
 }

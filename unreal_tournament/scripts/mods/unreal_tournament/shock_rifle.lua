@@ -881,6 +881,10 @@ end
 -- Explosions of the weapons are run by their names, on every peer (one hook for all of them)
 mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_position)
 	start_implosion(world, impact_position)
+
+	for _, callback in pairs(mod.shock_combo_callbacks) do
+		callback(impact_position, ExplosionTemplates.ut_shock_combo_explosion.explosion.radius)
+	end
 end
 
 -- Beam trail: the staff's own beam particle, stretched from the muzzle to the hit point

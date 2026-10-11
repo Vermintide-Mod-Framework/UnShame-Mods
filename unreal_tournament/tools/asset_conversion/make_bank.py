@@ -37,6 +37,9 @@ WEAPONS = {
         ('ut_announcer_first_blood', ANNOUNCER + 'first_blood', False, -18, 0),
         ('ut_announcer_headshot', ANNOUNCER + 'Headshot', False, -18, 0),
         ('ut_announcer_headhunter', ANNOUNCER + 'Headhunter', False, -18, 0),
+        # (DamTypeFlakChunk and DamTypeShockCombo)
+        ('ut_announcer_flak_monkey', ANNOUNCER + 'FlackMonkey', False, -18, 0),
+        ('ut_announcer_combo_whore', ANNOUNCER + 'Combowhore', False, -18, 0),
     ],
     'shock_rifle': [
         ('ut_shock_fire', SHOCK + 'BShockRifleFire', False, -22, 0),
