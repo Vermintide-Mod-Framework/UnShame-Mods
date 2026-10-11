@@ -30,7 +30,8 @@ for name, tga in (('shock_power_df', SCRATCH + '/umodel/out3/UT2004Weapons/Textu
                   ('shock_glass', SCRATCH + '/umodel/out6/UT2004Weapons/Texture/ShockGlass.tga')):
     w, h, rows = read_tga(tga)
     write_png('%s/%s.png' % (UNITS, name), w, h, rows)
-    open('%s/%s.texture' % (UNITS, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % ('units/ut/' + name))
+    # (not sRGB: UT does its sums on the colours as they are in the texture, which are then shown as they are, see the end of the graph)
+    open('%s/%s.texture' % (UNITS, name), 'w', newline='\n').write((TEXTURE_TEMPLATE % ('units/ut/' + name)).replace('srgb = true', 'srgb = false'))
 
 def guid(n):
     return 'c0de0000-0000-4000-8000-%012d' % n
@@ -49,7 +50,8 @@ IN_CONSTANT_VECTOR3 = '6ff26be7-68a1-4b89-b9dd-551d216086c2'
 IN_CONSTRUCT_X, IN_CONSTRUCT_Y = '8231a2cb-b751-4ecd-94eb-3e6d048ba173', '46536067-b418-47a5-bc6b-234972e963e9'
 IN_OUT_BASE_COLOR, IN_OUT_OPACITY, IN_OUT_ADDITIVE = 'aca690cb-6305-4a2f-bf3d-69183a493db3', '34259752-b962-4b65-92c3-903a57338519', 'c9a30d71-a8ad-4b9e-aedf-d785ae7e301f'
 
-ADDRESS_WRAP, FILTER_LINEAR, SRGB = '5dd59b3d-1762-4a14-9930-7500230ef3db', 'f669a3a6-0376-4187-840e-80000e2939d5', 'fb3f709b-a54a-4e93-ac9f-e9fc76fb8bcd'
+ADDRESS_WRAP, FILTER_LINEAR, SRGB = '5dd59b3d-1762-4a14-9930-7500230ef3db', 'f669a3a6-0376-4187-840e-80000e2939d5', 'e94e53e6-49b6-4194-a747-8f064a5932e0'
+IN_SATURATE, IN_POWER_A, IN_POWER_B = '6cebb808-14e4-45d6-9816-3838b1f6f4c7', '447b3fe2-c820-4511-a923-b38b0f6c9fe6', 'e16267f4-8b4e-4079-b13d-f380cfd386ec'
 LAYER_TRANSPARENT, DOUBLE_SIDED, BLEND_TRANSPARENT, DISABLE_DEPTH_WRITE = (
     'c8d8b754-c567-4c7b-9cbd-8acab22beff5', '8df1b8f7-17c2-4ae4-8c4e-25517ec1df46',
     '435e14e4-556d-4ac1-af14-8dafe63aff8f', '7b8bc0bf-c453-49d2-9415-0e80fec1039f')
@@ -141,7 +143,13 @@ add_node('blend', 'core/shader_nodes/lerp')
 connect('modulated', 'blend', IN_LERP_A)
 connect('glass', 'blend', IN_LERP_B, 'rgb')
 connect('glass_weight', 'blend', IN_LERP_W)
-connect('blend', 'out', IN_OUT_BASE_COLOR)
+# UT does its sums on gamma colours and shows them as they are: the result (at most 1) is made the light that is shown as it
+add_node('shown', 'core/shader_nodes/saturate')
+connect('blend', 'shown', IN_SATURATE)
+add_node('light', 'core/shader_nodes/power')
+connect('shown', 'light', IN_POWER_A)
+constant('light', IN_POWER_B, 2.2)
+connect('light', 'out', IN_OUT_BASE_COLOR)
 connect('intensity', 'out', IN_OUT_OPACITY)
 # (blended, not added: the liquid hides what is inside the chamber as UT's does; the glow, which is the opacity, takes it away after a shot)
 constant('out', IN_OUT_ADDITIVE, 0)

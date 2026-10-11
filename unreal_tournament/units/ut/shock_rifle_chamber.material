@@ -251,11 +251,29 @@ shader = {
 		}
 		{
 			destination = {
+				connector_id = "6cebb808-14e4-45d6-9816-3838b1f6f4c7"
+				instance_id = "c0de0000-0000-4000-8000-000000000026"
+			}
+			source = {
+				instance_id = "c0de0000-0000-4000-8000-000000000025"
+			}
+		}
+		{
+			destination = {
+				connector_id = "447b3fe2-c820-4511-a923-b38b0f6c9fe6"
+				instance_id = "c0de0000-0000-4000-8000-000000000027"
+			}
+			source = {
+				instance_id = "c0de0000-0000-4000-8000-000000000026"
+			}
+		}
+		{
+			destination = {
 				connector_id = "aca690cb-6305-4a2f-bf3d-69183a493db3"
 				instance_id = "c0de0000-0000-4000-8000-000000000001"
 			}
 			source = {
-				instance_id = "c0de0000-0000-4000-8000-000000000025"
+				instance_id = "c0de0000-0000-4000-8000-000000000027"
 			}
 		}
 		{
@@ -384,8 +402,16 @@ shader = {
 			]
 		}
 		{
-			connector_id = "c9a30d71-a8ad-4b9e-aedf-d785ae7e301f"
+			connector_id = "e16267f4-8b4e-4079-b13d-f380cfd386ec"
 			id = "c0de0000-0000-4000-8000-000000001014"
+			instance_id = "c0de0000-0000-4000-8000-000000000027"
+			value = [
+				2.2
+			]
+		}
+		{
+			connector_id = "c9a30d71-a8ad-4b9e-aedf-d785ae7e301f"
+			id = "c0de0000-0000-4000-8000-000000001015"
 			instance_id = "c0de0000-0000-4000-8000-000000000001"
 			value = [
 				0
@@ -716,7 +742,7 @@ shader = {
 			options = [
 				"5dd59b3d-1762-4a14-9930-7500230ef3db"
 				"f669a3a6-0376-4187-840e-80000e2939d5"
-				"fb3f709b-a54a-4e93-ac9f-e9fc76fb8bcd"
+				"e94e53e6-49b6-4194-a747-8f064a5932e0"
 			]
 			position = [
 				1500
@@ -796,7 +822,7 @@ shader = {
 			options = [
 				"5dd59b3d-1762-4a14-9930-7500230ef3db"
 				"f669a3a6-0376-4187-840e-80000e2939d5"
-				"fb3f709b-a54a-4e93-ac9f-e9fc76fb8bcd"
+				"e94e53e6-49b6-4194-a747-8f064a5932e0"
 			]
 			position = [
 				900
@@ -876,6 +902,42 @@ shader = {
 			samplers = {
 			}
 			type = "core/shader_nodes/lerp"
+		}
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+			}
+			id = "c0de0000-0000-4000-8000-000000000026"
+			options = [
+			]
+			position = [
+				300
+				800
+			]
+			samplers = {
+			}
+			type = "core/shader_nodes/saturate"
+		}
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+			}
+			id = "c0de0000-0000-4000-8000-000000000027"
+			options = [
+			]
+			position = [
+				600
+				800
+			]
+			samplers = {
+			}
+			type = "core/shader_nodes/power"
 		}
 	]
 	version = 3
