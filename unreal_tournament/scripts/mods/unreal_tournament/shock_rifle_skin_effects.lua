@@ -168,7 +168,7 @@ local CONFIG = {
 		flash = false,
 		scorch = false,
 		sphere = false,
-		vortex = false,
+		vortex = true,
 		wiggles = false,
 	},
 	-- How much of the vortex (the jagged ring of lines that faces the camera) shows at the most, 1 being UT's
