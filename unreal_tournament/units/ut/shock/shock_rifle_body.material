@@ -3,7 +3,7 @@ material_contexts = {
 }
 parent_material = "core/stingray_renderer/shader_import/standard"
 textures = {
-	color_map = "units/ut/shock_body_df"
+	color_map = "units/ut/shock/shock_body_df"
 }
 variables = {
 	use_color_map = {

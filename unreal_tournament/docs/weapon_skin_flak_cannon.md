@@ -11,7 +11,7 @@ changes only what is seen and heard.
 
 What the Shock Rifle's skin does is mostly not about the Shock Rifle: it spawns a model in the first person unit, places it as
 UT places it, plays animations, hides the game's weapon, bobs, holds the pickup mesh in the hand of every character, and plays
-sounds. That moves out of `shock_rifle_skin.lua` into **`weapon_skin.lua`**, a factory (`mod.weapon_skin.new(definition)`, the
+sounds. That moved out of the Shock Rifle's `skin.lua` into **`weapon_skin.lua`**, a factory (`mod.weapon_skin.new(definition)`, the
 precedent is `mod.skin_particles`) that each weapon's skin file calls with what is its own:
 
 | The definition says | Used for |

@@ -14,8 +14,8 @@ local mod = get_mod("unreal_tournament")
 -- The assets were made with unreal_tournament/tools/asset_conversion.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
-local animations = mod:dofile("scripts/mods/unreal_tournament/shock_rifle_skin_animations")
-local fx = mod:dofile("scripts/mods/unreal_tournament/shock_rifle_skin_effects")
+local animations = mod:dofile("scripts/mods/unreal_tournament/shock/skin_animations")
+local fx = mod:dofile("scripts/mods/unreal_tournament/shock/skin_effects")
 
 local TEMPLATE_NAME = "staff_blast_beam_template_1"
 local SETTING_ID = "shock_rifle"
@@ -49,7 +49,7 @@ local CONFIG = {
 
 local skin_api
 
--- The balls that are flying (every player's, as this machine sees them). What makes up a ball is made as it goes, see shock_rifle_skin_effects.
+-- The balls that are flying (every player's, as this machine sees them). What makes up a ball is made as it goes, see skin_effects.lua.
 local balls = {}
 
 -- Every frame: the chamber's glow
@@ -121,7 +121,7 @@ skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
 	name = "shock",
 	template = TEMPLATE_NAME,
-	unit_name = "units/ut/shock_rifle",
+	unit_name = "units/ut/shock/shock_rifle",
 	animations = {
 		bones = {
 			"root",
@@ -164,7 +164,7 @@ skin_api = mod.weapon_skin.new({
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
-		unit_name = "units/ut/shock_pickup",
+		unit_name = "units/ut/shock/pickup",
 		hand_node = "j_rightweaponattach",
 		meters_per_unit = 0.011,
 		scale = 0.65,

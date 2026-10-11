@@ -13,7 +13,7 @@ local mod = get_mod("unreal_tournament")
 -- The assets were made with unreal_tournament/tools/asset_conversion.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
-local animations = mod:dofile("scripts/mods/unreal_tournament/rocket_launcher_skin_animations")
+local animations = mod:dofile("scripts/mods/unreal_tournament/rocket/skin_animations")
 local particles = mod.skin_particles
 
 local TEMPLATE_NAME = "repeating_crossbow_template_1"

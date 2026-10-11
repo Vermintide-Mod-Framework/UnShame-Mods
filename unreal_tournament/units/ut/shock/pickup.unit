@@ -1,6 +1,6 @@
 materials = {
-	m_body = "units/ut/shock_rifle_body"
-	m_power = "units/ut/shock_rifle_power"
+	m_body = "units/ut/shock/shock_rifle_body"
+	m_power = "units/ut/shock/shock_rifle_power"
 }
 renderables = {
 	g_pickup_0 = {

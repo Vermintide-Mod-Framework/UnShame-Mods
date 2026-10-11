@@ -22,7 +22,7 @@ WEAPONS = {
         'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
         'locators': ['Bone_Flash'],
         'unit': 'units/ut/flak/flak_cannon',
-        'lua': 'scripts/mods/unreal_tournament/flak_cannon_skin_animations.lua',
+        'lua': 'scripts/mods/unreal_tournament/flak/skin_animations.lua',
     },
 }
 
@@ -140,7 +140,7 @@ WEAPONS['rocket'] = {
     'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire'), ('load', 'Load')],
     'locators': ['Bone_Flash'],
     'unit': 'units/ut/rocket/rocket_launcher',
-    'lua': 'scripts/mods/unreal_tournament/rocket_launcher_skin_animations.lua',
+    'lua': 'scripts/mods/unreal_tournament/rocket/skin_animations.lua',
 }
 
 WEAPONS['bio'] = {
@@ -153,7 +153,7 @@ WEAPONS['bio'] = {
     'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire'), ('HOLD', 'Hold')],
     'locators': ['Bone_Flash'],
     'unit': 'units/ut/bio/bio_rifle',
-    'lua': 'scripts/mods/unreal_tournament/bio_rifle_skin_animations.lua',
+    'lua': 'scripts/mods/unreal_tournament/bio/skin_animations.lua',
 }
 
 WEAPONS['link'] = {
@@ -166,7 +166,7 @@ WEAPONS['link'] = {
     'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
     'locators': ['bone flashA'],
     'unit': 'units/ut/link/link_gun',
-    'lua': 'scripts/mods/unreal_tournament/link_gun_skin_animations.lua',
+    'lua': 'scripts/mods/unreal_tournament/link/skin_animations.lua',
 }
 
 MATERIAL_TEMPLATES = {

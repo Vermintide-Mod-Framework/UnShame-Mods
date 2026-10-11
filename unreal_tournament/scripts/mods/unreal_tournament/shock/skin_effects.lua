@@ -5,7 +5,7 @@ local mod = get_mod("unreal_tournament")
 -- UT units. The textures are the game's own, converted (tools/asset_conversion/make_fx_assets.py). The meshes (units/ut/fx, made by
 -- tools/asset_conversion/make_fx_meshes.py) are the beam's coil and the combo's sphere and vortex.
 --
--- shock_rifle_skin.lua calls these functions: it knows when and where an effect happens.
+-- skin.lua calls these functions: it knows when and where an effect happens.
 
 local particles = mod.skin_particles
 

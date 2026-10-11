@@ -20,7 +20,7 @@ import os, sys, shutil
 
 SCRATCH = sys.argv[1]
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-UNITS = REPO + '/units/ut'
+UNITS = REPO + '/units/ut/shock'
 
 sys.path.insert(0, os.path.dirname(__file__))
 from convert_weapon import read_tga, write_png, TEXTURE_TEMPLATE
@@ -31,7 +31,7 @@ for name, tga in (('shock_power_df', SCRATCH + '/umodel/out3/UT2004Weapons/Textu
     w, h, rows = read_tga(tga)
     write_png('%s/%s.png' % (UNITS, name), w, h, rows)
     # (not sRGB: UT does its sums on the colours as they are in the texture, which are then shown as they are, see the end of the graph)
-    open('%s/%s.texture' % (UNITS, name), 'w', newline='\n').write((TEXTURE_TEMPLATE % ('units/ut/' + name)).replace('srgb = true', 'srgb = false'))
+    open('%s/%s.texture' % (UNITS, name), 'w', newline='\n').write((TEXTURE_TEMPLATE % ('units/ut/shock/' + name)).replace('srgb = true', 'srgb = false'))
 
 def guid(n):
     return 'c0de0000-0000-4000-8000-%012d' % n
@@ -195,10 +195,10 @@ open(UNITS + '/shock_rifle_chamber.material', 'w', newline='\n').write(text)
 open(UNITS + '/shock_rifle_power.material', 'w', newline='\n').write('''material_contexts = {
 	surface_material = ""
 }
-parent_material = "units/ut/shock_rifle_chamber"
+parent_material = "units/ut/shock/shock_rifle_chamber"
 textures = {
-	gel_map = "units/ut/shock_power_df"
-	glass_map = "units/ut/shock_glass"
+	gel_map = "units/ut/shock/shock_power_df"
+	glass_map = "units/ut/shock/shock_glass"
 }
 variables = {
 }

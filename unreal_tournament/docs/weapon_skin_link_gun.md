@@ -1,6 +1,6 @@
 # Link Gun skin
 
-Setting: Weapons > Weapon Skins (`link_gun`). Template `staff_life` (the Deepwood Staff). Code: `link_gun_skin.lua`; the gameplay stays in `link_gun.lua`.
+Setting: Weapons > Weapon Skins (`link_gun`). Template `staff_life` (the Deepwood Staff). Code: `link/skin.lua`; the gameplay stays in `link/link_gun.lua`.
 
 ## What UT2004 has
 - `NewWeapons2004.FatLinkGun`: DisplayFOV 60, PlayerViewOffset (-5,-3,0), PlayerViewPivot yaw 500, BobDamping 1.575. Muzzle bone `b_bone_flasha`. Animations Pickup / Idle / Fire / AltFire.

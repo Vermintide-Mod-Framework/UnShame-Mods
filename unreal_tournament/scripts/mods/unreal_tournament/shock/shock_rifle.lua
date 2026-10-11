@@ -4,7 +4,7 @@ local mod = get_mod("unreal_tournament")
 --   Left button: an instant hitscan beam
 --   Right button: a slow ball that flies straight and explodes on impact
 --   A beam that hits a ball detonates it in a large "shock combo" explosion
--- The skin (shock_rifle_skin.lua) draws all of it; this file only does what it does to the game.
+-- The skin (skin.lua) draws all of it; this file only does what it does to the game.
 
 local TEMPLATE_NAME = "staff_blast_beam_template_1"
 

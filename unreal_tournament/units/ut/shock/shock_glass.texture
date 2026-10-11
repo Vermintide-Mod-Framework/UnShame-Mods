@@ -1,6 +1,6 @@
 common = {
 	input = {
-		filename = "units/ut/shock_body_df"
+		filename = "units/ut/shock/shock_glass"
 	}
 	output = {
 		apply_processing = true
@@ -13,7 +13,7 @@ common = {
 		mipmap_keep_original = false
 		mipmap_num_smallest_steps_to_discard = 0
 		resident_mips = 0
-		srgb = true
+		srgb = false
 		streamable = false
 	}
 }

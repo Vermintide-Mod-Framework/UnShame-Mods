@@ -1,6 +1,6 @@
 common = {
 	input = {
-		filename = "units/ut/shock_power_df"
+		filename = "units/ut/shock/shock_power_df"
 	}
 	output = {
 		apply_processing = true

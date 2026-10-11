@@ -11,8 +11,8 @@ lua = [
 ]
 
 unit = [
-	"units/ut/shock_rifle"
-	"units/ut/shock_pickup"
+	"units/ut/shock/shock_rifle"
+	"units/ut/shock/pickup"
 	"units/ut/flak/flak_cannon"
 	"units/ut/flak/pickup"
 	"units/ut/flak/chunk"
@@ -32,7 +32,7 @@ unit = [
 ]
 
 material = [
-	"units/ut/shock_rifle_power"
+	"units/ut/shock/*"
 	"units/ut/flak/*"
 	"units/ut/rocket/*"
 	"units/ut/bio/*"
