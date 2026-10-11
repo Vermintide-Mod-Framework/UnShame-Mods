@@ -10,6 +10,7 @@ local mod = get_mod("unreal_tournament")
 --       how long the effect has been going, for its panning)
 --   life: how long it lasts
 --   size, growth: the size of the sprite and how much it changes in a second (a negative growth shrinks it)
+--   grow_time: seconds it takes to grow from nothing to its size (it starts out small)
 --   color: { r, g, b }, intensity: the most light it gives (1 is the texture as it is)
 --   attenuation: UT's mAttenKa: how far into its life it is the brightest (0 is at the start), it fades in before that and
 --       out after it
@@ -106,6 +107,7 @@ local function add(kind, spec)
 		scale = spec.scale,
 		brightness_by = spec.brightness,
 		growth = spec.growth or 0,
+		grow_time = spec.grow_time,
 		additive = spec.additive or 1,
 		own_material = spec.material ~= nil,
 		intensity = spec.intensity or 1,
@@ -203,6 +205,11 @@ local function place(particle, dt, camera_position, camera_rotation)
 	local unit = particle.entry.unit
 	local fraction = particle.age / particle.life
 	local size = particle.size and math.max(0, particle.size + particle.growth * particle.age)
+
+	if size and particle.grow_time then
+		size = size * math.min(1, particle.age / particle.grow_time)
+	end
+
 	local light = particle.intensity * (particle.brightness_by and particle.brightness_by(fraction) or brightness(particle))
 	local position, rotation, scale
 

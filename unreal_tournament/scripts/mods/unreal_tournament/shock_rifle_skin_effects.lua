@@ -50,6 +50,7 @@ local CONFIG = {
 	ball_sprite_size = 90, -- ShockProjectile: DrawScale 0.7 of the 128 units of the texture
 	ball_sprite_life = 10, -- its LifeSpan
 	ball_sprite_layers = 3,
+	ball_grow_time = 0.25, -- seconds the core of the ball takes to grow to its size when it starts
 	-- (FadeInEndTime and FadeOutStartTime of each: it is all there between, and the next core comes as one ends)
 	ball_fill_size = 85, -- units across: as big as the rim of the texture of the ball is
 	ball_fill_intensity = 1.5,
@@ -64,7 +65,7 @@ local CONFIG = {
 	ball_flare_interval = 0.5,
 	ball_flare_fade_in = 0.25,
 	ball_flare_fade_out = 0.2,
-	ball_spark_size = 4.5,
+	ball_spark_size = 18,
 	ball_spark_life = 0.35,
 	ball_spark_fade_in = 0.1,
 	ball_spark_fade_out = 0.3,
@@ -426,6 +427,7 @@ function fx.new_ball(follow)
 		color = PURPLE,
 		fade_in = 0,
 		follow = follow,
+		grow_time = CONFIG.ball_grow_time,
 		intensity = CONFIG.ball_fill_intensity,
 		life = CONFIG.ball_sprite_life,
 		size = CONFIG.ball_fill_size * UNIT,
@@ -437,6 +439,7 @@ function fx.new_ball(follow)
 			color = WHITE,
 			fade_in = 0,
 			follow = follow,
+			grow_time = CONFIG.ball_grow_time,
 			life = CONFIG.ball_sprite_life,
 			size = CONFIG.ball_sprite_size * UNIT,
 			-- (each layer turns its own way, so that the spikes of the texture move: made once and still, they stood out against the ones that
