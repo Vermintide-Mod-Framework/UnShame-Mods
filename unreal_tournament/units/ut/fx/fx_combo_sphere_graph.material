@@ -384,6 +384,10 @@ variables = {
 		type = "scalar"
 		value = 0
 	}
+	age = {
+		type = "scalar"
+		value = 0
+	}
 	intensity = {
 		type = "scalar"
 		value = 1
