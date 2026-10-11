@@ -50,7 +50,7 @@ local CONFIG = {
 	gel_material_format = "units/ut/shock_rifle_power_%02d",
 	gel_frame_count = 200, -- (20 a second: the pan is slow, so the steps are smaller than a pixel)
 	gel_loop_seconds = 10,
-	chamber_opacity = 0.6,
+	chamber_opacity = 1,
 	vent_pulse_speed = 14, -- radians per second, of the glow while the heat is vented
 	-- Weapon bob (UT2004 Pawn.CheckBob and Pawn.WeaponBob, in UT units): both the sway and how fast it goes follow the speed
 	-- of the player, as they do in UT (it is none when standing still). Bob is Pawn.Bob, which is 0.01 at most there: that is
