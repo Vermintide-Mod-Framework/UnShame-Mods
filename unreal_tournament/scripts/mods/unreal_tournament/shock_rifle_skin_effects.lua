@@ -78,6 +78,15 @@ local CONFIG = {
 	explosion_core_size = 40,
 	explosion_core_growth = 100,
 	explosion_core_life = 1,
+	-- ShockExplosion: a dark sphere (EffectsSphere144, 48 units in radius, drawn here with the smoother sphere of the combo, 126.7 in radius) that
+	-- is 0.6 of its size at first and grows 1.2 of it a second; it is at its darkest 0.3 of its life in, and as dark as the gray of 100 of 255 is
+	explosion_sphere_life = 0.6,
+	explosion_sphere_size = 0.6,
+	explosion_sphere_growth = 1.2,
+	explosion_sphere_attenuation = 0.3,
+	explosion_sphere_darkness = 100 / 255,
+	explosion_sphere_radius = 48,
+	sphere_mesh_radius = 126.7,
 	-- ShockCombo and the effects it makes
 	combo_core_size = 50,
 	combo_core_growth = 400,
@@ -531,8 +540,33 @@ function fx.update_ball(ball, dt)
 	return true
 end
 
--- The ball hits something and goes off (ShockExplosionCore)
+-- The ball hits something and goes off (ShockExplosionCore and ShockExplosion's dark sphere)
 function fx.ball_explosion(position)
+	local life = CONFIG.explosion_sphere_life
+
+	particles.mesh({
+		additive = 0,
+		-- (UT fades it in until attenuation of its life and out after it)
+		brightness = function (fraction)
+			if fraction < CONFIG.explosion_sphere_attenuation then
+				return fraction / CONFIG.explosion_sphere_attenuation
+			end
+
+			return (1 - fraction) / (1 - CONFIG.explosion_sphere_attenuation)
+		end,
+		color = { 0, 0, 0 },
+		intensity = CONFIG.explosion_sphere_darkness,
+		life = life,
+		material = "units/ut/fx/fx_explosion_dark",
+		position = position,
+		rotation = random_rotation(),
+		scale = function (fraction)
+			return (CONFIG.explosion_sphere_size + CONFIG.explosion_sphere_growth * life * fraction)
+				* CONFIG.explosion_sphere_radius / CONFIG.sphere_mesh_radius
+		end,
+		unit = "units/ut/fx/sphere",
+	})
+
 	particles.sprite({
 		attenuation = 0,
 		color = WHITE,

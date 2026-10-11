@@ -9,6 +9,7 @@ import os, sys
 #   fx_combo_vortex  ShockComboVortex's FinalBlend ShockElecRingFB (XEffectMat): FB_Translucent of the Combiner ShockElecRingComb
 #                    (CO_Multiply) of the TexPanner ShockElecAPanner (Shock_Elec_a, PanDirection yaw 16000, PanRate -1: along -V, a texture a
 #                    second) and the texture shock_gradient_b (a band: it is only there that the lines are seen)
+#   fx_explosion_dark  ShockExplosion's ShockDarkFB (not the combo's: the dark sphere that the ball's explosion makes)
 # Each is a graph (fx_combo_*_graph) and a material derived from it that binds its textures. The effects set their "intensity" (UT's ScaleGlow,
 # how much of it there is) and "tint" (a color that multiplies it).
 # Usage: make_combo_materials.py        (the textures are those of make_fx_assets.py: units/ut/fx/shock_electricity, shock_elec_a, shock_gradient_b)
@@ -161,3 +162,16 @@ multiply(vortex, 'color', 'lit', 'tint')
 vortex.connect('color', 'out', IN_OUT_BASE_COLOR)
 vortex.connect('intensity', 'out', IN_OUT_OPACITY)
 write('combo_vortex', vortex, {'lines_map': 'shock_elec_a', 'band_map': 'shock_gradient_b'})
+
+# ---------------------------------------------------------------- the dark sphere of the explosion of the ball
+# ShockExplosion's FinalBlend ShockDarkFB (XEffectMat): FB_Darken of the TexPanner ShockElecDPanner (PanDirection yaw 0, PanRate 1: along U, a texture
+# a second) of the texture shock_Energy_green_faded. It darkens what is behind it by what its texture is bright: here it is black, blended by the
+# green of the texture (the stock blends cannot darken each color of the screen by itself).
+dark = Graph()
+common(dark)
+panned(dark, 'pan', 1, 0)
+texture(dark, 'blobs', 'blobs_map', 'pan')
+multiply(dark, 'opacity', 'blobs', 'intensity', 'g')
+dark.connect('tint', 'out', IN_OUT_BASE_COLOR)
+dark.connect('opacity', 'out', IN_OUT_OPACITY)
+write('explosion_dark', dark, {'blobs_map': 'shock_dark'})

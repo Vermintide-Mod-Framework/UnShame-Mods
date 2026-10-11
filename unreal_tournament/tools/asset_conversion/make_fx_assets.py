@@ -48,6 +48,8 @@ TEXTURES = {
     'smoke': 'XEffects/Texture/SmokeAlphab_t.tga',
     # the meshes of the combo and of the beam (ShockComboSphereDark's electricity, the others are above)
     'shock_electricity': 'DeployableTex/Texture/C_T_Electricity_SG.tga',
+    # the dark sphere of the explosion of the ball (ShockDarkFB's texture)
+    'shock_dark': 'XEffectMat/Texture/shock_Energy_green_faded.tga',
 }
 
 # A texture that is made from another: name -> (the exported tga, what is made of its pixels (r, g, b, a) -> (r, g, b, a))
