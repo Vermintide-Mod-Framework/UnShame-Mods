@@ -55,7 +55,7 @@ local CONFIG = {
 	implosion_ring_end_scale = 0.3,
 	implosion_rings = false, -- the series of rings above is off for now
 	-- The ring of the game's own effect (Kruber's shockwave), which bends the light behind it: the effects of the skin can't, so one of them
-	-- (all three ways about, as a sphere) is played where the combo goes off, as big as combo_distortion_scale times the effect's own size
+	-- is played where the combo goes off, turned to face the player, as big as combo_distortion_scale times the effect's own size
 	combo_ring_effect = "fx/chr_kruber_shockwave",
 	combo_distortion_scale = 0.7,
 	combo_ring_height = 1, -- meters: how high above the origin of the ring effect its ring is (it is made to be played at a character's feet)
@@ -645,8 +645,10 @@ end
 local function start_implosion(world, position)
 	local radius = ExplosionTemplates.ut_shock_combo_explosion.explosion.radius
 
-	-- (the ring that bends the light, as the combo goes off)
-	create_rings(world, position, CONFIG.combo_distortion_scale)
+	-- (the ring that bends the light, as the combo goes off: one, turned to face the player, which is seen from the front whichever way the player is)
+	if CONFIG.combo_ring_effect then
+		effects.play_facing(world, CONFIG.combo_ring_effect, position, CONFIG.combo_distortion_scale, CONFIG.combo_ring_height)
+	end
 
 	-- (the skin draws the explosion, see skin_explosion_callbacks)
 	implosions[#implosions + 1] = {

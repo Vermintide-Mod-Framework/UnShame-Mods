@@ -44,6 +44,18 @@ function utils.is_local_player_unit(unit)
 	return local_player ~= nil and local_player.player_unit == unit
 end
 
+-- Where the camera of the player who is playing on this machine is and how it is turned (nothing if there is none now)
+function utils.camera_pose()
+	local player = Managers.player and Managers.player:local_player()
+	local camera_manager = Managers.state and Managers.state.camera
+
+	if not player or not camera_manager or not camera_manager:has_viewport(player.viewport_name) then
+		return
+	end
+
+	return camera_manager:camera_position(player.viewport_name), camera_manager:camera_rotation(player.viewport_name)
+end
+
 -- Whether the animations of a player's character are the weapon's to play: not while the game plays its own (hanging off a ledge,
 -- being knocked down, dead). The weapons' stance is an animation event that is sent to the character that others see too, and
 -- sent in the middle of one of those it replaces the animation of the state. (Only these: the status of being disabled is

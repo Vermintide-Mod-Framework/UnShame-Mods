@@ -33,6 +33,8 @@ local mod = get_mod("unreal_tournament")
 --
 -- (Vectors can't be kept from one frame to the next, so they are kept in boxes.)
 
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+
 local particles = {}
 
 local UNIT_NAME = "units/ut/fx/quad"
@@ -42,17 +44,6 @@ local MAX_PARTICLES = 400
 local active = {}
 -- units that are not used, by the name of the unit: { unit, world, material, unit_name }
 local free = {}
-
-local function camera_pose()
-	local player = Managers.player and Managers.player:local_player()
-	local camera_manager = Managers.state and Managers.state.camera
-
-	if not player or not camera_manager or not camera_manager:has_viewport(player.viewport_name) then
-		return
-	end
-
-	return camera_manager:camera_position(player.viewport_name), camera_manager:camera_rotation(player.viewport_name)
-end
 
 local function acquire(world, unit_name)
 	free[unit_name] = free[unit_name] or {}
@@ -320,7 +311,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 		return
 	end
 
-	local camera_position, camera_rotation = camera_pose()
+	local camera_position, camera_rotation = utils.camera_pose()
 
 	for i = #active, 1, -1 do
 		local particle = active[i]

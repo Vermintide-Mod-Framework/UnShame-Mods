@@ -4,6 +4,8 @@ local mod = get_mod("unreal_tournament")
 -- characters and weapons that use them, playing one that isn't loaded crashes the game, so an
 -- effect is only played when it is available.
 
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+
 local CONFIG = {
 	-- Particle effects are scaled by linking them to a unit with a scale, so effects that need
 	-- a size get an invisible helper unit. Some effects ignore the scale.
@@ -91,11 +93,46 @@ effects.play = function (world, effect_name, position, scale, rotation)
 	return true
 end
 
+-- Plays an effect that is a ring in its own plane (at the height above its origin) so that the ring is always seen from the front, however
+-- the player moves: the effect is turned to face the camera every frame, about position
+effects.play_facing = function (world, effect_name, position, scale, height)
+	local effect = effects.start(world, effect_name, position, scale)
+
+	if not effect then
+		return false
+	end
+
+	effect.age = 0
+	effect.facing = {
+		distance = height * scale,
+		position = Vector3Box(position),
+	}
+	timed_effects[#timed_effects + 1] = effect
+
+	return true
+end
+
+local function face_camera(effect, camera_rotation)
+	-- (its z axis is the way it faces: toward the camera)
+	local rotation = Quaternion.look(Quaternion.up(camera_rotation), -Quaternion.forward(camera_rotation))
+
+	-- (the ring is above the origin of the effect, and turned about it: the origin is where it puts the ring about the position)
+	Unit.set_local_position(effect.unit, 0, effect.facing.position:unbox() - Quaternion.rotate(rotation, Vector3(0, 0, effect.facing.distance)))
+	Unit.set_local_rotation(effect.unit, 0, rotation)
+	World.update_unit(effect.world, effect.unit)
+end
+
 effects.update = function (dt)
+	local _, camera_rotation = utils.camera_pose()
+
 	for i = #timed_effects, 1, -1 do
 		local effect = timed_effects[i]
 
 		effect.age = effect.age + dt
+
+		if effect.facing and camera_rotation and Unit.alive(effect.unit) then
+			face_camera(effect, camera_rotation)
+		end
 
 		if effect.age >= CONFIG.timed_effect_lifetime then
 			destroy_timed_effect(effect)
