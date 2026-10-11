@@ -195,6 +195,14 @@ register_explosion_template("ut_shock_combo_explosion", {
 	},
 })
 
+-- The hit effect of the beam: what it does to what it hits (the sound, the particles and the decals of the material, by the material of
+-- what is hit) is nothing, the skin draws the impact. The game sends the name of it to the other peers when the beam hits something that is
+-- not an enemy's (a wall, a prop, a training dummy), so it has to be in the lookup of names; a mapping with nothing in it does nothing.
+-- (set, not added with MaterialEffectMappingsUtility.add, which is an error for a name that is there: the mod is loaded again on a reload)
+MaterialEffectMappings.ut_shock_impact = {}
+
+utils.register_network_lookup("surface_material_effects", "ut_shock_impact")
+
 -- Weapon template
 
 -- Refire logic of UT2004 (WeaponFire / Weapon.StartFire / Weapon.ReadyToFire):
@@ -282,9 +290,8 @@ local function build_beam_action()
 		fire_sound_event = "weapon_staff_fire_beam_end_shot",
 		fire_time = CONFIG.beam_fire_time,
 		headshot_multiplier = 2,
-		-- (the beam must have one: the game sends the name of it to the other peers when the beam hits something that is not a level's, a
-		-- training dummy, and a nil is an error of the network lookup that closes the game)
-		hit_effect = "fireball_impact",
+		-- (the beam must have one, see ut_shock_impact)
+		hit_effect = "ut_shock_impact",
 		is_spell = true,
 		kind = "handgun",
 		overcharge_type = "ut_shock_beam",
