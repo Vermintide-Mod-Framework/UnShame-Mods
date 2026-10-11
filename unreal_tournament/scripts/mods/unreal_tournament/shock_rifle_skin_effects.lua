@@ -175,7 +175,7 @@ local CONFIG = {
 	-- How much of the vortex (the jagged ring of lines that faces the camera) shows at the most, 1 being UT's
 	vortex_opacity = 0.35,
 	-- How much of the sphere's bolts show at the most, 1 being UT's (the bolts are a strip of lightning that sweeps over the sphere: the blue band)
-	sphere_opacity = 0.35,
+	sphere_opacity = 1,
 	combo_scorch_size = 260,
 	combo_scorch_life = 6,
 	combo_scorch_reach = 120,
