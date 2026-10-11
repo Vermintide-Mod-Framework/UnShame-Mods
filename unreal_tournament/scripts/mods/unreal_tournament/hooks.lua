@@ -272,6 +272,9 @@ end)
 --   mod.crossbow_start_callbacks[name] = function (action_crossbow, new_action, t)
 --   mod.aim_start_callbacks[name] = function (action_aim, new_action, t)
 --   mod.aim_finish_callbacks[name] = function (action_aim, reason)
+--   mod.rocket_load_callbacks[name] = function (owner_unit, loaded)
+--       the Rocket Launcher has loaded another rocket (how many are loaded now), for the player who loads
+mod.rocket_load_callbacks = {}
 mod.shotgun_start_callbacks = {}
 mod.crossbow_start_callbacks = {}
 mod.aim_start_callbacks = {}

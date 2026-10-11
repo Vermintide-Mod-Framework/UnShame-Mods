@@ -17,16 +17,21 @@ unit = [
 	"units/ut/flak/pickup"
 	"units/ut/flak/chunk"
 	"units/ut/flak/shell"
+	"units/ut/rocket/rocket_launcher"
+	"units/ut/rocket/pickup"
+	"units/ut/rocket/projectile"
 	"units/ut/fx/quad"
 ]
 
 material = [
 	"units/ut/shock_rifle_power"
 	"units/ut/flak/*"
+	"units/ut/rocket/*"
 	"units/ut/fx/fx_*"
 ]
 
 wwise_dep = [
 	"wwise/unreal_tournament/shock_rifle"
 	"wwise/unreal_tournament/flak_cannon"
+	"wwise/unreal_tournament/rocket_launcher"
 ]

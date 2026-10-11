@@ -258,7 +258,7 @@ skin_api = mod.weapon_skin.new({
 	template = TEMPLATE_NAME,
 	unit_name = "units/ut/flak/flak_cannon",
 	animations = animations,
-	muzzle_node = "b_Bone_Flash",
+	muzzle_node = "b_bone_flash",
 	-- The model was converted at this many meters per UT unit (tools/asset_conversion/convert_weapon.py), the distance scale is how
 	-- many meters of forward are a UT unit of it in the view
 	model_meters_per_unit = 0.0125,

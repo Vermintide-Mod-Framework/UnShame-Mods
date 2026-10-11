@@ -23,6 +23,18 @@ STATICS = {
         'scale': 0.28,
         'unit': 'units/ut/flak/chunk',
     },
+    'rocket_pickup': {
+        'pskx': 'WeaponStaticMesh/StaticMesh/RocketLauncherPickup.pskx',
+        'materials': [('WeaponSkins/Texture/RocketTex0.tga', 'opaque')],
+        'scale': 0.009,
+        'unit': 'units/ut/rocket/pickup',
+    },
+    'rocket_proj': {
+        'pskx': 'WeaponStaticMesh/StaticMesh/RocketProj.pskx',
+        'materials': [('WeaponSkins/Texture/RocketShellTex.tga', 'opaque')],
+        'scale': 0.02,
+        'unit': 'units/ut/rocket/projectile',
+    },
     'flak_shell': {
         'pskx': 'WeaponStaticMesh/StaticMesh/FlakShell.pskx',
         'materials': [('WeaponSkins/Texture/FlakSlugTex.tga', 'opaque')],

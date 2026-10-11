@@ -203,6 +203,8 @@ local function build_rocket_action(source, is_salvo)
 	action.projectile_info = projectile_info
 	action.speed = CONFIG.rocket_speed
 	action.ut_aoe_callback = "rocket"
+	action.ut_init_flow_event_filter = "rocket"
+	action.ut_skin_init_callback = "rocket"
 	action.ut_rocket = true
 	action.spread_template_override = nil
 
@@ -465,6 +467,10 @@ local function update_loading(t)
 
 			if loaded > state.loaded then
 				state.loaded = loaded
+
+				for _, callback in pairs(mod.rocket_load_callbacks) do
+					callback(unit, loaded)
+				end
 
 				if CONFIG.load_kick then
 					first_person_extension:play_camera_recoil(CONFIG.load_kick, t)
@@ -1052,8 +1058,11 @@ end
 
 -- The look of the explosion, on every peer: the explosion's callback is run for everyone who sees it
 mod.explosion_callbacks.ut_rocket_explosion = function (world, position)
-	for _, effect in ipairs(CONFIG.explosion_effects) do
-		effects.play(world, effect.name, position + Vector3(0, 0, effect.offset), effect.scale)
+	-- (with the skin the skin draws it, see skin_explosion_callbacks)
+	if not utils.is_weapon_skin_enabled("rocket_launcher") then
+		for _, effect in ipairs(CONFIG.explosion_effects) do
+			effects.play(world, effect.name, position + Vector3(0, 0, effect.offset), effect.scale)
+		end
 	end
 
 	local radius = ExplosionTemplates.ut_rocket_explosion.explosion.radius

@@ -357,8 +357,8 @@ local function new(def)
 
 	-- (the mod is switched off or unloaded: the setting reads as it is, what the weapon took is given back)
 	local function give_back()
-		third_person.clear()
 		destroy()
+		third_person.clear()
 
 		if CONFIG.on_give_back then
 			CONFIG.on_give_back()
@@ -368,12 +368,12 @@ local function new(def)
 	mod.disabled_callbacks[#mod.disabled_callbacks + 1] = give_back
 	mod.unload_callbacks[#mod.unload_callbacks + 1] = give_back
 	mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+		destroy(true)
+		third_person.clear()
+
 		if CONFIG.on_level_exit then
 			CONFIG.on_level_exit()
 		end
-
-		third_person.clear()
-		destroy(true)
 	end
 
 	mod.first_person_destroy_callbacks[CONFIG.id] = function (first_person_extension)

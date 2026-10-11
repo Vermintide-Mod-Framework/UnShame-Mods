@@ -31,6 +31,7 @@ TEXTURES = {
     'explosion_flash': 'XEffects/Texture/ExplosionFlashTex.tga',
     'muzzle_white': 'XEffects/Texture/MuzFlashWhite_t.tga',
     'rocket_muzzle': 'XEffects/Texture/MuzFlashRocket_t.tga',
+    'rocket_flare': 'XEffects/Texture/RocketFlare.tga',
     'smoke': 'XEffects/Texture/SmokeAlphab_t.tga',
 }
 

@@ -1,0 +1,13 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "core/stingray_renderer/shader_import/standard"
+textures = {
+	color_map = "units/ut/rocket/projectile_rocketshelltex"
+}
+variables = {
+	use_color_map = {
+		type = "scalar"
+		value = 1
+	}
+}

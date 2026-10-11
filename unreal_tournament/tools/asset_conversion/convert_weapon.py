@@ -132,6 +132,17 @@ win32 = {
 '''
 
 # (the weapons are lit by the level, as the game's own are: brighter in the sun and dark in the shade)
+WEAPONS['rocket'] = {
+    'psk': 'Weapons/SkeletalMesh/RocketLauncher_1st.psk',
+    'psa': 'Weapons/MeshAnimation/RocketLauncher_1st.psa',
+    'materials': [('WeaponSkins/Texture/RocketTex0.tga', 'opaque')],
+    'scale': 0.0125,
+    'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire'), ('load', 'Load')],
+    'locators': ['Bone_Flash'],
+    'unit': 'units/ut/rocket/rocket_launcher',
+    'lua': 'scripts/mods/unreal_tournament/rocket_launcher_skin_animations.lua',
+}
+
 MATERIAL_TEMPLATES = {
     'opaque': '''material_contexts = {
 	surface_material = ""
@@ -278,7 +289,9 @@ def main():
     normals = [norm(n) for n in normals]
 
     def sjson_node_name(i):
-        return 'b_' + re.sub(r'[^A-Za-z0-9_]', '_', bone_names[i])
+        # (lower case: a geometry with a capital in its name is dropped from the unit by the compiler, and the units that have none are the ones
+        # that were all in lower case; the node names are in lower case with them)
+        return 'b_' + re.sub(r'[^A-Za-z0-9_]', '_', bone_names[i]).lower()
 
     def fl(values):
         return ' '.join(str(int(v)) if float(v).is_integer() else repr(float('%.7g' % v)) for v in values)
@@ -347,7 +360,8 @@ def main():
     # the unit, the materials and the textures
     used_materials = sorted(set(m for b, m in pieces))
     unit_text = 'materials = {\n' + ''.join('\tm_%d = "%s/%s_m%d"\n' % (m, unit_dir, unit_base, m) for m in used_materials) + '}\nrenderables = {\n'
-    for g in renderables:
+    # (the renderables of a unit are the nodes that have geometry, by the name of the node: the geometries of a node are its pieces)
+    for g in [sjson_node_name(b) for b in used_bones]:
         unit_text += ('\t%s = {\n\t\talways_keep = false\n\t\tculling = "bounding_volume"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
                       '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n') % g
     unit_text += '}\n'

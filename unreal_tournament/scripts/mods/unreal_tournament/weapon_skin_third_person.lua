@@ -64,12 +64,21 @@ local function new(def)
 
 		-- (the weapon that is still wielded is shown as the game would: when the mesh goes because the setting is off. One that is
 		-- put away, or the one of an earlier wield, is the game's to show or to have taken down)
-		if Unit.alive(entry.staff) and Unit.alive(character) and utils.wielded_template_name(character) == CONFIG.template then
-			Unit.set_unit_visibility(entry.staff, third_person.shows_weapon(character))
+		-- (the effects of the units are started again as the game does when it wields: its flow event)
+		if Unit.alive(character) and utils.wielded_template_name(character) == CONFIG.template then
+			for _, game_unit in ipairs(entry.units) do
+				if Unit.alive(game_unit) then
+					if game_unit ~= entry.staff then
+						Unit.flow_event(game_unit, "lua_wield")
+					end
+
+					Unit.set_unit_visibility(game_unit, third_person.shows_weapon(character))
+				end
+			end
 		end
 	end
 
-	local function attach(character, staff)
+	local function attach(character, staff, units)
 		local world = Managers.world:world("level_world")
 		local hand_node = Unit.node(character, CONFIG.hand_node)
 		local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
@@ -79,9 +88,17 @@ local function new(def)
 			character = character,
 			hand_node = hand_node,
 			staff = staff,
+			units = units,
 			unit = unit,
 			world = world,
 		}
+
+		-- (the effects of the game's units, a flame at the hand of the Beam Staff, are put out as the game does when it unwields)
+		for _, game_unit in ipairs(units) do
+			if game_unit ~= staff then
+				Unit.flow_event(game_unit, "lua_unwield")
+			end
+		end
 
 		Unit.set_unit_visibility(unit, false)
 		World.link_unit(world, unit, 0, character, hand_node)
@@ -100,7 +117,20 @@ local function new(def)
 		local equipment = ScriptUnit.extension(character, "inventory_system"):equipment()
 		local staff = equipment.right_hand_wielded_unit_3p or equipment.left_hand_wielded_unit_3p
 
-		return staff and Unit.alive(staff) and staff or nil
+		if not staff or not Unit.alive(staff) then
+			return nil
+		end
+
+		-- (and the units of both hands: the Beam Staff's left hand has the flame)
+		local units = {}
+
+		for _, game_unit in ipairs({equipment.right_hand_wielded_unit_3p, equipment.left_hand_wielded_unit_3p}) do
+			if game_unit and Unit.alive(game_unit) then
+				units[#units + 1] = game_unit
+			end
+		end
+
+		return staff, units
 	end
 
 	-- If the character is shown holding its weapon: the player's own character is not while the view is the first person one
@@ -129,7 +159,7 @@ local function new(def)
 			local character = player.player_unit
 
 			if character and Unit.alive(character) and ScriptUnit.has_extension(character, "inventory_system") then
-				local staff = staff_to_replace(character)
+				local staff, units = staff_to_replace(character)
 				local entry = attached[character]
 
 				if entry and entry.staff ~= staff then
@@ -140,7 +170,7 @@ local function new(def)
 
 				if staff then
 					if not entry then
-						attach(character, staff)
+						attach(character, staff, units)
 
 						entry = attached[character]
 					end
@@ -148,7 +178,7 @@ local function new(def)
 					seen[character] = true
 					place(entry)
 					Unit.set_unit_visibility(entry.unit, third_person.shows_weapon(character))
-					Unit.set_unit_visibility(staff, false)
+					third_person.hide_staffs()
 				end
 			end
 		end
@@ -163,8 +193,10 @@ local function new(def)
 	-- The game's units are hidden again before the frame is drawn: the game shows them at times of its own, after the update
 	function third_person.hide_staffs()
 		for _, entry in pairs(attached) do
-			if Unit.alive(entry.staff) then
-				Unit.set_unit_visibility(entry.staff, false)
+			for _, game_unit in ipairs(entry.units) do
+				if Unit.alive(game_unit) then
+					Unit.set_unit_visibility(game_unit, false)
+				end
 			end
 		end
 	end
