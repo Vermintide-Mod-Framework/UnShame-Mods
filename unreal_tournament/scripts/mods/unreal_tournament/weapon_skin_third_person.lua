@@ -17,6 +17,9 @@ local mod = get_mod("unreal_tournament")
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
+-- Every weapon's third person
+local instances = {}
+
 local function new(def)
 	local CONFIG = {}
 
@@ -28,6 +31,8 @@ local function new(def)
 	local attached = {}
 
 	local third_person = {}
+
+	instances[#instances + 1] = third_person
 
 	-- How many meters a UT unit of the mesh is as it is held (the flashes are made as big as the mesh is)
 	third_person.meters_per_unit = CONFIG.meters_per_unit * CONFIG.scale
@@ -201,6 +206,22 @@ local function new(def)
 		end
 	end
 
+	-- The effects of the game's units that are not shown are put out (the game starts them again each time it shows the character's weapons: it
+	-- sends the units the flow event of wielding, which lights the flame of the Beam Staff's left hand)
+	function third_person.put_out_flames(character)
+		local entry = attached[character]
+
+		if not entry then
+			return
+		end
+
+		for _, game_unit in ipairs(entry.units) do
+			if game_unit ~= entry.staff and Unit.alive(game_unit) then
+				Unit.flow_event(game_unit, "lua_unwield")
+			end
+		end
+	end
+
 	-- Where the barrel ends, for the flashes of a shot (nothing if the character holds the game's weapon)
 	function third_person.muzzle_position(character)
 		local entry = attached[character]
@@ -269,6 +290,15 @@ local function new(def)
 
 	return third_person
 end
+
+-- The game shows the character's weapons again (the view is changed to the third person, a ladder is let go of, ...)
+mod:hook_safe(SimpleInventoryExtension, "show_third_person_inventory", function (self, show)
+	if show then
+		for _, third_person in ipairs(instances) do
+			third_person.put_out_flames(self._unit)
+		end
+	end
+end)
 
 return {
 	new = new,

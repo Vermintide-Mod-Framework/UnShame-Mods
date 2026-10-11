@@ -360,8 +360,9 @@ end
 -- (an action that starts before the stance was entered enters it itself, the shots have no animation of their own)
 function pose.enter(unit_1p, owner_unit)
 	-- (only while the staff is what is wielded: the event is not one of the animations of another weapon, which is what the arms and
-	-- the character play after a swap, and an event that an animation graph doesn't have is an error of the game's)
-	if not utils.is_local_player_unit(owner_unit) or utils.wielded_template_name(owner_unit) ~= TEMPLATE_NAME then
+	-- the character play after a swap, and an event that an animation graph doesn't have is an error of the game's). Not while the skin is
+	-- on: the stance is the staff's, the skin's gun is held as UT2004's is, by the animations of the model.
+	if utils.is_weapon_skin_enabled("link_gun") or not utils.is_local_player_unit(owner_unit) or utils.wielded_template_name(owner_unit) ~= TEMPLATE_NAME then
 		pose.waiting = nil
 
 		return

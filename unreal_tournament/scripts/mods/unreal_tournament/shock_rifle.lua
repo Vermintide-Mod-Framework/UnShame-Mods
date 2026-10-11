@@ -242,6 +242,12 @@ local function set_animation_speed(first_person_extension, speed)
 	first_person_extension:animation_set_variable("attack_speed", speed)
 end
 
+-- The raised pose of the stance is the staff's: the skin's rifle is held as UT2004's is, by the animations of the model, so the stance is not
+-- entered, returned to or slowed down while the skin is on
+local function stance_enabled()
+	return CONFIG.idle_pose_event ~= nil and not utils.is_weapon_skin_enabled("shock_rifle")
+end
+
 local function slow_down_idle_pose(first_person_extension, is_valid, delay)
 	schedule(delay or CONFIG.idle_pose_slow_delay, is_valid, function ()
 		set_animation_speed(first_person_extension, CONFIG.idle_pose_speed)
@@ -251,7 +257,7 @@ end
 local function enter_idle_pose(first_person_extension, unit_1p, is_valid, slow_delay)
 	-- (only while the rifle is what is wielded: the event is not one of the animations of another weapon, which is what the arms
 	-- and the character play after a swap, and an event that an animation graph doesn't have is an error of the game's)
-	if not utils.is_local_player_unit(first_person_extension.unit) or utils.wielded_template_name(first_person_extension.unit) ~= TEMPLATE_NAME then
+	if not stance_enabled() or not utils.is_local_player_unit(first_person_extension.unit) or utils.wielded_template_name(first_person_extension.unit) ~= TEMPLATE_NAME then
 		return
 	end
 
@@ -270,7 +276,7 @@ end
 
 -- Re-enters the pose after a shot, unless another action has started in the meantime
 local function schedule_pose_return(weapon_extension, action, delay)
-	if not CONFIG.idle_pose_event then
+	if not stance_enabled() then
 		return
 	end
 
@@ -537,7 +543,7 @@ local function apply_shock_rifle()
 
 	-- The vent/reload action also returns to the raised pose when it ends (its end event is
 	-- skipped when it is interrupted, see its anim_end_event_condition_func)
-	actions.weapon_reload.default.anim_end_event = CONFIG.idle_pose_event or original.reload_anim_end_event
+	actions.weapon_reload.default.anim_end_event = stance_enabled() and CONFIG.idle_pose_event or original.reload_anim_end_event
 	-- Venting right after wielding: the raise to the pose would play over the heat release
 	actions.weapon_reload.default.enter_function = function (...)
 		scheduler.clear()
@@ -551,7 +557,7 @@ local function apply_shock_rifle()
 			original.reload_finish_function(owner_unit, reason, weapon_extension)
 		end
 
-		if CONFIG.idle_pose_event and reason ~= "new_interupting_action" then
+		if stance_enabled() and reason ~= "new_interupting_action" then
 			slow_down_idle_pose(weapon_extension.first_person_extension, function ()
 				return weapon_extension.current_action_settings == nil
 			end)
@@ -1055,6 +1061,13 @@ end
 
 utils.register_weapon("shock_rifle", enable_shock_rifle, disable_shock_rifle)
 
+-- (the end event of venting depends on the skin, which is put in the template as it is applied)
+mod.setting_changed_callbacks[#mod.setting_changed_callbacks + 1] = function (changed_setting_id)
+	if changed_setting_id == "weapon_skins" and utils.is_weapon_enabled("shock_rifle") then
+		enable_shock_rifle()
+	end
+end
+
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	clear_trails()
 	clear_implosions()
@@ -1063,7 +1076,7 @@ end
 -- Hanging off a ledge: the stance is ended in the character the others see, which is in it as the character's idle, under the
 -- animations of hanging
 mod.ledge_hang_callbacks.shock = function (unit)
-	if CONFIG.idle_pose_event and utils.is_weapon_enabled("shock_rifle") and utils.wielded_template_name(unit) == TEMPLATE_NAME then
+	if stance_enabled() and utils.is_weapon_enabled("shock_rifle") and utils.wielded_template_name(unit) == TEMPLATE_NAME then
 		Managers.state.network:anim_event(unit, "attack_finished")
 	end
 end
@@ -1082,7 +1095,7 @@ mod.wield_callbacks.shock = function (self, equipment, slot_data, unit_1p)
 
 	local item_template = BackendUtils.get_item_template(slot_data.item_data)
 
-	if item_template.name ~= TEMPLATE_NAME or not utils.is_weapon_enabled("shock_rifle") then
+	if item_template.name ~= TEMPLATE_NAME or not utils.is_weapon_enabled("shock_rifle") or not stance_enabled() then
 		return
 	end
 
