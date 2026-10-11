@@ -26,7 +26,6 @@ local CONFIG = {
 	silent_breeds = {
 		beastmen_ungor = true,
 		chaos_fanatic = true,
-		skaven_clan_rat = true,
 		skaven_slave = true,
 	},
 	-- MultiKillMessage, by the level of the multi kill (1 is the second kill): its sound and its text; the last one is every level after it
