@@ -21,6 +21,13 @@ local CONFIG = {
 	ignored_races = {
 		dummy = true,
 	},
+	-- The most basic enemy of each race: killing one counts for a multi kill, but it is not the kill that announces it (another enemy's is)
+	silent_breeds = {
+		beastmen_ungor = true,
+		chaos_fanatic = true,
+		skaven_clan_rat = true,
+		skaven_slave = true,
+	},
 	-- MultiKillMessage, by the level of the multi kill (1 is the second kill): its sound and its text; the last one is every level after it
 	multi_kills = {
 		{ event = "ut_announcer_double_kill", text = "Double Kill!" },
@@ -251,7 +258,9 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 	if now - last_kill_time < CONFIG.window then
 		multi_kill_level = multi_kill_level + 1
 
-		announce_multi_kill(multi_kill_level)
+		if not CONFIG.silent_breeds[Unit.get_data(victim_unit, "breed").name] then
+			announce_multi_kill(multi_kill_level)
+		end
 	else
 		multi_kill_level = 0
 	end
