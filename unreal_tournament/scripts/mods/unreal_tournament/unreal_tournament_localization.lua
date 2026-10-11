@@ -24,7 +24,7 @@ return {
 		en = "Announcer",
 	},
 	announcer_description = {
-		en = "Unreal Tournament 2004's announcer. Kill fast for multi kills, and kill a lot without being hurt for killing sprees.",
+		en = "Unreal Tournament 2004's announcer. Kills in quick succession are multi kills, and long runs of kills without being hurt are killing sprees. Head shots and the first kill of a level are announced too.",
 	},
 	no_barriers = {
 		en = "Remove Barriers",
