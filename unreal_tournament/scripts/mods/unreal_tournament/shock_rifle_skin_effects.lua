@@ -117,8 +117,8 @@ local CONFIG = {
 	coil_life = 0.75,
 	coil_max_pieces = 30,
 	-- ShockComboSphereDark and ShockComboVortex (MeshEffects, they last mesh_life, with the interpolations of their scale and of how much of
-	-- them there is that UT gives them) and ComboDecal (the mark on the floor: the effect of the game's grenade, if there is a floor within
-	-- combo_scorch_reach below the combo)
+	-- them there is that UT gives them) (UT's ComboDecal, the mark on the floor, is not made: a flat disc is no good on anything but a flat floor,
+	-- and the game's own effects that leave a mark are whole effects)
 	mesh_life = 1,
 	-- (how many times the mesh is the sphere of UT: the mesh is UT's own, Editor.TexPropSphere)
 	sphere_scale = 1,
@@ -177,7 +177,6 @@ local CONFIG = {
 		flares = true,
 		flash = true,
 		ring = true,
-		scorch = true,
 		sphere_body = false,
 		sphere_bolts = true,
 		vortex = true,
@@ -187,8 +186,6 @@ local CONFIG = {
 	vortex_opacity = 2.5,
 	-- How much of the sphere's bolts show at the most, 1 being UT's (the bolts are a strip of lightning that sweeps over the sphere: the blue band)
 	sphere_opacity = 1,
-	combo_scorch_effect = "fx/wpnfx_frag_grenade_impact", -- (or "fx/wpnfx_grenade_impact")
-	combo_scorch_reach = 120,
 	-- Turns a second of what spins (UT's mSpinRange is in the units of its own)
 	spin = 0.3,
 }
@@ -629,29 +626,6 @@ local function combo_vortex(position)
 	})
 end
 
--- The mark of the combo on the floor (ComboDecal) if there is a floor below it
-local function combo_scorch(position)
-	if not CONFIG.combo_shown.scorch then
-		return
-	end
-
-	local world = Managers.world:world("level_world")
-	local hit, hit_position, _, normal, actor = PhysicsWorld.immediate_raycast(World.get_data(world, "physics_world"), position, Vector3(0, 0, -1), CONFIG.combo_scorch_reach * UNIT, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
-
-	if not hit then
-		return
-	end
-
-	-- (the effect of the game's grenade, which leaves its mark where it goes off, played turned so that its up is the way the surface faces)
-	local side = Vector3.cross(normal, Vector3.up())
-
-	if Vector3.length(side) < 0.1 then
-		side = Vector3.cross(normal, Vector3.right())
-	end
-
-	mod.effects.create(world, CONFIG.combo_scorch_effect, hit_position, Quaternion.look(Vector3.normalize(side), normal))
-end
-
 local function combo_ring(position)
 	if not CONFIG.combo_shown.ring then
 		return
@@ -775,7 +749,6 @@ function fx.combo(position)
 	combo_sphere_body(position)
 	combo_sphere_bolts(position)
 	combo_vortex(position)
-	combo_scorch(position)
 end
 
 return fx

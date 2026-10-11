@@ -51,13 +51,9 @@ TEXTURES = {
 }
 
 # A texture that is made from another: name -> (the exported tga, what is made of its pixels (r, g, b, a) -> (r, g, b, a))
-# shock_combo_scorch: ComboDecal's SaDScorcht is the mark of a projector, gray where there is none and dark where it is: the mark is black, as
-# opaque as the texture is darker than gray
 DERIVED = {
     # (all white: a sphere that is filled with its color, whatever its texture coordinates)
     'shock_solid': ('XEffectMat/Texture/shock_core.tga', lambda r, g, b, a: (255, 255, 255, 255)),
-    'shock_combo_scorch': ('XEffects/Texture/SaDScorcht.tga',
-                           lambda r, g, b, a: (0, 0, 0, min(255, int(max(0, 128 - (r + g + b) / 3) * 2.2)))),
 }
 
 def read_tga(path):
