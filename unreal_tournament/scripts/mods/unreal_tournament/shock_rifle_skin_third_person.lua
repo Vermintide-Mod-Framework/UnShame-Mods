@@ -6,9 +6,9 @@ local mod = get_mod("unreal_tournament")
 -- player's own (in a third person view), the other players and the bots.
 --
 -- The staff's unit is the game's own, and stays: it is hidden, and the mesh is linked to the same node of the character as it
--- (the right hand weapon attachment node, AttachmentNodeLinking.spear_staff) and turned to where the staff points, found from
--- the node of the staff where its muzzle is. Which character wields what is looked at every frame, so that the game's own
--- wielding, which makes a new staff unit each time, needs no hook.
+-- (the right hand weapon attachment node, AttachmentNodeLinking.spear_staff) and turned to point the way the character faces.
+-- Which character wields what is looked at every frame, so that the game's own wielding, which makes a new staff unit each
+-- time, needs no hook.
 --
 -- The mesh was converted with the DrawScale in it (tools/asset_conversion/psk2bsi.py, 0.011 meters a UT unit). How it sits in the
 -- hand is in CONFIG, and /shockskin 3p tunes it while playing.
@@ -22,12 +22,11 @@ local CONFIG = {
 	unit_name = "units/ut/shock_pickup",
 	chamber_material = "units/ut/shock_rifle_power_00",
 	hand_node = "j_rightweaponattach",
-	muzzle_node = "fx_muzzle",
 	meters_per_unit = 0.011,
 	-- UT2004's pickup models are far bigger than the weapon in the hand is (they are made to be seen on the floor): this much of it
 	scale = 0.5,
 	-- The point of the mesh that is in the hand, in UT units from its origin (right, forward, up), and how the mesh is turned
-	-- from pointing where the staff does, degrees (yaw, pitch, roll)
+	-- from pointing the way the character faces, degrees (yaw, pitch, roll)
 	grip_right = 0,
 	grip_forward = -12,
 	grip_up = -8,
@@ -45,14 +44,13 @@ local attached = {}
 
 local module = {}
 
--- The mesh's pose: it points where the staff does (the direction from the staff's root to its muzzle, in the root's frame), and
--- the point of it that is in the hand is the origin of the staff's root, which is where the game puts the hand
+-- The mesh's pose, every frame: the point of it that is in the hand is the node of the hand, and it points the way the character
+-- faces, level (a staff is held upright, a rifle is carried pointing ahead: that is not how the hand is turned), so the
+-- rotation in the frame of the hand is the one that makes it so in the world
 local function place(entry)
-	local staff = entry.staff
-	local root_rotation = Unit.world_rotation(staff, 0)
-	local to_muzzle = Unit.world_position(staff, Unit.node(staff, CONFIG.muzzle_node)) - Unit.world_position(staff, 0)
-	local direction = Quaternion.rotate(Quaternion.inverse(root_rotation), to_muzzle)
-	local rotation = Quaternion.look(Vector3.normalize(direction), Vector3.up())
+	local facing = Vector3.flat(Quaternion.forward(Unit.world_rotation(entry.character, 0)))
+	local wanted = Quaternion.look(Vector3.normalize(facing), Vector3.up())
+	local rotation = Quaternion.multiply(Quaternion.inverse(Unit.world_rotation(entry.character, entry.hand_node)), wanted)
 
 	rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(math.rad(CONFIG.pitch), math.rad(CONFIG.roll), math.rad(CONFIG.yaw)))
 
@@ -89,10 +87,14 @@ local function attach(character, staff)
 	local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
 
 	Unit.set_unit_visibility(unit, false)
-	World.link_unit(world, unit, 0, character, Unit.node(character, CONFIG.hand_node))
+	local hand_node = Unit.node(character, CONFIG.hand_node)
+
+	World.link_unit(world, unit, 0, character, hand_node)
 	Unit.set_material(unit, "m_power", CONFIG.chamber_material)
 
 	local entry = {
+		character = character,
+		hand_node = hand_node,
 		staff = staff,
 		unit = unit,
 		world = world,
@@ -158,6 +160,7 @@ function module.update()
 				end
 
 				seen[character] = true
+				place(entry)
 				Unit.set_unit_visibility(entry.unit, module.shows_weapon(character))
 				Unit.set_unit_visibility(staff, false)
 			end
