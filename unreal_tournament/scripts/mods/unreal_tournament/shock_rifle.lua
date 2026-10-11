@@ -42,6 +42,10 @@ local CONFIG = {
 	-- Friendly fire is scaled to nothing on lower difficulties, so the combo's damage to the shooter is applied separately: this much at the
 	-- center, falling off like the explosion
 	combo_self_damage = 100,
+	-- Shock jumps: the explosions throw the shooter away from them (UT's ShockProjectile.MomentumTransfer is 70000 and the combo's is
+	-- 150000), this many m/s at the center, falling off like the damage. They add to the speed the shooter has.
+	ball_jump_speed = 8,
+	combo_jump_speed = 14,
 	-- The ball's explosion hurts the shooter too, in the same way (half of the ball's damage in UT's numbers, as the combo's is half of its)
 	ball_self_damage = 18,
 	-- Combo: the blast (the skin draws it) is followed by everything that died being pulled back to the center, like in UT.
@@ -562,7 +566,10 @@ local function find_ball_hit_by_beam(origin, direction, blocker_distance)
 end
 
 local function apply_combo_self_damage(owner_unit, position, item_name)
-	utils.apply_explosion_self_damage(owner_unit, position, item_name, ExplosionTemplates.ut_shock_combo_explosion.explosion, CONFIG.combo_self_damage)
+	local explosion = ExplosionTemplates.ut_shock_combo_explosion.explosion
+
+	utils.apply_explosion_self_damage(owner_unit, position, item_name, explosion, CONFIG.combo_self_damage)
+	utils.apply_explosion_self_push(owner_unit, position, explosion, CONFIG.combo_jump_speed)
 end
 
 -- The ball's explosion hurts the shooter. (The ball's do_aoe is also what makes the combo go off: the two are told apart by the explosion
@@ -574,7 +581,10 @@ mod.aoe_callbacks.shock_ball = function (self, aoe_data, position)
 
 	self._ut_shock_ball_exploded = true
 
-	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_shock_ball_explosion.explosion, CONFIG.ball_self_damage)
+	local explosion = ExplosionTemplates.ut_shock_ball_explosion.explosion
+
+	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, explosion, CONFIG.ball_self_damage)
+	utils.apply_explosion_self_push(self._owner_unit, position, explosion, CONFIG.ball_jump_speed)
 end
 
 -- Another player's ball is a copy on this machine. The combo is the shooter's: it goes through the area damage system, which applies the

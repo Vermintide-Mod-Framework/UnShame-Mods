@@ -220,11 +220,10 @@ function utils.set_armor_modifiers(profile, attack, impact, with_critical)
 	end
 end
 
--- Damage to the player who set off an explosion. The game scales friendly fire damage, which
--- includes the damage to yourself, by a number that is 0 on the lower difficulties, so the damage
--- is applied directly: max_damage at the center of the explosion, falling off in the same way as
--- the explosion's damage does (explosion is the "explosion" table of the explosion template).
-function utils.apply_explosion_self_damage(owner_unit, position, item_name, explosion, max_damage)
+-- How much of an explosion reaches the player who set it off (1 within the explosion's full damage radius, falling off to 0 at its radius),
+-- and the direction from the explosion to the player's body. Nothing if the player is out of reach or dead. `explosion` is the "explosion"
+-- table of the explosion template.
+local function explosion_reach(owner_unit, position, explosion)
 	local body_position = Unit.world_position(owner_unit, 0) + Vector3.up() * 0.9
 	local offset = body_position - position
 	local distance = Vector3.length(offset)
@@ -232,13 +231,49 @@ function utils.apply_explosion_self_damage(owner_unit, position, item_name, expl
 	local falloff_range = explosion.radius - full_radius
 
 	if distance >= explosion.radius or not HEALTH_ALIVE[owner_unit] then
-		return
+		return nil
 	end
 
 	local factor = distance <= full_radius and 1 or 1 - (distance - full_radius) / falloff_range
 	local direction = distance > 0.01 and offset * (1 / distance) or Vector3.up()
 
+	return factor, direction
+end
+
+-- Damage to the player who set off an explosion. The game scales friendly fire damage, which
+-- includes the damage to yourself, by a number that is 0 on the lower difficulties, so the damage
+-- is applied directly: max_damage at the center of the explosion, falling off in the same way as
+-- the explosion's damage does.
+function utils.apply_explosion_self_damage(owner_unit, position, item_name, explosion, max_damage)
+	local factor, direction = explosion_reach(owner_unit, position, explosion)
+
+	if not factor then
+		return
+	end
+
 	DamageUtils.add_damage_network(owner_unit, owner_unit, max_damage * factor, "torso", "drakegun", position, direction, item_name, nil, owner_unit, nil, nil, false, nil, nil, nil, nil, nil, 1)
+end
+
+-- Throws the player who set off an explosion away from it (a shock jump): `speed` m/s at the center of the explosion, falling off in the same
+-- way as its damage does, added to the speed the player has. Only the player on this machine is moved: it is where their movement is run.
+function utils.apply_explosion_self_push(owner_unit, position, explosion, speed)
+	if not utils.is_local_player_unit(owner_unit) then
+		return
+	end
+
+	local factor, direction = explosion_reach(owner_unit, position, explosion)
+
+	if not factor then
+		return
+	end
+
+	local locomotion_extension = ScriptUnit.extension(owner_unit, "locomotion_system")
+	local velocity = locomotion_extension:current_velocity() + direction * (speed * factor)
+
+	-- (the jumping state limits how fast the player can go up, the falling state doesn't)
+	locomotion_extension:set_maximum_upwards_velocity(math.huge)
+	locomotion_extension:set_forced_velocity(velocity)
+	locomotion_extension:set_wanted_velocity(velocity)
 end
 
 -- Units in the world
