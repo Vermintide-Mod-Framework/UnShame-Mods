@@ -314,7 +314,8 @@ end
 
 -- The player's own shots, which the game plays for the weapon and tells the others about (the others hear them from the shot, see
 -- shock_beam_callbacks and init_callbacks): the staff's sounds are not played, UT's are, from the head
-skin_api.take_over_sound("weapon_staff_fire_beam_end_shot", "ut_shock_fire")
+-- TEST: the beam's own shot sound is dropped, to hear whether the combo sound is being cut by it
+skin_api.take_over_sound("weapon_staff_fire_beam_end_shot", nil)
 skin_api.take_over_sound("player_combat_weapon_staff_fireball_fire", "ut_shock_alt_fire")
 
 -- The staff's fireball flash is in its animation, so while the skin is on, the ball's shot animation is not played on the player's own first
