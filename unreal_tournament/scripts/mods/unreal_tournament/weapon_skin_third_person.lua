@@ -191,12 +191,16 @@ local function new(def)
 		end
 	end
 
-	-- The game's units are hidden again before the frame is drawn: the game shows them at times of its own, after the update
+	-- The game's units are hidden again before the frame is drawn: the game shows them at times of its own, after the update. A hidden unit
+	-- is still drawn by the outline passes (the green outline of an ally, seen through walls and over your own weapon), so the outline flags
+	-- are taken off it too, as the game does to a weapon it drops.
 	function third_person.hide_staffs()
 		for _, entry in pairs(attached) do
 			for _, game_unit in ipairs(entry.units) do
 				if Unit.alive(game_unit) then
 					Unit.set_unit_visibility(game_unit, false)
+					Unit.set_shader_pass_flag_for_meshes_in_unit_and_childs(game_unit, OutlineSettings.flags.non_wall_occluded, false)
+					Unit.set_shader_pass_flag_for_meshes_in_unit_and_childs(game_unit, OutlineSettings.flags.wall_occluded, false)
 				end
 			end
 		end
