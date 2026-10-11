@@ -117,7 +117,7 @@ local CONFIG = {
 	coil_life = 0.75,
 	coil_max_pieces = 30,
 	-- ShockComboSphereDark and ShockComboVortex (MeshEffects, they last mesh_life, with the interpolations of their scale and of how much of
-	-- them there is that UT gives them) and ComboDecal (the mark on the floor, as big as combo_scorch_size, if there is a floor within
+	-- them there is that UT gives them) and ComboDecal (the mark on the floor: the effect of the game's grenade, if there is a floor within
 	-- combo_scorch_reach below the combo)
 	mesh_life = 1,
 	-- (how many times the mesh is the sphere of UT: the mesh is UT's own, Editor.TexPropSphere)
@@ -187,8 +187,7 @@ local CONFIG = {
 	vortex_opacity = 2.5,
 	-- How much of the sphere's bolts show at the most, 1 being UT's (the bolts are a strip of lightning that sweeps over the sphere: the blue band)
 	sphere_opacity = 1,
-	combo_scorch_decal = "units/decals/projection_blood_01", -- a unit of the game's decals (the blood's, for now)
-	combo_scorch_size = 260,
+	combo_scorch_effect = "fx/wpnfx_frag_grenade_impact", -- (or "fx/wpnfx_grenade_impact")
 	combo_scorch_reach = 120,
 	-- Turns a second of what spins (UT's mSpinRange is in the units of its own)
 	spin = 0.3,
@@ -643,28 +642,14 @@ local function combo_scorch(position)
 		return
 	end
 
-	-- (a decal of the game's own, which wraps what it lands on: the unit of the game's blood, for now, as it is, to see that it does; the way the
-	-- game puts its blood down (flow_callback_blood_ball_hit): the unit and the actor it hit if it is a unit of the level)
-	local hit_unit = actor and Actor.unit(actor)
-
-	if hit_unit and Unit.alive(hit_unit) then
-		local _, is_level_unit = Managers.state.network:game_object_or_level_id(hit_unit)
-
-		if not is_level_unit then
-			hit_unit = nil
-			actor = nil
-		end
-	end
-
+	-- (the effect of the game's grenade, which leaves its mark where it goes off, played turned so that its up is the way the surface faces)
 	local side = Vector3.cross(normal, Vector3.up())
 
 	if Vector3.length(side) < 0.1 then
 		side = Vector3.cross(normal, Vector3.right())
 	end
 
-	local size = CONFIG.combo_scorch_size * UNIT
-
-	Managers.state.decal:add_projection_decal(CONFIG.combo_scorch_decal, hit_unit, actor, hit_position, Quaternion.look(Vector3.normalize(side), normal), Vector3(size, size, 1), normal)
+	mod.effects.create(world, CONFIG.combo_scorch_effect, hit_position, Quaternion.look(Vector3.normalize(side), normal))
 end
 
 local function combo_ring(position)
