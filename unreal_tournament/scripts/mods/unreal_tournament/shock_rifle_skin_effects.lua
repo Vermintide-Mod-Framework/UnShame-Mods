@@ -581,7 +581,7 @@ local function combo_sphere_bolts(position)
 	local sphere_fade = CONFIG.sphere_fade_interp
 
 	particles.mesh({
-		additive = 0,
+		additive = 1,
 		brightness = function (fraction)
 			return interpolate(sphere_fade, fraction) * CONFIG.sphere_opacity
 		end,

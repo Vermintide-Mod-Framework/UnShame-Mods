@@ -140,10 +140,11 @@ common(sphere)
 # (PanDirection yaw 1000 of 65536: cos and sin of 5.5 degrees, times PanRate 10)
 panned(sphere, 'pan', 9.9540, 0.9585)
 texture(sphere, 'bolts', 'bolts_map', 'pan')
+# (it is the color of the texture that is the bolts, not its alpha: UT's FB_Overwrite draws the color as it is, and the white zigzag of the lightning
+# over the blue line is in the color, where the alpha is all but nothing; it is added, so that the dark of the texture is not seen)
 multiply(sphere, 'color', 'bolts', 'tint', 'rgb')
-multiply(sphere, 'opacity', 'bolts', 'intensity', 'a')
 sphere.connect('color', 'out', IN_OUT_BASE_COLOR)
-sphere.connect('opacity', 'out', IN_OUT_OPACITY)
+sphere.connect('intensity', 'out', IN_OUT_OPACITY)
 write('combo_sphere', sphere, {'bolts_map': 'shock_electricity'})
 
 # ---------------------------------------------------------------- the vortex: the lines, panned along -V a texture a second, in a band
