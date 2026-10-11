@@ -141,6 +141,12 @@ local CONFIG = {
 		0.65,
 		1,
 	},
+	sphere_fill_color = {
+		0.6,
+		0.3,
+		1,
+	},
+	sphere_fill_intensity = 0.55,
 	sphere_spin = 0.6, -- turns a second about an axis of any kind (the bolts of its texture are a strip that UT pans across it)
 	combo_scorch_size = 260,
 	combo_scorch_life = 6,
@@ -500,6 +506,23 @@ local function combo_meshes(position)
 	local life = CONFIG.mesh_life
 	local sphere_scale = CONFIG.sphere_scale_interp
 	local sphere_fade = CONFIG.sphere_fade_interp
+
+	-- (the texture of the bolts is a strip, which on the sphere is seen as a ring about it: the whole sphere is purple, the bolts are over it)
+	particles.mesh({
+		brightness = function (fraction)
+			return interpolate(sphere_fade, fraction)
+		end,
+		color = CONFIG.sphere_fill_color,
+		intensity = CONFIG.sphere_fill_intensity,
+		life = life,
+		position = position,
+		rotation = Quaternion.identity(),
+		scale = function (fraction)
+			return interpolate(sphere_scale, fraction) * CONFIG.sphere_scale
+		end,
+		texture = "shock_solid",
+		unit = "units/ut/fx/sphere",
+	})
 
 	particles.mesh({
 		additive = 1,
