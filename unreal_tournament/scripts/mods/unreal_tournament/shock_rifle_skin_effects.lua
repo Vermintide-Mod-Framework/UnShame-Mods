@@ -96,7 +96,7 @@ local CONFIG = {
 	combo_wiggle_count = 25,
 	combo_wiggle_size = 240, -- (UT's mSizeRange is 120: they look twice as big in UT, as a sprite's size is its radius there)
 	combo_wiggle_intensity = 0.4, -- (and subtler)
-	combo_wiggle_speed = 300,
+	combo_wiggle_speed = 150, -- (UT's mSpeedRange is 300: they do not go as far in UT as that makes them)
 	combo_wiggle_life = 0.75,
 	-- ShockBeamCoil: pieces of the coil mesh (30 long, units/ut/fx/coil) along the beam every coil_piece_length, scaled coil_length_scale along
 	-- it and coil_radius_scale across times a size of coil_size (mSizeRange), turning about the beam coil_spin turns a second (mSpinRange 32000
