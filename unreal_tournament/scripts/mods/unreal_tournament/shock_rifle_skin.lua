@@ -180,11 +180,12 @@ skin_api = mod.weapon_skin.new({
 	alt_pose_up = -3,
 	-- Held across the view, level, the muzzle to the left, as the game's own weapons are inspected: its left side is shown (a guess,
 	-- /skin shock_rifle set inspect_pose_yaw <degrees> and the others)
+	-- (further away, and its top turned to the view: from below it shows the underside, which UT's model has no faces for)
 	inspect_pose_right = -2,
-	inspect_pose_forward = -4,
-	inspect_pose_up = 10,
-	inspect_pose_roll = 0,
-	inspect_pose_pitch = 12,
+	inspect_pose_forward = 6,
+	inspect_pose_up = 8,
+	inspect_pose_roll = -20,
+	inspect_pose_pitch = 6,
 	inspect_pose_yaw = 65,
 	third_person = {
 		id = SETTING_ID,
