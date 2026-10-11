@@ -161,6 +161,8 @@ local CONFIG = {
 		1,
 	},
 	sphere_fill_intensity = 0.2,
+	-- How much of the vortex (the jagged ring of lines that faces the camera) shows at the most, 1 being UT's
+	vortex_opacity = 0.35,
 	-- How much of the sphere's bolts show at the most, 1 being UT's (the bolts are a strip of lightning that sweeps over the sphere: the blue band)
 	sphere_opacity = 0.35,
 	combo_scorch_size = 260,
@@ -561,7 +563,7 @@ local function combo_meshes(position)
 	particles.mesh({
 		additive = 0,
 		brightness = function (fraction)
-			return interpolate(vortex_fade, fraction)
+			return interpolate(vortex_fade, fraction) * CONFIG.vortex_opacity
 		end,
 		face_camera = true,
 		life = life,
@@ -652,7 +654,9 @@ function fx.combo(position)
 	end
 
 	for _ = 1, CONFIG.combo_wiggle_count do
-		particles.sprite({
+		-- (ShockComboWiggles is an emitter of discs (PT_Disc): flat, all facing the same way (UT's x, the emitter is not turned), not sprites that face
+		-- the camera: seen from the side they are lines)
+		particles.disc({
 			attenuation = 0.3,
 			color = {
 				0.35,
@@ -661,6 +665,7 @@ function fx.combo(position)
 			},
 			drag = 0.8,
 			life = CONFIG.combo_wiggle_life,
+			normal = Vector3(0, 1, 0),
 			position = position,
 			size = CONFIG.combo_wiggle_size * UNIT,
 			texture = "shock_sparkle",
