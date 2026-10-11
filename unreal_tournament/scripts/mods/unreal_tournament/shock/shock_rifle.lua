@@ -41,7 +41,7 @@ local CONFIG = {
 	explosion_full_damage_radius = 0.5, -- damage falls off linearly from here to the radius
 	-- Friendly fire is scaled to nothing on lower difficulties, so the combo's damage to the shooter is applied separately: this much at the
 	-- center, falling off like the explosion
-	combo_self_damage = 100,
+	combo_self_damage = 0, -- TEST (100): the maker of a combo never hears the combo's sound, to hear whether being hurt by it is what mutes it
 	-- Shock jumps: the explosions throw the shooter away from them (UT's ShockProjectile.MomentumTransfer is 70000 and the combo's is
 	-- 150000), this many m/s at the center, falling off like the damage. They add to the speed the shooter has.
 	ball_jump_speed = 8,
