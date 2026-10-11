@@ -60,7 +60,6 @@ local CONFIG = {
 	ball_core_fade_in = 0.05,
 	ball_core_fade_out = 0.32,
 	ball_flare_size = 60,
-	ball_flare_spin = { 0.1, 0.3 }, -- turns a second (SpinsPerSecondRange)
 	ball_flare_life = 0.4,
 	ball_flare_interval = 0.5,
 	ball_flare_fade_in = 0.25,
@@ -503,7 +502,7 @@ function fx.update_ball(ball, dt)
 			follow = ball.follow,
 			life = CONFIG.ball_flare_life,
 			size = CONFIG.ball_flare_size * UNIT,
-			spin = between(CONFIG.ball_flare_spin),
+			spin = random_spin(),
 			texture = "shock_flare_a",
 		})
 	end
