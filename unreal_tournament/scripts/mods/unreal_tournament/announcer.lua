@@ -17,13 +17,14 @@ local CONFIG = {
 	-- UnrealPlayer.LogMultiKills: a kill counts as the next one of a multi kill if it comes this soon after the last one (UT has 4
 	-- seconds, a horde of this game dies faster than players do)
 	window = 1.5, -- seconds
-	-- What is not an enemy for it (a player is the kill of UT: the target dummies of this game are not one)
+	-- What is not an enemy for it (a player is the kill of UT: the target dummies and the critters of this game are not one)
 	ignored_races = {
+		critter = true,
 		dummy = true,
 	},
-	-- The most basic enemy of each race: killing one counts for a multi kill, but it is not the kill that announces it (another enemy's is),
-	-- and it does not count for a spree or a call out of a number of kills
-	silent_breeds = {
+	-- The most basic enemy of each race: its kills are not counted at all (not for a first blood, a multi kill, a spree, a head shot or a
+	-- call out)
+	ignored_breeds = {
 		beastmen_ungor = true,
 		chaos_fanatic = true,
 		skaven_slave = true,
@@ -98,19 +99,20 @@ local playing_id -- of the announcement that is playing
 local delayed = {} -- { time = when, event = ... }
 local messages = {} -- by name (the places on the screen): { text, size, color, time }
 
+-- If the death of a unit can count as a kill: it is an enemy of a kind that is not ignored
+local function is_counted(unit)
+	local breed = Unit.get_data(unit, "breed")
+
+	return breed ~= nil and not breed.is_player and not CONFIG.ignored_races[breed.race] and not CONFIG.ignored_breeds[breed.name]
+end
+
 -- The player whose kill the death of an enemy was: the one that last hurt it (the game's own statistics tell kills the same way)
 local function killer_of(victim_unit)
 	local health_extension = ScriptUnit.has_extension(victim_unit, "health_system")
 	local damage_data = health_extension and health_extension.last_damage_data
 	local killer = damage_data and damage_data.attacker_unique_id and Managers.player:player_from_unique_id(damage_data.attacker_unique_id)
 
-	if not killer then
-		return nil
-	end
-
-	local breed = Unit.get_data(victim_unit, "breed")
-
-	if not breed or breed.is_player or CONFIG.ignored_races[breed.race] then
+	if not killer or not is_counted(victim_unit) then
 		return nil
 	end
 
@@ -203,11 +205,6 @@ local function announce_head_shot()
 	play(CONFIG.head_shot.event, false)
 end
 
--- (the most basic enemies of each race don't count for a spree or a call out, and don't announce a multi kill)
-local function is_silent(unit)
-	return CONFIG.silent_breeds[Unit.get_data(unit, "breed").name] == true
-end
-
 -- If the shot that killed was a ranged one (how the game's own statistics tell: by the type of the attack, or the slot of the weapon when
 -- it says none)
 local function is_ranged_hit(damage_data)
@@ -258,14 +255,11 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 	end
 
 	local now = Managers.time:time("game")
-	local silent = is_silent(victim_unit)
 
 	if now - last_kill_time < CONFIG.window then
 		multi_kill_level = multi_kill_level + 1
 
-		if not silent then
-			announce_multi_kill(multi_kill_level)
-		end
+		announce_multi_kill(multi_kill_level)
 	else
 		multi_kill_level = 0
 	end
@@ -277,10 +271,6 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 
 	if is_head_shot then
 		announce_head_shot()
-	end
-
-	if silent then
-		return
 	end
 
 	spree = spree + 1
@@ -302,7 +292,7 @@ mod.shock_combo_callbacks.announcer = function (attacker_unit, killed_units)
 	local kills = 0
 
 	for _, unit in ipairs(killed_units) do
-		if not is_silent(unit) then
+		if is_counted(unit) then
 			kills = kills + 1
 		end
 	end
