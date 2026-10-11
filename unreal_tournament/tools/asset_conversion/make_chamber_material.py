@@ -14,8 +14,8 @@ import os, sys, shutil
 #   ShockControl: R192 G0 B255, and its alpha is 128 times how much the glow has come back after a shot (ShockRifle.RenderOverlays)
 #   Final blend: FB_AlphaModulate (the alpha of the control, the glow, modulates what is added)
 # What is here: all of it but the cube map (the world's reflection: the mesh's cube map would need a cubemap texture), the glass
-# share of the blend is half of the glow and the glow is the material's "intensity" (the skin sets it). The light is added to the
-# screen, as the shader's self illumination is.
+# share of the blend is half of the glow and the glow is the material's "intensity" (the skin sets it), which is also how much of
+# the liquid is there: it is blended over what is in the chamber, lit by itself (the shader's self illumination).
 # Usage: make_chamber_material.py <scratch dir>      (needs the UModel export of the textures: umodel/out3 and out6)
 
 SCRATCH = sys.argv[1]
@@ -143,7 +143,8 @@ connect('glass', 'blend', IN_LERP_B, 'rgb')
 connect('glass_weight', 'blend', IN_LERP_W)
 connect('blend', 'out', IN_OUT_BASE_COLOR)
 connect('intensity', 'out', IN_OUT_OPACITY)
-constant('out', IN_OUT_ADDITIVE, 1)
+# (blended, not added: the liquid hides what is inside the chamber as UT's does; the glow, which is the opacity, takes it away after a shot)
+constant('out', IN_OUT_ADDITIVE, 0)
 
 text = 'shader = {\n\tconnections = [\n'
 for source, destination, connector, select in connections:
