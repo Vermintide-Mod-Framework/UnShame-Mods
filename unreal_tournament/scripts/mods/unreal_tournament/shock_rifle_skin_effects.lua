@@ -155,20 +155,19 @@ local CONFIG = {
 		out_style = "linear",
 	},
 	-- (UT's sphere is mostly see through, with its bright band of bolts: the body is a little of this, and what is behind it shows through)
-	-- (red and all there is, for now, to see how big the sphere is as it goes)
 	sphere_fill_color = {
+		0.45,
+		0.3,
 		1,
-		0,
-		0,
 	},
-	sphere_fill_intensity = 1,
+	sphere_fill_intensity = 0.2,
 	-- Which of the effects of the combo are drawn (the game's rings, shock_rifle.lua's, are not these)
 	combo_shown = {
 		core = false,
 		flares = false,
 		flash = false,
 		scorch = false,
-		sphere_body = true,
+		sphere_body = false,
 		sphere_bolts = true,
 		vortex = false,
 		wiggles = false,
