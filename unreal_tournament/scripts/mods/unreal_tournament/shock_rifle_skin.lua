@@ -24,7 +24,7 @@ local CONFIG = {
 	-- The chamber is a shader graph that makes the flowing gel itself (tools/asset_conversion/make_chamber_material.py); this is the
 	-- light of it when the glow is all there (it is lit by itself, as UT's shader has its diffuse as its self illumination)
 	chamber_intensity = 1,
-	shot_dim = 0.2, -- how bright the liquid is just after a shot, times how bright it is (it is back by the time of the next shot)
+	shot_flash = 0.9, -- how much brighter the liquid is just after a shot, times how bright it is (it has settled by the time of the next shot)
 	vent_pulse_speed = 14, -- radians per second, of the brightness of the liquid while the heat is vented
 	vent_pulse_swing = 0.3, -- how much brighter and dimmer than it is, times that
 	-- Overheating (the game's overcharge explosion, which lasts a few seconds before it goes off): the liquid of the chamber pulses fast
@@ -56,11 +56,11 @@ local balls = {}
 -- The chamber: the glow
 local function update_chamber(skin, dt)
 	-- (a shock rifle in UT hasn't the glow of its chamber after it has fired, and gets it back as the time to the next shot goes: here the
-	-- liquid is dimmer after a shot, and gets its brightness back, it does not go away)
-	local charge = 1 - math.clamp((skin.cooldown_end - Managers.time:time("game")) / skin.cooldown, 0, 1)
+	-- liquid flashes brighter as the shot goes and settles back as the time to the next one goes, it does not go away)
+	local since_shot = math.clamp((skin.cooldown_end - Managers.time:time("game")) / skin.cooldown, 0, 1)
 	-- (how bright the liquid is, which also pulses while the heat is vented and while the weapon overheats: the liquid is always all
 	-- there, it does not go away with a pulse or a shot)
-	local brightness = CONFIG.shot_dim + (1 - CONFIG.shot_dim) * charge
+	local brightness = 1 + CONFIG.shot_flash * since_shot * since_shot
 
 	if skin.venting then
 		skin.vent_time = skin.vent_time + dt
