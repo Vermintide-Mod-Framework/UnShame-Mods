@@ -27,8 +27,10 @@ local mod = get_mod("unreal_tournament")
 --       (PlayerViewPivot, degrees), field_of_view (the horizontal one, if it is not the one DisplayFOV gives)
 --   bob, bob_damping, bob_smoothing, ut_ground_speed: the weapon's sway (Pawn.CheckBob, Pawn.WeaponBob)
 --   blend_time: the seconds in which one animation blends into the next
---   alt_pose_right/forward/up (UT units), alt_pose_roll (degrees, the right side down): a second place for the model in the view (held
---       sideways, say), which the weapon's file moves it to with skin.alt_pose, 0 (where UT has it) to 1
+--   alt_pose_right/forward/up (UT units), alt_pose_roll/pitch/yaw (degrees, the roll is the right side down, the pitch the muzzle up, the
+--       yaw the muzzle to the left): a second place for the model in the view (held sideways, say), which the weapon's file moves it to
+--       with skin.alt_pose, 0 (where UT has it) to 1. inspect_pose_* are a third, for the inspect, with skin.inspect_pose. skin.extra_yaw is
+--       a turn that is added to them, degrees, for what moves while it is held there.
 --   third_person: what weapon_skin_third_person.lua takes
 --   on_create(skin), on_update(skin, dt), on_destroy(skin): what is the weapon's own of the model that is shown
 --   on_update_always(dt): every frame, shown or not; on_refresh(): when the setting or the weapon is switched; on_give_back(),
@@ -59,9 +61,17 @@ local function new(def)
 		pivot_yaw = 0,
 		ut_ground_speed = 440,
 		alt_pose_forward = 0,
+		alt_pose_pitch = 0,
 		alt_pose_right = 0,
 		alt_pose_roll = 0,
 		alt_pose_up = 0,
+		alt_pose_yaw = 0,
+		inspect_pose_forward = 0,
+		inspect_pose_pitch = 0,
+		inspect_pose_right = 0,
+		inspect_pose_roll = 0,
+		inspect_pose_up = 0,
+		inspect_pose_yaw = 0,
 	}
 
 	for key, value in pairs(def) do
@@ -486,17 +496,25 @@ local function new(def)
 		local bob_right = CONFIG.bob_damping * skin.walk_right
 		local bob_up = (0.45 + 0.55 * CONFIG.bob_damping) * skin.walk_up
 		local alt = skin.alt_pose or 0
+		local inspect = skin.inspect_pose or 0
 		local position = Vector3(
-			across_scale * (CONFIG.draw_scale * move.x + CONFIG.offset_right * offset_scale + bob_right + alt * CONFIG.alt_pose_right),
-			forward_scale * (CONFIG.draw_scale * move.y + CONFIG.offset_forward * offset_scale + alt * CONFIG.alt_pose_forward),
-			across_scale * (CONFIG.draw_scale * move.z + CONFIG.offset_up * offset_scale + bob_up + alt * CONFIG.alt_pose_up)
+			across_scale * (CONFIG.draw_scale * move.x + CONFIG.offset_right * offset_scale + bob_right + alt * CONFIG.alt_pose_right + inspect * CONFIG.inspect_pose_right),
+			forward_scale * (CONFIG.draw_scale * move.y + CONFIG.offset_forward * offset_scale + alt * CONFIG.alt_pose_forward + inspect * CONFIG.inspect_pose_forward),
+			across_scale * (CONFIG.draw_scale * move.z + CONFIG.offset_up * offset_scale + bob_up + alt * CONFIG.alt_pose_up + inspect * CONFIG.inspect_pose_up)
 		)
 		local size = CONFIG.draw_scale / CONFIG.model_meters_per_unit
 		local rotation = Quaternion.multiply(pivot, Quaternion.from_elements(pose[1], pose[2], pose[3], pose[4]))
 
-		-- (turned about the way the view looks, after everything of the model's own)
-		if alt ~= 0 then
-			rotation = Quaternion.multiply(Quaternion.axis_angle(Vector3(0, 1, 0), math.rad(alt * CONFIG.alt_pose_roll)), rotation)
+		-- (turned about the way the view looks, after everything of the model's own: the roll about the way it looks, the pitch about
+		-- the way it is to the right, the yaw about up; skin.extra_yaw is a turn of the weapon's own, degrees, as it plays)
+		local roll = alt * CONFIG.alt_pose_roll + inspect * CONFIG.inspect_pose_roll
+		local pitch = alt * CONFIG.alt_pose_pitch + inspect * CONFIG.inspect_pose_pitch
+		local yaw = alt * CONFIG.alt_pose_yaw + inspect * CONFIG.inspect_pose_yaw + (skin.extra_yaw or 0)
+
+		if roll ~= 0 or pitch ~= 0 or yaw ~= 0 then
+			local turn = Quaternion.multiply(Quaternion.axis_angle(Vector3(0, 0, 1), math.rad(yaw)), Quaternion.multiply(Quaternion.axis_angle(Vector3(1, 0, 0), math.rad(pitch)), Quaternion.axis_angle(Vector3(0, 1, 0), math.rad(roll))))
+
+			rotation = Quaternion.multiply(turn, rotation)
 		end
 
 		-- The model's pose is the turn, then the scale of the view (across, forward, across): a scale that is applied after the turn, in the

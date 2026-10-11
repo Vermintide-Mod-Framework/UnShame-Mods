@@ -333,6 +333,26 @@ mod:hook_safe(ActionAim, "finish", function (self, reason)
 	end
 end)
 
+-- The inspect of a weapon (held with the key, the game's action_inspect_hold): it starts and it ends, with the action
+--   mod.inspect_callbacks[name] = function (action_dummy, started)
+mod.inspect_callbacks = {}
+
+mod:hook_safe(ActionDummy, "client_owner_start_action", function (self, new_action)
+	if new_action.anim_event == "inspect_start" then
+		for _, callback in pairs(mod.inspect_callbacks) do
+			callback(self, true)
+		end
+	end
+end)
+
+mod:hook_safe(ActionDummy, "finish", function (self)
+	if self.current_action and self.current_action.anim_event == "inspect_start" then
+		for _, callback in pairs(mod.inspect_callbacks) do
+			callback(self, false)
+		end
+	end
+end)
+
 -- The animation events that the game plays on the player's own first person unit for a weapon, by the template of the weapon: some
 -- of the sounds of a weapon (the shot of the blunderbuss) are made by its animation, not by an event of Lua that can be taken over
 -- (hud_sound_callbacks), and the first person unit and the arms are not shown while a weapon's skin is

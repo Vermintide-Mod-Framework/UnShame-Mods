@@ -30,6 +30,10 @@ local CONFIG = {
 	overheat_pulse_floor = 0.2, -- how dim the glow gets between pulses
 	overheat_peak = 1.6, -- how bright it is at a pulse, times the glow when all there
 	alt_pose_speed = 6, -- how fast the model moves to the sideways pose and back, per second
+	-- Inspecting (UT2004 has no animation of it): the rifle is brought in and turned to show its side, and sways slowly while the key is held
+	inspect_pose_speed = 5, -- how fast the model moves to the pose and back, per second
+	inspect_sway = 12, -- degrees of yaw each way
+	inspect_sway_speed = 1.8, -- radians per second
 	projectile_sound_seconds = 1.795, -- how long the sound of the ball (ShockRifleProjectile) is
 	-- How fast each shot's animation plays (WeaponFire.FireAnimRate: ShockProjFire says 1.5, ShockBeamFire leaves the default 1)
 	fire_animation_rates = {
@@ -97,6 +101,11 @@ local function update_chamber(skin, dt)
 
 	-- (the model goes to the sideways pose while it overheats, and comes back after)
 	skin.alt_pose = (skin.alt_pose or 0) + ((overheating and 1 or 0) - (skin.alt_pose or 0)) * math.min(1, CONFIG.alt_pose_speed * dt)
+
+	-- (the inspect pose, and the sway it turns the rifle with)
+	skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
+	skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
+	skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
 
 	if overheating then
 		skin.overheat_time = (skin.overheat_time or 0) + dt
@@ -169,6 +178,13 @@ skin_api = mod.weapon_skin.new({
 	alt_pose_right = 4,
 	alt_pose_forward = 0,
 	alt_pose_up = -3,
+	-- Brought in and turned to show its side while it is inspected (a guess, /skin shock_rifle set inspect_pose_roll <degrees> and the others)
+	inspect_pose_right = -4,
+	inspect_pose_forward = -3,
+	inspect_pose_up = 1,
+	inspect_pose_roll = -35,
+	inspect_pose_pitch = 12,
+	inspect_pose_yaw = 25,
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
@@ -336,6 +352,15 @@ mod.skin_explosion_callbacks.ut_shock_combo_explosion = function (world, positio
 		skin_api.play_sound_at("ut_shock_combo_3d", position)
 
 		skin_api.debug("combo")
+	end
+end
+
+-- The inspect is the game's own action, held with the key: the rifle is turned to show its side as long as it lasts
+mod.inspect_callbacks.shock_skin = function (action, started)
+	local skin = skin_api.state()
+
+	if skin and utils.is_local_player_unit(action.owner_unit) then
+		skin.inspecting = started
 	end
 end
 
