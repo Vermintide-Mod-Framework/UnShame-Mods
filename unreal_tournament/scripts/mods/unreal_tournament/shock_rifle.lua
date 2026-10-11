@@ -53,7 +53,7 @@ local CONFIG = {
 	implosion_ring_count = 4,
 	implosion_ring_start_scale = 1.5,
 	implosion_ring_end_scale = 0.3,
-	combo_ring_effect = "fx/chr_kruber_shockwave",
+	combo_ring_effect = false, -- off for now ("fx/chr_kruber_shockwave" is the ring the game has)
 	combo_ring_height = 1, -- meters: how high above the origin of the ring effect its ring is (it is made to be played at a character's feet)
 	-- Bodies are thrown away from the blast first: whatever has died (and started to ragdoll) in
 	-- the first implosion_delay seconds gets thrown once, then everything is pulled back in.
