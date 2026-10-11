@@ -53,7 +53,11 @@ local CONFIG = {
 	implosion_ring_count = 4,
 	implosion_ring_start_scale = 1.5,
 	implosion_ring_end_scale = 0.3,
-	combo_ring_effect = false, -- off for now ("fx/chr_kruber_shockwave" is the ring the game has)
+	implosion_rings = false, -- the series of rings above is off for now
+	-- The ring of the game's own effect (Kruber's shockwave), which bends the light behind it: the effects of the skin can't, so one of them
+	-- (all three ways about, as a sphere) is played where the combo goes off, as big as combo_distortion_scale times the effect's own size
+	combo_ring_effect = "fx/chr_kruber_shockwave",
+	combo_distortion_scale = 1,
 	combo_ring_height = 1, -- meters: how high above the origin of the ring effect its ring is (it is made to be played at a character's feet)
 	-- Bodies are thrown away from the blast first: whatever has died (and started to ragdoll) in
 	-- the first implosion_delay seconds gets thrown once, then everything is pulled back in.
@@ -613,9 +617,9 @@ local function ring_rotations()
 	}
 end
 
--- One ring of the implosion, at the given scale. The effects are created with their scale
+-- A ring (all three ways about) at the given scale. The effects are created with their scale
 -- already set, see effects.play.
-local function create_implosion_ring(world, position, scale)
+local function create_rings(world, position, scale)
 	if not CONFIG.combo_ring_effect then
 		return
 	end
@@ -631,8 +635,18 @@ local function create_implosion_ring(world, position, scale)
 	end
 end
 
+-- One ring of the implosion
+local function create_implosion_ring(world, position, scale)
+	if CONFIG.implosion_rings then
+		create_rings(world, position, scale)
+	end
+end
+
 local function start_implosion(world, position)
 	local radius = ExplosionTemplates.ut_shock_combo_explosion.explosion.radius
+
+	-- (the ring that bends the light, as the combo goes off)
+	create_rings(world, position, CONFIG.combo_distortion_scale)
 
 	-- (the skin draws the explosion, see skin_explosion_callbacks)
 	implosions[#implosions + 1] = {
