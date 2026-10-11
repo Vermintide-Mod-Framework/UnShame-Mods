@@ -135,18 +135,18 @@ local CONFIG = {
 		in_style = "linear",
 		out_style = "linear",
 	},
-	sphere_intensity = 1.6,
+	sphere_intensity = 1,
 	sphere_color = {
 		0.55,
 		0.65,
 		1,
 	},
 	sphere_fill_color = {
-		0.6,
-		0.3,
-		1,
+		0.4,
+		0.15,
+		0.9,
 	},
-	sphere_fill_intensity = 0.55,
+	sphere_fill_intensity = 0.6, -- how much of the sphere is the color, the rest is what is behind it
 	sphere_spin = 0.6, -- turns a second about an axis of any kind (the bolts of its texture are a strip that UT pans across it)
 	combo_scorch_size = 260,
 	combo_scorch_life = 6,
@@ -508,7 +508,9 @@ local function combo_meshes(position)
 	local sphere_fade = CONFIG.sphere_fade_interp
 
 	-- (the texture of the bolts is a strip, which on the sphere is seen as a ring about it: the whole sphere is purple, the bolts are over it)
+	-- (blended, not added: added to the flash and the core that are in it, a solid color is blown out to white and pink)
 	particles.mesh({
+		additive = 0,
 		brightness = function (fraction)
 			return interpolate(sphere_fade, fraction)
 		end,
