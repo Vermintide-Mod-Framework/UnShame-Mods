@@ -187,8 +187,8 @@ local CONFIG = {
 	vortex_opacity = 2.5,
 	-- How much of the sphere's bolts show at the most, 1 being UT's (the bolts are a strip of lightning that sweeps over the sphere: the blue band)
 	sphere_opacity = 1,
+	combo_scorch_decal = "units/decals/projection_blood_01", -- a unit of the game's decals (the blood's, for now)
 	combo_scorch_size = 260,
-	combo_scorch_life = 6,
 	combo_scorch_reach = 120,
 	-- Turns a second of what spins (UT's mSpinRange is in the units of its own)
 	spin = 0.3,
@@ -637,24 +637,34 @@ local function combo_scorch(position)
 	end
 
 	local world = Managers.world:world("level_world")
-	local hit, hit_position, _, normal = PhysicsWorld.immediate_raycast(World.get_data(world, "physics_world"), position, Vector3(0, 0, -1), CONFIG.combo_scorch_reach * UNIT, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
+	local hit, hit_position, _, normal, actor = PhysicsWorld.immediate_raycast(World.get_data(world, "physics_world"), position, Vector3(0, 0, -1), CONFIG.combo_scorch_reach * UNIT, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
 
 	if not hit then
 		return
 	end
 
-	particles.disc({
-		additive = 0,
-		color = WHITE,
-		fade_in = 0,
-		fade_out = CONFIG.combo_scorch_life - 2,
-		life = CONFIG.combo_scorch_life,
-		normal = normal,
-		position = hit_position + normal * 0.02,
-		size = CONFIG.combo_scorch_size * UNIT,
-		spin = 0,
-		texture = "shock_combo_scorch",
-	})
+	-- (a decal of the game's own, which wraps what it lands on: the unit of the game's blood, for now, as it is, to see that it does; the way the
+	-- game puts its blood down (flow_callback_blood_ball_hit): the unit and the actor it hit if it is a unit of the level)
+	local hit_unit = actor and Actor.unit(actor)
+
+	if hit_unit and Unit.alive(hit_unit) then
+		local _, is_level_unit = Managers.state.network:game_object_or_level_id(hit_unit)
+
+		if not is_level_unit then
+			hit_unit = nil
+			actor = nil
+		end
+	end
+
+	local side = Vector3.cross(normal, Vector3.up())
+
+	if Vector3.length(side) < 0.1 then
+		side = Vector3.cross(normal, Vector3.right())
+	end
+
+	local size = CONFIG.combo_scorch_size * UNIT
+
+	Managers.state.decal:add_projection_decal(CONFIG.combo_scorch_decal, hit_unit, actor, hit_position, Quaternion.look(Vector3.normalize(side), normal), Vector3(size, size, 1), normal)
 end
 
 local function combo_ring(position)
