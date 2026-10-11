@@ -27,7 +27,6 @@ unit = [
 	"units/ut/fx/quad"
 	"units/ut/fx/coil"
 	"units/ut/fx/sphere"
-	"units/ut/fx/vortex"
 ]
 
 material = [

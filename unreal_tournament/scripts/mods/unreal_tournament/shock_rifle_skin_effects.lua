@@ -3,8 +3,8 @@ local mod = get_mod("unreal_tournament")
 -- The effects of the Shock Rifle's skin: what UT2004's own shows (XEffects: ShockMuzFlash, ShockBeamEffect, ShockImpact*,
 -- ShockBall, ShockExplosionCore, ShockCombo*), drawn with the particles of skin_particles.lua. UT's sizes, speeds and times are
 -- used as they are, in UT units; the textures are the game's own, converted (tools/asset_conversion/make_fx_assets.py).
--- What is not done: the meshes of the effects (the coil of the beam, the dark and vortex spheres of the combo), which only
--- add shape to what the sprites show.
+-- The meshes of the effects are the coil of the beam and the dark sphere of the combo (units/ut/fx, tools/asset_conversion/make_fx_meshes.py);
+-- the vortex of the combo is not made, it is a flat disc that is seen as rings.
 --
 -- The functions are called by shock_rifle_skin.lua, which knows when and where.
 
@@ -52,6 +52,7 @@ local CONFIG = {
 	ball_sprite_life = 10, -- its LifeSpan
 	ball_sprite_layers = 3,
 	-- (FadeInEndTime and FadeOutStartTime of each: it is all there between, and the next core comes as one ends)
+	ball_sprite_spin = 0.8, -- turns a second, the most a layer of the ball's sprite turns either way
 	ball_core_size = 55,
 	ball_core_life = 0.35,
 	ball_core_interval = 0.35,
@@ -79,9 +80,6 @@ local CONFIG = {
 	combo_core_size = 50,
 	combo_core_growth = 400,
 	combo_core_life = 1.5,
-	combo_ring_growth = 500,
-	combo_ring_life = 0.5,
-	combo_ring_attenuation = 0.4,
 	combo_flare_count = 5,
 	combo_flare_size = 85,
 	combo_flare_growth = 260,
@@ -142,31 +140,6 @@ local CONFIG = {
 		1,
 	},
 	sphere_spin = 0.6, -- turns a second about an axis of any kind (the bolts of its texture are a strip that UT pans across it)
-	vortex_scale_interp = {
-		start = 0.4,
-		mid = 1.6,
-		finish = 0.2,
-		in_time = 0.4,
-		out_time = 0.4,
-		in_style = "inv_exp",
-		out_style = "inv_exp",
-	},
-	vortex_fade_interp = {
-		start = 0,
-		mid = 1,
-		finish = 0,
-		in_time = 0,
-		out_time = 0.9,
-		in_style = "linear",
-		out_style = "linear",
-	},
-	vortex_frames = 56, -- the frames of ShockVortexMesh, and how many of them the unit has (every vortex_frame_step)
-	vortex_frame_step = 3,
-	vortex_color = {
-		0.5,
-		0.65,
-		1,
-	},
 	combo_scorch_size = 260,
 	combo_scorch_life = 6,
 	combo_scorch_reach = 120,
@@ -405,6 +378,9 @@ function fx.new_ball(follow)
 			follow = follow,
 			life = CONFIG.ball_sprite_life,
 			size = CONFIG.ball_sprite_size * UNIT,
+			-- (each layer turns its own way, so that the spikes of the texture move: made once and still, they stood out against the ones that
+			-- UT makes again every 0.35 s)
+			spin = (math.random() * 2 - 1) * CONFIG.ball_sprite_spin,
 			texture = "shock_core_low",
 		})
 	end
@@ -504,8 +480,8 @@ function fx.ball_explosion(position)
 	})
 end
 
--- The two meshes of the combo (ShockComboSphereDark and ShockComboVortex, MeshEffects): the sphere grows and goes, the vortex lies flat, grows
--- and closes (the frames of its mesh are shown one after the other over its life)
+-- The sphere of the combo (ShockComboSphereDark, a MeshEffect): it grows and goes. (There are only spheres in UT's combo, no rings: the
+-- vortex mesh it also has is a flat disc that was seen as rings, and is not made.)
 local function combo_meshes(position)
 	local life = CONFIG.mesh_life
 	local sphere_scale = CONFIG.sphere_scale_interp
@@ -530,46 +506,6 @@ local function combo_meshes(position)
 		unit = "units/ut/fx/sphere",
 	})
 
-	local frames = {}
-
-	for index = 0, CONFIG.vortex_frames - 1, CONFIG.vortex_frame_step do
-		frames[#frames + 1] = string.format("g_f%02d", index)
-	end
-
-	if (CONFIG.vortex_frames - 1) % CONFIG.vortex_frame_step ~= 0 then
-		frames[#frames + 1] = string.format("g_f%02d", CONFIG.vortex_frames - 1)
-	end
-
-	local vortex_scale = CONFIG.vortex_scale_interp
-	local vortex_fade = CONFIG.vortex_fade_interp
-
-	particles.mesh({
-		brightness = function (fraction)
-			return interpolate(vortex_fade, fraction)
-		end,
-		color = CONFIG.vortex_color,
-		-- (ShockComboVortex is bAlwaysFaceCamera: its disc faces the view, so it is seen as a swirl, not from its edge as a ring)
-		face_camera = true,
-		frame = function (fraction)
-			-- (the last of the frames that is shown at or before the one the life is at)
-			local index = math.min(math.floor(fraction * CONFIG.vortex_frames), CONFIG.vortex_frames - 1)
-
-			if index == CONFIG.vortex_frames - 1 then
-				return frames[#frames]
-			end
-
-			return string.format("g_f%02d", index - index % CONFIG.vortex_frame_step)
-		end,
-		frames = frames,
-		life = life,
-		position = position,
-		rotation = Quaternion.identity(),
-		scale = function (fraction)
-			return interpolate(vortex_scale, fraction)
-		end,
-		texture = "shock_elec_a",
-		unit = "units/ut/fx/vortex",
-	})
 end
 
 -- The mark of the combo on the floor (ComboDecal) if there is a floor below it
@@ -605,16 +541,6 @@ function fx.combo(position)
 		position = position,
 		size = CONFIG.combo_core_size * UNIT,
 		texture = "shock_core",
-	})
-	particles.sprite({
-		attenuation = CONFIG.combo_ring_attenuation,
-		color = WHITE,
-		growth = CONFIG.combo_ring_growth * UNIT,
-		life = CONFIG.combo_ring_life,
-		position = position,
-		size = 0,
-		spin = random_spin(),
-		texture = "shock_ring_a",
 	})
 	particles.sprite({
 		attenuation = 0.5,
