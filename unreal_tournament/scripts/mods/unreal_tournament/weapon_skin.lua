@@ -51,6 +51,12 @@ local FIELD_OF_VIEW_FACTOR = 1.345
 -- the view on any screen, and a wider one shows more beside it. The aspect of the screen it is seen on is not used.
 local REFERENCE_ASPECT = 16 / 9
 
+-- The materials of the first person weapons are drawn with the game's custom FOV for weapons (see units/ut/weapon_standard.material), which
+-- is the vertical field of view of the first person camera without the player's FOV setting applied (the camera's own is that times the
+-- setting): the model is placed for the field of view it is drawn with, not the camera's. (65 is the first person camera's vertical_fov in
+-- settings/camera_settings.lua.)
+local WEAPON_VERTICAL_FOV = math.rad(65)
+
 local function new(def)
 	local CONFIG = {
 		blend_time = 0.1,
@@ -499,7 +505,7 @@ local function new(def)
 
 	-- Where the model is, and how it is turned and scaled, in the first person unit's root, and the pose of its other bones
 	function place(fp)
-		local tangent_vertical = math.tan(Camera.vertical_fov(fp:camera()) / 2)
+		local tangent_vertical = math.tan(WEAPON_VERTICAL_FOV / 2)
 		local field_of_view = CONFIG.field_of_view or 2 * math.atan(math.tan(math.rad(CONFIG.display_fov) / 2) * FIELD_OF_VIEW_FACTOR)
 		local across = tangent_vertical * REFERENCE_ASPECT / math.tan(field_of_view / 2)
 		local forward_scale = CONFIG.meters_per_unit
