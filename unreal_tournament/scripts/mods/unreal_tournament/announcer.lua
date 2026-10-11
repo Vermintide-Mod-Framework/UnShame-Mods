@@ -63,10 +63,9 @@ local CONFIG = {
 	-- game's own weapon that has it)
 	flak_cannon = { setting = "flak_cannon", template = "blunderbuss_template_1" },
 	shock_rifle = { setting = "shock_rifle", template = "staff_blast_beam_template_1" },
-	-- A kill of the Shock Rifle is one of a combo if the enemy dies this soon after the combo goes off, and as close to it as how far it reaches
-	-- and this much more (the dead are thrown about by it)
-	combo_window = 0.5, -- seconds
-	combo_margin = 3, -- m
+	-- A kill of the Shock Rifle is one of a combo if the enemy was in the combo when it went off and dies within this long after (the
+	-- death comes from the host a moment after the blast)
+	combo_window = 1, -- seconds
 	-- PlayerController.PlayRewardAnnouncement: an announcement that is not forced is not played if one has been played in the last second
 	unforced_gap = 1, -- seconds
 	-- The words (LocalMessage): where they are on the screen (PosY of each message, from the top), how long they last (Lifetime) and how they
@@ -89,7 +88,7 @@ local multi_kill_level = 0 -- UnrealPlayer.MultiKillLevel
 local last_kill_time = -math.huge
 local spree = 0 -- Pawn.Spree
 local call_out_kills = {} -- by name: how many of the kills of each
-local combo -- the last shock combo: { time, position (boxed), radius }
+local combo_victims = {} -- the enemies that were in a shock combo: { [unit] = when }
 local first_blood_taken = false
 local last_sound_time = -math.huge
 local playing_id -- of the announcement that is playing
@@ -223,11 +222,9 @@ local function is_killed_by(weapon, damage_data)
 end
 
 local function is_combo_kill(victim_unit, damage_data, now)
-	if not combo or now - combo.time > CONFIG.combo_window or not is_killed_by(CONFIG.shock_rifle, damage_data) then
-		return false
-	end
+	local when = combo_victims[victim_unit]
 
-	return Vector3.distance(Unit.world_position(victim_unit, 0), combo.position:unbox()) <= combo.radius + CONFIG.combo_margin
+	return when ~= nil and now - when <= CONFIG.combo_window and is_killed_by(CONFIG.shock_rifle, damage_data)
 end
 
 mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_data)
@@ -286,13 +283,19 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 	end
 end)
 
--- Where and when the shock combos go off
-mod.shock_combo_callbacks.announcer = function (position, radius)
-	combo = {
-		position = Vector3Box(position),
-		radius = radius,
-		time = Managers.time:time("game"),
-	}
+-- The enemies that are in a shock combo as it goes off are marked, with the time (the Shock Rifle tells it: it makes the combo)
+mod.shock_combo_callbacks.announcer = function (_, units)
+	local now = Managers.time:time("game")
+
+	for unit, when in pairs(combo_victims) do
+		if now - when > CONFIG.combo_window then
+			combo_victims[unit] = nil
+		end
+	end
+
+	for unit in pairs(units) do
+		combo_victims[unit] = now
+	end
 end
 
 -- What ends a spree, and starts the count of the call outs again: an enemy hurts the player. Their own weapons (and the overcharge) and their
@@ -367,12 +370,12 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	multi_kill_level = 0
 	last_kill_time = -math.huge
 	spree = 0
-	combo = nil
 	first_blood_taken = false
 	last_sound_time = -math.huge
 	playing_id = nil
 
 	table.clear(call_out_kills)
+	table.clear(combo_victims)
 	table.clear(delayed)
 	table.clear(messages)
 end

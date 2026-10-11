@@ -760,7 +760,7 @@ local function start_implosion(world, position)
 		end
 	end
 
-	implosions[#implosions + 1] = {
+	local implosion = {
 		position = Vector3Box(position),
 		blasted = {},
 		-- the way each body was from the center when it was first pulled, and if it has been past it
@@ -771,6 +771,10 @@ local function start_implosion(world, position)
 		units = utils.units_in_radius(world, position, radius),
 		world = world,
 	}
+
+	implosions[#implosions + 1] = implosion
+
+	return implosion
 end
 
 -- Where a ragdoll is (its first dynamic actor), nil if it isn't one yet
@@ -880,10 +884,10 @@ end
 
 -- Explosions of the weapons are run by their names, on every peer (one hook for all of them)
 mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_position)
-	start_implosion(world, impact_position)
+	local implosion = start_implosion(world, impact_position)
 
 	for _, callback in pairs(mod.shock_combo_callbacks) do
-		callback(impact_position, ExplosionTemplates.ut_shock_combo_explosion.explosion.radius)
+		callback(impact_position, implosion.units)
 	end
 end
 

@@ -140,8 +140,9 @@ mod.skin_explosion_callbacks = {}
 --   mod.shock_beam_callbacks[name] = function (owner_unit, start_position, end_position, hit_normal)
 mod.shock_beam_callbacks = {}
 
--- A shock combo goes off (on every peer, as the explosion is made): where, and how far it reaches in meters
---   mod.shock_combo_callbacks[name] = function (position, radius)
+-- A shock combo goes off (on every peer, as the explosion is made): where, and the enemies that are in it ({ [unit] = true }, the
+-- implosion that follows takes units out of it as it is done with them: a callback that keeps them copies them)
+--   mod.shock_combo_callbacks[name] = function (position, units)
 mod.shock_combo_callbacks = {}
 
 -- The sounds a weapon's action plays for its player (the shot's, which the game plays and tells the others of), by the name of
