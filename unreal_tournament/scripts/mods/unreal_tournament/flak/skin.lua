@@ -33,11 +33,14 @@ local CONFIG = {
 	-- trail would stop growing.
 	chunk_trail_step = 1 / 60,
 	chunk_trail_width = 0.1, -- m
+	chunk_trail_intensity = 2,
+	-- A piece stays at full brightness for this share of its life, and fades out over the rest
+	chunk_trail_hold = 0.4,
 	-- The glow around the chunk: it is drawn a little behind the chunk, so the chunk's mesh covers its middle, and is dim so that it
 	-- stays a halo
-	chunk_glow_size = 0.35, -- m
-	chunk_glow_intensity = 0.4,
-	chunk_glow_behind = 0.15, -- m, away from the camera
+	chunk_glow_size = 0.4, -- m
+	chunk_glow_intensity = 1.2,
+	chunk_glow_behind = 0.08, -- m, away from the camera
 	-- FlakShell: the mesh, FlakGlow (a gold sprite) and FlakShellTrail (smoke, 0.5 to 0.6 s, 20 to 35 units, growing 15 a second)
 	shell_glow_size = 40,
 	shell_glow_color = {
@@ -176,7 +179,10 @@ local function update_visuals(dt)
 								1,
 								1,
 							},
+							fade_in = 0,
+							fade_out = CONFIG.chunk_trail_seconds * CONFIG.chunk_trail_hold,
 							from = trail_from,
+							intensity = CONFIG.chunk_trail_intensity,
 							life = CONFIG.chunk_trail_seconds,
 							size = CONFIG.chunk_trail_width,
 							texture = "flak_trail",
