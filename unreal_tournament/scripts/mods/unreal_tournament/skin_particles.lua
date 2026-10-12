@@ -354,12 +354,32 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 			release(particle)
 			table.remove(active, i)
 		elseif particle.age >= 0 then
-			place(particle, dt, camera_position, camera_rotation)
+			-- (a particle that follows something is placed before the frame is drawn, see below)
+			if not particle.follow then
+				place(particle, dt, camera_position, camera_rotation)
+			end
 
 			if particle.age >= particle.life then
 				release(particle)
 				table.remove(active, i)
 			end
+		end
+	end
+end
+
+-- The particles that follow something (a muzzle, a projectile) are placed before the frame is drawn: the engine moves the units that are linked
+-- (the weapon of the first person view, which follows the camera) after the mod's update, so a position taken in the update is the one of
+-- the frame before, and the particle trails what it follows
+mod.pre_render_callbacks.skin_particles = function ()
+	local camera_position, camera_rotation = utils.camera_pose()
+
+	if not camera_position then
+		return
+	end
+
+	for _, particle in ipairs(active) do
+		if particle.follow and particle.age >= 0 and particle.age < particle.life then
+			place(particle, 0, camera_position, camera_rotation)
 		end
 	end
 end
