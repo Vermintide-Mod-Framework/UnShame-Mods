@@ -357,6 +357,7 @@ skin_api = mod.weapon_skin.new({
 		muzzle_right = -56,
 		muzzle_forward = 0,
 		muzzle_up = 12,
+		menu_yaw = 180,
 	},
 	on_create = function ()
 		skin_api.play_sound("ut_flak_select")
