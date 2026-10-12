@@ -251,7 +251,12 @@ function utils.apply_explosion_self_damage(owner_unit, position, item_name, expl
 		return
 	end
 
-	DamageUtils.add_damage_network(owner_unit, owner_unit, max_damage * factor, "torso", "drakegun", position, direction, item_name, nil, owner_unit, nil, nil, false, nil, nil, nil, nil, nil, 1)
+	utils.apply_self_damage(owner_unit, position, direction, item_name, max_damage * factor)
+end
+
+-- Damage to the player who fired a weapon, from where it is (applied directly, as above)
+function utils.apply_self_damage(owner_unit, position, direction, item_name, damage)
+	DamageUtils.add_damage_network(owner_unit, owner_unit, damage, "torso", "drakegun", position, direction, item_name, nil, owner_unit, nil, nil, false, nil, nil, nil, nil, nil, 1)
 end
 
 -- Throws the player who set off an explosion away from it (a shock jump): `speed` m/s at the center of the explosion, falling off in the same

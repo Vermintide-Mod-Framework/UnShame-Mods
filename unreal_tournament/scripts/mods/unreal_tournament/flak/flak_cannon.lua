@@ -62,6 +62,13 @@ local CONFIG = {
 	chunk_damage_decay = 5, -- per second
 	chunk_damage_decay_delay = 1, -- seconds
 	chunk_damage_min = 5,
+	-- A chunk that is slower than UT's 200 of its 2500 uu/s does no damage (FlakChunk.ProcessTouch)
+	chunk_min_speed_fraction = 200 / 2500,
+	-- A chunk that has bounced can hit the player who fired it (FlakChunk.ProcessTouch: a falling chunk is not ignored by its instigator): it
+	-- hurts them this much (the shell's self damage is three quarters of its damage), if it passes this close to a line along their body
+	chunk_self_damage = 8,
+	chunk_self_hit_radius = 0.45, -- m
+	chunk_self_hit_height = 1.6, -- m, the height of that line
 	-- Fire rates (FlakFire.FireRate, FlakAltFire.FireRate): the weapon fires again that long after a shot, with either fire mode (UT's modes
 	-- are exclusive: one waits for the other's shot to be over). There is no reload between shots: all of the ammo is the clip, and the ammo
 	-- that is picked up goes straight to it (ammo_immediately_available).
@@ -114,6 +121,16 @@ local CONFIG = {
 	-- The explosion hurts the player who fired the shell: this much at the center, falling off like
 	-- the explosion's damage does (the combo of the shock rifle, which is twice the damage, is 100)
 	shell_self_damage = 45,
+	-- The explosion throws the player who fired the shell away from it, this many m/s at the center, falling off like the damage (FlakShell.
+	-- MomentumTransfer is 75000, the Shock Rifle's ball's is 70000 with 8)
+	shell_jump_speed = 8.5,
+	-- The shell explodes if a projectile of one of the mod's weapons (a ball, a rocket, another shell) is this close to it (FlakShell.bProjTarget)
+	shell_trigger_radius = 0.5, -- m
+	-- While it flies the shell pushes the bodies near it (FlakShell.ForceType FT_Constant, ForceRadius 60 uu, ForceScale 5)
+	shell_force_radius = 1.2, -- m
+	shell_force_acceleration = 12, -- m/s^2
+	-- What the shell kills is thrown away from it (the ragdoll of FlakDamageShell: bThrowRagdoll), this many m/s at the center
+	shell_ragdoll_speed = 30,
 	shell_explosion_full_damage_radius = 0.5, -- damage falls off linearly from here to the radius
 	shell_chunk_count = 6,
 	shell_chunk_cone_degrees = 88, -- the chunks go up to this far from the direction of the shell, in yaw and pitch
@@ -518,7 +535,10 @@ mod.aoe_callbacks.ut_flak_shell = function (self, aoe_data, position)
 		power_level = self.power_level,
 	}
 
-	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_flak_shell_explosion.explosion, CONFIG.shell_self_damage)
+	local explosion = ExplosionTemplates.ut_flak_shell_explosion.explosion
+
+	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, explosion, CONFIG.shell_self_damage)
+	utils.apply_explosion_self_push(self._owner_unit, position, explosion, CONFIG.shell_jump_speed)
 
 	for _ = 1, CONFIG.shell_chunk_count do
 		spawn_projectile(shot, start, burst_rotation(rotation, math.degrees_to_radians(CONFIG.shell_chunk_cone_degrees)), CHUNK_ACTION_NAME, random_chunk_action(), CONFIG.chunk_speed)
@@ -534,6 +554,7 @@ mod:hook_safe(ProjectileScriptUnitLocomotionExtension, "bounce", function (self)
 	if action and action.ut_flak_chunk then
 		self.speed = self.speed * CONFIG.chunk_bounce_speed_scale
 		self.gravity = ProjectileGravitySettings[CONFIG.chunk_bounce_gravity_settings]
+		extension._ut_flak_bounced = true
 		extension._num_additional_penetrations = math.max(extension._num_additional_penetrations - 1, 0)
 	end
 end)
@@ -654,6 +675,11 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 		local damage = math.max(CONFIG.chunk_damage_min, CONFIG.chunk_ut_damage - CONFIG.chunk_damage_decay * math.max(0, age - CONFIG.chunk_damage_decay_delay))
 
 		self.power_level = power_level * damage / CONFIG.chunk_ut_damage
+
+		-- (a chunk that has slowed down too much does not hurt)
+		if Vector3.length(self.locomotion_extension:current_velocity()) < CONFIG.chunk_speed / 100 * CONFIG.chunk_min_speed_fraction then
+			self.power_level = 0
+		end
 	end
 
 	func(self, impact_data, hit_unit, hit_position, hit_direction, ...)
@@ -666,6 +692,166 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 
 	if self._num_additional_penetrations < penetrations_before then
 		self._num_bounces = self._num_bounces + penetrations_before - self._num_additional_penetrations
+	end
+end
+
+-- The projectiles that are flying: this machine's and the copies of the others', as find_ball_hit_by_beam in shock_rifle.lua has them. Each
+-- is { unit, extension, own }.
+local function flying_projectiles()
+	local entity = Managers.state and Managers.state.entity
+	local projectile_system = entity and entity:system("projectile_system")
+
+	if not projectile_system then
+		return nil
+	end
+
+	local projectiles = {}
+
+	for _, units in pairs(projectile_system.player_projectile_units) do
+		for unit in pairs(units) do
+			local extension = Unit.alive(unit) and ScriptUnit.has_extension(unit, "projectile_system")
+
+			if extension and extension._current_action then
+				projectiles[#projectiles + 1] = { unit = unit, extension = extension, own = true }
+			end
+		end
+	end
+
+	for unit, extension in pairs(entity:get_entities("PlayerProjectileHuskExtension")) do
+		if Unit.alive(unit) and extension._current_action then
+			projectiles[#projectiles + 1] = { unit = unit, extension = extension, own = false }
+		end
+	end
+
+	return projectiles
+end
+
+-- A chunk that has bounced can hit the player who fired it
+local function hit_owner(chunk)
+	local extension = chunk.extension
+	local owner_unit = extension._owner_unit
+
+	if not extension._ut_flak_bounced or extension._ut_flak_hit_owner or extension._stop_impacts then
+		return
+	end
+
+	if not owner_unit or not Unit.alive(owner_unit) or not HEALTH_ALIVE[owner_unit] or not utils.is_local_player_unit(owner_unit) then
+		return
+	end
+
+	local feet = POSITION_LOOKUP[owner_unit]
+	local position = POSITION_LOOKUP[chunk.unit]
+
+	if not feet or not position then
+		return
+	end
+
+	local closest = Vector3(feet.x, feet.y, feet.z + math.clamp(position.z - feet.z, 0, CONFIG.chunk_self_hit_height))
+
+	if Vector3.distance(position, closest) > CONFIG.chunk_self_hit_radius then
+		return
+	end
+
+	extension._ut_flak_hit_owner = true
+
+	utils.apply_self_damage(owner_unit, position, Vector3.normalize(position - closest), extension.item_name, CONFIG.chunk_self_damage)
+	extension:stop()
+end
+
+-- A shell goes off when another projectile of the mod touches it
+local function detonate_by_projectiles(shell, projectiles)
+	local position = POSITION_LOOKUP[shell.unit]
+
+	if not position or shell.extension._ut_flak_exploded then
+		return
+	end
+
+	for _, other in ipairs(projectiles) do
+		local action = other.extension._current_action
+		local other_position = POSITION_LOOKUP[other.unit]
+
+		if other ~= shell and (action.ut_shock_ball or action.ut_flak_shell or action.ut_rocket) and not other.extension._stop_impacts and other_position and Vector3.distance(position, other_position) < CONFIG.shell_trigger_radius then
+			shell.extension:do_aoe(ExplosionTemplates.ut_flak_shell_explosion, position, true)
+			shell.extension:stop()
+
+			return
+		end
+	end
+end
+
+-- The bodies near a shell are pushed away from it as it flies
+local function push_bodies(world, shell, dt)
+	local position = POSITION_LOOKUP[shell.unit]
+
+	if not position then
+		return
+	end
+
+	for unit in pairs(utils.units_in_radius(world, position, CONFIG.shell_force_radius)) do
+		if not HEALTH_ALIVE[unit] then
+			for i = 0, Unit.num_actors(unit) - 1 do
+				local actor = Unit.actor(unit, i)
+
+				if actor and Actor.is_dynamic(actor) then
+					local offset = Actor.position(actor) - position
+					local distance = Vector3.length(offset)
+
+					if distance > 0.01 then
+						Actor.set_velocity(actor, Actor.velocity(actor) + offset * (CONFIG.shell_force_acceleration * dt / distance))
+					end
+				end
+			end
+		end
+	end
+end
+
+local function update_flying_projectiles(dt)
+	local projectiles = flying_projectiles()
+
+	if not projectiles or #projectiles == 0 then
+		return
+	end
+
+	local world = Managers.world:world("level_world")
+
+	for _, projectile in ipairs(projectiles) do
+		local action = projectile.extension._current_action
+
+		if action.ut_flak_shell and not projectile.extension._stop_impacts then
+			push_bodies(world, projectile, dt)
+
+			if projectile.own then
+				detonate_by_projectiles(projectile, projectiles)
+			end
+		elseif action.ut_flak_chunk and projectile.own then
+			hit_owner(projectile)
+		end
+	end
+end
+
+-- What a shell kills is thrown away from it: the bodies are told, and thrown once their ragdolls have started, as the chunks' are. Every
+-- machine does it, as the ragdolls are simulated on each.
+mod.explosion_before_callbacks.ut_flak_shell_explosion = function (world, position)
+	return utils.units_in_radius(world, position, ExplosionTemplates.ut_flak_shell_explosion.explosion.radius)
+end
+
+mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position, _, alive_before)
+	local t = Managers.time:time("game")
+
+	for unit in pairs(alive_before or {}) do
+		if Unit.alive(unit) and not HEALTH_ALIVE[unit] and not ragdoll_throws[unit] then
+			local unit_position = POSITION_LOOKUP[unit] or position
+			local offset = Vector3.flat(unit_position - position)
+			local distance = Vector3.length(offset)
+			local direction = distance > 0.01 and offset * (1 / distance) or Vector3.up()
+			local speed = CONFIG.shell_ragdoll_speed * math.lerp(1, 0.5, math.clamp(distance / ExplosionTemplates.ut_flak_shell_explosion.explosion.radius, 0, 1))
+
+			-- (the upwards speed is added when the body is thrown, as for the chunks')
+			ragdoll_throws[unit] = {
+				t = t,
+				velocity = Vector3Box(direction * speed),
+			}
+		end
 	end
 end
 
@@ -686,8 +872,9 @@ mod.enabled_callbacks[#mod.enabled_callbacks + 1] = enable_flak_cannon
 mod.disabled_callbacks[#mod.disabled_callbacks + 1] = disable_flak_cannon
 mod.unload_callbacks[#mod.unload_callbacks + 1] = disable_flak_cannon
 
-mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	update_ragdoll_throws()
+	update_flying_projectiles(dt)
 end
 
 mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
