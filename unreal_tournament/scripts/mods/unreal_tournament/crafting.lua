@@ -5,8 +5,10 @@ local mod = get_mod("unreal_tournament")
 -- takes the answer into the inventory). The backend has no such weapons, so for a recipe that has one in it the mod makes the answer
 -- itself, the way the cloud scripts do, and gives it to craft_request_cb: the crafting pages need nothing else.
 --
--- The recipes done here: crafting a weapon from the blueprint, rerolling the properties or the traits of a weapon, and upgrading its rarity.
--- (Salvaging, applying and extracting skins are not: the materials a salvage gives would have to be added to the backend's amounts.)
+-- The recipes done here: crafting a weapon from the blueprint, rerolling the properties or the traits of a weapon, upgrading its rarity, and
+-- salvaging, which only discards the weapon: the materials a salvage gives would have to be added to the backend's amounts, which it does
+-- not know (the page that shows what the salvage gave shows the materials it would give, with 0 of each). Applying and extracting skins
+-- are not done.
 --
 -- What the weapons are made of is in the game's own data: the rarities that crafting gives and their weights (CraftingData), the properties
 -- and traits a weapon of a rarity can have (WeaponProperties.combinations, WeaponTraits.combinations: the Chaos Wastes make and upgrade
@@ -230,8 +232,57 @@ local function spend_materials(ingredients)
 	return consumed_items, weapon_id, saved
 end
 
+-- The answer to a salvage of crafted weapons: they are gone and give nothing, the page shows the materials they would have given as 0 (the
+-- items of the inventory that are the stacks of them, as changed by 0)
+local function discard(ingredients)
+	local inventory = Managers.backend._backend_mirror._inventory_items
+	local saved = items.saved()
+	local consumed_items = {}
+	local materials = {}
+	local modified_items = {}
+
+	for _, ingredient in ipairs(ingredients) do
+		local record = saved.crafted[ingredient.backend_id]
+
+		consumed_items[#consumed_items + 1] = {
+			ItemInstanceId = ingredient.backend_id,
+			RemainingUses = 0,
+		}
+
+		for _, material in ipairs(CraftingData.salvage_data.materials_from_rarity[record.rarity] or {}) do
+			materials[material.name] = true
+		end
+
+		saved.crafted[ingredient.backend_id] = nil
+	end
+
+	for _, item in pairs(inventory) do
+		if item.data and item.data.item_type == "crafting_material" and materials[item.key] then
+			local unchanged = {}
+
+			for field, value in pairs(item) do
+				unchanged[field] = value
+			end
+
+			unchanged.UsesIncrementedBy = 0
+			modified_items[#modified_items + 1] = unchanged
+		end
+	end
+
+	items.save(saved)
+
+	return {
+		consumed_items = consumed_items,
+		modified_items = modified_items,
+	}
+end
+
 -- The answer of the backend to a recipe that has one of the mod's weapons in it
 local function answer_to(recipe, ingredients)
+	if recipe.name == "salvage" then
+		return discard(ingredients)
+	end
+
 	local consumed_items, weapon_id, saved = spend_materials(ingredients)
 	local change = CHANGES[recipe.name]
 
@@ -270,8 +321,18 @@ mod:hook(BackendInterfaceCraftingPlayfab, "craft", function (func, self, career_
 		return func(self, career_name, item_backend_ids, recipe_override)
 	end
 
-	if recipe.name ~= "craft_weapon" and not CHANGES[recipe.name] then
-		mod:echo("The Unreal Tournament weapons cannot be salvaged, or have skins applied or extracted")
+	if recipe.name == "salvage" then
+		local saved = items.saved()
+
+		for _, ingredient in ipairs(ingredients) do
+			if not saved.crafted[ingredient.backend_id] then
+				mod:echo("The Unreal Tournament weapons you have crafted are salvaged apart from other items, and the blueprint cannot be")
+
+				return nil
+			end
+		end
+	elseif recipe.name ~= "craft_weapon" and not CHANGES[recipe.name] then
+		mod:echo("The Unreal Tournament weapons cannot have skins applied or extracted")
 
 		return nil
 	end
