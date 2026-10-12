@@ -45,17 +45,18 @@ local CONFIG = {
 	-- A chunk that has gone cold and landed stays on the ground this long (FlakChunk.Landed sets its life span to 1)
 	chunk_lie_seconds = 1,
 	-- FlakShell: the mesh, FlakGlow (a gold sprite) and FlakShellTrail (smoke, 0.5 to 0.6 s, 20 to 35 units, growing 15 a second)
-	shell_glow_size = 40,
+	shell_glow_size = 22, -- UT units, a little wider than the shell's mesh so that a ring of it shows around the mesh
+	shell_glow_behind = 0.1, -- m, away from the camera, so that the mesh covers the middle of the glow
 	shell_glow_color = {
 		1,
 		0.75,
 		0.3,
 	},
-	shell_glow_intensity = 0.6,
+	shell_glow_intensity = 1.5,
 	shell_smoke_interval = 0.02,
 	shell_smoke_life = 0.55,
-	shell_smoke_size = 20,
-	shell_smoke_growth = 15,
+	shell_smoke_size = 40,
+	shell_smoke_growth = 30,
 	shell_smoke_color = {
 		0.3,
 		0.28,
@@ -215,7 +216,7 @@ local function update_visuals(dt)
 						additive = 0,
 						color = CONFIG.shell_smoke_color,
 						growth = CONFIG.shell_smoke_growth * UNIT,
-						intensity = 1,
+						intensity = 1.5,
 						life = CONFIG.shell_smoke_life,
 						position = position,
 						size = CONFIG.shell_smoke_size * UNIT,
@@ -463,13 +464,20 @@ mod.skin_init_callbacks.ut_flak_shell = function (projectile)
 		fade_in = 0,
 		follow = function ()
 			if Unit.alive(visual.game_unit) and not visual.projectile._stop_impacts then
-				return Unit.world_position(visual.game_unit, 0)
+				local position = Unit.world_position(visual.game_unit, 0)
+				local camera_position = utils.camera_pose()
+
+				if camera_position then
+					position = position + Vector3.normalize(position - camera_position) * CONFIG.shell_glow_behind
+				end
+
+				return position
 			end
 		end,
 		intensity = CONFIG.shell_glow_intensity,
 		life = 6,
 		size = CONFIG.shell_glow_size * UNIT,
-		texture = "flak_chunk_glow",
+		texture = "flak_shell_glow",
 	})
 end
 

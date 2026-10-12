@@ -3,8 +3,7 @@ import sys, os
 # Splits UT2004's FlakTrailTex, which make_fx_assets.py converts as it is, into the two textures the skin uses. The texture is two tiles
 # stacked: a streak that runs across the tile (along u), and a glow for the head of the trail.
 # The skin's beam maps v along its length, so the streak tile is turned a quarter (transposed).
-# The glow tile has a bright white middle that looks like a solid dot, so the glow texture is generated instead: a soft orange-yellow
-# falloff with no bright middle.
+# The glow tile has a bright white middle that looks like a solid dot, so the glow textures are generated instead.
 # Usage: split_flak_trail.py <scratch dir>     (run after make_fx_assets.py, which writes flak_trail.png the first time)
 
 sys.argv = [sys.argv[0], sys.argv[1]]
@@ -56,14 +55,21 @@ for x in range(w):
     turned.append(b'\0' + b''.join(streak[y][x] for y in range(tile)))
 write('flak_trail', tile, w, turned)
 
-# The glow: an orange-yellow disc that fades smoothly to nothing at the edge
-GLOW_COLOR = (255, 170, 40)
-glow = []
-for y in range(tile):
-    row = bytes([0])
-    for x in range(w):
-        distance = (((x + 0.5) / w - 0.5) ** 2 + ((y + 0.5) / tile - 0.5) ** 2) ** 0.5 * 2
-        brightness = max(0.0, 1 - distance) ** 2.5 * 0.7
-        row += bytes([int(c * brightness) for c in GLOW_COLOR] + [255])
-    glow.append(row)
-write('flak_chunk_glow', w, tile, glow)
+def glow_texture(name, color, brightness_at):
+    # A disc: brightness_at(distance) is the brightness from 0 at the middle to 1 at the edge of the texture
+    pixels_out = []
+    for y in range(tile):
+        row = bytes([0])
+        for x in range(w):
+            distance = (((x + 0.5) / w - 0.5) ** 2 + ((y + 0.5) / tile - 0.5) ** 2) ** 0.5 * 2
+            brightness = brightness_at(min(distance, 1))
+            row += bytes([int(c * brightness) for c in color] + [255])
+        pixels_out.append(row)
+    write(name, w, tile, pixels_out)
+
+
+# The glow of a chunk: an orange-yellow disc that fades smoothly to nothing at the edge
+glow_texture('flak_chunk_glow', (255, 170, 40), lambda distance: (1 - distance) ** 2.5 * 0.7)
+
+# The glow of the shell: a gold disc that is as bright over most of its width, so the ring that shows around the shell's mesh is bright
+glow_texture('flak_shell_glow', (255, 190, 70), lambda distance: min(1.0, (1 - distance) / 0.35) ** 1.5)
