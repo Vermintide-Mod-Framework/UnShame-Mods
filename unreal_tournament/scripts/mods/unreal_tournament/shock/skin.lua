@@ -204,14 +204,13 @@ skin_api = mod.weapon_skin.new({
 			pivot_yaw = -800 / 65536 * 360,
 			-- (the roll that fits a screenshot of UT2004 with the old model is the other way round from OldPlayerViewPivot's sign here)
 			pivot_roll = 500 / 65536 * 360,
-			-- Held across the view as the other look is, fitted to show about as much of the model (it is turned about its own origin, which is
-			-- far from its middle)
-			inspect_pose_right = 29,
-			inspect_pose_forward = -70,
-			inspect_pose_up = -18,
-			inspect_pose_roll = -26,
-			inspect_pose_pitch = 7,
-			inspect_pose_yaw = 77,
+			-- Held across the view in the lower middle, the whole model in sight (it is turned about its own origin, which is far from its middle)
+			inspect_pose_right = 22,
+			inspect_pose_forward = -9,
+			inspect_pose_up = 0.5,
+			inspect_pose_roll = -20,
+			inspect_pose_pitch = 12,
+			inspect_pose_yaw = 89,
 			-- WeaponStaticMesh.ShockRiflePickup: its barrel is along the mesh's own Y, as the Flak Cannon's pickup is; the grip is the pistol grip
 			third_person = {
 				id = SETTING_ID,
