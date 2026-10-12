@@ -943,6 +943,16 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	sync_instagib_actions()
 end
 
+-- What kills an enemy comes apart when the attacker has the perk of the game's "bloody mess" buffs (GenericHitReactionExtension asks the
+-- attacker's buffs for it): the Instagib skin has it, for as long as it is wielded
+mod:hook(BuffExtension, "has_buff_perk", function (func, self, perk_name)
+	if perk_name == "bloody_mess" and utils.wielded_template_name(self._unit) == TEMPLATE_NAME and utils.wielded_skin(self._unit) == INSTAGIB_SKIN then
+		return true
+	end
+
+	return func(self, perk_name)
+end)
+
 local packages = utils.package_holder("unreal_tournament")
 
 -- The overheating explosion: the whole combo (the blast, and the pulling in of what died). The game's own overheating explosion hurts the
