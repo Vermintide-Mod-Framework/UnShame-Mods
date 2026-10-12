@@ -72,6 +72,9 @@ local CONFIG = {
 	explosion_effect = "fx/wpnfx_frag_grenade_impact",
 	-- A shot that is seen of another player, by the first chunk of it: more than this far apart in time is another shot
 	shot_gap = 0.25,
+	inspect_pose_speed = 5, -- how fast the model moves to the inspect pose and back, per second
+	inspect_sway = 5, -- degrees of yaw each way while inspecting
+	inspect_sway_speed = 1.8, -- radians per second
 }
 
 local UNIT = CONFIG.meters_per_uu
@@ -320,6 +323,13 @@ skin_api = mod.weapon_skin.new({
 	pivot_yaw = 16884 / 65536 * 360,
 	pivot_roll = 200 / 65536 * 360,
 	bob_damping = 1.4,
+	-- The inspect pose: the cannon is held across the view with the muzzle to the left, further away, and turned a little to show its top
+	inspect_pose_right = -2,
+	inspect_pose_forward = 6,
+	inspect_pose_up = 2,
+	inspect_pose_roll = -20,
+	inspect_pose_pitch = 6,
+	inspect_pose_yaw = 65,
 	-- WeaponStaticMesh.FlakCannonPickup (DrawScale 0.55): its barrel is along the mesh's own Y, and the grip is under the back of it
 	third_person = {
 		id = SETTING_ID,
@@ -329,7 +339,9 @@ skin_api = mod.weapon_skin.new({
 		-- (the game links the blunderbuss, the crossbow and the Drakegun to the left hand's node, AttachmentNodeLinking.rifles)
 		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.011,
-		scale = 0.5,
+		-- UT's third person mesh is as long as the pickup's would be without its DrawScale: about half of the height of a player's mesh
+		-- (113 units against 233), which is 0.85 m for a character of 1.8 m
+		scale = 0.7,
 		grip_right = 45,
 		grip_forward = 0,
 		grip_up = -10,
@@ -342,6 +354,11 @@ skin_api = mod.weapon_skin.new({
 	},
 	on_create = function ()
 		skin_api.play_sound("ut_flak_select")
+	end,
+	on_update = function (skin, dt)
+		skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
+		skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
+		skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
 	end,
 	on_refresh = apply_template_overrides,
 	on_give_back = function ()
@@ -387,6 +404,15 @@ mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
 end
 
 -- Also skip them on the character's own unit, which other players hear.
+-- Inspecting is the game's own action, held with the key: the cannon is turned to show its side as long as it lasts
+mod.inspect_callbacks.flak_skin = function (action, started)
+	local skin = skin_api.state()
+
+	if skin and utils.is_local_player_unit(action.owner_unit) then
+		skin.inspecting = started
+	end
+end
+
 mod.third_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return string.find(event, "reload", 1, true) ~= nil
 end
