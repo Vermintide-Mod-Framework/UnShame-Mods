@@ -178,6 +178,8 @@ WEAPONS['shock2003'] = {
     'materials': [('WeaponSkins/Texture/ShockTex0.tga', 'opaque'), ('WeaponSkins/Texture/ShockTex0.tga', 'opaque'),
                   ('solid:5c1410', 'additive')],
     'scale': 0.0125,
+    # (the laser sight starts further back than it was converted)
+    'shift': {2: (0, -15, 0)},
     'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
     'locators': ['Bone_flash01'],
     'unit': 'units/ut/shock2003/shock_rifle',
@@ -271,6 +273,14 @@ def main():
             mat = fb[i * fs + 12]
         if mat not in cfg.get('skip_materials', ()):
             faces.append((w0, w1, w2, mat))
+    # shift: { material: (x, y, z) in the psk's units } moves the points of that material's faces (none are shared with other materials)
+    moved = {}
+    for w0, w1, w2, mat in faces:
+        if mat in cfg.get('shift', {}):
+            for w in (w0, w1, w2):
+                moved[wedges[w][0]] = cfg['shift'][mat]
+    for pi, delta in moved.items():
+        points[pi] = tuple(points[pi][k] + delta[k] for k in range(3))
     ms, mc, mb = psk['MATT0000']
     psk_materials = [mb[i * ms:i * ms + 64].split(b'\0')[0].decode('latin1') for i in range(mc)]
     assert len(cfg['materials']) >= mc, 'a texture for each of %s' % psk_materials
