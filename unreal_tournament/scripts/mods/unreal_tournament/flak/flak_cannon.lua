@@ -32,7 +32,7 @@ local TEMPLATE_NAME = mod.items.weapons.flak_cannon.template
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
-	-- The blunderbuss's own ammo (16) is changed by this factor
+	-- The blunderbuss's own ammo (16, with 1 in the clip) is changed by this factor
 	ammo_multiplier = 1.33,
 	-- Flak chunk
 	chunk_count = 9, -- FlakFire.ProjPerFire
@@ -60,9 +60,11 @@ local CONFIG = {
 	chunk_damage_decay_delay = 1, -- seconds
 	chunk_damage_min = 5,
 	-- Fire rates (FlakFire.FireRate, FlakAltFire.FireRate): the weapon fires again that long after a shot, with either fire mode (UT's modes
-	-- are exclusive: one waits for the other's shot to be over). There is no reload between shots: all of the ammo is the clip.
+	-- are exclusive: one waits for the other's shot to be over). UT has no reload, the blunderbuss's clip of one is loaded again right after a
+	-- shot, in reload_time, so that it is ready when the shot's time is over (the ammo that is picked up goes to the clip that way).
 	primary_fire_rate = 0.8947,
 	alt_fire_rate = 1.11,
+	reload_time = 0.6,
 	-- Knockback of a chunk: how hard it staggers what it hits, (the beam's impact power is 0.3, a
 	-- shotgun pellet's is 0.3 up close and 0.15 far away). It falls off with the distance between the
 	-- player and the target, from the near value up to the start, to the far value from the end.
@@ -269,13 +271,26 @@ local function build_shell_action()
 	}
 end
 
--- What can follow a shot: either fire mode, once the shot's time is over (holding the button repeats the shot, as in UT)
+-- What can follow a shot: either fire mode, once the shot's time is over (holding the button repeats the shot, as in UT), and the reload that
+-- is done by then
 local function fire_chain_actions(rate)
 	local entries = {
 		{
 			action = "action_wield",
 			input = "action_wield",
 			start_time = 0.4,
+			sub_action = "default",
+		},
+		{
+			action = "weapon_reload",
+			input = "weapon_reload",
+			start_time = 0.4,
+			sub_action = "default",
+		},
+		{
+			action = "weapon_reload",
+			auto_chain = true,
+			start_time = math.max(rate - CONFIG.reload_time, 0),
 			sub_action = "default",
 		},
 	}
@@ -294,13 +309,12 @@ local function fire_chain_actions(rate)
 	return entries
 end
 
--- The blunderbuss's own shot (ammo, recoil, animation), fired again after the time of UT's fire mode, with no reload after it
+-- The blunderbuss's own shot (ammo, recoil, animation, reload), fired again after the time of UT's fire mode
 local function build_shot(original, rate)
 	local action = table.clone(original)
 
 	action.total_time = rate
 	action.total_time_secondary = rate
-	action.play_reload_animation = false
 	action.allowed_chain_actions = fire_chain_actions(rate)
 
 	return action
@@ -373,9 +387,8 @@ local function apply_flak_cannon()
 		action_two_default = actions.action_two.default,
 		required_projectile_unit_templates = {},
 		ammo_data = {
-			ammo_per_clip = template.ammo_data.ammo_per_clip,
-			ammo_per_reload = template.ammo_data.ammo_per_reload,
 			max_ammo = template.ammo_data.max_ammo,
+			reload_time = template.ammo_data.reload_time,
 		},
 	}
 
@@ -385,10 +398,8 @@ local function apply_flak_cannon()
 
 	saved.original = original
 
-	-- All of the ammo is in the clip: no reload between shots
 	template.ammo_data.max_ammo = math.floor(original.ammo_data.max_ammo * CONFIG.ammo_multiplier + 0.5)
-	template.ammo_data.ammo_per_clip = template.ammo_data.max_ammo
-	template.ammo_data.ammo_per_reload = template.ammo_data.max_ammo
+	template.ammo_data.reload_time = CONFIG.reload_time
 
 	local primary = build_shot(original.action_one_default, CONFIG.primary_fire_rate)
 
