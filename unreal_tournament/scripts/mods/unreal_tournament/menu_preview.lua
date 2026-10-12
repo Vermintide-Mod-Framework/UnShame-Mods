@@ -6,8 +6,9 @@ local mod = get_mod("unreal_tournament")
 -- (the game's weapons are those units): the previewers' units are hidden and the mesh is put where they are.
 
 local CONFIG = {
-	-- How long the mesh is shown in the inspection of an item (meters): 1.3 filled more than the window's view, 0.65 was still too big
-	item_length = 0.45,
+	-- How long the mesh is shown in the inspection of an item (meters): 1.3 filled more than the window's view, 0.65 was still too big, 0.45
+	-- too small
+	item_length = 0.55,
 }
 
 -- The skin of an item, if the item is a weapon that has one that is shown (the Weapon Skins setting)
