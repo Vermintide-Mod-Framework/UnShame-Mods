@@ -323,14 +323,15 @@ skin_api = mod.weapon_skin.new({
 	pivot_yaw = 16884 / 65536 * 360,
 	pivot_roll = 200 / 65536 * 360,
 	bob_damping = 1.4,
-	-- The inspect pose: the cannon is held in the middle of the view, further away, across it with the muzzle to the left, and turned a little
-	-- to show its top. Its middle is moved to the middle of the view, and it turns about its middle.
-	inspect_pose_right = -36,
-	inspect_pose_forward = 65,
-	inspect_pose_up = 12,
-	inspect_pose_roll = -20,
-	inspect_pose_pitch = 6,
-	inspect_pose_yaw = 80,
+	-- The inspect pose: the cannon is held a little right of the middle of the view, further away, with its left side to the view and the muzzle to
+	-- the left, turned a little to show its top. It is turned past straight across so that its open back, which UT's model has no faces for, is
+	-- turned away. It turns about its middle.
+	inspect_pose_right = -30,
+	inspect_pose_forward = 67,
+	inspect_pose_up = 18,
+	inspect_pose_roll = -15,
+	inspect_pose_pitch = 8,
+	inspect_pose_yaw = 95,
 	-- The middle of the model (UT units from its origin, in the view's axes), which the inspect turns it about
 	inspect_pivot_right = 24.7,
 	inspect_pivot_forward = 93,
