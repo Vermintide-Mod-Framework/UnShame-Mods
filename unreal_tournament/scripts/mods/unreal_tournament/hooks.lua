@@ -375,6 +375,22 @@ mod:hook(WeaponUnitExtension, "_play_1p_anim", function (func, self, event_1p, e
 	return func(self, event_1p, event, ...)
 end)
 
+-- The same for the character's own (third person) unit, whose events come over the network from the player who has the weapon: a sound in
+-- an animation (reloading) is heard from everyone's unit
+--   mod.third_person_animation_filters[template] = function (event_name)
+mod.third_person_animation_filters = {}
+
+mod:hook(AnimationSystem, "anim_event", function (func, self, unit, event_name, ...)
+	local template_name = utils.wielded_template_name(unit)
+	local filter = template_name and mod.third_person_animation_filters[template_name]
+
+	if filter and filter(event_name) then
+		return
+	end
+
+	return func(self, unit, event_name, ...)
+end)
+
 -- (the events that the game plays itself, not as the animation of an action of the weapon: the one of venting the heat is made by its overcharge)
 mod:hook(PlayerUnitFirstPerson, "animation_event", function (func, self, event, ...)
 	local template_name = utils.wielded_template_name(self.unit)

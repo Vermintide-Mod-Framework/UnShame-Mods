@@ -340,6 +340,11 @@ mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return skin_api.enabled() and (event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil)
 end
 
+-- The same sound in the character's own unit, which the others hear
+mod.third_person_animation_filters[TEMPLATE_NAME] = function (event)
+	return string.find(event, "reload", 1, true) ~= nil
+end
+
 -- The flow events of the game's units of the chunks and the shell start their effects as they are made: not while the skin is on
 mod.init_flow_event_filters.flak = function (event_name)
 	return skin_api.enabled() and (event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike")
