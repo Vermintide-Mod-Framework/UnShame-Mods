@@ -760,7 +760,7 @@ end
 
 -- A shell goes off when another projectile of the mod touches it
 local function detonate_by_projectiles(shell, projectiles)
-	local position = POSITION_LOOKUP[shell.unit]
+	local position = Unit.world_position(shell.unit, 0)
 
 	if not position or shell.extension._ut_flak_exploded then
 		return
@@ -768,7 +768,7 @@ local function detonate_by_projectiles(shell, projectiles)
 
 	for _, other in ipairs(projectiles) do
 		local action = other.extension._current_action
-		local other_position = POSITION_LOOKUP[other.unit]
+		local other_position = Unit.world_position(other.unit, 0)
 
 		if other ~= shell and (action.ut_shock_ball or action.ut_flak_shell or action.ut_rocket) and not other.extension._stop_impacts and other_position and Vector3.distance(position, other_position) < CONFIG.shell_trigger_radius then
 			shell.extension:do_aoe(ExplosionTemplates.ut_flak_shell_explosion, position, true)
@@ -781,7 +781,7 @@ end
 
 -- The bodies near a shell are pushed away from it as it flies
 local function push_bodies(world, shell, dt)
-	local position = POSITION_LOOKUP[shell.unit]
+	local position = Unit.world_position(shell.unit, 0)
 
 	if not position then
 		return
