@@ -21,7 +21,7 @@ mod.items.register("flak_cannon", {
 	deus_copy = "deus_es_blunderbuss",
 	name = "UT2004 Flak Cannon",
 	type_name = "Flak Cannon",
-	description = "The Trident Series 7 Flechette Cannon has evolved into the \"Mk3 Negotiator\". Its ionized flechettes burn and cauterize flesh, fired in a spread from the barrel or by grenades that explode on impact and radiate flechettes.\n\nThe primary fire is a tight spread of flak that bounces off walls. The secondary fire lobs a shell that bursts into shrapnel when it hits.",
+	description = "The Trident Series 7 Flechette Cannon has evolved into the \"Mk3 Negotiator\". Its ionized flechettes burn and cauterize flesh, fired in a spread from the barrel or by grenades that explode on impact and radiate flechettes.",
 	keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_close_range" },
 	icon = "ut_flak_cannon_icon",
 	icon_package = "resource_packages/unreal_tournament/icons",
