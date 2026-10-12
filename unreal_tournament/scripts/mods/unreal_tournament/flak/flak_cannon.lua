@@ -58,8 +58,9 @@ local CONFIG = {
 	-- it stops flying straight, slides along the surface it hit and falls, and it stops where it lands.
 	-- A chunk also goes through enemies. Each enemy it goes through and each bounce uses up one of the
 	-- chunk's passes, and a chunk has its bounces plus this many in all.
-	-- The multipliers of a chunk per armor type (unarmored, armored, monsters, players, berserkers, super armor)
-	chunk_armor_attack = {1, 1.25, 1.5, 1, 1, 0.5},
+	-- The multipliers of a chunk per armor type (unarmored, armored, monsters, players, berserkers, super armor). UT has no
+	-- armor, so the damage is the same for all of them.
+	chunk_armor_attack = {1, 1, 1, 1, 1, 1},
 	chunk_armor_impact = {1, 1, 1, 1, 1, 0.25},
 	chunk_bounces = 2, -- the most bounces a chunk has in UT2004
 	chunk_extra_bounces = 2,
@@ -168,7 +169,7 @@ register_network_lookup("sub_actions", SHELL_ACTION)
 register_damage_profile("ut_flak_chunk", "staff_fireball", function (profile)
 	make_flat(profile, attack_power_for(CONFIG.chunk_damage), impact_power_for(CONFIG.chunk_damage))
 
-	-- armor piercing: armored enemies take more damage than unarmored ones (critical hits too)
+	-- the same damage against every armor type (critical hits too)
 	utils.set_armor_modifiers(profile, CONFIG.chunk_armor_attack, CONFIG.chunk_armor_impact, true)
 
 	-- knockback that falls off: the damage is the same at any distance, the impact is not. This is
@@ -687,7 +688,41 @@ mod.init_callbacks.ut_flak_chunk = function (self)
 	self._ut_flak_spawn_t = Managers.time:time("game")
 end
 
-mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_data, hit_unit, hit_position, hit_direction, ...)
+-- Bounces the chunk off the shield of an enemy that blocks it, like off a wall. Returns false if the chunk can't bounce any more.
+local function bounce_off_shield(self, impact_data, hit_unit, hit_position, hit_direction, hit_normal)
+	local locomotion = self.locomotion_extension
+
+	if not locomotion.bounce or self._num_bounces >= (impact_data.max_bounces or 0) then
+		return false
+	end
+
+	-- The shield faces the way the enemy does.
+	local normal = Vector3.flat(Quaternion.forward(Unit.world_rotation(hit_unit, 0)))
+
+	if Vector3.length(normal) < 0.01 or Vector3.dot(normal, hit_direction) > 0 then
+		normal = -hit_direction
+	end
+
+	normal = Vector3.normalize(normal)
+
+	local breed = AiUtils.unit_breed(hit_unit)
+
+	if breed and breed.blocking_hit_effect then
+		EffectHelper.player_ranged_block_hit_particles(self._world, breed.blocking_hit_effect, hit_position, hit_direction, hit_unit)
+	end
+
+	locomotion:bounce(hit_position, hit_direction, normal)
+
+	self._num_bounces = self._num_bounces + 1
+
+	return true
+end
+
+mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
+	if AiUtils.attack_is_shield_blocked(hit_unit, self._owner_unit, nil, hit_direction) and bounce_off_shield(self, impact_data, hit_unit, hit_position, hit_direction, hit_normal) then
+		return
+	end
+
 	-- armor stops a chunk (after it did its damage): the game stops a projectile that has
 	-- nothing left to go through
 	if stops_chunk(self, hit_unit, hit_direction) then
@@ -716,7 +751,7 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 		end
 	end
 
-	func(self, impact_data, hit_unit, hit_position, hit_direction, ...)
+	func(self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
 
 	self.power_level = power_level
 
