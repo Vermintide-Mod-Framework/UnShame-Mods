@@ -85,7 +85,6 @@ local CONFIG = {
 	-- center, falling off like the explosion
 	combo_self_damage = 100,
 	combo_standard_power_level = 500, -- against a beastmen standard (banner) in the combo's radius
-	combo_standard_margin = 1, -- meters past the radius: the game's overlap is of the standard's body, this measures to its position
 	-- Shock jumps: the explosions throw the shooter away from them (UT's ShockProjectile.MomentumTransfer is 70000 and the combo's is
 	-- 150000), this many m/s at the center, falling off like the damage. They add to the speed the shooter has.
 	ball_jump_speed = 8,
@@ -849,39 +848,11 @@ mod.explosion_before_callbacks.ut_shock_combo_explosion = function (world, impac
 	}
 end
 
--- A beastmen standard (banner) only takes damage from melee attacks and from a list of damage sources (bombs, torches), which doesn't
--- have the rifle. Its other damage is dropped.
-if rawget(_G, "BeastmenStandardHealthExtension") then
-	mod:hook(BeastmenStandardHealthExtension, "add_damage", function (func, self, attacker_unit, damage_amount, hit_zone_name, damage_type, hit_position, damage_direction, damage_source_name, ...)
-		if damage_source_name == mod.items.weapons.shock_rifle.key then
-			return GenericHealthExtension.add_damage(self, attacker_unit, damage_amount, hit_zone_name, damage_type, hit_position, damage_direction, damage_source_name, ...)
-		end
+-- The Shock Rifle's damage is not dropped by a beastmen standard (banner), and the combo damages the ones in its radius
+mod.standards.allow_source(mod.items.weapons.shock_rifle.key)
 
-		return func(self, attacker_unit, damage_amount, hit_zone_name, damage_type, hit_position, damage_direction, damage_source_name, ...)
-	end)
-end
-
--- A beastmen standard is not an enemy, and the explosion doesn't hit it. The host damages the ones in the combo's radius.
 local function blow_up_standards(impact_position, attacker_unit)
-	if not Managers.player.is_server or not attacker_unit then
-		return
-	end
-
-	local explosion = ExplosionTemplates.ut_shock_combo_explosion.explosion
-	local damage_profile = DamageProfileTemplates.ut_shock_combo_explosion
-	-- Copied: the standard leaves the list when it dies
-	local standards = table.clone(Managers.state.conflict:alive_standards())
-
-	for _, standard in ipairs(standards) do
-		-- Not every unit is in POSITION_LOOKUP, the game's own explosion falls back to the unit's position the same way
-		local position = POSITION_LOOKUP[standard] or Unit.local_position(standard, 0)
-
-		if HEALTH_ALIVE[standard] and Vector3.distance(position, impact_position) <= explosion.radius + CONFIG.combo_standard_margin then
-			local direction = Vector3.normalize(position - impact_position)
-
-			DamageUtils.add_damage_network_player(damage_profile, 1, CONFIG.combo_standard_power_level, standard, attacker_unit, "full", position, direction, mod.items.weapons.shock_rifle.key, nil, 0, false, nil, false, 0, 1, attacker_unit)
-		end
-	end
+	mod.standards.blow_up(impact_position, attacker_unit, ExplosionTemplates.ut_shock_combo_explosion.explosion.radius, DamageProfileTemplates.ut_shock_combo_explosion, CONFIG.combo_standard_power_level, mod.items.weapons.shock_rifle.key)
 end
 
 mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_position, _, before)

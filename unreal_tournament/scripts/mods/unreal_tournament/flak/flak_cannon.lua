@@ -143,6 +143,9 @@ local CONFIG = {
 	-- Bodies killed by the shell are thrown away from the explosion at this speed (m/s) at the center (DamTypeFlakShell.bThrowRagdoll).
 	shell_ragdoll_speed = 30,
 	shell_explosion_full_damage_radius = 0.5, -- damage falls off linearly from here to the radius
+	shell_standard_power_level = 500, -- against a beastmen standard (banner) in the explosion's radius
+	-- Chunks of one shot that spawn this close in time (seconds) are one shot, see buffs_used
+	shot_window = 0.1,
 	shell_chunk_count = 6,
 	shell_chunk_cone_degrees = 88, -- the chunks go up to this far from the direction of the shell, in yaw and pitch
 	shell_chunk_start_offset = 0.2, -- m back from the explosion, so the chunks start in front of the wall
@@ -395,6 +398,7 @@ local function restore_blunderbuss()
 	end
 
 	actions[SHELL_ACTION_NAME][SHELL_ACTION] = nil
+	template.attack_meta_data.ut_flak = nil
 
 	for _, name in ipairs(PROJECTILE_UNIT_TEMPLATES) do
 		template.required_projectile_unit_templates[name] = original.required_projectile_unit_templates[name]
@@ -454,6 +458,9 @@ local function apply_flak_cannon()
 	end
 
 	saved.original = original
+
+	-- (what tells the bot shooting, see bots.lua, that this is the Flak Cannon)
+	template.attack_meta_data.ut_flak = true
 
 	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
 	template.ammo_data.max_ammo = math.floor(original.ammo_data.max_ammo * CONFIG.ammo_multiplier + 0.5)
@@ -755,6 +762,34 @@ local function bounce_off_shield(self, impact_data, hit_unit, hit_position, hit_
 	return true
 end
 
+-- The game's hitscan shotguns run the buffs that trigger on a hit (the headshot ammo trait, ...) only for the first pellet that hits, once per
+-- shot (ActionShotgun's check_buffs). The chunks are projectiles that each run them, so the ones after the first of a shot don't:
+-- buffs_used[owner unit] is the spawn time of the shot whose first hit has run them.
+local buffs_used = {}
+local skip_buffs = false
+
+mod:hook(DamageUtils, "buff_on_attack", function (func, ...)
+	if skip_buffs then
+		return false
+	end
+
+	return func(...)
+end)
+
+local function buffs_already_run(chunk)
+	local owner_unit = chunk._owner_unit
+	local spawn_t = chunk._ut_flak_spawn_t
+	local used = buffs_used[owner_unit]
+
+	if used and spawn_t and math.abs(used - spawn_t) < CONFIG.shot_window then
+		return true
+	end
+
+	buffs_used[owner_unit] = spawn_t
+
+	return false
+end
+
 mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
 	if AiUtils.attack_is_shield_blocked(hit_unit, self._owner_unit, nil, hit_direction) and bounce_off_shield(self, impact_data, hit_unit, hit_position, hit_direction, hit_normal) then
 		return
@@ -788,9 +823,17 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 		end
 	end
 
-	func(self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
+	-- (an error mustn't leave the buffs skipped)
+	skip_buffs = buffs_already_run(self)
 
+	local ok, error_message = pcall(func, self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
+
+	skip_buffs = false
 	self.power_level = power_level
+
+	if not ok then
+		error(error_message, 0)
+	end
 
 	if not AiUtils.attack_is_shield_blocked(hit_unit, self._owner_unit, nil, hit_direction) then
 		add_ragdoll_throw(hit_unit, self._owner_unit, hit_position, hit_direction)
@@ -935,14 +978,22 @@ end
 
 -- Bodies killed by a shell are thrown away from it. The throw is queued here and applied once the ragdoll has started, the same way as
 -- for chunks. It runs on every machine, because ragdolls are simulated locally.
-mod.explosion_before_callbacks.ut_flak_shell_explosion = function (world, position)
-	return utils.units_in_radius(world, position, ExplosionTemplates.ut_flak_shell_explosion.explosion.radius)
+mod.explosion_before_callbacks.ut_flak_shell_explosion = function (world, position, attacker_unit)
+	return {
+		alive = utils.units_in_radius(world, position, ExplosionTemplates.ut_flak_shell_explosion.explosion.radius),
+		attacker_unit = attacker_unit,
+	}
 end
 
-mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position, _, alive_before)
+-- The Flak Cannon's damage is not dropped by a beastmen standard (banner), and the shell damages the ones in its radius
+mod.standards.allow_source(mod.items.weapons.flak_cannon.key)
+
+mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position, _, before)
 	local t = Managers.time:time("game")
 
-	for unit in pairs(alive_before or {}) do
+	mod.standards.blow_up(position, before and before.attacker_unit, ExplosionTemplates.ut_flak_shell_explosion.explosion.radius, DamageProfileTemplates.ut_flak_shell_explosion, CONFIG.shell_standard_power_level, mod.items.weapons.flak_cannon.key)
+
+	for unit in pairs(before and before.alive or {}) do
 		if Unit.alive(unit) and not HEALTH_ALIVE[unit] and not ragdoll_throws[unit] then
 			local unit_position = Unit.world_position(unit, 0)
 			local offset = Vector3.flat(unit_position - position)

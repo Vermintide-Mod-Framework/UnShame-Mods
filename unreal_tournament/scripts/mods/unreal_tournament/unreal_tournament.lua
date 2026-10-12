@@ -68,6 +68,9 @@ mod.items = mod:dofile("scripts/mods/unreal_tournament/items")
 -- The scaled particle effects of the weapons, the one copy of them
 mod.effects = mod:dofile("scripts/mods/unreal_tournament/effects")
 
+-- What lets the weapons damage beastmen standards (banners), the one copy of it
+mod.standards = mod:dofile("scripts/mods/unreal_tournament/standards")
+
 -- The particles of the weapon skins (UT2004's effects), the one copy of them
 mod.skin_particles = mod:dofile("scripts/mods/unreal_tournament/skin_particles")
 
@@ -80,6 +83,7 @@ mod:dofile("scripts/mods/unreal_tournament/shock/shock_rifle")
 mod:dofile("scripts/mods/unreal_tournament/shock/skin")
 mod:dofile("scripts/mods/unreal_tournament/shock/bots")
 mod:dofile("scripts/mods/unreal_tournament/flak/flak_cannon")
+mod:dofile("scripts/mods/unreal_tournament/flak/bots")
 mod:dofile("scripts/mods/unreal_tournament/flak/skin")
 mod:dofile("scripts/mods/unreal_tournament/rocket/rocket_launcher")
 mod:dofile("scripts/mods/unreal_tournament/rocket/skin")
@@ -99,5 +103,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- (seen in the chat each time the mod is loaded or reloaded, to know which build is running: the number is the count of
 -- commits of the repository, which goes up by one with every change). Only with the developer mode of the mod framework on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 639)")
+	mod:echo("Unreal Tournament loaded (build 640)")
 end
