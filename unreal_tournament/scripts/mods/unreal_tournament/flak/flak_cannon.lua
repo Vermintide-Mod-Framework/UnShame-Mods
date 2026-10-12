@@ -33,7 +33,7 @@ local TEMPLATE_NAME = mod.items.weapons.flak_cannon.template
 local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
 	-- Temporary, for testing: multiplies the launch speed of the chunks and the shell. 1 is normal.
-	debug_speed_scale = 0.2,
+	debug_speed_scale = 1,
 	-- The Blunderbuss's ammo (16) is multiplied by this.
 	ammo_multiplier = 1.33,
 	-- Flak chunk

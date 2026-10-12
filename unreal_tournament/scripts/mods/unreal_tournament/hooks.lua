@@ -508,3 +508,17 @@ for _, function_name in ipairs({
 		return func(effect_name, ...)
 	end)
 end
+
+-- Development: /timescale <number> runs the game at that speed (1 is normal), to look at fast effects slowly
+mod:command("timescale", "<number> - the speed of the game, 1 is normal", function (scale)
+	local number = tonumber(scale)
+
+	if not number or number < 0 then
+		mod:echo("timescale: a number, 1 is normal")
+
+		return
+	end
+
+	Managers.time:set_global_time_scale(number)
+	mod:echo("timescale: %s", tostring(number))
+end)
