@@ -88,6 +88,7 @@ local function new(def)
 		inspect_pose_roll = 0,
 		inspect_pose_up = 0,
 		inspect_pose_yaw = 0,
+		inspect_turn_start = 0,
 		inspect_pivot_forward = 0,
 		inspect_pivot_right = 0,
 		inspect_pivot_up = 0,
@@ -618,9 +619,11 @@ local function new(def)
 
 		-- (turned about the way the view looks, after everything of the model's own: the roll about the way it looks, the pitch about
 		-- the way it is to the right, the yaw about up; skin.extra_yaw is a turn of the weapon's own, degrees, as it plays)
-		local roll = alt * CONFIG.alt_pose_roll + inspect * CONFIG.inspect_pose_roll
-		local pitch = alt * CONFIG.alt_pose_pitch + inspect * CONFIG.inspect_pose_pitch
-		local yaw = alt * CONFIG.alt_pose_yaw + inspect * CONFIG.inspect_pose_yaw + (skin.extra_yaw or 0)
+		-- (the inspect turn starts when the inspect pose is inspect_turn_start of the way: the weapon is brought forward first, then turned)
+		local inspect_turn = math.clamp((inspect - CONFIG.inspect_turn_start) / (1 - CONFIG.inspect_turn_start), 0, 1)
+		local roll = alt * CONFIG.alt_pose_roll + inspect_turn * CONFIG.inspect_pose_roll
+		local pitch = alt * CONFIG.alt_pose_pitch + inspect_turn * CONFIG.inspect_pose_pitch
+		local yaw = alt * CONFIG.alt_pose_yaw + inspect_turn * CONFIG.inspect_pose_yaw + (skin.extra_yaw or 0)
 
 		if roll ~= 0 or pitch ~= 0 or yaw ~= 0 then
 			local turn = Quaternion.multiply(Quaternion.axis_angle(Vector3(0, 0, 1), math.rad(yaw)), Quaternion.multiply(Quaternion.axis_angle(Vector3(1, 0, 0), math.rad(pitch)), Quaternion.axis_angle(Vector3(0, 1, 0), math.rad(roll))))
