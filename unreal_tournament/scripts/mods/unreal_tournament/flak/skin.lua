@@ -30,6 +30,7 @@ local CONFIG = {
 	chunk_trail_seconds = 0.1,
 	chunk_trail_length_max = 3, -- m
 	chunk_trail_width = 0.1, -- m
+	chunk_glow_size = 0.3, -- m, the glow at the head of the trail
 	-- FlakShell: the mesh, FlakGlow (a gold sprite) and FlakShellTrail (smoke, 0.5 to 0.6 s, 20 to 35 units, growing 15 a second)
 	shell_glow_size = 40,
 	shell_glow_color = {
@@ -382,6 +383,23 @@ mod.skin_init_callbacks.ut_flak_chunk = function (projectile)
 
 			return position - visual.direction:unbox() * length, position
 		end,
+	})
+
+	particles.sprite({
+		color = {
+			1,
+			1,
+			1,
+		},
+		fade_in = 0,
+		follow = function ()
+			if Unit.alive(visual.game_unit) and not visual.projectile._stop_impacts then
+				return Unit.world_position(visual.game_unit, 0)
+			end
+		end,
+		life = 2.7,
+		size = CONFIG.chunk_glow_size,
+		texture = "flak_chunk_glow",
 	})
 end
 
