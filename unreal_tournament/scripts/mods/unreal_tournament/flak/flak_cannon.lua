@@ -64,6 +64,7 @@ local CONFIG = {
 	-- that is picked up goes straight to it (ammo_immediately_available).
 	primary_fire_rate = 0.8947,
 	alt_fire_rate = 1.11,
+	chain_margin = 0.15, -- seconds
 	-- Knockback of a chunk: how hard it staggers what it hits, (the beam's impact power is 0.3, a
 	-- shotgun pellet's is 0.3 up close and 0.15 far away). It falls off with the distance between the
 	-- player and the target, from the near value up to the start, to the far value from the end.
@@ -299,8 +300,10 @@ end
 local function build_shot(original, rate)
 	local action = table.clone(original)
 
-	action.total_time = rate
-	action.total_time_secondary = rate
+	-- (the shot lasts a little longer than the time to the next one: a button that is held is read while the shot is going on, and a shot
+	-- that ends the moment the next one can start misses it)
+	action.total_time = rate + CONFIG.chain_margin
+	action.total_time_secondary = rate + CONFIG.chain_margin
 	action.play_reload_animation = false
 	action.allowed_chain_actions = fire_chain_actions(rate)
 
@@ -374,6 +377,7 @@ local function apply_flak_cannon()
 		action_two_default = actions.action_two.default,
 		required_projectile_unit_templates = {},
 		ammo_data = {
+			reload_time = template.ammo_data.reload_time,
 			ammo_immediately_available = template.ammo_data.ammo_immediately_available,
 			ammo_per_clip = template.ammo_data.ammo_per_clip,
 			ammo_per_reload = template.ammo_data.ammo_per_reload,
@@ -392,6 +396,8 @@ local function apply_flak_cannon()
 	template.ammo_data.ammo_per_clip = template.ammo_data.max_ammo
 	template.ammo_data.ammo_per_reload = template.ammo_data.max_ammo
 	template.ammo_data.ammo_immediately_available = true
+	-- (nothing is meant to need a reload: this is for the one the game may still do, as when the weapon is wielded)
+	template.ammo_data.reload_time = 0.2
 
 	local primary = build_shot(original.action_one_default, CONFIG.primary_fire_rate)
 
