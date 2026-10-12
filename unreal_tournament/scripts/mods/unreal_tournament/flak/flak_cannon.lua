@@ -707,8 +707,11 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 
 		self.power_level = power_level * damage / CONFIG.chunk_ut_damage
 
-		-- A chunk that is too slow does no damage.
-		if Vector3.length(self.locomotion_extension:current_velocity()) < CONFIG.chunk_speed * CONFIG.debug_speed_scale / 100 * CONFIG.chunk_min_speed_fraction then
+		-- A chunk that is too slow does no damage. The locomotion's velocity is the distance moved in the last frame.
+		local locomotion = self.locomotion_extension
+		local frame_time = locomotion.dt or 0
+
+		if frame_time > 0.0001 and Vector3.length(locomotion:current_velocity()) / frame_time < CONFIG.chunk_speed * CONFIG.debug_speed_scale / 100 * CONFIG.chunk_min_speed_fraction then
 			self.power_level = 0
 		end
 	end
