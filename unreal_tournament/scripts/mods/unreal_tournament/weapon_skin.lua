@@ -33,9 +33,9 @@ local mod = get_mod("unreal_tournament")
 --       with skin.alt_pose, 0 (where UT has it) to 1. inspect_pose_* are a third, for the inspect, with skin.inspect_pose. skin.extra_yaw is
 --       a turn that is added to them, degrees, for what moves while it is held there.
 --   third_person: what weapon_skin_third_person.lua takes
---   looks: { [skin key] = { ... } } the weapon's skins (illusions, see items.lua) that look different: what is in a look replaces the same
---       thing of the definition above (the unit and its animations, where it is drawn, ...) while the weapon with that skin is wielded;
---       a third_person in it is the third person of that look, in full. The weapon's own skin is the definition.
+--   looks: { [skin key] = { ... } } skins (illusions, see items.lua) that look different. While the weapon with that skin is wielded,
+--       the values in the look replace the same values of the definition above (the unit, its animations, where it is drawn, ...).
+--       A third_person in a look is that look's full third person definition. The weapon's own skin is the definition itself.
 --   on_create(skin), on_update(skin, dt), on_destroy(skin): what is the weapon's own of the model that is shown
 --   on_update_always(dt): every frame, shown or not; on_refresh(): when the setting or the weapon is switched; on_give_back(),
 --   on_level_exit(): what is its own to take back and to clear
@@ -99,7 +99,7 @@ local function new(def)
 	local animations = CONFIG.animations.animations
 	local bone_count = #bones
 
-	-- The definition without any look, and what the looks replace
+	-- A copy of the definition without any look, and the keys that looks replace.
 	local BASE = {}
 	local REPLACED = {}
 	local third_person_looks
@@ -117,12 +117,12 @@ local function new(def)
 		end
 	end
 
-	-- The look of a skin of the weapon (its key), nothing for the weapon's own
+	-- Returns the look for a skin key, or nothing for the weapon's own look.
 	local function look_of(skin_key)
 		return skin_key and CONFIG.looks and CONFIG.looks[skin_key] and skin_key or nil
 	end
 
-	-- The look that CONFIG has now
+	-- The look CONFIG currently has.
 	local current_look
 
 	local function set_look(name)
@@ -678,7 +678,7 @@ local function new(def)
 			return
 		end
 
-		-- A skin applied to the weapon that is held (the Illusions page): the model of the new one
+		-- A different skin was applied to the weapon being held (on the Illusions page): switch to its model.
 		local skin_key = utils.wielded_skin(fp.unit)
 
 		if look_of(skin_key) ~= skin.look then

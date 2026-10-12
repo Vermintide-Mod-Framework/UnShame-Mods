@@ -227,8 +227,8 @@ local PURPLE = {
 	0.55,
 	1,
 }
--- The Instagib Shock Rifle's effects (ShockMuzFlashB, ShockImpactFlareB, ShockImpactRingB, ShockExplosionCoreB: mColorRange R235 G35 B35, and
--- ShockBeamCoilB: R150) are the same effects in red
+-- The Instagib Shock Rifle's effects are the same effects in red (ShockMuzFlashB, ShockImpactFlareB, ShockImpactRingB and
+-- ShockExplosionCoreB use color R235 G35 B35, and ShockBeamCoilB uses R150).
 local RED = {
 	235 / 255,
 	35 / 255,
@@ -460,7 +460,7 @@ function fx.beam(start, stop, normal, red)
 		local piece_length = CONFIG.beam_piece_length * UNIT
 		local count = math.max(1, math.ceil(length / piece_length))
 
-		-- The Instagib Shock Rifle's beam is red and has a second beam on it (SuperShockBeamEffect, ExtraRedBeam)
+		-- The Instagib beam is red and drawn twice (SuperShockBeamEffect adds an ExtraRedBeam).
 		for _ = 1, red and 2 or 1 do
 			for i = 0, count - 1 do
 				particles.beam({

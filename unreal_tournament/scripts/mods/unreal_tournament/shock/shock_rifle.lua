@@ -11,7 +11,7 @@ mod.items.register("shock_rifle", {
 	template = "ut_shock_rifle_template",
 	base_item = "bw_skullstaff_beam",
 	deus_copy = "deus_bw_skullstaff_beam",
-	-- The Beam Staff's careers, and the Necromancer (the DLC's career, which has staffs of its own)
+	-- The Beam Staff's careers, plus the Necromancer (a DLC career that has its own staffs).
 	can_wield = { "bw_scholar", "bw_adept", "bw_unchained", "bw_necromancer" },
 	name = "UT2004 Shock Rifle",
 	-- UT2004's manual calls it the ASMD Shock Rifle
@@ -23,7 +23,7 @@ mod.items.register("shock_rifle", {
 	icon = "ut_shock_rifle_icon",
 	icon_package = "resource_packages/unreal_tournament/icons",
 	icon_materials = "ui/ut/shock_rifle_icon",
-	-- The illusions: UT2004's model, and the old ASMD that UT2003 had (UT2004 has it as an option)
+	-- The illusions: UT2004's model and UT2003's old model (UT2004 still has it as an option).
 	skins = {
 		{
 			key = "ut_shock_rifle_skin_2004",
@@ -36,7 +36,7 @@ mod.items.register("shock_rifle", {
 			icon = "ut_shock_rifle_2003_icon",
 			icon_materials = "ui/ut/shock_rifle_2003_icon",
 		},
-		-- UT2004's SuperShockRifle: the same rifle with a red chamber, beam and flashes
+		-- UT2004's SuperShockRifle: the same rifle with a red chamber, beam and flashes.
 		{
 			key = "ut_shock_rifle_skin_instagib",
 			name = "UT2004 Instagib Shock Rifle",
@@ -109,8 +109,8 @@ local CONFIG = {
 	implosion_pull = 90, -- m/s^2
 	implosion_pull_softening = 1, -- m, the pull is weaker than this close to the center
 	implosion_max_speed = 30, -- m/s
-	-- The Instagib skin (UT2004's SuperShockRifle): both fire modes shoot a beam (SuperShockBeamFire), which does 1000 damage (DamageMax) to
-	-- the beam's 45 and fires every 1.1 seconds, and shots cost no ammo (here: no overcharge). The stagger is scaled less than the damage.
+	-- The Instagib skin (UT2004's SuperShockRifle): both fire modes shoot a beam (SuperShockBeamFire) that does 1000 damage (DamageMax) where
+	-- the normal beam does 45. It fires every 1.1 seconds and uses no overcharge. Stagger is scaled less than damage.
 	instagib_damage = 1000,
 	instagib_fire_rate = 1.1,
 	instagib_impact_multiplier = 2,
@@ -256,8 +256,8 @@ register_explosion_template("ut_shock_combo_explosion", {
 	},
 })
 
--- The beam's hit effect does nothing (the game would play the sound, particles and decals of the material it hits): the skin draws the
--- impact (see mod.silent_hit_effects in hooks.lua)
+-- The beam's hit effect does nothing. Without this the game would play the sound, particles and decals of the surface it hits, and the
+-- skin draws the impact instead (see mod.silent_hit_effects in hooks.lua).
 local NO_HIT_EFFECT = "ut_shock_impact"
 
 mod.silent_hit_effects[NO_HIT_EFFECT] = true
@@ -354,7 +354,7 @@ local function build_beam_action(instagib_own_action, instagib_other_action)
 		hit_effect = NO_HIT_EFFECT,
 		is_spell = true,
 		kind = "handgun",
-		-- The Instagib's beam goes through shields, which block shots of the game's own handguns the same way unless told not to
+		-- The Instagib beam goes through shields. The game's own handguns set this field to ignore shields too.
 		ignore_shield_hit = instagib_own_action and true or nil,
 		overcharge_type = instagib_own_action and "ut_shock_instagib" or "ut_shock_beam",
 		reset_aim_on_attack = true,
@@ -516,7 +516,7 @@ local function apply_shock_rifle()
 		default = build_ball_action(),
 	}
 
-	-- The Instagib skin's: the beam on both buttons (see sync_instagib_actions)
+	-- The Instagib skin's actions: the beam on both buttons (see sync_instagib_actions).
 	saved.normal_actions = {
 		action_one = actions.action_one,
 		action_two = actions.action_two,
@@ -915,8 +915,8 @@ mod:network_register("ut_shock_trail", function (_, owner_go_id, x, y, z, normal
 	end
 end)
 
--- The Instagib skin changes how the weapon is shot, and the template is shared by every Shock Rifle on this machine, so its fire modes are
--- the Instagib's only while this player's wielded weapon has that skin (the others' actions are not run here)
+-- The Instagib skin changes how the weapon fires, but every Shock Rifle shares one template. So the Instagib fire modes are only used
+-- while this player's wielded weapon has the skin. Other players' actions are not run on this machine.
 local function sync_instagib_actions()
 	local template = rawget(Weapons, TEMPLATE_NAME)
 
@@ -924,7 +924,7 @@ local function sync_instagib_actions()
 		return
 	end
 
-	-- (not before there is a network game: asking the engine for this peer's id is an error in the menus)
+	-- (Skip this until there is a network game: asking the engine for this peer's id is an error in the menus.)
 	local player = Managers.player and Managers.player:local_player_safe()
 	local unit = player and player.player_unit
 	local wanted = unit ~= nil and Unit.alive(unit) and utils.wielded_template_name(unit) == TEMPLATE_NAME and utils.wielded_skin(unit) == INSTAGIB_SKIN
@@ -946,8 +946,8 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	sync_instagib_actions()
 end
 
--- What kills an enemy comes apart when the attacker has the perk of the game's "bloody mess" buffs (GenericHitReactionExtension asks the
--- attacker's buffs for it): the Instagib skin has it, for as long as it is wielded
+-- Kills by the Instagib skin dismember the enemy. The game checks the attacker's buffs for the "bloody mess" perk when deciding that
+-- (GenericHitReactionExtension), so report the perk while the skin's weapon is wielded.
 mod:hook(BuffExtension, "has_buff_perk", function (func, self, perk_name)
 	if perk_name == "bloody_mess" and utils.wielded_template_name(self._unit) == TEMPLATE_NAME and utils.wielded_skin(self._unit) == INSTAGIB_SKIN then
 		return true

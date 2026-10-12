@@ -375,8 +375,8 @@ mod:hook(WeaponUnitExtension, "_play_1p_anim", function (func, self, event_1p, e
 	return func(self, event_1p, event, ...)
 end)
 
--- The same for the character's own (third person) unit, whose events come over the network from the player who has the weapon: a sound in
--- an animation (reloading) is heard from everyone's unit
+-- The same for the character's third person unit. Its animation events come over the network from the player holding the weapon, and
+-- sounds inside an animation (like reloading) are heard from every player's unit.
 --   mod.third_person_animation_filters[template] = function (event_name)
 mod.third_person_animation_filters = {}
 
@@ -488,10 +488,10 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	end
 end
 
--- Hit effects that do nothing: a weapon that draws its own impact names one (mod.silent_hit_effects[name] = true) as its action's hit_effect.
--- The game wants a name for it, and sends the name to the other peers as its number in a lookup of names. That lookup is full (adding a
--- name is an error: too many entries), so a name that is not in it is neither played nor sent. Walls and props and enemies (the "skinned"
--- ones: flesh, armor) each have their own pair of functions, so all four are hooked.
+-- Hit effects that do nothing. A weapon that draws its own impact adds an effect name here (mod.silent_hit_effects[name] = true) and uses
+-- that name as its action's hit_effect. The game needs a name, and sends it to other players as a number from a lookup table. That table
+-- is full and adding a name is an error, so these names can't be sent, and the hooks below skip playing and sending them.
+-- Walls and props, and enemies (flesh, armor), each have a local and a remote function, so all four are hooked.
 mod.silent_hit_effects = {}
 
 for _, function_name in ipairs({

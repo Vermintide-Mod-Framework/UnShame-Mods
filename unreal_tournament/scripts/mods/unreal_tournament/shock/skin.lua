@@ -1,9 +1,10 @@
 local mod = get_mod("unreal_tournament")
 
--- The Shock Rifle's skin: the Shock Rifle is UT2004's, in the player's own first person view and in the hand of every character. The
--- Weapon Skins setting is for the other weapons. The weapon's skins (illusions, see items.lua) are UT2004's model and UT2003's (the old
--- ASMD that UT2004 still has, Weapons.ShockRifle_1st, as ShockRifle.bUseOldWeaponMesh uses it): the second is a look of this skin (see
--- weapon_skin.lua), with its own model, placement and animations. Everything else is the same.
+-- The Shock Rifle's skin: the Shock Rifle always looks and sounds like UT2004's, in the player's own first person view and in the hand of
+-- every character. The Weapon Skins setting does not apply to it.
+-- It has illusions (see items.lua): UT2004's model, and UT2003's old model (Weapons.ShockRifle_1st, which UT2004 still has and uses with
+-- ShockRifle.bUseOldWeaponMesh). The UT2003 one is a look of this skin (see weapon_skin.lua) with its own model, placement and animations.
+-- Everything else is the same.
 --
 -- The model, its placement, its animations, the bob and the third person are weapon_skin.lua's. This file is what is the Shock Rifle's own:
 -- the chamber, the shots, the beam, the ball, the explosion and the combo. The gameplay is shock_rifle.lua's: this only draws it, and is told
@@ -91,7 +92,7 @@ local function update_chamber(skin, dt)
 		skin.overheat_time = 0
 	end
 
-	-- (UT2003's model has no chamber of its own)
+	-- (The UT2003 model has no chamber of its own.)
 	if skin_api.config.chamber == false then
 		return
 	end
@@ -125,8 +126,8 @@ local function update_balls(dt)
 	end
 end
 
--- The Instagib Shock Rifle (UT2004's SuperShockRifle): the same rifle and gameplay, with its chamber red (its ShockControl color is the team's,
--- HUD.RedColor) and its beam, coil, flash and impact red (ShockBeamCoilB and the B effects)
+-- The Instagib Shock Rifle (UT2004's SuperShockRifle): the same rifle with a red chamber (its ShockControl color is the team's,
+-- HUD.RedColor), and a red beam, coil, flash and impact (ShockBeamCoilB and the B effects).
 local INSTAGIB_SKIN = "ut_shock_rifle_skin_instagib"
 
 local THIRD_PERSON = {
@@ -211,7 +212,7 @@ skin_api = mod.weapon_skin.new({
 			chamber_material = "units/ut/shock/shock_rifle_fp_power_instagib",
 			third_person = INSTAGIB_THIRD_PERSON,
 		},
-		-- ShockRifle.uc with bUseOldWeaponMesh: OldMesh, OldPlayerViewOffset, OldPlayerViewPivot (Weapon.RenderOverlays gives it OldDrawScale, 1)
+		-- From ShockRifle.uc with bUseOldWeaponMesh: OldMesh, OldPlayerViewOffset and OldPlayerViewPivot. Weapon.RenderOverlays draws it at OldDrawScale, 1.
 		ut_shock_rifle_skin_2003 = {
 			unit_name = "units/ut/shock2003/shock_rifle",
 			animations = animations_2003,
@@ -223,16 +224,16 @@ skin_api = mod.weapon_skin.new({
 			offset_up = -5,
 			pivot_pitch = 1000 / 65536 * 360,
 			pivot_yaw = -800 / 65536 * 360,
-			-- (the roll that fits a screenshot of UT2004 with the old model is the other way round from OldPlayerViewPivot's sign here)
+			-- (The roll that fits a UT2004 screenshot has the opposite sign from OldPlayerViewPivot's roll, in this mod's conventions.)
 			pivot_roll = 500 / 65536 * 360,
-			-- Held across the view in the lower middle, the whole model in sight (it is turned about its own origin, which is far from its middle)
+			-- Held across the view in the lower middle, with the whole model visible. The model turns about its own origin, which is far from its middle, so the offsets compensate.
 			inspect_pose_right = -3.4,
 			inspect_pose_forward = -67.7,
 			inspect_pose_up = -3,
 			inspect_pose_roll = -20,
 			inspect_pose_pitch = 12,
 			inspect_pose_yaw = 64,
-			-- WeaponStaticMesh.ShockRiflePickup: its barrel is along the mesh's own Y, as the Flak Cannon's pickup is; the grip is the pistol grip
+			-- WeaponStaticMesh.ShockRiflePickup. Its barrel runs along the mesh's own Y, like the Flak Cannon's pickup. The hand holds the pistol grip.
 			third_person = {
 				id = SETTING_ID,
 				always = true,

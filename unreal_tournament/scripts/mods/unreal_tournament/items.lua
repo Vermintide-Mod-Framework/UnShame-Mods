@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- The mod's weapons as items of their own: each is a copy of a game weapon (template and item) with its own name, usable by the careers of that weapon.
+-- The mod's weapons as items of their own. Each is a copy of a game weapon (template and item) with its own name, usable by the careers of that weapon.
 -- The game's weapon is left unchanged.
 --
 --   items.register(setting_id, { key, template, base_item, deus_copy, name, type_name, description, keywords, texts, icon, icon_package, icon_materials })
@@ -8,13 +8,13 @@ local mod = get_mod("unreal_tournament")
 --     template: name of the weapon template (a copy of base_item's)
 --     base_item: the game item that is copied; its models are used
 --     deus_copy: the Chaos Wastes weapon (DeusWeapons key) of base_item, which the item's Chaos Wastes weapon is a copy of
---     can_wield: the careers that can have it, if they are not those of base_item
+--     can_wield: the careers that can use it, if they differ from base_item's
 --     name, type_name (the line under the name), description
 --     keywords: localization ids for the line under the power; texts: { id = text } for the ids that are the mod's
 --     icon: a material in the file icon_materials, which is in the package icon_package
---     skins: the weapon's illusions, { key, name, description, icon, icon_materials, default }: the one that is default is what the item looks
---         like without one (it has no skin of its own), the others are chosen with the game's Illusions page. They are unlocked for
---         everyone. The icon and description are the item's when a skin has none. weapon_skin.lua shows a model for each.
+--     skins: the weapon's illusions, each { key, name, description, icon, icon_materials, default }. The one marked default is how the item
+--         looks with no illusion applied. The others are picked on the game's Illusions page. All are unlocked for everyone. A skin without
+--         an icon or description uses the item's. weapon_skin.lua shows a model for each.
 --
 -- The backend doesn't have these items, so they are added to the inventory it loaded. The ids are fixed: the item's key for the blueprint,
 -- key#number for crafted weapons (see crafting.lua), so a loadout finds them again.
@@ -69,7 +69,7 @@ mod:hook_safe(IngameUI, "init", function ()
 	table.clear(icons_waiting)
 end)
 
--- Gives each of the tables (an item, a skin) the icon, now or when the in-game UI has its renderers
+-- Sets the icon on each table (an item or a skin), now or once the in-game UI has its renderers.
 local function set_icons(tables, icon)
 	local function set_icon()
 		for _, icon_owner in ipairs(tables) do
@@ -198,7 +198,7 @@ local function add_to_inventory(mirror)
 
 		inventory[definition.key] = item
 
-		-- (the inventory is loaded after the skins that are unlocked, so this only has to make them when the mod is loaded later)
+		-- (When the inventory loads, the unlocked skins already include these, so this is only needed when the mod loads later.)
 		if mirror._unlocked_weapon_skins then
 			for _, skin_key in ipairs(definition.skin_keys or {}) do
 				mirror:add_unlocked_weapon_skin(skin_key)
@@ -233,7 +233,7 @@ end)
 -- The registered definitions by setting id, e.g. items.weapons.shock_rifle.template
 items.weapons = {}
 
--- The weapon's skins: entries of the game's skin tables and of its item list, copies of the base weapon's default skin
+-- Registers the weapon's skins: entries in the game's skin tables and item list, copied from the base weapon's default skin.
 local function register_skins(definition, item)
 	if not definition.skins then
 		return
@@ -285,7 +285,7 @@ local function register_skins(definition, item)
 		end
 	end
 
-	-- The skin item the backend's unlocked skins are made into (named after the weapon)
+	-- The item that the backend's unlocked skins are turned into (named after the weapon).
 	local base_skin_item = table.clone(ItemMasterList[base_skin_item_key])
 
 	base_skin_item.matching_item_key = definition.key
@@ -297,14 +297,14 @@ local function register_skins(definition, item)
 
 	WeaponSkins.skin_combinations[definition.key .. "_skins"] = { common = skin_keys }
 	WeaponSkins.default_skins[definition.key] = default_skin_key
-	-- (made from the tables above the first time it is asked for)
+	-- (Cleared so the game builds it again from these tables the next time it is needed.)
 	WeaponSkins._matching_weapon_skin_item_keys = nil
 
 	item.skin_combination_table = definition.key .. "_skins"
 	definition.skin_keys = skin_keys
 end
 
--- Every skin of the mod's weapons is unlocked: the game keeps what is unlocked in the backend's data, which doesn't know them
+-- Unlocks every skin of the mod's weapons. The game keeps unlocked skins in the backend's data, which doesn't know about them.
 mod:hook(PlayFabMirrorAdventure, "_parse_unlocked_weapon_skins", function (func, self)
 	local unlocked = func(self)
 
@@ -337,10 +337,10 @@ function items.register(setting_id, definition)
 	item.description = definition.key .. "_description"
 	-- The line under the name in the inventory
 	item.item_type = definition.key .. "_type"
-	-- The careers of the weapon it is a copy of (the game's first person animations, units and attachments are made for them: another
-	-- career equipping it crashes the game)
+	-- Use the careers of the weapon this is a copy of. The first person animations, units and attachments are made for them, and another
+	-- career equipping it crashes the game.
 	item.can_wield = table.clone(definition.can_wield or ItemMasterList[definition.base_item].can_wield)
-	-- The base weapon's skins don't apply (register_skins gives the item its own)
+	-- The base weapon's skins don't apply. register_skins gives the item its own.
 	item.skin_combination_table = nil
 	-- What parse_item_master_list does for every item
 	item.key = definition.key

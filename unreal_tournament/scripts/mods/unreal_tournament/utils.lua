@@ -254,7 +254,7 @@ function utils.apply_explosion_self_damage(owner_unit, position, item_name, expl
 	utils.apply_self_damage(owner_unit, position, direction, item_name, max_damage * factor)
 end
 
--- Damage to the player who fired a weapon, from where it is (applied directly, as above)
+-- Damages the player who fired a weapon. It is applied directly, as above.
 function utils.apply_self_damage(owner_unit, position, direction, item_name, damage)
 	DamageUtils.add_damage_network(owner_unit, owner_unit, damage, "torso", "drakegun", position, direction, item_name, nil, owner_unit, nil, nil, false, nil, nil, nil, nil, nil, 1)
 end
@@ -283,7 +283,7 @@ end
 
 -- Units in the world
 
--- A position as a vector: some of the game's calls give a boxed one (Vector3Box), which the engine's functions don't take
+-- Returns a position as a vector. Some game calls give a Vector3Box, which engine functions don't accept.
 function utils.as_vector(position)
 	if pcall(Vector3.x, position) then
 		return position
@@ -345,7 +345,7 @@ function utils.wielded_template_name(unit)
 	return wielded and (wielded.template or wielded.data and wielded.data.template)
 end
 
--- The weapon skin (illusion) of the weapon a unit has wielded, if it has one
+-- Returns the weapon skin (illusion) of the weapon a unit has wielded, if any.
 function utils.wielded_skin(unit)
 	local inventory_extension = ScriptUnit.has_extension(unit, "inventory_system")
 	local equipment = inventory_extension and inventory_extension:equipment()

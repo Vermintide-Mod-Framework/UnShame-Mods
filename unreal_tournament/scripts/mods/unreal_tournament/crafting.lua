@@ -4,7 +4,7 @@ local mod = get_mod("unreal_tournament")
 -- with mods. A recipe that involves one of them is answered here, in the shape the backend answers, and handed to craft_request_cb.
 --
 -- Supported: crafting from the blueprint, rerolling properties and traits, upgrading rarity, and salvaging (which only discards the weapon).
--- Applying a skin (the Illusions page) is supported too. All of them are free. Extracting skins is refused.
+-- Applying a skin on the Illusions page also works. Everything is free. Extracting skins is refused.
 --
 -- Rarities, properties and traits come from the game's data (CraftingData, WeaponProperties.combinations, WeaponTraits.combinations).
 -- The blueprint (rarity "default") is what the Craft page crafts new weapons from.
@@ -203,7 +203,7 @@ local CHANGES = {
 	upgrade_item_rarity_unique = upgraded,
 }
 
--- The weapon's record with a skin applied (the weapon's default skin is none)
+-- Returns the record with the skin set. The weapon's default skin is stored as no skin.
 local function with_skin(record, skin_key)
 	return {
 		key = record.key,
@@ -260,7 +260,7 @@ local function discard(weapon_ids)
 	}
 end
 
--- The answer for a recipe on the mod's weapons (by backend id). Nothing is spent. skin_key is the skin that is applied.
+-- Builds the backend's answer for a recipe on the mod's weapons (by backend id). Nothing is spent. skin_key is the skin being applied.
 local function answer_to(recipe_name, weapon_ids, skin_key)
 	if recipe_name == "salvage" then
 		return discard(weapon_ids)
@@ -354,7 +354,7 @@ local function craft(func, self, career_name, item_backend_ids, recipe_override)
 			return nil
 		end
 
-		-- The other ingredient is the skin: an item of the backend's unlocked skins
+		-- The other ingredient is the skin: one of the items made from the unlocked skins.
 		local inventory = Managers.backend._backend_mirror._inventory_items
 
 		for _, backend_id in ipairs(item_backend_ids) do

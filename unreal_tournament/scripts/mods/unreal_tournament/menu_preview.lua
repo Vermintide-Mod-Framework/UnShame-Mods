@@ -9,7 +9,7 @@ local CONFIG = {
 	item_length = 0.62,
 }
 
--- The skin of an item, if it has one that is shown (and the look of it that its weapon skin (illusion) has, if it has one)
+-- Returns the weapon skin for an item, if it has one and it is shown.
 local function skin_of(item_name)
 	local item = item_name and rawget(ItemMasterList, item_name)
 
@@ -62,7 +62,7 @@ for _, previewer_class in ipairs({ HeroPreviewer, MenuWorldPreviewer }) do
 		local character = self.character_unit
 		local skin = character and Unit.alive(character) and skin_of(self:item_name_by_slot_type("ranged")) or nil
 		local item_info = self._item_info_by_slot.ranged
-		-- (most screens give the previewer the item's backend id and not its skin)
+		-- (Most screens give the previewer the item's backend id, not its skin.)
 		local skin_key = item_info and (item_info.skin_name or item_info.backend_id and Managers.backend:get_interface("items"):get_skin(item_info.backend_id))
 		local entry = holding[self]
 

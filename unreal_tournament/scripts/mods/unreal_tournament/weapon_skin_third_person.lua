@@ -8,16 +8,16 @@ local mod = get_mod("unreal_tournament")
 --   DrawScale of the pickup in it), materials: { slot = material } to set on it, hand_node: where the game links the weapon to the
 --   character, meters_per_unit: the meters of a UT unit of the mesh, scale: how much of it is held (UT's pickups are far bigger
 --   than the weapon in the hand is), grip_*: the point of the mesh that is in the hand (right, forward, up, UT units), yaw, pitch,
---   roll: how the mesh is turned from pointing the way the character faces (degrees), muzzle_*: the end of its barrel, menu_yaw: how it is
---   turned about the vertical in the item inspection to have the barrel to the side (-90 if its barrel is along its forward)
+--   roll: how the mesh is turned from pointing the way the character faces (degrees), muzzle_*: the end of its barrel, menu_yaw: how far to
+--   turn it about the vertical in the item inspection so the barrel points sideways (-90 if its barrel runs along its forward)
 --
 -- The game's unit (the staff, the blunderbuss...) stays, hidden, and the mesh is linked to the same node of the character as it, turned
 -- every frame to point the way the character faces, level (a staff is held upright, a rifle is carried pointing ahead: that is not
 -- how the hand is turned). Which character wields what is looked at every frame, so that the game's own wielding, which makes a new
 -- unit each time, needs no hook.
 --
--- A weapon with skins (illusions) can hold another mesh for one of them: looks = { [skin key] = the definition above, for that mesh },
--- and a character that wields the weapon with that skin holds it.
+-- A weapon with skins (illusions) can hold a different mesh for one of them: looks = { [skin key] = the definition above, for that mesh }.
+-- A character wielding the weapon with that skin holds that mesh.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
@@ -31,12 +31,12 @@ local function new(def, looks)
 		CONFIG[key] = value
 	end
 
-	-- The definition of a look (the skin's key, or none for the weapon's own)
+	-- The definition for a look (a skin key), or the weapon's own when there is none.
 	local function config_of(look)
 		return look and looks and looks[look] or CONFIG
 	end
 
-	-- The look of what a character wields
+	-- The look for the weapon a character wields.
 	local function look_of(character)
 		local skin_key = utils.wielded_skin(character)
 
@@ -274,7 +274,7 @@ local function new(def, looks)
 		return Unit.world_position(entry.unit, 0) + Quaternion.rotate(Unit.world_rotation(entry.unit, 0), offset)
 	end
 
-	-- How many meters a UT unit of the mesh a character holds is (the flashes are made as big as the mesh is)
+	-- How many meters one UT unit of the mesh is as a character holds it (flashes are sized to match the mesh).
 	function third_person.meters_per_unit_of(character)
 		local config = attached[character] and attached[character].config or CONFIG
 

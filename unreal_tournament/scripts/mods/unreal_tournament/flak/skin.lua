@@ -1,10 +1,10 @@
 local mod = get_mod("unreal_tournament")
 
--- Flak Cannon skin: the Flak Cannon is UT2004's, in the player's own first person view and in the hand of every character. It has no
--- other look: the Weapon Skins setting is for the other weapons. The model (Weapons.Flak_1st, skeletal: the barrel, the hammer, the hydraulics, the teeth), its placement and
--- animations, the bob and the third person are weapon_skin.lua's; this file is what is the Flak Cannon's: the muzzle flash, the
--- chunks and the shell as they fly, their explosion, and the sounds. The gameplay is flak_cannon.lua's, this only draws it
--- differently, and is told what happens through the hook tables of hooks.lua.
+-- Flak Cannon skin: the Flak Cannon always looks and sounds like UT2004's, in the player's own first person view and in the hand of every
+-- character. The Weapon Skins setting does not apply to it.
+-- The model (Weapons.Flak_1st), its placement, animations, bob and third person are handled by weapon_skin.lua. This file handles what is
+-- specific to the Flak Cannon: the muzzle flash, the chunks and the shell in flight, their explosion and the sounds. The gameplay is in
+-- flak_cannon.lua. This file only draws it, and is told what happens through the hook tables in hooks.lua.
 --
 -- The game's own units of the chunks and of the shell are what is flying (they are the gameplay), their effects are not started and
 -- what UT has is drawn at them: the mesh of the chunk with its streak (FlakTrail), the mesh of the shell with its gold glow and smoke
@@ -254,7 +254,7 @@ end
 
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
-	-- No setting: the skin is always shown
+	-- There is no setting for this: the skin is always on.
 	always = true,
 	name = "flak",
 	template = TEMPLATE_NAME,
@@ -333,14 +333,14 @@ mod.shotgun_start_callbacks.flak_skin = function (action, new_action)
 	end, in_third_person and third_person.meters_per_unit or skin.unit_scale)
 end
 
--- The shot and reload sounds of the blunderbuss are in its animations: while the skin is on the animations of the shots, and of reloading
--- (UT's has none: the game does it when ammo is picked up and when the weapon is wielded), are not played on the player's own first
--- person unit (the model of the skin plays UT's)
+-- The Blunderbuss's shot and reload sounds are part of its animations. The shot and reload animations are not played on the player's own
+-- first person unit (the skin's model plays UT's animations instead). UT's weapon has no reload, but the game still reloads when ammo is
+-- picked up or the weapon is wielded.
 mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return skin_api.enabled() and (event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil)
 end
 
--- The same sound in the character's own unit, which the others hear
+-- Also skip them on the character's own unit, which other players hear.
 mod.third_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return string.find(event, "reload", 1, true) ~= nil
 end
