@@ -995,9 +995,7 @@ mod.explosion_before_callbacks.ut_flak_shell_explosion = function (world, positi
 	}
 end
 
--- The Flak Cannon's damage is not dropped by a beastmen standard (banner), and the shell damages the ones in its radius
-mod.standards.allow_source(mod.items.weapons.flak_cannon.key)
-
+-- The shell's explosion damages the beastmen standards (banners) in its radius. The chunks don't: a standard drops their damage.
 mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position, _, before)
 	local t = Managers.time:time("game")
 
