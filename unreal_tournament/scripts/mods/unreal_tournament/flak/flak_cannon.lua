@@ -44,11 +44,14 @@ local CONFIG = {
 	chunk_radius = 0.08, -- m, how easily a chunk hits things
 	chunk_gravity_settings = "spark", -- the game's gravity setting with the least gravity (-0.5)
 	chunk_bounce_speed_scale = 0.65, -- the speed a chunk keeps after bouncing
-	-- UT2004: 25% of the chunks bounce twice, 50% once and 25% not at all. A chunk stops at the first enemy it hits.
+	-- UT2004: 25% of the chunks bounce twice, 50% once and 25% not at all. This many bounces more
+	-- than that for every chunk. A chunk also goes through enemies, every enemy it goes through
+	-- uses up one of its bounces, and the other way round: a chunk has this many in all.
 	-- The multipliers of a chunk per armor type (unarmored, armored, monsters, players, berserkers, super armor)
 	chunk_armor_attack = {1, 1.25, 1.5, 1, 1, 0.5},
 	chunk_armor_impact = {1, 1, 1, 1, 1, 0.25},
 	chunk_bounces = 2, -- the most bounces a chunk has in UT2004
+	chunk_extra_bounces = 2,
 	chunk_damage = 11, -- in UT2004's units, 45 is the shock rifle's beam. UT has 13 with a 90 explosion, 8.7 was it scaled with the explosion's 60
 	-- UT2004: after its first second a chunk loses 5 damage per second of its 13, but not below 5
 	-- (FlakChunk.DamageAtten). The same share of chunk_damage here (these are in UT's units).
@@ -118,7 +121,7 @@ local CHUNK_ACTION_NAME = "action_one"
 local SHELL_ACTION_NAME = "action_two"
 local CHUNK_ACTIONS = {} -- the chunk that bounces n times is CHUNK_ACTIONS[n + 1]
 
-for bounces = 0, CONFIG.chunk_bounces do
+for bounces = 0, CONFIG.chunk_bounces + CONFIG.chunk_extra_bounces do
 	CHUNK_ACTIONS[bounces + 1] = "ut_flak_chunk_" .. bounces
 end
 local SHELL_ACTION = "ut_flak_shell"
@@ -426,7 +429,7 @@ local function random_chunk_action()
 	local roll = math.random()
 	local bounces = roll > 0.75 and 2 or roll > 0.25 and 1 or 0
 
-	return CHUNK_ACTIONS[bounces + 1]
+	return CHUNK_ACTIONS[bounces + CONFIG.chunk_extra_bounces + 1]
 end
 
 -- A random direction inside a cone of the angle (radians) around the rotation
@@ -510,15 +513,33 @@ mod.aoe_callbacks.ut_flak_shell = function (self, aoe_data, position)
 	end
 end
 
--- A chunk keeps part of its speed when it bounces
+-- A chunk keeps part of its speed when it bounces, and a bounce uses up one of the enemies it can go
+-- through
 mod:hook_safe(ProjectileScriptUnitLocomotionExtension, "bounce", function (self)
 	local extension = ScriptUnit.has_extension(self.unit, "projectile_system")
 	local action = extension and extension._current_action
 
 	if action and action.ut_flak_chunk then
 		self.speed = self.speed * CONFIG.chunk_bounce_speed_scale
+		extension._num_additional_penetrations = math.max(extension._num_additional_penetrations - 1, 0)
 	end
 end)
+
+-- What stops a chunk: the targets the game itself stops projectiles on, armor (armored and monster
+-- armor, like the game does it) and an enemy that blocks with a shield
+local function stops_chunk(self, hit_unit, hit_direction)
+	local breed = AiUtils.unit_breed(hit_unit)
+
+	if not breed then
+		return false
+	end
+
+	if breed.armor_category == 2 or breed.armor_category == 3 then
+		return true
+	end
+
+	return not not AiUtils.attack_is_shield_blocked(hit_unit, self._owner_unit, nil, hit_direction)
+end
 
 -- Ragdolls thrown by chunks: the hits are collected per target, and once the target has died and
 -- its ragdoll has started (before that the actors are driven by animation) the body is thrown once,
@@ -592,14 +613,24 @@ local function update_ragdoll_throws()
 	end
 end
 
--- A chunk stops at the first enemy it hits (UT's FlakChunk is destroyed by what it touches), so it goes through none: the game's projectile
--- counts the enemies it goes through separately from its bounces
+-- Bounces and enemies gone through share one number per chunk: the game's projectile counts the
+-- bounces (impact_data.max_bounces) and the enemies it goes through (_num_additional_penetrations)
+-- separately. The chunk goes through as many enemies as it bounces, and going through an enemy is
+-- counted as a bounce. Players who didn't fire the chunk have the same code for it.
 mod.init_callbacks.ut_flak_chunk = function (self)
-	self._num_additional_penetrations = 0
+	self._num_additional_penetrations = self._current_action.impact_data.max_bounces
 	self._ut_flak_spawn_t = Managers.time:time("game")
 end
 
 mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_data, hit_unit, hit_position, hit_direction, ...)
+	-- armor stops a chunk (after it did its damage): the game stops a projectile that has
+	-- nothing left to go through
+	if stops_chunk(self, hit_unit, hit_direction) then
+		self._num_additional_penetrations = 0
+	end
+
+	local penetrations_before = self._num_additional_penetrations
+
 	-- the damage (and the knockback) of a chunk decays with its age. The power level is what
 	-- the game reads for a hit, so it is scaled for the duration of it.
 	local power_level = self.power_level
@@ -618,6 +649,10 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 
 	if not AiUtils.attack_is_shield_blocked(hit_unit, self._owner_unit, nil, hit_direction) then
 		add_ragdoll_throw(hit_unit, self._owner_unit, hit_position, hit_direction)
+	end
+
+	if self._num_additional_penetrations < penetrations_before then
+		self._num_bounces = self._num_bounces + penetrations_before - self._num_additional_penetrations
 	end
 end
 
