@@ -34,6 +34,13 @@ mod.items.register("shock_rifle", {
 			icon = "ut_shock_rifle_2003_icon",
 			icon_materials = "ui/ut/shock_rifle_2003_icon",
 		},
+		-- UT2004's SuperShockRifle: the same rifle with a red chamber, beam and flashes
+		{
+			key = "ut_shock_rifle_skin_instagib",
+			name = "UT2004 Instagib Shock Rifle",
+			icon = "ut_shock_rifle_instagib_icon",
+			icon_materials = "ui/ut/shock_rifle_instagib_icon",
+		},
 	},
 })
 

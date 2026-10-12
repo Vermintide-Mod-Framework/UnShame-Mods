@@ -125,6 +125,39 @@ local function update_balls(dt)
 	end
 end
 
+-- The Instagib Shock Rifle (UT2004's SuperShockRifle): the same rifle and gameplay, with its chamber red (its ShockControl color is the team's,
+-- HUD.RedColor) and its beam, coil, flash and impact red (ShockBeamCoilB and the B effects)
+local INSTAGIB_SKIN = "ut_shock_rifle_skin_instagib"
+
+local THIRD_PERSON = {
+	id = SETTING_ID,
+	always = true,
+	template = TEMPLATE_NAME,
+	unit_name = "units/ut/shock/pickup",
+	hand_node = "j_rightweaponattach",
+	meters_per_unit = 0.011,
+	scale = 0.65,
+	grip_right = 0,
+	grip_forward = -31,
+	grip_up = 6,
+	yaw = 0,
+	pitch = 0,
+	roll = 0,
+	muzzle_right = 0,
+	muzzle_forward = 51.7,
+	muzzle_up = 10,
+}
+
+local INSTAGIB_THIRD_PERSON = {}
+
+for key, value in pairs(THIRD_PERSON) do
+	INSTAGIB_THIRD_PERSON[key] = value
+end
+
+INSTAGIB_THIRD_PERSON.materials = {
+	m_power = "units/ut/shock/shock_rifle_power_instagib",
+}
+
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
 	-- No setting: the skin is always shown
@@ -171,25 +204,13 @@ skin_api = mod.weapon_skin.new({
 	inspect_pose_roll = -20,
 	inspect_pose_pitch = 6,
 	inspect_pose_yaw = 65,
-	third_person = {
-		id = SETTING_ID,
-		always = true,
-		template = TEMPLATE_NAME,
-		unit_name = "units/ut/shock/pickup",
-		hand_node = "j_rightweaponattach",
-		meters_per_unit = 0.011,
-		scale = 0.65,
-		grip_right = 0,
-		grip_forward = -31,
-		grip_up = 6,
-		yaw = 0,
-		pitch = 0,
-		roll = 0,
-		muzzle_right = 0,
-		muzzle_forward = 51.7,
-		muzzle_up = 10,
-	},
+	third_person = THIRD_PERSON,
+
 	looks = {
+		[INSTAGIB_SKIN] = {
+			chamber_material = "units/ut/shock/shock_rifle_fp_power_instagib",
+			third_person = INSTAGIB_THIRD_PERSON,
+		},
 		-- ShockRifle.uc with bUseOldWeaponMesh: OldMesh, OldPlayerViewOffset, OldPlayerViewPivot (Weapon.RenderOverlays gives it OldDrawScale, 1)
 		ut_shock_rifle_skin_2003 = {
 			unit_name = "units/ut/shock2003/shock_rifle",
@@ -236,6 +257,10 @@ skin_api = mod.weapon_skin.new({
 	on_create = function (skin)
 		skin.cooldown = 1
 		skin.cooldown_end = 0
+
+		if skin_api.config.chamber_material then
+			Unit.set_material(skin.unit, "m_power", skin_api.config.chamber_material)
+		end
 
 		skin_api.play_sound("ut_shock_select")
 	end,
@@ -285,7 +310,7 @@ local function shot(action, new_action, animation_name)
 	end
 
 	if animation_name == "Fire" then
-		fx.beam_muzzle_flash(follow, scale, locked)
+		fx.beam_muzzle_flash(follow, scale, locked, utils.wielded_skin(owner_unit) == INSTAGIB_SKIN)
 	else
 		fx.ball_muzzle_flash(follow, scale, locked)
 	end
@@ -317,7 +342,7 @@ mod.shock_beam_callbacks.skin = function (owner_unit, start_position, end_positi
 		if not is_local then
 			fx.beam_muzzle_flash(function ()
 				return third_person.muzzle_position(owner_unit)
-			end, third_person.meters_per_unit_of(owner_unit))
+			end, third_person.meters_per_unit_of(owner_unit), nil, utils.wielded_skin(owner_unit) == INSTAGIB_SKIN)
 		end
 	end
 
@@ -326,7 +351,7 @@ mod.shock_beam_callbacks.skin = function (owner_unit, start_position, end_positi
 		skin_api.play_sound_at("ut_shock_fire_3d", start_position)
 	end
 
-	fx.beam(start_position, end_position, hit_normal)
+	fx.beam(start_position, end_position, hit_normal, utils.wielded_skin(owner_unit) == INSTAGIB_SKIN)
 end
 
 -- The ball (every player's, on every machine). The game's own fireball is not started: its effects are made by the flow events that the game

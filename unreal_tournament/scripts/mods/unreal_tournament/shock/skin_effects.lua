@@ -227,6 +227,18 @@ local PURPLE = {
 	0.55,
 	1,
 }
+-- The Instagib Shock Rifle's effects (ShockMuzFlashB, ShockImpactFlareB, ShockImpactRingB, ShockExplosionCoreB: mColorRange R235 G35 B35, and
+-- ShockBeamCoilB: R150) are the same effects in red
+local RED = {
+	235 / 255,
+	35 / 255,
+	35 / 255,
+}
+local RED_COIL = {
+	150 / 255,
+	0,
+	0,
+}
 
 local function between(range)
 	return range[1] + (range[2] - range[1]) * math.random()
@@ -305,12 +317,12 @@ end
 
 -- Muzzle flashes. `follow` gives the position; `locked` (the player's own first person view) gives a unit and a position in it, see
 -- skin_particles.lua.
-function fx.beam_muzzle_flash(follow, scale, locked)
+function fx.beam_muzzle_flash(follow, scale, locked, red)
 	fire_light(follow, locked)
 
 	particles.sprite({
 		attenuation = 0,
-		color = WHITE,
+		color = red and RED or WHITE,
 		follow = follow,
 		locked = locked,
 		growth = CONFIG.muzzle_sparkle_growth * scale,
@@ -321,7 +333,7 @@ function fx.beam_muzzle_flash(follow, scale, locked)
 	})
 	particles.sprite({
 		attenuation = 0,
-		color = WHITE,
+		color = red and RED or WHITE,
 		follow = follow,
 		locked = locked,
 		life = CONFIG.muzzle_flash_life,
@@ -349,13 +361,14 @@ function fx.ball_muzzle_flash(follow, scale, locked)
 end
 
 -- What a beam makes where it hits a surface that faces the way `normal` says: flares, a ring, a core and a scorch mark
-local function impact(position, normal)
+local function impact(position, normal, red)
+	local color = red and RED or WHITE
 	local lifted = position + normal * (2 * UNIT)
 
 	for _ = 1, CONFIG.impact_flare_count do
 		particles.disc({
 			attenuation = 0,
-			color = WHITE,
+			color = color,
 			growth = CONFIG.impact_flare_growth * UNIT,
 			life = CONFIG.impact_flare_life,
 			normal = normal,
@@ -368,7 +381,7 @@ local function impact(position, normal)
 
 	particles.disc({
 		attenuation = 0,
-		color = WHITE,
+		color = color,
 		growth = CONFIG.impact_ring_growth * UNIT,
 		life = CONFIG.impact_ring_life,
 		normal = normal,
@@ -379,7 +392,7 @@ local function impact(position, normal)
 	})
 	particles.sprite({
 		attenuation = 0,
-		color = WHITE,
+		color = color,
 		growth = CONFIG.impact_core_growth * UNIT,
 		life = CONFIG.impact_core_life,
 		position = position + normal * (CONFIG.impact_core_offset * UNIT),
@@ -398,7 +411,7 @@ local function impact(position, normal)
 end
 
 -- The beam's coil (ShockBeamCoil): pieces of a turning mesh along it
-local function coil(start, stop)
+local function coil(start, stop, red)
 	local along = stop - start
 	local length = Vector3.length(along)
 	local direction = along * (1 / length)
@@ -417,7 +430,7 @@ local function coil(start, stop)
 			brightness = function (fraction)
 				return 1 - fraction
 			end,
-			color = {
+			color = red and RED_COIL or {
 				CONFIG.coil_color,
 				CONFIG.coil_color,
 				CONFIG.coil_color,
@@ -437,31 +450,34 @@ local function coil(start, stop)
 end
 
 -- The beam, from `start` to `stop`, and what it hits there if it hits a surface (`normal` is the vector of no length if it doesn't)
-function fx.beam(start, stop, normal)
+function fx.beam(start, stop, normal, red)
 	local along = stop - start
 	local length = Vector3.length(along)
 
 	if length > 0.01 then
-		coil(start, stop)
+		coil(start, stop, red)
 
 		local piece_length = CONFIG.beam_piece_length * UNIT
 		local count = math.max(1, math.ceil(length / piece_length))
 
-		for i = 0, count - 1 do
-			particles.beam({
-				attenuation = CONFIG.beam_attenuation,
-				color = WHITE,
-				from = start + along * (i / count),
-				life = CONFIG.beam_life,
-				size = CONFIG.beam_width * UNIT,
-				texture = "shock_beam",
-				to = start + along * ((i + 1) / count),
-			})
+		-- The Instagib Shock Rifle's beam is red and has a second beam on it (SuperShockBeamEffect, ExtraRedBeam)
+		for _ = 1, red and 2 or 1 do
+			for i = 0, count - 1 do
+				particles.beam({
+					attenuation = CONFIG.beam_attenuation,
+					color = red and RED or WHITE,
+					from = start + along * (i / count),
+					life = CONFIG.beam_life,
+					size = CONFIG.beam_width * UNIT,
+					texture = "shock_beam",
+					to = start + along * ((i + 1) / count),
+				})
+			end
 		end
 	end
 
 	if Vector3.length(normal) > 0.01 then
-		impact(stop, Vector3.normalize(normal))
+		impact(stop, Vector3.normalize(normal), red)
 	end
 end
 

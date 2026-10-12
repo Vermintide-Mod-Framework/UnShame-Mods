@@ -76,6 +76,16 @@ def variable(name, display, kind, value):
             '\t\t\t\t\tui = {\n\t\t\t\t\t\tmax = 100\n\t\t\t\t\t\tmin = 0\n\t\t\t\t\t\tstep = 0.001\n\t\t\t\t\t}\n\t\t\t\t\tvalue = %s\n\t\t\t\t}\n'
             % (display, name, kind, value))
 
+def variable3(name, display, values):
+    # (a color: three numbers)
+    def triple(first, indent):
+        return '\t' * indent + '[\n' + ''.join('\t' * (indent + 1) + '%s\n' % v for v in first) + '\t' * indent + ']\n'
+    return ('\t\t\t\tmaterial_variable = {\n\t\t\t\t\tdisplay_name = "%s"\n\t\t\t\t\tname = "%s"\n\t\t\t\t\ttype = "float3"\n'
+            '\t\t\t\t\tui = {\n\t\t\t\t\t\tmax = %s\t\t\t\t\t\tmin = %s\t\t\t\t\t\tstep = %s\t\t\t\t\t\tui_type = "RGBColor"\n\t\t\t\t\t}\n'
+            '\t\t\t\t\tvalue = %s\t\t\t\t}\n'
+            % (display, name, triple((100, 100, 100), 6).lstrip('\t'), triple((0, 0, 0), 6).lstrip('\t'),
+               triple((0.001, 0.001, 0.001), 6).lstrip('\t'), triple(values, 5).lstrip('\t')))
+
 def sampler(slot):
     # (the key of the sampler of a sample_texture node is always texture_map: the slot of the material is its slot_name)
     return '\t\t\t\ttexture_map = {\n\t\t\t\t\tdisplay_name = "%s"\n\t\t\t\t\tslot_name = "%s"\n\t\t\t\t}\n' % (slot, slot)
@@ -124,8 +134,7 @@ constant('pan', IN_PAN_SPEED_V, -0.1)
 add_node('gel', 'core/shader_nodes/sample_texture', (ADDRESS_WRAP, FILTER_LINEAR, SRGB), samplers=sampler('gel_map'), title='PowerGel')
 connect('pan', 'gel', IN_SAMPLE_UV)
 # Combiner1: times the ShockControl color (R192 B255), Modulate2X
-add_node('control_color', 'core/shader_nodes/constant_vector3')
-constant('control_color', IN_CONSTANT_VECTOR3, 192 / 255, 0, 1)
+add_node('control_color', 'core/shader_nodes/material_variable', export=variable3('control_color', 'Control Color', (192 / 255, 0, 1)), title='Control Color')
 add_node('control', 'core/shader_nodes/mul')
 connect('gel', 'control', IN_MUL_A, 'rgb')
 connect('control_color', 'control', IN_MUL_B)
@@ -189,7 +198,7 @@ for n, (node_id, node_type, options, export, samplers, title) in enumerate(nodes
     if title:
         text += '\t\t\ttitle = "%s"\n' % title
     text += '\t\t\ttype = "%s"\n\t\t}\n' % node_type
-text += '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tbrightness = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n}\n'
+text += '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tbrightness = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\tcontrol_color = {\n\t\ttype = "vector3"\n\t\tvalue = [\n\t\t\t0.752941\n\t\t\t0\n\t\t\t1\n\t\t]\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n}\n'
 # Two graphs: the chamber of the pickup (and of the character's hand), and the chamber of the first person rifle, which is drawn with the game's
 # custom FOV for weapons (the option HAS_CUSTOM_FOV of unlit_base), as the game's own first person weapons are: it is that option that makes the
 # outlines of other players not be drawn over it, see units/ut/weapon_standard.material.
@@ -213,6 +222,26 @@ textures = {
 	glass_map = "units/ut/shock/shock_glass"
 }
 variables = {
+}
+''' % name)
+    # The Instagib Shock Rifle: its ShockControl color is the team's, red (HUD.RedColor)
+    open('%s/%s_instagib.material' % (UNITS, power_name), 'w', newline='\n').write('''material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/shock/%s"
+textures = {
+	gel_map = "units/ut/shock/shock_power_df"
+	glass_map = "units/ut/shock/shock_glass"
+}
+variables = {
+	control_color = {
+		type = "vector3"
+		value = [
+			1
+			0
+			0
+		]
+	}
 }
 ''' % name)
 print('wrote the chamber and power materials of the pickup and of the first person rifle,', len(nodes), 'nodes')

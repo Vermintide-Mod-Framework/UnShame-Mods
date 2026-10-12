@@ -412,18 +412,8 @@ shader = {
 			]
 		}
 		{
-			connector_id = "6ff26be7-68a1-4b89-b9dd-551d216086c2"
-			id = "c0de0000-0000-4000-8000-000000001011"
-			instance_id = "c0de0000-0000-4000-8000-000000000019"
-			value = [
-				0.7529411764705882
-				0
-				1
-			]
-		}
-		{
 			connector_id = "242d1648-a626-445b-9534-bccec094112f"
-			id = "c0de0000-0000-4000-8000-000000001012"
+			id = "c0de0000-0000-4000-8000-000000001011"
 			instance_id = "c0de0000-0000-4000-8000-000000000021"
 			value = [
 				2
@@ -431,7 +421,7 @@ shader = {
 		}
 		{
 			connector_id = "242d1648-a626-445b-9534-bccec094112f"
-			id = "c0de0000-0000-4000-8000-000000001013"
+			id = "c0de0000-0000-4000-8000-000000001012"
 			instance_id = "c0de0000-0000-4000-8000-000000000024"
 			value = [
 				0.5
@@ -439,7 +429,7 @@ shader = {
 		}
 		{
 			connector_id = "242d1648-a626-445b-9534-bccec094112f"
-			id = "c0de0000-0000-4000-8000-000000001014"
+			id = "c0de0000-0000-4000-8000-000000001013"
 			instance_id = "c0de0000-0000-4000-8000-000000000028"
 			value = [
 				1.5
@@ -447,7 +437,7 @@ shader = {
 		}
 		{
 			connector_id = "0806db0d-2c4a-43ca-99cc-f5a2f036a8e8"
-			id = "c0de0000-0000-4000-8000-000000001015"
+			id = "c0de0000-0000-4000-8000-000000001014"
 			instance_id = "c0de0000-0000-4000-8000-000000000029"
 			value = [
 				0.12
@@ -455,7 +445,7 @@ shader = {
 		}
 		{
 			connector_id = "e16267f4-8b4e-4079-b13d-f380cfd386ec"
-			id = "c0de0000-0000-4000-8000-000000001016"
+			id = "c0de0000-0000-4000-8000-000000001015"
 			instance_id = "c0de0000-0000-4000-8000-000000000031"
 			value = [
 				2.2
@@ -463,7 +453,7 @@ shader = {
 		}
 		{
 			connector_id = "c9a30d71-a8ad-4b9e-aedf-d785ae7e301f"
-			id = "c0de0000-0000-4000-8000-000000001017"
+			id = "c0de0000-0000-4000-8000-000000001016"
 			instance_id = "c0de0000-0000-4000-8000-000000000001"
 			value = [
 				0
@@ -815,6 +805,34 @@ shader = {
 				0
 			]
 			export = {
+				material_variable = {
+					display_name = "Control Color"
+					name = "control_color"
+					type = "float3"
+					ui = {
+						max = [
+							100
+							100
+							100
+						]
+						min = [
+							0
+							0
+							0
+						]
+						step = [
+							0.001
+							0.001
+							0.001
+						]
+						ui_type = "RGBColor"
+					}
+					value = [
+						0.7529411764705882
+						0
+						1
+					]
+				}
 			}
 			id = "c0de0000-0000-4000-8000-000000000019"
 			options = [
@@ -825,7 +843,8 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/shader_nodes/constant_vector3"
+			title = "Control Color"
+			type = "core/shader_nodes/material_variable"
 		}
 		{
 			content_size = [
@@ -1084,6 +1103,14 @@ variables = {
 	brightness = {
 		type = "scalar"
 		value = 1
+	}
+	control_color = {
+		type = "vector3"
+		value = [
+			0.752941
+			0
+			1
+		]
 	}
 	intensity = {
 		type = "scalar"
