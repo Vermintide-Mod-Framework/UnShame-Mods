@@ -796,9 +796,10 @@ local function blow_up_standards(impact_position, attacker_unit)
 	local standards = table.clone(Managers.state.conflict:alive_standards())
 
 	for _, standard in ipairs(standards) do
-		local position = POSITION_LOOKUP[standard]
+		-- Not every unit is in POSITION_LOOKUP, the game's own explosion falls back to the unit's position the same way
+		local position = POSITION_LOOKUP[standard] or Unit.local_position(standard, 0)
 
-		if HEALTH_ALIVE[standard] and position and Vector3.distance(position, impact_position) <= explosion.radius + CONFIG.combo_standard_margin then
+		if HEALTH_ALIVE[standard] and Vector3.distance(position, impact_position) <= explosion.radius + CONFIG.combo_standard_margin then
 			local direction = Vector3.normalize(position - impact_position)
 
 			DamageUtils.add_damage_network_player(damage_profile, 1, CONFIG.combo_standard_power_level, standard, attacker_unit, "full", position, direction, mod.items.weapons.shock_rifle.key, nil, 0, false, nil, false, 0, 1, attacker_unit)
