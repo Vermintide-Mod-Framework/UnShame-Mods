@@ -207,7 +207,7 @@ skin_api = mod.weapon_skin.new({
 			-- Held across the view in the lower middle, the whole model in sight (it is turned about its own origin, which is far from its middle)
 			inspect_pose_right = -3.4,
 			inspect_pose_forward = -67.7,
-			inspect_pose_up = -9.2,
+			inspect_pose_up = -3,
 			inspect_pose_roll = -20,
 			inspect_pose_pitch = 12,
 			inspect_pose_yaw = 64,
