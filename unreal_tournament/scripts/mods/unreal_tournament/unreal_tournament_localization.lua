@@ -98,12 +98,6 @@ return {
 	ut_weapons_description = {
 		en = "Weapons from Unreal Tournament that replace some of the game's own. Switch off any you don't want.",
 	},
-	flak_cannon = {
-		en = "Flak Cannon",
-	},
-	flak_cannon_description = {
-		en = "Kruber (Mercenary, Huntsman, Foot Knight). Replaces the Blunderbuss. Primary fires a tight spread of flak that bounces off walls. Alt fire lobs a shell that bursts into shrapnel when it hits.",
-	},
 	bio_rifle = {
 		en = "Bio Rifle",
 	},
@@ -126,6 +120,6 @@ return {
 		en = "Weapon Skins",
 	},
 	weapon_skins_description = {
-		en = "The Flak Cannon, Rocket Launcher, Bio Rifle and Link Gun look and sound like Unreal Tournament 2004's (the Shock Rifle always does). What the others see of you depends on their own setting.",
+		en = "The Rocket Launcher, Bio Rifle and Link Gun look and sound like Unreal Tournament 2004's (the Shock Rifle and the Flak Cannon always do). What the others see of you depends on their own setting.",
 	},
 }

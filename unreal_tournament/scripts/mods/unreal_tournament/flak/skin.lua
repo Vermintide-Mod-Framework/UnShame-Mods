@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
--- Flak Cannon skin (the Weapon Skins setting): the Flak Cannon is UT2004's, in the player's own first person view and in the hand of
--- every character. The model (Weapons.Flak_1st, skeletal: the barrel, the hammer, the hydraulics, the teeth), its placement and
+-- Flak Cannon skin: the Flak Cannon is UT2004's, in the player's own first person view and in the hand of every character. It has no
+-- other look: the Weapon Skins setting is for the other weapons. The model (Weapons.Flak_1st, skeletal: the barrel, the hammer, the hydraulics, the teeth), its placement and
 -- animations, the bob and the third person are weapon_skin.lua's; this file is what is the Flak Cannon's: the muzzle flash, the
 -- chunks and the shell as they fly, their explosion, and the sounds. The gameplay is flak_cannon.lua's, this only draws it
 -- differently, and is told what happens through the hook tables of hooks.lua.
@@ -17,7 +17,7 @@ local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local animations = mod:dofile("scripts/mods/unreal_tournament/flak/skin_animations")
 local particles = mod.skin_particles
 
-local TEMPLATE_NAME = "blunderbuss_template_1"
+local TEMPLATE_NAME = mod.items.weapons.flak_cannon.template
 local SETTING_ID = "flak_cannon"
 
 local CONFIG = {
@@ -254,6 +254,8 @@ end
 
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
+	-- No setting: the skin is always shown
+	always = true,
 	name = "flak",
 	template = TEMPLATE_NAME,
 	unit_name = "units/ut/flak/flak_cannon",
@@ -275,6 +277,7 @@ skin_api = mod.weapon_skin.new({
 	-- WeaponStaticMesh.FlakCannonPickup (DrawScale 0.55): its barrel is along the mesh's own Y, and the grip is under the back of it
 	third_person = {
 		id = SETTING_ID,
+		always = true,
 		template = TEMPLATE_NAME,
 		unit_name = "units/ut/flak/pickup",
 		-- (the game links the blunderbuss, the crossbow and the Drakegun to the left hand's node, AttachmentNodeLinking.rifles)

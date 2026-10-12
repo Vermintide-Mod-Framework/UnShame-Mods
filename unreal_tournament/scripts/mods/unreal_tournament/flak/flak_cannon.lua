@@ -1,13 +1,12 @@
 local mod = get_mod("unreal_tournament")
 
--- Flak Cannon: replaces the Blunderbuss (Kruber's) actions in place, like the Shock Rifle does with
--- the beam staff. The numbers are from UT2004 (XWeapons/FlakFire, FlakAltFire, FlakChunk, FlakShell).
+-- Flak Cannon: a copy of the Blunderbuss (Kruber's), an item of its own, with the actions of the copy replaced, like the Shock Rifle is a
+-- copy of the Beam Staff. The numbers are from UT2004 (XWeapons/FlakFire, FlakAltFire, FlakChunk, FlakShell).
 --   LMB: a tight spread of flak chunks. They bounce off walls.
 --   RMB: a lobbed shell that explodes when it hits something and throws flak chunks in all directions.
 -- Ammo, reload, recoil and the sounds of the shot are the blunderbuss's own.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
-local effects = mod.effects
 local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template
 local register_network_lookup = utils.register_network_lookup
@@ -15,7 +14,21 @@ local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
-local TEMPLATE_NAME = "blunderbuss_template_1"
+mod.items.register("flak_cannon", {
+	key = "ut_flak_cannon",
+	template = "ut_flak_cannon_template",
+	base_item = "es_blunderbuss",
+	deus_copy = "deus_es_blunderbuss",
+	name = "UT2004 Flak Cannon",
+	type_name = "Flak Cannon",
+	description = "The primary fire is a tight spread of flak that bounces off walls. The secondary fire lobs a shell that bursts into shrapnel when it hits.",
+	keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_close_range" },
+	icon = "ut_flak_cannon_icon",
+	icon_package = "resource_packages/unreal_tournament/icons",
+	icon_materials = "ui/ut/flak_cannon_icon",
+})
+
+local TEMPLATE_NAME = mod.items.weapons.flak_cannon.template
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
@@ -98,25 +111,6 @@ local CONFIG = {
 	shell_chunk_count = 6,
 	shell_chunk_cone_degrees = 88, -- the chunks go up to this far from the direction of the shell, in yaw and pitch
 	shell_chunk_start_offset = 0.2, -- m back from the explosion, so the chunks start in front of the wall
-	-- The visual of the explosion: these effects are played together, each that is loaded for the
-	-- weapon's character (the others are skipped). Some effects ignore the scale.
-	shell_explosion_effects = {
-		{
-			name = "fx/wpnfx_frag_grenade_impact",
-			scale = 1,
-			offset = 0,
-		},
-		{
-			name = "fx/wpnfx_fireball_charged_impact_remap",
-			scale = 0.8,
-			offset = 0.1,
-		},
-		{
-			name = "fx/wpnfx_barrel_explosion",
-			scale = 0.5,
-			offset = 0,
-		},
-	},
 }
 
 -- The projectiles of the weapon are sub actions of its two actions, the names go over the network.
@@ -486,18 +480,6 @@ mod.aoe_callbacks.ut_flak_shell = function (self, aoe_data, position)
 	end
 end
 
--- The look of the explosion, on every peer: the explosion's callback is run for everyone who sees it
-mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position)
-	-- (with the skin the skin draws it, see skin_explosion_callbacks)
-	if utils.is_weapon_skin_enabled("flak_cannon") then
-		return
-	end
-
-	for _, effect in ipairs(CONFIG.shell_explosion_effects) do
-		effects.play(world, effect.name, position + Vector3(0, 0, effect.offset), effect.scale)
-	end
-end
-
 -- A chunk keeps part of its speed when it bounces, and a bounce uses up one of the enemies it can go
 -- through
 mod:hook_safe(ProjectileScriptUnitLocomotionExtension, "bounce", function (self)
@@ -649,13 +631,14 @@ local function enable_flak_cannon()
 	apply_flak_cannon()
 end
 
--- (the weapon can be switched off in the settings: the blunderbuss is then the game's own again, the weapon the player
--- holds changes when it is wielded again)
+-- When the mod is switched off or unloaded
 local function disable_flak_cannon()
 	restore_blunderbuss()
 end
 
-utils.register_weapon("flak_cannon", enable_flak_cannon, disable_flak_cannon)
+mod.enabled_callbacks[#mod.enabled_callbacks + 1] = enable_flak_cannon
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = disable_flak_cannon
+mod.unload_callbacks[#mod.unload_callbacks + 1] = disable_flak_cannon
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	update_ragdoll_throws()
