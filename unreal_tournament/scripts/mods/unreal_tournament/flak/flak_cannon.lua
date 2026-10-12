@@ -103,7 +103,7 @@ local CONFIG = {
 	chunk_ragdoll_window = 1.5, -- seconds a body has to start ragdolling after it was hit
 	-- Shell
 	shell_speed = 2400, -- FlakShell.Speed 1200 uu/s = 24 m/s
-	shell_lob_degrees = 5.3, -- how far up the shell is tossed from the aim (UT's FlakShell.TossZ 225 uu/s is 10.6, this is half)
+	shell_lob_degrees = 10.6, -- how far up the shell is tossed from the aim (FlakShell.TossZ: 225 units/s up for 1200 forward)
 	shell_lifetime = 6,
 	-- UT's gravity is 950 units/s^2, which is 19 m/s^2 at 0.02 m per unit. The game's own is -9.82, which keeps a shell fired straight up in the air
 	-- twice as long.
