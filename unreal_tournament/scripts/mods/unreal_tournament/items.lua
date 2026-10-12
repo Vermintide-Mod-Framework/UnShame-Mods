@@ -54,6 +54,30 @@ local function add_material_set(material_set)
 	end
 end
 
+-- The UI's renderer of the game's in-game UI is made when a level is loaded, with the materials of the time. When the mod is loaded or
+-- reloaded in a level it does not have the icons' materials (the game mounts the mod's resources again when it reloads mods, so one made before
+-- cannot find them): a new one is made and put where the views take their renderer from (the ones the HUD has are left, they do not draw the
+-- icons).
+local function remake_ui_renderers()
+	local ingame_ui = Managers.ui and Managers.ui._ingame_ui
+
+	if not ingame_ui then
+		return
+	end
+
+	local context = ingame_ui.ingame_ui_context
+	local mechanism_key = Managers.mechanism:current_mechanism_name()
+	local is_tutorial = Managers.state.game_mode:game_mode_key() == "tutorial"
+
+	ingame_ui.ui_renderer = ingame_ui:create_ui_renderer(ingame_ui.world, is_tutorial, ingame_ui.is_in_inn, mechanism_key)
+	ingame_ui.ui_top_renderer = ingame_ui:create_ui_renderer(ingame_ui.top_world, is_tutorial, ingame_ui.is_in_inn, mechanism_key)
+
+	UISetupFontHeights(ingame_ui.ui_renderer.gui)
+
+	context.ui_renderer = ingame_ui.ui_renderer
+	context.ui_top_renderer = ingame_ui.ui_top_renderer
+end
+
 -- Every career of the game: the copy is not for the ones the game's weapon is for
 local function all_careers()
 	local careers = {}
@@ -233,6 +257,7 @@ function items.register(setting_id, definition)
 	UIAtlasHelper.add_standalone_texture_by_name(definition.icon)
 	hold_package(definition.icon_package)
 	add_material_set(definition.icon_materials)
+	remake_ui_renderers()
 
 	item.inventory_icon = definition.icon
 
