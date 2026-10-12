@@ -283,8 +283,19 @@ end
 
 -- Units in the world
 
+-- A position as a vector: some of the game's calls give a boxed one (Vector3Box), which the engine's functions don't take
+function utils.as_vector(position)
+	if pcall(Vector3.x, position) then
+		return position
+	end
+
+	return position:unbox()
+end
+
 -- The enemies (units with a breed that isn't a player's) that are in a sphere, the unit as the key
 function utils.units_in_radius(world, position, radius)
+	position = utils.as_vector(position)
+
 	local physics_world = World.physics_world(world)
 	local actors, num_actors = PhysicsWorld.immediate_overlap(physics_world, "shape", "sphere", "position", position, "size", radius, "collision_filter", "filter_explosion_overlap")
 	local units = {}
