@@ -21,6 +21,10 @@ local items = mod.items
 local CONFIG = {
 	-- The power level of a crafted weapon (the highest the game has)
 	power_level = 300,
+	-- Seconds before the game is told that a craft of the mod's is complete: the backend takes a while to answer, and the screens do things
+	-- while they wait (the window of an item fades its view out for 0.3 seconds when a craft starts and in when it is complete, both with the
+	-- same value: an answer at once has the one fade the other)
+	craft_delay = 0.5,
 }
 
 -- The rarities, from the lowest: what an upgrade goes through
@@ -272,6 +276,9 @@ local function answer_to(recipe_name, weapon_ids)
 	return { modified_items = { items.change_crafted(saved, weapon_id, change(saved.crafted[weapon_id])) } }
 end
 
+-- When each craft of the mod's is to be told complete: [craft id] = time
+local complete_at = {}
+
 -- (the pages ask again every frame the button is held down: a message is told every few seconds)
 local MESSAGE_INTERVAL = 3
 local last_message_t = -math.huge
@@ -340,7 +347,23 @@ mod:hook(BackendInterfaceCraftingPlayfab, "craft", function (func, self, career_
 
 	self:craft_request_cb(id, { FunctionResult = answer_to(recipe_name, weapon_ids) })
 
+	complete_at[id] = Managers.time:time("main") + CONFIG.craft_delay
+
 	return id, self:get_recipe_by_name(recipe_name)
+end)
+
+mod:hook(BackendInterfaceCraftingPlayfab, "is_craft_complete", function (func, self, id)
+	local at = complete_at[id]
+
+	if at then
+		if Managers.time:time("main") < at then
+			return false
+		end
+
+		complete_at[id] = nil
+	end
+
+	return func(self, id)
 end)
 
 -- The crafting pages (the console ones, which is what the game's inventory uses) show what a recipe needs of the materials (what the player
