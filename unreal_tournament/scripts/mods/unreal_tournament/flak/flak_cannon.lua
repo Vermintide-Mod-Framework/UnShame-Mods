@@ -32,9 +32,8 @@ local TEMPLATE_NAME = mod.items.weapons.flak_cannon.template
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
-	-- The blunderbuss's own ammo (16, with 1 in the clip) and reload time (1.5 s) are changed by these factors
+	-- The blunderbuss's own ammo (16) is changed by this factor
 	ammo_multiplier = 1.33,
-	reload_time_multiplier = 0.75,
 	-- Flak chunk
 	chunk_count = 9, -- FlakFire.ProjPerFire
 	chunk_spread_degrees = 4, -- "tight", FlakFire.Spread is about 7.7 degrees
@@ -45,22 +44,22 @@ local CONFIG = {
 	chunk_radius = 0.08, -- m, how easily a chunk hits things
 	chunk_gravity_settings = "spark", -- the game's gravity setting with the least gravity (-0.5)
 	chunk_bounce_speed_scale = 0.65, -- the speed a chunk keeps after bouncing
-	-- UT2004: 25% of the chunks bounce twice, 50% once and 25% not at all. This many bounces more
-	-- than that for every chunk. A chunk also goes through enemies, every enemy it goes through
-	-- uses up one of its bounces, and the other way round: a chunk has this many in all.
+	-- UT2004: 25% of the chunks bounce twice, 50% once and 25% not at all. A chunk stops at the first enemy it hits.
 	-- The multipliers of a chunk per armor type (unarmored, armored, monsters, players, berserkers, super armor)
 	chunk_armor_attack = {1, 1.25, 1.5, 1, 1, 0.5},
 	chunk_armor_impact = {1, 1, 1, 1, 1, 0.25},
 	chunk_bounces = 2, -- the most bounces a chunk has in UT2004
-	chunk_extra_bounces = 2,
 	chunk_damage = 11, -- in UT2004's units, 45 is the shock rifle's beam. UT has 13 with a 90 explosion, 8.7 was it scaled with the explosion's 60
 	-- UT2004: after its first second a chunk loses 5 damage per second of its 13, but not below 5
-	-- (FlakChunk.DamageAtten). The same share of chunk_damage here, with a slower loss: it begins later, is slower
-	-- and stops higher.
+	-- (FlakChunk.DamageAtten). The same share of chunk_damage here (these are in UT's units).
 	chunk_ut_damage = 13,
-	chunk_damage_decay = 2, -- per second (UT: 5)
-	chunk_damage_decay_delay = 1.5, -- seconds (UT: 1)
-	chunk_damage_min = 8, -- (UT: 5)
+	chunk_damage_decay = 5, -- per second
+	chunk_damage_decay_delay = 1, -- seconds
+	chunk_damage_min = 5,
+	-- Fire rates (FlakFire.FireRate, FlakAltFire.FireRate): the weapon fires again that long after a shot, with either fire mode (UT's modes
+	-- are exclusive: one waits for the other's shot to be over). There is no reload between shots: all of the ammo is the clip.
+	primary_fire_rate = 0.8947,
+	alt_fire_rate = 1.11,
 	-- Knockback of a chunk: how hard it staggers what it hits, (the beam's impact power is 0.3, a
 	-- shotgun pellet's is 0.3 up close and 0.15 far away). It falls off with the distance between the
 	-- player and the target, from the near value up to the start, to the far value from the end.
@@ -119,7 +118,7 @@ local CHUNK_ACTION_NAME = "action_one"
 local SHELL_ACTION_NAME = "action_two"
 local CHUNK_ACTIONS = {} -- the chunk that bounces n times is CHUNK_ACTIONS[n + 1]
 
-for bounces = 0, CONFIG.chunk_bounces + CONFIG.chunk_extra_bounces do
+for bounces = 0, CONFIG.chunk_bounces do
 	CHUNK_ACTIONS[bounces + 1] = "ut_flak_chunk_" .. bounces
 end
 local SHELL_ACTION = "ut_flak_shell"
@@ -267,22 +266,51 @@ local function build_shell_action()
 	}
 end
 
--- The secondary fire is the blunderbuss's own shot (ammo, recoil, animation) with the shell
--- fired instead of pellets
-local function build_shell_launcher(primary)
-	local action = table.clone(primary)
+-- What can follow a shot: either fire mode, once the shot's time is over (holding the button repeats the shot, as in UT)
+local function fire_chain_actions(rate)
+	local entries = {
+		{
+			action = "action_wield",
+			input = "action_wield",
+			start_time = 0.4,
+			sub_action = "default",
+		},
+	}
+
+	for _, action_name in ipairs({ "action_one", "action_two" }) do
+		for _, input in ipairs({ action_name, action_name .. "_hold" }) do
+			entries[#entries + 1] = {
+				action = action_name,
+				input = input,
+				start_time = rate,
+				sub_action = "default",
+			}
+		end
+	end
+
+	return entries
+end
+
+-- The blunderbuss's own shot (ammo, recoil, animation), fired again after the time of UT's fire mode, with no reload after it
+local function build_shot(original, rate)
+	local action = table.clone(original)
+
+	action.total_time = rate
+	action.total_time_secondary = rate
+	action.play_reload_animation = false
+	action.allowed_chain_actions = fire_chain_actions(rate)
+
+	return action
+end
+
+-- The secondary fire is that shot with the shell fired instead of pellets
+local function build_shell_launcher(original)
+	local action = build_shot(original, CONFIG.alt_fire_rate)
 
 	action.damage_profile = "ut_flak_shell"
 	action.shot_count = 1
 	action.ut_flak_chunks = nil
 	action.ut_flak_shell = true
-
-	-- the shell can be fired as soon as the primary shot can be
-	for _, chain in ipairs(action.allowed_chain_actions) do
-		if chain.action == "action_two" then
-			chain.start_time = 0.75
-		end
-	end
 
 	return action
 end
@@ -319,7 +347,6 @@ local function restore_blunderbuss()
 		template.required_projectile_unit_templates[name] = original.required_projectile_unit_templates[name]
 	end
 
-	-- (a patch from before the ammo was changed has none saved)
 	for key, value in pairs(original.ammo_data or {}) do
 		template.ammo_data[key] = value
 	end
@@ -343,8 +370,9 @@ local function apply_flak_cannon()
 		action_two_default = actions.action_two.default,
 		required_projectile_unit_templates = {},
 		ammo_data = {
+			ammo_per_clip = template.ammo_data.ammo_per_clip,
+			ammo_per_reload = template.ammo_data.ammo_per_reload,
 			max_ammo = template.ammo_data.max_ammo,
-			reload_time = template.ammo_data.reload_time,
 		},
 	}
 
@@ -354,10 +382,12 @@ local function apply_flak_cannon()
 
 	saved.original = original
 
+	-- All of the ammo is in the clip: no reload between shots
 	template.ammo_data.max_ammo = math.floor(original.ammo_data.max_ammo * CONFIG.ammo_multiplier + 0.5)
-	template.ammo_data.reload_time = original.ammo_data.reload_time * CONFIG.reload_time_multiplier
+	template.ammo_data.ammo_per_clip = template.ammo_data.max_ammo
+	template.ammo_data.ammo_per_reload = template.ammo_data.max_ammo
 
-	local primary = table.clone(original.action_one_default)
+	local primary = build_shot(original.action_one_default, CONFIG.primary_fire_rate)
 
 	primary.shot_count = CONFIG.chunk_count
 	primary.ut_flak_chunks = true
@@ -396,7 +426,7 @@ local function random_chunk_action()
 	local roll = math.random()
 	local bounces = roll > 0.75 and 2 or roll > 0.25 and 1 or 0
 
-	return CHUNK_ACTIONS[bounces + CONFIG.chunk_extra_bounces + 1]
+	return CHUNK_ACTIONS[bounces + 1]
 end
 
 -- A random direction inside a cone of the angle (radians) around the rotation
@@ -480,33 +510,15 @@ mod.aoe_callbacks.ut_flak_shell = function (self, aoe_data, position)
 	end
 end
 
--- A chunk keeps part of its speed when it bounces, and a bounce uses up one of the enemies it can go
--- through
+-- A chunk keeps part of its speed when it bounces
 mod:hook_safe(ProjectileScriptUnitLocomotionExtension, "bounce", function (self)
 	local extension = ScriptUnit.has_extension(self.unit, "projectile_system")
 	local action = extension and extension._current_action
 
 	if action and action.ut_flak_chunk then
 		self.speed = self.speed * CONFIG.chunk_bounce_speed_scale
-		extension._num_additional_penetrations = math.max(extension._num_additional_penetrations - 1, 0)
 	end
 end)
-
--- What stops a chunk: the targets the game itself stops projectiles on, armor (armored and monster
--- armor, like the game does it) and an enemy that blocks with a shield
-local function stops_chunk(self, hit_unit, hit_direction)
-	local breed = AiUtils.unit_breed(hit_unit)
-
-	if not breed then
-		return false
-	end
-
-	if breed.armor_category == 2 or breed.armor_category == 3 then
-		return true
-	end
-
-	return not not AiUtils.attack_is_shield_blocked(hit_unit, self._owner_unit, nil, hit_direction)
-end
 
 -- Ragdolls thrown by chunks: the hits are collected per target, and once the target has died and
 -- its ragdoll has started (before that the actors are driven by animation) the body is thrown once,
@@ -580,24 +592,14 @@ local function update_ragdoll_throws()
 	end
 end
 
--- Bounces and enemies gone through share one number per chunk: the game's projectile counts the
--- bounces (impact_data.max_bounces) and the enemies it goes through (_num_additional_penetrations)
--- separately. The chunk goes through as many enemies as it bounces, and going through an enemy is
--- counted as a bounce. Players who didn't fire the chunk have the same code for it.
+-- A chunk stops at the first enemy it hits (UT's FlakChunk is destroyed by what it touches), so it goes through none: the game's projectile
+-- counts the enemies it goes through separately from its bounces
 mod.init_callbacks.ut_flak_chunk = function (self)
-	self._num_additional_penetrations = self._current_action.impact_data.max_bounces
+	self._num_additional_penetrations = 0
 	self._ut_flak_spawn_t = Managers.time:time("game")
 end
 
 mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_data, hit_unit, hit_position, hit_direction, ...)
-	-- armor stops a chunk (after it did its damage): the game stops a projectile that has
-	-- nothing left to go through
-	if stops_chunk(self, hit_unit, hit_direction) then
-		self._num_additional_penetrations = 0
-	end
-
-	local penetrations_before = self._num_additional_penetrations
-
 	-- the damage (and the knockback) of a chunk decays with its age. The power level is what
 	-- the game reads for a hit, so it is scaled for the duration of it.
 	local power_level = self.power_level
@@ -616,10 +618,6 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 
 	if not AiUtils.attack_is_shield_blocked(hit_unit, self._owner_unit, nil, hit_direction) then
 		add_ragdoll_throw(hit_unit, self._owner_unit, hit_position, hit_direction)
-	end
-
-	if self._num_additional_penetrations < penetrations_before then
-		self._num_bounces = self._num_bounces + penetrations_before - self._num_additional_penetrations
 	end
 end
 
