@@ -29,6 +29,7 @@ local CONFIG = {
 	-- FlakChunk: the mesh and FlakTrail. The trail is a piece of streak for each frame of the chunk's path, which fades out in
 	-- chunk_trail_seconds, so it follows the path and bends where the chunk bounces.
 	chunk_trail_seconds = 0.1,
+	chunk_scale = 0.75, -- of the converted mesh
 	-- A piece is made at most this often (seconds). One for every frame would use up the particles when the frame rate is high, and the
 	-- trail would stop growing.
 	chunk_trail_step = 1 / 60,
@@ -240,6 +241,10 @@ local function add_visual(projectile, kind, unit_name)
 	local unit = World.spawn_unit(world, unit_name, position)
 
 	Unit.set_unit_visibility(game_unit, false)
+
+	if kind == "chunk" then
+		Unit.set_local_scale(unit, 0, Vector3(CONFIG.chunk_scale, CONFIG.chunk_scale, CONFIG.chunk_scale))
+	end
 
 	local visual = {
 		direction = Vector3Box(Vector3.forward()),
