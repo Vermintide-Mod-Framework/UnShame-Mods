@@ -26,7 +26,8 @@ party IP in a published mod: this branch is for local use, and nothing of it sho
    textures of its geometries in order) into an icon with a transparent background: the inventory icon of the weapon's item
    (`ui/ut/shock_rifle_icon.png`, made with `pickup.bsi 256 20 0 35`). Its `.texture` and `.material` (a gui material that
    items.lua registers in the UI's renderers) are next to it, in a package of their own (`resource_packages/unreal_tournament/icons`)
-   that the mod loads and never unloads: the renderers hold the material locked, and the game fails when it is unloaded.
+   that is listed in `unreal_tournament.mod` (the game only loads the packages that are) and that the mod keeps a handle to, so
+   that it stays loaded when the mod is reloaded: the renderers hold the material locked, and the game fails when it is unloaded.
 
 ## What was found
 

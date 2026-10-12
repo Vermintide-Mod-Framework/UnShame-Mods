@@ -6,8 +6,9 @@ local mod = get_mod("unreal_tournament")
 --   items.register(setting_id, { key, template, base_item, name, type_name, description, keywords, texts, icon, icon_package, icon_materials })
 --     key: the item's name (damage sources, the loadout and the other peers know the item by it), template: the weapon template's name,
 --     base_item: the game's item that is copied (its models and skins are the copy's), name, type_name (the kind of weapon, "Beam Staff"
---     for the game's), description, keywords (the green line: localization ids), texts ({ id = text } for the ids that are the mod's), icon: shown in the inventory, the icon being the name of a material of the file icon_materials, which
---     is in the package icon_package (a package of its own, see load_icon_package)
+--     for the game's), description, keywords (the green line: localization ids), texts ({ id = text } for the ids that are the mod's),
+--     icon: shown in the inventory, the name of a material of the file icon_materials, which is in the package icon_package (a package
+--     of its own, listed in the mod's file, see hold_package)
 --
 -- The game takes the inventory from the backend (PlayFab), which does not have these items: they are put into the inventory it has loaded,
 -- under an id that is the item's key, the same every time, so that the loadout that has one equipped finds it again.
@@ -25,19 +26,27 @@ mod:hook(LocalizationManager, "_base_lookup", function (func, self, text_id)
 	return texts[text_id] or func(self, text_id)
 end)
 
--- The materials the UI's renderers are made with, besides the game's own (the game's UIRenderer.create adds these to every renderer made
--- after this: the ones that exist already do not have them)
--- The package of the icons is listed in the mod's file, which is what makes the game find it, and loaded here under a reference of its own
--- that is never given back: the UI's renderers hold their materials locked, and the game fails when a package with a locked resource is
--- unloaded (as the mod's packages are when the mod is reloaded: with this reference the package stays).
-local ICON_PACKAGE_REFERENCE = "unreal_tournament_icons"
+-- The package of the icons is one of the packages the mod's file lists, which the game loads through the mod (a mod's packages are not
+-- known to Managers.package). The UI's renderers hold the materials of it locked, and the game fails when a package with a locked resource
+-- is unloaded, as the mod's packages are when the mod is reloaded: so the mod holds a handle of its own to the package, which is never
+-- released (kept in a global, to be found again after a reload).
+local function hold_package(package_name)
+	UT_HELD_PACKAGES = UT_HELD_PACKAGES or {}
 
-local function load_icon_package(package_name)
-	if not Managers.package:has_loaded(package_name, ICON_PACKAGE_REFERENCE) then
-		Managers.package:load(package_name, ICON_PACKAGE_REFERENCE)
+	if UT_HELD_PACKAGES[package_name] then
+		return
 	end
+
+	local handle = Mod.resource_package(Managers.mod:currently_loading_mod().handle, package_name)
+
+	ResourcePackage.load(handle)
+	ResourcePackage.flush(handle)
+
+	UT_HELD_PACKAGES[package_name] = handle
 end
 
+-- The materials the UI's renderers are made with, besides the game's own (the game's UIRenderer.create adds these to every renderer made
+-- after this: the ones that exist already do not have them)
 local function add_material_set(material_set)
 	if not table.contains(UIRenderer._injected_material_sets, material_set) then
 		table.insert(UIRenderer._injected_material_sets, material_set)
@@ -151,7 +160,7 @@ function items.register(setting_id, definition)
 	-- The in-game UI's renderer is made when a level is loaded, so when the mod is loaded in a level the item keeps the icon of the game's
 	-- item until the next one)
 	UIAtlasHelper.add_standalone_texture_by_name(definition.icon)
-	load_icon_package(definition.icon_package)
+	hold_package(definition.icon_package)
 	add_material_set(definition.icon_materials)
 
 	if Managers.ui and Managers.ui._ingame_ui then
