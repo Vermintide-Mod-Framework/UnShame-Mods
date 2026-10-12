@@ -62,6 +62,8 @@ for _, previewer_class in ipairs({ HeroPreviewer, MenuWorldPreviewer }) do
 		local character = self.character_unit
 		local skin = character and Unit.alive(character) and skin_of(self:item_name_by_slot_type("ranged")) or nil
 		local item_info = self._item_info_by_slot.ranged
+		-- (most screens give the previewer the item's backend id and not its skin)
+		local skin_key = item_info and (item_info.skin_name or item_info.backend_id and Managers.backend:get_interface("items"):get_skin(item_info.backend_id))
 		local entry = holding[self]
 
 		if entry and (entry.skin ~= skin or entry.character ~= character) then
@@ -75,7 +77,7 @@ for _, previewer_class in ipairs({ HeroPreviewer, MenuWorldPreviewer }) do
 		-- Shown while the ranged weapon is in hand
 		local visible = self._wielded_slot_type == "ranged" and self.character_unit_visible ~= false
 
-		skin.third_person.hold_in_menu(character, self.world, ranged_units(self), visible, item_info and item_info.skin_name)
+		skin.third_person.hold_in_menu(character, self.world, ranged_units(self), visible, skin_key)
 
 		holding[self] = {
 			character = character,
