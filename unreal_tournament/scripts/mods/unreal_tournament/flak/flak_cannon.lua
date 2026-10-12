@@ -44,6 +44,11 @@ local CONFIG = {
 	chunk_speed = 3500,
 	chunk_lifetime = 2.7, -- seconds
 	chunk_radius = 0.08, -- m, how easily a chunk hits things
+	-- Where the chunks start, from the camera: forward, to the right and down (FlakFire.ProjSpawnOffset, 25, 5 and -6 units).
+	-- The shift sideways is what lets you see a trail from the front instead of straight on.
+	chunk_spawn_forward = 0.5, -- m
+	chunk_spawn_right = 0.1, -- m
+	chunk_spawn_down = 0.12, -- m
 	-- A UT chunk flies straight and only starts to fall after it hits a wall. So there is no gravity in flight, and after the first bounce
 	-- the chunk gets the game's weakest gravity setting (-0.5).
 	chunk_gravity_settings = "drake_pistols", -- the game's gravity of 0
@@ -506,7 +511,9 @@ mod:hook(ActionShotgun, "_shoot", function (func, self, num_shots_total, num_sho
 		self._shots_fired = self._shots_fired + 1
 
 		if action.ut_flak_chunks then
-			spawn_projectile(shot, position, spread_rotation(rotation, math.degrees_to_radians(CONFIG.chunk_spread_degrees)), CHUNK_ACTION_NAME, random_chunk_action(), CONFIG.chunk_speed * CONFIG.debug_speed_scale)
+			local chunk_position = position + Quaternion.forward(rotation) * CONFIG.chunk_spawn_forward + Quaternion.right(rotation) * CONFIG.chunk_spawn_right - Quaternion.up(rotation) * CONFIG.chunk_spawn_down
+
+			spawn_projectile(shot, chunk_position, spread_rotation(rotation, math.degrees_to_radians(CONFIG.chunk_spread_degrees)), CHUNK_ACTION_NAME, random_chunk_action(), CONFIG.chunk_speed * CONFIG.debug_speed_scale)
 		else
 			local lobbed_rotation = Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3.right(), math.degrees_to_radians(CONFIG.shell_lob_degrees)))
 
