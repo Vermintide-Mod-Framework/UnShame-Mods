@@ -1,6 +1,6 @@
 common = {
 	input = {
-		filename = "units/ut/shock/icon"
+		filename = "ui/ut/shock_rifle_icon"
 	}
 	output = {
 		apply_processing = true

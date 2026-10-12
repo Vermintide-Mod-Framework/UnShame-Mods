@@ -6,7 +6,8 @@ local mod = get_mod("unreal_tournament")
 --   items.register(setting_id, { key, template, base_item, name, type_name, description, icon, icon_materials })
 --     key: the item's name (damage sources, the loadout and the other peers know the item by it), template: the weapon template's name,
 --     base_item: the game's item that is copied (its models and skins are the copy's), name, type_name (the kind of weapon, "Beam Staff"
---     for the game's), description, icon: shown in the inventory, the icon being the name of a material of the file icon_materials (a resource of the mod's package)
+--     for the game's), description, icon: shown in the inventory, the icon being the name of a material of the file icon_materials, which
+--     is in the package icon_package (a package of its own, see load_icon_package)
 --
 -- The game takes the inventory from the backend (PlayFab), which does not have these items: they are put into the inventory it has loaded,
 -- under an id that is the item's key, the same every time, so that the loadout that has one equipped finds it again.
@@ -26,23 +27,20 @@ end)
 
 -- The materials the UI's renderers are made with, besides the game's own (the game's UIRenderer.create adds these to every renderer made
 -- after this: the ones that exist already do not have them)
-local material_sets = {}
+-- The package of the icons is loaded under a reference of its own and never unloaded: the UI's renderers hold their materials locked, and
+-- the game fails when a package with a locked resource is unloaded (as the mod's own package is when the mod is reloaded).
+local ICON_PACKAGE_REFERENCE = "unreal_tournament_icons"
+
+local function load_icon_package(package_name)
+	if not Managers.package:has_loaded(package_name, ICON_PACKAGE_REFERENCE) then
+		Managers.package:load(package_name, ICON_PACKAGE_REFERENCE)
+	end
+end
 
 local function add_material_set(material_set)
 	if not table.contains(UIRenderer._injected_material_sets, material_set) then
 		table.insert(UIRenderer._injected_material_sets, material_set)
 	end
-
-	material_sets[material_set] = true
-end
-
--- (a renderer made with a material that is not loaded crashes the game: they are taken back when the mod is unloaded, with its package)
-mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
-	for material_set in pairs(material_sets) do
-		table.remove(UIRenderer._injected_material_sets, table.find(UIRenderer._injected_material_sets, material_set))
-	end
-
-	table.clear(material_sets)
 end
 
 -- The items whose icon is not used yet: the renderer of the UI that is there was made without it
@@ -145,6 +143,7 @@ function items.register(setting_id, definition)
 	-- The in-game UI's renderer is made when a level is loaded, so when the mod is loaded in a level the item keeps the icon of the game's
 	-- item until the next one)
 	UIAtlasHelper.add_standalone_texture_by_name(definition.icon)
+	load_icon_package(definition.icon_package)
 	add_material_set(definition.icon_materials)
 
 	if Managers.ui and Managers.ui._ingame_ui then

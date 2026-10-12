@@ -24,8 +24,9 @@ party IP in a published mod: this branch is for local use, and nothing of it sho
 
 6. `render_icon.py in.bsi out.png size yaw pitch roll body.png,power.png` renders a converted mesh (a pickup's bsi, with the
    textures of its geometries in order) into an icon with a transparent background: the inventory icon of the weapon's item
-   (`units/ut/shock/icon.png`, made with `pickup.bsi 256 20 0 35`). Its `.texture` and `.material` (a gui material that the
-   items.lua registers in the UI's renderers) are next to it.
+   (`ui/ut/shock_rifle_icon.png`, made with `pickup.bsi 256 20 0 35`). Its `.texture` and `.material` (a gui material that
+   items.lua registers in the UI's renderers) are next to it, in a package of their own (`resource_packages/unreal_tournament/icons`)
+   that the mod loads and never unloads: the renderers hold the material locked, and the game fails when it is unloaded.
 
 ## What was found
 

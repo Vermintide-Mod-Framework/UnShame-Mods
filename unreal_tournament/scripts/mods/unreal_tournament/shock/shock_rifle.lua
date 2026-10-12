@@ -15,7 +15,8 @@ mod.items.register("shock_rifle", {
 	type_name = "Shock Rifle",
 	description = "UT2004's Shock Rifle. The primary fire is an instant beam, the secondary fire a slow energy ball. Shoot the ball with the beam for a huge combo explosion.",
 	icon = "ut_shock_rifle_icon",
-	icon_materials = "units/ut/shock/icon",
+	icon_package = "resource_packages/unreal_tournament/icons",
+	icon_materials = "ui/ut/shock_rifle_icon",
 })
 
 local TEMPLATE_NAME = mod.items.weapons.shock_rifle.template

@@ -4,6 +4,6 @@ ut_shock_rifle_icon = {
 	}
 	shader = "gui:DIFFUSE_MAP"
 	textures = {
-		diffuse_map = "units/ut/shock/icon"
+		diffuse_map = "ui/ut/shock_rifle_icon"
 	}
 }
