@@ -261,13 +261,16 @@ mod:hook(SimpleInventoryExtension, "_wield_slot", function (func, self, equipmen
 		end
 	end
 
-	func(self, equipment, slot_data, unit_1p, ...)
+	-- (what it returns, whether it wielded a weapon, is what the caller shows the weapon's units by)
+	local wielded = func(self, equipment, slot_data, unit_1p, ...)
 
 	if is_local_player then
 		for _, callback in pairs(mod.wield_callbacks) do
 			callback(self, equipment, slot_data, unit_1p)
 		end
 	end
+
+	return wielded
 end)
 
 -- The shots of the weapons that are patched (the Shock Rifle's), by name:

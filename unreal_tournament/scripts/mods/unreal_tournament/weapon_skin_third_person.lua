@@ -186,15 +186,6 @@ local function new(def)
 
 					seen[character] = true
 					place(entry)
-
-					-- TEST: where the mesh is against the hand it is linked to, told once a second for each character
-					local now = Managers.time:time("game")
-
-					if now >= (entry.told or 0) then
-						entry.told = now + 1
-
-						mod:echo("%s: mesh %.2f m from the hand, character scale %s, mesh scale %s, mesh at %s, hand at %s", CONFIG.id, Vector3.length(Unit.world_position(entry.unit, 0) - Unit.world_position(character, entry.hand_node)), tostring(Unit.local_scale(character, 0)), tostring(Unit.local_scale(entry.unit, 0)), tostring(Unit.world_position(entry.unit, 0)), tostring(Unit.world_position(character, entry.hand_node)))
-					end
 					Unit.set_unit_visibility(entry.unit, third_person.shows_weapon(character))
 					third_person.hide_staffs()
 				end
