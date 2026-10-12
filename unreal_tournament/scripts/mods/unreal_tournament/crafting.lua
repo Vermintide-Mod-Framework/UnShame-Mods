@@ -295,7 +295,7 @@ end
 
 -- The recipe is the one the page says; the Craft page does not say, it crafts (from a blueprint). The materials the page may have put in are
 -- not used: the recipes of the mod's weapons have none.
-mod:hook(BackendInterfaceCraftingPlayfab, "craft", function (func, self, career_name, item_backend_ids, recipe_override)
+local function craft(func, self, career_name, item_backend_ids, recipe_override)
 	local weapon_ids = {}
 
 	for _, backend_id in ipairs(item_backend_ids) do
@@ -350,9 +350,9 @@ mod:hook(BackendInterfaceCraftingPlayfab, "craft", function (func, self, career_
 	complete_at[id] = Managers.time:time("main") + CONFIG.craft_delay
 
 	return id, self:get_recipe_by_name(recipe_name)
-end)
+end
 
-mod:hook(BackendInterfaceCraftingPlayfab, "is_craft_complete", function (func, self, id)
+local function is_craft_complete(func, self, id)
 	local at = complete_at[id]
 
 	if at then
@@ -364,7 +364,14 @@ mod:hook(BackendInterfaceCraftingPlayfab, "is_craft_complete", function (func, s
 	end
 
 	return func(self, id)
-end)
+end
+
+-- (hooked when all the mods are loaded: the hook that is made last is the first to be called, and the mod's has to get the crafts of its
+-- weapons before another mod's hook of the same function, the Casual mod's, which stops a craft of an item that is not its own)
+mod.all_mods_loaded_callbacks[#mod.all_mods_loaded_callbacks + 1] = function ()
+	mod:hook(BackendInterfaceCraftingPlayfab, "craft", craft)
+	mod:hook(BackendInterfaceCraftingPlayfab, "is_craft_complete", is_craft_complete)
+end
 
 -- The crafting pages (the console ones, which is what the game's inventory uses) show what a recipe needs of the materials (what the player
 -- has / what it takes), and let the player craft when they have it: for one of the mod's weapons it takes none, so they show what the player

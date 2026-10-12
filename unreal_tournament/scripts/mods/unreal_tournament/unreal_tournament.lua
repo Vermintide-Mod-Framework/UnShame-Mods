@@ -13,6 +13,8 @@ mod.setting_changed_callbacks = {}
 mod.update_callbacks = {}
 mod.unload_callbacks = {}
 mod.level_exit_callbacks = {}
+-- all_mods_loaded_callbacks: for what has to be done after the other mods have: hooks that are to come before theirs
+mod.all_mods_loaded_callbacks = {}
 
 -- (an error in one of them is told and the others are still called: what a weapon takes back when the mod is unloaded or a level is left
 -- must not be skipped because another weapon's failed, a unit of the mod's package that is alive when the package is unloaded
@@ -45,6 +47,10 @@ end
 
 mod.on_unload = function (...)
 	call_all(mod.unload_callbacks, ...)
+end
+
+mod.on_all_mods_loaded = function (...)
+	call_all(mod.all_mods_loaded_callbacks, ...)
 end
 
 mod.on_game_state_changed = function (status, state_name)
@@ -93,5 +99,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- (seen in the chat each time the mod is loaded or reloaded, to know which build is running: the number is the count of
 -- commits of the repository, which goes up by one with every change). Only with the developer mode of the mod framework on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 522)")
+	mod:echo("Unreal Tournament loaded (build 523)")
 end
