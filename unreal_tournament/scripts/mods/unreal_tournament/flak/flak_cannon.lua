@@ -748,7 +748,8 @@ local function hit_owner(chunk)
 		return
 	end
 
-	local closest = Vector3(feet.x, feet.y, feet.z + math.clamp(position.z - feet.z, 0, CONFIG.chunk_self_hit_height))
+	local feet_z = Vector3.z(feet)
+	local closest = Vector3(Vector3.x(feet), Vector3.y(feet), feet_z + math.clamp(Vector3.z(position) - feet_z, 0, CONFIG.chunk_self_hit_height))
 
 	if Vector3.distance(position, closest) > CONFIG.chunk_self_hit_radius then
 		return
