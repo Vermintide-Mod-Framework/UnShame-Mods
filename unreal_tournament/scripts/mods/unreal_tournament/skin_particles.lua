@@ -390,12 +390,29 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 			release(particle)
 			table.remove(active, i)
 		elseif particle.age >= 0 then
-			place(particle, dt, camera_position, camera_rotation)
+			-- Linked particles are placed in pre_render, after the skin has moved its model this frame
+			if not particle.locked then
+				place(particle, dt, camera_position, camera_rotation)
+			end
 
 			if particle.age >= particle.life then
 				release(particle)
 				table.remove(active, i)
 			end
+		end
+	end
+end
+
+mod.pre_render_callbacks.skin_particles = function ()
+	local camera_position, camera_rotation = utils.camera_pose()
+
+	if not camera_position then
+		return
+	end
+
+	for _, particle in ipairs(active) do
+		if particle.locked and particle.age >= 0 and particle.age < particle.life then
+			place(particle, 0, camera_position, camera_rotation)
 		end
 	end
 end

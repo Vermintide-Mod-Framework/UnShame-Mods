@@ -1,17 +1,15 @@
 local mod = get_mod("unreal_tournament")
 
--- The weapon skins in the menus. The hero of the equipment screen holds the weapon's mesh instead of the game's unit (the staff), as the
--- characters of the game do (weapon_skin_third_person.lua), and the inspection of an item (the window the equipment screen opens on an
--- item, LootItemUnitPreviewer) shows the mesh instead of the staff. What the game shows of an item is its own units, which are not changed
--- (the game's weapons are those units): the previewers' units are hidden and the mesh is put where they are.
+-- Weapon skins in the menus. The hero on the equipment screen holds the weapon's mesh instead of the game's unit (weapon_skin_third_person.lua
+-- does the same in the world), and the item inspection (LootItemUnitPreviewer) shows the mesh instead of the staff. The previewers keep
+-- spawning the game's units; they are hidden and the mesh is shown in their place.
 
 local CONFIG = {
-	-- How long the mesh is shown in the inspection of an item (meters): 1.3 filled more than the window's view, 0.65 was still too big, 0.45
-	-- too small, 0.55 a bit small
+	-- Length of the mesh in the item inspection (meters)
 	item_length = 0.62,
 }
 
--- The skin of an item, if the item is a weapon that has one that is shown (the Weapon Skins setting)
+-- The skin of an item, if it has one that is shown
 local function skin_of(item_name)
 	local item = item_name and rawget(ItemMasterList, item_name)
 
@@ -28,7 +26,7 @@ end
 
 -- The hero of the equipment screen (HeroPreviewer)
 
--- [previewer] = { character, skin }: what holds the mesh
+-- [previewer] = { character, skin }: the previewers whose hero holds the mesh
 local holding = {}
 
 local function release_hero(previewer)
@@ -41,7 +39,7 @@ local function release_hero(previewer)
 	end
 end
 
--- The units of the hero's ranged weapon that the previewer has made (the right hand's and the left hand's)
+-- The previewer's units for the ranged weapon (right and left hand)
 local function ranged_units(previewer)
 	local slot = InventorySettings.slots_by_name.slot_ranged
 	local equipment_units = previewer._equipment_units[slot.slot_index]
@@ -58,7 +56,7 @@ local function ranged_units(previewer)
 	return units
 end
 
--- (a class gets a copy of its parent's functions when it is made, so the menu's previewer has to be hooked as well as the one it is made from)
+-- A class copies its parent's functions when it is made, so MenuWorldPreviewer needs hooking as well as HeroPreviewer
 for _, previewer_class in ipairs({ HeroPreviewer, MenuWorldPreviewer }) do
 	mod:hook_safe(previewer_class, "post_update", function (self)
 		local character = self.character_unit
@@ -73,7 +71,7 @@ for _, previewer_class in ipairs({ HeroPreviewer, MenuWorldPreviewer }) do
 			return
 		end
 
-		-- (the mesh is held while the ranged weapon is the one the hero has in hand)
+		-- Shown while the ranged weapon is in hand
 		local visible = self._wielded_slot_type == "ranged" and self.character_unit_visible ~= false
 
 		skin.third_person.hold_in_menu(character, self.world, ranged_units(self), visible)
@@ -84,7 +82,7 @@ for _, previewer_class in ipairs({ HeroPreviewer, MenuWorldPreviewer }) do
 		}
 	end)
 
-	-- (before the previewer takes its units and its world's down)
+	-- Before the previewer destroys its units
 	mod:hook(previewer_class, "clear_units", function (func, self, ...)
 		release_hero(self)
 
@@ -92,10 +90,9 @@ for _, previewer_class in ipairs({ HeroPreviewer, MenuWorldPreviewer }) do
 	end)
 end
 
--- The inspection of an item (LootItemUnitPreviewer): the mesh is linked to the unit the item's units are linked to, which the previewer
--- turns, as long as the item is shown, and as big as CONFIG.item_length says
+-- Item inspection (LootItemUnitPreviewer): the mesh is linked to the unit the previewer turns, which the item's units are linked to
 
--- (the previewers that have the mesh)
+-- The previewers that have the mesh
 local inspecting = {}
 
 local function release_item(previewer)
@@ -126,7 +123,7 @@ mod:hook_safe(LootItemUnitPreviewer, "_enable_item_units_visibility", function (
 	if not unit then
 		unit = skin.third_person.new_mesh(world)
 
-		-- The mesh turned so that the barrel is to the side, and in the middle of the unit it is linked to, whatever size it is
+		-- Barrel to the side, centred on the unit, scaled to item_length
 		local pose, half_extents = Unit.box(unit)
 		local length = math.max(Vector3.x(half_extents), Vector3.y(half_extents), Vector3.z(half_extents)) * 2
 		local scale = CONFIG.item_length / length
@@ -143,7 +140,7 @@ mod:hook_safe(LootItemUnitPreviewer, "_enable_item_units_visibility", function (
 
 	Unit.set_unit_visibility(unit, visible)
 
-	-- (the effects of the game's units, the staff's flame, are put out as the game does when it unwields: hidden units still show them)
+	-- Hidden units still show their effects (the staff's flame), so they get the event the game sends on unwielding
 	for _, game_unit in ipairs(self._spawned_units or {}) do
 		if Unit.alive(game_unit) then
 			Unit.set_unit_visibility(game_unit, false)
@@ -158,7 +155,7 @@ mod:hook(LootItemUnitPreviewer, "_destroy_units", function (func, self, ...)
 	return func(self, ...)
 end)
 
--- (the mod is unloaded with a menu open: what it has in its worlds goes, the worlds are there)
+-- Unloading with a menu open: the worlds still exist, so the mod's units are destroyed first
 mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 	for previewer in pairs(holding) do
 		release_hero(previewer)
