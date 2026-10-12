@@ -3,7 +3,7 @@ import sys, os
 # Splits UT2004's FlakTrailTex, which make_fx_assets.py converts as it is, into the two textures the skin uses. The texture is two tiles
 # stacked: a streak that runs across the tile (along u), and a glow for the head of the trail.
 # The skin's beam maps v along its length, so the streak tile is turned a quarter (transposed).
-# The glow tile has a bright white middle that looks like a solid dot, so the glow texture is generated instead: a soft yellow
+# The glow tile has a bright white middle that looks like a solid dot, so the glow texture is generated instead: a soft orange-yellow
 # falloff with no bright middle.
 # Usage: split_flak_trail.py <scratch dir>     (run after make_fx_assets.py, which writes flak_trail.png the first time)
 
@@ -49,22 +49,15 @@ def write(name, width, height, new_rows):
     print('texture', name, width, height)
 
 
-def yellower(pixel):
-    # UT's streak is orange (green is 70% of red). More green makes it yellow.
-    return bytes([pixel[0], min(255, int(pixel[1] * GREEN_SCALE)), pixel[2], pixel[3]])
-
-
-GREEN_SCALE = 1.3
-
 # The streak: the pixel at column x, row y of the tile goes to column y, row x
-streak = [[yellower(pixel) for pixel in pixels(row)] for row in rows[:tile]]
+streak = [pixels(row) for row in rows[:tile]]
 turned = []
 for x in range(w):
     turned.append(b'\0' + b''.join(streak[y][x] for y in range(tile)))
 write('flak_trail', tile, w, turned)
 
-# The glow: a yellow disc that fades smoothly to nothing at the edge
-GLOW_COLOR = (255, 215, 50)
+# The glow: an orange-yellow disc that fades smoothly to nothing at the edge
+GLOW_COLOR = (255, 170, 40)
 glow = []
 for y in range(tile):
     row = bytes([0])
