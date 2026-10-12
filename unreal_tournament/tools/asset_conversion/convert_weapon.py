@@ -176,7 +176,7 @@ WEAPONS['shock2003'] = {
     'psa': 'Weapons/MeshAnimation/ShockRifle_1st.psa',
     # (the third is the red laser sight, which UT draws additively with a panning texture: here a see-through red)
     'materials': [('WeaponSkins/Texture/ShockTex0.tga', 'opaque'), ('WeaponSkins/Texture/ShockTex0.tga', 'opaque'),
-                  ('solid:ff2a1e', 'alpha', 0.6)],
+                  ('solid:ff2a1e', 'alpha', 0.2)],
     'scale': 0.0125,
     'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
     'locators': ['Bone_flash01'],
