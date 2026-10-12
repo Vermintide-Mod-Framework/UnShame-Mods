@@ -159,6 +159,15 @@ local function update_visuals(dt)
 			table.remove(visuals, i)
 		elseif not lying then
 			local position = Unit.world_position(game_unit, 0)
+
+			-- The game's unit may not be where it starts out when the visual is made, so the path starts from where it is on the first frame
+			if not visual.placed then
+				visual.placed = true
+
+				visual.previous:store(position)
+				visual.trail_from:store(position)
+			end
+
 			local previous = visual.previous:unbox()
 			local moved = position - previous
 
