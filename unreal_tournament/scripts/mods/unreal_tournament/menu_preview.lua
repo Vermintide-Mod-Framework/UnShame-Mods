@@ -6,8 +6,8 @@ local mod = get_mod("unreal_tournament")
 -- (the game's weapons are those units): the previewers' units are hidden and the mesh is put where they are.
 
 local CONFIG = {
-	-- How long the mesh is shown in the inspection of an item (meters)
-	item_length = 1.3,
+	-- How long the mesh is shown in the inspection of an item (meters): 1.3 filled more than the window's view
+	item_length = 0.65,
 }
 
 -- The skin of an item, if the item is a weapon that has one that is shown (the Weapon Skins setting)
@@ -142,9 +142,11 @@ mod:hook_safe(LootItemUnitPreviewer, "_enable_item_units_visibility", function (
 
 	Unit.set_unit_visibility(unit, visible)
 
+	-- (the effects of the game's units, the staff's flame, are put out as the game does when it unwields: hidden units still show them)
 	for _, game_unit in ipairs(self._spawned_units or {}) do
 		if Unit.alive(game_unit) then
 			Unit.set_unit_visibility(game_unit, false)
+			Unit.flow_event(game_unit, "lua_unwield")
 		end
 	end
 end)

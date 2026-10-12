@@ -288,9 +288,11 @@ local function new(def)
 		place(entry)
 		Unit.set_unit_visibility(entry.unit, visible)
 
+		-- (the effects of the game's units, the Beam Staff's flame, are put out as the game does when it unwields: hidden units still show them)
 		for _, game_unit in ipairs(game_units) do
 			if Unit.alive(game_unit) then
 				Unit.set_unit_visibility(game_unit, false)
+				Unit.flow_event(game_unit, "lua_unwield")
 			end
 		end
 	end
