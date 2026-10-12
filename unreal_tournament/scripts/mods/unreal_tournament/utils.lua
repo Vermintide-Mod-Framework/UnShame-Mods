@@ -419,10 +419,10 @@ end
 -- Packages (what a weapon's projectiles are made of)
 
 -- The projectile units are only loaded with the characters that use them (a projectile that is spawned unloaded crashes the
--- game), so a weapon holds its own references to them while it is enabled. Returns the holder of one weapon:
--- holder.load(package_names) and holder.unload(), under the reference name, which only takes back what it has loaded.
+-- game), so a weapon holds its own references to them. They are never released: units made from them may still be alive when the mod is
+-- unloaded, and unloading a package with a locked resource is an error. Returns the holder of one weapon, holder.load(package_names),
+-- under the reference name.
 function utils.package_holder(reference_name)
-	local loaded = {}
 	local holder = {}
 
 	function holder.load(package_names)
@@ -431,10 +431,8 @@ function utils.package_holder(reference_name)
 		end
 
 		for _, package_name in ipairs(package_names) do
-			if not loaded[package_name] then
+			if not Managers.package:has_loaded(package_name, reference_name) then
 				Managers.package:load(package_name, reference_name)
-
-				loaded[package_name] = true
 			end
 		end
 	end
@@ -448,16 +446,6 @@ function utils.package_holder(reference_name)
 		end
 
 		holder.load(package_names)
-	end
-
-	function holder.unload()
-		for package_name in pairs(loaded) do
-			loaded[package_name] = nil
-
-			if Managers.package then
-				pcall(Managers.package.unload, Managers.package, package_name, reference_name)
-			end
-		end
 	end
 
 	return holder

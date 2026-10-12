@@ -881,7 +881,6 @@ end
 local function disable_shock_rifle()
 	restore_beam_staff()
 	clear_implosions()
-	packages.unload()
 end
 
 mod.enabled_callbacks[#mod.enabled_callbacks + 1] = enable_shock_rifle

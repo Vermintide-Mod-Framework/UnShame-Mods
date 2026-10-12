@@ -653,7 +653,6 @@ end
 -- holds changes when it is wielded again)
 local function disable_flak_cannon()
 	restore_blunderbuss()
-	packages.unload()
 end
 
 utils.register_weapon("flak_cannon", enable_flak_cannon, disable_flak_cannon)

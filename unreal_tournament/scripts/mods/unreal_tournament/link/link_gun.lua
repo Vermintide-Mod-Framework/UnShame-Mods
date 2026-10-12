@@ -656,7 +656,7 @@ end
 
 -- The beam effect of the staff comes with the packages that the game only loads for the one who plays the Thornsister (for
 -- the others it loads the staff of the third person only): the mod holds a reference to the staff in the hands and to
--- the Thornsister's while the weapon is enabled, so that the others can draw the beam.
+-- the Thornsister's, so that the others can draw the beam.
 local packages = utils.package_holder("unreal_tournament_link")
 local BEAM_PACKAGES = {
 	"units/weapons/player/wpn_we_life_staff_01/wpn_we_life_staff_01",
@@ -4101,7 +4101,6 @@ end
 utils.register_weapon("link_gun", apply_link_gun, function ()
 	clear_beams()
 	restore_staff()
-	packages.unload()
 end)
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()

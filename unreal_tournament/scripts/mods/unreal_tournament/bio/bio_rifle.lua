@@ -1149,7 +1149,6 @@ end
 -- holds changes when it is wielded again)
 local function disable_bio_rifle()
 	restore_drakegun()
-	packages.unload()
 end
 
 utils.register_weapon("bio_rifle", enable_bio_rifle, disable_bio_rifle)
