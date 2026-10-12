@@ -2,10 +2,9 @@ local mod = get_mod("unreal_tournament")
 
 -- Beastmen standards (banners). A standard only takes damage from melee attacks and from a list of damage sources (bombs, torches), and the
 -- game's explosions don't look for it, as it is not an enemy. This lets the weapons of the mod damage it:
---   standards.allow_source(damage source): all the damage of the item with this key is not dropped
 --   standards.blow_up(position, attacker unit, radius, damage profile, power level, damage source): the host damages the standards that are
---     within the radius of the explosion. The damage of the explosion is not dropped, whatever the source: the item's other damage (a projectile
---     hitting a standard) is, unless the source is allowed
+--     within the radius of the explosion. The damage of the explosion is not dropped, the item's other damage (a beam or a projectile hitting a
+--     standard) is
 
 local CONFIG = {
 	-- Meters past the radius: the game's overlap is of the standard's body, this measures to its position
@@ -13,17 +12,12 @@ local CONFIG = {
 }
 
 local standards = {}
-local allowed_sources = {}
 -- While the damage of an explosion is applied (the host applies it at once)
 local exploding = false
 
-function standards.allow_source(damage_source)
-	allowed_sources[damage_source] = true
-end
-
 if rawget(_G, "BeastmenStandardHealthExtension") then
 	mod:hook(BeastmenStandardHealthExtension, "add_damage", function (func, self, attacker_unit, damage_amount, hit_zone_name, damage_type, hit_position, damage_direction, damage_source_name, ...)
-		if exploding or allowed_sources[damage_source_name] then
+		if exploding then
 			return GenericHealthExtension.add_damage(self, attacker_unit, damage_amount, hit_zone_name, damage_type, hit_position, damage_direction, damage_source_name, ...)
 		end
 

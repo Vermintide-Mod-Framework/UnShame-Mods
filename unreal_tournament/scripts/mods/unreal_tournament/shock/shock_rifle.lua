@@ -848,9 +848,7 @@ mod.explosion_before_callbacks.ut_shock_combo_explosion = function (world, impac
 	}
 end
 
--- The Shock Rifle's damage is not dropped by a beastmen standard (banner), and the combo damages the ones in its radius
-mod.standards.allow_source(mod.items.weapons.shock_rifle.key)
-
+-- The combo damages the beastmen standards (banners) in its radius. The beam doesn't: a standard drops its damage.
 local function blow_up_standards(impact_position, attacker_unit)
 	mod.standards.blow_up(impact_position, attacker_unit, ExplosionTemplates.ut_shock_combo_explosion.explosion.radius, DamageProfileTemplates.ut_shock_combo_explosion, CONFIG.combo_standard_power_level, mod.items.weapons.shock_rifle.key)
 end
