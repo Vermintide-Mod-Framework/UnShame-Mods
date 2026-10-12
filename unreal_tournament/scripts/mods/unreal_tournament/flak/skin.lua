@@ -33,7 +33,11 @@ local CONFIG = {
 	-- trail would stop growing.
 	chunk_trail_step = 1 / 60,
 	chunk_trail_width = 0.1, -- m
-	chunk_glow_size = 0.3, -- m, the glow at the head of the trail
+	-- The glow around the chunk: it is drawn a little behind the chunk, so the chunk's mesh covers its middle, and is dim so that it
+	-- stays a halo
+	chunk_glow_size = 0.6, -- m
+	chunk_glow_intensity = 0.5,
+	chunk_glow_behind = 0.15, -- m, away from the camera
 	-- FlakShell: the mesh, FlakGlow (a gold sprite) and FlakShellTrail (smoke, 0.5 to 0.6 s, 20 to 35 units, growing 15 a second)
 	shell_glow_size = 40,
 	shell_glow_color = {
@@ -404,9 +408,17 @@ mod.skin_init_callbacks.ut_flak_chunk = function (projectile)
 		fade_in = 0,
 		follow = function ()
 			if Unit.alive(visual.game_unit) and not visual.projectile._stop_impacts then
-				return Unit.world_position(visual.game_unit, 0)
+				local position = Unit.world_position(visual.game_unit, 0)
+				local camera_position = utils.camera_pose()
+
+				if camera_position then
+					position = position + Vector3.normalize(position - camera_position) * CONFIG.chunk_glow_behind
+				end
+
+				return position
 			end
 		end,
+		intensity = CONFIG.chunk_glow_intensity,
 		life = 2.7,
 		size = CONFIG.chunk_glow_size,
 		texture = "flak_chunk_glow",
