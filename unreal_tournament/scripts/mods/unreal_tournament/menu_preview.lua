@@ -7,8 +7,8 @@ local mod = get_mod("unreal_tournament")
 
 local CONFIG = {
 	-- How long the mesh is shown in the inspection of an item (meters): 1.3 filled more than the window's view, 0.65 was still too big, 0.45
-	-- too small
-	item_length = 0.55,
+	-- too small, 0.55 a bit small
+	item_length = 0.62,
 }
 
 -- The skin of an item, if the item is a weapon that has one that is shown (the Weapon Skins setting)
