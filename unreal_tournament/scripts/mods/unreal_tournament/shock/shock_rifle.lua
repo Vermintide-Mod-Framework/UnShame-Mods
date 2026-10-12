@@ -38,7 +38,7 @@ mod.items.register("shock_rifle", {
 		{
 			key = "ut_shock_rifle_skin_instagib",
 			name = "UT2004 Instagib Shock Rifle",
-			description = "This version of the Shock Rifle will instantly kill most enemies.",
+			description = "This version of the Shock Rifle will instantly kill most enemies, and down allies as well.",
 			icon = "ut_shock_rifle_instagib_icon",
 			icon_materials = "ui/ut/shock_rifle_instagib_icon",
 		},
