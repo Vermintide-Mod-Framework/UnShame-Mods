@@ -56,6 +56,9 @@ end
 -- The hooks of the game's functions that the weapons share, and the tables of callbacks they run
 mod:dofile("scripts/mods/unreal_tournament/hooks")
 
+-- The weapons as items of their own (copies of the game's weapons), registered by each weapon's file
+mod.items = mod:dofile("scripts/mods/unreal_tournament/items")
+
 -- The scaled particle effects of the weapons, the one copy of them
 mod.effects = mod:dofile("scripts/mods/unreal_tournament/effects")
 
@@ -85,5 +88,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- (seen in the chat each time the mod is loaded or reloaded, to know which build is running: the number is the count of
 -- commits of the repository, which goes up by one with every change). Only with the developer mode of the mod framework on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 488)")
+	mod:echo("Unreal Tournament loaded (build 489)")
 end

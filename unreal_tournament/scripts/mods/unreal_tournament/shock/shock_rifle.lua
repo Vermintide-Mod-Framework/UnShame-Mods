@@ -1,12 +1,20 @@
 local mod = get_mod("unreal_tournament")
 
--- The Shock Rifle's gameplay: it replaces the actions of the Beam Staff (Sienna's) in place.
+-- The Shock Rifle's gameplay: a copy of the Beam Staff (Sienna's), an item of its own, with the actions of the copy replaced.
 --   Left button: an instant hitscan beam
 --   Right button: a slow ball that flies straight and explodes on impact
 --   A beam that hits a ball detonates it in a large "shock combo" explosion
 -- The skin (skin.lua) draws all of it; this file only does what it does to the game.
 
-local TEMPLATE_NAME = "staff_blast_beam_template_1"
+mod.items.register("shock_rifle", {
+	key = "ut_shock_rifle",
+	template = "ut_shock_rifle_template",
+	base_item = "bw_skullstaff_beam",
+	name = "Shock Rifle",
+	description = "UT2004's Shock Rifle. The primary fire is an instant beam, the secondary fire a slow energy ball. Shoot the ball with the beam for a huge combo explosion.",
+})
+
+local TEMPLATE_NAME = mod.items.weapons.shock_rifle.template
 
 local CONFIG = {
 	-- The multipliers of the damage and the stagger per armor type: unarmored, armored, monsters, players, berserkers, super armor.

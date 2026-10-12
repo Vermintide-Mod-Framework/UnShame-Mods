@@ -17,7 +17,7 @@ local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local animations = mod:dofile("scripts/mods/unreal_tournament/shock/skin_animations")
 local fx = mod:dofile("scripts/mods/unreal_tournament/shock/skin_effects")
 
-local TEMPLATE_NAME = "staff_blast_beam_template_1"
+local TEMPLATE_NAME = mod.items.weapons.shock_rifle.template
 local SETTING_ID = "shock_rifle"
 
 local CONFIG = {

@@ -7,7 +7,7 @@ local mod = get_mod("unreal_tournament")
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
-local TEMPLATE_NAME = "staff_blast_beam_template_1"
+local TEMPLATE_NAME = mod.items.weapons.shock_rifle.template
 
 local CONFIG = {
 	-- The ball is used against a target this far away (meters): nearer, the ball is gone before the beam can follow it; further, the beam is

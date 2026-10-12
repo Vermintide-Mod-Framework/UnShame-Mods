@@ -70,7 +70,7 @@ local CONFIG = {
 	-- The weapons of the call outs: what the item that killed has as its template (the setting of the weapon must be on, or it is the
 	-- game's own weapon that has it)
 	flak_cannon = { setting = "flak_cannon", template = "blunderbuss_template_1" },
-	shock_rifle = { setting = "shock_rifle", template = "staff_blast_beam_template_1" },
+	shock_rifle = { setting = "shock_rifle", template = mod.items.weapons.shock_rifle.template },
 	-- PlayerController.PlayRewardAnnouncement: an announcement that is not forced is not played if one has been played in the last second
 	unforced_gap = 1, -- seconds
 	-- The words (LocalMessage): where they are on the screen (PosY of each message, from the top), how long they last (Lifetime) and how they
