@@ -105,6 +105,9 @@ local CONFIG = {
 	shell_speed = 2400, -- FlakShell.Speed 1200 uu/s = 24 m/s
 	shell_lob_degrees = 5.3, -- how far up the shell is tossed from the aim (UT's FlakShell.TossZ 225 uu/s is 10.6, this is half)
 	shell_lifetime = 6,
+	-- UT's gravity is 950 units/s^2, which is 19 m/s^2 at 0.02 m per unit. The game's own is -9.82, which keeps a shell fired straight up in the air
+	-- twice as long.
+	shell_gravity = -19,
 	shell_radius = 0.2, -- m
 	shell_damage = 60, -- the damage of the explosion
 	-- The multipliers of the explosion's damage and stagger per armor type: unarmored, armored, monsters, players,
@@ -155,6 +158,10 @@ for bounces = 0, CONFIG.chunk_bounces + CONFIG.chunk_extra_bounces do
 	CHUNK_ACTIONS[bounces + 1] = "ut_flak_chunk_" .. bounces
 end
 local SHELL_ACTION = "ut_flak_shell"
+local SHELL_GRAVITY_SETTINGS = "ut_flak_shell"
+
+ProjectileGravitySettings[SHELL_GRAVITY_SETTINGS] = CONFIG.shell_gravity
+register_network_lookup("projectile_gravity_settings", SHELL_GRAVITY_SETTINGS)
 
 for _, name in ipairs(CHUNK_ACTIONS) do
 	register_network_lookup("sub_actions", name)
@@ -273,7 +280,7 @@ local function build_shell_action()
 	-- "grenade_fire".)
 	local projectile_info = table.clone(Projectiles.grenade)
 
-	projectile_info.gravity_settings = "fireball"
+	projectile_info.gravity_settings = SHELL_GRAVITY_SETTINGS
 	projectile_info.life_time = CONFIG.shell_lifetime
 	projectile_info.radius = CONFIG.shell_radius
 	projectile_info.show_warning_icon = nil
