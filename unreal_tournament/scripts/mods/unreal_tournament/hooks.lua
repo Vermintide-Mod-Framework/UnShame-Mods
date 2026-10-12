@@ -471,3 +471,24 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 		get_mod("VMF").ping_vmf_users()
 	end
 end
+
+-- Hit effects that do nothing: a weapon that draws its own impact names one (mod.silent_hit_effects[name] = true) as its action's hit_effect.
+-- The game wants a name for it, and sends the name to the other peers as its number in a lookup of names. That lookup is full (adding a
+-- name is an error: too many entries), so a name that is not in it is neither played nor sent. Walls and props and enemies (the "skinned"
+-- ones: flesh, armor) each have their own pair of functions, so all four are hooked.
+mod.silent_hit_effects = {}
+
+for _, function_name in ipairs({
+	"play_surface_material_effects",
+	"remote_play_surface_material_effects",
+	"play_skinned_surface_material_effects",
+	"remote_play_skinned_surface_material_effects",
+}) do
+	mod:hook(EffectHelper, function_name, function (func, effect_name, ...)
+		if mod.silent_hit_effects[effect_name] then
+			return
+		end
+
+		return func(effect_name, ...)
+	end)
+end

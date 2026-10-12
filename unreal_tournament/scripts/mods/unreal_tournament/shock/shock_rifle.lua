@@ -236,25 +236,10 @@ register_explosion_template("ut_shock_combo_explosion", {
 })
 
 -- The beam's hit effect does nothing (the game would play the sound, particles and decals of the material it hits): the skin draws the
--- impact. The game still wants a name for it, and sends the name to the other peers as its number in a lookup of names. That lookup is
--- full (adding a name is an error: too many entries), so an effect with this name is neither played nor sent. Walls and props and enemies
--- (the "skinned" ones: flesh, armor) each have their own pair of functions, so all four are hooked.
+-- impact (see mod.silent_hit_effects in hooks.lua)
 local NO_HIT_EFFECT = "ut_shock_impact"
 
-for _, function_name in ipairs({
-	"play_surface_material_effects",
-	"remote_play_surface_material_effects",
-	"play_skinned_surface_material_effects",
-	"remote_play_skinned_surface_material_effects",
-}) do
-	mod:hook(EffectHelper, function_name, function (func, effect_name, ...)
-		if effect_name == NO_HIT_EFFECT then
-			return
-		end
-
-		return func(effect_name, ...)
-	end)
-end
+mod.silent_hit_effects[NO_HIT_EFFECT] = true
 
 -- Weapon template
 
