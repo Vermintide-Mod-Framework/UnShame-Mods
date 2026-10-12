@@ -10,6 +10,7 @@ mod.items.register("shock_rifle", {
 	key = "ut_shock_rifle",
 	template = "ut_shock_rifle_template",
 	base_item = "bw_skullstaff_beam",
+	deus_copy = "deus_bw_skullstaff_beam",
 	-- UT2004's manual calls it the ASMD Shock Rifle
 	name = "ASMD",
 	type_name = "Shock Rifle",

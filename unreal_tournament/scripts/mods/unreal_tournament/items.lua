@@ -3,10 +3,11 @@ local mod = get_mod("unreal_tournament")
 -- The mod's weapons as items of their own: each is a copy of a game weapon (template and item) with its own name, usable by every career.
 -- The game's weapon is left unchanged.
 --
---   items.register(setting_id, { key, template, base_item, name, type_name, description, keywords, texts, icon, icon_package, icon_materials })
+--   items.register(setting_id, { key, template, base_item, deus_copy, name, type_name, description, keywords, texts, icon, icon_package, icon_materials })
 --     key: the item's name, also used for damage sources, loadouts and the network
 --     template: name of the weapon template (a copy of base_item's)
 --     base_item: the game item that is copied; its models are used
+--     deus_copy: the Chaos Wastes weapon (DeusWeapons key) of base_item, which the item's Chaos Wastes weapon is a copy of
 --     name, type_name (the line under the name), description
 --     keywords: localization ids for the line under the power; texts: { id = text } for the ids that are the mod's
 --     icon: a material in the file icon_materials, which is in the package icon_package
@@ -284,6 +285,23 @@ function items.register(setting_id, definition)
 	utils.register_network_lookup("damage_sources", definition.key)
 
 	definitions[definition.key] = definition
+
+	-- Chaos Wastes builds its loadouts and drops from its own tables, which are read-only, so rawset. They only exist with the DLC.
+	if rawget(_G, "DeusWeapons") then
+		local deus_key = "deus_" .. definition.key
+		local deus_weapon = table.clone(DeusWeapons[definition.deus_copy])
+
+		deus_weapon.base_item = definition.key
+
+		rawset(DeusWeapons, deus_key, deus_weapon)
+		rawset(DeusStartingWeaponTypeMapping, definition.key, deus_key)
+		rawset(DeusWeaponGroups, definition.key, {
+			can_wield = item.can_wield,
+			default = deus_key,
+			items_per_rarity = {},
+			slot_type = item.slot_type,
+		})
+	end
 
 	-- The inventory is already loaded when the mod is loaded during a game
 	local backend = Managers.backend
