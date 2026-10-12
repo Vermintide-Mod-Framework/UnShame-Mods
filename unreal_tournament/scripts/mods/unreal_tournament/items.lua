@@ -82,12 +82,11 @@ end
 
 -- What the mod keeps of its own, between games (the settings file of the mod: the backend is not asked and does not know):
 --   crafted: { [backend id] = record } the weapons the player has crafted, a record being { key, rarity, power_level, properties, traits }
---   spent: { [material's key] = amount } the crafting materials spent on them, which the backend still has
 --   next_id: the number of the next crafted weapon
 local SAVED_SETTING = "custom_items"
 
 function items.saved()
-	return table.clone(mod:get(SAVED_SETTING) or { crafted = {}, spent = {}, next_id = 1 })
+	return table.clone(mod:get(SAVED_SETTING) or { crafted = {}, next_id = 1 })
 end
 
 function items.save(saved)
@@ -163,48 +162,6 @@ function items.change_crafted(saved, backend_id, record)
 	return inventory_item(key, backend_id, record)
 end
 
--- The materials of the inventory have the amounts the backend has, less what the mod has spent of them (the amount the backend has is
--- kept in the item, for when the mod spends more)
-local function take_spent_from_materials(inventory, saved)
-	for backend_id, item in pairs(inventory) do
-		local data = item.data
-
-		if data and data.item_type == "crafting_material" and item.RemainingUses then
-			local owned = item.UtOwned or item.RemainingUses
-			local spent = saved.spent[data.key] or 0
-
-			-- (the backend has fewer of them than were spent: they were used elsewhere, the rest of the spending is not owed)
-			if spent > owned then
-				spent = owned
-				saved.spent[data.key] = owned
-			end
-
-			item.UtOwned = owned
-			item.RemainingUses = owned - spent
-
-			if item.RemainingUses <= 0 then
-				inventory[backend_id] = nil
-			end
-		end
-	end
-end
-
--- The materials of the inventory after the backend has used some of them (the ids): the amounts are the backend's now, the mod's spending is
--- taken from them again
-function items.apply_spent(used_ids)
-	local inventory = mirror_of_backend()._inventory_items
-	local saved = items.saved()
-
-	for _, backend_id in ipairs(used_ids) do
-		if inventory[backend_id] then
-			inventory[backend_id].UtOwned = nil
-		end
-	end
-
-	take_spent_from_materials(inventory, saved)
-	items.save(saved)
-end
-
 -- Puts the mod's weapons into the inventory that the mirror of the backend has loaded
 local function add_to_inventory(mirror)
 	local inventory = mirror._inventory_items
@@ -232,9 +189,6 @@ local function add_to_inventory(mirror)
 			inventory[backend_id] = item
 		end
 	end
-
-	take_spent_from_materials(inventory, saved)
-	items.save(saved)
 end
 
 -- (the mirror the game uses is PlayFabMirrorAdventure: a class gets a copy of its parent's functions when it is made, so the base class's

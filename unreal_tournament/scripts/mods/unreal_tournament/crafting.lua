@@ -2,21 +2,19 @@ local mod = get_mod("unreal_tournament")
 
 -- Crafting the mod's weapons. The game's crafting is a request to the backend, whose cloud scripts make the weapon (or change it) and tell
 -- the game what came of it: the new items, the items used up, the items changed (BackendInterfaceCraftingPlayfab.craft, and craft_request_cb
--- takes the answer into the inventory). The backend has no such weapons, so for a recipe that has one in it the mod makes the answer
--- itself, the way the cloud scripts do, and gives it to craft_request_cb: the crafting pages need nothing else.
+-- takes the answer into the inventory). The backend has no such weapons (and a request of a game with mods is refused by it, which ends the
+-- game), so for a recipe that has one in it the mod makes the answer itself, the way the cloud scripts do, and gives it to craft_request_cb:
+-- the crafting pages need nothing else, but what they show of the materials (see the end of this file).
 --
 -- The recipes done here: crafting a weapon from the blueprint, rerolling the properties or the traits of a weapon, upgrading its rarity, and
--- salvaging, which only discards the weapon: the materials a salvage gives would have to be added to the backend's amounts, which it does
--- not know (the page that shows what the salvage gave shows the materials it would give, with 0 of each). Applying and extracting skins
--- are not done.
+-- salvaging. They cost nothing and give nothing (the materials are the backend's, which is not asked): a salvage only discards the weapon,
+-- and the page that shows what it gave shows the materials it would give, with 0 of each. Applying and extracting skins are not done.
 --
 -- What the weapons are made of is in the game's own data: the rarities that crafting gives and their weights (CraftingData), the properties
 -- and traits a weapon of a rarity can have (WeaponProperties.combinations, WeaponTraits.combinations: the Chaos Wastes make and upgrade
 -- weapons from the same, see DeusWeaponGeneration).
 --
--- The weapon the player starts with (a blueprint, of rarity "default") is what the Craft page crafts new ones from. Crafting is paid with
--- the materials of the player's inventory, which are the backend's: the amount spent is kept by the mod (items.saved().spent) and taken
--- from the amounts the backend says, see items.lua.
+-- The weapon the player starts with (a blueprint, of rarity "default") is what the Craft page crafts new ones from.
 
 local items = mod.items
 
@@ -207,45 +205,20 @@ local CHANGES = {
 	upgrade_item_rarity_unique = upgraded,
 }
 
--- The materials of a recipe are spent (what is left of a material is the answer's, what the backend still has of it is kept by the mod, see
--- items.lua): gives the items used up, the backend id of the weapon in the recipe and what is saved
-local function spend_materials(ingredients)
-	local inventory = Managers.backend._backend_mirror._inventory_items
-	local saved = items.saved()
-	local consumed_items = {}
-	local weapon_id
-
-	for _, ingredient in ipairs(ingredients) do
-		local item = inventory[ingredient.backend_id]
-
-		if item.UtCustom then
-			weapon_id = ingredient.backend_id
-		else
-			saved.spent[item.key] = (saved.spent[item.key] or 0) + ingredient.amount
-			consumed_items[#consumed_items + 1] = {
-				ItemInstanceId = ingredient.backend_id,
-				RemainingUses = item.RemainingUses - ingredient.amount,
-			}
-		end
-	end
-
-	return consumed_items, weapon_id, saved
-end
-
--- The answer to a salvage of crafted weapons: they are gone and give nothing, the page shows the materials they would have given as 0 (the
--- items of the inventory that are the stacks of them, as changed by 0)
-local function discard(ingredients)
+-- The answer to a salvage of crafted weapons (their backend ids): they are gone and give nothing, the page shows the materials they would have
+-- given as 0 (the items of the inventory that are the stacks of them, as changed by 0)
+local function discard(weapon_ids)
 	local inventory = Managers.backend._backend_mirror._inventory_items
 	local saved = items.saved()
 	local consumed_items = {}
 	local materials = {}
 	local modified_items = {}
 
-	for _, ingredient in ipairs(ingredients) do
-		local record = saved.crafted[ingredient.backend_id]
+	for _, weapon_id in ipairs(weapon_ids) do
+		local record = saved.crafted[weapon_id]
 
 		consumed_items[#consumed_items + 1] = {
-			ItemInstanceId = ingredient.backend_id,
+			ItemInstanceId = weapon_id,
 			RemainingUses = 0,
 		}
 
@@ -253,7 +226,7 @@ local function discard(ingredients)
 			materials[material.name] = true
 		end
 
-		saved.crafted[ingredient.backend_id] = nil
+		saved.crafted[weapon_id] = nil
 	end
 
 	for _, item in pairs(inventory) do
@@ -277,14 +250,15 @@ local function discard(ingredients)
 	}
 end
 
--- The answer of the backend to a recipe that has one of the mod's weapons in it
-local function answer_to(recipe, ingredients)
-	if recipe.name == "salvage" then
-		return discard(ingredients)
+-- The answer to a recipe that has the mod's weapons (their backend ids) in it: nothing is spent
+local function answer_to(recipe_name, weapon_ids)
+	if recipe_name == "salvage" then
+		return discard(weapon_ids)
 	end
 
-	local consumed_items, weapon_id, saved = spend_materials(ingredients)
-	local change = CHANGES[recipe.name]
+	local saved = items.saved()
+	local weapon_id = weapon_ids[1]
+	local change = CHANGES[recipe_name]
 
 	if not change then
 		local blueprint_key = Managers.backend._backend_mirror._inventory_items[weapon_id].key
@@ -292,79 +266,115 @@ local function answer_to(recipe, ingredients)
 
 		items.save(saved)
 
-		return {
-			consumed_items = consumed_items,
-			items = { new_item },
-		}
+		return { items = { new_item } }
 	end
 
-	local record = saved.crafted[weapon_id]
-
-	return {
-		consumed_items = consumed_items,
-		modified_items = { items.change_crafted(saved, weapon_id, change(record)) },
-	}
+	return { modified_items = { items.change_crafted(saved, weapon_id, change(saved.crafted[weapon_id])) } }
 end
 
--- (set while the mod gives an answer of its own to craft_request_cb)
-local answering = false
+-- (the pages ask again every frame the button is held down: a message is told every few seconds)
+local MESSAGE_INTERVAL = 3
+local last_message_t = -math.huge
 
+local function tell(message)
+	local t = Managers.time:time("main")
+
+	if t - last_message_t >= MESSAGE_INTERVAL then
+		last_message_t = t
+
+		mod:echo(message)
+	end
+end
+
+-- The recipe is the one the page says; the Craft page does not say, it crafts (from a blueprint). The materials the page may have put in are
+-- not used: the recipes of the mod's weapons have none.
 mod:hook(BackendInterfaceCraftingPlayfab, "craft", function (func, self, career_name, item_backend_ids, recipe_override)
-	local recipe, ingredients = self:_get_valid_recipe(item_backend_ids, recipe_override)
-	local has_custom_item = false
+	local weapon_ids = {}
 
-	for _, ingredient in ipairs(ingredients or {}) do
-		has_custom_item = has_custom_item or items.is_custom(ingredient.backend_id)
+	for _, backend_id in ipairs(item_backend_ids) do
+		if items.is_custom(backend_id) then
+			weapon_ids[#weapon_ids + 1] = backend_id
+		end
 	end
 
-	if not has_custom_item then
+	if #weapon_ids == 0 then
 		return func(self, career_name, item_backend_ids, recipe_override)
 	end
 
-	if recipe.name == "salvage" then
-		local saved = items.saved()
+	local recipe_name = recipe_override or "craft_weapon"
+	local saved = items.saved()
 
-		for _, ingredient in ipairs(ingredients) do
-			if not saved.crafted[ingredient.backend_id] then
-				mod:echo("The Unreal Tournament weapons you have crafted are salvaged apart from other items, and the blueprint cannot be")
+	if recipe_name == "salvage" then
+		for _, weapon_id in ipairs(weapon_ids) do
+			if not saved.crafted[weapon_id] then
+				tell("The Unreal Tournament weapon you start with, the blueprint, cannot be salvaged")
 
 				return nil
 			end
 		end
-	elseif recipe.name ~= "craft_weapon" and not CHANGES[recipe.name] then
-		mod:echo("The Unreal Tournament weapons cannot have skins applied or extracted")
+
+		if #weapon_ids ~= #item_backend_ids then
+			tell("The Unreal Tournament weapons you have crafted are salvaged apart from other items")
+
+			return nil
+		end
+	elseif recipe_name == "craft_weapon" then
+		if saved.crafted[weapon_ids[1]] then
+			tell("An Unreal Tournament weapon is crafted from the weapon you start with, the blueprint")
+
+			return nil
+		end
+	elseif CHANGES[recipe_name] then
+		if not saved.crafted[weapon_ids[1]] then
+			tell("The Unreal Tournament weapon you start with, the blueprint, cannot be changed: craft one")
+
+			return nil
+		end
+	else
+		tell("The Unreal Tournament weapons cannot have skins applied or extracted")
 
 		return nil
 	end
 
 	local id = self:_new_id()
-	local answer = { FunctionResult = answer_to(recipe, ingredients) }
 
-	answering = true
+	self:craft_request_cb(id, { FunctionResult = answer_to(recipe_name, weapon_ids) })
 
-	local ok, error_message = pcall(self.craft_request_cb, self, id, answer)
-
-	answering = false
-
-	if not ok then
-		error(error_message, 0)
-	end
-
-	return id, recipe
+	return id, self:get_recipe_by_name(recipe_name)
 end)
 
--- A recipe of the backend's own used materials that the mod has taken some of: what is left of them is what the backend says, less what the
--- mod has spent
-mod:hook_safe(BackendInterfaceCraftingPlayfab, "craft_request_cb", function (self, id, result)
-	if answering then
-		return
-	end
+-- The crafting pages (the console ones, which is what the game's inventory uses) show what a recipe needs of the materials, and let the player
+-- craft when they have it: for one of the mod's weapons it needs none, so they show 0/0 and the player can craft
+local PAGES = {
+	"CraftPageCraftItemConsole",
+	"CraftPageRollPropertiesConsole",
+	"CraftPageRollTraitConsole",
+	"CraftPageUpgradeItemConsole",
+}
 
-	local used = {}
+for _, page_name in ipairs(PAGES) do
+	mod:hook_safe(_G[page_name], "setup_recipe_requirements", function (self)
+		local weapon_id = self._craft_items[1]
 
-	for _, item in ipairs(result.FunctionResult.consumed_items or {}) do
-		used[#used + 1] = item.ItemInstanceId
-	end
+		if not weapon_id or not items.is_custom(weapon_id) then
+			return
+		end
 
-	items.apply_spent(used)
-end)
+		for i = 1, #UISettings.crafting_material_order do
+			local content = self._widgets_by_name["material_text_" .. i].content
+
+			if content.visible then
+				content.text = "0/0"
+				content.warning = false
+			end
+		end
+
+		table.clear(self._material_items)
+
+		self._has_all_requirements = true
+
+		if (self._num_craft_items or 0) > 0 then
+			self:_set_craft_button_disabled(false)
+		end
+	end)
+end
