@@ -28,8 +28,8 @@ local CONFIG = {
 	muzzle_life = 0.12,
 	-- FlakMuzFlash1st (the flash of the player's own view): a mesh of 56 units across, spiked like a star and pointing along the barrel. It is
 	-- this many times the mesh at the start and at the end of its life, which is muzzle_life.
-	flash_mesh_start = 1,
-	flash_mesh_end = 1.7,
+	flash_mesh_start = 2,
+	flash_mesh_end = 3.4,
 	-- FlakChunk: the mesh and FlakTrail. The trail is a piece of streak for each frame of the chunk's path, which fades out in
 	-- chunk_trail_seconds, so it follows the path and bends where the chunk bounces.
 	chunk_trail_seconds = 0.1,
