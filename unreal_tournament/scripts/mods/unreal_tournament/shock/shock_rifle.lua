@@ -45,6 +45,7 @@ mod.items.register("shock_rifle", {
 })
 
 local TEMPLATE_NAME = mod.items.weapons.shock_rifle.template
+local INSTAGIB_SKIN = "ut_shock_rifle_skin_instagib"
 
 local CONFIG = {
 	-- The multipliers of the damage and the stagger per armor type: unarmored, armored, monsters, players, berserkers, super armor.
@@ -105,6 +106,11 @@ local CONFIG = {
 	implosion_pull = 90, -- m/s^2
 	implosion_pull_softening = 1, -- m, the pull is weaker than this close to the center
 	implosion_max_speed = 30, -- m/s
+	-- The Instagib skin (UT2004's SuperShockRifle): both fire modes shoot a beam (SuperShockBeamFire), which does 1000 damage (DamageMax) to
+	-- the beam's 45 and fires every 1.1 seconds, and shots cost no ammo (here: no overcharge). The stagger is scaled less than the damage.
+	instagib_damage = 1000,
+	instagib_fire_rate = 1.1,
+	instagib_impact_multiplier = 2,
 	-- Overcharge: a shot costs this much of what the staff's own shots do, and a combo costs this many beam shots on top of the beam shot
 	-- that set it off (UT2004 ShockProjectile.ComboAmmoCost = 3, on top of the beam's own 1 ammo).
 	overcharge_scale = 0.5,
@@ -120,6 +126,7 @@ local overcharge_values = PlayerUnitStatusSettings.overcharge_values
 
 overcharge_values.ut_shock_beam = overcharge_values.beam_staff_sniper * CONFIG.overcharge_scale
 overcharge_values.ut_shock_ball = overcharge_values.ut_shock_beam
+overcharge_values.ut_shock_instagib = 0
 
 -- The game already defines a gravity of 0 (the drake pistols use it). Reusing it means NetworkLookup.projectile_gravity_settings does not
 -- have to be extended.
@@ -171,6 +178,17 @@ register_damage_profile("ut_shock_beam", "beam_shot", function (profile)
 	make_flat(profile, CONFIG.beam_attack_power, CONFIG.beam_impact_power)
 
 	-- The beam stops at the first enemy it hits, as UT's trace does (the cleave is how many a shot can hurt)
+	profile.cleave_distribution = {
+		attack = 0.01,
+		impact = 0.01,
+	}
+	set_armor_modifiers(profile)
+end)
+register_damage_profile("ut_shock_beam_instagib", "beam_shot", function (profile)
+	local damage_multiplier = CONFIG.instagib_damage / utils.UT_REFERENCE_DAMAGE
+
+	make_flat(profile, CONFIG.beam_attack_power * damage_multiplier, CONFIG.beam_impact_power * CONFIG.instagib_impact_multiplier)
+
 	profile.cleave_distribution = {
 		attack = 0.01,
 		impact = 0.01,
@@ -315,14 +333,15 @@ local function allowed_chain_actions(fire_entries, wield_start_time, reload_star
 	return entries
 end
 
-local function build_beam_action()
+local function build_beam_action(instagib_own_action, instagib_other_action)
 	local action
+	local total_time = instagib_own_action and CONFIG.instagib_fire_rate or BEAM_TOTAL_TIME
 
 	action = {
 		alert_sound_range_fire = 12,
 		anim_event = "attack_shoot_beam_spark",
 		charge_value = "light_attack",
-		damage_profile = "ut_shock_beam",
+		damage_profile = instagib_own_action and "ut_shock_beam_instagib" or "ut_shock_beam",
 		damage_window_end = 0,
 		damage_window_start = 0.1,
 		fire_sound_event = "weapon_staff_fire_beam_end_shot",
@@ -332,12 +351,14 @@ local function build_beam_action()
 		hit_effect = NO_HIT_EFFECT,
 		is_spell = true,
 		kind = "handgun",
-		overcharge_type = "ut_shock_beam",
+		overcharge_type = instagib_own_action and "ut_shock_instagib" or "ut_shock_beam",
 		reset_aim_on_attack = true,
 		spread_template_override = "ut_shock_beam",
-		total_time = BEAM_TOTAL_TIME,
+		total_time = total_time,
 		ut_shock_beam = true,
-		allowed_chain_actions = allowed_chain_actions(fire_chain_entries("action_one", "action_two", BEAM_TO_BEAM, BEAM_TO_BALL), 0.2, 0.2),
+		allowed_chain_actions = instagib_own_action
+			and allowed_chain_actions(fire_chain_entries(instagib_own_action, instagib_other_action, total_time, total_time), 0.2, 0.2)
+			or allowed_chain_actions(fire_chain_entries("action_one", "action_two", BEAM_TO_BEAM, BEAM_TO_BALL), 0.2, 0.2),
 		enter_function = function (attacker_unit, input_extension, remaining_time, weapon_extension)
 			input_extension:clear_input_buffer()
 
@@ -439,6 +460,9 @@ local function restore_beam_staff()
 
 	actions.action_one = original.action_one
 	actions.action_two = original.action_two
+	saved.normal_actions = nil
+	saved.instagib_actions = nil
+	saved.instagib_active = false
 
 	for _, field in ipairs(ATTACK_META_DATA_FIELDS) do
 		template.attack_meta_data[field] = original.attack_meta_data[field]
@@ -487,10 +511,22 @@ local function apply_shock_rifle()
 		default = build_ball_action(),
 	}
 
-	utils.set_actions_lookup_data({
+	-- The Instagib skin's: the beam on both buttons (see sync_instagib_actions)
+	saved.normal_actions = {
 		action_one = actions.action_one,
 		action_two = actions.action_two,
-	}, TEMPLATE_NAME)
+	}
+	saved.instagib_actions = {
+		action_one = {
+			default = build_beam_action("action_one", "action_two"),
+		},
+		action_two = {
+			default = build_beam_action("action_two", "action_one"),
+		},
+	}
+
+	utils.set_actions_lookup_data(saved.normal_actions, TEMPLATE_NAME)
+	utils.set_actions_lookup_data(saved.instagib_actions, TEMPLATE_NAME)
 
 	-- The bot AI and tooltips reference the removed charged/blast sub actions
 	attack_meta_data.can_charge_shot = false
@@ -874,8 +910,34 @@ mod:network_register("ut_shock_trail", function (_, owner_go_id, x, y, z, normal
 	end
 end)
 
+-- The Instagib skin changes how the weapon is shot, and the template is shared by every Shock Rifle on this machine, so its fire modes are
+-- the Instagib's only while this player's wielded weapon has that skin (the others' actions are not run here)
+local function sync_instagib_actions()
+	local template = rawget(Weapons, TEMPLATE_NAME)
+
+	if not template or not saved.instagib_actions then
+		return
+	end
+
+	local player = Managers.player and Managers.player:local_player()
+	local unit = player and player.player_unit
+	local wanted = unit ~= nil and Unit.alive(unit) and utils.wielded_template_name(unit) == TEMPLATE_NAME and utils.wielded_skin(unit) == INSTAGIB_SKIN
+
+	if wanted == (saved.instagib_active or false) then
+		return
+	end
+
+	saved.instagib_active = wanted
+
+	local actions = wanted and saved.instagib_actions or saved.normal_actions
+
+	template.actions.action_one = actions.action_one
+	template.actions.action_two = actions.action_two
+end
+
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	update_implosions(dt)
+	sync_instagib_actions()
 end
 
 local packages = utils.package_holder("unreal_tournament")
