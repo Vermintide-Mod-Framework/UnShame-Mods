@@ -33,7 +33,7 @@ party IP in a published mod: this branch is for local use, and nothing of it sho
    (a skeletal mesh with the animations in the same package), `WeaponStaticMesh.ShockRiflePickup` is its pickup (the third person), and
    `WeaponSkins.ShockTex0` its texture. After exporting them as in step 1 (`-export -out=<dir> Weapons`, `WeaponSkins`, and `WeaponStaticMesh
    ShockRiflePickup StaticMesh`, into one folder), `convert_weapon.py shock2003 <dir>` and `convert_static.py shock2003_pickup <dir>` make
-   `units/ut/shock2003` and `shock/skin_animations_2003.lua`. The mesh's third material is the alt fire's beam, left out. Where it is drawn
+   `units/ut/shock2003` and `shock/skin_animations_2003.lua`. The mesh's third material is the red laser sight (UT draws it additively with a panning texture), made here as a see-through red. Where it is drawn
    is ShockRifle.uc's `OldPlayerViewOffset` and `OldPlayerViewPivot` (read from XWeapons.u, which has the class's default properties as text).
    Its icon (`ui/ut/shock_rifle_2003_icon.png`) is the pickup, rendered with `render_icon.py units/ut/shock2003/pickup.bsi out.png 256 -70 0 35
    units/ut/shock2003/pickup_shocktex0.png`.

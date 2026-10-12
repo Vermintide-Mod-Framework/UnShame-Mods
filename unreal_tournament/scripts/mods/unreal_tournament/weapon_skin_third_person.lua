@@ -63,7 +63,7 @@ local function new(def, looks)
 		local wanted = Quaternion.look(Vector3.normalize(facing), Vector3.up())
 		local rotation = Quaternion.multiply(Quaternion.inverse(Unit.world_rotation(entry.character, entry.hand_node)), wanted)
 
-		rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(math.rad(config.pitch), math.rad(config.roll), math.rad(config.yaw)))
+		rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(config.pitch, config.roll, config.yaw))
 
 		local grip = Vector3(config.grip_right, config.grip_forward, config.grip_up) * config.meters_per_unit * config.scale
 

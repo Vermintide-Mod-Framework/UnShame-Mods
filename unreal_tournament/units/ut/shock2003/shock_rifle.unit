@@ -1,6 +1,7 @@
 materials = {
 	m_0 = "units/ut/shock2003/shock_rifle_m0"
 	m_1 = "units/ut/shock2003/shock_rifle_m1"
+	m_2 = "units/ut/shock2003/shock_rifle_m2"
 }
 renderables = {
 	b_bone_weapon = {

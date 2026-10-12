@@ -12,7 +12,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 # psk: the mesh, psa: the animations (UModel exports, relative to the export dir). materials: for each material of the mesh (in
 # its order) the texture (a tga, relative to the export dir) and the kind ('opaque', 'alpha': see MATERIAL_KINDS). scale: meters a UT
 # unit of the mesh is. animations: (name in the psa, name here). locators: bones with no mesh whose place is wanted (muzzle).
-# skip_materials: materials (by index) whose faces are left out.
+# skip_materials: materials (by index) whose faces are left out. A texture 'solid:rrggbb' is a plain color.
 WEAPONS = {
     'flak': {
         'psk': 'Weapons/SkeletalMesh/Flak_1st.psk',
@@ -170,14 +170,13 @@ WEAPONS['link'] = {
     'lua': 'scripts/mods/unreal_tournament/link/skin_animations.lua',
 }
 
-# UT2003's Shock Rifle (the model UT2004 keeps in Weapons.ukx). Its third material is the beam of the alt fire, which is on bones that
-# the animations scale away: left out.
+# UT2003's Shock Rifle (the model UT2004 keeps in Weapons.ukx).
 WEAPONS['shock2003'] = {
     'psk': 'Weapons/SkeletalMesh/ShockRifle_1st.psk',
     'psa': 'Weapons/MeshAnimation/ShockRifle_1st.psa',
+    # (the third is the red laser sight, which UT draws additively with a panning texture: here a see-through red)
     'materials': [('WeaponSkins/Texture/ShockTex0.tga', 'opaque'), ('WeaponSkins/Texture/ShockTex0.tga', 'opaque'),
-                  ('WeaponSkins/Texture/ShockTex0.tga', 'opaque')],
-    'skip_materials': [2],
+                  ('solid:ff2a1e', 'alpha', 0.6)],
     'scale': 0.0125,
     'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
     'locators': ['Bone_flash01'],
@@ -425,10 +424,14 @@ def main():
     for m in used_materials:
         tga, kind = cfg['materials'][m][:2]
         opacity = cfg['materials'][m][2] if len(cfg['materials'][m]) > 2 else None
-        tname = os.path.splitext(os.path.basename(tga))[0].lower()
+        tname = os.path.splitext(os.path.basename(tga))[0].lower().replace(':', '_')
         texture = '%s/%s_%s' % (unit_dir, unit_base, tname)
         if texture not in done_textures:
-            w, h, rows = read_tga(export + '/' + tga)
+            if tga.startswith('solid:'):
+                color = bytes(int(tga[6 + 2 * i:8 + 2 * i], 16) for i in range(3)) + bytes([255])
+                w, h, rows = 4, 4, [color * 4] * 4
+            else:
+                w, h, rows = read_tga(export + '/' + tga)
             write_png('%s/%s.png' % (REPO, texture), w, h, rows)
             open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
             done_textures[texture] = True
