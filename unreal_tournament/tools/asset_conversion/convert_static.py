@@ -28,6 +28,7 @@ STATICS = {
         'materials': [('WeaponSkins/Texture/FlakChunkTex.tga', 'opaque')],
         'scale': 0.28,
         'unit': 'units/ut/flak/chunk',
+        'culling': 'disabled',
     },
     'link_pickup': {
         'pskx': 'WeaponStaticMesh/StaticMesh/LinkGunPickup.pskx',
@@ -77,8 +78,8 @@ def main():
         unit_text += '\tm_%d = "%s/%s_m%d"\n' % (i, unit_dir, unit_base, i)
     unit_text += '}\nrenderables = {\n'
     for i in range(len(cfg['materials'])):
-        unit_text += ('\t%s_%d = {\n\t\talways_keep = false\n\t\tculling = "bounding_volume"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
-                      '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n') % (geometry, i)
+        unit_text += ('\t%s_%d = {\n\t\talways_keep = false\n\t\tculling = "%s"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
+                      '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n') % (geometry, i, cfg.get('culling', 'bounding_volume'))
     unit_text += '}\n'
     open('%s/%s.unit' % (REPO, cfg['unit']), 'w', newline='\n').write(unit_text)
     for i, material in enumerate(cfg['materials']):

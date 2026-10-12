@@ -202,7 +202,7 @@ open(FX + '/quad.unit', 'w', newline='\n').write('''materials = {
 renderables = {
 	g_quad = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
