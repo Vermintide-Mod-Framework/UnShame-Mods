@@ -13,7 +13,10 @@ mod.items.register("shock_rifle", {
 	-- (what UT2004's manual calls it: the ASMD Shock Rifle)
 	name = "ASMD",
 	type_name = "Shock Rifle",
-	description = "UT2004's Shock Rifle. The primary fire is an instant beam, the secondary fire a slow energy ball. Shoot the ball with the beam for a huge combo explosion.",
+	-- (UT2004's own description of it)
+	description = "The ASMD Shock Rifle has changed little since its incorporation into the Tournaments. The ASMD sports two firing modes capable of acting in concert to neutralize opponents in a devastating shockwave. This combination attack is achieved when the weapon operator utilizes the secondary fire mode to deliver a charge of seeded plasma to the target. Once the slow-moving plasma charge is within range of the target, the weapon operator may fire the photon beam into the plasma core, releasing the explosive energy of the anti-photons contained within the plasma's EM field.",
+	keywords = { "weapon_keyword_sniper", "weapon_keyword_crowd_control", "ut_weapon_keyword_combo" },
+	texts = { ut_weapon_keyword_combo = "Combo" },
 	icon = "ut_shock_rifle_icon",
 	icon_package = "resource_packages/unreal_tournament/icons",
 	icon_materials = "ui/ut/shock_rifle_icon",

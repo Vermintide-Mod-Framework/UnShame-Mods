@@ -3,10 +3,10 @@ local mod = get_mod("unreal_tournament")
 -- The weapons as items of their own: each is a copy of a game weapon (its template and its item), with a name of its own, in every
 -- player's inventory and usable by every career. The game's weapon is left as it is.
 --
---   items.register(setting_id, { key, template, base_item, name, type_name, description, icon, icon_materials })
+--   items.register(setting_id, { key, template, base_item, name, type_name, description, keywords, texts, icon, icon_package, icon_materials })
 --     key: the item's name (damage sources, the loadout and the other peers know the item by it), template: the weapon template's name,
 --     base_item: the game's item that is copied (its models and skins are the copy's), name, type_name (the kind of weapon, "Beam Staff"
---     for the game's), description, icon: shown in the inventory, the icon being the name of a material of the file icon_materials, which
+--     for the game's), description, keywords (the green line: localization ids), texts ({ id = text } for the ids that are the mod's), icon: shown in the inventory, the icon being the name of a material of the file icon_materials, which
 --     is in the package icon_package (a package of its own, see load_icon_package)
 --
 -- The game takes the inventory from the backend (PlayFab), which does not have these items: they are put into the inventory it has loaded,
@@ -138,6 +138,13 @@ function items.register(setting_id, definition)
 	texts[item.display_name] = definition.name
 	texts[item.description] = definition.description
 	texts[item.item_type] = definition.type_name
+
+	-- (the green line under the power: localization ids, the game's own or ones of texts)
+	template.tooltip_keywords = definition.keywords
+
+	for text_id, text in pairs(definition.texts or {}) do
+		texts[text_id] = text
+	end
 
 	-- (the icon is a texture of its own, not one of the game's atlases: drawn by its material's name, which the UI's renderers have to be given.
 	-- The in-game UI's renderer is made when a level is loaded, so when the mod is loaded in a level the item keeps the icon of the game's
