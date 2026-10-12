@@ -465,24 +465,14 @@ end
 
 -- Weapons
 
--- The weapons that have no setting: an item of their own, there when the mod is
-local ALWAYS_ENABLED = {
-	shock_rifle = true,
-}
-
 -- If a weapon is switched on in the settings: its own checkbox, and the Weapons checkbox above all of them
 function utils.is_weapon_enabled(setting_id)
-	return ALWAYS_ENABLED[setting_id] == true or mod:get("ut_weapons") ~= false and mod:get(setting_id) ~= false
+	return mod:get("ut_weapons") ~= false and mod:get(setting_id) ~= false
 end
-
--- The weapons that are only UT2004's look and sound: the Shock Rifle has no other
-local ALWAYS_SKINNED = {
-	shock_rifle = true,
-}
 
 -- If a weapon is switched on in the settings and the look of UT2004's is wanted for it (the Weapon Skins checkbox)
 function utils.is_weapon_skin_enabled(setting_id)
-	return utils.is_weapon_enabled(setting_id) and (ALWAYS_SKINNED[setting_id] == true or mod:get("weapon_skins") == true)
+	return utils.is_weapon_enabled(setting_id) and mod:get("weapon_skins") == true
 end
 
 -- A weapon that the settings can switch off: enable() makes it what the mod makes it, disable() gives the game its own

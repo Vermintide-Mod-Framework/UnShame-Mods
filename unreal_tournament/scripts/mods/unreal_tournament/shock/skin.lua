@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
 -- The Shock Rifle's skin: the Shock Rifle is UT2004's, in the player's own first person view and in the hand of every character. It has no
--- other look: the Weapon Skins setting is for the other weapons (see utils.is_weapon_skin_enabled).
+-- other look: the Weapon Skins setting is for the other weapons.
 --
 -- The model, its placement, its animations, the bob and the third person are weapon_skin.lua's. This file is what is the Shock Rifle's own:
 -- the chamber, the shots, the beam, the ball, the explosion and the combo. The gameplay is shock_rifle.lua's: this only draws it, and is told
@@ -119,6 +119,8 @@ end
 
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
+	-- (no setting: the weapon is an item of its own, shown the UT way)
+	always = true,
 	name = "shock",
 	template = TEMPLATE_NAME,
 	unit_name = "units/ut/shock/shock_rifle",
@@ -163,6 +165,7 @@ skin_api = mod.weapon_skin.new({
 	inspect_pose_yaw = 65,
 	third_person = {
 		id = SETTING_ID,
+		always = true,
 		template = TEMPLATE_NAME,
 		unit_name = "units/ut/shock/pickup",
 		hand_node = "j_rightweaponattach",
@@ -374,7 +377,7 @@ end
 -- The overcharge bar is orange between its thresholds for every Sienna: with the Shock Rifle it is purple, like its liquid. The bar's colors
 -- are the game's own, set every frame after it has worked out the fraction, so this follows it.
 mod:hook_safe(OverchargeBarUI, "set_charge_bar_fraction", function (self, player, _, min_threshold_fraction, max_threshold_fraction)
-	if not utils.is_weapon_enabled(SETTING_ID) or utils.wielded_template_name(player.player_unit) ~= TEMPLATE_NAME then
+	if utils.wielded_template_name(player.player_unit) ~= TEMPLATE_NAME then
 		return
 	end
 

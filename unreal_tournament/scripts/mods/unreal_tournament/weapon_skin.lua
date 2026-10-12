@@ -18,7 +18,8 @@ local mod = get_mod("unreal_tournament")
 -- put away.
 --
 -- A definition (the numbers of the weapon's class in UT2004, the files tools/asset_conversion made):
---   id, name: the weapon's setting (shock_rifle) and its name in the messages, template: the game's weapon template it replaces
+--   id, name: the weapon's setting (flak_cannon) and its name in the messages, template: the game's weapon template it replaces
+--   always: the weapon has no setting, the skin is always shown
 --   unit_name, animations: the unit, and its animations ({ bones = { "root", nodes... }, animations = { Name = { rate, frames } } },
 --       a frame is seven numbers for each bone: a rotation (x, y, z, w) and a move (right, forward, up in UT units))
 --   muzzle_node: the node of the unit where the muzzle is
@@ -123,7 +124,7 @@ local function new(def)
 	end
 
 	function self.enabled()
-		return utils.is_weapon_skin_enabled(CONFIG.id)
+		return CONFIG.always or utils.is_weapon_skin_enabled(CONFIG.id)
 	end
 
 	-- Sounds (the events are in the weapon's bank, see tools/asset_conversion/make_bank.py): from the head of the player, or from a place

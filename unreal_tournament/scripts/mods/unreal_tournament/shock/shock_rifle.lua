@@ -837,10 +837,6 @@ local packages = utils.package_holder("unreal_tournament")
 -- The overheating explosion: the whole combo (the blast, and the pulling in of what died). The game's own overheating explosion hurts the
 -- player, and is kept.
 mod.overheat_callbacks[TEMPLATE_NAME] = function (state, item_data)
-	if not utils.is_weapon_enabled("shock_rifle") then
-		return
-	end
-
 	local unit = state.unit
 	local position = Unit.world_position(unit, 0) + Vector3(0, 0, CONFIG.overheat_combo_height)
 
@@ -855,15 +851,16 @@ local function enable_shock_rifle()
 	apply_shock_rifle()
 end
 
--- (the weapon can be switched off in the settings: the staff is then the game's own again; the weapon the player holds changes when it is
--- wielded again)
+-- (when the mod is switched off or unloaded)
 local function disable_shock_rifle()
 	restore_beam_staff()
 	clear_implosions()
 	packages.unload()
 end
 
-utils.register_weapon("shock_rifle", enable_shock_rifle, disable_shock_rifle)
+mod.enabled_callbacks[#mod.enabled_callbacks + 1] = enable_shock_rifle
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = disable_shock_rifle
+mod.unload_callbacks[#mod.unload_callbacks + 1] = disable_shock_rifle
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	clear_implosions()

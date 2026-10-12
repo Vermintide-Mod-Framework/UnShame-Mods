@@ -67,10 +67,10 @@ local CONFIG = {
 		flak_monkey = { event = "ut_announcer_flak_monkey", kills = 15 },
 		combo_whore = { event = "ut_announcer_combo_whore", kills = 15 },
 	},
-	-- The weapons of the call outs: what the item that killed has as its template (the setting of the weapon must be on, or it is the
-	-- game's own weapon that has it)
+	-- The weapons of the call outs: what the item that killed has as its template (the setting of the weapon, if it has one, must be on, or
+	-- it is the game's own weapon that has it)
 	flak_cannon = { setting = "flak_cannon", template = "blunderbuss_template_1" },
-	shock_rifle = { setting = "shock_rifle", template = mod.items.weapons.shock_rifle.template },
+	shock_rifle = { template = mod.items.weapons.shock_rifle.template },
 	-- PlayerController.PlayRewardAnnouncement: an announcement that is not forced is not played if one has been played in the last second
 	unforced_gap = 1, -- seconds
 	-- The words (LocalMessage): where they are on the screen (PosY of each message, from the top), how long they last (Lifetime) and how they
@@ -223,7 +223,7 @@ end
 local function is_killed_by(weapon, damage_data)
 	local item = rawget(ItemMasterList, damage_data[DamageDataIndex.DAMAGE_SOURCE_NAME])
 
-	return item ~= nil and item.template == weapon.template and utils.is_weapon_enabled(weapon.setting)
+	return item ~= nil and item.template == weapon.template and (weapon.setting == nil or utils.is_weapon_enabled(weapon.setting))
 end
 
 
