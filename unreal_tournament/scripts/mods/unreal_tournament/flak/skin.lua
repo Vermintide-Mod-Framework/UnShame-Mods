@@ -354,12 +354,11 @@ skin_api = mod.weapon_skin.new({
 		yaw = -60,
 		pitch = 0,
 		roll = 0,
-		-- In the world the cannon is turned as the game's Blunderbuss is, which follows the arms (/skin flak_cannon 3p follow_game_unit 0 for the old
-		-- way, pointing the way the character faces, which is how the hero screen is placed)
+		-- In the world the cannon moves with the game's Blunderbuss, which the game animates with the arms. It is placed as pointing the way the
+		-- character faces first (as the hero screen is), and the unit's turn from that is taken a second after it is held. With the character
+		-- not standing as it should then, /skin flak_cannon 3p follow_recalibrate 1 takes it again, and follow_game_unit 0 turns it off.
 		follow_game_unit = 1,
-		follow_pitch = 0,
-		follow_roll = 0,
-		follow_yaw = -60,
+		follow_calibrate_seconds = 1,
 		muzzle_right = -56,
 		muzzle_forward = 0,
 		muzzle_up = 12,

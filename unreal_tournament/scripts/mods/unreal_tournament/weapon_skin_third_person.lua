@@ -10,8 +10,8 @@ local mod = get_mod("unreal_tournament")
 --   than the weapon in the hand is), grip_*: the point of the mesh that is in the hand (right, forward, up, UT units), yaw, pitch,
 --   roll: how the mesh is turned from pointing the way the character faces (degrees), muzzle_*: the end of its barrel, menu_yaw: how far to
 --   turn it about the vertical in the item inspection so the barrel points sideways (-90 if its barrel runs along its forward),
---   follow_game_unit: turn it as the game's unit of the weapon is, which the game animates with the arms, and follow_pitch, follow_roll,
---   follow_yaw: how it is turned from there (instead of pitch, roll, yaw)
+--   follow_game_unit: the mesh moves with the game's unit of the weapon, which the game animates with the arms, from how it is turned after
+--   follow_calibrate_seconds of being held
 --
 -- The game's unit (the staff, the blunderbuss...) stays, hidden, and the mesh is linked to the same node of the character as it, turned
 -- every frame to point the way the character faces, level (a staff is held upright, a rifle is carried pointing ahead: that is not
@@ -61,24 +61,31 @@ local function new(def, looks)
 	-- character faces, level, so the rotation in the frame of the hand is the one that makes it so in the world
 	local function place(entry)
 		local config = entry.config
-		local pitch, roll, yaw = config.pitch, config.roll, config.yaw
-		local wanted
+		local facing = Vector3.flat(Quaternion.forward(Unit.world_rotation(entry.character, 0)))
+		local wanted = Quaternion.look(Vector3.normalize(facing), Vector3.up())
 
-		-- follow_game_unit: the mesh is turned as the game's own unit of the weapon is, which the game animates with the arms, and
-		-- follow_pitch, follow_roll and follow_yaw turn it from there. Without it (or in a menu, where there is no unit) the mesh points
-		-- the way the character faces.
+		-- follow_game_unit: the mesh moves with the game's own unit of the weapon, which the game animates with the arms. The mesh starts
+		-- out pointing the way the character faces (with pitch, roll and yaw), and once the character has stood holding the weapon for
+		-- follow_calibrate_seconds, how the game's unit is turned from that is kept, and the mesh is turned from the unit by it from then
+		-- on. Without it, or in a menu, where there is no unit, the mesh keeps pointing the way the character faces.
 		if config.follow_game_unit and config.follow_game_unit ~= 0 and entry.staff and Unit.alive(entry.staff) then
-			wanted = Unit.world_rotation(entry.staff, 0)
-			pitch, roll, yaw = config.follow_pitch or 0, config.follow_roll or 0, config.follow_yaw or yaw
-		else
-			local facing = Vector3.flat(Quaternion.forward(Unit.world_rotation(entry.character, 0)))
+			local staff_rotation = Unit.world_rotation(entry.staff, 0)
+			local t = Managers.time:time("main")
 
-			wanted = Quaternion.look(Vector3.normalize(facing), Vector3.up())
+			entry.attached_at = entry.attached_at or t
+
+			if not entry.follow_offset and t - entry.attached_at >= (config.follow_calibrate_seconds or 1) then
+				entry.follow_offset = QuaternionBox(Quaternion.multiply(Quaternion.inverse(staff_rotation), wanted))
+			end
+
+			if entry.follow_offset then
+				wanted = Quaternion.multiply(staff_rotation, entry.follow_offset:unbox())
+			end
 		end
 
 		local rotation = Quaternion.multiply(Quaternion.inverse(Unit.world_rotation(entry.character, entry.hand_node)), wanted)
 
-		rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(pitch, roll, yaw))
+		rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(config.pitch, config.roll, config.yaw))
 
 		local grip = Vector3(config.grip_right, config.grip_forward, config.grip_up) * config.meters_per_unit * config.scale
 
@@ -407,6 +414,16 @@ local function new(def, looks)
 
 	-- Development: sets a number of the definition (how the mesh sits in the hand) while playing
 	function third_person.set(key, value)
+		-- (follow_recalibrate: the turn of the mesh from the game's unit is taken again, with the characters standing as they should)
+		if key == "follow_recalibrate" then
+			for _, entry in pairs(attached) do
+				entry.follow_offset = nil
+				entry.attached_at = nil
+			end
+
+			return
+		end
+
 		CONFIG[key] = value
 		third_person.meters_per_unit = CONFIG.meters_per_unit * CONFIG.scale
 	end
