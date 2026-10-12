@@ -221,10 +221,22 @@ local function shot(action, new_action, animation_name)
 	end
 	local scale = in_third_person and third_person.meters_per_unit or skin.unit_scale
 
+	-- (in the first person view it is linked to the first person unit, which the model is: they move together whatever order the engine does
+	-- things in)
+	local locked
+
+	if not in_third_person then
+		function locked()
+			if skin_api.state() == skin then
+				return skin_api.muzzle_in_view()
+			end
+		end
+	end
+
 	if animation_name == "Fire" then
-		fx.beam_muzzle_flash(follow, scale)
+		fx.beam_muzzle_flash(follow, scale, locked)
 	else
-		fx.ball_muzzle_flash(follow, scale)
+		fx.ball_muzzle_flash(follow, scale, locked)
 	end
 end
 

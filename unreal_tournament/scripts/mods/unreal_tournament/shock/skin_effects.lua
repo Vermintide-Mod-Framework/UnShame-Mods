@@ -291,7 +291,7 @@ end
 -- is drawn at a scale of its own).
 
 -- UT lights the weapon for 0.15 s with each shot, the beam's and the ball's (xWeaponAttachment.WeaponLight)
-local function fire_light(follow)
+local function fire_light(follow, locked)
 	particles.light({
 		brightness = steady,
 		color = CONFIG.light_color,
@@ -299,16 +299,20 @@ local function fire_light(follow)
 		follow = follow,
 		intensity = CONFIG.fire_light_intensity,
 		life = CONFIG.fire_light_life,
+		locked = locked,
 	})
 end
 
-function fx.beam_muzzle_flash(follow, scale)
-	fire_light(follow)
+-- The flashes at the muzzle: `follow` is a function that gives where it is, `locked` (the player's own first person view) one that gives the
+-- unit it is linked to and where it is in it, see skin_particles.lua
+function fx.beam_muzzle_flash(follow, scale, locked)
+	fire_light(follow, locked)
 
 	particles.sprite({
 		attenuation = 0,
 		color = WHITE,
 		follow = follow,
+		locked = locked,
 		growth = CONFIG.muzzle_sparkle_growth * scale,
 		life = CONFIG.muzzle_sparkle_life,
 		size = CONFIG.muzzle_sparkle_size * scale,
@@ -319,6 +323,7 @@ function fx.beam_muzzle_flash(follow, scale)
 		attenuation = 0,
 		color = WHITE,
 		follow = follow,
+		locked = locked,
 		life = CONFIG.muzzle_flash_life,
 		size = CONFIG.muzzle_flash_size * scale,
 		spin = random_spin(),
@@ -326,14 +331,15 @@ function fx.beam_muzzle_flash(follow, scale)
 	})
 end
 
-function fx.ball_muzzle_flash(follow, scale)
-	fire_light(follow)
+function fx.ball_muzzle_flash(follow, scale, locked)
+	fire_light(follow, locked)
 
 	for _ = 1, CONFIG.ball_flash_count do
 		particles.sprite({
 			attenuation = 0,
 			color = PURPLE,
 			follow = follow,
+			locked = locked,
 			life = CONFIG.ball_flash_life,
 			size = between(CONFIG.ball_flash_size) * scale,
 			spin = random_spin(),

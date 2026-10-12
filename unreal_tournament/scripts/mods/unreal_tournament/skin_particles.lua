@@ -18,6 +18,10 @@ local mod = get_mod("unreal_tournament")
 --   spin: turns per second (the angle it starts at is random)
 --   position: where it is; velocity, drag: where it goes and how fast that slows (per second); follow: a function that gives
 --       where it is now, nothing when it is to end
+--   locked: instead of follow, a function that gives a unit and where the particle is in that unit's own frame (the unit is the first
+--       person view's, which is where the camera is and turns with it, looking along y): the engine moves a particle that is linked to
+--       a unit with it, which a position that is worked out and set in the update is not (it is of the frame before, or of the engine's
+--       order of things: it trails what it follows). Nothing when it is to end
 --   delay: seconds before it shows
 --   additive: 1 (the default) adds its color to the screen, 0 blends it as the transparency of its texture says (smoke)
 --   falloff: how far a light reaches, in meters (particles.light only)
@@ -66,6 +70,15 @@ local function acquire(world, unit_name)
 end
 
 local function release(particle)
+	if particle.parent then
+		-- (the unit it was linked to may be gone, and has let go of it)
+		if Unit.alive(particle.parent) then
+			World.unlink_unit(particle.world, particle.entry.unit)
+		end
+
+		particle.parent = nil
+	end
+
 	if particle.kind == "light" then
 		Light.set_enabled(particle.entry.light, false)
 	else
@@ -117,6 +130,7 @@ local function add(kind, spec)
 		fade_in = spec.fade_in,
 		fade_out = spec.fade_out,
 		follow = spec.follow,
+		locked = spec.locked,
 		face_camera = spec.face_camera,
 		frame = spec.frame,
 		frames = spec.frames,
@@ -228,7 +242,29 @@ local function place(particle, dt, camera_position, camera_rotation)
 	local light = particle.intensity * (particle.brightness_by and particle.brightness_by(fraction) or brightness(particle))
 	local position, rotation, scale
 
-	if particle.follow then
+	if particle.locked then
+		local parent, local_position = particle.locked()
+
+		if not parent then
+			particle.age = particle.life
+
+			return
+		end
+
+		if particle.parent ~= parent then
+			if particle.parent and Unit.alive(particle.parent) then
+				World.unlink_unit(particle.world, unit)
+			end
+
+			World.link_unit(particle.world, unit, 0, parent, 0)
+
+			particle.parent = parent
+		end
+
+		-- (in the parent's frame, which is the camera's: it looks along y, up is z)
+		position = local_position
+		camera_rotation = Quaternion.identity()
+	elseif particle.follow then
 		position = particle.follow()
 
 		if not position then
@@ -354,32 +390,12 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 			release(particle)
 			table.remove(active, i)
 		elseif particle.age >= 0 then
-			-- (a particle that follows something is placed before the frame is drawn, see below)
-			if not particle.follow then
-				place(particle, dt, camera_position, camera_rotation)
-			end
+			place(particle, dt, camera_position, camera_rotation)
 
 			if particle.age >= particle.life then
 				release(particle)
 				table.remove(active, i)
 			end
-		end
-	end
-end
-
--- The particles that follow something (a muzzle, a projectile) are placed before the frame is drawn: the engine moves the units that are linked
--- (the weapon of the first person view, which follows the camera) after the mod's update, so a position taken in the update is the one of
--- the frame before, and the particle trails what it follows
-mod.pre_render_callbacks.skin_particles = function ()
-	local camera_position, camera_rotation = utils.camera_pose()
-
-	if not camera_position then
-		return
-	end
-
-	for _, particle in ipairs(active) do
-		if particle.follow and particle.age >= 0 and particle.age < particle.life then
-			place(particle, 0, camera_position, camera_rotation)
 		end
 	end
 end

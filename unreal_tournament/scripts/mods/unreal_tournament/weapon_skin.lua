@@ -171,6 +171,22 @@ local function new(def)
 		return camera_position + right * (Vector3.dot(offset, right) * ratio) + forward * Vector3.dot(offset, forward) + up * (Vector3.dot(offset, up) * ratio)
 	end
 
+	-- The same place, in the frame of the first person unit (the model is linked to it: where the camera is, turned as it is, so x is to
+	-- the right, y ahead and z up), worked out from the model's own pose and not from where the engine has put it in the world: gives the unit
+	-- and the place, for what is to be linked to the unit (skin_particles.lua)
+	function self.muzzle_in_view()
+		local fp = local_first_person()
+
+		if not skin or not Unit.alive(skin.unit) or not fp then
+			return nil
+		end
+
+		local at = Matrix4x4.transform(Unit.local_pose(skin.unit, 0), Unit.local_position(skin.unit, skin.muzzle_node))
+		local ratio = math.tan(Managers.state.camera:fov("player_1") / 2) / math.tan(WEAPON_VERTICAL_FOV / 2)
+
+		return fp.first_person_unit, Vector3(at.x * ratio, at.y, at.z * ratio)
+	end
+
 	-- How long the game takes to wield a weapon: nothing can be done with the weapon for that long
 	local function wield_time()
 		return rawget(Weapons, CONFIG.template).actions.action_wield.default.wield_cooldown
