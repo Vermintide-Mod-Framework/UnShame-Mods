@@ -36,6 +36,14 @@ local function ball_speed()
 	return action.speed / 100
 end
 
+-- What a bot tells in the chat about its choices (with the developer mode of the mod framework on), to see why it does or does not use the ball
+local function debug(text, ...)
+	if get_mod("VMF"):get("developer_mode") then
+		mod:echo("shock bot: " .. text, ...)
+	end
+end
+
+-- Whether to fire the ball at this target (and why not, for the chat)
 local function worth_a_ball(target_unit, target_position, world)
 	local breed = Unit.get_data(target_unit, "breed")
 
@@ -43,11 +51,13 @@ local function worth_a_ball(target_unit, target_position, world)
 		local player_unit = player.player_unit
 
 		if player_unit and Unit.alive(player_unit) and Vector3.distance(POSITION_LOOKUP[player_unit], target_position) < CONFIG.ally_clearance then
+			debug("no ball at %s: someone is within %s m of it", breed.name, CONFIG.ally_clearance)
+
 			return false
 		end
 	end
 
-	if breed and (breed.elite or breed.boss) then
+	if breed.elite or breed.boss then
 		return true
 	end
 
@@ -57,6 +67,10 @@ local function worth_a_ball(target_unit, target_position, world)
 		if HEALTH_ALIVE[unit] then
 			enemies = enemies + 1
 		end
+	end
+
+	if enemies < CONFIG.cluster_size then
+		debug("no ball at %s: not an elite or a boss, and %d enemies near it", breed.name, enemies)
 	end
 
 	return enemies >= CONFIG.cluster_size
@@ -89,6 +103,10 @@ mod:hook(BTBotShootAction, "_fire_shot", function (func, self, shoot_blackboard,
 
 	local bot_unit = shoot_blackboard.ut_unit
 
+	if not bot_unit then
+		debug("the bot's unit is not known: the ball is not used")
+	end
+
 	if bot_unit and HEALTH_ALIVE[target_unit] and t >= (shoot_blackboard.ut_next_ball or 0) then
 		local target_position = POSITION_LOOKUP[target_unit]
 		local distance = Vector3.distance(POSITION_LOOKUP[bot_unit], target_position)
@@ -103,6 +121,8 @@ mod:hook(BTBotShootAction, "_fire_shot", function (func, self, shoot_blackboard,
 				expire = t + flight + CONFIG.wait_grace,
 				fire_time = t + flight,
 			}
+
+			debug("ball at %s, %.1f m away: the beam in %.2f s", Unit.get_data(target_unit, "breed").name, distance, flight)
 
 			input_extension:charge_shot()
 
