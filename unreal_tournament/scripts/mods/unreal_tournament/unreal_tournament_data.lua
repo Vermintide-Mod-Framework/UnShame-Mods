@@ -14,11 +14,6 @@ return {
 				default_value = true,
 				sub_widgets = {
 					{
-						setting_id = "shock_rifle",
-						type = "checkbox",
-						default_value = true,
-					},
-					{
 						setting_id = "flak_cannon",
 						type = "checkbox",
 						default_value = true,

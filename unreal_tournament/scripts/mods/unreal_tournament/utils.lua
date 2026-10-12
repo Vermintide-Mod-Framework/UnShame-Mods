@@ -465,9 +465,14 @@ end
 
 -- Weapons
 
+-- The weapons that have no setting: an item of their own, there when the mod is
+local ALWAYS_ENABLED = {
+	shock_rifle = true,
+}
+
 -- If a weapon is switched on in the settings: its own checkbox, and the Weapons checkbox above all of them
 function utils.is_weapon_enabled(setting_id)
-	return mod:get("ut_weapons") ~= false and mod:get(setting_id) ~= false
+	return ALWAYS_ENABLED[setting_id] == true or mod:get("ut_weapons") ~= false and mod:get(setting_id) ~= false
 end
 
 -- The weapons that are only UT2004's look and sound: the Shock Rifle has no other

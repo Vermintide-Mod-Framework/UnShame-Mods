@@ -98,12 +98,6 @@ return {
 	ut_weapons_description = {
 		en = "Weapons from Unreal Tournament that replace some of the game's own. Switch off any you don't want.",
 	},
-	shock_rifle = {
-		en = "Shock Rifle",
-	},
-	shock_rifle_description = {
-		en = "Sienna (Pyromancer, Battle Wizard, Unchained). Replaces the Beam Staff. Primary fires an instant beam, alt fire a slow shock ball. Shoot the ball with the beam for a huge combo explosion.",
-	},
 	flak_cannon = {
 		en = "Flak Cannon",
 	},
