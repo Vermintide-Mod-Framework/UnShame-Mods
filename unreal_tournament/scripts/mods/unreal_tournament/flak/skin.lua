@@ -348,9 +348,9 @@ skin_api = mod.weapon_skin.new({
 		-- UT's third person mesh is as long as the pickup's would be without its DrawScale: about half of the height of a player's mesh
 		-- (113 units against 233), which is 0.85 m for a character of 1.8 m
 		scale = 0.7,
-		grip_right = 45,
+		grip_right = 42,
 		grip_forward = 0,
-		grip_up = -2,
+		grip_up = -6,
 		yaw = -60,
 		pitch = 0,
 		roll = 0,
