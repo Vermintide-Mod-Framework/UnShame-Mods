@@ -492,25 +492,39 @@ end
 -- weapon back (and takes back what enable has loaded). It is enabled when the mod is, disabled when the mod is, enabled
 -- or disabled when the settings change, and given back when the mod is unloaded.
 function utils.register_weapon(setting_id, enable, disable)
-	mod.enabled_callbacks[#mod.enabled_callbacks + 1] = function ()
-		if utils.is_weapon_enabled(setting_id) then
+	-- Whether enable has been called without disable since: enable takes the template for what the game made it, so it is not called twice
+	local active = false
+
+	local function sync()
+		local wanted = utils.is_weapon_enabled(setting_id)
+
+		if wanted and not active then
+			active = true
 			enable()
+		elseif not wanted and active then
+			active = false
+			disable()
 		end
 	end
 
-	mod.disabled_callbacks[#mod.disabled_callbacks + 1] = disable
+	local function give_back()
+		if active then
+			active = false
+			disable()
+		end
+	end
+
+	mod.enabled_callbacks[#mod.enabled_callbacks + 1] = sync
+
+	mod.disabled_callbacks[#mod.disabled_callbacks + 1] = give_back
 
 	mod.setting_changed_callbacks[#mod.setting_changed_callbacks + 1] = function (changed_setting_id)
 		if changed_setting_id == setting_id or changed_setting_id == "ut_weapons" then
-			if utils.is_weapon_enabled(setting_id) then
-				enable()
-			else
-				disable()
-			end
+			sync()
 		end
 	end
 
-	mod.unload_callbacks[#mod.unload_callbacks + 1] = disable
+	mod.unload_callbacks[#mod.unload_callbacks + 1] = give_back
 end
 
 return utils
