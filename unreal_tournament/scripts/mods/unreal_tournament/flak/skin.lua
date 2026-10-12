@@ -354,6 +354,12 @@ skin_api = mod.weapon_skin.new({
 		yaw = -60,
 		pitch = 0,
 		roll = 0,
+		-- In the world the cannon is turned as the game's Blunderbuss is, which follows the arms (/skin flak_cannon 3p follow_game_unit 0 for the old
+		-- way, pointing the way the character faces, which is how the hero screen is placed)
+		follow_game_unit = 1,
+		follow_pitch = 0,
+		follow_roll = 0,
+		follow_yaw = -60,
 		muzzle_right = -56,
 		muzzle_forward = 0,
 		muzzle_up = 12,

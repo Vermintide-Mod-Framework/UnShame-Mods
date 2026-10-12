@@ -9,7 +9,9 @@ local mod = get_mod("unreal_tournament")
 --   character, meters_per_unit: the meters of a UT unit of the mesh, scale: how much of it is held (UT's pickups are far bigger
 --   than the weapon in the hand is), grip_*: the point of the mesh that is in the hand (right, forward, up, UT units), yaw, pitch,
 --   roll: how the mesh is turned from pointing the way the character faces (degrees), muzzle_*: the end of its barrel, menu_yaw: how far to
---   turn it about the vertical in the item inspection so the barrel points sideways (-90 if its barrel runs along its forward)
+--   turn it about the vertical in the item inspection so the barrel points sideways (-90 if its barrel runs along its forward),
+--   follow_game_unit: turn it as the game's unit of the weapon is, which the game animates with the arms, and follow_pitch, follow_roll,
+--   follow_yaw: how it is turned from there (instead of pitch, roll, yaw)
 --
 -- The game's unit (the staff, the blunderbuss...) stays, hidden, and the mesh is linked to the same node of the character as it, turned
 -- every frame to point the way the character faces, level (a staff is held upright, a rifle is carried pointing ahead: that is not
@@ -59,11 +61,24 @@ local function new(def, looks)
 	-- character faces, level, so the rotation in the frame of the hand is the one that makes it so in the world
 	local function place(entry)
 		local config = entry.config
-		local facing = Vector3.flat(Quaternion.forward(Unit.world_rotation(entry.character, 0)))
-		local wanted = Quaternion.look(Vector3.normalize(facing), Vector3.up())
+		local pitch, roll, yaw = config.pitch, config.roll, config.yaw
+		local wanted
+
+		-- follow_game_unit: the mesh is turned as the game's own unit of the weapon is, which the game animates with the arms, and
+		-- follow_pitch, follow_roll and follow_yaw turn it from there. Without it (or in a menu, where there is no unit) the mesh points
+		-- the way the character faces.
+		if config.follow_game_unit and config.follow_game_unit ~= 0 and entry.staff and Unit.alive(entry.staff) then
+			wanted = Unit.world_rotation(entry.staff, 0)
+			pitch, roll, yaw = config.follow_pitch or 0, config.follow_roll or 0, config.follow_yaw or yaw
+		else
+			local facing = Vector3.flat(Quaternion.forward(Unit.world_rotation(entry.character, 0)))
+
+			wanted = Quaternion.look(Vector3.normalize(facing), Vector3.up())
+		end
+
 		local rotation = Quaternion.multiply(Quaternion.inverse(Unit.world_rotation(entry.character, entry.hand_node)), wanted)
 
-		rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(config.pitch, config.roll, config.yaw))
+		rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(pitch, roll, yaw))
 
 		local grip = Vector3(config.grip_right, config.grip_forward, config.grip_up) * config.meters_per_unit * config.scale
 
