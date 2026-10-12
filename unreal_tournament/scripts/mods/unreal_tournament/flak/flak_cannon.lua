@@ -105,9 +105,9 @@ local CONFIG = {
 	shell_speed = 2400, -- FlakShell.Speed 1200 uu/s = 24 m/s
 	shell_lob_degrees = 10.6, -- how far up the shell is tossed from the aim (FlakShell.TossZ: 225 units/s up for 1200 forward)
 	shell_lifetime = 6,
-	-- UT's gravity is 950 units/s^2, which is 19 m/s^2 at 0.02 m per unit. The game's own is -9.82, which keeps a shell fired straight up in the air
-	-- twice as long.
-	shell_gravity = -19,
+	-- UT's gravity is 950 units/s^2, which is 19 m/s^2 at 0.02 m per unit. This is a little less. The game's own is -9.82, which keeps a shell
+	-- fired straight up in the air twice as long as UT's.
+	shell_gravity = -17,
 	shell_radius = 0.2, -- m
 	shell_damage = 60, -- the damage of the explosion
 	-- The multipliers of the explosion's damage and stagger per armor type: unarmored, armored, monsters, players,
