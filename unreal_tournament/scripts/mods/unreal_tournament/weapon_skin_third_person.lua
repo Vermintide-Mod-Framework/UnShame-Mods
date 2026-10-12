@@ -36,8 +36,6 @@ local function new(def, looks)
 		return look and looks and looks[look] or CONFIG
 	end
 
-	third_person.config_of = config_of
-
 	-- The look of what a character wields
 	local function look_of(character)
 		local skin_key = utils.wielded_skin(character)
@@ -51,6 +49,8 @@ local function new(def, looks)
 	local third_person = {}
 
 	instances[#instances + 1] = third_person
+
+	third_person.config_of = config_of
 
 	-- How many meters a UT unit of the mesh is as it is held (the flashes are made as big as the mesh is)
 	third_person.meters_per_unit = CONFIG.meters_per_unit * CONFIG.scale
