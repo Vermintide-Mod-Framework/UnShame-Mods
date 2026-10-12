@@ -31,6 +31,7 @@ unit = [
 	"units/ut/fx/sphere"
 	"units/ut/fx/vortex"
 	"units/ut/fx/light"
+	"units/ut/fx/flak_flash_mesh"
 ]
 
 material = [
