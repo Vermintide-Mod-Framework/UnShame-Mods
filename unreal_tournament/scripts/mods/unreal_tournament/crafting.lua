@@ -381,13 +381,12 @@ for _, page_name in ipairs(PAGES) do
 end
 
 -- The pages of the rerolls do not set the requirements again when a weapon is put in or taken out (only when they are entered and after a
--- craft), so what they show is of the weapon that was in before: the mod's weapons have them set again
+-- craft), so what they show is of the weapon that was in before: they are set again for every weapon, so that the ones of the mod's weapons
+-- do not stay when another is put in
 for _, page_name in ipairs({ "CraftPageRollPropertiesConsole", "CraftPageRollTraitConsole" }) do
 	for _, function_name in ipairs({ "_add_craft_item", "_remove_craft_item" }) do
-		mod:hook_safe(_G[page_name], function_name, function (self, backend_id)
-			if items.is_custom(backend_id) then
-				self:setup_recipe_requirements()
-			end
+		mod:hook_safe(_G[page_name], function_name, function (self)
+			self:setup_recipe_requirements()
 		end)
 	end
 end
