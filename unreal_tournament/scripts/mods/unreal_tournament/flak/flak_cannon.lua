@@ -49,6 +49,10 @@ local CONFIG = {
 	chunk_spawn_forward = 0.5, -- m
 	chunk_spawn_right = 0.1, -- m
 	chunk_spawn_down = 0.12, -- m
+	-- Where the shell starts, from the camera (FlakAltFire.ProjSpawnOffset, 25, 9 and -12 units): lower and further right than the chunks
+	shell_spawn_forward = 0.5, -- m
+	shell_spawn_right = 0.18, -- m
+	shell_spawn_down = 0.24, -- m
 	-- A UT chunk flies straight and only starts to fall after it hits a wall. So there is no gravity in flight, and after the first bounce
 	-- the chunk gets the game's weakest gravity setting (-0.5).
 	chunk_gravity_settings = "drake_pistols", -- the game's gravity of 0
@@ -562,7 +566,9 @@ mod:hook(ActionShotgun, "_shoot", function (func, self, num_shots_total, num_sho
 		else
 			local lobbed_rotation = Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3.right(), math.degrees_to_radians(CONFIG.shell_lob_degrees)))
 
-			spawn_projectile(shot, position, lobbed_rotation, SHELL_ACTION_NAME, SHELL_ACTION, CONFIG.shell_speed * CONFIG.debug_speed_scale)
+			local shell_position = position + Quaternion.forward(rotation) * CONFIG.shell_spawn_forward + Quaternion.right(rotation) * CONFIG.shell_spawn_right - Quaternion.up(rotation) * CONFIG.shell_spawn_down
+
+			spawn_projectile(shot, shell_position, lobbed_rotation, SHELL_ACTION_NAME, SHELL_ACTION, CONFIG.shell_speed * CONFIG.debug_speed_scale)
 		end
 	end
 end)
