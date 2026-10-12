@@ -11,7 +11,8 @@ local mod = get_mod("unreal_tournament")
 --     of its own, listed in the mod's file, see hold_package)
 --
 -- The game takes the inventory from the backend (PlayFab), which does not have these items: they are put into the inventory it has loaded,
--- under an id that is the item's key, the same every time, so that the loadout that has one equipped finds it again.
+-- under ids that are the same every time (the item's key for the weapon the player starts with, a blueprint, and key#number for the
+-- weapons the player has crafted, see crafting.lua), so that the loadout that has one equipped finds it again.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
@@ -79,21 +80,104 @@ local function all_careers()
 	return careers
 end
 
--- The inventory item of a definition, as the backend's inventory has them
-local function inventory_item(definition)
-	local item = {
-		ItemId = definition.key,
-		ItemInstanceId = definition.key,
-		CustomData = {
-			power_level = "300",
-			rarity = "plentiful",
-		},
-	}
+-- What the mod keeps of its own, between games (the settings file of the mod: the backend is not asked and does not know):
+--   crafted: { [backend id] = record } the weapons the player has crafted, a record being { key, rarity, power_level, properties, traits }
+--   spent: { [material's key] = amount } the crafting materials spent on them, which the backend still has
+--   next_id: the number of the next crafted weapon
+local SAVED_SETTING = "custom_items"
 
-	return item
+function items.saved()
+	return table.clone(mod:get(SAVED_SETTING) or { crafted = {}, spent = {}, next_id = 1 })
 end
 
--- Puts the items into the inventory that the mirror of the backend has loaded
+function items.save(saved)
+	mod:set(SAVED_SETTING, saved)
+end
+
+-- The weapon that is in the inventory from the start, and what the Craft page makes new ones from: its rarity is the one that the page's
+-- items to craft with have, "default", and its power level the game's own for them
+local BLUEPRINT_RECORD = {
+	power_level = 5,
+	properties = {},
+	rarity = "default",
+	traits = {},
+}
+
+-- The inventory item of a weapon, as the backend's inventory has them
+local function inventory_item(key, backend_id, record)
+	local custom_data = {
+		power_level = tostring(record.power_level),
+		rarity = record.rarity,
+	}
+
+	if next(record.properties) then
+		custom_data.properties = cjson.encode(record.properties)
+	end
+
+	if #record.traits > 0 then
+		custom_data.traits = cjson.encode(record.traits)
+	end
+
+	return {
+		CustomData = custom_data,
+		ItemId = key,
+		ItemInstanceId = backend_id,
+		-- (what tells these from the backend's items)
+		UtCustom = true,
+	}
+end
+
+-- The mirror of the backend (the game's copy of the player's inventory)
+local function mirror_of_backend()
+	return Managers.backend and Managers.backend._backend_mirror
+end
+
+-- If an item of the inventory is one of the mod's weapons
+function items.is_custom(backend_id)
+	local mirror = mirror_of_backend()
+	local item = mirror and mirror._inventory_items and mirror._inventory_items[backend_id]
+
+	return item ~= nil and item.UtCustom == true
+end
+
+-- A weapon made new for the player: gives its backend id and the inventory item (it is not in the inventory yet: the game's craft does that)
+function items.new_crafted(saved, key, record)
+	local backend_id = string.format("%s#%d", key, saved.next_id)
+
+	saved.next_id = saved.next_id + 1
+	saved.crafted[backend_id] = table.clone(record)
+	saved.crafted[backend_id].key = key
+
+	return backend_id, inventory_item(key, backend_id, record)
+end
+
+-- The materials of the inventory have the amounts the backend has, less what the mod has spent of them (the amount the backend has is
+-- kept in the item, for when the mod spends more)
+local function take_spent_from_materials(inventory, saved)
+	for backend_id, item in pairs(inventory) do
+		local data = item.data
+
+		if data and data.item_type == "crafting_material" and item.RemainingUses then
+			local owned = item.UtOwned or item.RemainingUses
+			local spent = saved.spent[data.key] or 0
+
+			-- (the backend has fewer of them than were spent: they were used elsewhere, the rest of the spending is not owed)
+			if spent > owned then
+				spent = owned
+				saved.spent[data.key] = owned
+			end
+
+			item.UtOwned = owned
+			item.RemainingUses = owned - spent
+
+			if item.RemainingUses <= 0 then
+				inventory[backend_id] = nil
+			end
+		end
+	end
+end
+
+-- Puts the mod's weapons into the inventory that the mirror of the backend has loaded
 local function add_to_inventory(mirror)
 	local inventory = mirror._inventory_items
 
@@ -101,13 +185,28 @@ local function add_to_inventory(mirror)
 		return
 	end
 
+	local saved = items.saved()
+
 	for _, definition in pairs(definitions) do
-		local item = inventory_item(definition)
+		local item = inventory_item(definition.key, definition.key, BLUEPRINT_RECORD)
 
 		mirror:_update_data(item, definition.key)
 
 		inventory[definition.key] = item
 	end
+
+	for backend_id, record in pairs(saved.crafted) do
+		if definitions[record.key] then
+			local item = inventory_item(record.key, backend_id, record)
+
+			mirror:_update_data(item, backend_id)
+
+			inventory[backend_id] = item
+		end
+	end
+
+	take_spent_from_materials(inventory, saved)
+	items.save(saved)
 end
 
 -- (the mirror the game uses is PlayFabMirrorAdventure: a class gets a copy of its parent's functions when it is made, so the base class's
