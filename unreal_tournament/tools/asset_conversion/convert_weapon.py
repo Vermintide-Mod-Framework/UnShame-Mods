@@ -174,7 +174,7 @@ WEAPONS['link'] = {
 WEAPONS['shock2003'] = {
     'psk': 'Weapons/SkeletalMesh/ShockRifle_1st.psk',
     'psa': 'Weapons/MeshAnimation/ShockRifle_1st.psa',
-    # (the third is the red laser sight, which UT draws additively with a panning texture: here a faint red, unlit, with the mod's particle material)
+    # (the third is the red laser sight, which UT draws additively with a panning texture: here a faint red, unlit, with the mod's particle material that has the custom FOV of first person weapons, units/ut/fx/particle_weapon, a copy of particle with that option on)
     'materials': [('WeaponSkins/Texture/ShockTex0.tga', 'opaque'), ('WeaponSkins/Texture/ShockTex0.tga', 'opaque'),
                   ('solid:5c1410', 'additive')],
     'scale': 0.0125,
@@ -188,7 +188,7 @@ MATERIAL_TEMPLATES = {
     'additive': '''material_contexts = {
 	surface_material = ""
 }
-parent_material = "units/ut/fx/particle"
+parent_material = "units/ut/fx/particle_weapon"
 textures = {
 	texture_map = "%s"
 }

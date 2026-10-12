@@ -1,7 +1,7 @@
 material_contexts = {
 	surface_material = ""
 }
-parent_material = "units/ut/fx/particle"
+parent_material = "units/ut/fx/particle_weapon"
 textures = {
 	texture_map = "units/ut/shock2003/shock_rifle_solid_5c1410"
 }
