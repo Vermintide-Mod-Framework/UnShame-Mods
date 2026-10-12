@@ -39,7 +39,7 @@ local CONFIG = {
 	chunk_trail_hold = 0.4,
 	-- The glow around the chunk: it is drawn a little behind the chunk, so the chunk's mesh covers its middle, and is dim so that it
 	-- stays a halo
-	chunk_glow_size = 0.4, -- m
+	chunk_glow_size = 0.6, -- m
 	chunk_glow_intensity = 1.2,
 	chunk_glow_behind = 0.08, -- m, away from the camera
 	-- A chunk that has gone cold and landed stays on the ground this long (FlakChunk.Landed sets its life span to 1)
