@@ -51,14 +51,15 @@ local CONFIG = {
 		0.75,
 		0.3,
 	},
-	shell_smoke_interval = 0.04,
+	shell_glow_intensity = 0.6,
+	shell_smoke_interval = 0.02,
 	shell_smoke_life = 0.55,
 	shell_smoke_size = 20,
 	shell_smoke_growth = 15,
 	shell_smoke_color = {
-		0.55,
-		0.5,
-		0.45,
+		0.3,
+		0.28,
+		0.26,
 	},
 	shell_sound_seconds = 2.11, -- how long the loop of the shell (BFlakCannonProjectile) is
 	-- FlakExplosion (5 puffs of smoke, 91 to 161 units, 0.9 to 1.8 s, rising) and FlashExplosion (150 units, growing 500, 0.25 s)
@@ -214,7 +215,7 @@ local function update_visuals(dt)
 						additive = 0,
 						color = CONFIG.shell_smoke_color,
 						growth = CONFIG.shell_smoke_growth * UNIT,
-						intensity = 0.8,
+						intensity = 1,
 						life = CONFIG.shell_smoke_life,
 						position = position,
 						size = CONFIG.shell_smoke_size * UNIT,
@@ -465,9 +466,10 @@ mod.skin_init_callbacks.ut_flak_shell = function (projectile)
 				return Unit.world_position(visual.game_unit, 0)
 			end
 		end,
+		intensity = CONFIG.shell_glow_intensity,
 		life = 6,
 		size = CONFIG.shell_glow_size * UNIT,
-		texture = "muzzle_white",
+		texture = "flak_chunk_glow",
 	})
 end
 

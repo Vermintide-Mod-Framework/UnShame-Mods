@@ -104,7 +104,14 @@ local function add(kind, spec)
 		Light.set_falloff_end(entry.light, spec.falloff)
 		Light.set_enabled(entry.light, false)
 	else
-		local material = spec.material or MATERIAL_FORMAT:format(spec.texture)
+		local texture = spec.texture
+
+		-- The smoke texture is a sheet of 16 puffs (tools/asset_conversion/split_smoke.py): each particle shows one of them.
+		if texture == "smoke" then
+			texture = "smoke_" .. math.random(0, 15)
+		end
+
+		local material = spec.material or MATERIAL_FORMAT:format(texture)
 
 		if entry.material ~= material then
 			entry.material = material
