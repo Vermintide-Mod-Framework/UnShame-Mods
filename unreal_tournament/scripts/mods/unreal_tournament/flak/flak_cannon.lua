@@ -96,7 +96,7 @@ local CONFIG = {
 	-- Multiplies how far a staggered enemy is pushed back (1 is what the game's shotguns do). Every chunk that hits staggers, so this is
 	-- multiplied by the chunks that hit. Strong hits (up close) get the whole of it, weak ones (far away) get less because their stagger
 	-- is weaker.
-	chunk_stagger_distance_modifier = 1,
+	chunk_stagger_distance_modifier = 2,
 	chunk_knockback_falloff_start = 2, -- m
 	chunk_knockback_falloff_end = 12, -- m
 	-- The ragdoll of what a chunk killed is thrown (the game's own push of a dying body is small).
