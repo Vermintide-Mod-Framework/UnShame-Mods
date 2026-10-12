@@ -29,6 +29,9 @@ local CONFIG = {
 	-- FlakChunk: the mesh and FlakTrail. The trail is a piece of streak for each frame of the chunk's path, which fades out in
 	-- chunk_trail_seconds, so it follows the path and bends where the chunk bounces.
 	chunk_trail_seconds = 0.1,
+	-- A piece is made at most this often (seconds). One for every frame would use up the particles when the frame rate is high, and the
+	-- trail would stop growing.
+	chunk_trail_step = 1 / 60,
 	chunk_trail_width = 0.1, -- m
 	chunk_glow_size = 0.3, -- m, the glow at the head of the trail
 	-- FlakShell: the mesh, FlakGlow (a gold sprite) and FlakShellTrail (smoke, 0.5 to 0.6 s, 20 to 35 units, growing 15 a second)
@@ -151,20 +154,31 @@ local function update_visuals(dt)
 			if Vector3.length(moved) > 0.0001 then
 				visual.direction:store(Vector3.normalize(moved))
 				visual.speed = Vector3.length(moved) / math.max(dt, 0.0001)
+			end
 
-				if visual.kind == "chunk" then
-					particles.beam({
-						color = {
-							1,
-							1,
-							1,
-						},
-						from = previous,
-						life = CONFIG.chunk_trail_seconds,
-						size = CONFIG.chunk_trail_width,
-						texture = "flak_trail",
-						to = position,
-					})
+			if visual.kind == "chunk" then
+				visual.trail_time = visual.trail_time + dt
+
+				if visual.trail_time >= CONFIG.chunk_trail_step then
+					local trail_from = visual.trail_from:unbox()
+
+					visual.trail_time = 0
+					visual.trail_from:store(position)
+
+					if Vector3.length(position - trail_from) > 0.0001 then
+						particles.beam({
+							color = {
+								1,
+								1,
+								1,
+							},
+							from = trail_from,
+							life = CONFIG.chunk_trail_seconds,
+							size = CONFIG.chunk_trail_width,
+							texture = "flak_trail",
+							to = position,
+						})
+					end
 				end
 			end
 
@@ -218,6 +232,8 @@ local function add_visual(projectile, kind, unit_name)
 		smoke_time = 0,
 		sound_time = 0,
 		speed = 0,
+		trail_from = Vector3Box(position),
+		trail_time = 0,
 		unit = unit,
 		world = world,
 	}
