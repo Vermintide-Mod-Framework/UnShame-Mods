@@ -178,7 +178,7 @@ local function update_visuals(dt)
 				if visual.trail_time >= CONFIG.chunk_trail_step then
 					local trail_from = visual.trail_from:unbox()
 
-					visual.trail_time = 0
+					visual.trail_time = math.min(visual.trail_time - CONFIG.chunk_trail_step, CONFIG.chunk_trail_step)
 					visual.trail_from:store(position)
 
 					if Vector3.length(position - trail_from) > 0.0001 then
