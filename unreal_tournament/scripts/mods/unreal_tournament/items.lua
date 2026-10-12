@@ -151,6 +151,18 @@ function items.new_crafted(saved, key, record)
 	return backend_id, inventory_item(key, backend_id, record)
 end
 
+-- A weapon the player has changed (its properties, traits or rarity): gives the inventory item of it, which is to take the place of the old one
+function items.change_crafted(saved, backend_id, record)
+	local key = saved.crafted[backend_id].key
+
+	saved.crafted[backend_id] = table.clone(record)
+	saved.crafted[backend_id].key = key
+
+	items.save(saved)
+
+	return inventory_item(key, backend_id, record)
+end
+
 -- The materials of the inventory have the amounts the backend has, less what the mod has spent of them (the amount the backend has is
 -- kept in the item, for when the mod spends more)
 local function take_spent_from_materials(inventory, saved)
@@ -175,6 +187,22 @@ local function take_spent_from_materials(inventory, saved)
 			end
 		end
 	end
+end
+
+-- The materials of the inventory after the backend has used some of them (the ids): the amounts are the backend's now, the mod's spending is
+-- taken from them again
+function items.apply_spent(used_ids)
+	local inventory = mirror_of_backend()._inventory_items
+	local saved = items.saved()
+
+	for _, backend_id in ipairs(used_ids) do
+		if inventory[backend_id] then
+			inventory[backend_id].UtOwned = nil
+		end
+	end
+
+	take_spent_from_materials(inventory, saved)
+	items.save(saved)
 end
 
 -- Puts the mod's weapons into the inventory that the mirror of the backend has loaded
