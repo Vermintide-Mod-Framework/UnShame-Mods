@@ -372,12 +372,12 @@ skin_api = mod.weapon_skin.new({
 	-- The inspect pose: the cannon is brought forward and up, and then turned to the left about the grip, until it is across the view like the
 	-- Shock Rifle's: its left side to the view, the muzzle to the left and a little up, the back lower and nearer. The grip is the point of
 	-- the model that is in the hand (UT units from its origin, in the axes of the view). The turn starts when the cannon is 35% of the way.
-	inspect_pose_right = 4.5,
-	inspect_pose_forward = 17,
+	inspect_pose_right = 15.9,
+	inspect_pose_forward = 39.4,
 	inspect_pose_up = 0.2,
 	inspect_pose_roll = 16,
 	inspect_pose_pitch = 4,
-	inspect_pose_yaw = 65,
+	inspect_pose_yaw = 80,
 	inspect_turn_start = 0.35,
 	inspect_pivot_right = 24.7,
 	inspect_pivot_forward = 55,
