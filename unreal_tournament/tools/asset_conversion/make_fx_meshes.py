@@ -5,6 +5,8 @@ import struct, zlib, os, sys
 #   units/ut/fx/sphere  Editor.TexPropSphere (a static mesh of 960 triangles, 128 units in radius, from Editor.u: umodel -export "System/Editor.u" TexPropSphere,
 #                       into <scratch>/umodel/out13), the mesh of ShockComboSphereDark
 #   units/ut/fx/vortex  ShockVortexMesh (a vertex mesh of UT's first format, .3d), its first frame: a flat disc that faces the camera
+#   units/ut/fx/flak_flash_mesh  XEffects.FlakMuzFlashMesh, the Flak Cannon's first person muzzle flash (umodel -export XEffects.u FlakMuzFlashMesh, into
+#                       <scratch>/umodel/out34); its long axis is y, the way the barrel points
 # They are made in meters, a UT unit being 0.02 m (as everything of the effects is), turned from UT's axes (x forward, y right, z up) to
 # this game's (x right, y forward, z up), which makes the mesh the other way round: the long axis of the coil is y.
 # One material slot, m_fx, as the quad of the particles has (units/ut/fx/quad): the effects set the material of the texture they want.
@@ -171,3 +173,4 @@ make_static('coil', 'ShockCoil')
 make_light('light')
 make_static('sphere', 'TexPropSphere', SCRATCH + '/umodel/out13/Editor')
 make_vortex('vortex', 'ShockVortexMesh')
+make_static('flak_flash_mesh', 'FlakMuzFlashMesh', SCRATCH + '/umodel/out34/XEffects')

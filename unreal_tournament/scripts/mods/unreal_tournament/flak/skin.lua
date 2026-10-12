@@ -26,6 +26,10 @@ local CONFIG = {
 	muzzle_size = 90,
 	muzzle_growth = 120,
 	muzzle_life = 0.12,
+	-- FlakMuzFlash1st (the flash of the player's own view): a mesh of 56 units across, spiked like a star and pointing along the barrel. It is
+	-- this many times the mesh at the start and at the end of its life, which is muzzle_life.
+	flash_mesh_start = 1,
+	flash_mesh_end = 1.7,
 	-- FlakChunk: the mesh and FlakTrail. The trail is a piece of streak for each frame of the chunk's path, which fades out in
 	-- chunk_trail_seconds, so it follows the path and bends where the chunk bounces.
 	chunk_trail_seconds = 0.1,
@@ -277,6 +281,39 @@ local function muzzle_flash(follow, scale)
 	})
 end
 
+-- The flash of the player's own view: UT's mesh, pointing the way the camera looks, turned by a random angle about it
+local function first_person_flash(follow, scale)
+	local _, camera_rotation = utils.camera_pose()
+
+	if not camera_rotation then
+		return muzzle_flash(follow, scale)
+	end
+
+	-- (the mesh is made at 0.02 m to a UT unit, and is sized as the view's units are)
+	local factor = scale / UNIT
+
+	particles.mesh({
+		brightness = function (fraction)
+			return 1 - fraction
+		end,
+		color = {
+			1,
+			1,
+			1,
+		},
+		follow = follow,
+		life = CONFIG.muzzle_life,
+		rotation = camera_rotation,
+		scale = function (fraction)
+			return (CONFIG.flash_mesh_start + (CONFIG.flash_mesh_end - CONFIG.flash_mesh_start) * fraction) * factor
+		end,
+		spin = (math.random() * 2 - 1) * 0.5,
+		spin_axis = Vector3(0, 1, 0),
+		texture = "flak_flash",
+		unit = "units/ut/fx/flak_flash_mesh",
+	})
+end
+
 -- A shot that another player's machine sees: the flash and the sound from the end of the barrel of the mesh in their hand, once for the
 -- chunks of a shot that come together
 local last_remote_shot = {}
@@ -399,7 +436,9 @@ mod.shotgun_start_callbacks.flak_skin = function (action, new_action)
 
 	skin_api.play(new_action.ut_flak_chunks and "Fire" or "AltFire")
 	skin_api.play_sound(new_action.ut_flak_chunks and "ut_flak_fire" or "ut_flak_alt_fire")
-	muzzle_flash(function ()
+	local flash = in_third_person and muzzle_flash or first_person_flash
+
+	flash(function ()
 		if in_third_person then
 			return third_person.muzzle_position(owner_unit)
 		end
@@ -443,7 +482,8 @@ mod.skin_init_callbacks.ut_flak_chunk = function (projectile)
 	local owner_unit = projectile._owner_unit
 	local visual = add_visual(projectile, "chunk", "units/ut/flak/chunk")
 
-	if not utils.is_local_player_unit(owner_unit) then
+	-- (the chunks of a shell's explosion are not a shot from the muzzle)
+	if not utils.is_local_player_unit(owner_unit) and not projectile._current_action.ut_flak_burst then
 		remote_shot(owner_unit, "ut_flak_fire_3d")
 	end
 

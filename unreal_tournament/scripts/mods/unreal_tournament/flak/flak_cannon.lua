@@ -153,9 +153,11 @@ local CONFIG = {
 local CHUNK_ACTION_NAME = "action_one"
 local SHELL_ACTION_NAME = "action_two"
 local CHUNK_ACTIONS = {} -- the chunk that bounces n times is CHUNK_ACTIONS[n + 1]
+local BURST_ACTIONS = {} -- the same, for the chunks of a shell's explosion, so that they are not taken for a shot of the primary fire
 
 for bounces = 0, CONFIG.chunk_bounces + CONFIG.chunk_extra_bounces do
 	CHUNK_ACTIONS[bounces + 1] = "ut_flak_chunk_" .. bounces
+	BURST_ACTIONS[bounces + 1] = "ut_flak_burst_" .. bounces
 end
 local SHELL_ACTION = "ut_flak_shell"
 local SHELL_GRAVITY_SETTINGS = "ut_flak_shell"
@@ -164,6 +166,10 @@ ProjectileGravitySettings[SHELL_GRAVITY_SETTINGS] = CONFIG.shell_gravity
 register_network_lookup("projectile_gravity_settings", SHELL_GRAVITY_SETTINGS)
 
 for _, name in ipairs(CHUNK_ACTIONS) do
+	register_network_lookup("sub_actions", name)
+end
+
+for _, name in ipairs(BURST_ACTIONS) do
 	register_network_lookup("sub_actions", name)
 end
 
@@ -251,7 +257,7 @@ register_explosion_template("ut_flak_shell_explosion", {
 
 -- Weapon template
 
-local function build_chunk_action(max_bounces)
+local function build_chunk_action(max_bounces, burst)
 	local projectile_info = table.clone(Projectiles.brace_of_drake_pistols_shot)
 
 	projectile_info.gravity_settings = CONFIG.chunk_gravity_settings
@@ -261,6 +267,7 @@ local function build_chunk_action(max_bounces)
 	return {
 		hit_effect = "shotgun_bullet_impact",
 		kind = "charged_projectile",
+		ut_flak_burst = burst,
 		ut_flak_chunk = true,
 		ut_hit_enemy_callback = "ut_flak_chunk",
 		ut_init_callback = "ut_flak_chunk",
@@ -383,6 +390,10 @@ local function restore_blunderbuss()
 		actions[CHUNK_ACTION_NAME][name] = nil
 	end
 
+	for _, name in ipairs(BURST_ACTIONS) do
+		actions[CHUNK_ACTION_NAME][name] = nil
+	end
+
 	actions[SHELL_ACTION_NAME][SHELL_ACTION] = nil
 
 	for _, name in ipairs(PROJECTILE_UNIT_TEMPLATES) do
@@ -444,6 +455,7 @@ local function apply_flak_cannon()
 
 	for bounces = 0, #CHUNK_ACTIONS - 1 do
 		actions[CHUNK_ACTION_NAME][CHUNK_ACTIONS[bounces + 1]] = build_chunk_action(bounces)
+		actions[CHUNK_ACTION_NAME][BURST_ACTIONS[bounces + 1]] = build_chunk_action(bounces, true)
 	end
 
 	actions[SHELL_ACTION_NAME][SHELL_ACTION] = build_shell_action()
@@ -469,11 +481,11 @@ local function spawn_projectile(shot, position, rotation, action_name, sub_actio
 end
 
 -- UT2004: a quarter of the chunks bounce twice, half of them once (plus the extra bounces)
-local function random_chunk_action()
+local function random_chunk_action(burst)
 	local roll = math.random()
 	local bounces = roll > 0.75 and 2 or roll > 0.25 and 1 or 0
 
-	return CHUNK_ACTIONS[bounces + CONFIG.chunk_extra_bounces + 1]
+	return (burst and BURST_ACTIONS or CHUNK_ACTIONS)[bounces + CONFIG.chunk_extra_bounces + 1]
 end
 
 -- A random direction inside a cone of the angle (radians) around the rotation
@@ -558,7 +570,7 @@ mod.aoe_callbacks.ut_flak_shell = function (self, aoe_data, position)
 	utils.apply_explosion_self_push(self._owner_unit, position, explosion, CONFIG.shell_jump_speed)
 
 	for _ = 1, CONFIG.shell_chunk_count do
-		spawn_projectile(shot, start, burst_rotation(rotation, math.degrees_to_radians(CONFIG.shell_chunk_cone_degrees)), CHUNK_ACTION_NAME, random_chunk_action(), CONFIG.chunk_speed * CONFIG.debug_speed_scale)
+		spawn_projectile(shot, start, burst_rotation(rotation, math.degrees_to_radians(CONFIG.shell_chunk_cone_degrees)), CHUNK_ACTION_NAME, random_chunk_action(true), CONFIG.chunk_speed * CONFIG.debug_speed_scale)
 	end
 end
 
