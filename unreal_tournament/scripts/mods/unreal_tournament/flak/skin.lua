@@ -323,19 +323,18 @@ skin_api = mod.weapon_skin.new({
 	pivot_yaw = 16884 / 65536 * 360,
 	pivot_roll = 200 / 65536 * 360,
 	bob_damping = 1.4,
-	-- The inspect pose: the cannon is held a little right of the middle of the view, further away, with its left side to the view and the muzzle to
-	-- the left, turned a little to show its top. It is turned past straight across so that its open back, which UT's model has no faces for, is
-	-- turned away. It turns about its middle.
-	inspect_pose_right = -30,
-	inspect_pose_forward = 67,
-	inspect_pose_up = 18,
-	inspect_pose_roll = -15,
-	inspect_pose_pitch = 8,
-	inspect_pose_yaw = 95,
-	-- The middle of the model (UT units from its origin, in the view's axes), which the inspect turns it about
+	-- The inspect pose: the cannon is brought up and across the view like the Shock Rifle's: its left side to the view, the muzzle to the left
+	-- and a little up, the back lower and nearer. It turns about the grip, the point of the model that is in the hand (UT units from its
+	-- origin, in the axes of the view).
+	inspect_pose_right = -19,
+	inspect_pose_forward = 2,
+	inspect_pose_up = 2,
+	inspect_pose_roll = 16,
+	inspect_pose_pitch = 4,
+	inspect_pose_yaw = 65,
 	inspect_pivot_right = 24.7,
-	inspect_pivot_forward = 93,
-	inspect_pivot_up = -28.4,
+	inspect_pivot_forward = 81,
+	inspect_pivot_up = -38.7,
 	-- WeaponStaticMesh.FlakCannonPickup (DrawScale 0.55): its barrel is along the mesh's own Y, and the grip is under the back of it
 	third_person = {
 		id = SETTING_ID,
