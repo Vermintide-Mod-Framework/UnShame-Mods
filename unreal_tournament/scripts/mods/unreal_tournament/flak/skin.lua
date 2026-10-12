@@ -330,6 +330,10 @@ skin_api = mod.weapon_skin.new({
 	inspect_pose_roll = -20,
 	inspect_pose_pitch = 6,
 	inspect_pose_yaw = 65,
+	-- The middle of the model (UT units from its origin, in the view's axes), which the inspect turns it about
+	inspect_pivot_right = 24.7,
+	inspect_pivot_forward = 93,
+	inspect_pivot_up = -28.4,
 	-- WeaponStaticMesh.FlakCannonPickup (DrawScale 0.55): its barrel is along the mesh's own Y, and the grip is under the back of it
 	third_person = {
 		id = SETTING_ID,

@@ -88,6 +88,9 @@ local function new(def)
 		inspect_pose_roll = 0,
 		inspect_pose_up = 0,
 		inspect_pose_yaw = 0,
+		inspect_pivot_forward = 0,
+		inspect_pivot_right = 0,
+		inspect_pivot_up = 0,
 	}
 
 	for key, value in pairs(def) do
@@ -623,6 +626,13 @@ local function new(def)
 			local turn = Quaternion.multiply(Quaternion.axis_angle(Vector3(0, 0, 1), math.rad(yaw)), Quaternion.multiply(Quaternion.axis_angle(Vector3(1, 0, 0), math.rad(pitch)), Quaternion.axis_angle(Vector3(0, 1, 0), math.rad(roll))))
 
 			rotation = Quaternion.multiply(turn, rotation)
+
+			-- The turn is about the point of the model that the inspect_pivot_* say (UT units, in the axes of the view, from the model's
+			-- origin), not about its origin, so a long model turns about its middle
+			local pivot_point = Vector3(CONFIG.inspect_pivot_right, CONFIG.inspect_pivot_forward, CONFIG.inspect_pivot_up)
+			local moved = pivot_point - Quaternion.rotate(turn, pivot_point)
+
+			position = position + Vector3(moved.x * across_scale, moved.y * forward_scale, moved.z * across_scale)
 		end
 
 		-- The model's pose is the turn, then the scale of the view (across, forward, across): a scale that is applied after the turn, in the
