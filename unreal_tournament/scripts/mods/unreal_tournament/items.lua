@@ -54,30 +54,16 @@ local function add_material_set(material_set)
 end
 
 -- The in-game UI makes its renderers when a level loads. One made before the mod was loaded or reloaded can't find the icon's material (the
--- game mounts the mod's resources again on a reload), so new ones are made and put where the views take their renderer from. The HUD
--- keeps its own, which don't draw the icon.
-local function remake_ui_renderers()
-	local ingame_ui = Managers.ui and Managers.ui._ingame_ui
+-- game mounts the mod's resources again on a reload), so in a level the items keep the base item's icon until the next level.
+local icons_waiting = {}
 
-	if not ingame_ui then
-		return
+mod:hook_safe(IngameUI, "init", function ()
+	for key in pairs(icons_waiting) do
+		ItemMasterList[key].inventory_icon = definitions[key].icon
 	end
 
-	local context = ingame_ui.ingame_ui_context
-	local mechanism_key = Managers.mechanism:current_mechanism_name()
-	local is_tutorial = Managers.state.game_mode:game_mode_key() == "tutorial"
-
-	ingame_ui.ui_renderer = ingame_ui:create_ui_renderer(ingame_ui.world, is_tutorial, ingame_ui.is_in_inn, mechanism_key)
-	ingame_ui.ui_top_renderer = ingame_ui:create_ui_renderer(ingame_ui.top_world, is_tutorial, ingame_ui.is_in_inn, mechanism_key)
-
-	UISetupFontHeights(ingame_ui.ui_renderer.gui)
-
-	context.ui_renderer = ingame_ui.ui_renderer
-	context.ui_top_renderer = ingame_ui.ui_top_renderer
-end
-
--- After all mods are loaded, so the renderers get the materials the other mods add as well (VMF's atlas, for one)
-mod.all_mods_loaded_callbacks[#mod.all_mods_loaded_callbacks + 1] = remake_ui_renderers
+	table.clear(icons_waiting)
+end)
 
 -- Every career
 local function all_careers()
@@ -278,7 +264,11 @@ function items.register(setting_id, definition)
 	hold_package(definition.icon_package)
 	add_material_set(definition.icon_materials)
 
-	item.inventory_icon = definition.icon
+	if Managers.ui and Managers.ui._ingame_ui then
+		icons_waiting[definition.key] = true
+	else
+		item.inventory_icon = definition.icon
+	end
 
 	ItemMasterList[definition.key] = item
 
