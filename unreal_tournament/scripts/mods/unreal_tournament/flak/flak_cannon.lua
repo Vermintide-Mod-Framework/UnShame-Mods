@@ -93,9 +93,10 @@ local CONFIG = {
 	-- player and the target, from the near value up to the start, to the far value from the end.
 	chunk_knockback_near = 1.2,
 	chunk_knockback_far = 0.05,
-	-- Multiplies how far a staggered enemy is pushed back (1 is what the game's shotguns do). Strong
-	-- hits (up close) get the whole of it, weak ones (far away) get less because their stagger is weaker.
-	chunk_stagger_distance_modifier = 6,
+	-- Multiplies how far a staggered enemy is pushed back (1 is what the game's shotguns do). Every chunk that hits staggers, so this is
+	-- multiplied by the chunks that hit. Strong hits (up close) get the whole of it, weak ones (far away) get less because their stagger
+	-- is weaker.
+	chunk_stagger_distance_modifier = 1,
 	chunk_knockback_falloff_start = 2, -- m
 	chunk_knockback_falloff_end = 12, -- m
 	-- The ragdoll of what a chunk killed is thrown (the game's own push of a dying body is small).
@@ -833,10 +834,24 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 		end
 	end
 
+	-- A chunk pushes what it hits away from the shooter, not the way the chunk itself is flying: the chunks of a spread fly in different
+	-- directions, and one that has bounced flies off any way, so what is hit by several would be pushed in all of them.
+	local owner_position = POSITION_LOOKUP[self._owner_unit]
+	local target_position = POSITION_LOOKUP[hit_unit] or Unit.world_position(hit_unit, 0)
+	local push_direction = hit_direction
+
+	if owner_position then
+		local away = Vector3.flat(target_position - owner_position)
+
+		if Vector3.length(away) > 0.01 then
+			push_direction = Vector3.normalize(away)
+		end
+	end
+
 	-- (an error mustn't leave the chunk set)
 	chunk_in_hit = self
 
-	local ok, error_message = pcall(func, self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
+	local ok, error_message = pcall(func, self, impact_data, hit_unit, hit_position, push_direction, hit_normal, ...)
 
 	chunk_in_hit = nil
 	self.power_level = power_level
@@ -846,7 +861,7 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 	end
 
 	if not AiUtils.attack_is_shield_blocked(hit_unit, self._owner_unit, nil, hit_direction) then
-		add_ragdoll_throw(hit_unit, self._owner_unit, hit_position, hit_direction)
+		add_ragdoll_throw(hit_unit, self._owner_unit, hit_position, push_direction)
 	end
 
 	if self._num_additional_penetrations < penetrations_before then
