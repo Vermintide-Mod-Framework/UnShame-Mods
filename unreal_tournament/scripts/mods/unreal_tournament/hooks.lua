@@ -509,16 +509,16 @@ for _, function_name in ipairs({
 	end)
 end
 
--- Development: /timescale <number> runs the game at that speed (1 is normal), to look at fast effects slowly
-mod:command("timescale", "<number> - the speed of the game, 1 is normal", function (scale)
+-- UT's console command: /slomo <number> runs the game at that speed. Below 1 slows it down, above 1 speeds it up, 1 is normal.
+mod:command("slomo", "<number> - the speed of the game: below 1 slower, above 1 faster, 1 is normal", function (scale)
 	local number = tonumber(scale)
 
 	if not number or number < 0 then
-		mod:echo("timescale: a number, 1 is normal")
+		mod:echo("slomo: a number, 1 is normal")
 
 		return
 	end
 
 	Managers.time:set_global_time_scale(number)
-	mod:echo("timescale: %s", tostring(number))
+	mod:echo("slomo: %s", tostring(number))
 end)
