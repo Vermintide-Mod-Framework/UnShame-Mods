@@ -22,7 +22,7 @@ mod.items.register("flak_cannon", {
 	name = "UT2004 Flak Cannon",
 	type_name = "Flak Cannon",
 	description = "The Trident Series 7 Flechette Cannon has evolved into the \"Mk3 Negotiator\". Its ionized flechettes burn and cauterize flesh, fired in a spread from the barrel or by grenades that explode on impact and radiate flechettes.",
-	keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_close_range" },
+	keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_versatile" },
 	icon = "ut_flak_cannon_icon",
 	icon_package = "resource_packages/unreal_tournament/icons",
 	icon_materials = "ui/ut/flak_cannon_icon",
