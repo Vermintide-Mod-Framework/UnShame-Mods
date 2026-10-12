@@ -21,14 +21,7 @@ local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local instances = {}
 
 local function new(def)
-	-- (how the hero of a menu holds the mesh, guesses, /skin <weapon> 3p menu_pitch <degrees>, and the others, to try: menu_pitch, menu_yaw: in
-	-- degrees, up and to the left from the way the hero faces; menu_grip_forward: UT units further back along the mesh that the hand holds it,
-	-- the hero is to hold it by its handle, which the hero in the game does with the weapon turned to aim)
-	local CONFIG = {
-		menu_grip_forward = -25,
-		menu_pitch = 60,
-		menu_yaw = 0,
-	}
+	local CONFIG = {}
 
 	for key, value in pairs(def) do
 		CONFIG[key] = value
@@ -49,18 +42,11 @@ local function new(def)
 	local function place(entry)
 		local facing = Vector3.flat(Quaternion.forward(Unit.world_rotation(entry.character, 0)))
 		local wanted = Quaternion.look(Vector3.normalize(facing), Vector3.up())
-
-		-- (the hero of a menu does not aim: the weapon is held as it is carried, turned up and to the side from the way the hero faces)
-		if entry.in_menu then
-			wanted = Quaternion.multiply(wanted, Quaternion.multiply(Quaternion.axis_angle(Vector3(0, 0, 1), math.rad(CONFIG.menu_yaw)), Quaternion.axis_angle(Vector3(1, 0, 0), math.rad(CONFIG.menu_pitch))))
-		end
-
 		local rotation = Quaternion.multiply(Quaternion.inverse(Unit.world_rotation(entry.character, entry.hand_node)), wanted)
 
 		rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(math.rad(CONFIG.pitch), math.rad(CONFIG.roll), math.rad(CONFIG.yaw)))
 
-		local grip_forward = CONFIG.grip_forward + (entry.in_menu and CONFIG.menu_grip_forward or 0)
-		local grip = Vector3(CONFIG.grip_right, grip_forward, CONFIG.grip_up) * third_person.meters_per_unit
+		local grip = Vector3(CONFIG.grip_right, CONFIG.grip_forward, CONFIG.grip_up) * third_person.meters_per_unit
 
 		Unit.set_local_position(entry.unit, 0, -Quaternion.rotate(rotation, grip))
 		Unit.set_local_rotation(entry.unit, 0, rotation)
@@ -293,7 +279,6 @@ local function new(def)
 			entry = {
 				character = character,
 				hand_node = hand_node,
-				in_menu = true,
 				unit = unit,
 				world = world,
 			}
