@@ -60,6 +60,7 @@ local CONFIG = {
 	-- center, falling off like the explosion
 	combo_self_damage = 100,
 	combo_standard_power_level = 500, -- against a beastmen standard (banner) in the combo's radius
+	combo_standard_margin = 1, -- meters past the radius: the game's overlap is of the standard's body, this measures to its position
 	-- Shock jumps: the explosions throw the shooter away from them (UT's ShockProjectile.MomentumTransfer is 70000 and the combo's is
 	-- 150000), this many m/s at the center, falling off like the damage. They add to the speed the shooter has.
 	ball_jump_speed = 8,
@@ -797,7 +798,7 @@ local function blow_up_standards(impact_position, attacker_unit)
 	for _, standard in ipairs(standards) do
 		local position = POSITION_LOOKUP[standard]
 
-		if HEALTH_ALIVE[standard] and position and Vector3.distance(position, impact_position) <= explosion.radius then
+		if HEALTH_ALIVE[standard] and position and Vector3.distance(position, impact_position) <= explosion.radius + CONFIG.combo_standard_margin then
 			local direction = Vector3.normalize(position - impact_position)
 
 			DamageUtils.add_damage_network_player(damage_profile, 1, CONFIG.combo_standard_power_level, standard, attacker_unit, "full", position, direction, mod.items.weapons.shock_rifle.key, nil, 0, false, nil, false, 0, 1, attacker_unit)
