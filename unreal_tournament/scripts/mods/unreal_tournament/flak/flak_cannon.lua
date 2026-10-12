@@ -32,6 +32,8 @@ local TEMPLATE_NAME = mod.items.weapons.flak_cannon.template
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
+	-- TEMPORARY, for looking at the chunks and the shell: the speed of both is this much of what it is (1 for as it is)
+	debug_speed_scale = 0.2,
 	-- The blunderbuss's own ammo (16) is changed by this factor
 	ammo_multiplier = 1.33,
 	-- Flak chunk
@@ -504,11 +506,11 @@ mod:hook(ActionShotgun, "_shoot", function (func, self, num_shots_total, num_sho
 		self._shots_fired = self._shots_fired + 1
 
 		if action.ut_flak_chunks then
-			spawn_projectile(shot, position, spread_rotation(rotation, math.degrees_to_radians(CONFIG.chunk_spread_degrees)), CHUNK_ACTION_NAME, random_chunk_action(), CONFIG.chunk_speed)
+			spawn_projectile(shot, position, spread_rotation(rotation, math.degrees_to_radians(CONFIG.chunk_spread_degrees)), CHUNK_ACTION_NAME, random_chunk_action(), CONFIG.chunk_speed * CONFIG.debug_speed_scale)
 		else
 			local lobbed_rotation = Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3.right(), math.degrees_to_radians(CONFIG.shell_lob_degrees)))
 
-			spawn_projectile(shot, position, lobbed_rotation, SHELL_ACTION_NAME, SHELL_ACTION, CONFIG.shell_speed)
+			spawn_projectile(shot, position, lobbed_rotation, SHELL_ACTION_NAME, SHELL_ACTION, CONFIG.shell_speed * CONFIG.debug_speed_scale)
 		end
 	end
 end)
@@ -541,7 +543,7 @@ mod.aoe_callbacks.ut_flak_shell = function (self, aoe_data, position)
 	utils.apply_explosion_self_push(self._owner_unit, position, explosion, CONFIG.shell_jump_speed)
 
 	for _ = 1, CONFIG.shell_chunk_count do
-		spawn_projectile(shot, start, burst_rotation(rotation, math.degrees_to_radians(CONFIG.shell_chunk_cone_degrees)), CHUNK_ACTION_NAME, random_chunk_action(), CONFIG.chunk_speed)
+		spawn_projectile(shot, start, burst_rotation(rotation, math.degrees_to_radians(CONFIG.shell_chunk_cone_degrees)), CHUNK_ACTION_NAME, random_chunk_action(), CONFIG.chunk_speed * CONFIG.debug_speed_scale)
 	end
 end
 
@@ -677,7 +679,7 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 		self.power_level = power_level * damage / CONFIG.chunk_ut_damage
 
 		-- (a chunk that has slowed down too much does not hurt)
-		if Vector3.length(self.locomotion_extension:current_velocity()) < CONFIG.chunk_speed / 100 * CONFIG.chunk_min_speed_fraction then
+		if Vector3.length(self.locomotion_extension:current_velocity()) < CONFIG.chunk_speed * CONFIG.debug_speed_scale / 100 * CONFIG.chunk_min_speed_fraction then
 			self.power_level = 0
 		end
 	end
