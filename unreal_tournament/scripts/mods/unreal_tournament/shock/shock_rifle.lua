@@ -11,9 +11,9 @@ mod.items.register("shock_rifle", {
 	template = "ut_shock_rifle_template",
 	base_item = "bw_skullstaff_beam",
 	deus_copy = "deus_bw_skullstaff_beam",
+	name = "UT2004 Shock Rifle",
 	-- UT2004's manual calls it the ASMD Shock Rifle
-	name = "ASMD",
-	type_name = "Shock Rifle",
+	type_name = "ASMD Shock Rifle",
 	-- UT2004's description, shortened
 	description = "The ASMD Shock Rifle has changed little since its incorporation into the Tournaments. Fire the photon beam into the slow-moving plasma charge to release the explosive energy of the anti-photons contained within its EM field.",
 	keywords = { "weapon_keyword_sniper", "weapon_keyword_crowd_control", "ut_weapon_keyword_combo" },
@@ -25,12 +25,12 @@ mod.items.register("shock_rifle", {
 	skins = {
 		{
 			key = "ut_shock_rifle_skin_2004",
-			name = "ASMD",
+			name = "UT2004 Shock Rifle",
 			default = true,
 		},
 		{
 			key = "ut_shock_rifle_skin_2003",
-			name = "ASMD (UT2003)",
+			name = "UT2003 Shock Rifle",
 			icon = "ut_shock_rifle_2003_icon",
 			icon_materials = "ui/ut/shock_rifle_2003_icon",
 		},
