@@ -490,6 +490,24 @@ local function apply_shock_rifle()
 	-- Already applied by a previous load of this mod, start over from the vanilla values
 	restore_beam_staff()
 
+	-- The chart of the item's stats (0 to 7): the beam is the normal attack, the ball the heavy one
+	template.weapon_diagram = {
+		light_attack = {
+			[DamageTypes.ARMOR_PIERCING] = 5,
+			[DamageTypes.CLEAVE] = 1,
+			[DamageTypes.SPEED] = 5,
+			[DamageTypes.STAGGER] = 2,
+			[DamageTypes.DAMAGE] = 5,
+		},
+		heavy_attack = {
+			[DamageTypes.ARMOR_PIERCING] = 3,
+			[DamageTypes.CLEAVE] = 4,
+			[DamageTypes.SPEED] = 6,
+			[DamageTypes.STAGGER] = 4,
+			[DamageTypes.DAMAGE] = 4,
+		},
+	}
+
 	local actions = template.actions
 	local attack_meta_data = template.attack_meta_data
 	local original = {

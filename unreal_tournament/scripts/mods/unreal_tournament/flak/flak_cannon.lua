@@ -417,6 +417,24 @@ local function apply_flak_cannon()
 	-- Already applied by a previous load of this mod, start over from the original
 	restore_blunderbuss()
 
+	-- The chart of the item's stats (0 to 7): the primary fire is the normal attack, the shell the heavy one
+	template.weapon_diagram = {
+		light_attack = {
+			[DamageTypes.ARMOR_PIERCING] = 2,
+			[DamageTypes.CLEAVE] = 5,
+			[DamageTypes.SPEED] = 5,
+			[DamageTypes.STAGGER] = 4,
+			[DamageTypes.DAMAGE] = 5,
+		},
+		heavy_attack = {
+			[DamageTypes.ARMOR_PIERCING] = 4,
+			[DamageTypes.CLEAVE] = 7,
+			[DamageTypes.SPEED] = 3,
+			[DamageTypes.STAGGER] = 6,
+			[DamageTypes.DAMAGE] = 6,
+		},
+	}
+
 	local actions = template.actions
 	local original = {
 		action_one_default = actions.action_one.default,
