@@ -922,7 +922,8 @@ local function sync_instagib_actions()
 		return
 	end
 
-	local player = Managers.player and Managers.player:local_player()
+	-- (not before there is a network game: asking the engine for this peer's id is an error in the menus)
+	local player = Managers.player and Managers.player:local_player_safe()
 	local unit = player and player.player_unit
 	local wanted = unit ~= nil and Unit.alive(unit) and utils.wielded_template_name(unit) == TEMPLATE_NAME and utils.wielded_skin(unit) == INSTAGIB_SKIN
 
