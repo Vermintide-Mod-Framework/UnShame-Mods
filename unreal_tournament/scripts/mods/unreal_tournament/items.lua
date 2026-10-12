@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- The mod's weapons as items of their own: each is a copy of a game weapon (template and item) with its own name, usable by every career.
+-- The mod's weapons as items of their own: each is a copy of a game weapon (template and item) with its own name, usable by the careers of that weapon.
 -- The game's weapon is left unchanged.
 --
 --   items.register(setting_id, { key, template, base_item, deus_copy, name, type_name, description, keywords, texts, icon, icon_package, icon_materials })
@@ -81,21 +81,6 @@ local function set_icons(tables, icon)
 	else
 		set_icon()
 	end
-end
-
--- Every career
-local function all_careers()
-	local careers = {}
-
-	for career_name, settings in pairs(CareerSettings) do
-		if settings.playfab_name then
-			careers[#careers + 1] = career_name
-		end
-	end
-
-	table.sort(careers)
-
-	return careers
 end
 
 -- What the mod saves between games, in its settings file:
@@ -351,7 +336,9 @@ function items.register(setting_id, definition)
 	item.description = definition.key .. "_description"
 	-- The line under the name in the inventory
 	item.item_type = definition.key .. "_type"
-	item.can_wield = all_careers()
+	-- The careers of the weapon it is a copy of (the game's first person animations, units and attachments are made for them: another
+	-- career equipping it crashes the game)
+	item.can_wield = table.clone(definition.can_wield or ItemMasterList[definition.base_item].can_wield)
 	-- The base weapon's skins don't apply (register_skins gives the item its own)
 	item.skin_combination_table = nil
 	-- What parse_item_master_list does for every item
