@@ -589,6 +589,15 @@ local function new(def)
 			return
 		end
 
+		-- The weapon is not what is wielded: the game has taken its weapons down and made them again (a weapon of the player's that is upgraded
+		-- or rerolled while it is held), which does not tell the put away of the one that was wielded, and the one that is wielded now (the
+		-- melee weapon) is still hidden as the skin's weapon is
+		if utils.wielded_template_name(fp.unit) ~= CONFIG.template then
+			destroy()
+
+			return
+		end
+
 		update_animation(dt)
 		update_bob(fp.unit, dt)
 
