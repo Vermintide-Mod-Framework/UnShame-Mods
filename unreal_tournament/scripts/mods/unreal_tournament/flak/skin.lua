@@ -35,8 +35,8 @@ local CONFIG = {
 	chunk_trail_width = 0.1, -- m
 	-- The glow around the chunk: it is drawn a little behind the chunk, so the chunk's mesh covers its middle, and is dim so that it
 	-- stays a halo
-	chunk_glow_size = 0.6, -- m
-	chunk_glow_intensity = 0.5,
+	chunk_glow_size = 0.35, -- m
+	chunk_glow_intensity = 0.4,
 	chunk_glow_behind = 0.15, -- m, away from the camera
 	-- FlakShell: the mesh, FlakGlow (a gold sprite) and FlakShellTrail (smoke, 0.5 to 0.6 s, 20 to 35 units, growing 15 a second)
 	shell_glow_size = 40,
