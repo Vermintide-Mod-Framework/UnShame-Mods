@@ -520,7 +520,7 @@ mod:command("slomo", "<number> - the speed of the game: below 1 slower, above 1 
 	end
 
 	Managers.time:set_global_time_scale(number)
-	mod:echo("slomo: %s", tostring(number))
+	mod:echo("slomo: %g", number)
 end)
 
 -- How the bots shoot a weapon of the mod. The game's bot shooting (BTBotShootAction) is hooked once, here (a mod can hook a function once), and
