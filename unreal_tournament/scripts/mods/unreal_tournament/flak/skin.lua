@@ -333,10 +333,11 @@ mod.shotgun_start_callbacks.flak_skin = function (action, new_action)
 	end, in_third_person and third_person.meters_per_unit or skin.unit_scale)
 end
 
--- The shot sounds of the blunderbuss are in its animation: while the skin is on the animations of the shots are not played on the
--- player's own first person unit (the model of the skin plays UT's)
+-- The shot and reload sounds of the blunderbuss are in its animations: while the skin is on the animations of the shots, and of reloading
+-- (UT's has none: the game does it when ammo is picked up and when the weapon is wielded), are not played on the player's own first
+-- person unit (the model of the skin plays UT's)
 mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
-	return skin_api.enabled() and (event == "attack_shoot" or event == "attack_shoot_last")
+	return skin_api.enabled() and (event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil)
 end
 
 -- The flow events of the game's units of the chunks and the shell start their effects as they are made: not while the skin is on
