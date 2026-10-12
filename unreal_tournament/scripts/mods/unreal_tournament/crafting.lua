@@ -343,8 +343,9 @@ mod:hook(BackendInterfaceCraftingPlayfab, "craft", function (func, self, career_
 	return id, self:get_recipe_by_name(recipe_name)
 end)
 
--- The crafting pages (the console ones, which is what the game's inventory uses) show what a recipe needs of the materials, and let the player
--- craft when they have it: for one of the mod's weapons it needs none, so they show 0/0 and the player can craft
+-- The crafting pages (the console ones, which is what the game's inventory uses) show what a recipe needs of the materials (what the player
+-- has / what it takes), and let the player craft when they have it: for one of the mod's weapons it takes none, so they show what the player
+-- has / 0 and the player can craft
 local PAGES = {
 	"CraftPageCraftItemConsole",
 	"CraftPageRollPropertiesConsole",
@@ -364,7 +365,7 @@ for _, page_name in ipairs(PAGES) do
 			local content = self._widgets_by_name["material_text_" .. i].content
 
 			if content.visible then
-				content.text = "0/0"
+				content.text = (string.gsub(content.text, "/.*$", "/0"))
 				content.warning = false
 			end
 		end
@@ -377,4 +378,16 @@ for _, page_name in ipairs(PAGES) do
 			self:_set_craft_button_disabled(false)
 		end
 	end)
+end
+
+-- The pages of the rerolls do not set the requirements again when a weapon is put in or taken out (only when they are entered and after a
+-- craft), so what they show is of the weapon that was in before: the mod's weapons have them set again
+for _, page_name in ipairs({ "CraftPageRollPropertiesConsole", "CraftPageRollTraitConsole" }) do
+	for _, function_name in ipairs({ "_add_craft_item", "_remove_craft_item" }) do
+		mod:hook_safe(_G[page_name], function_name, function (self, backend_id)
+			if items.is_custom(backend_id) then
+				self:setup_recipe_requirements()
+			end
+		end)
+	end
 end
