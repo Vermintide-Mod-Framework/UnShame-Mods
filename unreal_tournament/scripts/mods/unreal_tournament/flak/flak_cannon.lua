@@ -63,8 +63,9 @@ local CONFIG = {
 	-- A chunk also goes through enemies. Each enemy it goes through and each bounce uses up one of the
 	-- chunk's passes, and a chunk has its bounces plus this many in all.
 	-- The multipliers of a chunk per armor type (unarmored, armored, monsters, players, berserkers, super armor). UT has no
-	-- armor, so there is no bonus against it. Super armor (chaos warriors) takes half.
-	chunk_armor_attack = {1, 1, 1, 1, 1, 0.5},
+	-- armor. Small flechettes in a spread are weak against armor (the Blunderbuss's pellets even more so), and super armor (chaos warriors)
+	-- takes half.
+	chunk_armor_attack = {1, 0.7, 1, 1, 1, 0.5},
 	chunk_armor_impact = {1, 1, 1, 1, 1, 0.25},
 	chunk_bounces = 2, -- the most bounces a chunk has in UT2004
 	chunk_extra_bounces = 2,
