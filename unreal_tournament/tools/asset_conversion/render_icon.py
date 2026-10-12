@@ -1,12 +1,14 @@
 import sys, re, zlib, struct, math
 
-# Usage: render_icon.py in.bsi out.png size yaw pitch roll texture0.png[,texture1.png...]
+# Usage: render_icon.py in.bsi out.png size yaw pitch roll texture0.png[,texture1.png...] [fill]
 # A software render of a converted mesh (psk2bsi.py's bsi: one geometry per material, a texture per geometry, in the order given) as an
 # icon: a square png with a transparent background, the mesh lit from above and the left, seen from its right side turned by yaw (about
 # the vertical) and pitch (degrees), and rolled in the picture by roll (degrees, so that a weapon lies diagonally as the game's icons do).
+# fill is how much of the picture the longer side of the mesh takes up (0.92 if it is not given): the game's frame covers the edges of an icon.
 src, dst, size = sys.argv[1], sys.argv[2], int(sys.argv[3])
 yaw, pitch, roll = [math.radians(float(v)) for v in sys.argv[4:7]]
 texture_paths = sys.argv[7].split(',')
+FILL = float(sys.argv[8]) if len(sys.argv) > 8 else 0.92
 SUPER = 3
 
 
@@ -104,7 +106,7 @@ T = [transform(p) for p in points]
 minx = min(t[0] for t in T); maxx = max(t[0] for t in T)
 miny = min(t[1] for t in T); maxy = max(t[1] for t in T)
 W = size * SUPER
-scale = (W * 0.92) / max(maxx - minx, maxy - miny)
+scale = (W * FILL) / max(maxx - minx, maxy - miny)
 offx = (W - (maxx - minx) * scale) / 2
 offy = (W - (maxy - miny) * scale) / 2
 
