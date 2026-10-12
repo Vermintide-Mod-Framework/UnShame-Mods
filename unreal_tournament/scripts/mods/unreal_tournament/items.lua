@@ -63,6 +63,10 @@ mod:hook_safe(IngameUI, "init", function ()
 	end
 
 	table.clear(icons_waiting)
+
+	-- (the renderer made now has the materials of the icons, and keeps them when the mod is reloaded: the flag is a global, to be found after a
+	-- reload, which makes the items again, with the icon of the game's)
+	UT_ICONS_IN_RENDERER = true
 end)
 
 -- Every career of the game: the copy is not for the ones the game's weapon is for
@@ -241,12 +245,12 @@ function items.register(setting_id, definition)
 
 	-- (the icon is a texture of its own, not one of the game's atlases: drawn by its material's name, which the UI's renderers have to be given.
 	-- The in-game UI's renderer is made when a level is loaded, so when the mod is loaded in a level the item keeps the icon of the game's
-	-- item until the next one)
+	-- item until the next one, unless the renderer was made with the icons' materials, as it was when the mod is reloaded)
 	UIAtlasHelper.add_standalone_texture_by_name(definition.icon)
 	hold_package(definition.icon_package)
 	add_material_set(definition.icon_materials)
 
-	if Managers.ui and Managers.ui._ingame_ui then
+	if Managers.ui and Managers.ui._ingame_ui and not UT_ICONS_IN_RENDERER then
 		icons_waiting[definition.key] = true
 	else
 		item.inventory_icon = definition.icon
