@@ -38,6 +38,7 @@ mod.items.register("shock_rifle", {
 		{
 			key = "ut_shock_rifle_skin_instagib",
 			name = "UT2004 Instagib Shock Rifle",
+			description = "This version of the Shock Rifle will instantly kill most enemies.",
 			icon = "ut_shock_rifle_instagib_icon",
 			icon_materials = "ui/ut/shock_rifle_instagib_icon",
 		},
@@ -107,7 +108,8 @@ local CONFIG = {
 	implosion_pull_softening = 1, -- m, the pull is weaker than this close to the center
 	implosion_max_speed = 30, -- m/s
 	-- The Instagib skin (UT2004's SuperShockRifle): both fire modes shoot a beam (SuperShockBeamFire), which does 1000 damage (DamageMax) to
-	-- the beam's 45 and fires every 1.1 seconds, and shots cost no ammo (here: no overcharge). The stagger is scaled less than the damage.
+	-- the beam's 45 and fires every 1.1 seconds. The stagger is scaled less than the damage. (It has no ammo in UT; here it overheats like the
+-- other skins.)
 	instagib_damage = 1000,
 	instagib_fire_rate = 1.1,
 	instagib_impact_multiplier = 2,
@@ -126,7 +128,6 @@ local overcharge_values = PlayerUnitStatusSettings.overcharge_values
 
 overcharge_values.ut_shock_beam = overcharge_values.beam_staff_sniper * CONFIG.overcharge_scale
 overcharge_values.ut_shock_ball = overcharge_values.ut_shock_beam
-overcharge_values.ut_shock_instagib = 0
 
 -- The game already defines a gravity of 0 (the drake pistols use it). Reusing it means NetworkLookup.projectile_gravity_settings does not
 -- have to be extended.
@@ -351,7 +352,7 @@ local function build_beam_action(instagib_own_action, instagib_other_action)
 		hit_effect = NO_HIT_EFFECT,
 		is_spell = true,
 		kind = "handgun",
-		overcharge_type = instagib_own_action and "ut_shock_instagib" or "ut_shock_beam",
+		overcharge_type = "ut_shock_beam",
 		reset_aim_on_attack = true,
 		spread_template_override = "ut_shock_beam",
 		total_time = total_time,
