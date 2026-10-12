@@ -69,7 +69,9 @@ local function add_to_inventory(mirror)
 	end
 end
 
-mod:hook_safe(PlayFabMirrorBase, "inventory_request_cb", function (self)
+-- (the mirror the game uses is PlayFabMirrorAdventure: a class gets a copy of its parent's functions when it is made, so the base class's
+-- function is not the one that runs)
+mod:hook_safe(PlayFabMirrorAdventure, "inventory_request_cb", function (self)
 	add_to_inventory(self)
 end)
 
@@ -85,6 +87,9 @@ function items.register(setting_id, definition)
 
 	-- (the actions say which template they are of: the game tells the other peers which action a projectile came from by it)
 	utils.set_actions_lookup_data(template.actions, definition.template)
+
+	-- (the game gives every template its name when it loads them: the skins ask the template which weapon it is by it)
+	template.name = definition.template
 
 	Weapons[definition.template] = template
 
