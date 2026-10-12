@@ -4,7 +4,7 @@ local mod = get_mod("unreal_tournament")
 -- pickup mesh of it instead of the game's weapon, as this player sees them: the skin is a setting of each machine, and the game's own
 -- units are what the others' machines show. The characters are the player's own (in a third person view), the other players and the
 -- bots. Made by weapon_skin.lua for each weapon (mod.weapon_skin.new), with what is the weapon's own in its definition:
---   id: the weapon's setting, always: it has none, template: the game's template it is, unit_name: the mesh (tools/asset_conversion/psk2bsi.py, with the
+--   id: the weapon's setting (always = true if it has none), template: the game's template it is, unit_name: the mesh (tools/asset_conversion/psk2bsi.py, with the
 --   DrawScale of the pickup in it), materials: { slot = material } to set on it, hand_node: where the game links the weapon to the
 --   character, meters_per_unit: the meters of a UT unit of the mesh, scale: how much of it is held (UT's pickups are far bigger
 --   than the weapon in the hand is), grip_*: the point of the mesh that is in the hand (right, forward, up, UT units), yaw, pitch,
@@ -80,7 +80,7 @@ local function new(def)
 		end
 	end
 
-	-- The mesh, made in a world, hidden and with its materials
+	-- A hidden mesh with its materials set
 	local function new_mesh(world)
 		local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
 
@@ -256,11 +256,11 @@ local function new(def)
 		end
 	end
 
-	-- The character of a menu (the hero of the equipment screen: not one of the game's players, which is what update looks at) holds the
-	-- mesh: [character unit] = { character, hand_node, unit, world }
+	-- Heroes in menus that hold the mesh. They aren't players, so update doesn't see them.
+	-- [character unit] = { character, hand_node, unit, world }
 	local in_menu = {}
 
-	-- The character holds the mesh, which is placed as in the game, and the game's units (the previewer's) are hidden; the mesh is shown if visible
+	-- Makes the hero hold the mesh, placed as in the world, and hides the previewer's own units
 	function third_person.hold_in_menu(character, world, game_units, visible)
 		local entry = in_menu[character]
 
@@ -288,7 +288,7 @@ local function new(def)
 		place(entry)
 		Unit.set_unit_visibility(entry.unit, visible)
 
-		-- (the effects of the game's units, the Beam Staff's flame, are put out as the game does when it unwields: hidden units still show them)
+		-- Hidden units still show their effects (the Beam Staff's flame), so they get the unwield event
 		for _, game_unit in ipairs(game_units) do
 			if Unit.alive(game_unit) then
 				Unit.set_unit_visibility(game_unit, false)
@@ -297,7 +297,7 @@ local function new(def)
 		end
 	end
 
-	-- (the world has to be there still: before the previewer takes its character down)
+	-- Call before the previewer destroys its character: the world must still exist
 	function third_person.release_from_menu(character)
 		local entry = in_menu[character]
 

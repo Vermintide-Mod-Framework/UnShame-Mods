@@ -303,8 +303,8 @@ local function fire_light(follow, locked)
 	})
 end
 
--- The flashes at the muzzle: `follow` is a function that gives where it is, `locked` (the player's own first person view) one that gives the
--- unit it is linked to and where it is in it, see skin_particles.lua
+-- Muzzle flashes. `follow` gives the position; `locked` (the player's own first person view) gives a unit and a position in it, see
+-- skin_particles.lua.
 function fx.beam_muzzle_flash(follow, scale, locked)
 	fire_light(follow, locked)
 

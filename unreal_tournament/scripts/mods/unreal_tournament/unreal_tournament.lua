@@ -13,7 +13,7 @@ mod.setting_changed_callbacks = {}
 mod.update_callbacks = {}
 mod.unload_callbacks = {}
 mod.level_exit_callbacks = {}
--- all_mods_loaded_callbacks: for what has to be done after the other mods have: hooks that are to come before theirs
+-- all_mods_loaded_callbacks: run once all mods are loaded, for hooks that must run before other mods' hooks
 mod.all_mods_loaded_callbacks = {}
 
 -- (an error in one of them is told and the others are still called: what a weapon takes back when the mod is unloaded or a level is left
@@ -62,7 +62,7 @@ end
 -- The hooks of the game's functions that the weapons share, and the tables of callbacks they run
 mod:dofile("scripts/mods/unreal_tournament/hooks")
 
--- The weapons as items of their own (copies of the game's weapons), registered by each weapon's file
+-- The weapons as items of their own; each weapon's file registers its item
 mod.items = mod:dofile("scripts/mods/unreal_tournament/items")
 
 -- The scaled particle effects of the weapons, the one copy of them
@@ -87,10 +87,10 @@ mod:dofile("scripts/mods/unreal_tournament/bio/bio_rifle")
 mod:dofile("scripts/mods/unreal_tournament/bio/skin")
 mod:dofile("scripts/mods/unreal_tournament/link/link_gun")
 mod:dofile("scripts/mods/unreal_tournament/link/skin")
--- Crafting the weapons that are items of their own
+-- Crafting for those items
 mod:dofile("scripts/mods/unreal_tournament/crafting")
 
--- The weapon skins in the menus (the hero of the equipment screen, the inspection of an item)
+-- Weapon skins in the menus
 mod:dofile("scripts/mods/unreal_tournament/menu_preview")
 mod:dofile("scripts/mods/unreal_tournament/announcer")
 mod:dofile("scripts/mods/unreal_tournament/movement")
@@ -99,5 +99,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- (seen in the chat each time the mod is loaded or reloaded, to know which build is running: the number is the count of
 -- commits of the repository, which goes up by one with every change). Only with the developer mode of the mod framework on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 527)")
+	mod:echo("Unreal Tournament loaded (build 528)")
 end

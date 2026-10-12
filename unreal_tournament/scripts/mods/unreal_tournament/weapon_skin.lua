@@ -152,9 +152,8 @@ local function new(def)
 		return item_data and BackendUtils.get_item_template(item_data).name
 	end
 
-	-- Where the muzzle of the model is seen (the unit has to be alive: the skin goes before it). The model is drawn with a field of view of
-	-- its own (see WEAPON_VERTICAL_FOV), so a point of it is seen where the camera, with its wider one, sees a point further from the middle
-	-- of the view, by the ratio of the tangents of the half field of views: the effects of the shot, which the camera draws, are put there.
+	-- The muzzle's position in the world, as the camera sees it. The model is drawn with its own, narrower field of view (WEAPON_VERTICAL_FOV),
+	-- so the point is moved away from the view axis by the ratio of the tangents of the half angles. The camera draws the shot's effects.
 	function self.muzzle_position()
 		if not skin or not Unit.alive(skin.unit) then
 			return nil
@@ -171,9 +170,8 @@ local function new(def)
 		return camera_position + right * (Vector3.dot(offset, right) * ratio) + forward * Vector3.dot(offset, forward) + up * (Vector3.dot(offset, up) * ratio)
 	end
 
-	-- The same place, in the frame of the first person unit (the model is linked to it: where the camera is, turned as it is, so x is to
-	-- the right, y ahead and z up), worked out from the model's own pose and not from where the engine has put it in the world: gives the unit
-	-- and the place, for what is to be linked to the unit (skin_particles.lua)
+	-- The same point in the first person unit's frame (x right, y ahead, z up), from the model's local pose, not its world position. Returns the
+	-- unit and the point, for particles linked to the unit (skin_particles.lua).
 	function self.muzzle_in_view()
 		local fp = local_first_person()
 
@@ -620,9 +618,8 @@ local function new(def)
 			return
 		end
 
-		-- The weapon is not what is wielded: the game has taken its weapons down and made them again (a weapon of the player's that is upgraded
-		-- or rerolled while it is held), which does not tell the put away of the one that was wielded, and the one that is wielded now (the
-		-- melee weapon) is still hidden as the skin's weapon is
+		-- The weapon is no longer wielded. Upgrading or rerolling the held weapon makes the game rebuild the inventory without announcing the
+		-- put away, which would leave the melee weapon hidden.
 		if utils.wielded_template_name(fp.unit) ~= CONFIG.template then
 			destroy()
 
@@ -700,6 +697,6 @@ end)
 
 return {
 	new = new,
-	-- (by setting id)
+	-- By setting id
 	skins = skins,
 }

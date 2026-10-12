@@ -67,8 +67,7 @@ local CONFIG = {
 		flak_monkey = { event = "ut_announcer_flak_monkey", kills = 15 },
 		combo_whore = { event = "ut_announcer_combo_whore", kills = 15 },
 	},
-	-- The weapons of the call outs: what the item that killed has as its template (the setting of the weapon, if it has one, must be on, or
-	-- it is the game's own weapon that has it)
+	-- Weapons with call outs, by the template of the item that killed. The weapon's setting, if it has one, must be on.
 	flak_cannon = { setting = "flak_cannon", template = "blunderbuss_template_1" },
 	shock_rifle = { template = mod.items.weapons.shock_rifle.template },
 	-- PlayerController.PlayRewardAnnouncement: an announcement that is not forced is not played if one has been played in the last second

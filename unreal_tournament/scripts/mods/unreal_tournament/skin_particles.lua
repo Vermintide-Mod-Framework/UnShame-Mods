@@ -18,10 +18,9 @@ local mod = get_mod("unreal_tournament")
 --   spin: turns per second (the angle it starts at is random)
 --   position: where it is; velocity, drag: where it goes and how fast that slows (per second); follow: a function that gives
 --       where it is now, nothing when it is to end
---   locked: instead of follow, a function that gives a unit and where the particle is in that unit's own frame (the unit is the first
---       person view's, which is where the camera is and turns with it, looking along y): the engine moves a particle that is linked to
---       a unit with it, which a position that is worked out and set in the update is not (it is of the frame before, or of the engine's
---       order of things: it trails what it follows). Nothing when it is to end
+--   locked: instead of follow, a function that gives a unit and the particle's position in that unit's frame (the first person unit: at the
+--       camera, looking along y). The particle is linked to the unit and placed in pre_render, so it doesn't trail what it follows.
+--       Nothing when it is to end
 --   delay: seconds before it shows
 --   additive: 1 (the default) adds its color to the screen, 0 blends it as the transparency of its texture says (smoke)
 --   falloff: how far a light reaches, in meters (particles.light only)
@@ -71,7 +70,7 @@ end
 
 local function release(particle)
 	if particle.parent then
-		-- (the unit it was linked to may be gone, and has let go of it)
+		-- The parent may be gone already
 		if Unit.alive(particle.parent) then
 			World.unlink_unit(particle.world, particle.entry.unit)
 		end
@@ -261,7 +260,7 @@ local function place(particle, dt, camera_position, camera_rotation)
 			particle.parent = parent
 		end
 
-		-- (in the parent's frame, which is the camera's: it looks along y, up is z)
+		-- In the parent's frame, which is the camera's
 		position = local_position
 		camera_rotation = Quaternion.identity()
 	elseif particle.follow then

@@ -10,10 +10,10 @@ mod.items.register("shock_rifle", {
 	key = "ut_shock_rifle",
 	template = "ut_shock_rifle_template",
 	base_item = "bw_skullstaff_beam",
-	-- (what UT2004's manual calls it: the ASMD Shock Rifle)
+	-- UT2004's manual calls it the ASMD Shock Rifle
 	name = "ASMD",
 	type_name = "Shock Rifle",
-	-- (UT2004's own description of it, shortened)
+	-- UT2004's description, shortened
 	description = "The ASMD Shock Rifle has changed little since its incorporation into the Tournaments. Fire the photon beam into the slow-moving plasma charge to release the explosive energy of the anti-photons contained within its EM field.",
 	keywords = { "weapon_keyword_sniper", "weapon_keyword_crowd_control", "ut_weapon_keyword_combo" },
 	texts = { ut_weapon_keyword_combo = "Combo" },
@@ -851,7 +851,7 @@ local function enable_shock_rifle()
 	apply_shock_rifle()
 end
 
--- (when the mod is switched off or unloaded)
+-- When the mod is switched off or unloaded
 local function disable_shock_rifle()
 	restore_beam_staff()
 	clear_implosions()

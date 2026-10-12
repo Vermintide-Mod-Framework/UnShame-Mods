@@ -119,7 +119,7 @@ end
 
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
-	-- (no setting: the weapon is an item of its own, shown the UT way)
+	-- No setting: the skin is always shown
 	always = true,
 	name = "shock",
 	template = TEMPLATE_NAME,
@@ -221,8 +221,7 @@ local function shot(action, new_action, animation_name)
 	end
 	local scale = in_third_person and third_person.meters_per_unit or skin.unit_scale
 
-	-- (in the first person view it is linked to the first person unit, which the model is: they move together whatever order the engine does
-	-- things in)
+	-- In the first person view the flash is linked to the first person unit, like the model
 	local locked
 
 	if not in_third_person then
