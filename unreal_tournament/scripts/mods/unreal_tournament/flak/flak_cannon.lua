@@ -148,7 +148,7 @@ local CONFIG = {
 	shell_ragdoll_speed = 30,
 	shell_explosion_full_damage_radius = 0.5, -- damage falls off linearly from here to the radius
 	shell_standard_power_level = 500, -- against a beastmen standard (banner) in the explosion's radius
-	-- Chunks of one shot that spawn this close in time (seconds) are one shot, see buffs_used
+	-- Chunks of one shot that spawn this close in time (seconds) are one shot, see shots
 	shot_window = 0.1,
 	shell_chunk_count = 6,
 	shell_chunk_cone_degrees = 88, -- the chunks go up to this far from the direction of the shell, in yaw and pitch
@@ -769,32 +769,36 @@ local function bounce_off_shield(self, impact_data, hit_unit, hit_position, hit_
 end
 
 -- The game's hitscan shotguns run the buffs that trigger on a hit (the headshot ammo trait, ...) only for the first pellet that hits, once per
--- shot (ActionShotgun's check_buffs). The chunks are projectiles that each run them, so the ones after the first of a shot don't:
--- buffs_used[owner unit] is the spawn time of the shot whose first hit has run them.
-local buffs_used = {}
-local skip_buffs = false
+-- shot (ActionShotgun's check_buffs). The chunks are projectiles that each run them. Here a shot runs them once, and once more if a chunk gets a
+-- headshot after a hit that was not one, so a headshot by any chunk counts: shots[owner unit] = { t = the spawn time of the shot,
+-- hit = if they have run, head = if they have run for a headshot }.
+local shots = {}
+local chunk_in_hit
 
-mod:hook(DamageUtils, "buff_on_attack", function (func, ...)
-	if skip_buffs then
-		return false
+mod:hook(DamageUtils, "buff_on_attack", function (func, unit, hit_unit, attack_type, is_critical_strike, hit_zone_name, ...)
+	local chunk = chunk_in_hit
+
+	if chunk and chunk._ut_flak_spawn_t then
+		local spawn_t = chunk._ut_flak_spawn_t
+		local shot = shots[unit]
+
+		if not shot or math.abs(shot.t - spawn_t) >= CONFIG.shot_window then
+			shot = { t = spawn_t }
+			shots[unit] = shot
+		end
+
+		local head = hit_zone_name == "head"
+
+		if shot.hit and (not head or shot.head) then
+			return false
+		end
+
+		shot.hit = true
+		shot.head = shot.head or head
 	end
 
-	return func(...)
+	return func(unit, hit_unit, attack_type, is_critical_strike, hit_zone_name, ...)
 end)
-
-local function buffs_already_run(chunk)
-	local owner_unit = chunk._owner_unit
-	local spawn_t = chunk._ut_flak_spawn_t
-	local used = buffs_used[owner_unit]
-
-	if used and spawn_t and math.abs(used - spawn_t) < CONFIG.shot_window then
-		return true
-	end
-
-	buffs_used[owner_unit] = spawn_t
-
-	return false
-end
 
 mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
 	if AiUtils.attack_is_shield_blocked(hit_unit, self._owner_unit, nil, hit_direction) and bounce_off_shield(self, impact_data, hit_unit, hit_position, hit_direction, hit_normal) then
@@ -829,12 +833,12 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 		end
 	end
 
-	-- (an error mustn't leave the buffs skipped)
-	skip_buffs = buffs_already_run(self)
+	-- (an error mustn't leave the chunk set)
+	chunk_in_hit = self
 
 	local ok, error_message = pcall(func, self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
 
-	skip_buffs = false
+	chunk_in_hit = nil
 	self.power_level = power_level
 
 	if not ok then
