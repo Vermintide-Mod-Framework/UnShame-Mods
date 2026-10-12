@@ -1048,7 +1048,7 @@ mod:hook_safe(PlayerProjectileUnitExtension, "mark_for_deletion", function (self
 end)
 
 -- The template is shared game state: it is patched in place, what is touched is saved to be put
--- back on disable, and when the mod is unloaded (a reload would take the patched template for the original).
+-- back on disable, and when the mod is unloaded.
 local saved = {}
 
 local function restore_drakegun()
@@ -1079,9 +1079,6 @@ local function apply_bio_rifle()
 	if not template then
 		return
 	end
-
-	-- Already applied by a previous load of this mod, start over from the original
-	restore_drakegun()
 
 	local actions = template.actions
 	local original = {

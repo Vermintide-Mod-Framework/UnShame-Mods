@@ -441,7 +441,7 @@ local function build_ball_action()
 end
 
 -- The staff template is shared game state, so it is patched in place and every touched value is saved, to be put back when the weapon is
--- disabled and when the mod is unloaded (a reload would mistake the patched template for the vanilla one).
+-- disabled and when the mod is unloaded.
 
 local saved = {}
 local ATTACK_META_DATA_FIELDS = {
@@ -485,9 +485,6 @@ local function apply_shock_rifle()
 	if not template then
 		return
 	end
-
-	-- Already applied by a previous load of this mod, start over from the vanilla values
-	restore_beam_staff()
 
 	-- The chart of the item's stats (0 to 7): the beam is the normal attack, the ball the heavy one
 	template.weapon_diagram = {

@@ -255,7 +255,7 @@ local needs_release = setmetatable({}, {
 })
 
 -- The template is shared game state: it is patched in place, what is touched is saved to be put
--- back on disable, and when the mod is unloaded (a reload would take the patched template for the original).
+-- back on disable, and when the mod is unloaded.
 local saved = {}
 
 local function restore_crossbow()
@@ -287,9 +287,6 @@ local function apply_rocket_launcher()
 	if not template then
 		return
 	end
-
-	-- Already applied by a previous load of this mod, start over from the original
-	restore_crossbow()
 
 	local actions = template.actions
 	local original = {

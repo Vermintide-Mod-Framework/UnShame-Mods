@@ -394,7 +394,7 @@ local function build_shell_launcher(original)
 end
 
 -- The template is shared game state: it is patched in place, what is touched is saved to be put
--- back on disable, and when the mod is unloaded (a reload would take the patched template for the original).
+-- back on disable, and when the mod is unloaded.
 local saved = {}
 
 local PROJECTILE_UNIT_TEMPLATES = {
@@ -443,9 +443,6 @@ local function apply_flak_cannon()
 	if not template then
 		return
 	end
-
-	-- Already applied by a previous load of this mod, start over from the original
-	restore_blunderbuss()
 
 	-- The chart of the item's stats (0 to 7): the primary fire is the normal attack, the shell the heavy one
 	template.weapon_diagram = {

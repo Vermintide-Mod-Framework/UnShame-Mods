@@ -331,7 +331,7 @@ utils.register_network_lookup("buff_templates", ALLY_BUFF_FADING)
 
 -- Weapon template
 -- The template is shared game state: it is patched in place, what is touched is saved to be put back on disable.
--- It is put back when the mod is unloaded too (a reload would take the patched template for the original).
+-- It is put back when the mod is unloaded too.
 local saved = {}
 
 -- The default stance. Delayed pose events: the animation event is only sent while is_valid() still holds, so
@@ -671,9 +671,6 @@ local function apply_link_gun()
 	end
 
 	packages.load(BEAM_PACKAGES)
-
-	-- Already applied by a previous load of this mod, start over from the original
-	restore_staff()
 
 	local actions = template.actions
 	local reload = actions.weapon_reload.default
