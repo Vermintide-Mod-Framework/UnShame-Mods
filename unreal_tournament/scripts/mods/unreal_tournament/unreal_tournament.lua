@@ -68,9 +68,7 @@ mod.weapon_skin = mod:dofile("scripts/mods/unreal_tournament/weapon_skin")
 -- The weapons: each has a folder with its gameplay (<weapon>.lua) and its skin (skin.lua, with its animations and effects), and a folder of
 -- the same name in units/ut with its models
 mod:dofile("scripts/mods/unreal_tournament/shock/shock_rifle")
-mod:dofile("scripts/mods/unreal_tournament/shock/skin")
-mod:dofile("scripts/mods/unreal_tournament/shock/bots")
-mod:dofile("scripts/mods/unreal_tournament/flak/flak_cannon")
+mod:dofile("scripts/mods/unreal_tournament/shock/skin")mod:dofile("scripts/mods/unreal_tournament/flak/flak_cannon")
 mod:dofile("scripts/mods/unreal_tournament/flak/skin")
 mod:dofile("scripts/mods/unreal_tournament/rocket/rocket_launcher")
 mod:dofile("scripts/mods/unreal_tournament/rocket/skin")
@@ -85,5 +83,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- (seen in the chat each time the mod is loaded or reloaded, to know which build is running: the number is the count of
 -- commits of the repository, which goes up by one with every change). Only with the developer mode of the mod framework on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 481)")
+	mod:echo("Unreal Tournament loaded (build 482)")
 end
