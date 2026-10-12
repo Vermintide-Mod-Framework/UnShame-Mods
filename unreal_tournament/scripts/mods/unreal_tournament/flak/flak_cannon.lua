@@ -42,7 +42,10 @@ local CONFIG = {
 	chunk_speed = 3500,
 	chunk_lifetime = 2.7, -- seconds
 	chunk_radius = 0.08, -- m, how easily a chunk hits things
-	chunk_gravity_settings = "spark", -- the game's gravity setting with the least gravity (-0.5)
+	-- UT's chunk flies straight (PHYS_Projectile) and falls once it has hit a wall (HitWall sets PHYS_Falling): no gravity in flight, and
+	-- the game's gravity setting with the least gravity (-0.5) after the first bounce
+	chunk_gravity_settings = "drake_pistols", -- the game's gravity of 0
+	chunk_bounce_gravity_settings = "spark",
 	chunk_bounce_speed_scale = 0.65, -- the speed a chunk keeps after bouncing
 	-- UT2004: 25% of the chunks bounce twice, 50% once and 25% not at all. This many bounces more
 	-- than that for every chunk. A chunk also goes through enemies, every enemy it goes through
@@ -522,7 +525,7 @@ mod.aoe_callbacks.ut_flak_shell = function (self, aoe_data, position)
 	end
 end
 
--- A chunk keeps part of its speed when it bounces, and a bounce uses up one of the enemies it can go
+-- A chunk keeps part of its speed when it bounces and starts to fall, and a bounce uses up one of the enemies it can go
 -- through
 mod:hook_safe(ProjectileScriptUnitLocomotionExtension, "bounce", function (self)
 	local extension = ScriptUnit.has_extension(self.unit, "projectile_system")
@@ -530,6 +533,7 @@ mod:hook_safe(ProjectileScriptUnitLocomotionExtension, "bounce", function (self)
 
 	if action and action.ut_flak_chunk then
 		self.speed = self.speed * CONFIG.chunk_bounce_speed_scale
+		self.gravity = ProjectileGravitySettings[CONFIG.chunk_bounce_gravity_settings]
 		extension._num_additional_penetrations = math.max(extension._num_additional_penetrations - 1, 0)
 	end
 end)
