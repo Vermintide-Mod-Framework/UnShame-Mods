@@ -76,6 +76,9 @@ local function remake_ui_renderers()
 	context.ui_top_renderer = ingame_ui.ui_top_renderer
 end
 
+-- After all mods are loaded, so the renderers get the materials the other mods add as well (VMF's atlas, for one)
+mod.all_mods_loaded_callbacks[#mod.all_mods_loaded_callbacks + 1] = remake_ui_renderers
+
 -- Every career
 local function all_careers()
 	local careers = {}
@@ -274,7 +277,6 @@ function items.register(setting_id, definition)
 	UIAtlasHelper.add_standalone_texture_by_name(definition.icon)
 	hold_package(definition.icon_package)
 	add_material_set(definition.icon_materials)
-	remake_ui_renderers()
 
 	item.inventory_icon = definition.icon
 
