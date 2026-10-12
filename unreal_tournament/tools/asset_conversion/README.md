@@ -22,6 +22,11 @@ party IP in a published mod: this branch is for local use, and nothing of it sho
 5. `render_psk2.py` and `ut_fit2.py` are checks: a software render of the mesh with outward faces only, and the fit of
    the mesh in UT's projection against pixels of a screenshot of UT2004.
 
+6. `render_icon.py in.bsi out.png size yaw pitch roll body.png,power.png` renders a converted mesh (a pickup's bsi, with the
+   textures of its geometries in order) into an icon with a transparent background: the inventory icon of the weapon's item
+   (`units/ut/shock/icon.png`, made with `pickup.bsi 256 20 0 35`). Its `.texture` and `.material` (a gui material that the
+   items.lua registers in the UI's renderers) are next to it.
+
 ## What was found
 
 - UModel's psk is right handed (x forward, y left, z up): the model's (right, forward, up) is (-y, x, z). The psk's

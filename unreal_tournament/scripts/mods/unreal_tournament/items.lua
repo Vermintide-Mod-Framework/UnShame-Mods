@@ -3,9 +3,10 @@ local mod = get_mod("unreal_tournament")
 -- The weapons as items of their own: each is a copy of a game weapon (its template and its item), with a name of its own, in every
 -- player's inventory and usable by every career. The game's weapon is left as it is.
 --
---   items.register(setting_id, { key, template, base_item, name, description })
+--   items.register(setting_id, { key, template, base_item, name, description, icon, icon_materials })
 --     key: the item's name (damage sources, the loadout and the other peers know the item by it), template: the weapon template's name,
---     base_item: the game's item that is copied (its models, icon, kind and skins are the copy's), name, description: shown in the inventory
+--     base_item: the game's item that is copied (its models, kind and skins are the copy's), name, description, icon: shown in the
+--     inventory, the icon being the name of a material of the file icon_materials (a resource of the mod's package)
 --
 -- The game takes the inventory from the backend (PlayFab), which does not have these items: they are put into the inventory it has loaded,
 -- under an id that is the item's key, the same every time, so that the loadout that has one equipped finds it again.
@@ -22,6 +23,27 @@ local texts = {}
 mod:hook(LocalizationManager, "_base_lookup", function (func, self, text_id)
 	return texts[text_id] or func(self, text_id)
 end)
+
+-- The materials the UI's renderers are made with, besides the game's own (the game's UIRenderer.create adds these to every renderer made
+-- after this: the ones that exist already do not have them)
+local material_sets = {}
+
+local function add_material_set(material_set)
+	if not table.contains(UIRenderer._injected_material_sets, material_set) then
+		table.insert(UIRenderer._injected_material_sets, material_set)
+	end
+
+	material_sets[material_set] = true
+end
+
+-- (a renderer made with a material that is not loaded crashes the game: they are taken back when the mod is unloaded, with its package)
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+	for material_set in pairs(material_sets) do
+		table.remove(UIRenderer._injected_material_sets, table.find(UIRenderer._injected_material_sets, material_set))
+	end
+
+	table.clear(material_sets)
+end
 
 -- Every career of the game: the copy is not for the ones the game's weapon is for
 local function all_careers()
@@ -104,6 +126,11 @@ function items.register(setting_id, definition)
 
 	texts[item.display_name] = definition.name
 	texts[item.description] = definition.description
+
+	-- (the icon is a texture of its own, not one of the game's atlases: drawn by its material's name, which the UI's renderers have to be given)
+	item.inventory_icon = definition.icon
+	UIAtlasHelper.add_standalone_texture_by_name(definition.icon)
+	add_material_set(definition.icon_materials)
 
 	ItemMasterList[definition.key] = item
 
