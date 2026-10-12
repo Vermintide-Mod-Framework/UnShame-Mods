@@ -63,8 +63,8 @@ local CONFIG = {
 	-- A chunk also goes through enemies. Each enemy it goes through and each bounce uses up one of the
 	-- chunk's passes, and a chunk has its bounces plus this many in all.
 	-- The multipliers of a chunk per armor type (unarmored, armored, monsters, players, berserkers, super armor). UT has no
-	-- armor: these make the chunks armor piercing, which is the mod's.
-	chunk_armor_attack = {1, 1.25, 1.5, 1, 1, 0.5},
+	-- armor, so there is no bonus against it. Super armor (chaos warriors) takes half.
+	chunk_armor_attack = {1, 1, 1, 1, 1, 0.5},
 	chunk_armor_impact = {1, 1, 1, 1, 1, 0.25},
 	chunk_bounces = 2, -- the most bounces a chunk has in UT2004
 	chunk_extra_bounces = 2,
@@ -188,7 +188,7 @@ register_network_lookup("sub_actions", SHELL_ACTION)
 register_damage_profile("ut_flak_chunk", "staff_fireball", function (profile)
 	make_flat(profile, attack_power_for(CONFIG.chunk_damage), impact_power_for(CONFIG.chunk_damage))
 
-	-- armor piercing: armored enemies take more damage than unarmored ones (critical hits too)
+	-- the damage against each armor type (critical hits too)
 	utils.set_armor_modifiers(profile, CONFIG.chunk_armor_attack, CONFIG.chunk_armor_impact, true)
 
 	-- knockback that falls off: the damage is the same at any distance, the impact is not. This is
