@@ -147,7 +147,6 @@ local CONFIG = {
 	-- Bodies killed by the shell are thrown away from the explosion at this speed (m/s) at the center (DamTypeFlakShell.bThrowRagdoll).
 	shell_ragdoll_speed = 30,
 	shell_explosion_full_damage_radius = 0.5, -- damage falls off linearly from here to the radius
-	shell_standard_power_level = 500, -- against a beastmen standard (banner) in the explosion's radius
 	-- Chunks of one shot that spawn this close in time (seconds) are one shot, see shots
 	shot_window = 0.1,
 	shell_chunk_count = 6,
@@ -988,20 +987,14 @@ end
 
 -- Bodies killed by a shell are thrown away from it. The throw is queued here and applied once the ragdoll has started, the same way as
 -- for chunks. It runs on every machine, because ragdolls are simulated locally.
-mod.explosion_before_callbacks.ut_flak_shell_explosion = function (world, position, attacker_unit)
-	return {
-		alive = utils.units_in_radius(world, position, ExplosionTemplates.ut_flak_shell_explosion.explosion.radius),
-		attacker_unit = attacker_unit,
-	}
+mod.explosion_before_callbacks.ut_flak_shell_explosion = function (world, position)
+	return utils.units_in_radius(world, position, ExplosionTemplates.ut_flak_shell_explosion.explosion.radius)
 end
 
--- The shell's explosion damages the beastmen standards (banners) in its radius. The chunks don't: a standard drops their damage.
-mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position, _, before)
+mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position, _, alive_before)
 	local t = Managers.time:time("game")
 
-	mod.standards.blow_up(position, before and before.attacker_unit, ExplosionTemplates.ut_flak_shell_explosion.explosion.radius, DamageProfileTemplates.ut_flak_shell_explosion, CONFIG.shell_standard_power_level, mod.items.weapons.flak_cannon.key)
-
-	for unit in pairs(before and before.alive or {}) do
+	for unit in pairs(alive_before or {}) do
 		if Unit.alive(unit) and not HEALTH_ALIVE[unit] and not ragdoll_throws[unit] then
 			local unit_position = Unit.world_position(unit, 0)
 			local offset = Vector3.flat(unit_position - position)
