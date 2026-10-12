@@ -21,6 +21,20 @@ mod.items.register("shock_rifle", {
 	icon = "ut_shock_rifle_icon",
 	icon_package = "resource_packages/unreal_tournament/icons",
 	icon_materials = "ui/ut/shock_rifle_icon",
+	-- The illusions: UT2004's model, and the old ASMD that UT2003 had (UT2004 has it as an option)
+	skins = {
+		{
+			key = "ut_shock_rifle_skin_2004",
+			name = "ASMD",
+			default = true,
+		},
+		{
+			key = "ut_shock_rifle_skin_2003",
+			name = "ASMD (UT2003)",
+			icon = "ut_shock_rifle_2003_icon",
+			icon_materials = "ui/ut/shock_rifle_2003_icon",
+		},
+	},
 })
 
 local TEMPLATE_NAME = mod.items.weapons.shock_rifle.template

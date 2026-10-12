@@ -1,7 +1,9 @@
 local mod = get_mod("unreal_tournament")
 
--- The Shock Rifle's skin: the Shock Rifle is UT2004's, in the player's own first person view and in the hand of every character. It has no
--- other look: the Weapon Skins setting is for the other weapons.
+-- The Shock Rifle's skin: the Shock Rifle is UT2004's, in the player's own first person view and in the hand of every character. The
+-- Weapon Skins setting is for the other weapons. The weapon's skins (illusions, see items.lua) are UT2004's model and UT2003's (the old
+-- ASMD that UT2004 still has, Weapons.ShockRifle_1st, as ShockRifle.bUseOldWeaponMesh uses it): the second is a look of this skin (see
+-- weapon_skin.lua), with its own model, placement and animations. Everything else is the same.
 --
 -- The model, its placement, its animations, the bob and the third person are weapon_skin.lua's. This file is what is the Shock Rifle's own:
 -- the chamber, the shots, the beam, the ball, the explosion and the combo. The gameplay is shock_rifle.lua's: this only draws it, and is told
@@ -15,6 +17,7 @@ local mod = get_mod("unreal_tournament")
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local animations = mod:dofile("scripts/mods/unreal_tournament/shock/skin_animations")
+local animations_2003 = mod:dofile("scripts/mods/unreal_tournament/shock/skin_animations_2003")
 local fx = mod:dofile("scripts/mods/unreal_tournament/shock/skin_effects")
 
 local TEMPLATE_NAME = mod.items.weapons.shock_rifle.template
@@ -86,6 +89,11 @@ local function update_chamber(skin, dt)
 		brightness = CONFIG.overheat_brightness_min + (CONFIG.overheat_brightness_max - CONFIG.overheat_brightness_min) * pulse
 	else
 		skin.overheat_time = 0
+	end
+
+	-- (UT2003's model has no chamber of its own)
+	if skin_api.config.chamber == false then
+		return
 	end
 
 	local material = Mesh.material(Unit.mesh(skin.unit, "g_shock_1"), "m_power")
@@ -181,6 +189,42 @@ skin_api = mod.weapon_skin.new({
 		muzzle_forward = 51.7,
 		muzzle_up = 10,
 	},
+	looks = {
+		-- ShockRifle.uc with bUseOldWeaponMesh: OldMesh, OldPlayerViewOffset, OldPlayerViewPivot (Weapon.RenderOverlays gives it OldDrawScale, 1)
+		ut_shock_rifle_skin_2003 = {
+			unit_name = "units/ut/shock2003/shock_rifle",
+			animations = animations_2003,
+			muzzle_node = "b_bone_flash01",
+			chamber = false,
+			draw_scale = 1,
+			offset_forward = -15,
+			offset_right = 0,
+			offset_up = -5,
+			pivot_pitch = 1000 / 65536 * 360,
+			pivot_yaw = -800 / 65536 * 360,
+			pivot_roll = -500 / 65536 * 360,
+			-- WeaponStaticMesh.ShockRiflePickup: its barrel is along the mesh's own Y, as the Flak Cannon's pickup is; the grip is the pistol grip
+			third_person = {
+				id = SETTING_ID,
+				always = true,
+				template = TEMPLATE_NAME,
+				unit_name = "units/ut/shock2003/pickup",
+				hand_node = "j_rightweaponattach",
+				meters_per_unit = 0.011,
+				scale = 0.46,
+				grip_right = 32,
+				grip_forward = 0,
+				grip_up = 0,
+				yaw = -90,
+				pitch = 0,
+				roll = 0,
+				muzzle_right = -86.2,
+				muzzle_forward = 0,
+				muzzle_up = 15,
+				menu_yaw = 180,
+			},
+		},
+	},
 	on_create = function (skin)
 		skin.cooldown = 1
 		skin.cooldown_end = 0
@@ -219,7 +263,7 @@ local function shot(action, new_action, animation_name)
 
 		return skin_api.state() == skin and skin_api.muzzle_position() or nil
 	end
-	local scale = in_third_person and third_person.meters_per_unit or skin.unit_scale
+	local scale = in_third_person and third_person.meters_per_unit_of(owner_unit) or skin.unit_scale
 
 	-- In the first person view the flash is linked to the first person unit, like the model
 	local locked
@@ -265,7 +309,7 @@ mod.shock_beam_callbacks.skin = function (owner_unit, start_position, end_positi
 		if not is_local then
 			fx.beam_muzzle_flash(function ()
 				return third_person.muzzle_position(owner_unit)
-			end, third_person.meters_per_unit)
+			end, third_person.meters_per_unit_of(owner_unit))
 		end
 	end
 
@@ -304,7 +348,7 @@ mod.init_callbacks.shock_ball = function (projectile)
 		skin_api.play_sound_at("ut_shock_alt_fire_3d", Unit.world_position(unit, 0))
 		fx.ball_muzzle_flash(function ()
 			return third_person.muzzle_position(owner_unit)
-		end, third_person.meters_per_unit)
+		end, third_person.meters_per_unit_of(owner_unit))
 	end
 
 	-- The ball is gone as soon as it has hit something. The game only notices a hit in its next update, by when the projectile has moved on a

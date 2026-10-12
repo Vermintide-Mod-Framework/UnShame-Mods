@@ -13,6 +13,8 @@ lua = [
 unit = [
 	"units/ut/shock/shock_rifle"
 	"units/ut/shock/pickup"
+	"units/ut/shock2003/shock_rifle"
+	"units/ut/shock2003/pickup"
 	"units/ut/flak/flak_cannon"
 	"units/ut/flak/pickup"
 	"units/ut/flak/chunk"
@@ -35,6 +37,7 @@ material = [
 	"units/ut/weapon_standard"
 	"units/ut/weapon_standard_transparent"
 	"units/ut/shock/*"
+	"units/ut/shock2003/*"
 	"units/ut/flak/*"
 	"units/ut/rocket/*"
 	"units/ut/bio/*"

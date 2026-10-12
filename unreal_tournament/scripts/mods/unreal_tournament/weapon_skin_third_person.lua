@@ -8,23 +8,41 @@ local mod = get_mod("unreal_tournament")
 --   DrawScale of the pickup in it), materials: { slot = material } to set on it, hand_node: where the game links the weapon to the
 --   character, meters_per_unit: the meters of a UT unit of the mesh, scale: how much of it is held (UT's pickups are far bigger
 --   than the weapon in the hand is), grip_*: the point of the mesh that is in the hand (right, forward, up, UT units), yaw, pitch,
---   roll: how the mesh is turned from pointing the way the character faces (degrees), muzzle_*: the end of its barrel
+--   roll: how the mesh is turned from pointing the way the character faces (degrees), muzzle_*: the end of its barrel, menu_yaw: how it is
+--   turned about the vertical in the item inspection to have the barrel to the side (-90 if its barrel is along its forward)
 --
 -- The game's unit (the staff, the blunderbuss...) stays, hidden, and the mesh is linked to the same node of the character as it, turned
 -- every frame to point the way the character faces, level (a staff is held upright, a rifle is carried pointing ahead: that is not
 -- how the hand is turned). Which character wields what is looked at every frame, so that the game's own wielding, which makes a new
 -- unit each time, needs no hook.
+--
+-- A weapon with skins (illusions) can hold another mesh for one of them: looks = { [skin key] = the definition above, for that mesh },
+-- and a character that wields the weapon with that skin holds it.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
 -- Every weapon's third person
 local instances = {}
 
-local function new(def)
+local function new(def, looks)
 	local CONFIG = {}
 
 	for key, value in pairs(def) do
 		CONFIG[key] = value
+	end
+
+	-- The definition of a look (the skin's key, or none for the weapon's own)
+	local function config_of(look)
+		return look and looks and looks[look] or CONFIG
+	end
+
+	third_person.config_of = config_of
+
+	-- The look of what a character wields
+	local function look_of(character)
+		local skin_key = utils.wielded_skin(character)
+
+		return skin_key and looks and looks[skin_key] and skin_key or nil
 	end
 
 	-- The characters that hold the mesh: [character unit] = { unit = the mesh, staff = the game's unit it stands in for, world, ... }
@@ -40,17 +58,18 @@ local function new(def)
 	-- The mesh's pose, every frame: the point of it that is in the hand is the node of the hand, and it points the way the
 	-- character faces, level, so the rotation in the frame of the hand is the one that makes it so in the world
 	local function place(entry)
+		local config = entry.config
 		local facing = Vector3.flat(Quaternion.forward(Unit.world_rotation(entry.character, 0)))
 		local wanted = Quaternion.look(Vector3.normalize(facing), Vector3.up())
 		local rotation = Quaternion.multiply(Quaternion.inverse(Unit.world_rotation(entry.character, entry.hand_node)), wanted)
 
-		rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(math.rad(CONFIG.pitch), math.rad(CONFIG.roll), math.rad(CONFIG.yaw)))
+		rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(math.rad(config.pitch), math.rad(config.roll), math.rad(config.yaw)))
 
-		local grip = Vector3(CONFIG.grip_right, CONFIG.grip_forward, CONFIG.grip_up) * third_person.meters_per_unit
+		local grip = Vector3(config.grip_right, config.grip_forward, config.grip_up) * config.meters_per_unit * config.scale
 
 		Unit.set_local_position(entry.unit, 0, -Quaternion.rotate(rotation, grip))
 		Unit.set_local_rotation(entry.unit, 0, rotation)
-		Unit.set_local_scale(entry.unit, 0, Vector3(CONFIG.scale, CONFIG.scale, CONFIG.scale))
+		Unit.set_local_scale(entry.unit, 0, Vector3(config.scale, config.scale, config.scale))
 	end
 
 	local function detach(character)
@@ -81,12 +100,13 @@ local function new(def)
 	end
 
 	-- A hidden mesh with its materials set
-	local function new_mesh(world)
-		local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
+	local function new_mesh(world, look)
+		local config = config_of(look)
+		local unit = World.spawn_unit(world, config.unit_name, Vector3(0, 0, 0))
 
 		Unit.set_unit_visibility(unit, false)
 
-		for slot, material in pairs(CONFIG.materials or {}) do
+		for slot, material in pairs(config.materials or {}) do
 			Unit.set_material(unit, slot, material)
 		end
 
@@ -97,12 +117,16 @@ local function new(def)
 
 	local function attach(character, staff, units)
 		local world = Managers.world:world("level_world")
-		local hand_node = Unit.node(character, CONFIG.hand_node)
-		local unit = new_mesh(world)
+		local look = look_of(character)
+		local config = config_of(look)
+		local hand_node = Unit.node(character, config.hand_node)
+		local unit = new_mesh(world, look)
 
 		-- (kept at once, so that the mesh is found and destroyed whatever happens next, see weapon_skin.lua)
 		attached[character] = {
 			character = character,
+			config = config,
+			look = look,
 			hand_node = hand_node,
 			staff = staff,
 			units = units,
@@ -181,7 +205,7 @@ local function new(def)
 				local staff, units = staff_to_replace(character)
 				local entry = attached[character]
 
-				if entry and entry.staff ~= staff then
+				if entry and (entry.staff ~= staff or entry.look ~= look_of(character)) then
 					detach(character)
 
 					entry = nil
@@ -244,9 +268,17 @@ local function new(def)
 			return nil
 		end
 
-		local offset = Vector3(CONFIG.muzzle_right, CONFIG.muzzle_forward, CONFIG.muzzle_up) * third_person.meters_per_unit
+		local config = entry.config
+		local offset = Vector3(config.muzzle_right, config.muzzle_forward, config.muzzle_up) * config.meters_per_unit * config.scale
 
 		return Unit.world_position(entry.unit, 0) + Quaternion.rotate(Unit.world_rotation(entry.unit, 0), offset)
+	end
+
+	-- How many meters a UT unit of the mesh a character holds is (the flashes are made as big as the mesh is)
+	function third_person.meters_per_unit_of(character)
+		local config = attached[character] and attached[character].config or CONFIG
+
+		return config.meters_per_unit * config.scale
 	end
 
 	-- All of them are given back (the setting is off, the mod is, the level is gone)
@@ -261,23 +293,28 @@ local function new(def)
 	local in_menu = {}
 
 	-- Makes the hero hold the mesh, placed as in the world, and hides the previewer's own units
-	function third_person.hold_in_menu(character, world, game_units, visible)
+	function third_person.hold_in_menu(character, world, game_units, visible, look)
 		local entry = in_menu[character]
 
-		if entry and entry.world ~= world then
+		look = look and looks and looks[look] and look or nil
+
+		if entry and (entry.world ~= world or entry.look ~= look) then
 			third_person.release_from_menu(character)
 
 			entry = nil
 		end
 
 		if not entry then
-			local hand_node = Unit.node(character, CONFIG.hand_node)
-			local unit = new_mesh(world)
+			local config = config_of(look)
+			local hand_node = Unit.node(character, config.hand_node)
+			local unit = new_mesh(world, look)
 
 			World.link_unit(world, unit, 0, character, hand_node)
 
 			entry = {
 				character = character,
+				config = config,
+				look = look,
 				hand_node = hand_node,
 				unit = unit,
 				world = world,

@@ -29,6 +29,15 @@ party IP in a published mod: this branch is for local use, and nothing of it sho
    that is listed in `unreal_tournament.mod` (the game only loads the packages that are) and that the mod keeps a handle to, so
    that it stays loaded when the mod is reloaded: the renderers hold the material locked, and the game fails when it is unloaded.
 
+7. The UT2003 Shock Rifle (the weapon's second skin: UT2004 keeps it as `ShockRifle.bUseOldWeaponMesh`) is `Weapons.ShockRifle_1st`
+   (a skeletal mesh with the animations in the same package), `WeaponStaticMesh.ShockRiflePickup` is its pickup (the third person), and
+   `WeaponSkins.ShockTex0` its texture. After exporting them as in step 1 (`-export -out=<dir> Weapons`, `WeaponSkins`, and `WeaponStaticMesh
+   ShockRiflePickup StaticMesh`, into one folder), `convert_weapon.py shock2003 <dir>` and `convert_static.py shock2003_pickup <dir>` make
+   `units/ut/shock2003` and `shock/skin_animations_2003.lua`. The mesh's third material is the alt fire's beam, left out. Where it is drawn
+   is ShockRifle.uc's `OldPlayerViewOffset` and `OldPlayerViewPivot` (read from XWeapons.u, which has the class's default properties as text).
+   Its icon (`ui/ut/shock_rifle_2003_icon.png`) is the pickup, rendered with `render_icon.py units/ut/shock2003/pickup.bsi out.png 256 -70 0 35
+   units/ut/shock2003/pickup_shocktex0.png`.
+
 ## What was found
 
 - UModel's psk is right handed (x forward, y left, z up): the model's (right, forward, up) is (-y, x, z). The psk's

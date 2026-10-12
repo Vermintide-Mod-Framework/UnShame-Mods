@@ -33,6 +33,9 @@ local mod = get_mod("unreal_tournament")
 --       with skin.alt_pose, 0 (where UT has it) to 1. inspect_pose_* are a third, for the inspect, with skin.inspect_pose. skin.extra_yaw is
 --       a turn that is added to them, degrees, for what moves while it is held there.
 --   third_person: what weapon_skin_third_person.lua takes
+--   looks: { [skin key] = { ... } } the weapon's skins (illusions, see items.lua) that look different: what is in a look replaces the same
+--       thing of the definition above (the unit and its animations, where it is drawn, ...) while the weapon with that skin is wielded;
+--       a third_person in it is the third person of that look, in full. The weapon's own skin is the definition.
 --   on_create(skin), on_update(skin, dt), on_destroy(skin): what is the weapon's own of the model that is shown
 --   on_update_always(dt): every frame, shown or not; on_refresh(): when the setting or the weapon is switched; on_give_back(),
 --   on_level_exit(): what is its own to take back and to clear
@@ -96,6 +99,52 @@ local function new(def)
 	local animations = CONFIG.animations.animations
 	local bone_count = #bones
 
+	-- The definition without any look, and what the looks replace
+	local BASE = {}
+	local REPLACED = {}
+	local third_person_looks
+
+	for key, value in pairs(CONFIG) do
+		BASE[key] = value
+	end
+
+	for skin_key, look in pairs(CONFIG.looks or {}) do
+		third_person_looks = third_person_looks or {}
+		third_person_looks[skin_key] = look.third_person
+
+		for key in pairs(look) do
+			REPLACED[key] = true
+		end
+	end
+
+	-- The look of a skin of the weapon (its key), nothing for the weapon's own
+	local function look_of(skin_key)
+		return skin_key and CONFIG.looks and CONFIG.looks[skin_key] and skin_key or nil
+	end
+
+	-- The look that CONFIG has now
+	local current_look
+
+	local function set_look(name)
+		if name == current_look then
+			return
+		end
+
+		current_look = name
+
+		for key in pairs(REPLACED) do
+			CONFIG[key] = BASE[key]
+		end
+
+		for key, value in pairs(name and CONFIG.looks[name] or {}) do
+			CONFIG[key] = value
+		end
+
+		bones = CONFIG.animations.bones
+		animations = CONFIG.animations.animations
+		bone_count = #bones
+	end
+
 	local self = {}
 
 	-- The state of the skin that is shown. Nothing when none is.
@@ -108,9 +157,10 @@ local function new(def)
 	local skin
 	local debug_enabled = false
 
-	local third_person = third_person_module.new(CONFIG.third_person)
+	local third_person = third_person_module.new(BASE.third_person, third_person_looks)
 
 	self.third_person = third_person
+	self.look_of = look_of
 	self.config = CONFIG
 
 	function self.debug(text, ...)
@@ -340,8 +390,9 @@ local function new(def)
 
 	local place
 
-	local function create(fp)
+	local function create(fp, skin_key)
 		destroy()
+		set_look(look_of(skin_key))
 
 		local world = Managers.world:world("level_world")
 		local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
@@ -360,6 +411,7 @@ local function new(def)
 		-- (the skin is kept before anything else is asked of the unit, so that a failure leaves it where destroy finds it: a unit of
 		-- the mod's package that is alive when the package is unloaded, with the mod being reloaded, crashes the game)
 		skin = {
+			look = current_look,
 			bob_speed = 0,
 			bob_time = 0,
 			nodes = {},
@@ -403,7 +455,7 @@ local function new(def)
 		end
 
 		if not skin and utils.wielded_template_name(fp.unit) == CONFIG.template then
-			create(fp)
+			create(fp, utils.wielded_skin(fp.unit))
 		end
 	end
 
@@ -445,7 +497,7 @@ local function new(def)
 	-- The weapon that is wielded
 	mod.wield_callbacks[CONFIG.id] = function (inventory_extension, equipment, slot_data)
 		if slot_data and item_template_name(slot_data.item_data) == CONFIG.template and self.enabled() then
-			create(inventory_extension.first_person_extension)
+			create(inventory_extension.first_person_extension, slot_data.skin)
 		end
 	end
 
@@ -622,6 +674,15 @@ local function new(def)
 		-- put away, which would leave the melee weapon hidden.
 		if utils.wielded_template_name(fp.unit) ~= CONFIG.template then
 			destroy()
+
+			return
+		end
+
+		-- A skin applied to the weapon that is held (the Illusions page): the model of the new one
+		local skin_key = utils.wielded_skin(fp.unit)
+
+		if look_of(skin_key) ~= skin.look then
+			create(fp, skin_key)
 
 			return
 		end

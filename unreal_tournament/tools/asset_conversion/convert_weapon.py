@@ -12,6 +12,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 # psk: the mesh, psa: the animations (UModel exports, relative to the export dir). materials: for each material of the mesh (in
 # its order) the texture (a tga, relative to the export dir) and the kind ('opaque', 'alpha': see MATERIAL_KINDS). scale: meters a UT
 # unit of the mesh is. animations: (name in the psa, name here). locators: bones with no mesh whose place is wanted (muzzle).
+# skip_materials: materials (by index) whose faces are left out.
 WEAPONS = {
     'flak': {
         'psk': 'Weapons/SkeletalMesh/Flak_1st.psk',
@@ -169,6 +170,21 @@ WEAPONS['link'] = {
     'lua': 'scripts/mods/unreal_tournament/link/skin_animations.lua',
 }
 
+# UT2003's Shock Rifle (the model UT2004 keeps in Weapons.ukx). Its third material is the beam of the alt fire, which is on bones that
+# the animations scale away: left out.
+WEAPONS['shock2003'] = {
+    'psk': 'Weapons/SkeletalMesh/ShockRifle_1st.psk',
+    'psa': 'Weapons/MeshAnimation/ShockRifle_1st.psa',
+    'materials': [('WeaponSkins/Texture/ShockTex0.tga', 'opaque'), ('WeaponSkins/Texture/ShockTex0.tga', 'opaque'),
+                  ('WeaponSkins/Texture/ShockTex0.tga', 'opaque')],
+    'skip_materials': [2],
+    'scale': 0.0125,
+    'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
+    'locators': ['Bone_flash01'],
+    'unit': 'units/ut/shock2003/shock_rifle',
+    'lua': 'scripts/mods/unreal_tournament/shock/skin_animations_2003.lua',
+}
+
 MATERIAL_TEMPLATES = {
     'opaque': '''material_contexts = {
 	surface_material = ""
@@ -244,7 +260,8 @@ def main():
         else:
             w0, w1, w2 = struct.unpack_from('<3I', fb, i * fs)
             mat = fb[i * fs + 12]
-        faces.append((w0, w1, w2, mat))
+        if mat not in cfg.get('skip_materials', ()):
+            faces.append((w0, w1, w2, mat))
     ms, mc, mb = psk['MATT0000']
     psk_materials = [mb[i * ms:i * ms + 64].split(b'\0')[0].decode('latin1') for i in range(mc)]
     assert len(cfg['materials']) >= mc, 'a texture for each of %s' % psk_materials

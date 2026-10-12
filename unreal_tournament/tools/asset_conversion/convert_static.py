@@ -17,6 +17,12 @@ STATICS = {
         'scale': 0.011,
         'unit': 'units/ut/flak/pickup',
     },
+    'shock2003_pickup': {
+        'pskx': 'WeaponStaticMesh/StaticMesh/ShockRiflePickup.pskx',
+        'materials': [('WeaponSkins/Texture/ShockTex0.tga', 'opaque')],
+        'scale': 0.011,
+        'unit': 'units/ut/shock2003/pickup',
+    },
     'flak_chunk': {
         'pskx': 'WeaponStaticMesh/StaticMesh/FlakChunk.pskx',
         'materials': [('WeaponSkins/Texture/FlakChunkTex.tga', 'opaque')],

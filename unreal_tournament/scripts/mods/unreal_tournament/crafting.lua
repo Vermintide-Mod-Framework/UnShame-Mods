@@ -4,7 +4,7 @@ local mod = get_mod("unreal_tournament")
 -- with mods. A recipe that involves one of them is answered here, in the shape the backend answers, and handed to craft_request_cb.
 --
 -- Supported: crafting from the blueprint, rerolling properties and traits, upgrading rarity, and salvaging (which only discards the weapon).
--- All of them are free. Applying and extracting skins are refused.
+-- Applying a skin (the Illusions page) is supported too. All of them are free. Extracting skins is refused.
 --
 -- Rarities, properties and traits come from the game's data (CraftingData, WeaponProperties.combinations, WeaponTraits.combinations).
 -- The blueprint (rarity "default") is what the Craft page crafts new weapons from.
@@ -151,6 +151,7 @@ local function rerolled_properties(record)
 		power_level = record.power_level,
 		properties = properties_of(combination, record.rarity),
 		rarity = record.rarity,
+		skin = record.skin,
 		traits = record.traits,
 	}
 end
@@ -166,6 +167,7 @@ local function rerolled_traits(record)
 		power_level = record.power_level,
 		properties = record.properties,
 		rarity = record.rarity,
+		skin = record.skin,
 		traits = copy_of(combination),
 	}
 end
@@ -186,6 +188,7 @@ local function upgraded(record)
 		power_level = record.power_level,
 		properties = properties_of(property_combination, rarity, record.properties),
 		rarity = rarity,
+		skin = record.skin,
 		traits = copy_of(trait_combination),
 	}
 end
@@ -199,6 +202,18 @@ local CHANGES = {
 	upgrade_item_rarity_exotic = upgraded,
 	upgrade_item_rarity_unique = upgraded,
 }
+
+-- The weapon's record with a skin applied (the weapon's default skin is none)
+local function with_skin(record, skin_key)
+	return {
+		key = record.key,
+		power_level = record.power_level,
+		properties = record.properties,
+		rarity = record.rarity,
+		skin = skin_key ~= WeaponSkins.default_skins[record.key] and skin_key or nil,
+		traits = record.traits,
+	}
+end
 
 -- Salvage of crafted weapons (by backend id): they are removed and give nothing. The materials they would have given are listed with an
 -- amount of 0.
@@ -245,8 +260,8 @@ local function discard(weapon_ids)
 	}
 end
 
--- The answer for a recipe on the mod's weapons (by backend id). Nothing is spent.
-local function answer_to(recipe_name, weapon_ids)
+-- The answer for a recipe on the mod's weapons (by backend id). Nothing is spent. skin_key is the skin that is applied.
+local function answer_to(recipe_name, weapon_ids, skin_key)
 	if recipe_name == "salvage" then
 		return discard(weapon_ids)
 	end
@@ -254,6 +269,10 @@ local function answer_to(recipe_name, weapon_ids)
 	local saved = items.saved()
 	local weapon_id = weapon_ids[1]
 	local change = CHANGES[recipe_name]
+
+	if recipe_name == "apply_weapon_skin" then
+		return { modified_items = { items.change_crafted(saved, weapon_id, with_skin(saved.crafted[weapon_id], skin_key)) } }
+	end
 
 	if not change then
 		local blueprint_key = Managers.backend._backend_mirror._inventory_items[weapon_id].key
@@ -300,6 +319,7 @@ local function craft(func, self, career_name, item_backend_ids, recipe_override)
 
 	local recipe_name = recipe_override or "craft_weapon"
 	local saved = items.saved()
+	local skin_key
 
 	if recipe_name == "salvage" then
 		for _, weapon_id in ipairs(weapon_ids) do
@@ -327,15 +347,36 @@ local function craft(func, self, career_name, item_backend_ids, recipe_override)
 
 			return nil
 		end
+	elseif recipe_name == "apply_weapon_skin" then
+		if not saved.crafted[weapon_ids[1]] then
+			tell("The Unreal Tournament weapon you start with, the blueprint, cannot be changed: craft one")
+
+			return nil
+		end
+
+		-- The other ingredient is the skin: an item of the backend's unlocked skins
+		local inventory = Managers.backend._backend_mirror._inventory_items
+
+		for _, backend_id in ipairs(item_backend_ids) do
+			local ingredient = inventory[backend_id]
+
+			if ingredient and not items.is_custom(backend_id) and ingredient.skin then
+				skin_key = ingredient.skin
+			end
+		end
+
+		if not skin_key then
+			return nil
+		end
 	else
-		tell("The Unreal Tournament weapons cannot have skins applied or extracted")
+		tell("The Unreal Tournament weapons cannot have skins extracted")
 
 		return nil
 	end
 
 	local id = self:_new_id()
 
-	self:craft_request_cb(id, { FunctionResult = answer_to(recipe_name, weapon_ids) })
+	self:craft_request_cb(id, { FunctionResult = answer_to(recipe_name, weapon_ids, skin_key) })
 
 	complete_at[id] = Managers.time:time("main") + CONFIG.craft_delay
 

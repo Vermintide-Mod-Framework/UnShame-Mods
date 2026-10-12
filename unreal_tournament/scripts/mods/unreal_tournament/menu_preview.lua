@@ -9,7 +9,7 @@ local CONFIG = {
 	item_length = 0.62,
 }
 
--- The skin of an item, if it has one that is shown
+-- The skin of an item, if it has one that is shown (and the look of it that its weapon skin (illusion) has, if it has one)
 local function skin_of(item_name)
 	local item = item_name and rawget(ItemMasterList, item_name)
 
@@ -61,6 +61,7 @@ for _, previewer_class in ipairs({ HeroPreviewer, MenuWorldPreviewer }) do
 	mod:hook_safe(previewer_class, "post_update", function (self)
 		local character = self.character_unit
 		local skin = character and Unit.alive(character) and skin_of(self:item_name_by_slot_type("ranged")) or nil
+		local item_info = self._item_info_by_slot.ranged
 		local entry = holding[self]
 
 		if entry and (entry.skin ~= skin or entry.character ~= character) then
@@ -74,7 +75,7 @@ for _, previewer_class in ipairs({ HeroPreviewer, MenuWorldPreviewer }) do
 		-- Shown while the ranged weapon is in hand
 		local visible = self._wielded_slot_type == "ranged" and self.character_unit_visible ~= false
 
-		skin.third_person.hold_in_menu(character, self.world, ranged_units(self), visible)
+		skin.third_person.hold_in_menu(character, self.world, ranged_units(self), visible, item_info and item_info.skin_name)
 
 		holding[self] = {
 			character = character,
@@ -121,13 +122,15 @@ mod:hook_safe(LootItemUnitPreviewer, "_enable_item_units_visibility", function (
 	local unit = self._ut_unit
 
 	if not unit then
-		unit = skin.third_person.new_mesh(world)
+		local look = self._item and skin.look_of(self._item.skin)
+
+		unit = skin.third_person.new_mesh(world, look)
 
 		-- Barrel to the side, centred on the unit, scaled to item_length
 		local pose, half_extents = Unit.box(unit)
 		local length = math.max(Vector3.x(half_extents), Vector3.y(half_extents), Vector3.z(half_extents)) * 2
 		local scale = CONFIG.item_length / length
-		local rotation = Quaternion.axis_angle(Vector3.up(), -math.pi / 2)
+		local rotation = Quaternion.axis_angle(Vector3.up(), math.rad(skin.third_person.config_of(look).menu_yaw or -90))
 
 		World.link_unit(world, unit, 0, self._link_unit, 0)
 		Unit.set_local_scale(unit, 0, Vector3(scale, scale, scale))

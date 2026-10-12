@@ -329,6 +329,15 @@ function utils.wielded_template_name(unit)
 	return wielded and (wielded.template or wielded.data and wielded.data.template)
 end
 
+-- The weapon skin (illusion) of the weapon a unit has wielded, if it has one
+function utils.wielded_skin(unit)
+	local inventory_extension = ScriptUnit.has_extension(unit, "inventory_system")
+	local equipment = inventory_extension and inventory_extension:equipment()
+	local slot_data = equipment and equipment.wielded_slot and equipment.slots[equipment.wielded_slot]
+
+	return slot_data and slot_data.skin
+end
+
 -- Actions of a weapon
 
 -- The lookup data of an action: the game tells the other peers which action a projectile came from by it
