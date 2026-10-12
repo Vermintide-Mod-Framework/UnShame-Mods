@@ -927,3 +927,20 @@ mod:hook(DamageUtils, "process_projectile_hit", function (func, world, damage_so
 
 	return func(world, damage_source, owner_unit, is_server, raycast_result, current_action, direction, ...)
 end)
+
+-- Right click with Tab held turns the cursor on, but the weapon reads the click as well, and the secondary fire is a shot. The click is
+-- ignored while the player list is up.
+local function player_list_is_active()
+	local ingame_ui = Managers.ui and Managers.ui._ingame_ui
+	local player_list = ingame_ui and ingame_ui.ingame_hud and ingame_ui.ingame_hud:component("IngamePlayerListUI")
+
+	return player_list ~= nil and player_list:is_active()
+end
+
+mod:hook(PlayerInputExtension, "get", function (func, self, input_key, ...)
+	if (input_key == "action_two" or input_key == "action_two_hold") and utils.wielded_template_name(self.unit) == TEMPLATE_NAME and player_list_is_active() then
+		return nil
+	end
+
+	return func(self, input_key, ...)
+end)
