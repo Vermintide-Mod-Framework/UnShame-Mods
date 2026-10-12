@@ -8,7 +8,7 @@ local mod = get_mod("unreal_tournament")
 --
 -- The game's own units of the chunks and of the shell are what is flying (they are the gameplay), their effects are not started and
 -- what UT has is drawn at them: the mesh of the chunk with its streak (FlakTrail), the mesh of the shell with its gold glow and smoke
--- (FlakShellTrail, FlakGlow). The explosion is FlakExplosion, FlashExplosion and RocketSmokeRing, with the game's own explosion played along with them. The shot sound of the blunderbuss is made by its
+-- (FlakShellTrail, FlakGlow). The explosion is FlashExplosion, with the game's own explosion played along with it. The shot sound of the blunderbuss is made by its
 -- animation, which is not played on the first person unit while the skin is on.
 --
 -- The assets were made with unreal_tournament/tools/asset_conversion.
@@ -63,43 +63,12 @@ local CONFIG = {
 		0.26,
 	},
 	shell_sound_seconds = 2.11, -- how long the loop of the shell (BFlakCannonProjectile) is
-	-- FlakExplosion (5 puffs of smoke, 91 to 161 units, 0.9 to 1.8 s, rising) and FlashExplosion (150 units, growing 500, 0.25 s)
-	explosion_puffs = 5,
-	explosion_puff_size = {
-		91,
-		161,
-	},
-	explosion_puff_life = {
-		0.9,
-		1.8,
-	},
-	explosion_puff_spread = 55, -- units
-	explosion_puff_rise = 0.4, -- m/s
-	explosion_puff_intensity = 0.7,
+	-- FlashExplosion (150 units, growing 500, 0.25 s)
 	explosion_flash_size = 150,
 	explosion_flash_growth = 500,
 	explosion_flash_life = 0.25,
 	explosion_flash_intensity = 0.5,
-	-- RocketSmokeRing: 15 puffs of smoke that fly out in a ring around the way the surface faces, 20 to 30 units wide, growing 40 a
-	-- second, 1.3 to 1.7 s, going out at 100 units a second and slowing down
-	explosion_ring_puffs = 15,
-	explosion_ring_size = {
-		20,
-		30,
-	},
-	explosion_ring_growth = 40,
-	explosion_ring_life = {
-		1.3,
-		1.7,
-	},
-	explosion_ring_speed = 100,
-	explosion_ring_drag = 1.9,
-	explosion_ring_color = {
-		0.8,
-		0.8,
-		0.78,
-	},
-	-- The game's own explosion, with its smoke and the mark it leaves, played with the skin's (only if the game has it loaded)
+	-- The game's own explosion, with its smoke and the mark it leaves, played with the flash (only if the game has it loaded)
 	explosion_effect = "fx/wpnfx_frag_grenade_impact",
 	-- A shot that is seen of another player, by the first chunk of it: more than this far apart in time is another shot
 	shot_gap = 0.25,
@@ -525,56 +494,4 @@ mod.skin_explosion_callbacks.ut_flak_shell_explosion = function (world, position
 		spin = (math.random() * 2 - 1) * 0.12,
 		texture = "explosion_flash",
 	})
-
-	-- The surface faces back along the way the shell came
-	local normal = -Quaternion.forward(rotation)
-	local side = Vector3.cross(normal, Vector3.up())
-
-	if Vector3.length(side) < 0.1 then
-		side = Vector3.cross(normal, Vector3.right())
-	end
-
-	side = Vector3.normalize(side)
-
-	local other_side = Vector3.cross(normal, side)
-
-	for _ = 1, CONFIG.explosion_ring_puffs do
-		local angle = math.random() * math.pi * 2
-		local direction = side * math.cos(angle) + other_side * math.sin(angle)
-
-		particles.sprite({
-			additive = 0,
-			attenuation = 0.5,
-			color = CONFIG.explosion_ring_color,
-			drag = CONFIG.explosion_ring_drag,
-			growth = CONFIG.explosion_ring_growth * UNIT,
-			life = random_between(CONFIG.explosion_ring_life),
-			position = position + normal * (16 * UNIT),
-			size = random_between(CONFIG.explosion_ring_size) * UNIT,
-			spin = (math.random() * 2 - 1) * 0.5,
-			texture = "smoke",
-			velocity = direction * (CONFIG.explosion_ring_speed * UNIT),
-		})
-	end
-
-	for _ = 1, CONFIG.explosion_puffs do
-		local offset = random_direction() * (math.random() * CONFIG.explosion_puff_spread * UNIT)
-
-		particles.sprite({
-			attenuation = 0.2,
-			color = {
-				1,
-				0.9,
-				0.8,
-			},
-			growth = 10 * UNIT,
-			intensity = CONFIG.explosion_puff_intensity,
-			life = random_between(CONFIG.explosion_puff_life),
-			position = position + offset,
-			size = random_between(CONFIG.explosion_puff_size) * UNIT,
-			spin = (math.random() * 2 - 1) * 0.5,
-			texture = "flak_explosion",
-			velocity = Vector3(0, 0, CONFIG.explosion_puff_rise),
-		})
-	end
 end
