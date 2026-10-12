@@ -95,11 +95,17 @@ end
 
 -- What the mod keeps of its own, between games (the settings file of the mod: the backend is not asked and does not know):
 --   crafted: { [backend id] = record } the weapons the player has crafted, a record being { key, rarity, power_level, properties, traits }
+--   started: { [item key] = true } the weapons the player was given to begin with (see add_to_inventory)
 --   next_id: the number of the next crafted weapon
 local SAVED_SETTING = "custom_items"
 
 function items.saved()
-	return table.clone(mod:get(SAVED_SETTING) or { crafted = {}, next_id = 1 })
+	local saved = table.clone(mod:get(SAVED_SETTING) or { crafted = {}, next_id = 1 })
+
+	-- (what an earlier version of the mod did not keep)
+	saved.started = saved.started or {}
+
+	return saved
 end
 
 function items.save(saved)
@@ -112,6 +118,14 @@ local BLUEPRINT_RECORD = {
 	power_level = 5,
 	properties = {},
 	rarity = "default",
+	traits = {},
+}
+
+-- The weapon that the player has to begin with, besides the blueprint: a white one, at the highest power level
+local STARTING_RECORD = {
+	power_level = 300,
+	properties = {},
+	rarity = "plentiful",
 	traits = {},
 }
 
@@ -191,6 +205,15 @@ local function add_to_inventory(mirror)
 		mirror:_update_data(item, definition.key)
 
 		inventory[definition.key] = item
+
+		-- The player has a weapon of each from the start, as well as the blueprint: once, it is one they have crafted then (they may change it
+		-- or salvage it)
+		if not saved.started[definition.key] then
+			saved.started[definition.key] = true
+
+			items.new_crafted(saved, definition.key, STARTING_RECORD)
+			items.save(saved)
+		end
 	end
 
 	for backend_id, record in pairs(saved.crafted) do
