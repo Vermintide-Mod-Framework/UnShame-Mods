@@ -49,9 +49,10 @@ local CONFIG = {
 	chunk_gravity_settings = "drake_pistols", -- the game's gravity of 0
 	chunk_bounce_gravity_settings = "spark",
 	chunk_bounce_speed_scale = 0.65, -- the speed a chunk keeps after bouncing
-	-- UT2004: 25% of the chunks bounce twice, 50% once and 25% not at all. This many bounces more
-	-- than that for every chunk. A chunk also goes through enemies, every enemy it goes through
-	-- uses up one of its bounces, and the other way round: a chunk has this many in all.
+	-- UT2004: 25% of the chunks bounce twice off the level, 50% once and 25% not at all. A chunk that has used up its bounces goes cold:
+	-- it stops flying straight, slides along the surface it hit and falls, and it stops where it lands.
+	-- A chunk also goes through enemies. Each enemy it goes through and each bounce uses up one of the
+	-- chunk's passes, and a chunk has its bounces plus this many in all.
 	-- The multipliers of a chunk per armor type (unarmored, armored, monsters, players, berserkers, super armor)
 	chunk_armor_attack = {1, 1.25, 1.5, 1, 1, 0.5},
 	chunk_armor_impact = {1, 1, 1, 1, 1, 0.25},
@@ -546,15 +547,36 @@ mod.aoe_callbacks.ut_flak_shell = function (self, aoe_data, position)
 	end
 end
 
--- A chunk keeps part of its speed when it bounces and starts to fall. Each bounce also uses up one of the enemies it can pass through.
-mod:hook_safe(ProjectileScriptUnitLocomotionExtension, "bounce", function (self)
+-- Runs after the game has bounced a chunk off the level. A chunk keeps part of its speed and starts to fall. A chunk that has no
+-- bounces left goes cold instead: it slides along the surface and falls, and stops at the next surface it hits.
+mod:hook_safe(ProjectileScriptUnitLocomotionExtension, "bounce", function (self, hit_position, hit_direction, hit_normal)
 	local extension = ScriptUnit.has_extension(self.unit, "projectile_system")
 	local action = extension and extension._current_action
 
 	if action and action.ut_flak_chunk then
-		self.speed = self.speed * CONFIG.chunk_bounce_speed_scale
 		self.gravity = ProjectileGravitySettings[CONFIG.chunk_bounce_gravity_settings]
 		extension._ut_flak_bounced = true
+
+		if (extension._ut_flak_bounces_left or 0) > 0 then
+			extension._ut_flak_bounces_left = extension._ut_flak_bounces_left - 1
+			self.speed = self.speed * CONFIG.chunk_bounce_speed_scale
+		else
+			local slide = hit_direction - hit_normal * Vector3.dot(hit_direction, hit_normal)
+
+			if Vector3.length(slide) < 0.01 then
+				slide = Vector3.down()
+			end
+
+			slide = Vector3.normalize(slide)
+
+			self.target_vector_boxed:store(slide)
+			self.radians = math.degrees_to_radians(ActionUtils.pitch_from_rotation(Quaternion.look(slide)))
+			extension._ut_flak_cold = true
+
+			-- The game stops a projectile that has no bounces left, on the next surface it hits.
+			extension._num_bounces = math.huge
+		end
+
 		extension._num_additional_penetrations = math.max(extension._num_additional_penetrations - 1, 0)
 	end
 end)
@@ -647,12 +669,14 @@ local function update_ragdoll_throws()
 	end
 end
 
--- Bounces and enemies gone through share one number per chunk: the game's projectile counts the
--- bounces (impact_data.max_bounces) and the enemies it goes through (_num_additional_penetrations)
--- separately. The chunk goes through as many enemies as it bounces, and going through an enemy is
--- counted as a bounce. Players who didn't fire the chunk have the same code for it.
+-- Sets how many times the chunk bounces and how many enemies it goes through. The action's max_bounces is the bounces UT
+-- gave the chunk plus chunk_extra_bounces, and the chunk can go through that many enemies. Going through an enemy is counted
+-- as one of the game's bounces, so the action allows enough of them. Runs on every machine.
 mod.init_callbacks.ut_flak_chunk = function (self)
-	self._num_additional_penetrations = self._current_action.impact_data.max_bounces
+	local max_bounces = self._current_action.impact_data.max_bounces
+
+	self._num_additional_penetrations = max_bounces
+	self._ut_flak_bounces_left = max_bounces - CONFIG.chunk_extra_bounces
 	self._ut_flak_spawn_t = Managers.time:time("game")
 end
 

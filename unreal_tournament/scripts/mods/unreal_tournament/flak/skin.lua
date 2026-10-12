@@ -41,6 +41,8 @@ local CONFIG = {
 	chunk_glow_size = 0.4, -- m
 	chunk_glow_intensity = 1.2,
 	chunk_glow_behind = 0.08, -- m, away from the camera
+	-- A chunk that has gone cold and landed stays on the ground this long (FlakChunk.Landed sets its life span to 1)
+	chunk_lie_seconds = 1,
 	-- FlakShell: the mesh, FlakGlow (a gold sprite) and FlakShellTrail (smoke, 0.5 to 0.6 s, 20 to 35 units, growing 15 a second)
 	shell_glow_size = 40,
 	shell_glow_color = {
@@ -146,11 +148,17 @@ local function update_visuals(dt)
 	for i = #visuals, 1, -1 do
 		local visual = visuals[i]
 		local game_unit = visual.game_unit
+		local projectile = visual.projectile
+		local lying = projectile._ut_flak_cold and projectile._stop_impacts and Unit.alive(visual.unit)
 
-		if not Unit.alive(game_unit) or visual.projectile._stop_impacts or not Unit.alive(visual.unit) then
+		if lying then
+			visual.lie_time = (visual.lie_time or CONFIG.chunk_lie_seconds) - dt
+		end
+
+		if (lying and visual.lie_time <= 0) or (not lying and (not Unit.alive(game_unit) or projectile._stop_impacts or not Unit.alive(visual.unit))) then
 			destroy_visual(visual)
 			table.remove(visuals, i)
-		else
+		elseif not lying then
 			local position = Unit.world_position(game_unit, 0)
 			local previous = visual.previous:unbox()
 			local moved = position - previous
@@ -163,7 +171,7 @@ local function update_visuals(dt)
 				visual.speed = Vector3.length(moved) / math.max(dt, 0.0001)
 			end
 
-			if visual.kind == "chunk" then
+			if visual.kind == "chunk" and not projectile._ut_flak_cold then
 				visual.trail_time = visual.trail_time + dt
 
 				if visual.trail_time >= CONFIG.chunk_trail_step then
@@ -413,7 +421,7 @@ mod.skin_init_callbacks.ut_flak_chunk = function (projectile)
 		},
 		fade_in = 0,
 		follow = function ()
-			if Unit.alive(visual.game_unit) and not visual.projectile._stop_impacts then
+			if Unit.alive(visual.game_unit) and not visual.projectile._stop_impacts and not visual.projectile._ut_flak_cold then
 				local position = Unit.world_position(visual.game_unit, 0)
 				local camera_position = utils.camera_pose()
 
