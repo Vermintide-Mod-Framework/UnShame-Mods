@@ -11,6 +11,7 @@ mod.items.register("shock_rifle", {
 	template = "ut_shock_rifle_template",
 	base_item = "bw_skullstaff_beam",
 	name = "Shock Rifle",
+	type_name = "Energy Rifle",
 	description = "UT2004's Shock Rifle. The primary fire is an instant beam, the secondary fire a slow energy ball. Shoot the ball with the beam for a huge combo explosion.",
 	icon = "ut_shock_rifle_icon",
 	icon_materials = "units/ut/shock/icon",

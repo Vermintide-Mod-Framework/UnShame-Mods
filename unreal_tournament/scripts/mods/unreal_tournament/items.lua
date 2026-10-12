@@ -3,10 +3,10 @@ local mod = get_mod("unreal_tournament")
 -- The weapons as items of their own: each is a copy of a game weapon (its template and its item), with a name of its own, in every
 -- player's inventory and usable by every career. The game's weapon is left as it is.
 --
---   items.register(setting_id, { key, template, base_item, name, description, icon, icon_materials })
+--   items.register(setting_id, { key, template, base_item, name, type_name, description, icon, icon_materials })
 --     key: the item's name (damage sources, the loadout and the other peers know the item by it), template: the weapon template's name,
---     base_item: the game's item that is copied (its models, kind and skins are the copy's), name, description, icon: shown in the
---     inventory, the icon being the name of a material of the file icon_materials (a resource of the mod's package)
+--     base_item: the game's item that is copied (its models and skins are the copy's), name, type_name (the kind of weapon, "Beam Staff"
+--     for the game's), description, icon: shown in the inventory, the icon being the name of a material of the file icon_materials (a resource of the mod's package)
 --
 -- The game takes the inventory from the backend (PlayFab), which does not have these items: they are put into the inventory it has loaded,
 -- under an id that is the item's key, the same every time, so that the loadout that has one equipped finds it again.
@@ -129,6 +129,8 @@ function items.register(setting_id, definition)
 	item.template = definition.template
 	item.display_name = definition.key .. "_name"
 	item.description = definition.key .. "_description"
+	-- (the kind of weapon, under the name in the inventory: the game's items say it by their item type)
+	item.item_type = definition.key .. "_type"
 	item.can_wield = all_careers()
 	-- (what the game's parse_item_master_list makes of every item)
 	item.key = definition.key
@@ -137,6 +139,7 @@ function items.register(setting_id, definition)
 
 	texts[item.display_name] = definition.name
 	texts[item.description] = definition.description
+	texts[item.item_type] = definition.type_name
 
 	-- (the icon is a texture of its own, not one of the game's atlases: drawn by its material's name, which the UI's renderers have to be given.
 	-- The in-game UI's renderer is made when a level is loaded, so when the mod is loaded in a level the item keeps the icon of the game's
