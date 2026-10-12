@@ -152,9 +152,23 @@ local function new(def)
 		return item_data and BackendUtils.get_item_template(item_data).name
 	end
 
-	-- Where the muzzle of the model is (the unit has to be alive: the skin goes before it)
+	-- Where the muzzle of the model is seen (the unit has to be alive: the skin goes before it). The model is drawn with a field of view of
+	-- its own (see WEAPON_VERTICAL_FOV), so a point of it is seen where the camera, with its wider one, sees a point further from the middle
+	-- of the view, by the ratio of the tangents of the half field of views: the effects of the shot, which the camera draws, are put there.
 	function self.muzzle_position()
-		return skin and Unit.alive(skin.unit) and Unit.world_position(skin.unit, skin.muzzle_node) or nil
+		if not skin or not Unit.alive(skin.unit) then
+			return nil
+		end
+
+		local position = Unit.world_position(skin.unit, skin.muzzle_node)
+		local camera_manager = Managers.state.camera
+		local camera_position = camera_manager:camera_position("player_1")
+		local camera_rotation = camera_manager:camera_rotation("player_1")
+		local ratio = math.tan(camera_manager:fov("player_1") / 2) / math.tan(WEAPON_VERTICAL_FOV / 2)
+		local right, forward, up = Quaternion.right(camera_rotation), Quaternion.forward(camera_rotation), Quaternion.up(camera_rotation)
+		local offset = position - camera_position
+
+		return camera_position + right * (Vector3.dot(offset, right) * ratio) + forward * Vector3.dot(offset, forward) + up * (Vector3.dot(offset, up) * ratio)
 	end
 
 	-- How long the game takes to wield a weapon: nothing can be done with the weapon for that long
