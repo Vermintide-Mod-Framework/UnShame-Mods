@@ -63,16 +63,8 @@ local function worth_a_ball(target_unit, target_position, world)
 	return enemies >= CONFIG.cluster_size
 end
 
-mod:hook_safe(BTBotShootAction, "enter", function (self, unit, blackboard)
-	blackboard.shoot.ut_unit = unit
-end)
-
 -- The bot fires: a ball, a wait for it, and then the beam, or just the beam
-mod:hook(BTBotShootAction, "_fire_shot", function (func, self, shoot_blackboard, action_data, input_extension, t)
-	if not shoot_blackboard.attack_meta_data.ut_shock then
-		return func(self, shoot_blackboard, action_data, input_extension, t)
-	end
-
+mod.bot_shot_callbacks.ut_shock = function (func, self, shoot_blackboard, action_data, input_extension, t)
 	local target_unit = shoot_blackboard.target_unit
 	local pending = shoot_blackboard.ut_pending
 
@@ -112,4 +104,4 @@ mod:hook(BTBotShootAction, "_fire_shot", function (func, self, shoot_blackboard,
 	end
 
 	return func(self, shoot_blackboard, action_data, input_extension, t)
-end)
+end

@@ -47,16 +47,8 @@ local function worth_a_shell(target_unit, target_position, world)
 	return enemies >= CONFIG.cluster_size
 end
 
-mod:hook_safe(BTBotShootAction, "enter", function (self, unit, blackboard)
-	blackboard.shoot.ut_unit = unit
-end)
-
 -- The bot fires the shell, or the flechettes
-mod:hook(BTBotShootAction, "_fire_shot", function (func, self, shoot_blackboard, action_data, input_extension, t)
-	if not shoot_blackboard.attack_meta_data.ut_flak then
-		return func(self, shoot_blackboard, action_data, input_extension, t)
-	end
-
+mod.bot_shot_callbacks.ut_flak = function (func, self, shoot_blackboard, action_data, input_extension, t)
 	local target_unit = shoot_blackboard.target_unit
 	local bot_unit = shoot_blackboard.ut_unit
 
@@ -76,4 +68,4 @@ mod:hook(BTBotShootAction, "_fire_shot", function (func, self, shoot_blackboard,
 	end
 
 	return func(self, shoot_blackboard, action_data, input_extension, t)
-end)
+end

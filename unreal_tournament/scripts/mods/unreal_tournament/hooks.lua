@@ -522,3 +522,23 @@ mod:command("slomo", "<number> - the speed of the game: below 1 slower, above 1 
 	Managers.time:set_global_time_scale(number)
 	mod:echo("slomo: %s", tostring(number))
 end)
+
+-- How the bots shoot a weapon of the mod. The game's bot shooting (BTBotShootAction) is hooked once, here (a mod can hook a function once), and
+-- runs the callback of the weapon, which is found by a key of the weapon's attack_meta_data that is true:
+--   mod.bot_shot_callbacks[key] = function (func, action, shoot_blackboard, action_data, input_extension, t)
+--       fires, or calls func(action, shoot_blackboard, action_data, input_extension, t) for the game's own shot. shoot_blackboard.ut_unit is the bot.
+mod.bot_shot_callbacks = {}
+
+mod:hook_safe(BTBotShootAction, "enter", function (self, unit, blackboard)
+	blackboard.shoot.ut_unit = unit
+end)
+
+mod:hook(BTBotShootAction, "_fire_shot", function (func, self, shoot_blackboard, action_data, input_extension, t)
+	for key, callback in pairs(mod.bot_shot_callbacks) do
+		if shoot_blackboard.attack_meta_data[key] then
+			return callback(func, self, shoot_blackboard, action_data, input_extension, t)
+		end
+	end
+
+	return func(self, shoot_blackboard, action_data, input_extension, t)
+end)
