@@ -380,6 +380,50 @@ for _, page_name in ipairs(PAGES) do
 	end)
 end
 
+-- The window of an item (HeroWindowItemCustomization: the page of the equipment screen that shows an item and upgrades or rerolls it) does the
+-- same from the item. The game turns the crafting off there in the modded realm (GameSettingsDevelopment.read_only_backend, which is set as
+-- the backend is not written to): for the mod's weapons, which the backend is not asked about, it is on, as the window sets its button
+local function writable_backend(func, self, ...)
+	if not items.is_custom(self._item_backend_id) then
+		return func(self, ...)
+	end
+
+	local read_only_backend = GameSettingsDevelopment.read_only_backend
+
+	GameSettingsDevelopment.read_only_backend = false
+
+	local ok, result = pcall(func, self, ...)
+
+	GameSettingsDevelopment.read_only_backend = read_only_backend
+
+	if not ok then
+		error(result, 0)
+	end
+
+	return result
+end
+
+mod:hook(HeroWindowItemCustomization, "_enable_craft_button", writable_backend)
+mod:hook(HeroWindowItemCustomization, "_update_state_craft_button", writable_backend)
+
+-- (and what the window shows of the materials, which the recipe does not need)
+mod:hook(HeroWindowItemCustomization, "_create_material_requirement_widgets", function (func, self, recipe_name)
+	local has_all_requirements, width = func(self, recipe_name)
+
+	if not items.is_custom(self._item_backend_id) then
+		return has_all_requirements, width
+	end
+
+	for _, widget in ipairs(self._material_widgets) do
+		widget.content.text = (string.gsub(widget.content.text, "/.*$", "/0"))
+		widget.content.warning = false
+	end
+
+	table.clear(self._material_items)
+
+	return true, width
+end)
+
 -- The pages of the rerolls do not set the requirements again when a weapon is put in or taken out (only when they are entered and after a
 -- craft), so what they show is of the weapon that was in before: they are set again for every weapon, so that the ones of the mod's weapons
 -- do not stay when another is put in
