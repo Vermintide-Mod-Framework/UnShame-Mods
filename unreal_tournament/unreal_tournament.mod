@@ -10,5 +10,6 @@ return {
 	end,
 	packages = {
 		"resource_packages/unreal_tournament/unreal_tournament",
+		"resource_packages/unreal_tournament/icons",
 	},
 }

@@ -27,8 +27,9 @@ end)
 
 -- The materials the UI's renderers are made with, besides the game's own (the game's UIRenderer.create adds these to every renderer made
 -- after this: the ones that exist already do not have them)
--- The package of the icons is loaded under a reference of its own and never unloaded: the UI's renderers hold their materials locked, and
--- the game fails when a package with a locked resource is unloaded (as the mod's own package is when the mod is reloaded).
+-- The package of the icons is listed in the mod's file, which is what makes the game find it, and loaded here under a reference of its own
+-- that is never given back: the UI's renderers hold their materials locked, and the game fails when a package with a locked resource is
+-- unloaded (as the mod's packages are when the mod is reloaded: with this reference the package stays).
 local ICON_PACKAGE_REFERENCE = "unreal_tournament_icons"
 
 local function load_icon_package(package_name)
