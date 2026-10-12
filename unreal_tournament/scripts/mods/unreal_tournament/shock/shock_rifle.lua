@@ -784,7 +784,19 @@ mod.explosion_before_callbacks.ut_shock_combo_explosion = function (world, impac
 	}
 end
 
--- A beastmen standard (banner) is not an enemy, and the explosion doesn't hit it. The host damages the ones in the combo's radius.
+-- A beastmen standard (banner) only takes damage from melee attacks and from a list of damage sources (bombs, torches), which doesn't
+-- have the rifle. Its other damage is dropped.
+if rawget(_G, "BeastmenStandardHealthExtension") then
+	mod:hook(BeastmenStandardHealthExtension, "add_damage", function (func, self, attacker_unit, damage_amount, hit_zone_name, damage_type, hit_position, damage_direction, damage_source_name, ...)
+		if damage_source_name == mod.items.weapons.shock_rifle.key then
+			return GenericHealthExtension.add_damage(self, attacker_unit, damage_amount, hit_zone_name, damage_type, hit_position, damage_direction, damage_source_name, ...)
+		end
+
+		return func(self, attacker_unit, damage_amount, hit_zone_name, damage_type, hit_position, damage_direction, damage_source_name, ...)
+	end)
+end
+
+-- A beastmen standard is not an enemy, and the explosion doesn't hit it. The host damages the ones in the combo's radius.
 local function blow_up_standards(impact_position, attacker_unit)
 	if not Managers.player.is_server or not attacker_unit then
 		return
