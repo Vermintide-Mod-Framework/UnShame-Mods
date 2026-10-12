@@ -399,6 +399,7 @@ local ATTACK_META_DATA_FIELDS = {
 	"charged_attack_action_name",
 	"fire_input",
 	"max_range",
+	"ut_shock",
 }
 
 local function restore_beam_staff()
@@ -471,6 +472,8 @@ local function apply_shock_rifle()
 	attack_meta_data.charged_attack_action_name = nil
 	attack_meta_data.fire_input = "fire"
 	attack_meta_data.max_range = 50
+	-- (what tells the bot shooting, see bots.lua, that this is the Shock Rifle)
+	attack_meta_data.ut_shock = true
 
 	template.tooltip_compare = {
 		light = {
