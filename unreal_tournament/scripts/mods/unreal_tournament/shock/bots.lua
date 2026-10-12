@@ -12,17 +12,17 @@ local TEMPLATE_NAME = "staff_blast_beam_template_1"
 local CONFIG = {
 	-- The ball is used against a target this far away (meters): nearer, the ball is gone before the beam can follow it; further, the beam is
 	-- out of range of the bot's aim
-	min_range = 6,
-	max_range = 35,
+	min_range = 0, -- TEST: no restrictions, to see that bots can do it (was 6)
+	max_range = 1000, -- (was 35)
 	-- The beam is fired when the ball is this far from the target (meters)
 	meet_distance = 3,
 	-- A cluster is this many enemies within this radius of the target (the combo's explosion is 3.8 m in radius)
-	cluster_size = 3,
+	cluster_size = 0, -- (was 3)
 	cluster_radius = 4,
 	-- No ball when a player or bot is this close to the target (the combo's explosion hurts them)
-	ally_clearance = 4,
+	ally_clearance = 0, -- (was 4)
 	-- Seconds between a bot's balls, and how long past the time the ball takes to get there the bot waits before it shoots the beam anyway
-	cooldown = 4,
+	cooldown = 1.5, -- (was 4)
 	wait_grace = 1.5,
 	-- The least time (seconds) between the ball and the beam
 	min_wait = 0.4,
