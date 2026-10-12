@@ -741,12 +741,9 @@ local function hit_owner(chunk)
 		return
 	end
 
-	local feet = POSITION_LOOKUP[owner_unit]
-	local position = POSITION_LOOKUP[chunk.unit]
-
-	if not feet or not position then
-		return
-	end
+	-- (the position of a player in POSITION_LOOKUP is not a vector)
+	local feet = Unit.world_position(owner_unit, 0)
+	local position = Unit.world_position(chunk.unit, 0)
 
 	local feet_z = Vector3.z(feet)
 	local closest = Vector3(Vector3.x(feet), Vector3.y(feet), feet_z + math.clamp(Vector3.z(position) - feet_z, 0, CONFIG.chunk_self_hit_height))
@@ -843,7 +840,7 @@ mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position, _, 
 
 	for unit in pairs(alive_before or {}) do
 		if Unit.alive(unit) and not HEALTH_ALIVE[unit] and not ragdoll_throws[unit] then
-			local unit_position = POSITION_LOOKUP[unit] or position
+			local unit_position = Unit.world_position(unit, 0)
 			local offset = Vector3.flat(unit_position - position)
 			local distance = Vector3.length(offset)
 			local direction = distance > 0.01 and offset * (1 / distance) or Vector3.up()
