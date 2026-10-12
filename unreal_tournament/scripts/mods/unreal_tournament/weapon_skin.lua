@@ -660,4 +660,6 @@ end)
 
 return {
 	new = new,
+	-- (by setting id)
+	skins = skins,
 }

@@ -221,6 +221,8 @@ function items.register(setting_id, definition)
 	-- (the kind of weapon, under the name in the inventory: the game's items say it by their item type)
 	item.item_type = definition.key .. "_type"
 	item.can_wield = all_careers()
+	-- (the weapon illusions are the game's weapon's: its skins are not for this one)
+	item.skin_combination_table = nil
 	-- (what the game's parse_item_master_list makes of every item)
 	item.key = definition.key
 	item.name = definition.key

@@ -80,10 +80,25 @@ local function new(def)
 		end
 	end
 
+	-- The mesh, made in a world, hidden and with its materials
+	local function new_mesh(world)
+		local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
+
+		Unit.set_unit_visibility(unit, false)
+
+		for slot, material in pairs(CONFIG.materials or {}) do
+			Unit.set_material(unit, slot, material)
+		end
+
+		return unit
+	end
+
+	third_person.new_mesh = new_mesh
+
 	local function attach(character, staff, units)
 		local world = Managers.world:world("level_world")
 		local hand_node = Unit.node(character, CONFIG.hand_node)
-		local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
+		local unit = new_mesh(world)
 
 		-- (kept at once, so that the mesh is found and destroyed whatever happens next, see weapon_skin.lua)
 		attached[character] = {
@@ -101,7 +116,6 @@ local function new(def)
 			Unit.flow_event(game_unit, "lua_unwield")
 		end
 
-		Unit.set_unit_visibility(unit, false)
 		World.link_unit(world, unit, 0, character, hand_node)
 
 		-- The outline of the character (an ally's, for one) is put on the units that are linked to it when it changes, so a unit that is linked
@@ -110,10 +124,6 @@ local function new(def)
 
 		if outline_extension then
 			outline_extension:reapply_outline()
-		end
-
-		for slot, material in pairs(CONFIG.materials or {}) do
-			Unit.set_material(unit, slot, material)
 		end
 	end
 
@@ -243,6 +253,61 @@ local function new(def)
 	function third_person.clear()
 		for character in pairs(attached) do
 			detach(character)
+		end
+	end
+
+	-- The character of a menu (the hero of the equipment screen: not one of the game's players, which is what update looks at) holds the
+	-- mesh: [character unit] = { character, hand_node, unit, world }
+	local in_menu = {}
+
+	-- The character holds the mesh, which is placed as in the game, and the game's units (the previewer's) are hidden; the mesh is shown if visible
+	function third_person.hold_in_menu(character, world, game_units, visible)
+		local entry = in_menu[character]
+
+		if entry and entry.world ~= world then
+			third_person.release_from_menu(character)
+
+			entry = nil
+		end
+
+		if not entry then
+			local hand_node = Unit.node(character, CONFIG.hand_node)
+			local unit = new_mesh(world)
+
+			World.link_unit(world, unit, 0, character, hand_node)
+
+			entry = {
+				character = character,
+				hand_node = hand_node,
+				unit = unit,
+				world = world,
+			}
+			in_menu[character] = entry
+		end
+
+		place(entry)
+		Unit.set_unit_visibility(entry.unit, visible)
+
+		for _, game_unit in ipairs(game_units) do
+			if Unit.alive(game_unit) then
+				Unit.set_unit_visibility(game_unit, false)
+			end
+		end
+	end
+
+	-- (the world has to be there still: before the previewer takes its character down)
+	function third_person.release_from_menu(character)
+		local entry = in_menu[character]
+
+		if not entry then
+			return
+		end
+
+		in_menu[character] = nil
+
+		if Unit.alive(entry.unit) then
+			World.unlink_unit(entry.world, entry.unit)
+			World.destroy_unit(entry.world, entry.unit)
 		end
 	end
 
