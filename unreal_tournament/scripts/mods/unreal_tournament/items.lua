@@ -45,6 +45,17 @@ mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 	table.clear(material_sets)
 end
 
+-- The items whose icon is not used yet: the renderer of the UI that is there was made without it
+local icons_waiting = {}
+
+mod:hook_safe(IngameUI, "init", function ()
+	for key in pairs(icons_waiting) do
+		ItemMasterList[key].inventory_icon = definitions[key].icon
+	end
+
+	table.clear(icons_waiting)
+end)
+
 -- Every career of the game: the copy is not for the ones the game's weapon is for
 local function all_careers()
 	local careers = {}
@@ -127,10 +138,17 @@ function items.register(setting_id, definition)
 	texts[item.display_name] = definition.name
 	texts[item.description] = definition.description
 
-	-- (the icon is a texture of its own, not one of the game's atlases: drawn by its material's name, which the UI's renderers have to be given)
-	item.inventory_icon = definition.icon
+	-- (the icon is a texture of its own, not one of the game's atlases: drawn by its material's name, which the UI's renderers have to be given.
+	-- The in-game UI's renderer is made when a level is loaded, so when the mod is loaded in a level the item keeps the icon of the game's
+	-- item until the next one)
 	UIAtlasHelper.add_standalone_texture_by_name(definition.icon)
 	add_material_set(definition.icon_materials)
+
+	if Managers.ui and Managers.ui._ingame_ui then
+		icons_waiting[definition.key] = true
+	else
+		item.inventory_icon = definition.icon
+	end
 
 	ItemMasterList[definition.key] = item
 
