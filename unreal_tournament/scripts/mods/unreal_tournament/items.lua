@@ -8,6 +8,7 @@ local mod = get_mod("unreal_tournament")
 --     template: name of the weapon template (a copy of base_item's)
 --     base_item: the game item that is copied; its models are used
 --     deus_copy: the Chaos Wastes weapon (DeusWeapons key) of base_item, which the item's Chaos Wastes weapon is a copy of
+--     can_wield: the careers that can have it, if they are not those of base_item
 --     name, type_name (the line under the name), description
 --     keywords: localization ids for the line under the power; texts: { id = text } for the ids that are the mod's
 --     icon: a material in the file icon_materials, which is in the package icon_package

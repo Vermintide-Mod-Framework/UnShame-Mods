@@ -11,6 +11,8 @@ mod.items.register("shock_rifle", {
 	template = "ut_shock_rifle_template",
 	base_item = "bw_skullstaff_beam",
 	deus_copy = "deus_bw_skullstaff_beam",
+	-- The Beam Staff's careers, and the Necromancer (the DLC's career, which has staffs of its own)
+	can_wield = { "bw_scholar", "bw_adept", "bw_unchained", "bw_necromancer" },
 	name = "UT2004 Shock Rifle",
 	-- UT2004's manual calls it the ASMD Shock Rifle
 	type_name = "ASMD Shock Rifle",
