@@ -3,9 +3,6 @@
 Local tools that produced `units/ut/*`, `ui/ut/*`, `wwise/unreal_tournament/*`, `texture_categories/ut.texture_category` and the
 `skin_animations*.lua` files of the weapons. They are run by hand, not by the build.
 
-The assets are Epic's (Unreal Tournament 2004), taken from a legally owned copy. Fatshark's mod rules forbid third
-party IP in a published mod: this branch is for local use, and nothing of it should be uploaded or pushed.
-
 ## Setup
 
 - **UModel** (UE Viewer, gildor.org) exports the game's files. It is run with `-game=ut2` against the UT2004 folder:
