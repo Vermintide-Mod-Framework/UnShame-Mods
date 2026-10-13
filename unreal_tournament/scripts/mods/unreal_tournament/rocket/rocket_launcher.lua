@@ -118,15 +118,6 @@ local CONFIG = {
 	-- units (the game triggers these for the sounds of handling a weapon: "sfx_ranged_weapon_foley" is the
 	-- rustle of it, "sfx_ranged_weapon_equip" the sound of wielding it)
 	load_animation_event = false,
-	-- the camera kicks a little when a rocket is loaded
-	load_kick = {
-		climb_duration = 0.075,
-		horizontal_climb = 0,
-		restore_duration = 0.3,
-		vertical_climb = 0.6,
-		climb_function = math.ease_out_quad,
-		restore_function = math.ease_out_quad,
-	},
 	load_flow_event = "sfx_ranged_weapon_equip",
 	-- The crosshair shows a pip for each rocket that can be loaded, the loaded ones lit, while loading
 	crosshair_pips = true,
@@ -506,10 +497,6 @@ local function update_loading(t)
 
 				for _, callback in pairs(mod.rocket_load_callbacks) do
 					callback(unit, loaded)
-				end
-
-				if CONFIG.load_kick then
-					first_person_extension:play_camera_recoil(CONFIG.load_kick, t)
 				end
 
 				if CONFIG.load_animation_event then
