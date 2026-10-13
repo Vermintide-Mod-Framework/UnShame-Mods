@@ -77,11 +77,12 @@ local CONFIG = {
 	-- at 2.95 thirds of a turn a second.
 	barrel_delay = 0.15,
 	load_sound_delay = 0.22,
-	plunger_sound_delay = 0.5,
+	plunger_sound_delay = 0.5, -- (the shell and the feed move then, at plunge_speed times the speed of the animation)
+	plunge_speed = 0.8,
 	barrel_step = 120, -- degrees
 	barrel_speed = 2.95 * 120, -- degrees per second
 	-- Its axis is along the mesh's own left, the way the barrels point before the animation's root turns the mesh, and goes through this
-	-- point of the mesh (right, forward, up in the mesh's units). The barrel turns clockwise as the player sees it.
+	-- point of the mesh (right, forward, up in the mesh's units). The barrel turns anticlockwise as the player sees it.
 	barrel_pivot = {
 		-23.3,
 		0.7,
@@ -94,9 +95,14 @@ local UNIT = CONFIG.meters_per_uu
 -- The place of the barrel's bone in the animations' bones
 local BARREL_BONE
 
+-- and of the shell and the feed, which the load animation moves
+local PLUNGE_BONES = {}
+
 for index, name in ipairs(animations.bones) do
 	if name == "b_bone_barrel" then
 		BARREL_BONE = index
+	elseif name == "b_bone_shell" or name == "b_bone_feed" then
+		PLUNGE_BONES[#PLUNGE_BONES + 1] = index
 	end
 end
 
@@ -344,7 +350,18 @@ skin_api = mod.weapon_skin.new({
 
 			if cycle.time >= CONFIG.plunger_sound_delay then
 				skin.load_cycle = nil
+				skin.plunge = {
+					time = 0,
+				}
 				skin_api.play_sound("ut_rocket_plunger")
+			end
+		end
+
+		if skin.plunge then
+			skin.plunge.time = skin.plunge.time + dt * CONFIG.plunge_speed
+
+			if skin.plunge.time * animations.animations.Load.rate >= #animations.animations.Load.frames - 1 then
+				skin.plunge = nil
 			end
 		end
 
@@ -353,26 +370,45 @@ skin_api = mod.weapon_skin.new({
 		end
 	end,
 	on_pose = function (skin, pose)
+		-- The shell and the feed play the load animation by themselves, on top of the animation that is playing (UT blends it in on
+		-- the bones of the two, and does not touch the rest)
+		local plunge = skin.plunge
+
+		if plunge then
+			local frames = animations.animations.Load.frames
+			local position = math.min(plunge.time * animations.animations.Load.rate, #frames - 1)
+			local index = math.floor(position)
+			local fraction = position - index
+			local first, second = frames[index + 1], frames[math.min(index + 2, #frames)]
+
+			for _, bone in ipairs(PLUNGE_BONES) do
+				local o = (bone - 1) * 7
+
+				for i = 1, 7 do
+					pose[o + i] = first[o + i] + (second[o + i] - first[o + i]) * fraction
+				end
+			end
+		end
+
 		local angle = math.rad(skin.barrel_angle or 0)
 
 		if angle == 0 then
 			return
 		end
 
-		-- The barrel's own pose (a move and a turn, about the mesh's origin) is turned about its axis, which goes through the pivot
+		-- The barrel's own pose (a move and a turn, about the mesh's origin) is turned about its axis, which goes through the pivot. The
+		-- axis is the mesh's own left; the turn here is about the mesh's right, which is the other way.
 		local o = (BARREL_BONE - 1) * 7
-		local half = -angle / 2
-		local sin_half, cos_half = math.sin(half), math.cos(half)
+		local sin_half, cos_half = math.sin(angle / 2), math.cos(angle / 2)
 		local x, y, z, w = pose[o + 1], pose[o + 2], pose[o + 3], pose[o + 4]
 		local pivot = CONFIG.barrel_pivot
 
-		-- (the turn is about the mesh's left, which is the negative of the right axis: the angle is negative about the right)
 		pose[o + 1] = cos_half * x + sin_half * w
 		pose[o + 2] = cos_half * y - sin_half * z
 		pose[o + 3] = cos_half * z + sin_half * y
 		pose[o + 4] = cos_half * w - sin_half * x
 
-		local cos_angle, sin_angle = math.cos(-angle), math.sin(-angle)
+		local cos_angle, sin_angle = math.cos(angle), math.sin(angle)
 		local py, pz = pose[o + 6] - pivot[2], pose[o + 7] - pivot[3]
 
 		pose[o + 6] = py * cos_angle - pz * sin_angle + pivot[2]
@@ -442,7 +478,7 @@ mod.aim_start_callbacks.rocket_skin = function (self, new_action)
 	end
 end
 
--- Another rocket is loaded: the animation and, for the second, the load (UT's third has none)
+-- Another rocket is loaded: the second one is the load (UT's third has none)
 mod.rocket_load_callbacks.rocket_skin = function (owner_unit, loaded)
 	local skin = skin_api.state()
 
@@ -452,8 +488,6 @@ mod.rocket_load_callbacks.rocket_skin = function (owner_unit, loaded)
 		if loaded == 2 then
 			turn_barrel(skin)
 		end
-
-		skin_api.play("Load")
 	end
 end
 
