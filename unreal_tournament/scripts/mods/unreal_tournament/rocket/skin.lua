@@ -50,7 +50,7 @@ local CONFIG = {
 	rocket_sound_seconds = 1.87, -- how long the loop of the rocket (RocketLauncherProjectile) is
 	-- The explosion (NewExplosionA, ExplosionCrap): the game's own explosion, with its smoke and the mark it leaves (only if the game has it
 	-- loaded), a flash, three fireballs that play a sheet of 16 frames (the same sheet for all three, one of two), and smoke
-	explosion_effect = "fx/wpnfx_frag_grenade_impact",
+	explosion_effect = false, -- "fx/wpnfx_frag_grenade_impact", off for a test
 	explosion_flash_size = 150,
 	explosion_flash_growth = 500,
 	explosion_flash_life = 0.25,
@@ -604,7 +604,9 @@ end
 -- The explosion of a rocket, on every machine: the game's own effects of it are not made
 mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, rotation)
 	skin_api.play_sound_at("ut_rocket_explosion_3d", position)
-	mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
+	if CONFIG.explosion_effect then
+		mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
+	end
 
 	particles.sprite({
 		attenuation = 0,
