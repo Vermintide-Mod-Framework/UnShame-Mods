@@ -5,7 +5,7 @@ they only read the game's files.
 
 - `bundles.py` reads the game's resource bundles: which bundle has a resource (`find`, `where`), what a bundle holds (`list`), and a bundle
   unpacked (`unpack`). The names of resources are not in the bundles, only their hashes, so a name has to be known to be found. The game folder is
-  in the `VT2_DIR` environment variable, or the usual place in a Steam library. It is how the game's own particle files, which are compiled and
+  in the `VT2_DIR` environment variable. It is how the game's own particle files, which are compiled and
   not text, were found (`fx/wpnfx_frag_grenade_impact` is in one of 15250 bytes).
 - `lua_bytecode.py` finds the compiled Lua in an unpacked bundle or a mod's bundle and writes each piece to a file named by its chunk name.
   They can be turned into text with a LuaJIT decompiler (luajit-decompiler-v2).

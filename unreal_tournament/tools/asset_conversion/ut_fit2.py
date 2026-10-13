@@ -1,6 +1,7 @@
 import struct, math, sys
 
-data = open('umodel/out3/NewWeapons2004/SkeletalMesh/ShockRifle.psk', 'rb').read()
+# Usage: ut_fit2.py <scratch dir>      (the dir has umodel/out3, the export of NewWeapons2004's ShockRifle, see README.md)
+data = open(sys.argv[1] + '/umodel/out3/NewWeapons2004/SkeletalMesh/ShockRifle.psk', 'rb').read()
 pos = 0
 ch = {}
 while pos + 32 <= len(data):

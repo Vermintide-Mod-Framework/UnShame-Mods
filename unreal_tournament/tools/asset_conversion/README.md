@@ -83,8 +83,8 @@ locked, and the game fails when it is unloaded.
   of the skin. It agrees with the game to within a few pixels. Only the root bone is posed (the rest of the model is in its reference pose),
   and the lighting is a simple shading. The weapons it knows are in its `WEAPONS`.
 - `render_psk2.py` is a software render of a mesh with outward faces only. `ut_fit2.py` is the fit of the Shock Rifle's mesh in UT's projection
-  against pixels of a screenshot of UT2004: where the projection of the weapons comes from (below). It is for the Shock Rifle only and is run
-  from the scratch folder.
+  against pixels of a screenshot of UT2004: where the projection of the weapons comes from (below). It is for the Shock Rifle only and takes the
+  scratch folder as its argument.
 
 ## What was found
 

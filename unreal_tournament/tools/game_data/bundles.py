@@ -11,7 +11,7 @@ import os, sys, struct, zlib, collections
 #   bundles.py where <name> <type>               the bundle that has this resource, as in "units/weapons/player/wpn_x/wpn_x unit"
 #   bundles.py list <bundle>                     the number of resources by type, and what the Wwise ones hold
 #   bundles.py unpack <bundle> <out>             the bundle decompressed, as it is (what is in it can be searched)
-# The game folder is found from the VT2_DIR environment variable, or the usual place in a Steam library. A bundle is a file of the bundle
+# The game folder is in the VT2_DIR environment variable (the folder that has the bundle folder). A bundle is a file of the bundle
 # folder with no extension.
 
 MULTIPLIER = 0xc6a4a7935bd1e995
@@ -60,7 +60,10 @@ TYPES = {name_hash(name): name for name in TYPE_NAMES}
 
 
 def bundle_folder():
-    game = os.environ.get('VT2_DIR', 'E:/SteamLibrary/steamapps/common/Warhammer Vermintide 2')
+    game = os.environ.get('VT2_DIR')
+
+    if not game:
+        sys.exit('Set the VT2_DIR environment variable to the folder of the game (the one that has the bundle folder).')
 
     return game + '/bundle'
 
