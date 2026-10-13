@@ -147,6 +147,9 @@ local THIRD_PERSON = {
 	muzzle_right = 0,
 	muzzle_forward = 51.7,
 	muzzle_up = 10,
+	-- The chamber is a material the engine's fade near the camera does not reach: it is faded from the distance (see weapon_skin_third_person.lua)
+	fade_mesh = "g_pickup_1",
+	fade_material = "m_power",
 }
 
 local INSTAGIB_THIRD_PERSON = {}

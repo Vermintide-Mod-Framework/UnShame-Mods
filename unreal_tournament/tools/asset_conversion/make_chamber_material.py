@@ -173,7 +173,13 @@ connect('shown', 'light', IN_POWER_A)
 constant('light', IN_POWER_B, 2.2)
 connect('light', 'out', IN_OUT_BASE_COLOR)
 # (the alpha of the control, 128 of 255 when the glow is all there: the liquid is half see through, UT's final blend modulates by it)
-connect('glass_weight', 'out', IN_OUT_OPACITY)
+# (times how much the chamber is faded: the skin sets "fade" from the distance of the camera, 1 is all there. The materials of the third person
+# fade out when the camera is close, which this shader has no option for)
+add_node('fade', 'core/shader_nodes/material_variable', export=variable('fade', 'Fade', 'float', 1), title='Fade')
+add_node('opacity', 'core/shader_nodes/mul')
+connect('glass_weight', 'opacity', IN_MUL_A)
+connect('fade', 'opacity', IN_MUL_B)
+connect('opacity', 'out', IN_OUT_OPACITY)
 # (blended, not added, at half the opacity: the liquid is half see through in UT, and the glow takes it away after a shot)
 constant('out', IN_OUT_ADDITIVE, 0)
 
@@ -198,37 +204,15 @@ for n, (node_id, node_type, options, export, samplers, title) in enumerate(nodes
     if title:
         text += '\t\t\ttitle = "%s"\n' % title
     text += '\t\t\ttype = "%s"\n\t\t}\n' % node_type
-text += '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tbrightness = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\tcontrol_color = {\n\t\ttype = "vector3"\n\t\tvalue = [\n\t\t\t0.752941\n\t\t\t0\n\t\t\t1\n\t\t]\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n}\n'
+text += '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tbrightness = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\tfade = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\tcontrol_color = {\n\t\ttype = "vector3"\n\t\tvalue = [\n\t\t\t0.752941\n\t\t\t0\n\t\t\t1\n\t\t]\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n}\n'
 # Two graphs: the chamber of the pickup (and of the character's hand), and the chamber of the first person rifle, which is drawn with the game's
 # custom FOV for weapons (the option HAS_CUSTOM_FOV of unlit_base), as the game's own first person weapons are: it is that option that makes the
 # outlines of other players not be drawn over it, see units/ut/weapon_standard.material.
 HAS_CUSTOM_FOV = 'b2556764-e8e9-47cf-9ecc-f53b5d5d73c7'
 last_option = '\t\t\t\t"%s"\n' % DISABLE_DEPTH_WRITE
 assert text.count(last_option) == 1
-# The chamber of the pickup (the third person) is made with the SDK's standard shader instead, with the jitter transparency option, so that it
-# fades out when the camera is close, as the rest of the weapon does (see units/ut/world_standard.material): the light is the emissive of an
-# unlit (black) surface, which is blended as it was, the faces are not culled, and the options are those of the transparent standard material.
-import re
-STANDARD_OPTIONS = {
-    LAYER_TRANSPARENT: 'dd7fcf97-0627-48ab-b29a-95b5685bb123',   # TRANSPARENT
-    BLEND_TRANSPARENT: 'b5bb2062-c8fa-43c5-8657-493a0be6860c',   # SKINNED_DISABLED
-    DISABLE_DEPTH_WRITE: '580cc6eb-3591-4c71-aa50-528af18ba160',  # JITTER_TRANSPARENCY
-}                                                                 # (DOUBLE_SIDED is CULL_NONE there, with the same id)
-IN_STANDARD_EMISSIVE = '1164a5ef-4563-4795-b3b5-42825d6df037'
-world_text = text.replace('output_nodes/unlit_base', 'output_nodes/standard_base')
-for unlit_option, standard_option in STANDARD_OPTIONS.items():
-    assert world_text.count('"%s"' % unlit_option) == 1
-    world_text = world_text.replace('"%s"' % unlit_option, '"%s"' % standard_option)
-light_to_out = 'connector_id = "%s"\n\t\t\t\tinstance_id = "%s"' % (IN_OUT_BASE_COLOR, guid(1))
-assert world_text.count(light_to_out) == 1
-world_text = world_text.replace(light_to_out, light_to_out.replace(IN_OUT_BASE_COLOR, IN_STANDARD_EMISSIVE))
-# (the base color is black: the constant that was the additive blend of the unlit output)
-world_text, replaced = re.subn(r'connector_id = "%s"(\n\t\t\tid = "[^"]+"\n\t\t\tinstance_id = "[^"]+"\n\t\t\tvalue = \[\n)\t\t\t\t0\n' % IN_OUT_ADDITIVE,
-                               lambda m: 'connector_id = "%s"%s\t\t\t\t0\n\t\t\t\t0\n\t\t\t\t0\n' % (IN_OUT_BASE_COLOR, m.group(1)), world_text)
-assert replaced == 1
-
 variants = {
-    'shock_rifle_chamber': world_text,
+    'shock_rifle_chamber': text,
     'shock_rifle_fp_chamber': text.replace(last_option, last_option + '\t\t\t\t"%s"\n' % HAS_CUSTOM_FOV),
 }
 for name, graph_text in variants.items():

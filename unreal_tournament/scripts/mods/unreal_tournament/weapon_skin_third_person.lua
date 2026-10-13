@@ -96,6 +96,21 @@ local function new(def, looks)
 		Unit.set_local_position(entry.unit, 0, -Quaternion.rotate(rotation, grip))
 		Unit.set_local_rotation(entry.unit, 0, rotation)
 		Unit.set_local_scale(entry.unit, 0, Vector3(config.scale, config.scale, config.scale))
+
+		-- A material that the engine's fade near the camera does not reach (its shader has no option for it) has a "fade" variable, set from
+		-- how far the camera is: nothing of it at fade_near meters, all of it from fade_far
+		if config.fade_material and Unit.has_mesh(entry.unit, config.fade_mesh) then
+			local camera_manager = Managers.state.camera
+			local fade = 1
+
+			if camera_manager then
+				local distance = Vector3.length(camera_manager:camera_position("player_1") - Unit.world_position(entry.unit, 0))
+
+				fade = math.clamp((distance - (config.fade_near or 0.3)) / ((config.fade_far or 0.8) - (config.fade_near or 0.3)), 0, 1)
+			end
+
+			Material.set_scalar(Mesh.material(Unit.mesh(entry.unit, config.fade_mesh), config.fade_material), "fade", fade)
+		end
 	end
 
 	local function detach(character)

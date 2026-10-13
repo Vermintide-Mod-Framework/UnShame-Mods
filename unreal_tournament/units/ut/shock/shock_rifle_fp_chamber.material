@@ -314,11 +314,29 @@ shader = {
 		}
 		{
 			destination = {
+				connector_id = "c5823c75-4ae5-4c71-b070-315fa4d03e8e"
+				instance_id = "c0de0000-0000-4000-8000-000000000033"
+			}
+			source = {
+				instance_id = "c0de0000-0000-4000-8000-000000000024"
+			}
+		}
+		{
+			destination = {
+				connector_id = "242d1648-a626-445b-9534-bccec094112f"
+				instance_id = "c0de0000-0000-4000-8000-000000000033"
+			}
+			source = {
+				instance_id = "c0de0000-0000-4000-8000-000000000032"
+			}
+		}
+		{
+			destination = {
 				connector_id = "34259752-b962-4b65-92c3-903a57338519"
 				instance_id = "c0de0000-0000-4000-8000-000000000001"
 			}
 			source = {
-				instance_id = "c0de0000-0000-4000-8000-000000000024"
+				instance_id = "c0de0000-0000-4000-8000-000000000033"
 			}
 		}
 	]
@@ -1095,6 +1113,54 @@ shader = {
 			}
 			type = "core/shader_nodes/power"
 		}
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+				material_variable = {
+					display_name = "Fade"
+					name = "fade"
+					type = "float"
+					ui = {
+						max = 100
+						min = 0
+						step = 0.001
+					}
+					value = 1
+				}
+			}
+			id = "c0de0000-0000-4000-8000-000000000032"
+			options = [
+			]
+			position = [
+				300
+				1000
+			]
+			samplers = {
+			}
+			title = "Fade"
+			type = "core/shader_nodes/material_variable"
+		}
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+			}
+			id = "c0de0000-0000-4000-8000-000000000033"
+			options = [
+			]
+			position = [
+				600
+				1000
+			]
+			samplers = {
+			}
+			type = "core/shader_nodes/mul"
+		}
 	]
 	version = 3
 }
@@ -1102,6 +1168,10 @@ textures = {
 }
 variables = {
 	brightness = {
+		type = "scalar"
+		value = 1
+	}
+	fade = {
 		type = "scalar"
 		value = 1
 	}
