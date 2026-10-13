@@ -69,6 +69,15 @@ local CONFIG = {
 		1,
 		0.75,
 	},
+	-- The same per armor type for the stagger (the game's own are 0.5 against armor, 0.75 against berserkers and 0 against super armor)
+	rocket_armor_impact = {
+		1,
+		1,
+		1,
+		1,
+		1,
+		0.5,
+	},
 	rocket_explosion_radius_uu = 150,
 	rocket_explosion_full_damage_radius = 0.5, -- damage falls off linearly from here to the radius
 	-- The explosion hurts the player who fired the rocket: this much at the center, falling off like
@@ -160,6 +169,7 @@ local function modify_explosion_profile(profile)
 
 	-- more damage against monsters (and armor)
 	profile.armor_modifier.attack = table.clone(CONFIG.rocket_armor_attack)
+	profile.armor_modifier.impact = table.clone(CONFIG.rocket_armor_impact)
 end
 
 register_damage_profile("ut_rocket_explosion", "fireball_charged_explosion", modify_explosion_profile)
