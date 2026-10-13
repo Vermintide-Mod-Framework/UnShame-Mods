@@ -48,9 +48,9 @@ local CONFIG = {
 		0.85,
 	},
 	rocket_sound_seconds = 1.87, -- how long the loop of the rocket (RocketLauncherProjectile) is
-	-- The explosion (NewExplosionA, ExplosionCrap): the game's own explosion, with its smoke and the mark it leaves (only if the game has it
-	-- loaded), a flash, three fireballs that play a sheet of 16 frames (the same sheet for all three, one of two), and smoke
-	explosion_effect = false, -- "fx/wpnfx_frag_grenade_impact", off for a test
+	-- The explosion (NewExplosionA): the game's own explosion, with its smoke and the mark it leaves (only if the game has it
+	-- loaded), a flash, and three fireballs that play a sheet of 16 frames (the same sheet for all three, one of two)
+	explosion_effect = "fx/wpnfx_frag_grenade_impact",
 	explosion_flash_size = 300,
 	explosion_flash_growth = 500,
 	explosion_flash_life = 0.25,
@@ -78,13 +78,6 @@ local CONFIG = {
 		1,
 	},
 	explosion_lift = 20, -- units, how far off the surface it is (NewExplosionA is spawned 20 units along the surface's normal)
-	explosion_smoke_ring = 10, -- units, the radius of the ring the smoke starts on
-	explosion_smoke_count = 15,
-	explosion_smoke_life = 2,
-	explosion_smoke_size = 60, -- units, growing to 2.5 times that (UT: 0.2 to 0.5 of 100, drawn about twice as wide, like the fireballs)
-	explosion_smoke_speed = 4, -- m/s outward, slowed to a tenth in the first part of its life
-	explosion_smoke_drag = 4, -- per second
-	explosion_smoke_rise = 0.4, -- m/s
 	inspect_pose_speed = 5, -- how fast the model moves to the inspect pose and back, per second
 	inspect_sway = 5, -- degrees of yaw each way while inspecting
 	inspect_sway_speed = 1.8, -- radians per second
@@ -687,34 +680,5 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 				texture = sheet .. (frame % 4 * 4 + math.floor(frame / 4)),
 			})
 		end
-	end
-
-	-- The smoke starts on a ring round the way the surface faces, and goes out along the surface, slows, rises and gets bigger
-	local side = Vector3.normalize(Vector3.cross(normal, math.abs(normal.z) > 0.9 and Vector3.right() or Vector3.up()))
-	local other_side = Vector3.cross(normal, side)
-
-	for _ = 1, CONFIG.explosion_smoke_count do
-		local turn = math.random() * 2 * math.pi
-		local outward = side * math.cos(turn) + other_side * math.sin(turn)
-		local size = CONFIG.explosion_smoke_size * UNIT
-
-		particles.sprite({
-			additive = 0,
-			attenuation = 0.3,
-			color = {
-				0.72,
-				0.7,
-				0.68,
-			},
-			drag = CONFIG.explosion_smoke_drag,
-			growth = size * 1.5 / CONFIG.explosion_smoke_life,
-			intensity = 0.9,
-			life = CONFIG.explosion_smoke_life,
-			position = center + outward * (CONFIG.explosion_smoke_ring * UNIT),
-			size = size,
-			spin = (math.random() * 2 - 1) * 0.1,
-			texture = "smoke_" .. math.random(0, 15),
-			velocity = outward * CONFIG.explosion_smoke_speed + Vector3(0, 0, CONFIG.explosion_smoke_rise),
-		})
 	end
 end
