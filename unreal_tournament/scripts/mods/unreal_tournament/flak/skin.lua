@@ -439,6 +439,8 @@ skin_api = mod.weapon_skin.new({
 
 		if was_out_of_ammo and not skin.out_of_ammo then
 			skin.chamber_load = CHAMBER_LOAD_FIRST / animations.animations.Fire.rate
+
+			skin_api.play_sound("ut_flak_load")
 		elseif skin.chamber_load then
 			skin.chamber_load = skin.chamber_load + dt
 
@@ -464,6 +466,22 @@ skin_api = mod.weapon_skin.new({
 
 				for i = 1, 7 do
 					pose[o + i] = first[o + i] + (second[o + i] - first[o + i]) * fraction
+				end
+			end
+		end
+
+		-- With no ammo left the shot does not load the next shell: from the frame where it would slide in, the shell and the hammer are
+		-- as the animation ends
+		local animation = animations.animations[skin.animation]
+
+		if skin.out_of_ammo and animation and (skin.animation == "Fire" or skin.animation == "AltFire") and skin.time * animation.rate >= CHAMBER_LOAD_FIRST then
+			local rest = animation.frames[#animation.frames]
+
+			for _, bone in ipairs({ SHELL_BONE, HAMMER_BONE }) do
+				local o = (bone - 1) * 7
+
+				for i = 1, 7 do
+					pose[o + i] = rest[o + i]
 				end
 			end
 		end

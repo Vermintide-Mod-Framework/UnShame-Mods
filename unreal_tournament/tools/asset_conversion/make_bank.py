@@ -56,6 +56,8 @@ WEAPONS = {
         ('ut_flak_fire', SOUNDS + 'BFlakCannonFire', False, -22, 0),
         ('ut_flak_alt_fire', SOUNDS + 'BFlakCannonAltFire', False, -22, 0),
         ('ut_flak_select', SOUNDS + 'SwitchToFlakCannon', False, -24, 0),
+        # (the end of the shot's sound, after the blast: the next shell sliding in and the hammer, which the shot's animation plays)
+        ('ut_flak_load', SOUNDS + 'BFlakCannonFire@0.64', False, -22, 0),
         ('ut_flak_fire_3d', SOUNDS + 'BFlakCannonFire', True, -22, 40),
         ('ut_flak_alt_fire_3d', SOUNDS + 'BFlakCannonAltFire', True, -22, 40),
         ('ut_flak_shell_3d', SOUNDS + 'BFlakCannonProjectile', True, -30, 25),
@@ -119,7 +121,7 @@ def attenuation_object(attenuation_id, distance):
 
     return bytes(body)
 
-def pcm_wem(path):
+def pcm_wem(path, start=0.0):
     d = open(path, 'rb').read()
     channels, rate = struct.unpack('<HI', d[22:24] + d[24:28])
     bits = struct.unpack('<H', d[34:36])[0]
@@ -132,6 +134,8 @@ def pcm_wem(path):
     if bits == 8:
         # (8 bit sounds are unsigned: they are made 16 bit)
         pcm = b''.join(struct.pack('<h', (s - 128) * 256) for s in pcm)
+    # (from this many seconds in: the end of a sound is a sound of its own)
+    pcm = pcm[int(start * rate) * channels * 2:]
     config = {1: b'\x01\x41', 2: b'\x02\x31'}[channels]
     fmt = struct.pack('<HHIIHH', 0xFFFE, channels, rate, rate * channels * 2, channels * 2, 16) + b'\x06\x00\x00\x00' + config + b'\x00\x00'
     body = b'WAVE' + b'fmt ' + struct.pack('<I', len(fmt)) + fmt + b'JUNK' + struct.pack('<I', 4) + b'\0\0\0\0' + b'data' + struct.pack('<I', len(pcm)) + pcm
@@ -146,7 +150,9 @@ def main():
     media = {}
     metadata = []
     for event, wav, is_3d, volume, distance in sounds:
-        wem, seconds = pcm_wem('%s/umodel/%s.wav' % (scratch, wav))
+        # (a wav can be followed by @ and the second to start from)
+        path, _, start = wav.partition('@')
+        wem, seconds = pcm_wem('%s/umodel/%s.wav' % (scratch, path), float(start or 0))
         media_id = fnv1('ut_media_' + os.path.basename(wav))
         media[media_id] = wem
         sound_id, action_id = fnv1('ut_sound_' + event), fnv1('ut_action_' + event)
