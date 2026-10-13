@@ -71,7 +71,7 @@ local CONFIG = {
 	explosion_fire_spread = 36, -- units, the radius of the sphere they start in
 	-- The frames are drawn in a colour that is more than white, which the game's light turns to glowing (the texture alone, at 1, is a dull
 	-- grey in it): this colour is yellow, brighter in the middle of a fireball than at its edge, which the frames' own colours make
-	explosion_fire_intensity = 1.6, -- how solid the frames are: their transparency times this (UT's fireballs are solid in the middle)
+	explosion_fire_intensity = 0.6, -- how solid the frames are: their transparency times this
 	explosion_fire_color = {
 		1.5,
 		1.25,
