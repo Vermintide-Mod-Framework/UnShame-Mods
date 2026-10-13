@@ -165,6 +165,12 @@ local function update_visuals(dt)
 		else
 			local position = Unit.world_position(game_unit, 0)
 			local previous = visual.previous:unbox()
+
+			if mod.rocket_debug and (visual.logged or 0) < 3 and utils.is_local_player_unit(visual.projectile._owner_unit) then
+				visual.logged = (visual.logged or 0) + 1
+
+				mod:echo(string.format("rocket frame %d (dt %.3f): %s", visual.logged, dt, mod.rocket_offset_text(position)))
+			end
 			local moved = position - previous
 
 			visual.previous:store(position)
