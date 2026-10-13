@@ -23,7 +23,7 @@ mod.items.register("rocket_launcher", {
 	deus_copy = "deus_wh_crossbow_repeater",
 	name = "UT2004 Rocket Launcher",
 	type_name = "Rocket Launcher",
-	description = "The Trident Tri-barrel Rocket Launcher is popular among competitors who want more bang for their buck. Its rotating rearloading barrel fires single rockets, or up to three at once, on target or locked on to it.",
+	description = "The Trident Tri-barrel Rocket Launcher is extremely popular among competitors who enjoy more bang for their buck. The rotating rear-loading barrel design allows for both single- and multi-warhead launches, letting you place up to three dumbfire rockets on target.",
 	keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_charged_attack" },
 	icon = "ut_rocket_launcher_icon",
 	icon_package = "resource_packages/unreal_tournament/icons",
