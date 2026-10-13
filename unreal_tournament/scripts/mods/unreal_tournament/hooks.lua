@@ -395,6 +395,18 @@ mod:hook(AnimationSystem, "anim_event", function (func, self, unit, event_name, 
 	return func(self, unit, event_name, ...)
 end)
 
+-- (the animation of an action of another player's weapon comes over the network with the speed of the attack, and is played by this one)
+mod:hook(AnimationSystem, "anim_event_with_variable_float", function (func, self, unit, event_name, ...)
+	local template_name = utils.wielded_template_name(unit)
+	local filter = template_name and mod.third_person_animation_filters[template_name]
+
+	if filter and filter(event_name, unit) then
+		return
+	end
+
+	return func(self, unit, event_name, ...)
+end)
+
 -- (the events that the game plays itself, not as the animation of an action of the weapon: the one of venting the heat is made by its overcharge)
 mod:hook(PlayerUnitFirstPerson, "animation_event", function (func, self, event, ...)
 	local template_name = utils.wielded_template_name(self.unit)
