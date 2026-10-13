@@ -110,8 +110,6 @@ local CONFIG = {
 	lock_keep_dot = 0.95, -- how far from the aim an enemy that is locked can be without it counting as being off it (18 degrees)
 	lock_required_time = 0.75, -- seconds (UT's LockRequiredTime is 1.25)
 	unlock_required_time = 0.5, -- seconds the aim has to be off the locked enemy before the lock is lost, UnLockRequiredTime
-	seek_blend = 0.5, -- SeekingRocketProj.Timer: this much of the direction to the target is added to the rocket's direction...
-	seek_interval = 0.1, -- ...every this many seconds
 	lock_outline = true, -- the locked enemy gets the red outline of the game's target marking (like the true flight bow's)
 	lock_indicator = false, -- the crosshair gets arrows around it while locked
 	lock_arrows_spread = 0.3, -- how far from the center the arrows are
@@ -721,7 +719,8 @@ local function register_true_flight_template()
 	template.initial_target_node = "c_spine"
 	template.target_node = "c_spine"
 	template.legitimate_target_func = "legitimate_always"
-	template.target_tracking_check_func = "ut_rocket_update_towards_target"
+	-- (the game's own steering of its true flight projectiles)
+	template.target_tracking_check_func = "update_towards_target"
 	-- when the target is gone the rocket flies straight on, it doesn't look for another one
 	template.max_on_target_time = 0
 	template.speed_multiplier = 0.01
@@ -745,32 +744,6 @@ local function spine_position(unit)
 	local node = Unit.has_node(unit, "c_spine") and Unit.node(unit, "c_spine") or 0
 
 	return Unit.world_position(unit, node)
-end
-
--- SeekingRocketProj.Timer: every 0.1 s the rocket's direction becomes the direction it has with seek_blend (0.5) of the direction to the
--- target added to it, as long as the target is in front of the direction the rocket was fired in. Here it is done a little every frame
--- (dt / 0.1 of it), so the turn is smooth.
-ProjectileTrueFlightLocomotionExtension.ut_rocket_update_towards_target = function (self, position, t, dt)
-	local direction = self.current_direction:unbox()
-	local speed = self.speed * self.true_flight_template.speed_multiplier
-	local target_unit = self.target_unit
-
-	self.ut_initial_direction = self.ut_initial_direction or Vector3Box(direction)
-
-	if target_unit and Unit.alive(target_unit) then
-		local to_target = spine_position(target_unit) - position
-		local distance = Vector3.length(to_target)
-
-		if distance > 0.01 then
-			local wanted_direction = to_target * (1 / distance)
-
-			if Vector3.dot(wanted_direction, self.ut_initial_direction:unbox()) > 0 then
-				direction = Vector3.normalize(direction + wanted_direction * (CONFIG.seek_blend * dt / CONFIG.seek_interval))
-			end
-		end
-	end
-
-	return position + direction * speed * dt, Quaternion.look(direction)
 end
 
 -- The lock of the local player: the enemy the crosshair has been on, for how long, and if it is a lock yet
