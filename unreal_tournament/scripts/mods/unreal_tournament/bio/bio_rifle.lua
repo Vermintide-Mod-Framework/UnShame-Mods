@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- Bio Rifle: replaces the Drakegun's (Bardin) actions in place, like the other weapons do.
+-- Bio Rifle: a copy of the Drakegun (Bardin's) with its fire modes replaced, the same way the Rocket Launcher is a copy of the Repeating Crossbow.
 --   LMB: a glob of goo, lobbed. It bursts where it lands and adds to the burning puddle there.
 --   RMB (held): charges a bigger glob, fired on release. The bigger the charge, the more goo is in it.
 --               (UT2004: XWeapons/BioRifle, BioGlob.)
@@ -11,7 +11,6 @@ local mod = get_mod("unreal_tournament")
 -- Overheating takes the place of ammo: the Drakegun's own.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
-local effects = mod.effects
 local with_valid_positions = utils.with_valid_positions
 local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template
@@ -19,7 +18,21 @@ local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
-local TEMPLATE_NAME = "drakegun_template_1"
+mod.items.register("bio_rifle", {
+	key = "ut_bio_rifle",
+	template = "ut_bio_rifle_template",
+	base_item = "dr_drakegun",
+	deus_copy = "deus_dr_drakegun",
+	name = "UT2004 Bio Rifle",
+	type_name = "Bio-Rifle",
+	description = "The GES BioRifle remains one of the most controversial weapons in the Tournament. It provides rapid-fire wide-area coverage with small globs of Biosludge in its primary mode, and launches one large glob at the target in its secondary mode.",
+	keywords = { "weapon_keyword_damage_over_time", "weapon_keyword_crowd_control", "weapon_keyword_charged_attack", "weapon_keyword_overheat" },
+	icon = "ut_bio_rifle_icon",
+	icon_package = "resource_packages/unreal_tournament/icons",
+	icon_materials = "ui/ut/bio_rifle_icon",
+})
+
+local TEMPLATE_NAME = mod.items.weapons.bio_rifle.template
 
 local CONFIG = {
 	-- Primary
@@ -60,7 +73,7 @@ local CONFIG = {
 	-- the two).
 	overheat_glob_count = 20,
 	child_goo_max = 3,
-	big_puddle_goo = 3, -- a puddle with this much goo looks like the charged glob's (charged_puddle_effect)
+	big_puddle_goo = 3, -- a puddle with this much goo looks like the charged glob's
 	-- Charged: the charge level (0 to 1) goes from the primary's numbers to these. The goo of the glob goes from
 	-- charged_goo_min, at the charge where it can first be fired (min_fire_time), to charged_goo, at a full charge
 	-- (it bursts the puddle it lands in whatever the goo), by the same curve as the heat of the charge
@@ -73,8 +86,6 @@ local CONFIG = {
 	charged_goo = 15,
 	charged_glob_damage = 70,
 	charged_burst_radius = 4,
-	puddle_burst_effect_scale = 3, -- the size of the burst of a puddle, relative to that of a glob's, at its least and at its most
-	puddle_burst_effect_scale_max = 7,
 	child_count_max = 14,
 	child_speed_min = 800, -- m/s * 100
 	child_speed_max = 1200,
@@ -95,11 +106,6 @@ local CONFIG = {
 	puddle_damage_interval = 1, -- seconds
 	puddle_tick_interval = 0.5, -- seconds
 	puddle_tick_damage = 6, -- in UT2004's units, per tick
-	puddle_effect = "fx/wpnfx_lamp_oil_remains", -- the game's burning lamp oil
-	charged_puddle_effect = "fx/wpnfx_fire_grenade_impact_remains_remap", -- the fire grenade's ground in another color
-	-- The effect is one fire emitter, scaled to the radius of the puddle (the game's own area effect puts a fixed emitter at
-	-- the center and adds more of them in rings as the radius grows). This is the radius of the effect at its own size.
-	puddle_effect_natural_radius = 2, -- m
 	-- Overheating, in the Drakegun's own units (it overheats at 30): a glob is this much, a full charge is
 	-- this much by the time it is full (the shot that follows costs nothing more). Balanced against the
 	-- Shock Rifle's, whose beam is 4 every 0.7 seconds (5.7 a second, a combo is 12 more): a glob every 0.45
@@ -117,35 +123,15 @@ local CONFIG = {
 	armor_impact = {1, 0.8, 1, 1, 1, 0.5},
 	-- A burn ticks at the game's default power level (195), what the weapons' profiles are measured against is about 500
 	burn_reference_power_level = 500,
-	-- The sounds, events of the game's: the Sienna's fireball and geiser for the shots (the shots' have to be
-	-- in the game's NetworkLookup of sound events, the others are not sent), the fire grenade's explosion and
-	-- the fireball's hit for the bursts and the impacts
+	-- The sounds of the shots are events of the game's, the Sienna's fireball and geiser (the shots' have to be in the game's NetworkLookup
+	-- of sound events). The skin takes them over and plays UT's.
 	fire_sound = "player_combat_weapon_staff_fireball_fire",
 	charged_fire_sound = "player_combat_weapon_staff_geiser_fire",
-	burst_sound = "fireball_big_hit",
-	charged_burst_sound = "player_combat_weapon_fire_grenade_explosion",
-	charged_impact_sound = "player_combat_weapon_fire_grenade_explosion",
-	-- The look of the burst: these effects are played together, each that is loaded for the weapon's character
-	-- (the others are skipped)
-	burst_effects = {
-		{
-			name = "fx/wpnfx_flamethrower_hit_01",
-			scale = 2.5,
-			offset = 0,
-		},
-	},
 	-- The impact: the charged glob, when it hits an enemy, sets off a blast of its own on top of the burst. It is
 	-- as big as the glob is charged. (The primary has none: a direct hit is the burst.)
 	impact_radius = 3, -- m (the smallest the charged one's gets)
 	charged_impact_damage = 20,
 	charged_impact_radius = 8,
-	impact_effects = {
-		{
-			name = "fx/wpnfx_flamethrower_hit_01",
-			scale = 4,
-			offset = 0.5,
-		},
-	},
 }
 
 local overcharge_values = PlayerUnitStatusSettings.overcharge_values
@@ -246,7 +232,7 @@ burst_profiles("ut_bio_charged_impact", CONFIG.charged_impact_damage)
 -- Explosion templates. The burst of a glob is only the blast, the goo it brings goes to the puddle (see Puddles
 -- below). The burst of a puddle with too much goo, ut_bio_charged_burst, has a radius (and a power) that goes
 -- with the goo it had: it is made with the goo as the scale of the explosion, 0 to 1.
-local function burst_template(burst_profile_name, sound_event_name, radius_min, radius_max)
+local function burst_template(burst_profile_name, radius_min, radius_max)
 	return {
 		explosion = {
 			alert_enemies = true,
@@ -258,15 +244,14 @@ local function burst_template(burst_profile_name, sound_event_name, radius_min, 
 			max_damage_radius_min = radius_min * 0.4,
 			radius_max = radius_max,
 			radius_min = radius_min,
-			sound_event_name = sound_event_name,
 			use_attacker_power_level = true,
 		},
 	}
 end
 
-register_explosion_template("ut_bio_burst", burst_template("ut_bio_burst", CONFIG.burst_sound, CONFIG.glob_burst_radius, CONFIG.glob_burst_radius))
-register_explosion_template("ut_bio_charged_burst", burst_template("ut_bio_charged_burst", CONFIG.charged_burst_sound, CONFIG.glob_burst_radius, CONFIG.charged_burst_radius))
-register_explosion_template("ut_bio_child_burst", burst_template("ut_bio_child_burst", CONFIG.burst_sound, CONFIG.child_burst_radius, CONFIG.child_burst_radius))
+register_explosion_template("ut_bio_burst", burst_template("ut_bio_burst", CONFIG.glob_burst_radius, CONFIG.glob_burst_radius))
+register_explosion_template("ut_bio_charged_burst", burst_template("ut_bio_charged_burst", CONFIG.glob_burst_radius, CONFIG.charged_burst_radius))
+register_explosion_template("ut_bio_child_burst", burst_template("ut_bio_child_burst", CONFIG.child_burst_radius, CONFIG.child_burst_radius))
 
 -- What the charged glob bursts with: nothing, it has the goo to burst the puddle it makes (a template is what
 -- tells the globs' bursts apart)
@@ -287,7 +272,7 @@ register_explosion_template("ut_bio_puddle", {
 
 -- The impact: only the blast, the burst that goes with it leaves the puddle. Its radius goes with the charge
 -- like the charged burst's does.
-local function impact_template(profile_name, sound_event_name, radius_min, radius_max)
+local function impact_template(profile_name, radius_min, radius_max)
 	return {
 		explosion = {
 			alert_enemies = true,
@@ -299,37 +284,15 @@ local function impact_template(profile_name, sound_event_name, radius_min, radiu
 			max_damage_radius_min = radius_min * 0.5,
 			radius_max = radius_max,
 			radius_min = radius_min,
-			sound_event_name = sound_event_name,
 			use_attacker_power_level = true,
 		},
 	}
 end
 
-register_explosion_template("ut_bio_charged_impact", impact_template("ut_bio_charged_impact", CONFIG.charged_impact_sound, CONFIG.impact_radius, CONFIG.charged_impact_radius))
+register_explosion_template("ut_bio_charged_impact", impact_template("ut_bio_charged_impact", CONFIG.impact_radius, CONFIG.charged_impact_radius))
 
--- The look of the burst and of the impact, on every peer (the explosion's callback is run for everyone who sees it)
-local function play_effects(effect_list, world, position)
-	for _, effect in ipairs(effect_list) do
-		effects.play(world, effect.name, position + Vector3(0, 0, effect.offset), effect.scale)
-	end
-end
+-- (the look and the sound of the bursts and of the impact are the skin's, see skin_explosion_callbacks)
 
--- (with the skin the skin draws them, see skin_explosion_callbacks)
-local function play_burst_effects(world, position)
-	if not utils.is_weapon_skin_enabled("bio_rifle") then
-		play_effects(CONFIG.burst_effects, world, position)
-	end
-end
-
-local function play_impact_effects(world, position)
-	if not utils.is_weapon_skin_enabled("bio_rifle") then
-		play_effects(CONFIG.impact_effects, world, position)
-	end
-end
-
-mod.explosion_callbacks.ut_bio_burst = play_burst_effects
-mod.explosion_callbacks.ut_bio_charged_burst = play_burst_effects
-mod.explosion_callbacks.ut_bio_charged_impact = play_impact_effects
 
 -- Weapon template
 -- The glob is a projectile of the game's, the bolt of the drakefire pistols. (The small fireball of the Sienna
@@ -710,64 +673,18 @@ local function units_inside(puddle)
 	return inside
 end
 
--- The fire of a puddle, on every machine: the host plays it and tells the others (the game's own look of an area can't
--- be told to the others, and doesn't grow with the area). It is one effect, scaled to the radius, that is played again
--- when the puddle grows.
-local visuals = {} -- { [the id of the puddle] = { effect, expires } }
-
+-- The look of a puddle, on every machine: the host shows it and tells the others (the game's own look of an area can't be told to the
+-- others, and doesn't grow with the area). It is the skin's (see puddle_visual_callbacks), and is shown again when the puddle grows.
 local function stop_visual(id)
-	local visual = visuals[id]
-
-	if visual then
-		visuals[id] = nil
-
-		effects.stop(visual.effect)
-	end
-
-	-- (the skin's look of the puddle, if it has made one)
-	if mod.puddle_visual_callbacks.stop then
-		mod.puddle_visual_callbacks.stop(id)
-	end
+	mod.puddle_visual_callbacks.stop(id)
 end
 
-local function show_visual(id, world, position, radius, charged, duration)
-	stop_visual(id)
-
-	-- (with the skin the skin draws it)
-	if utils.is_weapon_skin_enabled("bio_rifle") then
-		mod.puddle_visual_callbacks.show(id, position, radius, charged, duration)
-
-		return
-	end
-
-	local effect = effects.start(world, charged and CONFIG.charged_puddle_effect or CONFIG.puddle_effect, position, radius / CONFIG.puddle_effect_natural_radius)
-
-	if effect then
-		visuals[id] = {
-			effect = effect,
-			expires = Managers.time:time("game") + duration,
-		}
-	end
-end
-
-local function update_visuals(t)
-	for id, visual in pairs(visuals) do
-		if t >= visual.expires then
-			stop_visual(id)
-		end
-	end
-end
-
-local function clear_visuals()
-	for id, visual in pairs(visuals) do
-		effects.destroy(visual.effect)
-
-		visuals[id] = nil
-	end
+local function show_visual(id, position, radius, charged, duration)
+	mod.puddle_visual_callbacks.show(id, position, radius, charged, duration)
 end
 
 mod:network_register("ut_bio_puddle_look", function (_, id, x, y, z, radius, charged, duration)
-	show_visual(id, Managers.world:world("level_world"), Vector3(x, y, z), radius, charged, duration)
+	show_visual(id, Vector3(x, y, z), radius, charged, duration)
 end)
 
 mod:network_register("ut_bio_puddle_end", function (_, id)
@@ -793,26 +710,13 @@ local function make_puddle_area(puddle, t)
 	puddle.unit = DamageUtils.create_aoe(context.world, context.owner_unit, position, context.item_name, ExplosionTemplates.ut_bio_puddle, radius, duration)
 	puddle.inside = units_inside(puddle)
 
-	show_visual(puddle.id, context.world, position, radius, charged, duration)
+	show_visual(puddle.id, position, radius, charged, duration)
 	mod:network_send("ut_bio_puddle_look", "others", puddle.id, position.x, position.y, position.z, radius, charged, duration)
-end
-
-local function play_puddle_burst_effects(world, position, goo_scale)
-	-- (with the skin the skin draws it)
-	if utils.is_weapon_skin_enabled("bio_rifle") then
-		mod.puddle_visual_callbacks.burst(position, goo_scale)
-
-		return
-	end
-
-	for _, effect in ipairs(CONFIG.burst_effects) do
-		effects.play(world, effect.name, position + Vector3(0, 0, 0.5), math.lerp(CONFIG.puddle_burst_effect_scale, CONFIG.puddle_burst_effect_scale_max, goo_scale))
-	end
 end
 
 -- (the burst is seen by everyone: the host tells the others)
 mod:network_register("ut_bio_puddle_burst", function (_, x, y, z, goo_scale)
-	play_puddle_burst_effects(Managers.world:world("level_world"), Vector3(x, y, z), goo_scale)
+	mod.puddle_visual_callbacks.burst(Vector3(x, y, z), goo_scale)
 end)
 
 -- The burst of a puddle: a blast that is as big as the goo was, and the small globs
@@ -827,7 +731,7 @@ local function burst_puddle(puddle, t, final)
 
 	with_valid_positions(DamageUtils.create_explosion, context.world, context.owner_unit, position, Quaternion.identity(), ExplosionTemplates.ut_bio_charged_burst, goo_scale, context.item_name, true, false, context.owner_unit, power_level, context.is_critical_strike, context.owner_unit)
 
-	play_puddle_burst_effects(context.world, position, goo_scale)
+	mod.puddle_visual_callbacks.burst(position, goo_scale)
 	mod:network_send("ut_bio_puddle_burst", "others", position.x, position.y, position.z, goo_scale)
 
 	local kept_goo = final and 0 or math.min(puddle.goo * CONFIG.burst_goo_left, CONFIG.burst_goo_left_max)
@@ -1047,8 +951,7 @@ mod:hook_safe(PlayerProjectileUnitExtension, "mark_for_deletion", function (self
 	end
 end)
 
--- The template is shared game state: it is patched in place, what is touched is saved to be put
--- back on disable, and when the mod is unloaded.
+-- The template is patched in place, what is touched is saved to be put back on disable and when the mod is unloaded.
 local saved = {}
 
 local function restore_drakegun()
@@ -1079,6 +982,24 @@ local function apply_bio_rifle()
 	if not template then
 		return
 	end
+
+	-- The chart of the item's stats (0 to 7): the glob is the normal attack, the charged glob the heavy one
+	template.weapon_diagram = {
+		light_attack = {
+			[DamageTypes.ARMOR_PIERCING] = 1,
+			[DamageTypes.CLEAVE] = 4,
+			[DamageTypes.SPEED] = 5,
+			[DamageTypes.STAGGER] = 2,
+			[DamageTypes.DAMAGE] = 3,
+		},
+		heavy_attack = {
+			[DamageTypes.ARMOR_PIERCING] = 1,
+			[DamageTypes.CLEAVE] = 6,
+			[DamageTypes.SPEED] = 2,
+			[DamageTypes.STAGGER] = 4,
+			[DamageTypes.DAMAGE] = 5,
+		},
+	}
 
 	local actions = template.actions
 	local original = {
@@ -1142,21 +1063,13 @@ local function enable_bio_rifle()
 	apply_bio_rifle()
 end
 
--- (the weapon can be switched off in the settings: the drakegun is then the game's own again, the weapon the player
--- holds changes when it is wielded again)
-local function disable_bio_rifle()
-	restore_drakegun()
-end
-
-utils.register_weapon("bio_rifle", enable_bio_rifle, disable_bio_rifle)
+mod.enabled_callbacks[#mod.enabled_callbacks + 1] = enable_bio_rifle
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = restore_drakegun
+mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_drakegun
 
 -- The overheating explosion of the weapon (the game's own is kept, and hurts the player) throws small globs, with
 -- random amounts of goo, out of the player. (It is told by the hook in hooks.lua.)
 mod.overheat_callbacks[TEMPLATE_NAME] = function (state, item_data)
-	if not utils.is_weapon_enabled("bio_rifle") then
-		return
-	end
-
 	local unit = state.unit
 	local shot = {
 		is_critical_strike = false,
@@ -1178,14 +1091,12 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 
 	update_delayed_ends(t)
 	update_puddles(t)
-	update_visuals(t)
 end
 
 local function clear_all()
 	table.clear(delayed_ends)
 	table.clear(puddles)
 	table.clear(charge_levels)
-	clear_visuals()
 end
 
 mod.unload_callbacks[#mod.unload_callbacks + 1] = clear_all

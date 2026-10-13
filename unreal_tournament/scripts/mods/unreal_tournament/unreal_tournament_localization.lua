@@ -98,12 +98,6 @@ return {
 	ut_weapons_description = {
 		en = "Weapons from Unreal Tournament that replace some of the game's own. Switch off any you don't want.",
 	},
-	bio_rifle = {
-		en = "Bio Rifle",
-	},
-	bio_rifle_description = {
-		en = "Bardin (Ironbreaker). Replaces the Drakegun. Lobs globs that leave burning puddles. More globs grow a puddle, and a puddle that gets too big, or that anything steps into, bursts into more globs. Alt fire charges a glob that bursts a puddle as it lands.",
-	},
 	link_gun = {
 		en = "Link Gun",
 	},
@@ -114,6 +108,6 @@ return {
 		en = "Weapon Skins",
 	},
 	weapon_skins_description = {
-		en = "The Bio Rifle and Link Gun look and sound like Unreal Tournament 2004's (the Shock Rifle, the Flak Cannon and the Rocket Launcher always do). What the others see of you depends on their own setting.",
+		en = "The Link Gun looks and sounds like Unreal Tournament 2004's (the Shock Rifle, the Flak Cannon, the Rocket Launcher and the Bio Rifle always do). What the others see of you depends on their own setting.",
 	},
 }

@@ -14,11 +14,6 @@ return {
 				default_value = true,
 				sub_widgets = {
 					{
-						setting_id = "bio_rifle",
-						type = "checkbox",
-						default_value = true,
-					},
-					{
 						setting_id = "link_gun",
 						type = "checkbox",
 						default_value = true,
