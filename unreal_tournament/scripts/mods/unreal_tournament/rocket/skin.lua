@@ -623,6 +623,10 @@ local function remote_load_sounds(unit, delay)
 end
 
 mod.third_person_animation_filters[TEMPLATE_NAME] = function (event, unit)
+	if mod.rocket_debug then
+		mod:echo("rocket 3p event: %s (%s)", event, unit and utils.is_local_player_unit(unit) and "own" or "other")
+	end
+
 	if unit and not utils.is_local_player_unit(unit) then
 		if event == "to_zoom" then
 			-- (the aiming starts the loading, and the second rocket is loaded a salvo's time after)
