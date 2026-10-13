@@ -110,7 +110,6 @@ local CONFIG = {
 	lock_keep_dot = 0.95, -- how far from the aim an enemy that is locked can be without it counting as being off it (18 degrees)
 	lock_required_time = 0.75, -- seconds (UT's LockRequiredTime is 1.25)
 	unlock_required_time = 0.5, -- seconds the aim has to be off the locked enemy before the lock is lost, UnLockRequiredTime
-	lock_check_interval = 0.25, -- seconds (UT's SeekCheckFreq is 0.5): the lock is checked this often, so the time is counted in steps of it
 	seek_delay = 0.35, -- seconds a rocket flies straight after being fired before it starts to home in
 	seek_turn_rate = 3.5, -- radians per second, how fast a rocket can turn towards its target
 	lock_outline = true, -- the locked enemy gets the red outline of the game's target marking (like the true flight bow's)
@@ -849,7 +848,7 @@ local function reset_lock(state)
 	state.unlock_time = 0
 end
 
-local function update_lock_on(t)
+local function update_lock_on(dt)
 	local player = Managers.player:local_player_safe()
 	local unit = player and player.player_unit
 
@@ -869,9 +868,7 @@ local function update_lock_on(t)
 	local state = locks[unit]
 
 	if not state then
-		state = {
-			next_check_t = 0,
-		}
+		state = {}
 		reset_lock(state)
 		locks[unit] = state
 	end
@@ -886,12 +883,6 @@ local function update_lock_on(t)
 		return
 	end
 
-	if t < state.next_check_t then
-		return
-	end
-
-	state.next_check_t = t + CONFIG.lock_check_interval
-
 	-- a lock is used up by firing
 	if state.fired then
 		reset_lock(state)
@@ -903,7 +894,7 @@ local function update_lock_on(t)
 
 	local first_person_extension = ScriptUnit.has_extension(unit, "first_person_system")
 	local candidate = first_person_extension and pick_lock_candidate(unit, first_person_extension, state.target)
-	local interval = CONFIG.lock_check_interval
+	local interval = dt
 
 	if candidate then
 		if candidate == state.target then
@@ -1171,7 +1162,7 @@ mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_crossbow
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	update_blasts()
 	update_flocks(dt)
-	update_lock_on(Managers.time:time("game"))
+	update_lock_on(dt)
 	update_loading(Managers.time:time("game"))
 end
 
