@@ -225,7 +225,14 @@ local function update_visuals(dt)
 				end
 			end
 
-			Unit.set_local_rotation(visual.unit, 0, Quaternion.look(visual.direction:unbox(), Vector3.up()))
+			local rotation = Quaternion.look(visual.direction:unbox(), Vector3.up())
+
+			-- (FlakShell.PostBeginPlay flies the shell upside down: Roll = 32768)
+			if visual.kind == "shell" then
+				rotation = Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3.forward(), math.pi))
+			end
+
+			Unit.set_local_rotation(visual.unit, 0, rotation)
 
 			if visual.kind == "shell" then
 				visual.smoke_time = visual.smoke_time - dt
@@ -546,6 +553,12 @@ end
 
 mod.third_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return string.find(event, "reload", 1, true) ~= nil
+end
+
+-- The Blunderbuss's shot sound is played by its unit's flow as its animation plays on the characters: the others hear the Flak Cannon's
+-- own sounds instead (see the remote shots)
+mod.sound_event_filters[TEMPLATE_NAME] = function (event_name)
+	return event_name == "player_combat_weapon_blunderbuss_fire"
 end
 
 -- The flow events of the game's units of the chunks and the shell start their effects as they are made: not while the skin is on

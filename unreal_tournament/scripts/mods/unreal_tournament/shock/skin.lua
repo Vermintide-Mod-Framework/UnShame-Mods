@@ -416,6 +416,11 @@ mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return skin_api.enabled() and (event == "attack_shoot_fireball" or event == "cooldown_start")
 end
 
+-- The loop of the fire in the staff's left hand is played by its unit's flow: the Shock Rifle has none
+mod.sound_event_filters[TEMPLATE_NAME] = function (event_name)
+	return event_name == "player_combat_fireball_loop"
+end
+
 mod.skin_explosion_callbacks.ut_shock_ball_explosion = function (world, position)
 	if skin_api.enabled() then
 		fx.ball_explosion(position)
