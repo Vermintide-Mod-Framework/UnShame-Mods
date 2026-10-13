@@ -12,7 +12,8 @@ local mod = get_mod("unreal_tournament")
 --   turn it about the vertical in the item inspection so the barrel points sideways (-90 if its barrel runs along its forward),
 --   follow_game_unit: the mesh moves with the game's unit of the weapon, which the game animates with the arms, from how it is turned after
 --   follow_calibrate_seconds of being held (follow_game_unit = 2: no calibration, pitch, roll and yaw are from the unit's own axes, for a
---   weapon whose unit is still moving to its place when it would be calibrated: the Repeating Crossbow's)
+--   weapon whose unit is still moving to its place when it would be calibrated: the Repeating Crossbow's),
+--   kick_pitch: degrees the muzzle kicks up when the character fires (third_person.kick), kick_rise and kick_time: seconds up and back down
 --
 -- The game's unit (the staff, the blunderbuss...) stays, hidden, and the mesh is linked to the same node of the character as it, turned
 -- every frame to point the way the character faces, level (a staff is held upright, a rifle is carried pointing ahead: that is not
@@ -84,6 +85,21 @@ local function new(def, looks)
 
 			if entry.follow_offset then
 				wanted = Quaternion.multiply(staff_rotation, entry.follow_offset:unbox())
+			end
+		end
+
+		-- A shot kicks the muzzle up and it settles back: quickly up, then slowly down, about the character's right
+		if entry.kick_t and config.kick_pitch then
+			local age = Managers.time:time("main") - entry.kick_t
+			local rise = config.kick_rise or 0.06
+			local strength = age < rise and age / rise or math.max(0, 1 - (age - rise) / (config.kick_time or 0.35)) ^ 2
+
+			if strength > 0 then
+				local right = Quaternion.right(Unit.world_rotation(entry.character, 0))
+
+				wanted = Quaternion.multiply(Quaternion.axis_angle(right, math.rad(config.kick_pitch * strength)), wanted)
+			else
+				entry.kick_t = nil
 			end
 		end
 
@@ -215,6 +231,15 @@ local function new(def, looks)
 		end
 
 		return true
+	end
+
+	-- The character fires: the mesh kicks (kick_pitch in the definition)
+	function third_person.kick(character)
+		local entry = attached[character]
+
+		if entry then
+			entry.kick_t = Managers.time:time("main")
+		end
 	end
 
 	-- Every frame
