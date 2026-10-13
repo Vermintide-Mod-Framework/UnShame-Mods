@@ -305,7 +305,7 @@ shader = {
 		}
 		{
 			destination = {
-				connector_id = "aca690cb-6305-4a2f-bf3d-69183a493db3"
+				connector_id = "1164a5ef-4563-4795-b3b5-42825d6df037"
 				instance_id = "c0de0000-0000-4000-8000-000000000001"
 			}
 			source = {
@@ -452,10 +452,12 @@ shader = {
 			]
 		}
 		{
-			connector_id = "c9a30d71-a8ad-4b9e-aedf-d785ae7e301f"
+			connector_id = "aca690cb-6305-4a2f-bf3d-69183a493db3"
 			id = "c0de0000-0000-4000-8000-000000001016"
 			instance_id = "c0de0000-0000-4000-8000-000000000001"
 			value = [
+				0
+				0
 				0
 			]
 		}
@@ -472,10 +474,10 @@ shader = {
 			}
 			id = "c0de0000-0000-4000-8000-000000000001"
 			options = [
-				"c8d8b754-c567-4c7b-9cbd-8acab22beff5"
+				"dd7fcf97-0627-48ab-b29a-95b5685bb123"
 				"8df1b8f7-17c2-4ae4-8c4e-25517ec1df46"
-				"435e14e4-556d-4ac1-af14-8dafe63aff8f"
-				"7b8bc0bf-c453-49d2-9415-0e80fec1039f"
+				"b5bb2062-c8fa-43c5-8657-493a0be6860c"
+				"580cc6eb-3591-4c71-aa50-528af18ba160"
 			]
 			position = [
 				0
@@ -483,7 +485,7 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/stingray_renderer/output_nodes/unlit_base"
+			type = "core/stingray_renderer/output_nodes/standard_base"
 		}
 		{
 			content_size = [
