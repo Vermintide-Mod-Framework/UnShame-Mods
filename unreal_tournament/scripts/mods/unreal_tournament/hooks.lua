@@ -539,8 +539,8 @@ mod:command("slomo", "<number> - the speed of the game: below 1 slower, above 1 
 	mod:echo("slomo: %g", number)
 end)
 
--- Development, like UT's "loaded": fills the ammo of the ranged weapon, or adds the amount that is given
-mod:command("loaded", "[amount] - fills the ammo of the ranged weapon, or gives that many (a whole number)", function (amount)
+-- Development, like UT's "loaded": fills the ammo of the ranged weapon, or sets it to the amount that is given
+mod:command("loaded", "[amount] - fills the ammo of the ranged weapon, or sets it to that (a whole number)", function (amount)
 	local number = tonumber(amount)
 
 	if amount and (not number or number ~= math.floor(number) or number < 0) then
@@ -561,7 +561,19 @@ mod:command("loaded", "[amount] - fills the ammo of the ranged weapon, or gives 
 		return
 	end
 
-	ammo_extension:add_ammo(number)
+	if number then
+		-- (the clip is what it holds, the rest is in reserve)
+		local total = math.min(number, ammo_extension:max_ammo())
+		local in_clip = math.min(total, ammo_extension:clip_size())
+
+		ammo_extension._shots_fired = 0
+		ammo_extension._current_ammo = in_clip
+		ammo_extension._available_ammo = total - in_clip
+		ammo_extension:_update_anim_ammo()
+	else
+		ammo_extension:add_ammo()
+	end
+
 	mod:echo("loaded: %d", ammo_extension:total_remaining_ammo())
 end)
 
