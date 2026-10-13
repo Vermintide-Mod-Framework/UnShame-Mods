@@ -1,64 +1,67 @@
 # Weapon checklist
 
+Each line is one thing to look at.
+
 ## Item and menus
 
-- [ ] Name in the inventory is "UT2004 <weapon>"
-- [ ] Icon is the UT weapon's, not the base weapon's
-- [ ] Description reads right
-- [ ] Keywords fit how it plays
-- [ ] Stat chart looks right
-- [ ] Only the right careers can equip it
-- [ ] Chaos Wastes copy works
-- [ ] Crafting works
-- [ ] Hero screen shows it in the same place as in the world
-- [ ] Item screen shows it turned right
-- [ ] Tab screen works after a mod reload
-- [ ] Equipping and switching weapons doesn't crash
-- [ ] Mod disabled: the base weapon is as the game has it
+- [ ] Name in the inventory
+- [ ] Icon in the inventory
+- [ ] Description
+- [ ] Keywords
+- [ ] Stat chart
+- [ ] Which careers can equip it
+- [ ] Chaos Wastes copy
+- [ ] Crafting
+- [ ] Hero screen: model and its place
+- [ ] Item screen: model and its turn
+- [ ] Tab screen after a mod reload
+- [ ] Equipping and switching weapons
+- [ ] Base weapon when the mod is disabled
 
 ## First person
 
-- [ ] Position and size match UT
-- [ ] Pickup animation plays
-- [ ] Idle isn't too fast
-- [ ] Every fire mode plays its animation
-- [ ] Animation length matches the fire rate
-- [ ] Parts that move by code move right
-- [ ] Inspect shows the side of it
-- [ ] Inspect doesn't slide at the start
-- [ ] No vanilla model or arms
-- [ ] No vanilla flash or particles
-- [ ] Crosshair is right
-- [ ] Ammo number is right
-- [ ] Bob and sway look like UT
+- [ ] Position and size against UT
+- [ ] Pickup animation
+- [ ] Idle animation speed
+- [ ] Fire animation of each mode
+- [ ] Animation length against the fire rate
+- [ ] Parts that move by code
+- [ ] Inspect pose
+- [ ] Inspect: first second of movement
+- [ ] Vanilla model or arms showing
+- [ ] Vanilla flash or particles showing
+- [ ] Crosshair
+- [ ] Ammo number
+- [ ] Bob and sway
 
 ## Firing
 
-- [ ] Fire rate of each mode matches UT
-- [ ] The other mode can't start before the fire rate is up
-- [ ] Hold, release and auto-fire work
-- [ ] Shots start where UT starts them
-- [ ] The start doesn't change between shots
-- [ ] Shots in a line stay in a line
-- [ ] Spread is right
-- [ ] Rapid shots work
+- [ ] Fire rate of each mode
+- [ ] Second mode right after the first
+- [ ] First mode right after the second
+- [ ] Hold, release and auto-fire
+- [ ] Where shots start
+- [ ] Shots start in the same place each time
+- [ ] Shots in a line
+- [ ] Spread
+- [ ] Rapid shots
 
 ## Damage
 
-- [ ] Damage on normal enemies
-- [ ] Damage on armored enemies
-- [ ] Damage on monsters
+- [ ] Normal enemies
+- [ ] Armored enemies
+- [ ] Monsters
 - [ ] Shields
 - [ ] Headshots
 - [ ] Crits
-- [ ] Damage ratio to the other weapons matches UT
+- [ ] Damage against the other UT weapons
 - [ ] Self damage
 - [ ] Explosion radius
-- [ ] Falloff
+- [ ] Explosion falloff
 - [ ] Momentum
 - [ ] Weapon jumping
-- [ ] Ragdolls fly like UT's
-- [ ] Hits the objects UT hits (banners, barrels)
+- [ ] Ragdolls
+- [ ] Banners and barrels
 
 ## Projectiles
 
@@ -66,22 +69,22 @@
 - [ ] Gravity
 - [ ] Lifetime
 - [ ] Hit size
-- [ ] No draw distance cut
-- [ ] Hits other projectiles like UT
-- [ ] Lock-on, homing, bounce, link, goo, combo as UT
+- [ ] Draw distance
+- [ ] Hitting other projectiles
+- [ ] Lock-on, homing, bounce, link, goo, combo
 
 ## Ammo
 
 - [ ] Max ammo
 - [ ] Pickup amount
-- [ ] No reload between shots
-- [ ] Nothing loaded at 0
-- [ ] Last round looks right
-- [ ] Ammo coming back plays the load animation
-- [ ] Ammo coming back plays the load sound
-- [ ] A shot cuts a load animation short
-- [ ] Multi-load counts right at 1, 2 and 3
-- [ ] `/loaded` sets the ammo
+- [ ] Reload between shots
+- [ ] Chamber at 0 ammo
+- [ ] Chamber at the last round
+- [ ] Load animation when ammo comes back
+- [ ] Load sound when ammo comes back
+- [ ] Shot during a load animation
+- [ ] Multi-load at 1, 2 and 3 rounds
+- [ ] `/loaded`
 
 ## Effects
 
@@ -94,7 +97,7 @@
 - [ ] Explosion brightness
 - [ ] Explosion size
 - [ ] Impact marks
-- [ ] No vanilla effects on top
+- [ ] Vanilla effects playing on top
 
 ## Sounds
 
@@ -105,41 +108,41 @@
 - [ ] Explosion
 - [ ] Lock beep
 - [ ] Volumes
-- [ ] No vanilla sound on top
-- [ ] Others hear the UT sounds
-- [ ] Others don't hear the vanilla sounds
-- [ ] Loops stop when unwielded
-- [ ] Loops stop on death
-- [ ] Loops stop when the level ends
+- [ ] Vanilla sounds playing on top
+- [ ] What others hear of a shot
+- [ ] What others hear of a load
+- [ ] Loops after unwielding
+- [ ] Loops after death
+- [ ] Loops after the level ends
 
 ## Third person
 
 - [ ] Size
 - [ ] Position in the hand
 - [ ] Angle
-- [ ] Vanilla model hidden
-- [ ] Muzzle flash from the right place
-- [ ] Shot animation plays for others
-- [ ] Fades near the camera
-- [ ] Outline shows on it
-- [ ] Bots hold it right
+- [ ] Vanilla model showing
+- [ ] Muzzle flash position
+- [ ] Shot animation for others
+- [ ] Fade near the camera
+- [ ] Outline
+- [ ] Bots holding it
 - [ ] Your character in the third person view
 
 ## Multiplayer
 
-- [ ] Works as host
-- [ ] Works as client
-- [ ] Others see the projectiles
-- [ ] Others see the explosions
-- [ ] Damage is right on the client
-- [ ] Ammo is right on the client
+- [ ] As host
+- [ ] As client
+- [ ] Others seeing projectiles
+- [ ] Others seeing explosions
+- [ ] Damage on the client
+- [ ] Ammo on the client
 
 ## Bots
 
-- [ ] Bots use it
-- [ ] Bots shoot from a sensible range
-- [ ] Bots don't hit allies
-- [ ] Bots' shots look and sound right
+- [ ] Bots using it
+- [ ] Range they shoot from
+- [ ] Allies in the way
+- [ ] Look and sound of their shots
 
 ## Stability
 
@@ -151,5 +154,5 @@
 - [ ] Ledge hang
 - [ ] Switching away mid-animation
 - [ ] Switching back mid-animation
-- [ ] No errors in the console log
-- [ ] No crash dump
+- [ ] Errors in the console log
+- [ ] Crash dumps
