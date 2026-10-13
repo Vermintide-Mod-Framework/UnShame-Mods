@@ -73,10 +73,15 @@ local CONFIG = {
 	max_hold_time = 4, -- seconds
 	rocket_line_spread = 0.096, -- radians between two rockets
 	-- The spiral: pressing the primary button while loading makes the salvo a spiral instead of a line (UT's
-	-- tight spread). The rockets start in a ring around the aim and fly as a flock, RocketProj.Timer: they
+	-- tight spread). The rockets start in a ring and fly as a flock, RocketProj.Timer: they
 	-- are pulled towards each other when they are further apart than twice the flock radius and pushed
 	-- away when closer, and curl around each other. (UT's values, in meters.)
+	-- The ring is not around the aim: its center is to the right of the start of a rocket and below it
+	-- (RocketMultiFire.DoFireEffect), and each rocket starts a little way back, up to this much.
 	spiral_ring_radius = 0.32, -- 16 uu
+	spiral_ring_right = 0.28, -- 14 uu
+	spiral_ring_down = 0.28, -- 14 uu
+	spiral_start_back = 0.16, -- 8 uu
 	spiral_flock_radius = 0.24, -- FlockRadius 12 uu
 	spiral_stiffness = -40, -- FlockStiffness
 	spiral_max_force = 12, -- m/s^2, FlockMaxForce 600 uu/s^2
@@ -517,6 +522,7 @@ local function fire_spiral(self, action, count)
 	local position, rotation = first_person_extension:get_projectile_start_position_rotation()
 	local right = Quaternion.right(rotation)
 	local up = Quaternion.up(rotation)
+	local forward = Quaternion.forward(rotation)
 	local angle = ActionUtils.pitch_from_rotation(rotation)
 	local target_vector = Vector3.normalize(Vector3.flat(Quaternion.forward(rotation)))
 	local lookup_data = action.lookup_data
@@ -527,7 +533,10 @@ local function fire_spiral(self, action, count)
 		if count > 1 then
 			local ring_angle = (i - 1) * 2 * math.pi / CONFIG.max_rockets
 
-			offset = right * (math.sin(ring_angle) * CONFIG.spiral_ring_radius) + up * (math.cos(ring_angle) * CONFIG.spiral_ring_radius)
+			-- (UT: a point of the ring turns to the left as the angle grows, the first one is at the top)
+			offset = right * (CONFIG.spiral_ring_right - math.sin(ring_angle) * CONFIG.spiral_ring_radius)
+				+ up * (math.cos(ring_angle) * CONFIG.spiral_ring_radius - CONFIG.spiral_ring_down)
+				- forward * (CONFIG.spiral_start_back * math.random())
 		end
 
 		ActionUtils.spawn_player_projectile(owner_unit, position + offset, rotation, 0, angle, target_vector, action.speed, self.item_name, lookup_data.item_template_name, lookup_data.action_name, lookup_data.sub_action_name, self._is_critical_strike, self.power_level)
@@ -583,7 +592,7 @@ mod.init_callbacks.rocket = function (extension)
 		flock = {
 			members = {},
 			next_curl = false,
-			pull_t = 0,
+			pull_t = CONFIG.spiral_pull_interval,
 			t = t,
 		}
 		flocks[#flocks + 1] = flock
@@ -673,7 +682,8 @@ local function update_flocks(dt)
 
 							if distance > 0.001 then
 								local magnitude = CONFIG.spiral_stiffness * (2 * CONFIG.spiral_flock_radius - distance)
-								local curl = Vector3.cross(other.velocity:unbox(), offset)
+								-- (UT's axes are a left handed set, so its cross product points the other way: the factors are swapped)
+								local curl = Vector3.cross(offset, other.velocity:unbox())
 								local curl_length = Vector3.length(curl)
 
 								acceleration = offset * (1 / distance) * math.min(magnitude, CONFIG.spiral_max_force)
