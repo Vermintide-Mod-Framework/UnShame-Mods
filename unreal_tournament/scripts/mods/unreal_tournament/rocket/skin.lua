@@ -88,7 +88,7 @@ local CONFIG = {
 	-- at 2.95 thirds of a turn a second.
 	barrel_delay = 0.15,
 	load_sound_delay = 0.22,
-	remote_second_load = 0.95, -- seconds after another player starts aiming that the second rocket is loaded (RocketMultiFire.FireRate)
+	remote_load_interval = 0.95, -- seconds between another player's rockets being loaded (RocketMultiFire.FireRate)
 	plunger_sound_delay = 0.5, -- (the shell and the feed move then, at plunge_speed times the speed of the animation)
 	plunge_speed = 0.8,
 	barrel_step = 120, -- degrees
@@ -577,26 +577,21 @@ mod.rocket_lock_callbacks.rocket_skin = function (owner_unit, locked)
 	end
 end
 
--- The aiming starts, and the first rocket is loaded: the barrel turns
+-- The aiming starts: one rocket is in the barrel already, there is nothing to load yet
 mod.aim_start_callbacks.rocket_skin = function (self, new_action)
-	local skin = skin_api.state()
-
-	if new_action.ut_rocket_aim and skin and utils.is_local_player_unit(self.owner_unit) then
+	if new_action.ut_rocket_aim and utils.is_local_player_unit(self.owner_unit) then
 		loaded_count = 1
-		turn_barrel(skin)
 	end
 end
 
--- Another rocket is loaded: the second one is the load (UT's third has none)
+-- Another rocket is loaded, the second and the third: the barrel turns, and the sounds
 mod.rocket_load_callbacks.rocket_skin = function (owner_unit, loaded)
 	local skin = skin_api.state()
 
 	if skin and utils.is_local_player_unit(owner_unit) then
 		loaded_count = loaded
 
-		if loaded == 2 then
-			turn_barrel(skin)
-		end
+		turn_barrel(skin)
 	end
 end
 
@@ -629,9 +624,9 @@ mod.third_person_animation_filters[TEMPLATE_NAME] = function (event, unit)
 
 	if unit and not utils.is_local_player_unit(unit) then
 		if event == "to_zoom" then
-			-- (the aiming starts the loading, and the second rocket is loaded a salvo's time after)
-			remote_load_sounds(unit, 0)
-			remote_load_sounds(unit, CONFIG.remote_second_load)
+			-- (the second rocket is loaded a salvo's time after the aiming starts, and the third as long after that)
+			remote_load_sounds(unit, CONFIG.remote_load_interval)
+			remote_load_sounds(unit, 2 * CONFIG.remote_load_interval)
 		elseif event == "attack_shoot" or event == "attack_shoot_last" then
 			remote_load_sounds(unit, 0)
 		end
