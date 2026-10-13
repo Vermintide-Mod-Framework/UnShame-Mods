@@ -73,9 +73,9 @@ local CONFIG = {
 	-- grey in it): this colour is yellow, brighter in the middle of a fireball than at its edge, which the frames' own colours make
 	explosion_fire_intensity = 1,
 	explosion_fire_color = {
-		3,
-		2.5,
-		1.4,
+		2,
+		1.7,
+		1,
 	},
 	explosion_lift = 20, -- units, how far off the surface it is (NewExplosionA is spawned 20 units along the surface's normal)
 	explosion_smoke_ring = 10, -- units, the radius of the ring the smoke starts on
