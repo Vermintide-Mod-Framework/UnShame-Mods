@@ -20,14 +20,21 @@ local particles = mod.skin_particles
 local TEMPLATE_NAME = mod.items.weapons.flak_cannon.template
 local SETTING_ID = "flak_cannon"
 
--- The place of the bone of the flak shell that is loaded in the chamber, in the animations' bones
+-- The place of the bone of the flak shell that is loaded in the chamber, and of the hammer that pushes it, in the animations' bones
 local SHELL_BONE
+local HAMMER_BONE
 
 for index, name in ipairs(animations.bones) do
 	if name == "b_bone_flak01" then
 		SHELL_BONE = index
+	elseif name == "b_bone_hammer01" then
+		HAMMER_BONE = index
 	end
 end
+
+-- The frames of the Fire animation in which the next shell slides into the chamber, which is what loading one into an empty chamber plays
+local CHAMBER_LOAD_FIRST = 8
+local CHAMBER_LOAD_LAST = 21
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- the Unreal unit of the world, in meters (a player is 88 units high)
@@ -424,14 +431,43 @@ skin_api = mod.weapon_skin.new({
 		skin_api.play_sound("ut_flak_select")
 	end,
 	on_update = function (skin, dt)
-		-- UT puts the weapon away when it has no ammo, here it is carried on: there is no shell in the chamber then
+		-- UT puts the weapon away when it has no ammo, here it is carried on: there is no shell in the chamber then. When there is ammo again
+		-- a shell is loaded: it slides in and the hammer follows, as the next shell does after a shot.
+		local was_out_of_ammo = skin.out_of_ammo
+
 		skin.out_of_ammo = utils.local_ranged_out_of_ammo()
+
+		if was_out_of_ammo and not skin.out_of_ammo then
+			skin.chamber_load = CHAMBER_LOAD_FIRST / animations.animations.Fire.rate
+		elseif skin.chamber_load then
+			skin.chamber_load = skin.chamber_load + dt
+
+			if skin.chamber_load * animations.animations.Fire.rate >= CHAMBER_LOAD_LAST then
+				skin.chamber_load = nil
+			end
+		end
 
 		skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
 		skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
 		skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
 	end,
-	on_pose = function (skin)
+	on_pose = function (skin, pose)
+		if skin.chamber_load then
+			local fire = animations.animations.Fire
+			local position = math.min(skin.chamber_load * fire.rate, #fire.frames - 1)
+			local index = math.floor(position)
+			local fraction = position - index
+			local first, second = fire.frames[index + 1], fire.frames[math.min(index + 2, #fire.frames)]
+
+			for _, bone in ipairs({ SHELL_BONE, HAMMER_BONE }) do
+				local o = (bone - 1) * 7
+
+				for i = 1, 7 do
+					pose[o + i] = first[o + i] + (second[o + i] - first[o + i]) * fraction
+				end
+			end
+		end
+
 		skin.node_scales = skin.node_scales or {}
 		skin.node_scales[SHELL_BONE] = skin.out_of_ammo and Vector3(0.001, 0.001, 0.001) or nil
 	end,

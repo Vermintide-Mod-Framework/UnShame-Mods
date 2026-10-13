@@ -89,6 +89,8 @@ local CONFIG = {
 	barrel_delay = 0.15,
 	load_sound_delay = 0.22,
 	remote_second_load = 0.95, -- seconds after another player starts aiming that the second rocket is loaded (RocketMultiFire.FireRate)
+	chamber_load_frame = 3, -- the frame of the load animation that the loading of a rocket into an empty chamber starts from (the shell is out at the side)
+	chamber_plunger_delay = 0.3, -- seconds after that when the plunger sound is played
 	plunger_sound_delay = 0.5, -- (the shell and the feed move then, at plunge_speed times the speed of the animation)
 	plunge_speed = 0.8,
 	barrel_step = 120, -- degrees
@@ -403,8 +405,25 @@ skin_api = mod.weapon_skin.new({
 		skin_api.play_sound("ut_rocket_select")
 	end,
 	on_update = function (skin, dt)
-		-- UT puts the weapon away when it has no ammo, here it is carried on: there is no rocket in the chamber then
+		-- UT puts the weapon away when it has no ammo, here it is carried on: there is no rocket in the chamber then. When there is ammo
+		-- again a rocket is loaded: the shell and the rod play the end of the load animation (the shell coming in from the side, the rod
+		-- pushing it), with the sounds.
+		local was_out_of_ammo = skin.out_of_ammo
+
 		skin.out_of_ammo = utils.local_ranged_out_of_ammo()
+
+		if was_out_of_ammo and not skin.out_of_ammo then
+			skin.plunge = {
+				time = CONFIG.chamber_load_frame / animations.animations.Load.rate,
+			}
+
+			skin_api.play_sound("ut_rocket_load")
+			remote_sounds.schedule(CONFIG.chamber_plunger_delay, function ()
+				return skin_api.state() == skin
+			end, function ()
+				skin_api.play_sound("ut_rocket_plunger")
+			end)
+		end
 
 		-- The inspect pose, and the sway the launcher is turned with in it
 		skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
