@@ -455,6 +455,7 @@ skin_api = mod.weapon_skin.new({
 
 		-- With no ammo there is nothing to load: what a shot starts (the barrel turning, the sounds, the plunger) doesn't play
 		if ammo == 0 then
+			skin.barrels = 1
 			skin.load_cycle = nil
 			skin.plunge = nil
 		elseif ammo and previous_ammo and ammo > previous_ammo then
@@ -463,7 +464,7 @@ skin_api = mod.weapon_skin.new({
 					time = 0,
 					parts = ammo == 1 and {LOAD_PARTS.slide, LOAD_PARTS.push_last} or {LOAD_PARTS.slide, LOAD_PARTS.push, LOAD_PARTS.slide},
 				}
-			elseif previous_ammo == 1 and not skin.load_cycle and not skin.plunge then
+			elseif previous_ammo <= (skin.barrels or 1) and not skin.load_cycle and not skin.plunge then
 				skin.plunge = {
 					time = 0,
 					parts = {LOAD_PARTS.slide},
@@ -500,7 +501,7 @@ skin_api = mod.weapon_skin.new({
 				skin.load_cycle = nil
 				skin.plunge = {
 					time = 0,
-					parts = {(skin.ammo or 2) <= 1 and LOAD_PARTS.push_last or LOAD_PARTS.push},
+					parts = {(skin.ammo or math.huge) <= cycle.barrels and LOAD_PARTS.push_last or LOAD_PARTS.push},
 				}
 			end
 		end
@@ -524,7 +525,7 @@ skin_api = mod.weapon_skin.new({
 
 		-- (a shot that has the load still to come leaves the shell as it is)
 		if not skin.plunge and not skin.load_cycle then
-			skin.shell_hidden = ammo ~= nil and ammo <= 1
+			skin.shell_hidden = ammo ~= nil and ammo <= (skin.barrels or 1)
 		end
 
 		if (skin.barrel_angle or 0) < (skin.barrel_final or 0) then
@@ -607,10 +608,13 @@ skin_api = mod.weapon_skin.new({
 local third_person = skin_api.third_person
 
 -- The load: the barrel turns a third of a turn, and the sounds of the load and the plunger follow (see on_update). A new one replaces
--- one that is not finished.
-local function turn_barrel(skin)
+-- one that is not finished. "barrels" is how many rockets are in the barrels when it is done (a shot leaves one): when the ammo is
+-- not more than that, there is no rocket for the rod to push next, and no shell slides in.
+local function turn_barrel(skin, barrels)
+	skin.barrels = barrels or 1
 	skin.load_cycle = {
 		time = 0,
+		barrels = skin.barrels,
 	}
 end
 
@@ -626,6 +630,8 @@ local function shot(action, new_action)
 	if not skin or not utils.is_local_player_unit(owner_unit) then
 		return
 	end
+
+	skin.barrels = 1
 
 	-- (a rocket on its own always turns the barrel, a salvo only when it is a full one)
 	if not new_action.ut_rocket_salvo or loaded_count >= 3 then
@@ -677,8 +683,10 @@ mod.aim_start_callbacks.rocket_skin = function (self, new_action)
 
 		-- (one rocket is in the barrel already: with fewer than three there is a load less, and the last of them is the one cut, so
 		-- there is none to play for a single rocket, and one for two)
+		skin.barrels = 1
+
 		if rocket_capacity >= 2 then
-			turn_barrel(skin)
+			turn_barrel(skin, 2)
 		end
 	end
 end
@@ -691,7 +699,7 @@ mod.rocket_load_callbacks.rocket_skin = function (owner_unit, loaded)
 		loaded_count = loaded
 
 		if loaded == 2 and rocket_capacity >= 3 then
-			turn_barrel(skin)
+			turn_barrel(skin, 3)
 		end
 	end
 end
