@@ -2,22 +2,22 @@ local mod = get_mod("unreal_tournament")
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
--- The hooks of the game's functions that more than one weapon needs. A function can be hooked once, so the weapons
--- don't hook them: each hook here has a table of callbacks, and a weapon adds its function under a name. Most of them
--- find it from what the shot or the weapon says (the name in the action, the template of the weapon).
+-- Hooks of game functions that more than one weapon needs. The game lets a function be hooked only once, so the weapons don't hook
+-- these functions themselves. Each hook here runs a table of callbacks, and a weapon adds its own function to the table under a name.
+-- The callback is found from what the weapon says: the name in the action, or the weapon's template.
 
--- The projectiles' explosions, creation and hits, by the name the action gives:
+-- Projectiles: explosions, creation and hits. The name comes from the action.
 --   mod.aoe_callbacks[action.ut_aoe_callback] = function (projectile, aoe_data, position)
---       when a projectile makes its explosion (where the shot is handled, on the machine of the player who fired it)
+--       Runs when a projectile explodes, on the machine of the player who fired it.
 --   mod.init_callbacks[action.ut_init_callback] = function (projectile)
---       when a projectile is made, on every peer
+--       Runs when a projectile is made, on every machine.
 --   mod.hit_enemy_callbacks[action.ut_hit_enemy_callback] = function (func, projectile, is_owner, ...)
---       wraps the hit of an enemy: it calls func(projectile, ...) itself, is_owner is if it is the projectile of the player
---       who fired (the other peers get the hit from the network)
+--       Wraps the hit on an enemy. It calls func(projectile, ...) itself. is_owner says if this is the projectile of the player who
+--       fired it. The other machines get the hit over the network.
 --   mod.init_flow_event_filters[action.ut_init_flow_event_filter] = function (event_name)
---       while a projectile is made, on every peer: true if the flow event the game sends to its unit is to be held back
+--       While a projectile is made, on every machine. Return true to drop a flow event that the game sends to the projectile's unit.
 --   mod.skin_init_callbacks[action.ut_skin_init_callback] = function (projectile)
---       the same, for the weapon's skin (a projectile that has a callback of its own for its gameplay has one for its look as well)
+--       The same as init_callbacks, for the weapon's skin.
 mod.aoe_callbacks = {}
 mod.init_callbacks = {}
 mod.init_flow_event_filters = {}
@@ -40,8 +40,7 @@ for _, extension_class in ipairs({
 	mod:hook(extension_class, "init", function (func, self, ...)
 		local flow_event = Unit.flow_event
 
-		-- (the game's flow events of the unit, which start its effects, can be held back: the extension tells the unit when it
-		-- makes the projectile, and its action is known by then)
+		-- While the projectile is made, the flow events sent to its unit (they start its effects) can be dropped
 		Unit.flow_event = function (unit, event_name, ...)
 			local action = self._current_action
 			local filter = action and action.ut_init_flow_event_filter and mod.init_flow_event_filters[action.ut_init_flow_event_filter]
@@ -53,7 +52,7 @@ for _, extension_class in ipairs({
 			return flow_event(unit, event_name, ...)
 		end
 
-		-- (an error mustn't leave the function replaced)
+		-- An error must not leave Unit.flow_event replaced
 		local ok, error_message = pcall(func, self, ...)
 
 		Unit.flow_event = flow_event
@@ -88,13 +87,13 @@ for _, extension_class in ipairs({
 	end)
 end
 
--- Explosions, by the name of the explosion template:
+-- Explosions. The name is the name of the explosion template.
 --   mod.explosion_before_callbacks[template name] = function (world, position, attacker_unit)
---       before an explosion is made, on every peer: what it returns is given to the one after
+--       Runs before an explosion is made, on every machine. What it returns is passed to the callback below.
 --   mod.explosion_callbacks[template name] = function (world, position, rotation, before)
---       after an explosion is made, on every peer
--- A template that says ut_penetrates_shields goes through shields: the game asks AiUtils.attack_is_shield_blocked for
--- every enemy in an explosion, which is answered "not blocked" while the explosion of such a template is being made.
+--       Runs after an explosion is made, on every machine.
+-- A template with ut_penetrates_shields goes through shields. The game asks AiUtils.attack_is_shield_blocked for every enemy in an
+-- explosion, and while such an explosion is made the answer is always "not blocked".
 mod.explosion_before_callbacks = {}
 mod.explosion_callbacks = {}
 
@@ -114,7 +113,7 @@ mod:hook(DamageUtils, "create_explosion", function (func, world, attacker_unit, 
 	local before_callback = mod.explosion_before_callbacks[explosion_template.name]
 	local before = before_callback and before_callback(world, impact_position, attacker_unit)
 
-	-- (an error mustn't leave the flag set)
+	-- An error must not leave the flag set
 	local ok, error_message = pcall(func, world, attacker_unit, impact_position, rotation, explosion_template, ...)
 
 	penetrating_explosion = false
@@ -136,26 +135,28 @@ mod:hook(DamageUtils, "create_explosion", function (func, world, attacker_unit, 
 	end
 end)
 
--- What the skins of the weapons show of an explosion, by the name of the template, on every peer, after the weapon's own
--- (see explosion_callbacks): the weapon's skin draws the explosion that the game's own effect is taken away for
+-- What a weapon's skin draws for an explosion. It runs on every machine, after the callbacks above. The game's own effect of the
+-- explosion is dropped, and the skin draws its own.
 --   mod.skin_explosion_callbacks[template name] = function (world, position, rotation)
 mod.skin_explosion_callbacks = {}
 
--- What the Shock Rifle tells its skin of its beam (the machine of the shooter, and those of the others after the message of
--- it): the one who fired, where the beam starts, where it ends and the way the surface it hits faces (nothing if it hit none)
+-- The Shock Rifle tells its skin about its beam. It runs on the shooter's machine, and on the others' after they get the message.
 --   mod.shock_beam_callbacks[name] = function (owner_unit, start_position, end_position, hit_normal)
+-- owner_unit fired it. The beam goes from start_position to end_position. hit_normal is the way the surface it hit faces, or nil
+-- if it hit nothing.
 mod.shock_beam_callbacks = {}
 
--- A shock combo has gone off (on every peer, as the explosion is made): the one who made it, and the enemies that it killed (a list of
--- units: the combo's damage is applied by the host, and it is the host that tells, the others get an empty list)
+-- A shock combo has gone off. It runs on every machine, when the explosion is made.
 --   mod.shock_combo_callbacks[name] = function (attacker_unit, killed_units)
+-- attacker_unit made the combo. killed_units is a list of the enemies it killed. The host applies the damage and tells the others,
+-- so on the other machines the list is empty.
 mod.shock_combo_callbacks = {}
 
--- The sounds a weapon's action plays for its player (the shot's, which the game plays and tells the others of), by the name of
--- the game's event: a weapon's skin takes one over
+-- The sounds a weapon's action plays for its player, such as the shot sound. The game plays them and tells the others. The name is
+-- the game's sound event, and a weapon's skin can take it over.
 --   mod.hud_sound_callbacks[event name][name of the skin] = function (first_person_extension, play_on_husk)
---       returns true if the sound is played by it instead (the staffs' events are the ones of more than one weapon: each skin looks at
---       what the player wields)
+--       Return true if the skin plays the sound itself. Several weapons share some staff events, so each skin checks
+--       which weapon the player holds.
 mod.hud_sound_callbacks = {}
 
 mod:hook(PlayerUnitFirstPerson, "play_hud_sound_event", function (func, self, event, wwise_source_id, play_on_husk)
@@ -172,20 +173,22 @@ mod:hook(PlayerUnitFirstPerson, "play_hud_sound_event", function (func, self, ev
 	return func(self, event, wwise_source_id, play_on_husk)
 end)
 
--- What the Link Gun's skin does with the beam (the game's own look of it is made of effects of the Sister's staff): where the beam starts
--- (the muzzle of the model, or of the mesh in the hand of the character; nothing if it is not the skin's to say) and how it is drawn
+-- How the Link Gun's skin draws the beam.
 --   mod.link_beam_callbacks.start_position = function (owner_unit)
---   mod.link_beam_callbacks.draw = function (state, points, count, is_linked)    (the points are the curve, in the first `count`)
+--       Where the beam starts: the muzzle of the model, or of the mesh in the character's hand.
+--   mod.link_beam_callbacks.draw = function (state, points, count, is_linked)
+--       Draws the beam. points is the curve, and the first `count` points are used.
 mod.link_beam_callbacks = {}
 
--- What the Bio Rifle's skin draws of its puddles (the game's own look of them is a fire, which the skin takes away): the puddle of an id
--- is shown at a place, for a time, as big as the radius, and ends
+-- How the Bio Rifle's skin draws its puddles. The game's own look of a puddle is a fire, which the skin replaces.
 --   mod.puddle_visual_callbacks.show = function (id, position, radius, charged, duration)
+--       Shows the puddle with this id at a place, as wide as the radius, for the duration.
 --   mod.puddle_visual_callbacks.stop = function (id)
---   mod.puddle_visual_callbacks.burst = function (position, goo_scale)   (a puddle bursts: goo_scale is how much goo, 0 to 1)
+--   mod.puddle_visual_callbacks.burst = function (position, goo_scale)
+--       A puddle bursts. goo_scale is how much goo it had, from 0 to 1.
 mod.puddle_visual_callbacks = {}
 
--- The overheating of a weapon, by the template of the weapon (the game's own explosion hurts the player, and is kept):
+-- When a weapon overheats and explodes, by the weapon's template. The game's own explosion still happens and hurts the player.
 --   mod.overheat_callbacks[template] = function (state, item_data)
 mod.overheat_callbacks = {}
 
@@ -205,8 +208,8 @@ mod:hook_safe(PlayerCharacterStateOverchargeExploding, "explode", function (self
 	end
 end)
 
--- The charge actions of the weapons that are patched (the Bio Rifle's charge, the Link Gun's beam) are told about
--- every frame they are held, by name: the action says which callback in ut_charge_callback.
+-- Charge actions (the Bio Rifle's charge, the Link Gun's beam) are called every frame they are held. The action names the callback in
+-- ut_charge_callback.
 --   mod.charge_update_callbacks[action.ut_charge_callback] = function (action_charge, dt, t, world)
 mod.charge_update_callbacks = {}
 
@@ -219,8 +222,8 @@ mod:hook_safe(ActionCharge, "client_owner_post_update", function (self, dt, t, w
 	end
 end)
 
--- What the weapons do when any charge action starts or ends (the venting of overcharge is one of those, and is the game's own
--- action), by name, for the player or the bot that owns the action:
+-- Runs when any charge action starts or ends, for the player or bot that owns it. The game's own venting of overcharge is a charge
+-- action too.
 --   mod.charge_start_callbacks[name] = function (action_charge, new_action)
 --   mod.charge_finish_callbacks[name] = function (action_charge, reason)
 mod.charge_start_callbacks = {}
@@ -238,14 +241,14 @@ mod:hook_safe(ActionCharge, "finish", function (self, reason)
 	end
 end)
 
--- What the weapons do when they are wielded (their default stance) and when they are put away. Each is called with what the
--- game gives _wield_slot and looks at the weapon itself. Only for the player's own character: the bots and the other players
--- wield weapons through the same function, and what the weapons do here is with the player's own first person view.
+-- Runs when a weapon is wielded and when it is put away. It gets what the game gives _wield_slot, and each callback checks the
+-- weapon itself. It only runs for the player's own character, because bots and other players wield weapons through the same function,
+-- and these callbacks work on the player's own first person view.
 --   mod.unwield_callbacks[name] = function (inventory_extension, equipment, previous_item_data, slot_data)
---       before the swap, with what is wielded still the previous one (nothing, if there was no weapon wielded); slot_data
---       is what is wielded next, nothing if nothing is
+--       Runs before the swap, while the previous weapon is still wielded (nothing if there was none). slot_data is the weapon
+--       that comes next, or nothing.
 --   mod.wield_callbacks[name] = function (inventory_extension, equipment, slot_data, unit_1p)
---       after it
+--       Runs after the swap.
 mod.unwield_callbacks = {}
 mod.wield_callbacks = {}
 
@@ -261,7 +264,7 @@ mod:hook(SimpleInventoryExtension, "_wield_slot", function (func, self, equipmen
 		end
 	end
 
-	-- (what it returns, whether it wielded a weapon, is what the caller shows the weapon's units by)
+	-- It returns whether a weapon was wielded, which the caller uses to show the weapon's units
 	local wielded = func(self, equipment, slot_data, unit_1p, ...)
 
 	if is_local_player then
@@ -273,11 +276,11 @@ mod:hook(SimpleInventoryExtension, "_wield_slot", function (func, self, equipmen
 	return wielded
 end)
 
--- The shots of the weapons that are patched (the Shock Rifle's), by name:
+-- Shots of the Shock Rifle:
 --   mod.handgun_start_callbacks[name] = function (action_handgun, new_action)
 --   mod.handgun_update_callbacks[name] = function (action_handgun)
 --   mod.charged_projectile_start_callbacks[name] = function (action_charged_projectile, new_action)
--- They are called on the machine of whoever owns the action: the player who plays, and the host for its bots.
+-- They run on the machine that owns the action: the player's, or the host's for its bots.
 mod.handgun_start_callbacks = {}
 mod.handgun_update_callbacks = {}
 mod.charged_projectile_start_callbacks = {}
@@ -300,14 +303,15 @@ mod:hook_safe(ActionChargedProjectile, "client_owner_start_action", function (se
 	end
 end)
 
+-- Shots and aiming of the Flak Cannon and the Rocket Launcher:
 --   mod.shotgun_start_callbacks[name] = function (action_shotgun, new_action)
 --   mod.crossbow_start_callbacks[name] = function (action_crossbow, new_action, t)
 --   mod.aim_start_callbacks[name] = function (action_aim, new_action, t)
 --   mod.aim_finish_callbacks[name] = function (action_aim, reason)
 --   mod.rocket_load_callbacks[name] = function (owner_unit, loaded)
---       the Rocket Launcher has loaded another rocket (how many are loaded now), for the player who loads
+--       The Rocket Launcher loaded another rocket. loaded is how many are loaded now. Runs for the player who loads.
 --   mod.rocket_lock_callbacks[name] = function (owner_unit, locked)
---       the Rocket Launcher has locked on to an enemy (locked is true), or has lost the lock (false), for the player who aims
+--       The Rocket Launcher locked on to an enemy (locked is true) or lost the lock (false). Runs for the player who aims.
 mod.rocket_load_callbacks = {}
 mod.rocket_lock_callbacks = {}
 mod.shotgun_start_callbacks = {}
@@ -339,7 +343,7 @@ mod:hook_safe(ActionAim, "finish", function (self, reason)
 	end
 end)
 
--- The inspect of a weapon (held with the key, the game's action_inspect_hold): it starts and it ends, with the action
+-- Inspecting a weapon (the game's action_inspect_hold, held with the key). Runs when the inspect starts and when it ends.
 --   mod.inspect_callbacks[name] = function (action_dummy, started)
 mod.inspect_callbacks = {}
 
@@ -359,11 +363,11 @@ mod:hook_safe(ActionDummy, "finish", function (self)
 	end
 end)
 
--- The animation events that the game plays on the player's own first person unit for a weapon, by the template of the weapon: some
--- of the sounds of a weapon (the shot of the blunderbuss) are made by its animation, not by an event of Lua that can be taken over
--- (hud_sound_callbacks), and the first person unit and the arms are not shown while a weapon's skin is
+-- Animation events that the game plays on the player's own first person unit, by the weapon's template. Some weapon sounds (the
+-- blunderbuss's shot) are in the animation, not in a Lua sound event that hud_sound_callbacks could take over. The first person unit
+-- and the arms are hidden anyway while a skin is shown, so a skin can drop these events.
 --   mod.first_person_animation_filters[template] = function (event_name)
---       true if the event is not to be played (for the player who has it, not the others, who are told by the third person events)
+--       Return true to drop the event. It only applies to the player who holds the weapon. The others get the third person events.
 mod.first_person_animation_filters = {}
 
 mod:hook(WeaponUnitExtension, "_play_1p_anim", function (func, self, event_1p, event, ...)
@@ -378,10 +382,10 @@ mod:hook(WeaponUnitExtension, "_play_1p_anim", function (func, self, event_1p, e
 	return func(self, event_1p, event, ...)
 end)
 
--- The same for the character's third person unit. Its animation events come over the network from the player holding the weapon, and
+-- The same for the character's third person unit. Its animation events come over the network from the player who holds the weapon, and
 -- sounds inside an animation (like reloading) are heard from every player's unit.
 --   mod.third_person_animation_filters[template] = function (event_name, unit)
--- (a filter sees the events of every character that wields the weapon, so it can also play what they mean for the others)
+-- A filter sees the events of every character that wields the weapon, so it can also play sounds for them.
 mod.third_person_animation_filters = {}
 
 mod:hook(AnimationSystem, "anim_event", function (func, self, unit, event_name, ...)
@@ -395,7 +399,7 @@ mod:hook(AnimationSystem, "anim_event", function (func, self, unit, event_name, 
 	return func(self, unit, event_name, ...)
 end)
 
--- (the animation of an action of another player's weapon comes over the network with the speed of the attack, and is played by this one)
+-- The animation of another player's weapon action comes over the network with the speed of the attack, and is played by this function
 mod:hook(AnimationSystem, "anim_event_with_variable_float", function (func, self, unit, event_name, ...)
 	local template_name = utils.wielded_template_name(unit)
 	local filter = template_name and mod.third_person_animation_filters[template_name]
@@ -474,7 +478,7 @@ mod:hook(_G, "flow_callback_wwise_trigger_event_with_environment", function (fun
 	return func(params, ...)
 end)
 
--- (the events that the game plays itself, not as the animation of an action of the weapon: the one of venting the heat is made by its overcharge)
+-- Events that the game plays itself, not as part of a weapon action. Venting the heat is one: the overcharge plays it.
 mod:hook(PlayerUnitFirstPerson, "animation_event", function (func, self, event, ...)
 	local template_name = utils.wielded_template_name(self.unit)
 	local filter = template_name and mod.first_person_animation_filters[template_name]
@@ -486,8 +490,8 @@ mod:hook(PlayerUnitFirstPerson, "animation_event", function (func, self, event, 
 	return func(self, event, ...)
 end)
 
--- Before the first person view of a character is taken down (the character dies, the level ends): what a weapon has linked to
--- it has to be let go of first
+-- Runs before a character's first person view is taken down, when the character dies or the level ends. A weapon must let go of
+-- whatever it linked to the view first.
 --   mod.first_person_destroy_callbacks[name] = function (first_person_extension)
 mod.first_person_destroy_callbacks = {}
 
@@ -499,8 +503,8 @@ mod:hook(PlayerUnitFirstPerson, "destroy", function (func, self, ...)
 	return func(self, ...)
 end)
 
--- What is done to what the player sees just before the frame is drawn, after the game has updated everything of it (the game
--- shows the units of its own weapon and arms again at its own times, which a mod's update, that runs first, can't beat)
+-- Runs just before the frame is drawn, after the game has updated everything. The game shows its own weapon and arm units again at
+-- times of its own, and the mod's update runs too early to hide them again.
 --   mod.pre_render_callbacks[name] = function ()
 mod.pre_render_callbacks = {}
 
@@ -510,9 +514,8 @@ mod:hook_safe(StateIngame, "pre_render", function ()
 	end
 end)
 
--- What the weapons do when the character starts to hang off a ledge (the game plays the animations of hanging, and the stance a
--- weapon keeps the character in with an animation event of its own is still there under them: it is to be ended). Each is called with
--- the unit of the character, for the player's own character only (the state of the other players' characters is theirs).
+-- Runs when the character starts to hang off a ledge. The game plays the hanging animations, but a weapon's own stance animation is
+-- still playing under them, so the weapon ends it. It gets the character's unit, and only runs for the player's own character.
 --   mod.ledge_hang_callbacks[name] = function (unit)
 mod.ledge_hang_callbacks = {}
 
@@ -522,9 +525,9 @@ mod:hook_safe(PlayerCharacterStateLedgeHanging, "on_enter", function (self)
 	end
 end)
 
--- The heat the weapons are given, by the type of overcharge the game is adding (the id of the weapon's own value):
+-- The heat a weapon gets, by the overcharge type the game is adding (the id of the weapon's own value):
 --   mod.overcharge_callbacks[type] = function (overcharge_extension, amount, charge_level)
---       returns the amount to add instead, or nil to add nothing
+--       Return the amount to add instead, or nil to add nothing.
 mod.overcharge_callbacks = {}
 
 mod:hook(PlayerUnitOverchargeExtension, "add_charge", function (func, self, overcharge_amount, charge_level, overcharge_type, ...)
@@ -541,14 +544,14 @@ mod:hook(PlayerUnitOverchargeExtension, "add_charge", function (func, self, over
 	return func(self, overcharge_amount, charge_level, overcharge_type, ...)
 end)
 
--- The mod framework sends the mod's network messages only to the players on its list of players that have the framework.
--- When a level is loaded the game removes the players and adds them again, and the framework can take a player off its
--- list after it has put them back, so that the messages of the mod (the Shock Rifle's beam for the others, the Bio Rifle's
--- goo of a client) go nowhere until the mod is reloaded. A moment after the players change, after the last change,
--- the framework is asked to ping everyone again, which puts the players back on the list on both sides.
+-- The mod framework only sends the mod's network messages to the players on its list of players that have the framework. When a
+-- level loads, the game removes the players and adds them again, and the framework can take a player off its list after it put them
+-- back. Then the mod's messages (the Shock Rifle's beam for the others, the Bio Rifle's goo from a client) go nowhere until the mod is
+-- reloaded. So a moment after the last change of players, the framework is asked to ping everyone again. That puts the players back
+-- on the list on both sides.
 local FRAMEWORK_PING_DELAY = 1 -- seconds
 
-local framework_ping_timer -- seconds until the framework is asked to ping, nothing when it is not waiting
+local framework_ping_timer -- seconds until the framework is asked to ping, or nil when it is not waiting
 
 local function ask_framework_to_ping()
 	framework_ping_timer = FRAMEWORK_PING_DELAY
@@ -571,9 +574,9 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	end
 end
 
--- Hit effects that do nothing. A weapon that draws its own impact adds an effect name here (mod.silent_hit_effects[name] = true) and uses
--- that name as its action's hit_effect. The game needs a name, and sends it to other players as a number from a lookup table. That table
--- is full and adding a name is an error, so these names can't be sent, and the hooks below skip playing and sending them.
+-- Hit effects that do nothing. A weapon that draws its own impact adds an effect name here (mod.silent_hit_effects[name] = true) and
+-- uses it as its action's hit_effect. The game needs a name there, and sends it to the other players as a number from a lookup table.
+-- That table is full, and adding a name is an error, so these names can't be sent. The hooks below skip playing and sending them.
 -- Walls and props, and enemies (flesh, armor), each have a local and a remote function, so all four are hooked.
 mod.silent_hit_effects = {}
 
@@ -606,7 +609,7 @@ mod:command("slomo", "<number> - the speed of the game: below 1 slower, above 1 
 	mod:echo("slomo: %g", number)
 end)
 
--- Development, like UT's "loaded": fills the ammo of the ranged weapon, or sets it to the amount that is given
+-- Development command, like UT's "loaded": fills the ranged weapon's ammo, or sets it to the amount given
 mod:command("loaded", "[amount] - fills the ammo of the ranged weapon, or sets it to that (a whole number)", function (amount)
 	local number = tonumber(amount)
 
@@ -629,7 +632,7 @@ mod:command("loaded", "[amount] - fills the ammo of the ranged weapon, or sets i
 	end
 
 	if number then
-		-- (the clip is what it holds, the rest is in reserve)
+		-- The clip holds what it can, and the rest is in reserve
 		local total = math.min(number, ammo_extension:max_ammo())
 		local in_clip = math.min(total, ammo_extension:clip_size())
 
@@ -644,10 +647,11 @@ mod:command("loaded", "[amount] - fills the ammo of the ranged weapon, or sets i
 	mod:echo("loaded: %d", ammo_extension:total_remaining_ammo())
 end)
 
--- How the bots shoot a weapon of the mod. The game's bot shooting (BTBotShootAction) is hooked once, here (a mod can hook a function once), and
--- runs the callback of the weapon, which is found by a key of the weapon's attack_meta_data that is true:
+-- How bots shoot a weapon of the mod. The game's bot shooting (BTBotShootAction) is hooked once, here, because a function can be hooked
+-- only once. The hook runs the callback of the weapon whose key is true in the weapon's attack_meta_data:
 --   mod.bot_shot_callbacks[key] = function (func, action, shoot_blackboard, action_data, input_extension, t)
---       fires, or calls func(action, shoot_blackboard, action_data, input_extension, t) for the game's own shot. shoot_blackboard.ut_unit is the bot.
+--       Fires the shot itself, or calls func(action, shoot_blackboard, action_data, input_extension, t) for the game's own shot.
+--       shoot_blackboard.ut_unit is the bot.
 mod.bot_shot_callbacks = {}
 
 mod:hook_safe(BTBotShootAction, "enter", function (self, unit, blackboard)

@@ -1,30 +1,37 @@
 local mod = get_mod("unreal_tournament")
 
--- The third person of a weapon skin: every character on this machine that wields the weapon holds UT2004's pickup mesh of it instead of
--- the game's weapon, as this player sees them: the game's own units are what the machines of players without the mod show. The
--- characters are the player's own (in a third person view), the other players and the bots. Made by weapon_skin.lua for each weapon
--- (mod.weapon_skin.new), with what is the weapon's own in its definition:
---   id: the weapon's id, template: the game's template it is, unit_name: the mesh (tools/asset_conversion/psk2bsi.py, with the
---   DrawScale of the pickup in it), materials: { slot = material } to set on it, hand_node: where the game links the weapon to the
---   character, meters_per_unit: the meters of a UT unit of the mesh, scale: how much of it is held (UT's pickups are far bigger
---   than the weapon in the hand is), grip_*: the point of the mesh that is in the hand (right, forward, up, UT units), yaw, pitch,
---   roll: how the mesh is turned from pointing the way the character faces (degrees), muzzle_*: the end of its barrel, menu_yaw: how far to
---   turn it about the vertical in the item inspection so the barrel points sideways (-90 if its barrel runs along its forward),
---   follow_game_unit: the mesh moves with the game's unit of the weapon, which the game animates with the arms, from how it is turned after
---   follow_calibrate_seconds of being held (follow_game_unit = 2: no calibration, pitch, roll and yaw are from the unit's own axes, for a
---   weapon whose unit is still moving to its place when it would be calibrated: the Repeating Crossbow's)
+-- The third person of a weapon skin. Every character on this machine that wields the weapon holds UT2004's pickup mesh of it
+-- instead of the game's weapon. That is how this player sees them. Players without the mod see the game's own units. The characters
+-- are the player's own (in a third person view), the other players and the bots. weapon_skin.lua makes one of these for each weapon
+-- (mod.weapon_skin.new), from the weapon's definition:
+--   id: the weapon's id. template: the game's template of the weapon.
+--   unit_name: the mesh (made by tools/asset_conversion/psk2bsi.py, with the pickup's DrawScale in it).
+--   materials: { slot = material } to set on the mesh.
+--   hand_node: where the game links the weapon to the character.
+--   meters_per_unit: the meters per UT unit of the mesh.
+--   scale: how much of the mesh is held. UT's pickups are far bigger than the weapon in the hand.
+--   grip_*: the point of the mesh that is in the hand (right, forward, up, in UT units).
+--   yaw, pitch, roll: how the mesh is turned from pointing the way the character faces, in degrees.
+--   muzzle_*: the end of the barrel.
+--   menu_yaw: how far to turn the mesh about the vertical in the item inspection, so that the barrel points sideways (-90 if the
+--       barrel runs along the mesh's forward).
+--   follow_game_unit: the mesh moves with the game's unit of the weapon, which the game animates with the arms. The mesh is turned
+--       from the game's unit by the way the unit is turned after follow_calibrate_seconds of being held. With follow_game_unit = 2
+--       there is no calibration: pitch, roll and yaw are relative to the unit's own axes. That is for a weapon whose unit is still
+--       moving into place when it would be calibrated, such as the Repeating Crossbow.
+--   fade_mesh, fade_material: a material with a "fade" variable, for a material that the engine's near-camera fade doesn't reach.
 --
--- The game's unit (the staff, the blunderbuss...) stays, hidden, and the mesh is linked to the same node of the character as it, turned
--- every frame to point the way the character faces, level (a staff is held upright, a rifle is carried pointing ahead: that is not
--- how the hand is turned). Which character wields what is looked at every frame, so that the game's own wielding, which makes a new
--- unit each time, needs no hook.
+-- The game's unit (the staff, the blunderbuss and so on) stays, hidden. The mesh is linked to the same node of the character, and it
+-- is turned every frame to point the way the character faces, level. A staff is held upright and a rifle is carried pointing ahead,
+-- which is not how the hand is turned. Every frame the code looks at which character wields what, so the game's own wielding, which
+-- makes a new unit each time, needs no hook.
 --
--- A weapon with skins (illusions) can hold a different mesh for one of them: looks = { [skin key] = the definition above, for that mesh }.
--- A character wielding the weapon with that skin holds that mesh.
+-- A weapon with skins (illusions) can hold a different mesh for one of them: looks = { [skin key] = a definition like the one above,
+-- for that mesh }. A character wielding the weapon with that skin holds that mesh.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
--- Every weapon's third person
+-- The third person of every weapon
 local instances = {}
 
 local function new(def, looks)
@@ -34,19 +41,19 @@ local function new(def, looks)
 		CONFIG[key] = value
 	end
 
-	-- The definition for a look (a skin key), or the weapon's own when there is none.
+	-- Returns the definition for a look (a skin key), or the weapon's own definition if there is no look.
 	local function config_of(look)
 		return look and looks and looks[look] or CONFIG
 	end
 
-	-- The look for the weapon a character wields.
+	-- Returns the look for the weapon a character wields, or nil for the weapon's own look.
 	local function look_of(character)
 		local skin_key = utils.wielded_skin(character)
 
 		return skin_key and looks and looks[skin_key] and skin_key or nil
 	end
 
-	-- The characters that hold the mesh: [character unit] = { unit = the mesh, staff = the game's unit it stands in for, world, ... }
+	-- The characters that hold the mesh, as [character unit] = { unit = the mesh, staff = the game's unit it replaces, world, ... }
 	local attached = {}
 
 	local third_person = {}
@@ -55,20 +62,21 @@ local function new(def, looks)
 
 	third_person.config_of = config_of
 
-	-- How many meters a UT unit of the mesh is as it is held (the flashes are made as big as the mesh is)
+	-- How many meters a UT unit of the mesh is as it is held. Flashes use it to be as big as the mesh.
 	third_person.meters_per_unit = CONFIG.meters_per_unit * CONFIG.scale
 
-	-- The mesh's pose, every frame: the point of it that is in the hand is the node of the hand, and it points the way the
-	-- character faces, level, so the rotation in the frame of the hand is the one that makes it so in the world
+	-- Sets the mesh's pose. It runs every frame. The point of the mesh that is in the hand sits on the hand's node, and the mesh points
+	-- the way the character faces, level. So the rotation in the hand's frame is the one that gives that result in the world.
 	local function place(entry)
 		local config = entry.config
 		local facing = Vector3.flat(Quaternion.forward(Unit.world_rotation(entry.character, 0)))
 		local wanted = Quaternion.look(Vector3.normalize(facing), Vector3.up())
 
-		-- follow_game_unit: the mesh moves with the game's own unit of the weapon, which the game animates with the arms. The mesh starts
-		-- out pointing the way the character faces (with pitch, roll and yaw), and once the character has stood holding the weapon for
-		-- follow_calibrate_seconds, how the game's unit is turned from that is kept, and the mesh is turned from the unit by it from then
-		-- on. Without it, or in a menu, where there is no unit, the mesh keeps pointing the way the character faces.
+		-- With follow_game_unit the mesh moves with the game's own unit of the weapon, which the game animates with the arms. At first
+		-- the mesh points the way the character faces, with the pitch, roll and yaw. Once the character has held the weapon for
+		-- follow_calibrate_seconds, the way the game's unit is turned relative to that is stored, and from then on the mesh is turned
+		-- from the unit by that amount. Without follow_game_unit, or in a menu where there is no unit, the mesh keeps pointing the way
+		-- the character faces.
 		if config.follow_game_unit and config.follow_game_unit ~= 0 and entry.staff and Unit.alive(entry.staff) then
 			local staff_rotation = Unit.world_rotation(entry.staff, 0)
 			local t = Managers.time:time("main")
@@ -76,7 +84,8 @@ local function new(def, looks)
 			entry.attached_at = entry.attached_at or t
 
 			if config.follow_game_unit == 2 then
-				-- (the mesh is turned from the game's unit by pitch, roll and yaw alone, as they are the unit's own axes: no calibration)
+				-- The mesh is turned from the game's unit by the pitch, roll and yaw alone, which are in the unit's own axes. There is
+				-- no calibration.
 				wanted = staff_rotation
 			elseif not entry.follow_offset and t - entry.attached_at >= (config.follow_calibrate_seconds or 1) then
 				entry.follow_offset = QuaternionBox(Quaternion.multiply(Quaternion.inverse(staff_rotation), wanted))
@@ -97,9 +106,10 @@ local function new(def, looks)
 		Unit.set_local_rotation(entry.unit, 0, rotation)
 		Unit.set_local_scale(entry.unit, 0, Vector3(config.scale, config.scale, config.scale))
 
-		-- A material that the engine's fade near the camera does not reach (its shader has no option for it) has a "fade" variable, set as
-		-- the engine fades the character (read from the engine's fade update): nothing of it up to 0.5 m from the camera, sideways, all of
-		-- it from 0.7 m, and all of it when the camera is a meter or more above or below the character
+		-- The engine's fade near the camera does not reach some materials, because their shader has no option for it. Such a material
+		-- has a "fade" variable, and this sets it the way the engine fades a character (read from the engine's fade update). The
+		-- material is invisible up to 0.5 m from the camera, measured sideways. It is fully visible from 0.7 m, and also whenever the
+		-- camera is a meter or more above or below the character.
 		if config.fade_material and Unit.has_mesh(entry.unit, config.fade_mesh) then
 			local camera_manager = Managers.state.camera
 			local fade = 1
@@ -133,9 +143,8 @@ local function new(def, looks)
 			World.destroy_unit(entry.world, entry.unit)
 		end
 
-		-- (the weapon that is still wielded is shown as the game would: when the mesh goes because the setting is off. One that is
-		-- put away, or the one of an earlier wield, is the game's to show or to have taken down)
-		-- (the effects of the units are started again as the game does when it wields: its flow event)
+		-- If the character still wields the weapon, its game units are shown again and their effects are started, with the same flow
+		-- event the game sends when it wields. A weapon that was put away, or one from an earlier wield, is left to the game.
 		if Unit.alive(character) and utils.wielded_template_name(character) == CONFIG.template then
 			for _, game_unit in ipairs(entry.units) do
 				if Unit.alive(game_unit) then
@@ -146,7 +155,7 @@ local function new(def, looks)
 		end
 	end
 
-	-- A hidden mesh with its materials set
+	-- Makes a mesh, hidden, with its materials set.
 	local function new_mesh(world, look)
 		local config = config_of(look)
 		local unit = World.spawn_unit(world, config.unit_name, Vector3(0, 0, 0))
@@ -169,7 +178,7 @@ local function new(def, looks)
 		local hand_node = Unit.node(character, config.hand_node)
 		local unit = new_mesh(world, look)
 
-		-- (kept at once, so that the mesh is found and destroyed whatever happens next, see weapon_skin.lua)
+		-- The entry is stored at once, so the mesh can always be found and destroyed, whatever happens next (see weapon_skin.lua).
 		attached[character] = {
 			character = character,
 			config = config,
@@ -181,16 +190,17 @@ local function new(def, looks)
 			world = world,
 		}
 
-		-- (the effects of the game's units, the flame of the Beam Staff, are put out as the game does when it unwields: the units are only
-		-- hidden, and the effects of a unit are not hidden with it)
+		-- The game's units are only hidden, and a hidden unit still shows its effects, such as the Beam Staff's flame. So this puts the
+		-- effects out with the same flow event the game sends when it unwields.
 		for _, game_unit in ipairs(units) do
 			Unit.flow_event(game_unit, "lua_unwield")
 		end
 
 		World.link_unit(world, unit, 0, character, hand_node)
 
-		-- The outline of the character (an ally's, for one) is put on the units that are linked to it when it changes, so a unit that is linked
-		-- after it was put on is outlined only when it is put on again: the game does this when a weapon is wielded.
+		-- The game puts a character's outline (an ally's, for example) on the units linked to the character at the moment the outline
+		-- changes. A unit linked after that is not outlined until the outline is put on again, which the game does when a weapon is
+		-- wielded. So the outline is put on again here.
 		local outline_extension = ScriptUnit.has_extension(character, "outline_system")
 
 		if outline_extension then
@@ -198,7 +208,8 @@ local function new(def, looks)
 		end
 	end
 
-	-- The game's unit of a character if the skin is to replace it: the weapon is what it wields
+	-- Returns the game's weapon unit of a character if the skin replaces it, which is when the character wields this weapon. Also
+	-- returns the units of both hands.
 	local function staff_to_replace(character)
 		if utils.wielded_template_name(character) ~= CONFIG.template then
 			return nil
@@ -211,10 +222,10 @@ local function new(def, looks)
 			return nil
 		end
 
-		-- (and the units of both hands: the Beam Staff's left hand has the flame)
+		-- Both hands' units are needed, because the Beam Staff's left hand has the flame
 		local units = {}
 
-		-- (a list with a missing hand in it is not walked by ipairs: the Repeating Crossbow is in the left hand only)
+		-- The keys are walked by name, because ipairs stops at a missing hand. The Repeating Crossbow is in the left hand only.
 		for _, key in ipairs({"right_hand_wielded_unit_3p", "left_hand_wielded_unit_3p"}) do
 			local game_unit = equipment[key]
 
@@ -226,8 +237,8 @@ local function new(def, looks)
 		return staff, units
 	end
 
-	-- If the character is shown holding its weapon: the player's own character is not while the view is the first person one
-	-- (the game hides the weapon's unit then)
+	-- Returns whether the character is shown holding its weapon. The player's own character is not, while the view is first person,
+	-- because the game hides the weapon's unit then.
 	function third_person.shows_weapon(character)
 		if utils.is_local_player_unit(character) then
 			local first_person_extension = ScriptUnit.has_extension(character, "first_person_system")
@@ -238,7 +249,7 @@ local function new(def, looks)
 		return true
 	end
 
-	-- Every frame
+	-- Runs every frame. Attaches the mesh to characters that need it, places it, and removes it from the others.
 	function third_person.update()
 		local players = Managers.player and Managers.player:human_and_bot_players()
 
@@ -283,7 +294,7 @@ local function new(def, looks)
 		end
 	end
 
-	-- The game's units are hidden again before the frame is drawn: the game shows them at times of its own, after the update
+	-- Hides the game's units again before the frame is drawn, because the game shows them at times of its own, after the update.
 	function third_person.hide_staffs()
 		for _, entry in pairs(attached) do
 			for _, game_unit in ipairs(entry.units) do
@@ -294,8 +305,8 @@ local function new(def, looks)
 		end
 	end
 
-	-- The effects of the game's units that are not shown are put out (the game starts them again each time it shows the character's weapons: it
-	-- sends the units the flow event of wielding, which lights the flame of the Beam Staff's left hand)
+	-- Puts out the effects of the game's units that are not shown. Each time the game shows the character's weapons it sends the units
+	-- the wield flow event, which lights the flame of the Beam Staff's left hand again.
 	function third_person.put_out_flames(character)
 		local entry = attached[character]
 
@@ -310,7 +321,7 @@ local function new(def, looks)
 		end
 	end
 
-	-- Where the barrel ends, for the flashes of a shot (nothing if the character holds the game's weapon)
+	-- Returns where the barrel ends, for the flash of a shot. Returns nil if the character holds the game's weapon.
 	function third_person.muzzle_position(character)
 		local entry = attached[character]
 
@@ -324,25 +335,25 @@ local function new(def, looks)
 		return Unit.world_position(entry.unit, 0) + Quaternion.rotate(Unit.world_rotation(entry.unit, 0), offset)
 	end
 
-	-- How many meters one UT unit of the mesh is as a character holds it (flashes are sized to match the mesh).
+	-- Returns how many meters one UT unit of the mesh is as a character holds it. Flashes are sized to match the mesh.
 	function third_person.meters_per_unit_of(character)
 		local config = attached[character] and attached[character].config or CONFIG
 
 		return config.meters_per_unit * config.scale
 	end
 
-	-- All of them are given back (the setting is off, the mod is, the level is gone)
+	-- Removes the mesh from every character. This is used when the mod is switched off or the level ends.
 	function third_person.clear()
 		for character in pairs(attached) do
 			detach(character)
 		end
 	end
 
-	-- Heroes in menus that hold the mesh. They aren't players, so update doesn't see them.
-	-- [character unit] = { character, hand_node, unit, world }
+	-- The heroes in menus that hold the mesh, as [character unit] = { character, hand_node, unit, world }. They aren't players, so
+	-- update doesn't see them.
 	local in_menu = {}
 
-	-- Makes the hero hold the mesh, placed as in the world, and hides the previewer's own units
+	-- Makes the hero hold the mesh, placed as in the world, and hides the previewer's own units.
 	function third_person.hold_in_menu(character, world, game_units, visible, look)
 		local entry = in_menu[character]
 
@@ -372,7 +383,7 @@ local function new(def, looks)
 			in_menu[character] = entry
 		end
 
-		-- A mesh that is turned from the game's unit by its axes (follow_game_unit 2) is placed by the previewer's unit, as in the world
+		-- With follow_game_unit 2, the mesh is placed relative to the previewer's unit, as it is relative to the game's unit in the world.
 		if entry.config.follow_game_unit == 2 then
 			entry.staff = nil
 
@@ -388,7 +399,7 @@ local function new(def, looks)
 		place(entry)
 		Unit.set_unit_visibility(entry.unit, visible)
 
-		-- Hidden units still show their effects (the Beam Staff's flame), so they get the unwield event
+		-- Hidden units still show their effects, such as the Beam Staff's flame, so they get the unwield event.
 		for _, game_unit in ipairs(game_units) do
 			if Unit.alive(game_unit) then
 				Unit.set_unit_visibility(game_unit, false)
@@ -397,7 +408,7 @@ local function new(def, looks)
 		end
 	end
 
-	-- Call before the previewer destroys its character: the world must still exist
+	-- Removes the mesh from a hero in a menu. Call this before the previewer destroys its character, while the world still exists.
 	function third_person.release_from_menu(character)
 		local entry = in_menu[character]
 
@@ -413,8 +424,9 @@ local function new(def, looks)
 		end
 	end
 
-	-- Development: what every character holds, told in the chat: the scale of each unit of its weapons (the game's, in the first person and
-	-- the third), how far it is from the hand nodes, and the scale of the nodes, to see which one is off when a weapon is seen floating
+	-- Development command. Prints in the chat what every character holds: the scale of each of its weapon units (the game's, in first
+	-- and third person), how far each is from the hand nodes, and the scale of the nodes. This shows which one is off when a weapon
+	-- floats.
 	function third_person.report()
 		local players = Managers.player and Managers.player:human_and_bot_players()
 
@@ -453,9 +465,10 @@ local function new(def, looks)
 		end
 	end
 
-	-- Development: sets a number of the definition (how the mesh sits in the hand) while playing
+	-- Development command. Sets a number of the definition, which is how the mesh sits in the hand, while playing.
 	function third_person.set(key, value)
-		-- (follow_recalibrate: the turn of the mesh from the game's unit is taken again, with the characters standing as they should)
+		-- follow_recalibrate is not a number: it makes the mesh's turn from the game's unit be measured again. Use it with the
+		-- characters standing as they should.
 		if key == "follow_recalibrate" then
 			for _, entry in pairs(attached) do
 				entry.follow_offset = nil
@@ -472,8 +485,9 @@ local function new(def, looks)
 	return third_person
 end
 
--- The game shows the character's weapons again (the view is changed to the third person, a ladder is let go of, ...)
--- (the player's own character, and the other characters, which have an inventory of their own)
+-- The game shows the character's weapons again at some moments, for example when the view changes to third person or a ladder is let
+-- go. Their effects start again then, so they are put out. This covers the player's own character and the other characters, which
+-- have an inventory class of their own.
 for _, inventory_class in ipairs({ SimpleInventoryExtension, SimpleHuskInventoryExtension }) do
 	mod:hook_safe(inventory_class, "show_third_person_inventory", function (self, show)
 		if show then

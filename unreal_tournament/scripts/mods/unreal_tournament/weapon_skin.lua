@@ -1,67 +1,70 @@
 local mod = get_mod("unreal_tournament")
 
--- The weapon skins: a UT2004 weapon's first person model, in the player's own first person view, and
--- the pickup mesh of it in every character's hand, played with the game's own events. The gameplay is the weapon's own file's: a
--- skin only draws it differently. mod.weapon_skin.new(definition) makes the skin of a weapon; its own file says what it does with
--- the shots, the projectiles, the effects and the sounds, and this file is what all of them do.
+-- The weapon skins. A skin shows a UT2004 weapon: its first person model in the player's own view, and its pickup mesh in the hand of
+-- every character. The gameplay is in the weapon's own file, and a skin only draws it differently. mod.weapon_skin.new(definition)
+-- makes the skin of one weapon. The weapon's own skin file says what it does with the shots, projectiles, effects and sounds. This
+-- file does what all the skins have in common.
 --
 -- The game's weapon and arms are hidden, and UT2004's model is linked to the first person unit, as the game's own weapons are. It is
--- drawn where UT2004 draws it: the mesh is moved by the root bone of the animation it plays, drawn at DrawScale, turned by
--- PlayerViewPivot, at PlayerViewOffset scaled by 90 / DisplayFOV (Pawn.CalcDrawOffset), and seen with the field of view UT2004
--- draws weapons with. A point at (right, forward, up) in UT's view lands in the same place of the screen in this game's view, with its
--- own field of view, at (c * right, forward, c * up) * k, where c is the ratio of the tangents of the half field of views across the
--- screen and k is any distance scale: the gun is wider and taller across than it is long. The other bones of the animation
--- (a hammer, a barrel, a plunger) are the poses of nodes of the unit, against the root's move.
+-- drawn where UT2004 draws it. The root bone of the animation moves the mesh. The mesh is drawn at DrawScale, turned by
+-- PlayerViewPivot, at PlayerViewOffset scaled by 90 / DisplayFOV (Pawn.CalcDrawOffset), and seen with the field of view UT2004 uses
+-- for weapons. A point at (right, forward, up) in UT's view lands at the same place on the screen in this game's view, with its own
+-- field of view, at (c * right, forward, c * up) * k. Here c is the ratio of the tangents of the half fields of view across the
+-- screen, and k is any distance scale. So the gun is wider and taller across than it is long. The other bones of the animation (a
+-- hammer, a barrel, a plunger) are poses of nodes of the unit, relative to the root's move.
 --
--- The animations are UT's, played with the timing of the game's: the pickup lasts as long as the game's wield cooldown, a shot
--- plays when the action of it starts. The game has no animation of putting a weapon down, so the model is gone as the weapon is
--- put away.
+-- The animations are UT's, timed like the game's: the pickup lasts as long as the game's wield cooldown, and a shot plays when its
+-- action starts. The game has no animation for putting a weapon down, so the model just disappears when the weapon is put away.
 --
--- A definition (the numbers of the weapon's class in UT2004, the files tools/asset_conversion made):
---   id, name: the weapon's id (flak_cannon, for /skin) and its name in the messages, template: the game's weapon template it is the skin of
---   unit_name, animations: the unit, and its animations ({ bones = { "root", nodes... }, animations = { Name = { rate, frames } } },
---       a frame is seven numbers for each bone: a rotation (x, y, z, w) and a move (right, forward, up in UT units))
+-- A definition holds the numbers of the weapon's class in UT2004, and the files that tools/asset_conversion made:
+--   id, name: the weapon's id (flak_cannon, used by /skin) and its name in messages. template: the game weapon template this is the
+--       skin of.
+--   unit_name, animations: the unit and its animations. animations is { bones = { "root", nodes... }, animations = { Name = { rate,
+--       frames } } }. A frame is seven numbers for each bone: a rotation (x, y, z, w) and a move (right, forward, up in UT units).
 --   muzzle_node: the node of the unit where the muzzle is
---   model_meters_per_unit: the meters a UT unit of the unit's mesh is as it was converted; meters_per_unit: the distance scale
+--   model_meters_per_unit: the meters per UT unit of the mesh as it was converted. meters_per_unit: the distance scale.
 --   display_fov (DisplayFOV), draw_scale (DrawScale), offset_forward/right/up (PlayerViewOffset X, Y, Z), pivot_pitch/yaw/roll
 --       (PlayerViewPivot, degrees), field_of_view (the horizontal one, if it is not the one DisplayFOV gives)
 --   bob, bob_damping, bob_smoothing, ut_ground_speed: the weapon's sway (Pawn.CheckBob, Pawn.WeaponBob)
---   blend_time: the seconds in which one animation blends into the next
---   idle_speed: how fast the idle animation plays, against its own rate (the weapon's IdleAnimRate, 1 if it has none)
---   alt_pose_right/forward/up (UT units), alt_pose_roll/pitch/yaw (degrees, the roll is the right side down, the pitch the muzzle up, the
---       yaw the muzzle to the left): a second place for the model in the view (held sideways, say), which the weapon's file moves it to
---       with skin.alt_pose, 0 (where UT has it) to 1. inspect_pose_* are a third, for the inspect, with skin.inspect_pose. skin.extra_yaw is
---       a turn that is added to them, degrees, for what moves while it is held there.
+--   blend_time: seconds it takes one animation to blend into the next
+--   idle_speed: how fast the idle animation plays compared to its own rate (the weapon's IdleAnimRate, or 1 if it has none)
+--   alt_pose_right/forward/up (UT units) and alt_pose_roll/pitch/yaw (degrees): a second place for the model in the view, for example
+--       held sideways. The roll puts the right side down, the pitch points the muzzle up, and the yaw points it to the left. The
+--       weapon's file moves the model there with skin.alt_pose, from 0 (where UT has it) to 1.
+--       inspect_pose_* is a third place, for inspecting, used with skin.inspect_pose. skin.extra_yaw adds a turn (in degrees) to
+--       them, for things that move while the model is held there.
 --   third_person: what weapon_skin_third_person.lua takes
---   looks: { [skin key] = { ... } } skins (illusions, see items.lua) that look different. While the weapon with that skin is wielded,
---       the values in the look replace the same values of the definition above (the unit, its animations, where it is drawn, ...).
---       A third_person in a look is that look's full third person definition. The weapon's own skin is the definition itself.
---   on_create(skin), on_update(skin, dt), on_destroy(skin): what is the weapon's own of the model that is shown
---   on_pose(skin, pose): every frame before the model is placed, to change the pose of the bones that the animations don't (UT sets some
---       by code: the barrel of the Rocket Launcher). pose is the row of numbers of a frame (a bone's are at (index - 1) * 7 + 1).
---       skin.node_scales[bone index] = Vector3 scales a node along its own axes (a part that stretches: the rod of the Rocket Launcher).
---   on_update_always(dt): every frame, shown or not; on_give_back(), on_level_exit(): what is its own to take back and to clear
+--   looks: { [skin key] = { ... } }. Skins (illusions, see items.lua) that look different. While a weapon with that skin is wielded,
+--       the values in its look replace the same values in the definition (the unit, its animations, where it is drawn, and so on).
+--       A third_person in a look is that look's complete third person definition. The weapon's own skin is the definition itself.
+--   on_create(skin), on_update(skin, dt), on_destroy(skin): the weapon's own code for the model that is shown
+--   on_pose(skin, pose): runs every frame before the model is placed. It can change the pose of bones that the animations don't move
+--       (UT sets some by code: the Rocket Launcher's barrel). pose is the row of numbers of a frame, and a bone's numbers start at
+--       (index - 1) * 7 + 1. skin.node_scales[bone index] = Vector3 scales a node along its own axes (a part that stretches, like
+--       the Rocket Launcher's rod).
+--   on_update_always(dt): runs every frame, whether the skin is shown or not
+--   on_give_back(), on_level_exit(): the weapon takes back and clears what is its own
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local third_person_module = mod:dofile("scripts/mods/unreal_tournament/weapon_skin_third_person")
 
--- The skins, by setting id (for /skin)
+-- The skins, by id (used by /skin)
 local skins = {}
 
--- The factor that the horizontal field of view of a weapon is of tan(DisplayFOV / 2) at this aspect: the one that UT2004's picture
--- of the Shock Rifle fits (86.5 degrees for a DisplayFOV of 70)
+-- How much bigger a weapon's horizontal field of view is than tan(DisplayFOV / 2) at the reference aspect. 1.345 is the value that
+-- fits UT2004's picture of the Shock Rifle (86.5 degrees for a DisplayFOV of 70).
 local FIELD_OF_VIEW_FACTOR = 1.345
 
--- The aspect ratio of the screen that picture was of (and so of that horizontal field of view): this game keeps the vertical field of view
--- of the view when the screen is wider or narrower, as UT2004 does, so the weapon is the same height and the same angle from the middle of
--- the view on any screen, and a wider one shows more beside it. The aspect of the screen it is seen on is not used.
+-- The aspect ratio of the screen that picture was taken on, and so of that horizontal field of view. This game keeps the view's
+-- vertical field of view when the screen is wider or narrower, as UT2004 does. So the weapon has the same height and the same angle
+-- from the middle of the view on any screen, and a wider screen just shows more beside it. The aspect of the screen it is seen on is
+-- not used.
 local REFERENCE_ASPECT = 16 / 9
 
--- The materials of the first person weapons are drawn with the game's custom FOV for weapons (see units/ut/weapon_standard.material), which
--- is a field of view of its own, not the camera's: the model is placed for the field of view it is drawn with. It is not known where the
--- engine sets it, so this is fitted to how the weapon looked before the change (65, the first person camera's vertical_fov in
--- settings/camera_settings.lua, drew it too big and too far out, 50 too small and too near the middle of the view, and 60 still not right: it
--- is between 50 and 60).
+-- The first person weapon materials are drawn with the game's custom FOV for weapons (see units/ut/weapon_standard.material). That is
+-- a field of view of its own, not the camera's, so the model is placed for the field of view it is drawn with. It is not known where
+-- the engine sets it, so this was fitted by eye. 65 (the first person camera's vertical_fov in settings/camera_settings.lua) drew the
+-- weapon too big and too far out, 50 too small and too near the middle, and 60 was still not right, so it is between 50 and 60.
 local WEAPON_VERTICAL_FOV = math.rad(55)
 
 local function new(def)
@@ -106,7 +109,7 @@ local function new(def)
 	local animations = CONFIG.animations.animations
 	local bone_count = #bones
 
-	-- A copy of the definition without any look, and the keys that looks replace.
+	-- BASE is a copy of the definition without any look. REPLACED holds the keys that the looks replace.
 	local BASE = {}
 	local REPLACED = {}
 	local third_person_looks
@@ -124,12 +127,12 @@ local function new(def)
 		end
 	end
 
-	-- Returns the look for a skin key, or nothing for the weapon's own look.
+	-- Returns the look for a skin key, or nil if the skin key means the weapon's own look.
 	local function look_of(skin_key)
 		return skin_key and CONFIG.looks and CONFIG.looks[skin_key] and skin_key or nil
 	end
 
-	-- The look CONFIG currently has.
+	-- The name of the look that CONFIG has right now.
 	local current_look
 
 	local function set_look(name)
@@ -154,13 +157,13 @@ local function new(def)
 
 	local self = {}
 
-	-- The state of the skin that is shown. Nothing when none is.
-	--   world, unit: the model, nodes: the node of each bone
-	--   animation, time, speed: what is playing (the time is of the animation as it is in the file, speed makes it last as long
-	--       as it is to), blend_from, blend_left: the pose it blends from
-	--   muzzle_node: the node of the model where the muzzle is, unit_scale: how many meters a UT unit of the model is in the world
-	--   bob_speed, bob_time, walk_right, walk_up
-	-- and what the weapon's own functions put in it
+	-- The state of the skin that is shown. It is nil when no skin is shown. The fields are:
+	--   world, unit: the model. nodes: the node of each bone.
+	--   animation, time, speed: the animation that is playing. The time is in the animation's own timing, and the speed stretches
+	--       it to last as long as it should. blend_from and blend_left describe the pose it blends from.
+	--   muzzle_node: the node of the model where the muzzle is. unit_scale: how many meters a UT unit of the model is in the world.
+	--   bob_speed, bob_time, walk_right, walk_up: the weapon bob.
+	-- The weapon's own functions can add fields of their own.
 	local skin
 	local debug_enabled = false
 
@@ -180,7 +183,8 @@ local function new(def)
 		return skin
 	end
 
-	-- Sounds (the events are in the weapon's bank, see tools/asset_conversion/make_bank.py): from the head of the player, or from a place
+	-- Sounds. The events are in the weapon's bank (see tools/asset_conversion/make_bank.py). play_sound plays from the player's head,
+	-- and play_sound_at plays from a place in the world.
 	function self.play_sound(event)
 		WwiseWorld.trigger_event(Managers.world:wwise_world(Managers.world:world("level_world")), event)
 	end
@@ -188,7 +192,7 @@ local function new(def)
 	function self.play_sound_at(event, position)
 		local id = WwiseUtils.trigger_position_event(Managers.world:world("level_world"), event, position)
 
-		-- (no id means the engine did not play it: the event is not in a loaded bank)
+		-- If there is no id, the engine did not play the sound, because the event is not in a loaded bank.
 		self.debug("sound %s at %s: id %s", event, tostring(position), tostring(id))
 	end
 
@@ -205,8 +209,9 @@ local function new(def)
 		return item_data and BackendUtils.get_item_template(item_data).name
 	end
 
-	-- The muzzle's position in the world, as the camera sees it. The model is drawn with its own, narrower field of view (WEAPON_VERTICAL_FOV),
-	-- so the point is moved away from the view axis by the ratio of the tangents of the half angles. The camera draws the shot's effects.
+	-- Returns the muzzle's position in the world, as the camera sees it. The model is drawn with its own, narrower field of view
+	-- (WEAPON_VERTICAL_FOV), so this moves the point away from the view axis by the ratio of the tangents of the half angles. The
+	-- camera draws the shot's effects, so they need this position.
 	function self.muzzle_position()
 		if not skin or not Unit.alive(skin.unit) then
 			return nil
@@ -223,8 +228,8 @@ local function new(def)
 		return camera_position + right * (Vector3.dot(offset, right) * ratio) + forward * Vector3.dot(offset, forward) + up * (Vector3.dot(offset, up) * ratio)
 	end
 
-	-- The same point in the first person unit's frame (x right, y ahead, z up), from the model's local pose, not its world position. Returns the
-	-- unit and the point, for particles linked to the unit (skin_particles.lua).
+	-- Returns the same point in the first person unit's frame (x right, y ahead, z up). It is worked out from the model's local pose,
+	-- not its world position. It returns the unit and the point, for particles that are linked to the unit (skin_particles.lua).
 	function self.muzzle_in_view()
 		local fp = local_first_person()
 
@@ -238,7 +243,7 @@ local function new(def)
 		return fp.first_person_unit, Vector3(at.x * ratio, at.y, at.z * ratio)
 	end
 
-	-- How long the game takes to wield a weapon: nothing can be done with the weapon for that long
+	-- Returns how long the game takes to wield the weapon. The weapon can't be used for that long.
 	local function wield_time()
 		return rawget(Weapons, CONFIG.template).actions.action_wield.default.wield_cooldown
 	end
@@ -258,7 +263,7 @@ local function new(def)
 		Unit.set_unit_visibility(fp.first_person_attachment_unit, fp:first_person_mode_active())
 	end
 
-	-- If the game would show its own weapon now (it hides it for the reasons of its own too)
+	-- Returns whether the game would show its own weapon now. The game also hides the weapon for reasons of its own.
 	local function game_shows_weapon(fp)
 		for reason in pairs(fp.hide_weapon_reasons) do
 			if reason ~= HIDE_REASON then
@@ -269,14 +274,15 @@ local function new(def)
 		return fp:first_person_mode_active() and fp:first_person_units_visible() and utils.character_animation_is_free(fp.unit)
 	end
 
-	-- If the player's own model is the one that is seen (the first person view): not the mesh in the hand
+	-- Returns whether the player sees their own first person model, and not the mesh in the hand.
 	function self.shown_in_first_person()
 		return skin ~= nil and Unit.alive(skin.unit) and not third_person.shows_weapon(Managers.player:local_player().player_unit)
 	end
 
 	-- Animations
 
-	-- A pose: for each bone the rotation of what hangs off it (x, y, z, w) and its move (right, forward, up in UT units), in a row
+	-- Returns the pose of an animation at a time, as a row of numbers. Each bone has the rotation of what hangs off it (x, y, z, w)
+	-- and its move (right, forward, up in UT units).
 	local function sample(name, time, looping)
 		local animation = animations[name]
 		local frames = animation.frames
@@ -295,7 +301,7 @@ local function new(def)
 
 		for b = 0, bone_count - 1 do
 			local o = b * 7
-			-- (the rotations of two frames are the same turn if they are opposite: the short way)
+			-- Opposite rotations are the same turn, so this picks the short way round
 			local sign = (first[o + 1] * second[o + 1] + first[o + 2] * second[o + 2] + first[o + 3] * second[o + 3] + first[o + 4] * second[o + 4]) < 0 and -1 or 1
 
 			for i = 1, 4 do
@@ -310,7 +316,7 @@ local function new(def)
 		return pose
 	end
 
-	-- (the move is blended as it is, the rotations go the short way round and are made whole again)
+	-- Blends two poses. The move is blended as it is. The rotations go the short way round and are normalized again.
 	local function blend_poses(from, to, fraction)
 		local pose = {}
 
@@ -346,7 +352,7 @@ local function new(def)
 		return pose
 	end
 
-	-- Plays an animation, from the pose of the one that is playing; for a time of its own if one is given
+	-- Plays an animation and blends into it from the pose of the one that is playing. If a duration is given, the animation lasts that long.
 	function self.play(name, duration)
 		self.debug("%s", name)
 
@@ -400,7 +406,7 @@ local function new(def)
 		local world = Managers.world:world("level_world")
 		local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
 
-		-- (a new unit has the pose of the file, a big model at the camera, until it is placed: it is not shown before that)
+		-- A new unit starts in the pose of the file, a big model at the camera. It stays hidden until it is placed.
 		Unit.set_unit_visibility(unit, false)
 
 		-- The root of the first person unit is where the camera is, and it turns with it
@@ -411,8 +417,8 @@ local function new(def)
 			},
 		})
 
-		-- (the skin is kept before anything else is asked of the unit, so that a failure leaves it where destroy finds it: a unit of
-		-- the mod's package that is alive when the package is unloaded, with the mod being reloaded, crashes the game)
+		-- The skin is stored before anything else is done with the unit. If something fails after this, destroy can still find the
+		-- unit. A unit of the mod's package that is still alive when the package is unloaded on a mod reload crashes the game.
 		skin = {
 			look = current_look,
 			bob_speed = 0,
@@ -435,7 +441,7 @@ local function new(def)
 			CONFIG.on_create(skin)
 		end
 
-		-- (the game has just shown its own weapon, which is the one that is wielded now)
+		-- The game has just shown its own weapon, which is the one that is wielded now, so it is hidden again here.
 		fp:hide_weapons(HIDE_REASON, true)
 		hide_game_weapon(fp)
 		self.play(CONFIG.pickup_animation or "Pickup", wield_time())
@@ -443,7 +449,7 @@ local function new(def)
 		Unit.set_unit_visibility(unit, game_shows_weapon(fp))
 	end
 
-	-- Made when the mod is switched on with the weapon wielded
+	-- Makes the skin when the mod is switched on while the weapon is wielded.
 	mod.enabled_callbacks[#mod.enabled_callbacks + 1] = function ()
 		local fp = local_first_person()
 
@@ -452,7 +458,7 @@ local function new(def)
 		end
 	end
 
-	-- (the mod is switched off or unloaded: what the weapon took is given back)
+	-- When the mod is switched off or unloaded, this gives back what the skin took.
 	local function give_back()
 		destroy()
 		third_person.clear()
@@ -479,22 +485,22 @@ local function new(def)
 		end
 	end
 
-	-- The weapon that is wielded
+	-- Makes the skin when the weapon is wielded.
 	mod.wield_callbacks[CONFIG.id] = function (inventory_extension, equipment, slot_data)
 		if slot_data and item_template_name(slot_data.item_data) == CONFIG.template then
 			create(inventory_extension.first_person_extension, slot_data.skin)
 		end
 	end
 
-	-- The weapon that is put away: the model is gone, the arms are the game's again for the weapon that comes next
+	-- Removes the model when the weapon is put away. The arms go back to the game for the next weapon.
 	mod.unwield_callbacks[CONFIG.id] = function (inventory_extension, equipment, previous_item_data)
 		if skin and item_template_name(previous_item_data) == CONFIG.template then
 			destroy()
 		end
 	end
 
-	-- A sound of the game's that the player's own action plays (and tells the others of) is taken over by one of the skin's:
-	-- ut_event is the name of the event of the skin, a function that gives it, or nothing for none
+	-- Takes over a game sound that the player's own action plays and tells the others about. The skin plays its own sound instead.
+	-- ut_event is the name of the skin's event, a function that returns it, or nil for no sound.
 	function self.take_over_sound(game_event, ut_event)
 		mod.hud_sound_callbacks[game_event] = mod.hud_sound_callbacks[game_event] or {}
 		mod.hud_sound_callbacks[game_event][CONFIG.id] = function (first_person_extension)
@@ -516,29 +522,28 @@ local function new(def)
 		end
 	end
 
-	-- Every frame
-
-	-- Weapon bob (Pawn.CheckBob and Pawn.WeaponBob), in UT units: (right, up)
+	-- Updates the weapon bob (Pawn.CheckBob and Pawn.WeaponBob), in UT units (right, up). It runs every frame.
 	local function update_bob(owner_unit, dt)
 		local locomotion_extension = ScriptUnit.extension(owner_unit, "locomotion_system")
 		local movement_settings = PlayerUnitMovementSettings.get_movement_settings_table(owner_unit)
 		local state = ScriptUnit.extension(owner_unit, "character_state_machine_system").state_machine.state_current
 		local speed = 0
 
-		-- (the speed that the game's own walking state works out for the player, as it moves it: the top speed of how it walks (crouched, with the
-		-- walk key, or not), times what slows or quickens it and how far it has got up to it. It is not the velocity this game gives for a frame,
-		-- which jumps about when the player steps, lands or is pushed. The bob is none while the player is not walking on the ground)
+		-- The speed here is the one the game's walking state works out as it moves the player. That is the top speed for how the
+		-- player walks (crouched, with the walk key, or normally), times whatever slows or quickens them, and how far they have
+		-- accelerated towards it. It is not the velocity for a single frame, which jumps about when the player steps, lands or is
+		-- pushed. There is no bob while the player is not walking on the ground.
 		if state.name == "walking" and locomotion_extension:is_on_ground() then
 			local status_extension = ScriptUnit.extension(owner_unit, "status_system")
 			local is_walking = ScriptUnit.extension(owner_unit, "input_system"):get("walk")
 			local top_speed = status_extension:is_crouching() and movement_settings.crouch_move_speed or is_walking and movement_settings.walk_move_speed or movement_settings.move_speed
 
-			-- (the speeds of the player's own table are the ones that the buffs of an action change, venting the heat slows them: against the
-			-- speed of the game's settings, which they do not change, a slowed player is slower)
+			-- The speeds in the player's own table are the ones that an action's buffs change, for example venting the heat slows
+			-- them. They are divided by the speed in the game's settings, which buffs don't change, so a slowed player bobs slower.
 			speed = top_speed * status_extension:current_move_speed_multiplier() * state.current_movement_speed_scale / PlayerUnitMovementSettings.move_speed * CONFIG.ut_ground_speed
 		end
 
-		-- (the speed the bob follows is smoothed, and the phase of the sway is kept, so that the model doesn't jump)
+		-- The speed that the bob follows is smoothed, and the phase of the sway is kept, so the model doesn't jump.
 		local target_speed = speed
 
 		skin.bob_speed = skin.bob_speed + (target_speed - skin.bob_speed) * math.min(1, CONFIG.bob_smoothing * dt)
@@ -563,8 +568,8 @@ local function new(def)
 		end
 	end
 
-	-- PlayerViewPivot as a turn in this game's axes: UT's yaw turns to the right, its pitch up and its roll the right side up, and
-	-- the order is roll, pitch, yaw
+	-- Returns PlayerViewPivot as a turn in this game's axes. In UT a positive yaw turns to the right, a positive pitch turns up, and a
+	-- positive roll puts the right side up. The turns are applied in the order roll, pitch, yaw.
 	local function pivot_rotation()
 		local yaw = Quaternion.axis_angle(Vector3(0, 0, 1), -math.rad(CONFIG.pivot_yaw))
 		local pitch = Quaternion.axis_angle(Vector3(1, 0, 0), math.rad(CONFIG.pivot_pitch))
@@ -573,7 +578,8 @@ local function new(def)
 		return Quaternion.multiply(yaw, Quaternion.multiply(pitch, roll))
 	end
 
-	-- Where the model is, and how it is turned and scaled, in the first person unit's root, and the pose of its other bones
+	-- Places the model in the first person unit's root: where it is, and how it is turned and scaled. Also sets the pose of its other
+	-- bones.
 	function place(fp)
 		local tangent_vertical = math.tan(WEAPON_VERTICAL_FOV / 2)
 		local field_of_view = CONFIG.field_of_view or 2 * math.atan(math.tan(math.rad(CONFIG.display_fov) / 2) * FIELD_OF_VIEW_FACTOR)
@@ -589,7 +595,7 @@ local function new(def)
 		local pivot = pivot_rotation()
 		local offset_scale = 90 / CONFIG.display_fov
 
-		-- The move of the animation is the mesh's, turned by the pivot as everything of the mesh is
+		-- The animation's move belongs to the mesh, so it is turned by the pivot like everything else on the mesh.
 		local move = Quaternion.rotate(pivot, Vector3(pose[5], pose[6], pose[7]))
 		local bob_right = CONFIG.bob_damping * skin.walk_right
 		local bob_up = (0.45 + 0.55 * CONFIG.bob_damping) * skin.walk_up
@@ -603,9 +609,10 @@ local function new(def)
 		local size = CONFIG.draw_scale / CONFIG.model_meters_per_unit
 		local rotation = Quaternion.multiply(pivot, Quaternion.from_elements(pose[1], pose[2], pose[3], pose[4]))
 
-		-- (turned about the way the view looks, after everything of the model's own: the roll about the way it looks, the pitch about
-		-- the way it is to the right, the yaw about up; skin.extra_yaw is a turn of the weapon's own, degrees, as it plays)
-		-- (the inspect turn starts when the inspect pose is inspect_turn_start of the way: the weapon is brought forward first, then turned)
+		-- The extra turns are applied about the view's axes, after the model's own turns. The roll is about the way the view looks,
+		-- the pitch about its right, and the yaw about up. skin.extra_yaw is a turn in degrees that the weapon's own code can add.
+		-- The inspect turn only starts once the inspect pose is inspect_turn_start of the way there, so the weapon comes forward
+		-- first and is turned after.
 		local inspect_turn = math.clamp((inspect - CONFIG.inspect_turn_start) / (1 - CONFIG.inspect_turn_start), 0, 1)
 		local roll = alt * CONFIG.alt_pose_roll + inspect_turn * CONFIG.inspect_pose_roll
 		local pitch = alt * CONFIG.alt_pose_pitch + inspect_turn * CONFIG.inspect_pose_pitch
@@ -616,18 +623,18 @@ local function new(def)
 
 			rotation = Quaternion.multiply(turn, rotation)
 
-			-- The turn is about the point of the model that the inspect_pivot_* say (UT units, in the axes of the view, from the model's
-			-- origin), not about its origin, so a long model turns about its middle
+			-- The turn is about the point of the model given by inspect_pivot_* (UT units, in the axes of the view, from the model's
+			-- origin), not about the origin, so that a long model turns about its middle.
 			local pivot_point = Vector3(CONFIG.inspect_pivot_right, CONFIG.inspect_pivot_forward, CONFIG.inspect_pivot_up)
 			local moved = pivot_point - Quaternion.rotate(turn, pivot_point)
 
 			position = position + Vector3(moved.x * across_scale, moved.y * forward_scale, moved.z * across_scale)
 		end
 
-		-- The model's pose is the turn, then the scale of the view (across, forward, across): a scale that is applied after the turn, in the
-		-- axes of the view (a node's own scale is applied before it, in the axes of the model, which is the same only when the model is
-		-- not turned: the Flak Cannon lies sideways and is turned by its pivot). The images of the model's axes are the columns of the turn,
-		-- each scaled by the view.
+		-- The model's pose is the turn followed by the view's scale (across, forward, across). The scale has to be applied after the
+		-- turn, in the view's axes. A node's own scale is applied before the turn, in the model's axes, and that only gives the same
+		-- result when the model is not turned. The Flak Cannon lies sideways and is turned by its pivot, so this matters. The model's
+		-- axes after the turn are the columns of the turn, each scaled by the view.
 		local function image(axis)
 			return Vector3(axis.x * across_scale, axis.y * forward_scale, axis.z * across_scale) * size
 		end
@@ -636,7 +643,7 @@ local function new(def)
 
 		Unit.set_local_pose(skin.unit, 0, Matrix4x4(right.x, right.y, right.z, forward.x, forward.y, forward.z, up.x, up.y, up.z, position.x, position.y, position.z))
 
-		-- (the other bones are against the root's move, in the meters of the mesh)
+		-- The other bones are posed relative to the root's move, in the meters of the mesh.
 		for b = 2, bone_count do
 			local o = (b - 1) * 7
 			local node_rotation = Quaternion.from_elements(pose[o + 1], pose[o + 2], pose[o + 3], pose[o + 4])
@@ -644,7 +651,7 @@ local function new(def)
 			local node_scale = skin.node_scales and skin.node_scales[b]
 
 			if node_scale then
-				-- (scaled along the node's own axes, then turned)
+				-- The node is scaled along its own axes and then turned.
 				local node_right = Quaternion.right(node_rotation) * node_scale.x
 				local node_forward = Quaternion.forward(node_rotation) * node_scale.y
 				local node_up = Quaternion.up(node_rotation) * node_scale.z
@@ -660,7 +667,7 @@ local function new(def)
 			end
 		end
 
-		-- (a UT unit of the model, across: what is drawn on it is as big as the model is)
+		-- How many meters a UT unit of the model is across the view. Effects drawn on the model use it to be as big as the model.
 		skin.unit_scale = CONFIG.draw_scale * across_scale
 	end
 
@@ -683,15 +690,15 @@ local function new(def)
 			return
 		end
 
-		-- The weapon is no longer wielded. Upgrading or rerolling the held weapon makes the game rebuild the inventory without announcing the
-		-- put away, which would leave the melee weapon hidden.
+		-- The weapon is not wielded any more. Upgrading or rerolling the held weapon makes the game rebuild the inventory without
+		-- announcing that the weapon was put away, and the melee weapon would stay hidden.
 		if utils.wielded_template_name(fp.unit) ~= CONFIG.template then
 			destroy()
 
 			return
 		end
 
-		-- A different skin was applied to the weapon being held (on the Illusions page): switch to its model.
+		-- A different skin was applied to the weapon that is held, on the Illusions page. Switch to its model.
 		local skin_key = utils.wielded_skin(fp.unit)
 
 		if look_of(skin_key) ~= skin.look then
@@ -711,7 +718,8 @@ local function new(def)
 		place(fp)
 	end
 
-	-- (the game shows its weapon and its arms again at times of its own, after the mod's update)
+	-- The game shows its weapon and arms again at times of its own, after the mod's update, so they are hidden again just before the
+	-- frame is drawn.
 	mod.pre_render_callbacks[CONFIG.id] = function ()
 		third_person.hide_staffs()
 
@@ -724,7 +732,7 @@ local function new(def)
 		end
 	end
 
-	-- Development (/skin): what it does is told, an animation is played, a number of the definition is set
+	-- Development commands (/skin): print what the skin does, play an animation, or set a number of the definition.
 	function self.command(command, name, value)
 		if command == "debug" then
 			debug_enabled = not debug_enabled
@@ -771,6 +779,6 @@ end)
 
 return {
 	new = new,
-	-- By setting id
+	-- The skins, by id
 	skins = skins,
 }
