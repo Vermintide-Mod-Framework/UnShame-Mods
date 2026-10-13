@@ -746,8 +746,20 @@ mod.third_person_animation_filters[TEMPLATE_NAME] = function (event, unit)
 		end
 	end
 
-	-- (the crossbow's shot and reload sounds are in these animations, which are not played on the characters, or the others hear them)
-	return event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil
+	-- (the reload is not played on the characters: the launcher has none)
+	return string.find(event, "reload", 1, true) ~= nil
+end
+
+-- The crossbow's sounds that its animations play on the characters (the units' flow plays them): the shot animation is played, without its
+-- sound
+local MUTED_SOUNDS = {
+	player_combat_weapon_repeating_crossbow_fire = true,
+	player_combat_weapon_repeating_crossbow_special_fire = true,
+	player_combat_weapon_repeating_crossbow_reload = true,
+}
+
+mod.sound_event_filters[TEMPLATE_NAME] = function (event_name)
+	return MUTED_SOUNDS[event_name] == true
 end
 
 -- The flow events of the game's unit of the rocket start its effects as it is made: they are not started

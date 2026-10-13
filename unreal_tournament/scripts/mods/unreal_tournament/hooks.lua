@@ -407,6 +407,73 @@ mod:hook(AnimationSystem, "anim_event_with_variable_float", function (func, self
 	return func(self, unit, event_name, ...)
 end)
 
+-- The sounds of a weapon's units are played by the units' flow, from the callbacks of the animations (the shot and the reload of the
+-- crossbow). A weapon can mute one that its character's third person unit would play:
+--   mod.sound_event_filters[template] = function (event_name, character) return true to mute it
+mod.sound_event_filters = {}
+
+-- The character whose weapon unit (or who) this is
+local function sound_owner(unit)
+	local players = Managers.player and Managers.player:human_and_bot_players()
+
+	for _, player in pairs(players or {}) do
+		local character = player.player_unit
+
+		if character and Unit.alive(character) then
+			local inventory_extension = ScriptUnit.has_extension(character, "inventory_system")
+			local equipment = inventory_extension and inventory_extension:equipment()
+
+			if unit == character or equipment and (equipment.left_hand_wielded_unit_3p == unit or equipment.right_hand_wielded_unit_3p == unit) then
+				return character
+			end
+		end
+	end
+
+	return nil
+end
+
+local function sound_muted(params)
+	local event_name = params.name or params.Name
+	local unit = params.unit or params.Unit
+
+	if not event_name or not unit then
+		return false
+	end
+
+	local character = sound_owner(unit)
+	local template_name = character and utils.wielded_template_name(character)
+	local filter = template_name and mod.sound_event_filters[template_name]
+
+	if mod.rocket_debug and filter then
+		mod:echo("sound of a weapon with a filter: %s", event_name)
+	end
+
+	return filter ~= nil and filter(event_name, character) == true
+end
+
+local muted_flow_return = {
+	playing_id = 0,
+	source_id = 0,
+	Playing_Id = 0,
+	Source_Id = 0,
+}
+
+mod:hook(WwiseFlowCallbacks, "wwise_trigger_event", function (func, params, ...)
+	if sound_muted(params) then
+		return muted_flow_return
+	end
+
+	return func(params, ...)
+end)
+
+mod:hook(_G, "flow_callback_wwise_trigger_event_with_environment", function (func, params, ...)
+	if sound_muted(params) then
+		return muted_flow_return
+	end
+
+	return func(params, ...)
+end)
+
 -- (the events that the game plays itself, not as the animation of an action of the weapon: the one of venting the heat is made by its overcharge)
 mod:hook(PlayerUnitFirstPerson, "animation_event", function (func, self, event, ...)
 	local template_name = utils.wielded_template_name(self.unit)
