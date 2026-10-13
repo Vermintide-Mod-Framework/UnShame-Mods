@@ -41,10 +41,11 @@ local CONFIG = {
 	rocket_speed = 2200, -- RocketProj.Speed 1350 uu/s is 27 m/s by size and 12 m/s by run speed, this is in between (the action's unit is m/s * 100)
 	rocket_lifetime = 8, -- seconds
 	rocket_radius = 0.1, -- m, how easily a rocket hits things
-	-- Where a rocket starts, from the camera: forward, to the right and down (RocketFire.ProjSpawnOffset, 25, 6 and -6 units)
-	start_forward = 0.5, -- m
-	start_right = 0.12, -- m
-	start_down = 0.12, -- m
+	-- Where a rocket starts, from the camera: forward, to the right and down (UT's RocketFire.ProjSpawnOffset is 25, 6 and -6 units, 0.5, 0.12
+	-- and 0.12 m: the launcher is drawn further out here, so they are more, to start at its muzzle)
+	start_forward = 1.0, -- m
+	start_right = 0.35, -- m
+	start_down = 0.18, -- m
 	rocket_gravity_settings = "spark", -- the game's gravity setting with the least gravity
 	fire_interval = 0.9, -- seconds, RocketFire.FireRate
 	salvo_fire_interval = 0.95, -- seconds, RocketMultiFire.FireRate
