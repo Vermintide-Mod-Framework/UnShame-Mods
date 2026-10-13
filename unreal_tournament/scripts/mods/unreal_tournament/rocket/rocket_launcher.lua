@@ -102,13 +102,14 @@ local CONFIG = {
 	spiral_pull_interval = 0.1, -- seconds, how often the rockets are pulled back towards their direction
 	-- Lock-on, like UT's: keep the crosshair on an enemy for lock_required_time and the rockets fired after that
 	-- home in on it, using the game's true flight projectiles (the position of those is synced, so everyone sees
-	-- them home in). The lock stays until the enemy is dead or another one is locked on to. (UT: 1.25 s, the target has to be within
-	-- 0.996 of the aim, which is 5 degrees, and 8000 uu away.) The rockets of a spiral salvo start in their ring and home in too, which
-	-- takes them out of the flock.
+	-- them home in). The lock is lost after unlock_required_time off the enemy, and by firing. (UT: 1.25 s, 0.5 s,
+	-- the target has to be within 0.996 of the aim, which is 5 degrees, and 8000 uu away.) The rockets of a spiral
+	-- salvo start in their ring and home in too, which takes them out of the flock.
 	lock_range = 50, -- m
 	lock_aim_dot = 0.995, -- how close to the aim the enemy has to be, 1 is exactly
 	lock_keep_dot = 0.95, -- how far from the aim an enemy that is locked can be without it counting as being off it (18 degrees)
 	lock_required_time = 0.75, -- seconds (UT's LockRequiredTime is 1.25)
+	unlock_required_time = 0.5, -- seconds the aim has to be off the locked enemy before the lock is lost, UnLockRequiredTime
 	seek_delay = 0.35, -- seconds a rocket flies straight after being fired before it starts to home in
 	seek_turn_rate = 3.5, -- radians per second, how fast a rocket can turn towards its target
 	lock_outline = true, -- the locked enemy gets the red outline of the game's target marking (like the true flight bow's)
@@ -837,15 +838,14 @@ local function add_lock_outline(state)
 	end
 end
 
--- A lock stays until the enemy is dead or another enemy is locked on: not when the aim goes off it, when the loading ends or when a rocket
--- is fired. state.target is the enemy that is locked, state.candidate the one the aim is on that is being locked on to for lock_time.
 local function reset_lock(state)
 	clear_lock_outline(state)
 
-	state.candidate = nil
+	state.fired = nil
 	state.locked = false
 	state.lock_time = 0
 	state.target = nil
+	state.unlock_time = 0
 end
 
 local function update_lock_on(dt)
@@ -873,49 +873,58 @@ local function update_lock_on(dt)
 		locks[unit] = state
 	end
 
-	-- the enemy that is locked on to dies
-	if state.target and not HEALTH_ALIVE[state.target] then
-		for _, callback in pairs(mod.rocket_lock_callbacks) do
-			callback(unit, false)
-		end
-
-		reset_lock(state)
-	end
-
-	-- a new lock is made only while loading (holding the secondary button)
+	-- only while loading (holding the secondary button): without it there is no lock, and letting go of it,
+	-- or firing, ends it (a salvo has been given its target by then)
 	if not loading[unit] then
-		state.candidate = nil
-		state.lock_time = 0
+		if state.target or state.locked then
+			reset_lock(state)
+		end
 
 		return
 	end
 
+	-- a lock is used up by firing
+	if state.fired then
+		reset_lock(state)
+	end
+
+	if state.target and not HEALTH_ALIVE[state.target] then
+		reset_lock(state)
+	end
+
 	local first_person_extension = ScriptUnit.has_extension(unit, "first_person_system")
-	local candidate = first_person_extension and pick_lock_candidate(unit, first_person_extension, state.candidate or state.target)
+	local candidate = first_person_extension and pick_lock_candidate(unit, first_person_extension, state.target)
+	local interval = dt
 
-	if not candidate or candidate == state.target then
-		state.candidate = nil
-		state.lock_time = 0
-	elseif candidate ~= state.candidate then
-		state.candidate = candidate
-		state.lock_time = 0
-	else
-		state.lock_time = state.lock_time + dt
+	if candidate then
+		if candidate == state.target then
+			state.unlock_time = 0
+			state.lock_time = state.lock_time + interval
 
-		if state.lock_time >= CONFIG.lock_required_time then
-			-- the new lock replaces the one there was
-			clear_lock_outline(state)
+			if not state.locked and state.lock_time >= CONFIG.lock_required_time then
+				state.locked = true
 
-			state.target = candidate
-			state.candidate = nil
-			state.lock_time = 0
-			state.locked = true
+				add_lock_outline(state)
 
-			add_lock_outline(state)
-
-			for _, callback in pairs(mod.rocket_lock_callbacks) do
-				callback(unit, true)
+				for _, callback in pairs(mod.rocket_lock_callbacks) do
+					callback(unit, true)
+				end
 			end
+		else
+			reset_lock(state)
+			state.target = candidate
+		end
+	elseif state.target then
+		state.unlock_time = state.unlock_time + interval
+
+		if state.unlock_time >= CONFIG.unlock_required_time then
+			if state.locked then
+				for _, callback in pairs(mod.rocket_lock_callbacks) do
+					callback(unit, false)
+				end
+			end
+
+			reset_lock(state)
 		end
 	end
 end
@@ -989,6 +998,8 @@ mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, pos
 		local state = locks[owner_unit]
 
 		if state and state.locked and HEALTH_ALIVE[state.target] then
+			state.fired = true
+
 			-- a true flight projectile is given the direction it is fired in, not the flat part of it
 			ActionUtils.spawn_true_flight_projectile(owner_unit, state.target, TrueFlightTemplates[TRUE_FLIGHT_TEMPLATE].lookup_id, position, rotation, angle, Vector3.normalize(Quaternion.forward(rotation)), speed, item_name, item_template_name, action_name, sub_action_name, 1, ...)
 
