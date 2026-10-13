@@ -612,6 +612,7 @@ local third_person = skin_api.third_person
 -- not more than that, there is no rocket for the rod to push next, and no shell slides in.
 local function turn_barrel(skin, barrels)
 	skin.barrels = barrels or 1
+	skin.plunge = nil
 	skin.load_cycle = {
 		time = 0,
 		barrels = skin.barrels,
@@ -687,6 +688,7 @@ mod.aim_start_callbacks.rocket_skin = function (self, new_action)
 		-- (one rocket is in the barrel already: with fewer than three there is a load less, and the last of them is the one cut, so
 		-- there is none to play for a single rocket, and one for two)
 		skin.barrels = 1
+		skin.plunge = nil
 
 		if rocket_capacity >= 2 then
 			turn_barrel(skin, 2)
