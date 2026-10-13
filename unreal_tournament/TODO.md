@@ -6,9 +6,9 @@
 
 ## Weapons to convert to the new approach
 
-The Shock Rifle and the Flak Cannon are items of their own: a copy of the base item and template (`items.register`), UT2004's look always on, no
-setting. The Rocket Launcher, the Bio Rifle and the Link Gun still change the game's weapon in place, with a setting, and their looks are the
-Weapon Skins setting. Each one gets what the first two got:
+The Shock Rifle, the Flak Cannon and the Rocket Launcher are items of their own: a copy of the base item and template (`items.register`),
+UT2004's look always on, no setting. The Bio Rifle and the Link Gun still change the game's weapon in place, with a setting, and their looks are
+the Weapon Skins setting. Each one gets what the first ones got:
 
 - An item of its own with `items.register`: a copy of the base item and template (the base weapon is left as the game has it), named like the
   others ("UT2004 <name>", with UT's own name of the weapon as its type), with UT's flavor text as the description, edited down to the length of the
@@ -25,18 +25,16 @@ Weapon Skins setting. Each one gets what the first two got:
 
 For each:
 
-4. **Rocket Launcher** (the Repeating Crossbow, the witch hunter's). It has the loaded salvo and the lock-on, which hook the crossbow's actions: check
-   that they only run for the new item's template.
-5. **Bio Rifle** (the Drakegun, Bardin's). The puddles and the goo are in `bio_rifle.lua`: they are part of the weapon and go with it.
-6. **Link Gun** (the Deepwood Staff, the Thornsister's). It is the largest, with the link beam, the allies, the corpses and the objects it
+4. **Bio Rifle** (the Drakegun, Bardin's). The puddles and the goo are in `bio_rifle.lua`: they are part of the weapon and go with it.
+5. **Link Gun** (the Deepwood Staff, the Thornsister's). It is the largest, with the link beam, the allies, the corpses and the objects it
    can link: its parts in the game's systems (the bot group, the vortex, falling) are hooked in the file and should only act on the new item.
 
-After all three are done:
+After both are done:
 
-7. Remove the Weapon Skins setting, the weapons checkbox and the settings of the three weapons, and `utils.register_weapon` with what only it used. Update
+6. Remove the Weapon Skins setting, the weapons checkbox and the settings of the weapons, and `utils.register_weapon` with what only it used. Update
    the README and the localization.
 
 ## New weapons
 
-8. **Impact Hammer.** Engineer is the natural fit (the hammer), the Slayer can have it too.
-9. **Shield Gun.** For the careers that fight with a sword and a shield.
+7. **Impact Hammer.** Engineer is the natural fit (the hammer), the Slayer can have it too.
+8. **Shield Gun.** For the careers that fight with a sword and a shield.

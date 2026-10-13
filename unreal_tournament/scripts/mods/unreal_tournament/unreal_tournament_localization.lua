@@ -110,16 +110,10 @@ return {
 	link_gun_description = {
 		en = "Kerillian (Sister of the Thorn). Replaces the Deepwood Staff. Primary fires poisonous, stunning bolts. Hold alt fire to link to what you aim at, and press primary while linked to yank it. Try it on enemies, allies, and anything that looks interesting.",
 	},
-	rocket_launcher = {
-		en = "Rocket Launcher",
-	},
-	rocket_launcher_description = {
-		en = "Saltzpyre (Witch Hunter Captain, Bounty Hunter, Zealot). Replaces the Repeating Crossbow. Primary fires a rocket. Hold alt fire to load up to three, keep your aim on an enemy to lock on, and release to fire. Press primary while loading to fire them in a spiral instead of a line.",
-	},
 	weapon_skins = {
 		en = "Weapon Skins",
 	},
 	weapon_skins_description = {
-		en = "The Rocket Launcher, Bio Rifle and Link Gun look and sound like Unreal Tournament 2004's (the Shock Rifle and the Flak Cannon always do). What the others see of you depends on their own setting.",
+		en = "The Bio Rifle and Link Gun look and sound like Unreal Tournament 2004's (the Shock Rifle, the Flak Cannon and the Rocket Launcher always do). What the others see of you depends on their own setting.",
 	},
 }

@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
--- Rocket Launcher: replaces the Repeating Crossbow's (the witch hunter's) actions in place, like the Flak
--- Cannon does with the Blunderbuss. The numbers are from UT2004 (XWeapons/RocketFire, RocketMultiFire,
+-- Rocket Launcher: a copy of the Repeating Crossbow (the witch hunter's) with its fire modes replaced, the same way the Flak
+-- Cannon is a copy of the Blunderbuss. The numbers are from UT2004 (XWeapons/RocketFire, RocketMultiFire,
 -- RocketProj).
 --   LMB: a rocket that explodes where it hits.
 --   RMB (held): loads rockets, one at first and another every load_interval seconds, up to three.
@@ -9,7 +9,6 @@ local mod = get_mod("unreal_tournament")
 -- Ammo and reload are the crossbow's own.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
-local effects = mod.effects
 local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template
 local register_network_lookup = utils.register_network_lookup
@@ -17,7 +16,21 @@ local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
-local TEMPLATE_NAME = "repeating_crossbow_template_1"
+mod.items.register("rocket_launcher", {
+	key = "ut_rocket_launcher",
+	template = "ut_rocket_launcher_template",
+	base_item = "wh_crossbow_repeater",
+	deus_copy = "deus_wh_crossbow_repeater",
+	name = "UT2004 Rocket Launcher",
+	type_name = "Rocket Launcher",
+	description = "The Trident Tri-barrel Rocket Launcher is popular among competitors who want more bang for their buck. Its rotating rearloading barrel fires single rockets, or up to three at once, on target or locked on to it.",
+	keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_charged_attack" },
+	icon = "ut_rocket_launcher_icon",
+	icon_package = "resource_packages/unreal_tournament/icons",
+	icon_materials = "ui/ut/rocket_launcher_icon",
+})
+
+local TEMPLATE_NAME = mod.items.weapons.rocket_launcher.template
 local SPIRAL_ACTION = "zoomed_shot_spiral" -- the sub action of the salvo that is a spiral
 
 register_network_lookup("sub_actions", SPIRAL_ACTION)
@@ -122,20 +135,6 @@ local CONFIG = {
 	pip_spiral_side_y = -15,
 	-- and a sound of the game's HUD (false for none)
 	load_sound_event = false,
-	-- The visual of the explosion: these effects are played together, each that is loaded for the
-	-- weapon's character (the others are skipped)
-	explosion_effects = {
-		{
-			name = "fx/wpnfx_frag_grenade_impact",
-			scale = 1,
-			offset = 0,
-		},
-		{
-			name = "fx/wpnfx_barrel_explosion",
-			scale = 0.5,
-			offset = 0,
-		},
-	},
 	-- Whatever dies of the explosion is thrown away from it (the game's own push is small)
 	ragdoll_speed = 25, -- m/s, a little less for bodies far from the center
 	ragdoll_up = 6, -- m/s added upwards
@@ -163,7 +162,7 @@ end
 register_damage_profile("ut_rocket_explosion", "fireball_charged_explosion", modify_explosion_profile)
 register_damage_profile("ut_rocket_explosion_glance", "fireball_charged_explosion_glance", modify_explosion_profile)
 
--- The effect of the explosion is played by the code below, only if the game has it loaded
+-- The look and the sound of the explosion are the skin's
 register_explosion_template("ut_rocket_explosion", {
 	explosion = {
 		alert_enemies = true,
@@ -175,7 +174,6 @@ register_explosion_template("ut_rocket_explosion", {
 		ignore_attacker_unit = true,
 		max_damage_radius = CONFIG.rocket_explosion_full_damage_radius,
 		radius = CONFIG.rocket_explosion_radius_uu * CONFIG.meters_per_uu,
-		sound_event_name = "player_combat_weapon_grenade_explosion",
 		use_attacker_power_level = true,
 		camera_effect = {
 			far_distance = 20,
@@ -287,6 +285,24 @@ local function apply_rocket_launcher()
 	if not template then
 		return
 	end
+
+	-- The chart of the item's stats (0 to 7): the single rocket is the normal attack, the loaded salvo the heavy one
+	template.weapon_diagram = {
+		light_attack = {
+			[DamageTypes.ARMOR_PIERCING] = 4,
+			[DamageTypes.CLEAVE] = 5,
+			[DamageTypes.SPEED] = 2,
+			[DamageTypes.STAGGER] = 5,
+			[DamageTypes.DAMAGE] = 6,
+		},
+		heavy_attack = {
+			[DamageTypes.ARMOR_PIERCING] = 5,
+			[DamageTypes.CLEAVE] = 7,
+			[DamageTypes.SPEED] = 1,
+			[DamageTypes.STAGGER] = 6,
+			[DamageTypes.DAMAGE] = 7,
+		},
+	}
 
 	local actions = template.actions
 	local original = {
@@ -745,7 +761,7 @@ end
 local locks = {}
 
 local function wielding_rocket_launcher(unit)
-	return utils.is_weapon_enabled("rocket_launcher") and utils.wielded_template_name(unit) == TEMPLATE_NAME
+	return utils.wielded_template_name(unit) == TEMPLATE_NAME
 end
 
 -- The enemy closest to the aim that is in front of it, close enough to it and not behind a wall. If there is none
@@ -1055,13 +1071,7 @@ end
 
 -- The look of the explosion, on every peer: the explosion's callback is run for everyone who sees it
 mod.explosion_callbacks.ut_rocket_explosion = function (world, position)
-	-- (with the skin the skin draws it, see skin_explosion_callbacks)
-	if not utils.is_weapon_skin_enabled("rocket_launcher") then
-		for _, effect in ipairs(CONFIG.explosion_effects) do
-			effects.play(world, effect.name, position + Vector3(0, 0, effect.offset), effect.scale)
-		end
-	end
-
+	-- (the look of it is the skin's, see skin_explosion_callbacks)
 	local radius = ExplosionTemplates.ut_rocket_explosion.explosion.radius
 
 	blasts[#blasts + 1] = {
@@ -1072,9 +1082,9 @@ mod.explosion_callbacks.ut_rocket_explosion = function (world, position)
 	}
 end
 
--- Enabling and disabling (the weapon can be switched off in the settings: the crossbow is then the game's own again, the
--- weapon the player holds changes when it is wielded again)
-utils.register_weapon("rocket_launcher", apply_rocket_launcher, restore_crossbow)
+mod.enabled_callbacks[#mod.enabled_callbacks + 1] = apply_rocket_launcher
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = restore_crossbow
+mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_crossbow
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	update_blasts()

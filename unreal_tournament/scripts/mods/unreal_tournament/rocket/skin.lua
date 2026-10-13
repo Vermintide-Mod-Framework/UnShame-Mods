@@ -1,14 +1,13 @@
 local mod = get_mod("unreal_tournament")
 
--- Rocket Launcher skin (the Weapon Skins setting): the Rocket Launcher is UT2004's, in the player's own first person view and in the hand
+-- Rocket Launcher skin: the Rocket Launcher always looks and sounds like UT2004's, in the player's own first person view and in the hand
 -- of every character. The model (Weapons.RocketLauncher_1st, skeletal: the barrel turns as a rocket is loaded), its placement and
 -- animations, the bob and the third person are weapon_skin.lua's; this file is what is the Rocket Launcher's: the flash, the rocket as it
 -- flies (its mesh turning, its corona and its smoke), the explosion, and the sounds. The gameplay is rocket_launcher.lua's, this only
 -- draws it differently, and is told what happens through the hook tables of hooks.lua.
 --
 -- The game's own unit of the rocket (the crossbow's bolt) is what flies (it is the gameplay), its effects are not started and what UT has is
--- drawn at it. The shot sound of the crossbow is made by its animation, which is not played on the player's own first person unit while
--- the skin is on.
+-- drawn at it. The shot sound of the crossbow is made by its animation, which is not played on the player's own first person unit.
 --
 -- The assets were made with unreal_tournament/tools/asset_conversion.
 
@@ -16,7 +15,7 @@ local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local animations = mod:dofile("scripts/mods/unreal_tournament/rocket/skin_animations")
 local particles = mod.skin_particles
 
-local TEMPLATE_NAME = "repeating_crossbow_template_1"
+local TEMPLATE_NAME = mod.items.weapons.rocket_launcher.template
 local SETTING_ID = "rocket_launcher"
 
 local CONFIG = {
@@ -78,32 +77,6 @@ local CONFIG = {
 local UNIT = CONFIG.meters_per_uu
 
 local skin_api
-
--- What the game's own sound of the explosion is taken away for while the skin is on (the skin plays its own)
-local explosion_override = {
-	"ut_rocket_explosion",
-	"sound_event_name",
-}
-
-local function apply_template_overrides()
-	local explosion = ExplosionTemplates[explosion_override[1]].explosion
-	local key = explosion_override[2]
-
-	if skin_api.enabled() and explosion[key] then
-		explosion_override[3] = explosion[key]
-		explosion[key] = nil
-	elseif not skin_api.enabled() and explosion_override[3] then
-		explosion[key] = explosion_override[3]
-		explosion_override[3] = nil
-	end
-end
-
-local function give_back_overrides()
-	if explosion_override[3] then
-		ExplosionTemplates[explosion_override[1]].explosion[explosion_override[2]] = explosion_override[3]
-		explosion_override[3] = nil
-	end
-end
 
 -- What flies: { unit = the mesh, game_unit = the projectile's, projectile = its extension, ... }
 local visuals = {}
@@ -278,6 +251,8 @@ end
 
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
+	-- There is no setting for this: the skin is always on.
+	always = true,
 	name = "rocket",
 	template = TEMPLATE_NAME,
 	unit_name = "units/ut/rocket/rocket_launcher",
@@ -297,6 +272,7 @@ skin_api = mod.weapon_skin.new({
 	-- WeaponStaticMesh.RocketLauncherPickup (DrawScale 0.45): its barrels are along the mesh's own -Y, and the grip is under the back of it
 	third_person = {
 		id = SETTING_ID,
+		always = true,
 		template = TEMPLATE_NAME,
 		unit_name = "units/ut/rocket/pickup",
 		-- (the game links the crossbow, the blunderbuss and the Drakegun to the left hand's node, AttachmentNodeLinking.repeating_crossbow)
@@ -309,18 +285,18 @@ skin_api = mod.weapon_skin.new({
 		yaw = 90,
 		pitch = 0,
 		roll = 0,
+		-- In the world the launcher moves with the game's crossbow, which the game animates with the arms (see the Flak Cannon)
+		follow_game_unit = 1,
+		follow_calibrate_seconds = 1,
 		muzzle_right = 68,
 		muzzle_forward = 0,
 		muzzle_up = 8,
+		menu_yaw = 0,
 	},
 	on_create = function ()
 		skin_api.play_sound("ut_rocket_select")
 	end,
-	on_refresh = apply_template_overrides,
-	on_give_back = function ()
-		give_back_overrides()
-		clear_visuals()
-	end,
+	on_give_back = clear_visuals,
 	on_update_always = update_visuals,
 	on_level_exit = function ()
 		clear_visuals()
@@ -368,23 +344,19 @@ mod.rocket_load_callbacks.rocket_skin = function (owner_unit)
 	end
 end
 
--- The shot sounds of the crossbow are in its animation: while the skin is on the animations of the shots are not played on the player's
--- own first person unit (the model of the skin plays UT's)
+-- The shot sounds of the crossbow are in its animation: the animations of the shots are not played on the player's own first person unit
+-- (the model of the skin plays UT's)
 mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
-	return skin_api.enabled() and (event == "attack_shoot" or event == "attack_shoot_last")
+	return event == "attack_shoot" or event == "attack_shoot_last"
 end
 
--- The flow events of the game's unit of the rocket start its effects as it is made: not while the skin is on
+-- The flow events of the game's unit of the rocket start its effects as it is made: they are not started
 mod.init_flow_event_filters.rocket = function (event_name)
-	return skin_api.enabled() and (event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike")
+	return event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike"
 end
 
 -- A rocket (on every machine): the mesh, the corona, the smoke
 mod.skin_init_callbacks.rocket = function (projectile)
-	if not skin_api.enabled() then
-		return
-	end
-
 	local owner_unit = projectile._owner_unit
 
 	add_visual(projectile)
@@ -394,12 +366,8 @@ mod.skin_init_callbacks.rocket = function (projectile)
 	end
 end
 
--- The explosion of a rocket, on every machine: the game's own effects of it are not made while the skin is on (see rocket_launcher.lua)
+-- The explosion of a rocket, on every machine: the game's own effects of it are not made
 mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position)
-	if not skin_api.enabled() then
-		return
-	end
-
 	skin_api.play_sound_at("ut_rocket_explosion_3d", position)
 
 	particles.sprite({

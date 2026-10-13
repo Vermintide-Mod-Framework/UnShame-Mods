@@ -14,11 +14,6 @@ return {
 				default_value = true,
 				sub_widgets = {
 					{
-						setting_id = "rocket_launcher",
-						type = "checkbox",
-						default_value = true,
-					},
-					{
 						setting_id = "bio_rifle",
 						type = "checkbox",
 						default_value = true,
