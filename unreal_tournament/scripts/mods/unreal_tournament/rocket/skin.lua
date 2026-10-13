@@ -48,27 +48,30 @@ local CONFIG = {
 		0.85,
 	},
 	rocket_sound_seconds = 1.87, -- how long the loop of the rocket (RocketLauncherProjectile) is
-	-- The explosion (NewExplosionA: a fireball and smoke; ExplosionCrap: debris): the game's own explosion, a flash and some smoke
+	-- The explosion (NewExplosionA, ExplosionCrap): the game's own explosion, with its smoke and the mark it leaves (only if the game has it
+	-- loaded), a flash, three fireballs that play a sheet of 16 frames (the same sheet for all three, one of two), and smoke
+	explosion_effect = "fx/wpnfx_frag_grenade_impact",
 	explosion_flash_size = 150,
 	explosion_flash_growth = 500,
 	explosion_flash_life = 0.25,
 	explosion_flash_intensity = 0.5,
-	-- The game's own explosion, with its smoke and the mark it leaves, played with the flash (only if the game has it loaded)
-	explosion_effect = "fx/wpnfx_frag_grenade_impact",
-	-- and the game's yellow fireball (the powder barrel's explosion, smaller)
-	explosion_fireball = "fx/wpnfx_barrel_explosion",
-	explosion_fireball_scale = 0.5,
-	explosion_smoke_count = 5,
-	explosion_smoke_size = {
+	explosion_fire_count = 3,
+	explosion_fire_frames = 16,
+	explosion_fire_size = {
+		50,
 		70,
-		110,
 	},
-	explosion_smoke_life = {
-		0.9,
-		1.6,
+	explosion_fire_life = {
+		0.4,
+		0.6,
 	},
-	explosion_smoke_spread = 40,
-	explosion_smoke_rise = 0.5,
+	explosion_fire_spread = 24, -- units, the radius of the sphere they start in
+	explosion_smoke_count = 15,
+	explosion_smoke_life = 2,
+	explosion_smoke_size = 20, -- units, growing to 2.5 times that (UT: 0.2 to 0.5 of 100)
+	explosion_smoke_speed = 4, -- m/s outward, slowed to a tenth in the first part of its life
+	explosion_smoke_drag = 4, -- per second
+	explosion_smoke_rise = 0.4, -- m/s
 	inspect_pose_speed = 5, -- how fast the model moves to the inspect pose and back, per second
 	inspect_sway = 5, -- degrees of yaw each way while inspecting
 	inspect_sway_speed = 1.8, -- radians per second
@@ -596,7 +599,6 @@ end
 mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, rotation)
 	skin_api.play_sound_at("ut_rocket_explosion_3d", position)
 	mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
-	mod.effects.play(world, CONFIG.explosion_fireball, position, CONFIG.explosion_fireball_scale, rotation)
 
 	particles.sprite({
 		attenuation = 0,
@@ -614,23 +616,51 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 		texture = "explosion_flash",
 	})
 
+	-- The fireballs: a sprite for each frame of the sheet, which fades in and out over two frames' time, so that the frames blend
+	local sheet = math.random(2) == 1 and "explosion_a_" or "explosion_b_"
+	local frames = CONFIG.explosion_fire_frames
+
+	for _ = 1, CONFIG.explosion_fire_count do
+		local life = random_between(CONFIG.explosion_fire_life)
+		local size = random_between(CONFIG.explosion_fire_size) * UNIT
+		local center = position + random_direction() * (CONFIG.explosion_fire_spread * UNIT)
+		local angle = math.random() * 360
+
+		for frame = 0, frames - 1 do
+			particles.sprite({
+				angle = angle,
+				attenuation = 0.5,
+				delay = frame * life / frames,
+				life = 2 * life / frames,
+				position = center,
+				size = size,
+				texture = sheet .. frame,
+			})
+		end
+	end
+
+	-- The smoke: it goes out from the middle, slows, rises, and gets bigger
 	for _ = 1, CONFIG.explosion_smoke_count do
+		local direction = random_direction()
+		local size = CONFIG.explosion_smoke_size * UNIT
+
 		particles.sprite({
 			additive = 0,
-			attenuation = 0.2,
+			attenuation = 0.3,
 			color = {
 				0.72,
 				0.7,
 				0.68,
 			},
-			growth = 10 * UNIT,
+			drag = CONFIG.explosion_smoke_drag,
+			growth = size * 1.5 / CONFIG.explosion_smoke_life,
 			intensity = 0.9,
-			life = random_between(CONFIG.explosion_smoke_life),
-			position = position + random_direction() * (CONFIG.explosion_smoke_spread * UNIT),
-			size = random_between(CONFIG.explosion_smoke_size) * UNIT,
-			spin = (math.random() * 2 - 1) * 0.5,
-			texture = "smoke",
-			velocity = Vector3(0, 0, CONFIG.explosion_smoke_rise),
+			life = CONFIG.explosion_smoke_life,
+			position = position,
+			size = size,
+			spin = (math.random() * 2 - 1) * 0.1,
+			texture = "smoke_" .. math.random(0, 15),
+			velocity = direction * CONFIG.explosion_smoke_speed + Vector3(0, 0, CONFIG.explosion_smoke_rise),
 		})
 	end
 end
