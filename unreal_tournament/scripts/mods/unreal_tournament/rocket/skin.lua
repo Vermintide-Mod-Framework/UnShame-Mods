@@ -655,8 +655,7 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 		texture = "explosion_flash",
 	})
 
-	-- The fireballs: each plays the four frames of a row of the sheet, a sprite for each frame, which fades in and out over two frames'
-	-- time, so that the frames blend. They start one after another.
+	-- The fireballs: each plays the four frames of a row of the sheet, a sprite for each frame, one over the other. They start one after another.
 	local sheet = math.random(2) == 1 and "explosion_a_" or "explosion_b_"
 	local frames = CONFIG.explosion_fire_frames
 
@@ -670,14 +669,19 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 
 		for frame = 0, frames - 1 do
 			-- (not added to the screen: the later frames are dark, the soot of the fire, which only blending shows)
+			-- (a frame fades in over a frame's time, over the one before it, which stays until it is all there, and goes: no frame is
+			-- ever less than whole under the next, so the fireball is never thin; the last fades out)
+			local frame_time = life / frames
+
 			particles.sprite({
 				additive = 0,
 				angle = angle,
-				attenuation = 0.5,
 				color = CONFIG.explosion_fire_color,
 				intensity = CONFIG.explosion_fire_intensity,
-				delay = start + frame * life / frames,
-				life = 2 * life / frames,
+				delay = start + frame * frame_time,
+				fade_in = frame_time,
+				fade_out = frame == frames - 1 and frame_time or 2 * frame_time - 0.001,
+				life = 2 * frame_time,
 				position = fire_center,
 				size = size,
 				texture = sheet .. (first_frame + frame),
