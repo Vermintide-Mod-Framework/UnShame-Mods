@@ -55,6 +55,9 @@ local CONFIG = {
 	explosion_flash_intensity = 0.5,
 	-- The game's own explosion, with its smoke and the mark it leaves, played with the flash (only if the game has it loaded)
 	explosion_effect = "fx/wpnfx_frag_grenade_impact",
+	-- and the game's yellow fireball (the powder barrel's explosion, smaller)
+	explosion_fireball = "fx/wpnfx_barrel_explosion",
+	explosion_fireball_scale = 0.5,
 	explosion_smoke_count = 5,
 	explosion_smoke_size = {
 		70,
@@ -593,6 +596,7 @@ end
 mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, rotation)
 	skin_api.play_sound_at("ut_rocket_explosion_3d", position)
 	mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
+	mod.effects.play(world, CONFIG.explosion_fireball, position, CONFIG.explosion_fireball_scale, rotation)
 
 	particles.sprite({
 		attenuation = 0,
