@@ -2,8 +2,8 @@
 
 ## Item and menus
 
-- [ ] Own name in the inventory
-- [ ] Own icon
+- [ ] Name in the inventory is "UT2004 <weapon>"
+- [ ] Icon is the UT weapon's, not the base weapon's
 - [ ] Description reads right
 - [ ] Keywords fit how it plays
 - [ ] Stat chart looks right
@@ -123,7 +123,7 @@
 - [ ] Fades near the camera
 - [ ] Outline shows on it
 - [ ] Bots hold it right
-- [ ] Own character in third person view
+- [ ] Your character in the third person view
 
 ## Multiplayer
 
