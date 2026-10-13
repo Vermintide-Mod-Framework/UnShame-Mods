@@ -229,8 +229,13 @@ variables = {
 ''',
 }
 
-def material_text(kind, texture, opacity=None, first_person=False, roughness=None):
+def material_text(kind, texture, opacity=None, first_person=False, roughness=None, world=False):
     text = MATERIAL_TEMPLATES[kind] % texture
+
+    if world:
+        # (the material of a third person weapon fades out when the camera is close, as the game's characters do: units/ut/world_standard.material
+        # and world_standard_transparent.material are the SDK's standard materials with the jitter transparency option on)
+        text = text.replace('core/stingray_renderer/shader_import/standard', 'units/ut/world_standard')
 
     if first_person:
         # (the material of a first person weapon is drawn with the game's custom FOV for weapons, as the game's own are, which is also what keeps
