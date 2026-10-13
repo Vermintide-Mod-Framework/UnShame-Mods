@@ -334,15 +334,16 @@ skin_api = mod.weapon_skin.new({
 		-- (the game links the crossbow, the blunderbuss and the Drakegun to the left hand's node, AttachmentNodeLinking.repeating_crossbow)
 		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.009,
-		scale = 0.78,
-		grip_right = -45,
+		scale = 0.6,
+		grip_right = -25,
 		grip_forward = 0,
 		grip_up = -12,
-		yaw = 120,
+		yaw = 90,
 		pitch = 0,
 		roll = 0,
-		-- In the world the launcher moves with the game's crossbow, which the game animates with the arms (see the Flak Cannon)
-		follow_game_unit = 1,
+		-- In the world the launcher moves with the game's crossbow, which the game animates with the arms. It is turned from the crossbow's own axes,
+		-- not calibrated as the Flak Cannon's is: the crossbow is still moving to its place when that is done.
+		follow_game_unit = 2,
 		follow_calibrate_seconds = 1,
 		muzzle_right = 68,
 		muzzle_forward = 0,

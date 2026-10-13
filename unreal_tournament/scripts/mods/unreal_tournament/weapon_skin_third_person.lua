@@ -11,7 +11,8 @@ local mod = get_mod("unreal_tournament")
 --   roll: how the mesh is turned from pointing the way the character faces (degrees), muzzle_*: the end of its barrel, menu_yaw: how far to
 --   turn it about the vertical in the item inspection so the barrel points sideways (-90 if its barrel runs along its forward),
 --   follow_game_unit: the mesh moves with the game's unit of the weapon, which the game animates with the arms, from how it is turned after
---   follow_calibrate_seconds of being held
+--   follow_calibrate_seconds of being held (follow_game_unit = 2: no calibration, pitch, roll and yaw are from the unit's own axes, for a
+--   weapon whose unit is still moving to its place when it would be calibrated: the Repeating Crossbow's)
 --
 -- The game's unit (the staff, the blunderbuss...) stays, hidden, and the mesh is linked to the same node of the character as it, turned
 -- every frame to point the way the character faces, level (a staff is held upright, a rifle is carried pointing ahead: that is not
@@ -74,7 +75,10 @@ local function new(def, looks)
 
 			entry.attached_at = entry.attached_at or t
 
-			if not entry.follow_offset and t - entry.attached_at >= (config.follow_calibrate_seconds or 1) then
+			if config.follow_game_unit == 2 then
+				-- (the mesh is turned from the game's unit by pitch, roll and yaw alone, as they are the unit's own axes: no calibration)
+				wanted = staff_rotation
+			elseif not entry.follow_offset and t - entry.attached_at >= (config.follow_calibrate_seconds or 1) then
 				entry.follow_offset = QuaternionBox(Quaternion.multiply(Quaternion.inverse(staff_rotation), wanted))
 			end
 
@@ -244,6 +248,8 @@ local function new(def, looks)
 					end
 
 					seen[character] = true
+					-- (the game makes some of its units later than the weapon, the Repeating Crossbow's bolts)
+					entry.units = units
 					place(entry)
 					Unit.set_unit_visibility(entry.unit, third_person.shows_weapon(character))
 					third_person.hide_staffs()
