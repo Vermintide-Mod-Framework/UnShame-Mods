@@ -41,6 +41,10 @@ local CONFIG = {
 	rocket_speed = 2200, -- RocketProj.Speed 1350 uu/s is 27 m/s by size and 12 m/s by run speed, this is in between (the action's unit is m/s * 100)
 	rocket_lifetime = 8, -- seconds
 	rocket_radius = 0.1, -- m, how easily a rocket hits things
+	-- Where a rocket starts, from the camera: forward, to the right and down (RocketFire.ProjSpawnOffset, 25, 6 and -6 units)
+	start_forward = 0.5, -- m
+	start_right = 0.12, -- m
+	start_down = 0.12, -- m
 	rocket_gravity_settings = "spark", -- the game's gravity setting with the least gravity
 	fire_interval = 0.9, -- seconds, RocketFire.FireRate
 	salvo_fire_interval = 0.95, -- seconds, RocketMultiFire.FireRate
@@ -938,16 +942,41 @@ local function update_lock_on(t)
 	end
 end
 
--- A rocket fired while there is a lock is a true flight projectile with the locked enemy as its target
-mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
-	local state = locks[owner_unit]
+-- Where a rocket starts: in front of the camera, to its right and below it (RocketFire.ProjSpawnOffset, 25, 6 and -6 units). A rocket
+-- that would start behind a wall starts at the wall instead (RocketFire.DoFireEffect traces to it).
+local function start_position(position, rotation)
+	position = utils.as_vector(position)
 
-	if state and state.locked and item_template_name == TEMPLATE_NAME and HEALTH_ALIVE[state.target] then
+	local offset = Quaternion.forward(rotation) * CONFIG.start_forward + Quaternion.right(rotation) * CONFIG.start_right - Quaternion.up(rotation) * CONFIG.start_down
+	local distance = Vector3.length(offset)
+	local direction = offset * (1 / distance)
+	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+	local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world, position, direction, distance, "closest", "collision_filter", "filter_ai_line_of_sight_check")
+
+	if hit then
+		return position + direction * math.max(hit_distance - 0.05, 0)
+	end
+
+	return position + offset
+end
+
+-- The rockets: they start where UT's do, and one fired while there is a lock is a true flight projectile with the locked enemy as its target
+mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
+	local action
+
+	if item_template_name == TEMPLATE_NAME then
 		local template = rawget(Weapons, item_template_name)
 		local sub_actions = template and template.actions[action_name]
-		local action = sub_actions and sub_actions[sub_action_name]
 
-		if action and action.ut_rocket then
+		action = sub_actions and sub_actions[sub_action_name]
+	end
+
+	if action and action.ut_rocket then
+		position = start_position(position, rotation)
+
+		local state = locks[owner_unit]
+
+		if state and state.locked and HEALTH_ALIVE[state.target] then
 			state.fired = true
 
 			-- a true flight projectile is given the direction it is fired in, not the flat part of it
