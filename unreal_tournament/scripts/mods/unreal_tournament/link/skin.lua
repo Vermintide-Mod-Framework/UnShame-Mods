@@ -1,18 +1,18 @@
 local mod = get_mod("unreal_tournament")
 
--- Link Gun skin (the Weapon Skins setting): the Link Gun is UT2004's, in the player's own first person view and in the hand of every
--- character. The model (NewWeapons2004.FatLinkGun), its placement and animations, the bob and the third person are weapon_skin.lua's;
--- this file is what is the Link Gun's: the flash, the plasma bolts (the staff's thorns, as they fly), the beam (the curve that the gun draws
--- from its muzzle to what it is linked to, as UT's beam texture), and the sounds. The gameplay is link_gun.lua's, this only draws it
--- differently, and is told what happens through the hook tables of hooks.lua (link_beam_callbacks for the beam).
+-- Link Gun skin: how UT2004's Link Gun looks and sounds.
 --
--- The assets were made with unreal_tournament/tools/asset_conversion.
+-- weapon_skin.lua does the model, its placement and animations, the bob and the third person. This file does what is the Link Gun's own:
+-- the flash, the bolts in flight, the beam and the sounds. The gameplay is in link_gun.lua. This file only draws it, and is told what
+-- happens through the hook tables in hooks.lua (link_beam_callbacks for the beam).
+--
+-- The assets were made with tools/asset_conversion.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local animations = mod:dofile("scripts/mods/unreal_tournament/link/skin_animations")
 local particles = mod.skin_particles
 
-local TEMPLATE_NAME = "staff_life"
+local TEMPLATE_NAME = mod.items.weapons.link_gun.template
 local SETTING_ID = "link_gun"
 
 local CONFIG = {
@@ -97,9 +97,13 @@ skin_api = mod.weapon_skin.new({
 		yaw = 90,
 		pitch = 0,
 		roll = 0,
+		-- In the world the gun follows the staff's unit, which the arms animate
+		follow_game_unit = 1,
+		follow_calibrate_seconds = 1,
 		muzzle_right = 54,
 		muzzle_forward = 0,
 		muzzle_up = 3,
+		menu_yaw = 0,
 	},
 	on_create = function ()
 		skin_api.play_sound("ut_link_select")
@@ -111,18 +115,14 @@ skin_api = mod.weapon_skin.new({
 
 local third_person = skin_api.third_person
 
--- The flow events of the game's units of the thorns start their effects as they are made: not while the skin is on
+-- These flow events would start the game's effects on the thorns, so they are dropped
 mod.init_flow_event_filters.link = function (event_name)
-	return skin_api.enabled() and (event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike")
+	return event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike"
 end
 
 -- A bolt (on every machine): a green blob and its glow follow the game's thorn; the shot of the player is the animation, the flash and the
 -- sound, the shot that is seen of another player is the flash and the sound from their mesh
 mod.skin_init_callbacks.link_bolt = function (projectile)
-	if not skin_api.enabled() then
-		return
-	end
-
 	local game_unit = projectile._projectile_unit
 	local owner_unit = projectile._owner_unit
 

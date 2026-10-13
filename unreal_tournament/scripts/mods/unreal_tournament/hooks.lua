@@ -407,12 +407,12 @@ mod:hook(AnimationSystem, "anim_event_with_variable_float", function (func, self
 	return func(self, unit, event_name, ...)
 end)
 
--- The sounds of a weapon's units are played by the units' flow, from the callbacks of the animations (the shot and the reload of the
--- crossbow). A weapon can mute one that its character's third person unit would play:
+-- Some weapon sounds are played by the weapon unit's flow, when an animation reaches a point (the crossbow's shot and reload). A weapon
+-- can mute them:
 --   mod.sound_event_filters[template] = function (event_name, character) return true to mute it
 mod.sound_event_filters = {}
 
--- The character whose weapon unit (or who) this is
+-- The character that holds this weapon unit, or the character itself
 local function sound_owner(unit)
 	local players = Managers.player and Managers.player:human_and_bot_players()
 

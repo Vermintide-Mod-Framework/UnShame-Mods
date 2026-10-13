@@ -1,17 +1,17 @@
 local mod = get_mod("unreal_tournament")
 
--- Flak Cannon skin: the Flak Cannon always looks and sounds like UT2004's, in the player's own first person view and in the hand of every
--- character. The Weapon Skins setting does not apply to it.
--- The model (Weapons.Flak_1st), its placement, animations, bob and third person are handled by weapon_skin.lua. This file handles what is
--- specific to the Flak Cannon: the muzzle flash, the chunks and the shell in flight, their explosion and the sounds. The gameplay is in
--- flak_cannon.lua. This file only draws it, and is told what happens through the hook tables in hooks.lua.
+-- Flak Cannon skin: how UT2004's Flak Cannon looks and sounds.
 --
--- The game's own units of the chunks and of the shell are what is flying (they are the gameplay), their effects are not started and
--- what UT has is drawn at them: the mesh of the chunk with its streak (FlakTrail), the mesh of the shell with its gold glow and smoke
--- (FlakShellTrail, FlakGlow). The explosion is FlashExplosion, with the game's own explosion played along with it. The shot sound of the blunderbuss is made by its
--- animation, which is not played on the first person unit while the skin is on.
+-- weapon_skin.lua does the model, its placement and animations, the bob and the third person. This file does what is the Flak Cannon's
+-- own: the muzzle flash, the chunks and the shell in flight, their explosion and the sounds. The gameplay is in flak_cannon.lua. This
+-- file only draws it, and is told what happens through the hook tables in hooks.lua.
 --
--- The assets were made with unreal_tournament/tools/asset_conversion.
+-- The game's units of the chunks and the shell still fly, since they are the gameplay. Their own effects are dropped, and UT's are drawn at
+-- them: the chunk mesh with its streak (FlakTrail), and the shell mesh with its gold glow and smoke (FlakShellTrail, FlakGlow). The
+-- explosion is FlashExplosion, with the game's explosion played along with it. The blunderbuss's shot sound is in its animation, which is
+-- not played on the player's own first person unit.
+--
+-- The assets were made with tools/asset_conversion.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local animations = mod:dofile("scripts/mods/unreal_tournament/flak/skin_animations")
@@ -101,32 +101,6 @@ local CONFIG = {
 local UNIT = CONFIG.meters_per_uu
 
 local skin_api
-
--- What the game's own sound of the explosion is taken away for while the skin is on (the skin plays its own)
-local explosion_override = {
-	"ut_flak_shell_explosion",
-	"sound_event_name",
-}
-
-local function apply_template_overrides()
-	local explosion = ExplosionTemplates[explosion_override[1]].explosion
-	local key = explosion_override[2]
-
-	if skin_api.enabled() and explosion[key] then
-		explosion_override[3] = explosion[key]
-		explosion[key] = nil
-	elseif not skin_api.enabled() and explosion_override[3] then
-		explosion[key] = explosion_override[3]
-		explosion_override[3] = nil
-	end
-end
-
-local function give_back_overrides()
-	if explosion_override[3] then
-		ExplosionTemplates[explosion_override[1]].explosion[explosion_override[2]] = explosion_override[3]
-		explosion_override[3] = nil
-	end
-end
 
 -- What flies: { unit = the mesh, game_unit = the projectile's, projectile = its extension, kind, previous = where it was }
 local visuals = {}
@@ -227,7 +201,7 @@ local function update_visuals(dt)
 
 			local rotation = Quaternion.look(visual.direction:unbox(), Vector3.up())
 
-			-- (FlakShell.PostBeginPlay flies the shell upside down: Roll = 32768)
+			-- UT flies the shell upside down (FlakShell sets Roll = 32768)
 			if visual.kind == "shell" then
 				rotation = Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3.forward(), math.pi))
 			end
@@ -373,8 +347,6 @@ end
 
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
-	-- There is no setting for this: the skin is always on.
-	always = true,
 	name = "flak",
 	template = TEMPLATE_NAME,
 	unit_name = "units/ut/flak/flak_cannon",
@@ -409,7 +381,6 @@ skin_api = mod.weapon_skin.new({
 	-- WeaponStaticMesh.FlakCannonPickup (DrawScale 0.55): its barrel is along the mesh's own Y, and the grip is under the back of it
 	third_person = {
 		id = SETTING_ID,
-		always = true,
 		template = TEMPLATE_NAME,
 		unit_name = "units/ut/flak/pickup",
 		-- (the game links the blunderbuss, the crossbow and the Drakegun to the left hand's node, AttachmentNodeLinking.rifles)
@@ -477,8 +448,7 @@ skin_api = mod.weapon_skin.new({
 			end
 		end
 
-		-- With no ammo left the shot does not load the next shell: from the frame where it would slide in, the shell and the hammer are
-		-- as the animation ends
+		-- With no ammo left the shot loads no next shell: from the frame where it would slide in, the shell and the hammer stay at rest
 		local animation = animations.animations[skin.animation]
 
 		if skin.out_of_ammo and animation and (skin.animation == "Fire" or skin.animation == "AltFire") and skin.time * animation.rate >= CHAMBER_LOAD_FIRST then
@@ -496,11 +466,7 @@ skin_api = mod.weapon_skin.new({
 		skin.node_scales = skin.node_scales or {}
 		skin.node_scales[SHELL_BONE] = skin.out_of_ammo and Vector3(0.001, 0.001, 0.001) or nil
 	end,
-	on_refresh = apply_template_overrides,
-	on_give_back = function ()
-		give_back_overrides()
-		clear_visuals()
-	end,
+	on_give_back = clear_visuals,
 	on_update_always = update_visuals,
 	on_level_exit = function ()
 		clear_visuals()
@@ -538,7 +504,7 @@ end
 -- first person unit (the skin's model plays UT's animations instead). UT's weapon has no reload, but the game still reloads when ammo is
 -- picked up or the weapon is wielded.
 mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
-	return skin_api.enabled() and (event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil)
+	return event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil
 end
 
 -- Also skip them on the character's own unit, which other players hear.
@@ -555,23 +521,18 @@ mod.third_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return string.find(event, "reload", 1, true) ~= nil
 end
 
--- The Blunderbuss's shot sound is played by its unit's flow as its animation plays on the characters: the others hear the Flak Cannon's
--- own sounds instead (see the remote shots)
+-- The Blunderbuss's shot sound is played by its unit in third person. Mute it: the others hear the Flak Cannon's own sounds.
 mod.sound_event_filters[TEMPLATE_NAME] = function (event_name)
 	return event_name == "player_combat_weapon_blunderbuss_fire"
 end
 
--- The flow events of the game's units of the chunks and the shell start their effects as they are made: not while the skin is on
+-- These flow events would start the game's effects on the chunks and the shell, so they are dropped
 mod.init_flow_event_filters.flak = function (event_name)
-	return skin_api.enabled() and (event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike")
+	return event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike"
 end
 
 -- A chunk (on every machine): the mesh and its streak
 mod.skin_init_callbacks.ut_flak_chunk = function (projectile)
-	if not skin_api.enabled() then
-		return
-	end
-
 	local owner_unit = projectile._owner_unit
 	local visual = add_visual(projectile, "chunk", "units/ut/flak/chunk")
 
@@ -608,10 +569,6 @@ end
 
 -- The shell (on every machine): the mesh, the gold glow and the smoke it leaves
 mod.skin_init_callbacks.ut_flak_shell = function (projectile)
-	if not skin_api.enabled() then
-		return
-	end
-
 	local owner_unit = projectile._owner_unit
 	local visual = add_visual(projectile, "shell", "units/ut/flak/shell")
 
@@ -641,12 +598,8 @@ mod.skin_init_callbacks.ut_flak_shell = function (projectile)
 	})
 end
 
--- The explosion of the shell, on every machine: the game's own effects of it are not made while the skin is on (see flak_cannon.lua)
+-- The explosion of the shell, on every machine. The game's own effects of it are not made (see flak_cannon.lua).
 mod.skin_explosion_callbacks.ut_flak_shell_explosion = function (world, position, rotation)
-	if not skin_api.enabled() then
-		return
-	end
-
 	skin_api.play_sound_at("ut_flak_explosion_3d", position)
 	mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
 

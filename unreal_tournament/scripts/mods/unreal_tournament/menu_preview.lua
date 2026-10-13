@@ -9,7 +9,7 @@ local CONFIG = {
 	item_length = 0.62,
 }
 
--- Returns the weapon skin for an item, if it has one and it is shown.
+-- Returns the weapon skin for an item, if it has one.
 local function skin_of(item_name)
 	local item = item_name and rawget(ItemMasterList, item_name)
 
@@ -18,7 +18,7 @@ local function skin_of(item_name)
 	end
 
 	for _, skin in pairs(mod.weapon_skin.skins) do
-		if skin.config.template == item.template and skin.enabled() then
+		if skin.config.template == item.template then
 			return skin
 		end
 	end

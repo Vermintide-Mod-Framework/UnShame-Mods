@@ -9,23 +9,6 @@ return {
 	options = {
 		widgets = {
 			{
-				setting_id = "ut_weapons",
-				type = "checkbox",
-				default_value = true,
-				sub_widgets = {
-					{
-						setting_id = "link_gun",
-						type = "checkbox",
-						default_value = true,
-					},
-					{
-						setting_id = "weapon_skins",
-						type = "checkbox",
-						default_value = false,
-					},
-				},
-			},
-			{
 				setting_id = "ut_movement",
 				type = "checkbox",
 				default_value = true,

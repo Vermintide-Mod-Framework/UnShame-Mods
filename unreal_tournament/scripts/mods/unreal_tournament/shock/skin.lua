@@ -1,20 +1,20 @@
 local mod = get_mod("unreal_tournament")
 
--- The Shock Rifle's skin: the Shock Rifle always looks and sounds like UT2004's, in the player's own first person view and in the hand of
--- every character. The Weapon Skins setting does not apply to it.
+-- Shock Rifle skin: how UT2004's Shock Rifle looks and sounds.
+--
 -- It has illusions (see items.lua): UT2004's model, and UT2003's old model (Weapons.ShockRifle_1st, which UT2004 still has and uses with
--- ShockRifle.bUseOldWeaponMesh). The UT2003 one is a look of this skin (see weapon_skin.lua) with its own model, placement and animations.
--- Everything else is the same.
+-- ShockRifle.bUseOldWeaponMesh). The UT2003 one is a look of this skin (see weapon_skin.lua) with its own model, placement and
+-- animations. Everything else is the same.
 --
--- The model, its placement, its animations, the bob and the third person are weapon_skin.lua's. This file is what is the Shock Rifle's own:
--- the chamber, the shots, the beam, the ball, the explosion and the combo. The gameplay is shock_rifle.lua's: this only draws it, and is told
--- what happens through the hook tables of hooks.lua.
+-- weapon_skin.lua does the model, its placement and animations, the bob and the third person. This file does what is the Shock Rifle's
+-- own: the chamber, the shots, the beam, the ball, the explosion and the combo. The gameplay is in shock_rifle.lua. This file only draws
+-- it, and is told what happens through the hook tables in hooks.lua.
 --
--- The animations are UT's (Pickup, Idle, Fire, AltFire). The chamber's gel flows as UT's does (the rotation, the stretch, the pan and the
--- colour of ShockPowerShader, in the chamber's shader graph), and its glow comes back after a shot as the time to the next one goes
--- (ShockRifle.RenderOverlays). The game's own effects of the staff (the fireball, its explosion, the beam's trail) are not made.
+-- The chamber's gel flows as in UT (the rotation, stretch, pan and colour of ShockPowerShader, in the chamber's shader graph), and its
+-- glow comes back after a shot as the time to the next one passes (ShockRifle.RenderOverlays). The game's own effects of the staff (the
+-- fireball, its explosion, the beam's trail) are not made.
 --
--- The assets were made with unreal_tournament/tools/asset_conversion.
+-- The assets were made with tools/asset_conversion.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local animations = mod:dofile("scripts/mods/unreal_tournament/shock/skin_animations")
@@ -132,7 +132,6 @@ local INSTAGIB_SKIN = "ut_shock_rifle_skin_instagib"
 
 local THIRD_PERSON = {
 	id = SETTING_ID,
-	always = true,
 	template = TEMPLATE_NAME,
 	unit_name = "units/ut/shock/pickup",
 	hand_node = "j_rightweaponattach",
@@ -164,8 +163,6 @@ INSTAGIB_THIRD_PERSON.materials = {
 
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
-	-- No setting: the skin is always shown
-	always = true,
 	name = "shock",
 	template = TEMPLATE_NAME,
 	unit_name = "units/ut/shock/shock_rifle",
@@ -239,7 +236,6 @@ skin_api = mod.weapon_skin.new({
 			-- WeaponStaticMesh.ShockRiflePickup. Its barrel runs along the mesh's own Y, like the Flak Cannon's pickup. The hand holds the pistol grip.
 			third_person = {
 				id = SETTING_ID,
-				always = true,
 				template = TEMPLATE_NAME,
 				unit_name = "units/ut/shock2003/pickup",
 				hand_node = "j_rightweaponattach",
@@ -367,14 +363,10 @@ local FIREBALL_FLOW_EVENTS = {
 }
 
 mod.init_flow_event_filters.shock_ball = function (event_name)
-	return skin_api.enabled() and FIREBALL_FLOW_EVENTS[event_name] == true
+	return FIREBALL_FLOW_EVENTS[event_name] == true
 end
 
 mod.init_callbacks.shock_ball = function (projectile)
-	if not skin_api.enabled() then
-		return
-	end
-
 	local unit = projectile._projectile_unit
 
 	Unit.set_unit_visibility(unit, false)
@@ -412,11 +404,11 @@ end
 skin_api.take_over_sound("weapon_staff_fire_beam_end_shot", "ut_shock_fire")
 skin_api.take_over_sound("player_combat_weapon_staff_fireball_fire", "ut_shock_alt_fire")
 
--- The staff's fireball flash is in its animation, so while the skin is on, the ball's shot animation is not played on the player's own first
--- person unit (the skin's model plays UT's, with its own flash). The same goes for the animation of venting the heat: it has the staff's
--- puff of steam in it, which comes off where the game's staff is held, not off the skin's model.
+-- The staff's fireball flash is in its animation, so the ball's shot animation is not played on the player's own first person unit (the
+-- skin's model plays UT's, with its own flash). The same goes for the animation of venting the heat: it has the staff's puff of steam in
+-- it, which comes off where the game's staff is held, not off the skin's model.
 mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
-	return skin_api.enabled() and (event == "attack_shoot_fireball" or event == "cooldown_start")
+	return event == "attack_shoot_fireball" or event == "cooldown_start"
 end
 
 -- The loop of the fire in the staff's left hand is played by its unit's flow: the Shock Rifle has none
@@ -425,19 +417,15 @@ mod.sound_event_filters[TEMPLATE_NAME] = function (event_name)
 end
 
 mod.skin_explosion_callbacks.ut_shock_ball_explosion = function (world, position)
-	if skin_api.enabled() then
-		fx.ball_explosion(position)
-		skin_api.play_sound_at("ut_shock_explosion_3d", position)
-	end
+	fx.ball_explosion(position)
+	skin_api.play_sound_at("ut_shock_explosion_3d", position)
 end
 
 mod.skin_explosion_callbacks.ut_shock_combo_explosion = function (world, position)
-	if skin_api.enabled() then
-		fx.combo(position)
-		skin_api.play_sound_at("ut_shock_combo_3d", position)
+	fx.combo(position)
+	skin_api.play_sound_at("ut_shock_combo_3d", position)
 
-		skin_api.debug("combo")
-	end
+	skin_api.debug("combo")
 end
 
 -- Inspecting is the game's own action, held with the key: the rifle is turned to show its side as long as it lasts

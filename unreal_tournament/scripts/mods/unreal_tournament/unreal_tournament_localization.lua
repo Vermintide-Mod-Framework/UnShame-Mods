@@ -92,22 +92,4 @@ return {
 	more_ammo_pickups_description = {
 		en = "Levels have more ammo pickups. Applies to levels you host, from the next one you start.",
 	},
-	ut_weapons = {
-		en = "Weapons",
-	},
-	ut_weapons_description = {
-		en = "Weapons from Unreal Tournament that replace some of the game's own. Switch off any you don't want.",
-	},
-	link_gun = {
-		en = "Link Gun",
-	},
-	link_gun_description = {
-		en = "Kerillian (Sister of the Thorn). Replaces the Deepwood Staff. Primary fires poisonous, stunning bolts. Hold alt fire to link to what you aim at, and press primary while linked to yank it. Try it on enemies, allies, and anything that looks interesting.",
-	},
-	weapon_skins = {
-		en = "Weapon Skins",
-	},
-	weapon_skins_description = {
-		en = "The Link Gun looks and sounds like Unreal Tournament 2004's (the Shock Rifle, the Flak Cannon, the Rocket Launcher and the Bio Rifle always do). What the others see of you depends on their own setting.",
-	},
 }

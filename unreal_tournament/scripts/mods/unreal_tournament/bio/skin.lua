@@ -1,16 +1,15 @@
 local mod = get_mod("unreal_tournament")
 
--- Bio Rifle skin: the Bio Rifle always looks and sounds like UT2004's, in the player's own first person view and in the hand of every
--- character. The model (Weapons.BioRifle_1st: the tank, the plunger that moves as it is charged), its placement and animations, the bob
--- and the third person are weapon_skin.lua's; this file is what is the Bio Rifle's: the flash, the globs as they fly, their splash, the
--- puddles, and the sounds. The gameplay is bio_rifle.lua's, this only draws it differently, and is told what happens through the hook
--- tables of hooks.lua.
+-- Bio Rifle skin: how UT2004's Bio Rifle looks and sounds.
 --
--- The game's own units of the globs are what flies (they are the gameplay), their effects are not started and what UT has is drawn at
--- them (a green blob, ShockProjectile-like: GoopMesh with the goop shader, here sprites of its texture); the burst is GoopSmoke and
--- GoopSparks, the puddle is the splat of BioDecal (the game's own look of a puddle is a fire).
+-- weapon_skin.lua does the model, its placement and animations, the bob and the third person. This file does what is the Bio Rifle's own:
+-- the flash, the globs in flight, their splash, the puddles and the sounds. The gameplay is in bio_rifle.lua. This file only draws it, and
+-- is told what happens through the hook tables in hooks.lua.
 --
--- The assets were made with unreal_tournament/tools/asset_conversion.
+-- The game's units of the globs still fly, since they are the gameplay. Their own effects are dropped, and UT's are drawn at them: a green
+-- blob (sprites of the GoopMesh texture), the splash (GoopSmoke and GoopSparks) and the puddle (the splat of BioDecal).
+--
+-- The assets were made with tools/asset_conversion.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local animations = mod:dofile("scripts/mods/unreal_tournament/bio/skin_animations")
@@ -143,8 +142,6 @@ end
 
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
-	-- There is no setting for this: the skin is always on.
-	always = true,
 	name = "bio",
 	template = TEMPLATE_NAME,
 	unit_name = "units/ut/bio/bio_rifle",
@@ -162,7 +159,6 @@ skin_api = mod.weapon_skin.new({
 	-- WeaponStaticMesh.BioRiflePickup (DrawScale 0.6): its nozzle is along the mesh's own +Y and the tank is behind it
 	third_person = {
 		id = SETTING_ID,
-		always = true,
 		template = TEMPLATE_NAME,
 		unit_name = "units/ut/bio/pickup",
 		-- (the game links the Drakegun to the left hand's node, AttachmentNodeLinking.drakegun)
@@ -175,7 +171,7 @@ skin_api = mod.weapon_skin.new({
 		yaw = -90,
 		pitch = 0,
 		roll = 0,
-		-- In the world the rifle moves with the game's Drakegun, which the game animates with the arms (see the Flak Cannon)
+		-- In the world the rifle follows the Drakegun's unit, which the arms animate
 		follow_game_unit = 1,
 		follow_calibrate_seconds = 1,
 		muzzle_right = -30,
@@ -232,12 +228,12 @@ end
 skin_api.take_over_sound("player_combat_weapon_staff_fireball_fire", "ut_bio_fire")
 skin_api.take_over_sound("player_combat_weapon_staff_geiser_fire", "ut_bio_fire")
 
--- The shot animations of the Drakegun's first person unit are not played (the model of the skin plays UT's)
+-- The Drakegun's own shot animations are not played. The skin's model plays UT's.
 mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return event == "attack_shoot" or event == "attack_shoot_charged"
 end
 
--- The flow events of the game's units of the globs start their effects as they are made: they are not started
+-- These flow events would start the game's effects on the globs, so they are dropped
 mod.init_flow_event_filters.bio = function (event_name)
 	return (event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike")
 end

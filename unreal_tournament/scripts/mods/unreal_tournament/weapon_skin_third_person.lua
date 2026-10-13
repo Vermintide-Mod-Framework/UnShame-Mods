@@ -1,10 +1,10 @@
 local mod = get_mod("unreal_tournament")
 
--- The third person of a weapon skin (the Weapon Skins setting): every character on this machine that wields the weapon holds UT2004's
--- pickup mesh of it instead of the game's weapon, as this player sees them: the skin is a setting of each machine, and the game's own
--- units are what the others' machines show. The characters are the player's own (in a third person view), the other players and the
--- bots. Made by weapon_skin.lua for each weapon (mod.weapon_skin.new), with what is the weapon's own in its definition:
---   id: the weapon's setting (always = true if it has none), template: the game's template it is, unit_name: the mesh (tools/asset_conversion/psk2bsi.py, with the
+-- The third person of a weapon skin: every character on this machine that wields the weapon holds UT2004's pickup mesh of it instead of
+-- the game's weapon, as this player sees them: the game's own units are what the machines of players without the mod show. The
+-- characters are the player's own (in a third person view), the other players and the bots. Made by weapon_skin.lua for each weapon
+-- (mod.weapon_skin.new), with what is the weapon's own in its definition:
+--   id: the weapon's id, template: the game's template it is, unit_name: the mesh (tools/asset_conversion/psk2bsi.py, with the
 --   DrawScale of the pickup in it), materials: { slot = material } to set on it, hand_node: where the game links the weapon to the
 --   character, meters_per_unit: the meters of a UT unit of the mesh, scale: how much of it is held (UT's pickups are far bigger
 --   than the weapon in the hand is), grip_*: the point of the mesh that is in the hand (right, forward, up, UT units), yaw, pitch,
@@ -198,9 +198,9 @@ local function new(def, looks)
 		end
 	end
 
-	-- The game's unit of a character if the skin is to replace it: the weapon is what it wields and the setting is on
+	-- The game's unit of a character if the skin is to replace it: the weapon is what it wields
 	local function staff_to_replace(character)
-		if not (CONFIG.always or utils.is_weapon_skin_enabled(CONFIG.id)) or utils.wielded_template_name(character) ~= CONFIG.template then
+		if utils.wielded_template_name(character) ~= CONFIG.template then
 			return nil
 		end
 

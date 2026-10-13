@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- The weapon skins (the Weapon Skins setting): a UT2004 weapon's first person model, in the player's own first person view, and
+-- The weapon skins: a UT2004 weapon's first person model, in the player's own first person view, and
 -- the pickup mesh of it in every character's hand, played with the game's own events. The gameplay is the weapon's own file's: a
 -- skin only draws it differently. mod.weapon_skin.new(definition) makes the skin of a weapon; its own file says what it does with
 -- the shots, the projectiles, the effects and the sounds, and this file is what all of them do.
@@ -18,8 +18,7 @@ local mod = get_mod("unreal_tournament")
 -- put away.
 --
 -- A definition (the numbers of the weapon's class in UT2004, the files tools/asset_conversion made):
---   id, name: the weapon's setting (flak_cannon) and its name in the messages, template: the game's weapon template it replaces
---   always: the weapon has no setting, the skin is always shown
+--   id, name: the weapon's id (flak_cannon, for /skin) and its name in the messages, template: the game's weapon template it is the skin of
 --   unit_name, animations: the unit, and its animations ({ bones = { "root", nodes... }, animations = { Name = { rate, frames } } },
 --       a frame is seven numbers for each bone: a rotation (x, y, z, w) and a move (right, forward, up in UT units))
 --   muzzle_node: the node of the unit where the muzzle is
@@ -41,8 +40,7 @@ local mod = get_mod("unreal_tournament")
 --   on_pose(skin, pose): every frame before the model is placed, to change the pose of the bones that the animations don't (UT sets some
 --       by code: the barrel of the Rocket Launcher). pose is the row of numbers of a frame (a bone's are at (index - 1) * 7 + 1).
 --       skin.node_scales[bone index] = Vector3 scales a node along its own axes (a part that stretches: the rod of the Rocket Launcher).
---   on_update_always(dt): every frame, shown or not; on_refresh(): when the setting or the weapon is switched; on_give_back(),
---   on_level_exit(): what is its own to take back and to clear
+--   on_update_always(dt): every frame, shown or not; on_give_back(), on_level_exit(): what is its own to take back and to clear
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local third_person_module = mod:dofile("scripts/mods/unreal_tournament/weapon_skin_third_person")
@@ -180,10 +178,6 @@ local function new(def)
 
 	function self.state()
 		return skin
-	end
-
-	function self.enabled()
-		return CONFIG.always or utils.is_weapon_skin_enabled(CONFIG.id)
 	end
 
 	-- Sounds (the events are in the weapon's bank, see tools/asset_conversion/make_bank.py): from the head of the player, or from a place
@@ -449,34 +443,16 @@ local function new(def)
 		Unit.set_unit_visibility(unit, game_shows_weapon(fp))
 	end
 
-	-- Made when the setting or the weapon is switched, and when what is wielded is the weapon
-	local function refresh()
+	-- Made when the mod is switched on with the weapon wielded
+	mod.enabled_callbacks[#mod.enabled_callbacks + 1] = function ()
 		local fp = local_first_person()
 
-		if CONFIG.on_refresh then
-			CONFIG.on_refresh()
-		end
-
-		if not self.enabled() or not fp then
-			destroy()
-
-			return
-		end
-
-		if not skin and utils.wielded_template_name(fp.unit) == CONFIG.template then
+		if fp and not skin and utils.wielded_template_name(fp.unit) == CONFIG.template then
 			create(fp, utils.wielded_skin(fp.unit))
 		end
 	end
 
-	mod.setting_changed_callbacks[#mod.setting_changed_callbacks + 1] = function (changed_setting_id)
-		if changed_setting_id == "weapon_skins" or changed_setting_id == CONFIG.id or changed_setting_id == "ut_weapons" then
-			refresh()
-		end
-	end
-
-	mod.enabled_callbacks[#mod.enabled_callbacks + 1] = refresh
-
-	-- (the mod is switched off or unloaded: the setting reads as it is, what the weapon took is given back)
+	-- (the mod is switched off or unloaded: what the weapon took is given back)
 	local function give_back()
 		destroy()
 		third_person.clear()
@@ -505,7 +481,7 @@ local function new(def)
 
 	-- The weapon that is wielded
 	mod.wield_callbacks[CONFIG.id] = function (inventory_extension, equipment, slot_data)
-		if slot_data and item_template_name(slot_data.item_data) == CONFIG.template and self.enabled() then
+		if slot_data and item_template_name(slot_data.item_data) == CONFIG.template then
 			create(inventory_extension.first_person_extension, slot_data.skin)
 		end
 	end
@@ -522,7 +498,7 @@ local function new(def)
 	function self.take_over_sound(game_event, ut_event)
 		mod.hud_sound_callbacks[game_event] = mod.hud_sound_callbacks[game_event] or {}
 		mod.hud_sound_callbacks[game_event][CONFIG.id] = function (first_person_extension)
-			if not self.enabled() or not utils.is_local_player_unit(first_person_extension.unit) then
+			if not utils.is_local_player_unit(first_person_extension.unit) then
 				return false
 			end
 

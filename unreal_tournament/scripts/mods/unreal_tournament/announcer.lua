@@ -218,11 +218,11 @@ local function is_ranged_hit(damage_data)
 	return item ~= nil and item.slot_type == "ranged"
 end
 
--- If the item that killed is the weapon (and the weapon is the one of the mod, not the game's)
+-- If the item that killed is this weapon
 local function is_killed_by(weapon, damage_data)
 	local item = rawget(ItemMasterList, damage_data[DamageDataIndex.DAMAGE_SOURCE_NAME])
 
-	return item ~= nil and item.template == weapon.template and (weapon.setting == nil or utils.is_weapon_enabled(weapon.setting))
+	return item ~= nil and item.template == weapon.template
 end
 
 

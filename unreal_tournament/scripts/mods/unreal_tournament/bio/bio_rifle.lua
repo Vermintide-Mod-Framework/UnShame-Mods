@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- Bio Rifle: a copy of the Drakegun (Bardin's) with its fire modes replaced, the same way the Rocket Launcher is a copy of the Repeating Crossbow.
+-- Bio Rifle: a copy of the Drakegun (Bardin's) with fire modes of its own.
 --   LMB: a glob of goo, lobbed. It bursts where it lands and adds to the burning puddle there.
 --   RMB (held): charges a bigger glob, fired on release. The bigger the charge, the more goo is in it.
 --               (UT2004: XWeapons/BioRifle, BioGlob.)
@@ -123,8 +123,7 @@ local CONFIG = {
 	armor_impact = {1, 0.8, 1, 1, 1, 0.5},
 	-- A burn ticks at the game's default power level (195), what the weapons' profiles are measured against is about 500
 	burn_reference_power_level = 500,
-	-- The sounds of the shots are events of the game's, the Sienna's fireball and geiser (the shots' have to be in the game's NetworkLookup
-	-- of sound events). The skin takes them over and plays UT's.
+	-- The shots use the game's fireball and geiser sounds, which the network knows. The skin plays UT's instead.
 	fire_sound = "player_combat_weapon_staff_fireball_fire",
 	charged_fire_sound = "player_combat_weapon_staff_geiser_fire",
 	-- The impact: the charged glob, when it hits an enemy, sets off a blast of its own on top of the burst. It is
@@ -291,7 +290,7 @@ end
 
 register_explosion_template("ut_bio_charged_impact", impact_template("ut_bio_charged_impact", CONFIG.impact_radius, CONFIG.charged_impact_radius))
 
--- (the look and the sound of the bursts and of the impact are the skin's, see skin_explosion_callbacks)
+-- The skin draws and plays the bursts and the impact (skin_explosion_callbacks).
 
 
 -- Weapon template
@@ -673,8 +672,7 @@ local function units_inside(puddle)
 	return inside
 end
 
--- The look of a puddle, on every machine: the host shows it and tells the others (the game's own look of an area can't be told to the
--- others, and doesn't grow with the area). It is the skin's (see puddle_visual_callbacks), and is shown again when the puddle grows.
+-- The skin draws the puddles (puddle_visual_callbacks). The host shows a puddle and tells the others, and shows it again when it grows.
 local function stop_visual(id)
 	mod.puddle_visual_callbacks.stop(id)
 end
@@ -951,7 +949,7 @@ mod:hook_safe(PlayerProjectileUnitExtension, "mark_for_deletion", function (self
 	end
 end)
 
--- The template is patched in place, what is touched is saved to be put back on disable and when the mod is unloaded.
+-- What is changed in the template is saved, and put back on disable and on unload.
 local saved = {}
 
 local function restore_drakegun()
@@ -983,7 +981,7 @@ local function apply_bio_rifle()
 		return
 	end
 
-	-- The chart of the item's stats (0 to 7): the glob is the normal attack, the charged glob the heavy one
+	-- The stat chart (0 to 7): the glob is the light attack, the charged glob the heavy one
 	template.weapon_diagram = {
 		light_attack = {
 			[DamageTypes.ARMOR_PIERCING] = 1,

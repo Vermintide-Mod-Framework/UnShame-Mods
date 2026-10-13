@@ -1,15 +1,15 @@
 local mod = get_mod("unreal_tournament")
 
--- Rocket Launcher skin: the Rocket Launcher always looks and sounds like UT2004's, in the player's own first person view and in the hand
--- of every character. The model (Weapons.RocketLauncher_1st, skeletal: the barrel turns as a rocket is loaded), its placement and
--- animations, the bob and the third person are weapon_skin.lua's; this file is what is the Rocket Launcher's: the flash, the rocket as it
--- flies (its mesh turning, its corona and its smoke), the explosion, and the sounds. The gameplay is rocket_launcher.lua's, this only
--- draws it differently, and is told what happens through the hook tables of hooks.lua.
+-- Rocket Launcher skin: how UT2004's Rocket Launcher looks and sounds.
 --
--- The game's own unit of the rocket (the crossbow's bolt) is what flies (it is the gameplay), its effects are not started and what UT has is
--- drawn at it. The shot sound of the crossbow is made by its animation, which is not played on the player's own first person unit.
+-- weapon_skin.lua does the model, its placement and animations, the bob and the third person. This file does what is the Rocket
+-- Launcher's own: the flash, the rocket in flight (its mesh, corona and smoke), the explosion and the sounds. The gameplay is in
+-- rocket_launcher.lua. This file only draws it, and is told what happens through the hook tables in hooks.lua.
 --
--- The assets were made with unreal_tournament/tools/asset_conversion.
+-- The game's unit of the rocket (the crossbow's bolt) still flies, since it is the gameplay. Its own effects are dropped, and UT's are
+-- drawn at it. The crossbow's shot sound is in its animation, which is not played on the player's own first person unit.
+--
+-- The assets were made with tools/asset_conversion.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local animations = mod:dofile("scripts/mods/unreal_tournament/rocket/skin_animations")
@@ -384,8 +384,6 @@ end
 
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
-	-- There is no setting for this: the skin is always on.
-	always = true,
 	name = "rocket",
 	template = TEMPLATE_NAME,
 	unit_name = "units/ut/rocket/rocket_launcher",
@@ -419,7 +417,6 @@ skin_api = mod.weapon_skin.new({
 	-- WeaponStaticMesh.RocketLauncherPickup (DrawScale 0.45): its barrels are along the mesh's own -Y, and the grip is under the back of it
 	third_person = {
 		id = SETTING_ID,
-		always = true,
 		template = TEMPLATE_NAME,
 		unit_name = "units/ut/rocket/pickup",
 		-- (the game links the crossbow, the blunderbuss and the Drakegun to the left hand's node, AttachmentNodeLinking.repeating_crossbow)

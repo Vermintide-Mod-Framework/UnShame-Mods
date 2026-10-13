@@ -270,7 +270,6 @@ register_explosion_template("ut_flak_shell_explosion", {
 		ignore_attacker_unit = true,
 		max_damage_radius = CONFIG.shell_explosion_full_damage_radius,
 		radius = CONFIG.shell_explosion_radius_uu * CONFIG.meters_per_uu,
-		sound_event_name = "fireball_big_hit",
 		use_attacker_power_level = true,
 		camera_effect = {
 			far_distance = 20,

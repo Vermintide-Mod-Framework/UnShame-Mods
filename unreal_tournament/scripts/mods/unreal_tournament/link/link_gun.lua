@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- Link Gun: replaces the Deepwood Staff's (the Thornsister's, the template staff_life) actions in place.
+-- Link Gun: a copy of the Deepwood Staff (the Thornsister's) with fire modes of its own.
 -- The numbers are from UT2004 (XWeapons/LinkFire, LinkAltFire, LinkProjectile, LinkBeamEffect).
 --   LMB: the staff's burst of thorns, which stun as well as hurt.
 --   RMB (held): the link beam. What the aim is on is linked to, one thing at a time, and stays linked until the beam is let go.
@@ -32,49 +32,25 @@ local register_damage_profile = utils.register_damage_profile
 
 local stagger_types = require("scripts/utils/stagger_types")
 
-local TEMPLATE_NAME = "staff_life"
+mod.items.register("link_gun", {
+	key = "ut_link_gun",
+	template = "ut_link_gun_template",
+	base_item = "we_life_staff",
+	deus_copy = "deus_we_life_staff",
+	name = "UT2004 Link Gun",
+	type_name = "Link Gun",
+	description = "Riordan Dynamic Weapon Systems combines the best of weapon design in the Advanced Plasma Rifle v23, commonly known as the Link Gun. Its secondary mode is a switchable energy matrix: on a teammate it becomes a harmless carrier stream that boosts the output of any targeted player also using the Link.",
+	keywords = { "weapon_keyword_rapid_fire", "weapon_keyword_crowd_control", "weapon_keyword_damage_over_time", "weapon_keyword_overheat" },
+	icon = "ut_link_gun_icon",
+	icon_package = "resource_packages/unreal_tournament/icons",
+	icon_materials = "ui/ut/link_gun_icon",
+})
+
+local TEMPLATE_NAME = mod.items.weapons.link_gun.template
 
 local CONFIG = {
-	-- The default stance of both fire modes: the stance of the alt fire (its animation event). It is entered
-	-- idle_pose_delay seconds after the staff is wielded (the raise plays until then), and the beam and venting end
-	-- in it.
+	-- The event that puts the staff in its stance. Inspecting and venting end with it.
 	idle_pose_event = "attack_charge_fireball",
-	idle_pose_delay = 0.4,
-	transition_pose_delay = 0.5, -- seconds after the weapons are shown again, after a ladder or the like, that the stance is entered again
-	damage_recovery_delay = 0.5, -- seconds after damage that the stance is entered again (the reaction plays until then)
-	-- The right arm isn't shown: this node of the first person unit is scaled to this (0 would break the skinning)
-	hidden_arm_nodes = {
-		"j_rightshoulder",
-		"j_rightarm",
-		"j_rightarmroll",
-		"j_rightforearm",
-		"j_rightforearmroll",
-		"j_righthand",
-		"j_righthandthumb1",
-		"j_righthandthumb2",
-		"j_righthandthumb3",
-		"j_righthandindex1",
-		"j_righthandindex2",
-		"j_righthandindex3",
-		"j_righthandmiddle1",
-		"j_righthandmiddle2",
-		"j_righthandmiddle3",
-		"j_righthandmiddle4",
-		"j_righthandring1",
-		"j_righthandring2",
-		"j_righthandring3",
-		"j_righthandring4",
-		"j_righthandpinky1",
-		"j_righthandpinky2",
-		"j_righthandpinky3",
-		"j_righthandpinky4",
-		"j_rightinhandthumb",
-		"j_rightinhandindex",
-		"j_rightinhandmiddle",
-		"j_rightinhandring",
-		"j_rightinhandpinky",
-	},
-	hidden_arm_scale = 0.2, -- (each node of the arm, down the chain they multiply)
 	-- Primary: one bolt at a time while the button is held (UT's LinkAltFire: FireRate 0.2, and its LinkProjectile
 	-- starts at Speed 1000 uu/s, speeds up by 3000 uu/s every second to MaxSpeed 4000, an uu is 0.02 m). The
 	-- bolts are the staff's thorns, which start at the left hand's weapon node (the staff is in it) and a bit
@@ -170,7 +146,7 @@ local CONFIG = {
 	dot_power_level = 500,
 	dot_interval = 1,
 	dot_overcharge = 1, -- heat of every application of it, on top of the heat of the beam
-	dot_damage_source = "we_life_staff",
+	dot_damage_source = mod.items.weapons.link_gun.key,
 	-- A monster, an enemy too big to be held, is linked but not held: once it has moved monster_move_distance from
 	-- where it was when it was linked, or the owner tries to yank it, the owner is launched towards it (the state of
 	-- being launched by the game's monsters) at monster_pull_per_meter of its distance as speed (between the min and
@@ -231,22 +207,14 @@ local CONFIG = {
 	-- its weight (sag_per_weight a meter per meter of beam, per unit of weight, at most sag_max), and bends it
 	-- by how far the enemy is behind where it is being moved to (lag_bend).
 	staff_end_node = "fx_muzzle", -- the node at the end of the staff unit, where the beam and the bolts start
-	-- The beam effect is drawn with the field of view of the staff in the hands, not of the world (vertical, degrees: the
-	-- world's is read from the camera, every frame). Measured from where the beam ended on screenshots, with a world fov of
-	-- 85: the end was seen about 2.1 times as far from the middle of the screen as the target.
-	effect_fov = 47.5,
 	beam_aim_curve = 0.3, -- how far the beam bows towards the aim, as a share of its length at most: 0 is a straight line
 	beam_segment_length = 0.1, -- m, about how far apart the points of the beam are (the particles)
 	beam_min_segments = 2,
 	beam_max_segments = 220,
-	beam_sprite_copies = 1, -- how many copies of the effect at every point: the more, the denser the beam
 	sag_per_weight = 0.015,
 	sag_max = 2.5, -- m
 	lag_bend = 0.5,
 	lag_bend_max = 1.5, -- m
-	-- The beam is drawn with a copy of this particle effect at every point of the curve (it has no settings, so it is only
-	-- placed), the Thornsister's own, green.
-	beam_effect = "fx/lifestaff_idle",
 	-- The others: the end of the beam is told to them this often, and what they draw follows it (the share of the way to it
 	-- covered in a second is 1 - e^-smoothing); a beam that has not been heard of for the timeout is over
 	beam_send_interval = 0.05, -- seconds
@@ -259,10 +227,6 @@ local CONFIG = {
 	-- what depends on their own interactions and on the ragdolls and objects of their own game
 	local_link_kinds = {object = true, openable = true, supply = true},
 	remote_input_timeout = 0.5, -- seconds
-	-- The field of view (vertical, degrees) the effect of a beam that is seen from the outside is drawn with: found by eye with a
-	-- world field of view of 65, the beam is then where it is seen. (effect_fov, above, is the staff in the hands seen from the
-	-- holder's side: they are not the same.)
-	remote_effect_fov = 55,
 }
 
 local overcharge_values = PlayerUnitStatusSettings.overcharge_values
@@ -334,207 +298,26 @@ utils.register_network_lookup("buff_templates", ALLY_BUFF_FADING)
 -- It is put back when the mod is unloaded too.
 local saved = {}
 
--- The default stance. Delayed pose events: the animation event is only sent while is_valid() still holds, so
--- nothing is sent if the weapon was swapped or another action started in the meantime.
-local pose = {}
-local scheduler = utils.delayed_events()
+-- The overcharge lockout has an animation that stays until the weapon has cooled down, also after a weapon swap.
+-- This is the overcharge extension of the player who wields the staff.
+local wielder_overcharge_extension
 
-pose.schedule = scheduler.schedule
-
--- (the staff isn't idle while an action runs, every action calls this when it starts)
-function pose.clear()
-	scheduler.clear()
-
-	pose.waiting = nil
-	pose.recovering = false
-end
-
--- The overcharge lockout has an animation of its own, which stays until the weapon has cooled down, through weapon
--- swaps as well: the stance doesn't replace it, it waits for the lockout to end.
-function pose.locked_out()
-	local overcharge_extension = pose.overcharge_extension
-
-	return overcharge_extension ~= nil and overcharge_extension.lockout == true
-end
-
--- (an action that starts before the stance was entered enters it itself, the shots have no animation of their own)
-function pose.enter(unit_1p, owner_unit)
-	-- (only while the staff is what is wielded: the event is not one of the animations of another weapon, which is what the arms and
-	-- the character play after a swap, and an event that an animation graph doesn't have is an error of the game's). Not while the skin is
-	-- on: the stance is the staff's, the skin's gun is held as UT2004's is, by the animations of the model.
-	if utils.is_weapon_skin_enabled("link_gun") or not utils.is_local_player_unit(owner_unit) or utils.wielded_template_name(owner_unit) ~= TEMPLATE_NAME then
-		pose.waiting = nil
-
-		return
-	end
-
-	-- (also while the game plays an animation of its own, hanging off a ledge, say: it is entered when that is over)
-	if pose.locked_out() or not utils.character_animation_is_free(owner_unit) then
-		pose.waiting = unit_1p
-		pose.waiting_owner = owner_unit
-
-		return
-	end
-
-	pose.waiting = nil
-	pose.entered = true
-
-	Unit.animation_event(unit_1p, CONFIG.idle_pose_event)
-	-- (the others see the stance too: the event is sent to the third person unit, the game doesn't send it for this)
-	Managers.state.network:anim_event(owner_unit, CONFIG.idle_pose_event)
-end
-
--- The right arm is hidden from when the staff is wielded until anything else is: the node of its shoulder in the
--- first person unit is scaled down to a point (the arm hangs off it) every frame, before the world is updated and
--- again right after (some animations set the scale themselves), and the units are updated again for the new scale
--- before they are drawn.
-local hand = {}
-
-function hand.show()
-	local first_person_extension = hand.first_person_extension
-
-	if first_person_extension then
-		hand.first_person_extension = nil
-
-		local unit = first_person_extension:get_first_person_unit()
-
-		if unit and Unit.alive(unit) then
-			for _, name in ipairs(CONFIG.hidden_arm_nodes) do
-				if Unit.has_node(unit, name) then
-					Unit.set_local_scale(unit, Unit.node(unit, name), Vector3(1, 1, 1))
-				end
-			end
-		end
-	end
-end
-
--- (until anything else is wielded: the first person unit is looked up every frame, not kept)
-function hand.hide(first_person_extension)
-	hand.show()
-
-	hand.first_person_extension = first_person_extension
-end
-
-function hand.apply(world)
-	local first_person_extension = hand.first_person_extension
-
-	if not first_person_extension then
-		return
-	end
-
-	local unit = first_person_extension:get_first_person_unit()
-
-	if not unit or not Unit.alive(unit) then
-		return
-	end
-
-	local scale = CONFIG.hidden_arm_scale
-
-	for _, name in ipairs(CONFIG.hidden_arm_nodes) do
-		if Unit.has_node(unit, name) then
-			Unit.set_local_scale(unit, Unit.node(unit, name), Vector3(scale, scale, scale))
-		end
-	end
-
-	if world then
-		World.update_unit(world, unit)
-
-		local mesh_unit = first_person_extension:get_first_person_mesh_unit()
-
-		if mesh_unit and Unit.alive(mesh_unit) then
-			World.update_unit(world, mesh_unit)
-		end
-	end
-end
-
-function hand.update()
-	hand.apply()
+local function locked_out()
+	return wielder_overcharge_extension ~= nil and wielder_overcharge_extension.lockout == true
 end
 
 mod:hook_safe(TransportationSystem, "world_updated", function (self, world)
-	hand.apply(world)
-
 	if mod.draw_pending_beams then
 		mod.draw_pending_beams()
 	end
 end)
 
-local IGNORED_DAMAGE_TYPES = {
-	aoe_poison_dot = true,
-	arrow_poison_dot = true,
-	buff = true,
-	buff_shared_medpack = true,
-	buff_shared_medpack_temp_health = true,
-	burninating = true,
-	damage_over_time = true,
-	gas = true,
-	heal = true,
-	health_degen = true,
-	level = true,
-	life_drain = true,
-	life_tap = true,
-	plague_ground = true,
-	poison = true,
-	temporary_health_degen = true,
-	volume_generic_dot = true,
-	vomit_ground = true,
-	warpfire_ground = true,
-	wounded_dot = true,
-}
-
-function pose.update(dt)
-	-- Taking damage plays a reaction that takes the staff out of the stance: it is entered again after it
-	local health_extension = pose.health_extension
-
-	if health_extension and pose.is_valid and pose.is_valid() and not pose.recovering then
-		-- (the extension can be one that is gone, after a death or at the end of a level: it is then let go of)
-		local ok, damage_datas, num_damages = pcall(health_extension.recent_damages, health_extension)
-
-		if not ok then
-			pose.health_extension = nil
-			num_damages = 0
-		end
-
-		for i = 1, num_damages / DamageDataIndex.STRIDE do
-			local offset = (i - 1) * DamageDataIndex.STRIDE
-
-			-- (damage that is only a tick of something that goes on, the degrading of temporary health, poison, burning,
-			-- doesn't play a reaction: the ones that the game's interactions don't mind either)
-			if damage_datas[offset + DamageDataIndex.DAMAGE_AMOUNT] > 0 and not IGNORED_DAMAGE_TYPES[damage_datas[offset + DamageDataIndex.DAMAGE_TYPE]] then
-				pose.recovering = true
-				pose.entered = false
-
-				pose.schedule(CONFIG.damage_recovery_delay, pose.is_valid, function ()
-					pose.recovering = false
-
-					pose.enter(pose.unit_1p, pose.owner_unit)
-				end)
-
-				break
-			end
-		end
-	end
-
-	if pose.waiting then
-		if not pose.is_valid or not pose.is_valid() then
-			pose.waiting = nil
-		elseif not pose.locked_out() and Unit.alive(pose.waiting_owner) and utils.character_animation_is_free(pose.waiting_owner) then
-			pose.enter(pose.waiting, pose.waiting_owner)
-		end
-	end
-
-	scheduler.update(dt)
-end
-
--- The end of the staff itself (it moves with the animations), if the unit has the node
+-- Where the beam starts: the muzzle of the model or the mesh, else the end node of the staff
 local function staff_end_position(owner_unit)
-	-- (with the skin it is the end of the barrel of the model, or of the mesh in the hand)
-	if utils.is_weapon_skin_enabled("link_gun") then
-		local position = mod.link_beam_callbacks.start_position(owner_unit)
+	local position = mod.link_beam_callbacks.start_position(owner_unit)
 
-		if position then
-			return position
-		end
+	if position then
+		return position
 	end
 
 	local inventory_extension = ScriptUnit.has_extension(owner_unit, "inventory_system")
@@ -641,13 +424,10 @@ local function restore_staff()
 	end
 
 	actions.weapon_reload.default.anim_end_event = original.reload_anim_end_event
-	actions.weapon_reload.default.enter_function = original.reload_enter_function
-	actions.weapon_reload.default.finish_function = original.reload_finish_function
 
 	local inspect = actions.action_inspect.action_inspect_hold
 
 	inspect.anim_end_event = original.inspect_anim_end_event
-	inspect.enter_function = original.inspect_enter_function
 
 	actions.action_two.default = original.action_two_default
 
@@ -672,14 +452,30 @@ local function apply_link_gun()
 
 	packages.load(BEAM_PACKAGES)
 
+	-- The stat chart (0 to 7): the bolts are the light attack, the beam the heavy one
+	template.weapon_diagram = {
+		light_attack = {
+			[DamageTypes.ARMOR_PIERCING] = 2,
+			[DamageTypes.CLEAVE] = 3,
+			[DamageTypes.SPEED] = 6,
+			[DamageTypes.STAGGER] = 5,
+			[DamageTypes.DAMAGE] = 3,
+		},
+		heavy_attack = {
+			[DamageTypes.ARMOR_PIERCING] = 1,
+			[DamageTypes.CLEAVE] = 2,
+			[DamageTypes.SPEED] = 3,
+			[DamageTypes.STAGGER] = 4,
+			[DamageTypes.DAMAGE] = 4,
+		},
+	}
+
 	local actions = template.actions
 	local reload = actions.weapon_reload.default
 	local original = {
 		action_two_default = actions.action_two.default,
 		primary_actions = {},
 		reload_anim_end_event = reload.anim_end_event,
-		reload_enter_function = reload.enter_function,
-		reload_finish_function = reload.finish_function,
 	}
 
 	-- (the whole of an action is saved, its fields can be put back as they were)
@@ -743,48 +539,16 @@ local function apply_link_gun()
 		action.ut_init_callback = "link_bolt"
 		action.ut_init_flow_event_filter = "link"
 		action.ut_skin_init_callback = "link_bolt"
-		action.enter_function = function (...)
-			pose.clear()
-
-			if not pose.entered then
-				local weapon_extension = select(4, ...)
-
-				pose.enter(weapon_extension.first_person_extension:get_first_person_unit(), (...))
-			end
-
-			if saved.enter_function then
-				return saved.enter_function(...)
-			end
-		end
 	end
 
-	-- Inspecting ends in the stance too (the end event of the game takes the staff to its own idle)
+	-- Inspecting ends in the stance
 	local inspect = actions.action_inspect.action_inspect_hold
 
 	original.inspect_anim_end_event = inspect.anim_end_event
-	original.inspect_enter_function = inspect.enter_function
 	inspect.anim_end_event = CONFIG.idle_pose_event
-	inspect.enter_function = function (...)
-		pose.clear()
 
-		pose.entered = true
-
-		if original.inspect_enter_function then
-			return original.inspect_enter_function(...)
-		end
-	end
-
-	-- Venting also ends in the stance (venting right after wielding: the raise to the stance would play over it)
+	-- So does venting
 	reload.anim_end_event = CONFIG.idle_pose_event
-	reload.enter_function = function (...)
-		pose.clear()
-
-		pose.entered = true
-
-		if original.reload_enter_function then
-			return original.reload_enter_function(...)
-		end
-	end
 
 	-- The beam: a charge that is held, with the heat of the beam while it is, the rest is in the callback below
 	local beam = table.clone(original.action_two_default)
@@ -794,13 +558,7 @@ local function apply_link_gun()
 	beam.anim_end_event_condition_func = nil
 	beam.anim_event = nil
 	beam.charge_time = 1000 -- (it is never "full")
-	beam.enter_function = function (attacker_unit, input_extension, _, weapon_extension)
-		pose.clear()
-
-		if not pose.entered then
-			pose.enter(weapon_extension.first_person_extension:get_first_person_unit(), attacker_unit)
-		end
-
+	beam.enter_function = function (attacker_unit, input_extension)
 		input_extension:reset_release_input()
 		input_extension:clear_input_buffer()
 	end
@@ -2585,79 +2343,8 @@ local function bezier(p0, p1, p2, p3, s)
 	return a + b + c + d
 end
 
--- The beam as particles: a copy of the effect at every point of the curve, placed every frame and kept until the beam
--- ends, the effects are animated and one that is made again every so often is seen at its start, where it isn't there.
--- When it ends they stop spawning particles and what is out fades on its own, instead of vanishing at once.
-local function destroy_sprites(state)
-	if state.sprite_ids and state.world then
-		for _, effect_id in ipairs(state.sprite_ids) do
-			pcall(World.stop_spawning_particles, state.world, effect_id)
-		end
-	end
-
-	state.sprite_ids = nil
-	state.sprite_rolls = nil
-	state.world = nil
-end
-
--- The points of the beam, and the points as they are seen: kept, not made every frame
+-- The points of the beam, kept between frames. The skin draws the beam (link_beam_callbacks.draw).
 local beam_points = {}
-local seen_points = {}
-
--- (the first `count` of the points. Every copy is turned about the way the beam goes, by an angle of its own that it
--- keeps, so that the copies don't all look the same)
-local function draw_sprites(state, world, effect_name, points, count)
-	-- (with the skin the skin draws it)
-	if utils.is_weapon_skin_enabled("link_gun") then
-		mod.link_beam_callbacks.draw(state, points, count)
-
-		return
-	end
-
-	local ids = state.sprite_ids
-
-	if not ids then
-		ids = {}
-		state.sprite_ids = ids
-		state.sprite_rolls = {}
-	end
-
-	local rolls = state.sprite_rolls
-
-	state.world = world
-
-	-- (beam_sprite_copies copies of the effect at every point of the curve: a longer beam gets more, a shorter one fewer)
-	local copies = CONFIG.beam_sprite_copies
-	local wanted = (count - 1) * copies
-
-	for i = #ids + 1, wanted do
-		ids[i] = World.create_particles(world, effect_name, points[math.floor((i - 1) / copies) + 2], Quaternion.identity())
-		rolls[i] = math.random() * math.pi * 2
-	end
-
-	for i = #ids, wanted + 1, -1 do
-		pcall(World.destroy_particles, world, ids[i])
-
-		ids[i] = nil
-		rolls[i] = nil
-	end
-
-	-- (all looking along the line from the staff to the end, not along the curve: the particles of the effect move along the
-	-- way it faces, they flow towards the staff and not past the end)
-	local offset = points[count] - points[1]
-	local length = Vector3.length(offset)
-	local rotation = length > 0.001 and Quaternion.look(offset * (1 / length)) or Quaternion.identity()
-
-	for i = 2, count do
-		local to = points[i]
-
-		for copy = 1, copies do
-			local index = (i - 2) * copies + copy
-
-			World.move_particles(world, ids[index], to, Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3.forward(), rolls[index])))
-		end
-	end
-end
 
 -- The points of the beam, in the first of `points` and after it, as a curve from the start to the end; returns how many there
 -- are. aim is the way the holder is aiming, weight what hangs from the beam and lag how far what is held is behind where it
@@ -2701,28 +2388,10 @@ local function beam_curve(points, start_position, end_position, aim, weight, lag
 	return segments + 1
 end
 
-local function draw_beam(state, world, camera_position, start_position, rotation, end_position, weight, lag)
-	local right = Quaternion.right(rotation)
-	local up = Quaternion.up(rotation)
+local function draw_beam(state, start_position, rotation, end_position, weight, lag)
 	local count = beam_curve(beam_points, start_position, end_position, Quaternion.forward(rotation), weight, lag, CONFIG.beam_segment_length)
 
-	-- The effect is drawn like the staff in the hands is, with a narrower field of view than the world: a point of the
-	-- world is seen further from the middle of the screen (by the ratio of the two) than where it is. The beam starts at
-	-- the staff, which is drawn the same way, and ends in the world: the points are pulled towards the aim, the more
-	-- the further along the beam they are, so that the end is seen on the target.
-	local world_fov = math.deg(Managers.state.camera:fov("player_1"))
-	-- (not with the skin: the model is placed so that what it draws is seen where it is, and its particles are the world's)
-	local scale = utils.is_weapon_skin_enabled("link_gun") and 1 or math.tan(math.rad(CONFIG.effect_fov) / 2) / math.tan(math.rad(world_fov) / 2)
-	local forward = Quaternion.forward(rotation)
-
-	for i = 1, count do
-		local offset = beam_points[i] - camera_position
-		local factor = 1 + (scale - 1) * ((i - 1) / math.max(count - 1, 1))
-
-		seen_points[i] = camera_position + right * (Vector3.dot(offset, right) * factor) + up * (Vector3.dot(offset, up) * factor) + forward * Vector3.dot(offset, forward)
-	end
-
-	draw_sprites(state, world, CONFIG.beam_effect, seen_points, count)
+	mod.link_beam_callbacks.draw(state, beam_points, count)
 end
 
 local function end_beam(owner_unit)
@@ -2742,7 +2411,6 @@ local function end_beam(owner_unit)
 
 		finish_throw(state)
 		clear_held_outline(state)
-		destroy_sprites(state)
 		stop_drone(owner_unit)
 		track_released_object(state)
 
@@ -3546,7 +3214,7 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 		state.link_block_until = math.max(state.link_block_until or 0, interaction_block[owner_unit])
 	end
 
-	if yanked and state.target and not pose.locked_out() and utils.is_local_player_unit(owner_unit) and utils.wielded_template_name(owner_unit) == TEMPLATE_NAME then
+	if yanked and state.target and not locked_out() and utils.is_local_player_unit(owner_unit) and utils.wielded_template_name(owner_unit) == TEMPLATE_NAME then
 		Unit.animation_event(first_person_extension:get_first_person_unit(), CONFIG.yank_animation_event)
 		play_yank_sound(owner_unit)
 		mod:network_send("ut_link_yank", "others", Managers.state.unit_storage:go_id(owner_unit))
@@ -3632,11 +3300,9 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 	pending.ready = true
 	pending.end_position = end_position
 	pending.lag = state.kind == "enemy" and state.lag and state.lag:unbox() or nil
-	pending.origin = origin
 	pending.owner_unit = owner_unit
 	pending.rotation = rotation
 	pending.weight = state.kind == "enemy" and state.weight or nil
-	pending.world = world
 
 	-- the others are told where it ends
 	local send_position = end_position or state.target and Unit.alive(state.target) and target_position(state)
@@ -3661,15 +3327,13 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 end
 
 -- The beams of the other players: where each ends, as it was told, and what is drawn, which follows it
-local remote_beams = {} -- { [the unit of the player] = { sprite_ids, world, end_position, aim, weight, lag, shown, received, drawn_at } }
-local remote_world_points = {} -- the points of a beam, and the same as they are drawn
-local remote_points = {}
+local remote_beams = {} -- { [the unit of the player] = { end_position, aim, weight, lag, shown, received, drawn_at } }
+local remote_points = {} -- the points of a beam
 
 local function remove_remote_beam(owner_unit)
 	local beam = remote_beams[owner_unit]
 
 	if beam then
-		destroy_sprites(beam)
 		stop_drone(owner_unit)
 
 		remote_beams[owner_unit] = nil
@@ -3853,14 +3517,12 @@ mod:network_register("ut_link_beam_end", function (_, owner_go_id)
 	end
 end)
 
--- The end of the staff of the player's character: the one of the two hands' units that has the node the beam starts at
+-- Where another player's beam starts: the muzzle of the mesh in their hand, else the end node of their staff
 local function remote_staff_end(owner_unit)
-	if utils.is_weapon_skin_enabled("link_gun") then
-		local position = mod.link_beam_callbacks.start_position(owner_unit)
+	local position = mod.link_beam_callbacks.start_position(owner_unit)
 
-		if position then
-			return position
-		end
+	if position then
+		return position
 	end
 
 	local inventory_extension = ScriptUnit.has_extension(owner_unit, "inventory_system")
@@ -3879,12 +3541,11 @@ end
 
 local function draw_remote_beams()
 	local now = Application.time_since_launch()
-	local world = Managers.world:world("level_world")
 
 	for owner_unit, beam in pairs(remote_beams) do
 		local start_position = remote_staff_end(owner_unit)
 
-		if not start_position or now - beam.received > CONFIG.remote_beam_timeout or (not utils.is_weapon_skin_enabled("link_gun") and not effects.is_available(CONFIG.beam_effect)) then
+		if not start_position or now - beam.received > CONFIG.remote_beam_timeout then
 			remove_remote_beam(owner_unit)
 		else
 			set_drone(owner_unit, beam.linked)
@@ -3905,25 +3566,9 @@ local function draw_remote_beams()
 			beam.drawn_at = now
 
 			-- (curved as the holder's is)
-			local count = beam_curve(remote_world_points, start_position, shown, Vector3.normalize(shown_aim), beam.weight, shown_lag, CONFIG.beam_segment_length)
+			local count = beam_curve(remote_points, start_position, shown, Vector3.normalize(shown_aim), beam.weight, shown_lag, CONFIG.beam_segment_length)
 
-			-- The effect is drawn with the field of view of the staff in the hands, not of the world: every point of the beam is
-			-- moved toward the middle of the screen by the ratio of the two, so that it is seen where it is
-			local camera_manager = Managers.state.camera
-			local camera_position = camera_manager:camera_position("player_1")
-			local camera_rotation = camera_manager:camera_rotation("player_1")
-			local right = Quaternion.right(camera_rotation)
-			local up = Quaternion.up(camera_rotation)
-			local forward = Quaternion.forward(camera_rotation)
-			local scale = utils.is_weapon_skin_enabled("link_gun") and 1 or math.tan(math.rad(CONFIG.remote_effect_fov) / 2) / math.tan(camera_manager:fov("player_1") / 2)
-
-			for i = 1, count do
-				local offset = remote_world_points[i] - camera_position
-
-				remote_points[i] = camera_position + right * (Vector3.dot(offset, right) * scale) + up * (Vector3.dot(offset, up) * scale) + forward * Vector3.dot(offset, forward)
-			end
-
-			draw_sprites(beam, world, CONFIG.beam_effect, remote_points, count)
+			mod.link_beam_callbacks.draw(beam, remote_points, count)
 		end
 	end
 end
@@ -3947,7 +3592,7 @@ function mod.draw_pending_beams()
 			local start_position = Unit.alive(pending.owner_unit) and staff_end_position(pending.owner_unit)
 
 			if end_position and start_position then
-				draw_beam(state, pending.world, pending.origin, start_position, pending.rotation, end_position, pending.weight, pending.lag)
+				draw_beam(state, start_position, pending.rotation, end_position, pending.weight, pending.lag)
 			end
 		end
 	end
@@ -3962,68 +3607,24 @@ mod.charge_finish_callbacks.link = function (self)
 	end
 end
 
--- Wielding the staff: the stance is entered after a moment
--- Hanging off a ledge: the stance is ended in the character the others see, which is in it as the character's idle, under the
--- animations of hanging (it is entered again when the weapons are shown after, see unhide_weapons below)
+-- Hanging off a ledge: the staff's stance ends in the character the others see, under the hanging animations
 mod.ledge_hang_callbacks.link = function (unit)
-	if utils.is_weapon_enabled("link_gun") and utils.wielded_template_name(unit) == TEMPLATE_NAME then
-		pose.entered = false
-
+	if utils.wielded_template_name(unit) == TEMPLATE_NAME then
 		Managers.state.network:anim_event(unit, "attack_finished")
 	end
 end
 
-mod.wield_callbacks.link = function (self, equipment, slot_data, unit_1p)
-	if not slot_data then
+-- Wielding the staff: its overcharge lockout is read from now on
+mod.wield_callbacks.link = function (self, equipment, slot_data)
+	if not slot_data or not has_staff then
 		return
 	end
-
-	-- (whatever is wielded, what was going on with the staff's stance ends, and the arm is back)
-	pose.clear()
-	pose.entered = false
-	hand.show()
 
 	local item_template = BackendUtils.get_item_template(slot_data.item_data)
 
-	if item_template.name ~= TEMPLATE_NAME or not utils.is_weapon_enabled("link_gun") or not has_staff then
-		return
+	if item_template.name == TEMPLATE_NAME then
+		wielder_overcharge_extension = ScriptUnit.has_extension(self._unit, "overcharge_system")
 	end
-
-	local function is_valid()
-		return equipment.wielded == slot_data.item_data
-	end
-
-	if self.first_person_extension then
-		hand.hide(self.first_person_extension)
-	end
-
-	pose.overcharge_extension = ScriptUnit.has_extension(self._unit, "overcharge_system")
-	pose.health_extension = ScriptUnit.has_extension(self._unit, "health_system")
-	pose.is_valid = is_valid
-	pose.owner_unit = self._unit
-	pose.unit_1p = unit_1p
-	pose.recovering = false
-
-	pose.schedule(CONFIG.idle_pose_delay, is_valid, function ()
-		pose.enter(unit_1p, pose.owner_unit)
-	end)
-end
-
--- The first person weapons are hidden for a while by the game's transitions (ladders, interactions that are seen from the
--- third person, ledges, being knocked down, vortexes, being launched) and shown again when they are over, and the staff
--- is back in the idle of the game, not in the stance: it is entered again a moment after they are shown.
-if PlayerUnitFirstPerson then
-	mod:hook_safe(PlayerUnitFirstPerson, "unhide_weapons", function (self)
-		if hand.first_person_extension ~= self or not pose.is_valid or not pose.is_valid() or not table.is_empty(self.hide_weapon_reasons) then
-			return
-		end
-
-		pose.entered = false
-
-		pose.schedule(CONFIG.transition_pose_delay, pose.is_valid, function ()
-			pose.enter(pose.unit_1p, pose.owner_unit)
-		end)
-	end)
 end
 
 -- The beams of the others are run by the host from the weapon system's update, where its own beam is run (the actions of the
@@ -4047,9 +3648,6 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 			update_ally_buffs()
 		end
 	end
-
-	pose.update(dt)
-	hand.update()
 
 	if next(pending_rescues) then
 		update_pending_rescues(Managers.time:time("game"))
@@ -4086,19 +3684,19 @@ local function clear_beams()
 	end
 
 	restore_corpse()
-	pose.clear()
-	pose.health_extension = nil
-	pose.overcharge_extension = nil
-	pose.is_valid = nil
-	hand.show()
+	wielder_overcharge_extension = nil
 	table.clear(bolts)
 end
 
--- Enabling and disabling (the weapon can be switched off in the settings: the staff is then the game's own again)
-utils.register_weapon("link_gun", apply_link_gun, function ()
+mod.enabled_callbacks[#mod.enabled_callbacks + 1] = apply_link_gun
+
+local function give_back()
 	clear_beams()
 	restore_staff()
-end)
+end
+
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = give_back
+mod.unload_callbacks[#mod.unload_callbacks + 1] = give_back
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	clear_beams()
