@@ -525,8 +525,9 @@ local function turn_barrel(skin)
 	}
 end
 
--- How many rockets the player has loaded
+-- How many rockets the player has loaded, and how many there can be (the ammo limits it to fewer than three)
 local loaded_count = 1
+local rocket_capacity = 3
 
 -- A shot of the player: the animation, the flash and the sound
 local function shot(action, new_action)
@@ -583,18 +584,24 @@ mod.aim_start_callbacks.rocket_skin = function (self, new_action)
 
 	if new_action.ut_rocket_aim and skin and utils.is_local_player_unit(self.owner_unit) then
 		loaded_count = 1
-		turn_barrel(skin)
+		rocket_capacity = math.min(3, self.ammo_extension and self.ammo_extension:current_ammo() or 3)
+
+		-- (one rocket is in the barrel already: with fewer than three there is a load less, and the last of them is the one cut, so
+		-- there is none to play for a single rocket, and one for two)
+		if rocket_capacity >= 2 then
+			turn_barrel(skin)
+		end
 	end
 end
 
--- Another rocket is loaded: the second one is the load (UT's third has none)
+-- Another rocket is loaded: the second one is the load (UT's third has none), with three to load
 mod.rocket_load_callbacks.rocket_skin = function (owner_unit, loaded)
 	local skin = skin_api.state()
 
 	if skin and utils.is_local_player_unit(owner_unit) then
 		loaded_count = loaded
 
-		if loaded == 2 then
+		if loaded == 2 and rocket_capacity >= 3 then
 			turn_barrel(skin)
 		end
 	end
