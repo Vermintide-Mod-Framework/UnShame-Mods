@@ -539,8 +539,16 @@ mod:command("slomo", "<number> - the speed of the game: below 1 slower, above 1 
 	mod:echo("slomo: %g", number)
 end)
 
--- Development, like UT's "loaded": fills the ammo of the ranged weapon
-mod:command("loaded", "- fills the ammo of the ranged weapon", function ()
+-- Development, like UT's "loaded": fills the ammo of the ranged weapon, or adds the amount that is given
+mod:command("loaded", "[amount] - fills the ammo of the ranged weapon, or gives that many (a whole number)", function (amount)
+	local number = tonumber(amount)
+
+	if amount and (not number or number ~= math.floor(number) or number < 0) then
+		mod:echo("loaded: a whole number, or nothing to fill it")
+
+		return
+	end
+
 	local player = Managers.player:local_player_safe()
 	local unit = player and player.player_unit
 	local inventory_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "inventory_system")
@@ -553,7 +561,7 @@ mod:command("loaded", "- fills the ammo of the ranged weapon", function ()
 		return
 	end
 
-	ammo_extension:add_ammo()
+	ammo_extension:add_ammo(number)
 	mod:echo("loaded: %d", ammo_extension:total_remaining_ammo())
 end)
 
