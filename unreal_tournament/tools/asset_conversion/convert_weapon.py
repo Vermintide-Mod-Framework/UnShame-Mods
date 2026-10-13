@@ -140,6 +140,8 @@ WEAPONS['rocket'] = {
     'scale': 0.0125,
     'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire'), ('load', 'Load')],
     'locators': ['Bone_Flash'],
+    'stretch': ('Bone_rod', 'Bone_weapon', 'bone_feed'),
+    'roughness': 0.7,
     'unit': 'units/ut/rocket/rocket_launcher',
     'lua': 'scripts/mods/unreal_tournament/rocket/skin_animations.lua',
 }
@@ -227,7 +229,7 @@ variables = {
 ''',
 }
 
-def material_text(kind, texture, opacity=None, first_person=False):
+def material_text(kind, texture, opacity=None, first_person=False, roughness=None):
     text = MATERIAL_TEMPLATES[kind] % texture
 
     if first_person:
@@ -239,6 +241,10 @@ def material_text(kind, texture, opacity=None, first_person=False):
     if opacity is not None:
         # (a see through material: how much of it there is)
         text = text.rstrip('\n').rstrip('}') + '\topacity = {\n\t\ttype = "scalar"\n\t\tvalue = %s\n\t}\n}\n' % opacity
+
+    if roughness is not None:
+        # (the standard material's roughness is 0.33: shiny, which lights a small face at an angle in a color that is not its own)
+        text = text.rstrip('\n').rstrip('}') + '\troughness = {\n\t\ttype = "scalar"\n\t\tvalue = %s\n\t}\n}\n' % roughness
 
     return text
 
@@ -340,10 +346,20 @@ def main():
     bind_q, bind_p = world_bones(convention[0], convention[1], ref_q, ref_p)
 
     # geometry: a piece for each (bone, material), a face goes with the bone most of its points have
+    # A 'stretch' is a part between two bones that is stretched as one of them moves away from the other (UT skins the points of the rod
+    # of the Rocket Launcher's piston to two bones). It is a piece of its own, on a bone that is added, which the skin scales.
+    stretch = cfg.get('stretch')
+    stretch_bone = None
+    if stretch:
+        stretch_pair = set(bone_names.index(n) for n in stretch[1:])
+        stretch_bone = len(bone_names)
+        bone_names.append(stretch[0])
     pieces = {}
     for w0, w1, w2, mat in faces:
         votes = [point_bone[wedges[w][0]] for w in (w0, w1, w2)]
         bone = max(set(votes), key=votes.count)
+        if stretch and set(votes) == stretch_pair:
+            bone = stretch_bone
         pieces.setdefault((bone, mat), []).append((w0, w2, w1))  # the psk's front faces are clockwise
     used_bones = sorted(set(b for b, m in pieces))
 
@@ -455,7 +471,7 @@ def main():
             write_png('%s/%s.png' % (REPO, texture), w, h, rows)
             open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
             done_textures[texture] = True
-        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture, opacity, first_person=True))
+        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture, opacity, first_person=True, roughness=cfg.get('roughness')))
 
     # the animations: the pose of each bone (the root's move first: it is how the whole mesh is moved) against the mesh in its
     # reference pose, in the model's axes and UT units
@@ -510,12 +526,14 @@ def main():
         root_inverse = qconj(skin_q[0])
         poses = []
         for b in animated:
+            # (a stretch has the pose of the bone that moves, which the skin reads as how far to stretch it)
+            source = bone_names.index(stretch[2]) if b == stretch_bone else b
             if b == 0:
                 q, p = skin_q[0], skin_p[0]
             else:
                 # against the root's move (the root is placed by the skin as a whole)
-                q = qmul(root_inverse, skin_q[b])
-                p = rotate(root_inverse, sub(skin_p[b], skin_p[0]))
+                q = qmul(root_inverse, skin_q[source])
+                p = rotate(root_inverse, sub(skin_p[source], skin_p[0]))
             if b in locator_bones:
                 # a node of a bone with no mesh is at the bone, not at the origin of the mesh
                 p = add(p, rotate(q, bind_p[b]))

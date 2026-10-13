@@ -95,15 +95,14 @@ local CONFIG = {
 	lock_range = 50, -- m
 	lock_aim_dot = 0.995, -- how close to the aim the enemy has to be, 1 is exactly
 	lock_keep_dot = 0.95, -- how far from the aim an enemy that is locked can be without it counting as being off it (18 degrees)
-	lock_required_time = 0.4, -- seconds (UT's is 1.25)
-	unlock_required_time = 1.5, -- seconds the aim has to be off the locked enemy before the lock is lost (UT's is 0.5)
-	lock_check_interval = 0.1, -- seconds, UT's is 0.5
+	lock_required_time = 1.25, -- seconds, LockRequiredTime
+	unlock_required_time = 0.5, -- seconds the aim has to be off the locked enemy before the lock is lost, UnLockRequiredTime
+	lock_check_interval = 0.5, -- seconds, SeekCheckFreq: the lock is checked this often, so the time is counted in steps of it
 	seek_delay = 0.35, -- seconds a rocket flies straight after being fired before it starts to home in
 	seek_turn_rate = 3.5, -- radians per second, how fast a rocket can turn towards its target
 	lock_outline = true, -- the locked enemy gets the red outline of the game's target marking (like the true flight bow's)
 	lock_indicator = false, -- the crosshair gets arrows around it while locked
 	lock_arrows_spread = 0.3, -- how far from the center the arrows are
-	lock_sound_event = false, -- played when the lock is made, a sound event of the game's HUD (false for none)
 	-- When another rocket is loaded the weapon plays an animation (false for none: "attack_shoot" is the
 	-- animation of firing while aiming, its sound is the sound of a shot), and a flow event of the weapon's
 	-- units (the game triggers these for the sounds of handling a weapon: "sfx_ranged_weapon_foley" is the
@@ -125,11 +124,12 @@ local CONFIG = {
 	pip_size = 9, -- pixels at 1080p
 	pip_spacing = 18,
 	pip_offset_y = 7, -- from the center of the crosshair, positive is up
+	-- the red of the launcher's buttons
 	pip_loaded_color = {
 		255,
-		255,
-		170,
-		40,
+		215,
+		25,
+		25,
 	}, -- alpha, red, green, blue
 	pip_empty_alpha = 70,
 	-- When the salvo will be a spiral the pips are in a triangle instead of a row: the second stays where the
@@ -915,8 +915,8 @@ local function update_lock_on(t)
 
 				add_lock_outline(state)
 
-				if CONFIG.lock_sound_event and first_person_extension then
-					first_person_extension:play_hud_sound_event(CONFIG.lock_sound_event)
+				for _, callback in pairs(mod.rocket_lock_callbacks) do
+					callback(unit, true)
 				end
 			end
 		else
@@ -927,6 +927,12 @@ local function update_lock_on(t)
 		state.unlock_time = state.unlock_time + interval
 
 		if state.unlock_time >= CONFIG.unlock_required_time then
+			if state.locked then
+				for _, callback in pairs(mod.rocket_lock_callbacks) do
+					callback(unit, false)
+				end
+			end
+
 			reset_lock(state)
 		end
 	end

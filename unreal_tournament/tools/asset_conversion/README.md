@@ -32,7 +32,7 @@ Local tools that produced `units/ut/*`, `ui/ut/*`, `wwise/unreal_tournament/*`, 
 | `split_flak_trail.py <scratch>` | the Flak Cannon's trail streak (turned a quarter, for a beam) and the generated glows of the chunk and of the shell | `umodel/out4`, `out9`, `out11` |
 | `split_smoke.py <scratch>` | `smoke_0` to `smoke_15`: the 16 puffs of UT's smoke sheet, one texture each (a smoke particle shows one of them) | `umodel/out9` |
 | `make_flak_flash.py <scratch>` | the texture of the Flak Cannon's first person muzzle flash | `umodel/out33` (`XGameShaders`) |
-| `make_bank.py <weapon> <scratch>` | the sound banks in `wwise/unreal_tournament`: a bank with an event for each sound, written by hand. The weapons are in `WEAPONS`: `announcer`, `shock_rifle`, `flak_cannon`, `rocket_launcher`, `bio_rifle`, `link_gun` | the sounds exported with `-sounds`: `umodel/out5`, `out8`, `out10` |
+| `make_bank.py <weapon> <scratch>` | the sound banks in `wwise/unreal_tournament`: a bank with an event for each sound, written by hand. The weapons are in `WEAPONS`: `announcer`, `shock_rifle`, `flak_cannon`, `rocket_launcher`, `bio_rifle`, `link_gun` | the sounds exported with `-sounds`: `umodel/out5`, `out8`, `out10`, `out35` |
 | `render_icon.py in.bsi out.png size yaw pitch roll textures [fill]` | an inventory icon from a converted pickup | a bsi and its textures |
 | `preview_weapon.py <weapon> <export dir> out.png [inspect numbers]` | a picture of a first person weapon in its idle or inspect pose, placed the way `weapon_skin.lua` does | a psk |
 | `render_psk2.py` | a check (below) | |

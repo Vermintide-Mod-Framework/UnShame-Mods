@@ -40,6 +40,7 @@ local mod = get_mod("unreal_tournament")
 --   on_create(skin), on_update(skin, dt), on_destroy(skin): what is the weapon's own of the model that is shown
 --   on_pose(skin, pose): every frame before the model is placed, to change the pose of the bones that the animations don't (UT sets some
 --       by code: the barrel of the Rocket Launcher). pose is the row of numbers of a frame (a bone's are at (index - 1) * 7 + 1).
+--       skin.node_scales[bone index] = Vector3 scales a node along its own axes (a part that stretches: the rod of the Rocket Launcher).
 --   on_update_always(dt): every frame, shown or not; on_refresh(): when the setting or the weapon is switched; on_give_back(),
 --   on_level_exit(): what is its own to take back and to clear
 
@@ -662,11 +663,25 @@ local function new(def)
 		-- (the other bones are against the root's move, in the meters of the mesh)
 		for b = 2, bone_count do
 			local o = (b - 1) * 7
+			local node_rotation = Quaternion.from_elements(pose[o + 1], pose[o + 2], pose[o + 3], pose[o + 4])
+			local node_position = Vector3(pose[o + 5], pose[o + 6], pose[o + 7]) * CONFIG.model_meters_per_unit
+			local node_scale = skin.node_scales and skin.node_scales[b]
 
-			Unit.set_local_pose(skin.unit, skin.nodes[b], Matrix4x4.from_quaternion_position(
-				Quaternion.from_elements(pose[o + 1], pose[o + 2], pose[o + 3], pose[o + 4]),
-				Vector3(pose[o + 5], pose[o + 6], pose[o + 7]) * CONFIG.model_meters_per_unit
-			))
+			if node_scale then
+				-- (scaled along the node's own axes, then turned)
+				local node_right = Quaternion.right(node_rotation) * node_scale.x
+				local node_forward = Quaternion.forward(node_rotation) * node_scale.y
+				local node_up = Quaternion.up(node_rotation) * node_scale.z
+
+				Unit.set_local_pose(skin.unit, skin.nodes[b], Matrix4x4(
+					node_right.x, node_right.y, node_right.z,
+					node_forward.x, node_forward.y, node_forward.z,
+					node_up.x, node_up.y, node_up.z,
+					node_position.x, node_position.y, node_position.z
+				))
+			else
+				Unit.set_local_pose(skin.unit, skin.nodes[b], Matrix4x4.from_quaternion_position(node_rotation, node_position))
+			end
 		end
 
 		-- (a UT unit of the model, across: what is drawn on it is as big as the model is)

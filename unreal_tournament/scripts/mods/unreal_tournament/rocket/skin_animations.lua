@@ -7,7 +7,7 @@ return {
 		"b_bone_barrel",
 		"b_bone_chamber",
 		"b_bone_shell",
-		"b_bone_feed",
+		"b_bone_rod",
 		"b_bone_flash",
 	},
 	animations = {

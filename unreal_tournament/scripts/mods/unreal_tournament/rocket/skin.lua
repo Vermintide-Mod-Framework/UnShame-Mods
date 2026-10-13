@@ -81,6 +81,9 @@ local CONFIG = {
 	plunge_speed = 0.8,
 	barrel_step = 120, -- degrees
 	barrel_speed = 2.95 * 120, -- degrees per second
+	-- The rod of the piston (the mesh's units): how long it is, and where its back is, to the right of the mesh's origin
+	rod_length = 11.45,
+	rod_back = 15.55,
 	-- Its axis is along the mesh's own left, the way the barrels point before the animation's root turns the mesh, and goes through this
 	-- point of the mesh (right, forward, up in the mesh's units). The barrel turns anticlockwise as the player sees it.
 	barrel_pivot = {
@@ -95,14 +98,20 @@ local UNIT = CONFIG.meters_per_uu
 -- The place of the barrel's bone in the animations' bones
 local BARREL_BONE
 
--- and of the shell and the feed, which the load animation moves
+-- and of the shell and the rod, which the load animation moves (the rod is what UT's piston is: its front goes out with the animation
+-- and its back stays, so the skin stretches it)
 local PLUNGE_BONES = {}
+local ROD_BONE
 
 for index, name in ipairs(animations.bones) do
 	if name == "b_bone_barrel" then
 		BARREL_BONE = index
-	elseif name == "b_bone_shell" or name == "b_bone_feed" then
+	elseif name == "b_bone_shell" or name == "b_bone_rod" then
 		PLUNGE_BONES[#PLUNGE_BONES + 1] = index
+
+		if name == "b_bone_rod" then
+			ROD_BONE = index
+		end
 	end
 end
 
@@ -297,7 +306,8 @@ skin_api = mod.weapon_skin.new({
 	offset_right = 8,
 	offset_up = 0,
 	pivot_yaw = 500 / 65536 * 360,
-	pivot_roll = 1000 / 65536 * 360,
+	-- (drawn the other way round than the other weapons' roll: that is where UT's picture has it)
+	pivot_roll = -1000 / 65536 * 360,
 	bob_damping = 1.5,
 	idle_speed = 0.5, -- RocketLauncher.IdleAnimRate
 	-- WeaponStaticMesh.RocketLauncherPickup (DrawScale 0.45): its barrels are along the mesh's own -Y, and the grip is under the back of it
@@ -390,6 +400,23 @@ skin_api = mod.weapon_skin.new({
 			end
 		end
 
+		-- The rod is stretched from its back, which stays where it is, as far as the animation moves its front (the mesh's right is the
+		-- way back, so the move is negative)
+		local rod = (ROD_BONE - 1) * 7
+		local reach = -pose[rod + 5]
+
+		pose[rod + 5], pose[rod + 6], pose[rod + 7] = 0, 0, 0
+
+		if reach > 0.01 then
+			local stretch = (CONFIG.rod_length + reach) / CONFIG.rod_length
+
+			skin.node_scales = skin.node_scales or {}
+			skin.node_scales[ROD_BONE] = Vector3(stretch, 1, 1)
+			pose[rod + 5] = CONFIG.rod_back * (1 - stretch)
+		elseif skin.node_scales then
+			skin.node_scales[ROD_BONE] = nil
+		end
+
 		local angle = math.rad(skin.barrel_angle or 0)
 
 		if angle == 0 then
@@ -465,6 +492,13 @@ end
 mod.crossbow_start_callbacks.rocket_skin = function (action, new_action)
 	if new_action.ut_rocket or new_action.ut_rocket_salvo then
 		shot(action, new_action)
+	end
+end
+
+-- The lock is made (the beep) or lost
+mod.rocket_lock_callbacks.rocket_skin = function (owner_unit, locked)
+	if skin_api.state() and utils.is_local_player_unit(owner_unit) then
+		skin_api.play_sound(locked and "ut_rocket_lock" or "ut_rocket_seek_lost")
 	end
 end
 

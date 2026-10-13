@@ -306,7 +306,10 @@ end)
 --   mod.aim_finish_callbacks[name] = function (action_aim, reason)
 --   mod.rocket_load_callbacks[name] = function (owner_unit, loaded)
 --       the Rocket Launcher has loaded another rocket (how many are loaded now), for the player who loads
+--   mod.rocket_lock_callbacks[name] = function (owner_unit, locked)
+--       the Rocket Launcher has locked on to an enemy (locked is true), or has lost the lock (false), for the player who aims
 mod.rocket_load_callbacks = {}
+mod.rocket_lock_callbacks = {}
 mod.shotgun_start_callbacks = {}
 mod.crossbow_start_callbacks = {}
 mod.aim_start_callbacks = {}
