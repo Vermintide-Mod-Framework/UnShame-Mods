@@ -29,6 +29,7 @@ local CONFIG = {
 	-- RocketCorona (RocketFlare, 1.2 times the 128 units of its texture, pulsing between 0.9 and 1.5). It is at the
 	-- back of the mesh, and a little way towards the camera so that the mesh does not hide it.
 	corona_size = 90,
+	corona_intensity = 2.2, -- how bright it is, 1 is the texture as it is
 	corona_pulse_seconds = 0.2,
 	corona_back = 0.2, -- m
 	corona_toward_camera = 0.4, -- m
@@ -236,10 +237,11 @@ local function add_visual(projectile)
 	particles.sprite({
 		color = {
 			1,
-			0.85,
-			0.6,
+			0.9,
+			0.72,
 		},
 		fade_in = 0,
+		intensity = CONFIG.corona_intensity,
 		follow = function ()
 			if Unit.alive(game_unit) and not projectile._stop_impacts then
 				local position = Unit.world_position(game_unit, 0) - visual.direction:unbox() * CONFIG.corona_back
