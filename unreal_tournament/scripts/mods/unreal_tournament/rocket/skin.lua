@@ -425,6 +425,12 @@ skin_api = mod.weapon_skin.new({
 			end)
 		end
 
+		-- With no ammo there is nothing to load: what a shot starts (the barrel turning, the sounds, the plunger) doesn't play
+		if skin.out_of_ammo then
+			skin.load_cycle = nil
+			skin.plunge = nil
+		end
+
 		-- The inspect pose, and the sway the launcher is turned with in it
 		skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
 		skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
