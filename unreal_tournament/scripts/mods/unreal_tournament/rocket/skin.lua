@@ -633,7 +633,8 @@ mod.third_person_animation_filters[TEMPLATE_NAME] = function (event, unit)
 		end
 	end
 
-	return string.find(event, "reload", 1, true) ~= nil
+	-- (the crossbow's shot and reload sounds are in these animations, which are not played on the characters, or the others hear them)
+	return event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil
 end
 
 -- The flow events of the game's unit of the rocket start its effects as it is made: they are not started
