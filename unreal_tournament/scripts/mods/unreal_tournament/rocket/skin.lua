@@ -61,14 +61,14 @@ local CONFIG = {
 	-- (a UE2 sprite is about twice as wide as the number says: UT's explosion is as wide as its blast, 3 m of radius, which its three fireballs
 	-- of 50 to 70 only make that big)
 	explosion_fire_size = {
+		90,
 		125,
-		175,
 	},
 	explosion_fire_life = {
 		0.4,
 		0.6,
 	},
-	explosion_fire_spread = 48, -- units, the radius of the sphere they start in
+	explosion_fire_spread = 36, -- units, the radius of the sphere they start in
 	-- The frames are drawn in a colour that is more than white, which the game's light turns to glowing (the texture alone, at 1, is a dull
 	-- grey in it): this colour is yellow, brighter in the middle of a fireball than at its edge, which the frames' own colours make
 	explosion_fire_intensity = 1,
