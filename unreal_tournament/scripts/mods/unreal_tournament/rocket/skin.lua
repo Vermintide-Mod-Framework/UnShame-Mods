@@ -114,6 +114,8 @@ local BARREL_BONE
 -- and its back stays, so the skin stretches it)
 local PLUNGE_BONES = {}
 local ROD_BONE
+-- (the shell is the rocket that is loaded in the chamber)
+local SHELL_BONE
 
 for index, name in ipairs(animations.bones) do
 	if name == "b_bone_barrel" then
@@ -123,6 +125,8 @@ for index, name in ipairs(animations.bones) do
 
 		if name == "b_bone_rod" then
 			ROD_BONE = index
+		else
+			SHELL_BONE = index
 		end
 	end
 end
@@ -399,6 +403,9 @@ skin_api = mod.weapon_skin.new({
 		skin_api.play_sound("ut_rocket_select")
 	end,
 	on_update = function (skin, dt)
+		-- UT puts the weapon away when it has no ammo, here it is carried on: there is no rocket in the chamber then
+		skin.out_of_ammo = utils.local_ranged_out_of_ammo()
+
 		-- The inspect pose, and the sway the launcher is turned with in it
 		skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
 		skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
@@ -465,6 +472,9 @@ skin_api = mod.weapon_skin.new({
 				end
 			end
 		end
+
+		skin.node_scales = skin.node_scales or {}
+		skin.node_scales[SHELL_BONE] = skin.out_of_ammo and Vector3(0.001, 0.001, 0.001) or nil
 
 		-- The rod is stretched from its back, which stays where it is, as far as the animation moves its front (the mesh's right is the
 		-- way back, so the move is negative)

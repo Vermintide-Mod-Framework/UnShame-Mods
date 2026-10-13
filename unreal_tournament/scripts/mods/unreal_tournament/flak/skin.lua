@@ -20,6 +20,15 @@ local particles = mod.skin_particles
 local TEMPLATE_NAME = mod.items.weapons.flak_cannon.template
 local SETTING_ID = "flak_cannon"
 
+-- The place of the bone of the flak shell that is loaded in the chamber, in the animations' bones
+local SHELL_BONE
+
+for index, name in ipairs(animations.bones) do
+	if name == "b_bone_flak01" then
+		SHELL_BONE = index
+	end
+end
+
 local CONFIG = {
 	meters_per_uu = 0.02, -- the Unreal unit of the world, in meters (a player is 88 units high)
 	-- FlakMuzFlash1st: the flash of a shot (a mesh of 28 units across, DrawScale 2.2, growing 7 a second; here a sprite)
@@ -415,9 +424,16 @@ skin_api = mod.weapon_skin.new({
 		skin_api.play_sound("ut_flak_select")
 	end,
 	on_update = function (skin, dt)
+		-- UT puts the weapon away when it has no ammo, here it is carried on: there is no shell in the chamber then
+		skin.out_of_ammo = utils.local_ranged_out_of_ammo()
+
 		skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
 		skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
 		skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
+	end,
+	on_pose = function (skin)
+		skin.node_scales = skin.node_scales or {}
+		skin.node_scales[SHELL_BONE] = skin.out_of_ammo and Vector3(0.001, 0.001, 0.001) or nil
 	end,
 	on_refresh = apply_template_overrides,
 	on_give_back = function ()
