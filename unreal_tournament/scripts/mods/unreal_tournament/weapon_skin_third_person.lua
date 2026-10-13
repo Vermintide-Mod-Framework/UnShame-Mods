@@ -190,11 +190,11 @@ local function new(def, looks)
 			return nil
 		end
 
-		-- (and the units of both hands: the Beam Staff's left hand has the flame; and their ammo units, the Repeating Crossbow's bolts)
+		-- (and the units of both hands: the Beam Staff's left hand has the flame)
 		local units = {}
 
 		-- (a list with a missing hand in it is not walked by ipairs: the Repeating Crossbow is in the left hand only)
-		for _, key in ipairs({"right_hand_wielded_unit_3p", "left_hand_wielded_unit_3p", "right_hand_ammo_unit_3p", "left_hand_ammo_unit_3p"}) do
+		for _, key in ipairs({"right_hand_wielded_unit_3p", "left_hand_wielded_unit_3p"}) do
 			local game_unit = equipment[key]
 
 			if game_unit and Unit.alive(game_unit) then
@@ -248,8 +248,6 @@ local function new(def, looks)
 					end
 
 					seen[character] = true
-					-- (the game makes some of its units later than the weapon, the Repeating Crossbow's bolts)
-					entry.units = units
 					place(entry)
 					Unit.set_unit_visibility(entry.unit, third_person.shows_weapon(character))
 					third_person.hide_staffs()
