@@ -74,6 +74,9 @@ local CONFIG = {
 	-- The explosion hurts the player who fired the rocket: this much at the center, falling off like
 	-- the explosion's damage does
 	rocket_self_damage = 45,
+	-- The explosion throws the player who fired the rocket away from its center at this speed (m/s), less further out, like the damage.
+	-- (RocketProj.MomentumTransfer is 50000: the Flak Cannon's shell has 75000 and uses 8.5.)
+	rocket_jump_speed = 5.7,
 	-- Loading: RocketMultiFire. One rocket right away, the second after FireRate (0.95 s), the third after
 	-- twice that. They are fired in a line, 1000 uu of UT's spread units between them (5.5 degrees).
 	max_rockets = 3,
@@ -1112,7 +1115,7 @@ mod:hook_safe(CrosshairUI, "_draw_kill_confirm", function (self, dt, t, ui_rende
 	end
 end)
 
--- The explosion hurts the player (the callbacks of the actions are run by the hook of do_aoe in hooks.lua)
+-- The explosion hurts the player and throws them (the callbacks of the actions are run by the hook of do_aoe in hooks.lua)
 mod.aoe_callbacks.rocket = function (self, aoe_data, position)
 	if self._ut_rocket_exploded then
 		return
@@ -1121,6 +1124,7 @@ mod.aoe_callbacks.rocket = function (self, aoe_data, position)
 	self._ut_rocket_exploded = true
 
 	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_rocket_explosion.explosion, CONFIG.rocket_self_damage)
+	utils.apply_explosion_self_push(self._owner_unit, position, ExplosionTemplates.ut_rocket_explosion.explosion, CONFIG.rocket_jump_speed)
 end
 
 -- Bodies thrown by the explosion. Runs on every peer, the physics of ragdolls is local. The units
