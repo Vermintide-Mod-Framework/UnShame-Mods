@@ -1,8 +1,10 @@
-# Makes the animations of the Shock Rifle's model (its chamber is a shader graph, see make_chamber_material.py)
-import struct, math, zlib, os
+# Makes the animations of the UT2004 Shock Rifle's model (its chamber is a shader graph, see make_chamber_material.py) as Lua:
+# scripts/mods/unreal_tournament/shock/skin_animations.lua
+# Usage: make_anim_assets.py <scratch dir>      (the dir has umodel/out3, the export of NewWeapons2004's ShockRifle, see README.md)
+import struct, math, zlib, os, sys
 
-REPO = 'E:/Git/vmb/mods/unreal_tournament'
-SCRATCH = 'C:/Users/UnShame/AppData/Local/Temp/claude/E--Git-vmb-mods/070374a7-2283-43c8-bdec-22b0376758d1/scratchpad'
+REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+SCRATCH = sys.argv[1]
 OUT = SCRATCH + '/umodel/out3'
 
 # ---------------------------------------------------------------- animation keys

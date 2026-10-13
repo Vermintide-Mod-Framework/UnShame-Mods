@@ -1,6 +1,6 @@
 import sys, struct, zlib
 
-# Usage: render_psk.py in.psk in.tga out.png vflip(0/1) view(side|top|front) [mirror_u(0/1)]
+# Usage: render_psk2.py in.psk in.tga out.png vflip(0/1) view(side|top|front) [mirror_u(0/1)]
 src, tga, dst, vflip, view = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), sys.argv[5]
 mirror_u = int(sys.argv[6]) if len(sys.argv) > 6 else 0
 
