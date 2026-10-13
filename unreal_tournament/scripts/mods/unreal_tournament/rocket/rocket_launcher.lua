@@ -230,9 +230,10 @@ local function build_rocket_action(source, is_salvo)
 
 	local interval = is_salvo and CONFIG.salvo_fire_interval or CONFIG.fire_interval
 
-	-- the next shot can be fired as soon as the rocket launcher can
+	-- the next shot can be fired as soon as the rocket launcher can, and so can the aiming (UT does not start either mode while the
+	-- other one is waiting for its fire rate)
 	for _, chain in ipairs(action.allowed_chain_actions) do
-		if chain.action == "action_one" then
+		if chain.action == "action_one" or chain.action == "action_two" then
 			chain.start_time = interval
 		end
 	end
