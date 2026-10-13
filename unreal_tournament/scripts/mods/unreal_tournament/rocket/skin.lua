@@ -67,6 +67,8 @@ local CONFIG = {
 		0.6,
 	},
 	explosion_fire_spread = 24, -- units, the radius of the sphere they start in
+	explosion_lift = 20, -- units, how far off the surface it is (NewExplosionA is spawned 20 units along the surface's normal)
+	explosion_smoke_ring = 10, -- units, the radius of the ring the smoke starts on
 	explosion_smoke_count = 15,
 	explosion_smoke_life = 2,
 	explosion_smoke_size = 20, -- units, growing to 2.5 times that (UT: 0.2 to 0.5 of 100)
@@ -602,9 +604,27 @@ mod.skin_init_callbacks.rocket = function (projectile)
 	end
 end
 
--- The explosion of a rocket, on every machine: the game's own effects of it are not made
+-- The way the surface an explosion is on faces: the rocket flew into it, so against its flight, or what a ray along the flight finds
+local function surface_normal(world, position, rotation)
+	local forward = Quaternion.forward(rotation)
+	local physics_world = World.get_data(world, "physics_world")
+	local hit, _, _, normal = PhysicsWorld.immediate_raycast(physics_world, position - forward * 0.5, forward, 1, "closest", "collision_filter", "filter_ai_line_of_sight_check")
+
+	if hit and normal and Vector3.length(normal) > 0.5 then
+		return Vector3.normalize(normal)
+	end
+
+	return -forward
+end
+
+-- The explosion of a rocket, on every machine: the game's own effects of it are not made. Like UT's it is a little way off the surface it is on,
+-- or the surface would cut the fireballs.
 mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, rotation)
-	skin_api.play_sound_at("ut_rocket_explosion_3d", position)
+	local normal = surface_normal(world, position, rotation)
+	local center = position + normal * (CONFIG.explosion_lift * UNIT)
+
+	skin_api.play_sound_at("ut_rocket_explosion_3d", center)
+
 	if CONFIG.explosion_effect then
 		mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
 	end
@@ -619,7 +639,7 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 		growth = CONFIG.explosion_flash_growth * UNIT,
 		intensity = CONFIG.explosion_flash_intensity,
 		life = CONFIG.explosion_flash_life,
-		position = position,
+		position = center,
 		size = CONFIG.explosion_flash_size * UNIT,
 		spin = (math.random() * 2 - 1) * 0.12,
 		texture = "explosion_flash",
@@ -635,7 +655,7 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 		local first_frame = math.random(0, 3) * frames
 		local start = index * CONFIG.explosion_fire_gap
 		local size = random_between(CONFIG.explosion_fire_size) * UNIT
-		local center = position + random_direction() * (CONFIG.explosion_fire_spread * UNIT)
+		local fire_center = center + random_direction() * (CONFIG.explosion_fire_spread * UNIT)
 		local angle = math.random() * 360
 
 		for frame = 0, frames - 1 do
@@ -646,16 +666,20 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 				attenuation = 0.5,
 				delay = start + frame * life / frames,
 				life = 2 * life / frames,
-				position = center,
+				position = fire_center,
 				size = size,
 				texture = sheet .. (first_frame + frame),
 			})
 		end
 	end
 
-	-- The smoke: it goes out from the middle, slows, rises, and gets bigger
+	-- The smoke starts on a ring round the way the surface faces, and goes out along the surface, slows, rises and gets bigger
+	local side = Vector3.normalize(Vector3.cross(normal, math.abs(normal.z) > 0.9 and Vector3.right() or Vector3.up()))
+	local other_side = Vector3.cross(normal, side)
+
 	for _ = 1, CONFIG.explosion_smoke_count do
-		local direction = random_direction()
+		local turn = math.random() * 2 * math.pi
+		local outward = side * math.cos(turn) + other_side * math.sin(turn)
 		local size = CONFIG.explosion_smoke_size * UNIT
 
 		particles.sprite({
@@ -670,11 +694,11 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 			growth = size * 1.5 / CONFIG.explosion_smoke_life,
 			intensity = 0.9,
 			life = CONFIG.explosion_smoke_life,
-			position = position,
+			position = center + outward * (CONFIG.explosion_smoke_ring * UNIT),
 			size = size,
 			spin = (math.random() * 2 - 1) * 0.1,
 			texture = "smoke_" .. math.random(0, 15),
-			velocity = direction * CONFIG.explosion_smoke_speed + Vector3(0, 0, CONFIG.explosion_smoke_rise),
+			velocity = outward * CONFIG.explosion_smoke_speed + Vector3(0, 0, CONFIG.explosion_smoke_rise),
 		})
 	end
 end
