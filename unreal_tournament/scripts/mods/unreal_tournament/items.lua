@@ -69,6 +69,15 @@ mod:hook_safe(IngameUI, "init", function ()
 	table.clear(icons_waiting)
 end)
 
+-- After a reload the renderers that the game made before it can't find the icon's material, which crashes the game when one draws it. The
+-- tables of the load before still have the icon (the tab screen keeps the loadouts it made of them, until the player changes theirs), so
+-- they are given another one: the base weapon's.
+local function retire_icon(old_table, base_icon)
+	if old_table then
+		old_table.inventory_icon = base_icon
+	end
+end
+
 -- Sets the icon on each table (an item or a skin), now or once the in-game UI has its renderers.
 local function set_icons(tables, icon)
 	local function set_icon()
@@ -273,6 +282,9 @@ local function register_skins(definition, item)
 
 		set_icons({ skin_data, skin_item }, skin.icon or definition.icon)
 
+		retire_icon(WeaponSkins.skins[skin.key], WeaponSkins.skins[base_skin_key].inventory_icon)
+		retire_icon(ItemMasterList[skin.key], ItemMasterList[base_skin_key].inventory_icon)
+
 		WeaponSkins.skins[skin.key] = skin_data
 		ItemMasterList[skin.key] = skin_item
 
@@ -363,6 +375,8 @@ function items.register(setting_id, definition)
 	hold_package(definition.icon_package)
 	add_material_set(definition.icon_materials)
 	set_icons({ item }, definition.icon)
+
+	retire_icon(ItemMasterList[definition.key], ItemMasterList[definition.base_item].inventory_icon)
 
 	ItemMasterList[definition.key] = item
 
