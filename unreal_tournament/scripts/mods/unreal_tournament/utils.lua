@@ -310,15 +310,20 @@ function utils.as_vector(position)
 	return position:unbox()
 end
 
--- If the local player's ranged weapon has no ammo at all, in the clip or in reserve. False when there is no such weapon to ask.
-function utils.local_ranged_out_of_ammo()
+-- How much ammo the local player's ranged weapon has, in the clip and in reserve. Nil when there is no such weapon to ask.
+function utils.local_ranged_ammo()
 	local player = Managers.player and Managers.player:local_player_safe()
 	local unit = player and player.player_unit
 	local inventory_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "inventory_system")
 	local slot_data = inventory_extension and inventory_extension:get_slot_data("slot_ranged")
 	local ammo_extension = slot_data and GearUtils.get_ammo_extension(slot_data.right_unit_1p, slot_data.left_unit_1p)
 
-	return ammo_extension ~= nil and ammo_extension:total_remaining_ammo() == 0
+	return ammo_extension and ammo_extension:total_remaining_ammo() or nil
+end
+
+-- If it has none at all. False when there is no such weapon to ask.
+function utils.local_ranged_out_of_ammo()
+	return utils.local_ranged_ammo() == 0
 end
 
 -- The projectiles in flight, this machine's own and the copies of other players': a list of { unit, extension, own }.

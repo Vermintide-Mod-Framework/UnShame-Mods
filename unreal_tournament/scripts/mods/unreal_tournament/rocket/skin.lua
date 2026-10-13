@@ -89,8 +89,8 @@ local CONFIG = {
 	barrel_delay = 0.15,
 	load_sound_delay = 0.22,
 	remote_second_load = 0.95, -- seconds after another player starts aiming that the second rocket is loaded (RocketMultiFire.FireRate)
-	chamber_load_frame = 3, -- the frame of the load animation that the loading of a rocket into an empty chamber starts from (the shell is out at the side)
-	chamber_plunger_delay = 0.3, -- seconds after that when the plunger sound is played
+	chamber_load_frame = 3, -- the frame of the load animation where a rocket slides in from the side (the shell is out at the side)
+	shell_hide_frame = 2.5, -- the frame of the load animation where the rocket that the rod pushes has gone into the barrel
 	plunger_sound_delay = 0.5, -- (the shell and the feed move then, at plunge_speed times the speed of the animation)
 	plunge_speed = 0.8,
 	barrel_step = 120, -- degrees
@@ -131,6 +131,46 @@ for index, name in ipairs(animations.bones) do
 			SHELL_BONE = index
 		end
 	end
+end
+
+-- The parts of the load animation that are played alone or one after the other: a rocket slides in from the side, and the rod pushes
+-- the rocket in the chamber into the barrel (and the next one slides in). When the pushed one is the last, no other slides in, and the
+-- shell is hidden once it has gone into the barrel.
+local LAST_LOAD_FRAME = #animations.animations.Load.frames - 1
+local LOAD_PARTS = {
+	slide = {
+		from = CONFIG.chamber_load_frame,
+		to = LAST_LOAD_FRAME,
+		sound = "ut_rocket_load",
+	},
+	push = {
+		from = 0,
+		to = LAST_LOAD_FRAME,
+		sound = "ut_rocket_plunger",
+	},
+	push_last = {
+		from = 0,
+		to = LAST_LOAD_FRAME,
+		sound = "ut_rocket_plunger",
+		hide_from = CONFIG.shell_hide_frame,
+	},
+}
+
+-- Where in the parts the animation is after this many seconds: the frame, the part and its place in the list. Nil when it is over.
+local function plunge_position(plunge)
+	local frames = plunge.time * animations.animations.Load.rate
+
+	for index, part in ipairs(plunge.parts) do
+		local length = part.to - part.from
+
+		if frames <= length then
+			return part.from + frames, part, index
+		end
+
+		frames = frames - length
+	end
+
+	return nil
 end
 
 local skin_api
@@ -405,30 +445,30 @@ skin_api = mod.weapon_skin.new({
 		skin_api.play_sound("ut_rocket_select")
 	end,
 	on_update = function (skin, dt)
-		-- UT puts the weapon away when it has no ammo, here it is carried on: there is no rocket in the chamber then. When there is ammo
-		-- again a rocket is loaded: the shell and the rod play the end of the load animation (the shell coming in from the side, the rod
-		-- pushing it), with the sounds.
-		local was_out_of_ammo = skin.out_of_ammo
+		-- UT puts the weapon away when it has no ammo, here it is carried on. The last rocket is the one in the barrel, so with one
+		-- rocket of ammo (or none) there is no shell in the chamber. When ammo is picked up the rockets are loaded: one slides in, is
+		-- pushed into the barrel, and another slides in after it. With one rocket left in the barrel only one slides in.
+		local previous_ammo = skin.ammo
+		local ammo = utils.local_ranged_ammo()
 
-		skin.out_of_ammo = utils.local_ranged_out_of_ammo()
-
-		if was_out_of_ammo and not skin.out_of_ammo then
-			skin.plunge = {
-				time = CONFIG.chamber_load_frame / animations.animations.Load.rate,
-			}
-
-			skin_api.play_sound("ut_rocket_load")
-			remote_sounds.schedule(CONFIG.chamber_plunger_delay, function ()
-				return skin_api.state() == skin
-			end, function ()
-				skin_api.play_sound("ut_rocket_plunger")
-			end)
-		end
+		skin.ammo = ammo
 
 		-- With no ammo there is nothing to load: what a shot starts (the barrel turning, the sounds, the plunger) doesn't play
-		if skin.out_of_ammo then
+		if ammo == 0 then
 			skin.load_cycle = nil
 			skin.plunge = nil
+		elseif ammo and previous_ammo and ammo > previous_ammo then
+			if previous_ammo == 0 then
+				skin.plunge = {
+					time = 0,
+					parts = ammo == 1 and {LOAD_PARTS.slide, LOAD_PARTS.push_last} or {LOAD_PARTS.slide, LOAD_PARTS.push, LOAD_PARTS.slide},
+				}
+			elseif previous_ammo == 1 and not skin.load_cycle and not skin.plunge then
+				skin.plunge = {
+					time = 0,
+					parts = {LOAD_PARTS.slide},
+				}
+			end
 		end
 
 		-- The inspect pose, and the sway the launcher is turned with in it
@@ -460,17 +500,31 @@ skin_api = mod.weapon_skin.new({
 				skin.load_cycle = nil
 				skin.plunge = {
 					time = 0,
+					parts = {(skin.ammo or 2) <= 1 and LOAD_PARTS.push_last or LOAD_PARTS.push},
 				}
-				skin_api.play_sound("ut_rocket_plunger")
 			end
 		end
 
-		if skin.plunge then
-			skin.plunge.time = skin.plunge.time + dt * CONFIG.plunge_speed
+		local plunge = skin.plunge
 
-			if skin.plunge.time * animations.animations.Load.rate >= #animations.animations.Load.frames - 1 then
+		if plunge then
+			plunge.time = plunge.time + dt * CONFIG.plunge_speed
+
+			local position, part, index = plunge_position(plunge)
+
+			if not position then
 				skin.plunge = nil
+			elseif plunge.sounded ~= index then
+				plunge.sounded = index
+				skin_api.play_sound(part.sound)
 			end
+
+			skin.shell_hidden = position ~= nil and part.hide_from ~= nil and position >= part.hide_from
+		end
+
+		-- (a shot that has the load still to come leaves the shell as it is)
+		if not skin.plunge and not skin.load_cycle then
+			skin.shell_hidden = ammo ~= nil and ammo <= 1
 		end
 
 		if (skin.barrel_angle or 0) < (skin.barrel_final or 0) then
@@ -481,10 +535,10 @@ skin_api = mod.weapon_skin.new({
 		-- The shell and the feed play the load animation by themselves, on top of the animation that is playing (UT blends it in on
 		-- the bones of the two, and does not touch the rest)
 		local plunge = skin.plunge
+		local position = plunge and plunge_position(plunge)
 
-		if plunge then
+		if position then
 			local frames = animations.animations.Load.frames
-			local position = math.min(plunge.time * animations.animations.Load.rate, #frames - 1)
 			local index = math.floor(position)
 			local fraction = position - index
 			local first, second = frames[index + 1], frames[math.min(index + 2, #frames)]
@@ -499,7 +553,7 @@ skin_api = mod.weapon_skin.new({
 		end
 
 		skin.node_scales = skin.node_scales or {}
-		skin.node_scales[SHELL_BONE] = skin.out_of_ammo and Vector3(0.001, 0.001, 0.001) or nil
+		skin.node_scales[SHELL_BONE] = skin.shell_hidden and Vector3(0.001, 0.001, 0.001) or nil
 
 		-- The rod is stretched from its back, which stays where it is, as far as the animation moves its front (the mesh's right is the
 		-- way back, so the move is negative)
