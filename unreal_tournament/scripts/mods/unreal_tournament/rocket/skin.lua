@@ -635,7 +635,9 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 		local angle = math.random() * 360
 
 		for frame = 0, frames - 1 do
+			-- (not added to the screen: the later frames are dark, the soot of the fire, which only blending shows)
 			particles.sprite({
+				additive = 0,
 				angle = angle,
 				attenuation = 0.5,
 				delay = frame * life / frames,
