@@ -48,21 +48,13 @@ local CONFIG = {
 		0.85,
 	},
 	rocket_sound_seconds = 1.87, -- how long the loop of the rocket (RocketLauncherProjectile) is
-	-- The explosion (NewExplosionA: fire, 3 sprites of 50 to 70 units, 0.4 to 0.6 s, and smoke; ExplosionCrap: debris)
+	-- The explosion (NewExplosionA: a fireball and smoke; ExplosionCrap: debris): the game's own explosion, a flash and some smoke
 	explosion_flash_size = 150,
 	explosion_flash_growth = 500,
 	explosion_flash_life = 0.25,
-	explosion_fire_count = 3,
-	explosion_fire_size = {
-		90,
-		140,
-	},
-	explosion_fire_growth = 120,
-	explosion_fire_life = {
-		0.4,
-		0.6,
-	},
-	explosion_fire_spread = 24, -- units
+	explosion_flash_intensity = 0.5,
+	-- The game's own explosion, with its smoke and the mark it leaves, played with the flash (only if the game has it loaded)
+	explosion_effect = "fx/wpnfx_frag_grenade_impact",
 	explosion_smoke_count = 5,
 	explosion_smoke_size = {
 		70,
@@ -598,8 +590,9 @@ mod.skin_init_callbacks.rocket = function (projectile)
 end
 
 -- The explosion of a rocket, on every machine: the game's own effects of it are not made
-mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position)
+mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, rotation)
 	skin_api.play_sound_at("ut_rocket_explosion_3d", position)
+	mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
 
 	particles.sprite({
 		attenuation = 0,
@@ -609,6 +602,7 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position)
 			1,
 		},
 		growth = CONFIG.explosion_flash_growth * UNIT,
+		intensity = CONFIG.explosion_flash_intensity,
 		life = CONFIG.explosion_flash_life,
 		position = position,
 		size = CONFIG.explosion_flash_size * UNIT,
@@ -616,31 +610,14 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position)
 		texture = "explosion_flash",
 	})
 
-	for _ = 1, CONFIG.explosion_fire_count do
-		particles.sprite({
-			attenuation = 0.2,
-			color = {
-				1,
-				0.75,
-				0.4,
-			},
-			growth = CONFIG.explosion_fire_growth * UNIT,
-			life = random_between(CONFIG.explosion_fire_life),
-			position = position + random_direction() * (CONFIG.explosion_fire_spread * UNIT),
-			size = random_between(CONFIG.explosion_fire_size) * UNIT,
-			spin = (math.random() * 2 - 1) * 0.4,
-			texture = "flak_muzzle",
-		})
-	end
-
 	for _ = 1, CONFIG.explosion_smoke_count do
 		particles.sprite({
 			additive = 0,
 			attenuation = 0.2,
 			color = {
-				0.45,
-				0.4,
-				0.38,
+				0.72,
+				0.7,
+				0.68,
 			},
 			growth = 10 * UNIT,
 			intensity = 0.9,
