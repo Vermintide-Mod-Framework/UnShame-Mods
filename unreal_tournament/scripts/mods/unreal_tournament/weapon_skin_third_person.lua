@@ -351,6 +351,19 @@ local function new(def, looks)
 			in_menu[character] = entry
 		end
 
+		-- A mesh that is turned from the game's unit by its axes (follow_game_unit 2) is placed by the previewer's unit, as in the world
+		if entry.config.follow_game_unit == 2 then
+			entry.staff = nil
+
+			for _, game_unit in ipairs(game_units) do
+				if Unit.alive(game_unit) then
+					entry.staff = game_unit
+
+					break
+				end
+			end
+		end
+
 		place(entry)
 		Unit.set_unit_visibility(entry.unit, visible)
 
