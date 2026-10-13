@@ -110,6 +110,8 @@ local CONFIG = {
 	lock_keep_dot = 0.95, -- how far from the aim an enemy that is locked can be without it counting as being off it (18 degrees)
 	lock_required_time = 0.75, -- seconds (UT's LockRequiredTime is 1.25)
 	unlock_required_time = 0.5, -- seconds the aim has to be off the locked enemy before the lock is lost, UnLockRequiredTime
+	seek_delay = 0.35, -- seconds a rocket flies straight after being fired before it starts to home in
+	seek_turn_rate = 3.5, -- radians per second, how fast a rocket can turn towards its target
 	lock_outline = true, -- the locked enemy gets the red outline of the game's target marking (like the true flight bow's)
 	lock_indicator = false, -- the crosshair gets arrows around it while locked
 	lock_arrows_spread = 0.3, -- how far from the center the arrows are
@@ -719,8 +721,7 @@ local function register_true_flight_template()
 	template.initial_target_node = "c_spine"
 	template.target_node = "c_spine"
 	template.legitimate_target_func = "legitimate_always"
-	-- (the game's own steering of its true flight projectiles: it keeps the rocket on its target until it hits)
-	template.target_tracking_check_func = "update_towards_target"
+	template.target_tracking_check_func = "ut_rocket_update_towards_target"
 	-- when the target is gone the rocket flies straight on, it doesn't look for another one
 	template.max_on_target_time = 0
 	template.speed_multiplier = 0.01
@@ -744,6 +745,31 @@ local function spine_position(unit)
 	local node = Unit.has_node(unit, "c_spine") and Unit.node(unit, "c_spine") or 0
 
 	return Unit.world_position(unit, node)
+end
+
+-- Flies straight for seek_delay seconds after it was fired, then turns towards the target, at most
+-- seek_turn_rate radians per second
+ProjectileTrueFlightLocomotionExtension.ut_rocket_update_towards_target = function (self, position, t, dt)
+	local direction = self.current_direction:unbox()
+	local speed = self.speed * self.true_flight_template.speed_multiplier
+	local target_unit = self.target_unit
+
+	if self.on_target_time >= CONFIG.seek_delay and target_unit and Unit.alive(target_unit) then
+		local to_target = spine_position(target_unit) - position
+		local distance = Vector3.length(to_target)
+
+		if distance > 0.01 then
+			local wanted_direction = to_target * (1 / distance)
+			local angle = math.acos(math.clamp(Vector3.dot(direction, wanted_direction), -1, 1))
+			local max_turn = CONFIG.seek_turn_rate * dt
+			local fraction = angle <= max_turn and 1 or max_turn / angle
+			local rotation = Quaternion.lerp(Quaternion.look(direction), Quaternion.look(wanted_direction), fraction)
+
+			direction = Quaternion.forward(rotation)
+		end
+	end
+
+	return position + direction * speed * dt, Quaternion.look(direction)
 end
 
 -- The lock of the local player: the enemy the crosshair has been on, for how long, and if it is a lock yet
