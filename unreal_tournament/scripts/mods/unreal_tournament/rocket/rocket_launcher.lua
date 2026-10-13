@@ -980,6 +980,16 @@ mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, pos
 	end
 
 	if action and action.ut_rocket then
+		-- The game starts a shot at the camera, which the first person animations move a little (the breathing, the kick of the last shot):
+		-- the rocket starts from the eye instead, which is where the player is.
+		local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
+
+		if first_person_extension then
+			local camera_position = first_person_extension:get_projectile_start_position_rotation()
+
+			position = utils.as_vector(position) - camera_position + first_person_extension:current_position()
+		end
+
 		position = start_position(position, rotation)
 
 		local state = locks[owner_unit]
