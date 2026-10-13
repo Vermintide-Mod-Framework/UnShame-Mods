@@ -31,6 +31,11 @@ mod.items.register("rocket_launcher", {
 })
 
 local TEMPLATE_NAME = mod.items.weapons.rocket_launcher.template
+
+-- A rocket goes where the crosshair is: there is no spread (the crossbow's default would scatter it a little)
+local SPREAD_TEMPLATE = "ut_rocket"
+
+utils.zero_spread_template(SPREAD_TEMPLATE, "brace_of_pistols")
 local SPIRAL_ACTION = "zoomed_shot_spiral" -- the sub action of the salvo that is a spiral
 
 register_network_lookup("sub_actions", SPIRAL_ACTION)
@@ -213,7 +218,7 @@ local function build_rocket_action(source, is_salvo)
 	action.ut_init_flow_event_filter = "rocket"
 	action.ut_skin_init_callback = "rocket"
 	action.ut_rocket = true
-	action.spread_template_override = nil
+	action.spread_template_override = SPREAD_TEMPLATE
 
 	-- grenade: the explosion is set off by the first enemy it hits, like a grenade
 	action.impact_data = {
@@ -296,6 +301,8 @@ local function apply_rocket_launcher()
 		return
 	end
 
+	template.default_spread_template = SPREAD_TEMPLATE
+
 	-- The chart of the item's stats (0 to 7): the single rocket is the normal attack, the loaded salvo the heavy one
 	template.weapon_diagram = {
 		light_attack = {
@@ -363,7 +370,7 @@ local function apply_rocket_launcher()
 		return false
 	end
 	aim.buff_data = nil
-	aim.spread_template_override = nil
+	aim.spread_template_override = SPREAD_TEMPLATE
 
 	-- the salvo is fired by itself after a while (when is set when the aiming starts)
 	aim.allowed_chain_actions = table.clone(aim.allowed_chain_actions)

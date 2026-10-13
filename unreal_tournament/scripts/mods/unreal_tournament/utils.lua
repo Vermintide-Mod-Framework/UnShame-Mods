@@ -281,6 +281,24 @@ function utils.apply_explosion_self_push(owner_unit, position, explosion, speed)
 	locomotion_extension:set_wanted_velocity(velocity)
 end
 
+-- A spread template with no spread (a copy of another one, with all its numbers zero): the weapon shoots where the crosshair is.
+-- Made again on every load.
+function utils.zero_spread_template(name, base_name)
+	local function zero(tbl)
+		for key, value in pairs(tbl) do
+			if type(value) == "table" then
+				zero(value)
+			elseif type(value) == "number" then
+				tbl[key] = 0
+			end
+		end
+	end
+
+	SpreadTemplates[name] = table.clone(SpreadTemplates[base_name])
+
+	zero(SpreadTemplates[name])
+end
+
 -- Units in the world
 
 -- Returns a position as a vector. Some game calls give a Vector3Box, which engine functions don't accept.
