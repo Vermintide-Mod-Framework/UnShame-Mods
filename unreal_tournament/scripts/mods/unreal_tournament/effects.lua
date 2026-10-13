@@ -1,16 +1,15 @@
 local mod = get_mod("unreal_tournament")
 
--- Particle effects that can be scaled. The effects of the game are only loaded together with the
--- characters and weapons that use them, playing one that isn't loaded crashes the game, so an
--- effect is only played when it is available.
+-- Particle effects that can be scaled. The game only loads its effects together with the characters and weapons that use them, and
+-- playing an effect that isn't loaded crashes the game. So an effect is only played when it is available.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
 local CONFIG = {
-	-- Particle effects are scaled by linking them to a unit with a scale, so effects that need
-	-- a size get an invisible helper unit. Some effects ignore the scale.
+	-- Particle effects are scaled by linking them to a unit that has a scale, so an effect that needs a size gets an invisible helper
+	-- unit. Some effects ignore the scale.
 	fx_unit_name = "units/hub_elements/empty",
-	-- Scaled effects are destroyed after a while, in case they would never end
+	-- Scaled effects are destroyed after this long, in case they would never end.
 	timed_effect_lifetime = 3, -- seconds
 }
 
@@ -22,7 +21,7 @@ effects.is_available = function (effect_name)
 	return ok and available
 end
 
--- Plays the effect as it is (at its own size) if it is available, returns if it was
+-- Plays the effect as it is, at its own size, if it is available. Returns whether it was played.
 effects.create = function (world, effect_name, position, rotation)
 	if not effects.is_available(effect_name) then
 		return false
@@ -36,7 +35,7 @@ end
 local timed_effects = {}
 
 local function destroy_timed_effect(effect)
-	-- the effect or the world may already be gone
+	-- The effect or the world may already be gone, so errors are ignored.
 	pcall(World.destroy_particles, effect.world, effect.effect_id)
 
 	if Unit.alive(effect.unit) then
@@ -44,8 +43,8 @@ local function destroy_timed_effect(effect)
 	end
 end
 
--- Starts the effect at the scale if it is available and returns it (or nothing if it isn't). It goes on until
--- effects.stop (or effects.destroy).
+-- Starts the effect at the scale if it is available, and returns it, or returns nil if it isn't available. The effect goes on until
+-- effects.stop or effects.destroy.
 effects.start = function (world, effect_name, position, scale, rotation)
 	if not effects.is_available(effect_name) then
 		return nil
@@ -59,7 +58,7 @@ effects.start = function (world, effect_name, position, scale, rotation)
 
 	local effect_id = World.create_particles(world, effect_name, position)
 
-	-- "stop": when the unit is deleted the effect stops spawning and the particles already out fade on their own
+	-- With "stop", when the unit is deleted the effect stops spawning, and the particles already out fade on their own.
 	World.link_particles(world, effect_id, unit, 0, Matrix4x4.from_quaternion(rotation), "stop")
 
 	return {
@@ -69,17 +68,17 @@ effects.start = function (world, effect_name, position, scale, rotation)
 	}
 end
 
--- Stops the effect from spawning more, what is out fades on its own
+-- Stops the effect from spawning more particles. The ones already out fade on their own.
 effects.stop = function (effect)
 	if Unit.alive(effect.unit) then
 		Managers.state.unit_spawner:mark_for_deletion(effect.unit)
 	end
 end
 
--- Takes the effect away at once
+-- Removes the effect at once.
 effects.destroy = destroy_timed_effect
 
--- Plays the effect at the scale if it is available, returns if it was
+-- Plays the effect at the scale if it is available. Returns whether it was played.
 effects.play = function (world, effect_name, position, scale, rotation)
 	local effect = effects.start(world, effect_name, position, scale, rotation)
 
@@ -93,8 +92,9 @@ effects.play = function (world, effect_name, position, scale, rotation)
 	return true
 end
 
--- Plays an effect that is a ring in its own plane (at the height above its origin, at the scale) turned to face the camera as it starts, so that
--- the ring is seen from the front (a ring that is playing is not turned: its direction is where it started), about the position
+-- Plays an effect that is a ring in its own plane. The ring sits at the height above the effect's origin, at the scale, and is turned
+-- to face the camera when it starts, so that it is seen from the front. A ring that is already playing is not turned: it keeps the
+-- direction it started in. The ring is centered on the position.
 effects.play_facing = function (world, effect_name, position, scale, height)
 	local camera_position, camera_rotation = utils.camera_pose()
 
@@ -102,11 +102,11 @@ effects.play_facing = function (world, effect_name, position, scale, height)
 		return false
 	end
 
-	-- (its z axis is the way it faces: toward the camera)
+	-- The effect's z axis is the way it faces, which is towards the camera.
 	local front = Vector3.normalize(camera_position - position)
 	local rotation = Quaternion.look(Quaternion.up(camera_rotation), front)
 
-	-- (the ring is above the origin of the effect, and turned about it: the origin is where it puts the ring about the position)
+	-- The ring is above the effect's origin and is turned about that origin, so the origin is moved to put the ring on the position.
 	return effects.play(world, effect_name, position - Quaternion.rotate(rotation, Vector3(0, 0, height * scale)), scale, rotation)
 end
 
@@ -131,7 +131,7 @@ effects.clear = function ()
 	end
 end
 
--- (loaded once, by unreal_tournament.lua: the effects are kept here, and updated and cleared here, not by each weapon)
+-- This file is loaded once, by unreal_tournament.lua. The effects are updated and cleared here, not by each weapon.
 mod.update_callbacks[#mod.update_callbacks + 1] = effects.update
 mod.unload_callbacks[#mod.unload_callbacks + 1] = effects.clear
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = effects.clear

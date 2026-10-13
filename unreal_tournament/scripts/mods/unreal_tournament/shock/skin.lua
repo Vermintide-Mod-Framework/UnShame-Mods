@@ -355,7 +355,7 @@ mod.shock_beam_callbacks.skin = function (owner_unit, start_position, end_positi
 	end
 
 	if not is_local then
-		-- (the player's own shot is heard from the head, see take_over_sound)
+		-- The player's own shot is heard from the head (see take_over_sound).
 		skin_api.play_sound_at("ut_shock_fire_3d", start_position)
 	end
 

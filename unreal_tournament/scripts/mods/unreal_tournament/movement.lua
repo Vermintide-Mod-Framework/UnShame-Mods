@@ -8,25 +8,22 @@ local mod = get_mod("unreal_tournament")
 --   * Crouching players don't walk off ledges.
 
 local CONFIG = {
-	-- Gravity, relative to the game's (11 m/s^2). Jumps get lower and shorter with it.
+	-- The gravity, relative to the game's (11 m/s^2). Jumps get lower and shorter with it.
 	gravity_multiplier = 1.3,
-	-- Air control, how fast the player can change direction in the air, relative to the game's
+	-- The air control, which is how fast the player can change direction in the air, relative to the game's
 	air_control_multiplier = 0.7,
-	-- Crouching: no walking off ledges. The center of the player may be this far past the edge,
-	-- so about this much more than half of them hangs off. Further and the physics gets closer
-	-- to making them slide off by themselves.
+	-- A crouching player does not walk off ledges. The center of the player may be this far past the edge, so a bit more
+	-- than half of them hangs off. Further out, the physics starts to make them slide off by themselves.
 	crouch_ledge_overhang = 0.1, -- m
-	-- The ground is looked for down to this far below their feet (so stairs are fine, drops are
-	-- ledges).
+	-- The ground is looked for down to this far below the player's feet. Stairs count as ground, and drops count as ledges.
 	crouch_ledge_probe_depth = 0.7, -- m
-	-- Moving towards ground is always fine: it is looked for this far ahead, which has to be more
-	-- than the radius of the player, who can be that far past an edge (crouching there must not
-	-- trap them).
+	-- Moving towards ground is always allowed. The ground is looked for this far ahead. This has to be more than the radius of
+	-- the player, who can be that far past an edge, so that crouching there does not trap them.
 	crouch_ledge_safe_reach = 0.4, -- m
-	-- Regular jump, relative to the game's (4.25 m/s). The dodge launch and the double jump have
-	-- their own speeds, the jump is kept higher than the dodge launch.
+	-- The regular jump, relative to the game's (4.25 m/s). The dodge launch and the double jump have their own speeds. The
+	-- jump is kept higher than the dodge launch.
 	jump_speed_multiplier = 1.35,
-	-- UT2004: after landing from a dodge the next dodge is locked for this long
+	-- Like in UT2004, after landing from a dodge the next dodge is locked for this long.
 	dodge_landing_delay = 0.35, -- seconds
 	-- Dodge launch
 	dodge_launch_vertical_speed = 4.25, -- m/s, the same as a regular jump
@@ -34,43 +31,42 @@ local CONFIG = {
 	dodge_launch_max_speed = 9, -- m/s, the horizontal speed after adding the two together is limited to this
 	-- Wall dodge
 	wall_dodge_reach = 1, -- m, how far from the center of the player a wall can be
-	-- UT2004: the speed along the dodge is 1.5 times the ground speed, the player's momentum across
-	-- it is kept, there is no limit. The upward speed is set, whatever it was.
+	-- Like in UT2004, the speed along the dodge is 1.5 times the ground speed, and the player's momentum across the dodge is
+	-- kept with no limit. The upward speed is set, whatever it was.
 	wall_dodge_speed = 6, -- m/s in the direction of the dodge (1.5 * the run speed of 4)
 	wall_dodge_vertical_speed = 4.25, -- m/s, the upward speed it sets, the same as the dodge launch
-	-- Double jump, like in UT2004: once per airtime, only near the apex of the jump, and it sets
-	-- the upward speed. UT allows it while the vertical speed is within 100 uu/s of zero, which is
-	-- 29% of its jump speed (340 uu/s), the same share of this game's jump gives the window.
+	-- The double jump works like in UT2004. It can be used once per airtime, only near the apex of the jump, and it sets the
+	-- upward speed. UT allows it while the vertical speed is within 100 uu/s of zero, which is 29% of its jump speed
+	-- (340 uu/s). The same share of this game's jump speed gives the window.
 	double_jump_speed = 5, -- m/s, the upward speed it gives, a regular jump is 4.25 * jump_speed_multiplier
 	double_jump_apex_speed = 1.7, -- m/s, it is allowed while the vertical speed is within this of zero
-	-- A wall is found by sweeping a sphere of this radius sideways at these heights above the feet
+	-- A wall is found by sweeping a sphere of this radius sideways at these heights above the feet.
 	wall_sweep_heights = {0.3, 0.9, 1.5}, -- m
 	wall_sweep_radius = 0.25, -- m
-	-- Momentum damage: melee hits do more damage the faster the player is moving. No bonus up to momentum_min_speed
-	-- (about running speed, the game's is 4 m/s), rising to momentum_damage_bonus more damage at momentum_full_speed (a
-	-- dodge launch is 9 m/s at most), and going on rising above it. The speed counts for momentum_grace seconds after it
-	-- is lost, so that slowing down (a hit, the end of a dodge) doesn't take the bonus away at once.
+	-- Momentum damage: melee hits do more damage the faster the player is moving. There is no bonus up to momentum_min_speed,
+	-- which is about running speed (the game's is 4 m/s). The bonus then rises to momentum_damage_bonus at momentum_full_speed
+	-- (a dodge launch is 9 m/s at most), and keeps rising above that. A speed still counts for momentum_grace seconds after it
+	-- is lost, so that slowing down (a hit, the end of a dodge) does not take the bonus away at once.
 	momentum_min_speed = 4.5, -- m/s
 	momentum_full_speed = 9, -- m/s
 	momentum_damage_bonus = 0.25, -- the bonus at full speed: 0.25 is 25% more damage
 	momentum_grace = 0.1, -- seconds
 }
 
--- The Movement option: all of the movement of this file can be switched off, the hooks then do what the
--- game does
+-- The Movement option switches off all the movement in this file. The hooks then do what the game does.
 local function is_movement_enabled()
 	return mod:get("ut_movement") ~= false
 end
 
--- The Multidodge option: no limits on dodging
+-- The Multidodge option removes the limits on dodging.
 local function is_multidodge()
 	return is_movement_enabled() and mod:get("multidodge")
 end
 
--- What happened in the air since the player last was on the ground, per unit:
---   double_jumped: the extra jump was used
---   dodged: a dodge (on the ground or on a wall) was done, landing then locks dodging for a while
---   keep_speed: a dodge launch is in progress, its horizontal speed is kept
+-- What has happened in the air since the player was last on the ground, for each unit:
+--   double_jumped: the extra jump was used.
+--   dodged: a dodge was done, on the ground or on a wall. Landing then locks dodging for a while.
+--   keep_speed: a dodge launch is in progress, and its horizontal speed is kept.
 local air_state = setmetatable({}, {
 	__mode = "k",
 })
@@ -90,13 +86,12 @@ local function get_air_state(unit)
 	return state
 end
 
--- Until when dodging is locked, per unit
+-- The time until which dodging is locked, for each unit
 local dodge_unlocked_t = setmetatable({}, {
 	__mode = "k",
 })
 
--- Landing: the next time in the air is a new one, and having landed from a dodge locks dodging
--- for a while
+-- Landing starts a new time in the air for the next jump. Landing from a dodge also locks dodging for a while.
 for _, state in ipairs({
 	PlayerCharacterStateWalking,
 	PlayerCharacterStateStanding,
@@ -112,8 +107,8 @@ for _, state in ipairs({
 	end)
 end
 
--- Climbing or hanging: the next time in the air is a new one (hanging is told by the shared hook of the ledge, see hooks.lua: a
--- function is hooked once)
+-- Climbing or hanging also starts a new time in the air. Hanging is reported by the shared ledge hook in hooks.lua, because a
+-- function can only be hooked once.
 mod:hook_safe(PlayerCharacterStateClimbingLadder, "on_enter", function (self, unit)
 	reset_air_state(self, unit)
 end)
@@ -122,10 +117,9 @@ mod.ledge_hang_callbacks.movement = function (unit)
 	reset_air_state(nil, unit)
 end
 
--- Jumping: a jump from the ground starts a new time in the air (jumping out of falling doesn't
--- happen), and the jump is stronger. The state reads the speed of the jump from the player's
--- movement settings when it starts, so they are changed for the duration of that.
--- (One hook for both, the game has had trouble with more than one on the same function.)
+-- A jump from the ground starts a new time in the air, and the jump is stronger. A jump out of falling does not start a new one.
+-- The jumping state reads the jump speed from the player's movement settings when it starts, so the settings are changed while
+-- it starts. One hook does both, because the game has had trouble with more than one hook on the same function.
 mod:hook(PlayerCharacterStateJumping, "on_enter", function (func, self, unit, input, dt, context, t, previous_state, ...)
 	if not is_movement_enabled() then
 		return func(self, unit, input, dt, context, t, previous_state, ...)
@@ -146,11 +140,10 @@ mod:hook(PlayerCharacterStateJumping, "on_enter", function (func, self, unit, in
 end)
 
 -- Forward dodge
--- The game never dodges forwards: forward input is rejected and a forward-sideways input
--- becomes a sideways dodge. Added here: a double tap on forward (like the sideways and backward
--- double taps, when the player has those turned on) and the dodge key with only forward pressed.
--- There is no animation for dodging forward, the dodge plays the backward one (the sound of the
--- dodge comes with the animation).
+-- The game never dodges forwards. It rejects forward input, and a forward-sideways input becomes a sideways dodge. This adds a
+-- forward dodge on a double tap of forward, when the player has the other double taps turned on, and on the dodge key with only
+-- forward pressed. There is no animation for dodging forward, so the dodge plays the backward one. The dodge sound comes with
+-- the animation.
 local FORWARD_TAP = "move_forward_pressed"
 
 mod:hook(CharacterStateHelper, "check_to_start_dodge", function (func, unit, input_extension, status_extension, t)
@@ -158,8 +151,8 @@ mod:hook(CharacterStateHelper, "check_to_start_dodge", function (func, unit, inp
 		return func(unit, input_extension, status_extension, t)
 	end
 
-	-- no dodging while crouching (the jump key then uncrouches and jumps), or right after
-	-- landing from a dodge
+	-- There is no dodging while crouching, because the jump key then uncrouches and jumps. There is also none right after
+	-- landing from a dodge.
 	if status_extension:is_crouching() or dodge_unlocked_t[unit] and t < dodge_unlocked_t[unit] and not is_multidodge() then
 		return false, Vector3(0, 0, 0)
 	end
@@ -196,7 +189,7 @@ mod:hook(CharacterStateHelper, "check_to_start_dodge", function (func, unit, inp
 
 	dodge_direction = Vector3.forward()
 
-	-- what the game does when it starts a dodge
+	-- This is what the game does when it starts a dodge.
 	Managers.state.entity:system("play_go_tutorial_system"):register_dodge(dodge_direction)
 	status_extension:add_fatigue_points("action_dodge")
 	status_extension:set_dodge_locked(true)
@@ -206,9 +199,8 @@ mod:hook(CharacterStateHelper, "check_to_start_dodge", function (func, unit, inp
 end)
 
 -- Dodge launch
--- The dodge has set itself up by the time this runs. Leaving the ground ends it (the dodge state
--- hands over to falling when the player isn't on the ground), so the horizontal speed of the dodge
--- has to be given as well.
+-- The dodge has set itself up by the time this runs. Leaving the ground ends the dodge, because the dodge state hands over to
+-- falling when the player is not on the ground. So the horizontal speed of the dodge has to be set as well.
 mod:hook_safe(PlayerCharacterStateDodging, "on_enter", function (self, unit, input, dt, context, t)
 	if not is_movement_enabled() then
 		return
@@ -219,7 +211,7 @@ mod:hook_safe(PlayerCharacterStateDodging, "on_enter", function (self, unit, inp
 	local flat_rotation = Quaternion.look(Vector3.flat(Quaternion.forward(first_person_extension:current_rotation())), Vector3.up())
 	local direction = Quaternion.rotate(flat_rotation, self.dodge_direction:unbox())
 
-	-- the dodge is added to the momentum the player had
+	-- The dodge is added to the momentum the player had.
 	local horizontal_velocity = Vector3.flat(locomotion_extension:current_velocity()) + direction * CONFIG.dodge_launch_horizontal_speed
 	local horizontal_speed = Vector3.length(horizontal_velocity)
 
@@ -240,9 +232,9 @@ mod:hook_safe(PlayerCharacterStateDodging, "on_enter", function (self, unit, inp
 	}
 end)
 
--- The game's air movement limits the horizontal speed to the run speed, which would take the
--- speed of the dodge launch away at once. It is allowed to keep its speed (steering still works).
--- The speed it is given is how much the player can steer, which is scaled for the air control.
+-- The game's air movement limits the horizontal speed to the run speed, which would take the speed of the dodge launch away at
+-- once. This lets a dodge launch keep its speed, and steering still works. The speed passed to the air movement is how much the
+-- player can steer, and it is scaled by the air control.
 mod:hook(CharacterStateHelper, "move_in_air", function (func, first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
 	if not is_movement_enabled() then
 		return func(first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
@@ -264,11 +256,10 @@ mod:hook(CharacterStateHelper, "move_in_air", function (func, first_person_exten
 end)
 
 -- Wall dodge
--- In the air, a dodge input with a wall behind it launches the player off it. The inputs are the
--- same as for dodging on the ground: a double tap (if the player has turned those on), the dodge
--- key with a direction held, and the jump key with a sideways or backward direction held (the
--- game's default way to dodge). Without a wall that jump key is the double jump as usual.
--- Like in UT2004 it is one dodge per airtime: a dodge launch from the ground counts as well.
+-- In the air, a dodge input with a wall behind it launches the player off the wall. The inputs are the same as for dodging on
+-- the ground: a double tap if the player has turned those on, the dodge key with a direction held, and the jump key with a
+-- sideways or backward direction held, which is the game's default way to dodge. Without a wall, that jump key is the double
+-- jump as usual. Like in UT2004, there is one dodge per airtime, and a dodge launch from the ground counts as that dodge.
 local WALL_DODGE_TAPS = {
 	move_left_pressed = {
 		-1,
@@ -288,8 +279,8 @@ local WALL_DODGE_TAPS = {
 	},
 }
 
--- Returns the local direction the player wants to dodge in as x and y, and if the jump key
--- was the input, or nothing
+-- Returns the local direction the player wants to dodge in as x and y, and whether the jump key was the input. Returns nothing
+-- if the player does not want to dodge.
 local function read_air_dodge_input(input_extension, t)
 	if input_extension.double_tap_dodge then
 		for key, direction in pairs(WALL_DODGE_TAPS) do
@@ -317,15 +308,15 @@ local function read_air_dodge_input(input_extension, t)
 		local input = CharacterStateHelper.get_movement_input(input_extension)
 		local length = Vector3.length(input)
 
-		-- forward with the jump key is a jump, like on the ground
+		-- Forward with the jump key is a jump, like on the ground.
 		if length > input_extension.minimum_dodge_input and (input_extension:get("dodge") or input.y <= 0) then
 			return input.x / length, input.y / length, not input_extension:get("dodge")
 		end
 	end
 end
 
--- The animation of a dodge in a local direction, the way the dodge state picks it. The sound of
--- dodging comes with the animation.
+-- Plays the animation of a dodge in a local direction, picked the way the dodge state picks it. The dodge sound comes with the
+-- animation.
 local function play_dodge_animation(unit, first_person_extension, x, y)
 	local event
 
@@ -341,15 +332,15 @@ local function play_dodge_animation(unit, first_person_extension, x, y)
 	CharacterStateHelper.play_animation_event_first_person(first_person_extension, event)
 end
 
--- A wall is found by sweeping a sphere sideways at a few heights (a ray at one height can miss a
--- low wall, or slip through a gap). The game's collision with the level's static geometry for
--- projectiles is what is swept against, the player's mover filter is tried as well.
+-- A wall is found by sweeping a sphere sideways at a few heights, because a ray at one height can miss a low wall or slip
+-- through a gap. The sweep tests against the game's collision with the level's static geometry for projectiles, and also against
+-- the player's mover filter.
 local WALL_FILTERS = {
 	"filter_player_mover",
 	"filter_player_ray_projectile_static_only",
 }
 
--- Returns if there is a wall in the given direction
+-- Returns whether there is a wall in the given direction.
 local function find_wall(physics_world, position, direction)
 	local found_hit
 
@@ -364,7 +355,7 @@ local function find_wall(physics_world, position, direction)
 			for k = 1, num_hits do
 				local hit = result[k]
 
-				-- floors and ceilings aren't walls
+				-- Floors and ceilings are not walls.
 				if hit.normal and math.abs(hit.normal.z) <= 0.7 then
 					wall_hit = hit
 
@@ -381,7 +372,7 @@ local function find_wall(physics_world, position, direction)
 	return found_hit ~= nil
 end
 
--- Returns true if it dodged
+-- Dodges off a wall if the player asks for it. Returns true if it dodged.
 local function try_wall_dodge(self, unit, t)
 	local state = get_air_state(unit)
 	local input_x, input_y = read_air_dodge_input(self.input_extension, t)
@@ -390,8 +381,7 @@ local function try_wall_dodge(self, unit, t)
 		return false
 	end
 
-	-- UT2004 doesn't dodge while crouching or about to, and dodges once in the air (unless
-	-- multidodge is on)
+	-- UT2004 does not dodge while crouching or about to crouch, and allows one dodge in the air, unless multidodge is on.
 	if state.dodged and not is_multidodge() or self.status_extension:is_crouching() then
 		return false
 	end
@@ -403,8 +393,8 @@ local function try_wall_dodge(self, unit, t)
 		return false
 	end
 
-	-- Like in UT2004 the wall has to be behind the dodge: dodging left needs a wall on the right,
-	-- the player dodges off it (dodging into a wall does nothing)
+	-- Like in UT2004, the wall has to be behind the dodge. Dodging left needs a wall on the right, and the player dodges off it.
+	-- Dodging into a wall does nothing.
 	local flat_rotation = Quaternion.look(Vector3.flat(Quaternion.forward(first_person_extension:current_rotation())), Vector3.up())
 	local direction = Quaternion.rotate(flat_rotation, Vector3(input_x, input_y, 0))
 	local position = POSITION_LOOKUP[unit]
@@ -413,14 +403,14 @@ local function try_wall_dodge(self, unit, t)
 		return false
 	end
 
-	-- the dodge goes in the direction of the input, the momentum across it is kept (UT2004:
-	-- Velocity = DodgeSpeed * Dir + (Velocity dot Cross) * Cross)
+	-- The dodge goes in the direction of the input, and the momentum across it is kept. UT2004 does this with
+	-- Velocity = DodgeSpeed * Dir + (Velocity dot Cross) * Cross.
 	local velocity = locomotion_extension:current_velocity()
 	local flat_velocity = Vector3.flat(velocity)
 	local across = flat_velocity - direction * Vector3.dot(flat_velocity, direction)
 	local horizontal_velocity = across + direction * CONFIG.wall_dodge_speed
 
-	-- the upward speed is set, not added to what the player had (UT2004: Velocity.Z = DodgeSpeedZ)
+	-- The upward speed is set, not added to what the player had. UT2004 does this with Velocity.Z = DodgeSpeedZ.
 	local dodge_velocity = horizontal_velocity + Vector3(0, 0, CONFIG.wall_dodge_vertical_speed)
 
 	locomotion_extension:set_maximum_upwards_velocity(math.huge)
@@ -430,7 +420,7 @@ local function try_wall_dodge(self, unit, t)
 	state.dodged = true
 	state.keep_speed = true
 
-	-- multidodge: every wall dodge gives the double jump back
+	-- With multidodge, every wall dodge gives the double jump back.
 	if is_multidodge() then
 		state.double_jumped = nil
 	end
@@ -440,7 +430,7 @@ local function try_wall_dodge(self, unit, t)
 	return true
 end
 
--- Double jump
+-- Double jump: gives the player the extra jump if they ask for it near the apex of a jump.
 local function try_double_jump(self, unit, t)
 	local locomotion_extension = self.locomotion_extension
 	local velocity = locomotion_extension:current_velocity()
@@ -460,14 +450,14 @@ local function try_double_jump(self, unit, t)
 		return
 	end
 
-	-- only near the apex of the jump
+	-- The double jump is only allowed near the apex of the jump.
 	if math.abs(velocity.z) >= CONFIG.double_jump_apex_speed then
 		return
 	end
 
 	local jump_velocity = Vector3(velocity.x, velocity.y, CONFIG.double_jump_speed)
 
-	-- the jumping state limits how fast the player can go up, the falling state doesn't
+	-- The jumping state limits how fast the player can go up, and the falling state does not.
 	locomotion_extension:set_maximum_upwards_velocity(math.huge)
 	locomotion_extension:set_forced_velocity(jump_velocity)
 	locomotion_extension:set_wanted_velocity(jump_velocity)
@@ -478,7 +468,7 @@ local function try_double_jump(self, unit, t)
 	Unit.flow_event(unit, "sfx_player_jump")
 end
 
--- A jump key press that dodged off a wall isn't a double jump as well
+-- A jump key press that dodged off a wall is not also a double jump.
 mod:hook_safe(PlayerCharacterStateJumping, "update", function (self, unit, input, dt, context, t)
 	if is_movement_enabled() and not try_wall_dodge(self, unit, t) then
 		try_double_jump(self, unit, t)
@@ -492,9 +482,8 @@ mod:hook_safe(PlayerCharacterStateFalling, "update", function (self, unit, input
 end)
 
 -- Gravity
--- The player's gravity is applied while their movement is updated. It is multiplied only for the
--- duration of the update, other code changes the player's gravity scale too (levels, effects)
--- and sees its own value.
+-- The player's gravity is applied while their movement is updated. It is multiplied only during that update. Other code, such as
+-- levels and effects, also changes the player's gravity scale, and it must see its own value.
 mod:hook(PlayerUnitLocomotionExtension, "update_script_driven_movement", function (func, self, ...)
 	if not is_movement_enabled() then
 		return func(self, ...)
@@ -509,9 +498,8 @@ mod:hook(PlayerUnitLocomotionExtension, "update_script_driven_movement", functio
 	self._script_driven_gravity_scale = gravity_scale
 end)
 
--- Multidodge also takes away the game's own limit: the more dodges in a row, the shorter they get
--- (and after the first few they no longer dodge attacks). The game does the same for its
--- infinite dodge perk.
+-- Multidodge also removes the game's own limit. Normally the more dodges in a row, the shorter they get, and after the first few
+-- they no longer avoid attacks. The game removes the same limit for its infinite dodge perk.
 mod:hook(GenericStatusExtension, "add_dodge_cooldown", function (func, self, ...)
 	if is_multidodge() then
 		self.dodge_cooldown = 0
@@ -522,8 +510,8 @@ mod:hook(GenericStatusExtension, "add_dodge_cooldown", function (func, self, ...
 	return func(self, ...)
 end)
 
--- No fall damage. The game takes the next landing's damage away when this is set, it asks for it
--- every time the player lands (and is then also without the hard landing shake of the camera)
+-- No fall damage. The game removes the next landing's damage when this flag is set, so it is set again on every update. The
+-- player also loses the camera shake of a hard landing.
 mod:hook(GenericStatusExtension, "update_falling", function (func, self, ...)
 	if is_movement_enabled() then
 		self.ignore_next_fall_damage = true
@@ -532,11 +520,9 @@ mod:hook(GenericStatusExtension, "update_falling", function (func, self, ...)
 	return func(self, ...)
 end)
 
--- Crouching: no walking off ledges (UT2004: crouching and walking pawns stay on ledges), unless the
--- game is keeping the player crouched
--- A step is blocked when there is no ground in the direction the player is moving in. Moving
--- along an edge still works: the parts of the movement along the world's axes are tried on
--- their own.
+-- Crouching players do not walk off ledges, like UT2004's crouching and walking pawns. The exception is when the game is keeping
+-- the player crouched. A step is blocked when there is no ground in the direction the player is moving. Moving along an edge
+-- still works, because the parts of the movement along each of the world's axes are tried on their own.
 local GROUND_FILTERS = {
 	"filter_player_mover",
 	"filter_player_ray_projectile_static_only",
@@ -557,9 +543,9 @@ local function has_ground_at(physics_world, position)
 	return false
 end
 
--- A step is fine when there is ground ahead (stepping back to safety, moving along an edge), or
--- when the center of the player isn't further past the edge than the overhang: the ground is
--- there behind them, in the direction they are not going.
+-- Returns whether a step is allowed. A step is fine when there is ground ahead, for example when stepping back to safety or
+-- moving along an edge. It is also fine when the center of the player is not further past the edge than the overhang, because
+-- then the ground is behind them, in the direction they are not going.
 local function has_ground_ahead(physics_world, position, movement)
 	if Vector3.length(movement) < 0.001 then
 		return true
@@ -577,8 +563,8 @@ mod:hook(CharacterStateHelper, "move_on_ground", function (func, first_person_ex
 		return
 	end
 
-	-- The game keeps the player crouched when they can't stand up (a low ceiling), and the ledge
-	-- guard would trap them. It only applies to a player who could stand up.
+	-- The game keeps the player crouched when they cannot stand up, for example under a low ceiling, and the ledge guard would
+	-- trap them there. So the guard only applies to a player who could stand up.
 	if not CharacterStateHelper.can_uncrouch(unit) then
 		return
 	end
@@ -591,7 +577,7 @@ mod:hook(CharacterStateHelper, "move_on_ground", function (func, first_person_ex
 		return
 	end
 
-	-- at a ledge: what is left of the movement is what can be done along each axis
+	-- At a ledge, the movement that is left is the part that can be done along each axis.
 	local allowed = Vector3.zero()
 	local along_x = Vector3(wanted.x, 0, 0)
 	local along_y = Vector3(0, wanted.y, 0)
@@ -607,25 +593,24 @@ mod:hook(CharacterStateHelper, "move_on_ground", function (func, first_person_ex
 	locomotion_extension:set_wanted_velocity(allowed)
 end)
 
--- The barriers option: with it on, each of the barriers that is on (invisible walls, kill zones, ledges) is
--- taken away.
+-- The barriers option removes each barrier that is turned on in its settings: invisible walls, kill zones and ledges.
 local function is_barrier_removed(setting_id)
 	return mod:get("no_barriers") and mod:get(setting_id) ~= false
 end
 
--- Invisible walls: the player's movement collides with the level through a collision profile (a "mover filter"),
--- and the level's walls that keep heroes in belong to groups that the heroes' profile collides with and the
--- dark pact players' profile doesn't (the game has a separate group of blockers for each of them). With the option
--- on the player moves with the dark pact players' profile. This is for the player's own character, and it
--- changes nothing in the level.
+-- Invisible walls
+-- The player's movement collides with the level through a collision profile, called a mover filter. The level's walls that keep
+-- heroes in belong to groups that the heroes' profile collides with and the dark pact players' profile does not, because the game
+-- has a separate group of blockers for each of them. With the option on, the player moves with the dark pact players' profile.
+-- This only affects the player's own character and changes nothing in the level.
 local INVISIBLE_WALL_MOVER_FILTER = "filter_player_mover_pactsworn"
 
 local function is_passing_invisible_walls()
 	return is_barrier_removed("no_invisible_walls")
 end
 
--- The filter the game would use while a mode (a ladder, ...) isn't in the way is the locomotion's default one, it
--- is changed for the duration of the call that sets the filter
+-- When no mode such as a ladder is active, the game uses the locomotion's default filter. That default is replaced only during
+-- the call that sets the filter.
 mod:hook(PlayerUnitLocomotionExtension, "set_mover_filter_property", function (func, self, ...)
 	local default_filter = self._default_mover_filter
 
@@ -638,7 +623,7 @@ mod:hook(PlayerUnitLocomotionExtension, "set_mover_filter_property", function (f
 	self._default_mover_filter = default_filter
 end)
 
--- The filter is set again when the option is changed, and when the player's unit is new
+-- The filter is set again when the option is changed and when the player has a new unit.
 local applied_unit
 local applied_enabled = false
 
@@ -663,7 +648,7 @@ local function update_mover_filter()
 	local modes = locomotion_extension and locomotion_extension._mover_modes
 
 	if modes then
-		-- sets the filter for the modes the player is in now
+		-- This sets the filter for the modes the player is in now.
 		locomotion_extension:set_mover_filter_property("ladder", modes.ladder)
 
 		applied_unit = unit
@@ -675,7 +660,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	update_mover_filter()
 end
 
--- (the game's own filter is back when the mod is reloaded or switched off)
+-- The game's own filter comes back when the mod is reloaded or switched off.
 mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 	applied_unit = nil
 end
@@ -695,7 +680,7 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	applied_enabled = false
 end
 
--- Kill zones: entering one kills the player, the health extension is told about it
+-- Kill zones: entering one kills the player, because the health extension is told about it.
 mod:hook(PlayerUnitHealthExtension, "entered_kill_volume", function (func, self, ...)
 	if is_barrier_removed("no_kill_zones") then
 		return
@@ -704,7 +689,7 @@ mod:hook(PlayerUnitHealthExtension, "entered_kill_volume", function (func, self,
 	return func(self, ...)
 end)
 
--- Ledges: the player hangs from the ledge they fall past, until they are pulled up
+-- Ledges: the player hangs from a ledge they fall past, until they are pulled up.
 mod:hook(CharacterStateHelper, "is_ledge_hanging", function (func, ...)
 	if is_barrier_removed("no_ledges") then
 		return false
@@ -721,17 +706,17 @@ mod:hook(CharacterStateHelper, "will_be_ledge_hanging", function (func, ...)
 	return func(...)
 end)
 
--- Momentum damage (see momentum_* in CONFIG). The damage of a melee hit comes from the power level the attacker sends
--- with it, which is what is scaled, for the hit and for the prediction of it.
+-- Momentum damage (see momentum_* in CONFIG). The damage of a melee hit comes from the power level the attacker sends with it.
+-- That power level is what gets scaled, both for the hit and for the prediction of the hit.
 
--- How much of the bonus at full speed the speed gives: 0 up to min speed, 1 at full speed and no limit above it
+-- Returns how much of the full-speed bonus the speed gives. It is 0 up to the minimum speed, 1 at full speed, and keeps rising
+-- above that.
 local function momentum_share(speed)
 	return math.max((speed - CONFIG.momentum_min_speed) / (CONFIG.momentum_full_speed - CONFIG.momentum_min_speed), 0)
 end
 
--- Grace: the player's fastest recent speed is kept for momentum_grace seconds (it is looked at while the player
--- moves, for the local player's unit).
-
+-- Grace: the player's fastest recent speed is kept for momentum_grace seconds. It is tracked while the player moves, for the
+-- local player's unit.
 local recent = {
 	speed = 0,
 	t = 0,
@@ -758,7 +743,7 @@ local function update_recent_speed()
 	end
 end
 
--- How fast the unit is moving, counting the speed it had a moment ago
+-- Returns how fast the unit is moving, counting the speed it had a moment ago.
 local function momentum_speed(unit, locomotion_extension)
 	local speed = Vector3.length(locomotion_extension:current_velocity())
 

@@ -1,13 +1,13 @@
 local mod = get_mod("unreal_tournament")
 
--- Bots with the Rocket Launcher. The game's bot shooting (BTBotShootAction) already fires the primary attack, which is a rocket. Bots don't
--- use the salvo. This only keeps them from firing where the explosion (3 m in radius) would hurt them or a player.
+-- Bots with the Rocket Launcher. The game's bot shooting (BTBotShootAction) already fires the primary attack, which is a rocket. Bots
+-- don't use the salvo. This only keeps them from firing where the explosion (3 m in radius) would hurt them or a player.
 
 local CONFIG = {
-	-- A rocket is fired at a target in this range (meters): nearer, the explosion would hurt the bot
+	-- A rocket is fired at a target in this range, in meters. Nearer, the explosion would hurt the bot.
 	min_range = 6,
 	max_range = 40,
-	-- No rocket when a player or bot is this close to the target (the explosion hurts them)
+	-- No rocket is fired when a player or bot is this close to the target, because the explosion would hurt them.
 	ally_clearance = 4,
 }
 

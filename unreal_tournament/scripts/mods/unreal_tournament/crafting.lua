@@ -1,10 +1,11 @@
 local mod = get_mod("unreal_tournament")
 
--- Crafting for the mod's weapons. Crafting is a request to the backend, which doesn't know these weapons and refuses requests from a game
--- with mods. A recipe that involves one of them is answered here, in the shape the backend answers, and handed to craft_request_cb.
+-- Crafting for the mod's weapons. Crafting is a request to the backend, which doesn't know these weapons and refuses requests from a
+-- game with mods. So a recipe that involves one of the mod's weapons is answered here, in the shape the backend answers, and handed
+-- to craft_request_cb.
 --
--- Supported: crafting from the blueprint, rerolling properties and traits, upgrading rarity, and salvaging (which only discards the weapon).
--- Applying a skin on the Illusions page also works. Everything is free. Extracting skins is refused.
+-- Supported: crafting from the blueprint, rerolling properties and traits, upgrading rarity, and salvaging (which only discards the
+-- weapon). Applying a skin on the Illusions page also works. Everything is free. Extracting skins is refused.
 --
 -- Rarities, properties and traits come from the game's data (CraftingData, WeaponProperties.combinations, WeaponTraits.combinations).
 -- The blueprint (rarity "default") is what the Craft page crafts new weapons from.
@@ -12,14 +13,14 @@ local mod = get_mod("unreal_tournament")
 local items = mod.items
 
 local CONFIG = {
-	-- Power level of a crafted weapon
+	-- The power level of a crafted weapon
 	power_level = 300,
-	-- Seconds until a craft counts as complete. The item window fades out when a craft starts and in when it completes; an instant answer
-	-- makes the two fades overlap
+	-- Seconds until a craft counts as complete. The item window fades out when a craft starts and fades in when it completes, and an
+	-- instant answer would make the two fades overlap.
 	craft_delay = 0.5,
 }
 
--- Rarities in upgrade order
+-- The rarities, in upgrade order
 local RARITIES = { "plentiful", "common", "rare", "exotic", "unique" }
 
 local function next_rarity(rarity)
@@ -30,7 +31,7 @@ local function next_rarity(rarity)
 	end
 end
 
--- Property and trait combinations a weapon of a rarity can have (traits only on exotic and unique)
+-- Returns the property and trait combinations that a weapon of a rarity can have. Only exotic and unique weapons have traits.
 local function property_combinations(data, rarity)
 	local by_rarity = WeaponProperties.combinations[data.property_table_name]
 
@@ -59,7 +60,7 @@ local function is_same_set(combination, names)
 	return #combination == #names and contains_all(combination, names)
 end
 
--- A random combination that `accepts` (any combination, when none does)
+-- Picks a random combination that `accepts` approves. If none is approved, any combination can be picked.
 local function pick(combinations, accepts)
 	local accepted = {}
 
@@ -73,11 +74,12 @@ local function pick(combinations, accepts)
 		accepted = combinations
 	end
 
-	-- No combinations at all: a rarity without traits
+	-- If there are no combinations at all, the rarity has no traits, so this returns nil.
 	return #accepted > 0 and accepted[math.random(#accepted)] or nil
 end
 
--- The properties of a combination with their strengths: 1 on a unique weapon, `kept` ones unchanged, otherwise 0.01 to 1
+-- Returns the properties of a combination with their strengths. A unique weapon gets strength 1, the `kept` properties stay as they
+-- were, and any other gets a random strength from 0.01 to 1.
 local function properties_of(combination, rarity, kept)
 	local properties = {}
 
@@ -98,7 +100,7 @@ local function copy_of(combination)
 	return names
 end
 
--- A random rarity, weighted as the game's weapon crafting is
+-- Returns a random rarity, weighted the way the game's weapon crafting weights it.
 local function roll_rarity()
 	local weights = CraftingData.craft_weapon_data.rarity_weights
 	local total = 0
@@ -109,7 +111,7 @@ local function roll_rarity()
 
 	local roll = math.random() * total
 
-	-- Sorted, as the order of a table isn't fixed
+	-- The rarities are sorted, because the order of a table isn't fixed.
 	local rarities = table.keys(weights)
 
 	table.sort(rarities)
@@ -125,7 +127,7 @@ local function roll_rarity()
 	return rarities[#rarities]
 end
 
--- The records (see items.lua) the recipes make: a new weapon, rerolled properties, rerolled traits, the next rarity
+-- The records (see items.lua) that the recipes make: a new weapon, rerolled properties, rerolled traits, and the next rarity.
 local function new_record(key)
 	local data = ItemMasterList[key]
 	local rarity = roll_rarity()
@@ -193,7 +195,7 @@ local function upgraded(record)
 	}
 end
 
--- What each recipe does to a weapon's record (the blueprint has none)
+-- What each recipe does to a weapon's record. The blueprint has no entry here.
 local CHANGES = {
 	reroll_weapon_properties = rerolled_properties,
 	reroll_weapon_traits = rerolled_traits,
@@ -203,7 +205,7 @@ local CHANGES = {
 	upgrade_item_rarity_unique = upgraded,
 }
 
--- Returns the record with the skin set. The weapon's default skin is stored as no skin.
+-- Returns the record with the skin set. The weapon's default skin is stored as no skin at all.
 local function with_skin(record, skin_key)
 	return {
 		key = record.key,
@@ -215,8 +217,8 @@ local function with_skin(record, skin_key)
 	}
 end
 
--- Salvage of crafted weapons (by backend id): they are removed and give nothing. The materials they would have given are listed with an
--- amount of 0.
+-- Salvages crafted weapons, given by backend id. They are removed and give nothing. The materials they would have given are listed
+-- with an amount of 0.
 local function discard(weapon_ids)
 	local inventory = Managers.backend._backend_mirror._inventory_items
 	local saved = items.saved()
@@ -260,7 +262,8 @@ local function discard(weapon_ids)
 	}
 end
 
--- Builds the backend's answer for a recipe on the mod's weapons (by backend id). Nothing is spent. skin_key is the skin being applied.
+-- Builds the backend's answer for a recipe on the mod's weapons, given by backend id. Nothing is spent. skin_key is the skin being
+-- applied.
 local function answer_to(recipe_name, weapon_ids, skin_key)
 	if recipe_name == "salvage" then
 		return discard(weapon_ids)
@@ -286,10 +289,10 @@ local function answer_to(recipe_name, weapon_ids, skin_key)
 	return { modified_items = { items.change_crafted(saved, weapon_id, change(saved.crafted[weapon_id])) } }
 end
 
--- When each craft counts as complete: [craft id] = time
+-- The time at which each craft counts as complete, by craft id
 local complete_at = {}
 
--- The pages ask every frame while the button is held, so a message is shown at most every few seconds
+-- The pages ask every frame while the button is held, so a message is shown at most once every few seconds.
 local MESSAGE_INTERVAL = 3
 local last_message_t = -math.huge
 
@@ -303,7 +306,8 @@ local function tell(message)
 	end
 end
 
--- The recipe is the page's. The Craft page names none, so that is crafting from a blueprint. Materials the page passes are ignored.
+-- The recipe comes from the page. The Craft page names none, which means crafting from a blueprint. Any materials the page passes are
+-- ignored.
 local function craft(func, self, career_name, item_backend_ids, recipe_override)
 	local weapon_ids = {}
 
@@ -354,7 +358,7 @@ local function craft(func, self, career_name, item_backend_ids, recipe_override)
 			return nil
 		end
 
-		-- The other ingredient is the skin: one of the items made from the unlocked skins.
+		-- The other ingredient is the skin, which is one of the items made from the unlocked skins.
 		local inventory = Managers.backend._backend_mirror._inventory_items
 
 		for _, backend_id in ipairs(item_backend_ids) do
@@ -397,14 +401,15 @@ local function is_craft_complete(func, self, id)
 	return func(self, id)
 end
 
--- Hooked once all mods are loaded: the last hook made runs first, and this one has to run before the Casual mod's, which refuses items
--- that aren't its own
+-- These are hooked once all the mods are loaded. The last hook made runs first, and this one has to run before the Casual mod's hook,
+-- which refuses items that aren't its own.
 mod.all_mods_loaded_callbacks[#mod.all_mods_loaded_callbacks + 1] = function ()
 	mod:hook(BackendInterfaceCraftingPlayfab, "craft", craft)
 	mod:hook(BackendInterfaceCraftingPlayfab, "is_craft_complete", is_craft_complete)
 end
 
--- The console crafting pages show owned/needed for each material. The mod's weapons need nothing, so they show owned/0 and can be crafted.
+-- The console crafting pages show owned/needed for each material. The mod's weapons need nothing, so the pages show owned/0 and the
+-- weapons can be crafted.
 local PAGES = {
 	"CraftPageCraftItemConsole",
 	"CraftPageRollPropertiesConsole",
@@ -439,8 +444,8 @@ for _, page_name in ipairs(PAGES) do
 	end)
 end
 
--- The item window (HeroWindowItemCustomization) upgrades and rerolls from an item. In the modded realm the game turns crafting off there
--- (GameSettingsDevelopment.read_only_backend); for the mod's weapons it is left on.
+-- The item window (HeroWindowItemCustomization) upgrades and rerolls from an item. In the modded realm the game turns crafting off
+-- there (GameSettingsDevelopment.read_only_backend). For the mod's weapons, crafting is turned back on.
 local function writable_backend(func, self, ...)
 	if not items.is_custom(self._item_backend_id) then
 		return func(self, ...)
@@ -464,7 +469,7 @@ end
 mod:hook(HeroWindowItemCustomization, "_enable_craft_button", writable_backend)
 mod:hook(HeroWindowItemCustomization, "_update_state_craft_button", writable_backend)
 
--- The window's material requirements show owned/0 too
+-- The window's material requirements show owned/0 too.
 mod:hook(HeroWindowItemCustomization, "_create_material_requirement_widgets", function (func, self, recipe_name)
 	local has_all_requirements, width = func(self, recipe_name)
 
@@ -482,8 +487,8 @@ mod:hook(HeroWindowItemCustomization, "_create_material_requirement_widgets", fu
 	return true, width
 end)
 
--- The reroll pages only refresh their requirements when entered and after a craft. They are refreshed whenever a weapon is put in or taken
--- out, so the mod's owned/0 doesn't stay when another weapon is put in.
+-- The reroll pages only refresh their requirements when they are entered and after a craft. This refreshes them whenever a weapon is
+-- put in or taken out, so the mod's owned/0 doesn't stay when another weapon is put in.
 for _, page_name in ipairs({ "CraftPageRollPropertiesConsole", "CraftPageRollTraitConsole" }) do
 	for _, function_name in ipairs({ "_add_craft_item", "_remove_craft_item" }) do
 		mod:hook_safe(_G[page_name], function_name, function (self)

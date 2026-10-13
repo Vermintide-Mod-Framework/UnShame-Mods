@@ -1,35 +1,38 @@
 local mod = get_mod("unreal_tournament")
 
--- Announcer (the Announcer setting): UT2004's announcements of kills, with the voice of its male announcer (MaleAnnouncer) and the words on the
--- screen. The sounds are in a bank of their own (tools/asset_conversion/make_bank.py announcer).
---   Multi kills (UnrealPlayer.LogMultiKills, MultiKillMessage): a kill of yours soon after your last one is the next one of a multi kill, and each
---     one in a row raises its level: Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill, Holy Shit.
---   Killing sprees (DeathMatch.NotifySpree, KillingSpreeMessage): kills in a row without being hurt by an enemy: Killing Spree, Rampage,
---     Dominating, Unstoppable, Godlike, Wicked Sick. What hurts you is an enemy's damage, not your own weapons, overcharge or your allies'.
---   First blood (DeathMatch.ScoreKill, FirstBloodMessage): the first enemy to die in a level, if it was you who killed it.
---   Head shots (DamTypeSniperHeadShot, SpecialKillMessage): a kill with a ranged shot to the head.
---   Call outs of a number of kills with a weapon (DamageType.IncrementKills): Head Hunter for head shots, Flak Monkey for kills with the Flak
---     Cannon, Combo Whore for kills with a shock combo, a moment after the kill that makes the number.
+-- The announcer (the Announcer setting). It plays UT2004's announcements of kills, in the voice of its male announcer (MaleAnnouncer),
+-- and shows the words on the screen. The sounds are in a bank of their own (tools/asset_conversion/make_bank.py announcer).
+--   Multi kills (UnrealPlayer.LogMultiKills, MultiKillMessage): a kill soon after your last one is the next kill of a multi kill. Each
+--     kill in a row raises the level: Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill, Holy Shit.
+--   Killing sprees (DeathMatch.NotifySpree, KillingSpreeMessage): kills in a row without being hurt by an enemy. The announcements are
+--     Killing Spree, Rampage, Dominating, Unstoppable, Godlike and Wicked Sick. Only an enemy's damage ends a spree. Your own weapons,
+--     overcharge and your allies' damage do not.
+--   First blood (DeathMatch.ScoreKill, FirstBloodMessage): announced when you kill the first enemy to die in a level.
+--   Head shots (DamTypeSniperHeadShot, SpecialKillMessage): announced for a kill with a ranged shot to the head.
+--   Call outs of a number of kills with a weapon (DamageType.IncrementKills): Head Hunter for head shots, Flak Monkey for kills with the
+--     Flak Cannon, and Combo Whore for kills with a shock combo. The call out comes a moment after the kill that reaches the number.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
 local CONFIG = {
-	-- UnrealPlayer.LogMultiKills: a kill counts as the next one of a multi kill if it comes this soon after the last one (UT has 4
-	-- seconds, a horde of this game dies faster than players do)
+	-- UnrealPlayer.LogMultiKills: a kill counts as the next kill of a multi kill if it comes within this long after the last one. UT
+	-- uses 4 seconds, but a horde in this game dies faster than players do.
 	window = 1.5, -- seconds
-	-- What is not an enemy for it (a player is the kill of UT: the target dummies and the critters of this game are not one)
+	-- These are not enemies as far as the announcer is concerned. In UT a player is a kill, and the target dummies and critters of this
+	-- game are not.
 	ignored_races = {
 		critter = true,
 		dummy = true,
 	},
-	-- The most basic enemy of each race: its kills are not counted at all (not for a first blood, a multi kill, a spree, a head shot or a
-	-- call out)
+	-- The most basic enemy of each race. Its kills are not counted at all: not for a first blood, a multi kill, a spree, a head shot or
+	-- a call out.
 	ignored_breeds = {
 		beastmen_ungor = true,
 		chaos_fanatic = true,
 		skaven_slave = true,
 	},
-	-- MultiKillMessage, by the level of the multi kill (1 is the second kill): its sound and its text; the last one is every level after it
+	-- MultiKillMessage, by the level of the multi kill (level 1 is the second kill). Each entry has a sound and a text. The last entry
+	-- is used for every level after it.
 	multi_kills = {
 		{ event = "ut_announcer_double_kill", text = "Double Kill!" },
 		{ event = "ut_announcer_multi_kill", text = "Multi Kill!" },
@@ -39,7 +42,8 @@ local CONFIG = {
 		{ event = "ut_announcer_ludicrous_kill", text = "L U D I C R O U S !!!" },
 		{ event = "ut_announcer_holy_shit", text = "H O L Y  S H I T !" },
 	},
-	-- KillingSpreeMessage, by the kills of the spree that UT makes it for, times this much (a horde is killed faster than players are)
+	-- KillingSpreeMessage, by the number of kills in the spree that UT announces it at, times this multiplier. A horde dies faster than
+	-- players do.
 	spree_multiplier = 3,
 	sprees = {
 		{ kills = 5, event = "ut_announcer_killing_spree", text = "Killing Spree!" },
@@ -49,17 +53,17 @@ local CONFIG = {
 		{ kills = 25, event = "ut_announcer_godlike", text = "GODLIKE!" },
 		{ kills = 30, event = "ut_announcer_wicked_sick", text = "WICKED SICK!" },
 	},
-	-- (FirstBloodMessage: "<name> drew first blood!")
+	-- FirstBloodMessage shows "<name> drew first blood!"
 	first_blood = { event = "ut_announcer_first_blood", text = "drew first blood!" },
 	head_shot = { event = "ut_announcer_headshot", text = "Head Shot!!" },
-	-- (what is a ranged hit: the types of attack the game tells the shots of a ranged weapon by)
+	-- The attack types that the game gives the shots of a ranged weapon. A hit with one of them is a ranged hit.
 	ranged_attack_types = {
 		instant_projectile = true,
 		heavy_instant_projectile = true,
 		projectile = true,
 	},
-	-- The call outs of a number of kills (the DamageTypes call ClientDelayedAnnouncementNamed at 15 of them, a moment later), times this
-	-- much: they start again when an enemy hurts the player, as a spree does
+	-- The call outs for a number of kills. UT's DamageTypes call ClientDelayedAnnouncementNamed at 15 kills, a moment after the kill.
+	-- The number is multiplied by this. The count starts again when an enemy hurts the player, as a spree does.
 	call_out_multiplier = 3,
 	call_out_delay = 1.5, -- seconds
 	call_outs = {
@@ -67,22 +71,22 @@ local CONFIG = {
 		flak_monkey = { event = "ut_announcer_flak_monkey", kills = 15 },
 		combo_whore = { event = "ut_announcer_combo_whore", kills = 15 },
 	},
-	-- Weapons with call outs, by the template of the item that killed. The weapon's setting, if it has one, must be on.
+	-- The weapons with call outs, matched by the template of the item that killed
 	flak_cannon = { template = mod.items.weapons.flak_cannon.template },
 	shock_rifle = { template = mod.items.weapons.shock_rifle.template },
-	-- PlayerController.PlayRewardAnnouncement: an announcement that is not forced is not played if one has been played in the last second
+	-- PlayerController.PlayRewardAnnouncement: an announcement that is not forced is not played if one was played in the last second
 	unforced_gap = 1, -- seconds
-	-- The words (LocalMessage): where they are on the screen (PosY of each message, from the top), how long they last (Lifetime) and how they
-	-- fade out, and their colors (MultiKillMessage and SpecialKillMessage are red, CriticalEventPlus, which the sprees are, is white and
-	-- FirstBloodMessage is red). The size is one of those of FontSize, in pixels at 1080 high
+	-- The words on the screen (LocalMessage). Each message has where it is on the screen (PosY, from the top), how long it lasts
+	-- (Lifetime), how it fades out, and its color. MultiKillMessage, SpecialKillMessage and FirstBloodMessage are red. CriticalEventPlus,
+	-- which the sprees use, is white. The size is one of the FontSize values, in pixels at a height of 1080.
 	messages = {
 		multi_kill = { y = 0.242, color = { 255, 0, 0 } },
 		head_shot = { y = 0.14, color = { 255, 0, 0 } },
 		critical = { y = 0.83, color = { 255, 255, 255 } },
 	},
 	text_life = 3, -- seconds
-	text_fade = 1, -- seconds, at the end of it
-	text_shadow = 2, -- pixels, of the shadow it is read by
+	text_fade = 1, -- seconds, at the end of its life
+	text_shadow = 2, -- pixels of shadow, to make the text readable
 	font_material = "materials/fonts/gw_head",
 	font_name = "gw_head",
 	font_sizes = { 40, 52, 66, 84 },
@@ -91,21 +95,22 @@ local CONFIG = {
 local multi_kill_level = 0 -- UnrealPlayer.MultiKillLevel
 local last_kill_time = -math.huge
 local spree = 0 -- Pawn.Spree
-local call_out_kills = {} -- by name: how many of the kills of each
+local call_out_kills = {} -- how many kills each call out has counted, by name
 local first_blood_taken = false
 local last_sound_time = -math.huge
-local playing_id -- of the announcement that is playing
-local delayed = {} -- { time = when, event = ... }
-local messages = {} -- by name (the places on the screen): { text, size, color, time }
+local playing_id -- the id of the announcement that is playing
+local delayed = {} -- announcements waiting to play, each { time = when, event = ... }
+local messages = {} -- the words on the screen, by place name, each { text, size, color, time }
 
--- If the death of a unit can count as a kill: it is an enemy of a kind that is not ignored
+-- Returns whether the death of a unit counts as a kill. It does if the unit is an enemy of a kind that is not ignored.
 local function is_counted(unit)
 	local breed = Unit.get_data(unit, "breed")
 
 	return breed ~= nil and not breed.is_player and not CONFIG.ignored_races[breed.race] and not CONFIG.ignored_breeds[breed.name]
 end
 
--- The player whose kill the death of an enemy was: the one that last hurt it (the game's own statistics tell kills the same way)
+-- Returns the player whose kill an enemy's death was, which is the one who hurt it last. The game's own statistics decide kills the
+-- same way.
 local function killer_of(victim_unit)
 	local health_extension = ScriptUnit.has_extension(victim_unit, "health_system")
 	local damage_data = health_extension and health_extension.last_damage_data
@@ -135,7 +140,7 @@ local function play(event, forced)
 
 	local wwise_world = Managers.world:wwise_world(Managers.world:world("level_world"))
 
-	-- (the one that is playing is cut off by the next, a forced reward announcement is)
+	-- The announcement that is playing is cut off by the next one, as a forced reward announcement is in UT.
 	if playing_id then
 		WwiseWorld.stop_event(wwise_world, playing_id)
 	end
@@ -154,7 +159,7 @@ local function show(place, text, font_size_index, color)
 	}
 end
 
--- MultiKillMessage.GetFontSize
+-- Returns the font size index for a multi kill level, as MultiKillMessage.GetFontSize does.
 local function multi_kill_font_size(level)
 	if level < 4 then
 		return 1
@@ -177,14 +182,14 @@ end
 local function announce_spree(kills)
 	for _, level in ipairs(CONFIG.sprees) do
 		if kills == level.kills * CONFIG.spree_multiplier then
-			-- (KillingSpreeMessage: the player's own is the size 2)
+			-- In KillingSpreeMessage the player's own message is size 2.
 			show("critical", level.text, 3)
 			play(level.event, true)
 		end
 	end
 end
 
--- A kill that counts for a call out (DamageType.IncrementKills): the call out comes a moment after the kill that makes the number
+-- Counts a kill for a call out (DamageType.IncrementKills). The call out comes a moment after the kill that reaches the number.
 local function count_call_out(name, kills)
 	local call_out = CONFIG.call_outs[name]
 	local before = call_out_kills[name] or 0
@@ -204,8 +209,8 @@ local function announce_head_shot()
 	play(CONFIG.head_shot.event, false)
 end
 
--- If the shot that killed was a ranged one (how the game's own statistics tell: by the type of the attack, or the slot of the weapon when
--- it says none)
+-- Returns whether the shot that killed was a ranged one. This works the way the game's own statistics do: by the type of the attack,
+-- or by the slot of the weapon when the attack has no type.
 local function is_ranged_hit(damage_data)
 	local attack_type = damage_data[DamageDataIndex.ATTACK_TYPE]
 
@@ -218,7 +223,7 @@ local function is_ranged_hit(damage_data)
 	return item ~= nil and item.slot_type == "ranged"
 end
 
--- If the item that killed is this weapon
+-- Returns whether the item that killed is this weapon.
 local function is_killed_by(weapon, damage_data)
 	local item = rawget(ItemMasterList, damage_data[DamageDataIndex.DAMAGE_SOURCE_NAME])
 
@@ -239,7 +244,7 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 
 	local is_local = killer == Managers.player:local_player()
 
-	-- (the first enemy that dies in the level, whoever kills it)
+	-- The first enemy that dies in the level counts as first blood, whoever kills it.
 	if not first_blood_taken then
 		first_blood_taken = true
 
@@ -265,7 +270,7 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 
 	last_kill_time = now
 
-	-- (the zone of the shot that killed: the game's own statistics tell a head shot this way)
+	-- The game's own statistics recognize a head shot by the hit zone of the shot that killed.
 	local is_head_shot = damage_data[DamageDataIndex.HIT_ZONE] == "head" and is_ranged_hit(damage_data)
 
 	if is_head_shot then
@@ -285,8 +290,8 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 	end
 end)
 
--- The kills of a shock combo: the Shock Rifle tells which enemies it killed (the host, which applies the damage, knows), and the host tells
--- the player whose combo it was if that is not itself
+-- Counts the kills of a shock combo. The Shock Rifle reports which enemies the combo killed, and the host, which applies the damage,
+-- knows. The host tells the player whose combo it was, if that is not the host itself.
 mod.shock_combo_callbacks.announcer = function (attacker_unit, killed_units)
 	local kills = 0
 
@@ -302,7 +307,7 @@ mod.shock_combo_callbacks.announcer = function (attacker_unit, killed_units)
 
 	local attacker = Managers.player:owner(attacker_unit)
 
-	-- (the setting is each player's own: the one whose combo it was is the one who has it)
+	-- The setting belongs to each player, so only the player whose combo it was can have it on.
 	if attacker == Managers.player:local_player() then
 		if mod:get("announcer") then
 			count_call_out("combo_whore", kills)
@@ -318,8 +323,8 @@ mod:network_register("ut_combo_kills", function (_, kills)
 	end
 end)
 
--- What ends a spree, and starts the count of the call outs again: an enemy hurts the player. Their own weapons (and the overcharge) and their
--- allies' don't: the one who hurts is the unit that did it, an enemy is a unit that has a breed that is not a player's
+-- An enemy hurting the player ends a spree and starts the count of the call outs again. The player's own weapons (and overcharge) and
+-- their allies don't. The one who hurts is the unit that did the damage, and an enemy is a unit with a breed that is not a player's.
 mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_unit, damage_amount, _, _, _, _, _, _, source_attacker_unit)
 	if (spree == 0 and next(call_out_kills) == nil) or damage_amount <= 0 or not attacker_unit then
 		return
@@ -341,7 +346,7 @@ mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_
 	end
 end)
 
--- The announcements that come a moment after
+-- Plays the announcements that were delayed, when their time comes.
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	if not delayed[1] then
 		return
@@ -357,7 +362,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	end
 end
 
--- The words, every frame (the game's own user interface draws them, as it does its debug texts)
+-- Draws the words every frame. The game's own user interface draws them, the way it draws its debug texts.
 mod:hook_safe(IngameUI, "post_update", function (self)
 	if not next(messages) then
 		return

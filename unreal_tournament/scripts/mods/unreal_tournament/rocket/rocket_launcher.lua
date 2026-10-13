@@ -1,12 +1,11 @@
 local mod = get_mod("unreal_tournament")
 
--- Rocket Launcher: a copy of the Repeating Crossbow (the witch hunter's) with its fire modes replaced, the same way the Flak
--- Cannon is a copy of the Blunderbuss. The numbers are from UT2004 (XWeapons/RocketFire, RocketMultiFire,
--- RocketProj).
---   LMB: a rocket that explodes where it hits.
---   RMB (held): loads rockets, one at first and another every load_interval seconds, up to three.
---               LMB then fires them all in a line.
--- All the ammo is the clip: there is no reload.
+-- Rocket Launcher: a copy of the witch hunter's Repeating Crossbow with its fire modes replaced, the same way the Flak Cannon is
+-- a copy of the Blunderbuss. The numbers are from UT2004 (XWeapons/RocketFire, RocketMultiFire and RocketProj).
+--   LMB: fires a rocket that explodes where it hits.
+--   RMB (held): loads rockets, one at first and then another every load_interval seconds, up to three.
+--               Releasing RMB fires them all in a line.
+-- All the ammo is the clip, so there is no reload.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local register_damage_profile = utils.register_damage_profile
@@ -32,37 +31,42 @@ mod.items.register("rocket_launcher", {
 
 local TEMPLATE_NAME = mod.items.weapons.rocket_launcher.template
 
--- A rocket goes where the crosshair is: there is no spread (the crossbow's default would scatter it a little)
+-- A rocket goes where the crosshair is. It has no spread, while the crossbow's default would scatter it a little.
 local SPREAD_TEMPLATE = "ut_rocket"
 
 utils.zero_spread_template(SPREAD_TEMPLATE, "brace_of_pistols")
-local SPIRAL_ACTION = "zoomed_shot_spiral" -- the sub action of the salvo that is a spiral
+local SPIRAL_ACTION = "zoomed_shot_spiral" -- the sub action for a salvo that is a spiral
 
 register_network_lookup("sub_actions", SPIRAL_ACTION)
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
 	-- Rocket
-	rocket_speed = 2200, -- RocketProj.Speed 1350 uu/s is 27 m/s by size and 12 m/s by run speed, this is in between (the action's unit is m/s * 100)
+	-- RocketProj.Speed is 1350 uu/s. That is 27 m/s by size and 12 m/s by run speed, so this is in between. The action's unit is
+	-- m/s * 100.
+	rocket_speed = 2200,
 	rocket_lifetime = 8, -- seconds
 	rocket_radius = 0.1, -- m, how easily a rocket hits things
-	projectile_touch_radius = 0.5, -- m, how close a Flak shell or a Shock ball has to be for the rocket to explode on it (as the shell's)
-	-- Where a rocket starts, from the camera: forward, to the right and down (UT's RocketFire.ProjSpawnOffset is 25, 6 and -6 units, 0.5, 0.12
-	-- and 0.12 m: the launcher is drawn further out here, so they are more, to start at its muzzle)
+	-- How close a Flak shell or a Shock ball has to be for the rocket to explode on it. It is the same as the shell's.
+	projectile_touch_radius = 0.5, -- m
+	-- Where a rocket starts, measured from the camera: forward, to the right and down. UT's RocketFire.ProjSpawnOffset is 25, 6 and
+	-- -6 units, which is 0.5, 0.12 and 0.12 m. The launcher is drawn further out here, so the offsets are larger, to start the
+	-- rocket at the muzzle.
 	start_forward = 1.0, -- m
 	start_right = 0.35, -- m
 	start_down = 0.18, -- m
 	rocket_gravity_settings = "spark", -- the game's gravity setting with the least gravity
 	fire_interval = 0.9, -- seconds, RocketFire.FireRate
 	salvo_fire_interval = 0.95, -- seconds, RocketMultiFire.FireRate
-	-- Ammo (the crossbow's is 15 in a clip and 48 in all, UT's RocketAmmo.MaxAmmo is 30). All of it is the clip: there is no reload.
+	-- The crossbow has 15 in a clip and 48 in all, and UT's RocketAmmo.MaxAmmo is 30. All the ammo is the clip, so there is no
+	-- reload.
 	max_ammo = 27,
-	-- The damage and radius of the explosion are the same as the Flak Cannon's shell: UT has 90 and 220 uu for
-	-- both, and they were reduced in the same way
+	-- The damage and radius of the explosion are the same as the Flak Cannon's shell. UT has 90 damage and a 220 uu radius for
+	-- both, and they were reduced in the same way.
 	rocket_damage = 60,
-	-- The damage multipliers of the explosion per armor type: unarmored, armored, monsters, players,
-	-- berserkers, super armor. Like the armour piercing weapons of the game (0.8 against armor, 1.5 against monsters at the most) and the
-	-- Flak Cannon's shell; the super armor (chaos warriors) takes half, the game's own is 0.
+	-- The damage multipliers of the explosion for each armor type: unarmored, armored, monsters, players, berserkers and super
+	-- armor. They are like the game's armour piercing weapons (at most 0.8 against armor and 1.5 against monsters) and like the Flak
+	-- Cannon's shell. Super armor (chaos warriors) takes half damage, while the game's own multiplier for it is 0.
 	rocket_armor_attack = {
 		1,
 		1,
@@ -71,7 +75,7 @@ local CONFIG = {
 		1,
 		0.5,
 	},
-	-- The same per armor type for the stagger (the game's own are 0.5 against armor, 0.75 against berserkers and 0 against super armor)
+	-- The same multipliers for the stagger. The game's own are 0.5 against armor, 0.75 against berserkers and 0 against super armor.
 	rocket_armor_impact = {
 		1,
 		1,
@@ -81,27 +85,26 @@ local CONFIG = {
 		0.5,
 	},
 	rocket_explosion_radius_uu = 150,
-	rocket_explosion_full_damage_radius = 0.5, -- damage falls off linearly from here to the radius
-	-- The explosion hurts the player who fired the rocket: this much at the center, falling off like
-	-- the explosion's damage does
+	rocket_explosion_full_damage_radius = 0.5, -- the damage falls off linearly from here to the radius
+	-- The explosion hurts the player who fired the rocket. This is the damage at the center, and it falls off the same way the
+	-- explosion's damage does.
 	rocket_self_damage = 45,
-	-- The explosion throws the player who fired the rocket away from its center at this speed (m/s), less further out, like the damage.
-	-- (RocketProj.MomentumTransfer is 50000: the Flak Cannon's shell has 75000 and uses 8.5.)
+	-- The explosion throws the player who fired the rocket away from its center at this speed in m/s. The speed is lower further
+	-- out, like the damage. RocketProj.MomentumTransfer is 50000, while the Flak Cannon's shell has 75000 and uses 8.5.
 	rocket_jump_speed = 5.7,
-	-- Loading: RocketMultiFire. One rocket right away, the second after FireRate (0.95 s), the third after
-	-- twice that. They are fired in a line, 1000 uu of UT's spread units between them (5.5 degrees).
+	-- Loading follows RocketMultiFire. One rocket is loaded right away, the second after FireRate (0.95 s), and the third after
+	-- twice that. The rockets are fired in a line, with 1000 uu of UT's spread units (5.5 degrees) between them.
 	max_rockets = 3,
 	load_interval = 0.95, -- seconds, RocketMultiFire.FireRate
 	-- The loaded rockets are fired by themselves after this long, whatever the ammo (RocketMultiFire.MaxHoldTime). UT also fires
-	-- right away when the last of the ammo is loaded, that is not done here.
+	-- right away when the last of the ammo is loaded, but that is not done here.
 	max_hold_time = 2.3, -- seconds
 	rocket_line_spread = 0.096, -- radians between two rockets
-	-- The spiral: pressing the primary button while loading makes the salvo a spiral instead of a line (UT's
-	-- tight spread). The rockets start in a ring and fly as a flock, RocketProj.Timer: they
-	-- are pulled towards each other when they are further apart than twice the flock radius and pushed
-	-- away when closer, and curl around each other. (UT's values, in meters.)
-	-- The ring is not around the aim: its center is to the right of the start of a rocket and below it
-	-- (RocketMultiFire.DoFireEffect), and each rocket starts a little way back, up to this much.
+	-- The spiral: pressing the primary button while loading makes the salvo a spiral instead of a line (UT's tight spread). The
+	-- rockets start in a ring and fly as a flock (RocketProj.Timer). They are pulled towards each other when they are further apart
+	-- than twice the flock radius, pushed away when they are closer, and curl around each other. These are UT's values in meters.
+	-- The ring is not around the aim. Its center is to the right of the start of a rocket and below it (see
+	-- RocketMultiFire.DoFireEffect), and each rocket starts a little way back, by up to the spiral_start_back distance.
 	spiral_ring_radius = 0.32, -- 16 uu
 	spiral_ring_right = 0.28, -- 14 uu
 	spiral_ring_down = 0.28, -- 14 uu
@@ -111,32 +114,32 @@ local CONFIG = {
 	spiral_max_force = 12, -- m/s^2, FlockMaxForce 600 uu/s^2
 	spiral_curl_force = 9, -- m/s^2, FlockCurlForce 450 uu/s^2
 	spiral_pull_interval = 0.1, -- seconds, how often the rockets are pulled back towards their direction
-	-- Lock-on, like UT's: keep the crosshair on an enemy for lock_required_time and the rockets fired after that
-	-- home in on it, using the game's true flight projectiles (the position of those is synced, so everyone sees
-	-- them home in). The lock is lost after unlock_required_time off the enemy, and by firing. (UT: 1.25 s, 0.5 s,
-	-- the target has to be within 0.996 of the aim, which is 5 degrees, and 8000 uu away.) The rockets of a spiral
-	-- salvo start in their ring and home in too, which takes them out of the flock.
+	-- Lock-on works like UT's. When the crosshair stays on an enemy for lock_required_time, the rockets fired after that home in
+	-- on it. They use the game's true flight projectiles, whose position is synced, so everyone sees them home in. The lock is lost
+	-- when the aim is off the enemy for unlock_required_time, and by firing. UT uses 1.25 s and 0.5 s, requires the target to be
+	-- within 0.996 of the aim (5 degrees), and requires it to be within 8000 uu. The rockets of a spiral salvo start in their ring
+	-- and home in too, which takes them out of the flock.
 	lock_range = 50, -- m
-	lock_aim_dot = 0.995, -- how close to the aim the enemy has to be, 1 is exactly
-	lock_keep_dot = 0.95, -- how far from the aim an enemy that is locked can be without it counting as being off it (18 degrees)
+	lock_aim_dot = 0.995, -- how close to the aim the enemy has to be, where 1 is exactly on it
+	lock_keep_dot = 0.95, -- how far from the aim a locked enemy can be without counting as off the aim (18 degrees)
 	lock_required_time = 0.75, -- seconds (UT's LockRequiredTime is 1.25)
 	unlock_required_time = 0.5, -- seconds the aim has to be off the locked enemy before the lock is lost, UnLockRequiredTime
-	lock_outline = true, -- the locked enemy gets the red outline of the game's target marking (like the true flight bow's)
+	lock_outline = true, -- the locked enemy gets the red outline of the game's target marking, like the true flight bow's
 	lock_indicator = false, -- the crosshair gets arrows around it while locked
 	lock_arrows_spread = 0.3, -- how far from the center the arrows are
-	-- When another rocket is loaded the weapon plays an animation (false for none: "attack_shoot" is the
-	-- animation of firing while aiming, its sound is the sound of a shot), and a flow event of the weapon's
-	-- units (the game triggers these for the sounds of handling a weapon: "sfx_ranged_weapon_foley" is the
-	-- rustle of it, "sfx_ranged_weapon_equip" the sound of wielding it)
+	-- When another rocket is loaded, the weapon plays an animation (false for none) and sends a flow event to the weapon's units.
+	-- "attack_shoot" is the animation of firing while aiming, and its sound is the sound of a shot. The game triggers flow events
+	-- for the sounds of handling a weapon. "sfx_ranged_weapon_foley" is the rustle of it, and "sfx_ranged_weapon_equip" is the
+	-- sound of wielding it.
 	load_animation_event = false,
 	load_flow_event = "sfx_ranged_weapon_equip",
-	-- The crosshair shows a pip for each rocket that can be loaded, the loaded ones lit, while loading
+	-- While loading, the crosshair shows a pip for each rocket that can be loaded, and the loaded ones are lit.
 	crosshair_pips = true,
 	pip_texture = "crosshair_01_center",
 	pip_size = 9, -- pixels at 1080p
 	pip_spacing = 18,
 	pip_offset_y = 7, -- from the center of the crosshair, positive is up
-	-- the red of the launcher's buttons
+	-- The red of the launcher's buttons
 	pip_loaded_color = {
 		255,
 		215,
@@ -144,19 +147,19 @@ local CONFIG = {
 		25,
 	}, -- alpha, red, green, blue
 	pip_empty_alpha = 70,
-	-- When the salvo will be a spiral the pips are in a triangle instead of a row: the second stays where the
-	-- middle one of the row is, the first and third are below the lines to the left and right of the crosshair's
-	-- center, this far from the center sideways and down (negative is down):
+	-- When the salvo will be a spiral, the pips are in a triangle instead of a row. The second pip stays where the middle one of
+	-- the row is. The first and third pips are below the lines to the left and right of the crosshair's center, by this much
+	-- sideways and down (negative is down).
 	pip_spiral_side_x = 16,
 	pip_spiral_side_y = -15,
-	-- and a sound of the game's HUD (false for none)
+	-- A sound of the game's HUD played when a rocket is loaded (false for none)
 	load_sound_event = false,
-	-- Whatever dies of the explosion is thrown away from it as UT does (utils.blast_ragdoll)
+	-- Whatever dies of the explosion is thrown away from it as UT does (utils.blast_ragdoll).
 	ragdoll_window = 1.5, -- seconds a body has to start ragdolling after the explosion
 }
 
--- Damage profiles: the direct hit of the rocket only staggers, its damage is the explosion, which is at
--- full strength for whatever the rocket hits (like in UT)
+-- Damage profiles. The direct hit of the rocket only staggers. Its damage is the explosion, which is at full strength for
+-- whatever the rocket hits, like in UT.
 register_damage_profile("ut_rocket", "staff_fireball", function (profile)
 	make_flat(profile, 0, impact_power_for(CONFIG.rocket_damage))
 
@@ -169,7 +172,7 @@ end)
 local function modify_explosion_profile(profile)
 	make_flat(profile, attack_power_for(CONFIG.rocket_damage), impact_power_for(CONFIG.rocket_damage))
 
-	-- more damage against monsters (and armor)
+	-- The explosion does more damage against monsters and armor.
 	profile.armor_modifier.attack = table.clone(CONFIG.rocket_armor_attack)
 	profile.armor_modifier.impact = table.clone(CONFIG.rocket_armor_impact)
 end
@@ -177,7 +180,7 @@ end
 register_damage_profile("ut_rocket_explosion", "fireball_charged_explosion", modify_explosion_profile)
 register_damage_profile("ut_rocket_explosion_glance", "fireball_charged_explosion_glance", modify_explosion_profile)
 
--- The look and the sound of the explosion are the skin's
+-- The look and the sound of the explosion come from the skin.
 register_explosion_template("ut_rocket_explosion", {
 	explosion = {
 		alert_enemies = true,
@@ -185,7 +188,7 @@ register_explosion_template("ut_rocket_explosion", {
 		attacker_power_level_offset = 1,
 		damage_profile = "ut_rocket_explosion",
 		damage_profile_glance = "ut_rocket_explosion_glance",
-		-- the shooter is hurt separately, see rocket_self_damage
+		-- The shooter is hurt separately. See rocket_self_damage.
 		ignore_attacker_unit = true,
 		max_damage_radius = CONFIG.rocket_explosion_full_damage_radius,
 		radius = CONFIG.rocket_explosion_radius_uu * CONFIG.meters_per_uu,
@@ -201,8 +204,8 @@ register_explosion_template("ut_rocket_explosion", {
 })
 
 -- Weapon template
--- The sub actions keep their names (default is the rocket, zoomed_shot the loaded rockets), only what
--- they are made of changes.
+-- The sub actions keep their names: default is the single rocket, and zoomed_shot is the loaded rockets. Only what they are made
+-- of changes.
 
 local function build_rocket_action(source, is_salvo)
 	local action = table.clone(source)
@@ -221,7 +224,7 @@ local function build_rocket_action(source, is_salvo)
 	action.ut_rocket = true
 	action.spread_template_override = SPREAD_TEMPLATE
 
-	-- grenade: the explosion is set off by the first enemy it hits, like a grenade
+	-- The rocket is a grenade, so the first enemy it hits sets off the explosion.
 	action.impact_data = {
 		aoe = ExplosionTemplates.ut_rocket_explosion,
 		damage_profile = "ut_rocket",
@@ -230,8 +233,8 @@ local function build_rocket_action(source, is_salvo)
 
 	local interval = is_salvo and CONFIG.salvo_fire_interval or CONFIG.fire_interval
 
-	-- the next shot can be fired as soon as the rocket launcher can, and so can the aiming (UT does not start either mode while the
-	-- other one is waiting for its fire rate)
+	-- The next shot, or the aiming, can start only once the launcher can fire again. UT does not start either mode while the other
+	-- one is waiting for its fire rate.
 	for _, chain in ipairs(action.allowed_chain_actions) do
 		if chain.action == "action_one" or chain.action == "action_two" then
 			chain.start_time = interval
@@ -243,14 +246,14 @@ local function build_rocket_action(source, is_salvo)
 		action.multi_projectile_spread = CONFIG.rocket_line_spread
 		action.ut_rocket_salvo = true
 
-		-- firing the salvo ends the aiming: the weapon goes back to neutral, and aiming again needs
-		-- the button to be released first (see needs_release)
+		-- Firing the salvo ends the aiming. The weapon goes back to neutral, and the player has to release the aiming button
+		-- before aiming again (see needs_release).
 		action.hold_input = nil
 		action.minimum_hold_time = nil
 		action.total_time = interval
 		action.ut_init_callback = "rocket"
 
-		-- (no reloading during it either, like in the aiming)
+		-- There is no reloading during the salvo either, like during the aiming.
 		for i = #action.allowed_chain_actions, 1, -1 do
 			local chain = action.allowed_chain_actions[i]
 
@@ -265,13 +268,13 @@ local function build_rocket_action(source, is_salvo)
 	return action
 end
 
--- After a salvo the player has to release the aiming button before aiming again, per unit
+-- After a salvo, the player has to release the aiming button before aiming again. This is tracked for each unit.
 local needs_release = setmetatable({}, {
 	__mode = "k",
 })
 
--- The template is shared game state: it is patched in place, what is touched is saved to be put
--- back on disable, and when the mod is unloaded.
+-- The template is shared game state, so it is patched in place. What is changed is saved, and it is put back when the mod is
+-- disabled or unloaded.
 local saved = {}
 
 local function restore_crossbow()
@@ -307,7 +310,7 @@ local function apply_rocket_launcher()
 
 	template.default_spread_template = SPREAD_TEMPLATE
 
-	-- The chart of the item's stats (0 to 7): the single rocket is the normal attack, the loaded salvo the heavy one
+	-- The chart of the item's stats, from 0 to 7. The single rocket is the normal attack, and the loaded salvo is the heavy one.
 	template.weapon_diagram = {
 		light_attack = {
 			[DamageTypes.ARMOR_PIERCING] = 4,
@@ -342,8 +345,8 @@ local function apply_rocket_launcher()
 
 	saved.original = original
 
-	-- (what tells the bot shooting, see bots.lua, that this is the Rocket Launcher: bots fire single rockets, the crossbow's charged shot
-	-- is the aiming, which loads rockets here)
+	-- This tells the bot shooting that this is the Rocket Launcher (see bots.lua). Bots fire single rockets. The crossbow's
+	-- charged shot is the aiming, which loads rockets here, so bots must not use it.
 	template.attack_meta_data.ut_rocket = true
 	template.attack_meta_data.can_charge_shot = false
 
@@ -352,7 +355,7 @@ local function apply_rocket_launcher()
 	template.ammo_data.ammo_per_clip = CONFIG.max_ammo
 	template.ammo_data.ammo_per_reload = CONFIG.max_ammo
 	template.ammo_data.ammo_immediately_available = true
-	-- Nothing should need a reload, but the game may still start one (when the weapon is wielded), so make it short.
+	-- Nothing should need a reload, but the game may still start one when the weapon is wielded, so the reload is made short.
 	template.ammo_data.reload_time = 0.2
 
 	actions.action_one.default = build_rocket_action(original.action_one_default, false)
@@ -364,7 +367,7 @@ local function apply_rocket_launcher()
 	spiral.lookup_data.sub_action_name = SPIRAL_ACTION
 	actions.action_one[SPIRAL_ACTION] = spiral
 
-	-- the aiming loads the rockets: no zoom (UT has none) and no slowing down while loading
+	-- The aiming loads the rockets. It has no zoom, because UT has none, and it does not slow the player down while loading.
 	local aim = table.clone(original.action_two_default)
 	local original_condition = aim.condition_func
 
@@ -382,11 +385,10 @@ local function apply_rocket_launcher()
 	aim.buff_data = nil
 	aim.spread_template_override = SPREAD_TEMPLATE
 
-	-- the salvo is fired by itself after a while (when is set when the aiming starts)
 	aim.allowed_chain_actions = table.clone(aim.allowed_chain_actions)
 
-	-- the primary button doesn't fire while loading, it makes the salvo a spiral. Reloading isn't possible
-	-- while loading either: the game doesn't allow it while zooming, and there is no zoom here to do that.
+	-- The primary button does not fire while loading. It makes the salvo a spiral. Reloading is not possible while loading
+	-- either. The game does not allow it while zooming, and there is no zoom here to stop it.
 	for i = #aim.allowed_chain_actions, 1, -1 do
 		local chain = aim.allowed_chain_actions[i]
 
@@ -395,6 +397,7 @@ local function apply_rocket_launcher()
 		end
 	end
 
+	-- The salvo is fired by itself after max_hold_time.
 	aim.allowed_chain_actions[#aim.allowed_chain_actions + 1] = {
 		action = "action_one",
 		auto_chain = true,
@@ -403,7 +406,7 @@ local function apply_rocket_launcher()
 		ut_salvo_chain = true,
 	}
 
-	-- releasing the aiming button fires the loaded rockets (UT's bFireOnRelease)
+	-- Releasing the aiming button fires the loaded rockets, like UT's bFireOnRelease.
 	aim.allowed_chain_actions[#aim.allowed_chain_actions + 1] = {
 		action = "action_one",
 		auto_chain = true,
@@ -415,20 +418,20 @@ local function apply_rocket_launcher()
 	actions.action_two.default = aim
 end
 
--- Loading: when aiming started, per unit. The number of rockets of a salvo is how long the player
--- has been loading, when it is fired, and a salvo starts the loading again.
+-- Loading: the time the aiming started, for each unit. The number of rockets in a salvo depends on how long the player has been
+-- loading when the salvo is fired. Firing a salvo starts the loading again.
 local load_start_t = setmetatable({}, {
 	__mode = "k",
 })
 
--- The rockets loaded so far while loading (to tell when another one is), per unit
+-- The number of rockets loaded so far while loading, for each unit. It is used to tell when another rocket gets loaded.
 local loading = {}
 
 mod.aim_start_callbacks.rocket = function (self, new_action, t)
 	if new_action.ut_rocket_aim then
 		local ammo = self.ammo_extension and self.ammo_extension:current_ammo() or CONFIG.max_rockets
 
-		-- the salvo is a line until the primary button is pressed (the chains are shared, so they are set every time)
+		-- The salvo is a line until the primary button is pressed. The chains are shared, so they are reset every time.
 		local salvo_chains = {}
 
 		for _, chain in ipairs(new_action.allowed_chain_actions) do
@@ -440,7 +443,7 @@ mod.aim_start_callbacks.rocket = function (self, new_action, t)
 
 		load_start_t[self.owner_unit] = t
 		loading[self.owner_unit] = {
-			-- a salvo is not bigger than the ammo
+			-- A salvo is not bigger than the ammo.
 			capacity = math.min(CONFIG.max_rockets, ammo),
 			first_person_unit = self.first_person_unit,
 			loaded = 1,
@@ -455,16 +458,16 @@ mod.aim_finish_callbacks.rocket = function (self, reason)
 	if self.current_action and self.current_action.ut_rocket_aim then
 		loading[self.owner_unit] = nil
 
-		-- leaving the aiming for another action (a reload, the salvo) is not the button being released: it has
-		-- to be, before aiming again, or the aiming would start again at the end of the reload
+		-- Leaving the aiming for another action, such as a reload or the salvo, does not mean the button was released. The
+		-- button has to be released before aiming again, or the aiming would start again at the end of the reload.
 		if reason ~= "hold_input_released" then
 			needs_release[self.owner_unit] = true
 		end
 	end
 end
 
--- A reload that starts while the aiming button is down needs it released as well, whichever way the
--- aiming was left for it. (For other weapons this does nothing, the flag is only read by the aiming of this one.)
+-- A reload that starts while the aiming button is down also needs the button released, whichever way the aiming was left for it.
+-- This does nothing for other weapons, because only this weapon's aiming reads the flag.
 mod:hook_safe(GenericAmmoUserExtension, "start_reload", function (self)
 	local unit = self.owner_unit
 	local input_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "input_system")
@@ -474,7 +477,8 @@ mod:hook_safe(GenericAmmoUserExtension, "start_reload", function (self)
 	end
 end)
 
--- Another rocket loaded: the animation of firing while aiming, and a sound
+-- Every frame, this switches the salvo between a line and a spiral when the primary button is pressed. When another rocket gets
+-- loaded, it plays the load animation and sound.
 local function update_loading(t)
 	for unit in pairs(needs_release) do
 		local input_extension = Unit.alive(unit) and ScriptUnit.has_extension(unit, "input_system")
@@ -490,9 +494,9 @@ local function update_loading(t)
 		if not first_person_extension then
 			loading[unit] = nil
 		else
-			-- each press of the primary button switches the salvo between a line and a spiral (a press
-			-- is the button going down, so holding it doesn't switch back and forth every frame, and a button that
-			-- was already down when the aiming started doesn't count)
+			-- Each press of the primary button switches the salvo between a line and a spiral. A press is the button going
+			-- down, so holding it does not switch back and forth every frame. A button that was already down when the aiming
+			-- started does not count.
 			local input_extension = ScriptUnit.has_extension(unit, "input_system")
 
 			if input_extension then
@@ -535,7 +539,7 @@ local function update_loading(t)
 	end
 end
 
--- The spiral salvo: the rockets start in a ring around the aim, all in the same direction
+-- Fires the spiral salvo. The rockets start in a ring around the aim, all in the same direction.
 local function fire_spiral(self, action, count)
 	local owner_unit = self.owner_unit
 	local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
@@ -553,7 +557,7 @@ local function fire_spiral(self, action, count)
 		if count > 1 then
 			local ring_angle = (i - 1) * 2 * math.pi / CONFIG.max_rockets
 
-			-- (UT: a point of the ring turns to the left as the angle grows, the first one is at the top)
+			-- In UT, a point of the ring turns to the left as the angle grows, and the first one is at the top.
 			offset = right * (CONFIG.spiral_ring_right - math.sin(ring_angle) * CONFIG.spiral_ring_radius)
 				+ up * (math.cos(ring_angle) * CONFIG.spiral_ring_radius - CONFIG.spiral_ring_down)
 				- forward * (CONFIG.spiral_start_back * math.random())
@@ -579,7 +583,7 @@ mod.crossbow_start_callbacks.rocket = function (self, new_action, t)
 	load_start_t[self.owner_unit] = t
 	needs_release[self.owner_unit] = true
 
-	-- the crossbow's own code fires nothing, the rockets are fired here
+	-- The crossbow's own code fires nothing for a spiral. The rockets are fired here.
 	if new_action.ut_rocket_spiral then
 		fire_spiral(self, new_action, self.num_projectiles)
 
@@ -587,11 +591,10 @@ mod.crossbow_start_callbacks.rocket = function (self, new_action, t)
 	end
 end
 
--- The flock of a spiral salvo, RocketProj.Timer. The rockets that start together are a flock: every
--- pull_interval seconds each is pulled back towards the direction it was fired in, and gets an acceleration
--- from the neighbor (attraction or repulsion by the distance, and a curl around it, the opposite way for
--- rockets with a different curl). The path of a rocket is re-based on its current position and velocity
--- every frame.
+-- The flock of a spiral salvo, from RocketProj.Timer. The rockets that start together are a flock. Every pull_interval seconds,
+-- each rocket is pulled back towards the direction it was fired in, and it gets an acceleration from its neighbor. The neighbor
+-- attracts or repels it depending on the distance, and makes it curl around the neighbor, the opposite way for rockets with a
+-- different curl. Every frame, the path of a rocket is re-based on its current position and velocity.
 local flocks = {}
 local latest_flock = setmetatable({}, {
 	__mode = "k",
@@ -626,7 +629,7 @@ mod.init_callbacks.rocket = function (extension)
 	flock.next_curl = not flock.next_curl
 end
 
--- Makes the trajectory of a rocket go on from the position with the velocity
+-- Makes the trajectory of a rocket continue from the given position with the given velocity.
 local function steer(locomotion_extension, position, velocity)
 	local speed = Vector3.length(velocity)
 
@@ -646,7 +649,7 @@ local function steer(locomotion_extension, position, velocity)
 
 	locomotion_extension.radians = math.asin(math.clamp(direction.z, -1, 1))
 	locomotion_extension.speed = speed * 100
-	-- the locomotion moves it by the time since its last update
+	-- The locomotion moves the rocket by the time since its last update.
 	locomotion_extension.spawn_time = locomotion_extension.t
 end
 
@@ -658,7 +661,7 @@ local function update_flocks(dt)
 		for _, member in ipairs(flock.members) do
 			local locomotion_extension = Unit.alive(member.unit) and ScriptUnit.has_extension(member.unit, "projectile_locomotion_system")
 
-			-- (a rocket that homes in is steered by that, it leaves the flock)
+			-- A rocket that homes in is steered by that instead, so it leaves the flock.
 			if locomotion_extension and not locomotion_extension.stopped and not locomotion_extension.true_flight_template then
 				if not member.velocity then
 					local direction = Vector3.normalize(Vector3.flat(locomotion_extension.target_vector_boxed:unbox())) * math.cos(locomotion_extension.radians) + Vector3(0, 0, math.sin(locomotion_extension.radians))
@@ -702,7 +705,7 @@ local function update_flocks(dt)
 
 							if distance > 0.001 then
 								local magnitude = CONFIG.spiral_stiffness * (2 * CONFIG.spiral_flock_radius - distance)
-								-- (UT's axes are a left handed set, so its cross product points the other way: the factors are swapped)
+								-- UT's axes are left handed, so its cross product points the other way. The factors are swapped to match.
 								local curl = Vector3.cross(offset, other.velocity:unbox())
 								local curl_length = Vector3.length(curl)
 
@@ -727,9 +730,8 @@ local function update_flocks(dt)
 	end
 end
 
--- Lock-on. The game's true flight projectiles: a template (the settings, with an id that goes over the
--- network) and the movement towards the target, a method of the projectile's locomotion extension that is
--- named by the template.
+-- Lock-on uses the game's true flight projectiles. A true flight template holds the settings, with an id that is sent over the
+-- network. The movement towards the target is a method of the projectile's locomotion extension, and the template names it.
 local TRUE_FLIGHT_TEMPLATE = "ut_rocket"
 
 local function register_true_flight_template()
@@ -740,9 +742,9 @@ local function register_true_flight_template()
 	template.initial_target_node = "c_spine"
 	template.target_node = "c_spine"
 	template.legitimate_target_func = "legitimate_always"
-	-- (the game's own steering of its true flight projectiles)
+	-- This is the game's own steering of its true flight projectiles.
 	template.target_tracking_check_func = "update_towards_target"
-	-- when the target is gone the rocket flies straight on, it doesn't look for another one
+	-- When the target is gone, the rocket flies straight on and does not look for another one.
 	template.max_on_target_time = 0
 	template.speed_multiplier = 0.01
 	template.time_between_raycasts = 0.1
@@ -767,16 +769,15 @@ local function spine_position(unit)
 	return Unit.world_position(unit, node)
 end
 
--- The lock of the local player: the enemy the crosshair has been on, for how long, and if it is a lock yet
+-- The lock of the local player. It holds the enemy the crosshair has been on, for how long, and whether it is a lock yet.
 local locks = {}
 
 local function wielding_rocket_launcher(unit)
 	return utils.wielded_template_name(unit) == TEMPLATE_NAME
 end
 
--- The enemy closest to the aim that is in front of it, close enough to it and not behind a wall. If there is none
--- on the aim, the enemy that is the target already (current_target) is kept while it is within the wider
--- lock_keep_dot of the aim.
+-- Returns the enemy closest to the aim that is in front of the player, close enough to the aim and not behind a wall. If no
+-- enemy is on the aim, the current target stays the candidate while it is within the wider lock_keep_dot of the aim.
 local function pick_lock_candidate(unit, first_person_extension, current_target)
 	local side = Managers.state.side.side_by_unit[unit]
 	local origin = first_person_extension:current_position()
@@ -819,12 +820,12 @@ local function pick_lock_candidate(unit, first_person_extension, current_target)
 		end
 	end
 
-	-- An enemy that is on the aim wins, whether it is the target or not: the target is only held on to (kept_unit)
-	-- while there isn't one, so the lock moves to another enemy as soon as the aim is on it.
+	-- An enemy on the aim wins, whether or not it is the target. The target is only held on to (kept_unit) while no other enemy
+	-- is on the aim, so the lock moves to another enemy as soon as the aim is on it.
 	return best_unit or kept_unit
 end
 
--- The red outline of the game's target marking, what the true flight bow puts on the enemy it is aimed at
+-- The red outline of the game's target marking. The true flight bow puts it on the enemy it is aimed at.
 local clear_lock_outline = utils.clear_outline
 
 local function add_lock_outline(state)
@@ -849,7 +850,7 @@ local function update_lock_on(dt)
 	local player = Managers.player:local_player_safe()
 	local unit = player and player.player_unit
 
-	-- the lock of a unit that is gone, or of a weapon that isn't wielded
+	-- Remove the lock of a unit that is gone, or of a weapon that is not wielded.
 	for locked_unit, locked_state in pairs(locks) do
 		if locked_unit ~= unit or not Unit.alive(unit) or not HEALTH_ALIVE[unit] or not wielding_rocket_launcher(unit) then
 			clear_lock_outline(locked_state)
@@ -870,11 +871,12 @@ local function update_lock_on(dt)
 		locks[unit] = state
 	end
 
-	-- The lock is kept while a rocket that was fired with it is on its way to the enemy, which it is after the aiming has ended (the
-	-- rockets are the lock's own: they are as locked on as it is). It is used up when they are gone.
+	-- The lock is kept while a rocket that was fired with it is still on its way to the enemy, which can be after the aiming has
+	-- ended. Those rockets belong to the lock, so they are as locked on as it is. The lock is used up when they are gone.
 	local rockets_on_their_way = state.fired and (Managers.time:time("game") - state.fired_t < 0.5 or mod.rocket_homing_on(state.target))
 
-	-- only while loading (holding the secondary button): without it there is no lock, and letting go of it ends it
+	-- A lock exists only while loading, which means holding the secondary button. Without it there is no lock, and letting go of
+	-- it ends the lock.
 	if not loading[unit] then
 		if (state.target or state.locked) and not rockets_on_their_way then
 			reset_lock(state)
@@ -896,8 +898,8 @@ local function update_lock_on(dt)
 	local interval = dt
 
 	if state.locked then
-		-- The aim moving off the enemy that is locked on to doesn't unlock it: only locking on to another enemy (the aim on it for
-		-- lock_required_time) does.
+		-- Moving the aim off the locked enemy does not unlock it. Only locking on to another enemy does, which takes the aim on
+		-- that enemy for lock_required_time.
 		if candidate and candidate ~= state.target then
 			if candidate == state.candidate then
 				state.candidate_time = state.candidate_time + interval
@@ -907,7 +909,7 @@ local function update_lock_on(dt)
 
 					state.target = candidate
 					state.candidate = nil
-					-- (the rockets that were fired belong to the lock that is gone: the new one is not used up by them)
+					-- The rockets that were fired belong to the lock that is gone, so they must not use up the new lock.
 					state.fired = nil
 
 					add_lock_outline(state)
@@ -956,13 +958,13 @@ local function update_lock_on(dt)
 	end
 end
 
--- Where a rocket starts: in front of the camera, to its right and below it (RocketFire.ProjSpawnOffset, 25, 6 and -6 units). A rocket
--- that would start behind a wall starts at the wall instead (RocketFire.DoFireEffect traces to it).
+-- Returns where a rocket starts: in front of the camera, to its right and below it, like RocketFire.ProjSpawnOffset (25, 6 and -6
+-- units). A rocket that would start behind a wall starts at the wall instead, because RocketFire.DoFireEffect traces to it.
 local function start_position(position, rotation)
 	position = utils.as_vector(position)
 
-	-- (the rotation of a shot is rolled by a random angle about the way it points, by the game's spread, whatever its numbers are: right and
-	-- up are taken from the way it points alone, or the offset would turn about the aim from shot to shot)
+	-- The game's spread rolls the rotation of a shot by a random angle about the way it points, whatever the spread numbers are.
+	-- So right and up are taken from the way it points alone. Otherwise the offset would turn about the aim from shot to shot.
 	local level = Quaternion.look(Quaternion.forward(rotation), Vector3.up())
 	local offset = Quaternion.forward(level) * CONFIG.start_forward + Quaternion.right(level) * CONFIG.start_right - Quaternion.up(level) * CONFIG.start_down
 	local distance = Vector3.length(offset)
@@ -977,7 +979,8 @@ local function start_position(position, rotation)
 	return position + offset
 end
 
--- Development: /rocket_start prints where each rocket starts and where it is on its first frames, from the camera (forward, right, up, m)
+-- Development: /rocket_start prints where each rocket starts and where it is on its first frames, measured from the camera as
+-- forward, right and up in meters.
 mod.rocket_debug = false
 
 mod:command("rocket_start", "- prints where rockets start, from the camera, to see what moves them", function ()
@@ -986,7 +989,7 @@ mod:command("rocket_start", "- prints where rockets start, from the camera, to s
 	mod:echo("rocket_start " .. (mod.rocket_debug and "on" or "off"))
 end)
 
--- How far a direction is from where the camera looks, to the right and up, in degrees
+-- Returns how far a direction is from where the camera looks, to the right and up, in degrees.
 function mod.rocket_aim_text(rotation)
 	local camera_rotation = Managers.state.camera:camera_rotation("player_1")
 	local forward = Quaternion.forward(rotation)
@@ -1002,7 +1005,8 @@ function mod.rocket_offset_text(position)
 	return string.format("%.3f %.3f %.3f", Vector3.dot(offset, Quaternion.forward(rotation)), Vector3.dot(offset, Quaternion.right(rotation)), Vector3.dot(offset, Quaternion.up(rotation)))
 end
 
--- The rockets: they start where UT's do, and one fired while there is a lock is a true flight projectile with the locked enemy as its target
+-- The rockets start where UT's do. A rocket fired while there is a lock is a true flight projectile with the locked enemy as its
+-- target.
 mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
 	local action
 
@@ -1028,7 +1032,7 @@ mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, pos
 			state.fired = true
 			state.fired_t = Managers.time:time("game")
 
-			-- a true flight projectile is given the direction it is fired in, not the flat part of it
+			-- A true flight projectile is given the direction it is fired in, not just the flat part of it.
 			ActionUtils.spawn_true_flight_projectile(owner_unit, state.target, TrueFlightTemplates[TRUE_FLIGHT_TEMPLATE].lookup_id, position, rotation, angle, Vector3.normalize(Quaternion.forward(rotation)), speed, item_name, item_template_name, action_name, sub_action_name, 1, ...)
 
 			return
@@ -1038,20 +1042,20 @@ mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, pos
 	return func(owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
 end)
 
--- The crosshair while loading: a pip for each rocket that can be loaded, the loaded ones lit. It is drawn
--- in the pass of the crosshair, after the rest of it.
+-- The crosshair while loading shows a pip for each rocket that can be loaded, and the loaded ones are lit. The pips are drawn in
+-- the crosshair's pass, after the rest of the crosshair.
 local PIPS_TOKEN = {}
 
--- A texture is drawn from the top left corner of the crosshair's dot (which is 4 pixels and centered) to
--- the right and down, so a pip bigger than that is moved to have its center where it should be
+-- A texture is drawn from the top left corner of the crosshair's dot, which is 4 pixels and centered, to the right and down. So a
+-- pip bigger than the dot is moved to put its center where it should be.
 local CROSSHAIR_DOT_SIZE = 4
 
--- Where a pip is, from the center of the crosshair: in a row, or in a triangle for a spiral
+-- Returns where a pip is, measured from the center of the crosshair. The pips are in a row, or in a triangle for a spiral.
 local function pip_position(index, spiral)
 	local x, y
 
 	if spiral then
-		-- the order is the one of the hands of a clock: bottom left, top, bottom right
+		-- The pips go in the order of a clock's hands: bottom left, top, bottom right.
 		if index == 2 then
 			x, y = 0, CONFIG.pip_offset_y
 		else
@@ -1102,7 +1106,7 @@ mod:hook_safe(CrosshairUI, "_draw_kill_confirm", function (self, dt, t, ui_rende
 	local player_unit = player and player.player_unit
 	local lock = player_unit and locks[player_unit]
 
-	-- locked on: the crosshair gets arrows around it
+	-- When locked on, the crosshair gets arrows around it.
 	if CONFIG.lock_indicator and lock and lock.locked then
 		self:draw_arrows_style_crosshair(ui_renderer, CONFIG.lock_arrows_spread, CONFIG.lock_arrows_spread)
 	end
@@ -1113,7 +1117,7 @@ mod:hook_safe(CrosshairUI, "_draw_kill_confirm", function (self, dt, t, ui_rende
 		return
 	end
 
-	-- the pips are kept in the crosshair, which outlives a reload of the mod: made again after one
+	-- The pips are kept in the crosshair, which outlives a reload of the mod. So they are made again after a reload.
 	if self._ut_rocket_pips_token ~= PIPS_TOKEN then
 		self._ut_rocket_pips = create_pips()
 		self._ut_rocket_pips_token = PIPS_TOKEN
@@ -1132,7 +1136,7 @@ mod:hook_safe(CrosshairUI, "_draw_kill_confirm", function (self, dt, t, ui_rende
 	end
 end)
 
--- The explosion hurts the player and throws them (the callbacks of the actions are run by the hook of do_aoe in hooks.lua)
+-- The explosion hurts the player and throws them. The hook of do_aoe in hooks.lua runs the callbacks of the actions.
 mod.aoe_callbacks.rocket = function (self, aoe_data, position)
 	if self._ut_rocket_exploded then
 		return
@@ -1144,9 +1148,9 @@ mod.aoe_callbacks.rocket = function (self, aoe_data, position)
 	utils.apply_explosion_self_push(self._owner_unit, position, ExplosionTemplates.ut_rocket_explosion.explosion, CONFIG.rocket_jump_speed)
 end
 
--- Bodies thrown by the explosion. Runs on every peer, the physics of ragdolls is local. The units
--- near the explosion are collected when it goes off, the ones that die are thrown once their
--- ragdoll has started (before that the actors are driven by animation).
+-- Bodies thrown by the explosion. This runs on every peer, because the physics of ragdolls is local. The units near the
+-- explosion are collected when it goes off. The ones that die are thrown once their ragdoll has started, because before that
+-- the actors are driven by animation.
 local blasts = {}
 
 local function update_blasts()
@@ -1170,9 +1174,9 @@ local function update_blasts()
 	end
 end
 
--- The look of the explosion, on every peer: the explosion's callback is run for everyone who sees it
+-- The look of the explosion on every peer. The explosion's callback runs for everyone who sees it.
 mod.explosion_callbacks.ut_rocket_explosion = function (world, position)
-	-- (the look of it is the skin's, see skin_explosion_callbacks)
+	-- The look itself comes from the skin (see skin_explosion_callbacks). This only collects the bodies to throw.
 	local radius = ExplosionTemplates.ut_rocket_explosion.explosion.radius
 
 	blasts[#blasts + 1] = {
@@ -1187,8 +1191,8 @@ mod.enabled_callbacks[#mod.enabled_callbacks + 1] = apply_rocket_launcher
 mod.disabled_callbacks[#mod.disabled_callbacks + 1] = restore_crossbow
 mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_crossbow
 
--- A rocket explodes when it touches a Flak shell or a Shock ball (RocketProj.ProcessTouch, their bProjTarget). The shell explodes
--- too when a rocket gets near it, see flak_cannon.lua.
+-- A rocket explodes when it touches a Flak shell or a Shock ball (RocketProj.ProcessTouch and their bProjTarget). The shell also
+-- explodes when a rocket gets near it. See flak_cannon.lua.
 local function detonate_on_projectiles()
 	local projectiles = utils.flying_projectiles()
 

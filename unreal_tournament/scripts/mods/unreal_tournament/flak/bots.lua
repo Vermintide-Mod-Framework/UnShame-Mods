@@ -1,26 +1,27 @@
 local mod = get_mod("unreal_tournament")
 
--- Bots with the Flak Cannon. The game's own shooting of bots (BTBotShootAction) aims at an enemy and fires the weapon's primary attack, which
--- is the flechettes here, so bots already shoot them. This teaches them the shell (the secondary attack): against an elite or a boss, or a
--- cluster of enemies, a bot fires the shell. The shell is tossed up from the aim, so a target about as far as it flies (a level target at
--- 10 to 12 m) is hit where the bot aims.
+-- Bots with the Flak Cannon. The game's own bot shooting (BTBotShootAction) aims at an enemy and fires the weapon's primary attack,
+-- which is the flechettes here, so bots already shoot those. This teaches them the shell, the secondary attack. Against an elite or a
+-- boss, or a cluster of enemies, a bot fires the shell. The shell is tossed up from the aim, so a target about as far as the shell
+-- flies (a level target at 10 to 12 m) is hit where the bot aims.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
 local CONFIG = {
-	-- The shell is used against a target in this range (meters): nearer, its explosion (3 m) would hurt the bot, further, it falls short
+	-- The shell is used against a target in this range, in meters. Nearer, its explosion (3 m) would hurt the bot. Further away, it
+	-- falls short.
 	min_range = 6,
 	max_range = 14,
-	-- A cluster is this many enemies within this radius of the target (the explosion is 3 m in radius)
+	-- A cluster is this many enemies within this radius of the target. The explosion is 3 m in radius.
 	cluster_size = 3,
 	cluster_radius = 3,
-	-- No shell when a player or bot is this close to the target (the explosion hurts them)
+	-- No shell is fired when a player or bot is this close to the target, because the explosion would hurt them.
 	ally_clearance = 4,
-	-- Seconds between a bot's shells
+	-- The seconds between a bot's shells
 	cooldown = 3,
 }
 
--- Whether to fire the shell at this target
+-- Returns whether the bot should fire the shell at this target.
 local function worth_a_shell(target_unit, target_position, world)
 	local breed = Unit.get_data(target_unit, "breed")
 
@@ -47,7 +48,7 @@ local function worth_a_shell(target_unit, target_position, world)
 	return enemies >= CONFIG.cluster_size
 end
 
--- The bot fires the shell, or the flechettes
+-- The bot fires the shell or the flechettes.
 mod.bot_shot_callbacks.ut_flak = function (func, self, shoot_blackboard, action_data, input_extension, t)
 	local target_unit = shoot_blackboard.target_unit
 	local bot_unit = shoot_blackboard.ut_unit

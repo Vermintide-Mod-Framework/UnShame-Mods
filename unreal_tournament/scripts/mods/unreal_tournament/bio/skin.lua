@@ -29,8 +29,8 @@ local CONFIG = {
 		1,
 		0.3,
 	},
-	-- BioGlob has DrawScale 1.2 of its mesh. The blob and its glow are sprites that follow the glob and are as big as the glob's scale
-	-- (more for a charged glob).
+	-- BioGlob has DrawScale 1.2 of its mesh. The blob and its glow are sprites that follow the glob and are as big as the glob's
+	-- scale, and bigger for a charged glob.
 	glob_size = 30,
 	glob_glow_size = 55,
 	glob_color = {

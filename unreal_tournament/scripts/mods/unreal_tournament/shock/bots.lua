@@ -1,34 +1,35 @@
 local mod = get_mod("unreal_tournament")
 
--- Bots with the Shock Rifle. The game's own shooting of bots (BTBotShootAction) aims at an enemy and fires the weapon's primary attack, which
--- is the beam here, so bots already shoot the beam. This teaches them the combo: against an elite or a boss, or a cluster of enemies, a bot
--- fires the ball (the secondary attack), waits for it to get near the target, and then fires the beam along the line the ball flew: the beam
--- passes through the ball, which goes off (see find_ball_hit_by_beam in shock_rifle.lua).
+-- Bots with the Shock Rifle. The game's own bot shooting (BTBotShootAction) aims at an enemy and fires the weapon's primary attack,
+-- which is the beam here, so bots already shoot the beam. This teaches them the combo. Against an elite or a boss, or a cluster of
+-- enemies, a bot fires the ball (the secondary attack), waits for it to get near the target, and then fires the beam along the line
+-- the ball flew. The beam passes through the ball, and the ball goes off (see find_ball_hit_by_beam in shock_rifle.lua).
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
 local TEMPLATE_NAME = mod.items.weapons.shock_rifle.template
 
 local CONFIG = {
-	-- The ball is used against a target this far away (meters): nearer, the ball is gone before the beam can follow it; further, the beam is
-	-- out of range of the bot's aim
+	-- The ball is used against a target at this distance, in meters. Nearer, the ball is gone before the beam can follow it. Further
+	-- away, the beam is out of range of the bot's aim.
 	min_range = 3,
 	max_range = 60,
-	-- The beam is fired when the ball is this far from the target (meters)
+	-- The beam is fired when the ball is this far from the target, in meters.
 	meet_distance = 3,
-	-- A cluster is this many enemies within this radius of the target (the combo's explosion is 3.8 m in radius)
+	-- A cluster is this many enemies within this radius of the target. The combo's explosion is 3.8 m in radius.
 	cluster_size = 2,
 	cluster_radius = 5,
-	-- No ball when a player or bot is this close to the target (the combo's explosion hurts them)
+	-- No ball is fired when a player or bot is this close to the target, because the combo's explosion would hurt them.
 	ally_clearance = 2,
-	-- Seconds between a bot's balls, and how long past the time the ball takes to get there the bot waits before it shoots the beam anyway
+	-- cooldown is the seconds between a bot's balls. wait_grace is how long the bot waits, past the time the ball takes to get there,
+	-- before it shoots the beam anyway.
 	cooldown = 2,
 	wait_grace = 1.5,
-	-- The least time (seconds) between the ball and the beam
+	-- The least time, in seconds, between the ball and the beam
 	min_wait = 0.4,
 }
 
--- How fast the ball flies, in meters a second (the action's speed is in centimeters)
+-- Returns how fast the ball flies, in meters a second. The action's speed is in centimeters.
 local function ball_speed()
 	local template = rawget(Weapons, TEMPLATE_NAME)
 	local action = template and template.actions.action_two.default
@@ -36,7 +37,7 @@ local function ball_speed()
 	return action.speed / 100
 end
 
--- Whether to fire the ball at this target
+-- Returns whether the bot should fire the ball at this target.
 local function worth_a_ball(target_unit, target_position, world)
 	local breed = Unit.get_data(target_unit, "breed")
 
@@ -63,7 +64,7 @@ local function worth_a_ball(target_unit, target_position, world)
 	return enemies >= CONFIG.cluster_size
 end
 
--- The bot fires: a ball, a wait for it, and then the beam, or just the beam
+-- The bot fires a ball, waits for it, and then fires the beam. Or it fires just the beam.
 mod.bot_shot_callbacks.ut_shock = function (func, self, shoot_blackboard, action_data, input_extension, t)
 	local target_unit = shoot_blackboard.target_unit
 	local pending = shoot_blackboard.ut_pending

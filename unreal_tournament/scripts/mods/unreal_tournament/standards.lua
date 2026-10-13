@@ -1,18 +1,18 @@
 local mod = get_mod("unreal_tournament")
 
--- Beastmen standards (banners). A standard only takes damage from melee attacks and from a list of damage sources (bombs, torches), and the
--- game's explosions don't look for it, as it is not an enemy. This lets the weapons of the mod damage it:
---   standards.blow_up(position, attacker unit, radius, damage profile, power level, damage source): the host damages the standards that are
---     within the radius of the explosion. The damage of the explosion is not dropped, the item's other damage (a beam or a projectile hitting a
---     standard) is
+-- Beastmen standards (banners). A standard only takes damage from melee attacks and from a list of damage sources (bombs, torches). The
+-- game's explosions don't look for it, because it is not an enemy. This lets the mod's weapons damage it:
+--   standards.blow_up(position, attacker unit, radius, damage profile, power level, damage source): the host damages the standards
+--     within the radius of the explosion. The damage of the explosion is not dropped. The item's other damage, such as a beam or a
+--     projectile hitting a standard, is dropped.
 
 local CONFIG = {
-	-- Meters past the radius: the game's overlap is of the standard's body, this measures to its position
+	-- Meters past the radius that still count. The game's overlap test is on the standard's body, and this measures to its position.
 	margin = 1,
 }
 
 local standards = {}
--- While the damage of an explosion is applied (the host applies it at once)
+-- True while the damage of an explosion is being applied. The host applies it at once.
 local exploding = false
 
 if rawget(_G, "BeastmenStandardHealthExtension") then
@@ -30,11 +30,11 @@ function standards.blow_up(impact_position, attacker_unit, radius, damage_profil
 		return
 	end
 
-	-- Copied: the standard leaves the list when it dies
+	-- The list is copied, because a standard leaves it when it dies.
 	local alive = table.clone(Managers.state.conflict:alive_standards())
 
 	for _, standard in ipairs(alive) do
-		-- Not every unit is in POSITION_LOOKUP, the game's own explosion falls back to the unit's position the same way
+		-- Not every unit is in POSITION_LOOKUP. The game's own explosion falls back to the unit's position the same way.
 		local position = POSITION_LOOKUP[standard] or Unit.local_position(standard, 0)
 
 		if HEALTH_ALIVE[standard] and Vector3.distance(position, impact_position) <= radius + CONFIG.margin then
@@ -42,7 +42,7 @@ function standards.blow_up(impact_position, attacker_unit, radius, damage_profil
 
 			exploding = true
 
-			-- (an error mustn't leave the standards open to damage)
+			-- An error must not leave the standards open to damage.
 			local ok, error_message = pcall(DamageUtils.add_damage_network_player, damage_profile, 1, power_level, standard, attacker_unit, "full", position, direction, damage_source, nil, 0, false, nil, false, 0, 1, attacker_unit)
 
 			exploding = false

@@ -4,25 +4,25 @@ local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
 -- Gameplay options
 local CONFIG = {
-	-- More Ammo Pickups: how many times as many ammo pickups a level gets
+	-- More Ammo Pickups: a level gets this many times as many ammo pickups
 	ammo_multiplier = 8,
-	-- Forgiving Disablers: a player who has been held by a disabler for disable_time seconds is let go of, the disabler is
-	-- staggered for stagger_duration
+	-- Forgiving Disablers: a player who has been held by a disabler for disable_time seconds is let go, and the disabler is staggered
+	-- for stagger_duration.
 	disable_time = 2, -- seconds
 	stagger_duration = 2, -- seconds
 	-- Auto Revive: a player who has been knocked down for self_revive_time seconds gets up, and can't be hurt for
-	-- self_revive_invulnerable_time after
+	-- self_revive_invulnerable_time after that.
 	self_revive_time = 3, -- seconds
 	self_revive_invulnerable_time = 2, -- seconds
 }
 
--- If an option is on: its own checkbox, and the Gameplay checkbox above all of them
+-- Returns whether an option is on. That needs its own checkbox and the Gameplay checkbox above all of them.
 local function is_option_on(setting_id)
 	return mod:get("gameplay") and mod:get(setting_id)
 end
 
--- No Bots: the game modes have a flag that says there are no bots, and clear the ones there are when it is
--- set. It is set for the duration of the call that handles the bots.
+-- No Bots: the game modes have a flag that says there are no bots, and they remove any existing bots when it is set. The flag is set
+-- for the length of the call that handles the bots.
 for _, game_mode_name in ipairs({
 	"GameModeAdventure",
 	"GameModeDeus",
@@ -45,7 +45,7 @@ for _, game_mode_name in ipairs({
 	end
 end
 
--- Without bots the game can fail to find the places to put the players at the start of a level
+-- Without bots, the game can fail to find the places to put the players at the start of a level.
 local adventure_spawning = rawget(_G, "AdventureSpawning")
 
 if adventure_spawning then
@@ -58,9 +58,9 @@ if adventure_spawning then
 	end)
 end
 
--- No Friendly Fire: the damage a player does to an ally (not to themselves) is dropped where it is handed to the game,
--- on the machine of whoever deals it and on the host that applies it. The damage to a player goes through
--- add_damage_network_player, the damage to anything else (and damage over time) through add_damage_network.
+-- No Friendly Fire: the damage a player does to an ally (not to themselves) is dropped at the point where it is handed to the game.
+-- That is on the machine of whoever deals it, and on the host that applies it. The damage to a player goes through
+-- add_damage_network_player. The damage to anything else, and damage over time, goes through add_damage_network.
 local function is_friendly_fire(attacker_unit, target_unit)
 	if not is_option_on("no_friendly_fire") or not attacker_unit or attacker_unit == target_unit then
 		return false
@@ -87,7 +87,7 @@ mod:hook(DamageUtils, "add_damage_network_player", function (func, damage_profil
 	return func(damage_profile, target_index, power_level, hit_unit, attacker_unit, ...)
 end)
 
--- Auto Restart: a level that is lost starts again, instead of going back to the keep
+-- Auto Restart: a level that is lost starts again, instead of sending the players back to the keep.
 mod:hook(GameModeAdventure, "evaluate_end_conditions", function (func, self, ...)
 	local ended, reason, reason_data = func(self, ...)
 
@@ -98,10 +98,9 @@ mod:hook(GameModeAdventure, "evaluate_end_conditions", function (func, self, ...
 	return ended, reason, reason_data
 end)
 
--- More Ammo Pickups: the game works out how many pickups of each kind a level gets (its settings for the
--- difficulty, with the multipliers of the mutators that are on), and this scales the ammo among them. The
--- pickups are still put where the level has places for them, so a level with few places can't get as many as
--- the setting says. Only the host's game decides what a level gets.
+-- More Ammo Pickups: the game works out how many pickups of each kind a level gets, from its settings for the difficulty and the
+-- multipliers of the mutators that are on. This scales the ammo among them. The pickups are still put where the level has places for
+-- them, so a level with few places can't get as many as the setting says. Only the host decides what a level gets.
 local function scale(amount, multiplier)
 	return math.ceil(amount * multiplier)
 end
@@ -115,7 +114,7 @@ mod:hook(MutatorHandler, "pickup_settings_updated_settings", function (func, sel
 
 	local multiplier = CONFIG.ammo_multiplier
 
-	-- (what the game gives back is a copy, it is changed in place)
+	-- What the game returns is a copy, so it is changed in place.
 	local ammo = updated_settings.ammo
 
 	if type(ammo) == "table" then
@@ -129,11 +128,11 @@ mod:hook(MutatorHandler, "pickup_settings_updated_settings", function (func, sel
 	return updated_settings
 end)
 
--- Forgiving Disablers: a player who has been held by a disabler for disable_time seconds is let go of. The
--- disabler is staggered, which takes its behavior away from the hold, and that frees the player. It is
--- staggered once for a hold: one that holds on after it isn't staggered again (that would only keep it stunned). The
--- host's game does this, it is where the enemies are.
-local disabled_since = {} -- the player's unit: { disabler = the unit holding them, t = since when, released = it was staggered }
+-- Forgiving Disablers: a player who has been held by a disabler for disable_time seconds is let go. The disabler is staggered, which
+-- interrupts its hold and frees the player. It is staggered once per hold. If it holds on after that, it is not staggered again,
+-- because that would only keep it stunned. The host does this, since the enemies are on the host.
+-- For each player's unit this holds { disabler = the unit holding them, t = since when, released = whether it was staggered }.
+local disabled_since = {}
 
 local function update_forgiving_disablers(t)
 	if not t or not is_option_on("forgiving_disablers") then
@@ -170,14 +169,13 @@ local function update_forgiving_disablers(t)
 	end
 end
 
--- Auto Revive: a player who has been knocked down for self_revive_time seconds gets back up, every time. Not
--- while something is holding them (the disabler first, see Forgiving Disablers). The host's game does this, it
--- is where the revives are decided.
+-- Auto Revive: a player who has been knocked down for self_revive_time seconds gets back up, every time. This does not happen while
+-- something is holding them, so the disabler comes first (see Forgiving Disablers). The host does this, since it decides the revives.
 local SELF_REVIVE_BUFF = "ut_self_revive_invulnerability"
-local knocked_down_since = {} -- the player's unit: since when
+local knocked_down_since = {} -- for each player's unit, since when it was knocked down
 
--- The protection is a buff like the one of the game's invulnerability potion, with a duration of its own. The
--- buffs go over the network by name, everyone in the game needs the mod.
+-- The protection is a buff like the one from the game's invulnerability potion, with a duration of its own. Buffs go over the network
+-- by name, so everyone in the game needs the mod.
 BuffTemplates[SELF_REVIVE_BUFF] = {
 	buffs = {
 		{

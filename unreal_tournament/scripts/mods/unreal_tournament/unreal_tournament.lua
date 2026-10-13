@@ -1,24 +1,24 @@
 local mod = get_mod("unreal_tournament")
 
--- What the files do when the mod is enabled, disabled, reloaded, updated, when a setting changes, or when a level is
--- left: the mod framework's calls to the mod go to each of these lists, in the order the files are loaded. A file adds its
+-- The mod framework calls the mod when it is enabled, disabled, updated or unloaded, when a setting changes, and when a level is
+-- left. Each of those calls goes to every function in the matching list below, in the order the files are loaded. A file adds its
 -- own function to the list it wants:
 --   mod.update_callbacks[#mod.update_callbacks + 1] = function (dt) ... end
--- level_exit_callbacks: what the weapons have running that belongs to a level (effects, units, worlds) is cleared when the
--- level is left: the game tells the mods before it takes the level's world down, calling something on a world that is
--- gone crashes the game and no pcall catches that.
+-- The level_exit_callbacks list is for what the weapons have running inside a level, such as effects, units and worlds. It is
+-- cleared when the level is left. The game tells the mods before it takes the level's world down. Calling something on a world
+-- that is gone crashes the game, and no pcall catches that.
 mod.enabled_callbacks = {}
 mod.disabled_callbacks = {}
 mod.setting_changed_callbacks = {}
 mod.update_callbacks = {}
 mod.unload_callbacks = {}
 mod.level_exit_callbacks = {}
--- all_mods_loaded_callbacks: run once all mods are loaded, for hooks that must run before other mods' hooks
+-- The all_mods_loaded_callbacks list runs once all mods are loaded. It is for hooks that must run before other mods' hooks.
 mod.all_mods_loaded_callbacks = {}
 
--- (an error in one of them is told and the others are still called: what a weapon takes back when the mod is unloaded or a level is left
--- must not be skipped because another weapon's failed, a unit of the mod's package that is alive when the package is unloaded
--- crashes the game)
+-- Calls every function in the list. An error in one of them is reported, and the others are still called. A weapon must always take
+-- back what it set up when the mod is unloaded or a level is left, even if another weapon's cleanup failed. A unit of the mod's
+-- package that is still alive when the package is unloaded crashes the game.
 local function call_all(callbacks, ...)
 	for i = 1, #callbacks do
 		local ok, error_message = pcall(callbacks[i], ...)
@@ -59,26 +59,26 @@ mod.on_game_state_changed = function (status, state_name)
 	end
 end
 
--- The hooks of the game's functions that the weapons share, and the tables of callbacks they run
+-- The hooks on the game's functions that the weapons share, and the callback tables those hooks run
 mod:dofile("scripts/mods/unreal_tournament/hooks")
 
--- The weapons as items of their own; each weapon's file registers its item
+-- The weapons as items of their own. Each weapon's file registers its item.
 mod.items = mod:dofile("scripts/mods/unreal_tournament/items")
 
--- The scaled particle effects of the weapons, the one copy of them
+-- The scaled particle effects of the weapons. All weapons share this one copy.
 mod.effects = mod:dofile("scripts/mods/unreal_tournament/effects")
 
--- What lets the weapons damage beastmen standards (banners), the one copy of it
+-- What lets the weapons damage beastmen standards (banners). All weapons share this one copy.
 mod.standards = mod:dofile("scripts/mods/unreal_tournament/standards")
 
--- The particles of the weapon skins (UT2004's effects), the one copy of them
+-- The particles of the weapon skins, which are UT2004's effects. All skins share this one copy.
 mod.skin_particles = mod:dofile("scripts/mods/unreal_tournament/skin_particles")
 
--- What the skins of the weapons have in common (a weapon's own file calls mod.weapon_skin.new with what is its own)
+-- What the weapon skins have in common. A weapon's own file calls mod.weapon_skin.new with the parts that are its own.
 mod.weapon_skin = mod:dofile("scripts/mods/unreal_tournament/weapon_skin")
 
--- The weapons: each has a folder with its gameplay (<weapon>.lua) and its skin (skin.lua, with its animations and effects), and a folder of
--- the same name in units/ut with its models
+-- The weapons. Each has a folder with its gameplay (<weapon>.lua) and its skin (skin.lua, with its animations and effects). Each
+-- also has a folder of the same name in units/ut with its models.
 mod:dofile("scripts/mods/unreal_tournament/shock/shock_rifle")
 mod:dofile("scripts/mods/unreal_tournament/shock/skin")
 mod:dofile("scripts/mods/unreal_tournament/shock/bots")
@@ -92,7 +92,7 @@ mod:dofile("scripts/mods/unreal_tournament/bio/bio_rifle")
 mod:dofile("scripts/mods/unreal_tournament/bio/skin")
 mod:dofile("scripts/mods/unreal_tournament/link/link_gun")
 mod:dofile("scripts/mods/unreal_tournament/link/skin")
--- Crafting for those items
+-- Crafting for those items.
 mod:dofile("scripts/mods/unreal_tournament/crafting")
 
 -- Weapon skins in the menus
@@ -101,8 +101,9 @@ mod:dofile("scripts/mods/unreal_tournament/announcer")
 mod:dofile("scripts/mods/unreal_tournament/movement")
 mod:dofile("scripts/mods/unreal_tournament/gameplay")
 
--- (seen in the chat each time the mod is loaded or reloaded, to know which build is running: the number is the count of
--- commits of the repository, which goes up by one with every change). Only with the developer mode of the mod framework on.
+-- This message appears in the chat each time the mod is loaded or reloaded, so you can tell which build is running. The build
+-- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
+-- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 769)")
+	mod:echo("Unreal Tournament loaded (build 770)")
 end

@@ -1,23 +1,24 @@
 local mod = get_mod("unreal_tournament")
 
--- The mod's weapons as items of their own. Each is a copy of a game weapon (template and item) with its own name, usable by the careers of that weapon.
--- The game's weapon is left unchanged.
+-- The mod's weapons as items of their own. Each is a copy of a game weapon (its template and its item) with a name of its own. The
+-- careers that can use the game's weapon can use the copy. The game's weapon itself is left unchanged.
 --
---   items.register(setting_id, { key, template, base_item, deus_copy, name, type_name, description, keywords, texts, icon, icon_package, icon_materials })
---     key: the item's name, also used for damage sources, loadouts and the network
---     template: name of the weapon template (a copy of base_item's)
---     base_item: the game item that is copied; its models are used
---     deus_copy: the Chaos Wastes weapon (DeusWeapons key) of base_item, which the item's Chaos Wastes weapon is a copy of
---     can_wield: the careers that can use it, if they differ from base_item's
---     name, type_name (the line under the name), description
---     keywords: localization ids for the line under the power; texts: { id = text } for the ids that are the mod's
---     icon: a material in the file icon_materials, which is in the package icon_package
---     skins: the weapon's illusions, each { key, name, description, icon, icon_materials, default }. The one marked default is how the item
---         looks with no illusion applied. The others are picked on the game's Illusions page. All are unlocked for everyone. A skin without
---         an icon or description uses the item's. weapon_skin.lua shows a model for each.
+--   items.register(setting_id, { key, template, base_item, deus_copy, name, type_name, description, keywords, texts, icon, icon_package,
+--       icon_materials })
+--     key: the item's name. It is also used for damage sources, loadouts and the network.
+--     template: the name of the weapon template, which is a copy of base_item's.
+--     base_item: the game item that is copied. Its models are used.
+--     deus_copy: the Chaos Wastes weapon (a DeusWeapons key) of base_item. The item's Chaos Wastes weapon is a copy of it.
+--     can_wield: the careers that can use the item, if they differ from base_item's.
+--     name, type_name (the line under the name), description: the texts of the item.
+--     keywords: localization ids for the line under the power. texts: { id = text } for the ids that are the mod's own.
+--     icon: a material in the file icon_materials, which is in the package icon_package.
+--     skins: the weapon's illusions, each { key, name, description, icon, icon_materials, default }. The one marked default is how the
+--         item looks with no illusion applied. The others are picked on the game's Illusions page. All of them are unlocked for
+--         everyone. A skin without an icon or description uses the item's. weapon_skin.lua shows a model for each.
 --
--- The backend doesn't have these items, so they are added to the inventory it loaded. The ids are fixed: the item's key for the blueprint,
--- key#number for crafted weapons (see crafting.lua), so a loadout finds them again.
+-- The backend doesn't have these items, so they are added to the inventory it loaded. The ids are fixed: the item's key for the
+-- blueprint, and key#number for crafted weapons (see crafting.lua). That way a loadout finds them again.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
@@ -25,7 +26,7 @@ local items = {}
 
 local definitions = {}
 
--- Texts for the names and descriptions, which the game's localization doesn't have
+-- The texts of the items' names and descriptions, which the game's localization doesn't have
 local texts = {}
 
 mod:hook(LocalizationManager, "_base_lookup", function (func, self, text_id)
@@ -33,8 +34,8 @@ mod:hook(LocalizationManager, "_base_lookup", function (func, self, text_id)
 end)
 
 -- The icons package is listed in the .mod file, and the game loads it through the mod (Managers.package doesn't know it). UI renderers
--- lock its materials, and unloading a package with a locked resource is an error, which a mod reload would do. So the mod keeps a handle
--- of its own, in a global so a reload finds it, and never releases it.
+-- lock its materials, and unloading a package with a locked resource is an error, which a mod reload would cause. So the mod keeps a
+-- handle of its own to the package, in a global so that a reload finds it, and never releases it.
 local function hold_package(package_name)
 	UT_HELD_PACKAGES = UT_HELD_PACKAGES or {}
 
@@ -50,15 +51,16 @@ local function hold_package(package_name)
 	UT_HELD_PACKAGES[package_name] = handle
 end
 
--- Extra materials for UI renderers. UIRenderer.create adds them to every renderer made after this.
+-- Adds a material set to the UI renderers. UIRenderer.create adds it to every renderer made after this.
 local function add_material_set(material_set)
 	if not table.contains(UIRenderer._injected_material_sets, material_set) then
 		table.insert(UIRenderer._injected_material_sets, material_set)
 	end
 end
 
--- The in-game UI makes its renderers when a level loads. One made before the mod was loaded or reloaded can't find the icon's material (the
--- game mounts the mod's resources again on a reload), so in a level the items keep the base item's icon until the next level.
+-- The in-game UI makes its renderers when a level loads. A renderer made before the mod was loaded or reloaded can't find the icon's
+-- material, because the game mounts the mod's resources again on a reload. So in a level, the items keep the base item's icon until the
+-- next level.
 local icons_waiting = {}
 
 mod:hook_safe(IngameUI, "init", function ()
@@ -69,9 +71,9 @@ mod:hook_safe(IngameUI, "init", function ()
 	table.clear(icons_waiting)
 end)
 
--- After a reload the renderers that the game made before it can't find the icon's material, which crashes the game when one draws it. The
--- tables of the load before still have the icon (the tab screen keeps the loadouts it made of them, until the player changes theirs), so
--- they are given another one: the base weapon's.
+-- After a reload, the renderers that the game made before it can't find the icon's material, and the game crashes when one draws it.
+-- The item tables from before the reload still have the icon, because the tab screen keeps the loadouts it made from them until the
+-- player changes theirs. So those tables are given another icon: the base weapon's.
 local function retire_icon(old_table, base_icon)
 	if old_table then
 		old_table.inventory_icon = base_icon
@@ -102,7 +104,7 @@ local SAVED_SETTING = "custom_items"
 function items.saved()
 	local saved = table.clone(mod:get(SAVED_SETTING) or { crafted = {}, next_id = 1 })
 
-	-- Saved data from before this field existed
+	-- Saved data from before this field existed has no started list
 	saved.started = saved.started or {}
 
 	return saved
@@ -112,7 +114,7 @@ function items.save(saved)
 	mod:set(SAVED_SETTING, saved)
 end
 
--- The blueprint: always in the inventory, and what the Craft page crafts from. "default" is the rarity the page accepts for that.
+-- The blueprint is always in the inventory, and the Craft page crafts from it. "default" is the rarity that the page accepts for that.
 local BLUEPRINT_RECORD = {
 	power_level = 5,
 	properties = {},
@@ -120,7 +122,7 @@ local BLUEPRINT_RECORD = {
 	traits = {},
 }
 
--- The weapon given at the start, besides the blueprint
+-- The weapon that is given at the start, besides the blueprint
 local STARTING_RECORD = {
 	power_level = 300,
 	properties = {},
@@ -128,7 +130,7 @@ local STARTING_RECORD = {
 	traits = {},
 }
 
--- An inventory item in the shape of the backend's
+-- Makes an inventory item in the shape that the backend uses.
 local function inventory_item(key, backend_id, record)
 	local custom_data = {
 		power_level = tostring(record.power_level),
@@ -149,17 +151,17 @@ local function inventory_item(key, backend_id, record)
 		CustomData = custom_data,
 		ItemId = key,
 		ItemInstanceId = backend_id,
-		-- Marks the mod's items
+		-- This marks the mod's items.
 		UtCustom = true,
 	}
 end
 
--- The game's local copy of the backend inventory
+-- Returns the game's local copy of the backend inventory.
 local function mirror_of_backend()
 	return Managers.backend and Managers.backend._backend_mirror
 end
 
--- If the inventory item is one of the mod's weapons
+-- Returns whether the inventory item is one of the mod's weapons.
 function items.is_custom(backend_id)
 	local mirror = mirror_of_backend()
 	local item = mirror and mirror._inventory_items and mirror._inventory_items[backend_id]
@@ -167,7 +169,7 @@ function items.is_custom(backend_id)
 	return item ~= nil and item.UtCustom == true
 end
 
--- A new weapon: returns its backend id and inventory item. The game's craft adds it to the inventory.
+-- Makes a new crafted weapon and returns its backend id and inventory item. The game's craft adds it to the inventory.
 function items.new_crafted(saved, key, record)
 	local backend_id = string.format("%s#%d", key, saved.next_id)
 
@@ -178,7 +180,7 @@ function items.new_crafted(saved, key, record)
 	return backend_id, inventory_item(key, backend_id, record)
 end
 
--- A changed weapon: returns the inventory item that replaces the old one
+-- Changes a crafted weapon and returns the inventory item that replaces the old one.
 function items.change_crafted(saved, backend_id, record)
 	local key = saved.crafted[backend_id].key
 
@@ -207,7 +209,7 @@ local function add_to_inventory(mirror)
 
 		inventory[definition.key] = item
 
-		-- (When the inventory loads, the unlocked skins already include these, so this is only needed when the mod loads later.)
+		-- When the inventory loads, the unlocked skins already include these, so this is only needed when the mod loads later.
 		if mirror._unlocked_weapon_skins then
 			for _, skin_key in ipairs(definition.skin_keys or {}) do
 				mirror:add_unlocked_weapon_skin(skin_key)
@@ -239,7 +241,7 @@ mod:hook_safe(PlayFabMirrorAdventure, "inventory_request_cb", function (self)
 	add_to_inventory(self)
 end)
 
--- The registered definitions by setting id, e.g. items.weapons.shock_rifle.template
+-- The registered definitions by id, for example items.weapons.shock_rifle.template
 items.weapons = {}
 
 -- Registers the weapon's skins: entries in the game's skin tables and item list, copied from the base weapon's default skin.
@@ -297,7 +299,7 @@ local function register_skins(definition, item)
 		end
 	end
 
-	-- The item that the backend's unlocked skins are turned into (named after the weapon).
+	-- This is the item that the backend's unlocked skins are turned into. It is named after the weapon.
 	local base_skin_item = table.clone(ItemMasterList[base_skin_item_key])
 
 	base_skin_item.matching_item_key = definition.key
@@ -309,7 +311,7 @@ local function register_skins(definition, item)
 
 	WeaponSkins.skin_combinations[definition.key .. "_skins"] = { common = skin_keys }
 	WeaponSkins.default_skins[definition.key] = default_skin_key
-	-- (Cleared so the game builds it again from these tables the next time it is needed.)
+	-- This is cleared so the game builds it again from these tables the next time it needs it.
 	WeaponSkins._matching_weapon_skin_item_keys = nil
 
 	item.skin_combination_table = definition.key .. "_skins"
@@ -336,10 +338,10 @@ function items.register(setting_id, definition)
 	local template = table.clone(base_template)
 	local item = table.clone(ItemMasterList[definition.base_item])
 
-	-- Actions name their template; it is how other peers learn which action a projectile came from
+	-- Actions name their template, which is how the other machines learn which action a projectile came from.
 	utils.set_actions_lookup_data(template.actions, definition.template)
 
-	-- The game sets this when it loads templates; the skins identify the weapon by it
+	-- The game sets the name when it loads templates, and the skins use it to identify the weapon.
 	template.name = definition.template
 
 	Weapons[definition.template] = template
@@ -347,14 +349,14 @@ function items.register(setting_id, definition)
 	item.template = definition.template
 	item.display_name = definition.key .. "_name"
 	item.description = definition.key .. "_description"
-	-- The line under the name in the inventory
+	-- This is the line under the name in the inventory.
 	item.item_type = definition.key .. "_type"
-	-- Use the careers of the weapon this is a copy of. The first person animations, units and attachments are made for them, and another
-	-- career equipping it crashes the game.
+	-- The item uses the careers of the weapon it is a copy of. The first person animations, units and attachments are made for those
+	-- careers, and another career that equips the item crashes the game.
 	item.can_wield = table.clone(definition.can_wield or ItemMasterList[definition.base_item].can_wield)
-	-- The base weapon's skins don't apply. register_skins gives the item its own.
+	-- The base weapon's skins don't apply to the item. register_skins gives it skins of its own.
 	item.skin_combination_table = nil
-	-- What parse_item_master_list does for every item
+	-- These are set the way parse_item_master_list sets them for every item.
 	item.key = definition.key
 	item.name = definition.key
 	item.localized_name = definition.name
@@ -363,14 +365,14 @@ function items.register(setting_id, definition)
 	texts[item.description] = definition.description
 	texts[item.item_type] = definition.type_name
 
-	-- The green line under the power
+	-- These are the green words under the power.
 	template.tooltip_keywords = definition.keywords
 
 	for text_id, text in pairs(definition.texts or {}) do
 		texts[text_id] = text
 	end
 
-	-- The icon is a standalone texture, drawn by its material's name, which the UI renderers must be given
+	-- The icon is a standalone texture, drawn by its material's name, so the UI renderers must be given that material.
 	UIAtlasHelper.add_standalone_texture_by_name(definition.icon)
 	hold_package(definition.icon_package)
 	add_material_set(definition.icon_materials)
@@ -388,7 +390,7 @@ function items.register(setting_id, definition)
 
 	definitions[definition.key] = definition
 
-	-- Chaos Wastes builds its loadouts and drops from its own tables, which are read-only, so rawset. They only exist with the DLC.
+	-- Chaos Wastes builds its loadouts and drops from its own tables. They are read-only, so rawset is used. They only exist with the DLC.
 	if rawget(_G, "DeusWeapons") then
 		local deus_key = "deus_" .. definition.key
 		local deus_weapon = table.clone(DeusWeapons[definition.deus_copy])
@@ -405,7 +407,7 @@ function items.register(setting_id, definition)
 		})
 	end
 
-	-- The inventory is already loaded when the mod is loaded during a game
+	-- If the mod is loaded during a game, the inventory is already loaded, so the items are added to it now.
 	local backend = Managers.backend
 	local mirror = backend and backend._backend_mirror
 
