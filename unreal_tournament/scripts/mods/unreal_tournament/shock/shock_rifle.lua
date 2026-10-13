@@ -99,8 +99,6 @@ local CONFIG = {
 	combo_ring_height = 1, -- meters: how high above the effect's origin its ring is (it is made to be played at a character's feet)
 	-- Bodies are thrown away from the blast first: whatever has died (and started to ragdoll) in the first implosion_delay seconds is
 	-- thrown once, then everything is pulled back in.
-	implosion_blast_speed = 14, -- m/s, a little less for bodies far from the center
-	implosion_blast_up = 5, -- m/s added upwards
 	implosion_delay = 0.6, -- seconds after the blast before bodies start being pulled in
 	implosion_duration = 0.6,
 	-- The pull is like gravity: it speeds the bodies up toward the center (they keep their own speed), and they go through the center and fly
@@ -787,7 +785,7 @@ local function update_implosions(dt)
 			for unit in pairs(implosion.units) do
 				if not Unit.alive(unit) then
 					implosion.units[unit] = nil
-				elseif not HEALTH_ALIVE[unit] and not implosion.blasted[unit] and utils.blast_ragdoll(unit, center, implosion.radius, CONFIG.implosion_blast_speed, CONFIG.implosion_blast_up) then
+				elseif not HEALTH_ALIVE[unit] and not implosion.blasted[unit] and utils.blast_ragdoll(unit, center) then
 					implosion.blasted[unit] = true
 				end
 			end

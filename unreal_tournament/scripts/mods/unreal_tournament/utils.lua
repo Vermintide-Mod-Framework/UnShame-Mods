@@ -330,27 +330,58 @@ function utils.units_in_radius(world, position, radius)
 	return units
 end
 
--- Throws the bodies of a ragdoll away from a point, less hard the further from it they are (speed at the center, half of
--- it at the radius), and up by up. Returns if it had bodies that move.
-function utils.blast_ragdoll(unit, center, radius, speed, up)
-	local thrown = false
+-- UT throws a ragdoll that an explosion of a weapon with bThrowRagdoll reaches (xPawn.TakeDamage: the rocket, the flak shell and the
+-- shock combo): the whole body gets RagDeathVel (200 uu/s, 4 m/s) away from the explosion and 250 uu/s (5 m/s) up, however far from it the
+-- body is, and a turn about the axis across the throw (18000 units of rotation a second, 1.73 rad/s). The speeds are UT's, as they are in
+-- meters (the pellets of the flak, which are many, are scaled up for their own reason, in flak_cannon.lua).
+utils.UT_RAGDOLL_SPEED = 4
+utils.UT_RAGDOLL_UP = 5
+utils.UT_RAGDOLL_SPIN = 18000 / 65536 * 2 * math.pi
+
+-- The velocity and the spin that UT's throw gives a body that is away from a point in `direction` (a vector, not of length 1)
+function utils.ut_ragdoll_throw(direction)
+	local length = Vector3.length(direction)
+	local unit_direction = length > 0.01 and direction * (1 / length) or Vector3.up()
+	local velocity = unit_direction * utils.UT_RAGDOLL_SPEED + Vector3(0, 0, utils.UT_RAGDOLL_UP)
+	local across = Vector3.cross(Vector3.up(), Vector3.flat(unit_direction))
+	local spin = Vector3.length(across) > 0.01 and Vector3.normalize(across) * utils.UT_RAGDOLL_SPIN or Vector3.zero()
+
+	return velocity, spin
+end
+
+-- Throws a ragdoll as above, away from a point. Returns if it had bodies that move.
+function utils.blast_ragdoll(unit, center)
+	local body_position
 
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 
 		if actor and Actor.is_dynamic(actor) then
-			local offset = Actor.position(actor) - center
-			local distance = Vector3.length(offset)
-			local direction = distance > 0.01 and offset * (1 / distance) or Vector3.up()
-			local scaled_speed = speed * math.lerp(1, 0.5, math.clamp(distance / radius, 0, 1))
-
-			Actor.set_velocity(actor, direction * scaled_speed + Vector3(0, 0, up))
-
-			thrown = true
+			body_position = body_position or Actor.position(actor)
 		end
 	end
 
-	return thrown
+	if not body_position then
+		return false
+	end
+
+	local velocity, spin = utils.ut_ragdoll_throw(body_position - center)
+
+	utils.set_ragdoll_motion(unit, velocity, spin)
+
+	return true
+end
+
+-- Gives every body of a ragdoll that moves the velocity and the spin
+function utils.set_ragdoll_motion(unit, velocity, spin)
+	for i = 0, Unit.num_actors(unit) - 1 do
+		local actor = Unit.actor(unit, i)
+
+		if actor and Actor.is_dynamic(actor) then
+			Actor.set_velocity(actor, velocity)
+			Actor.set_angular_velocity(actor, spin)
+		end
+	end
 end
 
 -- The name of the template of the weapon a unit has wielded, if it has one

@@ -143,9 +143,7 @@ local CONFIG = {
 	pip_spiral_side_y = -15,
 	-- and a sound of the game's HUD (false for none)
 	load_sound_event = false,
-	-- Whatever dies of the explosion is thrown away from it (the game's own push is small)
-	ragdoll_speed = 25, -- m/s, a little less for bodies far from the center
-	ragdoll_up = 6, -- m/s added upwards
+	-- Whatever dies of the explosion is thrown away from it as UT does (utils.blast_ragdoll)
 	ragdoll_window = 1.5, -- seconds a body has to start ragdolling after the explosion
 }
 
@@ -1142,7 +1140,7 @@ local function update_blasts()
 		for unit in pairs(blast.units) do
 			if not Unit.alive(unit) then
 				blast.units[unit] = nil
-			elseif not HEALTH_ALIVE[unit] and utils.blast_ragdoll(unit, center, blast.radius, CONFIG.ragdoll_speed, CONFIG.ragdoll_up) then
+			elseif not HEALTH_ALIVE[unit] and utils.blast_ragdoll(unit, center) then
 				blast.units[unit] = nil
 			end
 		end

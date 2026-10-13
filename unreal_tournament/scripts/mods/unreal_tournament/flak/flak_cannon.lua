@@ -146,8 +146,6 @@ local CONFIG = {
 	-- While flying, the shell pushes dead bodies near it away (FlakShell.ForceType, ForceRadius 60 units, ForceScale 5).
 	shell_force_radius = 1.2, -- m
 	shell_force_acceleration = 12, -- m/s^2
-	-- Bodies killed by the shell are thrown away from the explosion at this speed (m/s) at the center (DamTypeFlakShell.bThrowRagdoll).
-	shell_ragdoll_speed = 30,
 	shell_explosion_full_damage_radius = 0.5, -- damage falls off linearly from here to the radius
 	-- Chunks of one shot that spawn this close in time (seconds) are one shot, see shots
 	shot_window = 0.1,
@@ -708,7 +706,7 @@ local function add_ragdoll_throw(hit_unit, owner_unit, hit_position, hit_directi
 end
 
 -- Returns true once the body has been thrown
-local function throw_ragdoll(unit, velocity)
+local function throw_ragdoll(unit, velocity, spin)
 	local thrown = false
 
 	for i = 0, Unit.num_actors(unit) - 1 do
@@ -716,6 +714,10 @@ local function throw_ragdoll(unit, velocity)
 
 		if actor and Actor.is_dynamic(actor) then
 			Actor.set_velocity(actor, velocity)
+
+			if spin then
+				Actor.set_angular_velocity(actor, spin)
+			end
 
 			thrown = true
 		end
@@ -734,12 +736,13 @@ local function update_ragdoll_throws()
 			local velocity = throw.velocity:unbox()
 			local speed = Vector3.length(velocity)
 
-			if speed > 0 then
+			-- (the throw of a shell is UT's as it is: the chunks' is scaled up and has its share of up added)
+			if speed > 0 and not throw.spin then
 				velocity = velocity * (math.min(speed, CONFIG.chunk_ragdoll_max_speed) / speed)
 				velocity = velocity + Vector3(0, 0, Vector3.length(velocity) * CONFIG.chunk_ragdoll_up)
 			end
 
-			if throw_ragdoll(unit, velocity) then
+			if throw_ragdoll(unit, velocity, throw.spin and throw.spin:unbox()) then
 				ragdoll_throws[unit] = nil
 			end
 		end
@@ -1016,16 +1019,13 @@ mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position, _, 
 
 	for unit in pairs(alive_before or {}) do
 		if Unit.alive(unit) and not HEALTH_ALIVE[unit] and not ragdoll_throws[unit] then
-			local unit_position = Unit.world_position(unit, 0)
-			local offset = Vector3.flat(unit_position - position)
-			local distance = Vector3.length(offset)
-			local direction = distance > 0.01 and offset * (1 / distance) or Vector3.up()
-			local speed = CONFIG.shell_ragdoll_speed * math.lerp(1, 0.5, math.clamp(distance / ExplosionTemplates.ut_flak_shell_explosion.explosion.radius, 0, 1))
+			-- (UT's throw of a body that a shell's explosion reaches, see utils.ut_ragdoll_throw)
+			local velocity, spin = utils.ut_ragdoll_throw(Unit.world_position(unit, 0) - position)
 
-			-- (The upward speed is added when the body is thrown, as for chunks.)
 			ragdoll_throws[unit] = {
 				t = t,
-				velocity = Vector3Box(direction * speed),
+				spin = Vector3Box(spin),
+				velocity = Vector3Box(velocity),
 			}
 		end
 	end
