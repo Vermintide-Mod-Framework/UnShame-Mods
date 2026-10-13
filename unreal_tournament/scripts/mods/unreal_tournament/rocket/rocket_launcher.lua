@@ -886,6 +886,8 @@ local function update_lock_on(dt)
 
 					state.target = candidate
 					state.candidate = nil
+					-- (the rockets that were fired belong to the lock that is gone: the new one is not used up by them)
+					state.fired = nil
 
 					add_lock_outline(state)
 
