@@ -46,7 +46,7 @@ local particles = {}
 local UNIT_NAME = "units/ut/fx/quad"
 local LIGHT_UNIT_NAME = "units/ut/fx/light"
 local MATERIAL_FORMAT = "units/ut/fx/fx_%s"
-local MAX_PARTICLES = 400
+local MAX_PARTICLES = 800
 
 local active = {}
 -- units that are not used, by the name of the unit: { unit, world, material, unit_name }

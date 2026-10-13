@@ -26,11 +26,14 @@ local CONFIG = {
 	muzzle_life = 0.15,
 	-- RocketProj: the mesh turns (RotationRate roll 50000 of 65536 to the turn, a second)
 	rocket_turns_per_second = 50000 / 65536,
-	-- RocketCorona (a flare along the flight: 1.2 times the 64 units of the texture, 0.7 by 0.35 of that, pulsing between 0.9 and 1.5)
-	corona_size = 70,
+	-- RocketCorona (RocketFlare, 1.2 times the 128 units of its texture and 0.7 of that wide, pulsing between 0.9 and 1.5). It is at the
+	-- back of the mesh, and a little way towards the camera so that the mesh does not hide it.
+	corona_size = 110,
 	corona_pulse_seconds = 0.2,
+	corona_back = 0.2, -- m
+	corona_toward_camera = 0.4, -- m
 	-- RocketTrailSmoke (wisps, 90 a second, 1.25 s, 15 to 20 units, growing 13 a second, rising a little)
-	smoke_interval = 0.025,
+	smoke_interval = 1 / 90,
 	smoke_life = 1.25,
 	smoke_size = {
 		15,
@@ -188,7 +191,7 @@ local function update_visuals(dt)
 					additive = 0,
 					color = CONFIG.smoke_color,
 					growth = CONFIG.smoke_growth * UNIT,
-					intensity = 0.6,
+					intensity = 0.9,
 					life = CONFIG.smoke_life,
 					position = position,
 					size = random_between(CONFIG.smoke_size) * UNIT,
@@ -239,7 +242,15 @@ local function add_visual(projectile)
 		fade_in = 0,
 		follow = function ()
 			if Unit.alive(game_unit) and not projectile._stop_impacts then
-				return Unit.world_position(game_unit, 0)
+				local position = Unit.world_position(game_unit, 0) - visual.direction:unbox() * CONFIG.corona_back
+				local to_camera = Managers.state.camera:camera_position("player_1") - position
+				local distance = Vector3.length(to_camera)
+
+				if distance > 0.01 then
+					position = position + to_camera * (math.min(CONFIG.corona_toward_camera, distance * 0.5) / distance)
+				end
+
+				return position
 			end
 		end,
 		life = 8,

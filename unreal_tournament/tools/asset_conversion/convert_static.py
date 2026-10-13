@@ -53,12 +53,14 @@ STATICS = {
         'materials': [('WeaponSkins/Texture/RocketShellTex.tga', 'opaque')],
         'scale': 0.02,
         'unit': 'units/ut/rocket/projectile',
+        'culling': 'disabled',
     },
     'flak_shell': {
         'pskx': 'WeaponStaticMesh/StaticMesh/FlakShell.pskx',
         'materials': [('WeaponSkins/Texture/FlakSlugTex.tga', 'opaque')],
         'scale': 0.16,
         'unit': 'units/ut/flak/shell',
+        'culling': 'disabled',
     },
 }
 
