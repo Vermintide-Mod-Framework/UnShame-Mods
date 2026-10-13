@@ -977,6 +977,14 @@ mod:command("rocket_start", "- prints where rockets start, from the camera, to s
 	mod:echo("rocket_start " .. (mod.rocket_debug and "on" or "off"))
 end)
 
+-- How far a direction is from where the camera looks, to the right and up, in degrees
+function mod.rocket_aim_text(rotation)
+	local camera_rotation = Managers.state.camera:camera_rotation("player_1")
+	local forward = Quaternion.forward(rotation)
+
+	return string.format("%.2f %.2f", math.deg(math.asin(Vector3.dot(forward, Quaternion.right(camera_rotation)))), math.deg(math.asin(Vector3.dot(forward, Quaternion.up(camera_rotation)))))
+end
+
 function mod.rocket_offset_text(position)
 	local camera_manager = Managers.state.camera
 	local rotation = camera_manager:camera_rotation("player_1")
@@ -1002,7 +1010,7 @@ mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, pos
 		position = start_position(position, rotation)
 
 		if mod.rocket_debug and utils.is_local_player_unit(owner_unit) then
-			mod:echo("rocket start: given " .. mod.rocket_offset_text(given_position) .. ", used " .. mod.rocket_offset_text(position))
+			mod:echo("rocket start: given " .. mod.rocket_offset_text(given_position) .. ", used " .. mod.rocket_offset_text(position) .. ", aim off " .. mod.rocket_aim_text(rotation) .. " (" .. sub_action_name .. ")")
 		end
 
 		local state = locks[owner_unit]
