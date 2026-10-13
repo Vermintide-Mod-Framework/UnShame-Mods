@@ -51,27 +51,35 @@ local CONFIG = {
 	-- The explosion (NewExplosionA, ExplosionCrap): the game's own explosion, with its smoke and the mark it leaves (only if the game has it
 	-- loaded), a flash, three fireballs that play a sheet of 16 frames (the same sheet for all three, one of two), and smoke
 	explosion_effect = false, -- "fx/wpnfx_frag_grenade_impact", off for a test
-	explosion_flash_size = 150,
+	explosion_flash_size = 300,
 	explosion_flash_growth = 500,
 	explosion_flash_life = 0.25,
 	explosion_flash_intensity = 0.5,
 	explosion_fire_count = 3,
 	explosion_fire_frames = 4, -- a sheet is four animations of four frames, a row each (the frames of a fireball are one of the rows)
 	explosion_fire_gap = 0.1, -- seconds between the fireballs starting (UT: 10 a second)
+	-- (a UE2 sprite is about twice as wide as the number says: UT's explosion is as wide as its blast, 3 m of radius, which its three fireballs
+	-- of 50 to 70 only make that big)
 	explosion_fire_size = {
-		50,
-		70,
+		125,
+		175,
 	},
 	explosion_fire_life = {
 		0.4,
 		0.6,
 	},
-	explosion_fire_spread = 24, -- units, the radius of the sphere they start in
+	explosion_fire_spread = 48, -- units, the radius of the sphere they start in
+	explosion_fire_intensity = 1.8, -- how bright the frames are, 1 is the texture as it is
+	explosion_fire_color = {
+		1,
+		0.9,
+		0.62,
+	},
 	explosion_lift = 20, -- units, how far off the surface it is (NewExplosionA is spawned 20 units along the surface's normal)
 	explosion_smoke_ring = 10, -- units, the radius of the ring the smoke starts on
 	explosion_smoke_count = 15,
 	explosion_smoke_life = 2,
-	explosion_smoke_size = 20, -- units, growing to 2.5 times that (UT: 0.2 to 0.5 of 100)
+	explosion_smoke_size = 60, -- units, growing to 2.5 times that (UT: 0.2 to 0.5 of 100, drawn about twice as wide, like the fireballs)
 	explosion_smoke_speed = 4, -- m/s outward, slowed to a tenth in the first part of its life
 	explosion_smoke_drag = 4, -- per second
 	explosion_smoke_rise = 0.4, -- m/s
@@ -664,6 +672,8 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 				additive = 0,
 				angle = angle,
 				attenuation = 0.5,
+				color = CONFIG.explosion_fire_color,
+				intensity = CONFIG.explosion_fire_intensity,
 				delay = start + frame * life / frames,
 				life = 2 * life / frames,
 				position = fire_center,
