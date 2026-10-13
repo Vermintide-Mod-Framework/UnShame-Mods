@@ -28,6 +28,7 @@ local mod = get_mod("unreal_tournament")
 --       (PlayerViewPivot, degrees), field_of_view (the horizontal one, if it is not the one DisplayFOV gives)
 --   bob, bob_damping, bob_smoothing, ut_ground_speed: the weapon's sway (Pawn.CheckBob, Pawn.WeaponBob)
 --   blend_time: the seconds in which one animation blends into the next
+--   idle_speed: how fast the idle animation plays, against its own rate (the weapon's IdleAnimRate, 1 if it has none)
 --   alt_pose_right/forward/up (UT units), alt_pose_roll/pitch/yaw (degrees, the roll is the right side down, the pitch the muzzle up, the
 --       yaw the muzzle to the left): a second place for the model in the view (held sideways, say), which the weapon's file moves it to
 --       with skin.alt_pose, 0 (where UT has it) to 1. inspect_pose_* are a third, for the inspect, with skin.inspect_pose. skin.extra_yaw is
@@ -67,6 +68,7 @@ local WEAPON_VERTICAL_FOV = math.rad(55)
 local function new(def)
 	local CONFIG = {
 		blend_time = 0.1,
+		idle_speed = 1,
 		bob = 0.0035,
 		bob_damping = 1.5,
 		bob_smoothing = 10,
@@ -360,7 +362,7 @@ local function new(def)
 
 		skin.animation = name
 		skin.time = 0
-		skin.speed = duration and self.animation_duration(name) / duration or 1
+		skin.speed = duration and self.animation_duration(name) / duration or name == (CONFIG.idle_animation or "Idle") and CONFIG.idle_speed or 1
 	end
 
 	-- The skin

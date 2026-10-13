@@ -290,6 +290,7 @@ skin_api = mod.weapon_skin.new({
 	pivot_yaw = 500 / 65536 * 360,
 	pivot_roll = 1000 / 65536 * 360,
 	bob_damping = 1.5,
+	idle_speed = 0.5, -- RocketLauncher.IdleAnimRate
 	-- WeaponStaticMesh.RocketLauncherPickup (DrawScale 0.45): its barrels are along the mesh's own -Y, and the grip is under the back of it
 	third_person = {
 		id = SETTING_ID,
