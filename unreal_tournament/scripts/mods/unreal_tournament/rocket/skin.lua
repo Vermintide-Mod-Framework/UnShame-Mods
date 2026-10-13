@@ -69,11 +69,13 @@ local CONFIG = {
 		0.6,
 	},
 	explosion_fire_spread = 48, -- units, the radius of the sphere they start in
-	explosion_fire_intensity = 1.8, -- how bright the frames are, 1 is the texture as it is
+	-- The frames are drawn in a colour that is more than white, which the game's light turns to glowing (the texture alone, at 1, is a dull
+	-- grey in it): this colour is yellow, brighter in the middle of a fireball than at its edge, which the frames' own colours make
+	explosion_fire_intensity = 1,
 	explosion_fire_color = {
-		1,
-		0.9,
-		0.62,
+		3,
+		2.5,
+		1.4,
 	},
 	explosion_lift = 20, -- units, how far off the surface it is (NewExplosionA is spawned 20 units along the surface's normal)
 	explosion_smoke_ring = 10, -- units, the radius of the ring the smoke starts on
