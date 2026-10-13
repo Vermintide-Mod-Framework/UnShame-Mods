@@ -841,6 +841,8 @@ end
 local function reset_lock(state)
 	clear_lock_outline(state)
 
+	state.candidate = nil
+	state.candidate_time = 0
 	state.fired = nil
 	state.locked = false
 	state.lock_time = 0
@@ -893,10 +895,36 @@ local function update_lock_on(dt)
 	end
 
 	local first_person_extension = ScriptUnit.has_extension(unit, "first_person_system")
-	local candidate = first_person_extension and pick_lock_candidate(unit, first_person_extension, state.target)
+	local candidate = first_person_extension and pick_lock_candidate(unit, first_person_extension, state.candidate or state.target)
 	local interval = dt
 
-	if candidate then
+	if state.locked then
+		-- The aim moving off the enemy that is locked on to doesn't unlock it: only locking on to another enemy (the aim on it for
+		-- lock_required_time) does.
+		if candidate and candidate ~= state.target then
+			if candidate == state.candidate then
+				state.candidate_time = state.candidate_time + interval
+
+				if state.candidate_time >= CONFIG.lock_required_time then
+					clear_lock_outline(state)
+
+					state.target = candidate
+					state.candidate = nil
+
+					add_lock_outline(state)
+
+					for _, callback in pairs(mod.rocket_lock_callbacks) do
+						callback(unit, true)
+					end
+				end
+			else
+				state.candidate = candidate
+				state.candidate_time = 0
+			end
+		else
+			state.candidate = nil
+		end
+	elseif candidate then
 		if candidate == state.target then
 			state.unlock_time = 0
 			state.lock_time = state.lock_time + interval
