@@ -56,7 +56,8 @@ local CONFIG = {
 	explosion_flash_life = 0.25,
 	explosion_flash_intensity = 0.5,
 	explosion_fire_count = 3,
-	explosion_fire_frames = 16,
+	explosion_fire_frames = 4, -- a sheet is four animations of four frames, a row each (the frames of a fireball are one of the rows)
+	explosion_fire_gap = 0.1, -- seconds between the fireballs starting (UT: 10 a second)
 	explosion_fire_size = {
 		50,
 		70,
@@ -624,12 +625,15 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 		texture = "explosion_flash",
 	})
 
-	-- The fireballs: a sprite for each frame of the sheet, which fades in and out over two frames' time, so that the frames blend
+	-- The fireballs: each plays the four frames of a row of the sheet, a sprite for each frame, which fades in and out over two frames'
+	-- time, so that the frames blend. They start one after another.
 	local sheet = math.random(2) == 1 and "explosion_a_" or "explosion_b_"
 	local frames = CONFIG.explosion_fire_frames
 
-	for _ = 1, CONFIG.explosion_fire_count do
+	for index = 0, CONFIG.explosion_fire_count - 1 do
 		local life = random_between(CONFIG.explosion_fire_life)
+		local first_frame = math.random(0, 3) * frames
+		local start = index * CONFIG.explosion_fire_gap
 		local size = random_between(CONFIG.explosion_fire_size) * UNIT
 		local center = position + random_direction() * (CONFIG.explosion_fire_spread * UNIT)
 		local angle = math.random() * 360
@@ -640,11 +644,11 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 				additive = 0,
 				angle = angle,
 				attenuation = 0.5,
-				delay = frame * life / frames,
+				delay = start + frame * life / frames,
 				life = 2 * life / frames,
 				position = center,
 				size = size,
-				texture = sheet .. frame,
+				texture = sheet .. (first_frame + frame),
 			})
 		end
 	end
