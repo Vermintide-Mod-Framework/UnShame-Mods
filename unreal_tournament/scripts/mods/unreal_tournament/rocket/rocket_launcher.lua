@@ -955,7 +955,10 @@ end
 local function start_position(position, rotation)
 	position = utils.as_vector(position)
 
-	local offset = Quaternion.forward(rotation) * CONFIG.start_forward + Quaternion.right(rotation) * CONFIG.start_right - Quaternion.up(rotation) * CONFIG.start_down
+	-- (the rotation of a shot is rolled by a random angle about the way it points, by the game's spread, whatever its numbers are: right and
+	-- up are taken from the way it points alone, or the offset would turn about the aim from shot to shot)
+	local level = Quaternion.look(Quaternion.forward(rotation), Vector3.up())
+	local offset = Quaternion.forward(level) * CONFIG.start_forward + Quaternion.right(level) * CONFIG.start_right - Quaternion.up(level) * CONFIG.start_down
 	local distance = Vector3.length(offset)
 	local direction = offset * (1 / distance)
 	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
