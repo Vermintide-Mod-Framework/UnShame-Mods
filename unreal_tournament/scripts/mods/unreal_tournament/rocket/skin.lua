@@ -56,7 +56,7 @@ local CONFIG = {
 	explosion_flash_life = 0.25,
 	explosion_flash_intensity = 0.5,
 	explosion_fire_count = 3,
-	explosion_fire_frames = 4, -- a sheet is four animations of four frames, a row each (the frames of a fireball are one of the rows)
+	explosion_fire_frames = 16, -- the frames of a sheet, which go down its columns, not along its rows
 	explosion_fire_gap = 0.1, -- seconds between the fireballs starting (UT: 10 a second)
 	-- (a UE2 sprite is about twice as wide as the number says: UT's explosion is as wide as its blast, 3 m of radius, which its three fireballs
 	-- of 50 to 70 only make that big)
@@ -655,13 +655,13 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 		texture = "explosion_flash",
 	})
 
-	-- The fireballs: each plays the four frames of a row of the sheet, a sprite for each frame, one over the other. They start one after another.
+	-- The fireballs: each plays the 16 frames of the sheet (one of two, the same for all), a sprite for each frame, one over the other. They
+	-- start one after another.
 	local sheet = math.random(2) == 1 and "explosion_a_" or "explosion_b_"
 	local frames = CONFIG.explosion_fire_frames
 
 	for index = 0, CONFIG.explosion_fire_count - 1 do
 		local life = random_between(CONFIG.explosion_fire_life)
-		local first_frame = math.random(0, 3) * frames
 		local start = index * CONFIG.explosion_fire_gap
 		local size = random_between(CONFIG.explosion_fire_size) * UNIT
 		local fire_center = center + random_direction() * (CONFIG.explosion_fire_spread * UNIT)
@@ -684,7 +684,7 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 				life = 2 * frame_time,
 				position = fire_center,
 				size = size,
-				texture = sheet .. (first_frame + frame),
+				texture = sheet .. (frame % 4 * 4 + math.floor(frame / 4)),
 			})
 		end
 	end
