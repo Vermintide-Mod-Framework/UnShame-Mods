@@ -131,6 +131,19 @@ local skin_api
 -- What flies: { unit = the mesh, game_unit = the projectile's, projectile = its extension, ... }
 local visuals = {}
 
+-- If a rocket that is in flight is on its way to this enemy (rocket_launcher.lua keeps the lock while there is one)
+function mod.rocket_homing_on(target)
+	for _, visual in ipairs(visuals) do
+		local locomotion_extension = Unit.alive(visual.game_unit) and ScriptUnit.has_extension(visual.game_unit, "projectile_locomotion_system")
+
+		if locomotion_extension and locomotion_extension.target_unit == target then
+			return true
+		end
+	end
+
+	return false
+end
+
 local function random_between(range)
 	return range[1] + (range[2] - range[1]) * math.random()
 end

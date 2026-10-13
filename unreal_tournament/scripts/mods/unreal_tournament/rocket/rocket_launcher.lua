@@ -875,18 +875,20 @@ local function update_lock_on(dt)
 		locks[unit] = state
 	end
 
-	-- only while loading (holding the secondary button): without it there is no lock, and letting go of it,
-	-- or firing, ends it (a salvo has been given its target by then)
+	-- The lock is kept while a rocket that was fired with it is on its way to the enemy, which it is after the aiming has ended (the
+	-- rockets are the lock's own: they are as locked on as it is). It is used up when they are gone.
+	local rockets_on_their_way = state.fired and (Managers.time:time("game") - state.fired_t < 0.5 or mod.rocket_homing_on(state.target))
+
+	-- only while loading (holding the secondary button): without it there is no lock, and letting go of it ends it
 	if not loading[unit] then
-		if state.target or state.locked then
+		if (state.target or state.locked) and not rockets_on_their_way then
 			reset_lock(state)
 		end
 
 		return
 	end
 
-	-- a lock is used up by firing
-	if state.fired then
+	if state.fired and not rockets_on_their_way then
 		reset_lock(state)
 	end
 
@@ -1027,6 +1029,7 @@ mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, pos
 
 		if state and state.locked and HEALTH_ALIVE[state.target] then
 			state.fired = true
+			state.fired_t = Managers.time:time("game")
 
 			-- a true flight projectile is given the direction it is fired in, not the flat part of it
 			ActionUtils.spawn_true_flight_projectile(owner_unit, state.target, TrueFlightTemplates[TRUE_FLIGHT_TEMPLATE].lookup_id, position, rotation, angle, Vector3.normalize(Quaternion.forward(rotation)), speed, item_name, item_template_name, action_name, sub_action_name, 1, ...)
