@@ -432,7 +432,6 @@ skin_api = mod.weapon_skin.new({
 		yaw = 90,
 		pitch = -15,
 		roll = 0,
-		kick_pitch = 10,
 		-- In the world the launcher moves with the game's crossbow, which the game animates with the arms. It is turned from the crossbow's own axes,
 		-- not calibrated as the Flak Cannon's is: the crossbow is still moving to its place when that is done.
 		follow_game_unit = 2,
@@ -735,11 +734,6 @@ end
 mod.third_person_animation_filters[TEMPLATE_NAME] = function (event, unit)
 	if mod.rocket_debug then
 		mod:echo("rocket 3p event: %s (%s)", event, unit and utils.is_local_player_unit(unit) and "own" or "other")
-	end
-
-	-- (the shot of the game's animation is not played, it has the bow's sound: the launcher kicks by itself)
-	if unit and (event == "attack_shoot" or event == "attack_shoot_last") then
-		third_person.kick(unit)
 	end
 
 	if unit and not utils.is_local_player_unit(unit) then
