@@ -6,7 +6,7 @@ local mod = get_mod("unreal_tournament")
 --   LMB: a rocket that explodes where it hits.
 --   RMB (held): loads rockets, one at first and another every load_interval seconds, up to three.
 --               LMB then fires them all in a line.
--- Ammo and reload are the crossbow's own.
+-- All the ammo is the clip: there is no reload.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local register_damage_profile = utils.register_damage_profile
@@ -43,9 +43,8 @@ local CONFIG = {
 	rocket_radius = 0.1, -- m, how easily a rocket hits things
 	rocket_gravity_settings = "spark", -- the game's gravity setting with the least gravity
 	fire_interval = 0.9, -- seconds, RocketFire.FireRate
-	-- Ammo (the crossbow's is 15 in a clip and 48 in all). UT's RocketAmmo.MaxAmmo is 30.
-	ammo_per_clip = 9,
-	max_ammo = 36, -- four clips
+	-- Ammo (the crossbow's is 15 in a clip and 48 in all). UT's RocketAmmo.MaxAmmo is 30. All of it is the clip: there is no reload.
+	max_ammo = 36,
 	-- The damage and radius of the explosion are the same as the Flak Cannon's shell: UT has 90 and 220 uu for
 	-- both, and they were reduced in the same way
 	rocket_damage = 60,
@@ -271,8 +270,7 @@ local function restore_crossbow()
 	actions.action_one[SPIRAL_ACTION] = nil
 	actions.action_two.default = original.action_two_default
 
-	-- (a patch from before the ammo was changed has none saved)
-	for key, value in pairs(original.ammo_data or {}) do
+	for key, value in pairs(original.ammo_data) do
 		template.ammo_data[key] = value
 	end
 
@@ -310,6 +308,8 @@ local function apply_rocket_launcher()
 		action_one_zoomed_shot = actions.action_one.zoomed_shot,
 		action_two_default = actions.action_two.default,
 		ammo_data = {
+			reload_time = template.ammo_data.reload_time,
+			ammo_immediately_available = template.ammo_data.ammo_immediately_available,
 			ammo_per_clip = template.ammo_data.ammo_per_clip,
 			ammo_per_reload = template.ammo_data.ammo_per_reload,
 			max_ammo = template.ammo_data.max_ammo,
@@ -318,9 +318,13 @@ local function apply_rocket_launcher()
 
 	saved.original = original
 
-	template.ammo_data.ammo_per_clip = CONFIG.ammo_per_clip
-	template.ammo_data.ammo_per_reload = CONFIG.ammo_per_clip
+	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
 	template.ammo_data.max_ammo = CONFIG.max_ammo
+	template.ammo_data.ammo_per_clip = CONFIG.max_ammo
+	template.ammo_data.ammo_per_reload = CONFIG.max_ammo
+	template.ammo_data.ammo_immediately_available = true
+	-- Nothing should need a reload, but the game may still start one (when the weapon is wielded), so make it short.
+	template.ammo_data.reload_time = 0.2
 
 	actions.action_one.default = build_rocket_action(original.action_one_default, false)
 	actions.action_one.zoomed_shot = build_rocket_action(original.action_one_zoomed_shot, true)

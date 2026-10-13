@@ -344,10 +344,15 @@ mod.rocket_load_callbacks.rocket_skin = function (owner_unit)
 	end
 end
 
--- The shot sounds of the crossbow are in its animation: the animations of the shots are not played on the player's own first person unit
--- (the model of the skin plays UT's)
+-- The shot and reload sounds of the crossbow are in its animations: the animations of the shots and the reload are not played on the
+-- player's own first person unit (the model of the skin plays UT's). UT's weapon has no reload, but the game still reloads when the
+-- weapon is wielded.
 mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
-	return event == "attack_shoot" or event == "attack_shoot_last"
+	return event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil
+end
+
+mod.third_person_animation_filters[TEMPLATE_NAME] = function (event)
+	return string.find(event, "reload", 1, true) ~= nil
 end
 
 -- The flow events of the game's unit of the rocket start its effects as it is made: they are not started
