@@ -29,6 +29,15 @@ WEAPONS = {
         'offset': (8, -7, 0),
         'pivot': (16884 / 65536 * 360, 0, 200 / 65536 * 360),
     },
+    'rocket': {
+        'psk': 'Weapons/SkeletalMesh/RocketLauncher_1st.psk',
+        'textures': ['units/ut/rocket/rocket_launcher_rockettex0.png'],
+        'lua': 'scripts/mods/unreal_tournament/rocket/skin_animations.lua',
+        'display_fov': 60,
+        'draw_scale': 1,
+        'offset': (8, 0, 0),
+        'pivot': (500 / 65536 * 360, 0, -1000 / 65536 * 360),
+    },
     'shock2003': {
         'psk': 'Weapons/SkeletalMesh/ShockRifle_1st.psk',
         'textures': ['units/ut/shock2003/shock_rifle_shocktex0.png', 'units/ut/shock2003/shock_rifle_shocktex0.png', None],

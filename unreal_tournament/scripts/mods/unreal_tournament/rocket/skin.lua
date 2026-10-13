@@ -70,6 +70,9 @@ local CONFIG = {
 	},
 	explosion_smoke_spread = 40,
 	explosion_smoke_rise = 0.5,
+	inspect_pose_speed = 5, -- how fast the model moves to the inspect pose and back, per second
+	inspect_sway = 5, -- degrees of yaw each way while inspecting
+	inspect_sway_speed = 1.8, -- radians per second
 	-- Another shot of another player: more than this far apart in time is another shot
 	shot_gap = 0.25,
 	-- What follows a rocket being fired or loaded (RocketLauncher.uc, state AnimateLoad), in seconds after it: the barrel starts to turn,
@@ -310,6 +313,18 @@ skin_api = mod.weapon_skin.new({
 	pivot_roll = -1000 / 65536 * 360,
 	bob_damping = 1.5,
 	idle_speed = 0.5, -- RocketLauncher.IdleAnimRate
+	-- The inspect pose: the launcher is brought to the middle of the view and turned to the left about its middle, until it is across the
+	-- view with its left side to it (the display and the label) and the barrels to the left. The turn starts when it is 35% of the way.
+	inspect_pose_right = -53,
+	inspect_pose_forward = -2,
+	inspect_pose_up = 26,
+	inspect_pose_roll = 10,
+	inspect_pose_pitch = 4,
+	inspect_pose_yaw = 70,
+	inspect_turn_start = 0.35,
+	inspect_pivot_right = 7,
+	inspect_pivot_forward = 22,
+	inspect_pivot_up = 12,
 	-- WeaponStaticMesh.RocketLauncherPickup (DrawScale 0.45): its barrels are along the mesh's own -Y, and the grip is under the back of it
 	third_person = {
 		id = SETTING_ID,
@@ -338,6 +353,11 @@ skin_api = mod.weapon_skin.new({
 		skin_api.play_sound("ut_rocket_select")
 	end,
 	on_update = function (skin, dt)
+		-- The inspect pose, and the sway the launcher is turned with in it
+		skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
+		skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
+		skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
+
 		local cycle = skin.load_cycle
 
 		if cycle then
@@ -492,6 +512,15 @@ end
 mod.crossbow_start_callbacks.rocket_skin = function (action, new_action)
 	if new_action.ut_rocket or new_action.ut_rocket_salvo then
 		shot(action, new_action)
+	end
+end
+
+-- Inspecting is the game's own action, held with the key: the launcher is turned to show its side as long as it lasts
+mod.inspect_callbacks.rocket_skin = function (action, started)
+	local skin = skin_api.state()
+
+	if skin and utils.is_local_player_unit(action.owner_unit) then
+		skin.inspecting = started
 	end
 end
 
