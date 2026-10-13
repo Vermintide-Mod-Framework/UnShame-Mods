@@ -45,7 +45,7 @@ local CONFIG = {
 	fire_interval = 0.9, -- seconds, RocketFire.FireRate
 	salvo_fire_interval = 0.95, -- seconds, RocketMultiFire.FireRate
 	-- Ammo (the crossbow's is 15 in a clip and 48 in all): UT's RocketAmmo.MaxAmmo. All of it is the clip: there is no reload.
-	max_ammo = 30,
+	max_ammo = 20,
 	-- The damage and radius of the explosion are the same as the Flak Cannon's shell: UT has 90 and 220 uu for
 	-- both, and they were reduced in the same way
 	rocket_damage = 60,

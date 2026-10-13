@@ -34,8 +34,8 @@ local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
 	-- Temporary, for testing: multiplies the launch speed of the chunks and the shell. 1 is normal.
 	debug_speed_scale = 1,
-	-- The Blunderbuss's ammo (16) is multiplied by this.
-	ammo_multiplier = 1.33,
+	-- All of the ammo (the Blunderbuss's is 16). It is all the clip: there is no reload.
+	max_ammo = 20,
 	-- Flak chunk
 	chunk_count = 9, -- FlakFire.ProjPerFire
 	chunk_spread_degrees = 4, -- "tight", FlakFire.Spread is about 7.7 degrees
@@ -486,7 +486,7 @@ local function apply_flak_cannon()
 	template.attack_meta_data.ut_flak = true
 
 	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
-	template.ammo_data.max_ammo = math.floor(original.ammo_data.max_ammo * CONFIG.ammo_multiplier + 0.5)
+	template.ammo_data.max_ammo = CONFIG.max_ammo
 	template.ammo_data.ammo_per_clip = template.ammo_data.max_ammo
 	template.ammo_data.ammo_per_reload = template.ammo_data.max_ammo
 	template.ammo_data.ammo_immediately_available = true
