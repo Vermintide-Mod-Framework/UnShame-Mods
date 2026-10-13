@@ -72,10 +72,13 @@ local CONFIG = {
 	explosion_smoke_rise = 0.5,
 	-- Another shot of another player: more than this far apart in time is another shot
 	shot_gap = 0.25,
-	-- The barrel (RocketLauncher.uc: it is turned by code, not by the animations): a third of a turn each time it turns, which starts
-	-- 0.15 s after a rocket is fired or loaded and goes at 2.95 thirds of a turn a second
+	-- What follows a rocket being fired or loaded (RocketLauncher.uc, state AnimateLoad), in seconds after it: the barrel starts to turn,
+	-- the sound of the load, the sound of the plunger. The barrel is turned by code, not by the animations: a third of a turn each time,
+	-- at 2.95 thirds of a turn a second.
+	barrel_delay = 0.15,
+	load_sound_delay = 0.22,
+	plunger_sound_delay = 0.5,
 	barrel_step = 120, -- degrees
-	barrel_delay = 0.15, -- seconds
 	barrel_speed = 2.95 * 120, -- degrees per second
 	-- Its axis is along the mesh's own left, the way the barrels point before the animation's root turns the mesh, and goes through this
 	-- point of the mesh (right, forward, up in the mesh's units). The barrel turns clockwise as the player sees it.
@@ -319,17 +322,29 @@ skin_api = mod.weapon_skin.new({
 		skin_api.play_sound("ut_rocket_select")
 	end,
 	on_update = function (skin, dt)
-		if skin.barrel_wait then
-			skin.barrel_wait = skin.barrel_wait - dt
+		local cycle = skin.load_cycle
 
-			if skin.barrel_wait <= 0 then
-				skin.barrel_wait = nil
+		if cycle then
+			cycle.time = cycle.time + dt
+
+			if not cycle.turned and cycle.time >= CONFIG.barrel_delay then
+				cycle.turned = true
 				skin.barrel_final = (skin.barrel_final or 0) + CONFIG.barrel_step
 
 				if skin.barrel_final >= 360 then
 					skin.barrel_final = skin.barrel_final - 360
 					skin.barrel_angle = (skin.barrel_angle or 0) - 360
 				end
+			end
+
+			if not cycle.loaded and cycle.time >= CONFIG.load_sound_delay then
+				cycle.loaded = true
+				skin_api.play_sound("ut_rocket_load")
+			end
+
+			if cycle.time >= CONFIG.plunger_sound_delay then
+				skin.load_cycle = nil
+				skin_api.play_sound("ut_rocket_plunger")
 			end
 		end
 
@@ -373,9 +388,12 @@ skin_api = mod.weapon_skin.new({
 
 local third_person = skin_api.third_person
 
--- The barrel turns a third of a turn, after a short while
+-- The load: the barrel turns a third of a turn, and the sounds of the load and the plunger follow (see on_update). A new one replaces
+-- one that is not finished.
 local function turn_barrel(skin)
-	skin.barrel_wait = CONFIG.barrel_delay
+	skin.load_cycle = {
+		time = 0,
+	}
 end
 
 -- How many rockets the player has loaded
@@ -424,7 +442,7 @@ mod.aim_start_callbacks.rocket_skin = function (self, new_action)
 	end
 end
 
--- Another rocket is loaded: the sound, the animation and, for the second, the barrel turning (UT's third has none)
+-- Another rocket is loaded: the animation and, for the second, the load (UT's third has none)
 mod.rocket_load_callbacks.rocket_skin = function (owner_unit, loaded)
 	local skin = skin_api.state()
 
@@ -436,7 +454,6 @@ mod.rocket_load_callbacks.rocket_skin = function (owner_unit, loaded)
 		end
 
 		skin_api.play("Load")
-		skin_api.play_sound("ut_rocket_load")
 	end
 end
 

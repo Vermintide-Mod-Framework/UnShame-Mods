@@ -43,6 +43,7 @@ local CONFIG = {
 	rocket_radius = 0.1, -- m, how easily a rocket hits things
 	rocket_gravity_settings = "spark", -- the game's gravity setting with the least gravity
 	fire_interval = 0.9, -- seconds, RocketFire.FireRate
+	salvo_fire_interval = 0.95, -- seconds, RocketMultiFire.FireRate
 	-- Ammo (the crossbow's is 15 in a clip and 48 in all). UT's RocketAmmo.MaxAmmo is 30. All of it is the clip: there is no reload.
 	max_ammo = 36,
 	-- The damage and radius of the explosion are the same as the Flak Cannon's shell: UT has 90 and 220 uu for
@@ -66,11 +67,10 @@ local CONFIG = {
 	-- Loading: RocketMultiFire. One rocket right away, the second after FireRate (0.95 s), the third after
 	-- twice that. They are fired in a line, 1000 uu of UT's spread units between them (5.5 degrees).
 	max_rockets = 3,
-	load_interval = 0.65, -- seconds, UT's is 0.95 which is slower than the 0.9 s of regular fire, this is faster
-	-- The loaded rockets are fired by themselves after this long, whatever the ammo. (UT: MaxHoldTime is
-	-- 2.3 s, only 0.4 s after the third rocket, which felt too short here. It also fires right away when
-	-- the last of the ammo is loaded, that is not done here.)
-	max_hold_time = 4, -- seconds
+	load_interval = 0.95, -- seconds, RocketMultiFire.FireRate
+	-- The loaded rockets are fired by themselves after this long, whatever the ammo (RocketMultiFire.MaxHoldTime). UT also fires
+	-- right away when the last of the ammo is loaded, that is not done here.
+	max_hold_time = 2.3, -- seconds
 	rocket_line_spread = 0.096, -- radians between two rockets
 	-- The spiral: pressing the primary button while loading makes the salvo a spiral instead of a line (UT's
 	-- tight spread). The rockets start in a ring and fly as a flock, RocketProj.Timer: they
@@ -217,10 +217,12 @@ local function build_rocket_action(source, is_salvo)
 		grenade = true,
 	}
 
+	local interval = is_salvo and CONFIG.salvo_fire_interval or CONFIG.fire_interval
+
 	-- the next shot can be fired as soon as the rocket launcher can
 	for _, chain in ipairs(action.allowed_chain_actions) do
 		if chain.action == "action_one" then
-			chain.start_time = CONFIG.fire_interval
+			chain.start_time = interval
 		end
 	end
 
@@ -233,7 +235,7 @@ local function build_rocket_action(source, is_salvo)
 		-- the button to be released first (see needs_release)
 		action.hold_input = nil
 		action.minimum_hold_time = nil
-		action.total_time = CONFIG.fire_interval
+		action.total_time = interval
 		action.ut_init_callback = "rocket"
 
 		-- (no reloading during it either, like in the aiming)
@@ -245,7 +247,7 @@ local function build_rocket_action(source, is_salvo)
 			end
 		end
 	else
-		action.total_time = CONFIG.fire_interval
+		action.total_time = interval
 	end
 
 	return action
