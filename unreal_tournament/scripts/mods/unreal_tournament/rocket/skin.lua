@@ -339,7 +339,7 @@ skin_api = mod.weapon_skin.new({
 		grip_forward = 0,
 		grip_up = 18,
 		yaw = 90,
-		pitch = -30,
+		pitch = -15,
 		roll = 0,
 		-- In the world the launcher moves with the game's crossbow, which the game animates with the arms. It is turned from the crossbow's own axes,
 		-- not calibrated as the Flak Cannon's is: the crossbow is still moving to its place when that is done.
