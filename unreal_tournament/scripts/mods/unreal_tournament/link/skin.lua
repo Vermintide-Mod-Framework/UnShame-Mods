@@ -16,12 +16,12 @@ local TEMPLATE_NAME = mod.items.weapons.link_gun.template
 local SETTING_ID = "link_gun"
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- the Unreal unit of the world, in meters (a player is 88 units high)
-	-- LinkMuzFlash (the flash of a shot)
+	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
+	-- LinkMuzFlash is the flash of a shot.
 	muzzle_size = 45,
 	muzzle_growth = 100,
 	muzzle_life = 0.1,
-	-- LinkProjectile: a green bolt (a mesh with a flare), here sprites that follow the thorn of the game
+	-- LinkProjectile is a green bolt, a mesh with a flare. Here it is sprites that follow the game's thorn.
 	bolt_size = 40,
 	bolt_glow_size = 70,
 	bolt_color = {
@@ -29,12 +29,12 @@ local CONFIG = {
 		1,
 		0.4,
 	},
-	-- LinkBeamEffect: the beam is the texture of the beam on each stretch of the curve, green, and gold while something is linked
+	-- LinkBeamEffect: the beam is the beam texture on each stretch of the curve. It is green, and gold while something is linked.
 	beam_width = 0.18, -- m
-	beam_life = 0.06, -- seconds (it is made again every frame)
-	beam_sound_seconds = 1.26, -- how long the sound of the beam (BLinkGunBeam) is
+	beam_life = 0.06, -- seconds. The beam is made again every frame.
+	beam_sound_seconds = 1.26, -- length of the beam's sound (BLinkGunBeam)
 	end_flare_size = 60,
-	-- A shot that another player's machine sees: more than this far apart in time is another shot
+	-- Bolts of another player that start less than this far apart (in seconds) belong to the same shot
 	shot_gap = 0.1,
 }
 
@@ -43,12 +43,12 @@ local UNIT = CONFIG.meters_per_uu
 local skin_api
 
 local last_remote_shot = {}
--- When the sound of each beam is played again, by the state of the beam
+-- The time at which each beam's sound is played again, for each beam state
 local beam_sound_time = setmetatable({}, {
 	__mode = "k",
 })
 
--- A flash at the muzzle (where the character holds the mesh, or the model of the player's own view)
+-- Shows a flash at the muzzle, either of the mesh in the character's hand or of the model in the player's own view.
 local function muzzle_flash(follow, scale)
 	particles.sprite({
 		color = {
@@ -82,12 +82,12 @@ skin_api = mod.weapon_skin.new({
 	offset_up = 0,
 	pivot_yaw = 500 / 65536 * 360,
 	bob_damping = 1.575,
-	-- WeaponStaticMesh.LinkGunPickup: its barrel is along the mesh's own -Y, the grip is under the middle of it
+	-- WeaponStaticMesh.LinkGunPickup. Its barrel runs along the mesh's own -Y, and the grip is under its middle.
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
 		unit_name = "units/ut/link/pickup",
-		-- (the game links the Deepwood Staff to the left hand's node, AttachmentNodeLinking.one_handed_melee_weapon.left)
+		-- The game links the Deepwood Staff to the left hand's node (AttachmentNodeLinking.one_handed_melee_weapon.left).
 		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.012,
 		scale = 0.6,
@@ -97,7 +97,7 @@ skin_api = mod.weapon_skin.new({
 		yaw = 90,
 		pitch = 0,
 		roll = 0,
-		-- In the world the gun follows the staff's unit, which the arms animate
+		-- In the world the gun follows the staff's unit, which the arms animate.
 		follow_game_unit = 1,
 		follow_calibrate_seconds = 1,
 		muzzle_right = 54,
@@ -115,13 +115,13 @@ skin_api = mod.weapon_skin.new({
 
 local third_person = skin_api.third_person
 
--- These flow events would start the game's effects on the thorns, so they are dropped
+-- These flow events would start the game's effects on the thorns, so they are dropped.
 mod.init_flow_event_filters.link = function (event_name)
 	return event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike"
 end
 
--- A bolt (on every machine): a green blob and its glow follow the game's thorn; the shot of the player is the animation, the flash and the
--- sound, the shot that is seen of another player is the flash and the sound from their mesh
+-- Adds a bolt on every machine: a green blob and its glow follow the game's thorn. For the player's own shot this also plays the
+-- animation, the flash and the sound. For another player's shot it plays the flash and the sound from their mesh.
 mod.skin_init_callbacks.link_bolt = function (projectile)
 	local game_unit = projectile._projectile_unit
 	local owner_unit = projectile._owner_unit
@@ -183,14 +183,14 @@ mod.skin_init_callbacks.link_bolt = function (projectile)
 	end
 end
 
--- The beam starts: the animation of the alt fire
+-- When the beam starts, the alt fire animation plays.
 mod.charge_start_callbacks.link_skin = function (action, new_action)
 	if new_action.ut_charge_callback == "link" and skin_api.state() and utils.is_local_player_unit(action.owner_unit) then
 		skin_api.play("AltFire")
 	end
 end
 
--- Where the beam starts: the end of the barrel of the model of the player's own view, or of the mesh in the hand of the character
+-- Returns where the beam starts: the end of the barrel of the model in the player's own view, or of the mesh in the character's hand.
 mod.link_beam_callbacks.start_position = function (owner_unit)
 	if utils.is_local_player_unit(owner_unit) and skin_api.state() and not third_person.shows_weapon(owner_unit) then
 		return skin_api.muzzle_position()
@@ -199,8 +199,8 @@ mod.link_beam_callbacks.start_position = function (owner_unit)
 	return third_person.muzzle_position(owner_unit)
 end
 
--- The beam: the texture of UT's beam on every stretch of the curve, drawn again each frame, and a flare where it ends, and its sound,
--- played again as it ends (it is a loop in UT)
+-- Draws the beam: UT's beam texture on every stretch of the curve, drawn again each frame, and a flare where it ends. It also plays
+-- the beam's sound, again each time it ends, because it is a loop in UT.
 mod.link_beam_callbacks.draw = function (state, points, count)
 	local linked = state.linked or state.target ~= nil
 	local texture = linked and "link_beam_yellow" or "link_beam_green"

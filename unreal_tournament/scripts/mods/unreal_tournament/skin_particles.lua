@@ -1,43 +1,45 @@
 local mod = get_mod("unreal_tournament")
 
 -- The particles of the weapon skins: sprites, discs and beams that add their light to the screen, like UT2004's emitters do.
--- The game's own particle effects can't be made in the SDK, so each particle is a unit with a quad (units/ut/fx/quad) and the
--- material of its texture (units/ut/fx/fx_<texture>, made by tools/asset_conversion/make_fx_assets.py, an unlit material that
--- adds its color), moved, turned, scaled and faded every frame. The units are reused.
+-- The game's own particle effects can't be made in the SDK, so each particle is a unit with a quad (units/ut/fx/quad) and the material
+-- of its texture (units/ut/fx/fx_<texture>, made by tools/asset_conversion/make_fx_assets.py, an unlit material that adds its color).
+-- Every frame the particle is moved, turned, scaled and faded. The units are reused.
 --
--- A spec is a table (positions are in meters, the colors are 0 to 1, the times are seconds):
---   texture: the name of the texture (shock_core, ...); material: the name of a material of its own instead (a mesh's, which is given its "age",
---       how long the effect has been going, for its panning)
---   life: how long it lasts
---   size, growth: the size of the sprite and how much it changes in a second (a negative growth shrinks it)
---   color: { r, g, b }, intensity: the most light it gives (1 is the texture as it is)
---   attenuation: UT's mAttenKa: how far into its life it is the brightest (0 is at the start), it fades in before that and
---       out after it
---   fade_in, fade_out: UT's FadeInEndTime and FadeOutStartTime, in seconds: it is all there from fade_in until fade_out (used
---       instead of the attenuation)
---   spin: turns per second (the angle it starts at is random, or spec.angle, degrees: 0 keeps a sprite upright on the screen)
---   position: where it is; velocity, drag: where it goes and how fast that slows (per second); follow: a function that gives
---       where it is now, nothing when it is to end
---   locked: instead of follow, a function that gives a unit and the particle's position in that unit's frame (the first person unit: at the
---       camera, looking along y). The particle is linked to the unit and placed in pre_render, so it doesn't trail what it follows.
---       Nothing when it is to end
---   delay: seconds before it shows
---   additive: 1 (the default) adds its color to the screen, 0 blends it as the transparency of its texture says (smoke)
---   falloff: how far a light reaches, in meters (particles.light only)
+-- A spec is a table. Positions are in meters, colors are 0 to 1, and times are seconds.
+--   texture: the name of the texture (shock_core, ...).
+--   material: the name of a material of its own, instead of the texture. A mesh's material is given its "age" (how long the effect has
+--       been going), which it uses for panning.
+--   life: how long the particle lasts.
+--   size, growth: the size of the sprite, and how much it changes in a second (a negative growth shrinks it).
+--   color: { r, g, b }. intensity: the most light it gives (1 is the texture as it is).
+--   attenuation: UT's mAttenKa, how far into its life the particle is brightest (0 is the start). It fades in before that and out
+--       after it.
+--   fade_in, fade_out: UT's FadeInEndTime and FadeOutStartTime, in seconds. The particle is fully visible from fade_in until fade_out.
+--       They are used instead of attenuation.
+--   spin: turns per second. The angle it starts at is random, or spec.angle in degrees (0 keeps a sprite upright on the screen).
+--   position: where it is. velocity, drag: where it goes and how fast that slows down (per second).
+--   follow: a function that returns where the particle is now, or nothing when it should end.
+--   locked: used instead of follow. A function that returns a unit and the particle's position in that unit's frame. For the first
+--       person unit the frame is at the camera, looking along y. The particle is linked to the unit and placed in pre_render, so it
+--       doesn't trail behind what it follows. It returns nothing when the particle should end.
+--   delay: seconds before the particle shows.
+--   additive: 1 (the default) adds its color to the screen. 0 blends it as the transparency of its texture says (smoke).
+--   falloff: how far a light reaches, in meters (only for particles.light).
 -- The kinds:
---   particles.sprite(spec): faces the camera
---   particles.disc(spec): lies on a surface, spec.normal is the way it faces
---   particles.light(spec): a point light (units/ut/fx/light) at spec.position or spec.follow, spec.color its color, spec.intensity how bright
---       it is, spec.falloff how far it reaches; it fades as the other particles do
---   particles.beam(spec): from spec.from to spec.to, spec.size is how wide it is, and it faces the camera around its length;
---       spec.track, a function that gives from and to (nothing when it is to end), instead of the two points
---   particles.mesh(spec): a mesh (units/ut/fx/coil, sphere, vortex, made by tools/asset_conversion/make_fx_meshes.py) at spec.position,
---       turned by spec.rotation (or facing the camera, with spec.face_camera, its z axis the way it faces) (and about spec.spin_axis, a vector in the mesh's own axes, by spec.spin), spec.scale a function of how far
---       into its life it is (0 to 1) that gives its scale (a number, or a vector in the mesh's axes), spec.brightness the same for how
---       bright it is (instead of fade_in, fade_out and attenuation); spec.unit is the unit; spec.frames, the names of the meshes of a unit
---       that has more than one, and spec.frame, a function of how far into its life it is that names the one that shows
+--   particles.sprite(spec): faces the camera.
+--   particles.disc(spec): lies on a surface. spec.normal is the way it faces.
+--   particles.light(spec): a point light (units/ut/fx/light) at spec.position or spec.follow. spec.color is its color, spec.intensity
+--       how bright it is, and spec.falloff how far it reaches. It fades like the other particles.
+--   particles.beam(spec): goes from spec.from to spec.to. spec.size is how wide it is, and it faces the camera around its length.
+--       Instead of the two points, spec.track can be a function that returns from and to, or nothing when the beam should end.
+--   particles.mesh(spec): a mesh (units/ut/fx/coil, sphere, vortex, made by tools/asset_conversion/make_fx_meshes.py) at spec.position.
+--       It is turned by spec.rotation, or it faces the camera with spec.face_camera (its z axis is the way it faces). It also turns by
+--       spec.spin about spec.spin_axis, a vector in the mesh's own axes. spec.scale is a function of how far into its life the mesh
+--       is (0 to 1) that returns its scale, either a number or a vector in the mesh's axes. spec.brightness is the same for how bright
+--       it is, and replaces fade_in, fade_out and attenuation. spec.unit is the unit. For a unit with more than one mesh, spec.frames
+--       lists the mesh names and spec.frame is a function of how far into its life the mesh is that returns the name of the mesh to show.
 --
--- (Vectors can't be kept from one frame to the next, so they are kept in boxes.)
+-- Vectors can't be kept from one frame to the next, so they are kept in boxes.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
@@ -49,7 +51,7 @@ local MATERIAL_FORMAT = "units/ut/fx/fx_%s"
 local MAX_PARTICLES = 800
 
 local active = {}
--- units that are not used, by the name of the unit: { unit, world, material, unit_name }
+-- The units that are not in use, grouped by the name of the unit. Each is { unit, world, material, unit_name }.
 local free = {}
 
 local function acquire(world, unit_name)
@@ -70,7 +72,7 @@ end
 
 local function release(particle)
 	if particle.parent then
-		-- The parent may be gone already
+		-- The parent may be gone already, so check that before unlinking.
 		if Unit.alive(particle.parent) then
 			World.unlink_unit(particle.world, particle.entry.unit)
 		end
@@ -106,7 +108,7 @@ local function add(kind, spec)
 	else
 		local texture = spec.texture
 
-		-- The smoke texture is a sheet of 16 puffs (tools/asset_conversion/split_smoke.py): each particle shows one of them.
+		-- The smoke texture is a sheet of 16 puffs (made by tools/asset_conversion/split_smoke.py). Each particle shows one of them.
 		if texture == "smoke" then
 			texture = "smoke_" .. math.random(0, 15)
 		end
@@ -202,7 +204,7 @@ function particles.light(spec)
 	add("light", spec)
 end
 
--- How bright a particle is a fraction of its life in (UT's attenuation: it comes up until ka, and goes down from there)
+-- Returns how bright a particle is at a fraction of its life. This is UT's attenuation: it brightens until ka and dims from there.
 local function fade(fraction, ka)
 	if ka <= 0 then
 		return 1 - fraction
@@ -215,8 +217,8 @@ local function fade(fraction, ka)
 	return (1 - fraction) / (1 - ka)
 end
 
--- How bright a particle is at its age: by when it is all there and when it starts to go (UT's FadeInEndTime and
--- FadeOutStartTime, which together multiply), or by the attenuation
+-- Returns how bright a particle is at its age. It uses the times when the particle is fully there and when it starts to go (UT's
+-- FadeInEndTime and FadeOutStartTime, which multiply together), or else the attenuation.
 local function brightness(particle)
 	if not particle.fade_in and not particle.fade_out then
 		return math.max(0, fade(particle.age / particle.life, particle.attenuation))
@@ -235,7 +237,7 @@ local function brightness(particle)
 	return math.max(0, result)
 end
 
--- A rotation whose z axis is the way the quad faces, and whose y axis is the way its top is (as near as can be)
+-- Returns a rotation whose z axis is the way the quad faces and whose y axis is as close as possible to the way its top points.
 local function facing(front, top)
 	return Quaternion.look(top, front)
 end
@@ -267,7 +269,7 @@ local function place(particle, dt, camera_position, camera_rotation)
 			particle.parent = parent
 		end
 
-		-- In the parent's frame, which is the camera's
+		-- The position is in the parent's frame, which is the camera's.
 		position = local_position
 		camera_rotation = Quaternion.identity()
 	elseif particle.follow then
@@ -304,10 +306,10 @@ local function place(particle, dt, camera_position, camera_rotation)
 	end
 
 	if particle.kind == "mesh" then
-		-- (a mesh: where it is, turned as it is (and about its axis by its spin), scaled as its scale function says for how far into its life it
-		-- is, and showing the one of its frames that the frame function names)
+		-- A mesh is placed at its position and turned as its rotation says, plus its spin about its axis. It is scaled by its scale
+		-- function for how far into its life it is, and it shows the frame that the frame function names.
 		local axis = particle.spin_axis and particle.spin_axis:unbox() or Vector3(0, 0, 1)
-		-- (a mesh that always faces the camera, as UT's bAlwaysFaceCamera: its z axis is the way it faces, as a quad's)
+		-- A mesh that always faces the camera, like UT's bAlwaysFaceCamera, has its z axis pointing the way it faces, as a quad does.
 		local base = particle.face_camera and facing(-Quaternion.forward(camera_rotation), Quaternion.up(camera_rotation)) or particle.rotation:unbox()
 
 		rotation = Quaternion.multiply(base, Quaternion.axis_angle(axis, particle.angle + particle.spin * particle.age))
@@ -372,7 +374,7 @@ local function place(particle, dt, camera_position, camera_rotation)
 	Unit.set_scalar_for_materials(unit, "additive", particle.additive)
 
 	if particle.own_material then
-		-- (a material of its own pans its textures by how long the effect has been going)
+		-- A material of its own pans its textures by how long the effect has been going.
 		Unit.set_scalar_for_materials(unit, "age", particle.age)
 	end
 
@@ -396,7 +398,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 			release(particle)
 			table.remove(active, i)
 		elseif particle.age >= 0 then
-			-- Linked particles are placed in pre_render, after the skin has moved its model this frame
+			-- Linked particles are placed in pre_render, after the skin has moved its model this frame.
 			if not particle.locked then
 				place(particle, dt, camera_position, camera_rotation)
 			end
@@ -423,7 +425,7 @@ mod.pre_render_callbacks.skin_particles = function ()
 	end
 end
 
--- Everything is let go of before the level's world is taken down
+-- Lets go of everything before the level's world is taken down.
 local function clear()
 	for i = #active, 1, -1 do
 		table.remove(active, i)
@@ -443,7 +445,7 @@ local function clear()
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
-	-- (what is in use is destroyed as well: the units of the particles that are showing are in the world that goes)
+	-- The units in use are destroyed too, because the particles that are showing are in the world that goes away.
 	for i = #active, 1, -1 do
 		local entry = active[i].entry
 

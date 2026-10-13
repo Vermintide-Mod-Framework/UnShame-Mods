@@ -20,7 +20,7 @@ local particles = mod.skin_particles
 local TEMPLATE_NAME = mod.items.weapons.flak_cannon.template
 local SETTING_ID = "flak_cannon"
 
--- The place of the bone of the flak shell that is loaded in the chamber, and of the hammer that pushes it, in the animations' bones
+-- The indexes, in the animations' list of bones, of the bone of the flak shell loaded in the chamber and of the hammer that pushes it
 local SHELL_BONE
 local HAMMER_BONE
 
@@ -32,41 +32,42 @@ for index, name in ipairs(animations.bones) do
 	end
 end
 
--- The frames of the Fire animation in which the next shell slides into the chamber, which is what loading one into an empty chamber plays
+-- The frames of the Fire animation where the next shell slides into the chamber. Loading a shell into an empty chamber plays them.
 local CHAMBER_LOAD_FIRST = 8
 local CHAMBER_LOAD_LAST = 21
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- the Unreal unit of the world, in meters (a player is 88 units high)
-	-- FlakMuzFlash1st: the flash of a shot (a mesh of 28 units across, DrawScale 2.2, growing 7 a second; here a sprite)
+	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
+	-- FlakMuzFlash1st is the flash of a shot. In UT it is a mesh 28 units across (DrawScale 2.2) that grows 7 a second. Here it is a sprite.
 	muzzle_size = 90,
 	muzzle_growth = 120,
 	muzzle_life = 0.12,
-	-- FlakMuzFlash1st (the flash of the player's own view): a mesh of 56 units across, spiked like a star and pointing along the barrel. It is
-	-- this many times the mesh at the start and at the end of its life, which is muzzle_life.
+	-- FlakMuzFlash1st in the player's own view is a mesh 56 units across, spiked like a star and pointing along the barrel. Its size
+	-- is this many times the mesh at the start of its life and at the end of it, which is muzzle_life.
 	flash_mesh_start = 2.6,
 	flash_mesh_end = 3.8,
 	flash_mesh_brightness = 1.5,
-	-- FlakChunk: the mesh and FlakTrail. The trail is a piece of streak for each frame of the chunk's path, which fades out in
-	-- chunk_trail_seconds, so it follows the path and bends where the chunk bounces.
+	-- FlakChunk is the mesh and FlakTrail. The trail is a piece of streak for each frame of the chunk's path. Each piece fades out in
+	-- chunk_trail_seconds, so the trail follows the path and bends where the chunk bounces.
 	chunk_trail_seconds = 0.1,
-	chunk_scale = 0.75, -- of the converted mesh
-	-- A piece is made at most this often (seconds). One for every frame would use up the particles when the frame rate is high, and the
+	chunk_scale = 0.75, -- scale of the converted mesh
+	-- A piece is made at most this often, in seconds. A piece every frame would use up the particles at a high frame rate, and the
 	-- trail would stop growing.
 	chunk_trail_step = 1 / 60,
 	chunk_trail_width = 0.1, -- m
 	chunk_trail_intensity = 2,
-	-- A piece stays at full brightness for this share of its life, and fades out over the rest
+	-- A piece stays at full brightness for this share of its life, and fades out over the rest of it
 	chunk_trail_hold = 0.4,
-	-- The glow around the chunk: it is drawn a little behind the chunk, so the chunk's mesh covers its middle, and is dim so that it
-	-- stays a halo
+	-- The glow around the chunk is drawn a little behind the chunk, so the chunk's mesh covers its middle. It is dim, so it stays a
+	-- halo.
 	chunk_glow_size = 0.6, -- m
 	chunk_glow_intensity = 1.2,
 	chunk_glow_behind = 0.08, -- m, away from the camera
-	-- A chunk that has gone cold and landed stays on the ground this long (FlakChunk.Landed sets its life span to 1)
+	-- A chunk that has gone cold and landed stays on the ground for this many seconds (FlakChunk.Landed sets its life span to 1)
 	chunk_lie_seconds = 1,
-	-- FlakShell: the mesh, FlakGlow (a gold sprite) and FlakShellTrail (smoke, 0.5 to 0.6 s, 20 to 35 units, growing 15 a second)
-	shell_glow_size = 22, -- UT units, a little wider than the shell's mesh so that a ring of it shows around the mesh
+	-- FlakShell is the mesh, FlakGlow (a gold sprite) and FlakShellTrail (smoke that lasts 0.5 to 0.6 s, is 20 to 35 units wide, and
+	-- grows 15 a second)
+	shell_glow_size = 22, -- UT units, a little wider than the shell's mesh, so that a ring of glow shows around the mesh
 	shell_glow_behind = 0.1, -- m, away from the camera, so that the mesh covers the middle of the glow
 	shell_glow_color = {
 		1,
@@ -83,15 +84,15 @@ local CONFIG = {
 		0.28,
 		0.26,
 	},
-	shell_sound_seconds = 2.11, -- how long the loop of the shell (BFlakCannonProjectile) is
-	-- FlashExplosion (150 units, growing 500, 0.25 s)
+	shell_sound_seconds = 2.11, -- length of the shell's sound loop (BFlakCannonProjectile)
+	-- FlashExplosion: 150 units wide, growing 500 a second, lasting 0.25 s
 	explosion_flash_size = 150,
 	explosion_flash_growth = 500,
 	explosion_flash_life = 0.25,
 	explosion_flash_intensity = 0.5,
-	-- The game's own explosion, with its smoke and the mark it leaves, played with the flash (only if the game has it loaded)
+	-- The game's own explosion, with its smoke and the mark it leaves, is played together with the flash if the game has it loaded
 	explosion_effect = "fx/wpnfx_frag_grenade_impact",
-	-- A shot that is seen of another player, by the first chunk of it: more than this far apart in time is another shot
+	-- Another player's shot is recognized by its first chunk. Chunks that start further apart than this many seconds are another shot.
 	shot_gap = 0.25,
 	inspect_pose_speed = 5, -- how fast the model moves to the inspect pose and back, per second
 	inspect_sway = 5, -- degrees of yaw each way while inspecting
@@ -102,7 +103,8 @@ local UNIT = CONFIG.meters_per_uu
 
 local skin_api
 
--- What flies: { unit = the mesh, game_unit = the projectile's, projectile = its extension, kind, previous = where it was }
+-- The projectiles in flight, each as { unit = the mesh, game_unit = the projectile's unit, projectile = its extension, kind, previous =
+-- where it was }
 local visuals = {}
 
 local function random_between(range)
@@ -125,7 +127,8 @@ local function destroy_visual(visual)
 	end
 end
 
--- All of them go with the level, and with the mod (a unit of the mod's package that is alive when the package is unloaded crashes the game)
+-- Destroys all the visuals when the level ends or the mod is unloaded. A unit of the mod's package that is still alive when the
+-- package is unloaded crashes the game.
 local function clear_visuals()
 	for i = #visuals, 1, -1 do
 		destroy_visual(visuals[i])
@@ -151,7 +154,8 @@ local function update_visuals(dt)
 		elseif not lying then
 			local position = Unit.world_position(game_unit, 0)
 
-			-- The game's unit may not be where it starts out when the visual is made, so the path starts from where it is on the first frame
+			-- The game's unit may not be at its starting place yet when the visual is made, so the path starts from where the unit is on
+			-- the first frame.
 			if not visual.placed then
 				visual.placed = true
 
@@ -238,7 +242,7 @@ local function update_visuals(dt)
 	end
 end
 
--- The mesh of a projectile, drawn at the game's unit (the unit itself is not shown)
+-- Adds the mesh of a projectile, drawn at the game's unit. The unit itself is not shown.
 local function add_visual(projectile, kind, unit_name)
 	local world = Managers.world:world("level_world")
 	local game_unit = projectile._projectile_unit
@@ -271,7 +275,7 @@ local function add_visual(projectile, kind, unit_name)
 	return visual
 end
 
--- A flash at the muzzle (where the character holds the mesh, or the model of the player's own view)
+-- Shows a flash at the muzzle, either of the mesh in the character's hand or of the model in the player's own view.
 local function muzzle_flash(follow, scale)
 	particles.sprite({
 		color = {
@@ -288,7 +292,8 @@ local function muzzle_flash(follow, scale)
 	})
 end
 
--- The flash of the player's own view: UT's mesh, pointing the way the camera looks, turned by a random angle about it
+-- Shows the flash of the player's own view. It is UT's mesh, pointing the way the camera looks and turned by a random angle about
+-- that direction.
 local function first_person_flash(follow, scale)
 	local _, camera_rotation = utils.camera_pose()
 
@@ -296,7 +301,7 @@ local function first_person_flash(follow, scale)
 		return muzzle_flash(follow, scale)
 	end
 
-	-- (the mesh is made at 0.02 m to a UT unit, and is sized as the view's units are)
+	-- The mesh is made at 0.02 m per UT unit, and it is scaled to the size of the view's units.
 	local factor = scale / UNIT
 
 	particles.mesh({
@@ -321,8 +326,8 @@ local function first_person_flash(follow, scale)
 	})
 end
 
--- A shot that another player's machine sees: the flash and the sound from the end of the barrel of the mesh in their hand, once for the
--- chunks of a shot that come together
+-- A shot by another player, as seen on this machine: the flash and the sound come from the end of the barrel of the mesh in their
+-- hand. They play once for all the chunks of a shot that start together.
 local last_remote_shot = {}
 
 local function remote_shot(owner_unit, sound_event)
@@ -352,11 +357,11 @@ skin_api = mod.weapon_skin.new({
 	unit_name = "units/ut/flak/flak_cannon",
 	animations = animations,
 	muzzle_node = "b_bone_flash",
-	-- The model was converted at this many meters per UT unit (tools/asset_conversion/convert_weapon.py), the distance scale is how
-	-- many meters of forward are a UT unit of it in the view
+	-- model_meters_per_unit is the meters per UT unit at which the model was converted (tools/asset_conversion/convert_weapon.py).
+	-- meters_per_unit is the distance scale: the meters of forward in the view that one UT unit of the model takes up.
 	model_meters_per_unit = 0.0125,
 	meters_per_unit = 0.01,
-	-- FlakCannon.uc: the mesh lies sideways, which the yaw of the pivot turns to the front
+	-- FlakCannon.uc. The mesh lies sideways, and the pivot's yaw turns it to the front.
 	display_fov = 60,
 	draw_scale = 1,
 	offset_forward = -7,
@@ -365,9 +370,10 @@ skin_api = mod.weapon_skin.new({
 	pivot_yaw = 16884 / 65536 * 360,
 	pivot_roll = 200 / 65536 * 360,
 	bob_damping = 1.4,
-	-- The inspect pose: the cannon is brought forward and up, and then turned to the left about the grip, until it is across the view like the
-	-- Shock Rifle's: its left side to the view, the muzzle to the left and a little up, the back lower and nearer. The grip is the point of
-	-- the model that is in the hand (UT units from its origin, in the axes of the view). The turn starts when the cannon is 35% of the way.
+	-- The inspect pose brings the cannon forward and up, and then turns it to the left about the grip. It ends up across the view like
+	-- the Shock Rifle: its left side towards the player, the muzzle pointing left and a little up, and the back lower and nearer. The grip
+	-- is the point of the model that is in the hand (in UT units from the model's origin, in the view's axes). The turn starts when the
+	-- cannon is 35% of the way there.
 	inspect_pose_right = -6.2,
 	inspect_pose_forward = 4,
 	inspect_pose_up = 0.2,
@@ -378,16 +384,16 @@ skin_api = mod.weapon_skin.new({
 	inspect_pivot_right = 24.7,
 	inspect_pivot_forward = 55,
 	inspect_pivot_up = -38.7,
-	-- WeaponStaticMesh.FlakCannonPickup (DrawScale 0.55): its barrel is along the mesh's own Y, and the grip is under the back of it
+	-- WeaponStaticMesh.FlakCannonPickup (DrawScale 0.55). Its barrel runs along the mesh's own Y, and the grip is under its back.
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
 		unit_name = "units/ut/flak/pickup",
-		-- (the game links the blunderbuss, the crossbow and the Drakegun to the left hand's node, AttachmentNodeLinking.rifles)
+		-- The game links the blunderbuss, the crossbow and the Drakegun to the left hand's node (AttachmentNodeLinking.rifles).
 		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.011,
-		-- UT's third person mesh is as long as the pickup's would be without its DrawScale: about half of the height of a player's mesh
-		-- (113 units against 233), which is 0.85 m for a character of 1.8 m
+		-- UT's third person mesh is as long as the pickup would be without its DrawScale. That is about half the height of a player's
+		-- mesh (113 units against 233), or 0.85 m for a character of 1.8 m.
 		scale = 0.7,
 		grip_right = 42,
 		grip_forward = 0,
@@ -395,9 +401,10 @@ skin_api = mod.weapon_skin.new({
 		yaw = -60,
 		pitch = 0,
 		roll = 0,
-		-- In the world the cannon moves with the game's Blunderbuss, which the game animates with the arms. It is placed as pointing the way the
-		-- character faces first (as the hero screen is), and the unit's turn from that is taken a second after it is held. With the character
-		-- not standing as it should then, /skin flak_cannon 3p follow_recalibrate 1 takes it again, and follow_game_unit 0 turns it off.
+		-- In the world the cannon moves with the game's Blunderbuss, which the game animates with the arms. At first the cannon points
+		-- the way the character faces, as it does on the hero screen. A second after it is held, the way the unit is turned from that
+		-- is stored. If the character was not standing as it should at that moment, /skin flak_cannon 3p follow_recalibrate 1 measures
+		-- it again, and follow_game_unit 0 turns the following off.
 		follow_game_unit = 1,
 		follow_calibrate_seconds = 1,
 		muzzle_right = -56,
@@ -409,8 +416,8 @@ skin_api = mod.weapon_skin.new({
 		skin_api.play_sound("ut_flak_select")
 	end,
 	on_update = function (skin, dt)
-		-- UT puts the weapon away when it has no ammo, here it is carried on: there is no shell in the chamber then. When there is ammo again
-		-- a shell is loaded: it slides in and the hammer follows, as the next shell does after a shot.
+		-- UT puts the weapon away when it has no ammo, but here it stays in hand, with no shell in the chamber. When there is ammo
+		-- again a shell is loaded: it slides in and the hammer follows, as the next shell does after a shot.
 		local was_out_of_ammo = skin.out_of_ammo
 
 		skin.out_of_ammo = utils.local_ranged_out_of_ammo()
@@ -476,7 +483,8 @@ skin_api = mod.weapon_skin.new({
 
 local third_person = skin_api.third_person
 
--- The shots: the animation and the flash as the action of the shot starts (the blunderbuss shoots at once), the sound with them
+-- Handles the player's shots. The animation, the flash and the sound all start when the shot's action starts, because the blunderbuss
+-- shoots at once.
 mod.shotgun_start_callbacks.flak_skin = function (action, new_action)
 	local skin = skin_api.state()
 
@@ -500,15 +508,14 @@ mod.shotgun_start_callbacks.flak_skin = function (action, new_action)
 	end, in_third_person and third_person.meters_per_unit or skin.unit_scale)
 end
 
--- The Blunderbuss's shot and reload sounds are part of its animations. The shot and reload animations are not played on the player's own
--- first person unit (the skin's model plays UT's animations instead). UT's weapon has no reload, but the game still reloads when ammo is
+-- The Blunderbuss's shot and reload sounds are part of its animations, so those animations are not played on the player's own first
+-- person unit. The skin's model plays UT's animations instead. UT's weapon has no reload, but the game still reloads when ammo is
 -- picked up or the weapon is wielded.
 mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil
 end
 
--- Also skip them on the character's own unit, which other players hear.
--- Inspecting is the game's own action, held with the key: the cannon is turned to show its side as long as it lasts
+-- Inspecting is the game's own action, held with the key. The cannon is turned to show its side for as long as it lasts.
 mod.inspect_callbacks.flak_skin = function (action, started)
 	local skin = skin_api.state()
 
@@ -517,26 +524,27 @@ mod.inspect_callbacks.flak_skin = function (action, started)
 	end
 end
 
+-- The reload animation is not played on the characters, because the cannon has no reload.
 mod.third_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return string.find(event, "reload", 1, true) ~= nil
 end
 
--- The Blunderbuss's shot sound is played by its unit in third person. Mute it: the others hear the Flak Cannon's own sounds.
+-- The Blunderbuss's unit plays its shot sound in third person. It is muted, so the others hear the Flak Cannon's own sounds.
 mod.sound_event_filters[TEMPLATE_NAME] = function (event_name)
 	return event_name == "player_combat_weapon_blunderbuss_fire"
 end
 
--- These flow events would start the game's effects on the chunks and the shell, so they are dropped
+-- These flow events would start the game's effects on the chunks and the shell, so they are dropped.
 mod.init_flow_event_filters.flak = function (event_name)
 	return event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike"
 end
 
--- A chunk (on every machine): the mesh and its streak
+-- Adds the mesh and the streak of a chunk, on every machine.
 mod.skin_init_callbacks.ut_flak_chunk = function (projectile)
 	local owner_unit = projectile._owner_unit
 	local visual = add_visual(projectile, "chunk", "units/ut/flak/chunk")
 
-	-- (the chunks of a shell's explosion are not a shot from the muzzle)
+	-- The chunks of a shell's explosion are not a shot from the muzzle, so they play no shot sound.
 	if not utils.is_local_player_unit(owner_unit) and not projectile._current_action.ut_flak_burst then
 		remote_shot(owner_unit, "ut_flak_fire_3d")
 	end
@@ -567,7 +575,7 @@ mod.skin_init_callbacks.ut_flak_chunk = function (projectile)
 	})
 end
 
--- The shell (on every machine): the mesh, the gold glow and the smoke it leaves
+-- Adds the mesh of the shell, its gold glow and the smoke it leaves, on every machine.
 mod.skin_init_callbacks.ut_flak_shell = function (projectile)
 	local owner_unit = projectile._owner_unit
 	local visual = add_visual(projectile, "shell", "units/ut/flak/shell")

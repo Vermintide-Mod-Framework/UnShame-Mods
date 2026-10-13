@@ -19,8 +19,8 @@ local TEMPLATE_NAME = mod.items.weapons.bio_rifle.template
 local SETTING_ID = "bio_rifle"
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- the Unreal unit of the world, in meters (a player is 88 units high)
-	-- BioMuzFlash1st: a flash of 0.1 to 0.15 s, 0.6 to 0.8 of a mesh (here a sprite)
+	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
+	-- BioMuzFlash1st is a flash that lasts 0.1 to 0.15 s, at 0.6 to 0.8 of a mesh. Here it is a sprite.
 	muzzle_size = 50,
 	muzzle_growth = 120,
 	muzzle_life = 0.12,
@@ -29,7 +29,8 @@ local CONFIG = {
 		1,
 		0.3,
 	},
-	-- BioGlob: DrawScale 1.2 of its mesh; the blob and its glow are sprites that follow it, as big as the glob's scale (a charged one is more)
+	-- BioGlob has DrawScale 1.2 of its mesh. The blob and its glow are sprites that follow the glob and are as big as the glob's scale
+	-- (more for a charged glob).
 	glob_size = 30,
 	glob_glow_size = 55,
 	glob_color = {
@@ -37,7 +38,8 @@ local CONFIG = {
 		1,
 		0.35,
 	},
-	-- GoopSmoke (10 puffs of 20 to 30 units, 1 to 2 s, green, slow) and GoopSparks (10 sparks of 4 units, 0.5 to 0.8 s, 80 to 240 units a second)
+	-- GoopSmoke is 10 slow green puffs, 20 to 30 units wide, lasting 1 to 2 s. GoopSparks is 10 sparks 4 units wide, lasting 0.5 to
+	-- 0.8 s, moving 80 to 240 units a second.
 	burst_puffs = 6,
 	burst_puff_size = {
 		20,
@@ -66,7 +68,8 @@ local CONFIG = {
 		80,
 		240,
 	},
-	-- BioDecal: the splat that the puddle is (DrawScale 0.65 of its texture), the size of the puddle's radius; it lasts the puddle's time
+	-- BioDecal is the splat that the puddle is (DrawScale 0.65 of its texture). Its size is the puddle's radius, and it lasts as long as
+	-- the puddle.
 	puddle_color = {
 		0.45,
 		1,
@@ -77,7 +80,7 @@ local CONFIG = {
 		1,
 		0.3,
 	},
-	-- A shot that another player's machine sees: more than this far apart in time is another shot
+	-- Globs of another player that start less than this far apart (in seconds) belong to the same shot
 	shot_gap = 0.1,
 }
 
@@ -99,11 +102,11 @@ local function random_direction()
 	return Vector3.normalize(direction)
 end
 
--- The puddles that are shown, by id: the token of the one that is (a puddle that ends, or is shown again, is another token, and the sprite
--- of the old one stops by itself as it asks for its place)
+-- The puddles that are shown, as a token for each id. A puddle that ends or is shown again gets a new token, and the sprite of the old
+-- one stops by itself when it asks for its place and finds a different token.
 local puddles = {}
 
--- A flash at the muzzle (where the character holds the mesh, or the model of the player's own view)
+-- Shows a flash at the muzzle, either of the mesh in the character's hand or of the model in the player's own view.
 local function muzzle_flash(follow, scale)
 	particles.sprite({
 		color = CONFIG.muzzle_color,
@@ -116,8 +119,8 @@ local function muzzle_flash(follow, scale)
 	})
 end
 
--- A shot that another player's machine sees: the flash and the sound from the end of the barrel of the mesh in their hand, once for the
--- globs of a shot that come together
+-- A shot by another player, as seen on this machine: the flash and the sound come from the end of the barrel of the mesh in their
+-- hand. They play once for all the globs of a shot that start together.
 local last_remote_shot = {}
 
 local function remote_shot(owner_unit)
@@ -156,12 +159,12 @@ skin_api = mod.weapon_skin.new({
 	offset_right = 3,
 	offset_up = 0,
 	bob_damping = 2.2,
-	-- WeaponStaticMesh.BioRiflePickup (DrawScale 0.6): its nozzle is along the mesh's own +Y and the tank is behind it
+	-- WeaponStaticMesh.BioRiflePickup (DrawScale 0.6). Its nozzle runs along the mesh's own +Y, and the tank is behind it.
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
 		unit_name = "units/ut/bio/pickup",
-		-- (the game links the Drakegun to the left hand's node, AttachmentNodeLinking.drakegun)
+		-- The game links the Drakegun to the left hand's node (AttachmentNodeLinking.drakegun).
 		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.012,
 		scale = 0.6,
@@ -171,7 +174,7 @@ skin_api = mod.weapon_skin.new({
 		yaw = -90,
 		pitch = 0,
 		roll = 0,
-		-- In the world the rifle follows the Drakegun's unit, which the arms animate
+		-- In the world the rifle follows the Drakegun's unit, which the arms animate.
 		follow_game_unit = 1,
 		follow_calibrate_seconds = 1,
 		muzzle_right = -30,
@@ -193,7 +196,7 @@ skin_api = mod.weapon_skin.new({
 
 local third_person = skin_api.third_person
 
--- A shot of the player: the animation, the flash (the sound is taken over below)
+-- Handles a shot of the player: plays the animation and shows the flash. The sound is taken over below.
 mod.charged_projectile_start_callbacks.bio_skin = function (action, new_action)
 	local skin = skin_api.state()
 	local owner_unit = action.owner_unit
@@ -214,7 +217,7 @@ mod.charged_projectile_start_callbacks.bio_skin = function (action, new_action)
 	end, in_third_person and third_person.meters_per_unit or skin.unit_scale)
 end
 
--- Charging for the big glob: the plunger is drawn back (UT's AltFire), and the sound of the power up
+-- Charging the big glob draws the plunger back (UT's AltFire) and plays the power-up sound.
 mod.charge_start_callbacks.bio_skin = function (action, new_action)
 	local skin = skin_api.state()
 
@@ -224,7 +227,7 @@ mod.charge_start_callbacks.bio_skin = function (action, new_action)
 	end
 end
 
--- The shots' sounds are the game's events of the Sienna's fireball and geiser: the skin plays UT's
+-- The shots use the game's sound events of the Sienna's fireball and geiser. The skin plays UT's sound instead.
 skin_api.take_over_sound("player_combat_weapon_staff_fireball_fire", "ut_bio_fire")
 skin_api.take_over_sound("player_combat_weapon_staff_geiser_fire", "ut_bio_fire")
 
@@ -233,12 +236,13 @@ mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return event == "attack_shoot" or event == "attack_shoot_charged"
 end
 
--- These flow events would start the game's effects on the globs, so they are dropped
+-- These flow events would start the game's effects on the globs, so they are dropped.
 mod.init_flow_event_filters.bio = function (event_name)
 	return (event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike")
 end
 
--- A glob (on every machine): a green blob and its glow follow the game's unit, as big as it is (a charged one is the scale of its charge)
+-- Adds a glob on every machine: a green blob and its glow follow the game's unit. They are as big as the glob (a charged glob is as
+-- big as its charge).
 local function add_glob(projectile, scale)
 	local game_unit = projectile._projectile_unit
 
@@ -280,12 +284,12 @@ mod.skin_init_callbacks.bio = function (projectile)
 	end
 end
 
--- (the globs of a puddle that bursts are smaller)
+-- The globs that come out of a bursting puddle are smaller.
 mod.skin_init_callbacks.bio_child = function (projectile)
 	add_glob(projectile, 0.6)
 end
 
--- The splash of a glob: GoopSmoke and GoopSparks, as many as the size says
+-- Shows the splash of a glob: GoopSmoke and GoopSparks, as many as the size calls for.
 local function splash(position, scale)
 	local puffs = math.max(2, math.floor(CONFIG.burst_puffs * scale + 0.5))
 	local sparks = math.max(2, math.floor(CONFIG.burst_sparks * scale + 0.5))
@@ -337,7 +341,7 @@ mod.skin_explosion_callbacks.ut_bio_child_burst = burst_effect(0.6, "ut_bio_spla
 mod.skin_explosion_callbacks.ut_bio_charged_burst = burst_effect(1.8, "ut_bio_splat_3d")
 mod.skin_explosion_callbacks.ut_bio_charged_impact = burst_effect(2.2, "ut_bio_splat2_3d")
 
--- The puddles: the splat lies on the ground for as long as the puddle lasts, as wide as its radius
+-- Puddles: the splat lies on the ground for as long as the puddle lasts, and is as wide as the puddle's radius.
 mod.puddle_visual_callbacks.show = function (id, position, radius, charged, duration)
 	local token = {}
 	local place = Vector3Box(position + Vector3(0, 0, 0.03))
@@ -366,7 +370,7 @@ mod.puddle_visual_callbacks.stop = function (id)
 	puddles[id] = nil
 end
 
--- A puddle that bursts: the splash, as big as the goo
+-- A bursting puddle shows a splash as big as its goo.
 mod.puddle_visual_callbacks.burst = function (position, goo_scale)
 	splash(position + Vector3(0, 0, 0.3), 1 + 1.2 * goo_scale)
 	skin_api.play_sound_at("ut_bio_splat_3d", position)

@@ -19,21 +19,21 @@ local TEMPLATE_NAME = mod.items.weapons.rocket_launcher.template
 local SETTING_ID = "rocket_launcher"
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- the Unreal unit of the world, in meters (a player is 88 units high)
-	-- RocketMuzFlash1st: a flash of 0.15 s (meshes; here a sprite)
+	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
+	-- RocketMuzFlash1st: a flash that lasts 0.15 s. UT draws it as meshes, and here it is a sprite.
 	muzzle_size = 70,
 	muzzle_growth = 80,
 	muzzle_life = 0.15,
-	-- RocketProj: the mesh turns (RotationRate roll 50000 of 65536 to the turn, a second)
+	-- RocketProj: the mesh spins. Its RotationRate roll is 50000 out of 65536 for a full turn, per second.
 	rocket_turns_per_second = 50000 / 65536,
-	-- RocketCorona (RocketFlare, 1.2 times the 128 units of its texture, pulsing between 0.9 and 1.5). It is at the
-	-- back of the mesh, and a little way towards the camera so that the mesh does not hide it.
+	-- RocketCorona (RocketFlare): 1.2 times the 128 units of its texture, pulsing between 0.9 and 1.5. It sits at the back of the mesh,
+	-- and a little towards the camera so the mesh does not hide it.
 	corona_size = 90,
-	corona_intensity = 2.2, -- how bright it is, 1 is the texture as it is
+	corona_intensity = 2.2, -- brightness, where 1 is the texture as it is
 	corona_pulse_seconds = 0.2,
 	corona_back = 0.2, -- m
 	corona_toward_camera = 0.4, -- m
-	-- RocketTrailSmoke (wisps, 90 a second, 1.25 s, 15 to 20 units, growing 13 a second, rising a little)
+	-- RocketTrailSmoke: wisps, 90 a second, each lasting 1.25 s. They are 15 to 20 units wide, grow 13 units a second, and rise a little.
 	smoke_interval = 1 / 90,
 	smoke_life = 1.25,
 	smoke_size = {
@@ -47,19 +47,19 @@ local CONFIG = {
 		0.85,
 		0.85,
 	},
-	rocket_sound_seconds = 1.87, -- how long the loop of the rocket (RocketLauncherProjectile) is
-	-- The explosion (NewExplosionA): the game's own explosion, with its smoke and the mark it leaves (only if the game has it
-	-- loaded), a flash, and three fireballs that play a sheet of 16 frames (the same sheet for all three, one of two)
+	rocket_sound_seconds = 1.87, -- length of the rocket's sound loop (RocketLauncherProjectile)
+	-- The explosion (NewExplosionA) has the game's own explosion, with its smoke and the mark it leaves (only if the game has it
+	-- loaded), a flash, and three fireballs. Each fireball plays a sheet of 16 frames. All three use the same sheet, one of two.
 	explosion_effect = "fx/wpnfx_frag_grenade_impact",
 	explosion_flash_size = 300,
 	explosion_flash_growth = 500,
 	explosion_flash_life = 0.25,
 	explosion_flash_intensity = 0.5,
 	explosion_fire_count = 3,
-	explosion_fire_frames = 16, -- the frames of a sheet, which go down its columns, not along its rows
+	explosion_fire_frames = 16, -- frames in a sheet. They run down its columns, not along its rows.
 	explosion_fire_gap = 0.1, -- seconds between the fireballs starting (UT: 10 a second)
-	-- (a UE2 sprite is about twice as wide as the number says: UT's explosion is as wide as its blast, 3 m of radius, which its three fireballs
-	-- of 50 to 70 only make that big)
+	-- A UE2 sprite is about twice as wide as its size number says. UT's explosion is as wide as its blast, 3 m of radius, and its
+	-- three fireballs of size 50 to 70 only reach that width because of this.
 	explosion_fire_size = {
 		90,
 		125,
@@ -68,38 +68,39 @@ local CONFIG = {
 		0.4,
 		0.6,
 	},
-	explosion_fire_spread = 36, -- units, the radius of the sphere they start in
-	-- The frames are drawn in a colour that is more than white, which the game's light turns to glowing (the texture alone, at 1, is a dull
-	-- grey in it): this colour is yellow, brighter in the middle of a fireball than at its edge, which the frames' own colours make
+	explosion_fire_spread = 36, -- units, the radius of the sphere the fireballs start in
+	-- The frames are drawn in a colour brighter than white, which the game's lighting turns into a glow. The texture alone, at 1, looks
+	-- dull grey in the game. The colour is yellow, and the frames' own colours make the middle of a fireball brighter than its edge.
 	explosion_fire_intensity = 0.6, -- how solid the frames are: their transparency times this
 	explosion_fire_color = {
 		1.5,
 		1.25,
 		0.8,
 	},
-	explosion_lift = 20, -- units, how far off the surface it is (NewExplosionA is spawned 20 units along the surface's normal)
+	explosion_lift = 20, -- units off the surface (NewExplosionA is spawned 20 units along the surface's normal)
 	inspect_pose_speed = 5, -- how fast the model moves to the inspect pose and back, per second
 	inspect_sway = 5, -- degrees of yaw each way while inspecting
 	inspect_sway_speed = 1.8, -- radians per second
-	-- Another shot of another player: more than this far apart in time is another shot
+	-- Rockets of another player that start less than this far apart (in seconds) belong to the same shot
 	shot_gap = 0.25,
-	-- What follows a rocket being fired or loaded (RocketLauncher.uc, state AnimateLoad), in seconds after it: the barrel starts to turn,
-	-- the sound of the load, the sound of the plunger. The barrel is turned by code, not by the animations: a third of a turn each time,
-	-- at 2.95 thirds of a turn a second.
+	-- What follows a rocket being fired or loaded (RocketLauncher.uc, state AnimateLoad), in seconds after it: the barrel starts to
+	-- turn, the load sound plays, and the plunger sound plays. The code turns the barrel, not the animations. It turns a third of a
+	-- turn each time, at 2.95 thirds of a turn a second.
 	barrel_delay = 0.15,
 	load_sound_delay = 0.22,
 	remote_second_load = 0.95, -- seconds after another player starts aiming that the second rocket is loaded (RocketMultiFire.FireRate)
 	chamber_load_frame = 3, -- the frame of the load animation where a rocket slides in from the side (the shell is out at the side)
 	shell_hide_frame = 2.5, -- the frame of the load animation where the rocket that the rod pushes has gone into the barrel
-	plunger_sound_delay = 0.5, -- (the shell and the feed move then, at plunge_speed times the speed of the animation)
+	plunger_sound_delay = 0.5, -- seconds until the plunger sound. The shell and the feed move then, at plunge_speed times the animation's speed.
 	plunge_speed = 0.8,
 	barrel_step = 120, -- degrees
 	barrel_speed = 2.95 * 120, -- degrees per second
-	-- The rod of the piston (the mesh's units): how long it is, and where its back is, to the right of the mesh's origin
+	-- The piston's rod, in the mesh's units: how long it is, and where its back is, to the right of the mesh's origin.
 	rod_length = 11.45,
 	rod_back = 15.55,
-	-- Its axis is along the mesh's own left, the way the barrels point before the animation's root turns the mesh, and goes through this
-	-- point of the mesh (right, forward, up in the mesh's units). The barrel turns anticlockwise as the player sees it.
+	-- The barrel turns about an axis along the mesh's own left, which is the way the barrels point before the animation's root turns
+	-- the mesh. The axis goes through this point of the mesh (right, forward, up, in the mesh's units). The barrel turns anticlockwise
+	-- as the player sees it.
 	barrel_pivot = {
 		-23.3,
 		0.7,
@@ -109,14 +110,13 @@ local CONFIG = {
 
 local UNIT = CONFIG.meters_per_uu
 
--- The place of the barrel's bone in the animations' bones
+-- The index of the barrel's bone in the animations' list of bones
 local BARREL_BONE
 
--- and of the shell and the rod, which the load animation moves (the rod is what UT's piston is: its front goes out with the animation
--- and its back stays, so the skin stretches it)
+-- The indexes of the bones that the load animation moves, the shell and the rod. The rod is UT's piston: its front goes out with the
+-- animation and its back stays in place, so the skin stretches it. The shell is the rocket that is loaded in the chamber.
 local PLUNGE_BONES = {}
 local ROD_BONE
--- (the shell is the rocket that is loaded in the chamber)
 local SHELL_BONE
 
 for index, name in ipairs(animations.bones) do
@@ -133,9 +133,9 @@ for index, name in ipairs(animations.bones) do
 	end
 end
 
--- The parts of the load animation that are played alone or one after the other: a rocket slides in from the side, and the rod pushes
--- the rocket in the chamber into the barrel (and the next one slides in). When the pushed one is the last, no other slides in, and the
--- shell is hidden once it has gone into the barrel.
+-- The parts of the load animation. They are played alone or one after the other. In "slide" a rocket slides in from the side. In
+-- "push" the rod pushes the rocket in the chamber into the barrel, and the next one slides in. In "push_last" the pushed rocket is the
+-- last one, so no other slides in, and the shell is hidden once it is in the barrel.
 local LAST_LOAD_FRAME = #animations.animations.Load.frames - 1
 local LOAD_PARTS = {
 	slide = {
@@ -156,7 +156,8 @@ local LOAD_PARTS = {
 	},
 }
 
--- Where in the parts the animation is after this many seconds: the frame, the part and its place in the list. Nil when it is over.
+-- Returns where the animation is after this many seconds, as the frame, the part and the part's place in the list. Returns nil when
+-- the animation is over.
 local function plunge_position(plunge)
 	local frames = plunge.time * animations.animations.Load.rate
 
@@ -175,13 +176,13 @@ end
 
 local skin_api
 
--- The sounds of another player's loading that are waiting for their time
+-- Sounds of another player's loading that are waiting for their time to play
 local remote_sounds = utils.delayed_events()
 
--- What flies: { unit = the mesh, game_unit = the projectile's, projectile = its extension, ... }
+-- The rockets in flight, each as { unit = the mesh, game_unit = the projectile's unit, projectile = its extension, ... }
 local visuals = {}
 
--- If a rocket that is in flight is on its way to this enemy (rocket_launcher.lua keeps the lock while there is one)
+-- Returns whether a rocket in flight is on its way to this enemy. rocket_launcher.lua keeps the lock while there is one.
 function mod.rocket_homing_on(target)
 	for _, visual in ipairs(visuals) do
 		local locomotion_extension = Unit.alive(visual.game_unit) and ScriptUnit.has_extension(visual.game_unit, "projectile_locomotion_system")
@@ -214,7 +215,8 @@ local function destroy_visual(visual)
 	end
 end
 
--- All of them go with the level, and with the mod (a unit of the mod's package that is alive when the package is unloaded crashes the game)
+-- Destroys all the visuals when the level ends or the mod is unloaded. A unit of the mod's package that is still alive when the
+-- package is unloaded crashes the game.
 local function clear_visuals()
 	for i = #visuals, 1, -1 do
 		destroy_visual(visuals[i])
@@ -254,7 +256,7 @@ local function update_visuals(dt)
 				visual.direction:store(Vector3.normalize(moved))
 			end
 
-			-- (turning about its length as it flies)
+			-- The rocket spins about its own length as it flies.
 			local direction = visual.direction:unbox()
 			local turn = Quaternion.axis_angle(Vector3(0, 1, 0), visual.time * CONFIG.rocket_turns_per_second * 2 * math.pi)
 
@@ -287,7 +289,7 @@ local function update_visuals(dt)
 	end
 end
 
--- The mesh of a rocket, drawn at the game's unit (the unit itself is not shown), and its corona
+-- Adds the mesh of a rocket and its corona, drawn at the game's unit. The game's unit itself is not shown.
 local function add_visual(projectile)
 	local world = Managers.world:world("level_world")
 	local game_unit = projectile._projectile_unit
@@ -334,14 +336,14 @@ local function add_visual(projectile)
 		life = 8,
 		size = CONFIG.corona_size * UNIT,
 		texture = "rocket_flare",
-		-- (UT draws it wider than it is high, and always upright)
+		-- UT draws the corona wider than it is high, and always upright.
 		angle = 0,
 	})
 
 	return visual
 end
 
--- A flash at the muzzle (where the character holds the mesh, or the model of the player's own view)
+-- Shows a flash at the muzzle, either of the mesh in the character's hand or of the model in the player's own view.
 local function muzzle_flash(follow, scale)
 	particles.sprite({
 		color = {
@@ -358,8 +360,8 @@ local function muzzle_flash(follow, scale)
 	})
 end
 
--- A shot that another player's machine sees: the flash and the sound from the end of the barrel of the mesh in their hand, once for the
--- rockets of a shot that come together
+-- A shot by another player, as seen on this machine: the flash and the sound come from the end of the barrel of the mesh in their
+-- hand. They play once for all the rockets of a shot that start together.
 local last_remote_shot = {}
 
 local function remote_shot(owner_unit)
@@ -391,19 +393,19 @@ skin_api = mod.weapon_skin.new({
 	muzzle_node = "b_bone_flash",
 	model_meters_per_unit = 0.0125,
 	meters_per_unit = 0.01,
-	-- RocketLauncher.uc: the model is turned a little (the pivot's yaw 500 and roll 1000 of 65536 to the turn)
+	-- RocketLauncher.uc turns the model a little: the pivot's yaw is 500 and its roll is 1000, out of 65536 for a full turn.
 	display_fov = 60,
 	draw_scale = 1,
 	offset_forward = 0,
 	offset_right = 8,
 	offset_up = 0,
 	pivot_yaw = 500 / 65536 * 360,
-	-- (drawn the other way round than the other weapons' roll: that is where UT's picture has it)
+	-- The roll is the other way round from the other weapons', because that matches UT's picture.
 	pivot_roll = -1000 / 65536 * 360,
 	bob_damping = 1.5,
 	idle_speed = 0.5, -- RocketLauncher.IdleAnimRate
-	-- The inspect pose: the launcher is brought to the middle of the view and turned to the left about its middle, until it is across the
-	-- view with its left side to it (the display and the label) and the barrels to the left. The turn goes with the move.
+	-- The inspect pose brings the launcher to the middle of the view and turns it to the left about its middle. It ends up across the
+	-- view, with its left side (the display and the label) towards the player and the barrels pointing left. The turn goes with the move.
 	inspect_pose_right = -28,
 	inspect_pose_forward = -2,
 	inspect_pose_up = 10,
@@ -414,12 +416,12 @@ skin_api = mod.weapon_skin.new({
 	inspect_pivot_right = 7,
 	inspect_pivot_forward = 22,
 	inspect_pivot_up = 12,
-	-- WeaponStaticMesh.RocketLauncherPickup (DrawScale 0.45): its barrels are along the mesh's own -Y, and the grip is under the back of it
+	-- WeaponStaticMesh.RocketLauncherPickup (DrawScale 0.45). Its barrels run along the mesh's own -Y, and the grip is under its back.
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
 		unit_name = "units/ut/rocket/pickup",
-		-- (the game links the crossbow, the blunderbuss and the Drakegun to the left hand's node, AttachmentNodeLinking.repeating_crossbow)
+		-- The game links the crossbow, the blunderbuss and the Drakegun to the left hand's node (AttachmentNodeLinking.repeating_crossbow).
 		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.009,
 		scale = 0.6,
@@ -429,8 +431,9 @@ skin_api = mod.weapon_skin.new({
 		yaw = 90,
 		pitch = -15,
 		roll = 0,
-		-- In the world the launcher moves with the game's crossbow, which the game animates with the arms. It is turned from the crossbow's own axes,
-		-- not calibrated as the Flak Cannon's is: the crossbow is still moving to its place when that is done.
+		-- In the world the launcher moves with the game's crossbow, which the game animates with the arms. It is turned from the
+		-- crossbow's own axes and is not calibrated the way the Flak Cannon is, because the crossbow is still moving into place at the
+		-- time of calibration.
 		follow_game_unit = 2,
 		follow_calibrate_seconds = 1,
 		muzzle_right = 68,
@@ -442,15 +445,15 @@ skin_api = mod.weapon_skin.new({
 		skin_api.play_sound("ut_rocket_select")
 	end,
 	on_update = function (skin, dt)
-		-- UT puts the weapon away when it has no ammo, here it is carried on. The last rocket is the one in the barrel, so with one
-		-- rocket of ammo (or none) there is no shell in the chamber. When ammo is picked up the rockets are loaded: one slides in, is
-		-- pushed into the barrel, and another slides in after it. With one rocket left in the barrel only one slides in.
+		-- UT puts the weapon away when it has no ammo, but here it stays in hand. The last rocket is the one in the barrel, so with 1
+		-- rocket of ammo, or none, there is no shell in the chamber. When ammo is picked up, the rockets are loaded: one slides in,
+		-- is pushed into the barrel, and another slides in after it. If one rocket is already in the barrel, only one slides in.
 		local previous_ammo = skin.ammo
 		local ammo = utils.local_ranged_ammo()
 
 		skin.ammo = ammo
 
-		-- With no ammo there is nothing to load: what a shot starts (the barrel turning, the sounds, the plunger) doesn't play
+		-- With no ammo there is nothing to load, so what a shot starts (the barrel turning, the sounds, the plunger) does not play.
 		if ammo == 0 then
 			skin.barrels = 1
 			skin.load_cycle = nil
@@ -469,7 +472,7 @@ skin_api = mod.weapon_skin.new({
 			end
 		end
 
-		-- The inspect pose, and the sway the launcher is turned with in it
+		-- Moves the model towards the inspect pose and back, and sways it while it is there.
 		skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
 		skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
 		skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
@@ -520,7 +523,7 @@ skin_api = mod.weapon_skin.new({
 			skin.shell_hidden = position ~= nil and part.hide_from ~= nil and position >= part.hide_from
 		end
 
-		-- (a shot that has the load still to come leaves the shell as it is)
+		-- While a load is still to come after a shot, the shell stays as it is.
 		if not skin.plunge and not skin.load_cycle then
 			skin.shell_hidden = ammo ~= nil and ammo <= (skin.barrels or 1)
 		end
@@ -530,8 +533,8 @@ skin_api = mod.weapon_skin.new({
 		end
 	end,
 	on_pose = function (skin, pose)
-		-- The shell and the feed play the load animation by themselves, on top of the animation that is playing (UT blends it in on
-		-- the bones of the two, and does not touch the rest)
+		-- The shell and the feed play the load animation by themselves, on top of the animation that is playing. UT blends it in on
+		-- the bones of those two and leaves the rest alone.
 		local plunge = skin.plunge
 		local position = plunge and plunge_position(plunge)
 
@@ -553,8 +556,8 @@ skin_api = mod.weapon_skin.new({
 		skin.node_scales = skin.node_scales or {}
 		skin.node_scales[SHELL_BONE] = skin.shell_hidden and Vector3(0.001, 0.001, 0.001) or nil
 
-		-- The rod is stretched from its back, which stays where it is, as far as the animation moves its front (the mesh's right is the
-		-- way back, so the move is negative)
+		-- The rod is stretched from its back, which stays in place, by as much as the animation moves its front. The mesh's right is
+		-- the way back, so the move is negative.
 		local rod = (ROD_BONE - 1) * 7
 		local reach = -pose[rod + 5]
 
@@ -576,8 +579,8 @@ skin_api = mod.weapon_skin.new({
 			return
 		end
 
-		-- The barrel's own pose (a move and a turn, about the mesh's origin) is turned about its axis, which goes through the pivot. The
-		-- axis is the mesh's own left; the turn here is about the mesh's right, which is the other way.
+		-- The barrel's own pose (a move and a turn about the mesh's origin) is turned about the barrel's axis, which goes through the
+		-- pivot. The axis is the mesh's own left, but the turn here is about the mesh's right, which is the opposite direction.
 		local o = (BARREL_BONE - 1) * 7
 		local sin_half, cos_half = math.sin(angle / 2), math.cos(angle / 2)
 		local x, y, z, w = pose[o + 1], pose[o + 2], pose[o + 3], pose[o + 4]
@@ -604,9 +607,9 @@ skin_api = mod.weapon_skin.new({
 
 local third_person = skin_api.third_person
 
--- The load: the barrel turns a third of a turn, and the sounds of the load and the plunger follow (see on_update). A new one replaces
--- one that is not finished. "barrels" is how many rockets are in the barrels when it is done (a shot leaves one): when the ammo is
--- not more than that, there is no rocket for the rod to push next, and no shell slides in.
+-- Starts a load. The barrel turns a third of a turn, and then the load and plunger sounds play (see on_update). A new load replaces
+-- one that is not finished. "barrels" is how many rockets are in the barrels when the load is done, and a shot leaves one. If the
+-- ammo is not more than that, there is no rocket for the rod to push next, so no shell slides in.
 local function turn_barrel(skin, barrels)
 	skin.barrels = barrels or 1
 	skin.plunge = nil
@@ -616,11 +619,11 @@ local function turn_barrel(skin, barrels)
 	}
 end
 
--- How many rockets the player has loaded, and how many there can be (the ammo limits it to fewer than three)
+-- How many rockets the player has loaded, and how many can be loaded. The ammo can limit that to fewer than three.
 local loaded_count = 1
 local rocket_capacity = 3
 
--- A shot of the player: the animation, the flash and the sound
+-- Handles a shot of the player: plays the animation, the flash and the sound.
 local function shot(action, new_action)
 	local skin = skin_api.state()
 	local owner_unit = action.owner_unit
@@ -631,10 +634,10 @@ local function shot(action, new_action)
 
 	skin.barrels = 1
 
-	-- A shot cuts off a load that is still playing (the sliding in after picking up ammo), with the sounds it has left
+	-- A shot cuts off a load that is still playing, such as the sliding in after picking up ammo, along with the sounds it has left.
 	skin.plunge = nil
 
-	-- (a rocket on its own always turns the barrel, a salvo only when it is a full one)
+	-- A single rocket always turns the barrel. A salvo only turns it when the salvo is full.
 	if not new_action.ut_rocket_salvo or loaded_count >= 3 then
 		turn_barrel(skin)
 	end
@@ -658,7 +661,7 @@ mod.crossbow_start_callbacks.rocket_skin = function (action, new_action)
 	end
 end
 
--- Inspecting is the game's own action, held with the key: the launcher is turned to show its side as long as it lasts
+-- Inspecting is the game's own action, held with the key. The launcher is turned to show its side for as long as it lasts.
 mod.inspect_callbacks.rocket_skin = function (action, started)
 	local skin = skin_api.state()
 
@@ -667,14 +670,14 @@ mod.inspect_callbacks.rocket_skin = function (action, started)
 	end
 end
 
--- The lock is made (the beep) or lost
+-- Plays the beep when a lock is made, and the lost-lock sound when it is lost.
 mod.rocket_lock_callbacks.rocket_skin = function (owner_unit, locked)
 	if skin_api.state() and utils.is_local_player_unit(owner_unit) then
 		skin_api.play_sound(locked and "ut_rocket_lock" or "ut_rocket_seek_lost")
 	end
 end
 
--- The aiming starts, and the first rocket is loaded: the barrel turns
+-- When the aiming starts, the first rocket is loaded and the barrel turns.
 mod.aim_start_callbacks.rocket_skin = function (self, new_action)
 	local skin = skin_api.state()
 
@@ -682,8 +685,8 @@ mod.aim_start_callbacks.rocket_skin = function (self, new_action)
 		loaded_count = 1
 		rocket_capacity = math.min(3, self.ammo_extension and self.ammo_extension:current_ammo() or 3)
 
-		-- (one rocket is in the barrel already: with fewer than three there is a load less, and the last of them is the one cut, so
-		-- there is none to play for a single rocket, and one for two)
+		-- One rocket is in the barrel already. With fewer than three rockets of ammo there is one load fewer, and the last load is the
+		-- one that is cut. So there is no load to play for a single rocket, and one for two.
 		skin.barrels = 1
 		skin.plunge = nil
 
@@ -693,7 +696,7 @@ mod.aim_start_callbacks.rocket_skin = function (self, new_action)
 	end
 end
 
--- Another rocket is loaded: the second one is the load (UT's third has none), with three to load
+-- Another rocket is loaded. The load animation plays for the second rocket when three can be loaded. UT's third rocket has none.
 mod.rocket_load_callbacks.rocket_skin = function (owner_unit, loaded)
 	local skin = skin_api.state()
 
@@ -706,15 +709,16 @@ mod.rocket_load_callbacks.rocket_skin = function (owner_unit, loaded)
 	end
 end
 
--- The shot and reload sounds of the crossbow are in its animations: the animations of the shots and the reload are not played on the
--- player's own first person unit (the model of the skin plays UT's). UT's weapon has no reload, but the game still reloads when the
--- weapon is wielded.
+-- The crossbow's shot and reload sounds are in its animations, so those animations are not played on the player's own first person
+-- unit. The skin's model plays UT's animations instead. UT's weapon has no reload, but the game still reloads when the weapon is
+-- wielded.
 mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil
 end
 
--- What other players' loading and shots sound like. In UT everyone hears the load sound and the plunger sound a little after a rocket is
--- loaded or fired. Here they are played where the player is, from the animation events the game sends over the network.
+-- Plays what other players' loading and shots sound like. In UT everyone hears the load sound and the plunger sound a little after a
+-- rocket is loaded or fired. Here they are played where the other player is, from the animation events that the game sends over the
+-- network.
 local function remote_load_sounds(unit, delay)
 	local function still_there()
 		return Unit.alive(unit)
@@ -735,7 +739,7 @@ mod.third_person_animation_filters[TEMPLATE_NAME] = function (event, unit)
 
 	if unit and not utils.is_local_player_unit(unit) then
 		if event == "to_zoom" then
-			-- (the aiming starts the loading, and the second rocket is loaded a salvo's time after)
+			-- Aiming starts the loading, and the second rocket is loaded one salvo time later.
 			remote_load_sounds(unit, 0)
 			remote_load_sounds(unit, CONFIG.remote_second_load)
 		elseif event == "attack_shoot" or event == "attack_shoot_last" then
@@ -743,12 +747,12 @@ mod.third_person_animation_filters[TEMPLATE_NAME] = function (event, unit)
 		end
 	end
 
-	-- (the reload is not played on the characters: the launcher has none)
+	-- The reload is not played on the characters, because the launcher has none.
 	return string.find(event, "reload", 1, true) ~= nil
 end
 
--- The crossbow's sounds that its animations play on the characters (the units' flow plays them): the shot animation is played, without its
--- sound
+-- The crossbow's animations play these sounds on the characters, through the units' flow. They are muted, so the shot animation
+-- plays without its sound.
 local MUTED_SOUNDS = {
 	player_combat_weapon_repeating_crossbow_fire = true,
 	player_combat_weapon_repeating_crossbow_special_fire = true,
@@ -759,12 +763,12 @@ mod.sound_event_filters[TEMPLATE_NAME] = function (event_name)
 	return MUTED_SOUNDS[event_name] == true
 end
 
--- The flow events of the game's unit of the rocket start its effects as it is made: they are not started
+-- These flow events would start the game's effects on the rocket's unit, so they are dropped.
 mod.init_flow_event_filters.rocket = function (event_name)
 	return event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike"
 end
 
--- A rocket (on every machine): the mesh, the corona, the smoke
+-- Adds a rocket's mesh, corona and smoke, on every machine.
 mod.skin_init_callbacks.rocket = function (projectile)
 	local owner_unit = projectile._owner_unit
 
@@ -775,7 +779,8 @@ mod.skin_init_callbacks.rocket = function (projectile)
 	end
 end
 
--- The way the surface an explosion is on faces: the rocket flew into it, so against its flight, or what a ray along the flight finds
+-- Returns the way the surface of an explosion faces. The rocket flew into the surface, so this is against its flight, or the normal
+-- that a ray along the flight finds.
 local function surface_normal(world, position, rotation)
 	local forward = Quaternion.forward(rotation)
 	local physics_world = World.get_data(world, "physics_world")
@@ -788,8 +793,8 @@ local function surface_normal(world, position, rotation)
 	return -forward
 end
 
--- The explosion of a rocket, on every machine: the game's own effects of it are not made. Like UT's it is a little way off the surface it is on,
--- or the surface would cut the fireballs.
+-- Draws the explosion of a rocket, on every machine. The game's own effects of it are not made. Like UT's, the explosion sits a
+-- little way off the surface, or the surface would cut the fireballs.
 mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, rotation)
 	local normal = surface_normal(world, position, rotation)
 	local center = position + normal * (CONFIG.explosion_lift * UNIT)
@@ -816,8 +821,8 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 		texture = "explosion_flash",
 	})
 
-	-- The fireballs: each plays the 16 frames of the sheet (one of two, the same for all), a sprite for each frame, one over the other. They
-	-- start one after another.
+	-- The fireballs. Each plays the 16 frames of its sheet (one of two, the same for all three) as a sprite for each frame, one over
+	-- the other. They start one after another.
 	local sheet = math.random(2) == 1 and "explosion_a_" or "explosion_b_"
 	local frames = CONFIG.explosion_fire_frames
 
@@ -829,9 +834,11 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 		local angle = math.random() * 360
 
 		for frame = 0, frames - 1 do
-			-- (not added to the screen: the later frames are dark, the soot of the fire, which only blending shows)
-			-- (a frame fades in over a frame's time, over the one before it, which stays until it is all there, and goes: no frame is
-			-- ever less than whole under the next, so the fireball is never thin; the last fades out)
+			-- The sprites are blended, not added to the screen, because the later frames are dark, the soot of the fire, and only
+			-- blending shows that.
+			-- A frame fades in over one frame's time on top of the previous frame. The previous frame stays until the new one is
+			-- fully there, and then goes. So no frame is ever less than whole under the next, and the fireball is never thin. The
+			-- last frame fades out.
 			local frame_time = life / frames
 
 			particles.sprite({
