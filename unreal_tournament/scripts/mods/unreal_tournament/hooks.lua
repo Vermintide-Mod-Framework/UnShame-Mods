@@ -526,6 +526,24 @@ mod:command("slomo", "<number> - the speed of the game: below 1 slower, above 1 
 	mod:echo("slomo: %g", number)
 end)
 
+-- Development, like UT's "loaded": fills the ammo of the ranged weapon
+mod:command("loaded", "- fills the ammo of the ranged weapon", function ()
+	local player = Managers.player:local_player_safe()
+	local unit = player and player.player_unit
+	local inventory_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "inventory_system")
+	local slot_data = inventory_extension and inventory_extension:get_slot_data("slot_ranged")
+	local ammo_extension = slot_data and GearUtils.get_ammo_extension(slot_data.right_unit_1p, slot_data.left_unit_1p)
+
+	if not ammo_extension then
+		mod:echo("loaded: no ranged weapon with ammo")
+
+		return
+	end
+
+	ammo_extension:add_ammo()
+	mod:echo("loaded: %d", ammo_extension:total_remaining_ammo())
+end)
+
 -- How the bots shoot a weapon of the mod. The game's bot shooting (BTBotShootAction) is hooked once, here (a mod can hook a function once), and
 -- runs the callback of the weapon, which is found by a key of the weapon's attack_meta_data that is true:
 --   mod.bot_shot_callbacks[key] = function (func, action, shoot_blackboard, action_data, input_extension, t)
