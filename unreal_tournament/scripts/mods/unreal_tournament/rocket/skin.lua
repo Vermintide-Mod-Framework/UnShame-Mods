@@ -26,9 +26,9 @@ local CONFIG = {
 	muzzle_life = 0.15,
 	-- RocketProj: the mesh turns (RotationRate roll 50000 of 65536 to the turn, a second)
 	rocket_turns_per_second = 50000 / 65536,
-	-- RocketCorona (RocketFlare, 1.2 times the 128 units of its texture and 0.7 of that wide, pulsing between 0.9 and 1.5). It is at the
+	-- RocketCorona (RocketFlare, 1.2 times the 128 units of its texture, pulsing between 0.9 and 1.5). It is at the
 	-- back of the mesh, and a little way towards the camera so that the mesh does not hide it.
-	corona_size = 110,
+	corona_size = 70,
 	corona_pulse_seconds = 0.2,
 	corona_back = 0.2, -- m
 	corona_toward_camera = 0.4, -- m
