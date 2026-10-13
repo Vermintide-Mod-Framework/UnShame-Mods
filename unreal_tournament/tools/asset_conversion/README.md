@@ -38,7 +38,7 @@ party IP in a published mod: this branch is for local use, and nothing of it sho
 | `make_bank.py <weapon> <scratch>` | the sound banks in `wwise/unreal_tournament`: a bank with an event for each sound, written by hand. The weapons are in `WEAPONS`: `announcer`, `shock_rifle`, `flak_cannon`, `rocket_launcher`, `bio_rifle`, `link_gun` | the sounds exported with `-sounds`: `umodel/out5`, `out8`, `out10` |
 | `render_icon.py in.bsi out.png size yaw pitch roll textures [fill]` | an inventory icon from a converted pickup | a bsi and its textures |
 | `preview_weapon.py <weapon> <export dir> out.png [inspect numbers]` | a picture of a first person weapon in its idle or inspect pose, placed the way `weapon_skin.lua` does | a psk |
-| `render_psk2.py`, `ut_fit2.py` | checks (below) | |
+| `render_psk2.py` | a check (below) | |
 
 ### Order
 
@@ -82,9 +82,7 @@ locked, and the game fails when it is unloaded.
   and (with the numbers) an inspect pose: `right forward up roll pitch yaw` and where it turns about, `inspect_pose_*` and `inspect_pivot_*`
   of the skin. It agrees with the game to within a few pixels. Only the root bone is posed (the rest of the model is in its reference pose),
   and the lighting is a simple shading. The weapons it knows are in its `WEAPONS`.
-- `render_psk2.py` is a software render of a mesh with outward faces only. `ut_fit2.py` is the fit of the Shock Rifle's mesh in UT's projection
-  against pixels of a screenshot of UT2004: where the projection of the weapons comes from (below). It is for the Shock Rifle only and takes the
-  scratch folder as its argument.
+- `render_psk2.py` is a software render of a mesh with outward faces only.
 
 ## What was found
 
@@ -96,7 +94,8 @@ locked, and the game fails when it is unloaded.
   the psa: the rotation of the mesh is `q_animation * conj(q_reference)`, unconjugated (Pickup comes up from below,
   PutDown goes down, Fire kicks back).
 - UT draws the weapon at `DrawScale` 0.7, `PlayerViewOffset * 90 / DisplayFOV`, `PlayerViewPivot`, with a horizontal
-  field of view of about 86.5 (fitted, with small weapons off). `weapon_skin.lua` places the models with it.
+  field of view of about 86.5 (fitted against pixels of a screenshot of UT2004 with small weapons off, from the position of four features of the Shock Rifle's mesh: the
+  radar, the two buttons and the label). `weapon_skin.lua` places the models with it.
 - The standard SDK material needs `use_color_map = 1` for its color map to be used, and the key of the texture is
   `color_map`.
 - The first person materials are the SDK's standard material with the custom field of view of the weapons on
