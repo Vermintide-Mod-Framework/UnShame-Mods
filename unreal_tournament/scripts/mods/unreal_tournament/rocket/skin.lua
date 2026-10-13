@@ -633,6 +633,9 @@ local function shot(action, new_action)
 
 	skin.barrels = 1
 
+	-- A shot cuts off a load that is still playing (the sliding in after picking up ammo), with the sounds it has left
+	skin.plunge = nil
+
 	-- (a rocket on its own always turns the barrel, a salvo only when it is a full one)
 	if not new_action.ut_rocket_salvo or loaded_count >= 3 then
 		turn_barrel(skin)
