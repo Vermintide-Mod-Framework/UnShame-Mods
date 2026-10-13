@@ -314,14 +314,14 @@ skin_api = mod.weapon_skin.new({
 	bob_damping = 1.5,
 	idle_speed = 0.5, -- RocketLauncher.IdleAnimRate
 	-- The inspect pose: the launcher is brought to the middle of the view and turned to the left about its middle, until it is across the
-	-- view with its left side to it (the display and the label) and the barrels to the left. The turn starts when it is 35% of the way.
+	-- view with its left side to it (the display and the label) and the barrels to the left. The turn goes with the move.
 	inspect_pose_right = -28,
 	inspect_pose_forward = -2,
 	inspect_pose_up = 10,
 	inspect_pose_roll = 10,
 	inspect_pose_pitch = 4,
 	inspect_pose_yaw = 70,
-	inspect_turn_start = 0.35,
+	inspect_turn_start = 0,
 	inspect_pivot_right = 7,
 	inspect_pivot_forward = 22,
 	inspect_pivot_up = 12,
