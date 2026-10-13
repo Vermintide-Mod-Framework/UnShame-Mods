@@ -37,6 +37,8 @@ local mod = get_mod("unreal_tournament")
 --       the values in the look replace the same values of the definition above (the unit, its animations, where it is drawn, ...).
 --       A third_person in a look is that look's full third person definition. The weapon's own skin is the definition itself.
 --   on_create(skin), on_update(skin, dt), on_destroy(skin): what is the weapon's own of the model that is shown
+--   on_pose(skin, pose): every frame before the model is placed, to change the pose of the bones that the animations don't (UT sets some
+--       by code: the barrel of the Rocket Launcher). pose is the row of numbers of a frame (a bone's are at (index - 1) * 7 + 1).
 --   on_update_always(dt): every frame, shown or not; on_refresh(): when the setting or the weapon is switched; on_give_back(),
 --   on_level_exit(): what is its own to take back and to clear
 
@@ -600,6 +602,11 @@ local function new(def)
 		local forward_scale = CONFIG.meters_per_unit
 		local across_scale = forward_scale * across
 		local pose = current_pose()
+
+		if CONFIG.on_pose then
+			CONFIG.on_pose(skin, pose)
+		end
+
 		local pivot = pivot_rotation()
 		local offset_scale = 90 / CONFIG.display_fov
 
