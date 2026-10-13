@@ -15,7 +15,7 @@ local mod = get_mod("unreal_tournament")
 --       out after it
 --   fade_in, fade_out: UT's FadeInEndTime and FadeOutStartTime, in seconds: it is all there from fade_in until fade_out (used
 --       instead of the attenuation)
---   spin: turns per second (the angle it starts at is random)
+--   spin: turns per second (the angle it starts at is random, or spec.angle, degrees: 0 keeps a sprite upright on the screen)
 --   position: where it is; velocity, drag: where it goes and how fast that slows (per second); follow: a function that gives
 --       where it is now, nothing when it is to end
 --   locked: instead of follow, a function that gives a unit and the particle's position in that unit's frame (the first person unit: at the
@@ -124,7 +124,7 @@ local function add(kind, spec)
 
 	local particle = {
 		age = -(spec.delay or 0),
-		angle = math.random() * math.pi * 2,
+		angle = spec.angle and math.rad(spec.angle) or math.random() * math.pi * 2,
 		attenuation = spec.attenuation or 0,
 		color = spec.color or {
 			1,

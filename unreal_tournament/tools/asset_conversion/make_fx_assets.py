@@ -142,6 +142,9 @@ def find(tga):
 
     raise FileNotFoundError(tga)
 
+# Textures that are wider than they are high and are drawn as sprites
+SQUARE = ('rocket_flare',)
+
 def derived_rows(rows, make):
     out = []
 
@@ -160,6 +163,12 @@ for name, tga in list(TEXTURES.items()) + [(name, derived[0]) for name, derived 
 
     if name in DERIVED:
         rows = derived_rows(rows, DERIVED[name][1])
+
+    if name in SQUARE:
+        # (a sprite is a square: a texture that is wider than it is high is put in the middle of one, so that it is not stretched)
+        blank = b'\0' + bytes(4 * w)
+        rows = [blank] * ((w - h) // 2) + rows + [blank] * (w - h - (w - h) // 2)
+        h = w
 
     write_png('%s/%s.png' % (FX, name), w, h, rows)
     open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % {'name': name})
