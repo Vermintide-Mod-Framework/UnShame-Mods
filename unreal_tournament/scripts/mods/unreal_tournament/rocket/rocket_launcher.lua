@@ -60,14 +60,15 @@ local CONFIG = {
 	-- both, and they were reduced in the same way
 	rocket_damage = 60,
 	-- The damage multipliers of the explosion per armor type: unarmored, armored, monsters, players,
-	-- berserkers, super armor (the explosion hits harder what is big)
+	-- berserkers, super armor. Like the armour piercing weapons of the game (0.8 against armor, 1.5 against monsters at the most) and the
+	-- Flak Cannon's shell; the super armor (chaos warriors) takes half, the game's own is 0.
 	rocket_armor_attack = {
 		1,
-		1.25,
-		2.5,
+		1,
+		1.5,
 		1,
 		1,
-		0.75,
+		0.5,
 	},
 	-- The same per armor type for the stagger (the game's own are 0.5 against armor, 0.75 against berserkers and 0 against super armor)
 	rocket_armor_impact = {
