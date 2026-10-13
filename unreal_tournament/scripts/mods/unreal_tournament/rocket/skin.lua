@@ -88,6 +88,7 @@ local CONFIG = {
 	-- at 2.95 thirds of a turn a second.
 	barrel_delay = 0.15,
 	load_sound_delay = 0.22,
+	remote_second_load = 0.95, -- seconds after another player starts aiming that the second rocket is loaded (RocketMultiFire.FireRate)
 	plunger_sound_delay = 0.5, -- (the shell and the feed move then, at plunge_speed times the speed of the animation)
 	plunge_speed = 0.8,
 	barrel_step = 120, -- degrees
@@ -127,6 +128,9 @@ for index, name in ipairs(animations.bones) do
 end
 
 local skin_api
+
+-- The sounds of another player's loading that are waiting for their time
+local remote_sounds = utils.delayed_events()
 
 -- What flies: { unit = the mesh, game_unit = the projectile's, projectile = its extension, ... }
 local visuals = {}
@@ -171,9 +175,12 @@ local function clear_visuals()
 	end
 
 	table.clear(visuals)
+	remote_sounds.clear()
 end
 
 local function update_visuals(dt)
+	remote_sounds.update(dt)
+
 	for i = #visuals, 1, -1 do
 		local visual = visuals[i]
 		local game_unit = visual.game_unit
@@ -600,7 +607,32 @@ mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil
 end
 
-mod.third_person_animation_filters[TEMPLATE_NAME] = function (event)
+-- What other players' loading and shots sound like. In UT everyone hears the load sound and the plunger sound a little after a rocket is
+-- loaded or fired. Here they are played where the player is, from the animation events the game sends over the network.
+local function remote_load_sounds(unit, delay)
+	local function still_there()
+		return Unit.alive(unit)
+	end
+
+	remote_sounds.schedule(delay + CONFIG.load_sound_delay, still_there, function ()
+		skin_api.play_sound_at("ut_rocket_load_3d", Unit.world_position(unit, 0))
+	end)
+	remote_sounds.schedule(delay + CONFIG.plunger_sound_delay, still_there, function ()
+		skin_api.play_sound_at("ut_rocket_plunger_3d", Unit.world_position(unit, 0))
+	end)
+end
+
+mod.third_person_animation_filters[TEMPLATE_NAME] = function (event, unit)
+	if unit and not utils.is_local_player_unit(unit) then
+		if event == "to_zoom" then
+			-- (the aiming starts the loading, and the second rocket is loaded a salvo's time after)
+			remote_load_sounds(unit, 0)
+			remote_load_sounds(unit, CONFIG.remote_second_load)
+		elseif event == "attack_shoot" or event == "attack_shoot_last" then
+			remote_load_sounds(unit, 0)
+		end
+	end
+
 	return string.find(event, "reload", 1, true) ~= nil
 end
 

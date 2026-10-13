@@ -876,36 +876,7 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 	end
 end
 
--- Returns the projectiles in flight: this machine's own and the copies of other players' (like find_ball_hit_by_beam in shock_rifle.lua).
--- Each entry is { unit, extension, own }.
-local function flying_projectiles()
-	local entity = Managers.state and Managers.state.entity
-	local projectile_system = entity and entity:system("projectile_system")
-
-	if not projectile_system then
-		return nil
-	end
-
-	local projectiles = {}
-
-	for _, units in pairs(projectile_system.player_projectile_units) do
-		for unit in pairs(units) do
-			local extension = Unit.alive(unit) and ScriptUnit.has_extension(unit, "projectile_system")
-
-			if extension and extension._current_action then
-				projectiles[#projectiles + 1] = { unit = unit, extension = extension, own = true }
-			end
-		end
-	end
-
-	for unit, extension in pairs(entity:get_entities("PlayerProjectileHuskExtension")) do
-		if Unit.alive(unit) and extension._current_action then
-			projectiles[#projectiles + 1] = { unit = unit, extension = extension, own = false }
-		end
-	end
-
-	return projectiles
-end
+local flying_projectiles = utils.flying_projectiles
 
 -- Hurts the player if a bounced chunk of theirs hits them.
 local function hit_owner(chunk)

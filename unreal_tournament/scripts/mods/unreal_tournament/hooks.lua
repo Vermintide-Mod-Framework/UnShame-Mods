@@ -380,14 +380,15 @@ end)
 
 -- The same for the character's third person unit. Its animation events come over the network from the player holding the weapon, and
 -- sounds inside an animation (like reloading) are heard from every player's unit.
---   mod.third_person_animation_filters[template] = function (event_name)
+--   mod.third_person_animation_filters[template] = function (event_name, unit)
+-- (a filter sees the events of every character that wields the weapon, so it can also play what they mean for the others)
 mod.third_person_animation_filters = {}
 
 mod:hook(AnimationSystem, "anim_event", function (func, self, unit, event_name, ...)
 	local template_name = utils.wielded_template_name(unit)
 	local filter = template_name and mod.third_person_animation_filters[template_name]
 
-	if filter and filter(event_name) then
+	if filter and filter(event_name, unit) then
 		return
 	end
 

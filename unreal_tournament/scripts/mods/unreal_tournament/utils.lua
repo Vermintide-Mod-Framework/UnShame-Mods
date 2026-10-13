@@ -310,6 +310,36 @@ function utils.as_vector(position)
 	return position:unbox()
 end
 
+-- The projectiles in flight, this machine's own and the copies of other players': a list of { unit, extension, own }.
+function utils.flying_projectiles()
+	local entity = Managers.state and Managers.state.entity
+	local projectile_system = entity and entity:system("projectile_system")
+
+	if not projectile_system then
+		return nil
+	end
+
+	local projectiles = {}
+
+	for _, units in pairs(projectile_system.player_projectile_units) do
+		for unit in pairs(units) do
+			local extension = Unit.alive(unit) and ScriptUnit.has_extension(unit, "projectile_system")
+
+			if extension and extension._current_action then
+				projectiles[#projectiles + 1] = { unit = unit, extension = extension, own = true }
+			end
+		end
+	end
+
+	for unit, extension in pairs(entity:get_entities("PlayerProjectileHuskExtension")) do
+		if Unit.alive(unit) and extension._current_action then
+			projectiles[#projectiles + 1] = { unit = unit, extension = extension, own = false }
+		end
+	end
+
+	return projectiles
+end
+
 -- The enemies (units with a breed that isn't a player's) that are in a sphere, the unit as the key
 function utils.units_in_radius(world, position, radius)
 	position = utils.as_vector(position)

@@ -46,6 +46,7 @@ local CONFIG = {
 	rocket_speed = 2200, -- RocketProj.Speed 1350 uu/s is 27 m/s by size and 12 m/s by run speed, this is in between (the action's unit is m/s * 100)
 	rocket_lifetime = 8, -- seconds
 	rocket_radius = 0.1, -- m, how easily a rocket hits things
+	projectile_touch_radius = 0.5, -- m, how close a Flak shell or a Shock ball has to be for the rocket to explode on it (as the shell's)
 	-- Where a rocket starts, from the camera: forward, to the right and down (UT's RocketFire.ProjSpawnOffset is 25, 6 and -6 units, 0.5, 0.12
 	-- and 0.12 m: the launcher is drawn further out here, so they are more, to start at its muzzle)
 	start_forward = 1.0, -- m
@@ -286,6 +287,8 @@ local function restore_crossbow()
 	actions.action_one.zoomed_shot = original.action_one_zoomed_shot
 	actions.action_one[SPIRAL_ACTION] = nil
 	actions.action_two.default = original.action_two_default
+	template.attack_meta_data.ut_rocket = nil
+	template.attack_meta_data.can_charge_shot = original.can_charge_shot
 
 	for key, value in pairs(original.ammo_data) do
 		template.ammo_data[key] = value
@@ -326,6 +329,7 @@ local function apply_rocket_launcher()
 		action_one_default = actions.action_one.default,
 		action_one_zoomed_shot = actions.action_one.zoomed_shot,
 		action_two_default = actions.action_two.default,
+		can_charge_shot = template.attack_meta_data.can_charge_shot,
 		ammo_data = {
 			reload_time = template.ammo_data.reload_time,
 			ammo_immediately_available = template.ammo_data.ammo_immediately_available,
@@ -336,6 +340,11 @@ local function apply_rocket_launcher()
 	}
 
 	saved.original = original
+
+	-- (what tells the bot shooting, see bots.lua, that this is the Rocket Launcher: bots fire single rockets, the crossbow's charged shot
+	-- is the aiming, which loads rockets here)
+	template.attack_meta_data.ut_rocket = true
+	template.attack_meta_data.can_charge_shot = false
 
 	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
 	template.ammo_data.max_ammo = CONFIG.max_ammo
@@ -1177,7 +1186,38 @@ mod.enabled_callbacks[#mod.enabled_callbacks + 1] = apply_rocket_launcher
 mod.disabled_callbacks[#mod.disabled_callbacks + 1] = restore_crossbow
 mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_crossbow
 
+-- A rocket explodes when it touches a Flak shell or a Shock ball (RocketProj.ProcessTouch, their bProjTarget). The shell explodes
+-- too when a rocket gets near it, see flak_cannon.lua.
+local function detonate_on_projectiles()
+	local projectiles = utils.flying_projectiles()
+
+	if not projectiles or #projectiles == 0 then
+		return
+	end
+
+	for _, rocket in ipairs(projectiles) do
+		local extension = rocket.extension
+
+		if rocket.own and extension._current_action.ut_rocket and not extension._stop_impacts and not extension._ut_rocket_exploded then
+			local position = Unit.world_position(rocket.unit, 0)
+
+			for _, other in ipairs(projectiles) do
+				local action = other.extension._current_action
+				local other_position = Unit.world_position(other.unit, 0)
+
+				if other ~= rocket and (action.ut_flak_shell or action.ut_shock_ball) and not other.extension._stop_impacts and other_position and Vector3.distance(position, other_position) < CONFIG.projectile_touch_radius then
+					extension:do_aoe(ExplosionTemplates.ut_rocket_explosion, position, true)
+					extension:stop()
+
+					break
+				end
+			end
+		end
+	end
+end
+
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
+	detonate_on_projectiles()
 	update_blasts()
 	update_flocks(dt)
 	update_lock_on(dt)

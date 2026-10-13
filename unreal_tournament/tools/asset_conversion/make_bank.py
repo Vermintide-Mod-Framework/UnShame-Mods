@@ -71,6 +71,7 @@ WEAPONS = {
         ('ut_rocket_select', SOUNDS + 'SwitchToRocketLauncher', False, -24, 0),
         ('ut_rocket_fire_3d', SOUNDS + 'BRocketLauncherFire', True, -22, 40),
         ('ut_rocket_load_3d', SOUNDS + 'BRocketLauncherLoad', True, -26, 25),
+        ('ut_rocket_plunger_3d', SOUNDS + 'RocketLauncherPlunger', True, -26, 25),
         ('ut_rocket_projectile_3d', SOUNDS + 'RocketLauncherProjectile', True, -30, 25),
         ('ut_rocket_explosion_3d', SOUNDS + 'BExplosion3', True, -20, 50),
     ],
