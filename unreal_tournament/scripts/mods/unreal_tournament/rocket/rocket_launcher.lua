@@ -24,7 +24,7 @@ mod.items.register("rocket_launcher", {
 	name = "UT2004 Rocket Launcher",
 	type_name = "Rocket Launcher",
 	description = "The Trident Tri-barrel Rocket Launcher is extremely popular among competitors who enjoy more bang for their buck. The rotating rear-loading barrel design allows for both single- and multi-warhead launches, letting you place up to three dumbfire rockets on target.",
-	keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_charged_attack" },
+	keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_charged_attack", "weapon_keyword_armour_piercing" },
 	icon = "ut_rocket_launcher_icon",
 	icon_package = "resource_packages/unreal_tournament/icons",
 	icon_materials = "ui/ut/rocket_launcher_icon",
@@ -296,9 +296,9 @@ local function apply_rocket_launcher()
 	template.weapon_diagram = {
 		light_attack = {
 			[DamageTypes.ARMOR_PIERCING] = 4,
-			[DamageTypes.CLEAVE] = 5,
+			[DamageTypes.CLEAVE] = 6,
 			[DamageTypes.SPEED] = 2,
-			[DamageTypes.STAGGER] = 5,
+			[DamageTypes.STAGGER] = 6,
 			[DamageTypes.DAMAGE] = 6,
 		},
 		heavy_attack = {
