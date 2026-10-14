@@ -194,7 +194,7 @@ skin_api = mod.weapon_skin.new({
 		grip_right = 5,
 		grip_forward = -12.5,
 		grip_up = 2,
-		yaw = -90,
+		yaw = 90,
 		pitch = 0,
 		roll = 0,
 		-- In the world the rifle is held as the pistol is: it is turned as the pistol's unit is, with the barrel along the unit's y.
