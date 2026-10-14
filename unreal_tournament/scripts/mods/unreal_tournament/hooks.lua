@@ -261,6 +261,13 @@ mod:hook_safe(ActionCharge, "client_owner_post_update", function (self, dt, t, w
 	end
 end)
 
+-- Development command: prints, for each explosion that can throw the player, how far it was from them and whether they were thrown.
+mod:command("push_debug", "- prints what each explosion that throws a player did to the player on this machine", function ()
+	mod.push_debug = not mod.push_debug
+
+	mod:echo("push debug %s", mod.push_debug and "on" or "off")
+end)
+
 -- Runs when any charge action starts or ends, for the player or bot that owns it. The game's own venting of overcharge is a charge
 -- action too.
 --   mod.charge_start_callbacks[name] = function (action_charge, new_action)
