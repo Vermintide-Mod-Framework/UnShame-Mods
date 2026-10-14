@@ -43,13 +43,12 @@ local CONFIG = {
 	goop_frame_rate = 30,
 	-- The light of a glob of volume 1 (the light is steady, and bigger for a bigger glob). Its color is UT's LightHue 82, a pale green.
 	light_color = { 0.3, 1, 0.3 },
-	light_falloff = 0.7, -- m
-	light_intensity = 0.2,
-	-- The goop is see through and glows. UT draws it as FB_Translucent, which adds its color to the screen. goop_additive is how much of it is added
-	-- (1) and how much is blended by goop_opacity (0). The color of the texture is made brighter by goop_brightness.
-	goop_opacity = 0.8,
-	goop_additive = 0.5,
-	goop_brightness = 0.8,
+	light_falloff = 0.5, -- m
+	light_intensity = 0.08,
+	-- The goop is lit by the level and glows by itself (see fx_goop in make_combo_materials.py). goop_opacity is how much of it there is (1 is
+	-- solid, as it is in UT), and goop_brightness multiplies its color.
+	goop_opacity = 1,
+	goop_brightness = 1,
 	goop_animations = {
 		drip = { start = 40, count = 39, speed = 0.66 },
 		flying = { start = 3, count = 11 },
@@ -418,7 +417,6 @@ end
 -- to show for the time since it started. follow keeps it where it is and ends it when it returns nothing.
 local function goop_mesh(volume, rotation, follow, frame)
 	particles.mesh({
-		additive = CONFIG.goop_additive,
 		angle = 0,
 		brightness = function ()
 			return 1
