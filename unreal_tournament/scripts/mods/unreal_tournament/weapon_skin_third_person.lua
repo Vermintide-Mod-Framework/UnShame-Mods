@@ -18,7 +18,9 @@ local mod = get_mod("unreal_tournament")
 --   follow_game_unit: the mesh moves with the game's unit of the weapon, which the game animates with the arms. The mesh is turned
 --       from the game's unit by the way the unit is turned after follow_calibrate_seconds of being held. With follow_game_unit = 2
 --       there is no calibration: pitch, roll and yaw are relative to the unit's own axes. That is for a weapon whose unit is still
---       moving into place when it would be calibrated, such as the Repeating Crossbow.
+--       moving into place when it would be calibrated, such as the Repeating Crossbow. With follow_game_unit = 3 the mesh's barrel (its
+--       -x, its top is +z) is turned to the way the unit's barrel runs, which is read from the unit's box, and pitch, roll and yaw
+--       turn it from there.
 --   fade_mesh, fade_material: a material with a "fade" variable, for a material that the engine's near-camera fade doesn't reach.
 --
 -- The game's unit (the staff, the blunderbuss and so on) stays, hidden. The mesh is linked to the same node of the character, and it
@@ -87,6 +89,37 @@ local function new(def, looks)
 				-- The mesh is turned from the game's unit by the pitch, roll and yaw alone, which are in the unit's own axes. There is
 				-- no calibration.
 				wanted = staff_rotation
+			elseif config.follow_game_unit == 3 then
+				-- The mesh's barrel (along its -x, with its top along +z) is turned to the way the game's unit's barrel runs, which is
+				-- found from the unit's box: its barrel is its longest side and its top is the next longest, and the unit's origin is
+				-- in the hand, so the middle of the box is toward the barrel and toward the top. The pitch, roll and yaw turn the
+				-- mesh from there.
+				if not entry.barrel_frame then
+					local box_pose, radius = Unit.box(entry.staff)
+					local local_pose = Matrix4x4.multiply(box_pose, Matrix4x4.inverse(Unit.world_pose(entry.staff, 0)))
+					local middle = Matrix4x4.translation(local_pose)
+					local axes = { Matrix4x4.x(local_pose), Matrix4x4.y(local_pose), Matrix4x4.z(local_pose) }
+					local sizes = { Vector3.x(radius), Vector3.y(radius), Vector3.z(radius) }
+					local order = { 1, 2, 3 }
+
+					table.sort(order, function (a, b)
+						return sizes[a] > sizes[b]
+					end)
+
+					local function toward_middle(axis)
+						return Vector3.dot(middle, axis) < 0 and -axis or axis
+					end
+
+					local barrel = toward_middle(axes[order[1]])
+					local top = toward_middle(axes[order[2]])
+
+					top = Vector3.normalize(top - barrel * Vector3.dot(top, barrel))
+
+					-- Quaternion.look has its y axis along the first vector and its z axis toward the second. The mesh's -x is turned to y.
+					entry.barrel_frame = QuaternionBox(Quaternion.multiply(Quaternion.look(barrel, top), Quaternion.from_euler_angles_xyz(0, 0, -90)))
+				end
+
+				wanted = Quaternion.multiply(staff_rotation, entry.barrel_frame:unbox())
 			elseif not entry.follow_offset and t - entry.attached_at >= (config.follow_calibrate_seconds or 1) then
 				entry.follow_offset = QuaternionBox(Quaternion.multiply(Quaternion.inverse(staff_rotation), wanted))
 			end
@@ -384,7 +417,7 @@ local function new(def, looks)
 		end
 
 		-- With follow_game_unit 2, the mesh is placed relative to the previewer's unit, as it is relative to the game's unit in the world.
-		if entry.config.follow_game_unit == 2 then
+		if entry.config.follow_game_unit == 2 or entry.config.follow_game_unit == 3 then
 			entry.staff = nil
 
 			for _, game_unit in ipairs(game_units) do
