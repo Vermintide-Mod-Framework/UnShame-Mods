@@ -37,46 +37,12 @@ local CONFIG = {
 	respawn_timeout = 30, -- seconds
 	-- How long an enemy may take to spawn. Its packages may have to be loaded.
 	spawn_timeout = 30, -- seconds
-	-- The files of a remote driver (see poll_command_file)
-	command_file = "ut_test_command.txt",
-	result_file = "ut_test_result.txt",
-	command_poll_interval = 0.5, -- seconds
 }
 
 local RESTORE_SETTING = "test_restore"
 
 local function log(text, ...)
 	mod:echo("[ut_test] " .. text, ...)
-end
-
--- The commands and the results of a remote driver, when the mod has a way to read and write files (see poll_command_file)
-local result_lines = {}
-
-local function result(text, ...)
-	result_lines[#result_lines + 1] = string.format(text, ...)
-end
-
-local function write_result_file()
-	local ok_io, io_lib = pcall(function ()
-		return rawget(_G, "io")
-	end)
-
-	if not ok_io or not io_lib or not io_lib.open then
-		return
-	end
-
-	local path = runner.file_directory and runner.file_directory .. CONFIG.result_file
-
-	if not path then
-		return
-	end
-
-	local file = io_lib.open(path, "w")
-
-	if file then
-		file:write(table.concat(result_lines, "\n"), "\n")
-		file:close()
-	end
 end
 
 -- The player
@@ -510,7 +476,6 @@ local function run_suite(suite, only_career)
 
 		if not setup_character(t, suite, career) then
 			summary.failed = summary.failed + 1
-			result("FAIL %s %s: setup", suite.name, career)
 		else
 			for _, scenario_definition in ipairs(suite.scenarios) do
 				local scenario = {
@@ -544,14 +509,11 @@ local function run_suite(suite, only_career)
 				if scenario.skipped then
 					summary.skipped = summary.skipped + 1
 					log("SKIP %s: %s", scenario.name, scenario.skipped)
-					result("SKIP %s: %s", scenario.name, scenario.skipped)
 				elseif #scenario.failures > 0 then
 					summary.failed = summary.failed + 1
-					result("FAIL %s: %s", scenario.name, table.concat(scenario.failures, "; "))
 				else
 					summary.passed = summary.passed + 1
 					log("PASS %s", scenario.name)
-					result("PASS %s", scenario.name)
 				end
 
 				if not player_unit() then
@@ -574,9 +536,6 @@ local function run_suite(suite, only_career)
 	end
 
 	log("%s: %d passed, %d failed, %d skipped", suite.name, summary.passed, summary.failed, summary.skipped)
-	result("SUMMARY %s: %d passed, %d failed, %d skipped", suite.name, summary.passed, summary.failed, summary.skipped)
-	result("DONE")
-	write_result_file()
 end
 
 -- Starting and stopping
@@ -594,8 +553,6 @@ function runner.start(suite_name, career)
 
 		return
 	end
-
-	table.clear(result_lines)
 
 	run = {
 		co = coroutine.create(function ()
@@ -629,9 +586,6 @@ local function step(dt)
 
 	if run.error then
 		log("the suite broke: %s", tostring(run.error))
-		result("ERROR %s", tostring(run.error))
-		result("DONE")
-		write_result_file()
 		runner.restore_input()
 		run = nil
 
@@ -708,72 +662,9 @@ local function check_pending_restore(dt)
 	end
 end
 
--- A driver outside the game can start a suite by writing its command to a file that the mod reads, and reads the results from another.
--- This only works if the game's Lua has the io library, which nothing else of the mod uses. The files are in the game's folder in the
--- user's AppData (Fatshark\Vermintide 2).
-local command_elapsed = 0
-
-local function poll_command_file(dt)
-	command_elapsed = command_elapsed + dt
-
-	if command_elapsed < CONFIG.command_poll_interval then
-		return
-	end
-
-	command_elapsed = 0
-
-	local ok_io, io_lib = pcall(function ()
-		return rawget(_G, "io")
-	end)
-
-	if not ok_io or not io_lib or not io_lib.open then
-		return
-	end
-
-	if not runner.file_directory then
-		local appdata = os and os.getenv and os.getenv("APPDATA")
-
-		if not appdata then
-			return
-		end
-
-		runner.file_directory = appdata .. "\\Fatshark\\Vermintide 2\\"
-	end
-
-	local file = io_lib.open(runner.file_directory .. CONFIG.command_file, "r")
-
-	if not file then
-		return
-	end
-
-	local line = file:read("*l")
-
-	file:close()
-	os.remove(runner.file_directory .. CONFIG.command_file)
-
-	if not line or line == "" then
-		return
-	end
-
-	local command, argument, career = string.match(line, "^(%S+)%s*(%S*)%s*(%S*)")
-
-	if command == "run" and argument ~= "" then
-		runner.start(argument, career ~= "" and career or nil)
-	elseif command == "stop" then
-		runner.stop()
-	end
-end
-
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	step(dt)
 	check_pending_restore(dt)
-
-	if not runner.poll_failed then
-		local ok = pcall(poll_command_file, dt)
-
-		-- Without the files, nothing more is tried
-		runner.poll_failed = not ok
-	end
 end
 
 mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
