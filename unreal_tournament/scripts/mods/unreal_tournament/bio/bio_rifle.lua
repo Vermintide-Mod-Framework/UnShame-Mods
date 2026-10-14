@@ -562,7 +562,7 @@ local function add_goop(action, state)
 end
 
 -- BioChargedFire.Hold: one unit of goop at once, and then one every GoopUpRate seconds.
-mod.charge_start_callbacks.bio = function (action, new_action, t, chain_action_data, power_level)
+mod.charge_start_callbacks.bio = function (action, new_action)
 	if new_action.ut_charge_callback ~= "bio" then
 		return
 	end
@@ -570,8 +570,6 @@ mod.charge_start_callbacks.bio = function (action, new_action, t, chain_action_d
 	local state = {
 		done = false,
 		load = 0,
-		-- The power level of the charge, which a glob that is released by switching weapons is fired with.
-		power_level = power_level,
 		timer = 0,
 	}
 
@@ -608,14 +606,19 @@ local function take_goop_load(owner_unit)
 	return math.clamp(load, 1, CONFIG.max_goop_load)
 end
 
--- Switching to another weapon while the goop is loading releases it: the glob is fired as if the button was let go, as it would not be
--- used otherwise (the ammo for it was used as it was loaded). The reason for a release is a new action (the shot's), so this is only for
--- the weapon being switched.
-local release_load
-
+-- Switching to another weapon while the goop is loading gives the ammo back, as the glob is not fired. (The ammo for the goop was used as it
+-- was loaded.) Releasing the button is not this: it starts the shot's action, and the reason is a new action.
 mod.charge_finish_callbacks.bio = function (action, reason)
-	if reason == "weapon_wielded" and action.current_action and action.current_action.ut_charge_callback == "bio" then
-		release_load(action)
+	if reason ~= "weapon_wielded" or not action.current_action or action.current_action.ut_charge_callback ~= "bio" then
+		return
+	end
+
+	local state = goop_loads[action.owner_unit]
+
+	if state and state.load > 0 and action.ammo_extension then
+		action.ammo_extension:add_ammo(state.load)
+
+		state.load = 0
 	end
 end
 
@@ -658,28 +661,6 @@ mod.spawn_projectile_callbacks[TEMPLATE_NAME] = function (func, owner_unit, posi
 	end
 
 	return func(owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, is_critical_strike, power_level, ...)
-end
-
--- Fires the glob of the goop that is loaded, from where the player looks. It is the shot of the charged action, which the spawn
--- callback above gives the loaded goop, the start position and the speed.
-release_load = function (action)
-	local owner_unit = action.owner_unit
-	local state = goop_loads[owner_unit]
-	local template = rawget(Weapons, TEMPLATE_NAME)
-	local shot = template and template.actions.action_one.shoot_charged
-
-	if not state or state.load <= 0 or not state.power_level or not shot then
-		return
-	end
-
-	local first_person_extension = action.first_person_extension
-	local rotation = first_person_extension:current_rotation()
-	local position = first_person_extension:current_position()
-	local angle = ActionUtils.pitch_from_rotation(rotation)
-	local target_vector = Vector3.normalize(Vector3.flat(Quaternion.forward(rotation)))
-	local lookup_data = shot.lookup_data
-
-	ActionUtils.spawn_player_projectile(owner_unit, position, rotation, 0, angle, target_vector, shot.speed, action.item_name, lookup_data.item_template_name, lookup_data.action_name, lookup_data.sub_action_name, false, state.power_level)
 end
 
 -- Spawns a glob of the given level, moving at the given velocity (in m/s). It is used for the small globs and for the glob that drips.
@@ -997,6 +978,39 @@ mod.any_explosion_callbacks.bio = function (explosion_template, position, scale)
 			detonate(glob, t)
 		end
 	end
+end
+
+-- A beam or a bolt that passes through a glob that has landed sets it off too (the shock beam, and the link gun's bolts and beam: their damage
+-- types have bDetonatesGoop in UT). This is called with the two ends of what moved: the beam, or the part of the path of a bolt in the
+-- last frame. Only the host does it, as it has the globs.
+local function distance_to_segment(point, from, to)
+	local along = to - from
+	local length_squared = Vector3.dot(along, along)
+	local share = length_squared > 0.0001 and math.clamp(Vector3.dot(point - from, along) / length_squared, 0, 1) or 0
+
+	return Vector3.distance(point, from + along * share)
+end
+
+mod.bio_goop.detonate_segment = function (from, to)
+	if #stuck == 0 or not Managers.player.is_server then
+		return
+	end
+
+	local t = Managers.time:time("game")
+
+	if not t then
+		return
+	end
+
+	for _, glob in ipairs(stuck) do
+		if distance_to_segment(glob.position:unbox(), from, to) <= glob_radius(glob.level) then
+			detonate(glob, t)
+		end
+	end
+end
+
+mod.shock_beam_callbacks.bio = function (owner_unit, start_position, end_position)
+	mod.bio_goop.detonate_segment(start_position, end_position)
 end
 
 -- Globs that hit something

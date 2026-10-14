@@ -253,14 +253,14 @@ end)
 
 -- Runs when any charge action starts or ends, for the player or bot that owns it. The game's own venting of overcharge is a charge
 -- action too.
---   mod.charge_start_callbacks[name] = function (action_charge, new_action, t, chain_action_data, power_level)
+--   mod.charge_start_callbacks[name] = function (action_charge, new_action)
 --   mod.charge_finish_callbacks[name] = function (action_charge, reason)
 mod.charge_start_callbacks = {}
 mod.charge_finish_callbacks = {}
 
-mod:hook_safe(ActionCharge, "client_owner_start_action", function (self, new_action, t, chain_action_data, power_level)
+mod:hook_safe(ActionCharge, "client_owner_start_action", function (self, new_action)
 	for _, callback in pairs(mod.charge_start_callbacks) do
-		callback(self, new_action, t, chain_action_data, power_level)
+		callback(self, new_action)
 	end
 end)
 
@@ -335,7 +335,7 @@ end)
 -- Shots and aiming of the Flak Cannon and the Rocket Launcher:
 --   mod.shotgun_start_callbacks[name] = function (action_shotgun, new_action)
 --   mod.crossbow_start_callbacks[name] = function (action_crossbow, new_action, t)
---   mod.aim_start_callbacks[name] = function (action_aim, new_action, t, chain_action_data, power_level)
+--   mod.aim_start_callbacks[name] = function (action_aim, new_action, t)
 --   mod.aim_finish_callbacks[name] = function (action_aim, reason)
 --   mod.rocket_load_callbacks[name] = function (owner_unit, loaded)
 --       The Rocket Launcher loaded another rocket. loaded is how many are loaded now. Runs for the player who loads.
@@ -360,9 +360,9 @@ mod:hook_safe(ActionCrossbow, "client_owner_start_action", function (self, new_a
 	end
 end)
 
-mod:hook_safe(ActionAim, "client_owner_start_action", function (self, new_action, t, chain_action_data, power_level)
+mod:hook_safe(ActionAim, "client_owner_start_action", function (self, new_action, t)
 	for _, callback in pairs(mod.aim_start_callbacks) do
-		callback(self, new_action, t, chain_action_data, power_level)
+		callback(self, new_action, t)
 	end
 end)
 

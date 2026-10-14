@@ -383,6 +383,11 @@ mod.init_callbacks.link_bolt = function (extension)
 	bolts[#bolts + 1] = extension._projectile_unit
 end
 
+-- Where each bolt was a frame ago, to tell the Bio Rifle's goop which way it went (bolts set off goop, as they do in UT).
+local last_bolt_positions = setmetatable({}, {
+	__mode = "k",
+})
+
 local function update_bolts()
 	for i = #bolts, 1, -1 do
 		local unit = bolts[i]
@@ -391,6 +396,15 @@ local function update_bolts()
 		if not locomotion_extension or locomotion_extension.stopped then
 			table.remove(bolts, i)
 		else
+			local position = Unit.world_position(unit, 0)
+			local last_position = last_bolt_positions[unit]
+
+			if last_position and mod.bio_goop then
+				mod.bio_goop.detonate_segment(last_position:unbox(), position)
+			end
+
+			last_bolt_positions[unit] = Vector3Box(position)
+
 			local time_lived = locomotion_extension.time_lived or 0
 			local speed = math.min(CONFIG.bolt_speed + CONFIG.bolt_acceleration * time_lived, CONFIG.bolt_max_speed) * 100
 			local old_speed = locomotion_extension.speed
@@ -2413,9 +2427,21 @@ local function beam_curve(points, start_position, end_position, aim, weight, lag
 	return segments + 1
 end
 
+-- The beam sets off the Bio Rifle's goop along its length (the link gun's beam has bDetonatesGoop in UT).
+local function beam_sets_off_goop(points, count)
+	local detonate = mod.bio_goop and mod.bio_goop.detonate_segment
+
+	if detonate then
+		for i = 1, count - 1 do
+			detonate(points[i], points[i + 1])
+		end
+	end
+end
+
 local function draw_beam(state, start_position, rotation, end_position, weight, lag)
 	local count = beam_curve(beam_points, start_position, end_position, Quaternion.forward(rotation), weight, lag, CONFIG.beam_segment_length)
 
+	beam_sets_off_goop(beam_points, count)
 	mod.link_beam_callbacks.draw(state, beam_points, count)
 end
 
@@ -3606,6 +3632,7 @@ local function draw_remote_beams()
 			-- The beam is curved the same way the holder's is.
 			local count = beam_curve(remote_points, start_position, shown, Vector3.normalize(shown_aim), beam.weight, shown_lag, CONFIG.beam_segment_length)
 
+			beam_sets_off_goop(remote_points, count)
 			mod.link_beam_callbacks.draw(beam, remote_points, count)
 		end
 	end

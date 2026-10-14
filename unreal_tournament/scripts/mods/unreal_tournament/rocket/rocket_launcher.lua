@@ -427,7 +427,7 @@ local load_start_t = setmetatable({}, {
 -- The number of rockets loaded so far while loading, for each unit. It is used to tell when another rocket gets loaded.
 local loading = {}
 
-mod.aim_start_callbacks.rocket = function (self, new_action, t, chain_action_data, power_level)
+mod.aim_start_callbacks.rocket = function (self, new_action, t)
 	if new_action.ut_rocket_aim then
 		local ammo = self.ammo_extension and self.ammo_extension:current_ammo() or CONFIG.max_rockets
 
@@ -447,8 +447,6 @@ mod.aim_start_callbacks.rocket = function (self, new_action, t, chain_action_dat
 			capacity = math.min(CONFIG.max_rockets, ammo),
 			first_person_unit = self.first_person_unit,
 			loaded = 1,
-			-- The power level the salvo is fired with when the weapon is switched away (see release_salvo).
-			power_level = power_level,
 			salvo_chains = salvo_chains,
 			spiral = false,
 			start_t = t,
@@ -456,59 +454,9 @@ mod.aim_start_callbacks.rocket = function (self, new_action, t, chain_action_dat
 	end
 end
 
--- Fires the rockets that are loaded, in a line, as the loaded salvo is fired. It is for switching to another weapon while loading, which
--- would lose them otherwise (UT fires them). It is what ActionCrossbow does for the salvo.
-local function release_salvo(self, state)
-	local template = rawget(Weapons, TEMPLATE_NAME)
-	local action = template and template.actions.action_one.zoomed_shot
-	local lookup_data = action and action.lookup_data
-	local ammo_extension = self.ammo_extension
-	local held = Managers.time:time("game") - (load_start_t[self.owner_unit] or state.start_t)
-	local count = math.clamp(1 + math.floor(held / CONFIG.load_interval), 1, CONFIG.max_rockets)
-
-	if ammo_extension then
-		count = math.min(count, ammo_extension:current_ammo())
-	end
-
-	if not lookup_data or not state.power_level or count < 1 then
-		return
-	end
-
-	local owner_unit = self.owner_unit
-	local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
-	local position, rotation = first_person_extension:get_projectile_start_position_rotation()
-	local spread_extension = self.spread_extension
-
-	for shot = 1, count do
-		local fire_rotation = rotation
-
-		if spread_extension and shot > 1 then
-			local horizontal_angle = math.pi * (shot % 2 + 0.5)
-			local offset = math.round((shot - 1) / 2, 0)
-
-			fire_rotation = spread_extension:combine_spread_rotations(horizontal_angle, action.multi_projectile_spread * offset, rotation)
-		end
-
-		local angle = ActionUtils.pitch_from_rotation(fire_rotation)
-		local target_vector = Vector3.normalize(Vector3.flat(Quaternion.forward(fire_rotation)))
-
-		ActionUtils.spawn_player_projectile(owner_unit, position, fire_rotation, 0, angle, target_vector, action.speed, self.item_name, lookup_data.item_template_name, lookup_data.action_name, lookup_data.sub_action_name, false, state.power_level)
-
-		if ammo_extension then
-			ammo_extension:use_ammo(action.ammo_usage)
-		end
-	end
-end
-
 mod.aim_finish_callbacks.rocket = function (self, reason)
 	if self.current_action and self.current_action.ut_rocket_aim then
-		local state = loading[self.owner_unit]
-
 		loading[self.owner_unit] = nil
-
-		if reason == "weapon_wielded" and state then
-			release_salvo(self, state)
-		end
 
 		-- Leaving the aiming for another action, such as a reload or the salvo, does not mean the button was released. The
 		-- button has to be released before aiming again, or the aiming would start again at the end of the reload.
