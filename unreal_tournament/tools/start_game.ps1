@@ -105,5 +105,14 @@ if (-not $ready) {
 
 # The Keep has to finish loading
 Start-Sleep -Seconds 15
+
+# The Keep opens the hero selection the first time. Confirm closes it, as the log says whether it is open.
+$text = Read-Shared (Get-NewLog).FullName
+
+if ($text.LastIndexOf("[GameModeInn] Start menu opened") -gt $text.LastIndexOf("[GameModeInn] Start menu closed")) {
+    & (Join-Path $PSScriptRoot "game_input.ps1") -Click "960,1018"
+    Start-Sleep -Seconds 2
+}
+
 Write-Host "The game is in the Keep."
 exit 0

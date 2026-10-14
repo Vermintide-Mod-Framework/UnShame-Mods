@@ -14,7 +14,7 @@ needs its own copy from a base of that hero, because the animations, units and a
 | Rocket Launcher | Repeating Crossbow (`wh_crossbow_repeater`) | Zealot, Bounty Hunter, Captain | none | done |
 | Link Gun | open, see below | all four Kerillian careers | Deepwood Staff: woods | on the Deepwood Staff, Sister of the Thorn only |
 | Shield Gun | six melee bases, see below | everyone | see below | not started |
-| Lightning Gun | Handgun (`es_handgun`, `dr_handgun`) | Mercenary, Huntsman, Foot Knight, Ironbreaker, Ranger | none | not started |
+| Lightning Gun | Handgun (`es_handgun`, `dr_handgun`) | Mercenary, Huntsman, Foot Knight, Ironbreaker, Ranger | none | done (third person, inspect and bots not yet checked against UT) |
 | Assault Rifle (akimbo) | Brace of Pistols (`wh_brace_of_pistols`) or Repeating Pistols (`wh_repeating_pistols`); Drakefire Pistols (`dr_drake_pistol`) | Zealot, Bounty Hunter, Captain, Ironbreaker | none | not started |
 | Minigun | Repeater: `es_repeating_handgun`; `wh_repeating_pistols` or `wh_crossbow_repeater` | Mercenary, Huntsman, Foot Knight, Zealot, Bounty Hunter, Captain | none | not started |
 | Redeemer | Trollhammer Torpedo (`dr_deus_01`) | Ironbreaker | grass | not started |
