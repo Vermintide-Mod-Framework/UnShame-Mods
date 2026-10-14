@@ -79,8 +79,7 @@ while ((Get-Date) -lt $deadline -and -not $ready) {
     if ($log) {
         $text = Read-Shared $log.FullName
 
-        # The Keep is playable when the game says it has actually started, which comes a few seconds after the state is entered
-        if ($text -match "StateInGameRunning:_game_actually_starts\(\)") {
+        if ($text -match "\[Gamestate\] Enter StateIngame") {
             $ready = $true
         } elseif ($menuStep -eq 0 -and $text -match "StateTitleScreenInitNetwork") {
             # The main menu is up. Start Game is chosen, and then Adventure, which loads the Keep.
@@ -100,6 +99,7 @@ if (-not $ready) {
     exit 2
 }
 
+# The Keep has to finish loading
 Start-Sleep -Seconds 15
 Write-Host "The game is in the Keep."
 exit 0
