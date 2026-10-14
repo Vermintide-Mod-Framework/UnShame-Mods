@@ -55,10 +55,11 @@ local CONFIG = {
 	start_forward = 0.8, -- m
 	start_right = 0.25, -- m
 	start_down = 0.15, -- m
-	-- The view shakes when a glob is fired (ShakeRotMag 70 for BioFire and 100 for BioChargedFire, which also moves the view back). The
-	-- game's shakes are a noise of an amplitude over a time in seconds. UT's units do not carry over, so these are set by eye.
-	shake_primary = { amplitude = 0.08, duration = 0.3 },
-	shake_charged = { amplitude = 0.12, duration = 0.4 },
+	-- The view shakes when a glob is fired. UT turns the view by ShakeRotMag (70 for BioFire, 100 for BioChargedFire, in units of 360 /
+	-- 65536 degrees) for ShakeRotTime seconds (1.8 and 2), less and less. This uses the game's own shake, which turns the view up and down
+	-- and sideways by a noise, and fades it out. (UT also rolls the view and moves it, which the game's shake does not do.)
+	shake_primary = { degrees = 70 * 360 / 65536, seconds = 1.8 },
+	shake_charged = { degrees = 100 * 360 / 65536, seconds = 2 },
 	-- BioChargedFire: GoopUpRate, MaxGoopLoad and FireRate
 	goop_up_rate = 0.25, -- seconds between two units of goop
 	max_goop_load = 10,
@@ -186,7 +187,7 @@ local function charged_speed_uu(level)
 	return CONFIG.glob_speed_uu * (0.4 + level) / (1.4 * level)
 end
 
--- The shakes are added to the game's, which has them by name.
+-- The shakes are added to the game's, which has them by name. The shake starts at its full size and fades out over its time.
 local SHAKES = {
 	ut_bio_charged_fire = CONFIG.shake_charged,
 	ut_bio_fire = CONFIG.shake_primary,
@@ -194,10 +195,11 @@ local SHAKES = {
 
 for name, shake in pairs(SHAKES) do
 	CameraEffectSettings.shake[name] = {
-		amplitude = shake.amplitude,
-		duration = shake.duration,
-		octaves = 6,
-		persistance = 1,
+		amplitude = shake.degrees,
+		duration = 0,
+		fade_out = shake.seconds,
+		octaves = 2,
+		persistance = 0.5,
 	}
 end
 
