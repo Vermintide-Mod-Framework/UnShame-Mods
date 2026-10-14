@@ -201,7 +201,9 @@ IN_DECAL_BASE_COLOR_OPACITY = 'ad5e052f-d316-4a0f-8b79-53c38204d61b'
 IN_DECAL_MASK, IN_DECAL_MASK_THRESHOLD = '34259752-b962-4b65-92c3-903a57338519', '7a9306c6-95ae-4cdb-9fef-0eedacce4e83'
 decal = Graph()
 decal.no_variables = True
-decal.add('out', 'core/stingray_renderer/output_nodes/decal_base')
+# (the decal group 0, 1 and 2, not 3: the first person weapons are in the group 3, see units/ut/weapon_standard.material, and the decal does not
+# draw on them)
+decal.add('out', 'core/stingray_renderer/output_nodes/decal_base', ('4035efa3-d637-4d4d-865d-24653f90b7a3',))
 decal.add('uv', 'core/shader_nodes/decal_uv')
 texture(decal, 'splat', 'splat_map', 'uv')
 texture(decal, 'shape', 'shape_map', 'uv')
