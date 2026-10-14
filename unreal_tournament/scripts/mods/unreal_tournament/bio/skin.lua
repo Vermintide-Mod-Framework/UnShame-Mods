@@ -191,10 +191,11 @@ skin_api = mod.weapon_skin.new({
 		meters_per_unit = 0.012,
 		-- The mesh is 0.67 m long, so 0.4 m as it is held.
 		scale = 0.6,
-		-- Where the mesh is in the hand, in the mesh's own axes: the middle of the thin handle that points back and down from the body.
-		grip_right = -23,
+		-- Where the mesh is in the hand, in the mesh's own axes. The hand's node is not in the fist, so this is a point away from the thin handle
+		-- (which points back and down from the body) that puts the handle in the fist. It is placed by eye.
+		grip_right = -5,
 		grip_forward = 0,
-		grip_up = -7.5,
+		grip_up = -18,
 		yaw = 90,
 		pitch = 0,
 		roll = 0,
