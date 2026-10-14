@@ -43,7 +43,9 @@ Write-Host "Starting the game..."
 $env:SteamAppId = $SteamAppId
 $env:SteamGameId = $SteamAppId
 
-Start-Process -FilePath (Join-Path $GameFolder "binaries_dx12\vermintide2_dx12.exe") -ArgumentList @("-eac-untrusted", "--bundle-dir", "../bundle", "--ini", "settings", "--silent-mode") -WorkingDirectory (Join-Path $GameFolder "launcher")
+# The game's output goes to files of its own. Without that it holds the output of this script, and whatever reads that (a pipe to tail)
+# waits until the game is closed.
+Start-Process -FilePath (Join-Path $GameFolder "binaries_dx12\vermintide2_dx12.exe") -ArgumentList @("-eac-untrusted", "--bundle-dir", "../bundle", "--ini", "settings", "--silent-mode") -WorkingDirectory (Join-Path $GameFolder "launcher") -RedirectStandardOutput (Join-Path $env:TEMP "vermintide2_stdout.txt") -RedirectStandardError (Join-Path $env:TEMP "vermintide2_stderr.txt")
 
 # The log of this run is the first one that is newer than the start
 function Get-NewLog {

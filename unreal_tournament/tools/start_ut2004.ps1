@@ -51,7 +51,7 @@ if (Get-Game) {
 }
 
 Write-Host "Starting the game..."
-Start-Process -FilePath (Join-Path $GameFolder "System\UT2004.exe") -ArgumentList "${Map}?game=XGame.xDeathMatch?numbots=${Bots}" -WorkingDirectory (Join-Path $GameFolder "System")
+Start-Process -FilePath (Join-Path $GameFolder "System\UT2004.exe") -ArgumentList "${Map}?game=XGame.xDeathMatch?numbots=${Bots}" -WorkingDirectory (Join-Path $GameFolder "System") -RedirectStandardOutput (Join-Path $env:TEMP "ut2004_stdout.txt") -RedirectStandardError (Join-Path $env:TEMP "ut2004_stderr.txt")
 
 # The game shows a small window with its logo first. The game's own window is the one that is large.
 $game = $null

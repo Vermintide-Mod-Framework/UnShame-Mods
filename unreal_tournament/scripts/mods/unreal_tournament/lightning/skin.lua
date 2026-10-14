@@ -194,14 +194,32 @@ local function sparks(position, normal, count)
 	end
 end
 
-local skin_api
+-- Each template has a skin of its own, and a character holds the weapon of one of them. These find the skin that has the weapon in
+-- the player's own view, and the one whose mesh a character holds.
+local function first_person_api()
+	for _, api in ipairs(skin_apis) do
+		if api.state() then
+			return api
+		end
+	end
+end
+
+local function third_person_muzzle(character)
+	for _, api in ipairs(skin_apis) do
+		local muzzle = api.third_person.muzzle_position(character)
+
+		if muzzle then
+			return muzzle, api
+		end
+	end
+end
 
 -- Where the bolt of a character starts: the weapon in the player's own view, or the end of the weapon in the character's hand
 local function bolt_start(owner_unit)
 	if utils.is_local_player_unit(owner_unit) then
-		local in_third_person = skin_api.third_person.shows_weapon(owner_unit)
+		local api = first_person_api()
 
-		if not in_third_person then
+		if api and not api.third_person.shows_weapon(owner_unit) then
 			if lightning.zoom.zoomed then
 				local camera_position, camera_rotation = utils.camera_pose()
 
@@ -210,11 +228,11 @@ local function bolt_start(owner_unit)
 				end
 			end
 
-			return skin_api.state() and skin_api.muzzle_position()
+			return api.muzzle_position()
 		end
 	end
 
-	return skin_api.third_person.muzzle_position(owner_unit)
+	return (third_person_muzzle(owner_unit))
 end
 
 -- Draws a bolt that was fired. It runs on the machine of the shooter and, with the same numbers, on the others.
@@ -240,11 +258,11 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
 	end
 
 	-- NewLightningBolt.PostBeginPlay plays the impact sound where the bolt starts
-	skin_api.play_sound_at("ut_lightning_impact_3d", start)
+	skin_apis[1].play_sound_at("ut_lightning_impact_3d", start)
 end
 
 mod.lightning_bolt_callbacks.lightning_skin = function (owner_unit, end_position, hit_normal, arcs, arcs_start)
-	if not skin_api then
+	if not skin_apis[1] then
 		return
 	end
 
@@ -252,10 +270,10 @@ mod.lightning_bolt_callbacks.lightning_skin = function (owner_unit, end_position
 
 	-- The shot's own sounds are played for the player in the shot's action (see below). For the others they come from the weapon.
 	if not utils.is_local_player_unit(owner_unit) then
-		local muzzle = skin_api.third_person.muzzle_position(owner_unit)
+		local muzzle, api = third_person_muzzle(owner_unit)
 
 		if muzzle then
-			skin_api.play_sound_at("ut_lightning_fire_3d", muzzle)
+			api.play_sound_at("ut_lightning_fire_3d", muzzle)
 		end
 	end
 end
@@ -474,11 +492,8 @@ local function new_skin(variant)
 	return api
 end
 
--- Each skin has its own state. The bolt and its sounds are drawn through the first one, because they are the same for both.
 for _, variant in ipairs(TEMPLATES) do
-	local api = new_skin(variant)
-
-	skin_api = skin_api or api
+	new_skin(variant)
 end
 
 -- The shot of the player: the animation and the sounds start when the shot's action starts, because the handgun shoots at once.
