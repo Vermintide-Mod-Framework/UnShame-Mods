@@ -12,6 +12,10 @@ local CONFIG = {
 	gravity_multiplier = 1.3,
 	-- The air control, which is how fast the player can change direction in the air, relative to the game's
 	air_control_multiplier = 0.7,
+	-- After the player climbs off the top of a ladder the gravity and the air control are the game's for this long. The climb ends a
+	-- little above the platform, and the player is in the air for a moment. With the stronger gravity and the weaker air control they
+	-- fall back down the ladder before they can move onto the platform.
+	ladder_exit_grace = 1, -- seconds
 	-- A crouching player does not walk off ledges. The center of the player may be this far past the edge, so a bit more
 	-- than half of them hangs off. Further out, the physics starts to make them slide off by themselves.
 	crouch_ledge_overhang = 0.1, -- m
@@ -165,7 +169,20 @@ mod:hook_safe(PlayerCharacterStateClimbingLadder, "on_exit", function (self, uni
 	mod:echo("ladder exit to %s: %.2f m above the climb-off height, in the ladder's box %s, vertical speed %.2f, pitch %.0f degrees, held jump %s", tostring(next_state), height_over_limit, tostring(colliding), Vector3.z(velocity), math.radians_to_degrees(pitch), tostring(self.input_extension:get("jump") or self.input_extension:get("jump_only")))
 end)
 
+-- When the player last climbed off the top of a ladder, for each unit.
+local ladder_exit_t = setmetatable({}, {
+	__mode = "k",
+})
+
+local function recently_left_ladder(unit)
+	local exit_t = ladder_exit_t[unit]
+
+	return exit_t ~= nil and Managers.time:time("game") - exit_t < CONFIG.ladder_exit_grace
+end
+
 mod:hook_safe(PlayerCharacterStateLeavingLadderTop, "on_exit", function (self, unit, input, dt, context, t, next_state)
+	ladder_exit_t[unit] = t
+
 	if ladder_debug then
 		mod:echo("leaving the top of the ladder ended: next state %s, on ground %s, vertical speed %.2f", tostring(next_state), tostring(self.locomotion_extension.on_ground), Vector3.z(self.locomotion_extension:current_velocity()))
 	end
@@ -295,6 +312,10 @@ end)
 -- player can steer, and it is scaled by the air control.
 mod:hook(CharacterStateHelper, "move_in_air", function (func, first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
 	if not is_movement_enabled() then
+		return func(first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
+	end
+
+	if recently_left_ladder(unit) then
 		return func(first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
 	end
 
@@ -544,6 +565,10 @@ end)
 -- levels and effects, also changes the player's gravity scale, and it must see its own value.
 mod:hook(PlayerUnitLocomotionExtension, "update_script_driven_movement", function (func, self, ...)
 	if not is_movement_enabled() then
+		return func(self, ...)
+	end
+
+	if recently_left_ladder(self.unit) then
 		return func(self, ...)
 	end
 
