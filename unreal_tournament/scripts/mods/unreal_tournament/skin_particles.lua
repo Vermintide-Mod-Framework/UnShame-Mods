@@ -38,6 +38,7 @@ local mod = get_mod("unreal_tournament")
 --       is (0 to 1) that returns its scale, either a number or a vector in the mesh's axes. spec.brightness is the same for how bright
 --       it is, and replaces fade_in, fade_out and attenuation. spec.unit is the unit. For a mesh with frames, each a unit, spec.unit is the
 --       unit of the first frame and spec.frame is a function of how far into its life the mesh is that returns the name of the unit to show.
+--       spec.decal is true for a decal unit (units/ut/fx/decal_bio): its material has only an intensity, and its z axis is the way it faces.
 --
 -- Vectors can't be kept from one frame to the next, so they are kept in boxes.
 
@@ -134,6 +135,7 @@ local function add(kind, spec)
 			1,
 			1,
 		},
+		decal = spec.decal,
 		drag = spec.drag or 0,
 		entry = entry,
 		fade_in = spec.fade_in,
@@ -384,6 +386,16 @@ local function place(particle, dt, camera_position, camera_rotation)
 	Unit.set_local_position(unit, 0, position)
 	Unit.set_local_rotation(unit, 0, rotation)
 	Unit.set_local_scale(unit, 0, scale)
+
+	if particle.decal then
+		-- The material of a decal has only its intensity, which is how much of it there is.
+		Unit.set_scalar_for_materials(unit, "intensity", light)
+		Unit.set_unit_visibility(unit, true)
+		World.update_unit(particle.world, unit)
+
+		return
+	end
+
 	Unit.set_vector3_for_materials(unit, "tint", Vector3(particle.color[1], particle.color[2], particle.color[3]))
 	Unit.set_scalar_for_materials(unit, "intensity", light)
 	Unit.set_scalar_for_materials(unit, "additive", particle.additive)

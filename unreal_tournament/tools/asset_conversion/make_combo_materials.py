@@ -51,6 +51,7 @@ class Graph:
         self.constants = []    # (instance, connector, value)
         self.ids = {}
         self.no_variables = False    # (a graph that has none of the variables of the effects, such as the decal's)
+        self.own_variables = ''      # (the variables it has instead, as text)
 
     def add(self, name, node_type, options=(), export='', samplers='', title=None):
         self.ids[name] = guid(len(self.ids) + 1)
@@ -96,7 +97,7 @@ class Graph:
             text += '\t\t\ttype = "%s"\n\t\t}\n' % node_type
 
         if self.no_variables:
-            return text + '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n}\n'
+            return text + '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n' + self.own_variables + '}\n'
 
         text += ('\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tadditive = {\n\t\ttype = "scalar"\n\t\tvalue = 0\n\t}\n\tage = {\n\t\ttype = "scalar"\n\t\tvalue = 0\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n'
                  '\ttint = {\n\t\ttype = "vector3"\n\t\tvalue = [\n\t\t\t1\n\t\t\t1\n\t\t\t1\n\t\t]\n\t}\n}\n')
@@ -206,7 +207,11 @@ decal.add('uv', 'core/shader_nodes/decal_uv')
 texture(decal, 'splat', 'splat_map', 'uv')
 texture(decal, 'shape', 'shape_map', 'uv')
 decal.connect('splat', 'out', IN_OUT_BASE_COLOR, 'rgb')
-decal.connect('shape', 'out', IN_DECAL_BASE_COLOR_OPACITY, 'r')
+# (the intensity is how much of the splat there is: the particle fades the splat out with it)
+decal.own_variables = '\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n'
+decal.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
+multiply(decal, 'opacity', 'shape', 'intensity', 'r')
+decal.connect('opacity', 'out', IN_DECAL_BASE_COLOR_OPACITY)
 decal.connect('shape', 'out', IN_DECAL_MASK, 'r')
 decal.constant('out', IN_DECAL_MASK_THRESHOLD, 0.05)
 write('decal_bio', decal, {'splat_map': 'bio_splat', 'shape_map': 'bio_splat_mask'})
