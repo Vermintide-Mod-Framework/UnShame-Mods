@@ -1,4 +1,5 @@
-# Saves a picture of the running game's window as a PNG (or of the whole screen if the game is not running), so that what the game shows can be looked at from the command line.
+# Saves a picture of the running game's window as a PNG, so that what the game shows can be looked at from the command line. It never takes
+# a picture of anything else on the screen.
 #
 #   screenshot.ps1 -Path out.png
 #
@@ -33,19 +34,7 @@ public static class GameWindow {
 $game = Get-Process | Where-Object { $_.ProcessName -like "vermintide2*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1
 
 if (-not $game) {
-    # No game window: the whole screen, to see what else is there (the launcher, a dialog)
-    Add-Type -AssemblyName System.Windows.Forms
-    $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-    $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
-    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-
-    $graphics.CopyFromScreen($bounds.X, $bounds.Y, 0, 0, $bounds.Size)
-    $bitmap.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
-    $graphics.Dispose()
-    $bitmap.Dispose()
-
-    Write-Host "The game is not running. Saved the whole screen to $Path ($($bounds.Width) x $($bounds.Height))"
-    return
+    throw "Vermintide 2 is not running. This only takes pictures of the game's window, never of the rest of the screen."
 }
 
 $window = $game.MainWindowHandle
