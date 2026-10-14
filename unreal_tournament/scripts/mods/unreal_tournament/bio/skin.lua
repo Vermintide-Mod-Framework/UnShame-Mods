@@ -469,7 +469,7 @@ local function show_landed(id)
 
 	goop_light(volume, function ()
 		if landed[id] and landed[id].token == token then
-			return entry.position:unbox() + normal * (0.2 * volume)
+			return entry.position:unbox() + entry.normal:unbox() * (0.2 * volume)
 		end
 	end)
 	goop_mesh(volume, surface_rotation(normal), function ()
