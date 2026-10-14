@@ -15,6 +15,7 @@ local mod = get_mod("unreal_tournament")
 -- The ammo is the clip, so there is no reload.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local with_valid_positions = utils.with_valid_positions
 local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template
 local make_flat = utils.make_flat
@@ -688,7 +689,10 @@ local function blow_up(glob)
 	local context = glob.context
 	local position = glob.position:unbox() + glob.normal:unbox() * 0.1
 
-	Managers.state.entity:system("area_damage_system"):create_explosion(context.owner_unit, position, Quaternion.identity(), "ut_bio_blast", scale_of_level(glob.level), context.item_name, context.base_power * power_ratio(glob.level), context.is_critical_strike, context.owner_unit)
+	local area_damage_system = Managers.state.entity:system("area_damage_system")
+
+	-- The game looks at where units are, and the mod's update runs before the positions are current (see utils.with_valid_positions).
+	with_valid_positions(area_damage_system.create_explosion, area_damage_system, context.owner_unit, position, Quaternion.identity(), "ut_bio_blast", scale_of_level(glob.level), context.item_name, context.base_power * power_ratio(glob.level), context.is_critical_strike, context.owner_unit)
 	end_visual(glob)
 end
 
