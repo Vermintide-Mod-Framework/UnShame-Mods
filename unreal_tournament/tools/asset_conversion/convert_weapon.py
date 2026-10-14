@@ -22,6 +22,8 @@ WEAPONS = {
         'scale': 0.0125,
         'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
         'locators': ['Bone_Flash'],
+        # (UT's flak has no specular: its materials are plain textures)
+        'roughness': 0.9,
         'unit': 'units/ut/flak/flak_cannon',
         'lua': 'scripts/mods/unreal_tournament/flak/skin_animations.lua',
     },
@@ -141,7 +143,7 @@ WEAPONS['rocket'] = {
     'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire'), ('load', 'Load')],
     'locators': ['Bone_Flash'],
     'stretch': ('Bone_rod', 'Bone_weapon', 'bone_feed'),
-    'roughness': 0.7,
+    'roughness': 0.9,
     'unit': 'units/ut/rocket/rocket_launcher',
     'lua': 'scripts/mods/unreal_tournament/rocket/skin_animations.lua',
 }
@@ -164,6 +166,8 @@ WEAPONS['bio'] = {
 }
 
 WEAPONS['link'] = {
+    # UT's body and glowing parts have no specular, and the glass (LinkGlassShader) is a reflection
+    'roughness': {0: 0.9, 1: 0.9, 2: 0.12},
     'psk': 'NewWeapons2004/SkeletalMesh/FatLinkGun.psk',
     'psa': 'NewWeapons2004/MeshAnimation/LinkGun.psa',
     # the body, the glowing parts (the shader pans the green power texture over it), the glass
