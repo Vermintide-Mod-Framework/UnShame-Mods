@@ -17,10 +17,14 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
   Adventure in the main menu), runs the in-game suite, and prints its results. It notices a crash (the game's process is gone), prints the
   Lua error and the dump, and exits with 3. `-Reload` reloads the mods first. `screenshot.ps1` and `game_input.ps1`
   give a picture of the game's window, and send it a key or a click.
-  **Only ever take pictures of the game's window, never of the rest of the screen.** The launcher is not used, and the user has set
+  **Only ever take pictures of the window of Vermintide 2 or of Unreal Tournament 2004, never of the rest of the screen.** The launcher is not used, and the user has set
   `SendCrashReports = false` in the launcher's config so that a crash leaves no windows. The user still tests by playing and sends
   screenshots, logs and crash text. Do not add "I haven't tested this in game" disclaimers in replies; when something cannot be known from
   the code, say what is guessed and how it can be checked.
+- Unreal Tournament 2004, the reference for the weapons, is driven the same way: `start_ut2004.ps1 [-Restart]` starts it in a level (the map
+  is the program's argument, so no menus), starts the match, and gives all weapons with the console command `loaded`. Then `screenshot.ps1` and
+  `game_input.ps1` with `-Target ut2004` show how the weapons look and play. The game reads the mouse as input, so `game_input.ps1` moves it
+  with input events there; Ctrl is Fire and Tilde opens the console. Its window is moved to the top left, or its bottom is under the taskbar.
 - The game's own logs and crash dumps: `%APPDATA%\Fatshark\Vermintide 2\console_logs` and `crash_dumps`. Look at them when told about a crash.
 - In-game tests are in `scripts/mods/unreal_tournament/tests` (`runner.lua`, and a suite for each weapon). `/ut_test <suite>` runs one (or
   `tools/run_tests.ps1 -Suite <suite>`): it loads its level, sets the career and weapon, and goes back to the Keep. The results are lines that

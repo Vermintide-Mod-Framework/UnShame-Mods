@@ -1,16 +1,17 @@
 # Saves a picture of the running game's window as a PNG, so that what the game shows can be looked at from the command line. It never takes
-# a picture of anything else on the screen.
+# a picture of anything else on the screen. The game is Vermintide 2, or Unreal Tournament 2004 (the reference for the weapons).
 #
-#   screenshot.ps1 -Path out.png [-Target launcher]
+#   screenshot.ps1 -Path out.png [-Target launcher | ut2004]
 #
-# -Target launcher takes the picture of the game's launcher window (the program in the game's folder) instead.
+# -Target launcher takes the picture of Vermintide 2's launcher window (the program in the game's folder) instead.
+# -Target ut2004 takes the picture of Unreal Tournament 2004's window.
 #
 # It copies the window's area of the screen, so the window has to be visible and not covered (it is brought to the front first). A game
 # in exclusive full screen may give a black picture. Borderless or windowed gives the real one.
 
 param(
     [Parameter(Mandatory = $true)][string]$Path,
-    [ValidateSet("game", "launcher")][string]$Target = "game"
+    [ValidateSet("game", "launcher", "ut2004")][string]$Target = "game"
 )
 
 $ErrorActionPreference = "Stop"
@@ -38,12 +39,14 @@ public static class GameWindow {
 # The game's window, or the game's launcher, which is a program in the game's folder
 if ($Target -eq "launcher") {
     $game = Get-Process | Where-Object { $_.ProcessName -eq "Launcher" -and $_.Path -like "*\Warhammer Vermintide 2\*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+} elseif ($Target -eq "ut2004") {
+    $game = Get-Process | Where-Object { $_.ProcessName -like "ut2004*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1
 } else {
     $game = Get-Process | Where-Object { $_.ProcessName -like "vermintide2*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1
 }
 
 if (-not $game) {
-    throw "Vermintide 2 ($Target) is not running. This only takes pictures of the game's window or its launcher, never of the rest of the screen."
+    throw "The game ($Target) is not running. This only takes pictures of the window of Vermintide 2, its launcher or Unreal Tournament 2004, never of the rest of the screen."
 }
 
 $window = $game.MainWindowHandle

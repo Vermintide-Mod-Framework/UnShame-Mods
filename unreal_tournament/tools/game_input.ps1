@@ -3,15 +3,20 @@
 #   game_input.ps1 -Key Enter          one key: Enter, Space, Escape, Tab, Up, Down, Left, Right, or a letter or a number
 #   game_input.ps1 -Click 1200,600     a left click at a place in the game window's picture (pixels, as in the pictures of screenshot.ps1)
 #   game_input.ps1 -Move 1200,600      moves the mouse there without a click
-#   -Target launcher sends it to the game's launcher window instead of the game
+#   game_input.ps1 -Type "loaded"      types letters, digits and spaces as keys
+#   game_input.ps1 -Press              a left click where the mouse is
+#   -Target launcher sends it to Vermintide 2's launcher window instead of the game
+#   -Target ut2004 sends it to Unreal Tournament 2004
 #
 # The game's window is brought to the front first, and the input goes to it.
 
 param(
-    [ValidateSet("game", "launcher")][string]$Target = "game",
+    [ValidateSet("game", "launcher", "ut2004")][string]$Target = "game",
     [string]$Key = "",
     [string]$Click = "",
-    [string]$Move = ""
+    [string]$Move = "",
+    [string]$Type = "",
+    [switch]$Press
 )
 
 $ErrorActionPreference = "Stop"
@@ -41,7 +46,7 @@ public static class GameInput {
     [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
 
     const uint KEYEVENTF_EXTENDEDKEY = 0x0001, KEYEVENTF_KEYUP = 0x0002, KEYEVENTF_SCANCODE = 0x0008;
-    const uint MOUSEEVENTF_LEFTDOWN = 0x0002, MOUSEEVENTF_LEFTUP = 0x0004;
+    const uint MOUSEEVENTF_MOVE = 0x0001, MOUSEEVENTF_LEFTDOWN = 0x0002, MOUSEEVENTF_LEFTUP = 0x0004, MOUSEEVENTF_ABSOLUTE = 0x8000, MOUSEEVENTF_VIRTUALDESK = 0x4000;
 
     public static void Key(ushort scan, bool extended, bool down) {
         INPUT[] input = new INPUT[1];
@@ -55,6 +60,17 @@ public static class GameInput {
         INPUT[] input = new INPUT[1];
         input[0].type = 0;
         input[0].u.mi.dwFlags = down ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_LEFTUP;
+        SendInput(1, input, Marshal.SizeOf(typeof(INPUT)));
+    }
+
+    // A mouse move that comes as input, which is what a game that reads the mouse directly (Unreal Tournament's menus) sees. The place is on
+    // the whole screen, in pixels, and the screen's area is where it starts and how large it is.
+    public static void MoveTo(int x, int y, int left, int top, int width, int height) {
+        INPUT[] input = new INPUT[1];
+        input[0].type = 0;
+        input[0].u.mi.dx = (int)((x - left) * 65535L / (width - 1));
+        input[0].u.mi.dy = (int)((y - top) * 65535L / (height - 1));
+        input[0].u.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK;
         SendInput(1, input, Marshal.SizeOf(typeof(INPUT)));
     }
 
@@ -75,12 +91,14 @@ public static class GameInput {
 # The game's window, or the game's launcher, which is a program in the game's folder
 if ($Target -eq "launcher") {
     $game = Get-Process | Where-Object { $_.ProcessName -eq "Launcher" -and $_.Path -like "*\Warhammer Vermintide 2\*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+} elseif ($Target -eq "ut2004") {
+    $game = Get-Process | Where-Object { $_.ProcessName -like "ut2004*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1
 } else {
     $game = Get-Process | Where-Object { $_.ProcessName -like "vermintide2*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1
 }
 
 if (-not $game) {
-    throw "Vermintide 2 is not running."
+    throw "The game ($Target) is not running."
 }
 
 $window = $game.MainWindowHandle
@@ -108,32 +126,68 @@ function Parse-Place([string]$text) {
 $KEYS = @{
     Enter = @(0x1C, $false); Space = @(0x39, $false); Escape = @(0x01, $false); Tab = @(0x0F, $false)
     Up = @(0x48, $true); Down = @(0x50, $true); Left = @(0x4B, $true); Right = @(0x4D, $true)
-    "1" = @(0x02, $false); "2" = @(0x03, $false); "3" = @(0x04, $false); "4" = @(0x05, $false); "5" = @(0x06, $false)
-    Q = @(0x10, $false); W = @(0x11, $false); E = @(0x12, $false); R = @(0x13, $false); A = @(0x1E, $false); S = @(0x1F, $false); D = @(0x20, $false)
+    Tilde = @(0x29, $false); Ctrl = @(0x1D, $false)
+}
+
+# Digits and letters, by their scan codes
+$digits = "1234567890"
+for ($i = 0; $i -lt $digits.Length; $i++) { $KEYS[[string]$digits[$i]] = @((0x02 + $i), $false) }
+
+$rows = @{ 0x10 = "QWERTYUIOP"; 0x1E = "ASDFGHJKL"; 0x2C = "ZXCVBNM" }
+foreach ($start in $rows.Keys) {
+    for ($i = 0; $i -lt $rows[$start].Length; $i++) { $KEYS[[string]$rows[$start][$i]] = @(($start + $i), $false) }
+}
+
+function Send-Key([string]$name) {
+    if (-not $KEYS.ContainsKey($name)) {
+        throw "Unknown key $name. Known: $($KEYS.Keys -join ', ')"
+    }
+
+    $entry = $KEYS[$name]
+
+    [GameInput]::Key($entry[0], $entry[1], $true)
+    Start-Sleep -Milliseconds 80
+    [GameInput]::Key($entry[0], $entry[1], $false)
+}
+
+# Unreal Tournament's menus read the mouse as input, not from the cursor's place, so the mouse is moved with input there. Two moves are
+# sent, because the cursor of its menus moves by how far the mouse has gone.
+function Move-Mouse($place) {
+    if ($Target -eq "ut2004") {
+        $screen = [System.Windows.Forms.SystemInformation]::VirtualScreen
+
+        foreach ($step in 1..2) {
+            [GameInput]::MoveTo($place[0], $place[1], $screen.Left, $screen.Top, $screen.Width, $screen.Height)
+            Start-Sleep -Milliseconds 100
+        }
+    } else {
+        [void][GameInput]::SetCursorPos($place[0], $place[1])
+    }
 }
 
 if ($Move -ne "") {
-    $place = Parse-Place $Move
-    [void][GameInput]::SetCursorPos($place[0], $place[1])
+    Move-Mouse (Parse-Place $Move)
 }
 
 if ($Click -ne "") {
-    $place = Parse-Place $Click
-    [void][GameInput]::SetCursorPos($place[0], $place[1])
+    Move-Mouse (Parse-Place $Click)
     Start-Sleep -Milliseconds 150
     [GameInput]::Button($true)
     Start-Sleep -Milliseconds 80
     [GameInput]::Button($false)
 }
 
-if ($Key -ne "") {
-    if (-not $KEYS.ContainsKey($Key)) {
-        throw "Unknown key $Key. Known: $($KEYS.Keys -join ', ')"
-    }
-
-    $entry = $KEYS[$Key]
-
-    [GameInput]::Key($entry[0], $entry[1], $true)
+if ($Press) {
+    [GameInput]::Button($true)
     Start-Sleep -Milliseconds 80
-    [GameInput]::Key($entry[0], $entry[1], $false)
+    [GameInput]::Button($false)
+}
+
+if ($Key -ne "") {
+    Send-Key $Key
+}
+
+foreach ($c in $Type.ToUpper().ToCharArray()) {
+    Send-Key $(if ($c -eq " ") { "Space" } else { [string]$c })
+    Start-Sleep -Milliseconds 60
 }
