@@ -2,6 +2,8 @@ events = {
 	ut_bio_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.739 duration_max = 0.739 positioning = "2D" }
 	ut_bio_charge = { attenuation_max = 0 duration_type = "OneShot" duration_min = 3.710 duration_max = 3.710 positioning = "2D" }
 	ut_bio_goop_loop = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.254 duration_max = 2.254 positioning = "2D" }
+	ut_bio_charge_3d = { attenuation_max = 25 duration_type = "OneShot" duration_min = 3.710 duration_max = 3.710 positioning = "3D" }
+	ut_bio_goop_loop_3d = { attenuation_max = 8 duration_type = "OneShot" duration_min = 2.254 duration_max = 2.254 positioning = "3D" }
 	ut_bio_select = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.654 duration_max = 0.654 positioning = "2D" }
 	ut_bio_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 0.739 duration_max = 0.739 positioning = "3D" }
 	ut_bio_splat_3d = { attenuation_max = 30 duration_type = "OneShot" duration_min = 0.783 duration_max = 0.783 positioning = "3D" }

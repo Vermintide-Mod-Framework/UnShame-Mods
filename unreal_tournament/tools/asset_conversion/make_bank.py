@@ -82,6 +82,9 @@ WEAPONS = {
         # (BioChargedFire.Hold plays Biorifle_charge when the charge starts, and BioGoopLoop, a loop, from when it is full)
         ('ut_bio_charge', SOUNDS + 'biorifle_charge', False, -24, 0),
         ('ut_bio_goop_loop', NEW_SOUNDS + 'BioGoopLoop', False, -32, 0),
+        # (what others hear: Weapon.PlayOwnedSound for the charge, and the pawn's AmbientSound, radius 50 uu, for the goop loop)
+        ('ut_bio_charge_3d', SOUNDS + 'biorifle_charge', True, -26, 25),
+        ('ut_bio_goop_loop_3d', NEW_SOUNDS + 'BioGoopLoop', True, -34, 8),
         ('ut_bio_select', SOUNDS + 'SwitchToBioRifle', False, -24, 0),
         ('ut_bio_fire_3d', SOUNDS + 'BBioRifleFire', True, -22, 40),
         ('ut_bio_splat_3d', SOUNDS + 'BBioRifleGoo1', True, -22, 30),

@@ -173,6 +173,102 @@ local charging
 -- How long BioGoopLoop lasts, in seconds. It is played again when it ends, as it is a loop in UT.
 local GOOP_LOOP_TIME = 2.25
 
+-- What other players hear of a charge. UT plays Biorifle_charge for everyone near when the charge starts (Weapon.PlayOwnedSound), and puts
+-- BioGoopLoop on the pawn (its AmbientSound) once the load is full. The player who charges sends three messages (see send_charge):
+-- 0 the charge starts, 1 the load is full (or the ammo is gone), 2 the charge ends. They are told as { stage }.
+local CHARGE_START, CHARGE_FULL, CHARGE_END = 0, 1, 2
+
+-- The charge of the local player that the others are told about, as { owner_unit, full_sent }
+local broadcasting
+
+-- The charges of other players on this machine, as [unit] = { sound, loop_sound, loop_timer, full, world }
+local remote_charges = {}
+
+local function send_charge(owner_unit, stage)
+	local go_id = Managers.state.unit_storage and Managers.state.unit_storage:go_id(owner_unit)
+
+	if go_id then
+		mod:network_send("ut_bio_charge", "others", go_id, stage)
+	end
+end
+
+-- Plays a sound that follows a player's unit. Returns what is needed to stop it.
+local function play_on_unit(event, unit)
+	local world = Managers.world:world("level_world")
+	local id, _, wwise_world = WwiseUtils.trigger_unit_event(world, event, unit)
+
+	return id and { id = id, wwise_world = wwise_world } or nil
+end
+
+local function stop_handle(handle)
+	if handle then
+		WwiseWorld.stop_event(handle.wwise_world, handle.id)
+	end
+end
+
+local function stop_remote_charge(unit)
+	local remote = remote_charges[unit]
+
+	if remote then
+		stop_handle(remote.sound)
+		stop_handle(remote.loop_sound)
+
+		remote_charges[unit] = nil
+	end
+end
+
+local function stop_all_remote_charges()
+	for unit in pairs(remote_charges) do
+		stop_remote_charge(unit)
+	end
+end
+
+mod:network_register("ut_bio_charge", function (_, owner_go_id, stage)
+	local unit = Managers.state.unit_storage:unit(owner_go_id)
+
+	if not unit or not Unit.alive(unit) or utils.is_local_player_unit(unit) or not Managers.world:has_world("level_world") then
+		return
+	end
+
+	if stage == CHARGE_START then
+		stop_remote_charge(unit)
+
+		remote_charges[unit] = {
+			loop_timer = 0,
+			sound = play_on_unit("ut_bio_charge_3d", unit),
+		}
+	elseif stage == CHARGE_FULL then
+		if remote_charges[unit] then
+			remote_charges[unit].full = true
+		end
+	else
+		stop_remote_charge(unit)
+	end
+end)
+
+mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
+	-- The local player's charge: the others are told when the load is full.
+	if broadcasting and not broadcasting.full_sent and mod.bio_goop.is_load_done(broadcasting.owner_unit) then
+		broadcasting.full_sent = true
+
+		send_charge(broadcasting.owner_unit, CHARGE_FULL)
+	end
+
+	-- The charges of the others. The loop is played again each time it ends, and a charge whose player is gone ends.
+	for unit, remote in pairs(remote_charges) do
+		if not Unit.alive(unit) then
+			stop_remote_charge(unit)
+		elseif remote.full then
+			remote.loop_timer = remote.loop_timer - dt
+
+			if remote.loop_timer <= 0 then
+				remote.loop_sound = play_on_unit("ut_bio_goop_loop_3d", unit)
+				remote.loop_timer = GOOP_LOOP_TIME
+			end
+		end
+	end
+end
+
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
 	name = "bio",
@@ -279,6 +375,10 @@ skin_api = mod.weapon_skin.new({
 	on_level_exit = function ()
 		table.clear(landed)
 		table.clear(last_remote_shot)
+
+		stop_all_remote_charges()
+
+		broadcasting = nil
 	end,
 })
 
@@ -319,6 +419,14 @@ end
 mod.charge_start_callbacks.bio_skin = function (action, new_action)
 	local skin = skin_api.state()
 
+	if new_action.ut_charge_callback == "bio" and utils.is_local_player_unit(action.owner_unit) then
+		broadcasting = {
+			owner_unit = action.owner_unit,
+		}
+
+		send_charge(action.owner_unit, CHARGE_START)
+	end
+
 	if skin and new_action.ut_charge_callback == "bio" and utils.is_local_player_unit(action.owner_unit) then
 		skin_api.play("AltFire", mod.bio_goop.load_time)
 
@@ -332,7 +440,13 @@ mod.charge_start_callbacks.bio_skin = function (action, new_action)
 end
 
 -- Letting go cuts off the animation and the sounds.
-mod.charge_finish_callbacks.bio_skin = function ()
+mod.charge_finish_callbacks.bio_skin = function (action)
+	if broadcasting and action.owner_unit == broadcasting.owner_unit then
+		send_charge(broadcasting.owner_unit, CHARGE_END)
+
+		broadcasting = nil
+	end
+
 	if not charging then
 		return
 	end
@@ -671,6 +785,8 @@ end
 -- The decal manager keeps the units of its pools alive, and the mod's package can't be unloaded while they are (the game crashes when
 -- the mods are reloaded). So when the mod is unloaded the manager is made again, without the mod's pool.
 mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+	stop_all_remote_charges()
+
 	DecalSettings[DECAL_POOL] = nil
 
 	local manager = Managers.state and Managers.state.decal
