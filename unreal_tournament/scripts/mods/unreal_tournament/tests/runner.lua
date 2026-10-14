@@ -40,6 +40,8 @@ local CONFIG = {
 	spawn_timeout = 30, -- seconds
 	-- How long a level may take to load
 	level_timeout = 240, -- seconds
+	-- How long a level must have no intro playing before it counts as started
+	intro_settle_time = 1.5, -- seconds
 	-- The game's flags (script_data) that a suite sets, so that the level is empty and nothing hurts the player, and puts back at the end
 	quiet_flags = {
 		ai_bots_disabled = true,
@@ -532,30 +534,34 @@ local function load_level(t, level_key)
 		Managers.mechanism:debug_load_level(level_key, 0)
 	end)
 
+	-- The level starts with an intro fly-over. It is skipped as soon as it starts, the way the game's own tests skip it, so the test begins in
+	-- first person. It is done once no intro has been playing for a moment.
+	local quiet_since
+
 	local loaded = t.wait_until(function ()
 		local unit = player_unit()
 
-		return current_level_key() == level_key and not Managers.level_transition_handler:needs_level_load() and unit and unit ~= previous_unit and HEALTH_ALIVE[unit]
+		if current_level_key() ~= level_key or Managers.level_transition_handler:needs_level_load() or not unit or unit == previous_unit or not HEALTH_ALIVE[unit] then
+			return false
+		end
+
+		local cutscene_system = Managers.state.entity:system("cutscene_system")
+		local now = Managers.time:time("main")
+
+		if cutscene_system:is_active() then
+			cutscene_system:skip_pressed()
+
+			quiet_since = nil
+
+			return false
+		end
+
+		quiet_since = quiet_since or now
+
+		return now - quiet_since >= CONFIG.intro_settle_time
 	end, CONFIG.level_timeout, "the level " .. level_key .. " to load")
 
 	run.loading = false
-
-	if loaded then
-		-- The level starts with an intro, and the game's own tests skip it the same way
-		t.wait_until(function ()
-			local cutscene_system = Managers.state.entity:system("cutscene_system")
-
-			if cutscene_system:is_active() then
-				cutscene_system:skip_pressed()
-
-				return false
-			end
-
-			return true
-		end, 30, "the intro of the level to end")
-
-		t.wait(2)
-	end
 
 	return loaded
 end
