@@ -429,6 +429,7 @@ local function restore_pistol()
 	actions[CHILD_ACTION_NAME][CHILD_SUB_ACTION] = nil
 	actions.action_two.default = original.action_two_default
 	template.default_spread_template = original.default_spread_template
+	template.attack_meta_data.ut_bio = nil
 
 	for _, field in ipairs(AMMO_FIELDS) do
 		template.ammo_data[field] = original.ammo_data[field]
@@ -490,6 +491,9 @@ local function apply_bio_rifle()
 	end
 
 	saved.original = original
+
+	-- This tells the bot shooting that this is the Bio Rifle (see bots.lua).
+	template.attack_meta_data.ut_bio = true
 
 	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots. The pistol's ammo counter is
 	-- for six rounds, so it is not updated.
