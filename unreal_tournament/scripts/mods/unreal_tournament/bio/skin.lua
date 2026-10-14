@@ -568,6 +568,24 @@ local function add_splat(position, normal)
 	manager:add_projection_decal(CONFIG.splat_unit, nil, nil, position, Quaternion.look(tangent, normal), Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_depth), normal)
 end
 
+-- The decal manager keeps the units of its pools alive, and the mod's package can't be unloaded while they are (the game crashes when
+-- the mods are reloaded). So when the mod is unloaded the manager is made again, without the mod's pool.
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+	DecalSettings[DECAL_POOL] = nil
+
+	local manager = Managers.state and Managers.state.decal
+
+	if not manager or not Managers.world:has_world("level_world") then
+		return
+	end
+
+	manager:destroy()
+	manager._decal_system = nil
+	manager._ut_bio_pool = nil
+	manager:init(Managers.world:world("level_world"))
+	manager._ut_bio_pool = nil
+end
+
 -- A glob lands. The splat stays where it is for its own time, and the blob stays until the glob is gone.
 mod.goop_visual_callbacks.land = function (id, position, normal, level)
 	landed[id] = {
