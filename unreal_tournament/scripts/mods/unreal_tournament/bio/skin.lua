@@ -528,9 +528,9 @@ local function add_splat(position, normal)
 
 	local tangent = Quaternion.rotate(Quaternion.axis_angle(normal, math.random() * math.pi * 2), side)
 
-	-- The engine uses the rotation as it is (turned only about the normal, the box lay flat in the surface). The decal shader draws the
-	-- texture on the x and z axes of the box and projects along its y axis, so y is the way the surface faces.
-	manager:add_projection_decal(CONFIG.splat_unit, nil, nil, position, Quaternion.look(normal, tangent), Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_size), normal)
+	-- As the game's blood decals are placed: the rotation looks along the tangent with the normal up, and the extents are the width, the
+	-- length and the depth. (The unit is made for it, see tools/asset_conversion/make_decal_unit.py.)
+	manager:add_projection_decal(CONFIG.splat_unit, nil, nil, position, Quaternion.look(tangent, normal), Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_depth), normal)
 end
 
 -- A glob lands. The splat stays where it is for its own time, and the blob stays until the glob is gone.

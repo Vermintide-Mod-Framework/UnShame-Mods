@@ -117,12 +117,12 @@ def geometry(name, positions, position_index, uvs, uv_index):
 
 IDENTITY = '1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1'
 
-def write_unit(unit_name, geometries, nodes):
-    # geometries: text of each, nodes: { node name: geometry name } (the renderables are keyed by the node)
+def write_unit(unit_name, geometries, nodes, node_local=IDENTITY):
+    # geometries: text of each, nodes: { node name: geometry name } (the renderables are keyed by the node), node_local: the pose of the nodes
     text = '\ngeometries = {\n' + ''.join(geometries) + '}\nnodes = {\n\troot = {\n\t\tchildren = {\n'
 
     for node, geometry_name in nodes.items():
-        text += '\t\t\t%s = {\n\t\t\t\tgeometries = [ "%s" ]\n\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t}\n' % (node, geometry_name, IDENTITY)
+        text += '\t\t\t%s = {\n\t\t\t\tgeometries = [ "%s" ]\n\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t}\n' % (node, geometry_name, node_local)
 
     text += '\t\t}\n\t\tlocal = [ %s ]\n\t}\n}\nsource_path = "make_fx_meshes"\n' % IDENTITY
     raw = text.encode('latin1')
