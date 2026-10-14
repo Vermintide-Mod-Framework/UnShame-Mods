@@ -36,8 +36,8 @@ local mod = get_mod("unreal_tournament")
 --       It is turned by spec.rotation, or it faces the camera with spec.face_camera (its z axis is the way it faces). It also turns by
 --       spec.spin about spec.spin_axis, a vector in the mesh's own axes. spec.scale is a function of how far into its life the mesh
 --       is (0 to 1) that returns its scale, either a number or a vector in the mesh's axes. spec.brightness is the same for how bright
---       it is, and replaces fade_in, fade_out and attenuation. spec.unit is the unit. For a unit with more than one mesh, spec.frames
---       lists the mesh names and spec.frame is a function of how far into its life the mesh is that returns the name of the mesh to show.
+--       it is, and replaces fade_in, fade_out and attenuation. spec.unit is the unit. For a mesh with frames, each a unit, spec.unit is the
+--       unit of the first frame and spec.frame is a function of how far into its life the mesh is that returns the name of the unit to show.
 --
 -- Vectors can't be kept from one frame to the next, so they are kept in boxes.
 
@@ -98,6 +98,7 @@ local function add(kind, spec)
 
 	local world = Managers.world:world("level_world")
 	local entry = acquire(world, spec.unit or (kind == "light" and LIGHT_UNIT_NAME) or UNIT_NAME)
+	local material
 
 	if kind == "light" then
 		entry.light = entry.light or Unit.light(entry.unit, "light")
@@ -113,7 +114,7 @@ local function add(kind, spec)
 			texture = "smoke_" .. math.random(0, 15)
 		end
 
-		local material = spec.material or MATERIAL_FORMAT:format(texture)
+		material = spec.material or MATERIAL_FORMAT:format(texture)
 
 		if entry.material ~= material then
 			entry.material = material
@@ -141,7 +142,7 @@ local function add(kind, spec)
 		locked = spec.locked,
 		face_camera = spec.face_camera,
 		frame = spec.frame,
-		frames = spec.frames,
+		material_name = material,
 		scale = spec.scale,
 		brightness_by = spec.brightness,
 		growth = spec.growth or 0,
@@ -242,14 +243,6 @@ local function facing(front, top)
 	return Quaternion.look(top, front)
 end
 
--- Shows or hides one mesh of a unit. The engine takes the context the visibility is for ("default" is the one the unit is drawn with), and
--- the call without it is the fallback.
-local function set_mesh_visible(unit, name, visible)
-	if not pcall(Unit.set_mesh_visibility, unit, name, visible, "default") then
-		Unit.set_mesh_visibility(unit, name, visible)
-	end
-end
-
 local function place(particle, dt, camera_position, camera_rotation)
 	local unit = particle.entry.unit
 	local fraction = particle.age / particle.life
@@ -330,27 +323,25 @@ local function place(particle, dt, camera_position, camera_rotation)
 		if particle.frame then
 			local shown = particle.frame(fraction)
 
+			-- Each frame is a unit of its own, so a new frame puts the unit of the last one back in the pool and takes the unit of the new
+			-- one (the goop has over a hundred frames; hiding and showing the meshes of one unit did not draw anything).
 			if shown ~= particle.shown then
-				local entry = particle.entry
+				Unit.set_unit_visibility(particle.entry.unit, false)
 
-				-- A new unit shows all its meshes, so they are all hidden once. After that only the mesh that was shown and the new one
-				-- change, because a unit can have over a hundred meshes (the goop).
-				if not entry.meshes_hidden then
-					for _, name in ipairs(particle.frames) do
-						set_mesh_visible(unit, name, false)
-					end
+				local pool = free[particle.entry.unit_name]
 
-					entry.meshes_hidden = true
-					entry.shown_mesh = nil
+				pool[#pool + 1] = particle.entry
+
+				local entry = acquire(particle.world, shown)
+
+				if entry.material ~= particle.material_name then
+					entry.material = particle.material_name
+
+					Unit.set_material(entry.unit, "m_fx", particle.material_name)
 				end
 
-				if entry.shown_mesh then
-					set_mesh_visible(unit, entry.shown_mesh, false)
-				end
-
-				set_mesh_visible(unit, shown, true)
-
-				entry.shown_mesh = shown
+				particle.entry = entry
+				unit = entry.unit
 				particle.shown = shown
 			end
 		end

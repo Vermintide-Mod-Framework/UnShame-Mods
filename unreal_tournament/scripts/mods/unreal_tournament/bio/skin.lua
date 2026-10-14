@@ -29,12 +29,13 @@ local CONFIG = {
 		1,
 		0.3,
 	},
-	-- The glob is UT's own mesh, GoopMesh (units/ut/fx/goop, made by tools/asset_conversion/make_goop_mesh.py), with every frame of its
-	-- animations as a mesh of its own. Its material is the panning goop texture (fx_goop). The mesh is scaled by the glob's volume. The
+	-- The glob is UT's own mesh, GoopMesh, made by tools/asset_conversion/make_goop_mesh.py. Every frame of its animations is a unit of
+	-- its own (units/ut/fx/goop/f<number of the frame>). Its material is the panning goop texture (fx_goop). The mesh is scaled by the
+	-- glob's volume. The
 	-- animations (XWeapons_rc/BioRifle_rc.uc) are Flying (frames 3 to 13, looped), Hit (20 to 37), Drip (40 to 78) and Slide (83 to
 	-- 121). The frame rate is 30 a second. It is not in the source, but the Drip animation, 39 frames at the 0.66 speed that BioGlob
 	-- plays it at, then takes 2 seconds, which is DripTime.
-	goop_unit = "units/ut/fx/goop",
+	goop_unit_format = "units/ut/fx/goop/f%d",
 	goop_material = "units/ut/fx/fx_goop",
 	goop_frame_rate = 30,
 	goop_animations = {
@@ -273,16 +274,7 @@ mod.init_flow_event_filters.bio = function (event_name)
 	return (event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike")
 end
 
--- The names of the goop's meshes: one for each frame of each animation (g_f<number of the frame>).
-local GOOP_FRAMES = {}
-
-for _, animation in pairs(CONFIG.goop_animations) do
-	for frame = animation.start, animation.start + animation.count - 1 do
-		GOOP_FRAMES[#GOOP_FRAMES + 1] = "g_f" .. frame
-	end
-end
-
--- Returns the mesh of the frame that an animation shows after it has played for this long. A looped animation starts over, and any
+-- Returns the unit of the frame that an animation shows after it has played for this long. A looped animation starts over, and any
 -- other holds its last frame.
 local function goop_frame(animation_name, age, looped)
 	local animation = CONFIG.goop_animations[animation_name]
@@ -294,13 +286,13 @@ local function goop_frame(animation_name, age, looped)
 		frame = math.min(frame, animation.count - 1)
 	end
 
-	return "g_f" .. (animation.start + frame)
+	return CONFIG.goop_unit_format:format(animation.start + frame)
 end
 
 local GOOP_LIFE = 20
 
--- Shows the goop's mesh. It is the unit's mesh of a frame, scaled by the glob's volume, with its material that pans. frame(age) names
--- the mesh to show for the time since it started. follow keeps it where it is and ends it when it returns nothing.
+-- Shows the goop's mesh. It is the unit of a frame, scaled by the glob's volume, with its material that pans. frame(age) names the unit
+-- to show for the time since it started. follow keeps it where it is and ends it when it returns nothing.
 local function goop_mesh(volume, rotation, follow, frame)
 	particles.mesh({
 		angle = 0,
@@ -311,14 +303,13 @@ local function goop_mesh(volume, rotation, follow, frame)
 		frame = function (fraction)
 			return frame(fraction * GOOP_LIFE)
 		end,
-		frames = GOOP_FRAMES,
 		life = GOOP_LIFE,
 		material = CONFIG.goop_material,
 		rotation = rotation,
 		scale = function ()
 			return volume
 		end,
-		unit = CONFIG.goop_unit,
+		unit = frame(0),
 	})
 end
 

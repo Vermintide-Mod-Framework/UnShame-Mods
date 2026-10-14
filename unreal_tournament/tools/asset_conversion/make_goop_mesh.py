@@ -1,7 +1,7 @@
 import os, sys, zlib, struct
 
 # Makes the unit of the Bio Rifle's goop, as UT2004 has it: XWeapons.GoopMesh (a vertex mesh of UT's first format, .3d), with every frame of the
-# animations that the glob plays, each frame a mesh of its own in the unit (units/ut/fx/goop). The skin shows one of them at a time.
+# animations that the glob plays, each frame a unit of its own (units/ut/fx/goop/f<number of the frame>). The skin shows one of them at a time.
 #   Flying   frames 3 to 13   the glob in the air
 #   Hit      frames 20 to 37  the glob landing on a surface
 #   Drip     frames 40 to 78  the glob hanging from a ceiling
@@ -19,7 +19,7 @@ import make_fx_meshes as fx
 EXPORT = sys.argv[1]
 DRAW_SCALE = 1.2
 MESH_MAP = (0.04, 0.04, 0.08)
-SEQUENCES = {'flying': (3, 11), 'hit': (20, 18), 'drip': (40, 39), 'slide': (83, 39)}
+SEQUENCES = {'flying': (3, 11), 'hit': (20, 18), 'drip': (40, 39), 'slide': (83, 39)}  # (the first frame, how many)
 
 frames, triangles, polygon_uvs, frame = fx.vertex_mesh('GoopMesh', EXPORT)
 position_index = [v for t in triangles for v in t]
@@ -31,16 +31,15 @@ back_uv_index = [uv_index[i + k] for i in range(0, len(uv_index), 3) for k in (0
 both_index = position_index + back_index
 both_uv_index = uv_index + back_uv_index
 
-geometries, nodes = [], {}
+os.makedirs(fx.FX + '/goop', exist_ok=True)
+count = 0
 
-for name, (start, count) in SEQUENCES.items():
-    for number in range(start, start + count):
+for name, (start, length) in SEQUENCES.items():
+    for number in range(start, start + length):
         points = [fx.to_game((x * MESH_MAP[0] * DRAW_SCALE, y * MESH_MAP[1] * DRAW_SCALE, z * MESH_MAP[2] * DRAW_SCALE)) for x, y, z in frame(number)]
         points = [(x * fx.UNIT, y * fx.UNIT, z * fx.UNIT) for x, y, z in points]
-        mesh = 'f%d' % number
 
-        geometries.append(fx.geometry('g_' + mesh, points, both_index, uvs, both_uv_index))
-        nodes['g_' + mesh] = 'g_' + mesh
+        fx.write_unit('goop/f%d' % number, [fx.geometry('g_mesh', points, both_index, uvs, both_uv_index)], {'g_mesh': 'g_mesh'})
+        count += 1
 
-fx.write_unit('goop', geometries, nodes)
-print('goop', len(nodes), 'frames', len(triangles), 'triangles each')
+print('goop', count, 'units', len(triangles), 'triangles each')
