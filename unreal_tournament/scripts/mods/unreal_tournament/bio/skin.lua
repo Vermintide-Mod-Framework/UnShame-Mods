@@ -406,8 +406,10 @@ local function splash(position, scale, direction)
 		})
 	end
 
-	-- GoopSparks are lines (PT_Line): each is a streak along the way the spark moves, as long as the spark is fast. The position of a
-	-- spark is its start plus its velocity, which the air slows (drag), so it is worked out from how long the spark has been going.
+	-- GoopSparks are lines (PT_Line): each is a streak along the way the spark moves, as long as the spark is fast, with a glow at its
+	-- front. The texture of a spark has both (see tools/asset_conversion/split_spark.py): the body is a beam from the tail to the head, and
+	-- the head is a sprite at the head. The position of a spark is its start plus its velocity, which the air slows (drag), so it is worked
+	-- out from how long the spark has been going.
 	for _ = 1, sparks do
 		local origin = Vector3Box(position)
 		local start_velocity = deviated(direction, CONFIG.burst_spark_direction_spread) * (random_between(CONFIG.burst_spark_speed) * UNIT)
@@ -415,24 +417,44 @@ local function splash(position, scale, direction)
 		local started = Application.time_since_launch()
 		local drag = CONFIG.burst_spark_drag
 		local width = CONFIG.burst_spark_size * UNIT * scale
+		local life = random_between(CONFIG.burst_spark_life)
+
+		-- Returns where the spark's head is, and where its tail is.
+		local function spark()
+			local age = Application.time_since_launch() - started
+			local velocity = velocity_box:unbox()
+			local speed = Vector3.length(velocity)
+			local head = origin:unbox() + velocity * ((1 - math.exp(-drag * age)) / drag)
+			local heading = speed > 0.001 and velocity * (1 / speed) or Vector3.up()
+			local length = math.max(width, speed * math.exp(-drag * age) * CONFIG.burst_spark_length)
+
+			return head, head - heading * length
+		end
 
 		particles.beam({
 			attenuation = 0,
 			color = CONFIG.glob_color,
 			growth = -3 * UNIT,
-			life = random_between(CONFIG.burst_spark_life),
+			life = life,
 			size = width,
-			texture = "link_spark_green",
+			texture = "link_spark_green_body",
 			track = function ()
-				local age = Application.time_since_launch() - started
-				local velocity = velocity_box:unbox()
-				local speed = Vector3.length(velocity)
-				local current = origin:unbox() + velocity * ((1 - math.exp(-drag * age)) / drag)
-				local direction = speed > 0.001 and velocity * (1 / speed) or Vector3.up()
-				local length = math.max(width, speed * math.exp(-drag * age) * CONFIG.burst_spark_length)
+				local head, tail = spark()
 
-				return current - direction * length, current
+				return tail, head
 			end,
+		})
+		particles.sprite({
+			angle = 0,
+			attenuation = 0,
+			color = CONFIG.glob_color,
+			follow = function ()
+				return (spark())
+			end,
+			growth = -3 * UNIT,
+			life = life,
+			size = width,
+			texture = "link_spark_green_head",
 		})
 	end
 end
