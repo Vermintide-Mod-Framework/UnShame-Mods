@@ -251,6 +251,22 @@ local function make_context(suite)
 		end
 	end
 
+	-- Some engine calls refuse a reference that comes from another Lua state, and a coroutine is one. So the calls that use the world, the
+	-- physics and the spawning are made on the main thread, by the update.
+	local function on_main_thread(fn)
+		local reply = yield({
+			main = fn,
+		})
+
+		if not reply.ok then
+			error(reply.value, 0)
+		end
+
+		return reply.value
+	end
+
+	t.on_main_thread = on_main_thread
+
 	local function aim()
 		local unit = player_unit()
 		local first_person_extension = unit and ScriptUnit.has_extension(unit, "first_person_system")
@@ -267,46 +283,57 @@ local function make_context(suite)
 	end
 
 	function t.surface_ahead(distance)
-		local origin, forward = aim()
+		return on_main_thread(function ()
+			local origin, forward = aim()
 
-		if not origin then
+			if not origin then
+				return nil
+			end
+
+			local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world(), origin, forward, distance, "closest", "collision_filter", "filter_ai_line_of_sight_check")
+
+			if hit then
+				return origin + forward * hit_distance
+			end
+
 			return nil
-		end
-
-		local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world(), origin, forward, distance, "closest", "collision_filter", "filter_ai_line_of_sight_check")
-
-		if hit then
-			return origin + forward * hit_distance
-		end
-
-		return nil
+		end)
 	end
 
 	function t.spawn(breed_name, distance)
-		local origin, forward = aim()
-		local breed = Breeds[breed_name]
-
-		if not origin or not breed then
-			return nil
-		end
-
-		local flat = Vector3.normalize(Vector3.flat(forward))
-		local above = origin + flat * distance + Vector3(0, 0, 2)
-		local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world(), above, Vector3.down(), 8, "closest", "collision_filter", "filter_ai_line_of_sight_check")
-
-		if not hit then
-			return nil
-		end
-
-		local position = above - Vector3(0, 0, hit_distance)
 		local spawned
-		local optional_data = {
-			spawned_func = function (unit)
-				spawned = unit
-			end,
-		}
 
-		Managers.state.conflict:spawn_one(breed, position, nil, optional_data, Quaternion.look(-flat, Vector3.up()))
+		local started = on_main_thread(function ()
+			local origin, forward = aim()
+			local breed = Breeds[breed_name]
+
+			if not origin or not breed then
+				return false
+			end
+
+			local flat = Vector3.normalize(Vector3.flat(forward))
+			local above = origin + flat * distance + Vector3(0, 0, 2)
+			local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world(), above, Vector3.down(), 8, "closest", "collision_filter", "filter_ai_line_of_sight_check")
+
+			if not hit then
+				return false
+			end
+
+			local position = above - Vector3(0, 0, hit_distance)
+			local optional_data = {
+				spawned_func = function (unit)
+					spawned = unit
+				end,
+			}
+
+			Managers.state.conflict:spawn_one(breed, position, nil, optional_data, Quaternion.look(-flat, Vector3.up()))
+
+			return true
+		end)
+
+		if not started then
+			return nil
+		end
 
 		if not t.wait_until(function ()
 			return spawned ~= nil
@@ -496,10 +523,14 @@ local function run_suite(suite, only_career)
 				end
 
 				-- What the scenario made is taken away
-				for _, spawned in ipairs(scenario.spawned) do
-					if Unit.alive(spawned) then
-						Managers.state.conflict:destroy_unit(spawned, BLACKBOARDS[spawned], "ut_test")
-					end
+				if #scenario.spawned > 0 then
+					t.on_main_thread(function ()
+						for _, spawned in ipairs(scenario.spawned) do
+							if Unit.alive(spawned) then
+								Managers.state.conflict:destroy_unit(spawned, BLACKBOARDS[spawned], "ut_test")
+							end
+						end
+					end)
 				end
 
 				runner.restore_input()
@@ -606,7 +637,14 @@ local function step(dt)
 
 	run.waited = run.waited + dt
 
-	if waiting.frames then
+	if waiting.main then
+		local ok, value = pcall(waiting.main)
+
+		resume({
+			ok = ok,
+			value = value,
+		})
+	elseif waiting.frames then
 		waiting.frames = waiting.frames - 1
 
 		if waiting.frames <= 0 then
