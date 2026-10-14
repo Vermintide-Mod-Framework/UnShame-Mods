@@ -242,6 +242,14 @@ local function facing(front, top)
 	return Quaternion.look(top, front)
 end
 
+-- Shows or hides one mesh of a unit. The engine takes the context the visibility is for ("default" is the one the unit is drawn with), and
+-- the call without it is the fallback.
+local function set_mesh_visible(unit, name, visible)
+	if not pcall(Unit.set_mesh_visibility, unit, name, visible, "default") then
+		Unit.set_mesh_visibility(unit, name, visible)
+	end
+end
+
 local function place(particle, dt, camera_position, camera_rotation)
 	local unit = particle.entry.unit
 	local fraction = particle.age / particle.life
@@ -329,7 +337,7 @@ local function place(particle, dt, camera_position, camera_rotation)
 				-- change, because a unit can have over a hundred meshes (the goop).
 				if not entry.meshes_hidden then
 					for _, name in ipairs(particle.frames) do
-						Unit.set_mesh_visibility(unit, name, false)
+						set_mesh_visible(unit, name, false)
 					end
 
 					entry.meshes_hidden = true
@@ -337,10 +345,10 @@ local function place(particle, dt, camera_position, camera_rotation)
 				end
 
 				if entry.shown_mesh then
-					Unit.set_mesh_visibility(unit, entry.shown_mesh, false)
+					set_mesh_visible(unit, entry.shown_mesh, false)
 				end
 
-				Unit.set_mesh_visibility(unit, shown, true)
+				set_mesh_visible(unit, shown, true)
 
 				entry.shown_mesh = shown
 				particle.shown = shown
