@@ -172,9 +172,18 @@ end
 -- differ in the power factor. Damage is flat, with no range falloff, like in UT, and there is no burning.
 local BASE_ARMOR_MODIFIER = table.clone(DamageProfileTemplates.beam_shot.armor_modifier_near)
 
-function utils.make_flat(profile, attack_power, impact_power)
+-- The damage type of a hit picks the game's hit effects, and those of the fire attacks (burn_*, drakegun) set the bodies they kill on
+-- fire. The profiles that are copied from fire attacks get another damage type: an explosion gets the frag grenade's, which throws the
+-- body and takes limbs off. The caller gives the damage type of the others, such as "shot_shotgun" for flechettes.
+local EXPLOSION_DAMAGE_TYPES = {
+	drakegun = "grenade",
+	drakegun_glance = "grenade_glance",
+}
+
+function utils.make_flat(profile, attack_power, impact_power, damage_type)
 	local target = profile.default_target
 
+	target.damage_type = damage_type or EXPLOSION_DAMAGE_TYPES[target.damage_type] or target.damage_type
 	target.power_distribution = {
 		attack = attack_power,
 		impact = impact_power,

@@ -183,7 +183,7 @@ local function register_explosion_damage_profiles(name, damage_multiplier)
 end
 
 register_damage_profile("ut_shock_beam", "beam_shot", function (profile)
-	make_flat(profile, CONFIG.beam_attack_power, CONFIG.beam_impact_power)
+	make_flat(profile, CONFIG.beam_attack_power, CONFIG.beam_impact_power, "shot_sniper")
 
 	-- The beam stops at the first enemy it hits, as UT's trace does. The cleave is how many enemies a shot can hurt.
 	profile.cleave_distribution = {
@@ -195,7 +195,7 @@ end)
 register_damage_profile("ut_shock_beam_instagib", "beam_shot", function (profile)
 	local damage_multiplier = CONFIG.instagib_damage / utils.UT_REFERENCE_DAMAGE
 
-	make_flat(profile, CONFIG.beam_attack_power * damage_multiplier, CONFIG.beam_impact_power * CONFIG.instagib_impact_multiplier)
+	make_flat(profile, CONFIG.beam_attack_power * damage_multiplier, CONFIG.beam_impact_power * CONFIG.instagib_impact_multiplier, "shot_sniper")
 
 	profile.cleave_distribution = {
 		attack = 0.01,
@@ -206,7 +206,7 @@ end)
 -- The ball's direct hit does no damage of its own. As in UT, the damage is the explosion, which is at full strength for whatever
 -- the ball hits. The direct hit only staggers, and does 1 damage so that it is not shown as blocked by armor.
 register_damage_profile("ut_shock_ball", "staff_fireball", function (profile)
-	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, CONFIG.beam_impact_power)
+	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, CONFIG.beam_impact_power, "grenade")
 
 	-- The cleave is kept tiny so the ball detonates on the first enemy it hits.
 	profile.cleave_distribution = {

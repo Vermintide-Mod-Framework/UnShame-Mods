@@ -189,7 +189,7 @@ register_network_lookup("sub_actions", SHELL_ACTION)
 -- full strength for whatever the shell hits, like in UT.
 
 register_damage_profile("ut_flak_chunk", "staff_fireball", function (profile)
-	make_flat(profile, attack_power_for(CONFIG.chunk_damage), impact_power_for(CONFIG.chunk_damage))
+	make_flat(profile, attack_power_for(CONFIG.chunk_damage), impact_power_for(CONFIG.chunk_damage), "shot_shotgun")
 
 	-- The damage against each armor type, including critical hits
 	utils.set_armor_modifiers(profile, CONFIG.chunk_armor_attack, CONFIG.chunk_armor_impact, true)
@@ -222,7 +222,7 @@ end)
 
 register_damage_profile("ut_flak_shell", "staff_fireball", function (profile)
 	-- (the direct hit only staggers, and does 1 damage so that it is not shown as blocked by armor)
-	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, impact_power_for(CONFIG.chunk_damage))
+	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, impact_power_for(CONFIG.chunk_damage), "grenade")
 
 	profile.cleave_distribution = {
 		attack = 0.01,

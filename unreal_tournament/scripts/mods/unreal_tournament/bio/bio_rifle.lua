@@ -216,7 +216,7 @@ end
 -- Damage profiles. The direct hit of a glob only staggers (UT has no damage from the hit itself, all of the damage is the explosion), and
 -- does 1 damage so that it is not shown as blocked by armor.
 register_damage_profile("ut_bio_glob", "staff_fireball", function (profile)
-	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, impact_power_for(CONFIG.level_damage * CONFIG.damage_scale))
+	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, impact_power_for(CONFIG.level_damage * CONFIG.damage_scale), "grenade")
 	set_armor_modifiers(profile)
 
 	profile.cleave_distribution = {
