@@ -12,7 +12,7 @@ local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 --   mod.init_callbacks[action.ut_init_callback] = function (projectile)
 --       Runs when a projectile is made, on every machine.
 --   mod.hit_enemy_callbacks[action.ut_hit_enemy_callback] = function (func, projectile, is_owner, ...)
---       Wraps the hit on an enemy. It calls func(projectile, ...) itself. is_owner says if this is the projectile of the player who
+--       Wraps the hit on an enemy or on a player. It calls func(projectile, ...) itself. is_owner says if this is the projectile of the player who
 --       fired it. The other machines get the hit over the network.
 --   mod.init_flow_event_filters[action.ut_init_flow_event_filter] = function (event_name)
 --       While a projectile is made, on every machine. Return true to drop a flow event that the game sends to the projectile's unit.
@@ -75,27 +75,49 @@ for _, extension_class in ipairs({
 		end
 	end)
 
-	mod:hook(extension_class, "hit_enemy", function (func, self, ...)
-		local action = self._current_action
-		local callback = action and action.ut_hit_enemy_callback and mod.hit_enemy_callbacks[action.ut_hit_enemy_callback]
+	-- Hitting a player or a bot (hit_player) calls the same callbacks as hitting an enemy.
+	for _, function_name in ipairs({ "hit_enemy", "hit_player" }) do
+		mod:hook(extension_class, function_name, function (func, self, ...)
+			local action = self._current_action
+			local callback = action and action.ut_hit_enemy_callback and mod.hit_enemy_callbacks[action.ut_hit_enemy_callback]
 
-		if callback then
-			return callback(func, self, extension_class == PlayerProjectileUnitExtension, ...)
-		end
+			if callback then
+				return callback(func, self, extension_class == PlayerProjectileUnitExtension, ...)
+			end
 
-		return func(self, ...)
-	end)
+			return func(self, ...)
+		end)
+	end
 end
+
+-- Projectiles that a weapon's shot spawns. A weapon can change where and how a projectile starts, by its template name.
+--   mod.spawn_projectile_callbacks[template name] = function (func, owner_unit, position, rotation, scale, angle, target_vector, speed,
+--       item_name, item_template_name, action_name, sub_action_name, ...)
+--       Wraps ActionUtils.spawn_player_projectile. It calls func(owner_unit, position, ...) itself, with the arguments it changed.
+mod.spawn_projectile_callbacks = {}
+
+mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
+	local callback = mod.spawn_projectile_callbacks[item_template_name]
+
+	if callback then
+		return callback(func, owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
+	end
+
+	return func(owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
+end)
 
 -- Explosions. The name is the name of the explosion template.
 --   mod.explosion_before_callbacks[template name] = function (world, position, attacker_unit)
 --       Runs before an explosion is made, on every machine. What it returns is passed to the callback below.
---   mod.explosion_callbacks[template name] = function (world, position, rotation, before)
---       Runs after an explosion is made, on every machine.
+--   mod.explosion_callbacks[template name] = function (world, position, rotation, before, scale)
+--       Runs after an explosion is made, on every machine. The scale is the one the explosion was made with.
+--   mod.any_explosion_callbacks[name] = function (explosion_template, position, scale)
+--       Runs after every explosion of any template, on every machine.
 -- A template with ut_penetrates_shields goes through shields. The game asks AiUtils.attack_is_shield_blocked for every enemy in an
 -- explosion, and while such an explosion is made the answer is always "not blocked".
 mod.explosion_before_callbacks = {}
 mod.explosion_callbacks = {}
+mod.any_explosion_callbacks = {}
 
 local penetrating_explosion = false
 
@@ -122,22 +144,28 @@ mod:hook(DamageUtils, "create_explosion", function (func, world, attacker_unit, 
 		error(error_message, 0)
 	end
 
+	-- The first argument after the template is the explosion's scale.
+	local scale = ...
 	local callback = mod.explosion_callbacks[explosion_template.name]
 
 	if callback then
-		callback(world, impact_position, rotation, before)
+		callback(world, impact_position, rotation, before, scale)
+	end
+
+	for _, any_callback in pairs(mod.any_explosion_callbacks) do
+		any_callback(explosion_template, impact_position, scale)
 	end
 
 	callback = mod.skin_explosion_callbacks[explosion_template.name]
 
 	if callback then
-		callback(world, impact_position, rotation)
+		callback(world, impact_position, rotation, scale)
 	end
 end)
 
 -- What a weapon's skin draws for an explosion. It runs on every machine, after the callbacks above. The game's own effect of the
 -- explosion is dropped, and the skin draws its own.
---   mod.skin_explosion_callbacks[template name] = function (world, position, rotation)
+--   mod.skin_explosion_callbacks[template name] = function (world, position, rotation, scale)
 mod.skin_explosion_callbacks = {}
 
 -- The Shock Rifle tells its skin about its beam. It runs on the shooter's machine, and on the others' after they get the message.
@@ -180,13 +208,14 @@ end)
 --       Draws the beam. points is the curve, and the first `count` points are used.
 mod.link_beam_callbacks = {}
 
--- How the Bio Rifle's skin draws its puddles. The game's own look of a puddle is a fire, which the skin replaces.
---   mod.puddle_visual_callbacks.show = function (id, position, radius, charged, duration)
---       Shows the puddle with this id at a place, as wide as the radius, for the duration.
---   mod.puddle_visual_callbacks.stop = function (id)
---   mod.puddle_visual_callbacks.burst = function (position, goo_scale)
---       A puddle bursts. goo_scale is how much goo it had, from 0 to 1.
-mod.puddle_visual_callbacks = {}
+-- How the Bio Rifle's skin draws the globs that have landed. They run on every machine.
+--   mod.goop_visual_callbacks.land = function (id, position, normal, level)
+--       A glob with this id lands on a surface. normal is the way the surface faces, and level is how much goop the glob has.
+--   mod.goop_visual_callbacks.merge = function (id, level)
+--       Another glob lands in the glob with this id, and it now has this level.
+--   mod.goop_visual_callbacks.stop = function (id)
+--       The glob with this id is gone.
+mod.goop_visual_callbacks = {}
 
 -- When a weapon overheats and explodes, by the weapon's template. The game's own explosion still happens and hurts the player.
 --   mod.overheat_callbacks[template] = function (state, item_data)

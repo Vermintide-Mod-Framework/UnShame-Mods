@@ -1,16 +1,20 @@
 local mod = get_mod("unreal_tournament")
 
--- Bio Rifle: a copy of Bardin's Drakegun with fire modes of its own. It follows UT2004's XWeapons/BioRifle and BioGlob.
---   LMB: lobs a glob of goo. It bursts where it lands and adds to the burning puddle there.
---   RMB (held): charges a bigger glob, which is fired on release. The bigger the charge, the more goo is in the glob.
--- Puddles are made of goo. Every glob that lands adds its goo to the puddle under it, and the puddle grows as it gets more goo.
--- A puddle bursts into small globs when it gets too much goo or when something steps into it. The small globs are thrown out in
--- a short arc and make puddles of their own where they land. The charged glob landing counts as stepping in. It bursts the
--- puddle it lands in, or makes, however much goo there is.
--- Overheating takes the place of ammo, as in the Drakegun.
+-- Bio Rifle: a copy of Bardin's Masterwork Pistol with fire modes of its own. It follows UT2004's XWeapons/BioRifle, BioFire,
+-- BioChargedFire and BioGlob.
+--   LMB: lobs one glob of goop. It costs 1 ammo, and a glob can be fired every 0.33 seconds.
+--   RMB (held): loads goop, 1 ammo at once and then 1 more every 0.25 seconds, up to 10. Releasing RMB fires one big glob, which has
+--               as much goop as was loaded.
+-- A glob that hits a player, a bot or an enemy while it flies explodes there. A glob that hits a surface sticks to it. Its goop level
+-- is cut down to 2, 3 or 4, chosen at random for each glob, and what is above that is thrown off as small globs of 1 goop each. A
+-- stuck glob explodes by itself after 2.25 seconds. It explodes 0.15 seconds after something steps into it, and 0.1 seconds after
+-- an explosion of a rocket, a flak shell, a shock ball, a shock combo or another glob reaches it. A glob on a ceiling drips instead
+-- of exploding: it falls after about 2.2 seconds and explodes where it lands. A glob that lands in a stuck glob joins it, up to a
+-- level of 5, and what is above that is thrown off as small globs. An explosion does 20 + 19 damage for each level of goop, and it is
+-- as wide as the level's square root times the radius of a level 1 glob.
+-- The ammo is the clip, so there is no reload.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
-local with_valid_positions = utils.with_valid_positions
 local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template
 local make_flat = utils.make_flat
@@ -20,12 +24,12 @@ local impact_power_for = utils.impact_power_for
 mod.items.register("bio_rifle", {
 	key = "ut_bio_rifle",
 	template = "ut_bio_rifle_template",
-	base_item = "dr_drakegun",
-	deus_copy = "deus_dr_drakegun",
+	base_item = "dr_steam_pistol",
+	deus_copy = "deus_dr_steam_pistol",
 	name = "UT2004 Bio Rifle",
 	type_name = "Bio-Rifle",
 	description = "The GES BioRifle remains one of the most controversial weapons in the Tournament. It provides rapid-fire wide-area coverage with small globs of Biosludge in its primary mode, and launches one large glob at the target in its secondary mode.",
-	keywords = { "weapon_keyword_damage_over_time", "weapon_keyword_crowd_control", "weapon_keyword_charged_attack", "weapon_keyword_overheat" },
+	keywords = { "weapon_keyword_rapid_fire", "weapon_keyword_crowd_control", "weapon_keyword_charged_attack" },
 	icon = "ut_bio_rifle_icon",
 	icon_package = "resource_packages/unreal_tournament/icons",
 	icon_materials = "ui/ut/bio_rifle_icon",
@@ -34,143 +38,163 @@ mod.items.register("bio_rifle", {
 local TEMPLATE_NAME = mod.items.weapons.bio_rifle.template
 
 local CONFIG = {
-	-- Primary
-	fire_interval = 0.45, -- seconds between globs when the button is held
-	glob_speed = 3500, -- m/s * 100
-	-- The game's gravity settings. "bolts" is a gentle arc. "drakegun" drops a shot by 16 m over 40 m at the speed the globs
-	-- used to have.
-	glob_gravity_settings = "bolts",
-	glob_max_flight = 4, -- seconds until a glob that hit nothing bursts
-	glob_fizzle_time = 1.5, -- seconds a glob stays after it has hit something, so its trail can fade out
-	glob_end_delay = 0.5, -- seconds after the hit until the glob's effects are told to end
-	glob_direct_damage = 8, -- what the glob does to what it hits, in UT2004's units (45 is the shock rifle's beam)
-	glob_damage = 10, -- what the burst of the glob does, in the radius and also to what the glob hit
-	glob_burst_radius = 1.5, -- m
-	-- Puddles. A glob is 1 goo. The radius of a puddle with 1 goo is that of a glob's puddle, and it grows with the square root
-	-- of the goo, so the area goes with the goo, up to puddle_radius_max. A puddle lasts a glob's time plus a little more for
-	-- each extra goo, and every glob that lands in it starts the time again. A glob lands in a puddle if it is closer to the
-	-- puddle's center than the radius plus puddle_merge_margin.
-	glob_puddle_radius = 1.2, -- m
-	glob_puddle_duration = 4, -- seconds
-	puddle_radius_max = 4, -- m
-	puddle_duration_per_goo = 1, -- seconds
-	puddle_duration_max = 8, -- seconds
-	puddle_merge_margin = 0.5, -- m
-	puddle_merge_height = 1.5, -- m
-	-- A puddle bursts when it holds burst_goo or more goo. It also bursts when something steps into it. The small globs it throws
-	-- have child_goo_min goo each, and together they take the puddle's goo less burst_goo_loss and less the goo that stays in the
-	-- puddle. The goo that stays is burst_goo_left of the puddle's goo, at most burst_goo_left_max. The thrown globs can land
-	-- back in the puddle and burst it again, so bursts that follow each other die out.
-	burst_goo = 7,
-	step_burst_goo = 3, -- a puddle with less goo than this is walked through, but the alt fire still bursts it
-	burst_goo_loss = 0.2,
-	burst_goo_left = 0.2, -- the share of its goo that a puddle keeps when it bursts
-	burst_goo_left_max = 1.5,
-	child_goo_min = 1,
-	-- The weapon's overheating explosion throws overheat_glob_count small globs from the player. Each has a random amount of
-	-- goo from child_goo_min to child_goo_max. The goo is the scale of the projectile, from 0 to 1 between those two.
-	overheat_glob_count = 20,
-	child_goo_max = 3,
-	big_puddle_goo = 3, -- a puddle with this much goo looks like the charged glob's
-	-- Charged: the charge level, from 0 to 1, takes the numbers from the primary's to these. The goo of the glob goes from
-	-- charged_goo_min, at the charge where it can first be fired (min_fire_time), to charged_goo at a full charge. A full charge
-	-- bursts the puddle it lands in, whatever the goo. The goo follows the same curve as the heat of the charge
-	-- (charge_heat_curve). The power of a puddle's burst goes with the goo it had. At charged_goo, the power is
-	-- charged_glob_damage instead of the primary's glob_damage, and the radius is charged_burst_radius instead of
-	-- glob_burst_radius.
-	charge_time = 2, -- seconds to a full charge
-	min_fire_time = 0.3, -- seconds into the charge when the glob can first be fired, which is the lowest amount of goo
-	charged_glob_speed = 3000,
-	charged_goo_min = 3,
-	charged_goo = 15,
-	charged_glob_damage = 70,
-	charged_burst_radius = 4,
-	child_count_max = 14,
-	child_speed_min = 800, -- m/s * 100
-	child_speed_max = 1200,
-	-- The game's own gravity is -9.82 for a thrown thing and -5 for the globs. This one gives a short arc, going up and coming
-	-- down fast.
-	child_gravity = -30,
-	child_angle_min = 50, -- degrees up from the ground
-	child_angle_max = 75,
-	child_start_height = 0.4, -- m above the burst
-	child_max_flight = 3, -- seconds until a small glob that hit nothing bursts
-	child_damage = 12,
-	child_burst_radius = 1, -- m
-	-- The puddle burns, using one of the game's damage-over-time effects, and looks like the ground the fire grenade leaves. The
-	-- effect is put along the ground in the radius of the puddle, and each of its particles is this share of the radius. The
-	-- puddle burns whoever stands in it for as long as it lasts. Every puddle_damage_interval seconds it puts a burn on them. The
-	-- burn ticks every puddle_tick_interval seconds and lasts a little longer than the interval, so it never goes out while they
-	-- are inside. The game's own burning_dot_1tick is a single tick of 0.07 of the standard power level.
-	puddle_dot = "ut_bio_puddle_dot",
-	puddle_damage_interval = 1, -- seconds
-	puddle_tick_interval = 0.5, -- seconds
-	puddle_tick_damage = 6, -- in UT2004's units, per tick
-	-- Overheating, in the Drakegun's own units (it overheats at 30). A glob adds glob_overcharge, and a full charge adds
-	-- charged_overcharge by the time it is full. The shot that follows costs nothing more. This is balanced against the Shock
-	-- Rifle, whose beam adds 4 every 0.7 seconds (5.7 a second, and a combo is 12 more). A glob every 0.45 seconds is 5.6 a
-	-- second. The game takes the heat off again at 1.3 a second, starting 0.25 seconds after the last addition.
-	glob_overcharge = 2.5,
-	charged_overcharge = 15,
-	-- How front-loaded the heat of the charge is. 1 is even, and the higher it is, the more of the heat comes at the start.
-	charge_heat_curve = 2,
-	charge_heat_interval = 0.2, -- seconds between the additions of heat while charging
-	-- The multipliers of the damage and the stagger for each armor type: unarmored, armored, monsters, players, berserkers and
-	-- super armor. The game's own multipliers for these explosions are 0 against super armor, which chaos warriors have, so they
-	-- would take nothing. The damage is low to begin with, so super armor takes all of it and half of the stagger.
+	-- Sizes and distances use UT's 0.02 m for each Unreal unit (uu). Speeds are 0.75 of that, so the globs are slower, and the gravity
+	-- is lowered to match, which keeps the drop of a glob over a distance the same as in UT.
+	meters_per_uu = 0.02,
+	speed_scale = 0.75,
+	gravity = -10.7, -- m/s^2, UT's 950 uu/s^2 (19 m/s^2) times speed_scale squared
+	-- BioAmmo.MaxAmmo. All of it is the clip, so there is no reload.
+	max_ammo = 50,
+	-- BioFire: FireRate and the speed of BioGlob (Speed 2000 uu/s)
+	fire_interval = 0.33,
+	glob_speed_uu = 2000,
+	-- Where a glob starts, measured from the camera: forward, to the right and down. UT's ProjSpawnOffset is 20, 9 and -6 uu. The
+	-- pistol is drawn further out here, so the offsets are larger, to start the glob at the muzzle.
+	start_forward = 0.8, -- m
+	start_right = 0.25, -- m
+	start_down = 0.15, -- m
+	-- BioChargedFire: GoopUpRate, MaxGoopLoad and FireRate
+	goop_up_rate = 0.25, -- seconds between two units of goop
+	max_goop_load = 10,
+	charged_fire_interval = 0.33,
+	-- The release of the button fires the glob once this long has passed since the charge started.
+	release_delay = 0.05, -- seconds
+	-- BioGlob
+	max_goop_level = 5, -- the level a glob that has landed can grow to
+	base_damage = 20, -- BaseDamage
+	level_damage = 19, -- Damage, which is added for each level of goop
+	-- DamageRadius is 120 uu. It is reduced to 80 uu here, the way the other weapons' explosions are, because a glob explodes a lot.
+	blast_radius_uu = 80,
+	-- The damage is the same up to this share of the radius and then falls off linearly to 0 at the radius. UT's falls off from the
+	-- edge of the victim's body.
+	blast_full_damage_share = 0.15,
+	-- MomentumTransfer is 40000. Halved when the glob explodes in the air. Scaled by the volume of the glob, which is the square root of
+	-- its level. This is the speed in m/s that the player who fired the glob is thrown at when it explodes at their feet.
+	jump_speed = 4.6,
+	-- The explosion hurts the player who fired the glob, as in UT. This is the share of the glob's damage that they take at the center.
+	self_damage_share = 0.75,
+	-- BioGlob.GloblingSpeed is 200 uu/s, plus up to 150 uu/s more. SplashGlobs multiplies it by (the surface's normal plus a random
+	-- direction times 0.8).
+	globling_speed_uu = { 200, 350 },
+	globling_random_share = 0.8,
+	-- How much of the speed of the glob that landed, reflected off the surface, a small glob takes with it
+	globling_inherit_share = 0.1,
+	-- BioGlob.RestTime, TouchDetonationDelay and DripTime. The delay of an explosion that is set off by an explosion is 0.1 seconds in
+	-- BioGlob.TakeDamage.
+	rest_time = 2.25,
+	touch_detonation_delay = 0.15,
+	drip_time = 1.8,
+	detonation_delay = 0.1,
+	-- A glob that drips starts with the gravity times 0.2 as its speed (190 uu/s).
+	drip_speed_uu = 190,
+	-- The glob's 'hit' animation plays when it lands. A glob on a ceiling starts to drip when the animation ends. UT's mesh animation
+	-- is not available here, so the length is a guess.
+	hit_animation_time = 0.4,
+	-- The collision of a glob that has landed is a cylinder, GoopVolume * 10 uu across. The collision of a glob in the air is 2 uu.
+	collision_uu = 10,
+	flying_collision_uu = 2,
+	-- The height of the surface normal's down component above which a glob is on a ceiling (SurfaceNormal dot (0, 0, -1) > 0.7)
+	ceiling_dot = 0.7,
+	-- A glob that lands also leaves a splat on the surface (BioDecal), which stays for 6 seconds.
+	-- The size of a character, for the globs that wait for someone to step in. UT's collision is 17 uu in radius and 88 uu high.
+	pawn_radius_uu = 17,
+	pawn_height_uu = 88,
+	-- A glob that is still flying after this many seconds disappears. UT's LifeSpan is 20.
+	max_flight = 8,
+	-- The most globs that can wait on the surfaces at once. The oldest explodes when there are more.
+	max_stuck = 40,
+	-- A critical hit and the armor of an enemy do not exist in UT. These are how much of the damage and the stagger each armor type
+	-- takes: unarmored, armored, monsters, players, berserkers and super armor. The game's own multipliers for explosions are 0 against
+	-- super armor (chaos warriors), which would make them take nothing.
 	armor_attack = {1, 0.8, 1.5, 1, 1, 1},
 	armor_impact = {1, 0.8, 1, 1, 1, 0.5},
-	-- A burn ticks at the game's default power level of 195. The weapons' profiles are measured against about 500.
-	burn_reference_power_level = 500,
-	-- The shots use the game's fireball and geiser sounds, which the network knows. The skin plays UT's sounds instead.
+	-- The game's sound event of the Sienna's fireball. The skin plays UT's sound instead.
 	fire_sound = "player_combat_weapon_staff_fireball_fire",
-	charged_fire_sound = "player_combat_weapon_staff_geiser_fire",
-	-- The impact: when the charged glob hits an enemy, it sets off a blast of its own on top of the burst. The blast is as big
-	-- as the glob is charged. The primary has none, because a direct hit is the burst.
-	impact_radius = 3, -- m, the smallest the charged one's gets
-	charged_impact_damage = 20,
-	charged_impact_radius = 8,
 }
 
-local overcharge_values = PlayerUnitStatusSettings.overcharge_values
+local UNIT = CONFIG.meters_per_uu
 
-overcharge_values.ut_bio_glob = CONFIG.glob_overcharge
--- This heat is added every charge_heat_interval seconds while charging, and together it adds up to charged_overcharge.
-local CHARGE_STEP = CONFIG.charge_heat_interval / CONFIG.charge_time -- the charge, from 0 to 1, between two additions
-overcharge_values.ut_bio_charging = CONFIG.charged_overcharge * CHARGE_STEP
+-- The goop level of a glob is carried by the scale of its projectile. The scale goes from 0 to 1, and 0 is a level 1 glob. The blast
+-- radius of a level is the radius of level 1 times the level's square root, so the scale is made to follow the square root.
+local ROOT_MAX = math.sqrt(CONFIG.max_goop_load)
 
--- The heat of the charge goes up fast at first and then slows down. The heat made by the time the charge is c, from 0 to 1, is
--- charged_overcharge * (1 - (1 - c)^charge_heat_curve). The game adds the same amount every time, so each addition is scaled to
--- what the curve makes in the step it ends. The charge action stores the player's charge here.
-local charge_levels = {}
-
-local function charge_heat_progress(charge_level)
-	return 1 - (1 - math.clamp(charge_level, 0, 1)) ^ CONFIG.charge_heat_curve
+local function scale_of_level(level)
+	return (math.sqrt(level) - 1) / (ROOT_MAX - 1)
 end
 
-mod.charge_update_callbacks.bio = function (self)
-	charge_levels[self.owner_unit] = self.charge_level
+local function level_of_scale(scale)
+	local root = 1 + math.clamp(scale or 0, 0, 1) * (ROOT_MAX - 1)
+
+	return math.clamp(math.floor(root * root + 0.5), 1, CONFIG.max_goop_load)
 end
 
-mod.overcharge_callbacks.ut_bio_charging = function (self, overcharge_amount)
-	local level = charge_levels[self.unit] or 0
-
-	-- Once the charge is full, the game adds next to nothing, and that is left alone.
-	if level < 1 then
-		overcharge_amount = overcharge_amount * (charge_heat_progress(level) - charge_heat_progress(level - CHARGE_STEP)) / CHARGE_STEP
-	end
-
-	return overcharge_amount
+-- The scale is sent as a whole number from 0 to 100.
+local function scale_to_send(level)
+	return math.floor(scale_of_level(level) * 100 + 0.5)
 end
+
+-- What the skin needs to know about a glob
+mod.bio_goop = {
+	level_of_scale = level_of_scale,
+	volume_of_level = function (level)
+		return math.sqrt(level)
+	end,
+}
+
+local function blast_damage(level)
+	return CONFIG.base_damage + CONFIG.level_damage * level
+end
+
+local REFERENCE_DAMAGE = blast_damage(CONFIG.max_goop_load)
+
+-- The power level of a glob is the weapon's power level times this. The damage profiles are made for the biggest glob.
+local function power_ratio(level)
+	return blast_damage(level) / REFERENCE_DAMAGE
+end
+
+local function blast_radius(level)
+	return CONFIG.blast_radius_uu * UNIT * math.sqrt(level)
+end
+
+local function glob_radius(level)
+	return CONFIG.collision_uu * UNIT * math.sqrt(level)
+end
+
+-- The speed for the action or the projectile, in the unit that the game uses: m/s * 100
+local function action_speed(speed_uu)
+	return speed_uu * UNIT * CONFIG.speed_scale * 100
+end
+
+-- A charged glob is slower the more goop it has (BioGlob.AdjustSpeed).
+local function charged_speed_uu(level)
+	return CONFIG.glob_speed_uu * (0.4 + level) / (1.4 * level)
+end
+
+local GRAVITY_SETTINGS = "ut_bio_glob"
+
+ProjectileGravitySettings[GRAVITY_SETTINGS] = CONFIG.gravity
+
+utils.register_network_lookup("projectile_gravity_settings", GRAVITY_SETTINGS)
+
+-- The globs that come off a landing glob, and the glob that drips, are an action of the weapon of their own. A projectile takes its
+-- settings from its action by name, and the name is sent over the network, so it is registered.
+local CHILD_ACTION_NAME = "action_one"
+local CHILD_SUB_ACTION = "ut_bio_child"
+
+utils.register_network_lookup("sub_actions", CHILD_SUB_ACTION)
+
+-- A glob goes where the crosshair is. It has no spread.
+local SPREAD_TEMPLATE = "ut_bio"
+
+utils.zero_spread_template(SPREAD_TEMPLATE, "brace_of_pistols")
 
 local function set_armor_modifiers(profile)
 	utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact, true)
 end
 
--- Damage profiles. The direct hit of a glob does glob_direct_damage and staggers. It is the part of the hit that headshots count
--- for, because a burst has no hit zone. The rest of the damage is the burst.
+-- Damage profiles. The direct hit of a glob only staggers. UT has no damage from the hit itself. All of the damage is the explosion.
 register_damage_profile("ut_bio_glob", "staff_fireball", function (profile)
-	make_flat(profile, attack_power_for(CONFIG.glob_direct_damage), impact_power_for(CONFIG.glob_direct_damage))
+	make_flat(profile, 0, impact_power_for(CONFIG.level_damage))
 	set_armor_modifiers(profile)
 
 	profile.cleave_distribution = {
@@ -179,38 +203,7 @@ register_damage_profile("ut_bio_glob", "staff_fireball", function (profile)
 	}
 end)
 
--- The burn of the puddle is the game's burning dot with a power of its own (see burn_reference_power_level).
-register_damage_profile(CONFIG.puddle_dot, "burning_dot", function (profile)
-	profile.default_target.power_distribution = {
-		attack = attack_power_for(CONFIG.puddle_tick_damage) * CONFIG.burn_reference_power_level / DefaultPowerLevel,
-		impact = 0,
-	}
-end)
-
-BuffTemplates[CONFIG.puddle_dot] = {
-	buffs = {
-		{
-			apply_buff_func = "start_dot_damage",
-			damage_profile = CONFIG.puddle_dot,
-			damage_type = "burninating",
-			duration = CONFIG.puddle_damage_interval * 1.2,
-			max_stacks = 1,
-			name = CONFIG.puddle_dot,
-			refresh_durations = true,
-			time_between_dot_damages = CONFIG.puddle_tick_interval,
-			update_func = "apply_dot_damage",
-			update_start_delay = CONFIG.puddle_tick_interval,
-			perks = {
-				require("scripts/unit_extensions/default_player_unit/buffs/settings/buff_perk_names").burning,
-			},
-		},
-	},
-}
-
-DotTypeLookup[CONFIG.puddle_dot] = "burning_dot"
-utils.register_network_lookup("buff_templates", CONFIG.puddle_dot)
-
-local function burst_profiles(name, damage)
+local function blast_profiles(name, damage)
 	local function modify(profile)
 		make_flat(profile, attack_power_for(damage), impact_power_for(damage))
 		set_armor_modifiers(profile)
@@ -220,95 +213,40 @@ local function burst_profiles(name, damage)
 	register_damage_profile(name .. "_glance", "fireball_charged_explosion_glance", modify)
 end
 
-burst_profiles("ut_bio_burst", CONFIG.glob_damage)
-burst_profiles("ut_bio_charged_burst", CONFIG.charged_glob_damage)
-burst_profiles("ut_bio_child_burst", CONFIG.child_damage)
-burst_profiles("ut_bio_charged_impact", CONFIG.charged_impact_damage)
+blast_profiles("ut_bio_blast", REFERENCE_DAMAGE)
 
--- Explosion templates. The burst of a glob is only the blast. The goo it brings goes to the puddle (see Puddles below). The
--- burst of a puddle with too much goo, ut_bio_charged_burst, has a radius and a power that go with the goo the puddle had. It is
--- made with the goo as the scale of the explosion, from 0 to 1.
-local function burst_template(burst_profile_name, radius_min, radius_max)
-	return {
+-- Explosion templates. The scale of the explosion goes from 0 for a level 1 glob to 1 for a level 10 glob. The damage comes from the
+-- power level that the explosion is made with (see power_ratio). The one in the air has half the momentum, so it throws the player
+-- who fired it less (see blast_effects). The shooter is hurt separately.
+local function blast_template(name)
+	register_explosion_template(name, {
 		explosion = {
 			alert_enemies = true,
 			alert_enemies_radius = 10,
 			attacker_power_level_offset = 1,
-			damage_profile = burst_profile_name,
-			damage_profile_glance = burst_profile_name .. "_glance",
-			max_damage_radius_max = radius_max * 0.4,
-			max_damage_radius_min = radius_min * 0.4,
-			radius_max = radius_max,
-			radius_min = radius_min,
+			damage_profile = "ut_bio_blast",
+			damage_profile_glance = "ut_bio_blast_glance",
+			ignore_attacker_unit = true,
+			max_damage_radius_max = blast_radius(CONFIG.max_goop_load) * CONFIG.blast_full_damage_share,
+			max_damage_radius_min = blast_radius(1) * CONFIG.blast_full_damage_share,
+			radius_max = blast_radius(CONFIG.max_goop_load),
+			radius_min = blast_radius(1),
 			use_attacker_power_level = true,
 		},
-	}
+	})
 end
 
-register_explosion_template("ut_bio_burst", burst_template("ut_bio_burst", CONFIG.glob_burst_radius, CONFIG.glob_burst_radius))
-register_explosion_template("ut_bio_charged_burst", burst_template("ut_bio_charged_burst", CONFIG.glob_burst_radius, CONFIG.charged_burst_radius))
-register_explosion_template("ut_bio_child_burst", burst_template("ut_bio_child_burst", CONFIG.child_burst_radius, CONFIG.child_burst_radius))
+blast_template("ut_bio_blast")
+blast_template("ut_bio_blast_air")
 
--- The charged glob bursts with nothing, because it has the goo to burst the puddle it makes. The template exists to tell the
--- globs' bursts apart.
-register_explosion_template("ut_bio_charged_glob", {})
+-- A glob that lands or runs out of time does nothing by itself. The mod handles the landing.
+register_explosion_template("ut_bio_landing", {})
 
--- The puddle is the area that burns whoever is in it. Its radius and duration are those of the puddle that is made. It has no
--- look of its own. The mod plays the puddle's fire (see the visuals below).
-register_explosion_template("ut_bio_puddle", {
-	aoe = {
-		area_damage_template = "explosion_template_aoe",
-		attack_template = "fire_grenade_dot",
-		damage_interval = CONFIG.puddle_damage_interval,
-		dot_template_name = CONFIG.puddle_dot,
-		duration = CONFIG.glob_puddle_duration,
-		radius = CONFIG.glob_puddle_radius,
-	},
-})
-
--- The impact is only the blast. The burst that goes with it leaves the puddle. Its radius goes with the charge, like the charged
--- burst's does.
-local function impact_template(profile_name, radius_min, radius_max)
-	return {
-		explosion = {
-			alert_enemies = true,
-			alert_enemies_radius = 10,
-			attacker_power_level_offset = 1,
-			damage_profile = profile_name,
-			damage_profile_glance = profile_name .. "_glance",
-			max_damage_radius_max = radius_max * 0.5,
-			max_damage_radius_min = radius_min * 0.5,
-			radius_max = radius_max,
-			radius_min = radius_min,
-			use_attacker_power_level = true,
-		},
-	}
-end
-
-register_explosion_template("ut_bio_charged_impact", impact_template("ut_bio_charged_impact", CONFIG.impact_radius, CONFIG.charged_impact_radius))
-
--- The skin draws and plays the bursts and the impact (skin_explosion_callbacks).
-
--- Weapon template
--- The glob is one of the game's projectiles, the bolt of the drakefire pistols. The Sienna's small fireball stops being drawn
--- when it is not close, while the bolt is made to be seen from afar. The charged glob is the Sienna's charged fireball, which is
--- big enough to be seen.
-
+-- The Weapon template
+-- The glob is one of the game's projectiles, the bolt of the drakefire pistols.
 local PROJECTILE_UNIT_TEMPLATES = {
 	"drake_pistol_shot",
-	"fireball_charged",
 }
-
--- The small globs have an action of their own on the weapon. A projectile takes its settings from its action by name, and the
--- name is sent over the network, so it is registered.
-local CHILD_ACTION_NAME = "action_one"
-local CHILD_SUB_ACTION = "ut_bio_child"
-local CHILD_GRAVITY_SETTINGS = "ut_bio_child"
-
-ProjectileGravitySettings[CHILD_GRAVITY_SETTINGS] = CONFIG.child_gravity
-utils.register_network_lookup("projectile_gravity_settings", CHILD_GRAVITY_SETTINGS)
-
-utils.register_network_lookup("sub_actions", CHILD_SUB_ACTION)
 
 local function enter_function(attacker_unit, input_extension)
 	input_extension:clear_input_buffer()
@@ -316,640 +254,159 @@ local function enter_function(attacker_unit, input_extension)
 	return input_extension:reset_release_input()
 end
 
-local function build_projectile_info(projectile_name)
-	local projectile_info = table.clone(Projectiles[projectile_name])
+local function build_projectile_info()
+	local projectile_info = table.clone(Projectiles.brace_of_drake_pistols_shot)
 
-	projectile_info.gravity_settings = CONFIG.glob_gravity_settings
-	projectile_info.life_time = CONFIG.glob_max_flight + 1
-	projectile_info.unit_life_time = CONFIG.glob_max_flight + 1
+	projectile_info.gravity_settings = GRAVITY_SETTINGS
+	projectile_info.life_time = CONFIG.max_flight + 1
+	projectile_info.unit_life_time = CONFIG.max_flight + 1
 
 	return projectile_info
 end
 
-local function build_glob_action()
-	local projectile_info = build_projectile_info("brace_of_drake_pistols_shot")
-
+-- The actions that can follow a shot. Either fire mode can be used once the fire rate has passed, and the button can be held.
+local function fire_chain_actions(interval)
 	return {
-		alert_sound_range_fire = 12,
-		alert_sound_range_hit = 2,
-		anim_end_event = "attack_finished",
-		anim_event = "attack_shoot",
-		apply_recoil = true,
-		charge_value = "light_attack",
-		fire_sound_event = CONFIG.fire_sound,
-		fire_sound_on_husk = true,
-		fire_time = 0.15,
-		kind = "charged_projectile",
-		overcharge_type = "ut_bio_glob",
-		ut_bio_glob = true,
-		ut_aoe_callback = "ut_bio_glob",
-		ut_init_flow_event_filter = "bio",
-		ut_skin_init_callback = "bio",
-		ut_bio_goo = 1,
-		ut_hit_enemy_callback = "ut_bio_glob",
-		speed = CONFIG.glob_speed,
-		total_time = CONFIG.fire_interval,
-		allowed_chain_actions = {
-			{
-				action = "action_wield",
-				input = "action_wield",
-				start_time = 0.2,
-				sub_action = "default",
-			},
-			{
-				action = "action_one",
-				input = "action_one_hold",
-				start_time = CONFIG.fire_interval,
-				sub_action = "default",
-			},
-			{
-				action = "action_two",
-				input = "action_two_hold",
-				start_time = CONFIG.fire_interval,
-				sub_action = "default",
-			},
-			{
-				action = "weapon_reload",
-				input = "weapon_reload",
-				start_time = 0.3,
-				sub_action = "default",
-			},
+		{
+			action = "action_wield",
+			input = "action_wield",
+			start_time = 0.2,
+			sub_action = "default",
 		},
-		enter_function = enter_function,
-		projectile_info = projectile_info,
-		impact_data = {
-			aoe = ExplosionTemplates.ut_bio_burst,
-			damage_profile = "ut_bio_glob",
+		{
+			action = "action_one",
+			input = "action_one",
+			start_time = interval,
+			sub_action = "default",
 		},
-		-- A glob that has not hit anything bursts when its time is up.
-		timed_data = {
-			aoe = ExplosionTemplates.ut_bio_burst,
-			life_time = CONFIG.glob_max_flight,
+		{
+			action = "action_one",
+			input = "action_one_hold",
+			start_time = interval,
+			sub_action = "default",
 		},
-		recoil_settings = {
-			climb_duration = 0.1,
-			horizontal_climb = 0,
-			restore_duration = 0.2,
-			vertical_climb = -0.5,
-			climb_function = math.easeInCubic,
-			restore_function = math.ease_out_quad,
+		{
+			action = "action_two",
+			input = "action_two_hold",
+			start_time = interval,
+			sub_action = "default",
+		},
+		{
+			action = "weapon_reload",
+			input = "weapon_reload",
+			start_time = 0.3,
+			sub_action = "default",
 		},
 	}
 end
 
-local function build_charged_action()
-	-- This is the Sienna's charged fireball as the game has it, and its unit grows with the charge by itself. Only the arc of its
-	-- flight is the globs'.
-	local projectile_info = table.clone(Projectiles.fireball_charged)
-
-	projectile_info.gravity_settings = CONFIG.glob_gravity_settings
-
+-- The fields that every glob's action has, whether the player fires it or it comes off a landed glob
+local function glob_fields()
 	return {
-		alert_sound_range_fire = 12,
-		alert_sound_range_hit = 2,
-		anim_end_event = "attack_finished",
-		anim_event = "attack_shoot_charged",
-		apply_recoil = true,
-		charge_value = "light_attack",
-		fire_sound_event = CONFIG.charged_fire_sound,
-		fire_sound_on_husk = true,
-		fire_time = 0.15,
-		kind = "charged_projectile",
-		speed = CONFIG.charged_glob_speed,
-		throw_up_this_much_in_target_direction = 0.1,
-		ut_bio_glob = true,
-		ut_init_flow_event_filter = "bio",
-		ut_skin_init_callback = "bio",
-		ut_bio_impact_template = "ut_bio_charged_impact",
-		ut_hit_enemy_callback = "ut_bio_glob",
+		kind = "crossbow",
+		projectile_info = build_projectile_info(),
+		speed = action_speed(CONFIG.glob_speed_uu),
+		spread_template_override = SPREAD_TEMPLATE,
 		ut_aoe_callback = "ut_bio_glob",
-		-- The goo of the glob goes with its charge (see goo_of).
-		ut_bio_goo_by_charge = true,
-		ut_bio_bursts_puddle = true,
-		-- The damage of an uncharged glob is the primary's, and the damage of a full charge is the charged one's.
-		scale_power_level = CONFIG.glob_damage / CONFIG.charged_glob_damage,
-		total_time = 0.8,
-		allowed_chain_actions = {
-			{
-				action = "action_wield",
-				input = "action_wield",
-				start_time = 0.2,
-				sub_action = "default",
-			},
-			{
-				action = "action_one",
-				input = "action_one",
-				release_required = "action_two_hold",
-				start_time = 0.8,
-				sub_action = "default",
-			},
-			{
-				action = "action_two",
-				input = "action_two_hold",
-				start_time = 0.8,
-				sub_action = "default",
-			},
-			{
-				action = "weapon_reload",
-				input = "weapon_reload",
-				start_time = 0.3,
-				sub_action = "default",
-			},
-		},
-		enter_function = enter_function,
-		projectile_info = projectile_info,
+		ut_bio_glob = true,
+		ut_hit_enemy_callback = "ut_bio_glob",
+		ut_init_flow_event_filter = "bio",
 		impact_data = {
-			aoe = ExplosionTemplates.ut_bio_charged_glob,
+			aoe = ExplosionTemplates.ut_bio_landing,
 			damage_profile = "ut_bio_glob",
 		},
 		timed_data = {
-			aoe = ExplosionTemplates.ut_bio_charged_glob,
-			life_time = CONFIG.glob_max_flight,
-		},
-		recoil_settings = {
-			climb_duration = 0.2,
-			horizontal_climb = 0,
-			restore_duration = 0.2,
-			vertical_climb = -1,
-			climb_function = math.easeInCubic,
-			restore_function = math.ease_out_quad,
+			aoe = ExplosionTemplates.ut_bio_landing,
+			life_time = CONFIG.max_flight,
 		},
 	}
 end
 
+-- The shot of a player: LMB fires a small glob, and releasing RMB fires the big one.
+local function build_shot_action(charged)
+	local interval = charged and CONFIG.charged_fire_interval or CONFIG.fire_interval
+	local action = glob_fields()
+
+	action.alert_sound_range_fire = 12
+	action.alert_sound_range_hit = 2
+	action.allowed_chain_actions = fire_chain_actions(interval)
+	-- The ammo of the big glob was used while it was loaded.
+	action.ammo_usage = charged and 0 or 1
+	action.anim_event = "attack_shoot"
+	action.anim_event_last_ammo = "attack_shoot"
+	action.enter_function = enter_function
+	action.fire_sound_event = CONFIG.fire_sound
+	action.fire_time = 0
+	action.total_time = interval
+	action.ut_bio_charged = charged or nil
+	action.ut_bio_shot = true
+	action.ut_skin_init_callback = "bio"
+
+	return action
+end
+
+-- The globs that come off a landed glob. They are not fired by the player.
 local function build_child_action()
-	local projectile_info = build_projectile_info("brace_of_drake_pistols_shot")
+	local action = glob_fields()
 
-	-- The small globs fly in a short arc. They are fast, and they fall quickly.
-	projectile_info.gravity_settings = CHILD_GRAVITY_SETTINGS
-	projectile_info.life_time = CONFIG.child_max_flight + 1
-	projectile_info.unit_life_time = CONFIG.child_max_flight + 1
+	action.allowed_chain_actions = {}
+	action.ammo_usage = 0
+	action.total_time = 1
+	action.ut_skin_init_callback = "bio"
 
+	return action
+end
+
+-- The charge. The goop is loaded by the callbacks below. Releasing the button fires the big glob.
+local function build_charge_action()
 	return {
-		kind = "charged_projectile",
-		ut_aoe_callback = "ut_bio_glob",
-		ut_bio_glob = true,
-		ut_init_flow_event_filter = "bio",
-		ut_skin_init_callback = "bio_child",
-		ut_bio_goo_range = {
-			CONFIG.child_goo_min,
-			CONFIG.child_goo_max,
+		allowed_chain_actions = {
+			{
+				action = "action_wield",
+				input = "action_wield",
+				start_time = 0,
+				sub_action = "default",
+			},
+			{
+				action = "action_one",
+				auto_chain = true,
+				release_required = "action_two_hold",
+				start_time = CONFIG.release_delay,
+				sub_action = "shoot_charged",
+			},
 		},
-		speed = CONFIG.child_speed_min,
-		total_time = 1,
-		allowed_chain_actions = {},
-		projectile_info = projectile_info,
-		impact_data = {
-			aoe = ExplosionTemplates.ut_bio_child_burst,
-			damage_profile = "ut_bio_glob",
-		},
-		timed_data = {
-			aoe = ExplosionTemplates.ut_bio_child_burst,
-			life_time = CONFIG.child_max_flight,
-		},
+		charge_time = CONFIG.goop_up_rate * CONFIG.max_goop_load,
+		-- The charge needs ammo to start, like UT's ModeHoldFire.
+		condition_func = function (unit, input_extension, ammo_extension)
+			return not ammo_extension or ammo_extension:total_remaining_ammo() > 0
+		end,
+		enter_function = enter_function,
+		hold_input = "action_two_hold",
+		kind = "charge",
+		minimum_hold_time = 0.05,
+		total_time = math.huge,
+		ut_charge_callback = "bio",
+		zoom_condition_function = function ()
+			return false
+		end,
 	}
 end
 
--- After a projectile has hit something, the game keeps its unit for a short time before taking it away, so that its trail can
--- fade out. For the globs, the unit is kept for glob_fizzle_time seconds instead.
--- The game also tells the unit that the projectile has ended the moment it hits, which ends its effects at once. For the globs,
--- that signal is held back and sent glob_end_delay seconds later.
-local delayed_ends = {} -- maps the projectile's unit to the time to tell it that it has ended
-
-mod:hook(PlayerProjectileUnitExtension, "stop", function (func, self, ...)
-	local action = self._current_action
-
-	if not action or not action.ut_bio_glob or self._stop_impacts then
-		return func(self, ...)
-	end
-
-	local projectile_unit = self._projectile_unit
-	local flow_event = Unit.flow_event
-
-	Unit.flow_event = function (unit, event_name, ...)
-		if unit == projectile_unit and event_name == "lua_projectile_end" then
-			delayed_ends[projectile_unit] = Managers.time:time("game") + CONFIG.glob_end_delay
-
-			return
-		end
-
-		return flow_event(unit, event_name, ...)
-	end
-
-	-- The replaced function must be put back even if the call fails.
-	local ok, error_message = pcall(func, self, ...)
-
-	Unit.flow_event = flow_event
-
-	if not ok then
-		error(error_message, 0)
-	end
-end)
-
-local function update_delayed_ends(t)
-	for projectile_unit, end_t in pairs(delayed_ends) do
-		if t >= end_t then
-			delayed_ends[projectile_unit] = nil
-
-			if Unit.alive(projectile_unit) then
-				Unit.flow_event(projectile_unit, "lua_projectile_end")
-			end
-		end
-	end
-end
-
--- The way out of the wall, floor or ceiling that a glob hits is stored on the glob before its burst is made, because the game
--- gives the burst only the place.
-for _, function_name in ipairs({
-	"hit_level_unit",
-	"hit_non_level_unit",
-}) do
-	mod:hook(PlayerProjectileUnitExtension, function_name, function (func, self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
-		local action = self._current_action
-
-		if action and action.ut_aoe_callback == "ut_bio_glob" and hit_normal then
-			self._ut_bio_hit_normal = Vector3Box(hit_normal)
-		end
-
-		return func(self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
-	end)
-end
-
--- Smaller globs are thrown out of a puddle that bursts, or out of the player when the weapon overheats. They fly in a small arc
--- in random directions. They are projectiles of the weapon's own action (CHILD_SUB_ACTION) and are spawned like a shot, away
--- from the surface the puddle is on: up from a floor, down from a ceiling, and out from a wall.
--- The shot is { owner_unit, item_name, item_template_name, is_critical_strike }. With random_goo, each glob has a random amount
--- of goo from child_goo_min to child_goo_max. Without it, each has child_goo_min.
-local function throw_children(shot, position, normal, count, power_level, random_goo)
-	local start = position + normal * CONFIG.child_start_height
-	local helper_axis = math.abs(normal.z) < 0.9 and Vector3.up() or Vector3.right()
-	local tangent_a = Vector3.normalize(Vector3.cross(normal, helper_axis))
-	local tangent_b = Vector3.cross(normal, tangent_a)
-
-	for _ = 1, count do
-		local around = math.random() * math.pi * 2
-		local elevation = math.degrees_to_radians(CONFIG.child_angle_min + math.random() * (CONFIG.child_angle_max - CONFIG.child_angle_min))
-		local speed = CONFIG.child_speed_min + math.random() * (CONFIG.child_speed_max - CONFIG.child_speed_min)
-		-- The elevation is measured from the surface, towards the way out of it.
-		local along = tangent_a * math.cos(around) + tangent_b * math.sin(around)
-		local direction = along * math.cos(elevation) + normal * math.sin(elevation)
-		-- The game's projectiles are given a flat direction and the angle up or down from it.
-		local flat = Vector3.flat(direction)
-		local target_vector
-
-		if Vector3.length(flat) > 0.01 then
-			target_vector = Vector3.normalize(flat)
-		else
-			target_vector = Vector3(math.cos(around), math.sin(around), 0)
-		end
-
-		local angle = math.radians_to_degrees(math.asin(math.clamp(direction.z, -1, 1)))
-
-		-- The goo of the small glob is its scale, from child_goo_min at 0 to child_goo_max at 100.
-		local goo_scale = random_goo and math.floor(math.random() * 100 + 0.5) or 0
-
-		ActionUtils.spawn_player_projectile(shot.owner_unit, start, Quaternion.look(direction), goo_scale, angle, target_vector, speed, shot.item_name, shot.item_template_name, CHILD_ACTION_NAME, CHILD_SUB_ACTION, shot.is_critical_strike, power_level)
-	end
-end
-
--- Puddles. Where a glob bursts, it adds its goo to the puddle there, or makes one. A puddle with too much goo bursts into small
--- globs. The puddles are kept by the game that has the enemies, which is the host's, and that is where the areas that burn are
--- made. A puddle's area (an area damage unit) is made again every time goo is added, for the radius the puddle has then. The old
--- area stops, and its effects fade on their own.
-local puddles = {} -- { id, position, normal (Vector3Boxes), goo, expires = the time it dries up, unit = its area }
-local next_puddle_id = 0
-
-local function puddle_radius(goo)
-	return math.min(CONFIG.glob_puddle_radius * math.sqrt(goo), CONFIG.puddle_radius_max)
-end
-
-local function puddle_duration(goo)
-	return math.min(CONFIG.glob_puddle_duration + (goo - 1) * CONFIG.puddle_duration_per_goo, CONFIG.puddle_duration_max)
-end
-
-local function remove_puddle_area(puddle)
-	if puddle.unit and Unit.alive(puddle.unit) then
-		Managers.state.unit_spawner:mark_for_deletion(puddle.unit)
-	end
-
-	puddle.unit = nil
-end
-
--- Returns whoever is in the puddle as a set: the players, the bots and the enemies within its radius. Stepping into a puddle is
--- being in it when you were not a moment ago. What was in the puddle when it was made or grew has not stepped in.
-local query_units = {}
-
-local function units_inside(puddle)
-	local inside = {}
-	local position = puddle.position:unbox()
-	local radius = puddle_radius(puddle.goo)
-	local side = Managers.state.side:get_side_from_name("heroes")
-
-	if not side then
-		return inside
-	end
-
-	for _, unit in ipairs(side.PLAYER_AND_BOT_UNITS) do
-		if Unit.alive(unit) and HEALTH_ALIVE[unit] and Vector3.distance(Unit.world_position(unit, 0), position) < radius then
-			inside[unit] = true
-		end
-	end
-
-	local num_units = AiUtils.broadphase_query(position, radius, query_units, side.enemy_broadphase_categories)
-
-	for i = 1, num_units do
-		local unit = query_units[i]
-
-		if HEALTH_ALIVE[unit] then
-			inside[unit] = true
-		end
-	end
-
-	return inside
-end
-
--- The skin draws the puddles (puddle_visual_callbacks). The host shows a puddle and tells the others. It shows the puddle again
--- when it grows.
-local function stop_visual(id)
-	mod.puddle_visual_callbacks.stop(id)
-end
-
-local function show_visual(id, position, radius, charged, duration)
-	mod.puddle_visual_callbacks.show(id, position, radius, charged, duration)
-end
-
-mod:network_register("ut_bio_puddle_look", function (_, id, x, y, z, radius, charged, duration)
-	show_visual(id, Vector3(x, y, z), radius, charged, duration)
-end)
-
-mod:network_register("ut_bio_puddle_end", function (_, id)
-	stop_visual(id)
-end)
-
-local function end_puddle_visual(puddle)
-	stop_visual(puddle.id)
-	mod:network_send("ut_bio_puddle_end", "others", puddle.id)
-end
-
--- Makes the area of the puddle for the goo it has. The puddle.context describes the glob that made the puddle:
--- { world, owner_unit, item_name, item_template_name, is_critical_strike, base_power }
-local function make_puddle_area(puddle, t)
-	remove_puddle_area(puddle)
-
-	local context = puddle.context
-	local radius = puddle_radius(puddle.goo)
-	local position = puddle.position:unbox()
-	local duration = math.max(puddle.expires - t, 1)
-	local charged = puddle.goo >= CONFIG.big_puddle_goo
-
-	puddle.unit = DamageUtils.create_aoe(context.world, context.owner_unit, position, context.item_name, ExplosionTemplates.ut_bio_puddle, radius, duration)
-	puddle.inside = units_inside(puddle)
-
-	show_visual(puddle.id, position, radius, charged, duration)
-	mod:network_send("ut_bio_puddle_look", "others", puddle.id, position.x, position.y, position.z, radius, charged, duration)
-end
-
--- Everyone sees the burst, because the host tells the others.
-mod:network_register("ut_bio_puddle_burst", function (_, x, y, z, goo_scale)
-	mod.puddle_visual_callbacks.burst(Vector3(x, y, z), goo_scale)
-end)
-
--- The burst of a puddle is a blast as big as the goo was, plus the small globs. With final, the puddle is gone after the burst
--- and nothing of it stays.
-local function burst_puddle(puddle, t, final)
-	remove_puddle_area(puddle)
-
-	local context = puddle.context
-	local goo_scale = math.clamp(puddle.goo / CONFIG.charged_goo, 0, 1)
-	local position = puddle.position:unbox()
-	local power_level = context.base_power * math.max(CONFIG.glob_damage / CONFIG.charged_glob_damage, goo_scale)
-
-	with_valid_positions(DamageUtils.create_explosion, context.world, context.owner_unit, position, Quaternion.identity(), ExplosionTemplates.ut_bio_charged_burst, goo_scale, context.item_name, true, false, context.owner_unit, power_level, context.is_critical_strike, context.owner_unit)
-
-	mod.puddle_visual_callbacks.burst(position, goo_scale)
-	mod:network_send("ut_bio_puddle_burst", "others", position.x, position.y, position.z, goo_scale)
-
-	local kept_goo = final and 0 or math.min(puddle.goo * CONFIG.burst_goo_left, CONFIG.burst_goo_left_max)
-	local count = math.clamp(math.floor((puddle.goo * (1 - CONFIG.burst_goo_loss) - kept_goo) / CONFIG.child_goo_min), 0, CONFIG.child_count_max)
-
-	throw_children(context, position, puddle.normal:unbox(), count, context.base_power)
-
-	if final then
-		end_puddle_visual(puddle)
-
-		return
-	end
-
-	-- Some of the puddle stays where it was.
-	puddle.goo = kept_goo
-	puddle.expires = t + puddle_duration(puddle.goo)
-
-	make_puddle_area(puddle, t)
-end
-
-local function goo_of(self)
-	local action = self._current_action
-
-	if action.ut_bio_goo_by_charge then
-		-- The goo starts at charged_goo_min at the charge where the glob can first be fired, not at zero.
-		local first_charge = CONFIG.min_fire_time / CONFIG.charge_time
-		local progress = math.clamp(((self.scale or 1) - first_charge) / (1 - first_charge), 0, 1)
-
-		return math.lerp(CONFIG.charged_goo_min, CONFIG.charged_goo, charge_heat_progress(progress))
-	end
-
-	if action.ut_bio_goo_range then
-		return math.lerp(action.ut_bio_goo_range[1], action.ut_bio_goo_range[2], math.clamp(self.scale or 0, 0, 1))
-	end
-
-	return action.ut_bio_goo or 1
-end
-
--- Adds goo to the puddles, on the host. The context describes the glob that makes the puddle (see make_puddle_area).
-local function add_goo_to_puddles(context, position, normal, goo, bursts_puddle)
-	local t = Managers.time:time("game")
-
-	-- The glob lands in the nearest puddle that it is inside of, as long as the puddle has not gone out (see update_puddles).
-	local puddle
-	local nearest = math.huge
-
-	for _, other in ipairs(puddles) do
-		local offset = other.position:unbox() - position
-		local distance = Vector3.length(Vector3.flat(offset))
-
-		if t < other.expires and distance < puddle_radius(other.goo) + CONFIG.puddle_merge_margin and math.abs(offset.z) < CONFIG.puddle_merge_height and distance < nearest then
-			puddle = other
-			nearest = distance
-		end
-	end
-
-	if puddle then
-		puddle.goo = puddle.goo + goo
-	else
-		next_puddle_id = next_puddle_id + 1
-
-		puddle = {
-			context = context,
-			goo = goo,
-			id = next_puddle_id,
-			normal = Vector3Box(normal),
-			position = Vector3Box(position),
-		}
-		puddles[#puddles + 1] = puddle
-	end
-
-	puddle.expires = t + puddle_duration(puddle.goo)
-
-	-- A puddle bursts when it has too much goo and when something steps into it. The glob of the alt fire counts as stepping in,
-	-- so it bursts the puddle it lands in however much goo there is.
-	if puddle.goo >= CONFIG.burst_goo or bursts_puddle then
-		burst_puddle(puddle, t)
-	else
-		make_puddle_area(puddle, t)
-	end
-end
-
--- The puddles belong to the host, because it has the enemies and makes the areas that burn. A glob of the host adds its goo
--- there. A glob of a client bursts on the client's machine, which tells the host.
-mod:network_register("ut_bio_goo", function (_, owner_go_id, item_name, is_critical_strike, base_power, x, y, z, normal_x, normal_y, normal_z, goo, bursts_puddle)
-	if not Managers.player.is_server then
-		return
-	end
-
-	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
-
-	if not owner_unit or not Unit.alive(owner_unit) then
-		return
-	end
-
-	local context = {
-		base_power = base_power,
-		is_critical_strike = is_critical_strike,
-		item_name = item_name,
-		item_template_name = TEMPLATE_NAME,
-		owner_unit = owner_unit,
-		world = Managers.world:world("level_world"),
-	}
-
-	add_goo_to_puddles(context, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), goo, bursts_puddle)
-end)
-
-local function add_goo(self, position)
-	local normal_box = self._ut_bio_hit_normal
-	local normal = normal_box and normal_box:unbox() or Vector3.up()
-	local goo = goo_of(self)
-	local bursts_puddle = self._current_action.ut_bio_bursts_puddle or false
-	-- This is the power the glob would have had uncharged.
-	local base_power = self.power_level / math.max(self._current_action.scale_power_level or 1, self.charge_level or 0)
-
-	if not self._is_server then
-		mod:network_send("ut_bio_goo", "others", Managers.state.unit_storage:go_id(self._owner_unit), self.item_name, self._is_critical_strike or false, base_power, position.x, position.y, position.z, normal.x, normal.y, normal.z, goo, bursts_puddle)
-
-		return
-	end
-
-	add_goo_to_puddles({
-		base_power = base_power,
-		is_critical_strike = self._is_critical_strike,
-		item_name = self.item_name,
-		item_template_name = self.action_lookup_data.item_template_name,
-		owner_unit = self._owner_unit,
-		world = self._world,
-	}, position, normal, goo, bursts_puddle)
-end
-
--- Removes puddles that are gone, and bursts a puddle when something steps into it.
-local function update_puddles(t)
-	if not Managers.player.is_server then
-		return
-	end
-
-	for i = #puddles, 1, -1 do
-		local puddle = puddles[i]
-
-		if not Unit.alive(puddle.context.owner_unit) then
-			-- The player's unit is gone, because a hero was changed or the level was left. Nothing can be made for it, because
-			-- the game breaks on a projectile that has no owner.
-			remove_puddle_area(puddle)
-			end_puddle_visual(puddle)
-			table.remove(puddles, i)
-		elseif t >= puddle.expires then
-			-- A puddle that goes out with nothing stepped into it bursts and is gone, unless it is too small.
-			table.remove(puddles, i)
-
-			if puddle.goo >= CONFIG.step_burst_goo then
-				burst_puddle(puddle, t, true)
-			end
-		elseif puddle.inside then
-			local inside = units_inside(puddle)
-			local stepped_in = false
-
-			for unit in pairs(inside) do
-				if not puddle.inside[unit] then
-					stepped_in = true
-
-					break
-				end
-			end
-
-			puddle.inside = inside
-
-			if stepped_in and puddle.goo >= CONFIG.step_burst_goo then
-				burst_puddle(puddle, t)
-			end
-		end
-	end
-end
-
--- The bursts of the globs add their goo. The impact of a glob on an enemy also goes through do_aoe, but it is not a burst that
--- adds goo, and neither is the burst of a puddle.
-local GOO_BURSTS = {
-	[ExplosionTemplates.ut_bio_burst] = true,
-	[ExplosionTemplates.ut_bio_charged_glob] = true,
-	[ExplosionTemplates.ut_bio_child_burst] = true,
-}
-
-mod.aoe_callbacks.ut_bio_glob = function (self, aoe_data, position)
-	if not GOO_BURSTS[aoe_data] or self._ut_bio_goo_added then
-		return
-	end
-
-	self._ut_bio_goo_added = true
-
-	add_goo(self, position)
-end
-
--- A glob that hits an enemy sets off the impact, once however many enemies it hits on its way.
-mod.hit_enemy_callbacks.ut_bio_glob = function (func, self, is_owner, impact_data, hit_unit, hit_position, ...)
-	func(self, impact_data, hit_unit, hit_position, ...)
-
-	-- Only the projectile of the player who fired sets off the impact. The other peers get the impact from the network.
-	if not is_owner then
-		return
-	end
-
-	local template_name = self._current_action.ut_bio_impact_template
-
-	if template_name and not self._ut_bio_impact then
-		self._ut_bio_impact = true
-
-		self:do_aoe(ExplosionTemplates[template_name], hit_position)
-	end
-end
-
-mod:hook_safe(PlayerProjectileUnitExtension, "mark_for_deletion", function (self)
-	local action = self._current_action
-
-	if action and action.ut_bio_glob and self._deletion_time and not self._ut_bio_fizzle then
-		self._ut_bio_fizzle = true
-		self._deletion_time = Managers.time:time("game") + CONFIG.glob_fizzle_time
-	end
-end)
-
--- What is changed in the template is saved, and it is put back when the mod is disabled or unloaded.
+-- The template is shared game state, so it is patched in place. What is changed is saved, and it is put back when the mod is disabled
+-- or unloaded.
 local saved = {}
 
-local function restore_drakegun()
+local AMMO_FIELDS = {
+	"ammo_immediately_available",
+	"ammo_per_clip",
+	"ammo_per_reload",
+	"max_ammo",
+	"play_reload_anim_on_wield_reload",
+	"reload_time",
+	"should_update_anim_ammo",
+}
+
+local function restore_pistol()
 	local original = saved.original
 	local template = rawget(Weapons, TEMPLATE_NAME)
 
@@ -963,6 +420,11 @@ local function restore_drakegun()
 	actions.action_one.shoot_charged = original.action_one_shoot_charged
 	actions[CHILD_ACTION_NAME][CHILD_SUB_ACTION] = nil
 	actions.action_two.default = original.action_two_default
+	template.default_spread_template = original.default_spread_template
+
+	for _, field in ipairs(AMMO_FIELDS) do
+		template.ammo_data[field] = original.ammo_data[field]
+	end
 
 	for _, name in ipairs(PROJECTILE_UNIT_TEMPLATES) do
 		template.required_projectile_unit_templates[name] = original.required_projectile_unit_templates[name]
@@ -978,7 +440,7 @@ local function apply_bio_rifle()
 		return
 	end
 
-	-- The stat chart, from 0 to 7. The glob is the light attack, and the charged glob is the heavy one.
+	-- The stat chart, from 0 to 7. The small glob is the light attack, and the big glob is the heavy one.
 	template.weapon_diagram = {
 		light_attack = {
 			[DamageTypes.ARMOR_PIERCING] = 1,
@@ -1001,8 +463,14 @@ local function apply_bio_rifle()
 		action_one_default = actions.action_one.default,
 		action_one_shoot_charged = actions.action_one.shoot_charged,
 		action_two_default = actions.action_two.default,
+		ammo_data = {},
+		default_spread_template = template.default_spread_template,
 		required_projectile_unit_templates = {},
 	}
+
+	for _, field in ipairs(AMMO_FIELDS) do
+		original.ammo_data[field] = template.ammo_data[field]
+	end
 
 	template.required_projectile_unit_templates = template.required_projectile_unit_templates or {}
 
@@ -1013,45 +481,574 @@ local function apply_bio_rifle()
 
 	saved.original = original
 
-	local glob = build_glob_action()
-	local charged = build_charged_action()
+	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots. The pistol's ammo counter is
+	-- for six rounds, so it is not updated.
+	template.ammo_data.max_ammo = CONFIG.max_ammo
+	template.ammo_data.ammo_per_clip = CONFIG.max_ammo
+	template.ammo_data.ammo_per_reload = CONFIG.max_ammo
+	template.ammo_data.ammo_immediately_available = true
+	template.ammo_data.play_reload_anim_on_wield_reload = false
+	template.ammo_data.should_update_anim_ammo = false
+	-- Nothing should need a reload, but the game may still start one when the weapon is wielded, so the reload is made short.
+	template.ammo_data.reload_time = 0.2
+	template.default_spread_template = SPREAD_TEMPLATE
 
-	utils.set_lookup_data(glob, TEMPLATE_NAME, "action_one", "default")
-	utils.set_lookup_data(charged, TEMPLATE_NAME, "action_one", "shoot_charged")
-
+	local primary = build_shot_action(false)
+	local charged = build_shot_action(true)
 	local child = build_child_action()
 
+	utils.set_lookup_data(primary, TEMPLATE_NAME, "action_one", "default")
+	utils.set_lookup_data(charged, TEMPLATE_NAME, "action_one", "shoot_charged")
 	utils.set_lookup_data(child, TEMPLATE_NAME, CHILD_ACTION_NAME, CHILD_SUB_ACTION)
 
+	actions.action_one.default = primary
+	actions.action_one.shoot_charged = charged
 	actions[CHILD_ACTION_NAME][CHILD_SUB_ACTION] = child
 
-	actions.action_one.default = glob
-	actions.action_one.shoot_charged = charged
+	local charge = build_charge_action()
 
-	-- The charge fires the glob when the button is let go. It also fires when the primary is pressed, through the game's own chain.
-	local charge = table.clone(original.action_two_default)
+	utils.set_lookup_data(charge, TEMPLATE_NAME, "action_two", "default")
 
-	charge.charge_time = CONFIG.charge_time
-	-- The release that the glob waits for has to come after the charge started.
-	charge.enter_function = enter_function
-	-- The charge makes the weapon hot as it goes.
-	charge.overcharge_interval = CONFIG.charge_heat_interval
-	charge.ut_charge_callback = "bio"
-	charge.overcharge_type = "ut_bio_charging"
-	-- The Drakegun's own charge setting, remove_overcharge_on_interrupt, is kept. A full charge adds almost no more heat, so it
-	-- can be held at full without overheating, and some of the heat is taken back if the charge is cancelled.
-	charge.allowed_chain_actions[#charge.allowed_chain_actions + 1] = {
-		action = "action_one",
-		auto_chain = true,
-		release_required = "action_two_hold",
-		start_time = CONFIG.min_fire_time,
-		sub_action = "shoot_charged",
-	}
 	actions.action_two.default = charge
 end
 
 -- The mod holds its own references to the units of the globs while the weapon is enabled.
 local packages = utils.package_holder("unreal_tournament_bio")
+
+-- Loading goop
+-- The goop that each player has loaded: { load, timer, done }. It is read when the big glob is fired.
+local goop_loads = setmetatable({}, {
+	__mode = "k",
+})
+
+-- Loads one more unit of goop. It takes 1 ammo, and nothing is loaded if there is none. The loading is done when the load is full or
+-- the ammo is gone.
+local function add_goop(action, state)
+	local ammo_extension = action.ammo_extension
+
+	if ammo_extension and ammo_extension:ammo_count() > 0 then
+		state.load = state.load + 1
+
+		ammo_extension:use_ammo(1)
+	end
+
+	if state.load >= CONFIG.max_goop_load or not ammo_extension or ammo_extension:ammo_count() <= 0 then
+		state.done = true
+	end
+end
+
+-- BioChargedFire.Hold: one unit of goop at once, and then one every GoopUpRate seconds.
+mod.charge_start_callbacks.bio = function (action, new_action)
+	if new_action.ut_charge_callback ~= "bio" then
+		return
+	end
+
+	local state = {
+		done = false,
+		load = 0,
+		timer = 0,
+	}
+
+	goop_loads[action.owner_unit] = state
+
+	add_goop(action, state)
+end
+
+mod.charge_update_callbacks.bio = function (action, dt)
+	local state = goop_loads[action.owner_unit]
+
+	if not state or state.done then
+		return
+	end
+
+	state.timer = state.timer + dt
+
+	while state.timer >= CONFIG.goop_up_rate and not state.done do
+		state.timer = state.timer - CONFIG.goop_up_rate
+
+		add_goop(action, state)
+	end
+end
+
+-- Returns how much goop the player has loaded, at least 1, and empties the load.
+local function take_goop_load(owner_unit)
+	local state = goop_loads[owner_unit]
+	local load = state and state.load or 0
+
+	if state then
+		state.load = 0
+	end
+
+	return math.clamp(load, 1, CONFIG.max_goop_load)
+end
+
+-- Starting a glob
+-- Returns where a glob starts: in front of the camera, to its right and below it. A glob that would start behind a wall starts at
+-- the wall instead, because ProjectileFire.DoFireEffect traces to it.
+local function start_position(position, rotation)
+	position = utils.as_vector(position)
+
+	-- The game's spread rolls the rotation of a shot by a random angle about the way it points, whatever the spread numbers are. So
+	-- right and up are taken from the way it points alone. Otherwise the offset would turn about the aim from shot to shot.
+	local level = Quaternion.look(Quaternion.forward(rotation), Vector3.up())
+	local offset = Quaternion.forward(level) * CONFIG.start_forward + Quaternion.right(level) * CONFIG.start_right - Quaternion.up(level) * CONFIG.start_down
+	local distance = Vector3.length(offset)
+	local direction = offset * (1 / distance)
+	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+	local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world, position, direction, distance, "closest", "collision_filter", "filter_ai_line_of_sight_check")
+
+	if hit then
+		return position + direction * math.max(hit_distance - 0.05, 0)
+	end
+
+	return position + offset
+end
+
+-- A shot of the player starts at UT's offset, and the big glob has the goop that was loaded. Its scale carries the level, its speed
+-- depends on the level, and its power level is the share of the biggest glob's.
+mod.spawn_projectile_callbacks[TEMPLATE_NAME] = function (func, owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, is_critical_strike, power_level, ...)
+	local template = rawget(Weapons, item_template_name)
+	local sub_actions = template and template.actions[action_name]
+	local action = sub_actions and sub_actions[sub_action_name]
+
+	if action and action.ut_bio_shot then
+		local level = action.ut_bio_charged and take_goop_load(owner_unit) or 1
+
+		position = start_position(position, rotation)
+		scale = scale_to_send(level)
+		speed = action_speed(action.ut_bio_charged and charged_speed_uu(level) or CONFIG.glob_speed_uu)
+		power_level = power_level * power_ratio(level)
+	end
+
+	return func(owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, is_critical_strike, power_level, ...)
+end
+
+-- Spawns a glob of the given level, moving at the given velocity (in m/s). It is used for the small globs and for the glob that drips.
+local function spawn_glob(context, position, velocity, level)
+	local speed = Vector3.length(velocity)
+	local direction = speed > 0.001 and velocity * (1 / speed) or Vector3.down()
+	local flat = Vector3.flat(direction)
+	local target_vector = Vector3.length(flat) > 0.01 and Vector3.normalize(flat) or Vector3(0, 1, 0)
+	local angle = math.radians_to_degrees(math.asin(math.clamp(Vector3.z(direction), -1, 1)))
+	-- A rotation that looks straight up or down needs another vector to say which way is up.
+	local up = math.abs(Vector3.z(direction)) > 0.99 and Vector3(0, 1, 0) or Vector3.up()
+
+	ActionUtils.spawn_player_projectile(context.owner_unit, position, Quaternion.look(direction, up), scale_to_send(level), angle, target_vector, speed * 100, context.item_name, TEMPLATE_NAME, CHILD_ACTION_NAME, CHILD_SUB_ACTION, context.is_critical_strike, context.base_power * power_ratio(level))
+end
+
+local function random_direction()
+	local direction = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1)
+
+	if Vector3.length(direction) < 0.001 or Vector3.length(direction) > 1 then
+		return random_direction()
+	end
+
+	return Vector3.normalize(direction)
+end
+
+-- Globs that have landed
+-- Only the host keeps these. It has the enemies, and it makes the explosions. Each is { id, context, position, normal (boxes), level,
+-- rand3, expire, drips, inside }. The context is who fired it: { owner_unit, item_name, is_critical_strike, base_power }, where the
+-- base power is the power of a level 10 glob.
+local stuck = {}
+local next_glob_id = 0
+
+local function visuals()
+	return mod.goop_visual_callbacks
+end
+
+mod:network_register("ut_bio_land", function (_, id, x, y, z, normal_x, normal_y, normal_z, level)
+	visuals().land(id, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), level)
+end)
+
+mod:network_register("ut_bio_merge", function (_, id, level)
+	visuals().merge(id, level)
+end)
+
+mod:network_register("ut_bio_end", function (_, id)
+	visuals().stop(id)
+end)
+
+local function end_visual(glob)
+	visuals().stop(glob.id)
+	mod:network_send("ut_bio_end", "others", glob.id)
+end
+
+-- Returns when a glob that has been hit or has landed explodes or drips: a glob on a ceiling drips when its animation ends and
+-- DripTime has passed, and any other glob explodes after RestTime.
+local function rest_end_time(glob, t)
+	if glob.ceiling then
+		return t + CONFIG.hit_animation_time + CONFIG.drip_time
+	end
+
+	return t + CONFIG.rest_time
+end
+
+local function blow_up(glob)
+	local context = glob.context
+	local position = glob.position:unbox() + glob.normal:unbox() * 0.1
+
+	Managers.state.entity:system("area_damage_system"):create_explosion(context.owner_unit, position, Quaternion.identity(), "ut_bio_blast", scale_of_level(glob.level), context.item_name, context.base_power * power_ratio(glob.level), context.is_critical_strike, context.owner_unit)
+	end_visual(glob)
+end
+
+-- A glob on a ceiling falls, as a glob of the same level.
+local function drip(glob)
+	local context = glob.context
+	local position = glob.position:unbox() + glob.normal:unbox() * 0.1
+	local speed = CONFIG.drip_speed_uu * UNIT * CONFIG.speed_scale
+
+	spawn_glob(context, position, Vector3(0, 0, -speed), glob.level)
+	end_visual(glob)
+end
+
+-- BioGlob.SplashGlobs: small globs fly off the surface. They start a little off it, and fly away from it in random directions. The
+-- glob that landed gives them a tenth of its velocity, reflected.
+local function splash_globs(context, position, normal, landing_velocity, count, volume)
+	local start = position + normal * (volume * (CONFIG.flying_collision_uu + 4) * UNIT)
+	local reflected = landing_velocity and (landing_velocity - normal * (Vector3.dot(landing_velocity, normal) * 2)) * CONFIG.globling_inherit_share or Vector3.zero()
+
+	for _ = 1, count do
+		local speed_uu = CONFIG.globling_speed_uu[1] + math.random() * (CONFIG.globling_speed_uu[2] - CONFIG.globling_speed_uu[1])
+		local velocity = speed_uu * UNIT * CONFIG.speed_scale * (normal + random_direction() * CONFIG.globling_random_share) + reflected
+
+		spawn_glob(context, start, velocity, 1)
+	end
+end
+
+local function is_ceiling(normal)
+	return Vector3.dot(normal, Vector3.down()) > CONFIG.ceiling_dot
+end
+
+-- BioGlob.MergeWithGlob (in the state OnGround): a glob that lands in another adds its goop. What is above the biggest level is
+-- thrown off as small globs.
+local function merge(glob, level, t)
+	local new_level = glob.level + level
+
+	if new_level > CONFIG.max_goop_level then
+		glob.rand3 = (glob.rand3 + 1) % 3
+
+		local extra = glob.rand3
+
+		splash_globs(glob.context, glob.position:unbox(), glob.normal:unbox(), nil, new_level - CONFIG.max_goop_level + extra, math.sqrt(glob.level))
+
+		new_level = CONFIG.max_goop_level - extra
+	end
+
+	glob.level = new_level
+	glob.drips = glob.ceiling
+	glob.expire = rest_end_time(glob, t)
+
+	visuals().merge(glob.id, glob.level)
+	mod:network_send("ut_bio_merge", "others", glob.id, glob.level)
+end
+
+-- Returns the glob that has landed that a glob landing at this position joins, if there is one: the nearest whose collision it
+-- touches.
+local function glob_to_join(position)
+	local nearest, nearest_distance
+
+	for _, glob in ipairs(stuck) do
+		local distance = Vector3.distance(glob.position:unbox(), position)
+
+		if distance <= glob_radius(glob.level) + CONFIG.flying_collision_uu * UNIT and (not nearest_distance or distance < nearest_distance) then
+			nearest = glob
+			nearest_distance = distance
+		end
+	end
+
+	return nearest
+end
+
+-- BioGlob.Landed: a glob lands on a surface. It joins a glob that is there, or it sticks. A glob that is bigger than its core size
+-- throws off the rest as small globs. landing_velocity is the glob's velocity as it hit, in m/s.
+local function land(context, position, normal, landing_velocity, level, t)
+	local joined = glob_to_join(position)
+
+	if joined then
+		merge(joined, level, t)
+
+		return
+	end
+
+	local rand3 = math.random(0, 2)
+	local core = rand3 + CONFIG.max_goop_level - 3
+
+	if level > core then
+		splash_globs(context, position, normal, landing_velocity, level - core, math.sqrt(level))
+
+		level = core
+	end
+
+	if #stuck >= CONFIG.max_stuck then
+		stuck[1].expire = 0
+		stuck[1].drips = false
+	end
+
+	next_glob_id = next_glob_id + 1
+
+	local glob = {
+		ceiling = is_ceiling(normal),
+		context = context,
+		id = next_glob_id,
+		inside = {},
+		level = level,
+		normal = Vector3Box(normal),
+		position = Vector3Box(position),
+		rand3 = rand3,
+	}
+
+	glob.drips = glob.ceiling
+	glob.expire = rest_end_time(glob, t)
+	stuck[#stuck + 1] = glob
+
+	visuals().land(glob.id, position, normal, level)
+	mod:network_send("ut_bio_land", "others", glob.id, position.x, position.y, position.z, normal.x, normal.y, normal.z, level)
+end
+
+-- A player, a bot or an enemy that touches a glob that has landed makes it explode soon. This returns the units that are inside the
+-- glob's collision, as a set.
+local query_units = {}
+
+local function units_touching(glob)
+	local touching = {}
+	local position = glob.position:unbox()
+	local side = Managers.state.side:get_side_from_name("heroes")
+
+	if not side then
+		return touching
+	end
+
+	local pawn_radius = CONFIG.pawn_radius_uu * UNIT
+	local pawn_height = CONFIG.pawn_height_uu * UNIT
+	local radius = glob_radius(glob.level)
+
+	local function consider(unit)
+		local offset = position - Unit.world_position(unit, 0)
+
+		if Vector3.length(Vector3.flat(offset)) <= radius + pawn_radius and Vector3.z(offset) >= -radius and Vector3.z(offset) <= pawn_height + radius then
+			touching[unit] = true
+		end
+	end
+
+	for _, unit in ipairs(side.PLAYER_AND_BOT_UNITS) do
+		if Unit.alive(unit) and HEALTH_ALIVE[unit] then
+			consider(unit)
+		end
+	end
+
+	local count = AiUtils.broadphase_query(position, radius + pawn_radius + 1, query_units, side.enemy_broadphase_categories)
+
+	for i = 1, count do
+		local unit = query_units[i]
+
+		if HEALTH_ALIVE[unit] then
+			consider(unit)
+		end
+	end
+
+	return touching
+end
+
+-- BioGlob.TakeDamage: a glob that something detonates explodes in 0.1 seconds. It does not drip any more.
+local function detonate(glob, t)
+	glob.drips = false
+	glob.expire = t + CONFIG.detonation_delay
+end
+
+local function update_globs(t)
+	for i = #stuck, 1, -1 do
+		local glob = stuck[i]
+
+		if not Unit.alive(glob.context.owner_unit) then
+			-- The player's unit is gone, because a hero was changed or the level was left. Nothing can be made for it, because the game
+			-- breaks on an explosion that has no attacker.
+			table.remove(stuck, i)
+			end_visual(glob)
+		else
+			-- BioGlob.OnGround.ProcessTouch: a pawn that steps in sets the explosion for 0.15 seconds from now.
+			local touching = units_touching(glob)
+
+			for unit in pairs(touching) do
+				if not glob.inside[unit] then
+					glob.drips = false
+					glob.expire = t + CONFIG.touch_detonation_delay
+				end
+			end
+
+			glob.inside = touching
+
+			if t >= glob.expire then
+				table.remove(stuck, i)
+
+				if glob.drips then
+					drip(glob)
+				else
+					blow_up(glob)
+				end
+			end
+		end
+	end
+end
+
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	if not Managers.player or not Managers.player.is_server or #stuck == 0 then
+		return
+	end
+
+	local t = Managers.time:time("game")
+
+	if t then
+		update_globs(t)
+	end
+end
+
+-- What detonates a glob: the explosions of the rocket, the flak shell, the shock ball, the shock combo and a glob (they all have
+-- bDetonatesGoop in UT). A glob that the explosion reaches explodes in 0.1 seconds.
+local DETONATORS = {
+	ut_bio_blast = true,
+	ut_bio_blast_air = true,
+	ut_flak_shell_explosion = true,
+	ut_rocket_explosion = true,
+	ut_shock_ball_explosion = true,
+	ut_shock_combo_explosion = true,
+}
+
+mod.any_explosion_callbacks.bio = function (explosion_template, position, scale)
+	if not DETONATORS[explosion_template.name] or #stuck == 0 or not Managers.player.is_server then
+		return
+	end
+
+	local explosion = explosion_template.explosion
+	local radius = explosion and (explosion.radius or math.lerp(explosion.radius_min, explosion.radius_max, scale or 0))
+	local t = Managers.time:time("game")
+
+	if not radius or not t then
+		return
+	end
+
+	for _, glob in ipairs(stuck) do
+		if Vector3.distance(glob.position:unbox(), position) <= radius + glob_radius(glob.level) then
+			detonate(glob, t)
+		end
+	end
+end
+
+-- Globs that hit something
+-- A glob lands on the machine of the player who fired it. The host handles it. For another player, this tells the host.
+mod:network_register("ut_bio_goo", function (_, owner_go_id, item_name, is_critical_strike, base_power, x, y, z, normal_x, normal_y, normal_z, velocity_x, velocity_y, velocity_z, level)
+	if not Managers.player.is_server then
+		return
+	end
+
+	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
+	local t = Managers.time:time("game")
+
+	if not owner_unit or not Unit.alive(owner_unit) or not t then
+		return
+	end
+
+	land({
+		base_power = base_power,
+		is_critical_strike = is_critical_strike,
+		item_name = item_name,
+		owner_unit = owner_unit,
+	}, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), Vector3(velocity_x, velocity_y, velocity_z), level, t)
+end)
+
+-- The way out of the wall, floor or ceiling that a glob hits is stored on the glob before it lands, because the game gives the
+-- landing only the place.
+for _, function_name in ipairs({
+	"hit_level_unit",
+	"hit_non_level_unit",
+}) do
+	mod:hook(PlayerProjectileUnitExtension, function_name, function (func, self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
+		local action = self._current_action
+
+		if action and action.ut_bio_glob and hit_normal then
+			self._ut_bio_hit_normal = Vector3Box(hit_normal)
+			self._ut_bio_hit_direction = Vector3Box(hit_direction)
+		end
+
+		return func(self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
+	end)
+end
+
+-- A glob that hit a surface lands, once.
+mod.aoe_callbacks.ut_bio_glob = function (self, aoe_data, position)
+	local normal_box = self._ut_bio_hit_normal
+
+	if not normal_box or self._ut_bio_done then
+		return
+	end
+
+	self._ut_bio_done = true
+
+	local level = level_of_scale(self.scale)
+	local normal = normal_box:unbox()
+	local direction = self._ut_bio_hit_direction:unbox()
+	local speed = (self.locomotion_extension.speed or 0) / 100
+	local base_power = self.power_level / power_ratio(level)
+	local velocity = direction * speed
+
+	if self._is_server then
+		local t = Managers.time:time("game")
+
+		if t then
+			land({
+				base_power = base_power,
+				is_critical_strike = self._is_critical_strike,
+				item_name = self.item_name,
+				owner_unit = self._owner_unit,
+			}, position, normal, velocity, level, t)
+		end
+	else
+		mod:network_send("ut_bio_goo", "others", Managers.state.unit_storage:go_id(self._owner_unit), self.item_name, self._is_critical_strike or false, base_power, position.x, position.y, position.z, normal.x, normal.y, normal.z, velocity.x, velocity.y, velocity.z, level)
+	end
+end
+
+-- A glob that hits a player, a bot or an enemy explodes there, in the air (BioGlob.Flying.ProcessTouch). The explosion goes through
+-- the area damage system, which applies the damage on the host and makes the explosion on every machine.
+mod.hit_enemy_callbacks.ut_bio_glob = function (func, self, is_owner, impact_data, hit_unit, hit_position, ...)
+	func(self, impact_data, hit_unit, hit_position, ...)
+
+	if is_owner and not self._ut_bio_done then
+		self._ut_bio_done = true
+
+		self:do_aoe(ExplosionTemplates.ut_bio_blast_air, hit_position, true)
+	end
+end
+
+-- Explosions
+-- The explosion of a glob hurts and throws the player who fired it, as in UT. It runs on every machine, and the player's own machine
+-- does it. before.attacker_unit is the player.
+for _, template_name in ipairs({ "ut_bio_blast", "ut_bio_blast_air" }) do
+	local in_air = template_name == "ut_bio_blast_air"
+
+	mod.explosion_before_callbacks[template_name] = function (world, position, attacker_unit)
+		return {
+			attacker_unit = attacker_unit,
+		}
+	end
+
+	mod.explosion_callbacks[template_name] = function (world, position, rotation, before, scale)
+		local owner_unit = before and before.attacker_unit
+
+		if not owner_unit or not utils.is_local_player_unit(owner_unit) then
+			return
+		end
+
+		local level = level_of_scale(scale)
+		local radius = blast_radius(level)
+		local explosion = {
+			max_damage_radius = radius * CONFIG.blast_full_damage_share,
+			radius = radius,
+		}
+
+		utils.apply_explosion_self_damage(owner_unit, position, mod.items.weapons.bio_rifle.key, explosion, blast_damage(level) * CONFIG.self_damage_share)
+		utils.apply_explosion_self_push(owner_unit, position, explosion, CONFIG.jump_speed * math.sqrt(level) * (in_air and 0.5 or 1))
+	end
+end
 
 local function enable_bio_rifle()
 	packages.load_projectile_units(PROJECTILE_UNIT_TEMPLATES)
@@ -1059,39 +1056,19 @@ local function enable_bio_rifle()
 end
 
 mod.enabled_callbacks[#mod.enabled_callbacks + 1] = enable_bio_rifle
-mod.disabled_callbacks[#mod.disabled_callbacks + 1] = restore_drakegun
-mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_drakegun
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = restore_pistol
+mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_pistol
 
--- The weapon's overheating explosion throws small globs with random amounts of goo out of the player. The game's own explosion
--- is kept, and it still hurts the player. The hook in hooks.lua calls this.
-mod.overheat_callbacks[TEMPLATE_NAME] = function (state, item_data)
-	local unit = state.unit
-	local shot = {
-		is_critical_strike = false,
-		item_name = item_data.name,
-		item_template_name = TEMPLATE_NAME,
-		owner_unit = unit,
-	}
-
-	throw_children(shot, Unit.world_position(unit, 0) + Vector3(0, 0, 1.5), Vector3.up(), CONFIG.overheat_glob_count, CONFIG.burn_reference_power_level, true)
-end
-
-mod.update_callbacks[#mod.update_callbacks + 1] = function ()
-	-- There is no game time outside of a level.
-	local t = Managers.time:time("game")
-
-	if not t then
-		return
+-- The globs are cleared when the mod is unloaded and when a level is left.
+local function clear_all()
+	for _, glob in ipairs(stuck) do
+		if visuals().stop then
+			visuals().stop(glob.id)
+		end
 	end
 
-	update_delayed_ends(t)
-	update_puddles(t)
-end
-
-local function clear_all()
-	table.clear(delayed_ends)
-	table.clear(puddles)
-	table.clear(charge_levels)
+	table.clear(stuck)
+	table.clear(goop_loads)
 end
 
 mod.unload_callbacks[#mod.unload_callbacks + 1] = clear_all

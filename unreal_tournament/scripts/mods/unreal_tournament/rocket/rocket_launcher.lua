@@ -1007,15 +1007,10 @@ end
 
 -- The rockets start where UT's do. A rocket fired while there is a lock is a true flight projectile with the locked enemy as its
 -- target.
-mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
-	local action
-
-	if item_template_name == TEMPLATE_NAME then
-		local template = rawget(Weapons, item_template_name)
-		local sub_actions = template and template.actions[action_name]
-
-		action = sub_actions and sub_actions[sub_action_name]
-	end
+mod.spawn_projectile_callbacks[TEMPLATE_NAME] = function (func, owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
+	local template = rawget(Weapons, item_template_name)
+	local sub_actions = template and template.actions[action_name]
+	local action = sub_actions and sub_actions[sub_action_name]
 
 	if action and action.ut_rocket then
 		local given_position = position
@@ -1040,7 +1035,7 @@ mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, pos
 	end
 
 	return func(owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
-end)
+end
 
 -- The crosshair while loading shows a pip for each rocket that can be loaded, and the loaded ones are lit. The pips are drawn in
 -- the crosshair's pass, after the rest of the crosshair.

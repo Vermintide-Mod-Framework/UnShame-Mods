@@ -2,7 +2,7 @@
 
 1. Adrenaline.
 2. Chat messages for sprees, like "X is on a Y spree" and "Z ended X's spree". Check the original for what is printed for everyone.
-3. The Flak Cannon's shell and the Rocket Launcher's explosion set off Bio Rifle goo (UT's DamTypeFlakShell and DamTypeRocket have bDetonatesGoop).
+3. The Shock Rifle's beam and the Link Gun's bolts and beam set off Bio Rifle goop (UT's DamTypeShockBeam, DamTypeLinkPlasma and DamTypeLinkShaft have bDetonatesGoop). Explosions already do.
 
 ## New weapons
 
