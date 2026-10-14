@@ -320,26 +320,42 @@ local function make_context(suite)
 		end)
 	end
 
+	-- Where the ground is, that far ahead of the player (on the main thread), and the way the player faces on the ground
+	local function ground_ahead(distance)
+		local origin, forward = aim()
+
+		if not origin then
+			return nil
+		end
+
+		local flat = Vector3.normalize(Vector3.flat(forward))
+		local above = origin + flat * distance + Vector3(0, 0, 2)
+		local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world(), above, Vector3.down(), 8, "closest", "collision_filter", "filter_ai_line_of_sight_check")
+
+		if not hit then
+			return nil
+		end
+
+		return above - Vector3(0, 0, hit_distance), flat
+	end
+
+	function t.ground_ahead(distance)
+		return on_main_thread(function ()
+			return ground_ahead(distance) ~= nil
+		end)
+	end
+
 	function t.spawn(breed_name, distance)
 		local spawned
 
 		local started = on_main_thread(function ()
-			local origin, forward = aim()
 			local breed = Breeds[breed_name]
+			local position, flat = ground_ahead(distance)
 
-			if not origin or not breed then
+			if not position or not breed then
 				return false
 			end
 
-			local flat = Vector3.normalize(Vector3.flat(forward))
-			local above = origin + flat * distance + Vector3(0, 0, 2)
-			local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world(), above, Vector3.down(), 8, "closest", "collision_filter", "filter_ai_line_of_sight_check")
-
-			if not hit then
-				return false
-			end
-
-			local position = above - Vector3(0, 0, hit_distance)
 			local optional_data = {
 				spawned_func = function (unit)
 					spawned = unit

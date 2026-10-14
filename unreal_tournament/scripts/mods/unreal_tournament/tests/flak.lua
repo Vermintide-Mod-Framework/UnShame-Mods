@@ -67,8 +67,9 @@ runner.add_suite({
 		{
 			name = "shell",
 			run = function (t)
-				if not t.surface_ahead(25) then
-					t.skip("there is nothing to shoot at ahead: face a wall or the ground")
+				-- The shell lands about 10 m ahead
+				if not t.ground_ahead(10) then
+					t.skip("there is no ground 10 m ahead")
 				end
 
 				local before = t.ammo()

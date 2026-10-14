@@ -4,8 +4,7 @@
 #   run_tests.ps1 -Suite flak [-Career es_mercenary] [-Build] [-Reload] [-TimeoutSeconds 600]
 #
 #   -Build   builds the mod first (vmb build, from the mods folder)
-#   -Reload  reloads the mods in the game (Ctrl+Shift+R, the framework's hotkey) and waits for the mod to say it has loaded. That
-#            message is only shown with the framework's developer mode on.
+#   -Reload  reloads the mods in the game (Ctrl+Shift+R, the framework's hotkey) and waits for the reload to show in the log
 #
 # It types "/ut_test <suite>" into the game's chat. The results are the lines with [ut_test] in the game's console log.
 
@@ -15,7 +14,7 @@ param(
     [switch]$Build,
     [switch]$Reload,
     [int]$TimeoutSeconds = 600,
-    [int]$ReloadWaitSeconds = 20
+    [int]$ReloadWaitSeconds = 15
 )
 
 $ErrorActionPreference = "Stop"
@@ -149,16 +148,17 @@ if ($Reload) {
 
     while ((Get-Date) -lt $deadline -and -not $loaded) {
         Start-Sleep -Milliseconds 500
-        $loaded = [bool]((Get-LogLines) | Select-Object -Skip $before | Select-String "Unreal Tournament loaded \(build")
+        $loaded = [bool]((Get-LogLines) | Select-Object -Skip $before | Select-String "VMF:ON_RELOAD")
     }
 
     if ($loaded) {
-        Write-Host "The mod has reloaded."
+        Write-Host "The mods are reloading."
     } else {
-        Write-Host "No 'Unreal Tournament loaded' line after $ReloadWaitSeconds seconds. Going on anyway."
+        Write-Host "No reload in the log after $ReloadWaitSeconds seconds. Going on anyway."
     }
 
-    Start-Sleep -Seconds 2
+    # The reload takes a few seconds to put the mods back
+    Start-Sleep -Seconds 8
 }
 
 $start = Log-Length
@@ -180,7 +180,7 @@ function Show-New([ref]$shown, [ref]$failed) {
         if ($lines[$i] -match "\[ut_test\]") {
             Write-Host $lines[$i]
 
-            if ($lines[$i] -match "FAIL") { $failed.Value = $true }
+            if ($lines[$i] -cmatch "\[ut_test\] FAIL ") { $failed.Value = $true }
         }
     }
 
