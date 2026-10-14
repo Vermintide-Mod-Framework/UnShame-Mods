@@ -661,7 +661,6 @@ local function apply_combo_self_damage(owner_unit, position, item_name)
 	local explosion = ExplosionTemplates.ut_shock_combo_explosion.explosion
 
 	utils.apply_explosion_self_damage(owner_unit, position, item_name, explosion, CONFIG.combo_self_damage)
-	utils.apply_explosion_self_push(owner_unit, position, explosion, CONFIG.combo_jump_speed)
 end
 
 -- The ball's explosion hurts the shooter. The ball's do_aoe is also what makes the combo go off, and the two are told apart by
@@ -676,7 +675,15 @@ mod.aoe_callbacks.shock_ball = function (self, aoe_data, position)
 	local explosion = ExplosionTemplates.ut_shock_ball_explosion.explosion
 
 	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, explosion, CONFIG.ball_self_damage)
-	utils.apply_explosion_self_push(self._owner_unit, position, explosion, CONFIG.ball_jump_speed)
+end
+
+-- The ball and the combo throw every player near them.
+mod.explosion_push_speeds.ut_shock_ball_explosion = function ()
+	return CONFIG.ball_jump_speed
+end
+
+mod.explosion_push_speeds.ut_shock_combo_explosion = function ()
+	return CONFIG.combo_jump_speed
 end
 
 -- Another player's ball is a copy on this machine. The combo is the shooter's. It goes through the area damage system, which

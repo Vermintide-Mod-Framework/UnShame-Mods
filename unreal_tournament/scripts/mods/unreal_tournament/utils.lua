@@ -222,9 +222,9 @@ function utils.set_armor_modifiers(profile, attack, impact, with_critical)
 	end
 end
 
--- How much of an explosion reaches the player who set it off: 1 inside the full damage radius, falling to 0 at the radius. Also returns
--- the direction from the explosion to the player's body. Returns nothing if the player is out of reach or dead. `explosion` is the
--- "explosion" table of the explosion template.
+-- How much of an explosion reaches a player: 1 inside the full damage radius, falling to 0 at the radius. Also returns the direction
+-- from the explosion to the player's body. Returns nothing if the player is out of reach or dead. `explosion` is the "explosion"
+-- table of the explosion template.
 local function explosion_reach(owner_unit, position, explosion)
 	local body_position = Unit.world_position(owner_unit, 0) + Vector3.up() * 0.9
 	local offset = body_position - position
@@ -260,21 +260,24 @@ function utils.apply_self_damage(owner_unit, position, direction, item_name, dam
 	DamageUtils.add_damage_network(owner_unit, owner_unit, damage, "torso", "drakegun", position, direction, item_name, nil, owner_unit, nil, nil, false, nil, nil, nil, nil, nil, 1)
 end
 
--- Throws the player who set off an explosion away from it, for a rocket or shock jump. It adds `speed` m/s at the center of the
--- explosion, falling off the same way as its damage, to the player's speed. Only the player on this machine is moved, because that is
--- where their movement runs.
-function utils.apply_explosion_self_push(owner_unit, position, explosion, speed)
-	if not utils.is_local_player_unit(owner_unit) then
+-- Throws the player on this machine away from an explosion, for a rocket or shock jump. Whoever set the explosion off, each machine
+-- moves its own player, because that is where their movement runs. It adds `speed` m/s at the center of the explosion, falling off
+-- the same way as its damage, to the player's speed.
+function utils.apply_explosion_push(position, explosion, speed)
+	local player = Managers.player:local_player_safe()
+	local unit = player and player.player_unit
+
+	if not unit or not Unit.alive(unit) then
 		return
 	end
 
-	local factor, direction = explosion_reach(owner_unit, position, explosion)
+	local factor, direction = explosion_reach(unit, position, explosion)
 
 	if not factor then
 		return
 	end
 
-	local locomotion_extension = ScriptUnit.extension(owner_unit, "locomotion_system")
+	local locomotion_extension = ScriptUnit.extension(unit, "locomotion_system")
 	local velocity = locomotion_extension:current_velocity() + direction * (speed * factor)
 
 	-- The jumping state limits how fast the player can go up, and the falling state doesn't

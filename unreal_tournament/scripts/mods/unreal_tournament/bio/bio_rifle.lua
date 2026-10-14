@@ -1118,8 +1118,9 @@ mod.hit_enemy_callbacks.ut_bio_glob = function (func, self, is_owner, impact_dat
 end
 
 -- Explosions
--- The explosion of a glob hurts and throws the player who fired it, as in UT. It runs on every machine, and the player's own machine
--- does it. before.attacker_unit is the player.
+-- The explosion of a glob hurts the player who fired it, as in UT, and throws every player near it. It runs on every machine. The
+-- hurt is done on the machine of the player who fired, and each machine throws its own player. before.attacker_unit is the player
+-- who fired.
 for _, template_name in ipairs({ "ut_bio_blast", "ut_bio_blast_air" }) do
 	local in_air = template_name == "ut_bio_blast_air"
 
@@ -1131,11 +1132,6 @@ for _, template_name in ipairs({ "ut_bio_blast", "ut_bio_blast_air" }) do
 
 	mod.explosion_callbacks[template_name] = function (world, position, rotation, before, scale)
 		local owner_unit = before and before.attacker_unit
-
-		if not owner_unit or not utils.is_local_player_unit(owner_unit) then
-			return
-		end
-
 		local level = level_of_scale(scale)
 		local radius = blast_radius(level)
 		local explosion = {
@@ -1143,8 +1139,11 @@ for _, template_name in ipairs({ "ut_bio_blast", "ut_bio_blast_air" }) do
 			radius = radius,
 		}
 
-		utils.apply_explosion_self_damage(owner_unit, position, mod.items.weapons.bio_rifle.key, explosion, blast_damage(level) * CONFIG.self_damage_share)
-		utils.apply_explosion_self_push(owner_unit, position, explosion, CONFIG.jump_speed * math.sqrt(level) * (in_air and 0.5 or 1))
+		if owner_unit and utils.is_local_player_unit(owner_unit) then
+			utils.apply_explosion_self_damage(owner_unit, position, mod.items.weapons.bio_rifle.key, explosion, blast_damage(level) * CONFIG.self_damage_share)
+		end
+
+		utils.apply_explosion_push(position, explosion, CONFIG.jump_speed * math.sqrt(level) * (in_air and 0.5 or 1))
 	end
 end
 

@@ -622,7 +622,6 @@ mod.aoe_callbacks.ut_flak_shell = function (self, aoe_data, position)
 	local explosion = ExplosionTemplates.ut_flak_shell_explosion.explosion
 
 	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, explosion, CONFIG.shell_self_damage)
-	utils.apply_explosion_self_push(self._owner_unit, position, explosion, CONFIG.shell_jump_speed)
 
 	for _ = 1, CONFIG.shell_chunk_count do
 		spawn_projectile(shot, start, burst_rotation(rotation, math.degrees_to_radians(CONFIG.shell_chunk_cone_degrees)), CHUNK_ACTION_NAME, random_chunk_action(true), CONFIG.chunk_speed * CONFIG.debug_speed_scale)
@@ -984,6 +983,11 @@ local function update_flying_projectiles(dt)
 			hit_owner(projectile)
 		end
 	end
+end
+
+-- The shell's explosion throws every player near it.
+mod.explosion_push_speeds.ut_flak_shell_explosion = function ()
+	return CONFIG.shell_jump_speed
 end
 
 -- Bodies killed by a shell are thrown away from it. The throw is queued here and applied once the ragdoll has started, the same

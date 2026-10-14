@@ -113,11 +113,15 @@ end)
 --       Runs after an explosion is made, on every machine. The scale is the one the explosion was made with.
 --   mod.any_explosion_callbacks[name] = function (explosion_template, position, scale)
 --       Runs after every explosion of any template, on every machine.
+--   mod.explosion_push_speeds[template name] = function (scale)
+--       Returns how fast an explosion throws a player (see utils.apply_explosion_push). Runs on every machine, and the player on each
+--       machine is thrown, whoever set the explosion off.
 -- A template with ut_penetrates_shields goes through shields. The game asks AiUtils.attack_is_shield_blocked for every enemy in an
 -- explosion, and while such an explosion is made the answer is always "not blocked".
 mod.explosion_before_callbacks = {}
 mod.explosion_callbacks = {}
 mod.any_explosion_callbacks = {}
+mod.explosion_push_speeds = {}
 
 local penetrating_explosion = false
 
@@ -150,6 +154,12 @@ mod:hook(DamageUtils, "create_explosion", function (func, world, attacker_unit, 
 
 	if callback then
 		callback(world, impact_position, rotation, before, scale)
+	end
+
+	local push_speed = mod.explosion_push_speeds[explosion_template.name]
+
+	if push_speed then
+		utils.apply_explosion_push(impact_position, explosion_template.explosion, push_speed(scale))
 	end
 
 	for _, any_callback in pairs(mod.any_explosion_callbacks) do

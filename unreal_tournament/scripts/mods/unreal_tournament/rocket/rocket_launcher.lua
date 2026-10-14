@@ -1131,7 +1131,7 @@ mod:hook_safe(CrosshairUI, "_draw_kill_confirm", function (self, dt, t, ui_rende
 	end
 end)
 
--- The explosion hurts the player and throws them. The hook of do_aoe in hooks.lua runs the callbacks of the actions.
+-- The explosion hurts the player who fired it. The hook of do_aoe in hooks.lua runs the callbacks of the actions.
 mod.aoe_callbacks.rocket = function (self, aoe_data, position)
 	if self._ut_rocket_exploded then
 		return
@@ -1140,7 +1140,11 @@ mod.aoe_callbacks.rocket = function (self, aoe_data, position)
 	self._ut_rocket_exploded = true
 
 	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates.ut_rocket_explosion.explosion, CONFIG.rocket_self_damage)
-	utils.apply_explosion_self_push(self._owner_unit, position, ExplosionTemplates.ut_rocket_explosion.explosion, CONFIG.rocket_jump_speed)
+end
+
+-- It throws every player near it.
+mod.explosion_push_speeds.ut_rocket_explosion = function ()
+	return CONFIG.rocket_jump_speed
 end
 
 -- Bodies thrown by the explosion. This runs on every peer, because the physics of ragdolls is local. The units near the
