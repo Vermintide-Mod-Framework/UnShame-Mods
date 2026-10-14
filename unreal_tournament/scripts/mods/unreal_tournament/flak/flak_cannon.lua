@@ -244,7 +244,8 @@ mod:command("flak_damage", "<number> - the share of its damage a flak chunk does
 end)
 
 register_damage_profile("ut_flak_shell", "staff_fireball", function (profile)
-	make_flat(profile, 0, impact_power_for(CONFIG.chunk_damage))
+	-- (the direct hit only staggers, and does 1 damage so that it is not shown as blocked by armor)
+	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, impact_power_for(CONFIG.chunk_damage))
 
 	profile.cleave_distribution = {
 		attack = 0.01,

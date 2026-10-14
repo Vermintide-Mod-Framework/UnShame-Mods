@@ -196,6 +196,10 @@ utils.UT_REFERENCE_DAMAGE = 45
 utils.REFERENCE_ATTACK_POWER = 0.7
 utils.REFERENCE_IMPACT_POWER = 0.3
 
+-- The attack power of a hit that only staggers: 1 damage. A hit with no damage at all is shown as blocked by armor, because the game does not
+-- check why there was none.
+utils.STAGGER_HIT_ATTACK_POWER = 0.01
+
 function utils.attack_power_for(ut_damage)
 	return utils.REFERENCE_ATTACK_POWER * ut_damage / utils.UT_REFERENCE_DAMAGE
 end
