@@ -7,5 +7,4 @@
 
 Each is an item of its own (`items.register`), UT2004's look always on, no setting. `WEAPON_CHECKLIST.md` is what to look at for a weapon.
 
-3. **Impact Hammer.** Engineer is the natural fit (the hammer), the Slayer can have it too.
-4. **Shield Gun.** For the careers that fight with a sword and a shield.
+3. **Shield Gun.** For the careers that fight with a sword and a shield.
