@@ -73,7 +73,8 @@ local CONFIG = {
 	-- The damage is the same up to this share of the radius and then falls off linearly to 0 at the radius. UT's falls off from the
 	-- edge of the victim's body.
 	blast_full_damage_share = 0.15,
-	-- MomentumTransfer is 40000. Halved when the glob explodes in the air. Scaled by the volume of the glob, which is the square root of
+	-- MomentumTransfer is 40000. (BioGlob.BlowUp halves it for a glob in the air, but it checks for PHYS_Flying and a glob in the air is
+	-- PHYS_Falling, so it never does.) Scaled by the volume of the glob, which is the square root of
 	-- its level. This is the speed in m/s that the player who fired the glob is thrown at when it explodes at their feet.
 	jump_speed = 4.6,
 	-- The explosion hurts the player who fired the glob, as in UT. This is the share of the glob's damage that they take at the center.
@@ -224,8 +225,8 @@ end
 blast_profiles("ut_bio_blast", REFERENCE_DAMAGE)
 
 -- Explosion templates. The scale of the explosion goes from 0 for a level 1 glob to 1 for a level 10 glob. The damage comes from the
--- power level that the explosion is made with (see power_ratio). The one in the air has half the momentum, so it throws the player
--- who fired it less (see blast_effects). The shooter is hurt separately.
+-- power level that the explosion is made with (see power_ratio). The one in the air is a template of its own for the skin, which draws
+-- it differently. The shooter is hurt separately.
 local function blast_template(name)
 	register_explosion_template(name, {
 		explosion = {
@@ -1122,8 +1123,6 @@ end
 -- hurt is done on the machine of the player who fired, and each machine throws its own player. before.attacker_unit is the player
 -- who fired.
 for _, template_name in ipairs({ "ut_bio_blast", "ut_bio_blast_air" }) do
-	local in_air = template_name == "ut_bio_blast_air"
-
 	mod.explosion_before_callbacks[template_name] = function (world, position, attacker_unit)
 		return {
 			attacker_unit = attacker_unit,
@@ -1143,7 +1142,7 @@ for _, template_name in ipairs({ "ut_bio_blast", "ut_bio_blast_air" }) do
 			utils.apply_explosion_self_damage(owner_unit, position, mod.items.weapons.bio_rifle.key, explosion, blast_damage(level) * CONFIG.self_damage_share)
 		end
 
-		utils.apply_explosion_push(position, explosion, CONFIG.jump_speed * math.sqrt(level) * (in_air and 0.5 or 1))
+		utils.apply_explosion_push(position, explosion, CONFIG.jump_speed * math.sqrt(level))
 	end
 end
 
