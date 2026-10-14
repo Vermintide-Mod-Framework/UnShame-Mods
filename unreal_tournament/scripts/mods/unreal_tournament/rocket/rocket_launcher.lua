@@ -979,32 +979,6 @@ local function start_position(position, rotation)
 	return position + offset
 end
 
--- Development: /rocket_start prints where each rocket starts and where it is on its first frames, measured from the camera as
--- forward, right and up in meters.
-mod.rocket_debug = false
-
-mod:command("rocket_start", "- prints where rockets start, from the camera, to see what moves them", function ()
-	mod.rocket_debug = not mod.rocket_debug
-
-	mod:echo("rocket_start " .. (mod.rocket_debug and "on" or "off"))
-end)
-
--- Returns how far a direction is from where the camera looks, to the right and up, in degrees.
-function mod.rocket_aim_text(rotation)
-	local camera_rotation = Managers.state.camera:camera_rotation("player_1")
-	local forward = Quaternion.forward(rotation)
-
-	return string.format("%.2f %.2f", math.deg(math.asin(Vector3.dot(forward, Quaternion.right(camera_rotation)))), math.deg(math.asin(Vector3.dot(forward, Quaternion.up(camera_rotation)))))
-end
-
-function mod.rocket_offset_text(position)
-	local camera_manager = Managers.state.camera
-	local rotation = camera_manager:camera_rotation("player_1")
-	local offset = utils.as_vector(position) - camera_manager:camera_position("player_1")
-
-	return string.format("%.3f %.3f %.3f", Vector3.dot(offset, Quaternion.forward(rotation)), Vector3.dot(offset, Quaternion.right(rotation)), Vector3.dot(offset, Quaternion.up(rotation)))
-end
-
 -- The rockets start where UT's do. A rocket fired while there is a lock is a true flight projectile with the locked enemy as its
 -- target.
 mod.spawn_projectile_callbacks[TEMPLATE_NAME] = function (func, owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
@@ -1013,13 +987,7 @@ mod.spawn_projectile_callbacks[TEMPLATE_NAME] = function (func, owner_unit, posi
 	local action = sub_actions and sub_actions[sub_action_name]
 
 	if action and action.ut_rocket then
-		local given_position = position
-
 		position = start_position(position, rotation)
-
-		if mod.rocket_debug and utils.is_local_player_unit(owner_unit) then
-			mod:echo("rocket start: given " .. mod.rocket_offset_text(given_position) .. ", used " .. mod.rocket_offset_text(position) .. ", aim off " .. mod.rocket_aim_text(rotation) .. " (" .. sub_action_name .. ")")
-		end
 
 		local state = locks[owner_unit]
 

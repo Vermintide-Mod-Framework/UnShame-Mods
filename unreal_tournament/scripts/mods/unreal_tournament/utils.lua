@@ -268,18 +268,10 @@ function utils.apply_explosion_push(position, explosion, speed)
 	local unit = player and player.player_unit
 
 	if not unit or not Unit.alive(unit) then
-		if mod.push_debug then
-			mod:echo("push: no player unit here")
-		end
-
 		return
 	end
 
 	local factor, direction = explosion_reach(unit, position, explosion)
-
-	if mod.push_debug then
-		mod:echo("push on the %s: %.2f m from the explosion, radius %.2f, alive %s, %s", Managers.player.is_server and "host" or "client", Vector3.distance(Unit.world_position(unit, 0) + Vector3.up() * 0.9, position), explosion.radius, tostring(HEALTH_ALIVE[unit]), factor and string.format("speed %.1f", speed * factor) or "out of reach")
-	end
 
 	if not factor then
 		return
