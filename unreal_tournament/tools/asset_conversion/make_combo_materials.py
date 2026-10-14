@@ -50,6 +50,7 @@ class Graph:
         self.connections = []  # (source, destination, connector, select)
         self.constants = []    # (instance, connector, value)
         self.ids = {}
+        self.no_variables = False    # (a graph that has none of the variables of the effects, such as the decal's)
 
     def add(self, name, node_type, options=(), export='', samplers='', title=None):
         self.ids[name] = guid(len(self.ids) + 1)
@@ -93,6 +94,9 @@ class Graph:
                 text += '\t\t\ttitle = "%s"\n' % title
 
             text += '\t\t\ttype = "%s"\n\t\t}\n' % node_type
+
+        if self.no_variables:
+            return text + '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n}\n'
 
         text += ('\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tadditive = {\n\t\ttype = "scalar"\n\t\tvalue = 0\n\t}\n\tage = {\n\t\ttype = "scalar"\n\t\tvalue = 0\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n'
                  '\ttint = {\n\t\ttype = "vector3"\n\t\tvalue = [\n\t\t\t1\n\t\t\t1\n\t\t\t1\n\t\t]\n\t}\n}\n')
@@ -187,3 +191,16 @@ multiply(goop, 'color', 'goop', 'tint', 'rgb')
 goop.connect('color', 'out', IN_OUT_BASE_COLOR)
 goop.connect('intensity', 'out', IN_OUT_OPACITY)
 write('goop', goop, {'goop_map': 'bio_goop'})
+
+# ---------------------------------------------------------------- the splat decal
+# BioDecal's xbiosplat (made into a green with an alpha by make_fx_assets.py), drawn by the decal shader onto the surfaces under the box of the
+# unit decal_bio: the color of the texture and its alpha as the opacity of the color.
+IN_DECAL_BASE_COLOR_OPACITY = 'ad5e052f-d316-4a0f-8b79-53c38204d61b'
+decal = Graph()
+decal.no_variables = True
+decal.add('out', 'core/stingray_renderer/output_nodes/decal_base')
+decal.add('uv', 'core/shader_nodes/decal_uv')
+texture(decal, 'splat', 'splat_map', 'uv')
+decal.connect('splat', 'out', IN_OUT_BASE_COLOR, 'rgb')
+decal.connect('splat', 'out', IN_DECAL_BASE_COLOR_OPACITY, 'a')
+write('decal_bio', decal, {'splat_map': 'bio_splat'})

@@ -1,0 +1,110 @@
+shader = {
+	connections = [
+		{
+			destination = {
+				connector_id = "1ee9af1f-65f2-4739-ad28-5ea6a0e68fc3"
+				instance_id = "c0de0001-0000-4000-8000-000000000003"
+			}
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000002"
+			}
+		}
+		{
+			destination = {
+				connector_id = "aca690cb-6305-4a2f-bf3d-69183a493db3"
+				instance_id = "c0de0001-0000-4000-8000-000000000001"
+			}
+			select = [
+				"rgb"
+			]
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000003"
+			}
+		}
+		{
+			destination = {
+				connector_id = "ad5e052f-d316-4a0f-8b79-53c38204d61b"
+				instance_id = "c0de0001-0000-4000-8000-000000000001"
+			}
+			select = [
+				"a"
+			]
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000003"
+			}
+		}
+	]
+	constants = [
+	]
+	groups = [
+	]
+	nodes = [
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+			}
+			id = "c0de0001-0000-4000-8000-000000000001"
+			options = [
+			]
+			position = [
+				0
+				0
+			]
+			samplers = {
+			}
+			type = "core/stingray_renderer/output_nodes/decal_base"
+		}
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+			}
+			id = "c0de0001-0000-4000-8000-000000000002"
+			options = [
+			]
+			position = [
+				300
+				0
+			]
+			samplers = {
+			}
+			type = "core/shader_nodes/decal_uv"
+		}
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+			}
+			id = "c0de0001-0000-4000-8000-000000000003"
+			options = [
+				"5dd59b3d-1762-4a14-9930-7500230ef3db"
+				"f669a3a6-0376-4187-840e-80000e2939d5"
+				"fb3f709b-a54a-4e93-ac9f-e9fc76fb8bcd"
+			]
+			position = [
+				600
+				0
+			]
+			samplers = {
+				texture_map = {
+					display_name = "splat_map"
+					slot_name = "splat_map"
+				}
+			}
+			title = "splat_map"
+			type = "core/shader_nodes/sample_texture"
+		}
+	]
+	version = 3
+}
+textures = {
+}
+variables = {
+}

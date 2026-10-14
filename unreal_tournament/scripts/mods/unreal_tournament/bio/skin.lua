@@ -38,7 +38,7 @@ local CONFIG = {
 	goop_unit_format = "units/ut/fx/goop/f%d",
 	goop_material = "units/ut/fx/fx_goop",
 	goop_frame_rate = 30,
-	goop_opacity = 0.8,
+	goop_opacity = 0.55,
 	goop_animations = {
 		drip = { start = 40, count = 39, speed = 0.66 },
 		flying = { start = 3, count = 11 },
@@ -81,15 +81,13 @@ local CONFIG = {
 		240,
 	},
 	-- BioDecal is the splat that a landing glob leaves on the surface. It is the same size for every glob, and it lasts 6 seconds
-	-- (LifeSpan). The size is the width in meters, and it is a guess.
-	-- The texture has the splat's green in it.
-	splat_color = {
-		1,
-		1,
-		1,
-	},
+	-- (LifeSpan).
+	-- The decal's box is this wide and this deep, in meters (the game's blood decals are 2.5 wide and 1 deep). It is a guess.
+	splat_unit = "units/ut/fx/decal_bio",
 	splat_size = 1.2,
+	splat_depth = 1,
 	splat_life = 6,
+	splat_pool_size = 30,
 	-- BioGlob.AnimEnd picks the animation of a glob that has landed from the way its surface faces (the surface normal dotted with straight
 	-- down): above ceiling_dot it is a ceiling and the glob drips, above wall_dot it is a wall and the glob slides.
 	ceiling_dot = 0.7,
@@ -297,8 +295,6 @@ local GOOP_LIFE = 20
 -- to show for the time since it started. follow keeps it where it is and ends it when it returns nothing.
 local function goop_mesh(volume, rotation, follow, frame)
 	particles.mesh({
-		-- The goop is blended by its opacity, not added: added, it is too bright on the surfaces it lies on.
-		additive = 0,
 		angle = 0,
 		brightness = function ()
 			return 1
@@ -436,10 +432,53 @@ local function show_landed(id)
 	end)
 end
 
+-- The splat is a projected decal of the game's own decal manager, like the game's blood: the manager draws it onto the surfaces under
+-- its box, so it follows walls, corners and floors. The decal's unit has a pool of its own in DecalSettings.
+local DECAL_POOL = "ut_bio"
+
+DecalSettings[DECAL_POOL] = {
+	life_time = CONFIG.splat_life,
+	pool_size = CONFIG.splat_pool_size,
+	units = {
+		CONFIG.splat_unit,
+	},
+}
+
+-- A manager that was made before the mod was loaded, or reloaded, does not have the pool, so it is added to it.
+mod:hook_safe(DecalManager, "init", function (self)
+	self._ut_bio_pool = true
+end)
+
+-- Puts a splat on the surface at a position, turned at random about the way the surface faces.
+local function add_splat(position, normal)
+	local manager = Managers.state and Managers.state.decal
+
+	if not manager then
+		return
+	end
+
+	if not manager._ut_bio_pool then
+		EngineOptimizedManagers.decal_manager_add_setting(manager._decal_system, DECAL_POOL, CONFIG.splat_life, CONFIG.splat_pool_size, CONFIG.splat_unit)
+
+		manager._ut_bio_pool = true
+	end
+
+	local angle = math.random() * math.pi * 2
+	local side = Vector3.cross(normal, Vector3.up())
+
+	if Vector3.length(side) < 0.1 then
+		side = Vector3.cross(normal, Vector3.right())
+	end
+
+	side = Vector3.normalize(side)
+
+	local tangent = Quaternion.rotate(Quaternion.axis_angle(normal, angle), side)
+
+	manager:add_projection_decal(CONFIG.splat_unit, nil, nil, position, Quaternion.look(tangent, normal), Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_depth), normal)
+end
+
 -- A glob lands. The splat stays where it is for its own time, and the blob stays until the glob is gone.
 mod.goop_visual_callbacks.land = function (id, position, normal, level)
-	local center = Vector3Box(position + normal * 0.03)
-
 	landed[id] = {
 		level = level,
 		normal = Vector3Box(normal),
@@ -448,23 +487,7 @@ mod.goop_visual_callbacks.land = function (id, position, normal, level)
 
 	show_landed(id)
 	skin_api.play_sound_at("ut_bio_splat2_3d", position)
-
-	particles.disc({
-		-- The splat is blended by the alpha of its texture (tools/asset_conversion/make_fx_assets.py).
-		additive = 0,
-		color = CONFIG.splat_color,
-		fade_in = 0.1,
-		fade_out = 1.5,
-		follow = function ()
-			return center:unbox()
-		end,
-		intensity = 0.7,
-		life = CONFIG.splat_life,
-		normal = normal,
-		size = CONFIG.splat_size,
-		spin = 0.02,
-		texture = "bio_splat",
-	})
+	add_splat(position, normal)
 end
 
 -- Another glob lands in a glob that is there. It is drawn again at the size it has now.

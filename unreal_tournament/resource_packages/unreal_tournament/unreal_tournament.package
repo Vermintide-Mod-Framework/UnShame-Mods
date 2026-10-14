@@ -33,6 +33,7 @@ unit = [
 	"units/ut/fx/light"
 	"units/ut/fx/flak_flash_mesh"
 	"units/ut/fx/goop/*"
+	"units/ut/fx/decal_bio"
 ]
 
 material = [
