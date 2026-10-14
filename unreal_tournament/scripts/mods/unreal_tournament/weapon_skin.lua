@@ -186,7 +186,14 @@ local function new(def)
 	-- Sounds. The events are in the weapon's bank (see tools/asset_conversion/make_bank.py). play_sound plays from the player's head,
 	-- and play_sound_at plays from a place in the world.
 	function self.play_sound(event)
-		WwiseWorld.trigger_event(Managers.world:wwise_world(Managers.world:world("level_world")), event)
+		return WwiseWorld.trigger_event(Managers.world:wwise_world(Managers.world:world("level_world")), event)
+	end
+
+	-- Stops a sound that play_sound started, by the id it returned.
+	function self.stop_sound(id)
+		if id then
+			WwiseWorld.stop_event(Managers.world:wwise_world(Managers.world:world("level_world")), id)
+		end
 	end
 
 	function self.play_sound_at(event, position)
@@ -362,6 +369,7 @@ local function new(def)
 		end
 
 		skin.animation = name
+		skin.hold = nil
 		skin.time = 0
 		skin.speed = duration and self.animation_duration(name) / duration or name == (CONFIG.idle_animation or "Idle") and CONFIG.idle_speed or 1
 	end
@@ -563,6 +571,9 @@ local function new(def)
 
 		if skin.animation == (CONFIG.idle_animation or "Idle") then
 			skin.time = skin.time % duration
+		elseif skin.hold and skin.time >= duration then
+			-- A held animation stays on its last frame until skin.hold is cleared, or another animation is played.
+			skin.time = duration
 		elseif skin.time >= duration then
 			self.play(CONFIG.idle_animation or "Idle")
 		end

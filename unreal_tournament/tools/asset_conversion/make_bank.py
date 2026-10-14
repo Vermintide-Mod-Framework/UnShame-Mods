@@ -79,7 +79,9 @@ WEAPONS = {
     ],
     'bio_rifle': [
         ('ut_bio_fire', SOUNDS + 'BBioRifleFire', False, -22, 0),
-        ('ut_bio_charge', SOUNDS + 'BBioRiflePoweUp', False, -24, 0),
+        # (BioChargedFire.Hold plays Biorifle_charge when the charge starts, and BioGoopLoop, a loop, from when it is full)
+        ('ut_bio_charge', SOUNDS + 'biorifle_charge', False, -24, 0),
+        ('ut_bio_goop_loop', NEW_SOUNDS + 'BioGoopLoop', False, -32, 0),
         ('ut_bio_select', SOUNDS + 'SwitchToBioRifle', False, -24, 0),
         ('ut_bio_fire_3d', SOUNDS + 'BBioRifleFire', True, -22, 40),
         ('ut_bio_splat_3d', SOUNDS + 'BBioRifleGoo1', True, -22, 30),

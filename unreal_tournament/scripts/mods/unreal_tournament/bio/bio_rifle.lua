@@ -523,6 +523,14 @@ local goop_loads = setmetatable({}, {
 	__mode = "k",
 })
 
+-- Used by the skin: how long a full load takes, and whether a player's load is done (full, or the ammo ran out).
+mod.bio_goop.load_time = CONFIG.goop_up_rate * CONFIG.max_goop_load
+mod.bio_goop.is_load_done = function (owner_unit)
+	local state = goop_loads[owner_unit]
+
+	return state ~= nil and state.done
+end
+
 -- Loads one more unit of goop. It takes 1 ammo, and nothing is loaded if there is none. The loading is done when the load is full or
 -- the ammo is gone.
 local function add_goop(action, state)

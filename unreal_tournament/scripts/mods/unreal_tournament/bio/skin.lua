@@ -167,6 +167,12 @@ local function remote_shot(owner_unit)
 	end
 end
 
+-- The charge that is going, as { owner_unit, sound, loop_sound, loop_timer }.
+local charging
+
+-- How long BioGoopLoop lasts, in seconds. It is played again when it ends, as it is a loop in UT.
+local GOOP_LOOP_TIME = 2.25
+
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
 	name = "bio",
@@ -226,6 +232,16 @@ skin_api = mod.weapon_skin.new({
 	end,
 	-- Moves the model towards the inspect pose and back, and sways it while it is there.
 	on_update = function (skin, dt)
+		-- Once the load is full (or the ammo is gone), UT plays BioGoopLoop until the charge is let go.
+		if charging and mod.bio_goop.is_load_done(charging.owner_unit) then
+			charging.loop_timer = charging.loop_timer - dt
+
+			if charging.loop_timer <= 0 then
+				charging.loop_sound = skin_api.play_sound("ut_bio_goop_loop")
+				charging.loop_timer = GOOP_LOOP_TIME
+			end
+		end
+
 		skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
 		skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
 		skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
@@ -271,13 +287,38 @@ mod.crossbow_start_callbacks.bio_skin = function (action, new_action)
 	end, in_third_person and third_person.meters_per_unit or skin.unit_scale)
 end
 
--- Charging the big glob draws the plunger back (UT's AltFire) and plays the power-up sound.
+-- Charging the big glob draws the plunger back, over the time a full load takes (BioChargedFire.PlayStartHold plays AltFire at that
+-- speed), and plays the charge sound. The model stays in its last frame while the charge is held, as UT's Hold animation does.
 mod.charge_start_callbacks.bio_skin = function (action, new_action)
 	local skin = skin_api.state()
 
 	if skin and new_action.ut_charge_callback == "bio" and utils.is_local_player_unit(action.owner_unit) then
-		skin_api.play("AltFire")
-		skin_api.play_sound("ut_bio_charge")
+		skin_api.play("AltFire", mod.bio_goop.load_time)
+
+		skin.hold = true
+		charging = {
+			loop_timer = 0,
+			owner_unit = action.owner_unit,
+			sound = skin_api.play_sound("ut_bio_charge"),
+		}
+	end
+end
+
+-- Letting go cuts off the animation and the sounds.
+mod.charge_finish_callbacks.bio_skin = function ()
+	if not charging then
+		return
+	end
+
+	skin_api.stop_sound(charging.sound)
+	skin_api.stop_sound(charging.loop_sound)
+
+	charging = nil
+
+	local skin = skin_api.state()
+
+	if skin and skin.animation == "AltFire" then
+		skin_api.play("Idle")
 	end
 end
 
