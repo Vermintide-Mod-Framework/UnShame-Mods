@@ -1,6 +1,8 @@
 import sys, re, zlib, struct, math
 
-# Usage: render_icon.py in.bsi out.png size yaw pitch roll texture0.png[,texture1.png...] [fill]
+# Usage: render_icon.py in.bsi out.png size yaw pitch roll texture0.png[,texture1.png...] [fill [mirror]]
+# (mirror turns the picture about its vertical axis: a weapon is rendered from the side that shows what it has, pointing up and to the left, and the
+# game's icons point up and to the right)
 # A software render of a converted mesh (psk2bsi.py's bsi: one geometry per material, a texture per geometry, in the order given) as an
 # icon: a square png with a transparent background, the mesh lit from above and the left, seen from its right side turned by yaw (about
 # the vertical) and pitch (degrees), and rolled in the picture by roll (degrees, so that a weapon lies diagonally as the game's icons do).
@@ -9,6 +11,7 @@ src, dst, size = sys.argv[1], sys.argv[2], int(sys.argv[3])
 yaw, pitch, roll = [math.radians(float(v)) for v in sys.argv[4:7]]
 texture_paths = sys.argv[7].split(',')
 FILL = float(sys.argv[8]) if len(sys.argv) > 8 else 0.92
+MIRROR = len(sys.argv) > 9 and sys.argv[9] == 'mirror'
 SUPER = 3
 
 
@@ -175,6 +178,10 @@ for y in range(size):
             row += bytes((int(r / n), int(g / n), int(b / n), int(255 * n / (SUPER * SUPER))))
         else:
             row += bytes((0, 0, 0, 0))
+    if MIRROR:
+        # (turned about the vertical axis of the picture: each pixel is 4 bytes after the filter byte)
+        row = bytearray([0]) + b''.join(bytes(row[1 + 4 * x:5 + 4 * x]) for x in reversed(range(size)))
+
     rows.append(bytes(row))
 
 
