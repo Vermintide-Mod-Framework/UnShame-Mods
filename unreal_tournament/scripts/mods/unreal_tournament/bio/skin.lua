@@ -196,6 +196,11 @@ skin_api = mod.weapon_skin.new({
 		b_bone_goop = {
 			axis = { 0.7051, -0.6581, 0.264 },
 			length = 0.0621,
+			-- The goop is not there when the plunger is in. It grows from its middle as the plunger comes out (the first 3 units of its move).
+			reveal = {
+				center = { -0.241, 0.624, -0.405 },
+				distance = 0.0375,
+			},
 			start = -0.7146,
 		},
 		b_bone_housing = {

@@ -45,6 +45,7 @@ local mod = get_mod("unreal_tournament")
 --   stretches: { node name = { axis = { x, y, z }, start, length } } for a part that is skinned to two bones (see 'stretch' in convert_weapon.py). The node
 --       has the move of the bone that moves, and its points are moved by it by a share: how far each is along the axis (a unit vector, three numbers),
 --       from start to start + length, as 0 to 1. The axis, start and length are in the model's axes and in meters.
+--       With reveal = { distance, center = { x, y, z } } the part grows from its center as the bone moves, to its size at that distance.
 --   on_update_always(dt): runs every frame, whether the skin is shown or not
 --   on_give_back(), on_level_exit(): the weapon takes back and clears what is its own
 
@@ -677,6 +678,16 @@ local function new(def)
 
 				local right, forward, up = image(Vector3(1, 0, 0)), image(Vector3(0, 1, 0)), image(Vector3(0, 0, 1))
 				local start_position = -node_position * (stretch.start * gain)
+
+				-- A part that is only there when the bone has moved (UT's goop is hidden in the plunger's housing when the plunger is
+				-- in): it grows from its center up to its size over the first stretch.reveal.distance meters of the move.
+				if stretch.reveal then
+					local grown = math.clamp(Vector3.length(node_position) / stretch.reveal.distance, 0.001, 1)
+					local center = Vector3(stretch.reveal.center[1], stretch.reveal.center[2], stretch.reveal.center[3])
+
+					right, forward, up = right * grown, forward * grown, up * grown
+					start_position = start_position * grown + center * (1 - grown)
+				end
 
 				Unit.set_local_pose(skin.unit, skin.nodes[b], Matrix4x4(
 					right.x, right.y, right.z,

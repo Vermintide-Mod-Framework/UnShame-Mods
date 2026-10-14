@@ -40,7 +40,7 @@ WEAPONS = {
     },
     'bio': {
         'psk': 'Weapons/SkeletalMesh/BioRifle_1st.psk',
-        'textures': ['units/ut/bio/bio_rifle_biorifletex0.png', None, None],
+        'textures': ['units/ut/bio/bio_rifle_biorifletex0.png', None, 'units/ut/bio/bio_rifle_brinnergoo.png'],
         'lua': 'scripts/mods/unreal_tournament/bio/skin_animations.lua',
         'display_fov': 60,
         'draw_scale': 1,
