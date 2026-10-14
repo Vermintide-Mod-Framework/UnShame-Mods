@@ -133,6 +133,22 @@ shader = {
 				0.8
 			]
 		}
+		{
+			connector_id = "34259752-b962-4b65-92c3-903a57338519"
+			id = "c0de0001-0000-4000-8000-000000001004"
+			instance_id = "c0de0001-0000-4000-8000-000000000001"
+			value = [
+				1
+			]
+		}
+		{
+			connector_id = "c9a30d71-a8ad-4b9e-aedf-d785ae7e301f"
+			id = "c0de0001-0000-4000-8000-000000001005"
+			instance_id = "c0de0001-0000-4000-8000-000000000001"
+			value = [
+				0
+			]
+		}
 	]
 	groups = [
 	]
@@ -146,7 +162,10 @@ shader = {
 			}
 			id = "c0de0001-0000-4000-8000-000000000001"
 			options = [
+				"c8d8b754-c567-4c7b-9cbd-8acab22beff5"
 				"8df1b8f7-17c2-4ae4-8c4e-25517ec1df46"
+				"435e14e4-556d-4ac1-af14-8dafe63aff8f"
+				"7b8bc0bf-c453-49d2-9415-0e80fec1039f"
 				"b2556764-e8e9-47cf-9ecc-f53b5d5d73c7"
 			]
 			position = [
