@@ -211,11 +211,11 @@ skin_api = mod.weapon_skin.new({
 	},
 	-- The inspect pose brings the rifle to the middle of the view and turns it to the left about its middle. It ends up across the view, with
 	-- its left side towards the player and the nozzle pointing left.
-	inspect_pose_right = -8,
-	inspect_pose_forward = 0,
-	inspect_pose_up = 18,
-	inspect_pose_roll = 10,
-	inspect_pose_pitch = 4,
+	inspect_pose_right = -9,
+	inspect_pose_forward = 12,
+	inspect_pose_up = 22,
+	inspect_pose_roll = 8,
+	inspect_pose_pitch = 8,
 	inspect_pose_yaw = 60,
 	inspect_turn_start = 0,
 	inspect_pivot_right = 15,
