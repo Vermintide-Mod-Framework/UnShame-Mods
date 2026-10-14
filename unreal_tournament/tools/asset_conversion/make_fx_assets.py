@@ -34,7 +34,6 @@ TEXTURES = {
     'rocket_flare': 'XEffects/Texture/RocketFlare.tga',
     # the Bio Rifle (the goo, the splat decal)
     'bio_goop': 'XEffectMat/Texture/goop_green_a.tga',
-    'bio_splat': 'XEffects/Texture/xbiosplat.tga',
     # the Link Gun (sparks, the flash, the beams, the rings, the splash of a plasma bolt)
     'link_spark_green': 'XEffectMat/Texture/link_spark_green.tga',
     'link_spark_yellow': 'XEffectMat/Texture/link_spark_yellow.tga',
@@ -54,6 +53,9 @@ TEXTURES = {
 
 # A texture that is made from another: name -> (the exported tga, what is made of its pixels (r, g, b, a) -> (r, g, b, a))
 DERIVED = {
+    # The Bio Rifle's splat (xbiosplat, BioDecal's projected texture). It is gray where it does nothing, and darker where the splat is: UT's
+    # projector multiplies the surface by it (and by 2). Here it is a blend: the green of the splat, where the texture is darker than gray.
+    'bio_splat': ('XEffects/Texture/xbiosplat.tga', lambda r, g, b, a: (30, 140, 30, max(0, min(255, (128 - r) * 255 // 104)))),
 }
 
 def read_tga(path):

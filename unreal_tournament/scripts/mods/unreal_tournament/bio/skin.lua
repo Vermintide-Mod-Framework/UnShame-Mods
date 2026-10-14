@@ -38,6 +38,7 @@ local CONFIG = {
 	goop_unit_format = "units/ut/fx/goop/f%d",
 	goop_material = "units/ut/fx/fx_goop",
 	goop_frame_rate = 30,
+	goop_opacity = 0.8,
 	goop_animations = {
 		drip = { start = 40, count = 39, speed = 0.66 },
 		flying = { start = 3, count = 11 },
@@ -81,10 +82,11 @@ local CONFIG = {
 	},
 	-- BioDecal is the splat that a landing glob leaves on the surface. It is the same size for every glob, and it lasts 6 seconds
 	-- (LifeSpan). The size is the width in meters, and it is a guess.
+	-- The texture has the splat's green in it.
 	splat_color = {
-		0.45,
 		1,
-		0.3,
+		1,
+		1,
 	},
 	splat_size = 1.2,
 	splat_life = 6,
@@ -295,6 +297,8 @@ local GOOP_LIFE = 20
 -- to show for the time since it started. follow keeps it where it is and ends it when it returns nothing.
 local function goop_mesh(volume, rotation, follow, frame)
 	particles.mesh({
+		-- The goop is blended by its opacity, not added: added, it is too bright on the surfaces it lies on.
+		additive = 0,
 		angle = 0,
 		brightness = function ()
 			return 1
@@ -303,6 +307,7 @@ local function goop_mesh(volume, rotation, follow, frame)
 		frame = function (fraction)
 			return frame(fraction * GOOP_LIFE)
 		end,
+		intensity = CONFIG.goop_opacity,
 		life = GOOP_LIFE,
 		material = CONFIG.goop_material,
 		rotation = rotation,
@@ -445,13 +450,15 @@ mod.goop_visual_callbacks.land = function (id, position, normal, level)
 	skin_api.play_sound_at("ut_bio_splat2_3d", position)
 
 	particles.disc({
+		-- The splat is blended by the alpha of its texture (tools/asset_conversion/make_fx_assets.py).
+		additive = 0,
 		color = CONFIG.splat_color,
 		fade_in = 0.1,
 		fade_out = 1.5,
 		follow = function ()
 			return center:unbox()
 		end,
-		intensity = 0.9,
+		intensity = 0.7,
 		life = CONFIG.splat_life,
 		normal = normal,
 		size = CONFIG.splat_size,
