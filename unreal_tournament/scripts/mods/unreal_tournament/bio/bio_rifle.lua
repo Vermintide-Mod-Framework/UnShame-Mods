@@ -55,11 +55,12 @@ local CONFIG = {
 	start_forward = 0.8, -- m
 	start_right = 0.25, -- m
 	start_down = 0.15, -- m
-	-- The view shakes when a glob is fired. UT turns the view by ShakeRotMag (70 for BioFire, 100 for BioChargedFire, in units of 360 /
-	-- 65536 degrees) for ShakeRotTime seconds (1.8 and 2), less and less. This uses the game's own shake, which turns the view up and down
-	-- and sideways by a noise, and fades it out. (UT also rolls the view and moves it, which the game's shake does not do.)
-	shake_primary = { degrees = 70 * 360 / 65536, seconds = 1.8 },
-	shake_charged = { degrees = 100 * 360 / 65536, seconds = 2 },
+	-- The view kicks when a glob is fired, with the game's weapon recoil, which is the Masterwork Pistol's own for the small glob. UT's
+	-- BioChargedFire shakes the view 100 against BioFire's 70 (ShakeRotMag), so the big glob kicks that much more.
+	recoil_climb = 2, -- degrees
+	recoil_climb_time = 0.1, -- seconds
+	recoil_restore_time = 0.25, -- seconds
+	recoil_charged_share = 100 / 70,
 	-- BioChargedFire: GoopUpRate, MaxGoopLoad and FireRate
 	goop_up_rate = 0.25, -- seconds between two units of goop
 	max_goop_load = 10,
@@ -185,28 +186,6 @@ end
 -- A charged glob is slower the more goop it has (BioGlob.AdjustSpeed).
 local function charged_speed_uu(level)
 	return CONFIG.glob_speed_uu * (0.4 + level) / (1.4 * level)
-end
-
--- The shakes are added to the game's, which has them by name. The shake starts at its full size and fades out over its time.
-local SHAKES = {
-	ut_bio_charged_fire = CONFIG.shake_charged,
-	ut_bio_fire = CONFIG.shake_primary,
-}
-
-for name, shake in pairs(SHAKES) do
-	CameraEffectSettings.shake[name] = {
-		amplitude = shake.degrees,
-		duration = 0,
-		fade_out = shake.seconds,
-		octaves = 2,
-		persistance = 0.5,
-	}
-end
-
-mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
-	for name in pairs(SHAKES) do
-		CameraEffectSettings.shake[name] = nil
-	end
 end
 
 local GRAVITY_SETTINGS = "ut_bio_glob"
@@ -374,9 +353,18 @@ local function build_shot_action(charged)
 	action.ammo_usage = charged and 0 or 1
 	action.anim_event = "attack_shoot"
 	action.anim_event_last_ammo = "attack_shoot"
+	action.apply_recoil = true
 	action.enter_function = enter_function
 	action.fire_sound_event = CONFIG.fire_sound
 	action.fire_time = 0
+	action.recoil_settings = {
+		climb_duration = CONFIG.recoil_climb_time,
+		horizontal_climb = 0,
+		restore_duration = CONFIG.recoil_restore_time,
+		vertical_climb = CONFIG.recoil_climb * (charged and CONFIG.recoil_charged_share or 1),
+		climb_function = math.easeInCubic,
+		restore_function = math.ease_out_quad,
+	}
 	action.total_time = interval
 	action.ut_bio_charged = charged or nil
 	action.ut_bio_shot = true
@@ -709,10 +697,6 @@ mod.spawn_projectile_callbacks[TEMPLATE_NAME] = function (func, owner_unit, posi
 		scale = scale_to_send(level)
 		speed = action_speed(action.ut_bio_charged and charged_speed_uu(level) or CONFIG.glob_speed_uu)
 		power_level = power_level * power_ratio(level)
-
-		if utils.is_local_player_unit(owner_unit) then
-			Managers.state.camera:camera_effect_shake_event(action.ut_bio_charged and "ut_bio_charged_fire" or "ut_bio_fire", Managers.time:time("game"))
-		end
 	end
 
 	return func(owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, is_critical_strike, power_level, ...)
