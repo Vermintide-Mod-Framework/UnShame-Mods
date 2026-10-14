@@ -137,6 +137,29 @@ mod:hook(PlayerCharacterStateClimbingLadder, "update", function (func, self, uni
 	return func(self, unit, ...)
 end)
 
+-- Development command: prints why the player leaves a ladder, to find out what happens at the top.
+local ladder_debug = false
+
+mod:command("ladder_debug", "- prints how the player leaves a ladder: where they were, the way they were moving and what the game decided", function ()
+	ladder_debug = not ladder_debug
+
+	mod:echo("ladder debug %s", ladder_debug and "on" or "off")
+end)
+
+mod:hook_safe(PlayerCharacterStateClimbingLadder, "on_exit", function (self, unit, input, dt, context, t, next_state)
+	if not ladder_debug then
+		return
+	end
+
+	local movement_settings_table = PlayerUnitMovementSettings.get_movement_settings_table(unit)
+	local height_over_limit = Vector3.z(Unit.world_position(unit, 0)) - (self.jump_off_height - movement_settings_table.ladder.leaving_ladder_height_below_get_of_node)
+	local colliding = CharacterStateHelper.is_colliding_with_gameplay_collision_box(self.world, unit, "filter_ladder_collision")
+	local velocity = self.locomotion_extension:current_velocity()
+	local pitch = Quaternion.pitch(Unit.local_rotation(self.first_person_extension:get_first_person_unit(), 0))
+
+	mod:echo("ladder exit to %s: %.2f m above the climb-off height, in the ladder's box %s, vertical speed %.2f, pitch %.0f degrees, held jump %s", tostring(next_state), height_over_limit, tostring(colliding), Vector3.z(velocity), math.radians_to_degrees(pitch), tostring(self.input_extension:get("jump") or self.input_extension:get("jump_only")))
+end)
+
 mod.ledge_hang_callbacks.movement = function (unit)
 	reset_air_state(nil, unit)
 end
