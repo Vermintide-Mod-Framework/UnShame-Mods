@@ -113,6 +113,30 @@ mod:hook_safe(PlayerCharacterStateClimbingLadder, "on_enter", function (self, un
 	reset_air_state(self, unit)
 end)
 
+-- Leaving a ladder at the top. The game only climbs off when the player is above the ladder's box and moving up. How fast the player
+-- climbs depends on which way they look, so looking down at the platform while pressing forward gives no upward speed, and the game
+-- then drops the player back on the ladder (it does that without this mod too, and the stronger gravity and the weaker air control
+-- make it worse). A player that is above the height where the game lets them climb off, and out of the ladder's box, climbs off
+-- whichever way they are moving.
+mod:hook(PlayerCharacterStateClimbingLadder, "update", function (func, self, unit, ...)
+	if is_movement_enabled() and not self.position_lerp_timer and not self.csm.state_next then
+		local movement_settings_table = PlayerUnitMovementSettings.get_movement_settings_table(unit)
+		local above_climb_off_height = self.jump_off_height - movement_settings_table.ladder.leaving_ladder_height_below_get_of_node <= Vector3.z(Unit.world_position(unit, 0))
+
+		if above_climb_off_height and not CharacterStateHelper.is_colliding_with_gameplay_collision_box(self.world, unit, "filter_ladder_collision") then
+			local params = self.temp_params
+
+			params.ladder_unit = self.ladder_unit
+
+			self.csm:change_state("leaving_ladder_top", params)
+
+			return
+		end
+	end
+
+	return func(self, unit, ...)
+end)
+
 mod.ledge_hang_callbacks.movement = function (unit)
 	reset_air_state(nil, unit)
 end
