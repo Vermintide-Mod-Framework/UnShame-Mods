@@ -270,6 +270,7 @@ local function register_skins(definition, item)
 		skin_item.template = definition.template
 		skin_item.rarity = skin_data.rarity
 		skin_item.can_wield = item.can_wield
+		skin_item.required_dlc = nil
 		skin_item.key = skin.key
 		skin_item.name = skin.key
 		skin_item.localized_name = skin.name
@@ -304,6 +305,7 @@ local function register_skins(definition, item)
 
 	base_skin_item.matching_item_key = definition.key
 	base_skin_item.can_wield = item.can_wield
+	base_skin_item.required_dlc = nil
 	base_skin_item.key = definition.key .. "_skin"
 	base_skin_item.name = base_skin_item.key
 
@@ -354,6 +356,8 @@ function items.register(setting_id, definition)
 	-- The item uses the careers of the weapon it is a copy of. The first person animations, units and attachments are made for those
 	-- careers, and another career that equips the item crashes the game.
 	item.can_wield = table.clone(definition.can_wield or ItemMasterList[definition.base_item].can_wield)
+	-- The game's weapon may need a DLC to own it, but the mod's weapon does not.
+	item.required_dlc = nil
 	-- The base weapon's skins don't apply to the item. register_skins gives it skins of its own.
 	item.skin_combination_table = nil
 	-- These are set the way parse_item_master_list sets them for every item.

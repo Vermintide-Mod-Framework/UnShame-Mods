@@ -44,9 +44,9 @@ needs its own copy from a base of that hero, because the animations, units and a
 - Redeemer. The Trollhammer Torpedo is Ironbreaker only. The Engineer has it only in Versus.
 - The Necromancer can carry any staff in the game, but the local item list shows only her own staff. So the staff weapons name her
   in `can_wield` themselves (the Shock Rifle does).
-- `items.register` copies the whole base item, including its `required_dlc`. The game loads every DLC's scripts and packages for
-  everyone, so cloning a base does not need the DLC. Whether a copy that keeps `required_dlc` shows as locked without the DLC is not
-  checked. Clearing `required_dlc` on the copy is the simple way to avoid it.
+- `items.register` copies the whole base item and clears its `required_dlc`, so a weapon of the mod does not need the DLC of its base
+  (the "Base item's DLC" column is only where the base comes from). The game loads every DLC's scripts and packages for everyone,
+  so cloning a base does not need the DLC either. A career that is itself a DLC career is still locked by its own DLC.
 - A career that equips an item it is not listed for crashes the game (see `CLAUDE.md`), so widening `can_wield` needs the first
   person and third person animations of that career to exist for the base.
 
