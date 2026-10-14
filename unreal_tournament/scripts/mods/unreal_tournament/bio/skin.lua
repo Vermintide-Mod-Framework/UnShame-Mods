@@ -78,6 +78,9 @@ local CONFIG = {
 	},
 	burst_sparks = 8,
 	burst_spark_size = 6,
+	-- GoopSparks have an air resistance of 2. A streak is this many seconds of the spark's speed long.
+	burst_spark_drag = 2,
+	burst_spark_length = 0.06,
 	burst_spark_life = {
 		0.5,
 		0.8,
@@ -395,19 +398,33 @@ local function splash(position, scale)
 		})
 	end
 
+	-- GoopSparks are lines (PT_Line): each is a streak along the way the spark moves, as long as the spark is fast. The position of a
+	-- spark is its start plus its velocity, which the air slows (drag), so it is worked out from how long the spark has been going.
 	for _ = 1, sparks do
-		local speed = random_between(CONFIG.burst_spark_speed) * UNIT
+		local origin = Vector3Box(position)
+		local start_velocity = random_direction() * (random_between(CONFIG.burst_spark_speed) * UNIT)
+		local velocity_box = Vector3Box(start_velocity)
+		local started = Application.time_since_launch()
+		local drag = CONFIG.burst_spark_drag
+		local width = CONFIG.burst_spark_size * UNIT * scale
 
-		particles.sprite({
+		particles.beam({
 			attenuation = 0,
 			color = CONFIG.glob_color,
-			drag = 2,
 			growth = -3 * UNIT,
 			life = random_between(CONFIG.burst_spark_life),
-			position = position,
-			size = CONFIG.burst_spark_size * UNIT * scale,
+			size = width,
 			texture = "link_spark_green",
-			velocity = random_direction() * speed,
+			track = function ()
+				local age = Application.time_since_launch() - started
+				local velocity = velocity_box:unbox()
+				local speed = Vector3.length(velocity)
+				local current = origin:unbox() + velocity * ((1 - math.exp(-drag * age)) / drag)
+				local direction = speed > 0.001 and velocity * (1 / speed) or Vector3.up()
+				local length = math.max(width, speed * math.exp(-drag * age) * CONFIG.burst_spark_length)
+
+				return current - direction * length, current
+			end,
 		})
 	end
 end
