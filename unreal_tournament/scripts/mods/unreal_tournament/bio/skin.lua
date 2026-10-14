@@ -84,7 +84,7 @@ local CONFIG = {
 		0.1,
 	},
 	burst_sparks = 8,
-	burst_spark_size = 6,
+	burst_spark_size = 3,
 	-- GoopSparks have an air resistance of 2. A streak is this many seconds of the spark's speed long.
 	burst_spark_drag = 2,
 	burst_spark_length = 0.06,
@@ -92,10 +92,12 @@ local CONFIG = {
 		0.5,
 		0.8,
 	},
+	-- The sparks of UT2004 fly faster than its numbers say here (80 to 240), and fall as they go; these are matched to how they look there.
 	burst_spark_speed = {
-		80,
-		240,
+		140,
+		420,
 	},
+	burst_spark_gravity = 10.7, -- m/s^2, the same as a glob's
 	-- BioDecal is the splat that a landing glob leaves on the surface. It is the same size for every glob, and it lasts 6 seconds
 	-- (LifeSpan).
 	-- The decal's box is this wide and this deep, in meters (the game's blood decals are 2.5 wide and 1 deep). It is a guess.
@@ -419,14 +421,17 @@ local function splash(position, scale, direction)
 		local width = CONFIG.burst_spark_size * UNIT * scale
 		local life = random_between(CONFIG.burst_spark_life)
 
-		-- Returns where the spark's head is, and where its tail is.
+		-- Returns where the spark's head is, and where its tail is. The air slows the spark and gravity pulls it down, so its velocity
+		-- goes toward the speed it falls at (gravity / drag).
 		local function spark()
 			local age = Application.time_since_launch() - started
-			local velocity = velocity_box:unbox()
+			local slowed = math.exp(-drag * age)
+			local fall = Vector3(0, 0, -CONFIG.burst_spark_gravity)
+			local velocity = velocity_box:unbox() * slowed + fall * ((1 - slowed) / drag)
+			local head = origin:unbox() + velocity_box:unbox() * ((1 - slowed) / drag) + fall * (age / drag - (1 - slowed) / (drag * drag))
 			local speed = Vector3.length(velocity)
-			local head = origin:unbox() + velocity * ((1 - math.exp(-drag * age)) / drag)
 			local heading = speed > 0.001 and velocity * (1 / speed) or Vector3.up()
-			local length = math.max(width, speed * math.exp(-drag * age) * CONFIG.burst_spark_length)
+			local length = math.max(width, speed * CONFIG.burst_spark_length)
 
 			return head, head - heading * length
 		end
