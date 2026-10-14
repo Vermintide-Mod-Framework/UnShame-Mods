@@ -518,11 +518,19 @@ local function add_splat(position, normal)
 		manager._ut_bio_pool = true
 	end
 
-	-- The game's own decals of hits (EffectHelper) are given a turn about the normal of the surface, and the engine places the decal's box
-	-- on the surface from the normal. The extents are the width, the length and the depth.
-	local rotation = Quaternion.axis_angle(normal, math.random() * math.pi * 2)
+	local side = Vector3.cross(normal, Vector3.up())
 
-	manager:add_projection_decal(CONFIG.splat_unit, nil, nil, position, rotation, Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_depth), normal)
+	if Vector3.length(side) < 0.1 then
+		side = Vector3.cross(normal, Vector3.right())
+	end
+
+	side = Vector3.normalize(side)
+
+	local tangent = Quaternion.rotate(Quaternion.axis_angle(normal, math.random() * math.pi * 2), side)
+
+	-- The engine uses the rotation as it is (turned only about the normal, the box lay flat in the surface). The decal shader draws the
+	-- texture on the x and z axes of the box and projects along its y axis, so y is the way the surface faces.
+	manager:add_projection_decal(CONFIG.splat_unit, nil, nil, position, Quaternion.look(normal, tangent), Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_size), normal)
 end
 
 -- A glob lands. The splat stays where it is for its own time, and the blob stays until the glob is gone.
