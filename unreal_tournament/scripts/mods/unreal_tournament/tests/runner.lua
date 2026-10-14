@@ -21,7 +21,8 @@ local mod = get_mod("unreal_tournament")
 --   t.projectiles(filter)                the units of the player's projectiles whose action the filter accepts
 --   t.explosions()                       a list that is filled with the names of the explosions that happen from now on
 --
--- A suite is { name, item (the key of the weapon item), template, slot, careers (the careers it is run for), scenarios = { { name, run } } }.
+-- A suite is { name, item (the key of the weapon item), template, slot, careers (the careers it is run for), level (the level it is run
+-- in, loaded if the player is in another one, and the player is taken back to the level they were in at the end), scenarios = { { name, run } } }.
 --
 -- The tests change the player's loadout and career, and put them back at the end. The loadout is kept in the backend, so what has to be
 -- put back is saved in the settings while a suite runs, and put back the next time the mod loads if a suite was cut short.
@@ -37,6 +38,23 @@ local CONFIG = {
 	respawn_timeout = 30, -- seconds
 	-- How long an enemy may take to spawn. Its packages may have to be loaded.
 	spawn_timeout = 30, -- seconds
+	-- How long a level may take to load
+	level_timeout = 240, -- seconds
+	-- The game's flags (script_data) that a suite sets, so that the level is empty and nothing hurts the player, and puts back at the end
+	quiet_flags = {
+		ai_bots_disabled = true,
+		ai_boss_spawning_disabled = true,
+		ai_critter_spawning_disabled = true,
+		ai_horde_spawning_disabled = true,
+		ai_mini_patrol_disabled = true,
+		ai_pacing_disabled = true,
+		ai_roaming_patrols_disabled = true,
+		ai_roaming_spawning_disabled = true,
+		ai_specials_spawning_disabled = true,
+		ai_terror_events_disabled = true,
+		disable_ai_perception = true,
+		player_invincible = true,
+	},
 }
 
 local RESTORE_SETTING = "test_restore"
@@ -459,6 +477,59 @@ local function setup_character(t, suite, career)
 	return true
 end
 
+-- The game's flags for an empty level where nothing hurts the player. Returns the function that puts them back.
+local function set_quiet_flags()
+	local previous = {}
+
+	for flag, value in pairs(CONFIG.quiet_flags) do
+		previous[flag] = script_data[flag]
+		script_data[flag] = value
+	end
+
+	return function ()
+		for flag, value in pairs(previous) do
+			script_data[flag] = value
+		end
+
+		for flag in pairs(CONFIG.quiet_flags) do
+			if previous[flag] == nil then
+				script_data[flag] = nil
+			end
+		end
+	end
+end
+
+local function current_level_key()
+	return Managers.level_transition_handler:get_current_level_key()
+end
+
+-- Loads a level the way the game's own automated tests do, and waits until the player has spawned in it. The level exit that this
+-- causes does not stop the suite.
+local function load_level(t, level_key)
+	local previous_unit = player_unit()
+
+	run.loading = true
+
+	t.on_main_thread(function ()
+		Managers.mechanism:debug_load_level(level_key, 0)
+	end)
+
+	local loaded = t.wait_until(function ()
+		local unit = player_unit()
+
+		return current_level_key() == level_key and not Managers.level_transition_handler:needs_level_load() and unit and unit ~= previous_unit and HEALTH_ALIVE[unit]
+	end, CONFIG.level_timeout, "the level " .. level_key .. " to load")
+
+	run.loading = false
+
+	if loaded then
+		-- The level has just started
+		t.wait(3)
+	end
+
+	return loaded
+end
+
 local function run_suite(suite, only_career)
 	local t = make_context(suite)
 	local summary = {
@@ -496,6 +567,24 @@ local function run_suite(suite, only_career)
 
 	if not Window.has_focus() then
 		log("the game window has no focus: the game ignores input without it")
+	end
+
+	run.restore_flags = set_quiet_flags()
+
+	local original_level = current_level_key()
+
+	if suite.level and original_level ~= suite.level then
+		log("loading %s", suite.level)
+
+		if not load_level(t, suite.level) then
+			log("the level did not load")
+			run.restore_flags()
+			run.restore_flags = nil
+			apply_restore(restore)
+			save_restore(NOTHING_TO_RESTORE)
+
+			return
+		end
 	end
 
 	for _, career in ipairs(careers) do
@@ -562,11 +651,21 @@ local function run_suite(suite, only_career)
 	apply_restore(restore)
 	save_restore(NOTHING_TO_RESTORE)
 
+	if run.restore_flags then
+		run.restore_flags()
+		run.restore_flags = nil
+	end
+
 	if original_career and player_career_name() ~= original_career then
 		Managers.state.network:request_profile(1, CareerSettings[original_career].profile_name, original_career, true)
 	end
 
 	log("%s: %d passed, %d failed, %d skipped", suite.name, summary.passed, summary.failed, summary.skipped)
+
+	if current_level_key() ~= original_level then
+		log("going back to %s", original_level)
+		load_level(t, original_level)
+	end
 end
 
 -- Starting and stopping
@@ -597,6 +696,10 @@ end
 
 function runner.stop()
 	if run then
+		if run.restore_flags then
+			run.restore_flags()
+		end
+
 		run = nil
 		runner.restore_input()
 		log("stopped. The loadout is put back the next time the mod loads, or run the suite again")
@@ -617,6 +720,11 @@ local function step(dt)
 
 	if run.error then
 		log("the suite broke: %s", tostring(run.error))
+
+		if run.restore_flags then
+			run.restore_flags()
+		end
+
 		runner.restore_input()
 		run = nil
 
@@ -711,7 +819,11 @@ mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
-	if run then
+	if run and not run.loading then
+		if run.restore_flags then
+			run.restore_flags()
+		end
+
 		run = nil
 		runner.restore_input()
 	end

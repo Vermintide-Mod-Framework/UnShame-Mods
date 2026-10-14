@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- The Flak Cannon's in-game tests (see runner.lua). Run them with /ut_test flak, as Kruber, in a mission.
+-- The Flak Cannon's in-game tests (see runner.lua). Run them with /ut_test flak. The suite loads its level and takes the player back.
 
 local runner = mod.test_runner
 
@@ -30,6 +30,8 @@ runner.add_suite({
 	item = definition.key,
 	template = definition.template,
 	slot = "slot_ranged",
+	-- Horn of Magnus: it starts in a courtyard with open ground
+	level = "military",
 	-- The careers of the Blunderbuss that the weapon is a copy of
 	careers = { "es_mercenary", "es_huntsman", "es_knight" },
 	scenarios = {
