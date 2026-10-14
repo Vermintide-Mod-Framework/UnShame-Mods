@@ -194,12 +194,12 @@ skin_api = mod.weapon_skin.new({
 	-- (from the psk, in UT units: the housing from -32.8 to -47.25, the goop from -57.17 to -52.2, times 0.0125).
 	stretches = {
 		b_bone_goop = {
-			axis = Vector3(0.7051, -0.6581, 0.264),
+			axis = { 0.7051, -0.6581, 0.264 },
 			length = 0.0621,
 			start = -0.7146,
 		},
 		b_bone_housing = {
-			axis = Vector3(0.7051, -0.6581, 0.264),
+			axis = { 0.7051, -0.6581, 0.264 },
 			length = -0.1806,
 			start = -0.41,
 		},

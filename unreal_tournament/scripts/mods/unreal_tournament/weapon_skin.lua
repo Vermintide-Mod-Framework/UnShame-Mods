@@ -42,8 +42,8 @@ local mod = get_mod("unreal_tournament")
 --       (UT sets some by code: the Rocket Launcher's barrel). pose is the row of numbers of a frame, and a bone's numbers start at
 --       (index - 1) * 7 + 1. skin.node_scales[bone index] = Vector3 scales a node along its own axes (a part that stretches, like
 --       the Rocket Launcher's rod).
---   stretches: { node name = { axis, start, length } } for a part that is skinned to two bones (see 'stretch' in convert_weapon.py). The node
---       has the move of the bone that moves, and its points are moved by it by a share: how far each is along the axis (a unit vector),
+--   stretches: { node name = { axis = { x, y, z }, start, length } } for a part that is skinned to two bones (see 'stretch' in convert_weapon.py). The node
+--       has the move of the bone that moves, and its points are moved by it by a share: how far each is along the axis (a unit vector, three numbers),
 --       from start to start + length, as 0 to 1. The axis, start and length are in the model's axes and in meters.
 --   on_update_always(dt): runs every frame, whether the skin is shown or not
 --   on_give_back(), on_level_exit(): the weapon takes back and clears what is its own
@@ -669,8 +669,10 @@ local function new(def)
 				-- A part that is skinned to two bones (CONFIG.stretches). Its points are moved by the move of the bone that moves, by
 				-- the share that says how far each point is along the stretch's axis between the two planes of the bone's points.
 				local gain = 1 / stretch.length
+				-- (the axis is three numbers, because a vector kept from one frame to the next is not good any more)
+				local stretch_axis = Vector3(stretch.axis[1], stretch.axis[2], stretch.axis[3])
 				local function image(axis)
-					return axis + node_position * (Vector3.dot(stretch.axis, axis) * gain)
+					return axis + node_position * (Vector3.dot(stretch_axis, axis) * gain)
 				end
 
 				local right, forward, up = image(Vector3(1, 0, 0)), image(Vector3(0, 1, 0)), image(Vector3(0, 0, 1))
