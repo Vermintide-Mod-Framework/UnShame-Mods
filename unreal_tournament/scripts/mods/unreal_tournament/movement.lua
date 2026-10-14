@@ -109,8 +109,15 @@ end
 
 -- Climbing or hanging also starts a new time in the air. Hanging is reported by the shared ledge hook in hooks.lua, because a
 -- function can only be hooked once.
-mod:hook_safe(PlayerCharacterStateClimbingLadder, "on_enter", function (self, unit)
+-- ladder_debug is the development command further down.
+local ladder_debug = false
+
+mod:hook_safe(PlayerCharacterStateClimbingLadder, "on_enter", function (self, unit, input, dt, context, t, previous_state)
 	reset_air_state(self, unit)
+
+	if ladder_debug then
+		mod:echo("climbing a ladder, coming from %s, vertical speed %.2f", tostring(previous_state), Vector3.z(self.locomotion_extension:current_velocity()))
+	end
 end)
 
 -- Leaving a ladder at the top. The game only climbs off when the player is above the ladder's box and moving up. How fast the player
@@ -138,8 +145,6 @@ mod:hook(PlayerCharacterStateClimbingLadder, "update", function (func, self, uni
 end)
 
 -- Development command: prints why the player leaves a ladder, to find out what happens at the top.
-local ladder_debug = false
-
 mod:command("ladder_debug", "- prints how the player leaves a ladder: where they were, the way they were moving and what the game decided", function ()
 	ladder_debug = not ladder_debug
 
@@ -158,6 +163,12 @@ mod:hook_safe(PlayerCharacterStateClimbingLadder, "on_exit", function (self, uni
 	local pitch = Quaternion.pitch(Unit.local_rotation(self.first_person_extension:get_first_person_unit(), 0))
 
 	mod:echo("ladder exit to %s: %.2f m above the climb-off height, in the ladder's box %s, vertical speed %.2f, pitch %.0f degrees, held jump %s", tostring(next_state), height_over_limit, tostring(colliding), Vector3.z(velocity), math.radians_to_degrees(pitch), tostring(self.input_extension:get("jump") or self.input_extension:get("jump_only")))
+end)
+
+mod:hook_safe(PlayerCharacterStateLeavingLadderTop, "on_exit", function (self, unit, input, dt, context, t, next_state)
+	if ladder_debug then
+		mod:echo("leaving the top of the ladder ended: next state %s, on ground %s, vertical speed %.2f", tostring(next_state), tostring(self.locomotion_extension.on_ground), Vector3.z(self.locomotion_extension:current_velocity()))
+	end
 end)
 
 mod.ledge_hang_callbacks.movement = function (unit)
