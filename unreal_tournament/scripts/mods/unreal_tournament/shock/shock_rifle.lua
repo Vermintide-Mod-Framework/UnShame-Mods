@@ -205,9 +205,9 @@ register_damage_profile("ut_shock_beam_instagib", "beam_shot", function (profile
 	set_armor_modifiers(profile)
 end)
 -- The ball's direct hit does no damage of its own. As in UT, the damage is the explosion, which is at full strength for whatever
--- the ball hits. The direct hit only staggers.
+-- the ball hits. The direct hit only staggers, and does 1 damage so that it is not shown as blocked by armor.
 register_damage_profile("ut_shock_ball", "staff_fireball", function (profile)
-	make_flat(profile, 0, CONFIG.beam_impact_power)
+	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, CONFIG.beam_impact_power)
 
 	-- The cleave is kept tiny so the ball detonates on the first enemy it hits.
 	profile.cleave_distribution = {

@@ -158,10 +158,10 @@ local CONFIG = {
 	ragdoll_window = 1.5, -- seconds a body has to start ragdolling after the explosion
 }
 
--- Damage profiles. The direct hit of the rocket only staggers. Its damage is the explosion, which is at full strength for
--- whatever the rocket hits, like in UT.
+-- Damage profiles. The direct hit of the rocket only staggers (and does 1 damage, so that it is not shown as blocked by armor). Its
+-- damage is the explosion, which is at full strength for whatever the rocket hits, like in UT.
 register_damage_profile("ut_rocket", "staff_fireball", function (profile)
-	make_flat(profile, 0, impact_power_for(CONFIG.rocket_damage))
+	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, impact_power_for(CONFIG.rocket_damage))
 
 	profile.cleave_distribution = {
 		attack = 0.01,
