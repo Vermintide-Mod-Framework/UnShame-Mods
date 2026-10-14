@@ -32,8 +32,6 @@ local TEMPLATE_NAME = mod.items.weapons.flak_cannon.template
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
-	-- Temporary, for testing: this multiplies the launch speed of the chunks and the shell. 1 is normal.
-	debug_speed_scale = 1,
 	-- All of the ammo. The Blunderbuss has 16. It is all the clip, so there is no reload.
 	max_ammo = 20,
 	-- Flak chunk
@@ -565,13 +563,13 @@ mod:hook(ActionShotgun, "_shoot", function (func, self, num_shots_total, num_sho
 		if action.ut_flak_chunks then
 			local chunk_position = position + Quaternion.forward(rotation) * CONFIG.chunk_spawn_forward + Quaternion.right(rotation) * CONFIG.chunk_spawn_right - Quaternion.up(rotation) * CONFIG.chunk_spawn_down
 
-			spawn_projectile(shot, chunk_position, spread_rotation(rotation, math.degrees_to_radians(CONFIG.chunk_spread_degrees)), CHUNK_ACTION_NAME, random_chunk_action(), CONFIG.chunk_speed * CONFIG.debug_speed_scale)
+			spawn_projectile(shot, chunk_position, spread_rotation(rotation, math.degrees_to_radians(CONFIG.chunk_spread_degrees)), CHUNK_ACTION_NAME, random_chunk_action(), CONFIG.chunk_speed)
 		else
 			local lobbed_rotation = Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3.right(), math.degrees_to_radians(CONFIG.shell_lob_degrees)))
 
 			local shell_position = position + Quaternion.forward(rotation) * CONFIG.shell_spawn_forward + Quaternion.right(rotation) * CONFIG.shell_spawn_right - Quaternion.up(rotation) * CONFIG.shell_spawn_down
 
-			spawn_projectile(shot, shell_position, lobbed_rotation, SHELL_ACTION_NAME, SHELL_ACTION, CONFIG.shell_speed * CONFIG.debug_speed_scale)
+			spawn_projectile(shot, shell_position, lobbed_rotation, SHELL_ACTION_NAME, SHELL_ACTION, CONFIG.shell_speed)
 		end
 	end
 end)
@@ -603,7 +601,7 @@ mod.aoe_callbacks.ut_flak_shell = function (self, aoe_data, position)
 	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, explosion, CONFIG.shell_self_damage)
 
 	for _ = 1, CONFIG.shell_chunk_count do
-		spawn_projectile(shot, start, burst_rotation(rotation, math.degrees_to_radians(CONFIG.shell_chunk_cone_degrees)), CHUNK_ACTION_NAME, random_chunk_action(true), CONFIG.chunk_speed * CONFIG.debug_speed_scale)
+		spawn_projectile(shot, start, burst_rotation(rotation, math.degrees_to_radians(CONFIG.shell_chunk_cone_degrees)), CHUNK_ACTION_NAME, random_chunk_action(true), CONFIG.chunk_speed)
 	end
 end
 
@@ -835,7 +833,7 @@ mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_d
 		local locomotion = self.locomotion_extension
 		local frame_time = locomotion.dt or 0
 
-		if frame_time > 0.0001 and Vector3.length(locomotion:current_velocity()) / frame_time < CONFIG.chunk_speed * CONFIG.debug_speed_scale / 100 * CONFIG.chunk_min_speed_fraction then
+		if frame_time > 0.0001 and Vector3.length(locomotion:current_velocity()) / frame_time < CONFIG.chunk_speed / 100 * CONFIG.chunk_min_speed_fraction then
 			self.power_level = 0
 		end
 	end
