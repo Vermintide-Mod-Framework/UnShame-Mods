@@ -20,16 +20,17 @@ local SETTING_ID = "bio_rifle"
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
-	-- BioMuzFlash1st is a flash that lasts 0.1 to 0.15 s, at 0.6 to 0.8 of a mesh. In the character's hand it is a sprite.
-	muzzle_size = 50,
-	muzzle_growth = 120,
+	-- BioMuzFlash1st is a flash that lasts 0.1 to 0.15 s, in the player's view and in the character's hand. It is UT's mesh, the Flak
+	-- Cannon's flash mesh with the Bio Rifle's own texture, pointing the way the camera looks. Its size is this many times the mesh at the
+	-- start of its life and at the end of it, which is muzzle_life. They are the Flak Cannon's, which is the same mesh. The brightness is
+	-- BioMuzFlash1st's color, 180 of 255, times the Flak Cannon's.
 	muzzle_life = 0.12,
-	-- In the player's own view it is UT's mesh, the Flak Cannon's flash mesh with the Bio Rifle's own texture, pointing the way the
-	-- camera looks. Its size is this many times the mesh at the start of its life and at the end of it, which is muzzle_life. They
-	-- are the Flak Cannon's, which is the same mesh. The brightness is BioMuzFlash1st's color, 180 of 255, times the Flak Cannon's.
 	flash_mesh_start = 2.6,
 	flash_mesh_end = 3.8,
 	flash_mesh_brightness = 1.05,
+	-- A sprite is shown instead when there is no camera.
+	muzzle_size = 50,
+	muzzle_growth = 120,
 	muzzle_color = {
 		0.5,
 		1,
@@ -136,8 +137,8 @@ end
 -- token, and the sprite of the old one stops by itself when it asks for its place and finds a different token.
 local landed = {}
 
--- Shows a flash at the muzzle, either of the mesh in the character's hand or of the model in the player's own view.
-local function muzzle_flash(follow, scale)
+-- A sprite flash, for when there is no camera to point the mesh by.
+local function sprite_flash(follow, scale)
 	particles.sprite({
 		color = CONFIG.muzzle_color,
 		follow = follow,
@@ -149,13 +150,13 @@ local function muzzle_flash(follow, scale)
 	})
 end
 
--- Shows the flash of the player's own view. It is UT's mesh, pointing the way the camera looks and turned by a random angle about
--- that direction.
-local function first_person_flash(follow, scale)
+-- Shows a flash at the muzzle, either of the mesh in the character's hand or of the model in the player's own view. It is UT's mesh,
+-- pointing the way the camera looks and turned by a random angle about that direction.
+local function muzzle_flash(follow, scale)
 	local _, camera_rotation = utils.camera_pose()
 
 	if not camera_rotation then
-		return muzzle_flash(follow, scale)
+		return sprite_flash(follow, scale)
 	end
 
 	-- The mesh is made at 0.02 m per UT unit, and it is scaled to the size of the view's units.
@@ -446,9 +447,7 @@ mod.crossbow_start_callbacks.bio_skin = function (action, new_action)
 
 	skin_api.play("Fire")
 
-	local flash = in_third_person and muzzle_flash or first_person_flash
-
-	flash(function ()
+	muzzle_flash(function ()
 		if in_third_person then
 			return third_person.muzzle_position(owner_unit)
 		end
