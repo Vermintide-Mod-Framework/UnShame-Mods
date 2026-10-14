@@ -65,6 +65,9 @@ local CONFIG = {
 	max_goop_level = 5, -- the level a glob that has landed can grow to
 	base_damage = 20, -- BaseDamage
 	level_damage = 19, -- Damage, which is added for each level of goop
+	-- UT's damage is scaled down as the Rocket Launcher's and the Flak Cannon's explosions are (UT's 90 is 60 here), because the game's enemies
+	-- are not UT's players.
+	damage_scale = 60 / 90,
 	-- DamageRadius is 120 uu. It is reduced to 80 uu here, the way the other weapons' explosions are, because a glob explodes a lot.
 	blast_radius_uu = 80,
 	-- The damage is the same up to this share of the radius and then falls off linearly to 0 at the radius. UT's falls off from the
@@ -143,8 +146,9 @@ mod.bio_goop = {
 	end,
 }
 
+-- The damage of a glob of the level, in the units that the damage profiles use (UT's scaled by damage_scale).
 local function blast_damage(level)
-	return CONFIG.base_damage + CONFIG.level_damage * level
+	return (CONFIG.base_damage + CONFIG.level_damage * level) * CONFIG.damage_scale
 end
 
 local REFERENCE_DAMAGE = blast_damage(CONFIG.max_goop_load)
@@ -196,7 +200,7 @@ end
 
 -- Damage profiles. The direct hit of a glob only staggers. UT has no damage from the hit itself. All of the damage is the explosion.
 register_damage_profile("ut_bio_glob", "staff_fireball", function (profile)
-	make_flat(profile, 0, impact_power_for(CONFIG.level_damage))
+	make_flat(profile, 0, impact_power_for(CONFIG.level_damage * CONFIG.damage_scale))
 	set_armor_modifiers(profile)
 
 	profile.cleave_distribution = {
