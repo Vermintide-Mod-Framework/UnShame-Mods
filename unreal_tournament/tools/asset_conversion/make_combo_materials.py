@@ -182,25 +182,32 @@ write('explosion_dark', dark, {'blobs_map': 'shock_dark'})
 
 # ---------------------------------------------------------------- the goop
 # GoopMesh's FinalBlend GoopFB (XEffectMat): FB_Translucent of the Shader GoopShader, whose diffuse and self illumination are the TexOscillator
-# GoopOsc (OT_Pan, 0.07 of the texture a second along U and 0.17 along V) of the texture goop_green_a. It is lit by itself, and added.
+# GoopOsc (OT_Pan, 0.07 of the texture a second along U and 0.17 along V) of the texture goop_green_a. It is lit by itself and see through
+# (the effect blends it by the alpha of its texture).
 goop = Graph()
 common(goop)
 panned(goop, 'pan', 0.07, 0.17)
 texture(goop, 'goop', 'goop_map', 'pan')
 multiply(goop, 'color', 'goop', 'tint', 'rgb')
+# (it is see through, as the texture's alpha says, and as much as intensity says of that)
+multiply(goop, 'opacity', 'goop', 'intensity', 'a')
 goop.connect('color', 'out', IN_OUT_BASE_COLOR)
-goop.connect('intensity', 'out', IN_OUT_OPACITY)
+goop.connect('opacity', 'out', IN_OUT_OPACITY)
 write('goop', goop, {'goop_map': 'bio_goop'})
 
 # ---------------------------------------------------------------- the splat decal
-# BioDecal's xbiosplat (made into a green with an alpha by make_fx_assets.py), drawn by the decal shader onto the surfaces under the box of the
-# unit decal_bio: the color of the texture and its alpha as the opacity of the color.
+# BioDecal's xbiosplat, drawn by the decal shader onto the surfaces under the box of the unit decal_bio: the green of bio_splat, cut out and
+# blended by bio_splat_mask (a gray, see make_fx_assets.py).
 IN_DECAL_BASE_COLOR_OPACITY = 'ad5e052f-d316-4a0f-8b79-53c38204d61b'
+IN_DECAL_MASK, IN_DECAL_MASK_THRESHOLD = '34259752-b962-4b65-92c3-903a57338519', '7a9306c6-95ae-4cdb-9fef-0eedacce4e83'
 decal = Graph()
 decal.no_variables = True
 decal.add('out', 'core/stingray_renderer/output_nodes/decal_base')
 decal.add('uv', 'core/shader_nodes/decal_uv')
 texture(decal, 'splat', 'splat_map', 'uv')
+texture(decal, 'shape', 'shape_map', 'uv')
 decal.connect('splat', 'out', IN_OUT_BASE_COLOR, 'rgb')
-decal.connect('splat', 'out', IN_DECAL_BASE_COLOR_OPACITY, 'a')
-write('decal_bio', decal, {'splat_map': 'bio_splat'})
+decal.connect('shape', 'out', IN_DECAL_BASE_COLOR_OPACITY, 'r')
+decal.connect('shape', 'out', IN_DECAL_MASK, 'r')
+decal.constant('out', IN_DECAL_MASK_THRESHOLD, 0.05)
+write('decal_bio', decal, {'splat_map': 'bio_splat', 'shape_map': 'bio_splat_mask'})

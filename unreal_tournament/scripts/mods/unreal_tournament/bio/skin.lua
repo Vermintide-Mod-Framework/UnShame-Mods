@@ -38,7 +38,13 @@ local CONFIG = {
 	goop_unit_format = "units/ut/fx/goop/f%d",
 	goop_material = "units/ut/fx/fx_goop",
 	goop_frame_rate = 30,
-	goop_opacity = 0.55,
+	-- The light of a glob of volume 1 (the light is steady, and bigger for a bigger glob). Its color is UT's LightHue 82, a pale green.
+	light_color = { 0.6, 1, 0.5 },
+	light_falloff = 1.2, -- m
+	light_intensity = 1,
+	goop_opacity = 1,
+	-- The goop is see through (the alpha of its texture), and its color is made brighter by this.
+	goop_brightness = 1.6,
 	goop_animations = {
 		drip = { start = 40, count = 39, speed = 0.66 },
 		flying = { start = 3, count = 11 },
@@ -291,14 +297,34 @@ end
 
 local GOOP_LIFE = 20
 
+-- UT lights up what is around a glob: BioGlob has a steady light, whose brightness and radius grow with its level (SetGoopLevel).
+local function goop_light(volume, follow)
+	particles.light({
+		brightness = function ()
+			return 1
+		end,
+		color = CONFIG.light_color,
+		falloff = CONFIG.light_falloff * volume,
+		follow = follow,
+		intensity = CONFIG.light_intensity * volume,
+		life = GOOP_LIFE,
+	})
+end
+
 -- Shows the goop's mesh. It is the unit of a frame, scaled by the glob's volume, with its material that pans. frame(age) names the unit
 -- to show for the time since it started. follow keeps it where it is and ends it when it returns nothing.
 local function goop_mesh(volume, rotation, follow, frame)
 	particles.mesh({
+		additive = 0,
 		angle = 0,
 		brightness = function ()
 			return 1
 		end,
+		color = {
+			CONFIG.goop_brightness,
+			CONFIG.goop_brightness,
+			CONFIG.goop_brightness,
+		},
 		follow = follow,
 		frame = function (fraction)
 			return frame(fraction * GOOP_LIFE)
@@ -321,11 +347,14 @@ local function add_glob(projectile, volume)
 
 	Unit.set_unit_visibility(game_unit, false)
 
-	goop_mesh(volume, Quaternion.identity(), function ()
+	local function follow()
 		if Unit.alive(game_unit) and not projectile._stop_impacts then
 			return Unit.world_position(game_unit, 0)
 		end
-	end, function (age)
+	end
+
+	goop_light(volume, follow)
+	goop_mesh(volume, Quaternion.identity(), follow, function (age)
 		return goop_frame("flying", age, true)
 	end)
 end
@@ -419,7 +448,14 @@ local function show_landed(id)
 
 	entry.token = token
 
-	goop_mesh(mod.bio_goop.volume_of_level(entry.level), surface_rotation(normal), function ()
+	local volume = mod.bio_goop.volume_of_level(entry.level)
+
+	goop_light(volume, function ()
+		if landed[id] and landed[id].token == token then
+			return entry.position:unbox() + normal * (0.2 * volume)
+		end
+	end)
+	goop_mesh(volume, surface_rotation(normal), function ()
 		if landed[id] and landed[id].token == token then
 			return entry.position:unbox()
 		end

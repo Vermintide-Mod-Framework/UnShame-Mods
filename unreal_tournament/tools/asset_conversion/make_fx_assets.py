@@ -56,6 +56,9 @@ DERIVED = {
     # The Bio Rifle's splat (xbiosplat, BioDecal's projected texture). It is gray where it does nothing, and darker where the splat is: UT's
     # projector multiplies the surface by it (and by 2). Here it is a blend: the green of the splat, where the texture is darker than gray.
     'bio_splat': ('XEffects/Texture/xbiosplat.tga', lambda r, g, b, a: (30, 140, 30, max(0, min(255, (128 - r) * 255 // 104)))),
+    # How much of the splat there is, as a gray: the decal shader cuts it out and blends it by this. (A texture's alpha did not make the decal
+    # transparent.) It is not a color, so it is not made linear (units/ut/fx/bio_splat_mask.texture has srgb = false).
+    'bio_splat_mask': ('XEffects/Texture/xbiosplat.tga', lambda r, g, b, a: ((max(0, min(255, (128 - r) * 255 // 104)),) * 3) + (255,)),
 }
 
 def read_tga(path):

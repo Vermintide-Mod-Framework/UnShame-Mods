@@ -11,6 +11,15 @@ shader = {
 		}
 		{
 			destination = {
+				connector_id = "1ee9af1f-65f2-4739-ad28-5ea6a0e68fc3"
+				instance_id = "c0de0001-0000-4000-8000-000000000004"
+			}
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000002"
+			}
+		}
+		{
+			destination = {
 				connector_id = "aca690cb-6305-4a2f-bf3d-69183a493db3"
 				instance_id = "c0de0001-0000-4000-8000-000000000001"
 			}
@@ -27,14 +36,34 @@ shader = {
 				instance_id = "c0de0001-0000-4000-8000-000000000001"
 			}
 			select = [
-				"a"
+				"r"
 			]
 			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000003"
+				instance_id = "c0de0001-0000-4000-8000-000000000004"
+			}
+		}
+		{
+			destination = {
+				connector_id = "34259752-b962-4b65-92c3-903a57338519"
+				instance_id = "c0de0001-0000-4000-8000-000000000001"
+			}
+			select = [
+				"r"
+			]
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000004"
 			}
 		}
 	]
 	constants = [
+		{
+			connector_id = "7a9306c6-95ae-4cdb-9fef-0eedacce4e83"
+			id = "c0de0001-0000-4000-8000-000000001000"
+			instance_id = "c0de0001-0000-4000-8000-000000000001"
+			value = [
+				0.05
+			]
+		}
 	]
 	groups = [
 	]
@@ -99,6 +128,32 @@ shader = {
 				}
 			}
 			title = "splat_map"
+			type = "core/shader_nodes/sample_texture"
+		}
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+			}
+			id = "c0de0001-0000-4000-8000-000000000004"
+			options = [
+				"5dd59b3d-1762-4a14-9930-7500230ef3db"
+				"f669a3a6-0376-4187-840e-80000e2939d5"
+				"fb3f709b-a54a-4e93-ac9f-e9fc76fb8bcd"
+			]
+			position = [
+				900
+				0
+			]
+			samplers = {
+				texture_map = {
+					display_name = "shape_map"
+					slot_name = "shape_map"
+				}
+			}
+			title = "shape_map"
 			type = "core/shader_nodes/sample_texture"
 		}
 	]
