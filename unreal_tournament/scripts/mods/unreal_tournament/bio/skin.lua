@@ -100,10 +100,11 @@ local CONFIG = {
 	burst_spark_gravity = 10.7, -- m/s^2, the same as a glob's
 	-- BioDecal is the splat that a landing glob leaves on the surface. It is the same size for every glob, and it lasts 6 seconds
 	-- (LifeSpan).
-	-- The decal's box is this wide and this deep, in meters (the game's blood decals are 2.5 wide and 1 deep). It is a guess.
+	-- The decal's box is this wide and this deep, in meters. It is shallow so that it does not reach the player's weapon when the splat is
+	-- close (the box takes in everything within half its depth of the surface). The size and the depth are guesses.
 	splat_unit = "units/ut/fx/decal_bio",
 	splat_size = 1.2,
-	splat_depth = 1,
+	splat_depth = 0.3,
 	splat_life = 6,
 	splat_pool_size = 30,
 	-- BioGlob.AnimEnd picks the animation of a glob that has landed from the way its surface faces (the surface normal dotted with straight
