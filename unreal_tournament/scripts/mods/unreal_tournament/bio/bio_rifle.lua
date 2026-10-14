@@ -449,8 +449,8 @@ local function apply_bio_rifle()
 	end
 
 	-- The stat chart, from 0 to 7, set by hand against the Rocket Launcher's (its rocket is 60 damage and 6 on the chart) and the Flak Cannon's
-	-- (its chunk and its shell). The small glob is the light attack (26 damage), and the big glob is the heavy one (140). Armor takes a
-	-- fifth of the goop's damage, between the chunk's and the shell's.
+	-- (its chunk and its shell). The small glob is the light attack (26 damage), and the big glob is the heavy one (140). The goop does a
+	-- fifth less against armor, which puts its armor piercing between the chunk's and the shell's.
 	template.weapon_diagram = {
 		light_attack = {
 			[DamageTypes.ARMOR_PIERCING] = 2,
