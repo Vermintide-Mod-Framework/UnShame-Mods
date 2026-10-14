@@ -191,8 +191,8 @@ skin_api = mod.weapon_skin.new({
 		-- The mesh is 0.67 m long, so 0.4 m as it is held.
 		scale = 0.6,
 		-- Where the mesh is in the hand, in the mesh's own axes (its barrel runs along -x, and its ring is on the -y side). It is placed by eye.
-		grip_right = 15,
-		grip_forward = -18,
+		grip_right = 26,
+		grip_forward = -14,
 		grip_up = 2,
 		yaw = 90,
 		pitch = 0,
