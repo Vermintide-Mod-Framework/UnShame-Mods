@@ -687,12 +687,15 @@ end
 
 local function blow_up(glob)
 	local context = glob.context
-	local position = glob.position:unbox() + glob.normal:unbox() * 0.1
+	local normal = glob.normal:unbox()
+	local position = glob.position:unbox() + normal * 0.1
+	-- The explosion looks the way the surface faces, as UT's glob does when it has landed (its effects are made along its rotation).
+	local up = math.abs(Vector3.z(normal)) > 0.99 and Vector3(0, 1, 0) or Vector3.up()
 
 	local area_damage_system = Managers.state.entity:system("area_damage_system")
 
 	-- The game looks at where units are, and the mod's update runs before the positions are current (see utils.with_valid_positions).
-	with_valid_positions(area_damage_system.create_explosion, area_damage_system, context.owner_unit, position, Quaternion.identity(), "ut_bio_blast", scale_of_level(glob.level), context.item_name, context.base_power * power_ratio(glob.level), context.is_critical_strike, context.owner_unit)
+	with_valid_positions(area_damage_system.create_explosion, area_damage_system, context.owner_unit, position, Quaternion.look(normal, up), "ut_bio_blast", scale_of_level(glob.level), context.item_name, context.base_power * power_ratio(glob.level), context.is_critical_strike, context.owner_unit)
 	end_visual(glob)
 end
 

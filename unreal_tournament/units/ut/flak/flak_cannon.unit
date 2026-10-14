@@ -6,7 +6,7 @@ materials = {
 renderables = {
 	b_bone_weapon = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -15,7 +15,7 @@ renderables = {
 	}
 	b_bone_hammer01 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -24,7 +24,7 @@ renderables = {
 	}
 	b_bone_flak01 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -33,7 +33,7 @@ renderables = {
 	}
 	b_bone_hydraulic01 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -42,7 +42,7 @@ renderables = {
 	}
 	b_bone_barrel01 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -51,7 +51,7 @@ renderables = {
 	}
 	b_bone_tooth01 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -60,7 +60,7 @@ renderables = {
 	}
 	b_bone_tooth02 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -69,7 +69,7 @@ renderables = {
 	}
 	b_bone_tooth03 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -78,7 +78,7 @@ renderables = {
 	}
 	b_bone_tooth04 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -87,7 +87,7 @@ renderables = {
 	}
 	b_bone_tooth06 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -96,7 +96,7 @@ renderables = {
 	}
 	b_bone_tooth07 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -105,7 +105,7 @@ renderables = {
 	}
 	b_bone_tooth08 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -114,7 +114,7 @@ renderables = {
 	}
 	b_bone_tooth09 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -123,7 +123,7 @@ renderables = {
 	}
 	b_bone_tooth10 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -132,7 +132,7 @@ renderables = {
 	}
 	b_bone_chamber01 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -141,7 +141,7 @@ renderables = {
 	}
 	b_bone_coil01 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false

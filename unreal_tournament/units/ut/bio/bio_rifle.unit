@@ -6,7 +6,7 @@ materials = {
 renderables = {
 	b_bone_weapon = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -15,7 +15,7 @@ renderables = {
 	}
 	b_bone_plunger = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false

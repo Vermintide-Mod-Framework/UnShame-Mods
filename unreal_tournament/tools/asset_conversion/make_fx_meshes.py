@@ -117,8 +117,9 @@ def geometry(name, positions, position_index, uvs, uv_index):
 
 IDENTITY = '1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1'
 
-def write_unit(unit_name, geometries, nodes, node_local=IDENTITY):
-    # geometries: text of each, nodes: { node name: geometry name } (the renderables are keyed by the node), node_local: the pose of the nodes
+def write_unit(unit_name, geometries, nodes, node_local=IDENTITY, culling='disabled'):
+    # geometries: text of each, nodes: { node name: geometry name } (the renderables are keyed by the node), node_local: the pose of the nodes,
+    # culling: "disabled" so that the engine does not cull the unit by its distance (the small effects vanished at a distance)
     text = '\ngeometries = {\n' + ''.join(geometries) + '}\nnodes = {\n\troot = {\n\t\tchildren = {\n'
 
     for node, geometry_name in nodes.items():
@@ -128,8 +129,8 @@ def write_unit(unit_name, geometries, nodes, node_local=IDENTITY):
     raw = text.encode('latin1')
     open('%s/%s.bsi' % (FX, unit_name), 'wb').write(b'bsiz' + struct.pack('<I', len(raw)) + zlib.compress(raw))
 
-    renderables = ''.join('\t%s = {\n\t\talways_keep = false\n\t\tculling = "bounding_volume"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
-                          '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n' % node for node in nodes)
+    renderables = ''.join('\t%s = {\n\t\talways_keep = false\n\t\tculling = "%s"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
+                          '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n' % (node, culling) for node in nodes)
     open('%s/%s.unit' % (FX, unit_name), 'w', newline='\n').write(
         'materials = {\n\tm_fx = "units/ut/fx/fx_shock_sparkle"\n}\nrenderables = {\n%s}\n' % renderables)
 

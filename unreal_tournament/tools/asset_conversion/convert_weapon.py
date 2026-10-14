@@ -457,7 +457,7 @@ def main():
     unit_text = 'materials = {\n' + ''.join('\tm_%d = "%s/%s_m%d"\n' % (m, unit_dir, unit_base, m) for m in used_materials) + '}\nrenderables = {\n'
     # (the renderables of a unit are the nodes that have geometry, by the name of the node: the geometries of a node are its pieces)
     for g in [sjson_node_name(b) for b in used_bones]:
-        unit_text += ('\t%s = {\n\t\talways_keep = false\n\t\tculling = "bounding_volume"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
+        unit_text += ('\t%s = {\n\t\talways_keep = false\n\t\tculling = "disabled"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
                       '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n') % g
     unit_text += '}\n'
     open('%s/%s.unit' % (REPO, cfg['unit']), 'w', newline='\n').write(unit_text)

@@ -28,7 +28,7 @@ uv_index = []
 for _ in faces:
     uv_index += [0, 1, 2, 0, 2, 3, 0, 2, 1, 0, 3, 2]
 
-fx.write_unit('decal_bio', [fx.geometry('g_box', corners, indices, uvs, uv_index)], {'g_box': 'g_box'}, TURNED)
+fx.write_unit('decal_bio', [fx.geometry('g_box', corners, indices, uvs, uv_index)], {'g_box': 'g_box'}, TURNED, 'bounding_volume')
 path = fx.FX + '/decal_bio.unit'
 text = open(path).read().replace('units/ut/fx/fx_shock_sparkle', 'units/ut/fx/fx_decal_bio')
 
