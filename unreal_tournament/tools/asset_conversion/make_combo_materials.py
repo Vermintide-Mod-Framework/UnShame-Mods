@@ -223,7 +223,8 @@ CUSTOM_FOV = 'b2556764-e8e9-47cf-9ecc-f53b5d5d73c7'
 IN_LERP_A, IN_LERP_B, IN_LERP_W = '995996dc-408e-4e6f-a310-0db5b3276075', '5551ea38-126d-4d89-ab57-14b36b92a93c', 'cdc83a63-3365-4c10-9353-79ff5f2fd1f0'
 goo = Graph()
 goo.no_variables = True
-goo.add('out', 'core/stingray_renderer/output_nodes/unlit_base', OUT_OPTIONS + (CUSTOM_FOV,))
+# (opaque and double sided: the glass of the tank is drawn over it, as it is in UT. Blended, it was drawn over the glass.)
+goo.add('out', 'core/stingray_renderer/output_nodes/unlit_base', (OUT_OPTIONS[1], CUSTOM_FOV))
 goo.add('uv', 'core/shader_nodes/texture_coordinate0')
 goo.add('time', 'core/shader_nodes/current_time')
 panned(goo, 'pan_goo', 0.3, 0)
@@ -235,8 +236,6 @@ goo.connect('goo', 'mix', IN_LERP_A, 'rgb')
 goo.connect('bubbles', 'mix', IN_LERP_B, 'rgb')
 goo.connect('bubbles', 'mix', IN_LERP_W, 'a')
 goo.connect('mix', 'out', IN_OUT_BASE_COLOR)
-goo.constant('out', IN_OUT_OPACITY, 1)
-goo.constant('out', IN_OUT_ADDITIVE, 0)
 open('%s/fx_bio_goo_graph.material' % FX, 'w', newline='\n').write(goo.text())
 open('%s/units/ut/bio/bio_rifle_m2.material' % REPO, 'w', newline='\n').write(
     'material_contexts = {\n\tsurface_material = ""\n}\nparent_material = "units/ut/fx/fx_bio_goo_graph"\ntextures = {\n'
