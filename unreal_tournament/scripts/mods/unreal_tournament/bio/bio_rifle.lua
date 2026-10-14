@@ -562,7 +562,7 @@ local function add_goop(action, state)
 end
 
 -- BioChargedFire.Hold: one unit of goop at once, and then one every GoopUpRate seconds.
-mod.charge_start_callbacks.bio = function (action, new_action)
+mod.charge_start_callbacks.bio = function (action, new_action, t, chain_action_data, power_level)
 	if new_action.ut_charge_callback ~= "bio" then
 		return
 	end
@@ -570,6 +570,8 @@ mod.charge_start_callbacks.bio = function (action, new_action)
 	local state = {
 		done = false,
 		load = 0,
+		-- The power level of the charge, which a glob that is released by switching weapons is fired with.
+		power_level = power_level,
 		timer = 0,
 	}
 
@@ -604,6 +606,17 @@ local function take_goop_load(owner_unit)
 	end
 
 	return math.clamp(load, 1, CONFIG.max_goop_load)
+end
+
+-- Switching to another weapon while the goop is loading releases it: the glob is fired as if the button was let go, as it would not be
+-- used otherwise (the ammo for it was used as it was loaded). The reason for a release is a new action (the shot's), so this is only for
+-- the weapon being switched.
+local release_load
+
+mod.charge_finish_callbacks.bio = function (action, reason)
+	if reason == "weapon_wielded" and action.current_action and action.current_action.ut_charge_callback == "bio" then
+		release_load(action)
+	end
 end
 
 -- Starting a glob
@@ -645,6 +658,28 @@ mod.spawn_projectile_callbacks[TEMPLATE_NAME] = function (func, owner_unit, posi
 	end
 
 	return func(owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, is_critical_strike, power_level, ...)
+end
+
+-- Fires the glob of the goop that is loaded, from where the player looks. It is the shot of the charged action, which the spawn
+-- callback above gives the loaded goop, the start position and the speed.
+release_load = function (action)
+	local owner_unit = action.owner_unit
+	local state = goop_loads[owner_unit]
+	local template = rawget(Weapons, TEMPLATE_NAME)
+	local shot = template and template.actions.action_one.shoot_charged
+
+	if not state or state.load <= 0 or not state.power_level or not shot then
+		return
+	end
+
+	local first_person_extension = action.first_person_extension
+	local rotation = first_person_extension:current_rotation()
+	local position = first_person_extension:current_position()
+	local angle = ActionUtils.pitch_from_rotation(rotation)
+	local target_vector = Vector3.normalize(Vector3.flat(Quaternion.forward(rotation)))
+	local lookup_data = shot.lookup_data
+
+	ActionUtils.spawn_player_projectile(owner_unit, position, rotation, 0, angle, target_vector, shot.speed, action.item_name, lookup_data.item_template_name, lookup_data.action_name, lookup_data.sub_action_name, false, state.power_level)
 end
 
 -- Spawns a glob of the given level, moving at the given velocity (in m/s). It is used for the small globs and for the glob that drips.
