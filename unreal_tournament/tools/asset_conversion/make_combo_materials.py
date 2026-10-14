@@ -51,7 +51,6 @@ class Graph:
         self.constants = []    # (instance, connector, value)
         self.ids = {}
         self.no_variables = False    # (a graph that has none of the variables of the effects, such as the decal's)
-        self.own_variables = ''      # (the variables it has instead, as text)
 
     def add(self, name, node_type, options=(), export='', samplers='', title=None):
         self.ids[name] = guid(len(self.ids) + 1)
@@ -97,7 +96,7 @@ class Graph:
             text += '\t\t\ttype = "%s"\n\t\t}\n' % node_type
 
         if self.no_variables:
-            return text + '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n' + self.own_variables + '}\n'
+            return text + '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n}\n'
 
         text += ('\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tadditive = {\n\t\ttype = "scalar"\n\t\tvalue = 0\n\t}\n\tage = {\n\t\ttype = "scalar"\n\t\tvalue = 0\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n'
                  '\ttint = {\n\t\ttype = "vector3"\n\t\tvalue = [\n\t\t\t1\n\t\t\t1\n\t\t\t1\n\t\t]\n\t}\n}\n')
@@ -185,37 +184,13 @@ write('explosion_dark', dark, {'blobs_map': 'shock_dark'})
 # GoopMesh's FinalBlend GoopFB (XEffectMat): FB_Translucent of the Shader GoopShader, whose diffuse and self illumination are the TexOscillator
 # GoopOsc (OT_Pan, 0.07 of the texture a second along U and 0.17 along V) of the texture goop_green_a. It is lit by itself and see through
 # (the effect blends it by its opacity).
-# It is a standard material, lit by the level, and it glows by itself (the shader's self illumination) by a share of its color. It has the
-# variables age (the panning), intensity (how much of it there is) and tint (a color that multiplies it) of the effects, but no "additive".
-IN_POW_A, IN_POW_B = '447b3fe2-c820-4511-a923-b38b0f6c9fe6', 'e16267f4-8b4e-4079-b13d-f380cfd386ec'
-IN_OUT_ROUGHNESS, IN_OUT_EMISSIVE = '36ba46d2-f6ea-4e60-a428-fdc17c75bc62', '1164a5ef-4563-4795-b3b5-42825d6df037'
-TRANSPARENT, SKINNED_DISABLED = 'dd7fcf97-0627-48ab-b29a-95b5685bb123', 'b5bb2062-c8fa-43c5-8657-493a0be6860c'
 goop = Graph()
-goop.no_variables = True
-goop.own_variables = ('\tage = {\n\t\ttype = "scalar"\n\t\tvalue = 0\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n'
-                      '\ttint = {\n\t\ttype = "vector3"\n\t\tvalue = [\n\t\t\t1\n\t\t\t1\n\t\t\t1\n\t\t]\n\t}\n')
-goop.add('out', 'core/stingray_renderer/output_nodes/standard_base', (TRANSPARENT, SKINNED_DISABLED))
-goop.add('uv', 'core/shader_nodes/texture_coordinate0')
-goop.add('time', 'core/shader_nodes/material_variable', export=float_variable('age', 'Age', 0), title='Age')
-goop.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
-goop.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
+common(goop)
 panned(goop, 'pan', 0.07, 0.17)
 texture(goop, 'goop', 'goop_map', 'pan')
-# (the texture to the power of 2.6: the same green, deeper and more saturated)
-goop.add('rich', 'core/shader_nodes/power')
-goop.connect('goop', 'rich', IN_POW_A, 'rgb')
-goop.constant('rich', IN_POW_B, 2.6)
-multiply(goop, 'color', 'rich', 'tint')
-# (the emissive output is HDR, where 1 is very bright: the goop of the tank in the weapon needs about 0.04 to be its color, and a share of it makes the goop glow)
-goop.add('glow', 'core/shader_nodes/mul')
-goop.connect('rich', 'glow', IN_MUL_A)
-goop.constant('glow', IN_MUL_B, 0.045)
-goop.constant('out', IN_OUT_ROUGHNESS, 1)
-goop.connect('color', 'out', IN_OUT_BASE_COLOR)
-# (the glow is added to the screen whatever the opacity, so it is scaled by it: otherwise the goop is solid with it)
-multiply(goop, 'glow_seen', 'glow', 'intensity')
-goop.connect('glow_seen', 'out', IN_OUT_EMISSIVE)
+multiply(goop, 'color', 'goop', 'tint', 'rgb')
 # (it is see through as much as intensity says: the alpha of the texture did not make it so)
+goop.connect('color', 'out', IN_OUT_BASE_COLOR)
 goop.connect('intensity', 'out', IN_OUT_OPACITY)
 write('goop', goop, {'goop_map': 'bio_goop'})
 
