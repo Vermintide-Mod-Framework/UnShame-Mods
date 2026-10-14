@@ -195,6 +195,45 @@ WEAPONS['sniper'] = {
     'lua': 'scripts/mods/unreal_tournament/lightning/skin_animations.lua',
 }
 
+# The Minigun (Weapons.Minigun_1st). Its barrels and gear are turned by code (Minigun.UpdateRoll).
+WEAPONS['minigun'] = {
+    'psk': 'Weapons/SkeletalMesh/Minigun_1st.psk',
+    'psa': 'Weapons/MeshAnimation/Minigun_1st.psa',
+    'materials': [('WeaponSkins/Texture/MinigunTex0.tga', 'opaque')],
+    'scale': 0.0125,
+    'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('FireLoop', 'FireLoop'), ('FireEnd', 'FireEnd')],
+    'locators': ['Bone Flash', 'Bone_CaseEjector'],
+    'roughness': 0.9,
+    'unit': 'units/ut/minigun/minigun',
+    'lua': 'scripts/mods/unreal_tournament/minigun/skin_animations.lua',
+}
+
+# The Shield Gun (Weapons.ShieldGun_1st)
+WEAPONS['shield'] = {
+    'psk': 'Weapons/SkeletalMesh/ShieldGun_1st.psk',
+    'psa': 'Weapons/MeshAnimation/ShieldGun_1st.psa',
+    'materials': [('WeaponSkins/Texture/ShieldTex0.tga', 'opaque')],
+    'scale': 0.0125,
+    'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Charge', 'Charge'), ('Charged', 'Charged'), ('Fire', 'Fire'), ('Shield', 'Shield')],
+    'locators': ['Bone_Flash'],
+    'roughness': 0.9,
+    'unit': 'units/ut/shield/shield_gun',
+    'lua': 'scripts/mods/unreal_tournament/shield/skin_animations.lua',
+}
+
+# The Redeemer (Weapons.Redeemer_1st)
+WEAPONS['redeemer'] = {
+    'psk': 'Weapons/SkeletalMesh/Redeemer_1st.psk',
+    'psa': 'Weapons/MeshAnimation/Redeemer_1st.psa',
+    'materials': [('WeaponSkins/Texture/RedeemerTex0.tga', 'opaque')],
+    'scale': 0.0125,
+    'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire')],
+    'locators': ['Bone_Flash'],
+    'roughness': 0.9,
+    'unit': 'units/ut/redeemer/redeemer',
+    'lua': 'scripts/mods/unreal_tournament/redeemer/skin_animations.lua',
+}
+
 # UT2003's Shock Rifle (the model UT2004 keeps in Weapons.ukx).
 WEAPONS['shock2003'] = {
     'psk': 'Weapons/SkeletalMesh/ShockRifle_1st.psk',

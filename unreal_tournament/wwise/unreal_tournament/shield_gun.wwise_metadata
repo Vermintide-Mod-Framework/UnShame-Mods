@@ -1,0 +1,11 @@
+events = {
+	ut_shield_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.280 duration_max = 1.280 positioning = "2D" }
+	ut_shield_charge = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.030 duration_max = 2.030 positioning = "2D" }
+	ut_shield_up = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.487 duration_max = 2.487 positioning = "2D" }
+	ut_shield_hit = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.998 duration_max = 0.998 positioning = "2D" }
+	ut_shield_regen = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.066 duration_max = 2.066 positioning = "2D" }
+	ut_shield_select = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.186 duration_max = 1.186 positioning = "2D" }
+	ut_shield_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 1.280 duration_max = 1.280 positioning = "3D" }
+	ut_shield_up_3d = { attenuation_max = 25 duration_type = "OneShot" duration_min = 2.487 duration_max = 2.487 positioning = "3D" }
+	ut_shield_hit_3d = { attenuation_max = 30 duration_type = "OneShot" duration_min = 0.998 duration_max = 0.998 positioning = "3D" }
+}

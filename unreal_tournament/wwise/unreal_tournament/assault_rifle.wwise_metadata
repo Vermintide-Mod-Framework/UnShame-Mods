@@ -1,0 +1,7 @@
+events = {
+	ut_assault_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.476 duration_max = 1.476 positioning = "2D" }
+	ut_assault_alt_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.741 duration_max = 0.741 positioning = "2D" }
+	ut_assault_select = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.795 duration_max = 0.795 positioning = "2D" }
+	ut_assault_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 1.476 duration_max = 1.476 positioning = "3D" }
+	ut_assault_alt_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 0.741 duration_max = 0.741 positioning = "3D" }
+}

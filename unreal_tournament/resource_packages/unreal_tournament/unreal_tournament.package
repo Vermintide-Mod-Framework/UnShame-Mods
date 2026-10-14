@@ -28,6 +28,13 @@ unit = [
 	"units/ut/link/pickup"
 	"units/ut/lightning/lightning_gun"
 	"units/ut/lightning/pickup"
+	"units/ut/minigun/minigun"
+	"units/ut/minigun/pickup"
+	"units/ut/shield/shield_gun"
+	"units/ut/shield/pickup"
+	"units/ut/redeemer/redeemer"
+	"units/ut/redeemer/pickup"
+	"units/ut/redeemer/missile"
 	"units/ut/fx/quad"
 	"units/ut/fx/coil"
 	"units/ut/fx/sphere"
@@ -50,6 +57,9 @@ material = [
 	"units/ut/bio/*"
 	"units/ut/link/*"
 	"units/ut/lightning/*"
+	"units/ut/minigun/*"
+	"units/ut/shield/*"
+	"units/ut/redeemer/*"
 	"units/ut/fx/fx_*"
 ]
 
@@ -60,5 +70,9 @@ wwise_dep = [
 	"wwise/unreal_tournament/bio_rifle"
 	"wwise/unreal_tournament/link_gun"
 	"wwise/unreal_tournament/lightning_gun"
+	"wwise/unreal_tournament/minigun"
+	"wwise/unreal_tournament/shield_gun"
+	"wwise/unreal_tournament/redeemer"
+	"wwise/unreal_tournament/assault_rifle"
 	"wwise/unreal_tournament/announcer"
 ]

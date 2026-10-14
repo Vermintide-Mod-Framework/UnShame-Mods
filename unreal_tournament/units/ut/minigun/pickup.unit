@@ -1,0 +1,14 @@
+materials = {
+	m_0 = "units/ut/minigun/pickup_m0"
+}
+renderables = {
+	g_pickup_0 = {
+		always_keep = false
+		culling = "bounding_volume"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+}

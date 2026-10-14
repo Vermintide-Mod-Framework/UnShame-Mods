@@ -120,6 +120,11 @@ if (-not $game) {
 
 $window = $game.MainWindowHandle
 
+# The two games are not both on the screen: the other one is minimized, so that it does not cover this one
+foreach ($other in (Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and $_.MainWindowHandle -ne $window -and ($_.ProcessName -like "ut2004*" -or $_.ProcessName -like "vermintide2*") })) {
+    [void][GameInput]::ShowWindow($other.MainWindowHandle, 6)
+}
+
 [GameInput]::Focus($window)
 Start-Sleep -Milliseconds 300
 

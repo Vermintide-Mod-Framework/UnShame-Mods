@@ -99,6 +99,42 @@ WEAPONS = {
         ('ut_link_beam_3d', SOUNDS + 'BLinkGunBeam', True, -28, 30),
         ('ut_link_projectile_3d', SOUNDS + 'LinkGunProjectile', True, -30, 25),
     ],
+    'minigun': [
+        ('ut_minigun_fire', NEW_SOUNDS + 'NewMinigunFire', False, -22, 0),
+        ('ut_minigun_alt_fire', SOUNDS + 'minialtfireb', False, -22, 0),
+        # (the winding of the barrels, which plays while they spin up and down, and the end of it)
+        ('ut_minigun_wind', SOUNDS + 'miniempty', False, -26, 0),
+        ('ut_minigun_wind_down', SOUNDS + 'BMiniGunWindDown', False, -26, 0),
+        ('ut_minigun_select', SOUNDS + 'SwitchToMiniGun', False, -24, 0),
+        ('ut_minigun_fire_3d', NEW_SOUNDS + 'NewMinigunFire', True, -22, 40),
+        ('ut_minigun_alt_fire_3d', SOUNDS + 'minialtfireb', True, -22, 40),
+        ('ut_minigun_shell_3d', SOUNDS + 'BShell1', True, -30, 12),
+    ],
+    'shield_gun': [
+        ('ut_shield_fire', SOUNDS + 'BShieldGunFire', False, -20, 0),
+        ('ut_shield_charge', SOUNDS + 'shieldgun_charge', False, -24, 0),
+        ('ut_shield_up', SOUNDS + 'BShield1', False, -24, 0),
+        ('ut_shield_hit', SOUNDS + 'BShieldReflection', False, -20, 0),
+        ('ut_shield_regen', SOUNDS + 'BTranslocatorModuleRegeneration', False, -28, 0),
+        ('ut_shield_select', SOUNDS + 'shieldgun_change', False, -24, 0),
+        ('ut_shield_fire_3d', SOUNDS + 'BShieldGunFire', True, -20, 40),
+        ('ut_shield_up_3d', SOUNDS + 'BShield1', True, -26, 25),
+        ('ut_shield_hit_3d', SOUNDS + 'BShieldReflection', True, -22, 30),
+    ],
+    'redeemer': [
+        ('ut_redeemer_fire', SOUNDS + 'redeemer_shoot', False, -18, 0),
+        ('ut_redeemer_select', SOUNDS + 'redeemer_change', False, -24, 0),
+        ('ut_redeemer_fire_3d', SOUNDS + 'redeemer_shoot', True, -18, 60),
+        ('ut_redeemer_flight_3d', SOUNDS + 'redeemer_flight', True, -22, 80),
+        ('ut_redeemer_explosion_3d', SOUNDS + 'redeemer_explosionsound', True, -10, 200),
+    ],
+    'assault_rifle': [
+        ('ut_assault_fire', SOUNDS + 'BAssaultRifleFire', False, -22, 0),
+        ('ut_assault_alt_fire', SOUNDS + 'BAssaultRifleAltFire', False, -22, 0),
+        ('ut_assault_select', SOUNDS + 'SwitchToAssaultRifle', False, -24, 0),
+        ('ut_assault_fire_3d', SOUNDS + 'BAssaultRifleFire', True, -22, 40),
+        ('ut_assault_alt_fire_3d', SOUNDS + 'BAssaultRifleAltFire', True, -22, 40),
+    ],
     'lightning_gun': [
         ('ut_lightning_fire', SOUNDS + 'BLightningGunFire', False, -22, 0),
         # (SniperFire.PlayFiring: the charge up that follows a shot, if there is ammo for the next)

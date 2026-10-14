@@ -54,6 +54,31 @@ STATICS = {
         'scale': 0.009,
         'unit': 'units/ut/lightning/pickup',
     },
+    'minigun_pickup': {
+        'pskx': 'WeaponStaticMesh/StaticMesh/MinigunPickup.pskx',
+        'materials': [('WeaponSkins/Texture/MinigunTex0.tga', 'opaque')],
+        'scale': 0.01,
+        'unit': 'units/ut/minigun/pickup',
+    },
+    'shield_pickup': {
+        'pskx': 'WeaponStaticMesh/StaticMesh/ShieldGunPickup.pskx',
+        'materials': [('WeaponSkins/Texture/ShieldTex0.tga', 'opaque')],
+        'scale': 0.01,
+        'unit': 'units/ut/shield/pickup',
+    },
+    'redeemer_pickup': {
+        'pskx': 'WeaponStaticMesh/StaticMesh/RedeemerPickup.pskx',
+        'materials': [('WeaponSkins/Texture/RedeemerTex0.tga', 'opaque'), ('WeaponSkins/Texture/Rmissle.tga', 'opaque')],
+        'scale': 0.018,
+        'unit': 'units/ut/redeemer/pickup',
+    },
+    'redeemer_missile': {
+        'pskx': 'WeaponStaticMesh/StaticMesh/RedeemerMissile.pskx',
+        'materials': [('WeaponSkins/Texture/RDMR_Missile.tga', 'opaque'), ('WeaponSkins/Texture/RDMR_Missile.tga', 'opaque')],
+        'scale': 0.04,
+        'unit': 'units/ut/redeemer/missile',
+        'culling': 'disabled',
+    },
     'rocket_proj': {
         'pskx': 'WeaponStaticMesh/StaticMesh/RocketProj.pskx',
         'materials': [('WeaponSkins/Texture/RocketShellTex.tga', 'opaque')],

@@ -981,6 +981,30 @@ mod:command("ut_quiet", "on | off - keeps the level empty and the player unhurt,
 	end
 end)
 
+-- For looking at the weapon in the character's hand: the camera goes behind the shoulder, and the character is shown. The game does this
+-- for its own third person debug mode.
+mod:command("ut_3p", "on | off - the third person view, for looking at the weapon in the hand", function (argument)
+	local player = local_player()
+	local unit = player_unit()
+	local first_person_extension = unit and ScriptUnit.has_extension(unit, "first_person_system")
+
+	if not player or not first_person_extension or not Unit.alive(player.camera_follow_unit) then
+		log("ut_3p: there is no player")
+
+		return
+	end
+
+	if argument == "off" then
+		Development.set_parameter("third_person_mode", false)
+		Unit.set_data(player.camera_follow_unit, "camera", "settings_node", "first_person_node")
+		first_person_extension:set_first_person_mode(true)
+	else
+		Development.set_parameter("third_person_mode", true)
+		Unit.set_data(player.camera_follow_unit, "camera", "settings_node", "over_shoulder")
+		first_person_extension:set_first_person_mode(false)
+	end
+end)
+
 mod:command("ut_equip","<suite> [career] | back - puts the weapon of a suite in your hands, or puts your loadout back", function (argument, career)
 	if argument == "back" or not argument then
 		runner.unequip()

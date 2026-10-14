@@ -224,12 +224,14 @@ local function new(def)
 	-- Returns the muzzle's position in the world, as the camera sees it. The model is drawn with its own, narrower field of view
 	-- (WEAPON_VERTICAL_FOV), so this moves the point away from the view axis by the ratio of the tangents of the half angles. The
 	-- camera draws the shot's effects, so they need this position.
-	function self.muzzle_position()
+	-- Another node of the model than the muzzle can be asked for by its name (the Minigun's shell ejector).
+	function self.muzzle_position(node_name)
 		if not skin or not Unit.alive(skin.unit) then
 			return nil
 		end
 
-		local position = Unit.world_position(skin.unit, skin.muzzle_node)
+		local node = node_name and Unit.has_node(skin.unit, node_name) and Unit.node(skin.unit, node_name) or skin.muzzle_node
+		local position = Unit.world_position(skin.unit, node)
 		local camera_manager = Managers.state.camera
 		local camera_position = camera_manager:camera_position("player_1")
 		local camera_rotation = camera_manager:camera_rotation("player_1")
