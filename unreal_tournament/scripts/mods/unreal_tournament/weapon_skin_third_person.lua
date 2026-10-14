@@ -459,6 +459,15 @@ local function new(def, looks)
 						local to_right = right_hand and Vector3.length(position - Unit.world_position(character, right_hand)) or -1
 
 						mod:echo("  %s: scale %.2f, %.2f m from the left hand, %.2f m from the right", field, scale_of(unit), to_left, to_right)
+
+						-- The unit's bounding box in the unit's own axes: how big it is along each axis and where its middle is, which
+						-- shows the way its barrel runs.
+						local box_pose, box_radius = Unit.box(unit)
+						local local_pose = Matrix4x4.multiply(box_pose, Matrix4x4.inverse(Unit.world_pose(unit, 0)))
+						local x, y, z = Matrix4x4.x(local_pose), Matrix4x4.y(local_pose), Matrix4x4.z(local_pose)
+						local middle = Matrix4x4.translation(local_pose)
+
+						mod:echo("    box: half sizes %.3f %.3f %.3f, along the unit's (%.2f %.2f %.2f) (%.2f %.2f %.2f) (%.2f %.2f %.2f), middle (%.3f %.3f %.3f)", Vector3.x(box_radius), Vector3.y(box_radius), Vector3.z(box_radius), Vector3.x(x), Vector3.y(x), Vector3.z(x), Vector3.x(y), Vector3.y(y), Vector3.z(y), Vector3.x(z), Vector3.y(z), Vector3.z(z), Vector3.x(middle), Vector3.y(middle), Vector3.z(middle))
 					end
 				end
 			end
