@@ -642,13 +642,14 @@ local function give_back_ammo(ammo_extension, amount)
 	end
 end
 
--- Switching to another weapon while the goop is loading gives the ammo back, as the glob is not fired. (The ammo for the goop was used as it
--- was loaded.) Releasing the button is not this: it starts the shot's action, and the reason is a new action. The game's switch is an
--- action that interrupts the charge, so it is a new action too, and the one that comes next tells the two apart.
+-- The ammo for the goop was used as it was loaded. When the charge ends and the glob is not fired, the ammo is given back: when the
+-- player switches weapons, mounts a ladder, is grabbed, starts an interaction, and so on, and when the button is let go before the
+-- shot can start. The shot is the only thing that keeps it. Its action interrupts the charge, so the reason is a new action, and the
+-- action that comes next tells the shot from a switch of weapons or a skill.
 mod.charge_finish_callbacks.bio = function (action, reason, data)
-	local switching = reason == "weapon_wielded" or reason == "new_interupting_action" and data and data.new_action == "action_wield"
+	local fires = reason == "new_interupting_action" and data and data.new_action == "action_one"
 
-	if not switching or not action.current_action or action.current_action.ut_charge_callback ~= "bio" then
+	if fires or not action.current_action or action.current_action.ut_charge_callback ~= "bio" then
 		return
 	end
 
