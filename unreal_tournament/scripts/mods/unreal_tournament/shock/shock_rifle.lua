@@ -14,8 +14,7 @@ mod.items.register("shock_rifle", {
 	-- The careers are the Beam Staff's, plus the Necromancer, which is a DLC career that has its own staffs.
 	can_wield = { "bw_scholar", "bw_adept", "bw_unchained", "bw_necromancer" },
 	name = "UT2004 Shock Rifle",
-	-- UT2004's manual calls it the ASMD Shock Rifle.
-	type_name = "ASMD Shock Rifle",
+	type_name = "Shock Rifle",
 	-- This is UT2004's description, shortened.
 	description = "The ASMD Shock Rifle has changed little since its incorporation into the Tournaments. Fire the photon beam into the slow-moving plasma charge to release the explosive energy of the anti-photons contained within its EM field.",
 	keywords = { "weapon_keyword_sniper", "weapon_keyword_crowd_control", "ut_weapon_keyword_combo" },
