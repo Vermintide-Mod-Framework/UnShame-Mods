@@ -59,9 +59,8 @@ end
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
-	-- All of the ammo. UT's Lightning Gun holds up to 40 and starts with 15. The game's handgun has 16. It is all the clip, so there is
-	-- no reload.
-	max_ammo = 20,
+	-- All of the ammo (UT's Lightning Gun holds up to 40). It is all the clip, so there is no reload.
+	max_ammo = 40,
 	-- SniperFire.FireRate. After a shot, the next one can be made once this much time has passed.
 	fire_rate = 1.6,
 	chain_margin = 0.15, -- seconds

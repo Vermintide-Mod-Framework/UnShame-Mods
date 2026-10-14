@@ -67,7 +67,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Hitting other projectiles | - | - |
 | Lock-on, homing, bounce, link, goo, combo | - | - |
 | **Ammo** | | |
-| Max ammo | no: 20, UT has 40 | ok (300) |
+| Max ammo | ok (40) | ok (300) |
 | Pickup amount | - | - |
 | Reload between shots | - | - |
 | Chamber at 0 ammo | - | - |
