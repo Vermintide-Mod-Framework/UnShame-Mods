@@ -188,8 +188,8 @@ skin_api = mod.weapon_skin.new({
 		-- The game links the Masterwork Pistol to the right hand's node (AttachmentNodeLinking.steam_pistol).
 		hand_node = "j_rightweaponattach",
 		meters_per_unit = 0.012,
-		-- The mesh is 0.67 m long, so 0.6 m as it is held.
-		scale = 0.9,
+		-- The mesh is 0.67 m long, so 0.47 m as it is held.
+		scale = 0.7,
 		-- The ring of the mesh that a hand goes through, in the mesh's own axes (its barrel runs along -x, and its ring is on the -y side).
 		grip_right = 5,
 		grip_forward = -12.5,
