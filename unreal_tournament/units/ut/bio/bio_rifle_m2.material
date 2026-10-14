@@ -1,17 +1,10 @@
 material_contexts = {
 	surface_material = ""
 }
-parent_material = "units/ut/weapon_standard_transparent"
+parent_material = "units/ut/fx/fx_bio_goo_graph"
 textures = {
-	color_map = "units/ut/bio/bio_rifle_brinnerbubbles"
+	goo_map = "units/ut/bio/bio_rifle_brinnergoo"
+	bubbles_map = "units/ut/bio/bio_rifle_brinnerbubbles"
 }
 variables = {
-	use_color_map = {
-		type = "scalar"
-		value = 1
-	}
-	opacity = {
-		type = "scalar"
-		value = 0.8
-	}
 }

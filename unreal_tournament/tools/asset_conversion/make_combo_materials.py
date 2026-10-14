@@ -212,3 +212,33 @@ decal.connect('shape', 'out', IN_DECAL_BASE_COLOR_OPACITY, 'r')
 decal.connect('shape', 'out', IN_DECAL_MASK, 'r')
 decal.constant('out', IN_DECAL_MASK_THRESHOLD, 0.05)
 write('decal_bio', decal, {'splat_map': 'bio_splat', 'shape_map': 'bio_splat_mask'})
+
+# ---------------------------------------------------------------- the goop in the Bio Rifle's tank
+# The Bio Rifle's first person mesh has its third material, BRPickupC (WeaponSkins): a Combiner (CO_AlphaBlend_With_Mask) of the TexPanner BRpickupP
+# (BioGoo.BRInnerGoo, PanRate 0.3 along U) and the TexPanner BRBubblesP (BioGoo.BRInnerBubbles, PanRate 0.8 along V), with the bubbles as the mask:
+# the green goop, with the bubbles in it. It is on the pieces of the mesh inside the tank, and one of them moves with the plunger. The mesh is drawn
+# with the game's field of view for weapons, as the other materials of the weapon are (units/ut/weapon_standard.material), so that it is not
+# placed differently from them. The material that binds the textures is units/ut/bio/bio_rifle_m2.material.
+CUSTOM_FOV = 'b2556764-e8e9-47cf-9ecc-f53b5d5d73c7'
+IN_LERP_A, IN_LERP_B, IN_LERP_W = '995996dc-408e-4e6f-a310-0db5b3276075', '5551ea38-126d-4d89-ab57-14b36b92a93c', 'cdc83a63-3365-4c10-9353-79ff5f2fd1f0'
+goo = Graph()
+goo.no_variables = True
+goo.add('out', 'core/stingray_renderer/output_nodes/unlit_base', OUT_OPTIONS + (CUSTOM_FOV,))
+goo.add('uv', 'core/shader_nodes/texture_coordinate0')
+goo.add('time', 'core/shader_nodes/current_time')
+panned(goo, 'pan_goo', 0.3, 0)
+panned(goo, 'pan_bubbles', 0, 0.8)
+texture(goo, 'goo', 'goo_map', 'pan_goo')
+texture(goo, 'bubbles', 'bubbles_map', 'pan_bubbles')
+goo.add('mix', 'core/shader_nodes/lerp')
+goo.connect('goo', 'mix', IN_LERP_A, 'rgb')
+goo.connect('bubbles', 'mix', IN_LERP_B, 'rgb')
+goo.connect('bubbles', 'mix', IN_LERP_W, 'a')
+goo.connect('mix', 'out', IN_OUT_BASE_COLOR)
+goo.constant('out', IN_OUT_OPACITY, 1)
+goo.constant('out', IN_OUT_ADDITIVE, 0)
+open('%s/fx_bio_goo_graph.material' % FX, 'w', newline='\n').write(goo.text())
+open('%s/units/ut/bio/bio_rifle_m2.material' % REPO, 'w', newline='\n').write(
+    'material_contexts = {\n\tsurface_material = ""\n}\nparent_material = "units/ut/fx/fx_bio_goo_graph"\ntextures = {\n'
+    '\tgoo_map = "units/ut/bio/bio_rifle_brinnergoo"\n\tbubbles_map = "units/ut/bio/bio_rifle_brinnerbubbles"\n}\nvariables = {\n}\n')
+print('wrote fx_bio_goo_graph.material and bio_rifle_m2.material, %d nodes' % len(goo.nodes))
