@@ -15,6 +15,9 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
 - The game cannot be run from here. The user tests in game and sends screenshots, logs and crash text. Do not add "I haven't tested this in
   game" disclaimers in replies; when something cannot be known from the code, say what is guessed and how the user can check it.
 - The game's own logs and crash dumps: `%APPDATA%\Fatshark\Vermintide 2\console_logs` and `crash_dumps`. Look at them when told about a crash.
+- In-game tests are in `scripts/mods/unreal_tournament/tests` (`runner.lua`, and a suite for each weapon). The user runs `/ut_test <suite>` in a
+  mission, and the results are lines that start with `[ut_test]` in the console log. A suite has to be tried in game before it is relied on:
+  it sets the loadout and career and respawns the player, which the code only guesses will work.
 
 ## How to work with the user
 
