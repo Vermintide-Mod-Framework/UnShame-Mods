@@ -183,16 +183,15 @@ write('explosion_dark', dark, {'blobs_map': 'shock_dark'})
 # ---------------------------------------------------------------- the goop
 # GoopMesh's FinalBlend GoopFB (XEffectMat): FB_Translucent of the Shader GoopShader, whose diffuse and self illumination are the TexOscillator
 # GoopOsc (OT_Pan, 0.07 of the texture a second along U and 0.17 along V) of the texture goop_green_a. It is lit by itself and see through
-# (the effect blends it by the alpha of its texture).
+# (the effect blends it by its opacity).
 goop = Graph()
 common(goop)
 panned(goop, 'pan', 0.07, 0.17)
 texture(goop, 'goop', 'goop_map', 'pan')
 multiply(goop, 'color', 'goop', 'tint', 'rgb')
-# (it is see through, as the texture's alpha says, and as much as intensity says of that)
-multiply(goop, 'opacity', 'goop', 'intensity', 'a')
+# (it is see through as much as intensity says: the alpha of the texture did not make it so)
 goop.connect('color', 'out', IN_OUT_BASE_COLOR)
-goop.connect('opacity', 'out', IN_OUT_OPACITY)
+goop.connect('intensity', 'out', IN_OUT_OPACITY)
 write('goop', goop, {'goop_map': 'bio_goop'})
 
 # ---------------------------------------------------------------- the splat decal

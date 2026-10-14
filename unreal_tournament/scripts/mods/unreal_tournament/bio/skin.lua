@@ -42,9 +42,9 @@ local CONFIG = {
 	light_color = { 0.6, 1, 0.5 },
 	light_falloff = 1.2, -- m
 	light_intensity = 1,
-	goop_opacity = 1,
-	-- The goop is see through (the alpha of its texture), and its color is made brighter by this.
-	goop_brightness = 1.6,
+	-- How much of the goop there is: it is blended by this, so it is see through. Its color is made brighter by goop_brightness.
+	goop_opacity = 0.6,
+	goop_brightness = 1.3,
 	goop_animations = {
 		drip = { start = 40, count = 39, speed = 0.66 },
 		flying = { start = 3, count = 11 },
@@ -527,7 +527,9 @@ local function add_splat(position, normal)
 
 	local tangent = Quaternion.rotate(Quaternion.axis_angle(normal, angle), side)
 
-	manager:add_projection_decal(CONFIG.splat_unit, nil, nil, position, Quaternion.look(tangent, normal), Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_depth), normal)
+	-- The decal shader projects along the y axis of the box (it compares that axis with the surface's normal), so y is the way the
+	-- surface faces. The box is wide along x and z, and deep along y.
+	manager:add_projection_decal(CONFIG.splat_unit, nil, nil, position, Quaternion.look(normal, tangent), Vector3(CONFIG.splat_size, CONFIG.splat_depth, CONFIG.splat_size), normal)
 end
 
 -- A glob lands. The splat stays where it is for its own time, and the blob stays until the glob is gone.

@@ -59,27 +59,6 @@ shader = {
 		}
 		{
 			destination = {
-				connector_id = "c5823c75-4ae5-4c71-b070-315fa4d03e8e"
-				instance_id = "c0de0001-0000-4000-8000-000000000010"
-			}
-			select = [
-				"a"
-			]
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000008"
-			}
-		}
-		{
-			destination = {
-				connector_id = "242d1648-a626-445b-9534-bccec094112f"
-				instance_id = "c0de0001-0000-4000-8000-000000000010"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000004"
-			}
-		}
-		{
-			destination = {
 				connector_id = "aca690cb-6305-4a2f-bf3d-69183a493db3"
 				instance_id = "c0de0001-0000-4000-8000-000000000001"
 			}
@@ -93,7 +72,7 @@ shader = {
 				instance_id = "c0de0001-0000-4000-8000-000000000001"
 			}
 			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000010"
+				instance_id = "c0de0001-0000-4000-8000-000000000004"
 			}
 		}
 	]
@@ -350,24 +329,6 @@ shader = {
 			]
 			position = [
 				600
-				200
-			]
-			samplers = {
-			}
-			type = "core/shader_nodes/mul"
-		}
-		{
-			content_size = [
-				160
-				0
-			]
-			export = {
-			}
-			id = "c0de0001-0000-4000-8000-000000000010"
-			options = [
-			]
-			position = [
-				900
 				200
 			]
 			samplers = {

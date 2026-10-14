@@ -4,7 +4,7 @@ import os, sys
 # manager (DecalManager.add_projection_decal) places the unit, scales it by the extents it is given, and draws it onto the surfaces it
 # reaches, so it follows walls, corners and floors. The unit is a box, 1 by 1 by 1, with the material fx_decal_bio (make_combo_materials.py), whose
 # shader draws the box as a decal. Each triangle is made twice, once for each side, because the decal shader draws only one of them.
-# The z axis of the box is the way the decal faces.
+# The y axis of the box is the way the decal faces (the decal shader compares it with the normal of the surface), so the box is deep along y.
 # Usage: make_decal_unit.py
 
 sys.path.insert(0, os.path.dirname(__file__))
