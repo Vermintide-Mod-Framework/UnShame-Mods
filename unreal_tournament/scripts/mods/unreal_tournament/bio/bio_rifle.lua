@@ -30,7 +30,7 @@ mod.items.register("bio_rifle", {
 	name = "UT2004 Bio Rifle",
 	type_name = "Bio Rifle",
 	-- This is UT2004's description, shortened.
-	description = "The GES Bio Rifle is one of the most controversial weapons in the Tournament: a barbaric minefield to some, a tool for covering choke points to others. It peppers an area with small globs of Biosludge, or launches one large glob at the target.",
+	description = "The GES Bio Rifle is one of the most controversial weapons in the Tournament, loved by some and loathed by others. It peppers an area with small globs of Biosludge, or launches one large glob at the target.",
 	keywords = { "weapon_keyword_rapid_fire", "weapon_keyword_crowd_control", "weapon_keyword_charged_attack" },
 	icon = "ut_bio_rifle_icon",
 	icon_package = "resource_packages/unreal_tournament/icons",

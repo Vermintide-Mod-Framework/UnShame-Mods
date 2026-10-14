@@ -190,16 +190,15 @@ skin_api = mod.weapon_skin.new({
 		meters_per_unit = 0.012,
 		-- The mesh is 0.67 m long, so 0.4 m as it is held.
 		scale = 0.6,
-		-- The ring of the mesh that a hand goes through, in the mesh's own axes (its barrel runs along -x, and its ring is on the -y side).
-		grip_right = 5,
-		grip_forward = -12.5,
+		-- Where the mesh is in the hand, in the mesh's own axes (its barrel runs along -x, and its ring is on the -y side). It is placed by eye.
+		grip_right = 15,
+		grip_forward = -18,
 		grip_up = 2,
-		yaw = 0,
+		yaw = 90,
 		pitch = 0,
 		roll = 0,
-		-- In the world the rifle is held as the pistol is: its barrel is turned to the way the pistol's unit's barrel runs, which is read from
-		-- the unit's box.
-		follow_game_unit = 3,
+		-- In the world the rifle is held as the pistol is: it is turned as the pistol's unit is, with the barrel along the unit's y.
+		follow_game_unit = 2,
 		muzzle_right = -30,
 		muzzle_forward = 0,
 		muzzle_up = -10,
