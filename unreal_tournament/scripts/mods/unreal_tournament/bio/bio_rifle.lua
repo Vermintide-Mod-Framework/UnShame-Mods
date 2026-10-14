@@ -610,17 +610,32 @@ local function take_goop_load(owner_unit)
 	return math.clamp(load, 1, CONFIG.max_goop_load)
 end
 
+-- Gives back ammo that use_ammo took. The game counts what was used in the last frame in _shots_fired, and takes it from the clip in
+-- its next update. add_ammo cannot give that part back, as it adds to a clip that has not lost it yet and stops at the maximum.
+local function give_back_ammo(ammo_extension, amount)
+	local pending = math.min(ammo_extension._shots_fired, amount)
+
+	ammo_extension._shots_fired = ammo_extension._shots_fired - pending
+
+	if amount > pending then
+		ammo_extension:add_ammo(amount - pending)
+	end
+end
+
 -- Switching to another weapon while the goop is loading gives the ammo back, as the glob is not fired. (The ammo for the goop was used as it
--- was loaded.) Releasing the button is not this: it starts the shot's action, and the reason is a new action.
-mod.charge_finish_callbacks.bio = function (action, reason)
-	if reason ~= "weapon_wielded" or not action.current_action or action.current_action.ut_charge_callback ~= "bio" then
+-- was loaded.) Releasing the button is not this: it starts the shot's action, and the reason is a new action. The game's switch is an
+-- action that interrupts the charge, so it is a new action too, and the one that comes next tells the two apart.
+mod.charge_finish_callbacks.bio = function (action, reason, data)
+	local switching = reason == "weapon_wielded" or reason == "new_interupting_action" and data and data.new_action == "action_wield"
+
+	if not switching or not action.current_action or action.current_action.ut_charge_callback ~= "bio" then
 		return
 	end
 
 	local state = goop_loads[action.owner_unit]
 
 	if state and state.load > 0 and action.ammo_extension then
-		action.ammo_extension:add_ammo(state.load)
+		give_back_ammo(action.ammo_extension, state.load)
 
 		state.load = 0
 	end

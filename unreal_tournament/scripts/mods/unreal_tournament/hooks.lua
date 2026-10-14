@@ -254,7 +254,9 @@ end)
 -- Runs when any charge action starts or ends, for the player or bot that owns it. The game's own venting of overcharge is a charge
 -- action too.
 --   mod.charge_start_callbacks[name] = function (action_charge, new_action)
---   mod.charge_finish_callbacks[name] = function (action_charge, reason)
+--   mod.charge_finish_callbacks[name] = function (action_charge, reason, data)
+-- data is what the game gives with the reason. For "new_interupting_action" it has new_action, the name of the action that
+-- interrupts the charge (a weapon switch is "action_wield").
 mod.charge_start_callbacks = {}
 mod.charge_finish_callbacks = {}
 
@@ -264,9 +266,9 @@ mod:hook_safe(ActionCharge, "client_owner_start_action", function (self, new_act
 	end
 end)
 
-mod:hook_safe(ActionCharge, "finish", function (self, reason)
+mod:hook_safe(ActionCharge, "finish", function (self, reason, data)
 	for _, callback in pairs(mod.charge_finish_callbacks) do
-		callback(self, reason)
+		callback(self, reason, data)
 	end
 end)
 
