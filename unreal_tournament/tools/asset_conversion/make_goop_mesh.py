@@ -37,7 +37,6 @@ count = 0
 for name, (start, length) in SEQUENCES.items():
     for number in range(start, start + length):
         points = [fx.to_game((x * MESH_MAP[0] * DRAW_SCALE, y * MESH_MAP[1] * DRAW_SCALE, z * MESH_MAP[2] * DRAW_SCALE)) for x, y, z in frame(number)]
-        points = [(x * fx.UNIT, y * fx.UNIT, z * fx.UNIT) for x, y, z in points]
 
         fx.write_unit('goop/f%d' % number, [fx.geometry('g_mesh', points, both_index, uvs, both_uv_index)], {'g_mesh': 'g_mesh'})
         count += 1
