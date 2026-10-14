@@ -50,6 +50,9 @@ local CONFIG = {
 	-- BioFire: FireRate and the speed of BioGlob (Speed 2000 uu/s)
 	fire_interval = 0.33,
 	glob_speed_uu = 2000,
+	-- Bots shoot globs at targets up to this far, in meters (BioFire.MaxRange is 1500 uu). It goes in the weapon's attack_meta_data, which
+	-- the game's bot shooting reads.
+	bot_max_range = 30,
 	-- Where a glob starts, measured from the camera: forward, to the right and down. UT's ProjSpawnOffset is 20, 9 and -6 uu. The
 	-- pistol is drawn further out here, so the offsets are larger, to start the glob at the muzzle.
 	start_forward = 0.8, -- m
@@ -450,6 +453,7 @@ local function restore_pistol()
 	actions.action_two.default = original.action_two_default
 	template.default_spread_template = original.default_spread_template
 	template.attack_meta_data.ut_bio = nil
+	template.attack_meta_data.max_range = original.max_range
 
 	for _, field in ipairs(AMMO_FIELDS) do
 		template.ammo_data[field] = original.ammo_data[field]
@@ -496,6 +500,7 @@ local function apply_bio_rifle()
 		action_two_default = actions.action_two.default,
 		ammo_data = {},
 		default_spread_template = template.default_spread_template,
+		max_range = template.attack_meta_data.max_range,
 		required_projectile_unit_templates = {},
 	}
 
@@ -514,6 +519,7 @@ local function apply_bio_rifle()
 
 	-- This tells the bot shooting that this is the Bio Rifle (see bots.lua).
 	template.attack_meta_data.ut_bio = true
+	template.attack_meta_data.max_range = CONFIG.bot_max_range
 
 	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots. The pistol's ammo counter is
 	-- for six rounds, so it is not updated.

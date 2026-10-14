@@ -84,6 +84,8 @@ local CONFIG = {
 		1,
 		0.5,
 	},
+	-- Bots shoot rockets at targets up to this far, in meters. It goes in the weapon's attack_meta_data, which the game's bot shooting reads.
+	bot_max_range = 40,
 	rocket_explosion_radius_uu = 150,
 	rocket_explosion_full_damage_radius = 0.5, -- the damage falls off linearly from here to the radius
 	-- The explosion hurts the player who fired the rocket. This is the damage at the center, and it falls off the same way the
@@ -293,6 +295,7 @@ local function restore_crossbow()
 	actions.action_two.default = original.action_two_default
 	template.attack_meta_data.ut_rocket = nil
 	template.attack_meta_data.can_charge_shot = original.can_charge_shot
+	template.attack_meta_data.max_range = original.max_range
 
 	for key, value in pairs(original.ammo_data) do
 		template.ammo_data[key] = value
@@ -334,6 +337,7 @@ local function apply_rocket_launcher()
 		action_one_zoomed_shot = actions.action_one.zoomed_shot,
 		action_two_default = actions.action_two.default,
 		can_charge_shot = template.attack_meta_data.can_charge_shot,
+		max_range = template.attack_meta_data.max_range,
 		ammo_data = {
 			reload_time = template.ammo_data.reload_time,
 			ammo_immediately_available = template.ammo_data.ammo_immediately_available,
@@ -349,6 +353,7 @@ local function apply_rocket_launcher()
 	-- charged shot is the aiming, which loads rockets here, so bots must not use it.
 	template.attack_meta_data.ut_rocket = true
 	template.attack_meta_data.can_charge_shot = false
+	template.attack_meta_data.max_range = CONFIG.bot_max_range
 
 	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
 	template.ammo_data.max_ammo = CONFIG.max_ammo

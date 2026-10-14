@@ -5,9 +5,9 @@ local mod = get_mod("unreal_tournament")
 -- A glob explodes in a radius of 1.6 m, and the biggest one in 5 m, so the range and the clearance are wider than for the rocket.
 
 local CONFIG = {
-	-- A glob is fired at a target in this range, in meters. Nearer, the explosion would hurt the bot.
+	-- A glob is fired at a target at least this far, in meters. Nearer, the explosion would hurt the bot. The furthest is the weapon's
+	-- max_range in its attack_meta_data (see bio_rifle.lua), which the game's bot shooting checks.
 	min_range = 4,
-	max_range = 30,
 	-- No glob is fired when a player or bot is this close to the target, because the explosion would hurt them.
 	ally_clearance = 3.5,
 }
@@ -23,7 +23,7 @@ mod.bot_shot_callbacks.ut_bio = function (func, self, shoot_blackboard, action_d
 	local target_position = POSITION_LOOKUP[target_unit]
 	local distance = Vector3.distance(POSITION_LOOKUP[bot_unit], target_position)
 
-	if distance < CONFIG.min_range or distance > CONFIG.max_range then
+	if distance < CONFIG.min_range then
 		return
 	end
 
