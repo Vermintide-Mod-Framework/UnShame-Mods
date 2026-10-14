@@ -62,6 +62,8 @@ local CONFIG = {
 }
 
 local RESTORE_SETTING = "test_restore"
+-- What /ut_equip replaced. It is put back the next time the mod loads, or with /ut_equip back.
+local EQUIP_SETTING = "equip_restore"
 
 local function log(text, ...)
 	mod:echo("[ut_test] " .. text, ...)
@@ -746,8 +748,69 @@ function runner.add_suite(suite)
 	runner.suites[suite.name] = suite
 end
 
+-- Puts a suite's weapon in the player's hands, and leaves it there, for looking at it and playing with it. The loadout that is replaced
+-- is saved, as it is for a suite, and put back with /ut_equip back.
+function runner.equip(suite_name, career)
+	if run and not run.finished and not run.error then
+		log("a suite is running. /ut_test stop ends it")
+
+		return
+	end
+
+	local suite = runner.suites[suite_name]
+
+	if not suite then
+		log("there is no suite %s. The suites: %s", tostring(suite_name), table.concat(table.keys(runner.suites), ", "))
+
+		return
+	end
+
+	career = career or suite.careers[1]
+
+	run = {
+		co = coroutine.create(function ()
+			local t = make_context(suite)
+			local saved_entries = mod:get(EQUIP_SETTING)
+
+			-- What a weapon that was equipped before replaced is still what is to be put back
+			if type(saved_entries) ~= "table" or #saved_entries == 0 then
+				mod:set(EQUIP_SETTING, {
+					{
+						backend_id = BackendUtils.get_loadout_item_id(career, suite.slot),
+						career = career,
+						slot = suite.slot,
+					},
+				})
+			end
+
+			if setup_character(t, suite, career) then
+				log("%s is in your hands as %s", suite.item, career)
+			end
+		end),
+		suite = suite,
+	}
+
+	resume()
+end
+
+-- Puts back what /ut_equip replaced
+function runner.unequip()
+	local entries = mod:get(EQUIP_SETTING)
+
+	if type(entries) ~= "table" or #entries == 0 then
+		log("nothing was equipped")
+
+		return
+	end
+
+	apply_restore(entries)
+	mod:set(EQUIP_SETTING, NOTHING_TO_RESTORE)
+	log("the loadout is put back. The weapon changes when the character spawns again")
+end
+
 -- Each frame
 local pending_restore_checked_t = 0
+local equip_checked = false
 
 local function step(dt)
 	if not run then
@@ -822,14 +885,28 @@ local function check_pending_restore(dt)
 
 	pending_restore_checked_t = 0
 
-	local entries = mod:get(RESTORE_SETTING)
-
-	if type(entries) ~= "table" or #entries == 0 then
+	-- The items are there once the player is in a level
+	if not local_player() then
 		return
 	end
 
-	-- The items are there once the player is in a level
-	if not local_player() then
+	local entries = mod:get(RESTORE_SETTING)
+
+	-- A weapon put in the player's hands with /ut_equip is taken out again when the mod loads
+	if not equip_checked then
+		equip_checked = true
+
+		local equipped = mod:get(EQUIP_SETTING)
+
+		if type(equipped) == "table" and #equipped > 0 then
+			pcall(function ()
+				apply_restore(equipped)
+				mod:set(EQUIP_SETTING, NOTHING_TO_RESTORE)
+			end)
+		end
+	end
+
+	if type(entries) ~= "table" or #entries == 0 then
 		return
 	end
 
@@ -864,6 +941,14 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 		runner.restore_input()
 	end
 end
+
+mod:command("ut_equip", "<suite> [career] | back - puts the weapon of a suite in your hands, or puts your loadout back", function (argument, career)
+	if argument == "back" or not argument then
+		runner.unequip()
+	else
+		runner.equip(argument, career)
+	end
+end)
 
 mod:command("ut_test", "list | stop | <suite> [career] - runs the in-game tests of a weapon", function (argument, career)
 	if argument == "list" or not argument then

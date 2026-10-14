@@ -324,6 +324,35 @@ function utils.as_vector(position)
 	return position:unbox()
 end
 
+-- Returns what a hitscan shot hits first among the hits of its ray, which are sorted nearest first. It follows the rule of the game's
+-- own Beam Staff (ActionBeam). The shooter's own hitbox, which the ray starts in, does not count. Neither does a hit on an enemy's
+-- "afro" zone, which is a much bigger hit zone than the enemy itself, nor a hit on someone who is not to be hurt. The shot stops at
+-- that hit, as UT's trace does.
+function utils.first_beam_hit(hits, owner_unit)
+	local allow_friendly_fire = DamageUtils.allow_friendly_fire_ranged(Managers.state.difficulty:get_difficulty_settings(), Managers.player:owner(owner_unit))
+
+	for i = 1, #(hits or {}) do
+		local hit_actor = hits[i][4]
+		local hit_unit
+
+		hit_unit, hit_actor = ActionUtils.redirect_shield_hit(Actor.unit(hit_actor), hit_actor)
+
+		if hit_unit ~= owner_unit then
+			local breed = Unit.get_data(hit_unit, "breed")
+
+			if not breed then
+				return hits[i]
+			end
+
+			local is_enemy = DamageUtils.is_enemy(owner_unit, hit_unit)
+
+			if (allow_friendly_fire and breed.is_player or is_enemy) and breed.hit_zones_lookup[Actor.node(hit_actor)].name ~= "afro" then
+				return hits[i]
+			end
+		end
+	end
+end
+
 -- How much ammo the local player's ranged weapon has, in the clip and in reserve, or nil if there is no such weapon
 function utils.local_ranged_ammo()
 	local player = Managers.player and Managers.player:local_player_safe()

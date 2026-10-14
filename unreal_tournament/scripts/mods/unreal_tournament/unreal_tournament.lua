@@ -93,6 +93,7 @@ mod:dofile("scripts/mods/unreal_tournament/bio/bots")
 mod:dofile("scripts/mods/unreal_tournament/bio/skin")
 mod:dofile("scripts/mods/unreal_tournament/link/link_gun")
 mod:dofile("scripts/mods/unreal_tournament/link/skin")
+mod:dofile("scripts/mods/unreal_tournament/lightning/lightning_gun")
 -- Crafting for those items.
 mod:dofile("scripts/mods/unreal_tournament/crafting")
 
@@ -105,10 +106,11 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- The in-game tests, run with /ut_test. The runner is loaded once, and each weapon's file adds its suite to it.
 mod.test_runner = mod:dofile("scripts/mods/unreal_tournament/tests/runner")
 mod:dofile("scripts/mods/unreal_tournament/tests/flak")
+mod:dofile("scripts/mods/unreal_tournament/tests/lightning")
 
 -- This message appears in the chat each time the mod is loaded or reloaded, so you can tell which build is running. The build
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 908)")
+	mod:echo("Unreal Tournament loaded (build 912)")
 end

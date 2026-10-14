@@ -184,6 +184,12 @@ mod.skin_explosion_callbacks = {}
 -- if it hit nothing.
 mod.shock_beam_callbacks = {}
 
+-- The Lightning Gun tells its skin about its bolt. It runs on the shooter's machine, and on the others' after they get the message.
+--   mod.lightning_bolt_callbacks[name] = function (owner_unit, end_position, hit_normal, arcs, arcs_start)
+-- owner_unit fired it. The bolt goes from the weapon to end_position. hit_normal is the way the surface it hit faces, or the zero
+-- vector if it hit nothing. arcs is a list of the ends of the arcs of lightning that jump from arcs_start.
+mod.lightning_bolt_callbacks = {}
+
 -- A shock combo has gone off. It runs on every machine, when the explosion is made.
 --   mod.shock_combo_callbacks[name] = function (attacker_unit, killed_units)
 -- attacker_unit made the combo. killed_units is a list of the enemies it killed. The host applies the damage and tells the others,

@@ -4,6 +4,7 @@
 #   game_input.ps1 -Click 1200,600     a left click at a place in the game window's picture (pixels, as in the pictures of screenshot.ps1)
 #   game_input.ps1 -Move 1200,600      moves the mouse there without a click
 #   game_input.ps1 -Type "loaded"      types letters, digits and spaces as keys
+#   game_input.ps1 -Chat "/ut_equip lightning"   opens the chat of Vermintide 2, types the text, and sends it
 #   game_input.ps1 -Press              a left click where the mouse is
 #   -Target launcher sends it to Vermintide 2's launcher window instead of the game
 #   -Target ut2004 sends it to Unreal Tournament 2004
@@ -16,6 +17,7 @@ param(
     [string]$Click = "",
     [string]$Move = "",
     [string]$Type = "",
+    [string]$Chat = "",
     [switch]$Press
 )
 
@@ -54,6 +56,18 @@ public static class GameInput {
         input[0].u.ki.wScan = scan;
         input[0].u.ki.dwFlags = KEYEVENTF_SCANCODE | (extended ? KEYEVENTF_EXTENDEDKEY : 0u) | (down ? 0u : KEYEVENTF_KEYUP);
         SendInput(1, input, Marshal.SizeOf(typeof(INPUT)));
+    }
+
+    // A character of text, which is what a text field sees
+    public static void Char(char c) {
+        INPUT[] input = new INPUT[2];
+        input[0].type = 1;
+        input[0].u.ki.wScan = (ushort)c;
+        input[0].u.ki.dwFlags = 0x0004;
+        input[1].type = 1;
+        input[1].u.ki.wScan = (ushort)c;
+        input[1].u.ki.dwFlags = 0x0004 | KEYEVENTF_KEYUP;
+        SendInput(2, input, Marshal.SizeOf(typeof(INPUT)));
     }
 
     public static void Button(bool down) {
@@ -185,6 +199,17 @@ if ($Press) {
 
 if ($Key -ne "") {
     Send-Key $Key
+}
+
+if ($Chat -ne "") {
+    # Enter opens the chat, the text is typed as characters, and Enter sends it
+    Send-Key "Enter"
+    Start-Sleep -Milliseconds 400
+
+    foreach ($c in $Chat.ToCharArray()) { [GameInput]::Char($c); Start-Sleep -Milliseconds 30 }
+
+    Start-Sleep -Milliseconds 300
+    Send-Key "Enter"
 }
 
 foreach ($c in $Type.ToUpper().ToCharArray()) {
