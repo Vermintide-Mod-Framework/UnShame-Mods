@@ -110,8 +110,9 @@ local CONFIG = {
 	max_stuck = 40,
 	-- A critical hit and the armor of an enemy do not exist in UT. These are how much of the damage and the stagger each armor type
 	-- takes: unarmored, armored, monsters, players, berserkers and super armor. The game's own multipliers for explosions are 0 against
-	-- super armor (chaos warriors), which would make them take nothing.
-	armor_attack = {1, 0.8, 1.5, 1, 1, 1},
+	-- super armor (chaos warriors), which would make them take nothing. The Bio Rifle is for denying an area and for swarms. Its many
+	-- small hits do less against armor, so that it does not stand in for the weapons that pierce it.
+	armor_attack = {1, 0.8, 1.5, 1, 1, 0.5},
 	armor_impact = {1, 0.8, 1, 1, 1, 0.5},
 	-- The game's sound event of the Sienna's fireball. The skin plays UT's sound instead.
 	fire_sound = "player_combat_weapon_staff_fireball_fire",
