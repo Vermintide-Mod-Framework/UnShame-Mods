@@ -100,6 +100,6 @@ if (-not $ready) {
     exit 2
 }
 
-Start-Sleep -Seconds 2
+Start-Sleep -Seconds 5
 Write-Host "The game is in the Keep."
 exit 0
