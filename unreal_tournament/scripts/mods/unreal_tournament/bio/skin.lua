@@ -49,7 +49,7 @@ local CONFIG = {
 	-- (1) and how much is blended by goop_opacity (0). The color of the texture is made brighter by goop_brightness.
 	goop_opacity = 0.8,
 	goop_additive = 0.5,
-	goop_brightness = 0.9,
+	goop_brightness = 0.55,
 	goop_animations = {
 		drip = { start = 40, count = 39, speed = 0.66 },
 		flying = { start = 3, count = 11 },
