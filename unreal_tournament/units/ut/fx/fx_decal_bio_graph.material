@@ -20,48 +20,57 @@ shader = {
 		}
 		{
 			destination = {
+				connector_id = "c010729f-6137-412c-99a5-f263fdeaa53c"
+				instance_id = "c0de0001-0000-4000-8000-000000000005"
+			}
+			select = [
+				"x"
+			]
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000002"
+			}
+		}
+		{
+			destination = {
+				connector_id = "d6179868-364c-4f38-bdc0-ea639b305015"
+				instance_id = "c0de0001-0000-4000-8000-000000000005"
+			}
+			select = [
+				"y"
+			]
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000002"
+			}
+		}
+		{
+			destination = {
+				connector_id = "6cce8b1d-5c70-44ea-bea3-b1ceafeb750e"
+				instance_id = "c0de0001-0000-4000-8000-000000000005"
+			}
+			select = [
+				"r"
+			]
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000004"
+			}
+		}
+		{
+			destination = {
 				connector_id = "aca690cb-6305-4a2f-bf3d-69183a493db3"
 				instance_id = "c0de0001-0000-4000-8000-000000000001"
 			}
-			select = [
-				"rgb"
-			]
 			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000003"
-			}
-		}
-		{
-			destination = {
-				connector_id = "ad5e052f-d316-4a0f-8b79-53c38204d61b"
-				instance_id = "c0de0001-0000-4000-8000-000000000001"
-			}
-			select = [
-				"r"
-			]
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000004"
-			}
-		}
-		{
-			destination = {
-				connector_id = "34259752-b962-4b65-92c3-903a57338519"
-				instance_id = "c0de0001-0000-4000-8000-000000000001"
-			}
-			select = [
-				"r"
-			]
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000004"
+				instance_id = "c0de0001-0000-4000-8000-000000000005"
 			}
 		}
 	]
 	constants = [
 		{
-			connector_id = "7a9306c6-95ae-4cdb-9fef-0eedacce4e83"
+			connector_id = "ad5e052f-d316-4a0f-8b79-53c38204d61b"
 			id = "c0de0001-0000-4000-8000-000000001000"
 			instance_id = "c0de0001-0000-4000-8000-000000000001"
 			value = [
-				0.05
+				1
 			]
 		}
 	]
@@ -155,6 +164,24 @@ shader = {
 			}
 			title = "shape_map"
 			type = "core/shader_nodes/sample_texture"
+		}
+		{
+			content_size = [
+				160
+				0
+			]
+			export = {
+			}
+			id = "c0de0001-0000-4000-8000-000000000005"
+			options = [
+			]
+			position = [
+				1200
+				0
+			]
+			samplers = {
+			}
+			type = "core/shader_nodes/construct_vector3"
 		}
 	]
 	version = 3
