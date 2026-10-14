@@ -129,11 +129,12 @@ mod:hook_safe(LootItemUnitPreviewer, "_enable_item_units_visibility", function (
 
 		unit = skin.third_person.new_mesh(world, look)
 
-		-- The barrel points to the side, the mesh is centered on the unit, and it is scaled to item_length.
+		-- The barrel points to the side, the mesh is centered on the unit, and it is scaled to item_length (times the weapon's menu_scale).
 		local pose, half_extents = Unit.box(unit)
 		local length = math.max(Vector3.x(half_extents), Vector3.y(half_extents), Vector3.z(half_extents)) * 2
-		local scale = CONFIG.item_length / length
-		local rotation = Quaternion.axis_angle(Vector3.up(), math.rad(skin.third_person.config_of(look).menu_yaw or -90))
+		local config = skin.third_person.config_of(look)
+		local scale = CONFIG.item_length / length * (config.menu_scale or 1)
+		local rotation = Quaternion.axis_angle(Vector3.up(), math.rad(config.menu_yaw or -90))
 
 		World.link_unit(world, unit, 0, self._link_unit, 0)
 		Unit.set_local_scale(unit, 0, Vector3(scale, scale, scale))

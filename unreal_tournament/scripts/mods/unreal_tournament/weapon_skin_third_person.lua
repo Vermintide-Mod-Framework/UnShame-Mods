@@ -13,6 +13,7 @@ local mod = get_mod("unreal_tournament")
 --   grip_*: the point of the mesh that is in the hand (right, forward, up, in UT units).
 --   yaw, pitch, roll: how the mesh is turned from pointing the way the character faces, in degrees.
 --   muzzle_*: the end of the barrel.
+--   menu_scale: how much of the usual size the mesh is in the item inspection (1 if it is not given).
 --   menu_yaw: how far to turn the mesh about the vertical in the item inspection, so that the barrel points sideways (-90 if the
 --       barrel runs along the mesh's forward).
 --   follow_game_unit: the mesh moves with the game's unit of the weapon, which the game animates with the arms. The mesh is turned

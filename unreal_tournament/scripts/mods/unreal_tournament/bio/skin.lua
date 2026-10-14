@@ -246,6 +246,7 @@ skin_api = mod.weapon_skin.new({
 		muzzle_forward = 0,
 		muzzle_up = 12,
 		menu_yaw = 0,
+		menu_scale = 0.65,
 	},
 	on_create = function ()
 		skin_api.play_sound("ut_bio_select")
