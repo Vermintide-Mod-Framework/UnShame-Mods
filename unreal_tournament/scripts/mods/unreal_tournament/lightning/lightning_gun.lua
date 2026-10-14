@@ -45,10 +45,9 @@ for _, variant in ipairs(VARIANTS) do
 		type_name = "Lightning Gun",
 		description = DESCRIPTION,
 		keywords = { "weapon_keyword_high_damage", "weapon_keyword_sniper", "weapon_keyword_headshotting" },
-		-- (the icon is the Flak Cannon's until the Lightning Gun's own is made)
-		icon = "ut_flak_cannon_icon",
+		icon = "ut_lightning_gun_icon",
 		icon_package = "resource_packages/unreal_tournament/icons",
-		icon_materials = "ui/ut/flak_cannon_icon",
+		icon_materials = "ui/ut/lightning_gun_icon",
 	})
 end
 
@@ -407,12 +406,21 @@ mod.handgun_update_callbacks.lightning = function (self)
 	local arcs_start = hit and hit[1] + hit[3] * CONFIG.arc_start_offset or end_position
 	local arcs = hit and jump_arcs(self, arcs_start, hit_unit_of(hit), self.world) or {}
 
+	-- The scope's charge bar and the sparks at the tip of the weapon follow the player's shots
+	if utils.is_local_player_unit(owner_unit) then
+		mod.lightning.last_fire_time = Managers.time:time("game")
+	end
+
 	mod.lightning.bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
 end
 
 -- What the skin is told (mod.lightning_bolt_callbacks in hooks.lua), and what is sent to the other players. The skin draws the bolt of
 -- the player who fires, from the weapon in their own view, and the others see it come from the weapon of the player's character.
-mod.lightning = {}
+mod.lightning = {
+	-- The seconds between shots, and when the player last fired
+	fire_rate = CONFIG.fire_rate,
+	last_fire_time = nil,
+}
 
 -- A vector's three numbers. Vectors are userdata, and a missing one is the zero vector.
 local function components(vector)

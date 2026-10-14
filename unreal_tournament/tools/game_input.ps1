@@ -3,9 +3,10 @@
 #   game_input.ps1 -Key Enter          one key: Enter, Space, Escape, Tab, Up, Down, Left, Right, or a letter or a number
 #   game_input.ps1 -Click 1200,600     a left click at a place in the game window's picture (pixels, as in the pictures of screenshot.ps1)
 #   game_input.ps1 -Move 1200,600      moves the mouse there without a click
+#   game_input.ps1 -Key Ctrl -Hold 5000  holds the key that many milliseconds (80 if it is not given)
 #   game_input.ps1 -Type "loaded"      types letters, digits and spaces as keys
 #   game_input.ps1 -Chat "/ut_equip lightning"   opens the chat of Vermintide 2, types the text, and sends it
-#   game_input.ps1 -Press              a left click where the mouse is
+#   game_input.ps1 -Press [-Right] [-Hold 900]   a click where the mouse is (the right button with -Right), held that many milliseconds
 #   -Target launcher sends it to Vermintide 2's launcher window instead of the game
 #   -Target ut2004 sends it to Unreal Tournament 2004
 #
@@ -18,7 +19,9 @@ param(
     [string]$Move = "",
     [string]$Type = "",
     [string]$Chat = "",
-    [switch]$Press
+    [int]$Hold = 80,
+    [switch]$Press,
+    [switch]$Right
 )
 
 $ErrorActionPreference = "Stop"
@@ -70,10 +73,10 @@ public static class GameInput {
         SendInput(2, input, Marshal.SizeOf(typeof(INPUT)));
     }
 
-    public static void Button(bool down) {
+    public static void Button(bool down, bool right) {
         INPUT[] input = new INPUT[1];
         input[0].type = 0;
-        input[0].u.mi.dwFlags = down ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_LEFTUP;
+        input[0].u.mi.dwFlags = right ? (down ? 0x0008u : 0x0010u) : (down ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_LEFTUP);
         SendInput(1, input, Marshal.SizeOf(typeof(INPUT)));
     }
 
@@ -140,7 +143,7 @@ function Parse-Place([string]$text) {
 $KEYS = @{
     Enter = @(0x1C, $false); Space = @(0x39, $false); Escape = @(0x01, $false); Tab = @(0x0F, $false)
     Up = @(0x48, $true); Down = @(0x50, $true); Left = @(0x4B, $true); Right = @(0x4D, $true)
-    Tilde = @(0x29, $false); Ctrl = @(0x1D, $false)
+    Tilde = @(0x29, $false); Ctrl = @(0x1D, $false); Alt = @(0x38, $false); "." = @(0x34, $false)
 }
 
 # Digits and letters, by their scan codes
@@ -152,7 +155,7 @@ foreach ($start in $rows.Keys) {
     for ($i = 0; $i -lt $rows[$start].Length; $i++) { $KEYS[[string]$rows[$start][$i]] = @(($start + $i), $false) }
 }
 
-function Send-Key([string]$name) {
+function Send-Key([string]$name, [int]$hold = 80) {
     if (-not $KEYS.ContainsKey($name)) {
         throw "Unknown key $name. Known: $($KEYS.Keys -join ', ')"
     }
@@ -160,7 +163,7 @@ function Send-Key([string]$name) {
     $entry = $KEYS[$name]
 
     [GameInput]::Key($entry[0], $entry[1], $true)
-    Start-Sleep -Milliseconds 80
+    Start-Sleep -Milliseconds $hold
     [GameInput]::Key($entry[0], $entry[1], $false)
 }
 
@@ -186,19 +189,19 @@ if ($Move -ne "") {
 if ($Click -ne "") {
     Move-Mouse (Parse-Place $Click)
     Start-Sleep -Milliseconds 150
-    [GameInput]::Button($true)
+    [GameInput]::Button($true, $false)
     Start-Sleep -Milliseconds 80
-    [GameInput]::Button($false)
+    [GameInput]::Button($false, $false)
 }
 
 if ($Press) {
-    [GameInput]::Button($true)
-    Start-Sleep -Milliseconds 80
-    [GameInput]::Button($false)
+    [GameInput]::Button($true, [bool]$Right)
+    Start-Sleep -Milliseconds $Hold
+    [GameInput]::Button($false, [bool]$Right)
 }
 
 if ($Key -ne "") {
-    Send-Key $Key
+    Send-Key $Key $Hold
 }
 
 if ($Chat -ne "") {

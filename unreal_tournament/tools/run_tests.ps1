@@ -2,6 +2,7 @@
 # the results. The game has to be running with the mod, and its window gets the keyboard focus while this runs.
 #
 #   run_tests.ps1 -Suite flak [-Career es_mercenary] [-Build] [-Reload] [-TimeoutSeconds 600]
+#   run_tests.ps1 -Build -Reload          without a suite: builds, and reloads the mods in the running game
 #
 #   -Build   builds the mod first (vmb build, from the mods folder)
 #   -Reload  reloads the mods in the game (Ctrl+Shift+R, the framework's hotkey) and waits for the reload to show in the log
@@ -12,7 +13,7 @@
 # It types "/ut_test <suite>" into the game's chat. The results are the lines with [ut_test] in the game's console log.
 
 param(
-    [Parameter(Mandatory = $true)][string]$Suite,
+    [string]$Suite = "",
     [string]$Career = "",
     [switch]$Build,
     [switch]$Reload,
@@ -263,6 +264,11 @@ if (-not $started) {
     Focus-Game
 
     if ($Reload) { Reload-Mods }
+}
+
+# With no suite, this only builds, starts the game and reloads the mods
+if ($Suite -eq "") {
+    exit 0
 }
 
 $result = Run-Suite

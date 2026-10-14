@@ -1,0 +1,13 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/world_standard"
+textures = {
+	color_map = "units/ut/lightning/pickup_snipertex0"
+}
+variables = {
+	use_color_map = {
+		type = "scalar"
+		value = 1
+	}
+}

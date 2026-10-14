@@ -48,6 +48,12 @@ STATICS = {
         'scale': 0.009,
         'unit': 'units/ut/rocket/pickup',
     },
+    'sniper_pickup': {
+        'pskx': 'WeaponStaticMesh/StaticMesh/SniperRiflePickup.pskx',
+        'materials': [('WeaponSkins/Texture/SniperTex0.tga', 'opaque')],
+        'scale': 0.009,
+        'unit': 'units/ut/lightning/pickup',
+    },
     'rocket_proj': {
         'pskx': 'WeaponStaticMesh/StaticMesh/RocketProj.pskx',
         'materials': [('WeaponSkins/Texture/RocketShellTex.tga', 'opaque')],

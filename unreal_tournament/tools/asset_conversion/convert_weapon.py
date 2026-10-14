@@ -180,6 +180,21 @@ WEAPONS['link'] = {
     'lua': 'scripts/mods/unreal_tournament/link/skin_animations.lua',
 }
 
+# The Lightning Gun (Weapons.Sniper_1st). Its screen is SniperScreen1C, made by make_sniper_screen.py.
+WEAPONS['sniper'] = {
+    'psk': 'Weapons/SkeletalMesh/Sniper_1st.psk',
+    'psa': 'Weapons/MeshAnimation/Sniper_1st.psa',
+    # the body, the screen on its side (the scope's readout), and the second screen
+    'materials': [('WeaponSkins/Texture/SniperTex0.tga', 'opaque'), ('WeaponSkins/Texture/SniperScreen1C.tga', 'opaque'),
+                  ('WeaponSkins/Texture/SniperScreen2.tga', 'opaque')],
+    'scale': 0.0125,
+    'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire')],
+    'locators': ['Bone_Flash'],
+    'roughness': 0.9,
+    'unit': 'units/ut/lightning/lightning_gun',
+    'lua': 'scripts/mods/unreal_tournament/lightning/skin_animations.lua',
+}
+
 # UT2003's Shock Rifle (the model UT2004 keeps in Weapons.ukx).
 WEAPONS['shock2003'] = {
     'psk': 'Weapons/SkeletalMesh/ShockRifle_1st.psk',

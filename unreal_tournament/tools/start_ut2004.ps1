@@ -25,7 +25,9 @@ using System;
 using System.Runtime.InteropServices;
 
 public static class Ut2004Window {
+    [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
     [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr window, IntPtr after, int x, int y, int width, int height, uint flags);
+    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr window, out RECT rect);
 }
 "@
 
@@ -51,12 +53,19 @@ if (Get-Game) {
 Write-Host "Starting the game..."
 Start-Process -FilePath (Join-Path $GameFolder "System\UT2004.exe") -ArgumentList "${Map}?game=XGame.xDeathMatch?numbots=${Bots}" -WorkingDirectory (Join-Path $GameFolder "System")
 
+# The game shows a small window with its logo first. The game's own window is the one that is large.
 $game = $null
-$deadline = (Get-Date).AddSeconds(60)
+$deadline = (Get-Date).AddSeconds(90)
 
 while ((Get-Date) -lt $deadline -and -not $game) {
     Start-Sleep -Seconds 1
-    $game = Get-Process | Where-Object { $_.ProcessName -like "ut2004*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+
+    $candidate = Get-Process | Where-Object { $_.ProcessName -like "ut2004*" -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+    $rect = New-Object Ut2004Window+RECT
+
+    if ($candidate -and [Ut2004Window]::GetWindowRect($candidate.MainWindowHandle, [ref]$rect) -and ($rect.Right - $rect.Left) -ge 1000) {
+        $game = $candidate
+    }
 }
 
 if (-not $game) {

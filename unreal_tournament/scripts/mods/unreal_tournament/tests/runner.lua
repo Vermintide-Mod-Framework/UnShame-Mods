@@ -942,7 +942,46 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	end
 end
 
-mod:command("ut_equip", "<suite> [career] | back - puts the weapon of a suite in your hands, or puts your loadout back", function (argument, career)
+-- For looking at a weapon: an enemy that stands still in front of the player, and the flags that keep the level empty and the
+-- player unhurt (the ones a suite sets).
+mod:command("ut_spawn", "<breed> [distance] - spawns an enemy that distance (5 m) ahead of the player, on the ground", function (breed_name, distance)
+	local unit = player_unit()
+	local breed = Breeds[breed_name or "chaos_marauder"]
+	local first_person_extension = unit and ScriptUnit.has_extension(unit, "first_person_system")
+
+	if not breed or not first_person_extension then
+		log("ut_spawn: there is no such enemy or no player")
+
+		return
+	end
+
+	local origin = first_person_extension:current_position()
+	local flat = Vector3.normalize(Vector3.flat(Quaternion.forward(first_person_extension:current_rotation())))
+	local above = origin + flat * (tonumber(distance) or 5) + Vector3(0, 0, 2)
+	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+	local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world, above, Vector3.down(), 8, "closest", "collision_filter", "filter_ai_line_of_sight_check")
+
+	if not hit then
+		log("ut_spawn: there is no ground there")
+
+		return
+	end
+
+	Managers.state.conflict:spawn_one(breed, above - Vector3(0, 0, hit_distance), nil, {}, Quaternion.look(-flat, Vector3.up()))
+end)
+
+mod:command("ut_quiet", "on | off - keeps the level empty and the player unhurt, like a suite does", function (argument)
+	if argument == "off" then
+		if runner.quiet_restore then
+			runner.quiet_restore()
+			runner.quiet_restore = nil
+		end
+	elseif not runner.quiet_restore then
+		runner.quiet_restore = set_quiet_flags()
+	end
+end)
+
+mod:command("ut_equip","<suite> [career] | back - puts the weapon of a suite in your hands, or puts your loadout back", function (argument, career)
 	if argument == "back" or not argument then
 		runner.unequip()
 	else

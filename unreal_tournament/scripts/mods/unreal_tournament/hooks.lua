@@ -557,6 +557,22 @@ mod:hook_safe(StateIngame, "pre_render", function ()
 	end
 end)
 
+-- Drawing on the screen, after the game's own user interface has been updated. The user interface's renderer draws what is added to
+-- its gui. The announcer's words and the Lightning Gun's scope are drawn this way.
+--   mod.ingame_ui_post_update_callbacks[name] = function (ingame_ui) ... end
+-- ingame_ui.ui_renderer.gui is the gui.
+--   mod.ingame_ui_init_callbacks[name] = function (ingame_ui)
+-- This runs when the in-game user interface is made, which is when a level starts. Its renderer is made then, and only knows the
+-- materials that the mod had added to the renderers before that.
+mod.ingame_ui_post_update_callbacks = {}
+mod.ingame_ui_init_callbacks = {}
+
+mod:hook_safe(IngameUI, "post_update", function (self)
+	for _, callback in pairs(mod.ingame_ui_post_update_callbacks) do
+		callback(self)
+	end
+end)
+
 -- Runs when the character starts to hang off a ledge. The game plays the hanging animations, but a weapon's own stance animation is
 -- still playing under them, so the weapon ends it. It gets the character's unit, and only runs for the player's own character.
 --   mod.ledge_hang_callbacks[name] = function (unit)

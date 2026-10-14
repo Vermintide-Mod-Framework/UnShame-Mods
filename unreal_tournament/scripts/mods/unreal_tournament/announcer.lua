@@ -363,7 +363,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 end
 
 -- Draws the words every frame. The game's own user interface draws them, the way it draws its debug texts.
-mod:hook_safe(IngameUI, "post_update", function (self)
+mod.ingame_ui_post_update_callbacks.announcer = function (self)
 	if not next(messages) then
 		return
 	end
@@ -389,7 +389,7 @@ mod:hook_safe(IngameUI, "post_update", function (self)
 			Gui.text(gui, message.text, CONFIG.font_material, size, CONFIG.font_name, position, Color(alpha, red, green, blue))
 		end
 	end
-end)
+end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	multi_kill_level = 0

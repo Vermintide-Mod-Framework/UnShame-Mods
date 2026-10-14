@@ -99,6 +99,18 @@ WEAPONS = {
         ('ut_link_beam_3d', SOUNDS + 'BLinkGunBeam', True, -28, 30),
         ('ut_link_projectile_3d', SOUNDS + 'LinkGunProjectile', True, -30, 25),
     ],
+    'lightning_gun': [
+        ('ut_lightning_fire', SOUNDS + 'BLightningGunFire', False, -22, 0),
+        # (SniperFire.PlayFiring: the charge up that follows a shot, if there is ammo for the next)
+        ('ut_lightning_charge', SOUNDS + 'LightningGunChargeUp', False, -24, 0),
+        ('ut_lightning_select', SOUNDS + 'SwitchToLightningGun', False, -24, 0),
+        # (SniperRifle.RenderOverlays: LightningZoomIn and LightningZoomOut)
+        ('ut_lightning_zoom_in', SOUNDS + 'BZoomIn1', False, -26, 0),
+        ('ut_lightning_zoom_out', SOUNDS + 'BZoomOut1', False, -26, 0),
+        # (the bolt's hit: LightningBolt.PostBeginPlay)
+        ('ut_lightning_impact_3d', SOUNDS + 'BLightningGunImpact', True, -20, 50),
+        ('ut_lightning_fire_3d', SOUNDS + 'BLightningGunFire', True, -22, 50),
+    ],
 }
 
 def fnv1(name):

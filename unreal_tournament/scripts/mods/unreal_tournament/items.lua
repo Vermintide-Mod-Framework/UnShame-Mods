@@ -58,17 +58,24 @@ local function add_material_set(material_set)
 	end
 end
 
+-- A weapon that draws on the screen (the Lightning Gun's scope) adds its materials the same way.
+items.add_material_set = add_material_set
+
 -- The in-game UI makes its renderers when a level loads. A renderer made before the mod was loaded or reloaded can't find the icon's
 -- material, because the game mounts the mod's resources again on a reload. So in a level, the items keep the base item's icon until the
 -- next level.
 local icons_waiting = {}
 
-mod:hook_safe(IngameUI, "init", function ()
+mod:hook_safe(IngameUI, "init", function (self)
 	for _, set_icon in ipairs(icons_waiting) do
 		set_icon()
 	end
 
 	table.clear(icons_waiting)
+
+	for _, callback in pairs(mod.ingame_ui_init_callbacks) do
+		callback(self)
+	end
 end)
 
 -- After a reload, the renderers that the game made before it can't find the icon's material, and the game crashes when one draws it.

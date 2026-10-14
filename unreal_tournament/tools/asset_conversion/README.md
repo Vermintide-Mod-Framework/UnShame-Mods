@@ -20,8 +20,8 @@ Local tools that produced `units/ut/*`, `ui/ut/*`, `wwise/unreal_tournament/*`, 
 
 | Script | Makes | From |
 |---|---|---|
-| `convert_weapon.py <weapon> <export dir>` | the first person model of a weapon: `units/ut/<weapon>`, its materials and textures, and its animations as Lua. The weapons are in `WEAPONS`: `flak`, `rocket`, `bio`, `link`, `shock2003` | the psk and psa of the weapon, its textures |
-| `convert_static.py <name> <export dir>` | static meshes: the pickups (the third person) and the meshes of the projectiles. The meshes are in `STATICS`: `flak_pickup`, `flak_chunk`, `flak_shell`, `shock2003_pickup`, `link_pickup`, `bio_pickup`, `rocket_pickup`, `rocket_proj` | a pskx and its texture |
+| `convert_weapon.py <weapon> <export dir>` | the first person model of a weapon: `units/ut/<weapon>`, its materials and textures, and its animations as Lua. The weapons are in `WEAPONS`: `flak`, `rocket`, `bio`, `link`, `sniper`, `shock2003` | the psk and psa of the weapon, its textures |
+| `convert_static.py <name> <export dir>` | static meshes: the pickups (the third person) and the meshes of the projectiles. The meshes are in `STATICS`: `flak_pickup`, `flak_chunk`, `flak_shell`, `shock2003_pickup`, `link_pickup`, `sniper_pickup`, `bio_pickup`, `rocket_pickup`, `rocket_proj` | a pskx and its texture |
 | `psk2bsi.py` | a mesh in the SDK's `.bsi` format (what the two above use) | a psk or pskx |
 | `tga2png.py in.tga out.png [tint]` | a texture as a png, with an optional tint | a tga |
 | `make_anim_assets.py <scratch>` | the animations of the UT2004 Shock Rifle (`shock/skin_animations.lua`) | `umodel/out3` |
@@ -31,8 +31,10 @@ Local tools that produced `units/ut/*`, `ui/ut/*`, `wwise/unreal_tournament/*`, 
 | `make_fx_meshes.py <scratch>` | the meshes of the effects: `coil`, `sphere`, `vortex`, `light`, `flak_flash_mesh` | `umodel/out11`, `out13`, `out34` |
 | `split_flak_trail.py <scratch>` | the Flak Cannon's trail streak (turned a quarter, for a beam) and the generated glows of the chunk and of the shell | `umodel/out4`, `out9`, `out11` |
 | `split_smoke.py <scratch>` | `smoke_0` to `smoke_15`: the 16 puffs of UT's smoke sheet, one texture each (a smoke particle shows one of them) | `umodel/out9` |
+| `make_sniper_screen.py <export dir>` | the Lightning Gun's screen (UT2004's SniperScreen1C, the scope's readout blended with scan lines), as a tga in the export folder where `convert_weapon.py sniper` reads it | `WeaponSkins` exported there |
+| `make_lightning_assets.py <export dir>` | the Lightning Gun's effects (`units/ut/fx/lightning_bolt`, `lightning_flare`, `lightning_charge_0` to `_3`, `blue_spark`, each with its `fx_` material) and the textures and gui materials of its scope (`ui/ut/lightning_scope*`) | `XEffects`, `XWeapons_rc` and `XGameShaders` exported there |
 | `make_flak_flash.py <scratch> [name]` | the texture of the first person muzzle flash of the Flak Cannon (`flak_flash`, the default) or of the Bio Rifle (`bio_flash`) | `umodel/out33` (`XGameShaders`) |
-| `make_bank.py <weapon> <scratch>` | the sound banks in `wwise/unreal_tournament`: a bank with an event for each sound, written by hand. The weapons are in `WEAPONS`: `announcer`, `shock_rifle`, `flak_cannon`, `rocket_launcher`, `bio_rifle`, `link_gun` | the sounds exported with `-sounds`: `umodel/out5`, `out8`, `out10`, `out35` |
+| `make_bank.py <weapon> <scratch>` | the sound banks in `wwise/unreal_tournament`: a bank with an event for each sound, written by hand. The weapons are in `WEAPONS`: `announcer`, `shock_rifle`, `flak_cannon`, `rocket_launcher`, `bio_rifle`, `link_gun`, `lightning_gun` | the sounds exported with `-sounds`: `umodel/out5`, `out8`, `out10`, `out35` |
 | `render_icon.py in.bsi out.png size yaw pitch roll textures [fill]` | an inventory icon from a converted pickup | a bsi and its textures |
 | `preview_weapon.py <weapon> <export dir> out.png [inspect numbers]` | a picture of a first person weapon in its idle or inspect pose, placed the way `weapon_skin.lua` does | a psk |
 | `render_psk2.py` | a check (below) | |

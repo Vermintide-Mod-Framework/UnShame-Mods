@@ -1,7 +1,7 @@
 # Saves a picture of the running game's window as a PNG, so that what the game shows can be looked at from the command line. It never takes
 # a picture of anything else on the screen. The game is Vermintide 2, or Unreal Tournament 2004 (the reference for the weapons).
 #
-#   screenshot.ps1 -Path out.png [-Target launcher | ut2004]
+#   screenshot.ps1 -Path out.png [-Target launcher | ut2004] [-Burst 20 -Interval 50]
 #
 # -Target launcher takes the picture of Vermintide 2's launcher window (the program in the game's folder) instead.
 # -Target ut2004 takes the picture of Unreal Tournament 2004's window.
@@ -11,7 +11,9 @@
 
 param(
     [Parameter(Mandatory = $true)][string]$Path,
-    [ValidateSet("game", "launcher", "ut2004")][string]$Target = "game"
+    [ValidateSet("game", "launcher", "ut2004")][string]$Target = "game",
+    [int]$Burst = 1,
+    [int]$Interval = 50
 )
 
 $ErrorActionPreference = "Stop"
@@ -80,12 +82,21 @@ $origin.X = $left
 $origin.Y = $top
 $width = $right - $left
 $height = $bottom - $top
-$bitmap = New-Object System.Drawing.Bitmap $width, $height
-$graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+# With -Burst, that many pictures are taken one after the other, Interval milliseconds apart, as <Path>_1.png, <Path>_2.png and so on. The
+# window is only brought to the front once, so they come fast. It is for catching something that lasts a moment.
+for ($index = 1; $index -le $Burst; $index++) {
+    $bitmap = New-Object System.Drawing.Bitmap $width, $height
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
 
-$graphics.CopyFromScreen($origin.X, $origin.Y, 0, 0, (New-Object System.Drawing.Size $width, $height))
-$bitmap.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
-$graphics.Dispose()
-$bitmap.Dispose()
+    $graphics.CopyFromScreen($origin.X, $origin.Y, 0, 0, (New-Object System.Drawing.Size $width, $height))
 
-Write-Host "Saved $Path ($width x $height)"
+    $file = if ($Burst -gt 1) { [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($Path), [System.IO.Path]::GetFileNameWithoutExtension($Path) + "_" + $index + ".png") } else { $Path }
+
+    $bitmap.Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
+    $graphics.Dispose()
+    $bitmap.Dispose()
+
+    if ($index -lt $Burst) { Start-Sleep -Milliseconds $Interval }
+}
+
+Write-Host "Saved $Path ($width x $height, $Burst picture(s))"

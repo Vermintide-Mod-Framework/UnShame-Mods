@@ -1,0 +1,9 @@
+events = {
+	ut_lightning_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.288 duration_max = 2.288 positioning = "2D" }
+	ut_lightning_charge = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.002 duration_max = 2.002 positioning = "2D" }
+	ut_lightning_select = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.668 duration_max = 0.668 positioning = "2D" }
+	ut_lightning_zoom_in = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.091 duration_max = 0.091 positioning = "2D" }
+	ut_lightning_zoom_out = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.420 duration_max = 0.420 positioning = "2D" }
+	ut_lightning_impact_3d = { attenuation_max = 50 duration_type = "OneShot" duration_min = 1.603 duration_max = 1.603 positioning = "3D" }
+	ut_lightning_fire_3d = { attenuation_max = 50 duration_type = "OneShot" duration_min = 2.288 duration_max = 2.288 positioning = "3D" }
+}

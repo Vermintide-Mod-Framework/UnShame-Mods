@@ -140,8 +140,13 @@ local function scenarios()
 				t.expect(after < before, "the target was not hurt: %s of %s", tostring(after), tostring(before))
 				mod:echo("[ut_test] the bolt did %s damage to a marauder with %s health", tostring(before - after), tostring(before))
 
-				if bolts[1] and Unit.alive(target) then
-					mod:echo("[ut_test] the bolt ended %.2f m from the marauder", Vector3.length(bolts[1].end_position - Unit.world_position(target, 0)))
+				if bolts[1] then
+					-- Vectors are made on the main thread, and the engine refuses them in a coroutine
+					local distance = t.on_main_thread(function ()
+						return Unit.alive(target) and Vector3.length(bolts[1].end_position - Unit.world_position(target, 0)) or -1
+					end)
+
+					mod:echo("[ut_test] the bolt ended %.2f m from the marauder", distance)
 				end
 			end,
 		},

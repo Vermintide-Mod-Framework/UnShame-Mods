@@ -47,6 +47,15 @@ WEAPONS = {
         'offset': (3, 7, 0),
         'pivot': (0, 0, 0),
     },
+    'sniper': {
+        'psk': 'Weapons/SkeletalMesh/Sniper_1st.psk',
+        'textures': ['units/ut/lightning/lightning_gun_snipertex0.png', 'units/ut/lightning/lightning_gun_sniperscreen1c.png', 'units/ut/lightning/lightning_gun_sniperscreen2.png'],
+        'lua': 'scripts/mods/unreal_tournament/lightning/skin_animations.lua',
+        'display_fov': 60,
+        'draw_scale': 0.4,
+        'offset': (2.3, 0, 0),
+        'pivot': (0, 0, 0),
+    },
     'shock2003': {
         'psk': 'Weapons/SkeletalMesh/ShockRifle_1st.psk',
         'textures': ['units/ut/shock2003/shock_rifle_shocktex0.png', 'units/ut/shock2003/shock_rifle_shocktex0.png', None],
