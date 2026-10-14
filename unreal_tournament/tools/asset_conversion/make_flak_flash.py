@@ -1,8 +1,10 @@
 import sys, os
 
-# Makes the texture of the first person muzzle flash of the Flak Cannon: XGameShaders.flak_flash, the texture of the shader
-# (flakflashfinal) that FlakMuzFlash1st's mesh is drawn with (the mesh is units/ut/fx/flak_flash_mesh, made by make_fx_meshes.py).
-# Usage: make_flak_flash.py <scratch dir>     (the texture is exported with UModel: umodel -export XGameShaders.utx, to <scratch>/umodel/out33)
+# Makes the texture of a first person muzzle flash: XGameShaders.flak_flash, the texture of the shader (flakflashfinal) that
+# FlakMuzFlash1st's mesh is drawn with, or bio_flash, that of BioMuzFlash1st's, which uses the same mesh (the mesh is
+# units/ut/fx/flak_flash_mesh, made by make_fx_meshes.py).
+# Usage: make_flak_flash.py <scratch dir> [flak_flash | bio_flash]     (the texture is exported with UModel: umodel -export
+# XGameShaders.utx, to <scratch>/umodel/out33)
 
 SCRATCH = sys.argv[1]
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -17,8 +19,8 @@ import struct, zlib
 exec(helpers)
 exec(templates)
 
-name = 'flak_flash'
-w, h, rows = read_tga('%s/umodel/out33/XGameShaders/Texture/flak_flash.tga' % SCRATCH)
+name = sys.argv[2] if len(sys.argv) > 2 else 'flak_flash'
+w, h, rows = read_tga('%s/umodel/out33/XGameShaders/Texture/%s.tga' % (SCRATCH, name))
 
 write_png('%s/%s.png' % (FX, name), w, h, rows)
 open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % {'name': name})
