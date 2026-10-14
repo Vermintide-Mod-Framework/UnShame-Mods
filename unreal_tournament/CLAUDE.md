@@ -15,8 +15,8 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
 - The game can be started and driven from here with the scripts in `tools/` (PowerShell). `run_tests.ps1 -Suite <suite>` does the whole loop: it
   starts the game if it is not running (`start_game.ps1`: the game's program directly, without the launcher, and Enter on Start Game and on
   Adventure in the main menu), runs the in-game suite, and prints its results. It notices a crash (the game's process is gone), and
-  `-RetryAfterCrash` starts the game again and runs the suite once more. `-Reload` reloads the mods first, and `-ForceCrashAfterSeconds` kills
-  the game to try the loop. `screenshot.ps1` and `game_input.ps1` give a picture of the game's window, and send it a key or a click.
+  `-RetryAfterCrash` starts the game again and runs the suite once more. `-Reload` reloads the mods first. `screenshot.ps1` and `game_input.ps1`
+  give a picture of the game's window, and send it a key or a click.
   **Only ever take pictures of the game's window, never of the rest of the screen.** The launcher is not used, and the user has set
   `SendCrashReports = false` in the launcher's config so that a crash leaves no windows. The user still tests by playing and sends
   screenshots, logs and crash text. Do not add "I haven't tested this in game" disclaimers in replies; when something cannot be known from

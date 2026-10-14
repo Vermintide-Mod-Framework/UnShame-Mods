@@ -2,12 +2,10 @@
 # the results. The game has to be running with the mod, and its window gets the keyboard focus while this runs.
 #
 #   run_tests.ps1 -Suite flak [-Career es_mercenary] [-Build] [-Reload] [-TimeoutSeconds 600] [-RetryAfterCrash]
-#                 [-ForceCrashAfterSeconds 25]
 #
 #   -Build   builds the mod first (vmb build, from the mods folder)
 #   -Reload  reloads the mods in the game (Ctrl+Shift+R, the framework's hotkey) and waits for the reload to show in the log
 #   -RetryAfterCrash  if the game crashes (its process is gone), starts it again and runs the suite once more
-#   -ForceCrashAfterSeconds  kills the game's process that long after the suite starts, to try the loop with a crash
 #
 # If the game is not running, it is started first (start_game.ps1) and taken to the Keep, so this one script does everything.
 # Exit codes: 0 all passed, 1 a test failed, 2 timed out, 3 the game crashed.
@@ -21,7 +19,6 @@ param(
     [switch]$Reload,
     [int]$TimeoutSeconds = 600,
     [int]$ReloadWaitSeconds = 15,
-    [int]$ForceCrashAfterSeconds = 0,
     [switch]$RetryAfterCrash
 )
 
@@ -202,7 +199,7 @@ function Show-Crash([string]$logPath) {
 
 # Sends the suite's command to the game and follows the log until the suite is over, the game is gone, or the time is up.
 # Returns "done", "crash" or "timeout", and sets $script:testsFailed.
-function Run-Suite([int]$forceCrashAfter) {
+function Run-Suite {
     $log = Latest-Log
     $start = Log-Length
     $command = "/ut_test $Suite $Career".Trim()
@@ -219,16 +216,9 @@ function Run-Suite([int]$forceCrashAfter) {
     $deadline = $began.AddSeconds($TimeoutSeconds)
     $shown = $start
     $script:testsFailed = $false
-    $crashForced = $false
 
     while ((Get-Date) -lt $deadline) {
         Start-Sleep -Seconds 1
-
-        if ($forceCrashAfter -gt 0 -and -not $crashForced -and ((Get-Date) - $began).TotalSeconds -ge $forceCrashAfter) {
-            Write-Host "Forcing a crash: the game's process is killed."
-            Get-Process | Where-Object { $_.ProcessName -like "vermintide2*" } | Stop-Process -Force
-            $crashForced = $true
-        }
 
         $lines = Get-LogLines
 
@@ -277,13 +267,12 @@ if (-not $started) {
     if ($Reload) { Reload-Mods }
 }
 
-$forceCrash = $ForceCrashAfterSeconds
-$result = Run-Suite $forceCrash
+$result = Run-Suite
 
 if ($result -eq "crash" -and $RetryAfterCrash) {
     Write-Host "Starting the game again and running the suite once more..."
     [void](Ensure-Game)
-    $result = Run-Suite 0
+    $result = Run-Suite
 }
 
 switch ($result) {
