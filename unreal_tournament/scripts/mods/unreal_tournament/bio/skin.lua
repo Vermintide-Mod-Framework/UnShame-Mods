@@ -188,16 +188,17 @@ skin_api = mod.weapon_skin.new({
 		-- The game links the Masterwork Pistol to the right hand's node (AttachmentNodeLinking.steam_pistol).
 		hand_node = "j_rightweaponattach",
 		meters_per_unit = 0.012,
-		scale = 0.6,
-		grip_right = 14,
-		grip_forward = 0,
-		grip_up = -20,
+		-- The mesh is 0.67 m long, so 0.34 m as it is held.
+		scale = 0.5,
+		-- The ring of the mesh that a hand goes through, in the mesh's own axes (its barrel runs along -x, and its ring is on the -y side).
+		grip_right = 5,
+		grip_forward = -12.5,
+		grip_up = 2,
 		yaw = -90,
 		pitch = 0,
 		roll = 0,
-		-- In the world the rifle follows the pistol's unit, which the arms animate.
-		follow_game_unit = 1,
-		follow_calibrate_seconds = 1,
+		-- In the world the rifle is held as the pistol is: it is turned as the pistol's unit is, with the barrel along the unit's y.
+		follow_game_unit = 2,
 		muzzle_right = -30,
 		muzzle_forward = 0,
 		muzzle_up = -10,
