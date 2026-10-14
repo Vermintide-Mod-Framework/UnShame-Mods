@@ -55,6 +55,10 @@ local CONFIG = {
 	start_forward = 0.8, -- m
 	start_right = 0.25, -- m
 	start_down = 0.15, -- m
+	-- The view shakes when a glob is fired (ShakeRotMag 70 for BioFire and 100 for BioChargedFire, which also moves the view back). The
+	-- game's shakes are a noise of an amplitude over a time in seconds. UT's units do not carry over, so these are set by eye.
+	shake_primary = { amplitude = 0.08, duration = 0.3 },
+	shake_charged = { amplitude = 0.12, duration = 0.4 },
 	-- BioChargedFire: GoopUpRate, MaxGoopLoad and FireRate
 	goop_up_rate = 0.25, -- seconds between two units of goop
 	max_goop_load = 10,
@@ -101,6 +105,10 @@ local CONFIG = {
 	flying_collision_uu = 2,
 	-- The height of the surface normal's down component above which a glob is on a ceiling (SurfaceNormal dot (0, 0, -1) > 0.7)
 	ceiling_dot = 0.7,
+	-- Bots keep away from a glob that has landed (UT's AvoidMarker) the way they keep away from a fire grenade's fire: a nav tag volume
+	-- of the same layer, as wide as the blast plus this margin (the margin is what AreaDamageExtension adds for a player's size).
+	avoid_layer = "fire_grenade",
+	avoid_margin = 0.5, -- m
 	-- A glob that lands also leaves a splat on the surface (BioDecal), which stays for 6 seconds.
 	-- The size of a character, for the globs that wait for someone to step in. UT's collision is 17 uu in radius and 88 uu high.
 	pawn_radius_uu = 17,
@@ -176,6 +184,27 @@ end
 -- A charged glob is slower the more goop it has (BioGlob.AdjustSpeed).
 local function charged_speed_uu(level)
 	return CONFIG.glob_speed_uu * (0.4 + level) / (1.4 * level)
+end
+
+-- The shakes are added to the game's, which has them by name.
+local SHAKES = {
+	ut_bio_charged_fire = CONFIG.shake_charged,
+	ut_bio_fire = CONFIG.shake_primary,
+}
+
+for name, shake in pairs(SHAKES) do
+	CameraEffectSettings.shake[name] = {
+		amplitude = shake.amplitude,
+		duration = shake.duration,
+		octaves = 6,
+		persistance = 1,
+	}
+end
+
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+	for name in pairs(SHAKES) do
+		CameraEffectSettings.shake[name] = nil
+	end
 end
 
 local GRAVITY_SETTINGS = "ut_bio_glob"
@@ -678,6 +707,10 @@ mod.spawn_projectile_callbacks[TEMPLATE_NAME] = function (func, owner_unit, posi
 		scale = scale_to_send(level)
 		speed = action_speed(action.ut_bio_charged and charged_speed_uu(level) or CONFIG.glob_speed_uu)
 		power_level = power_level * power_ratio(level)
+
+		if utils.is_local_player_unit(owner_unit) then
+			Managers.state.camera:camera_effect_shake_event(action.ut_bio_charged and "ut_bio_charged_fire" or "ut_bio_fire", Managers.time:time("game"))
+		end
 	end
 
 	return func(owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, is_critical_strike, power_level, ...)
@@ -717,20 +750,48 @@ local function visuals()
 	return mod.goop_visual_callbacks
 end
 
+-- Where the globs that have landed are, on every machine, by the glob's id: { level, normal, position } (the vectors boxed). A player's
+-- own glob looks here to see if it flies into one (see join_flying_globs).
+local landed_globs = {}
+
+local function glob_landed(id, position, normal, level)
+	landed_globs[id] = {
+		level = level,
+		normal = Vector3Box(normal),
+		position = Vector3Box(position),
+	}
+
+	visuals().land(id, position, normal, level)
+end
+
+local function glob_merged(id, level)
+	if landed_globs[id] then
+		landed_globs[id].level = level
+	end
+
+	visuals().merge(id, level)
+end
+
+local function glob_ended(id)
+	landed_globs[id] = nil
+
+	visuals().stop(id)
+end
+
 mod:network_register("ut_bio_land", function (_, id, x, y, z, normal_x, normal_y, normal_z, level)
-	visuals().land(id, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), level)
+	glob_landed(id, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), level)
 end)
 
 mod:network_register("ut_bio_merge", function (_, id, level)
-	visuals().merge(id, level)
+	glob_merged(id, level)
 end)
 
 mod:network_register("ut_bio_end", function (_, id)
-	visuals().stop(id)
+	glob_ended(id)
 end)
 
 local function end_visual(glob)
-	visuals().stop(glob.id)
+	glob_ended(glob.id)
 	mod:network_send("ut_bio_end", "others", glob.id)
 end
 
@@ -744,7 +805,37 @@ local function rest_end_time(glob, t)
 	return t + CONFIG.rest_time
 end
 
+-- Makes the volume that bots avoid at a glob, or makes it again at the glob's size now.
+local function stop_avoiding(glob)
+	local entity_manager = Managers.state and Managers.state.entity
+	local volume_system = entity_manager and entity_manager:system("volume_system")
+	local handler = volume_system and volume_system.nav_tag_volume_handler
+
+	-- The volume is gone with the level it was made in, and the game breaks on destroying one that is not there.
+	if glob.avoid_volume and handler == glob.avoid_handler and handler.created_tag_volumes[glob.avoid_volume] then
+		volume_system:destroy_nav_tag_volume(glob.avoid_volume)
+	end
+
+	glob.avoid_volume = nil
+	glob.avoid_handler = nil
+end
+
+local function avoid_glob(glob)
+	local volume_system = Managers.state.entity:system("volume_system")
+
+	if not volume_system.nav_tag_volume_handler then
+		return
+	end
+
+	stop_avoiding(glob)
+
+	glob.avoid_volume = volume_system:create_nav_tag_volume_from_data(glob.position:unbox(), blast_radius(glob.level) + CONFIG.avoid_margin, CONFIG.avoid_layer)
+	glob.avoid_handler = volume_system.nav_tag_volume_handler
+end
+
 local function blow_up(glob)
+	stop_avoiding(glob)
+
 	local context = glob.context
 	local normal = glob.normal:unbox()
 	local position = glob.position:unbox() + normal * 0.1
@@ -760,6 +851,8 @@ end
 
 -- A glob on a ceiling falls, as a glob of the same level.
 local function drip(glob)
+	stop_avoiding(glob)
+
 	local context = glob.context
 	local position = glob.position:unbox() + glob.normal:unbox() * 0.1
 	local speed = CONFIG.drip_speed_uu * UNIT * CONFIG.speed_scale
@@ -805,7 +898,8 @@ local function merge(glob, level, t)
 	glob.drips = glob.ceiling
 	glob.expire = rest_end_time(glob, t)
 
-	visuals().merge(glob.id, glob.level)
+	avoid_glob(glob)
+	glob_merged(glob.id, glob.level)
 	mod:network_send("ut_bio_merge", "others", glob.id, glob.level)
 end
 
@@ -868,7 +962,8 @@ local function land(context, position, normal, landing_velocity, level, t)
 	glob.expire = rest_end_time(glob, t)
 	stuck[#stuck + 1] = glob
 
-	visuals().land(glob.id, position, normal, level)
+	avoid_glob(glob)
+	glob_landed(glob.id, position, normal, level)
 	mod:network_send("ut_bio_land", "others", glob.id, position.x, position.y, position.z, normal.x, normal.y, normal.z, level)
 end
 
@@ -930,6 +1025,7 @@ local function update_globs(t)
 			-- The player's unit is gone, because a hero was changed or the level was left. Nothing can be made for it, because the game
 			-- breaks on an explosion that has no attacker.
 			table.remove(stuck, i)
+			stop_avoiding(glob)
 			end_visual(glob)
 		else
 			-- BioGlob.OnGround.ProcessTouch: a pawn that steps in sets the explosion for 0.15 seconds from now.
@@ -1106,6 +1202,41 @@ mod.aoe_callbacks.ut_bio_glob = function (self, aoe_data, position)
 	end
 end
 
+-- BioGlob.Flying.ProcessTouch: a glob that flies into a glob that has landed joins it, wherever it touches it, and does not have to
+-- reach a surface. It is landed at the glob it touched, which joins them, and it is stopped. The globs that come off a landing glob are not
+-- joined, because they start inside it. Each machine checks the globs of its own player.
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	local projectiles = next(landed_globs) and utils.flying_projectiles()
+
+	if not projectiles then
+		return
+	end
+
+	local touch_extra = CONFIG.flying_collision_uu * UNIT
+
+	for _, projectile in ipairs(projectiles) do
+		local extension = projectile.extension
+
+		if projectile.own and extension._current_action.ut_bio_shot and not extension._ut_bio_done and not extension._stop_impacts then
+			local position = Unit.world_position(projectile.unit, 0)
+
+			for _, landed in pairs(landed_globs) do
+				local landed_position = landed.position:unbox()
+
+				if Vector3.distance(landed_position, position) <= glob_radius(landed.level) + touch_extra then
+					extension._ut_bio_hit_normal = landed.normal
+					extension._ut_bio_hit_direction = Vector3Box(Vector3.normalize(landed_position - position))
+
+					mod.aoe_callbacks.ut_bio_glob(extension, nil, landed_position)
+					extension:stop()
+
+					break
+				end
+			end
+		end
+	end
+end
+
 -- A glob that hits a player, a bot or an enemy explodes there, in the air (BioGlob.Flying.ProcessTouch). The explosion goes through
 -- the area damage system, which applies the damage on the host and makes the explosion on every machine.
 mod.hit_enemy_callbacks.ut_bio_glob = function (func, self, is_owner, impact_data, hit_unit, hit_position, ...)
@@ -1158,11 +1289,14 @@ mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_pistol
 -- The globs are cleared when the mod is unloaded and when a level is left.
 local function clear_all()
 	for _, glob in ipairs(stuck) do
+		stop_avoiding(glob)
+
 		if visuals().stop then
 			visuals().stop(glob.id)
 		end
 	end
 
+	table.clear(landed_globs)
 	table.clear(stuck)
 	table.clear(goop_loads)
 end
