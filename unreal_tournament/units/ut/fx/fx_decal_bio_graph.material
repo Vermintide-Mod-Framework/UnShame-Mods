@@ -20,6 +20,18 @@ shader = {
 		}
 		{
 			destination = {
+				connector_id = "34259752-b962-4b65-92c3-903a57338519"
+				instance_id = "c0de0001-0000-4000-8000-000000000001"
+			}
+			select = [
+				"r"
+			]
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000004"
+			}
+		}
+		{
+			destination = {
 				connector_id = "c010729f-6137-412c-99a5-f263fdeaa53c"
 				instance_id = "c0de0001-0000-4000-8000-000000000005"
 			}
@@ -66,11 +78,19 @@ shader = {
 	]
 	constants = [
 		{
-			connector_id = "ad5e052f-d316-4a0f-8b79-53c38204d61b"
+			connector_id = "7a9306c6-95ae-4cdb-9fef-0eedacce4e83"
 			id = "c0de0001-0000-4000-8000-000000001000"
 			instance_id = "c0de0001-0000-4000-8000-000000000001"
 			value = [
-				1
+				0.5
+			]
+		}
+		{
+			connector_id = "ad5e052f-d316-4a0f-8b79-53c38204d61b"
+			id = "c0de0001-0000-4000-8000-000000001001"
+			instance_id = "c0de0001-0000-4000-8000-000000000001"
+			value = [
+				0.5
 			]
 		}
 	]
