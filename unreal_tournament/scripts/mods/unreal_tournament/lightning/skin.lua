@@ -15,22 +15,23 @@ local particles = mod.skin_particles
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
-	-- NewLightningBolt: the bolt is 30 units wide and lasts half a second. Each part of it is as long as bolt_segment, and the parts
-	-- are out of line by bolt_jitter (mPosDev, 5 units) each way.
-	bolt_width = 30,
+	-- NewLightningBolt lasts half a second. It is drawn as a line of parts of the streak texture, each bolt_segment meters long and
+	-- bolt_width wide. A part is out of line by bolt_jitter. UT's bolt is a thin bright line with small zigzags.
+	bolt_width = 6, -- UT units
 	bolt_life = 0.5,
-	bolt_segment = 1,
-	bolt_jitter = 0.1,
+	bolt_segment = 2,
+	bolt_jitter = 0.04,
 	bolt_intensity = 1.2,
 	-- ChildLightningBolt: the arcs are 15 units wide, and jump about more
-	arc_width = 15,
+	arc_width = 4,
 	arc_life = 0.5,
-	arc_segment = 0.5,
-	arc_jitter = 0.15,
+	arc_segment = 0.6,
+	arc_jitter = 0.05,
 	arc_intensity = 1.2,
 	-- The flare where the bolt starts and ends (the lower half of LightningBoltT)
-	flare_size = 60,
-	flare_life = 0.2,
+	flare_size = 45,
+	flare_life = 0.4,
+	flare_intensity = 1.5,
 	-- BlueSparks (20 particles of 0.8 to 1.2 s that fly out at 250 to 350 units a second) at the end of the bolt, and
 	-- ChildBlueSparks (10 particles) at the end of an arc
 	spark_count = 20,
@@ -160,6 +161,7 @@ local function flare(position, size)
 			1,
 			1,
 		},
+		intensity = CONFIG.flare_intensity,
 		life = CONFIG.flare_life,
 		position = position,
 		size = size,
@@ -238,6 +240,7 @@ end
 -- Draws a bolt that was fired. It runs on the machine of the shooter and, with the same numbers, on the others.
 local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
 	local start = bolt_start(owner_unit)
+
 
 	if not start then
 		return

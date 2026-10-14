@@ -66,7 +66,7 @@ function Read-Shared([string]$path) {
 
 $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
 $ready = $false
-$menuStep = 0
+$lastMenuTry = [datetime]::MinValue
 
 while ((Get-Date) -lt $deadline -and -not $ready) {
     Start-Sleep -Seconds 2
@@ -83,10 +83,12 @@ while ((Get-Date) -lt $deadline -and -not $ready) {
 
         if ($text -match "\[Gamestate\] Enter StateIngame") {
             $ready = $true
-        } elseif ($menuStep -eq 0 -and $text -match "StateTitleScreenInitNetwork") {
-            # The main menu is up. Start Game is chosen, and then Adventure, which loads the Keep.
-            $menuStep = 1
-            Start-Sleep -Seconds 5
+        } elseif ($text -match "StateTitleScreenInitNetwork" -and ((Get-Date) - $lastMenuTry).TotalSeconds -ge 12 -and $text -notmatch "Enter state StateLoading") {
+            # The main menu is up. Start Game is chosen, and then Adventure, which starts loading the Keep. The menu does not take
+            # input until the game has signed in, which takes a while and is not in the log, so this is tried again until the game is
+            # loading.
+            $lastMenuTry = Get-Date
+            Start-Sleep -Seconds 3
             Write-Host "Choosing Start Game..."
             & (Join-Path $PSScriptRoot "game_input.ps1") -Key Enter
             Start-Sleep -Seconds 4

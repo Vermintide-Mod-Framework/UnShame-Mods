@@ -25,6 +25,9 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
   is the program's argument, so no menus), starts the match, and gives all weapons with the console command `loaded`. Then `screenshot.ps1` and
   `game_input.ps1` with `-Target ut2004` show how the weapons look and play. The game reads the mouse as input, so `game_input.ps1` moves it
   with input events there; Ctrl is Fire and Tilde opens the console. Its window is moved to the top left, or its bottom is under the taskbar.
+- To compare a weapon with UT2004's, take the same moment in both (a burst of pictures, `screenshot.ps1 -Burst 30 -Interval 0`, while a
+  job presses fire: `game_input.ps1 -Press -Hold 100`) and put two of them together with `tools/compare_images.py` (side by side, blended,
+  difference, checkerboard), cropped to the weapon. Compare, change, and compare again.
 - The game's own logs and crash dumps: `%APPDATA%\Fatshark\Vermintide 2\console_logs` and `crash_dumps`. Look at them when told about a crash.
 - In-game tests are in `scripts/mods/unreal_tournament/tests` (`runner.lua`, and a suite for each weapon). `/ut_test <suite>` runs one (or
   `tools/run_tests.ps1 -Suite <suite>`): it loads its level, sets the career and weapon, and goes back to the Keep. The results are lines that
