@@ -189,6 +189,21 @@ skin_api = mod.weapon_skin.new({
 	offset_right = 3,
 	offset_up = 0,
 	bob_damping = 2.2,
+	-- Parts of the mesh that are skinned to the weapon and to the plunger, and are stretched between them (UT's skin does it). The axis is the way
+	-- the plunger moves. The start and the length are where the weapon's points are along it, and how far the plunger's are from them, in meters
+	-- (from the psk, in UT units: the housing from -32.8 to -47.25, the goop from -57.17 to -52.2, times 0.0125).
+	stretches = {
+		b_bone_goop = {
+			axis = Vector3(0.7051, -0.6581, 0.264),
+			length = 0.0621,
+			start = -0.7146,
+		},
+		b_bone_housing = {
+			axis = Vector3(0.7051, -0.6581, 0.264),
+			length = -0.1806,
+			start = -0.41,
+		},
+	},
 	-- The inspect pose brings the rifle to the middle of the view and turns it to the left about its middle. It ends up across the view, with
 	-- its left side towards the player and the nozzle pointing left.
 	inspect_pose_right = -8,
@@ -232,8 +247,14 @@ skin_api = mod.weapon_skin.new({
 	end,
 	-- Moves the model towards the inspect pose and back, and sways it while it is there.
 	on_update = function (skin, dt)
-		-- Once the load is full (or the ammo is gone), UT plays BioGoopLoop until the charge is let go.
+		-- Once the load is full (or the ammo is gone), UT plays BioGoopLoop until the charge is let go. A load that stopped because the ammo
+		-- ran out stops the animation where it is.
 		if charging and mod.bio_goop.is_load_done(charging.owner_unit) then
+			if not charging.stopped and mod.bio_goop.load_amount(charging.owner_unit) < mod.bio_goop.max_load then
+				charging.stopped = true
+				skin.speed = 0
+			end
+
 			charging.loop_timer = charging.loop_timer - dt
 
 			if charging.loop_timer <= 0 then

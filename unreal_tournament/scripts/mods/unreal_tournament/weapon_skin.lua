@@ -42,6 +42,9 @@ local mod = get_mod("unreal_tournament")
 --       (UT sets some by code: the Rocket Launcher's barrel). pose is the row of numbers of a frame, and a bone's numbers start at
 --       (index - 1) * 7 + 1. skin.node_scales[bone index] = Vector3 scales a node along its own axes (a part that stretches, like
 --       the Rocket Launcher's rod).
+--   stretches: { node name = { axis, start, length } } for a part that is skinned to two bones (see 'stretch' in convert_weapon.py). The node
+--       has the move of the bone that moves, and its points are moved by it by a share: how far each is along the axis (a unit vector),
+--       from start to start + length, as 0 to 1. The axis, start and length are in the model's axes and in meters.
 --   on_update_always(dt): runs every frame, whether the skin is shown or not
 --   on_give_back(), on_level_exit(): the weapon takes back and clears what is its own
 
@@ -660,8 +663,26 @@ local function new(def)
 			local node_rotation = Quaternion.from_elements(pose[o + 1], pose[o + 2], pose[o + 3], pose[o + 4])
 			local node_position = Vector3(pose[o + 5], pose[o + 6], pose[o + 7]) * CONFIG.model_meters_per_unit
 			local node_scale = skin.node_scales and skin.node_scales[b]
+			local stretch = CONFIG.stretches and CONFIG.stretches[bones[b]]
 
-			if node_scale then
+			if stretch then
+				-- A part that is skinned to two bones (CONFIG.stretches). Its points are moved by the move of the bone that moves, by
+				-- the share that says how far each point is along the stretch's axis between the two planes of the bone's points.
+				local gain = 1 / stretch.length
+				local function image(axis)
+					return axis + node_position * (Vector3.dot(stretch.axis, axis) * gain)
+				end
+
+				local right, forward, up = image(Vector3(1, 0, 0)), image(Vector3(0, 1, 0)), image(Vector3(0, 0, 1))
+				local start_position = -node_position * (stretch.start * gain)
+
+				Unit.set_local_pose(skin.unit, skin.nodes[b], Matrix4x4(
+					right.x, right.y, right.z,
+					forward.x, forward.y, forward.z,
+					up.x, up.y, up.z,
+					start_position.x, start_position.y, start_position.z
+				))
+			elseif node_scale then
 				-- The node is scaled along its own axes and then turned.
 				local node_right = Quaternion.right(node_rotation) * node_scale.x
 				local node_forward = Quaternion.forward(node_rotation) * node_scale.y

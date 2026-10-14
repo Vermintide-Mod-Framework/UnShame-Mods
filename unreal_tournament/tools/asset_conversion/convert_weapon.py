@@ -147,6 +147,8 @@ WEAPONS['rocket'] = {
 }
 
 WEAPONS['bio'] = {
+    # the plunger's housing and the strip of goop in the tank are skinned to the weapon and to the plunger, and are stretched between them
+    'stretch': [('Bone_housing', 'Bone_weapon', 'Bone_Plunger', (0,)), ('Bone_goop', 'Bone_weapon', 'Bone_Plunger', (2,))],
     'psk': 'Weapons/SkeletalMesh/BioRifle_1st.psk',
     'psa': 'Weapons/MeshAnimation/BioRifle_1st.psa',
     # the body, the glass of the tank, and what is in the tank (the bubbles)
@@ -353,18 +355,25 @@ def main():
     # geometry: a piece for each (bone, material), a face goes with the bone most of its points have
     # A 'stretch' is a part between two bones that is stretched as one of them moves away from the other (UT skins the points of the rod
     # of the Rocket Launcher's piston to two bones). It is a piece of its own, on a bone that is added, which the skin scales.
-    stretch = cfg.get('stretch')
-    stretch_bone = None
-    if stretch:
-        stretch_pair = set(bone_names.index(n) for n in stretch[1:])
-        stretch_bone = len(bone_names)
-        bone_names.append(stretch[0])
+    # cfg['stretch'] is (the name of the added bone, one bone, the bone that moves), or a list of them. A fourth item is the materials the
+    # part is of: there can be one part for each material between the same two bones.
+    stretches = cfg.get('stretch') or []
+    if stretches and not isinstance(stretches[0], tuple):
+        stretches = [stretches]
+    stretch_defs = []
+    stretch_source = {}
+    for entry in stretches:
+        pair = set(bone_names.index(n) for n in entry[1:3])
+        stretch_defs.append((len(bone_names), pair, entry[3] if len(entry) > 3 else None))
+        stretch_source[len(bone_names)] = bone_names.index(entry[2])
+        bone_names.append(entry[0])
     pieces = {}
     for w0, w1, w2, mat in faces:
         votes = [point_bone[wedges[w][0]] for w in (w0, w1, w2)]
         bone = max(set(votes), key=votes.count)
-        if stretch and set(votes) == stretch_pair:
-            bone = stretch_bone
+        for stretch_bone, pair, materials in stretch_defs:
+            if set(votes) == pair and (materials is None or mat in materials):
+                bone = stretch_bone
         pieces.setdefault((bone, mat), []).append((w0, w2, w1))  # the psk's front faces are clockwise
     used_bones = sorted(set(b for b, m in pieces))
 
@@ -532,7 +541,7 @@ def main():
         poses = []
         for b in animated:
             # (a stretch has the pose of the bone that moves, which the skin reads as how far to stretch it)
-            source = bone_names.index(stretch[2]) if b == stretch_bone else b
+            source = stretch_source.get(b, b)
             if b == 0:
                 q, p = skin_q[0], skin_p[0]
             else:
