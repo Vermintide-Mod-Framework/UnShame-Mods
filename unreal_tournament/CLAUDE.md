@@ -12,12 +12,15 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
   (`git rev-list --count HEAD`) plus one. Bump it, build, commit, **and push**, for every change, on this branch too. Do not ask whether to commit.
 - Edit code with the Edit and Write tools, not with Python or sed scripts through the shell (they have mangled backslashes and line endings). The
   files of the flak and the shock have CRLF line endings: keep them.
-- The game can be started and driven from here with the scripts in `tools/` (PowerShell): `start_game.ps1` (starts it through Steam, clicks
-  Play in the launcher and through the main menu, and waits for the Keep), `run_tests.ps1` (reloads the mods with `-Reload`, runs an
-  in-game suite and prints its results), `screenshot.ps1` and `game_input.ps1` (a picture of the game's window, and a key or a click
-  for it). **Only ever take pictures of the game's window or its launcher, never of the rest of the screen.** The user still tests by
-  playing and sends screenshots, logs and crash text. Do not add "I haven't tested this in game" disclaimers in replies; when something
-  cannot be known from the code, say what is guessed and how it can be checked.
+- The game can be started and driven from here with the scripts in `tools/` (PowerShell). `run_tests.ps1 -Suite <suite>` does the whole loop: it
+  starts the game if it is not running (`start_game.ps1`: the game's program directly, without the launcher, and Enter on Start Game and on
+  Adventure in the main menu), runs the in-game suite, and prints its results. It notices a crash (the game's process is gone), and
+  `-RetryAfterCrash` starts the game again and runs the suite once more. `-Reload` reloads the mods first, and `-ForceCrashAfterSeconds` kills
+  the game to try the loop. `screenshot.ps1` and `game_input.ps1` give a picture of the game's window, and send it a key or a click.
+  **Only ever take pictures of the game's window, never of the rest of the screen.** The launcher is not used, and the user has set
+  `SendCrashReports = false` in the launcher's config so that a crash leaves no windows. The user still tests by playing and sends
+  screenshots, logs and crash text. Do not add "I haven't tested this in game" disclaimers in replies; when something cannot be known from
+  the code, say what is guessed and how it can be checked.
 - The game's own logs and crash dumps: `%APPDATA%\Fatshark\Vermintide 2\console_logs` and `crash_dumps`. Look at them when told about a crash.
 - In-game tests are in `scripts/mods/unreal_tournament/tests` (`runner.lua`, and a suite for each weapon). `/ut_test <suite>` runs one (or
   `tools/run_tests.ps1 -Suite <suite>`): it loads its level, sets the career and weapon, and goes back to the Keep. The results are lines that

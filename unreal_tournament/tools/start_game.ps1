@@ -1,12 +1,13 @@
-# Starts Vermintide 2 through Steam, from the command line, and waits until the player is in the Keep. It clicks Play in the game's
-# launcher (the modded realm has to be the one that is chosen there), and presses Enter on Start Game and on Adventure in the main
-# menu. A mod skips the game's intro.
+# Starts Vermintide 2 from the command line, without the launcher, and waits until the player is in the Keep. It starts the game's program
+# with the arguments that the launcher gives it (read from the running game's command line: -eac-untrusted --bundle-dir ../bundle --ini
+# settings --silent-mode), from the launcher's folder, and presses Enter on Start Game and on Adventure in the main menu. A mod skips the
+# game's intro. The launcher and its crash windows are not used.
 #
 #   start_game.ps1 [-Restart] [-TimeoutSeconds 300]
 #
 #   -Restart  closes the game first if it is running
 #
-# It looks for the game's state in the game's console log. Pictures of the game's window can be taken with screenshot.ps1 if it stalls.
+# It looks for the game's state in the game's console log, so a picture of the game's window (screenshot.ps1) is only needed if it stalls.
 
 param(
     [switch]$Restart,
@@ -15,55 +16,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$GameFolder = "E:\SteamLibrary\steamapps\common\Warhammer Vermintide 2"
 $LogFolder = Join-Path $env:APPDATA "Fatshark\Vermintide 2\console_logs"
-$SteamAppId = 552500
-
-Add-Type -TypeDefinition @"
-using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Text;
-
-public static class LauncherWindows {
-    delegate bool EnumProc(IntPtr window, IntPtr parameter);
-    [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc callback, IntPtr parameter);
-    [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr window);
-    [DllImport("user32.dll")] static extern int GetWindowText(IntPtr window, StringBuilder text, int count);
-    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
-    [DllImport("user32.dll")] static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
-
-    // Closes the visible windows of these processes whose title is not the one to keep. Returns their titles.
-    public static List<string> CloseOthers(HashSet<uint> processIds, string keepTitle) {
-        List<string> closed = new List<string>();
-        EnumWindows(delegate (IntPtr window, IntPtr parameter) {
-            uint pid;
-            GetWindowThreadProcessId(window, out pid);
-            if (processIds.Contains(pid) && IsWindowVisible(window)) {
-                StringBuilder text = new StringBuilder(256);
-                GetWindowText(window, text, 256);
-                if (text.ToString() != keepTitle) {
-                    PostMessage(window, 0x0010, IntPtr.Zero, IntPtr.Zero);
-                    closed.Add(text.ToString());
-                }
-            }
-            return true;
-        }, IntPtr.Zero);
-        return closed;
-    }
-}
-"@
-
-# After a crash the launcher and its crash reporter put up windows ("Crash Upload Failed", "Enter Crash Details") that stop it from
-# going on. This closes every window of the game's launcher programs but the launcher itself.
-function Close-LauncherDialogs {
-    $ids = New-Object "System.Collections.Generic.HashSet[uint32]"
-
-    Get-Process | Where-Object { $_.ProcessName -in @("Launcher", "CrashReporter", "CrashifyUploader") -and $_.Path -like "*\Warhammer Vermintide 2\*" } | ForEach-Object { [void]$ids.Add([uint32]$_.Id) }
-
-    foreach ($title in [LauncherWindows]::CloseOthers($ids, "Launcher")) {
-        Write-Host "Closed the window '$title'."
-    }
-}
+$SteamAppId = "552500"
 
 function Get-Game {
     return Get-Process | Where-Object { $_.ProcessName -like "vermintide2*" } | Select-Object -First 1
@@ -80,81 +35,15 @@ if (Get-Game) {
     Start-Sleep -Seconds 6
 }
 
-# A game that crashed leaves its crash report window and its launcher running, and the next launcher then does not start: it fails on the
-# log that the old one holds. They are programs in the game's folder.
-Get-Process | Where-Object { $_.ProcessName -in @("Launcher", "CrashReporter", "CrashifyUploader") -and $_.Path -like "*\Warhammer Vermintide 2\*" } | Stop-Process -Force -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 2
-
 $startedAt = Get-Date
 
-# The launcher writes its own log, and says in it when its buttons can be used
-$LauncherLog = Join-Path (Join-Path $env:APPDATA "Fatshark\Vermintide 2") "vermintide2_launcher.log"
+Write-Host "Starting the game..."
 
-function Read-Shared([string]$path) {
-    $stream = [System.IO.File]::Open($path, "Open", "Read", "ReadWrite")
-    $reader = New-Object System.IO.StreamReader $stream
+# The game finds Steam by these, as it does when Steam starts it
+$env:SteamAppId = $SteamAppId
+$env:SteamGameId = $SteamAppId
 
-    try {
-        return $reader.ReadToEnd()
-    } finally {
-        $reader.Dispose()
-    }
-}
-
-$launcherLogLength = if (Test-Path $LauncherLog) { (Read-Shared $LauncherLog).Length } else { 0 }
-
-Write-Host "Starting the game through Steam..."
-Start-Process "steam://rungameid/$SteamAppId"
-
-# The launcher's Play button, as a place in the picture of the launcher's window (see screenshot.ps1 -Target launcher)
-$launcherDeadline = (Get-Date).AddSeconds(90)
-
-while ((Get-Date) -lt $launcherDeadline) {
-    Close-LauncherDialogs
-
-    $launcher = Get-Process | Where-Object { $_.ProcessName -eq "Launcher" -and $_.Path -like "*\Warhammer Vermintide 2\*" -and $_.MainWindowTitle -eq "Launcher" } | Select-Object -First 1
-
-    if ($launcher) { break }
-
-    Start-Sleep -Seconds 2
-}
-
-if ($launcher) {
-    # The Play button works once the launcher says its interface is enabled
-    $readyDeadline = (Get-Date).AddSeconds(90)
-    $ready = $false
-
-    while ((Get-Date) -lt $readyDeadline -and -not $ready) {
-        Close-LauncherDialogs
-        Start-Sleep -Seconds 1
-
-        $text = Read-Shared $LauncherLog
-        # The launcher may have started its log again
-        $from = if ($text.Length -ge $launcherLogLength) { $launcherLogLength } else { 0 }
-        $ready = $text.Substring($from).Contains("UI Enabled")
-    }
-
-    if (-not $ready) {
-        Write-Host "The launcher did not say it was ready. Clicking Play anyway."
-    }
-
-    # The button needs a moment to draw, and a click that does not start the game is made again
-    Start-Sleep -Seconds 4
-
-    for ($attempt = 1; $attempt -le 3; $attempt++) {
-        Write-Host "Clicking Play in the launcher (try $attempt)..."
-        & (Join-Path $PSScriptRoot "game_input.ps1") -Target launcher -Click "240,685"
-
-        $waitUntil = (Get-Date).AddSeconds(25)
-
-        while ((Get-Date) -lt $waitUntil -and -not (Get-Game)) {
-            Close-LauncherDialogs
-            Start-Sleep -Seconds 1
-        }
-
-        if (Get-Game) { break }
-    }
-}
+Start-Process -FilePath (Join-Path $GameFolder "binaries_dx12\vermintide2_dx12.exe") -ArgumentList @("-eac-untrusted", "--bundle-dir", "../bundle", "--ini", "settings", "--silent-mode") -WorkingDirectory (Join-Path $GameFolder "launcher")
 
 # The log of this run is the first one that is newer than the start
 function Get-NewLog {
@@ -162,7 +51,7 @@ function Get-NewLog {
 }
 
 # The log is read with sharing, because the game keeps it open
-function Read-Lines([string]$path) {
+function Read-Shared([string]$path) {
     $stream = [System.IO.File]::Open($path, "Open", "Read", "ReadWrite")
     $reader = New-Object System.IO.StreamReader $stream
 
@@ -180,10 +69,15 @@ $menuStep = 0
 while ((Get-Date) -lt $deadline -and -not $ready) {
     Start-Sleep -Seconds 2
 
+    if (-not (Get-Game)) {
+        Write-Host "The game is not running: it closed or crashed while starting."
+        exit 3
+    }
+
     $log = Get-NewLog
 
     if ($log) {
-        $text = Read-Lines $log.FullName
+        $text = Read-Shared $log.FullName
 
         if ($text -match "\[Gamestate\] Enter StateIngame") {
             $ready = $true
@@ -208,3 +102,4 @@ if (-not $ready) {
 # The Keep has to finish loading
 Start-Sleep -Seconds 15
 Write-Host "The game is in the Keep."
+exit 0
