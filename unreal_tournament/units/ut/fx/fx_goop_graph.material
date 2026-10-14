@@ -53,8 +53,11 @@ shader = {
 				connector_id = "c5823c75-4ae5-4c71-b070-315fa4d03e8e"
 				instance_id = "c0de0001-0000-4000-8000-000000000009"
 			}
+			select = [
+				"rgb"
+			]
 			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000008"
+				instance_id = "c0de0001-0000-4000-8000-000000000007"
 			}
 		}
 		{

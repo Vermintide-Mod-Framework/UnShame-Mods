@@ -45,10 +45,11 @@ local CONFIG = {
 	light_color = { 0.3, 1, 0.3 },
 	light_falloff = 0.5, -- m
 	light_intensity = 0.08,
-	-- The goop is lit by the level and glows by itself (see fx_goop in make_combo_materials.py). goop_opacity is how much of it there is (1 is
-	-- solid, as it is in UT), and goop_brightness multiplies its color.
+	-- The goop glows by itself (its texture, whatever the light) and the level lights it as well (see fx_goop in make_combo_materials.py).
+	-- goop_opacity is how much of it there is (1 is solid, as it is in UT). goop_brightness multiplies the color the level lights: it is
+	-- low, so that the goop is the green of its glow and not washed out by a bright level.
 	goop_opacity = 1,
-	goop_brightness = 1,
+	goop_brightness = 0.3,
 	goop_animations = {
 		drip = { start = 40, count = 39, speed = 0.66 },
 		flying = { start = 3, count = 11 },
