@@ -39,9 +39,9 @@ local CONFIG = {
 	goop_material = "units/ut/fx/fx_goop",
 	goop_frame_rate = 30,
 	-- The light of a glob of volume 1 (the light is steady, and bigger for a bigger glob). Its color is UT's LightHue 82, a pale green.
-	light_color = { 0.6, 1, 0.5 },
-	light_falloff = 1.2, -- m
-	light_intensity = 1,
+	light_color = { 0.3, 1, 0.3 },
+	light_falloff = 0.7, -- m
+	light_intensity = 0.4,
 	-- How much of the goop there is: it is blended by this, so it is see through. Its color is made brighter by goop_brightness.
 	goop_opacity = 0.6,
 	goop_brightness = 1.3,
@@ -516,20 +516,11 @@ local function add_splat(position, normal)
 		manager._ut_bio_pool = true
 	end
 
-	local angle = math.random() * math.pi * 2
-	local side = Vector3.cross(normal, Vector3.up())
+	-- The game's own decals of hits (EffectHelper) are given a turn about the normal of the surface, and the engine places the decal's box
+	-- on the surface from the normal. The extents are the width, the length and the depth.
+	local rotation = Quaternion.axis_angle(normal, math.random() * math.pi * 2)
 
-	if Vector3.length(side) < 0.1 then
-		side = Vector3.cross(normal, Vector3.right())
-	end
-
-	side = Vector3.normalize(side)
-
-	local tangent = Quaternion.rotate(Quaternion.axis_angle(normal, angle), side)
-
-	-- The decal shader projects along the y axis of the box (it compares that axis with the surface's normal), so y is the way the
-	-- surface faces. The box is wide along x and z, and deep along y.
-	manager:add_projection_decal(CONFIG.splat_unit, nil, nil, position, Quaternion.look(normal, tangent), Vector3(CONFIG.splat_size, CONFIG.splat_depth, CONFIG.splat_size), normal)
+	manager:add_projection_decal(CONFIG.splat_unit, nil, nil, position, rotation, Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_depth), normal)
 end
 
 -- A glob lands. The splat stays where it is for its own time, and the blob stays until the glob is gone.

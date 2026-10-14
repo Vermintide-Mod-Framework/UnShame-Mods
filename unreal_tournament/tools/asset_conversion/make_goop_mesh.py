@@ -9,7 +9,7 @@ import os, sys, zlib, struct
 # (the sequences are in XWeapons_rc/BioRifle_rc.uc). The mesh is lit by itself and shows the material fx_goop (make_combo_materials.py).
 # The mesh is made in meters, a UT unit being 0.02 m, with the DrawScale of the glob (1.2) in it. A raw vertex is scaled by the mesh map (0.04,
 # 0.04, 0.08). The z axis of the mesh is the way a glob that has landed faces away from its surface.
-# Each triangle is made twice, once for each side, because the glob is drawn on both (GoopFB is two sided).
+# Each triangle is made once. (Made for both sides, the front and the back of a see through glob are both drawn, and it is not see through.)
 # Usage: make_goop_mesh.py <umodel export dir of XWeapons_rc.u, the folder that has VertMesh>
 #        (umodel -game=ut2 -export -out=<dir> XWeapons_rc.u GoopMesh)
 
@@ -25,11 +25,8 @@ frames, triangles, polygon_uvs, frame = fx.vertex_mesh('GoopMesh', EXPORT)
 position_index = [v for t in triangles for v in t]
 uvs = [(polygon_uvs[i][2 * k], 1.0 - polygon_uvs[i][2 * k + 1]) for i in range(len(triangles)) for k in range(3)]
 uv_index = list(range(len(uvs)))
-# (both sides: the corners of each triangle in the other order, with the same uvs)
-back_index = [position_index[i + k] for i in range(0, len(position_index), 3) for k in (0, 2, 1)]
-back_uv_index = [uv_index[i + k] for i in range(0, len(uv_index), 3) for k in (0, 2, 1)]
-both_index = position_index + back_index
-both_uv_index = uv_index + back_uv_index
+both_index = position_index
+both_uv_index = uv_index
 
 os.makedirs(fx.FX + '/goop', exist_ok=True)
 count = 0
