@@ -187,6 +187,7 @@ write('explosion_dark', dark, {'blobs_map': 'shock_dark'})
 # (the effect blends it by its opacity).
 # It is a standard material, lit by the level, and it glows by itself (the shader's self illumination) by a share of its color. It has the
 # variables age (the panning), intensity (how much of it there is) and tint (a color that multiplies it) of the effects, but no "additive".
+IN_POW_A, IN_POW_B = '447b3fe2-c820-4511-a923-b38b0f6c9fe6', 'e16267f4-8b4e-4079-b13d-f380cfd386ec'
 IN_OUT_ROUGHNESS, IN_OUT_EMISSIVE = '36ba46d2-f6ea-4e60-a428-fdc17c75bc62', '1164a5ef-4563-4795-b3b5-42825d6df037'
 TRANSPARENT, SKINNED_DISABLED = 'dd7fcf97-0627-48ab-b29a-95b5685bb123', 'b5bb2062-c8fa-43c5-8657-493a0be6860c'
 goop = Graph()
@@ -200,11 +201,15 @@ goop.add('intensity', 'core/shader_nodes/material_variable', export=float_variab
 goop.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
 panned(goop, 'pan', 0.07, 0.17)
 texture(goop, 'goop', 'goop_map', 'pan')
-multiply(goop, 'color', 'goop', 'tint', 'rgb')
+# (the texture squared: the same green, deeper and more saturated)
+goop.add('rich', 'core/shader_nodes/power')
+goop.connect('goop', 'rich', IN_POW_A, 'rgb')
+goop.constant('rich', IN_POW_B, 2)
+multiply(goop, 'color', 'rich', 'tint')
 # (the emissive output is HDR, where 1 is very bright: the goop of the tank in the weapon needs about 0.04 to be its color, and a share of it makes the goop glow)
 goop.add('glow', 'core/shader_nodes/mul')
-goop.connect('goop', 'glow', IN_MUL_A, 'rgb')
-goop.constant('glow', IN_MUL_B, 0.018)
+goop.connect('rich', 'glow', IN_MUL_A)
+goop.constant('glow', IN_MUL_B, 0.026)
 goop.constant('out', IN_OUT_ROUGHNESS, 1)
 goop.connect('color', 'out', IN_OUT_BASE_COLOR)
 goop.connect('glow', 'out', IN_OUT_EMISSIVE)

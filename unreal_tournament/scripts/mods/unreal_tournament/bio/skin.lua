@@ -49,7 +49,7 @@ local CONFIG = {
 	-- goop_opacity is how much of it there is (UT's goop is see through). goop_brightness multiplies the color the level lights: it is
 	-- low, so that the goop is the green of its glow and not washed out by a bright level.
 	goop_opacity = 0.7,
-	goop_brightness = 0.3,
+	goop_brightness = 0.45,
 	goop_animations = {
 		drip = { start = 40, count = 39, speed = 0.66 },
 		flying = { start = 3, count = 11 },
