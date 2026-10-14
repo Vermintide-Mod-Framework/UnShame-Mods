@@ -6,24 +6,24 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Line | Lightning Gun | Minigun |
 |---|---|---|
 | **Item and menus** | | |
-| Name in the inventory | - | - |
-| Icon in the inventory | - | - |
-| Description | - | - |
-| Keywords | - | - |
-| Stat chart | - | - |
-| Which careers can equip it | - | - |
+| Name in the inventory | ok | ok |
+| Icon in the inventory | ok (points up-right) | ok (points up-right) |
+| Description | ok (UT's, shortened) | ok |
+| Keywords | ok | ok |
+| Stat chart | ok (a guess) | ok (a guess) |
+| Which careers can equip it | ok (two items: Kruber's handgun and Bardin's) | ok (repeating handgun and repeating crossbow items) |
 | Chaos Wastes copy | - | - |
 | Crafting | - | - |
-| Hero screen: model and its place | - | - |
+| Hero screen: model and its place | ok (held, size 0.5) | - |
 | Item screen: model and its turn | - | - |
-| Tab screen after a mod reload | - | - |
-| Equipping and switching weapons | - | - |
+| Tab screen after a mod reload | no: the icon shows after the next level (game limit) | - |
+| Equipping and switching weapons | ok | ok |
 | Base weapon when the mod is disabled | - | - |
 | **First person** | | |
-| Position and size against UT | - | - |
+| Position and size against UT | ok (blend with UT) | ok (side by side) |
 | Pickup animation | - | - |
 | Idle animation speed | - | - |
-| Fire animation of each mode | - | - |
+| Fire animation of each mode | ok (Fire; zoom has none) | - |
 | Animation length against the fire rate | - | - |
 | Parts that move by code | - | - |
 | Inspect pose | - | - |
@@ -34,7 +34,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Ammo number | - | - |
 | Bob and sway | - | - |
 | **Firing** | | |
-| Fire rate of each mode | - | - |
+| Fire rate of each mode | ok (tests: 1.6 s) | ok (tests) |
 | Second mode right after the first | - | - |
 | First mode right after the second | - | - |
 | Hold, release and auto-fire | - | - |
@@ -67,7 +67,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Hitting other projectiles | - | - |
 | Lock-on, homing, bounce, link, goo, combo | - | - |
 | **Ammo** | | |
-| Max ammo | - | - |
+| Max ammo | no: 20, UT has 40 | ok (300) |
 | Pickup amount | - | - |
 | Reload between shots | - | - |
 | Chamber at 0 ammo | - | - |
@@ -78,9 +78,9 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Multi-load at 1, 2 and 3 rounds | - | - |
 | `/loaded` | - | - |
 | **Effects** | | |
-| Muzzle flash | - | - |
+| Muzzle flash | no: UT has a big flare, here faint | no: faint next to UT |
 | Projectile model | - | - |
-| Trail | - | - |
+| Trail | ok (bolt) | no: the tracer is not seen |
 | Flare | - | - |
 | Smoke | - | - |
 | Explosion shape | - | - |
@@ -89,9 +89,9 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Impact marks | - | - |
 | Vanilla effects playing on top | - | - |
 | **Sounds** | | |
-| Fire | - | - |
+| Fire | ok (sound plays) | ok |
 | Alt fire | - | - |
-| Select | - | - |
+| Select | ok (sound plays) | ok |
 | Load | - | - |
 | Explosion | - | - |
 | Lock beep | - | - |
@@ -114,7 +114,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Bots holding it | - | - |
 | Your character in the third person view | - | - |
 | **Multiplayer** | | |
-| As host | - | - |
+| As host | ok | ok |
 | As client | - | - |
 | Others seeing projectiles | - | - |
 | Others seeing explosions | - | - |
@@ -134,5 +134,5 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Ledge hang | - | - |
 | Switching away mid-animation | - | - |
 | Switching back mid-animation | - | - |
-| Errors in the console log | - | - |
-| Crash dumps | - | - |
+| Errors in the console log | ok | ok |
+| Crash dumps | ok | ok |

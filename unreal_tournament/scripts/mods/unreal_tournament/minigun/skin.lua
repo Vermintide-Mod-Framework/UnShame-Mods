@@ -415,7 +415,7 @@ local function new_skin(variant)
 			-- The game links the repeating gun and the crossbow to the left hand's node
 			hand_node = "j_leftweaponattach",
 			meters_per_unit = 0.01,
-			scale = 0.7,
+			scale = 0.5,
 			grip_right = 0,
 			grip_forward = -10,
 			grip_up = -10,

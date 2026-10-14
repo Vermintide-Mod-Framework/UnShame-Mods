@@ -454,7 +454,7 @@ local function new_skin(variant)
 			unit_name = "units/ut/lightning/pickup",
 			hand_node = "j_leftweaponattach",
 			meters_per_unit = 0.009,
-			scale = 0.7,
+			scale = 0.5,
 			grip_right = 0,
 			grip_forward = 0,
 			grip_up = -8,
