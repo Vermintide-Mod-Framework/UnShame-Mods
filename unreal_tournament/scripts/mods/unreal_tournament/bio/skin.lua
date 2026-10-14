@@ -180,7 +180,8 @@ skin_api = mod.weapon_skin.new({
 	offset_right = 3,
 	offset_up = 0,
 	bob_damping = 2.2,
-	-- WeaponStaticMesh.BioRiflePickup (DrawScale 0.6). Its nozzle runs along the mesh's own +Y, and the tank is behind it.
+	-- WeaponStaticMesh.BioRiflePickup (DrawScale 0.6). Its barrel is the open end of the body, along the mesh's +x, and the tank hangs under it.
+	-- The handle points back and down from the body.
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
@@ -190,18 +191,18 @@ skin_api = mod.weapon_skin.new({
 		meters_per_unit = 0.012,
 		-- The mesh is 0.67 m long, so 0.4 m as it is held.
 		scale = 0.6,
-		-- Where the mesh is in the hand, in the mesh's own axes (its barrel runs along -x, and its ring is on the -y side). It is placed by eye.
-		grip_right = 26,
-		grip_forward = -14,
-		grip_up = 2,
+		-- Where the mesh is in the hand, in the mesh's own axes: the middle of the thin handle that points back and down from the body.
+		grip_right = -23,
+		grip_forward = 0,
+		grip_up = -7.5,
 		yaw = 90,
 		pitch = 0,
 		roll = 0,
 		-- In the world the rifle is held as the pistol is: it is turned as the pistol's unit is, with the barrel along the unit's y.
 		follow_game_unit = 2,
-		muzzle_right = -30,
+		muzzle_right = 26,
 		muzzle_forward = 0,
-		muzzle_up = -10,
+		muzzle_up = 12,
 		menu_yaw = 0,
 	},
 	on_create = function ()
