@@ -740,6 +740,15 @@ mod:hook(PlayerUnitHealthExtension, "entered_kill_volume", function (func, self,
 	return func(self, ...)
 end)
 
+-- Lifts and moving platforms: while one moves, a player who is on it but has left its box is put back on it.
+mod:hook(LinkerTransportationExtension, "_update_local_player_position", function (func, self, ...)
+	if is_barrier_removed("no_lifts") then
+		return
+	end
+
+	return func(self, ...)
+end)
+
 -- Ledges: the player hangs from a ledge they fall past, until they are pulled up.
 mod:hook(CharacterStateHelper, "is_ledge_hanging", function (func, ...)
 	if is_barrier_removed("no_ledges") then

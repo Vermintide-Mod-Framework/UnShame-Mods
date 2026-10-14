@@ -50,6 +50,11 @@ return {
 						type = "checkbox",
 						default_value = true,
 					},
+					{
+						setting_id = "no_lifts",
+						type = "checkbox",
+						default_value = true,
+					},
 				},
 			},
 			{

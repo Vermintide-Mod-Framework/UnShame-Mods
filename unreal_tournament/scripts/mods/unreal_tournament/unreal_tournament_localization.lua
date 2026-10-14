@@ -50,6 +50,12 @@ return {
 	no_ledges_description = {
 		en = "You no longer hang from most ledges when you fall past them.",
 	},
+	no_lifts = {
+		en = "Lifts",
+	},
+	no_lifts_description = {
+		en = "You are no longer put back on a lift or a moving platform when you leave it while it moves.",
+	},
 	gameplay = {
 		en = "Gameplay",
 	},
