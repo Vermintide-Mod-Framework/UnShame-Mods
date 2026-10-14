@@ -100,9 +100,9 @@ runner.add_suite({
 			end,
 		},
 		{
-			name = "damages a target",
+			name = "damages an enemy",
 			run = function (t)
-				local target = t.spawn("training_dummy", 5)
+				local target = t.spawn("chaos_marauder", 5)
 
 				if not t.expect(target, "the target could not be spawned") then
 					return

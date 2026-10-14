@@ -54,6 +54,8 @@ local CONFIG = {
 		ai_terror_events_disabled = true,
 		disable_ai_perception = true,
 		player_invincible = true,
+		-- Without it the game does not let the intro of a level be skipped
+		skippable_cutscenes = true,
 	},
 }
 
@@ -523,8 +525,20 @@ local function load_level(t, level_key)
 	run.loading = false
 
 	if loaded then
-		-- The level has just started
-		t.wait(3)
+		-- The level starts with an intro, and the game's own tests skip it the same way
+		t.wait_until(function ()
+			local cutscene_system = Managers.state.entity:system("cutscene_system")
+
+			if cutscene_system:is_active() then
+				cutscene_system:skip_pressed()
+
+				return false
+			end
+
+			return true
+		end, 30, "the intro of the level to end")
+
+		t.wait(2)
 	end
 
 	return loaded
