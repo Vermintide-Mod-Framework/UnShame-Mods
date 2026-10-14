@@ -32,32 +32,14 @@ shader = {
 		}
 		{
 			destination = {
-				connector_id = "c5823c75-4ae5-4c71-b070-315fa4d03e8e"
-				instance_id = "c0de0001-0000-4000-8000-000000000006"
+				connector_id = "ad5e052f-d316-4a0f-8b79-53c38204d61b"
+				instance_id = "c0de0001-0000-4000-8000-000000000001"
 			}
 			select = [
 				"r"
 			]
 			source = {
 				instance_id = "c0de0001-0000-4000-8000-000000000004"
-			}
-		}
-		{
-			destination = {
-				connector_id = "242d1648-a626-445b-9534-bccec094112f"
-				instance_id = "c0de0001-0000-4000-8000-000000000006"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000005"
-			}
-		}
-		{
-			destination = {
-				connector_id = "ad5e052f-d316-4a0f-8b79-53c38204d61b"
-				instance_id = "c0de0001-0000-4000-8000-000000000001"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000006"
 			}
 		}
 		{
@@ -174,62 +156,10 @@ shader = {
 			title = "shape_map"
 			type = "core/shader_nodes/sample_texture"
 		}
-		{
-			content_size = [
-				160
-				0
-			]
-			export = {
-				material_variable = {
-					display_name = "Intensity"
-					name = "intensity"
-					type = "float"
-					ui = {
-						max = 100
-						min = 0
-						step = 0.001
-					}
-					value = 1
-				}
-			}
-			id = "c0de0001-0000-4000-8000-000000000005"
-			options = [
-			]
-			position = [
-				1200
-				0
-			]
-			samplers = {
-			}
-			title = "Intensity"
-			type = "core/shader_nodes/material_variable"
-		}
-		{
-			content_size = [
-				160
-				0
-			]
-			export = {
-			}
-			id = "c0de0001-0000-4000-8000-000000000006"
-			options = [
-			]
-			position = [
-				1500
-				0
-			]
-			samplers = {
-			}
-			type = "core/shader_nodes/mul"
-		}
 	]
 	version = 3
 }
 textures = {
 }
 variables = {
-	intensity = {
-		type = "scalar"
-		value = 1
-	}
 }

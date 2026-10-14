@@ -95,12 +95,10 @@ local CONFIG = {
 	-- (LifeSpan).
 	-- The decal's box is this wide and this deep, in meters (the game's blood decals are 2.5 wide and 1 deep). It is a guess.
 	splat_unit = "units/ut/fx/decal_bio",
-	splat_material = "units/ut/fx/fx_decal_bio",
 	splat_size = 1.2,
 	splat_depth = 1,
 	splat_life = 6,
-	-- The splat fades out over this part of its life (0.5 is the last half).
-	splat_fade = 0.5,
+	splat_pool_size = 30,
 	-- BioGlob.AnimEnd picks the animation of a glob that has landed from the way its surface faces (the surface normal dotted with straight
 	-- down): above ceiling_dot it is a ceiling and the glob drips, above wall_dot it is a wall and the glob slides.
 	ceiling_dot = 0.7,
@@ -489,32 +487,50 @@ local function show_landed(id)
 	end)
 end
 
--- The splat is a decal unit like the game's blood: its shader draws it onto the surfaces under its box, so it follows walls, corners and
--- floors. It is spawned here and not by the game's decal manager, which removes a decal at once when its time is up, so that the splat can
--- fade out. The unit has its z axis along the normal (see tools/asset_conversion/make_decal_unit.py), and its scale is the width, the length
--- and the depth.
+-- The splat is a projected decal of the game's own decal manager, like the game's blood: the manager draws it onto the surfaces under
+-- its box, so it follows walls, corners and floors. The decal's unit has a pool of its own in DecalSettings.
+local DECAL_POOL = "ut_bio"
+
+DecalSettings[DECAL_POOL] = {
+	life_time = CONFIG.splat_life,
+	pool_size = CONFIG.splat_pool_size,
+	units = {
+		CONFIG.splat_unit,
+	},
+}
+
+-- A manager that was made before the mod was loaded, or reloaded, does not have the pool, so it is added to it.
+mod:hook_safe(DecalManager, "init", function (self)
+	self._ut_bio_pool = true
+end)
+
+-- Puts a splat on the surface at a position, turned at random about the way the surface faces.
 local function add_splat(position, normal)
+	local manager = Managers.state and Managers.state.decal
+
+	if not manager then
+		return
+	end
+
+	if not manager._ut_bio_pool then
+		EngineOptimizedManagers.decal_manager_add_setting(manager._decal_system, DECAL_POOL, CONFIG.splat_life, CONFIG.splat_pool_size, CONFIG.splat_unit)
+
+		manager._ut_bio_pool = true
+	end
+
 	local side = Vector3.cross(normal, Vector3.up())
 
 	if Vector3.length(side) < 0.1 then
 		side = Vector3.cross(normal, Vector3.right())
 	end
 
-	particles.mesh({
-		decal = true,
-		-- (the mesh turns about its z axis, the normal, by a random angle)
-		brightness = function (fraction)
-			return math.min(1, (1 - fraction) / CONFIG.splat_fade)
-		end,
-		life = CONFIG.splat_life,
-		material = CONFIG.splat_material,
-		position = position,
-		rotation = Quaternion.look(Vector3.normalize(side), normal),
-		scale = function ()
-			return Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_depth)
-		end,
-		unit = CONFIG.splat_unit,
-	})
+	side = Vector3.normalize(side)
+
+	local tangent = Quaternion.rotate(Quaternion.axis_angle(normal, math.random() * math.pi * 2), side)
+
+	-- As the game's blood decals are placed: the rotation looks along the tangent with the normal up, and the extents are the width, the
+	-- length and the depth. (The unit is made for it, see tools/asset_conversion/make_decal_unit.py.)
+	manager:add_projection_decal(CONFIG.splat_unit, nil, nil, position, Quaternion.look(tangent, normal), Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_depth), normal)
 end
 
 -- A glob lands. The splat stays where it is for its own time, and the blob stays until the glob is gone.
