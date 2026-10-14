@@ -68,7 +68,7 @@ drawn is `ShockRifle.uc`'s `OldPlayerViewOffset` and `OldPlayerViewPivot`.
 of its geometries in order) into an icon with a transparent background. `fill` is how much of the picture the mesh takes up (0.92 if it is
 not given: the item's frame covers the edges of an icon, the Flak Cannon's is 0.72). The icons are made with the pickup of each weapon, for
 instance `pickup.bsi out.png 256 -70 0 35 <texture>` for the Flak Cannon and the UT2003 Shock Rifle, and `20 0 35` for the UT2004 Shock
-Rifle. The Bio Rifle's is rendered from the side with its orange band, pointing up and to the left, and mirrored (`256 -70 0 -35 <textures> 0.92 mirror`)
+Rifle. The Bio Rifle's is rendered from the side with its orange band, pointing up and to the left, and mirrored (`256 -70 0 -35 <textures> 0.74 mirror`)
 so that it points up and to the right as the others do. Each icon's `.texture` and `.material` (a gui material that `items.lua` registers in the UI's renderers) are next to it in `ui/ut`, in a
 package of their own (`resource_packages/unreal_tournament/icons`) that is listed in `unreal_tournament.mod` (the game only loads the
 packages that are) and that the mod keeps a handle to, so that it stays loaded when the mod is reloaded: the renderers hold the material
