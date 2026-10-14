@@ -237,7 +237,11 @@ goo.add('mix', 'core/shader_nodes/lerp')
 goo.connect('goo', 'mix', IN_LERP_A, 'rgb')
 goo.connect('bubbles', 'mix', IN_LERP_B, 'rgb')
 goo.connect('bubbles', 'mix', IN_LERP_W, 'a')
-goo.connect('mix', 'out', IN_OUT_BASE_COLOR)
+# (the emissive layer is HDR, where 1 is very bright: dimmed so that the goop is the green of the texture)
+goo.add('dim', 'core/shader_nodes/mul')
+goo.connect('mix', 'dim', IN_MUL_A)
+goo.constant('dim', IN_MUL_B, 0.12)
+goo.connect('dim', 'out', IN_OUT_BASE_COLOR)
 open('%s/fx_bio_goo_graph.material' % FX, 'w', newline='\n').write(goo.text())
 open('%s/units/ut/bio/bio_rifle_m2.material' % REPO, 'w', newline='\n').write(
     'material_contexts = {\n\tsurface_material = ""\n}\nparent_material = "units/ut/fx/fx_bio_goo_graph"\ntextures = {\n'
