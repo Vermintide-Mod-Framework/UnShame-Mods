@@ -1,11 +1,10 @@
 # Runs a suite of the mod's in-game tests (scripts/mods/unreal_tournament/tests) in the running game, from the command line, and prints
 # the results. The game has to be running with the mod, and its window gets the keyboard focus while this runs.
 #
-#   run_tests.ps1 -Suite flak [-Career es_mercenary] [-Build] [-Reload] [-TimeoutSeconds 600] [-RetryAfterCrash]
+#   run_tests.ps1 -Suite flak [-Career es_mercenary] [-Build] [-Reload] [-TimeoutSeconds 600]
 #
 #   -Build   builds the mod first (vmb build, from the mods folder)
 #   -Reload  reloads the mods in the game (Ctrl+Shift+R, the framework's hotkey) and waits for the reload to show in the log
-#   -RetryAfterCrash  if the game crashes (its process is gone), starts it again and runs the suite once more
 #
 # If the game is not running, it is started first (start_game.ps1) and taken to the Keep, so this one script does everything.
 # Exit codes: 0 all passed, 1 a test failed, 2 timed out, 3 the game crashed.
@@ -18,8 +17,7 @@ param(
     [switch]$Build,
     [switch]$Reload,
     [int]$TimeoutSeconds = 600,
-    [int]$ReloadWaitSeconds = 15,
-    [switch]$RetryAfterCrash
+    [int]$ReloadWaitSeconds = 15
 )
 
 $ErrorActionPreference = "Stop"
@@ -268,12 +266,6 @@ if (-not $started) {
 }
 
 $result = Run-Suite
-
-if ($result -eq "crash" -and $RetryAfterCrash) {
-    Write-Host "Starting the game again and running the suite once more..."
-    [void](Ensure-Game)
-    $result = Run-Suite
-}
 
 switch ($result) {
     "done" { if ($script:testsFailed) { exit 1 } else { exit 0 } }
