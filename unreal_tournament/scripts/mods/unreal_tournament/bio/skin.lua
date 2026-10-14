@@ -29,6 +29,9 @@ local CONFIG = {
 		1,
 		0.3,
 	},
+	inspect_pose_speed = 5, -- how fast the model moves to the inspect pose and back, per second
+	inspect_sway = 5, -- degrees of yaw each way while inspecting
+	inspect_sway_speed = 1.8, -- radians per second
 	-- The glob is UT's own mesh, GoopMesh, made by tools/asset_conversion/make_goop_mesh.py. Every frame of its animations is a unit of
 	-- its own (units/ut/fx/goop/f<number of the frame>). Its material is the panning goop texture (fx_goop). The mesh is scaled by the
 	-- glob's volume. The
@@ -180,6 +183,18 @@ skin_api = mod.weapon_skin.new({
 	offset_right = 3,
 	offset_up = 0,
 	bob_damping = 2.2,
+	-- The inspect pose brings the rifle to the middle of the view and turns it to the left about its middle. It ends up across the view, with
+	-- its left side towards the player and the nozzle pointing left.
+	inspect_pose_right = -8,
+	inspect_pose_forward = 0,
+	inspect_pose_up = 18,
+	inspect_pose_roll = 10,
+	inspect_pose_pitch = 4,
+	inspect_pose_yaw = 60,
+	inspect_turn_start = 0,
+	inspect_pivot_right = 15,
+	inspect_pivot_forward = 30,
+	inspect_pivot_up = -5,
 	-- WeaponStaticMesh.BioRiflePickup (DrawScale 0.6). Its barrel is the open end of the body, along the mesh's +x, and the tank hangs under it.
 	-- The handle points back and down from the body.
 	third_person = {
@@ -209,6 +224,12 @@ skin_api = mod.weapon_skin.new({
 	on_create = function ()
 		skin_api.play_sound("ut_bio_select")
 	end,
+	-- Moves the model towards the inspect pose and back, and sways it while it is there.
+	on_update = function (skin, dt)
+		skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
+		skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
+		skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
+	end,
 	on_give_back = function ()
 		table.clear(landed)
 	end,
@@ -219,6 +240,15 @@ skin_api = mod.weapon_skin.new({
 })
 
 local third_person = skin_api.third_person
+
+-- Inspecting is the game's own action, held with the key. The rifle is turned to show its side for as long as it lasts.
+mod.inspect_callbacks.bio_skin = function (action, started)
+	local skin = skin_api.state()
+
+	if skin and utils.is_local_player_unit(action.owner_unit) then
+		skin.inspecting = started
+	end
+end
 
 -- Handles a shot of the player: plays the animation and shows the flash. The sound is taken over below.
 mod.crossbow_start_callbacks.bio_skin = function (action, new_action)
