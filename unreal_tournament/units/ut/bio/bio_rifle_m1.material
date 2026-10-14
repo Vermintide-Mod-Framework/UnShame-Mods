@@ -14,4 +14,8 @@ variables = {
 		type = "scalar"
 		value = 0.5
 	}
+	roughness = {
+		type = "scalar"
+		value = 0.12
+	}
 }

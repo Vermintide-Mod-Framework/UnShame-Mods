@@ -147,6 +147,8 @@ WEAPONS['rocket'] = {
 }
 
 WEAPONS['bio'] = {
+    # UT's body has no specular and only the glass of the tank shines (WeaponSkins.BioRifleGlassRef has a specular map and a reflection)
+    'roughness': {0: 0.9, 1: 0.12},
     # the plunger's housing and the strip of goop in the tank are skinned to the weapon and to the plunger, and are stretched between them
     'stretch': [('Bone_housing', 'Bone_weapon', 'Bone_Plunger', (0,)), ('Bone_goop', 'Bone_weapon', 'Bone_Plunger', (2,))],
     'psk': 'Weapons/SkeletalMesh/BioRifle_1st.psk',
@@ -485,7 +487,7 @@ def main():
             write_png('%s/%s.png' % (REPO, texture), w, h, rows)
             open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
             done_textures[texture] = True
-        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture, opacity, first_person=True, roughness=cfg.get('roughness')))
+        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture, opacity, first_person=True, roughness=cfg['roughness'].get(m) if isinstance(cfg.get('roughness'), dict) else cfg.get('roughness')))
 
     # the animations: the pose of each bone (the root's move first: it is how the whole mesh is moved) against the mesh in its
     # reference pose, in the model's axes and UT units
