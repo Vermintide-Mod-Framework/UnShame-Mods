@@ -6,5 +6,11 @@
 ## New weapons
 
 Each is an item of its own (`items.register`), UT2004's look always on, no setting. `WEAPON_CHECKLIST.md` is what to look at for a weapon.
+Which careers get which weapon, and from which base, is in `WEAPON_PLAN.md`.
 
-3. **Shield Gun.** For the careers that fight with a sword and a shield.
+3. **Shield Gun.** For everyone, including the melee-only careers. A melee base for each hero.
+4. **Lightning Gun.** From the handgun.
+5. **Assault Rifle.** Akimbo. Needs a second model for the other hand.
+6. **Minigun.** From the repeater.
+7. **Redeemer.** From the Trollhammer Torpedo.
+8. **Link Gun for all of Kerillian's careers.** The base and the resource (heat or ammo) are open.
