@@ -340,7 +340,7 @@ mod.ingame_ui_init_callbacks.lightning_scope = function ()
 end
 
 local function draw_scope(ingame_ui)
-	if not scope_ready or not lightning.zoom.zoomed then
+	if not lightning.zoom.zoomed then
 		return
 	end
 
@@ -395,7 +395,13 @@ local function draw_scope(ingame_ui)
 	Gui.rect(gui, Vector3(bar_x, bar_bottom, layer + 3), Vector2(bar_width, bar_height), Color(255, bar_red, bar_green, bar_blue))
 end
 
-mod.ingame_ui_post_update_callbacks.lightning_scope = draw_scope
+-- A material that the user interface's renderer does not have yet is an error, which is until the next level if the mod was loaded in
+-- the middle of one. So the scope is only drawn from the level after that.
+mod.ingame_ui_post_update_callbacks.lightning_scope = function (ingame_ui)
+	if scope_ready then
+		draw_scope(ingame_ui)
+	end
+end
 
 -- While the view is zoomed, the game's crosshair is not drawn: the scope has its own.
 mod:hook(CrosshairUI, "draw", function (func, self, ...)
@@ -462,6 +468,10 @@ local function new_skin(variant)
 			muzzle_up = 0,
 			menu_yaw = 180,
 		},
+		-- UT draws the scope in place of the weapon while zoomed (SniperRifle.RenderOverlays)
+		hidden = function ()
+			return lightning.zoom.zoomed
+		end,
 		on_create = function ()
 			api.play_sound("ut_lightning_select")
 		end,

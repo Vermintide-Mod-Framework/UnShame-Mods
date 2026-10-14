@@ -46,6 +46,7 @@ local mod = get_mod("unreal_tournament")
 --       has the move of the bone that moves, and its points are moved by it by a share: how far each is along the axis (a unit vector, three numbers),
 --       from start to start + length, as 0 to 1. The axis, start and length are in the model's axes and in meters.
 --       With reveal = { distance, center = { x, y, z } } the part grows from its center as the bone moves, to its size at that distance.
+--   hidden(skin): returns true while the model is not to be drawn in the player's view (the Lightning Gun's, while zoomed)
 --   on_update_always(dt): runs every frame, whether the skin is shown or not
 --   on_give_back(), on_level_exit(): the weapon takes back and clears what is its own
 
@@ -759,7 +760,7 @@ local function new(def)
 			CONFIG.on_update(skin, dt)
 		end
 
-		Unit.set_unit_visibility(skin.unit, game_shows_weapon(fp))
+		Unit.set_unit_visibility(skin.unit, game_shows_weapon(fp) and not (CONFIG.hidden and CONFIG.hidden(skin)))
 		place(fp)
 	end
 

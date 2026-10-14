@@ -510,6 +510,32 @@ local function local_wielding_lightning_gun()
 	return TEMPLATE_NAMES[template_name] and unit or nil
 end
 
+-- The game's camera takes a multiplier of its field of view for effects (CameraManager.set_additional_fov_multiplier). The zoom is made
+-- with it. The multiplier works on the angle, so it is worked out from the tangent that the zoom is made in.
+local zoom_fov_applied = false
+
+local function apply_zoom_fov()
+	local camera_manager = Managers.state and Managers.state.camera
+
+	if not camera_manager then
+		return
+	end
+
+	if zoom.zoomed then
+		-- The field of view the camera has without the multiplier: the first person camera's, times the player's setting
+		local base = math.rad(65) * camera_manager._fov_multiplier
+		local zoomed = 2 * math.atan(math.tan(base / 2) / zoom.magnification())
+
+		camera_manager:set_additional_fov_multiplier(zoomed / base)
+
+		zoom_fov_applied = true
+	elseif zoom_fov_applied then
+		camera_manager:set_additional_fov_multiplier(1)
+
+		zoom_fov_applied = false
+	end
+end
+
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	local unit = local_wielding_lightning_gun()
 
@@ -517,6 +543,8 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 		if zoom.zoomed then
 			end_zoom()
 		end
+
+		apply_zoom_fov()
 
 		return
 	end
@@ -543,31 +571,22 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 			zoom.zooming = false
 		end
 	end
+
+	apply_zoom_fov()
 end
 
--- The mod's update runs before the game's, which sets the camera's field of view. So the field of view is set just before the frame is
--- drawn.
-mod.pre_render_callbacks.lightning_zoom = function ()
-	if not zoom.zoomed then
-		return
-	end
-
-	local player = Managers.player and Managers.player:local_player_safe()
-	local camera_manager = Managers.state and Managers.state.camera
-
-	if not player or not camera_manager or not camera_manager:has_viewport(player.viewport_name) then
-		return
-	end
-
-	local viewport = ScriptWorld.viewport(Managers.world:world("level_world"), player.viewport_name)
-	local camera = ScriptViewport.camera(viewport)
-	local vertical_fov = Camera.vertical_fov(camera)
-
-	-- The camera's own field of view is the one without zoom, and the magnification is applied to it.
-	Camera.set_vertical_fov(camera, 2 * math.atan(math.tan(vertical_fov / 2) / zoom.magnification()))
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	end_zoom()
+	apply_zoom_fov()
 end
 
-mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = end_zoom
+local function reset_zoom()
+	end_zoom()
+	apply_zoom_fov()
+end
+
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = reset_zoom
+mod.unload_callbacks[#mod.unload_callbacks + 1] = reset_zoom
 
 -- The weapon is enabled with the mod. The mod's own copies of the templates are patched, and put back when the mod is switched off
 -- or unloaded.
