@@ -221,27 +221,6 @@ register_damage_profile("ut_flak_chunk", "staff_fireball", function (profile)
 		impact = 0.01,
 	}
 end)
--- For testing the push: /flak_damage <number> sets the share of its damage that a chunk does until the next load. 0 means no
--- damage, and the push stays.
-mod:command("flak_damage", "<number> - the share of its damage a flak chunk does, 0 for none (the push stays), 1 is normal", function (share)
-	local number = tonumber(share)
-	local profile = rawget(DamageProfileTemplates, "ut_flak_chunk")
-
-	if not profile or not number or number < 0 then
-		mod:echo("flak_damage: a number, 1 is normal, 0 is no damage")
-
-		return
-	end
-
-	-- The damage is never quite zero, because a hit that does no damage makes the game treat it as a hit that did none.
-	local attack = attack_power_for(CONFIG.chunk_damage) * math.max(number, 0.0001)
-	local target = profile.default_target
-
-	target.power_distribution_near.attack = attack
-	target.power_distribution_far.attack = attack
-
-	mod:echo("flak_damage: %g", number)
-end)
 
 register_damage_profile("ut_flak_shell", "staff_fireball", function (profile)
 	-- (the direct hit only staggers, and does 1 damage so that it is not shown as blocked by armor)
