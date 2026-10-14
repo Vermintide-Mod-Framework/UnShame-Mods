@@ -29,10 +29,20 @@ local CONFIG = {
 		1,
 		0.3,
 	},
-	-- BioGlob has DrawScale 1.2 of its mesh. The blob and its glow are sprites that follow the glob and are as big as the glob's
-	-- scale, and bigger for a charged glob.
-	glob_size = 30,
-	glob_glow_size = 55,
+	-- The glob is UT's own mesh, GoopMesh (units/ut/fx/goop, made by tools/asset_conversion/make_goop_mesh.py), with every frame of its
+	-- animations as a mesh of its own. Its material is the panning goop texture (fx_goop). The mesh is scaled by the glob's volume. The
+	-- animations (XWeapons_rc/BioRifle_rc.uc) are Flying (frames 3 to 13, looped), Hit (20 to 37), Drip (40 to 78) and Slide (83 to
+	-- 121). The frame rate is 30 a second. It is not in the source, but the Drip animation, 39 frames at the 0.66 speed that BioGlob
+	-- plays it at, then takes 2 seconds, which is DripTime.
+	goop_unit = "units/ut/fx/goop",
+	goop_material = "units/ut/fx/fx_goop",
+	goop_frame_rate = 30,
+	goop_animations = {
+		drip = { start = 40, count = 39, speed = 0.66 },
+		flying = { start = 3, count = 11 },
+		hit = { start = 20, count = 18 },
+		slide = { start = 83, count = 39 },
+	},
 	glob_color = {
 		0.55,
 		1,
@@ -77,8 +87,10 @@ local CONFIG = {
 	},
 	splat_size = 1.2,
 	splat_life = 6,
-	-- A glob that has landed is drawn as a blob, as big as a glob in the air times this much.
-	landed_size_scale = 0.8,
+	-- BioGlob.AnimEnd picks the animation of a glob that has landed from the way its surface faces (the surface normal dotted with straight
+	-- down): above ceiling_dot it is a ceiling and the glob drips, above wall_dot it is a wall and the glob slides.
+	ceiling_dot = 0.7,
+	wall_dot = -0.5,
 	-- Globs of another player that start less than this far apart (in seconds) belong to the same shot
 	shot_gap = 0.1,
 }
@@ -261,37 +273,69 @@ mod.init_flow_event_filters.bio = function (event_name)
 	return (event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike")
 end
 
--- Adds a glob on every machine: a green blob and its glow follow the game's unit. They are as big as the glob (a charged glob is as
--- big as its charge).
-local function add_glob(projectile, scale)
+-- The names of the goop's meshes: one for each frame of each animation (g_f<number of the frame>).
+local GOOP_FRAMES = {}
+
+for _, animation in pairs(CONFIG.goop_animations) do
+	for frame = animation.start, animation.start + animation.count - 1 do
+		GOOP_FRAMES[#GOOP_FRAMES + 1] = "g_f" .. frame
+	end
+end
+
+-- Returns the mesh of the frame that an animation shows after it has played for this long. A looped animation starts over, and any
+-- other holds its last frame.
+local function goop_frame(animation_name, age, looped)
+	local animation = CONFIG.goop_animations[animation_name]
+	local frame = math.floor(age * CONFIG.goop_frame_rate * (animation.speed or 1))
+
+	if looped then
+		frame = frame % animation.count
+	else
+		frame = math.min(frame, animation.count - 1)
+	end
+
+	return "g_f" .. (animation.start + frame)
+end
+
+local GOOP_LIFE = 20
+
+-- Shows the goop's mesh. It is the unit's mesh of a frame, scaled by the glob's volume, with its material that pans. frame(age) names
+-- the mesh to show for the time since it started. follow keeps it where it is and ends it when it returns nothing.
+local function goop_mesh(volume, rotation, follow, frame)
+	particles.mesh({
+		angle = 0,
+		brightness = function ()
+			return 1
+		end,
+		follow = follow,
+		frame = function (fraction)
+			return frame(fraction * GOOP_LIFE)
+		end,
+		frames = GOOP_FRAMES,
+		life = GOOP_LIFE,
+		material = CONFIG.goop_material,
+		rotation = rotation,
+		scale = function ()
+			return volume
+		end,
+		unit = CONFIG.goop_unit,
+	})
+end
+
+-- Adds a glob in the air on every machine. It is UT's mesh, playing its Flying animation, and it follows the game's unit. It is as big as
+-- the glob's volume.
+local function add_glob(projectile, volume)
 	local game_unit = projectile._projectile_unit
 
 	Unit.set_unit_visibility(game_unit, false)
 
-	local function follow()
+	goop_mesh(volume, Quaternion.identity(), function ()
 		if Unit.alive(game_unit) and not projectile._stop_impacts then
 			return Unit.world_position(game_unit, 0)
 		end
-	end
-
-	particles.sprite({
-		color = CONFIG.glob_color,
-		fade_in = 0,
-		follow = follow,
-		life = 20,
-		size = CONFIG.glob_size * scale * UNIT,
-		spin = 0.15,
-		texture = "bio_goop",
-	})
-	particles.sprite({
-		color = CONFIG.glob_color,
-		fade_in = 0,
-		follow = follow,
-		intensity = 0.5,
-		life = 20,
-		size = CONFIG.glob_glow_size * scale * UNIT,
-		texture = "muzzle_white",
-	})
+	end, function (age)
+		return goop_frame("flying", age, true)
+	end)
 end
 
 -- A glob is as big as its volume, which is the square root of its goop level. The small globs that come off a landed glob, and the
@@ -358,27 +402,42 @@ end
 mod.skin_explosion_callbacks.ut_bio_blast = blast_effect
 mod.skin_explosion_callbacks.ut_bio_blast_air = blast_effect
 
--- Draws a glob that has landed: a blob on the surface, as big as the glob's volume. It is drawn until the glob is gone or changes.
+-- Returns a rotation that turns the goop's mesh to lie on a surface: its z axis is the way the surface faces, and its x axis (the way it
+-- slides) is as close to straight up as the surface allows. The mesh is made with UT's x axis along this game's y.
+local function surface_rotation(normal)
+	local up = Vector3.up()
+	local along = up - normal * Vector3.dot(up, normal)
+
+	if Vector3.length(along) < 0.1 then
+		along = Vector3.forward() - normal * Vector3.dot(Vector3.forward(), normal)
+	end
+
+	return Quaternion.look(Vector3.normalize(along), normal)
+end
+
+-- Draws a glob that has landed: UT's mesh on the surface, as big as the glob's volume. It plays Hit, and then Drip on a ceiling, Slide on
+-- a wall, or nothing on a floor (BioGlob.AnimEnd). It is drawn until the glob is gone or changes.
 local function show_landed(id)
 	local entry = landed[id]
 	local token = {}
-	local volume = mod.bio_goop.volume_of_level(entry.level)
+	local normal = entry.normal:unbox()
+	local dot = Vector3.dot(normal, Vector3.down())
+	local after_hit = dot > CONFIG.ceiling_dot and "drip" or dot > CONFIG.wall_dot and "slide" or nil
+	local hit_time = CONFIG.goop_animations.hit.count / CONFIG.goop_frame_rate
 
 	entry.token = token
 
-	particles.sprite({
-		color = CONFIG.glob_color,
-		fade_in = 0,
-		follow = function ()
-			if landed[id] and landed[id].token == token then
-				return entry.position:unbox() + entry.normal:unbox() * (0.08 * volume)
-			end
-		end,
-		life = 20,
-		size = CONFIG.glob_size * volume * CONFIG.landed_size_scale * UNIT,
-		spin = 0.15,
-		texture = "bio_goop",
-	})
+	goop_mesh(mod.bio_goop.volume_of_level(entry.level), surface_rotation(normal), function ()
+		if landed[id] and landed[id].token == token then
+			return entry.position:unbox()
+		end
+	end, function (age)
+		if age < hit_time or not after_hit then
+			return goop_frame("hit", age, false)
+		end
+
+		return goop_frame(after_hit, age - hit_time, false)
+	end)
 end
 
 -- A glob lands. The splat stays where it is for its own time, and the blob stays until the glob is gone.

@@ -12,7 +12,7 @@ import struct, zlib, os, sys
 # One material slot, m_fx, as the quad of the particles has (units/ut/fx/quad): the effects set the material of the texture they want.
 # Usage: make_fx_meshes.py <scratch dir>
 
-SCRATCH = sys.argv[1]
+SCRATCH = sys.argv[1] if len(sys.argv) > 1 else ''
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 FX = REPO + '/units/ut/fx'
 EXPORT = SCRATCH + '/umodel/out11/XEffects'
@@ -50,10 +50,10 @@ def static_mesh(path):
 
     return points, wedges, triangles
 
-def vertex_mesh(name):
+def vertex_mesh(name, export=EXPORT):
     # UT's first mesh format: <name>_d.3d has the polygons, <name>_a.3d the frames, a vertex of which is 11, 11 and 10 bits
-    d = open('%s/VertMesh/%s_d.3d' % (EXPORT, name), 'rb').read()
-    a = open('%s/VertMesh/%s_a.3d' % (EXPORT, name), 'rb').read()
+    d = open('%s/VertMesh/%s_d.3d' % (export, name), 'rb').read()
+    a = open('%s/VertMesh/%s_a.3d' % (export, name), 'rb').read()
     polygons, vertices = struct.unpack('<HH', d[:4])
     frames, frame_size = struct.unpack('<HH', a[:4])
     assert frame_size == vertices * 4
@@ -169,8 +169,9 @@ def make_light(unit_name):
         '\t\tnode = "root"\n\t\ttype = "omni"\n\t\tvolumetric_intensity = 0\n\t}\n}\n')
     print(unit_name, 'a light')
 
-make_static('coil', 'ShockCoil')
-make_light('light')
-make_static('sphere', 'TexPropSphere', SCRATCH + '/umodel/out13/Editor')
-make_vortex('vortex', 'ShockVortexMesh')
-make_static('flak_flash_mesh', 'FlakMuzFlashMesh', SCRATCH + '/umodel/out34/XEffects')
+if __name__ == '__main__':
+    make_static('coil', 'ShockCoil')
+    make_light('light')
+    make_static('sphere', 'TexPropSphere', SCRATCH + '/umodel/out13/Editor')
+    make_vortex('vortex', 'ShockVortexMesh')
+    make_static('flak_flash_mesh', 'FlakMuzFlashMesh', SCRATCH + '/umodel/out34/XEffects')

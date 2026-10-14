@@ -87,9 +87,9 @@ local CONFIG = {
 	detonation_delay = 0.1,
 	-- A glob that drips starts with the gravity times 0.2 as its speed (190 uu/s).
 	drip_speed_uu = 190,
-	-- The glob's 'hit' animation plays when it lands. A glob on a ceiling starts to drip when the animation ends. UT's mesh animation
-	-- is not available here, so the length is a guess.
-	hit_animation_time = 0.4,
+	-- The glob's Hit animation plays when it lands. A glob on a ceiling starts to drip when the animation ends. The animation is 18 frames
+	-- (BioRifle_rc.uc) at the frame rate of 30 a second, which the skin assumes (see goop_frame_rate in bio/skin.lua).
+	hit_animation_time = 0.6,
 	-- The collision of a glob that has landed is a cylinder, GoopVolume * 10 uu across. The collision of a glob in the air is 2 uu.
 	collision_uu = 10,
 	flying_collision_uu = 2,

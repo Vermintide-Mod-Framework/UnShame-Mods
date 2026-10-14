@@ -323,10 +323,26 @@ local function place(particle, dt, camera_position, camera_rotation)
 			local shown = particle.frame(fraction)
 
 			if shown ~= particle.shown then
-				for _, name in ipairs(particle.frames) do
-					Unit.set_mesh_visibility(unit, name, name == shown)
+				local entry = particle.entry
+
+				-- A new unit shows all its meshes, so they are all hidden once. After that only the mesh that was shown and the new one
+				-- change, because a unit can have over a hundred meshes (the goop).
+				if not entry.meshes_hidden then
+					for _, name in ipairs(particle.frames) do
+						Unit.set_mesh_visibility(unit, name, false)
+					end
+
+					entry.meshes_hidden = true
+					entry.shown_mesh = nil
 				end
 
+				if entry.shown_mesh then
+					Unit.set_mesh_visibility(unit, entry.shown_mesh, false)
+				end
+
+				Unit.set_mesh_visibility(unit, shown, true)
+
+				entry.shown_mesh = shown
 				particle.shown = shown
 			end
 		end

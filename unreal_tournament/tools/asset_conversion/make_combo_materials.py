@@ -175,3 +175,15 @@ multiply(dark, 'opacity', 'blobs', 'intensity', 'g')
 dark.connect('tint', 'out', IN_OUT_BASE_COLOR)
 dark.connect('opacity', 'out', IN_OUT_OPACITY)
 write('explosion_dark', dark, {'blobs_map': 'shock_dark'})
+
+# ---------------------------------------------------------------- the goop
+# GoopMesh's FinalBlend GoopFB (XEffectMat): FB_Translucent of the Shader GoopShader, whose diffuse and self illumination are the TexOscillator
+# GoopOsc (OT_Pan, 0.07 of the texture a second along U and 0.17 along V) of the texture goop_green_a. It is lit by itself, and added.
+goop = Graph()
+common(goop)
+panned(goop, 'pan', 0.07, 0.17)
+texture(goop, 'goop', 'goop_map', 'pan')
+multiply(goop, 'color', 'goop', 'tint', 'rgb')
+goop.connect('color', 'out', IN_OUT_BASE_COLOR)
+goop.connect('intensity', 'out', IN_OUT_OPACITY)
+write('goop', goop, {'goop_map': 'bio_goop'})
