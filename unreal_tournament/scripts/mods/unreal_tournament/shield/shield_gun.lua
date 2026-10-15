@@ -103,14 +103,12 @@ local CONFIG = {
 	hit_angle = 60,
 	-- What the punch throws (see throws below): DamTypeShieldImpact's death throw (xPawn.PlayDying), KDeathVel along the way the punch
 	-- went (its momentum, Force * (X + 0.5 up), so lifted by half) and KDeathUpKick up, in UT units a second. A body is thrown once it
-	-- falls, if it dies within ragdoll_window seconds of the hit, and the throw is held for kill_hold seconds.
+	-- falls, if it dies within ragdoll_window seconds of the hit, and the throw is held for kill_hold seconds. The throw of a body the punch
+	-- kills is as strong as the punch's force is of MaxForce, so this at full charge (a choice: UT's death throw is the same for any).
 	ragdoll_speed = 450,
 	ragdoll_up = 300,
 	ragdoll_window = 1.5,
 	kill_hold = 0.15,
-	-- A body the punch kills is thrown this share as fast, as the game pushes it too for a heavy blow, and its spin moves it: a choice.
-	-- (Its spin is still worked out from UT's throw.)
-	kill_throw_share = 0.5,
 	-- The punch reaches from the middle of the player (Instigator.Location), not from the eyes: xPawn's CollisionHeight (44) above the
 	-- feet, and CrouchHeight (29) when crouched, in UT units. So the floor is in reach while looking up to 67 degrees from straight down.
 	reach_height = 44,
@@ -493,11 +491,11 @@ local function death_spin(unit, at, shot)
 end
 
 -- Throws what the punch hit, here and on the other machines. alive says that it is an enemy that was alive before the punch (which may
--- have killed it), not a loose thing. at is where the punch hit it.
-local function throw_hit(unit, direction, alive, at)
+-- have killed it), not a loose thing. at is where the punch hit it, and force the punch's.
+local function throw_hit(unit, direction, alive, at, force)
 	local kind = alive and KILL or LOOSE
 	local shot = Vector3.normalize(direction + Vector3(0, 0, 0.5)) * CONFIG.ragdoll_speed
-	local velocity = (shot + Vector3(0, 0, CONFIG.ragdoll_up)) * (UNIT * (alive and CONFIG.kill_throw_share or 1))
+	local velocity = (shot + Vector3(0, 0, CONFIG.ragdoll_up)) * (UNIT * (alive and force / CONFIG.max_force or 1))
 	local spin = alive and at and death_spin(unit, at, shot) or Vector3.zero()
 	local id, is_level_unit = Managers.state.network:game_object_or_level_id(unit)
 
@@ -665,7 +663,7 @@ local function punch(action, t, power_level, bash)
 		end
 
 		if alive then
-			throw_hit(target.unit, direction, true, hit_on_target and hit_on_target[1])
+			throw_hit(target.unit, direction, true, hit_on_target and hit_on_target[1], force)
 		elseif hit_on_target then
 			local body_zone = hit_zone_name(hit_on_target)
 			local id = Managers.state.unit_storage:go_id(target.unit)
