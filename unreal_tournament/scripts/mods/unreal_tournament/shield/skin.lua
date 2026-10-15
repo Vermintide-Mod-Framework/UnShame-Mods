@@ -372,15 +372,16 @@ local function new_skin(setting_id)
 		bob_damping = 2.2,
 		-- The second place is the shove of a push (update_state)
 		alt_pose_forward = CONFIG.shove_forward,
-		-- The inspect pose turns the gun to show its side, like the other weapons. These numbers are a guess, but for inspect_pose_right,
-		-- which puts the gun in the middle of the screen (preview_weapon.py shield: 175 to 789 of 960).
-		inspect_pose_right = -26.5,
-		inspect_pose_forward = 4,
-		inspect_pose_up = 0,
-		inspect_pose_roll = 10,
-		inspect_pose_pitch = 4,
-		inspect_pose_yaw = 55,
-		inspect_turn_start = 0.35,
+		-- The inspect pose brings the gun to the middle of the view, level, and turns it to the left about its middle until it is nearly
+		-- across the view, with its right side towards the player. The turn goes with the move, as the Rocket Launcher's does. The place was
+		-- checked with preview_weapon.py shield: 117 to 876 of 960 across, 57 to 438 of 540 down.
+		inspect_pose_right = -24,
+		inspect_pose_forward = 0,
+		inspect_pose_up = 14,
+		inspect_pose_roll = 0,
+		inspect_pose_pitch = 0,
+		inspect_pose_yaw = 75,
+		inspect_turn_start = 0,
 		inspect_pivot_right = 0,
 		inspect_pivot_forward = 20,
 		inspect_pivot_up = 0,
