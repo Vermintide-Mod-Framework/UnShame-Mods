@@ -258,6 +258,10 @@ local function update_state(api, skin, dt)
 		skin.charged = false
 
 		api.play("Charge", shield.fully_charged_time)
+
+		-- (held on its last frame at the end, so that it doesn't go back to Idle before Charged is played below)
+		skin.hold = true
+
 		api.stop_sound(skin.charge_sound)
 
 		skin.charge_sound = api.play_sound("ut_shield_charge")
