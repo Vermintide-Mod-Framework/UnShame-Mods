@@ -664,13 +664,19 @@ local function draw_charge_bar(bar, game_bar, dt, player)
 	UIRenderer.end_pass(ui_renderer)
 end
 
--- The copy is drawn after the game's bar, every frame the HUD draws it. It belongs to the game's bar, and goes with it.
+-- The copy of each of the game's bars, made by this load of the mod. The game's HUD lives on through a reload of the mod, so a copy kept
+-- on the game's bar would be the one an older build made.
+local charge_bars = setmetatable({}, {
+	__mode = "k",
+})
+
+-- The copy is drawn after the game's bar, every frame the HUD draws it, and goes with it
 mod:hook(OverchargeBarUI, "update", function (func, self, dt, t, player, ...)
 	func(self, dt, t, player, ...)
 
-	self.ut_charge_bar = self.ut_charge_bar or new_charge_bar(self)
+	charge_bars[self] = charge_bars[self] or new_charge_bar(self)
 
-	draw_charge_bar(self.ut_charge_bar, self, dt, self._is_spectator and self._spectated_player or player)
+	draw_charge_bar(charge_bars[self], self, dt, self._is_spectator and self._spectated_player or player)
 end)
 
 -- The melee weapon's own swings are not played on the player's own first person unit: their sounds are in the animations. The skin's
