@@ -459,6 +459,16 @@ mod:hook_safe(ActionDummy, "finish", function (self, reason)
 	end
 end)
 
+-- A player's block stops an attack (a blow or a shot)
+--   mod.block_callbacks[name] = function (status_extension, attacking_unit)
+mod.block_callbacks = {}
+
+mod:hook_safe(GenericStatusExtension, "blocked_attack", function (self, fatigue_type, attacking_unit)
+	for _, callback in pairs(mod.block_callbacks) do
+		callback(self, attacking_unit)
+	end
+end)
+
 -- Pushes (the push out of a block). They run on the machine that owns the action.
 --   mod.push_start_callbacks[name] = function (action_push, new_action, t)
 mod.push_start_callbacks = {}

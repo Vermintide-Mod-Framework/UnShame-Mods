@@ -25,6 +25,9 @@ TEXTURES = {
     'shell_casing': ('XEffects/Texture/ShellCasingTex.tga', 1, 1),
     # The Shield Gun (ShieldEffect's Shield3rdFB: its material is units/ut/fx/fx_shield, made by make_combo_materials.py)
     'shield_elec': ('XEffectMat/Texture/shield_elec_green_a.tga', 1, 1),
+    # (ShieldRip3rdFB, the shield as it stops something: its lines and the fade of its rim)
+    'shield_rip_elec': ('XEffectMat/Texture/shield_elec_green_rip_a.tga', 1, 1),
+    'shield_edge': ('XEffectMat/Texture/edgegrad.tga', 1, 1),
     # (ForceRingA's rings of the punch and ShieldCharge's sparks of the charge)
     'force_ring': ('XEffectMat/Texture/shock_ring_b.tga', 1, 1),
     'shield_charge_spark': ('XEffects/Texture/FlakTrailTex.tga', 1, 1),
@@ -47,7 +50,7 @@ BRIGHTEN = ('minigun_burst',)
 
 # The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield, made by
 # make_combo_materials.py, which does FB_Brighten itself and fades by the alpha)
-KEEP_ALPHA = ('shield_elec',)
+KEEP_ALPHA = ('shield_elec', 'shield_rip_elec', 'shield_edge')
 
 # The textures that are turned a quarter, because they are drawn on a beam, which lays v along its length (TracerShot is a streak along
 # u, the way NewTracer's sprite moves: PTDU_Right)

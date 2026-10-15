@@ -1,0 +1,10 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_shield_rip_graph"
+textures = {
+	lines_map = "units/ut/fx/shield_rip_elec"
+	fade_map = "units/ut/fx/shield_edge"
+}
+variables = {
+}

@@ -5,8 +5,9 @@ local mod = get_mod("unreal_tournament")
 --   Left button: held, it charges the gun, for up to 2.5 seconds. Let go, it punches what is right in front with a wave of force, for
 --       40 to 150 damage by how long it charged. While it charges, it punches by itself as soon as an enemy is in reach. Punching a wall
 --       throws the player away from it (the shield jump).
---   Right button: the base weapon's block. UT's shield blocks what comes from the front and is drained by what it stops, which is what
---       the game's block and stamina do. The skin draws UT's shield while it is up.
+--   Right button: the base weapon's block, made a shield block as the game's sword and shield has (SHIELD_FIELDS): it stops shots too.
+--       UT's shield blocks what comes from the front and is drained by what it stops, which is what the game's block and stamina do. The
+--       skin draws UT's shield while it is up.
 --   Left button while blocking: the base weapon's push, which the skin draws as a shove of the shield. Both buttons held after it: a bash,
 --       a punch as strong as a charge held since the push, with the shield down for a moment. UT has no push; this is the mod's own.
 -- Each hero has a melee weapon to be a copy of, so the weapon is six items of the mod that share everything but the base.
@@ -579,11 +580,29 @@ local function build_bash(original)
 	return action
 end
 
+-- What makes the game's shields different from a weapon's block, which the block of the gun takes from the game's sword and shield:
+-- it blocks shots too (a ratling gun's, a warpfire thrower's), it blocks a wider arc for less stamina and the rest of the way round for
+-- more, and it sounds like a shield.
+local SHIELD_FIELDS = {
+	"shield_block",
+	"can_block_ranged_attacks",
+	"block_angle",
+	"outer_block_angle",
+	"block_fatigue_point_multiplier",
+	"outer_block_fatigue_point_multiplier",
+	"sound_event_block_within_arc",
+}
+
 local function apply_template(template_name)
 	local template = rawget(Weapons, template_name)
 	local actions = template.actions
 	local original = actions.action_one
 	local heavy = original.heavy_attack or original.heavy_attack_left or original.default
+	local game_shield = rawget(Weapons, "one_handed_sword_shield_template_1")
+
+	for _, field in ipairs(game_shield and SHIELD_FIELDS or {}) do
+		template[field] = game_shield[field]
+	end
 
 	-- The chart of the item's stats, from 0 to 7
 	template.weapon_diagram = {

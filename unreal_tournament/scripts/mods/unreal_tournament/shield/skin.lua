@@ -20,6 +20,8 @@ local CONFIG = {
 	-- ShieldGun.EffectOffset (forward, right, up): where GetEffectStart is from the weapon, and ShieldEffect's DrawScale
 	effect_offset = {15, 5.5, 2},
 	shield_draw_scale = 1.8,
+	-- ShieldEffect.Flash: how long the shield shows its other skin when it stops something (its timer)
+	flash_time = 0.2, -- seconds
 	-- UT draws the effects at GetEffectStart before the gun, without depth (ShieldGun.RenderOverlays), so the gun covers them. Here they
 	-- are drawn this many times further from the eye and this many times bigger, which looks the same, and that puts them behind the
 	-- gun: they start 18 UT units ahead, and the gun reaches about 35 (the mesh is 79 units ahead of its origin, at DrawScale 0.4).
@@ -219,21 +221,14 @@ end
 -- The shield while it is up (ShieldAltFire.DrawMuzzleFlash): UT's Shield mesh at GetEffectStart, turned as the view is, drawn with the weapon's
 -- projection. Here it has the material that draws with the weapon's field of view (fx_shield), placed and scaled in the view as the model is
 -- (weapon_skin.lua), and it pans its texture by its age. It ends when the shield goes down or the model is gone.
-local function show_shield(api)
-	local skin = api.state()
-
-	if not skin then
-		return
-	end
-
+-- A shield mesh with a material, for as long as life says and while the shield is up. brightness is a function that says how bright it is.
+local function shield_mesh(api, skin, material, life, brightness)
 	local mesh_unit = 0.02 -- meters of a UT unit of the mesh (make_fx_meshes.py)
 	local forward, right, up = effect_start()
 
 	particles.mesh({
 		additive = 0,
-		brightness = function ()
-			return 1
-		end,
+		brightness = brightness,
 		color = {
 			1,
 			1,
@@ -251,8 +246,8 @@ local function show_shield(api)
 		-- about anything else)
 		angle = 0,
 		rotation = Quaternion.identity(),
-		life = math.huge,
-		material = "units/ut/fx/fx_shield",
+		life = life,
+		material = material,
 		scale = function ()
 			local across = (skin.view_across_scale or 0.01) / mesh_unit * CONFIG.shield_draw_scale * CONFIG.behind_gun
 			local along = (skin.view_forward_scale or 0.01) / mesh_unit * CONFIG.shield_draw_scale * CONFIG.behind_gun
@@ -261,6 +256,35 @@ local function show_shield(api)
 		end,
 		unit = "units/ut/fx/shield_mesh",
 	})
+end
+
+-- The shield while it is up. It is not drawn while it flashes (below).
+local function show_shield(api)
+	local skin = api.state()
+
+	if not skin then
+		return
+	end
+
+	shield_mesh(api, skin, "units/ut/fx/fx_shield", math.huge, function ()
+		return skin.flash_until and Managers.time:time("game") < skin.flash_until and 0 or 1
+	end)
+end
+
+-- The shield stopping something (ShieldEffect.Flash): its other skin (fx_shield_rip) for flash_time, and BShieldReflection
+local function flash_shield(api)
+	local skin = api.state()
+
+	if not skin or not skin.shield_up then
+		return
+	end
+
+	skin.flash_until = Managers.time:time("game") + CONFIG.flash_time
+
+	shield_mesh(api, skin, "units/ut/fx/fx_shield_rip", CONFIG.flash_time, function ()
+		return 1
+	end)
+	api.play_sound("ut_shield_hit")
 end
 
 -- The animations follow what the gun does (ShieldFire and ShieldAltFire): the charge plays Charge over FullyChargedTime and then loops
@@ -448,6 +472,17 @@ end
 
 for _, setting_id in ipairs(VARIANTS) do
 	new_skin(setting_id)
+end
+
+-- The player's block stops something: the shield flashes
+mod.block_callbacks.shield_skin = function (status_extension)
+	if not utils.is_local_player_unit(status_extension.unit) then
+		return
+	end
+
+	for _, api in ipairs(skin_apis) do
+		flash_shield(api)
+	end
 end
 
 -- Inspecting is the game's own action, held with the key

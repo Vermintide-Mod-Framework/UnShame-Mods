@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, math
 
 # Makes the materials of the two meshes of the Shock Rifle's combo, as UT2004 has them, as shader graphs that run on the GPU (as the chamber's
 # does, see make_chamber_material.py): the panning is done by the graph, so that nothing is baked and the effect needs no frames.
@@ -268,36 +268,53 @@ IN_ADD_A, IN_ADD_B = 'f72597c4-7487-419a-affb-df690e6582e1', '0806db0d-2c4a-43ca
 IN_CONSTANT_VECTOR3 = '6ff26be7-68a1-4b89-b9dd-551d216086c2'
 IN_CONSTANT_SCALAR = 'c4d6bc08-c489-430f-a836-ed490e59c3f9'
 LINEAR_SAMPLE_OPTIONS = ('5dd59b3d-1762-4a14-9930-7500230ef3db', 'f669a3a6-0376-4187-840e-80000e2939d5', 'e94e53e6-49b6-4194-a747-8f064a5932e0')
-shield = Graph()
-shield.add('out', 'core/stingray_renderer/output_nodes/unlit_base', OUT_OPTIONS + (CUSTOM_FOV,))
-shield.add('uv', 'core/shader_nodes/texture_coordinate0')
-shield.add('time', 'core/shader_nodes/material_variable', export=float_variable('age', 'Age', 0), title='Age')
-shield.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
-shield.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
-shield.add('additive', 'core/shader_nodes/material_variable', export=float_variable('additive', 'Additive', 0), title='Additive')
-panned(shield, 'pan', 0, 0.2)
-shield.add('lines', 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('lines_map'), title='lines_map')
-shield.connect('pan', 'lines', IN_SAMPLE_UV)
-shield.add('fade', 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('fade_map'), title='fade_map')
-shield.connect('uv', 'fade', IN_SAMPLE_UV)
-# (the colour: the lines, faded at the rim, tinted)
-multiply(shield, 'faded', 'lines', 'fade', 'rgb', 'a')
-multiply(shield, 'color', 'faded', 'tint')
-shield.connect('color', 'out', IN_OUT_BASE_COLOR)
-shield.connect('intensity', 'out', IN_OUT_OPACITY)
-# (additive: 1 - the luminance of the colour, plus the particles' own additive, which is 0 for the shield)
-shield.add('weights', 'core/shader_nodes/constant_vector3')
-shield.constant('weights', IN_CONSTANT_VECTOR3, [0.2126, 0.7152, 0.0722])
-shield.add('luminance', 'core/shader_nodes/dot')
-shield.connect('color', 'luminance', IN_DOT_A)
-shield.connect('weights', 'luminance', IN_DOT_B)
-shield.add('one', 'core/shader_nodes/constant_scalar')
-shield.constant('one', IN_CONSTANT_SCALAR, 1)
-shield.add('see_through', 'core/shader_nodes/subtract')
-shield.connect('one', 'see_through', IN_SUBTRACT_A)
-shield.connect('luminance', 'see_through', IN_SUBTRACT_B)
-shield.add('blend', 'core/shader_nodes/add')
-shield.connect('see_through', 'blend', IN_ADD_A)
-shield.connect('additive', 'blend', IN_ADD_B)
-shield.connect('blend', 'out', IN_OUT_ADDITIVE)
-write('shield', shield, {'lines_map': 'shield_elec', 'fade_map': 'shield_elec'})
+
+# The shield's graph: the lines panned by pan_u and pan_v a second, faded by the alpha of the fade texture as it is, and with
+# lines_alpha by the lines' own alpha too
+def shield_graph(pan_u, pan_v, lines_alpha):
+    shield = Graph()
+    shield.add('out', 'core/stingray_renderer/output_nodes/unlit_base', OUT_OPTIONS + (CUSTOM_FOV,))
+    shield.add('uv', 'core/shader_nodes/texture_coordinate0')
+    shield.add('time', 'core/shader_nodes/material_variable', export=float_variable('age', 'Age', 0), title='Age')
+    shield.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
+    shield.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
+    shield.add('additive', 'core/shader_nodes/material_variable', export=float_variable('additive', 'Additive', 0), title='Additive')
+    panned(shield, 'pan', pan_u, pan_v)
+    shield.add('lines', 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('lines_map'), title='lines_map')
+    shield.connect('pan', 'lines', IN_SAMPLE_UV)
+    shield.add('fade', 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('fade_map'), title='fade_map')
+    shield.connect('uv', 'fade', IN_SAMPLE_UV)
+    # (the colour: the lines, faded at the rim, tinted)
+    if lines_alpha:
+        multiply(shield, 'lines_faded', 'lines', 'lines', 'rgb', 'a')
+        multiply(shield, 'faded', 'lines_faded', 'fade', None, 'a')
+    else:
+        multiply(shield, 'faded', 'lines', 'fade', 'rgb', 'a')
+    multiply(shield, 'color', 'faded', 'tint')
+    shield.connect('color', 'out', IN_OUT_BASE_COLOR)
+    shield.connect('intensity', 'out', IN_OUT_OPACITY)
+    # (additive: 1 - the luminance of the colour, plus the particles' own additive, which is 0 for the shield)
+    shield.add('weights', 'core/shader_nodes/constant_vector3')
+    shield.constant('weights', IN_CONSTANT_VECTOR3, [0.2126, 0.7152, 0.0722])
+    shield.add('luminance', 'core/shader_nodes/dot')
+    shield.connect('color', 'luminance', IN_DOT_A)
+    shield.connect('weights', 'luminance', IN_DOT_B)
+    shield.add('one', 'core/shader_nodes/constant_scalar')
+    shield.constant('one', IN_CONSTANT_SCALAR, 1)
+    shield.add('see_through', 'core/shader_nodes/subtract')
+    shield.connect('one', 'see_through', IN_SUBTRACT_A)
+    shield.connect('luminance', 'see_through', IN_SUBTRACT_B)
+    shield.add('blend', 'core/shader_nodes/add')
+    shield.connect('see_through', 'blend', IN_ADD_A)
+    shield.connect('additive', 'blend', IN_ADD_B)
+    shield.connect('blend', 'out', IN_OUT_ADDITIVE)
+    return shield
+
+write('shield', shield_graph(0, 0.2, False), {'lines_map': 'shield_elec', 'fade_map': 'shield_elec'})
+
+# ShieldEffect's other skin, ShieldRip3rdFB, which ShieldEffect.Flash shows for 0.2 seconds when the shield stops something: FB_Brighten of the
+# Combiner ShieldRipComb, the colour of the TexPanner ShieldRipPanner (PanDirection yaw 12000, PanRate 0.35) of shield_elec_green_rip_a,
+# and the alpha of that times the alpha of edgegrad (AO_Multiply), which fades the rim as the shield's own does
+# (units/ut/fx/shield_rip_elec and shield_edge, make_weapon_fx.py).
+RIP_PAN = 12000 / 65536 * 2 * math.pi
+write('shield_rip', shield_graph(0.35 * math.cos(RIP_PAN), 0.35 * math.sin(RIP_PAN), True), {'lines_map': 'shield_rip_elec', 'fade_map': 'shield_edge'})
