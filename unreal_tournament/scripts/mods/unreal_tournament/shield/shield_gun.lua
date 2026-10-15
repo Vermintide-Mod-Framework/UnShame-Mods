@@ -1122,9 +1122,10 @@ end
 
 -- Whether a shot from `from` to `to`, as wide as `radius` (meters), is reflected by a player's shield on its way. The shot is the
 -- attacker's, and ignore_unit is a player it has just left. Only the first player it gets to counts: a shot that gets to a player who
--- doesn't reflect it hits them. Returns where it was reflected, how far along the way that is (meters), the way it goes on (the way the
--- player looks), and the player.
-function mod.shield.reflect(from, to, radius, attacker_unit, ignore_unit)
+-- doesn't reflect it hits them. The attacker's own shot doesn't get to them (a projectile's ProcessTouch skips its Instigator, which a
+-- reflected one keeps), except a beam that was reflected already, with reaches_attacker (InstantFire.DoTrace: ReflectNum > 0). Returns
+-- where it was reflected, how far along the way that is (meters), the way it goes on (the way the player looks), and the player.
+function mod.shield.reflect(from, to, radius, attacker_unit, ignore_unit, reaches_attacker)
 	local heroes = Managers.state.side and Managers.state.side:get_side_from_name("heroes")
 	local game = Managers.state.network:game()
 
@@ -1135,7 +1136,7 @@ function mod.shield.reflect(from, to, radius, attacker_unit, ignore_unit)
 	local best_t, best_unit, best_center
 
 	for _, unit in ipairs(heroes.PLAYER_AND_BOT_UNITS) do
-		if unit ~= attacker_unit and unit ~= ignore_unit and Unit.alive(unit) then
+		if (unit ~= attacker_unit or reaches_attacker) and unit ~= ignore_unit and Unit.alive(unit) then
 			local status_extension = ScriptUnit.has_extension(unit, "status_system")
 			local height = status_extension and status_extension:is_crouching() and CONFIG.reach_height_crouched or CONFIG.reach_height
 			local center = POSITION_LOOKUP[unit] + Vector3(0, 0, height * UNIT)

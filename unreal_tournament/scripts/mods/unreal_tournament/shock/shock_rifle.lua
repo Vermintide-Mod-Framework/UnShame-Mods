@@ -1015,7 +1015,7 @@ local function trace_beam(owner_unit, physics_world, origin, direction, hits)
 		local shield_position, shield_distance, shield_direction, shield_unit
 
 		if reflection < mod.shield.max_reflections then
-			shield_position, shield_distance, shield_direction, shield_unit = mod.shield.reflect(origin, origin + direction * length, 0, owner_unit, ignore_unit)
+			shield_position, shield_distance, shield_direction, shield_unit = mod.shield.reflect(origin, origin + direction * length, 0, owner_unit, ignore_unit, reflection > 0)
 		end
 
 		local reached = shield_distance or length
