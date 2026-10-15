@@ -742,15 +742,18 @@ local function debug_crosshair(owner_unit, physics_world)
 	local position = first_person_extension:current_position()
 	local direction = Quaternion.forward(first_person_extension:current_rotation())
 
-	for _, filter in ipairs({ "filter_melee_sweep", "filter_player_ray_projectile_static_only", "filter_player_ray_projectile" }) do
+	for _, filter in ipairs({ "filter_physics_projectile", "filter_physics_projectile_large", "filter_environment_overlap", "filter_player_ray_projectile_dynamic_only", "filter_ragdoll_secondary" }) do
 		local hits = PhysicsWorld.immediate_raycast(physics_world, position, direction, 10, "all", "collision_filter", filter)
 		local names = {}
 
-		for i = 1, math.min(#(hits or {}), 3) do
+		for i = 1, #(hits or {}) do
 			local actor = hits[i][4]
 			local unit = actor and Actor.unit(actor)
 
-			names[#names + 1] = string.format("%s %.1fm%s%s", unit and Unit.debug_name(unit) or "?", hits[i][2], actor and Actor.is_dynamic(actor) and " dynamic" or "", unit and ScriptUnit.has_extension(unit, "health_system") and " health" or "")
+			-- (not the player's own character)
+			if unit ~= owner_unit and #names < 3 then
+				names[#names + 1] = string.format("%s %.1fm%s%s", unit and Unit.debug_name(unit) or "?", hits[i][2], actor and Actor.is_dynamic(actor) and " dynamic" or "", unit and ScriptUnit.has_extension(unit, "health_system") and " health" or "")
+			end
 		end
 
 		mod:echo("%s: %s", filter, #names > 0 and table.concat(names, ", ") or "nothing")
