@@ -1018,7 +1018,8 @@ local function trace_beam(owner_unit, physics_world, origin, direction, hits)
 			shield_position, shield_distance, shield_direction, shield_unit = mod.shield.reflect(origin, origin + direction * length, 0, owner_unit, ignore_unit, reflection > 0)
 		end
 
-		local reached = shield_distance or length
+		-- (the hits before a ball or a shield: the game's shot itself stops at the first thing it hits)
+		local reached = shield_distance or ball_distance or math.huge
 		local piece_hits = {}
 
 		for i = 1, #(hits or {}) do
