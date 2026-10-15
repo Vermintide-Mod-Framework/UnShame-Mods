@@ -994,6 +994,22 @@ mod:command("ut_quiet", "on | off - keeps the level empty and the player unhurt,
 	end
 end)
 
+-- Where the player stands, for a test that has to run at a certain place
+mod:command("ut_where", "- says where the player stands", function ()
+	local unit = player_unit()
+
+	if not unit then
+		log("ut_where: there is no player")
+
+		return
+	end
+
+	local position = Unit.local_position(unit, 0)
+
+	log("ut_where: %s Vector3(%.3f, %.3f, %.3f)", current_level_key(), Vector3.x(position), Vector3.y(position), Vector3.z(position))
+	push_log_out()
+end)
+
 -- For looking at the weapon in the character's hand: the camera goes behind the shoulder, and the character is shown. The game does this
 -- for its own third person debug mode.
 mod:command("ut_3p", "on | off - the third person view, for looking at the weapon in the hand", function (argument)

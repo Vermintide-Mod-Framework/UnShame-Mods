@@ -531,22 +531,51 @@ end)
 -- Gravity
 -- The player's gravity is applied while their movement is updated. It is multiplied only during that update. Other code, such as
 -- levels and effects, also changes the player's gravity scale, and it must see its own value.
-mod:hook(PlayerUnitLocomotionExtension, "update_script_driven_movement", function (func, self, ...)
+--
+-- Blocked upward speed
+-- In the air, the game keeps the upward speed it worked out, not the one the player actually moved. So when a weapon jump throws
+-- the player into a ceiling or an overhang, the player stays pressed against it until gravity has used that speed up. UT2004
+-- takes away the speed that goes into what the player hit. Here the upward speed is cut to what the player moved when the mover
+-- hit something, as the game already does for the speed sideways.
+mod:hook(PlayerUnitLocomotionExtension, "update_script_driven_movement", function (func, self, unit, dt, t, calculate_fall_velocity, ...)
 	if not is_movement_enabled() then
-		return func(self, ...)
+		return func(self, unit, dt, t, calculate_fall_velocity, ...)
 	end
 
 	if recently_left_ladder(self.unit) then
-		return func(self, ...)
+		return func(self, unit, dt, t, calculate_fall_velocity, ...)
 	end
 
 	local gravity_scale = self._script_driven_gravity_scale
+	-- The game scales its dt by this inside the update, and clears it
+	local moved_dt = dt * (self._script_movement_time_scale or 1)
+	local start_z = Unit.local_position(unit, 0).z
 
 	self._script_driven_gravity_scale = gravity_scale * CONFIG.gravity_multiplier
 
-	func(self, ...)
+	func(self, unit, dt, t, calculate_fall_velocity, ...)
 
 	self._script_driven_gravity_scale = gravity_scale
+
+	local velocity = self.velocity_current:unbox()
+
+	if not calculate_fall_velocity or velocity.z <= 0 or moved_dt <= 0 then
+		return
+	end
+
+	local mover = Unit.mover(unit)
+
+	if not Mover.collides_up(mover) and not Mover.collides_sides(mover) then
+		return
+	end
+
+	local moved_z = (Unit.local_position(unit, 0).z - start_z) / moved_dt
+
+	if moved_z < velocity.z then
+		velocity.z = math.max(moved_z, 0)
+
+		self.velocity_current:store(velocity)
+	end
 end)
 
 -- Multidodge also removes the game's own limit. Normally the more dodges in a row, the shorter they get, and after the first few
