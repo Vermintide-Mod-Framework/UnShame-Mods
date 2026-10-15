@@ -129,6 +129,8 @@ local CONFIG = {
 		{ 2 / 3, "blunt_tank", 2 / 3 },
 		{ 1, "heavy_blunt_tank", 1 },
 	},
+	-- The bash out of a push is the blow of this third of the charge (above), its damage type and share, whatever its time held gives
+	bash_damage_type = 2,
 	-- ShieldFire: punching a wall hurts the player MinSelfDamage + SelfDamageScale * the damage. UT's DeathMatch.ReduceDamage halves a
 	-- player's own damage in a game with bots at the lower skills, and the Rocket Launcher and the Flak Cannon of the mod take that half too.
 	min_self_damage = 8,
@@ -196,21 +198,9 @@ local function damage_for_step(step)
 	return CONFIG.min_damage + (CONFIG.max_damage - CONFIG.min_damage) * step / (CONFIG.damage_steps - 1)
 end
 
-local PUNCH_ACTIONS = {}
-
-for step = 0, CONFIG.damage_steps - 1 do
-	local name = "ut_shield_punch_" .. step
-	local damage = damage_for_step(step)
-
-	local share = step / (CONFIG.damage_steps - 1)
-	local damage_type, damage_share
-
-	for _, entry in ipairs(CONFIG.damage_types) do
-		if not damage_type and share <= entry[1] + 0.0001 then
-			damage_type, damage_share = entry[2], entry[3]
-		end
-	end
-
+-- Makes the damage profile of a punch of a step of the charge, of a damage type and a share of UT's damage, and returns what the punch is to
+-- the game's hit processing
+local function make_punch_action(name, damage, damage_type, damage_share)
 	register_damage_profile(name, "shot_sniper", function (profile)
 		make_flat(profile, attack_power_for(damage * damage_share), impact_power_for(damage) * CONFIG.stagger_multiplier, damage_type)
 
@@ -225,13 +215,32 @@ for step = 0, CONFIG.damage_steps - 1 do
 		profile.no_headshot_boost = true
 	end)
 
-	-- What a punch is, to the game's hit processing
-	PUNCH_ACTIONS[step] = {
+	return {
 		damage_profile = name,
 		hit_effect = "melee_hit_hammers_2h",
 		ignore_shield_hit = true,
 		no_headshot_sound = true,
 	}
+end
+
+-- The punches of each step of the charge (their damage type and share by the third of the charge, see damage_types), and the bashes,
+-- which are the middle third's whatever their step (bash_damage_type)
+local PUNCH_ACTIONS = {}
+local BASH_ACTIONS = {}
+
+for step = 0, CONFIG.damage_steps - 1 do
+	local damage = damage_for_step(step)
+	local share = step / (CONFIG.damage_steps - 1)
+	local damage_type, damage_share
+
+	for _, entry in ipairs(CONFIG.damage_types) do
+		if not damage_type and share <= entry[1] + 0.0001 then
+			damage_type, damage_share = entry[2], entry[3]
+		end
+	end
+
+	PUNCH_ACTIONS[step] = make_punch_action("ut_shield_punch_" .. step, damage, damage_type, damage_share)
+	BASH_ACTIONS[step] = make_punch_action("ut_shield_bash_" .. step, damage, CONFIG.damage_types[CONFIG.bash_damage_type][2], CONFIG.damage_types[CONFIG.bash_damage_type][3])
 end
 
 -- The step of the charge after holding for some time (ShieldFire.DoFireEffect)
@@ -613,7 +622,7 @@ local function punch(action, t, power_level, bash)
 		return
 	end
 
-	local punch_action = PUNCH_ACTIONS[step]
+	local punch_action = bash and BASH_ACTIONS[step] or PUNCH_ACTIONS[step]
 	local targets = targets_in_reach(owner_unit, action.physics_world, origin, direction, range)
 
 	-- (the enemy straight ahead is always one: close up, its middle can be outside the cone)
