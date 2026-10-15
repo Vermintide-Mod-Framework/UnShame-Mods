@@ -561,21 +561,34 @@ local function show_charge_bar(bar_ui, player)
 end
 
 local bar_definitions = local_require("scripts/ui/hud_ui/overcharge_bar_ui_definitions")
-local equipment_definitions = local_require("scripts/ui/hud_ui/equipment_ui_definitions")
+-- Where the ammo counter is: the panel of the equipment HUD that is shown (the mouse and keyboard one or the gamepad one, which places
+-- it elsewhere), as it was laid out last
+local ammo_counter_scenegraph
 
--- Where the copy is: on the ammo counter, from the nodes the game places the counter with (equipment_ui_definitions.lua: the HUD's
--- scaled root, and the counter's panel at the bottom right), so it is on the counter at any resolution and HUD scale. The bar is in the
--- middle of the panel.
+for _, equipment_ui in ipairs({ EquipmentUI, GamePadEquipmentUI }) do
+	mod:hook_safe(equipment_ui, "update", function (self)
+		if self._is_visible ~= false and self.ui_scenegraph and self.ui_scenegraph.ammo_background then
+			ammo_counter_scenegraph = self.ui_scenegraph
+		end
+	end)
+end
+
+-- The copy's nodes: a root that stays as it is, so its child is placed in the HUD's own units, the units the counter's place is in
 local function charge_bar_scenegraph()
-	local game = equipment_definitions.scenegraph_definition
-
 	return {
-		root_parent = table.clone(game.root_parent),
-		ammo_background_parent = table.clone(game.ammo_background_parent),
+		screen = {
+			position = {
+				0,
+				0,
+				UILayer.hud_inventory,
+			},
+			size = {
+				1920,
+				1080,
+			},
+		},
 		charge_bar = {
-			horizontal_alignment = "center",
-			parent = "ammo_background_parent",
-			vertical_alignment = "center",
+			parent = "screen",
 			position = {
 				0,
 				0,
@@ -584,6 +597,24 @@ local function charge_bar_scenegraph()
 			size = table.clone(bar_definitions.DEFAULT_BAR_SIZE),
 		},
 	}
+end
+
+-- Puts the copy in the middle of the ammo counter's panel, where the counter is now. Returns false while there is no counter.
+local function place_on_ammo_counter(bar)
+	local counter = ammo_counter_scenegraph and ammo_counter_scenegraph.ammo_background
+
+	if not counter then
+		return false
+	end
+
+	local node = bar.ui_scenegraph.charge_bar
+	local position = node.local_position
+
+	position[1] = counter.world_position[1] + (counter.size[1] - node.size[1]) / 2
+	position[2] = counter.world_position[2] + (counter.size[2] - node.size[2]) / 2
+	position[3] = counter.world_position[3] + 1
+
+	return true
 end
 
 -- Makes the copy of a player's overcharge bar, as the game makes the bar (OverchargeBarUI.create_ui_elements), with the same renderer.
@@ -620,10 +651,11 @@ local function draw_charge_bar(bar, game_bar, dt, player)
 		return
 	end
 
-	local ui_renderer = bar.ui_renderer
+	if not place_on_ammo_counter(bar) then
+		return
+	end
 
-	-- (the nodes' alignments and the HUD's scale are worked out by this, for the resolution and HUD scale of now)
-	UISceneGraph.update_scenegraph(bar.ui_scenegraph)
+	local ui_renderer = bar.ui_renderer
 
 	bar.render_settings.alpha_multiplier = game_bar.render_settings.alpha_multiplier
 
