@@ -521,10 +521,10 @@ mod.inspect_callbacks.shield_skin = function (action, started)
 	end
 end
 
--- The charge is shown on the game's overcharge bar, which every player has and which shows while it is above 0. While the player holds
--- the Shield Gun, the bar is the charge from empty to full (FullyChargedTime) instead of the overcharge, where the ammo counter is, in
--- the Shield Gun's HudColor, without the overcharge's icon and glow. Its two marks are where the punch becomes the next blow
--- (shield.charge_marks). UT shows no charge; this is the mod's own.
+-- The charge is shown on a copy of the game's overcharge bar. While the player holds the Shield Gun, the copy is the charge from empty to
+-- full (FullyChargedTime), where the ammo counter is, in the Shield Gun's HudColor, without the overcharge's icon and glow. Its two marks
+-- are where the punch becomes the next blow (shield.charge_marks). The game's own bar still shows the overcharge, which a wizard has from
+-- her staff while she holds the Shield Gun. UT shows no charge; this is the mod's own.
 local function show_charge_bar(bar_ui, player)
 	local unit = player and player.player_unit
 	local style = bar_ui.charge_bar.style
@@ -563,21 +563,51 @@ local function show_charge_bar(bar_ui, player)
 	return true
 end
 
-mod:hook(OverchargeBarUI, "_update_overcharge", function (func, self, player, t)
-	if show_charge_bar(self, player) then
-		return true
+local bar_definitions = local_require("scripts/ui/hud_ui/overcharge_bar_ui_definitions")
+
+-- Makes the copy of a player's overcharge bar, as the game makes the bar (OverchargeBarUI.create_ui_elements), with the same renderer.
+-- (The game's clears the renderer's queue of scenegraphs first, which is not done here, in the middle of the HUD's frame.)
+local function new_charge_bar(game_bar)
+	local bar = setmetatable({}, getmetatable(game_bar))
+
+	bar.ui_renderer = game_bar.ui_renderer
+	bar.input_manager = game_bar.input_manager
+	bar._side = game_bar._side
+	bar.render_settings = {
+		alpha_multiplier = 1,
+		snap_pixel_positions = true,
+	}
+	bar.ui_scenegraph = UISceneGraph.init_scenegraph(bar_definitions.scenegraph_definition)
+	bar.charge_bar = UIWidget.init(UIWidgets.create_overcharge_bar_widget("charge_bar", nil, nil, nil, nil, bar_definitions.DEFAULT_BAR_SIZE))
+
+	return bar
+end
+
+-- Draws the copy as the game draws its bar (OverchargeBarUI.update), at the ammo counter, as see-through as the game's bar is
+local function draw_charge_bar(bar, game_bar, dt, player)
+	if not show_charge_bar(bar, player) then
+		return
 	end
 
-	return func(self, player, t)
-end)
+	local position = bar.ui_scenegraph.screen_bottom_pivot.local_position
+	local ui_renderer = bar.ui_renderer
 
--- The game places the bar below the crosshair every frame it is drawn. The charge bar is placed where the ammo counter is.
-mod:hook(OverchargeBarUI, "_apply_crosshair_position", function (func, self, x, y)
-	if self.ut_shield_charge then
-		return func(self, CONFIG.charge_bar_position[1], CONFIG.charge_bar_position[2] + CONFIG.charge_bar_drop)
-	end
+	position[1] = CONFIG.charge_bar_position[1]
+	position[2] = CONFIG.charge_bar_position[2] + CONFIG.charge_bar_drop
+	bar.render_settings.alpha_multiplier = game_bar.render_settings.alpha_multiplier
 
-	return func(self, x, y)
+	UIRenderer.begin_pass(ui_renderer, bar.ui_scenegraph, bar.input_manager:get_service("ingame_menu"), dt, nil, bar.render_settings)
+	UIRenderer.draw_widget(ui_renderer, bar.charge_bar)
+	UIRenderer.end_pass(ui_renderer)
+end
+
+-- The copy is drawn after the game's bar, every frame the HUD draws it. It belongs to the game's bar, and goes with it.
+mod:hook(OverchargeBarUI, "update", function (func, self, dt, t, player, ...)
+	func(self, dt, t, player, ...)
+
+	self.ut_charge_bar = self.ut_charge_bar or new_charge_bar(self)
+
+	draw_charge_bar(self.ut_charge_bar, self, dt, self._is_spectator and self._spectated_player or player)
 end)
 
 -- The melee weapon's own swings are not played on the player's own first person unit: their sounds are in the animations. The skin's
