@@ -352,9 +352,10 @@ local function bolt_projectile_info()
 	return projectile_info
 end
 
--- After the game has put a bolt where its blend says, the bolt is put on the same blend from the end of the staff.
+-- After the game has put a bolt where its blend says, the bolt is put on the same blend from the end of the staff. A bolt that a
+-- shield reflected doesn't come from the staff.
 mod:hook_safe(PlayerProjectileUnitExtension, "update", function (self)
-	if not self.projectile_info.ut_staff_end or not ALIVE[self._owner_unit] then
+	if not self.projectile_info.ut_staff_end or self._ut_reflected_by or not ALIVE[self._owner_unit] then
 		return
 	end
 
@@ -563,6 +564,8 @@ local function apply_link_gun()
 		action.total_time = CONFIG.bolt_fire_interval
 		action.ut_init_callback = "link_bolt"
 		action.ut_init_flow_event_filter = "link"
+		-- A shield reflects the bolt, as UT's does (see mod.shield.reflect)
+		action.ut_reflective = true
 		action.ut_skin_init_callback = "link_bolt"
 	end
 

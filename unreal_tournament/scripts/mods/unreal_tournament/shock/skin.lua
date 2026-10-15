@@ -337,8 +337,15 @@ mod.charged_projectile_start_callbacks.shock_skin = function (action, new_action
 end
 
 -- Draws the beam. The local player's beam starts at the model's muzzle, and the others' beams start at the mesh in their hand.
-mod.shock_beam_callbacks.skin = function (owner_unit, start_position, end_position, hit_normal)
+mod.shock_beam_callbacks.skin = function (owner_unit, start_position, end_position, hit_normal, reflected)
 	local is_local = utils.is_local_player_unit(owner_unit)
+
+	-- (a piece that a shield reflected starts where it was reflected, with no flash or sound of a shot)
+	if reflected then
+		fx.beam(start_position, end_position, hit_normal, utils.wielded_skin(owner_unit) == INSTAGIB_SKIN)
+
+		return
+	end
 
 	if is_local and skin_api.state() and not third_person.shows_weapon(owner_unit) then
 		start_position = skin_api.muzzle_position() or start_position

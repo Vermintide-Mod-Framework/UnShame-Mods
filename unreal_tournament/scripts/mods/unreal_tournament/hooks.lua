@@ -179,9 +179,10 @@ end)
 mod.skin_explosion_callbacks = {}
 
 -- The Shock Rifle tells its skin about its beam. It runs on the shooter's machine, and on the others' after they get the message.
---   mod.shock_beam_callbacks[name] = function (owner_unit, start_position, end_position, hit_normal)
+--   mod.shock_beam_callbacks[name] = function (owner_unit, start_position, end_position, hit_normal, reflected)
 -- owner_unit fired it. The beam goes from start_position to end_position. hit_normal is the way the surface it hit faces, or nil
--- if it hit nothing.
+-- if it hit nothing. A beam that a shield reflected comes in more than one piece: the ones after the first have reflected, and
+-- start where they were reflected.
 mod.shock_beam_callbacks = {}
 
 -- The Lightning Gun tells its skin about its bolt. It runs on the shooter's machine, and on the others' after they get the message.

@@ -420,6 +420,8 @@ local function build_ball_action()
 		speed = CONFIG.ball_speed,
 		total_time = BALL_TOTAL_TIME,
 		ut_shock_ball = true,
+		-- A shield reflects it (see mod.shield.reflect)
+		ut_reflective = true,
 		ut_aoe_callback = "shock_ball",
 		ut_init_callback = "shock_ball",
 		ut_init_flow_event_filter = "shock_ball",
@@ -862,20 +864,38 @@ mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_posit
 end
 
 -- The skin draws the beam of the player who fires (see shock_beam_callbacks). Where the beam ends is sent to the other players,
--- who see it come from the staff of the player's character.
-local function spawn_trail(action, end_position, hit_normal)
+-- who see it come from the staff of the player's character. A piece of the beam that a shield reflected (start_position is given)
+-- starts where it was reflected.
+local function spawn_trail(action, end_position, hit_normal, start_position)
 	local weapon_unit = action.weapon_unit
-	local muzzle_position = Unit.world_position(weapon_unit, Unit.node(weapon_unit, "fx_muzzle"))
+	local reflected = start_position ~= nil
+
+	start_position = start_position or Unit.world_position(weapon_unit, Unit.node(weapon_unit, "fx_muzzle"))
 
 	for _, callback in pairs(mod.shock_beam_callbacks) do
-		callback(action.owner_unit, muzzle_position, end_position, hit_normal)
+		callback(action.owner_unit, start_position, end_position, hit_normal, reflected)
 	end
 
-	mod:network_send("ut_shock_trail", "others", Managers.state.unit_storage:go_id(action.owner_unit), end_position.x, end_position.y, end_position.z, hit_normal.x, hit_normal.y, hit_normal.z)
+	local go_id = Managers.state.unit_storage:go_id(action.owner_unit)
+
+	if reflected then
+		mod:network_send("ut_shock_trail", "others", go_id, Vector3.x(end_position), Vector3.y(end_position), Vector3.z(end_position), Vector3.x(hit_normal), Vector3.y(hit_normal), Vector3.z(hit_normal), Vector3.x(start_position), Vector3.y(start_position), Vector3.z(start_position))
+	else
+		mod:network_send("ut_shock_trail", "others", go_id, Vector3.x(end_position), Vector3.y(end_position), Vector3.z(end_position), Vector3.x(hit_normal), Vector3.y(hit_normal), Vector3.z(hit_normal))
+	end
 end
 
-mod:network_register("ut_shock_trail", function (_, owner_go_id, x, y, z, normal_x, normal_y, normal_z)
+mod:network_register("ut_shock_trail", function (_, owner_go_id, x, y, z, normal_x, normal_y, normal_z, start_x, start_y, start_z)
 	local unit = Managers.state.unit_storage:unit(owner_go_id)
+
+	if start_x and unit then
+		for _, callback in pairs(mod.shock_beam_callbacks) do
+			callback(unit, Vector3(start_x, start_y, start_z), Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), true)
+		end
+
+		return
+	end
+
 	local inventory_extension = unit and ScriptUnit.has_extension(unit, "inventory_system")
 	local equipment = inventory_extension and inventory_extension:equipment()
 	-- The staff is the right hand's unit, and the left hand's unit is the fireball's effect. The game's own beam looks for the
@@ -972,6 +992,67 @@ mod.handgun_start_callbacks.shock = function (self, new_action)
 	self._ut_combo_checked = not new_action.ut_shock_beam
 end
 
+local function beam_ray(physics_world, origin, direction)
+	return PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
+end
+
+-- The way the beam goes, as UT's InstantFire.DoTrace: from the eye to the first thing it hits, or to a ball it gets to before that,
+-- which goes off. If it hits nothing, it goes on to its range. A player's shield that it gets to first reflects it, and it goes on
+-- from there the way that player looks (mod.shield.reflect), up to max_reflections times. Each piece of the way is { origin,
+-- direction, hits: the hits of its ray before where it ends, which are what it damages, end_position, hit_normal: the zero vector
+-- if it ends on no surface, ball_unit: the ball it sets off }. The first piece's hits can be given, as the game's shot made them.
+-- A reflection costs the shield's stamina, so this is done once a shot.
+local function trace_beam(owner_unit, physics_world, origin, direction, hits)
+	local pieces = {}
+	local ignore_unit
+
+	for reflection = 0, mod.shield.max_reflections do
+		hits = hits or beam_ray(physics_world, origin, direction)
+
+		local hit = first_beam_hit(hits, owner_unit, ignore_unit)
+		local ball_unit, ball_distance = find_ball_hit_by_beam(origin, direction, hit and hit[2])
+		local length = ball_distance or hit and hit[2] or CONFIG.beam_range
+		local shield_position, shield_distance, shield_direction, shield_unit
+
+		if reflection < mod.shield.max_reflections then
+			shield_position, shield_distance, shield_direction, shield_unit = mod.shield.reflect(origin, origin + direction * length, 0, owner_unit, ignore_unit)
+		end
+
+		local reached = shield_distance or length
+		local piece_hits = {}
+
+		for i = 1, #(hits or {}) do
+			if hits[i][2] < reached and Actor.unit(hits[i][4]) ~= ignore_unit then
+				piece_hits[#piece_hits + 1] = hits[i]
+			end
+		end
+
+		-- (the beam ends a little short of what it hits, as the game's own beam does)
+		local end_position = shield_position or ball_unit and origin + direction * ball_distance or hit and hit[1] - direction * 0.15 or origin + direction * CONFIG.beam_range
+		local hit_normal = not shield_position and not ball_unit and hit and hit[3] or Vector3.zero()
+
+		pieces[#pieces + 1] = {
+			ball_unit = not shield_position and ball_unit or nil,
+			direction = Vector3Box(direction),
+			end_position = Vector3Box(end_position),
+			hit_normal = Vector3Box(hit_normal),
+			hits = piece_hits,
+			origin = Vector3Box(origin),
+		}
+
+		if not shield_position then
+			break
+		end
+
+		origin, direction, ignore_unit, hits = shield_position, shield_direction, shield_unit, nil
+	end
+
+	return pieces
+end
+
+-- The way of each player's last shot, from the game's shot (below) to the end of the action's update, which draws it
+local beam_pieces = {}
+
 mod.handgun_update_callbacks.shock = function (self)
 	if self._ut_combo_checked or self.state == "waiting_to_shoot" then
 		return
@@ -980,49 +1061,50 @@ mod.handgun_update_callbacks.shock = function (self)
 	self._ut_combo_checked = true
 
 	local owner_unit = self.owner_unit
-	local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
-	local origin, rotation = first_person_extension:get_projectile_start_position_rotation()
-	local direction = Quaternion.forward(rotation)
-	local hits = PhysicsWorld.immediate_raycast_actors(self.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
-	local hit = first_beam_hit(hits, owner_unit)
-	-- The beam ends at the first thing it hits, or at a ball it gets to before that, which goes off. If it hits nothing, it goes
-	-- on to its range. The surface normal is the zero-length vector when there is no surface.
-	local ball_unit, ball_distance = find_ball_hit_by_beam(origin, direction, hit and hit[2])
-	-- The beam ends a little short of what it hits, as the game's own beam does.
-	local end_position = hit and hit[1] - direction * 0.15 or origin + direction * CONFIG.beam_range
-	local hit_normal = hit and hit[3] or Vector3.zero()
+	local pieces = beam_pieces[owner_unit]
 
-	if ball_unit then
-		end_position = origin + direction * ball_distance
-		hit_normal = Vector3.zero()
+	beam_pieces[owner_unit] = nil
+
+	-- (the game gives the shot to process_projectile_hit only if its ray hit something)
+	if not pieces then
+		local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
+		local origin, rotation = first_person_extension:get_projectile_start_position_rotation()
+
+		pieces = trace_beam(owner_unit, self.physics_world, origin, Quaternion.forward(rotation))
 	end
 
-	spawn_trail(self, end_position, hit_normal)
+	-- (a reflected piece is damaged here, as the same shot: see the hook below)
+	local reflected_action = setmetatable({
+		ut_reflected_beam = true,
+	}, {
+		__index = self.current_action,
+	})
 
-	if ball_unit then
-		detonate_ball(ball_unit, owner_unit)
+	for i, piece in ipairs(pieces) do
+		if i > 1 then
+			DamageUtils.process_projectile_hit(self.world, self.item_name, owner_unit, self.is_server, piece.hits, reflected_action, piece.direction:unbox(), true, nil, nil, self._is_critical_strike, self.power_level)
+		end
+
+		spawn_trail(self, piece.end_position:unbox(), piece.hit_normal:unbox(), i > 1 and piece.origin:unbox() or nil)
+
+		if piece.ball_unit and Unit.alive(piece.ball_unit) then
+			detonate_ball(piece.ball_unit, owner_unit)
+		end
 	end
 end
 
--- The beam's damage goes no further than a ball it gets to, because the ball goes off and the beam is spent. The hits of the
--- ray from there on are not given to the game.
+-- The game's shot damages what the first piece of the beam's way gets to: no further than a ball, which goes off and spends the
+-- beam, or a shield, which sends it on. The rest of the way is kept for the action's update, which draws it and damages the rest.
 mod:hook(DamageUtils, "process_projectile_hit", function (func, world, damage_source, owner_unit, is_server, raycast_result, current_action, direction, ...)
-	if current_action.ut_shock_beam and raycast_result then
+	if current_action.ut_shock_beam and not rawget(current_action, "ut_reflected_beam") and raycast_result then
 		local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
 		local origin = first_person_extension and first_person_extension:get_projectile_start_position_rotation()
-		local hit = first_beam_hit(raycast_result, owner_unit)
-		local ball_distance = origin and select(2, find_ball_hit_by_beam(origin, direction, hit and hit[2]))
 
-		if ball_distance then
-			local before_ball = {}
+		if origin then
+			local pieces = trace_beam(owner_unit, World.get_data(world, "physics_world"), origin, direction, raycast_result)
 
-			for i = 1, #raycast_result do
-				if raycast_result[i][2] < ball_distance then
-					before_ball[#before_ball + 1] = raycast_result[i]
-				end
-			end
-
-			raycast_result = before_ball
+			beam_pieces[owner_unit] = pieces
+			raycast_result = pieces[1].hits
 		end
 	end
 

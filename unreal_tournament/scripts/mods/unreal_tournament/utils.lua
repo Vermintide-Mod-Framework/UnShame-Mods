@@ -333,8 +333,8 @@ end
 -- Returns what a hitscan shot hits first among the hits of its ray, which are sorted nearest first. It follows the rule of the game's
 -- own Beam Staff (ActionBeam). The shooter's own hitbox, which the ray starts in, does not count. Neither does a hit on an enemy's
 -- "afro" zone, which is a much bigger hit zone than the enemy itself, nor a hit on someone who is not to be hurt. The shot stops at
--- that hit, as UT's trace does.
-function utils.first_beam_hit(hits, owner_unit)
+-- that hit, as UT's trace does. A hit on ignore_unit doesn't count either (a shot reflected off a shield starts at that player).
+function utils.first_beam_hit(hits, owner_unit, ignore_unit)
 	local allow_friendly_fire = DamageUtils.allow_friendly_fire_ranged(Managers.state.difficulty:get_difficulty_settings(), Managers.player:owner(owner_unit))
 
 	for i = 1, #(hits or {}) do
@@ -343,7 +343,7 @@ function utils.first_beam_hit(hits, owner_unit)
 
 		hit_unit, hit_actor = ActionUtils.redirect_shield_hit(Actor.unit(hit_actor), hit_actor)
 
-		if hit_unit ~= owner_unit then
+		if hit_unit ~= owner_unit and hit_unit ~= ignore_unit then
 			local breed = Unit.get_data(hit_unit, "breed")
 
 			if not breed then

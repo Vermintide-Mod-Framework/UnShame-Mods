@@ -180,6 +180,17 @@ local CONFIG = {
 	-- (explosions' 300): a choice.
 	body_push_distal = 250,
 	body_push_vertical = 100,
+	-- Reflection (ShieldGun.CheckReflect): a shot that touches a player while their shield is up is sent on the way they look, if it
+	-- comes from within this of where they look (the dot product of the look and the way from the hit to them, -0.37 for 68 degrees).
+	-- What touches a player is their collision cylinder (xPawn's CollisionRadius 25 and the heights above, in UT units). The shield's
+	-- charge it costs in UT is the game's stamina for blocking a shot here. Every UT shot that is reflective is: the Shock Rifle's beam
+	-- (InstantFire.DoTrace, at most max_reflections times) and ball (ShockProjectile), and the Link Gun's bolt (LinkProjectile), which
+	-- start again reflect_offset UT units out from the hit.
+	reflect_dot = -0.37,
+	reflect_up_offset = 8,
+	pawn_radius = 25,
+	max_reflections = 3,
+	reflect_offset = 20,
 }
 
 local UNIT = CONFIG.meters_per_uu
@@ -1038,6 +1049,178 @@ mod.dummy_finish_callbacks.shield_gun = function (action, reason)
 		mod.shield.charge_started = nil
 	end
 end
+
+-- Reflection (see reflect_dot in CONFIG)
+
+-- Where a segment from `from` to `to` first gets to an upright cylinder, as the share of the way along it, or nil if it doesn't
+local function segment_cylinder(from, to, center, radius, half_height)
+	local dx, dy, dz = Vector3.x(to) - Vector3.x(from), Vector3.y(to) - Vector3.y(from), Vector3.z(to) - Vector3.z(from)
+	local fx, fy = Vector3.x(from) - Vector3.x(center), Vector3.y(from) - Vector3.y(center)
+	local fz = Vector3.z(from) - Vector3.z(center)
+	local best
+
+	-- (its side)
+	local a = dx * dx + dy * dy
+	local b = 2 * (fx * dx + fy * dy)
+	local c = fx * fx + fy * fy - radius * radius
+	local discriminant = b * b - 4 * a * c
+
+	if a > 1e-8 and discriminant >= 0 then
+		local t = (-b - math.sqrt(discriminant)) / (2 * a)
+
+		if t >= 0 and t <= 1 and math.abs(fz + dz * t) <= half_height then
+			best = t
+		end
+	end
+
+	-- (its top and bottom)
+	if math.abs(dz) > 1e-8 then
+		for _, side in ipairs({ 1, -1 }) do
+			local t = (side * half_height - fz) / dz
+			local x, y = fx + dx * t, fy + dy * t
+
+			if t >= 0 and t <= 1 and (not best or t < best) and x * x + y * y <= radius * radius then
+				best = t
+			end
+		end
+	end
+
+	return best
+end
+
+-- Whether a player holds the Shield Gun's shield up
+local function shield_is_up(unit)
+	local status_extension = ScriptUnit.has_extension(unit, "status_system")
+
+	return HEALTH_ALIVE[unit] and TEMPLATE_NAMES[utils.wielded_template_name(unit)] and status_extension and status_extension:is_blocking()
+end
+
+-- The shield pays for a reflection as for a blocked shot, the way the game blocks one (DamageUtils.check_ranged_block): the block is
+-- made here, and the player's own machine is told, which takes their stamina and shows the hit.
+local function pay_for_reflection(unit, attacker_unit)
+	local network_manager = Managers.state.network
+	local status_extension = ScriptUnit.extension(unit, "status_system")
+	local template = WeaponUtils.get_weapon_template(utils.wielded_template_name(unit))
+	local multiplier = template and template.block_fatigue_point_multiplier or 1
+	local fatigue_type = "blocked_ranged"
+
+	status_extension:blocked_attack(fatigue_type, attacker_unit, multiplier, true)
+
+	local go_id = Managers.state.unit_storage:go_id(unit)
+	local attacker_id, attacker_is_level_unit = network_manager:game_object_or_level_id(attacker_unit)
+
+	if not go_id or not attacker_id then
+		return
+	end
+
+	if Managers.player.is_server then
+		network_manager.network_transmit:send_rpc_clients("rpc_player_blocked_attack", go_id, NetworkLookup.fatigue_types[fatigue_type], attacker_id, multiplier, true, "back", attacker_is_level_unit)
+	else
+		network_manager.network_transmit:send_rpc_server("rpc_player_blocked_attack", go_id, NetworkLookup.fatigue_types[fatigue_type], attacker_id, multiplier, true, "back", attacker_is_level_unit)
+	end
+end
+
+-- Whether a shot from `from` to `to`, as wide as `radius` (meters), is reflected by a player's shield on its way. The shot is the
+-- attacker's, and ignore_unit is a player it has just left. Only the first player it gets to counts: a shot that gets to a player who
+-- doesn't reflect it hits them. Returns where it was reflected, how far along the way that is (meters), the way it goes on (the way the
+-- player looks), and the player.
+function mod.shield.reflect(from, to, radius, attacker_unit, ignore_unit)
+	local heroes = Managers.state.side and Managers.state.side:get_side_from_name("heroes")
+	local game = Managers.state.network:game()
+
+	if not heroes or not game then
+		return
+	end
+
+	local best_t, best_unit, best_center
+
+	for _, unit in ipairs(heroes.PLAYER_AND_BOT_UNITS) do
+		if unit ~= attacker_unit and unit ~= ignore_unit and Unit.alive(unit) then
+			local status_extension = ScriptUnit.has_extension(unit, "status_system")
+			local height = status_extension and status_extension:is_crouching() and CONFIG.reach_height_crouched or CONFIG.reach_height
+			local center = POSITION_LOOKUP[unit] + Vector3(0, 0, height * UNIT)
+			local t = segment_cylinder(from, to, center, CONFIG.pawn_radius * UNIT + radius, height * UNIT)
+
+			if t and (not best_t or t < best_t) then
+				best_t, best_unit, best_center = t, unit, center
+			end
+		end
+	end
+
+	if not best_unit or not shield_is_up(best_unit) then
+		return
+	end
+
+	local go_id = Managers.state.unit_storage:go_id(best_unit)
+	local face = go_id and Vector3.normalize(GameSession.game_object_field(game, go_id, "aim_direction"))
+	local position = Vector3.lerp(from, to, best_t)
+	local to_player = Vector3.normalize(best_center - position + Vector3(0, 0, CONFIG.reflect_up_offset * UNIT))
+
+	-- (UT's arc is measured from the hit to the player, so a hit in front points back at the look)
+	if not face or Vector3.dot(face, to_player) >= CONFIG.reflect_dot then
+		return
+	end
+
+	pay_for_reflection(best_unit, attacker_unit)
+
+	return position, Vector3.distance(from, position), face, best_unit
+end
+
+-- Sends a projectile of a UT weapon on from a shield, as UT does (ShockProjectile and LinkProjectile.ProcessTouch): a new one of the same
+-- shot starts reflect_offset out from the hit, the way the player with the shield looks, at the shot's starting speed, and the old one
+-- ends. The new one is the same player's shot, and it doesn't touch the shield it came from.
+local function reflect_projectile(projectile, position, direction, shield_unit)
+	local lookup = projectile.action_lookup_data
+	local action = projectile._current_action
+	local owner_unit = projectile._owner_unit
+	local projectile_system = Managers.state.entity:system("projectile_system")
+	local before = {}
+
+	for unit in pairs(projectile_system.player_projectile_units[owner_unit] or {}) do
+		before[unit] = true
+	end
+
+	local start = position + direction * (CONFIG.reflect_offset * UNIT)
+	local flat = Vector3.flat(direction)
+	local target_vector = Vector3.length(flat) > 0.001 and Vector3.normalize(flat) or Vector3(1, 0, 0)
+	local angle = math.asin(math.clamp(Vector3.z(direction), -1, 1))
+
+	ActionUtils.spawn_player_projectile(owner_unit, start, Quaternion.look(direction, Vector3.up()), (projectile.scale or 1) * 100, angle, target_vector, action.speed, projectile.item_name, lookup.item_template_name, lookup.action_name, lookup.sub_action_name, projectile._is_critical_strike, projectile.power_level, nil, (projectile.charge_level or 0) * 100)
+
+	for unit in pairs(projectile_system.player_projectile_units[owner_unit] or {}) do
+		local extension = not before[unit] and ScriptUnit.has_extension(unit, "projectile_system")
+
+		if extension then
+			-- (the game blends a staff's bolt in from the hand that fired it, which a reflected one doesn't come from)
+			extension._anim_blend_enabled = false
+			extension._ut_reflected_by = shield_unit
+		end
+	end
+
+	projectile:stop()
+end
+
+-- A projectile of a UT weapon that reflects (its action has ut_reflective) is looked at before the game looks at what it hit this frame,
+-- on the machine of the player who shot it, where it flies
+mod:hook(PlayerProjectileImpactUnitExtension, "update", function (func, self, unit, ...)
+	local projectile = ScriptUnit.has_extension(unit, "projectile_system")
+	local action = projectile and projectile._current_action
+	local locomotion_extension = self.locomotion_extension
+
+	if action and action.ut_reflective and not projectile._stop_impacts and locomotion_extension:moved_this_frame() then
+		local position, _, direction, shield_unit = mod.shield.reflect(locomotion_extension:last_position(), locomotion_extension:current_position(), self.radius or 0, self.owner_unit, projectile._ut_reflected_by)
+
+		if position then
+			reflect_projectile(projectile, position, direction, shield_unit)
+
+			return
+		end
+	end
+
+	return func(self, unit, ...)
+end)
+
+mod.shield.max_reflections = CONFIG.max_reflections
 
 -- The actions
 
