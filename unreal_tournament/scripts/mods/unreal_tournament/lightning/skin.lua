@@ -452,6 +452,12 @@ mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 	scope_gui, scope_world = nil, nil
 end
 
+-- The gui goes with the level's world. The next level's world can be given the same handle, so the gui is forgotten when the level ends,
+-- and the next one makes its own.
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	scope_gui, scope_world = nil, nil
+end
+
 local function draw_scope(ingame_ui)
 	if not lightning.zoom.zoomed then
 		return
