@@ -622,6 +622,9 @@ local function draw_charge_bar(bar, game_bar, dt, player)
 
 	local ui_renderer = bar.ui_renderer
 
+	-- (the nodes' alignments and the HUD's scale are worked out by this, for the resolution and HUD scale of now)
+	UISceneGraph.update_scenegraph(bar.ui_scenegraph)
+
 	bar.render_settings.alpha_multiplier = game_bar.render_settings.alpha_multiplier
 
 	UIRenderer.begin_pass(ui_renderer, bar.ui_scenegraph, bar.input_manager:get_service("ingame_menu"), dt, nil, bar.render_settings)
