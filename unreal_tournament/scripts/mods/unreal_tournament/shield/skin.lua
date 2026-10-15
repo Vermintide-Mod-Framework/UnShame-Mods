@@ -49,6 +49,8 @@ local CONFIG = {
 	charge_length = 0.05, -- seconds of travel
 	charge_colors = { { 45 / 255, 220 / 255, 45 / 255 }, { 65 / 255, 250 / 255, 65 / 255 } },
 	charge_alpha = { 25 / 255, 200 / 255 },
+	-- The length of shieldgun_charge, which loops while the gun charges (the bank's ut_shield_charge)
+	charge_sound_length = 2.03, -- seconds
 	inspect_pose_speed = 5,
 	inspect_sway = 5,
 	inspect_sway_speed = 1.8,
@@ -259,10 +261,26 @@ local function update_state(api, skin, dt)
 		api.stop_sound(skin.charge_sound)
 
 		skin.charge_sound = api.play_sound("ut_shield_charge")
+		skin.charge_sound_time = CONFIG.charge_sound_length
 	elseif charging and not skin.charged and skin.animation == "Charge" and skin.time >= api.animation_duration("Charge") then
 		skin.charged = true
 
 		api.play("Charged", nil, true)
+	end
+
+	-- The charge sound is UT's AmbientSound while the gun charges, which loops. The bank's sounds play once, so it is played again
+	-- each time it ends. It stops when the charge does.
+	if charging then
+		skin.charge_sound_time = (skin.charge_sound_time or 0) - dt
+
+		if skin.charge_sound_time <= 0 then
+			skin.charge_sound = api.play_sound("ut_shield_charge")
+			skin.charge_sound_time = skin.charge_sound_time + CONFIG.charge_sound_length
+		end
+	elseif skin.charge_sound then
+		api.stop_sound(skin.charge_sound)
+
+		skin.charge_sound = nil
 	end
 
 	if shield.last_punch and skin.seen_punch ~= shield.last_punch then

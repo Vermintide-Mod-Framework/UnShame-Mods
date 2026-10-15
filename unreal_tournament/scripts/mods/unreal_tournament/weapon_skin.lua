@@ -80,7 +80,8 @@ local function new(def)
 	local CONFIG = {
 		blend_time = 0.1,
 		idle_speed = 1,
-		bob = 0.0035,
+		-- Pawn.Bob (UT2004's User.ini)
+		bob = 0.006,
 		bob_damping = 1.5,
 		bob_smoothing = 10,
 		meters_per_unit = 0.01,
@@ -284,6 +285,16 @@ local function new(def)
 		return fp.first_person_unit, Vector3(at.x * ratio, at.y, at.z * ratio)
 	end
 
+	-- How far the bob moves the weapon in the view, in UT units (right, up). UT moves the weapon by WeaponBob(BobDamping) and the eye by
+	-- WalkBob (CalcDrawOffset, EyePosition), so in the view the weapon moves by the difference. This game's camera doesn't bob, so only
+	-- the difference is used.
+	local function view_bob()
+		local right = (CONFIG.bob_damping - 1) * (skin.walk_right or 0)
+		local up = (0.45 + 0.55 * CONFIG.bob_damping - 1) * (skin.walk_up or 0)
+
+		return right, up
+	end
+
 	-- A point of the view in UT units from the eye (forward, right, up), where the weapon's projection draws it, moved by the weapon's
 	-- bob as the model is (UT's GetEffectStart adds CalcDrawOffset, which has the bob in it). Returns the first person unit, which the
 	-- model is linked to, and the point in its frame (x right, y ahead, z up), for particles that are linked to the unit so that they
@@ -296,8 +307,7 @@ local function new(def)
 		end
 
 		local across, along = skin.view_across_scale, skin.view_forward_scale
-		local bob_right = CONFIG.bob_damping * (skin.walk_right or 0)
-		local bob_up = (0.45 + 0.55 * CONFIG.bob_damping) * (skin.walk_up or 0)
+		local bob_right, bob_up = view_bob()
 		local x = across * (right + bob_right)
 
 		if CONFIG.mirror then
@@ -685,8 +695,7 @@ local function new(def)
 
 		-- The animation's move belongs to the mesh, so it is turned by the pivot like everything else on the mesh.
 		local move = Quaternion.rotate(pivot, Vector3(pose[5], pose[6], pose[7]))
-		local bob_right = CONFIG.bob_damping * skin.walk_right
-		local bob_up = (0.45 + 0.55 * CONFIG.bob_damping) * skin.walk_up
+		local bob_right, bob_up = view_bob()
 		local alt = skin.alt_pose or 0
 		local inspect = skin.inspect_pose or 0
 		local position = Vector3(

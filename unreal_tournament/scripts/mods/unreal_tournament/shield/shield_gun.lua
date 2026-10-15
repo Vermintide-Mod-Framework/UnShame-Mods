@@ -111,6 +111,8 @@ local CONFIG = {
 	self_force_scale = 1,
 	ut_mass = 100,
 	ground_lift = 0.4,
+	-- Pawn.TakeDamage takes the momentum a player gives themselves down to this share (instigatedBy == self), after the lift
+	self_momentum = 0.6,
 	-- UT speeds are turned into this game's by the ratio of the jumps: UT's JumpZ is 340 units a second, and the mod's jump is
 	-- 4.25 * 1.35 m/s (movement.lua)
 	ut_speed_to_mps = 4.25 * 1.35 / 340,
@@ -227,7 +229,7 @@ local function push_player(owner_unit, direction, force)
 		momentum = Vector3(momentum.x, momentum.y, math.max(momentum.z, CONFIG.ground_lift * size))
 	end
 
-	local velocity = locomotion_extension:current_velocity() + momentum * CONFIG.ut_speed_to_mps
+	local velocity = locomotion_extension:current_velocity() + momentum * (CONFIG.self_momentum * CONFIG.ut_speed_to_mps)
 
 	locomotion_extension:set_maximum_upwards_velocity(math.huge)
 	locomotion_extension:force_on_ground(false)
