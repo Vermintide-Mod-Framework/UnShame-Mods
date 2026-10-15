@@ -113,9 +113,12 @@ local CONFIG = {
 	ground_lift = 0.4,
 	-- Pawn.TakeDamage takes the momentum a player gives themselves down to this share (instigatedBy == self), after the lift
 	self_momentum = 0.6,
-	-- UT speeds are turned into this game's by the ratio of the jumps: UT's JumpZ is 340 units a second, and the mod's jump is
-	-- 4.25 * 1.35 m/s (movement.lua)
+	-- UT speeds are turned into this game's, upward by the ratio of the jumps (UT's JumpZ is 340 units a second, and the mod's jump is
+	-- 4.25 * 1.35 m/s, movement.lua) and along the ground by the ratio of the run speeds (UT's GroundSpeed is 440, and the game's is
+	-- PlayerUnitMovementSettings.move_speed). This game runs slower for its jump than UT, so one ratio for both would push the player
+	-- along the ground about twice as hard for their run as UT does. The movement's dodges are made from the run speed the same way.
 	ut_speed_to_mps = 4.25 * 1.35 / 340,
+	ut_ground_speed = 440,
 	-- The multipliers of the damage and the stagger for each armor type: unarmored, armored, monsters, players, berserkers and super
 	-- armor. UT has no armor, and the punch's force is not stopped by it.
 	armor_attack = {1, 1, 1, 1, 1, 0.8},
@@ -229,7 +232,9 @@ local function push_player(owner_unit, direction, force)
 		momentum = Vector3(momentum.x, momentum.y, math.max(momentum.z, CONFIG.ground_lift * size))
 	end
 
-	local velocity = locomotion_extension:current_velocity() + momentum * (CONFIG.self_momentum * CONFIG.ut_speed_to_mps)
+	local ground_scale = PlayerUnitMovementSettings.move_speed / CONFIG.ut_ground_speed
+	local push = Vector3(momentum.x * ground_scale, momentum.y * ground_scale, momentum.z * CONFIG.ut_speed_to_mps) * CONFIG.self_momentum
+	local velocity = locomotion_extension:current_velocity() + push
 
 	locomotion_extension:set_maximum_upwards_velocity(math.huge)
 	locomotion_extension:force_on_ground(false)
