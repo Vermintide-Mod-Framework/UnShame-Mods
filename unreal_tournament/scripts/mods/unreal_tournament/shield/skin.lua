@@ -53,12 +53,17 @@ local CONFIG = {
 	charge_colors = { { 45 / 255, 220 / 255, 45 / 255 }, { 65 / 255, 250 / 255, 65 / 255 } },
 	-- The length of shieldgun_charge, which loops while the gun charges (the bank's ut_shield_charge)
 	charge_sound_length = 2.03, -- seconds
-	-- The shove of a push (UT has no push): the gun and the shield go shove_forward ahead in the view, in UT units, over shove_out
-	-- seconds. They stay there while both buttons are held for a bash, and the bash punches from there (its Fire animation and rings).
-	-- Then they come back over shove_back. The shield is up while they are out, but for the bash. These numbers are a guess.
+	-- The shove of a push (UT has no push). The gun and the shield move on a spring, which goes shove_frequency radians a second and is
+	-- damped by shove_damping (1 is just enough not to swing past). They are pulled towards shove_forward ahead in the view (UT units) for
+	-- shove_out seconds, which takes them out quickly and a little past it. While both buttons are held for a bash they settle back to
+	-- shove_hold of the way, and the bash punches from there (its Fire animation and rings). Then they go home. The shield is up while they
+	-- are out, but for the bash. These numbers are a guess. With them the shove is all the way out at 0.1 s, a tap is home by 0.2 s, and
+	-- a hold has settled back by 0.2 s, before the bash can come at 0.4 s.
 	shove_forward = 10,
-	shove_out = 0.1,
-	shove_back = 0.3,
+	shove_out = 0.11,
+	shove_hold = 0.65,
+	shove_frequency = 32,
+	shove_damping = 0.65,
 	-- The colour of the charge on the overcharge bar: ShieldGun.HudColor (R, G, B)
 	charge_bar_color = { 0, 188, 121 },
 	-- Where the charge bar's middle is on the 1920 by 1080 screen, from its bottom left: the middle of the ammo counter, which is 383 by
@@ -352,17 +357,33 @@ local function update_state(api, skin, dt)
 	local since_push = shield.last_push and t >= shield.last_push and t - shield.last_push or math.huge
 	local since_bash = shield.last_bash and shield.last_push and shield.last_bash >= shield.last_push and t >= shield.last_bash and t - shield.last_bash or math.huge
 	local bashing = since_bash < api.animation_duration("Fire")
-	local held_out = since_push < CONFIG.shove_out or bashing or since_bash == math.huge and since_push < shield.bash_window_end and local_player_holds_both()
-	local shove = skin.alt_pose or 0
+	local holding = since_bash == math.huge and since_push < shield.bash_window_end and local_player_holds_both()
+	local target = 0
 
-	if held_out then
-		skin.alt_pose = math.min(1, shove + dt / CONFIG.shove_out)
-	else
-		skin.alt_pose = math.max(0, shove - dt / CONFIG.shove_back)
+	if since_push < CONFIG.shove_out then
+		target = 1
+	elseif holding or bashing then
+		target = CONFIG.shove_hold
 	end
 
-	-- The shield is up while blocking, and while the gun is out but for a bash. A bash's Fire animation is not cut short when it goes down.
-	local shield_up = blocking or skin.alt_pose > 0 and not bashing
+	-- (the spring: pulled towards the target, held back by its speed; the step is kept small so that a long frame doesn't make it jump)
+	local omega, damping = CONFIG.shove_frequency, CONFIG.shove_damping
+	local shove, speed = skin.alt_pose or 0, skin.shove_speed or 0
+	local left = math.min(dt, 0.1)
+
+	while left > 0 do
+		local step = math.min(left, 1 / 240)
+
+		speed = speed + (omega * omega * (target - shove) - 2 * damping * omega * speed) * step
+		shove = shove + speed * step
+		left = left - step
+	end
+
+	skin.alt_pose, skin.shove_speed = shove, speed
+
+	-- The shield is up while blocking, and while shoving or held out but for a bash. A bash's Fire animation is not cut short when it
+	-- goes down.
+	local shield_up = blocking or (since_push < CONFIG.shove_out or holding) and not bashing
 
 	if shield_up ~= skin.shield_up then
 		skin.shield_up = shield_up
