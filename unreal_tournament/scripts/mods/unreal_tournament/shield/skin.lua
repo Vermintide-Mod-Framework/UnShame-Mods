@@ -409,8 +409,10 @@ local function new_skin(setting_id)
 		on_create = function (skin)
 			api.play_sound("ut_shield_select")
 
-			-- (a punch from before the gun was put away is not played again when it is taken out)
+			-- (a punch from before the gun was put away is not played again when it is taken out, and the shield starts down, so that the
+			-- first frame doesn't put it down and play Idle over the pickup)
 			skin.seen_punch = shield.last_punch
+			skin.shield_up = false
 		end,
 		on_update = function (skin, dt)
 			skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
