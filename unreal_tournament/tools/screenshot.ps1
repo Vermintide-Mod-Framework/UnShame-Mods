@@ -1,7 +1,7 @@
 # Saves a picture of the running game's window as a PNG, so that what the game shows can be looked at from the command line. It never takes
 # a picture of anything else on the screen. The game is Vermintide 2, or Unreal Tournament 2004 (the reference for the weapons).
 #
-#   screenshot.ps1 -Path out.png [-Target launcher | ut2004] [-Burst 20 -Interval 50]
+#   screenshot.ps1 -Path out.png [-Target launcher | ut2004] [-Burst 20 -Interval 50] [-Click left | right]
 #
 # -Target launcher takes the picture of Vermintide 2's launcher window (the program in the game's folder) instead.
 # -Target ut2004 takes the picture of Unreal Tournament 2004's window.
@@ -13,7 +13,8 @@ param(
     [Parameter(Mandatory = $true)][string]$Path,
     [ValidateSet("game", "launcher", "ut2004")][string]$Target = "game",
     [int]$Burst = 1,
-    [int]$Interval = 50
+    [int]$Interval = 50,
+    [ValidateSet("", "left", "right")][string]$Click = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -33,6 +34,32 @@ public static class GameWindow {
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr window, int command);
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
     [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X, Y; }
+    [StructLayout(LayoutKind.Sequential)] public struct MOUSEINPUT { public int dx; public int dy; public uint mouseData; public uint dwFlags; public uint time; public IntPtr dwExtraInfo; }
+    [StructLayout(LayoutKind.Sequential)] public struct INPUT { public uint type; public MOUSEINPUT mi; }
+    [DllImport("user32.dll")] static extern uint SendInput(uint count, INPUT[] inputs, int size);
+
+    [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+    [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint from, uint to, bool attach);
+    [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
+
+    // Brings the window to the front. Windows lets a program do that only while it shares the input of the window that is in front.
+    public static void Focus(IntPtr window) {
+        ShowWindow(window, 9);
+        uint ignored;
+        uint foreground = GetWindowThreadProcessId(GetForegroundWindow(), out ignored);
+        uint mine = GetCurrentThreadId();
+        AttachThreadInput(mine, foreground, true);
+        SetForegroundWindow(window);
+        AttachThreadInput(mine, foreground, false);
+    }
+
+    public static void Button(uint flags) {
+        INPUT[] input = new INPUT[1];
+        input[0].type = 0;
+        input[0].mi.dwFlags = flags;
+        SendInput(1, input, Marshal.SizeOf(typeof(INPUT)));
+    }
 }
 "@
 
@@ -58,8 +85,7 @@ foreach ($other in (Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and 
     [void][GameWindow]::ShowWindow($other.MainWindowHandle, 6)
 }
 
-[void][GameWindow]::ShowWindow($window, 9)
-[void][GameWindow]::SetForegroundWindow($window)
+[GameWindow]::Focus($window)
 Start-Sleep -Milliseconds 400
 
 $rect = New-Object GameWindow+RECT
@@ -89,6 +115,17 @@ $width = $right - $left
 $height = $bottom - $top
 # With -Burst, that many pictures are taken one after the other, Interval milliseconds apart, as <Path>_1.png, <Path>_2.png and so on. The
 # window is only brought to the front once, so they come fast. It is for catching something that lasts a moment.
+# With -Click, the mouse button is pressed for a moment just before the first picture, so the pictures show what a shot does from its start
+if ($Click -ne "") {
+    $down, $up = if ($Click -eq "left") { 0x0002, 0x0004 } else { 0x0008, 0x0010 }
+
+    # (a game takes a moment after its window comes to the front before it reads the mouse)
+    Start-Sleep -Milliseconds 300
+    [GameWindow]::Button($down)
+    Start-Sleep -Milliseconds 100
+    [GameWindow]::Button($up)
+}
+
 for ($index = 1; $index -le $Burst; $index++) {
     $bitmap = New-Object System.Drawing.Bitmap $width, $height
     $graphics = [System.Drawing.Graphics]::FromImage($bitmap)

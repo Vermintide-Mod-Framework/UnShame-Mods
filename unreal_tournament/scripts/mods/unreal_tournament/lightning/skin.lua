@@ -28,10 +28,22 @@ local CONFIG = {
 	arc_segment = 0.6,
 	arc_jitter = 0.05,
 	arc_intensity = 1.2,
-	-- The flare where the bolt starts and ends (the lower half of LightningBoltT)
-	flare_size = 45,
-	flare_life = 0.4,
-	flare_intensity = 1.5,
+	-- The flare where the bolt starts and ends (the lower half of LightningBoltT). It is 30 units wide, the size of NewLightningBolt's
+	-- particles, and it fades out quickly. The bolt has 30 particles (mStartParticles), and each draws the flare at the start of the
+	-- bolt, added together, which makes its middle white and leaves a bright edge (lightning_flare_bright is that).
+	flare_size = 30,
+	flare_life = 0.25,
+	flare_intensity = 3,
+	flare_hold = 0.06, -- seconds at full brightness before it fades
+	-- The brightness of the white disk in the player's view. The game's tone mapping darkens what is added to the screen.
+	flare_view_intensity = 1.6,
+	-- Where the flare is in the player's view (right, forward, up, UT units from the eye) and how wide it is. SniperRifle.EffectOffset
+	-- is (28, 100, -26), and these are fitted to a picture of UT2004, which has the eye's bob and the view's height in it too.
+	flare_view_offset = {25, 100, -18.6},
+	flare_view_size = 41,
+	-- The flare in the player's view is drawn at this share of the distance to the weapon's muzzle. UT draws it behind the shroud at
+	-- the front of the weapon and in front of the rest.
+	flare_view_nearer = 0.9,
 	-- BlueSparks (20 particles of 0.8 to 1.2 s that fly out at 250 to 350 units a second) at the end of the bolt, and
 	-- ChildBlueSparks (10 particles) at the end of an arc
 	spark_count = 20,
@@ -43,11 +55,17 @@ local CONFIG = {
 	arc_spark_count = 10,
 	-- LightningCharge: 10 sparks a second at the tip, each 0.2 s long and 5 units across, one of the four pictures of the texture,
 	-- turned at random. They stop while the weapon cannot fire (its next shot is not yet due, or it has no ammo).
+	-- The emitter is 30 units behind the muzzle (LightningCharge.RelativeLocation), inside the glass at the front, and each spark is up
+	-- to 10 units from there along the barrel (mPosDev). It is attached to the model, so these are the model's units, with its DrawScale.
 	charge_rate = 10,
 	charge_life = 0.2,
-	charge_size = 5,
-	charge_spread = 10, -- units along the barrel
-	charge_size_first_person = 10,
+	charge_size = 9,
+	charge_back = 24,
+	charge_spread = 20,
+	charge_nearer = 0.8, -- share of the distance to the camera the sparks are drawn at (see update_charge)
+	-- The glass's middle is this many units above the muzzle, and the sparks are this bright (fitted to a picture of UT2004)
+	charge_up = 5,
+	charge_intensity = 0.45,
 	-- Where the bolt starts when the view is zoomed: SniperFire puts it at the player's middle (EffectOffset.Z, 26 units, below), so it
 	-- comes from the bottom of the screen
 	zoomed_start_down = 1, -- m below the camera
@@ -152,16 +170,19 @@ local function draw_bolt(from, to, width, segment_length, jitter, life, intensit
 	end
 end
 
--- A flare at a place, or one that follows the weapon
-local function flare(position, size)
+-- A flare at a place. The material is the texture's own, or another one for the flare in the player's view (see show_bolt).
+local function flare(position, size, material)
 	particles.sprite({
+		material = material,
 		attenuation = 0,
 		color = {
 			1,
 			1,
 			1,
 		},
-		intensity = CONFIG.flare_intensity,
+		fade_in = 0,
+		fade_out = CONFIG.flare_hold,
+		intensity = material and CONFIG.flare_view_intensity or CONFIG.flare_intensity,
 		life = CONFIG.flare_life,
 		position = position,
 		size = size,
@@ -247,7 +268,26 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
 	end
 
 	draw_bolt(start, end_position, CONFIG.bolt_width * UNIT, CONFIG.bolt_segment, CONFIG.bolt_jitter, CONFIG.bolt_life, CONFIG.bolt_intensity)
-	flare(start, CONFIG.flare_size * UNIT)
+
+	local camera_position = utils.camera_pose()
+	local api = utils.is_local_player_unit(owner_unit) and first_person_api()
+	local muzzle = api and not api.third_person.shows_weapon(owner_unit) and api.muzzle_model_position()
+
+	if muzzle and camera_position then
+		-- In the player's own view UT spawns the bolt at EffectOffset from the eye (100 ahead, 28 to the right, 26 down, in a view of
+		-- 90 degrees across), and draws the flare there at the front of the weapon. Here it is drawn with the field of view of the
+		-- weapon's model, so that it is among the parts of the model, at the same place on the screen and as wide as UT's.
+		local _, camera_rotation = utils.camera_pose()
+		-- (UT's view of 90 degrees across at 16 by 9 is 0.5625 of a tangent up and down)
+		local scale = math.tan(api.weapon_vertical_fov() / 2) / 0.5625
+		local ahead = Vector3.dot(muzzle - camera_position, Quaternion.forward(camera_rotation)) * CONFIG.flare_view_nearer
+		local offset = CONFIG.flare_view_offset
+		local position = camera_position + Quaternion.forward(camera_rotation) * ahead + Quaternion.right(camera_rotation) * (ahead * offset[1] / offset[2] * scale) + Quaternion.up(camera_rotation) * (ahead * offset[3] / offset[2] * scale)
+
+		flare(position, ahead * CONFIG.flare_view_size / offset[2] * scale, "units/ut/fx/fx_weapon_lightning_flare")
+	else
+		flare(start, CONFIG.flare_size * UNIT)
+	end
 
 	-- A bolt that hit something makes sparks and flares there
 	if Vector3.length(hit_normal) > 0.01 then
@@ -291,7 +331,8 @@ local function ready_to_fire()
 	return (not last_fire or now - last_fire >= lightning.fire_rate) and not utils.local_ranged_out_of_ammo()
 end
 
-local function update_charge(skin, dt, follow)
+local function update_charge(skin, dt, api)
+
 	if not ready_to_fire() then
 		charge_time = 0
 
@@ -301,9 +342,12 @@ local function update_charge(skin, dt, follow)
 	charge_time = charge_time + dt
 
 	local interval = 1 / CONFIG.charge_rate
+	local world_unit = skin.unit_scale
 
 	while charge_time >= interval do
 		charge_time = charge_time - interval
+
+		local along = CONFIG.charge_back + (math.random() * 2 - 1) * CONFIG.charge_spread
 
 		-- (a random one of the four pictures of the texture)
 		particles.sprite({
@@ -313,9 +357,24 @@ local function update_charge(skin, dt, follow)
 				1,
 				1,
 			},
-			follow = follow,
+			follow = function ()
+				local muzzle = api.state() == skin and api.muzzle_position()
+				local camera_position, camera_rotation = utils.camera_pose()
+
+				if not muzzle or not camera_rotation then
+					return nil
+				end
+
+				-- UT draws the sparks over the glass at the front of the weapon. The point is moved towards the camera, and the sprite
+				-- is made smaller by as much, so it is seen at the same place and size but in front of the model.
+				local point = muzzle - Quaternion.forward(camera_rotation) * (along * world_unit) + Quaternion.up(camera_rotation) * (CONFIG.charge_up * world_unit)
+
+				return camera_position + (point - camera_position) * CONFIG.charge_nearer
+			end,
+			intensity = CONFIG.charge_intensity,
 			life = CONFIG.charge_life,
-			size = CONFIG.charge_size_first_person * UNIT,
+			-- The sprite's size is in world units, not the model's
+			size = CONFIG.charge_size * world_unit / api.draw_scale() * CONFIG.charge_nearer,
 			texture = "lightning_charge_" .. math.random(0, 3),
 		})
 	end
@@ -491,9 +550,7 @@ local function new_skin(variant)
 				skin.was_zoomed = zoomed
 			end
 
-			update_charge(skin, dt, function ()
-				return api.state() == skin and api.muzzle_position() or nil
-			end)
+			update_charge(skin, dt, api)
 		end,
 		on_level_exit = function ()
 			charge_time = 0
