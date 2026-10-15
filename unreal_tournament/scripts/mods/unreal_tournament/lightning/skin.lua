@@ -80,7 +80,8 @@ local CONFIG = {
 	scope_focus_y = 105,
 	scope_arrows_x = 42,
 	scope_arrows_y = 42,
-	scope_focus_color = { 215, 71, 90, 126 }, -- alpha, red, green, blue
+	-- alpha, red, green, blue. FocusColor's alpha is 215, but RenderOverlays sets it to 255 before it draws.
+	scope_focus_color = { 255, 71, 90, 126 },
 	scope_arrow_color = { 255, 255, 0, 0 },
 	scope_bar_origin_x = 600,
 	scope_bar_origin_y = 330,
@@ -367,8 +368,8 @@ local function ready_to_fire()
 end
 
 local function update_charge(skin, dt, api)
-
-	if not ready_to_fire() then
+	-- While zoomed UT draws the scope instead of the weapon, and the charge with it (SniperRifle.RenderOverlays)
+	if not ready_to_fire() or lightning.zoom.zoomed then
 		charge_time = 0
 
 		return
@@ -422,15 +423,33 @@ local function scope_scale()
 end
 
 -- The scope is drawn over the player's view while zoomed: the lens and scan lines, the ring, the four arrows, and the bar at the right
--- that shows how long it is until the next shot (red to blue as it charges, green when ready)
-local scope_ready = false
+-- that shows how long it is until the next shot (red to blue as it charges, green when ready).
+-- It has a screen gui of its own, made with its materials in the level's world, where the in-game user interface draws too. The game's
+-- own renderer only gets the mod's materials when a level starts, so with it the scope would not show after the mod is reloaded until
+-- the next level. A new level has a new world, which gets a new gui.
+local scope_gui, scope_world
 
--- The scope's materials are in the user interface's renderer of the level, which is made when the level starts. So the scope shows from
--- the next level, if the mod was loaded in the middle of one.
-mod.items.add_material_set("ui/ut/lightning_scope")
+local function scope_gui_now()
+	local world = Managers.world:has_world("level_world") and Managers.world:world("level_world")
 
-mod.ingame_ui_init_callbacks.lightning_scope = function ()
-	scope_ready = true
+	if not world then
+		return
+	end
+
+	if scope_world ~= world then
+		scope_gui = World.create_screen_gui(world, "immediate", "material", "ui/ut/lightning_scope")
+		scope_world = world
+	end
+
+	return scope_gui
+end
+
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+	if scope_gui and Managers.world:has_world("level_world") and Managers.world:world("level_world") == scope_world then
+		World.destroy_gui(scope_world, scope_gui)
+	end
+
+	scope_gui, scope_world = nil, nil
 end
 
 local function draw_scope(ingame_ui)
@@ -445,9 +464,15 @@ local function draw_scope(ingame_ui)
 		return
 	end
 
-	local gui = ingame_ui.ui_renderer.gui
+	local gui = scope_gui_now()
+
+	if not gui then
+		return
+	end
+
 	local scale_x, scale_y, width, height = scope_scale()
-	local layer = 990
+	-- UT draws the scope with the weapon, before the HUD, so the HUD is over it. A low layer puts the game's HUD over it here.
+	local layer = 1
 
 	-- ZoomFB: the screen is darkened by the lens and the scan lines
 	Gui.bitmap(gui, "ut_lightning_scope_lens", Vector3(0, 0, layer), Vector2(width, height), Color(255, 255, 255, 255))
@@ -489,13 +514,7 @@ local function draw_scope(ingame_ui)
 	Gui.rect(gui, Vector3(bar_x, bar_bottom, layer + 3), Vector2(bar_width, bar_height), Color(255, bar_red, bar_green, bar_blue))
 end
 
--- A material that the user interface's renderer does not have yet is an error, which is until the next level if the mod was loaded in
--- the middle of one. So the scope is only drawn from the level after that.
-mod.ingame_ui_post_update_callbacks.lightning_scope = function (ingame_ui)
-	if scope_ready then
-		draw_scope(ingame_ui)
-	end
-end
+mod.ingame_ui_post_update_callbacks.lightning_scope = draw_scope
 
 -- While the view is zoomed, the game's crosshair is not drawn: the scope has its own.
 mod:hook(CrosshairUI, "draw", function (func, self, ...)
