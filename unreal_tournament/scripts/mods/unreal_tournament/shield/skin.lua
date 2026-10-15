@@ -580,9 +580,9 @@ mod:hook(OverchargeBarUI, "_apply_crosshair_position", function (func, self, x, 
 end)
 
 -- The melee weapon's own swings are not played on the player's own first person unit: their sounds are in the animations. The skin's
--- model plays UT's.
+-- model plays UT's. The push is the base weapon's own, so its animation is played for its sound (the arms are hidden).
 for template_name in pairs(shield.template_names) do
 	mod.first_person_animation_filters[template_name] = function (event)
-		return string.find(event, "attack", 1, true) ~= nil
+		return event ~= "attack_push" and string.find(event, "attack", 1, true) ~= nil
 	end
 end
