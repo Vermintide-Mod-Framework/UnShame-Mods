@@ -81,6 +81,9 @@ local CONFIG = {
 	arc_damage_multiplier = 0.5,
 	arc_range = 6, -- m
 	arc_start_offset = 0.04, -- m
+	-- An arc goes for an enemy within this of where the bolt hit, the nearest first and one each, and the arcs left over go in random
+	-- directions, as UT's all do. This is the mod's own: UT's arcs only hit what happens to be in their way. A choice, half their range.
+	arc_seek_range = 3, -- m
 	-- How far a bot shoots from, in meters. The handgun's own is the bot's sight.
 	bot_max_range = 60,
 	-- The camera shake of a shot is the handgun's recoil, scaled by this.
@@ -364,14 +367,40 @@ local function hit_unit_of(hit)
 	return (ActionUtils.redirect_shield_hit(unit, actor))
 end
 
+-- The living enemies of the shooter within arc_seek_range of where the bolt hit, other than the one it hit, nearest first, each as the
+-- point an arc goes for (its spine)
+local function arc_targets(shot, origin, main_unit, world)
+	local targets = {}
+
+	for unit in pairs(utils.units_in_radius(world, origin, CONFIG.arc_seek_range)) do
+		if unit ~= main_unit and HEALTH_ALIVE[unit] and DamageUtils.is_enemy(shot.owner_unit, unit) then
+			local point = Unit.has_node(unit, "j_spine") and Unit.world_position(unit, Unit.node(unit, "j_spine")) or Unit.world_position(unit, 0) + Vector3.up()
+
+			targets[#targets + 1] = {
+				distance = Vector3.distance(origin, point),
+				point = Vector3Box(point),
+			}
+		end
+	end
+
+	table.sort(targets, function (a, b)
+		return a.distance < b.distance
+	end)
+
+	return targets
+end
+
 -- Jumps the arcs from the place the bolt hit. Returns where each one ends, and the normal of what it hit: the surface's, or the way
--- back along the arc if it hit nothing (SniperFire.DoTrace). An arc that hits an enemy that is not the one the bolt hit damages it.
+-- back along the arc if it hit nothing (SniperFire.DoTrace). An arc that hits an enemy that is not the one the bolt hit damages it. The
+-- arcs go for the enemies near (arc_targets) before they go in random directions.
 local function jump_arcs(shot, origin, main_unit, world)
 	local arcs = {}
 	local normals = {}
+	local targets = arc_targets(shot, origin, main_unit, world)
 
-	for _ = 1, CONFIG.arc_count do
-		local direction = random_direction()
+	for i = 1, CONFIG.arc_count do
+		local target = targets[i]
+		local direction = target and Vector3.normalize(target.point:unbox() - origin) or random_direction()
 		local hits = raycast(shot.physics_world, origin, direction)
 		local hit = first_beam_hit(hits, shot.owner_unit)
 		local ends = hit and hit[2] <= CONFIG.arc_range
