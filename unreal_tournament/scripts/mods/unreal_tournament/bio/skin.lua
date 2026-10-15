@@ -795,8 +795,24 @@ mod:hook_safe(DecalManager, "init", function (self)
 	self._ut_bio_pool = true
 end)
 
--- Puts a splat on the surface at a position, turned at random about the way the surface faces.
-local function add_splat(position, normal)
+-- The part of a unit at a node, if it has one
+local function actor_at_node(unit, node)
+	if not unit or not Unit.alive(unit) or not node then
+		return nil
+	end
+
+	for i = 0, Unit.num_actors(unit) - 1 do
+		local actor = Unit.actor(unit, i)
+
+		if actor and Actor.node(actor) == node then
+			return actor
+		end
+	end
+end
+
+-- Puts a splat on the surface at a position, turned at random about the way the surface faces. Given the unit and the part it is on, the
+-- decal goes with them, as the game's blood does (a lift, a cart).
+local function add_splat(position, normal, hit_unit, hit_actor)
 	local manager = Managers.state and Managers.state.decal
 
 	if not manager then
@@ -821,7 +837,7 @@ local function add_splat(position, normal)
 
 	-- As the game's blood decals are placed: the rotation looks along the tangent with the normal up, and the extents are the width, the
 	-- length and the depth. (The unit is made for it, see tools/asset_conversion/make_decal_unit.py.)
-	manager:add_projection_decal(CONFIG.splat_unit, nil, nil, position, Quaternion.look(tangent, normal), Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_depth), normal)
+	manager:add_projection_decal(CONFIG.splat_unit, hit_actor and hit_unit or nil, hit_actor, position, Quaternion.look(tangent, normal), Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_depth), normal)
 end
 
 -- The decal manager keeps the units of its pools alive, and the mod's package can't be unloaded while they are (the game crashes when
@@ -844,8 +860,9 @@ mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 	manager._ut_bio_pool = nil
 end
 
--- A glob lands. The splat stays where it is for its own time, and the blob stays until the glob is gone.
-mod.goop_visual_callbacks.land = function (id, position, normal, level)
+-- A glob lands, on the part of a unit at a node if it is known. The splat stays on that part for its own time, and the blob stays until the
+-- glob is gone.
+mod.goop_visual_callbacks.land = function (id, position, normal, level, on_unit, on_node)
 	landed[id] = {
 		level = level,
 		normal = Vector3Box(normal),
@@ -854,7 +871,7 @@ mod.goop_visual_callbacks.land = function (id, position, normal, level)
 
 	show_landed(id)
 	skin_api.play_sound_at("ut_bio_splat2_3d", position)
-	add_splat(position, normal)
+	add_splat(position, normal, on_unit, actor_at_node(on_unit, on_node))
 end
 
 -- Another glob lands in a glob that is there. It is drawn again at the size it has now.
@@ -873,8 +890,8 @@ mod.goop_visual_callbacks.stop = function (id)
 	landed[id] = nil
 end
 
--- A glob on something that moves (a lift, a cart) goes with it. Its mesh and light follow the place; the splat stays on the surface where
--- it landed, as the game's decals do.
+-- A glob on something that moves (a lift, a cart) goes with it. Its mesh and light follow the place (the splat is the decal manager's,
+-- which keeps it on the part it was put on).
 mod.goop_visual_callbacks.move = function (id, position, normal)
 	local entry = landed[id]
 

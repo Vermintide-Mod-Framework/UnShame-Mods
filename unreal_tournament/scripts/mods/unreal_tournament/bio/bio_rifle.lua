@@ -787,7 +787,7 @@ local function glob_landed(id, position, normal, level, on_unit, on_node)
 		position = Vector3Box(position),
 	}
 
-	visuals().land(id, position, normal, level)
+	visuals().land(id, position, normal, level, on_unit, on_node)
 end
 
 local function glob_merged(id, level)
