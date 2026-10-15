@@ -98,6 +98,9 @@ local CONFIG = {
 	-- purpose: these numbers are a guess.
 	hit_range = 150,
 	bash_range = 200,
+	-- The punch hits every enemy within its range in a cone this wide (degrees) about the way the player looks, that it can see. UT's
+	-- punch hits the one thing in front: this is the mod's own, and a guess.
+	hit_angle = 60,
 	-- DamTypeShieldImpact's throw of a body (xPawn.PlayDying): KDeathVel along the way the punch went, which is lifted by half its
 	-- length (Force * (X + 0.5 up)), and KDeathUpKick up, in UT units a second. It is the same for a body that is hit when it is dead,
 	-- and for anything loose that the punch hits. A body is thrown once it falls, if it dies within ragdoll_window seconds of the hit.
@@ -236,12 +239,53 @@ local function in_reach(owner_unit, physics_world, range)
 	end
 
 	if not hit then
-		return nil, nil, direction
+		return nil, nil, direction, origin
 	end
 
 	local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
 
-	return hit, Unit.get_data(hit_unit, "breed") ~= nil and HEALTH_ALIVE[hit_unit] or false, direction
+	return hit, Unit.get_data(hit_unit, "breed") ~= nil and HEALTH_ALIVE[hit_unit] or false, direction, origin
+end
+
+-- The enemies and bodies in the cone of the punch (hit_angle) within the range, that a ray from the player reaches without a wall in
+-- the way. Each is { unit, hit }: the hit is where that ray meets it, as a shot's hit is.
+local function targets_in_reach(owner_unit, physics_world, origin, direction, range)
+	local world = Managers.world:world("level_world")
+	local min_dot = math.cos(math.rad(CONFIG.hit_angle / 2))
+	local targets = {}
+
+	for unit in pairs(utils.units_in_radius(world, origin, range * UNIT)) do
+		local node = Unit.has_node(unit, "j_spine") and Unit.node(unit, "j_spine") or 0
+		local to = Unit.world_position(unit, node) - origin
+		local distance = Vector3.length(to)
+
+		if unit ~= owner_unit and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot and not HEALTH_ALIVE[unit] then
+			-- (a body: its hit zones are off, so it is thrown without looking for them)
+			targets[#targets + 1] = {
+				unit = unit,
+			}
+		elseif unit ~= owner_unit and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot then
+			local hits = raycast(physics_world, origin, to / distance, range)
+
+			for i = 1, #(hits or {}) do
+				local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hits[i][4]), hits[i][4])
+
+				if hit_unit == unit then
+					targets[#targets + 1] = {
+						hit = hits[i],
+						unit = unit,
+					}
+
+					break
+				elseif not Unit.get_data(hit_unit, "breed") then
+					-- (a wall in the way)
+					break
+				end
+			end
+		end
+	end
+
+	return targets
 end
 
 -- The charge ends by itself when an enemy comes into reach (ShieldFire.Timer). The game asks this every frame while the charge goes
@@ -257,10 +301,20 @@ local function enemy_in_reach(unit)
 
 	next_auto_test[unit] = t + CONFIG.auto_fire_test_freq
 
-	local world = Managers.world:world("level_world")
-	local _, is_enemy = in_reach(unit, World.get_data(world, "physics_world"), CONFIG.hit_range)
+	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+	local _, _, direction, origin = in_reach(unit, physics_world, CONFIG.hit_range)
 
-	return is_enemy == true
+	if not origin then
+		return false
+	end
+
+	for _, target in ipairs(targets_in_reach(unit, physics_world, origin, direction, CONFIG.hit_range)) do
+		if HEALTH_ALIVE[target.unit] then
+			return true
+		end
+	end
+
+	return false
 end
 
 -- The shield jump: punching a wall pushes the player away from it (ShieldFire.DoFireEffect, Pawn.TakeDamage)
@@ -382,7 +436,8 @@ local function punch(action, t, power_level, bash)
 	local owner_unit = action.owner_unit
 	local hold_time = charge_started[owner_unit] and t - charge_started[owner_unit] or 0
 	local step, scale = charge_step(hold_time)
-	local hit, is_enemy, direction = in_reach(owner_unit, action.physics_world, bash and CONFIG.bash_range or CONFIG.hit_range)
+	local range = bash and CONFIG.bash_range or CONFIG.hit_range
+	local hit, is_enemy, direction, origin = in_reach(owner_unit, action.physics_world, range)
 
 	charge_started[owner_unit] = nil
 
@@ -391,17 +446,30 @@ local function punch(action, t, power_level, bash)
 		mod.shield.last_punch = t
 	end
 
-	if not hit then
+	if not origin then
+		return
+	end
+
+	local punch_action = PUNCH_ACTIONS[step]
+
+	-- Every enemy in reach takes the punch, and every body in reach is thrown
+	for _, target in ipairs(targets_in_reach(owner_unit, action.physics_world, origin, direction, range)) do
+		if HEALTH_ALIVE[target.unit] then
+			DamageUtils.process_projectile_hit(action.world, action.item_name, owner_unit, action.is_server, { target.hit }, punch_action, direction, true, nil, nil, false, power_level)
+		end
+
+		throw_hit(target.unit, direction)
+	end
+
+	-- The thing straight ahead, if it is not an enemy: a door or a barrel takes the punch as from a melee swing, a loose thing is thrown,
+	-- and a wall near enough throws the player off it
+	if not hit or is_enemy then
 		return
 	end
 
 	local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
-	local punch_action = PUNCH_ACTIONS[step]
 
-	if is_enemy then
-		DamageUtils.process_projectile_hit(action.world, action.item_name, owner_unit, action.is_server, { hit }, punch_action, direction, true, nil, nil, false, power_level)
-		throw_hit(hit_unit, direction)
-
+	if Unit.get_data(hit_unit, "breed") then
 		return
 	end
 
