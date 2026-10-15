@@ -414,7 +414,18 @@ local function objects_in_reach(owner_unit, physics_world, origin, direction, ra
 					local wall, _, wall_distance = PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, distance, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
 
 					if not wall or wall_distance >= distance - 0.05 then
-						hit = {
+						-- (where the ray meets the thing's surface, or its middle if the ray misses it)
+						local hits = PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, distance + 1, "all", "collision_filter", filter)
+
+						for j = 1, #(hits or {}) do
+							if hits[j][4] and Actor.unit(hits[j][4]) == unit then
+								hit = hits[j]
+
+								break
+							end
+						end
+
+						hit = hit or {
 							Actor.position(actor),
 							distance,
 							-to / distance,
@@ -500,17 +511,43 @@ end
 --   KILL: an enemy the punch hits. If it dies, its body is thrown with the punch's momentum once it falls (its parts move by physics only
 --       then), every part alike, as UT starts a ragdoll with a velocity (xPawn.PlayDying). The velocity is held for kill_hold seconds,
 --       because for its first moments the body is still moved by its animation, and the game pushes it too.
---   LOOSE: a loose thing, which moves as a whole.
+--   LOOSE: a loose thing, which is pushed where the punch hit it, as UT pushes a physics object it hits (KAddImpulse at the hit). A hit
+--       off its middle turns it, and the parts joined to it (a lantern's chain) move with it. A part that is held still (kinematic) is
+--       pushed once the game lets it move, which a lantern's hit does.
 local KILL, LOOSE = 1, 2
 local throws = {}
 
-local function add_throw(unit, kind, velocity, spin)
+local function add_throw(unit, kind, velocity, spin, at)
 	throws[unit] = {
+		at = Vector3Box(at),
 		kind = kind,
 		spin = Vector3Box(spin),
 		t = Managers.time:time("game"),
 		velocity = Vector3Box(velocity),
 	}
+end
+
+-- Gives the part of a unit that physics moves, nearest to a point, a velocity at that point. Returns whether there was such a part.
+local function push_part(unit, velocity, at)
+	local nearest, nearest_distance
+
+	for i = 0, Unit.num_actors(unit) - 1 do
+		local actor = Unit.actor(unit, i)
+
+		if actor and Actor.is_dynamic(actor) and Actor.is_physical(actor) then
+			local distance = Vector3.distance(Actor.center_of_mass(actor), at)
+
+			if not nearest or distance < nearest_distance then
+				nearest, nearest_distance = actor, distance
+			end
+		end
+	end
+
+	if nearest then
+		Actor.add_velocity_at(nearest, velocity, at)
+	end
+
+	return nearest ~= nil
 end
 
 -- Sets the velocity and the spin (radians a second, about each axis) of the moving parts of a unit, as one body: each part also moves
@@ -554,7 +591,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 			if not HEALTH_ALIVE[unit] and move_parts(unit, velocity, spin) then
 				throw.thrown_t = throw.thrown_t or t
 			end
-		elseif move_parts(unit, velocity, spin) then
+		elseif push_part(unit, velocity, throw.at:unbox()) then
 			throws[unit] = nil
 		end
 	end
@@ -564,11 +601,11 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(throws)
 end
 
-mod:network_register("ut_shield_throw", function (_, id, is_level_unit, kind, x, y, z, spin_x, spin_y, spin_z)
+mod:network_register("ut_shield_throw", function (_, id, is_level_unit, kind, x, y, z, spin_x, spin_y, spin_z, at_x, at_y, at_z)
 	local unit = Managers.state.network:game_object_or_level_unit(id, is_level_unit == 1)
 
 	if unit and Unit.alive(unit) then
-		add_throw(unit, kind, Vector3(x, y, z), Vector3(spin_x or 0, spin_y or 0, spin_z or 0))
+		add_throw(unit, kind, Vector3(x, y, z), Vector3(spin_x or 0, spin_y or 0, spin_z or 0), at_x and Vector3(at_x, at_y, at_z) or Unit.world_position(unit, 0))
 	end
 end)
 
@@ -591,10 +628,12 @@ local function throw_hit(unit, direction, alive, at, force)
 	local spin = alive and at and death_spin(unit, at, shot) or Vector3.zero()
 	local id, is_level_unit = Managers.state.network:game_object_or_level_id(unit)
 
-	add_throw(unit, kind, velocity, spin)
+	at = at or Unit.world_position(unit, 0)
+
+	add_throw(unit, kind, velocity, spin, at)
 
 	if id then
-		mod:network_send("ut_shield_throw", "others", id, is_level_unit and 1 or 0, kind, Vector3.x(velocity), Vector3.y(velocity), Vector3.z(velocity), Vector3.x(spin), Vector3.y(spin), Vector3.z(spin))
+		mod:network_send("ut_shield_throw", "others", id, is_level_unit and 1 or 0, kind, Vector3.x(velocity), Vector3.y(velocity), Vector3.z(velocity), Vector3.x(spin), Vector3.y(spin), Vector3.z(spin), Vector3.x(at), Vector3.y(at), Vector3.z(at))
 	end
 end
 
@@ -928,8 +967,8 @@ local function punch(action, t, power_level, bash)
 	for _, object in ipairs(objects) do
 		hit_object(action, object.unit, object.hit, direction, punch_action.damage_profile, power_level, blow)
 
-		if Actor.is_dynamic(object.hit[4]) then
-			throw_hit(object.unit, direction, false)
+		if not Actor.is_static(object.hit[4]) then
+			throw_hit(object.unit, direction, false, object.hit[1])
 		end
 	end
 
