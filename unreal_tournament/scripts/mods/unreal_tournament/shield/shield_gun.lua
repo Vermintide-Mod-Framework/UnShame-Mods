@@ -124,15 +124,13 @@ local CONFIG = {
 	-- The punch by how far the charge went, each up to the share of the charge given: the game's damage type, a two-handed hammer's light,
 	-- normal and heavy blows, which hit wide ("tank"), which chooses how the game shows a hit and a death (the hit effects: the push of the
 	-- body, its sounds); the share of UT's damage it does, less for a short charge than UT's (a choice); and how many enemies it gets
-	-- through, as the game's swing of that weight does (its cleave: the hammer's light, medium and heavy tank blows). Its stagger and the
-	-- player's own damage of a shield jump are still worked out from UT's damage.
+	-- through, as a swing with the game's cleave of that name does (light to heavy tank blows that reach about half as far as the
+	-- two-handed hammer's: a choice). Its stagger and the player's own damage of a shield jump are still worked out from UT's damage.
 	damage_types = {
-		{ 1 / 3, "light_blunt_tank", 1 / 2, "cleave_distribution_tank_L" },
-		{ 2 / 3, "blunt_tank", 2 / 3, "cleave_distribution_tank_M" },
-		{ 1, "heavy_blunt_tank", 1, "cleave_distribution_tank_H" },
+		{ 1 / 3, "light_blunt_tank", 1 / 2, "cleave_distribution_tank_spiked_L" },
+		{ 2 / 3, "blunt_tank", 2 / 3, "cleave_distribution_tank_dual_L" },
+		{ 1, "heavy_blunt_tank", 1, "cleave_distribution_burning_tank_M" },
 	},
-	-- The punch gets through this share of the enemies the hammer's blow of its weight would (the hit mass its cleave reaches): a choice
-	cleave_share = 0.5,
 	-- The bash out of a push is the blow of this third of the charge (above), its damage type and share, whatever its time held gives
 	bash_damage_type = 2,
 	-- ShieldFire: punching a wall hurts the player MinSelfDamage + SelfDamageScale * the damage. UT's DeathMatch.ReduceDamage halves a
@@ -869,9 +867,8 @@ local function cleave_of(owner_unit, damage_profile, power_level, is_critical_st
 
 	local max_attack, max_impact = ActionUtils.get_max_targets(damage_profile, cleave_power_level)
 
-	-- (the punch's share of the hammer's, see cleave_share)
-	max_attack = buff_extension:apply_buffs_to_value((max_attack or 1) * CONFIG.cleave_share, "increased_max_targets")
-	max_impact = buff_extension:apply_buffs_to_value((max_impact or 1) * CONFIG.cleave_share, "increased_max_targets")
+	max_attack = buff_extension:apply_buffs_to_value(max_attack or 1, "increased_max_targets")
+	max_impact = buff_extension:apply_buffs_to_value(max_impact or 1, "increased_max_targets")
 
 	if buff_extension:has_buff_perk("potion_armor_penetration") then
 		max_impact = max_impact * 2
