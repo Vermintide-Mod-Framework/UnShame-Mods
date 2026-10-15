@@ -516,6 +516,7 @@ mod.dummy_start_callbacks.shield_gun = function (action, new_action, t, power_le
 
 		if utils.is_local_player_unit(action.owner_unit) then
 			mod.shield.charge_started = t
+			mod.shield.charge_unit = action.owner_unit
 		end
 	elseif new_action.ut_shield_punch then
 		if new_action.ut_shield_bash and utils.is_local_player_unit(action.owner_unit) then
@@ -536,6 +537,25 @@ mod.push_start_callbacks.shield_gun = function (action, new_action, t)
 
 	if utils.is_local_player_unit(action.owner_unit) then
 		mod.shield.last_push = t
+	end
+end
+
+-- A charge of a character that is gone is over: the game does not finish the action of a player who dies, and the charge would show
+-- on the gun of the next one
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	if not mod.shield.charge_started then
+		return
+	end
+
+	local player = Managers.player:local_player_safe()
+
+	if not player or player.player_unit ~= mod.shield.charge_unit or not Unit.alive(mod.shield.charge_unit) then
+		if mod.shield.charge_unit then
+			charge_started[mod.shield.charge_unit] = nil
+		end
+
+		mod.shield.charge_started = nil
+		mod.shield.charge_unit = nil
 	end
 end
 
