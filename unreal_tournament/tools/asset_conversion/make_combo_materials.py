@@ -77,7 +77,9 @@ class Graph:
 
         for n, (instance, connector, value) in enumerate(self.constants):
             text += '\t\t{\n\t\t\tconnector_id = "%s"\n\t\t\tid = "%s"\n\t\t\tinstance_id = "%s"\n\t\t\tvalue = [\n' % (connector, guid(1000 + n), instance)
-            text += '\t\t\t\t%s\n' % (repr(float(value)) if not float(value).is_integer() else '%d' % int(value))
+            # (a number, or a list of them for a vector)
+            for component in (value if isinstance(value, (list, tuple)) else [value]):
+                text += '\t\t\t\t%s\n' % (repr(float(component)) if not float(component).is_integer() else '%d' % int(component))
             text += '\t\t\t]\n\t\t}\n'
 
         text += '\t]\n\tgroups = [\n\t]\n\tnodes = [\n'
@@ -251,10 +253,20 @@ print('wrote fx_bio_goo_graph.material and bio_rifle_m2.material, %d nodes' % le
 # ---------------------------------------------------------------- the Shield Gun's shield
 # ShieldEffect's FinalBlend Shield3rdFB (XEffectMat): FB_Brighten of the Shader Shader3, whose diffuse is the TexPanner TexPanner2 (PanDirection
 # yaw 16384: along V, PanRate 0.2) of the TexOscillator TexOscillator2 (OT_Pan along U, amplitude 0.1, rate 0.2 a second) of the texture
-# shield_elec_green_a. The texture (units/ut/fx/shield_elec, make_weapon_fx.py) has FB_Brighten baked into it: its hue in the colour and its
-# strength in the alpha, so blending it by its alpha is c + d * (1 - c). The oscillation is left out: it sways the lines by a tenth of the
-# texture every five seconds. It is drawn with the weapons' field of view, as UT draws it with the weapon (ShieldAltFire.DrawMuzzleFlash), and
-# the texture is read as it is (not srgb).
+# shield_elec_green_a, and whose opacity is that texture as it is, not panned. Its alpha fades in over the first sixth of V, which is the rim
+# of the shield's dish, so the rim fades out; here the colour is multiplied by it.
+# FB_Brighten is c + d * (1 - c) for each channel. The output node blends by one number for all three, as c + d * (1 - a) with a its opacity
+# times (1 - additive). Here a is the luminance of c: on a grey background that gives the same brightness as UT, and only the tint behind the
+# shield is a little off. (Its brightest channel, which the texture had baked in before, darkened what is behind it too much.) So the opacity
+# is the intensity, and additive is 1 - luminance.
+# The oscillation is left out: it sways the lines by a tenth of the texture every five seconds. It is drawn with the weapons' field of view,
+# as UT draws it with the weapon (ShieldAltFire.DrawMuzzleFlash), and the texture is read as it is (not srgb), alpha and all
+# (units/ut/fx/shield_elec, make_weapon_fx.py).
+IN_DOT_A, IN_DOT_B = '1227923c-0ef1-4823-b673-301cc9a5fc69', '0e627d0f-2503-4925-9811-d44aca00e49c'
+IN_SUBTRACT_A, IN_SUBTRACT_B = 'd5e375bc-daa4-4464-8448-14bf08d97f0e', 'cff85d3c-d5da-4ffc-ad20-f3872809ac4f'
+IN_ADD_A, IN_ADD_B = 'f72597c4-7487-419a-affb-df690e6582e1', '0806db0d-2c4a-43ca-99cc-f5a2f036a8e8'
+IN_CONSTANT_VECTOR3 = '6ff26be7-68a1-4b89-b9dd-551d216086c2'
+IN_CONSTANT_SCALAR = 'c4d6bc08-c489-430f-a836-ed490e59c3f9'
 LINEAR_SAMPLE_OPTIONS = ('5dd59b3d-1762-4a14-9930-7500230ef3db', 'f669a3a6-0376-4187-840e-80000e2939d5', 'e94e53e6-49b6-4194-a747-8f064a5932e0')
 shield = Graph()
 shield.add('out', 'core/stingray_renderer/output_nodes/unlit_base', OUT_OPTIONS + (CUSTOM_FOV,))
@@ -263,12 +275,29 @@ shield.add('time', 'core/shader_nodes/material_variable', export=float_variable(
 shield.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
 shield.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
 shield.add('additive', 'core/shader_nodes/material_variable', export=float_variable('additive', 'Additive', 0), title='Additive')
-shield.connect('additive', 'out', IN_OUT_ADDITIVE)
 panned(shield, 'pan', 0, 0.2)
 shield.add('lines', 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('lines_map'), title='lines_map')
 shield.connect('pan', 'lines', IN_SAMPLE_UV)
-multiply(shield, 'color', 'lines', 'tint', 'rgb')
-multiply(shield, 'opacity', 'lines', 'intensity', 'a')
+shield.add('fade', 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('fade_map'), title='fade_map')
+shield.connect('uv', 'fade', IN_SAMPLE_UV)
+# (the colour: the lines, faded at the rim, tinted)
+multiply(shield, 'faded', 'lines', 'fade', 'rgb', 'a')
+multiply(shield, 'color', 'faded', 'tint')
 shield.connect('color', 'out', IN_OUT_BASE_COLOR)
-shield.connect('opacity', 'out', IN_OUT_OPACITY)
-write('shield', shield, {'lines_map': 'shield_elec'})
+shield.connect('intensity', 'out', IN_OUT_OPACITY)
+# (additive: 1 - the luminance of the colour, plus the particles' own additive, which is 0 for the shield)
+shield.add('weights', 'core/shader_nodes/constant_vector3')
+shield.constant('weights', IN_CONSTANT_VECTOR3, [0.2126, 0.7152, 0.0722])
+shield.add('luminance', 'core/shader_nodes/dot')
+shield.connect('color', 'luminance', IN_DOT_A)
+shield.connect('weights', 'luminance', IN_DOT_B)
+shield.add('one', 'core/shader_nodes/constant_scalar')
+shield.constant('one', IN_CONSTANT_SCALAR, 1)
+shield.add('see_through', 'core/shader_nodes/subtract')
+shield.connect('one', 'see_through', IN_SUBTRACT_A)
+shield.connect('luminance', 'see_through', IN_SUBTRACT_B)
+shield.add('blend', 'core/shader_nodes/add')
+shield.connect('see_through', 'blend', IN_ADD_A)
+shield.connect('additive', 'blend', IN_ADD_B)
+shield.connect('blend', 'out', IN_OUT_ADDITIVE)
+write('shield', shield, {'lines_map': 'shield_elec', 'fade_map': 'shield_elec'})

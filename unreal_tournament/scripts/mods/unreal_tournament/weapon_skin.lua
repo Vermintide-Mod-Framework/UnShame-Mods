@@ -501,10 +501,10 @@ local function new(def)
 		-- A new unit starts in the pose of the file, a big model at the camera. It stays hidden until it is placed.
 		Unit.set_unit_visibility(unit, false)
 
-		-- The root of the first person unit is where the camera is, and it turns with it
+		-- The camera follows this node of the first person unit, and it moves with the game's head bob, so the model moves with the camera
 		AttachmentUtils.link(world, fp.first_person_unit, unit, {
 			{
-				source = 0,
+				source = utils.camera_node(fp.first_person_unit),
 				target = 0,
 			},
 		})

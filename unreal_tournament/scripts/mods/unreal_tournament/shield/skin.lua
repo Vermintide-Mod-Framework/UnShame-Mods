@@ -26,29 +26,29 @@ local CONFIG = {
 	-- A wall nearer than they are drawn hides them, so it is no more than it needs to be.
 	behind_gun = 3,
 	-- ForceRingA, the rings of a punch: 16 a second for 0.2 s, each 0.25 s long, flying forward at 100 units a second from GetEffectStart,
-	-- 1 unit across and growing by 100 a second, dimming from the start (mAttenKa 0), added. Its colour is (B=32,R=32): the fields that
+	-- of size 1 and growing by 100 a second (xEmitter's sizes are a half width, so twice that across), dimming from the start (mAttenKa 0),
+	-- added. Its colour is (B=32,R=32): the fields that
 	-- a struct in defaultproperties leaves out keep the parent's, and xEmitter's is white, so green is 255. That makes the purple
 	-- shock ring green.
 	ring_rate = 16,
 	ring_time = 0.2,
 	ring_life = 0.25,
 	ring_speed = 100, -- UT units a second
-	ring_size = 1, -- UT units
-	ring_growth = 100, -- UT units a second
+	ring_size = 2, -- UT units across
+	ring_growth = 200, -- UT units across, a second
 	ring_color = { 32 / 255, 1, 32 / 255 },
 	-- ShieldCharge, the sparks of the charge (ShieldFire.Timer): lines that appear up to 5 units from GetEffectStart (mPosDev) and fly
 	-- towards it, at ChargeScale * 15 units a second, 20 + ChargeScale * 10 a second, each lasting max(ChargeScale / 30, 0.2) s, where
-	-- ChargeScale is the time charged, up to FullyChargedTime. A line is 0.2 to 0.4 units wide and 0.05 s of its travel long (mSpawnVecB.X 5),
-	-- green ((45, 220, 45) to (65, 250, 65)), added. The colours have an alpha of 25 to 200 (of 255), which dims them: pictures of UT2004 show
-	-- them dim.
+	-- ChargeScale is the time charged, up to FullyChargedTime. A line is 0.2 to 0.4 units in size (xEmitter's sizes are a half width, so
+	-- twice that wide) and 0.05 s of its travel long (mSpawnVecB.X 5), green ((45, 220, 45) to (65, 250, 65)), added. The colours' alpha
+	-- (25 to 200) does nothing: STY_Additive adds the colour as it is.
 	charge_spread = 5, -- UT units
 	charge_speed = 15, -- UT units a second, for each second of charge
 	charge_rate = {20, 10}, -- a second: the first, and more for each second of charge
 	charge_min_life = 0.2,
-	charge_width = {0.2, 0.4}, -- UT units
+	charge_width = {0.4, 0.8}, -- UT units
 	charge_length = 0.05, -- seconds of travel
 	charge_colors = { { 45 / 255, 220 / 255, 45 / 255 }, { 65 / 255, 250 / 255, 65 / 255 } },
-	charge_alpha = { 25 / 255, 200 / 255 },
 	-- The length of shieldgun_charge, which loops while the gun charges (the bank's ut_shield_charge)
 	charge_sound_length = 2.03, -- seconds
 	inspect_pose_speed = 5,
@@ -164,14 +164,13 @@ local function charge_sparks(api, skin, dt)
 		local color = CONFIG.charge_colors[1]
 		local other = CONFIG.charge_colors[2]
 		local share = math.random()
-		local alpha = random_between(CONFIG.charge_alpha)
 
 		particles.beam({
 			attenuation = 0.5,
 			color = {
-				(color[1] + (other[1] - color[1]) * share) * alpha,
-				(color[2] + (other[2] - color[2]) * share) * alpha,
-				(color[3] + (other[3] - color[3]) * share) * alpha,
+				color[1] + (other[1] - color[1]) * share,
+				color[2] + (other[2] - color[2]) * share,
+				color[3] + (other[3] - color[3]) * share,
 			},
 			life = math.max(charged / 30, CONFIG.charge_min_life),
 			material = "units/ut/fx/fx_weapon_shield_charge_spark",

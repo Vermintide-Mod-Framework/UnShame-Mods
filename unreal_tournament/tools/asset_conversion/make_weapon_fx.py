@@ -43,7 +43,11 @@ TEXTURES = {
 SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff')
 
 # The textures that UT draws with FB_Brighten (see write)
-BRIGHTEN = ('minigun_burst', 'shield_elec')
+BRIGHTEN = ('minigun_burst',)
+
+# The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield, made by
+# make_combo_materials.py, which does FB_Brighten itself and fades by the alpha)
+KEEP_ALPHA = ('shield_elec',)
 
 # The textures that are turned a quarter, because they are drawn on a beam, which lays v along its length (TracerShot is a streak along
 # u, the way NewTracer's sprite moves: PTDU_Right)
@@ -94,8 +98,10 @@ variables = {
 }
 '''
 
-def write(name, width, height, rows, linear, weapon=False, brighten=False):
-    if brighten:
+def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_alpha=False):
+    if keep_alpha:
+        pass
+    elif brighten:
         # FB_Brighten (MinigunMuzFlash1stFinal) is c + d * (1 - c): the colour brightens the screen, but less where it is already
         # bright. The particle material draws c * a + d * (1 - a) with "additive" 0, so the texture is made its colour's hue
         # (c / max(c)) with max(c) as its alpha: that is c + d * (1 - max(c)).
@@ -134,7 +140,7 @@ for name, (tga, columns, rows_count) in TEXTURES.items():
         width, height = height, width
 
     if columns == 1 and rows_count == 1:
-        write(name, width, height, rows, name not in SRGB, name in WEAPON, name in BRIGHTEN)
+        write(name, width, height, rows, name not in SRGB, name in WEAPON, name in BRIGHTEN, name in KEEP_ALPHA)
         print('texture', name, width, height)
 
         continue
@@ -146,6 +152,6 @@ for name, (tga, columns, rows_count) in TEXTURES.items():
         # (a row from read_tga is four bytes for each pixel)
         tile = [line[4 * column * tile_width:4 * (column + 1) * tile_width] for line in rows[row * tile_height:(row + 1) * tile_height]]
 
-        write('%s_%d' % (name, index), tile_width, tile_height, tile, name not in SRGB, name in WEAPON, name in BRIGHTEN)
+        write('%s_%d' % (name, index), tile_width, tile_height, tile, name not in SRGB, name in WEAPON, name in BRIGHTEN, name in KEEP_ALPHA)
 
     print('sheet', name, columns * rows_count, 'tiles of', tile_width, tile_height)

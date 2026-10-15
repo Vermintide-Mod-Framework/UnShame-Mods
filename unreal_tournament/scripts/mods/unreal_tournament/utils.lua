@@ -44,6 +44,12 @@ function utils.is_local_player_unit(unit)
 end
 
 -- Where the local player's camera is and how it is turned. Returns nothing if there is no camera now.
+-- The node of the first person unit that the camera follows (GenericCameraExtension.get_follow_data). The game's head bob is an
+-- animation that moves it, so what is drawn in the player's view is linked to it, not to the unit's root, to move with the camera.
+function utils.camera_node(first_person_unit)
+	return Unit.has_node(first_person_unit, "camera_node") and Unit.node(first_person_unit, "camera_node") or 0
+end
+
 function utils.camera_pose()
 	local player = Managers.player and Managers.player:local_player()
 	local camera_manager = Managers.state and Managers.state.camera
