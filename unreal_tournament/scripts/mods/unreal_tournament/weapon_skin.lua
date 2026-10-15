@@ -827,11 +827,17 @@ local function new(def)
 
 		third_person.update()
 
+		local fp = local_first_person()
+
+		-- The weapon is in the player's hands without a skin. The game puts it back without wielding it at times (after the player was
+		-- pounced, or died and came back), and then its own weapon would show.
 		if not skin then
+			if fp and utils.wielded_template_name(fp.unit) == CONFIG.template then
+				create(fp, utils.wielded_skin(fp.unit))
+			end
+
 			return
 		end
-
-		local fp = local_first_person()
 
 		if not fp then
 			destroy(true)
