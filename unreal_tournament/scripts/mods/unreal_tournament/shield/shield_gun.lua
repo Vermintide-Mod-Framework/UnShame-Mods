@@ -142,6 +142,7 @@ mod.shield = {
 	charge_started = nil, -- when the charge started, or nil
 	last_punch = nil, -- when the last punch was
 	fully_charged_time = CONFIG.fully_charged_time,
+	min_hold_time = CONFIG.min_hold_time,
 }
 
 -- Damage profiles: one for each step of the charge

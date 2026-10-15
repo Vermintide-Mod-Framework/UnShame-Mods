@@ -56,6 +56,8 @@ local CONFIG = {
 	shove_forward = 10,
 	shove_out = 0.1,
 	shove_back = 0.3,
+	-- The colour of the charge on the overcharge bar: ShieldGun.HudColor (R, G, B)
+	charge_bar_color = { 0, 188, 121 },
 	inspect_pose_speed = 5,
 	inspect_sway = 5,
 	inspect_sway_speed = 1.8,
@@ -433,6 +435,40 @@ mod.inspect_callbacks.shield_skin = function (action, started)
 		end
 	end
 end
+
+-- The charge is shown on the game's overcharge bar, which every player has and which shows while it is above 0. While the player
+-- charges the Shield Gun, the bar is the charge from empty to full (FullyChargedTime) instead of the overcharge, in the Shield Gun's
+-- HudColor. Its first mark is MinHoldTime: a punch let go before it does the least damage. UT shows no charge; this is the mod's own.
+local function show_charge_bar(bar_ui, player)
+	local unit = player and player.player_unit
+
+	if not shield.charge_started or not unit or not utils.is_local_player_unit(unit) or not shield.template_names[utils.wielded_template_name(unit)] then
+		return false
+	end
+
+	local charged = (Managers.time:time("game") - shield.charge_started) / shield.fully_charged_time
+	local min_mark = shield.min_hold_time / shield.fully_charged_time
+	local widget = bar_ui.charge_bar
+
+	-- (40 is the overcharge that makes the bar its full width: OverchargeBarUI.update_bar_size)
+	bar_ui:update_bar_size(40, min_mark, 1)
+	bar_ui:set_charge_bar_fraction(player, math.min(charged, 1), min_mark, 1, 0)
+
+	for i = 1, 3 do
+		widget.style.bar_1.color[i + 1] = CONFIG.charge_bar_color[i]
+		widget.style.icon.color[i + 1] = CONFIG.charge_bar_color[i]
+	end
+
+	return true
+end
+
+mod:hook(OverchargeBarUI, "_update_overcharge", function (func, self, player, t)
+	if show_charge_bar(self, player) then
+		return true
+	end
+
+	return func(self, player, t)
+end)
 
 -- The melee weapon's own swings are not played on the player's own first person unit: their sounds are in the animations. The skin's
 -- model plays UT's.
