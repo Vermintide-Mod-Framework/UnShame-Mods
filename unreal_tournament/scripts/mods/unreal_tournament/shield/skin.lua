@@ -374,8 +374,9 @@ local function new_skin(setting_id)
 		bob_damping = 2.2,
 		-- The second place is the shove of a push (update_state)
 		alt_pose_forward = CONFIG.shove_forward,
-		-- The inspect pose turns the gun to show its side, like the other weapons. These numbers are a guess.
-		inspect_pose_right = -2,
+		-- The inspect pose turns the gun to show its side, like the other weapons. These numbers are a guess, but for inspect_pose_right,
+		-- which puts the gun in the middle of the screen (preview_weapon.py shield: 175 to 789 of 960).
+		inspect_pose_right = -26.5,
 		inspect_pose_forward = 4,
 		inspect_pose_up = 0,
 		inspect_pose_roll = 10,
