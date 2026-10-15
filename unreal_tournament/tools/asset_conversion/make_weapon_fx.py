@@ -25,6 +25,9 @@ TEXTURES = {
     'shell_casing': ('XEffects/Texture/ShellCasingTex.tga', 1, 1),
     # The Shield Gun (ShieldEffect's Shield3rdFB: its material is units/ut/fx/fx_shield, made by make_combo_materials.py)
     'shield_elec': ('XEffectMat/Texture/shield_elec_green_a.tga', 1, 1),
+    # (ForceRingA's rings of the punch and ShieldCharge's sparks of the charge)
+    'force_ring': ('XEffectMat/Texture/shock_ring_b.tga', 1, 1),
+    'shield_charge_spark': ('XEffects/Texture/FlakTrailTex.tga', 1, 1),
 }
 
 SRGB = ('shell_casing',)
@@ -34,12 +37,15 @@ BRIGHTEN = ('minigun_burst', 'shield_elec')
 
 # The textures that are turned a quarter, because they are drawn on a beam, which lays v along its length (TracerShot is a streak along
 # u, the way NewTracer's sprite moves: PTDU_Right)
-TURNED = ('tracer_shot',)
+TURNED = ('tracer_shot', 'shield_charge_spark')
+
+# The textures of which only the top half is used: FlakTrailTex is a streak above a dot, and a line particle (PT_Line) is the streak
+TOP_HALF = ('shield_charge_spark',)
 
 # The effects that UT draws with the weapon in the player's view (attached to it) also get fx_weapon_<name>, which draws with the
 # weapon model's field of view (units/ut/fx/particle_weapon_linear, or particle_weapon for an srgb one), so they are among the model's
 # parts. The Minigun's flash and shells are attached to the weapon (MinigunFire.InitEffects, Minigun.PostBeginPlay).
-WEAPON = ('minigun_burst', 'shell_casing')
+WEAPON = ('minigun_burst', 'shell_casing', 'force_ring', 'shield_charge_spark')
 
 TEXTURE_TEMPLATE = '''common = {
 	input = {
@@ -108,6 +114,10 @@ def write(name, width, height, rows, linear, weapon=False, brighten=False):
 
 for name, (tga, columns, rows_count) in TEXTURES.items():
     width, height, rows = read_tga('%s/%s' % (EXPORT, tga))
+
+    if name in TOP_HALF:
+        rows = rows[:height // 2]
+        height = len(rows)
 
     if name in TURNED:
         rows = [b''.join(rows[y][x * 4:x * 4 + 4] for y in range(height)) for x in range(width)]

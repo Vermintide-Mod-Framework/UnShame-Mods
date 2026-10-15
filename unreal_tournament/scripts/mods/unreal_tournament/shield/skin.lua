@@ -20,6 +20,28 @@ local CONFIG = {
 	-- ShieldGun.EffectOffset (forward, right, up): where GetEffectStart is from the weapon, and ShieldEffect's DrawScale
 	effect_offset = {15, 5.5, 2},
 	shield_draw_scale = 1.8,
+	-- ForceRingA, the rings of a punch: 16 a second for 0.2 s, each 0.25 s long, flying forward at 100 units a second from GetEffectStart,
+	-- 1 unit across and growing by 100 a second, dimming from the start (mAttenKa 0), of the colour (32, 0, 32) added
+	ring_rate = 16,
+	ring_time = 0.2,
+	ring_life = 0.25,
+	ring_speed = 100, -- UT units a second
+	ring_size = 1, -- UT units
+	ring_growth = 100, -- UT units a second
+	ring_color = { 32 / 255, 0, 32 / 255 },
+	-- ShieldCharge, the sparks of the charge (ShieldFire.Timer): lines that appear up to 5 units from GetEffectStart (mPosDev) and fly
+	-- towards it, at ChargeScale * 15 units a second, 20 + ChargeScale * 10 a second, each lasting max(ChargeScale / 30, 0.2) s, where
+	-- ChargeScale is the time charged, up to FullyChargedTime. A line is 0.2 to 0.4 units wide and 0.05 s of its travel long (mSpawnVecB.X 5),
+	-- green ((45, 220, 45) to (65, 250, 65)), added. The colours have an alpha of 25 to 200 (of 255), which dims them: pictures of UT2004 show
+	-- them dim.
+	charge_spread = 5, -- UT units
+	charge_speed = 15, -- UT units a second, for each second of charge
+	charge_rate = {20, 10}, -- a second: the first, and more for each second of charge
+	charge_min_life = 0.2,
+	charge_width = {0.2, 0.4}, -- UT units
+	charge_length = 0.05, -- seconds of travel
+	charge_colors = { { 45 / 255, 220 / 255, 45 / 255 }, { 65 / 255, 250 / 255, 65 / 255 } },
+	charge_alpha = { 25 / 255, 200 / 255 },
 	inspect_pose_speed = 5,
 	inspect_sway = 5,
 	inspect_sway_speed = 1.8,
@@ -47,6 +69,126 @@ local function local_player_blocking()
 	return status_extension and status_extension:is_blocking() or false
 end
 
+-- A point of the player's view in UT units from the eye (forward, right, up), where the weapon's projection draws it: the meters of a UT unit
+-- across the view and along it are the model's (weapon_skin.lua). Effects that UT draws with the weapon (Canvas.DrawActor with DisplayFOV)
+-- are placed with it and have the materials that draw with the weapon's field of view.
+local function view_point(skin, forward, right, up)
+	local camera_position, camera_rotation = utils.camera_pose()
+
+	if not camera_position or not skin.view_across_scale then
+		return nil
+	end
+
+	local across, along = skin.view_across_scale, skin.view_forward_scale
+
+	return camera_position + Quaternion.right(camera_rotation) * (right * across) + Quaternion.forward(camera_rotation) * (forward * along) + Quaternion.up(camera_rotation) * (up * across)
+end
+
+-- GetEffectStart: the weapon's place (PlayerViewOffset, scaled by CalcDrawOffset) and EffectOffset from it, as forward, right, up
+local function effect_start()
+	local offset_scale = 90 / CONFIG.display_fov
+
+	return CONFIG.view_offset[1] * offset_scale + CONFIG.effect_offset[1], CONFIG.view_offset[2] * offset_scale + CONFIG.effect_offset[2], CONFIG.view_offset[3] * offset_scale + CONFIG.effect_offset[3]
+end
+
+local function random_between(range)
+	return range[1] + (range[2] - range[1]) * math.random()
+end
+
+-- The rings of a punch (ForceRingA): discs that face the way the view looks and fly ahead
+local function force_rings(api)
+	local skin = api.state()
+	local _, camera_rotation = utils.camera_pose()
+
+	if not skin or not camera_rotation then
+		return
+	end
+
+	local forward, right, up = effect_start()
+	local count = math.floor(CONFIG.ring_rate * CONFIG.ring_time) + 1
+
+	for i = 1, count do
+		local delay = (i - 1) / CONFIG.ring_rate
+		local born = Managers.time:time("game") + delay
+
+		particles.disc({
+			attenuation = 0,
+			color = CONFIG.ring_color,
+			delay = delay,
+			follow = function ()
+				if api.state() ~= skin then
+					return nil
+				end
+
+				local age = math.max(0, Managers.time:time("game") - born)
+
+				return view_point(skin, forward + CONFIG.ring_speed * age, right, up)
+			end,
+			growth = CONFIG.ring_growth * (skin.view_across_scale or 0.01),
+			life = CONFIG.ring_life,
+			material = "units/ut/fx/fx_weapon_force_ring",
+			normal = Quaternion.forward(camera_rotation),
+			size = CONFIG.ring_size * (skin.view_across_scale or 0.01),
+			texture = "force_ring",
+		})
+	end
+end
+
+-- The sparks of the charge (ShieldCharge), made each frame while the gun charges
+local function charge_sparks(api, skin, dt)
+	local charged = math.min(Managers.time:time("game") - shield.charge_started, shield.fully_charged_time)
+
+	skin.spark_time = (skin.spark_time or 0) + dt
+
+	local interval = 1 / (CONFIG.charge_rate[1] + CONFIG.charge_rate[2] * charged)
+	local center_forward, center_right, center_up = effect_start()
+
+	while skin.spark_time >= interval do
+		skin.spark_time = skin.spark_time - interval
+
+		local spread = CONFIG.charge_spread
+		local x, y, z = random_between({-spread, spread}), random_between({-spread, spread}), random_between({-spread, spread})
+		local distance = math.max(math.sqrt(x * x + y * y + z * z), 0.001)
+		local speed = CONFIG.charge_speed * charged
+		local born = Managers.time:time("game")
+		local color = CONFIG.charge_colors[1]
+		local other = CONFIG.charge_colors[2]
+		local share = math.random()
+		local alpha = random_between(CONFIG.charge_alpha)
+
+		particles.beam({
+			attenuation = 0.5,
+			color = {
+				(color[1] + (other[1] - color[1]) * share) * alpha,
+				(color[2] + (other[2] - color[2]) * share) * alpha,
+				(color[3] + (other[3] - color[3]) * share) * alpha,
+			},
+			life = math.max(charged / 30, CONFIG.charge_min_life),
+			material = "units/ut/fx/fx_weapon_shield_charge_spark",
+			size = random_between(CONFIG.charge_width) * (skin.view_across_scale or 0.01),
+			texture = "shield_charge_spark",
+			-- (it flies towards the middle: ST_Explode with a speed below 0)
+			track = function ()
+				if api.state() ~= skin then
+					return nil
+				end
+
+				local age = Managers.time:time("game") - born
+				local at = math.max(0, distance - speed * age) / distance
+				local tail = math.max(0, distance - speed * (age - CONFIG.charge_length)) / distance
+				local head = view_point(skin, center_forward + x * at, center_right + y * at, center_up + z * at)
+				local back = view_point(skin, center_forward + x * tail, center_right + y * tail, center_up + z * tail)
+
+				if not head or not back then
+					return nil
+				end
+
+				return back, head
+			end,
+		})
+	end
+end
+
 -- The shield while it is up (ShieldAltFire.DrawMuzzleFlash): UT's Shield mesh at GetEffectStart, turned as the view is, drawn with the weapon's
 -- projection. Here it has the material that draws with the weapon's field of view (fx_shield), placed and scaled in the view as the model is
 -- (weapon_skin.lua), and it pans its texture by its age. It ends when the shield goes down or the model is gone.
@@ -58,10 +200,7 @@ local function show_shield(api)
 	end
 
 	local mesh_unit = 0.02 -- meters of a UT unit of the mesh (make_fx_meshes.py)
-	local offset_scale = 90 / CONFIG.display_fov
-	local forward = CONFIG.view_offset[1] * offset_scale + CONFIG.effect_offset[1]
-	local right = CONFIG.view_offset[2] * offset_scale + CONFIG.effect_offset[2]
-	local up = CONFIG.view_offset[3] * offset_scale + CONFIG.effect_offset[3]
+	local forward, right, up = effect_start()
 
 	particles.mesh({
 		additive = 0,
@@ -74,16 +213,11 @@ local function show_shield(api)
 			1,
 		},
 		follow = function ()
-			local now = api.state()
-			local camera_position, camera_rotation = utils.camera_pose()
-
-			if now ~= skin or not skin.blocking or not camera_position or not skin.view_across_scale then
+			if api.state() ~= skin or not skin.blocking then
 				return nil
 			end
 
-			local across, along = skin.view_across_scale, skin.view_forward_scale
-
-			return camera_position + Quaternion.right(camera_rotation) * (right * across) + Quaternion.forward(camera_rotation) * (forward * along) + Quaternion.up(camera_rotation) * (up * across)
+			return view_point(skin, forward, right, up)
 		end,
 		-- (the mesh's dish faces along its y, which is the way the view looks, and it is not turned about anything else)
 		angle = 0,
@@ -106,9 +240,15 @@ end
 
 -- The animations follow what the gun does (ShieldFire and ShieldAltFire): the charge plays Charge over FullyChargedTime and then loops
 -- Charged (PlayPreFire, ShieldGun.AnimEnd), the punch plays Fire, and the shield loops Shield while it is up.
-local function update_state(api, skin)
+local function update_state(api, skin, dt)
 	local charging = shield.charge_started ~= nil
 	local blocking = local_player_blocking()
+
+	if charging then
+		charge_sparks(api, skin, dt)
+	else
+		skin.spark_time = 0
+	end
 
 	if charging and skin.seen_charge ~= shield.charge_started then
 		skin.seen_charge = shield.charge_started
@@ -133,6 +273,7 @@ local function update_state(api, skin)
 
 		api.play("Fire")
 		api.play_sound("ut_shield_fire")
+		force_rings(api)
 	end
 
 	if blocking ~= skin.blocking then
@@ -220,7 +361,7 @@ local function new_skin(setting_id)
 			skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
 			skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
 
-			update_state(api, skin)
+			update_state(api, skin, dt)
 		end,
 		on_destroy = function (skin)
 			api.stop_sound(skin.charge_sound)

@@ -55,7 +55,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Explosion radius | - | - | - |
 | Explosion falloff | - | - | - |
 | Momentum | - | - | - |
-| Weapon jumping | - | - | open: the shield jump off a wall is made (UT's momentum, scaled by the jumps) but not checked in the game. Its self damage (8 + 0.3 of the damage) is left out |
+| Weapon jumping | - | - | ok in the game: a full punch at the floor throws the player up and back. Its self damage (8 + 0.3 of the damage) is left out |
 | Ragdolls | - | - | - |
 | Banners and barrels | - | - | - |
 | **Projectiles** | | | |
@@ -78,7 +78,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Multi-load at 1, 2 and 3 rounds | - | - | - |
 | `/loaded` | - | - | - |
 | **Effects** | | | |
-| Muzzle flash | ok (white disk with a blue rim, size, place and fade side by side with UT; it reads its texture linearly, as UT adds it) | no: close. UT's mesh with the tile of Minigun_burst its UVs use, blended as FB_Brighten (c + d(1 - c)), 5 a round that replace the last round's. Place and size match pictures of UT; ours is a more saturated orange where UT's is paler. | no: the ForceRingA rings of the punch and the ShieldCharge sparks are not drawn yet |
+| Muzzle flash | ok (white disk with a blue rim, size, place and fade side by side with UT; it reads its texture linearly, as UT adds it) | no: close. UT's mesh with the tile of Minigun_burst its UVs use, blended as FB_Brighten (c + d(1 - c)), 5 a round that replace the last round's. Place and size match pictures of UT; ours is a more saturated orange where UT's is paler. | close: ShieldCharge's green lines while charging, dim as UT's; ForceRingA's rings on a punch show as a purple haze beside the gun where UT's are a faint arc mostly hidden behind it (how xEmitter sizes a disc is in UT's engine) |
 | Projectile model | - | ok (the shells are UT's ShellCasing mesh, drawn with the gun) | - |
 | Trail | no: the bolt starts in the flare and has UT's width, brightness and fade, but its streak repeats the texture's zigzag evenly where UT's is ragged and branches (PT_Branch is in UT's engine, not its scripts). The arcs are the same. | ok (NewTracer: short yellow streaks, 400 by 10 units from EffectOffset, colour 1, 0.8, 0.5. A tracer lasts as long as it takes to reach the hit at 10000 units a second, so near a wall it is gone in a frame, as in UT) | - |
 | Flare | ok (where the bolt hits, whole, not cut by the wall; the arcs' sparks burst out along what each arc hit, as many as UT's, bright at the head; UT's are thinner) | - | - |
