@@ -78,9 +78,9 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Multi-load at 1, 2 and 3 rounds | - | - |
 | `/loaded` | - | - |
 | **Effects** | | |
-| Muzzle flash | ok (white disk with a blue rim, size, place and fade side by side with UT; it reads its texture linearly, as UT adds it) | no: faint next to UT (see the Lightning Gun) |
-| Projectile model | - | - |
-| Trail | no: the bolt starts in the flare and has UT's width, brightness and fade, but its streak repeats the texture's zigzag evenly where UT's is ragged and branches (PT_Branch is in UT's engine, not its scripts). The arcs are the same. | no: the tracer is not seen |
+| Muzzle flash | ok (white disk with a blue rim, size, place and fade side by side with UT; it reads its texture linearly, as UT adds it) | no: open. UT's mesh (MinigunMuzFlash1stMesh) with Minigun_burst, drawn among the gun's parts at the muzzle, its texture added at full alpha (UT's FB_Brighten leaves the alpha out). It is in place and about as large as UT's, but shows as orange arcs where UT shows pale petals: the mesh's turn, or how UT steps through the 4 tiles of the texture (mTileAnimation), may differ. |
+| Projectile model | - | ok (the shells are UT's ShellCasing mesh, drawn with the gun) |
+| Trail | no: the bolt starts in the flare and has UT's width, brightness and fade, but its streak repeats the texture's zigzag evenly where UT's is ragged and branches (PT_Branch is in UT's engine, not its scripts). The arcs are the same. | no: open. The tracer is NewTracer's numbers (400 by 10 units, from EffectOffset, colour 1, 0.8, 0.5) and its texture is now turned to run along the beam, but it was not seen in pictures yet. |
 | Flare | ok (where the bolt hits, whole, not cut by the wall; the arcs' sparks burst out along what each arc hit, as many as UT's, bright at the head; UT's are thinner) | - |
 | Smoke | - | - |
 | Explosion shape | - | - |

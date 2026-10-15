@@ -7,6 +7,9 @@ import struct, zlib, os, sys
 #   units/ut/fx/vortex  ShockVortexMesh (a vertex mesh of UT's first format, .3d), its first frame: a flat disc that faces the camera
 #   units/ut/fx/flak_flash_mesh  XEffects.FlakMuzFlashMesh, the Flak Cannon's first person muzzle flash (umodel -export XEffects.u FlakMuzFlashMesh, into
 #                       <scratch>/umodel/out34); its long axis is y, the way the barrel points
+#   units/ut/fx/minigun_flash_mesh  XEffects.MinigunMuzFlash1stMesh, the Minigun's first person muzzle flash, and
+#   units/ut/fx/shell_casing_mesh  XEffects.ShellCasing, the shell of ShellSpewer (umodel -export XEffects.u MinigunMuzFlash1stMesh and
+#                       ShellCasing, into <scratch>/umodel/out36)
 # They are made in meters, a UT unit being 0.02 m (as everything of the effects is), turned from UT's axes (x forward, y right, z up) to
 # this game's (x right, y forward, z up), which makes the mesh the other way round: the long axis of the coil is y.
 # One material slot, m_fx, as the quad of the particles has (units/ut/fx/quad): the effects set the material of the texture they want.
@@ -176,3 +179,5 @@ if __name__ == '__main__':
     make_static('sphere', 'TexPropSphere', SCRATCH + '/umodel/out13/Editor')
     make_vortex('vortex', 'ShockVortexMesh')
     make_static('flak_flash_mesh', 'FlakMuzFlashMesh', SCRATCH + '/umodel/out34/XEffects')
+    make_static('minigun_flash_mesh', 'MinigunMuzFlash1stMesh', SCRATCH + '/umodel/out36/XEffects')
+    make_static('shell_casing_mesh', 'ShellCasing', SCRATCH + '/umodel/out36/XEffects')

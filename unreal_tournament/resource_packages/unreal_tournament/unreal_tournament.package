@@ -41,6 +41,8 @@ unit = [
 	"units/ut/fx/vortex"
 	"units/ut/fx/light"
 	"units/ut/fx/flak_flash_mesh"
+	"units/ut/fx/minigun_flash_mesh"
+	"units/ut/fx/shell_casing_mesh"
 	"units/ut/fx/goop/*"
 	"units/ut/fx/decal_bio"
 ]

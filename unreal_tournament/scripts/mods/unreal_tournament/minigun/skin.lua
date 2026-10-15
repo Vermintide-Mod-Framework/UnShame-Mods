@@ -15,32 +15,46 @@ local particles = mod.skin_particles
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
-	-- The first person flash (MinigunMuzFlash1st): a few star-shaped bursts at the muzzle for every round, turned at random, each lasting
-	-- 0.1 to 0.15 seconds and growing as it goes
-	flash_count = 3,
-	flash_size = 110, -- UT units
-	flash_growth = 260, -- UT units a second
-	flash_life = 0.12,
-	flash_intensity = 1.2,
+	-- The first person flash (MinigunMuzFlash1st): 5 meshes (MinigunMuzFlash1stMesh) at the muzzle for every round (mNumPerFlash),
+	-- turned at random about the barrel, each lasting 0.1 to 0.15 seconds. A mesh's scale starts at 0.05 to 0.08 and grows by 3 a second
+	-- (mSizeRange, mGrowthRate), times the emitter's DrawScale of 0.9. It brightens until 0.2 of its life and dims after (mAttenKa).
+	flash_count = 5,
+	flash_scale = {0.05, 0.08},
+	flash_growth = 3, -- scale a second
+	flash_draw_scale = 0.9,
+	flash_life = {0.1, 0.15},
+	flash_attenuation = 0.2,
+	-- How xEmitter sizes a mesh particle is in UT's engine, not its scripts: the scales above drew it 2.5 times as wide as in pictures
+	-- of UT2004, so they are multiplied by this
+	flash_fit = 0.4,
+	flash_intensity = 1,
 	-- The third person flash (NewMinigunMFlash): four flames in a row along the barrel, each smaller and further out
 	flame_offsets = {8, 16, 24, 32}, -- UT units from the muzzle
 	flame_sizes = {17, 12, 7, 4}, -- UT units
 	flame_life = 0.1,
-	-- NewTracer: a streak of 40 by 10 units that flies at 10000 units a second to where the round hit, less the pullback, and is
-	-- there only if that is farther than the minimum. A tracer is made every tracer_interval seconds, for the primary and the alt fire.
+	-- NewTracer: a sprite along its velocity that flies at 10000 units a second to where the round hit, less the pullback, and is
+	-- there only if that is farther than the minimum. It is 10 units wide and 20 long times 0.002 of its speed (ScaleSizeXByVelocity),
+	-- grows to that in its first 0.03 s (SizeScale), and keeps its brightness. Its colour is the texture's times (1, 0.8, 0.5).
+	-- A tracer is made every tracer_interval seconds, for the primary and the alt fire.
 	tracer_speed = 10000, -- UT units a second
-	tracer_length = 40,
+	tracer_length = 400,
 	tracer_width = 10,
+	tracer_grow_time = 0.03,
+	tracer_color = { 1, 0.8, 0.5 },
 	tracer_pullback = 50,
 	tracer_min_distance = 0,
 	tracer_interval = 0.12,
 	tracer_alt_interval = 0.18,
-	tracer_intensity = 1.6,
-	-- ShellSpewer: the shells fly out of the gun's ejector and fall. Mass 2: they fall like the game's own, at gravity.
+	-- Minigun.EffectOffset: where the tracers start in the player's view (right, forward, up, UT units from the eye)
+	effect_offset = {18, 100, -16},
+	tracer_intensity = 1,
+	-- ShellSpewer: the shells (the ShellCasing mesh, at a scale of mSizeRange 10 times DrawScale 0.05) fly out of the gun's ejector at
+	-- 200 to 250 units a second and fall, for 0.5 to 1 s, turning as they go
 	shell_speed = {200, 250}, -- UT units a second
 	shell_life = {0.5, 1},
-	shell_size = 0.14, -- meters, as large as UT's shells look in the player's view
-	shell_gravity = 9.8, -- meters per second squared
+	shell_scale = 0.5,
+	shell_gravity = 950, -- UT units a second squared (PhysicsVolume's)
+	shell_spin = 12, -- radians a second, at most, each way
 	-- The winding sound plays while the barrels turn at less than full speed. The fire sound loops, so it is started again when its
 	-- length is over, and stopped when the shots stop.
 	fire_loop_seconds = 0.98,
@@ -142,23 +156,55 @@ local function turn_bone(pose, bone, angle, pivot)
 	pose[o + 7] = py * sin_angle + pz * cos_angle + pivot[2]
 end
 
--- The first person flash of a round, at the muzzle of the model in the player's own view
-local function first_person_flash(follow, scale)
+-- UT's attenuation: brightens until ka of the life and dims from there
+local function attenuation(fraction, ka)
+	if fraction < ka then
+		return fraction / ka
+	end
+
+	return (1 - fraction) / (1 - ka)
+end
+
+-- The first person flash of a round, at the muzzle of the model in the player's own view. UT attaches it to the weapon, so it is drawn
+-- with the weapon. Here it has the material that draws with the model's field of view (fx_weapon_*), at the muzzle of the model as it
+-- is placed for that, so it is among the model's parts and in front of the barrels, not hidden by them as a particle of the world is.
+-- world_unit is the meters of a UT unit there. The texture is a sheet of 4 that UT picks from at random (mRandTextures); a mesh here
+-- has one of them for its whole life, where UT also steps through them (mTileAnimation).
+local function first_person_flash(follow, world_unit)
+	local _, camera_rotation = utils.camera_pose()
+
+	if not camera_rotation then
+		return
+	end
+
+	-- (the mesh is made at 0.02 m per UT unit)
+	local factor = world_unit / UNIT * CONFIG.flash_draw_scale * CONFIG.flash_fit
+
 	for _ = 1, CONFIG.flash_count do
-		particles.sprite({
-			attenuation = 0,
+		local tile = math.random(0, 3)
+		local life = random_between(CONFIG.flash_life)
+		local start = random_between(CONFIG.flash_scale)
+
+		particles.mesh({
+			brightness = function (fraction)
+				return CONFIG.flash_intensity * attenuation(fraction, CONFIG.flash_attenuation)
+			end,
 			color = {
 				1,
 				1,
 				1,
 			},
 			follow = follow,
-			growth = CONFIG.flash_growth * scale,
-			intensity = CONFIG.flash_intensity,
-			life = CONFIG.flash_life,
-			size = CONFIG.flash_size * scale,
-			spin = (math.random() * 2 - 1) * 0.3,
-			texture = "minigun_burst_" .. math.random(0, 3),
+			life = life,
+			material = "units/ut/fx/fx_weapon_minigun_burst_" .. tile,
+			rotation = camera_rotation,
+			scale = function (fraction)
+				return (start + CONFIG.flash_growth * fraction * life) * factor
+			end,
+			spin = 0,
+			angle = math.random() * 360,
+			spin_axis = Vector3(0, 1, 0),
+			unit = "units/ut/fx/minigun_flash_mesh",
 		})
 	end
 end
@@ -211,56 +257,71 @@ local function tracer(owner_unit, start, end_position, interval)
 	local life = reach / speed
 
 	particles.beam({
-		attenuation = 0.9,
-		color = {
-			1,
-			0.8,
-			0.5,
-		},
+		color = CONFIG.tracer_color,
+		fade_in = 0,
+		fade_out = life,
 		intensity = CONFIG.tracer_intensity,
 		life = life,
 		size = CONFIG.tracer_width * UNIT,
 		texture = "tracer_shot",
 		track = function ()
-			-- The streak's head has gone this far along the path
-			local head = math.min(reach, speed * (Managers.time:time("game") - now))
-			local tail = math.max(0, head - length)
-
+			-- The sprite's middle flies along the path, and it grows to its length in its first moment (SizeScale)
+			local age = Managers.time:time("game") - now
+			local middle = speed * age
+			local half = length / 2 * math.min(1, age / CONFIG.tracer_grow_time)
 			local unboxed = direction_box:unbox()
 
-			return origin:unbox() + unboxed * tail, origin:unbox() + unboxed * head
+			return origin:unbox() + unboxed * (middle - half), origin:unbox() + unboxed * math.min(reach, middle + half)
 		end,
 	})
 end
 
--- A shell leaves the ejector and falls. It is a sprite that is moved every frame.
-local function shell(position, right, up)
-	local velocity = Vector3Box(right * (random_between(CONFIG.shell_speed) * UNIT) + up * (random_between(CONFIG.shell_speed) * 0.6 * UNIT) + random_direction() * (30 * UNIT))
-	local place = Vector3Box(position)
+-- A shell leaves the ejector and falls: UT's ShellCasing mesh. ShellSpewer is attached to the weapon, so like the flash it is drawn with
+-- the model's field of view, in the space of the model in the player's view, where a UT unit is world_unit meters. It is placed from the
+-- ejector, which moves with the model, by how far it has flown.
+local function shell(ejector, right, up, world_unit)
+	local velocity = Vector3Box(right * random_between(CONFIG.shell_speed) + up * (random_between(CONFIG.shell_speed) * 0.6) + random_direction() * 30)
+	local flown = Vector3Box(Vector3.zero())
+	local up_box = Vector3Box(up)
 	local last = Managers.time:time("game")
+	local _, camera_rotation = utils.camera_pose()
 
-	particles.sprite({
-		attenuation = 0.9,
+	particles.mesh({
+		additive = 0,
+		brightness = function ()
+			return 1
+		end,
 		color = {
 			1,
 			1,
 			1,
 		},
 		follow = function ()
+			local start = ejector()
+
+			if not start then
+				return nil
+			end
+
 			local now = Managers.time:time("game")
 			local dt = now - last
-			local v = velocity:unbox() + Vector3(0, 0, -CONFIG.shell_gravity * dt)
+			local v = velocity:unbox() - up_box:unbox() * (CONFIG.shell_gravity * dt)
 
 			last = now
 			velocity:store(v)
-			place:store(place:unbox() + v * dt)
+			flown:store(flown:unbox() + v * dt)
 
-			return place:unbox()
+			return start + flown:unbox() * world_unit
 		end,
 		life = random_between(CONFIG.shell_life),
-		size = CONFIG.shell_size,
-		spin = (math.random() * 2 - 1) * 2,
-		texture = "shell_casing",
+		material = "units/ut/fx/fx_weapon_shell_casing",
+		rotation = camera_rotation or Quaternion.identity(),
+		scale = function ()
+			return CONFIG.shell_scale * world_unit / UNIT
+		end,
+		spin = random_between({-CONFIG.shell_spin, CONFIG.shell_spin}) / (math.pi * 2),
+		spin_axis = random_direction(),
+		unit = "units/ut/fx/shell_casing_mesh",
 	})
 end
 
@@ -327,22 +388,33 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 
 		if api and not api.third_person.shows_weapon(owner_unit) then
 			round_sound(api, mode)
+
+			-- The meters of a UT unit of the world where the model is: its own unit, without its DrawScale
+			local world_unit = (api.state() and api.state().unit_scale or UNIT) / api.draw_scale()
+
 			first_person_flash(function ()
-				return api.state() and api.muzzle_position() or nil
-			end, api.state() and api.state().unit_scale or UNIT)
+				return api.state() and api.muzzle_model_position() or nil
+			end, world_unit)
 
-			local muzzle = api.muzzle_position()
+			-- MinigunAttachment.GetTracerStart: in the player's own view the tracer starts at Weapon.GetEffectStart, EffectOffset from
+			-- the eye (in a view of 90 degrees across)
+			local camera_position, camera_rotation = utils.camera_pose()
+			local player = Managers.player:local_player()
 
-			if muzzle then
-				tracer(owner_unit, muzzle, end_position, interval)
+			if camera_position and player then
+				local offset = CONFIG.effect_offset
+				-- (UT's view of 90 degrees across at 16 by 9 is 0.5625 of a tangent up and down)
+				local scale = math.tan(Managers.state.camera:fov(player.viewport_name) / 2) / 0.5625
+				local ray = Quaternion.forward(camera_rotation) + Quaternion.right(camera_rotation) * (offset[1] / offset[2] * scale) + Quaternion.up(camera_rotation) * (offset[3] / offset[2] * scale)
+
+				tracer(owner_unit, camera_position + ray * (offset[2] * UNIT), end_position, interval)
 			end
 
 			-- The shells fly out of the ejector to the right of the gun
-			local ejector = api.muzzle_position("b_bone_caseejector")
-			local _, camera_rotation = utils.camera_pose()
-
-			if ejector and camera_rotation then
-				shell(ejector, Quaternion.right(camera_rotation), Quaternion.up(camera_rotation))
+			if camera_rotation then
+				shell(function ()
+					return api.state() and api.muzzle_model_position("b_bone_caseejector") or nil
+				end, Quaternion.right(camera_rotation), Quaternion.up(camera_rotation), world_unit)
 			end
 
 			return
