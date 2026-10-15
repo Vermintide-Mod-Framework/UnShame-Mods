@@ -78,17 +78,13 @@ local function scenarios()
 		{
 			name = "damages an enemy",
 			run = function (t)
-				local target = t.spawn("chaos_marauder", 5)
+				local target = t.spawn_target(5)
 
 				if not t.expect(target, "the target could not be spawned") then
 					return
 				end
 
 				local health_extension = ScriptUnit.extension(target, "health_system")
-
-				-- Its health is only set some frames after it is spawned
-				t.wait(1)
-
 				local before = health_extension:current_health()
 
 				t.press("action_one", 0.8)

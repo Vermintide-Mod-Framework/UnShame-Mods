@@ -2,15 +2,18 @@
 # the results. The game has to be running with the mod, and its window gets the keyboard focus while this runs.
 #
 #   run_tests.ps1 -Suite flak [-Career es_mercenary] [-Build] [-Reload] [-TimeoutSeconds 600]
+#   run_tests.ps1 -Suite flak,shield,assault    several suites, one after the other
+#   run_tests.ps1 -Suite all                    every suite
 #   run_tests.ps1 -Build -Reload          without a suite: builds, and reloads the mods in the running game
 #
 #   -Build   builds the mod first (vmb build, from the mods folder)
 #   -Reload  reloads the mods in the game (Ctrl+Shift+R, the framework's hotkey) and waits for the reload to show in the log
 #
 # If the game is not running, it is started first (start_game.ps1) and taken to the Keep, so this one script does everything.
-# Exit codes: 0 all passed, 1 a test failed, 2 timed out, 3 the game crashed.
+# Exit codes: 0 all passed, 1 a test failed, 2 timed out (no new result for -TimeoutSeconds), 3 the game crashed.
 #
-# It types "/ut_test <suite>" into the game's chat. The results are the lines with [ut_test] in the game's console log.
+# It types "/ut_test <suites>" into the game's chat. The results are the lines with [ut_test] in the game's console log, and the
+# game's "done:" line ends the run.
 
 param(
     [string]$Suite = "",
@@ -196,12 +199,13 @@ function Show-Crash([string]$logPath) {
     }
 }
 
-# Sends the suite's command to the game and follows the log until the suite is over, the game is gone, or the time is up.
-# Returns "done", "crash" or "timeout", and sets $script:testsFailed.
+# Sends the suites' command to the game and follows the log until the suites are over, the game is gone, or nothing new has come
+# for -TimeoutSeconds. Returns "done", "crash" or "timeout", and sets $script:testsFailed.
 function Run-Suite {
     $log = Latest-Log
     $start = Log-Length
-    $command = "/ut_test $Suite $Career".Trim()
+    $names = ($Suite -split "[,\s]+" | Where-Object { $_ -ne "" }) -join " "
+    $command = "/ut_test $names $Career".Trim()
 
     Write-Host "Running $command"
     Focus-Game
@@ -224,6 +228,7 @@ function Run-Suite {
         for ($i = $shown; $i -lt $lines.Length; $i++) {
             if ($lines[$i] -match "\[ut_test\]") {
                 Write-Host $lines[$i]
+                $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
 
                 if ($lines[$i] -cmatch "\[ut_test\] FAIL ") { $script:testsFailed = $true }
             }
@@ -236,7 +241,7 @@ function Run-Suite {
             return "crash"
         }
 
-        if ($lines | Select-Object -Skip $start | Select-String "\[ut_test\] (\S+: \d+ passed, \d+ failed, \d+ skipped|the suite broke|there is no suite|a suite is running|the level did not load|there is no player)") {
+        if ($lines | Select-Object -Skip $start | Select-String "\[ut_test\] (done: \d+ suites|the suite broke|there is no suite|a suite is running)") {
             # The lines that come with the end
             Start-Sleep -Seconds 3
 
@@ -276,5 +281,5 @@ $result = Run-Suite
 switch ($result) {
     "done" { if ($script:testsFailed) { exit 1 } else { exit 0 } }
     "crash" { exit 3 }
-    default { Write-Host "Timed out after $TimeoutSeconds seconds without a summary."; exit 2 }
+    default { Write-Host "Timed out: no new result for $TimeoutSeconds seconds."; exit 2 }
 }

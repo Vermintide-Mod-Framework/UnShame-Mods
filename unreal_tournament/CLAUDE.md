@@ -30,7 +30,7 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
   difference, checkerboard), cropped to the weapon. Compare, change, and compare again.
 - The game's own logs and crash dumps: `%APPDATA%\Fatshark\Vermintide 2\console_logs` and `crash_dumps`. Look at them when told about a crash.
 - In-game tests are in `scripts/mods/unreal_tournament/tests` (`runner.lua`, and a suite for each weapon). `/ut_test <suite>` runs one (or
-  `tools/run_tests.ps1 -Suite <suite>`): it loads its level, sets the career and weapon, and goes back to the Keep. The results are lines that
+  `tools/run_tests.ps1 -Suite <suite>`; several with `-Suite a,b` or `-Suite all`, in one command): it loads its level, sets the career and weapon, and goes back to the Keep. The results are lines that
   start with `[ut_test]` in the console log. The game's engine calls that use the world or physics are made on the main thread
   (`t.on_main_thread`), because a coroutine's references are refused.
 

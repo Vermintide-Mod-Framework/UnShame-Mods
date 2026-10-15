@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- The Flak Cannon's in-game tests (see runner.lua). Run them with /ut_test flak. The suite loads its level and takes the player back.
+-- The Flak Cannon's in-game tests (see runner.lua). Run them with /ut_test flak. They run in the level the player is in, which is the Keep.
 
 local runner = mod.test_runner
 
@@ -30,8 +30,6 @@ runner.add_suite({
 	item = definition.key,
 	template = definition.template,
 	slot = "slot_ranged",
-	-- Horn of Magnus: it starts in a courtyard with open ground
-	level = "military",
 	-- The careers of the Blunderbuss that the weapon is a copy of
 	careers = { "es_mercenary", "es_huntsman", "es_knight" },
 	scenarios = {
@@ -103,7 +101,7 @@ runner.add_suite({
 		{
 			name = "damages an enemy",
 			run = function (t)
-				local target = t.spawn("chaos_marauder", 5)
+				local target = t.spawn_target(5)
 
 				if not t.expect(target, "the target could not be spawned") then
 					return
@@ -112,8 +110,6 @@ runner.add_suite({
 				local health_extension = ScriptUnit.extension(target, "health_system")
 				local before = health_extension:current_health()
 
-				-- A moment for the target to settle
-				t.wait(1)
 				t.press("action_one", 0.1)
 				t.wait(1.5)
 

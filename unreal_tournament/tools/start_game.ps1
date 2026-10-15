@@ -43,9 +43,21 @@ Write-Host "Starting the game..."
 $env:SteamAppId = $SteamAppId
 $env:SteamGameId = $SteamAppId
 
-# The game's output goes to files of its own. Without that it holds the output of this script, and whatever reads that (a pipe to tail)
-# waits until the game is closed.
-Start-Process -FilePath (Join-Path $GameFolder "binaries_dx12\vermintide2_dx12.exe") -ArgumentList @("-eac-untrusted", "--bundle-dir", "../bundle", "--ini", "settings", "--silent-mode") -WorkingDirectory (Join-Path $GameFolder "launcher") -RedirectStandardOutput (Join-Path $env:TEMP "vermintide2_stdout.txt") -RedirectStandardError (Join-Path $env:TEMP "vermintide2_stderr.txt")
+# The game is started by WMI, so it is not a child of this script. A child is closed with whatever ran the script when that is
+# stopped, and it holds the script's output, so that a pipe to tail waits until the game is closed. WMI does not pass on this
+# script's environment, so it is given with the Steam numbers in it.
+$exe = Join-Path $GameFolder "binaries_dx12\vermintide2_dx12.exe"
+$environment = [string[]](Get-ChildItem env: | ForEach-Object { "$($_.Name)=$($_.Value)" })
+$startup = New-CimInstance -ClassName Win32_ProcessStartup -ClientOnly -Property @{ EnvironmentVariables = $environment }
+$created = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+    CommandLine = "`"$exe`" -eac-untrusted --bundle-dir ../bundle --ini settings --silent-mode"
+    CurrentDirectory = (Join-Path $GameFolder "launcher")
+    ProcessStartupInformation = $startup
+}
+
+if ($created.ReturnValue -ne 0) {
+    throw "The game did not start (Win32_Process.Create returned $($created.ReturnValue))."
+}
 
 # The log of this run is the first one that is newer than the start
 function Get-NewLog {

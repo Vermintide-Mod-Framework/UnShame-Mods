@@ -120,17 +120,13 @@ local function scenarios()
 		{
 			name = "damages an enemy",
 			run = function (t)
-				local target = t.spawn("chaos_marauder", 5)
+				local target = t.spawn_target(5)
 
 				if not t.expect(target, "the target could not be spawned") then
 					return
 				end
 
 				local health_extension = ScriptUnit.extension(target, "health_system")
-
-				-- A moment for the target to settle. Its health is only set some frames after it is spawned.
-				t.wait(1)
-
 				local before = health_extension:current_health()
 
 				start_recording()
@@ -141,15 +137,25 @@ local function scenarios()
 				local after = HEALTH_ALIVE[target] and health_extension:current_health() or 0
 
 				t.expect(after < before, "the target was not hurt: %s of %s", tostring(after), tostring(before))
-				mod:echo("[ut_test] the bolt did %s damage to a marauder with %s health", tostring(before - after), tostring(before))
+				mod:echo("[ut_test] the bolt did %s damage to a target with %s health", tostring(before - after), tostring(before))
 
 				if bolts[1] then
 					-- Vectors are made on the main thread, and the engine refuses them in a coroutine
-					local distance = t.on_main_thread(function ()
-						return Unit.alive(target) and Vector3.length(bolts[1].end_position:unbox() - Unit.world_position(target, 0)) or -1
+					-- Where the bolt ended and where the target is, from the player's eyes: how far ahead and how far up
+					local report = t.on_main_thread(function ()
+						local first_person_extension = ScriptUnit.extension(t.unit(), "first_person_system")
+						local eyes = first_person_extension:current_position()
+						local target_position = Unit.alive(target) and Unit.world_position(target, 0) or eyes
+						local ahead = Vector3.normalize(Vector3.flat(target_position - eyes))
+						local bolt_end = bolts[1].end_position:unbox() - eyes
+						local to_target = target_position - eyes
+
+						local pitch = math.deg(math.asin(Vector3.z(Quaternion.forward(first_person_extension:current_rotation()))))
+
+						return string.format("the bolt ended %.2f m ahead and %.2f m up, the target's feet are %.2f m ahead and %.2f m up (%s); the view is %.1f degrees up", Vector3.dot(bolt_end, ahead), Vector3.z(bolt_end), Vector3.dot(to_target, ahead), Vector3.z(to_target), bolts[1].hit and "it hit something" or "it hit nothing", pitch)
 					end)
 
-					mod:echo("[ut_test] the bolt ended %.2f m from the marauder", distance)
+					mod:echo("[ut_test] %s", report)
 				end
 			end,
 		},

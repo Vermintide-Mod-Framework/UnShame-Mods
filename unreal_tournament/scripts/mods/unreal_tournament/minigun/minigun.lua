@@ -155,10 +155,13 @@ local DROPPED_FLOW_EVENTS = {
 	lua_bullet_trail_set = true,
 }
 
--- Builds a round of the gun's. The first round has the wind up before it, and the rounds after it follow at the fire rate.
-local function build_shot(source, mode, first)
+-- Builds a round of the gun's. The first round has the wind up before it, and the rounds after it follow at the fire rate. The hand
+-- is the base weapon's: the repeating crossbow is held in the left hand, and the game crashes on an action for a hand with no weapon.
+local function build_shot(source, mode, first, hand)
 	local action = table.clone(source)
 	local alt = mode == "alt"
+
+	action.weapon_action_hand = hand
 	local interval = alt and CONFIG.alt_rate or CONFIG.primary_rate
 	local wind_up = alt and CONFIG.alt_wind_up or CONFIG.primary_wind_up
 	local own_action = alt and "action_two" or "action_one"
@@ -284,14 +287,15 @@ local function apply_gun(template_name)
 
 	-- The shot comes from the game's repeating gun, whichever the template is a copy of
 	local source = rawget(Weapons, "repeating_handgun_template_1").actions.action_one.default
+	local hand = original.action_one.default.weapon_action_hand
 
 	actions.action_one = {
-		default = build_shot(source, "primary", true),
-		loop = build_shot(source, "primary", false),
+		default = build_shot(source, "primary", true, hand),
+		loop = build_shot(source, "primary", false, hand),
 	}
 	actions.action_two = {
-		default = build_shot(source, "alt", true),
-		loop = build_shot(source, "alt", false),
+		default = build_shot(source, "alt", true, hand),
+		loop = build_shot(source, "alt", false, hand),
 	}
 
 	utils.set_actions_lookup_data(actions, template_name)

@@ -6,9 +6,6 @@ local mod = get_mod("unreal_tournament")
 local runner = mod.test_runner
 
 local CONFIG = {
-	-- A place in the Keep under a low flat ceiling (found with /ut_where)
-	ceiling_level = "inn_level_halloween",
-	ceiling_spot = { 0.398, 10.382, 5.227 },
 	-- The ceiling is looked for this far up
 	ceiling_search = 20, -- m
 	-- The launch straight up, like a weapon jump, is fast enough to rise this far past the ceiling with nothing there. The rise
@@ -22,14 +19,6 @@ local CONFIG = {
 	max_time_at_top = 0.15, -- s
 }
 
--- Puts the player somewhere, as PlayerUnitLocomotionExtension.teleport_to does without the fall height, which fails when it is
--- called from the tests
-local function move_player(unit, position)
-	Mover.set_position(Unit.mover(unit), position)
-	Unit.set_local_position(unit, 0, position)
-	ScriptUnit.extension(unit, "locomotion_system"):move_to_non_intersecting_position()
-end
-
 runner.add_suite({
 	name = "movement",
 	item = mod.items.weapons.shield_gun.key,
@@ -38,6 +27,11 @@ runner.add_suite({
 	careers = {
 		"es_mercenary",
 	},
+	-- A place in the Keep under a low flat ceiling (found with /ut_where)
+	place = {
+		level = "inn_level_halloween",
+		position = { 0.398, 10.382, 5.227 },
+	},
 	scenarios = {
 		{
 			name = "a weapon jump into a ceiling does not stick to it",
@@ -45,15 +39,6 @@ runner.add_suite({
 				if mod:get("ut_movement") == false then
 					t.skip("the UT movement is turned off")
 				end
-
-				if Managers.state.game_mode:level_key() ~= CONFIG.ceiling_level then
-					t.skip("the place with the low ceiling is in " .. CONFIG.ceiling_level)
-				end
-
-				t.on_main_thread(function ()
-					move_player(t.unit(), Vector3(unpack(CONFIG.ceiling_spot)))
-				end)
-				t.wait(1)
 
 				local start = t.on_main_thread(function ()
 					local unit = t.unit()

@@ -1,8 +1,8 @@
 local mod = get_mod("unreal_tournament")
 
 -- In-game tests. A suite is a weapon's tests: it sets up the character, career and weapon, runs its scenarios in a level that is loaded,
--- and puts everything back. It is run with the chat command /ut_test <suite>, and it prints what passed and failed to the chat and to the
--- game's console log.
+-- and puts everything back. It is run with the chat command /ut_test <suite>, several with /ut_test <suite> <suite> ..., or all of them
+-- with /ut_test all. It prints what passed and failed to the chat and to the game's console log.
 --
 -- A scenario is a function of the test context `t`. It runs as a coroutine, one step a frame, so it can wait for the game:
 --   t.wait(seconds)                      waits that long
@@ -18,11 +18,15 @@ local mod = get_mod("unreal_tournament")
 --   t.surface_ahead(distance)            where the player's aim hits the level within that distance, or nil
 --   t.spawn(breed_name, distance)        spawns an enemy that distance ahead of the player on the ground, and returns it (nil if it could
 --                                        not be spawned). It is removed after the scenario.
+--   t.spawn_target(distance)             spawns the enemy to shoot at (CONFIG.target_breed, which never attacks) that far ahead, waits
+--                                        for it to settle, and turns the player to face it
+--   t.aim_at(unit)                       turns the player to face the middle of a unit
 --   t.projectiles(filter)                the units of the player's projectiles whose action the filter accepts
 --   t.explosions()                       a list that is filled with the names of the explosions that happen from now on
 --
 -- A suite is { name, item (the key of the weapon item), template, slot, careers (the careers it is run for), level (the level it is run
--- in, loaded if the player is in another one, and the player is taken back to the level they were in at the end), scenarios = { { name, run } } }.
+-- in, loaded if the player is in another one, and the player is taken back to the level they were in at the end), place (optional:
+-- { level, position, yaw }, where the player is put instead of the level's place in CONFIG.places), scenarios = { { name, run } } }.
 --
 -- The tests change the player's loadout and career, and put them back at the end. The loadout is kept in the backend, so what has to be
 -- put back is saved in the settings while a suite runs, and put back the next time the mod loads if a suite was cut short.
@@ -38,10 +42,26 @@ local CONFIG = {
 	respawn_timeout = 30, -- seconds
 	-- How long an enemy may take to spawn. Its packages may have to be loaded.
 	spawn_timeout = 30, -- seconds
+	-- The enemy that the tests shoot at: the game's clan rat that sees nobody and never attacks, so it stands still and the hits
+	-- land the same way every time. Hits still stagger it. The player aims at this node of it.
+	target_breed = "skaven_dummy_clan_rat",
+	target_node = "j_spine",
 	-- How long a level may take to load
 	level_timeout = 240, -- seconds
 	-- How long a level must have no intro playing before it counts as started
 	intro_settle_time = 1.5, -- seconds
+	-- The player looks this far below level in a place (degrees). An enemy's middle 5 m ahead, where most tests put it, is about that
+	-- far below the eyes of a tall career (1.7 m eyes, 0.8 m middle). Level aim goes over a clan rat's head.
+	place_pitch = -10,
+	-- Where the player is put after each respawn and before each test, for each level, so that what is ahead of them is the same every
+	-- time: the position (m) and the way they face (degrees about the up axis). A suite can name its own place.
+	places = {
+		-- The Keep's spawn point, facing the courtyard
+		inn_level_halloween = {
+			position = { -18.997, -0.246, 6.193 },
+			yaw = -90,
+		},
+	},
 	-- The game's flags (script_data) that a suite sets, so that the level is empty and nothing hurts the player, and puts back at the end
 	quiet_flags = {
 		ai_bots_disabled = true,
@@ -96,6 +116,34 @@ local function player_career_name()
 	local player = local_player()
 
 	return player and player:career_name()
+end
+
+local function current_level_key()
+	return Managers.level_transition_handler:get_current_level_key()
+end
+
+-- Puts the player somewhere, standing still, as PlayerUnitLocomotionExtension.teleport_to does without the fall height, which fails
+-- when it is called from a suite. The yaw is the way they face, in degrees about the up axis; without one they keep facing the way
+-- they do. The pitch is how far they look up (degrees, below level is negative). On the main thread.
+function runner.move_player(unit, position, yaw, pitch)
+	local first_person_extension = ScriptUnit.extension(unit, "first_person_system")
+	local locomotion_extension = ScriptUnit.extension(unit, "locomotion_system")
+
+	if not yaw then
+		local forward = Quaternion.forward(first_person_extension:current_rotation())
+
+		yaw = math.deg(math.atan2(-Vector3.x(forward), Vector3.y(forward)))
+	end
+
+	Mover.set_position(Unit.mover(unit), position)
+	Unit.set_local_position(unit, 0, position)
+	local facing = Quaternion.axis_angle(Vector3.up(), math.rad(yaw))
+	local tilt = Quaternion.axis_angle(Vector3.right(), math.rad(pitch or 0))
+
+	first_person_extension:set_rotation(Quaternion.multiply(facing, tilt))
+	locomotion_extension.velocity_current:store(Vector3.zero())
+	locomotion_extension:set_forced_velocity(nil)
+	locomotion_extension:move_to_non_intersecting_position()
 end
 
 local function inventory_extension_of(unit)
@@ -397,6 +445,41 @@ local function make_context(suite)
 		return spawned
 	end
 
+	-- Turns the player to face the middle of a unit's body
+	function t.aim_at(unit)
+		on_main_thread(function ()
+			local player = player_unit()
+			local first_person_extension = player and ScriptUnit.has_extension(player, "first_person_system")
+
+			if not first_person_extension or not Unit.alive(unit) then
+				return
+			end
+
+			local node = Unit.has_node(unit, CONFIG.target_node) and Unit.node(unit, CONFIG.target_node) or 0
+			local direction = Vector3.normalize(Unit.world_position(unit, node) - first_person_extension:current_position())
+
+			first_person_extension:set_rotation(Quaternion.look(direction, Vector3.up()))
+		end)
+
+		-- A shot sets the view to the camera's rotation (PlayerUnitFirstPerson.apply_recoil), and the camera follows the view a frame
+		-- later. A shot right away would turn the view back.
+		t.wait(0.1)
+	end
+
+	function t.spawn_target(distance)
+		local target = t.spawn(CONFIG.target_breed, distance)
+
+		if not target then
+			return nil
+		end
+
+		-- Its health is only set some frames after it is spawned, and it lands on the ground
+		t.wait(1)
+		t.aim_at(target)
+
+		return target
+	end
+
 	function t.projectiles(filter)
 		local found = {}
 
@@ -453,6 +536,39 @@ local function apply_restore(entries)
 	end
 end
 
+-- Puts the player in the suite's place, or the level's, standing still and looking level. Returns false and says why if the place is
+-- in another level. In a level without a place, the place is where the player was the first time after they spawned.
+local function go_to_place(t, suite)
+	local place = suite.place or CONFIG.places[current_level_key()]
+
+	if place and place.level and place.level ~= current_level_key() then
+		log("the suite's place is in %s", place.level)
+
+		return false
+	end
+
+	if not place then
+		t.spawn_place = t.spawn_place or t.on_main_thread(function ()
+			local unit = player_unit()
+			local position = Unit.local_position(unit, 0)
+			local forward = Quaternion.forward(ScriptUnit.extension(unit, "first_person_system"):current_rotation())
+
+			return {
+				position = { Vector3.x(position), Vector3.y(position), Vector3.z(position) },
+				yaw = math.deg(math.atan2(-Vector3.x(forward), Vector3.y(forward))),
+			}
+		end)
+		place = t.spawn_place
+	end
+
+	t.on_main_thread(function ()
+		runner.move_player(player_unit(), Vector3(unpack(place.position)), place.yaw, place.pitch or CONFIG.place_pitch)
+	end)
+	t.wait(0.5)
+
+	return true
+end
+
 -- Sets what a suite needs: the career, with the weapon in its slot, and the weapon in the player's hands. Returns false and says why if
 -- it could not.
 local function setup_character(t, suite, career)
@@ -490,6 +606,12 @@ local function setup_character(t, suite, career)
 
 	-- A moment for the new unit to settle
 	t.wait(1)
+
+	t.spawn_place = nil
+
+	if not go_to_place(t, suite) then
+		return false
+	end
 
 	local new_unit = player_unit()
 
@@ -530,10 +652,6 @@ local function set_quiet_flags()
 			end
 		end
 	end
-end
-
-local function current_level_key()
-	return Managers.level_transition_handler:get_current_level_key()
 end
 
 -- Loads a level the way the game's own automated tests do, and waits until the player has spawned in it. The level exit that this
@@ -596,9 +714,8 @@ local function run_suite(suite, only_career)
 
 	-- What has to be put back, saved first
 	local restore = {}
-	local original_career = player_career_name()
 
-	if not original_career then
+	if not player_career_name() then
 		log("there is no player: start a mission first")
 
 		return
@@ -653,6 +770,11 @@ local function run_suite(suite, only_career)
 				runner.explosion_watch = nil
 				t.refill()
 
+				-- Each scenario starts in the same place, whatever the last one did to where the player is and where they look
+				if not go_to_place(t, suite) then
+					break
+				end
+
 				local ok, error_value = call_waiting(scenario_definition.run, t)
 
 				if not ok and not (type(error_value) == "table" and error_value.skip) then
@@ -705,10 +827,6 @@ local function run_suite(suite, only_career)
 		run.restore_flags = nil
 	end
 
-	if original_career and player_career_name() ~= original_career then
-		Managers.state.network:request_profile(1, CareerSettings[original_career].profile_name, original_career, true)
-	end
-
 	log("%s: %d passed, %d failed, %d skipped", suite.name, summary.passed, summary.failed, summary.skipped)
 	push_log_out()
 
@@ -716,29 +834,73 @@ local function run_suite(suite, only_career)
 		log("going back to %s", original_level)
 		load_level(t, original_level)
 	end
+
+	return summary
 end
 
--- Starting and stopping
-function runner.start(suite_name, career)
+-- Runs suites one after the other. The player gets their own career back once, at the end. The last line says that all is done,
+-- which is what tools/run_tests.ps1 waits for.
+local function run_suites(suites, career)
+	local original_career = player_career_name()
+	local total = {
+		failed = 0,
+		passed = 0,
+		skipped = 0,
+	}
+
+	for _, suite in ipairs(suites) do
+		local summary = run_suite(suite, career)
+
+		if not summary then
+			break
+		end
+
+		total.failed = total.failed + summary.failed
+		total.passed = total.passed + summary.passed
+		total.skipped = total.skipped + summary.skipped
+	end
+
+	if original_career and player_career_name() ~= original_career then
+		Managers.state.network:request_profile(1, CareerSettings[original_career].profile_name, original_career, true)
+	end
+
+	log("done: %d suites, %d passed, %d failed, %d skipped", #suites, total.passed, total.failed, total.skipped)
+	push_log_out()
+end
+
+-- Starting and stopping. The names are a list of suites, or "all".
+function runner.start(names, career)
 	if run and not run.finished and not run.error then
 		log("a suite is running. /ut_test stop ends it")
+		push_log_out()
 
 		return
 	end
 
-	local suite = runner.suites[suite_name]
+	if #names == 1 and names[1] == "all" then
+		names = table.keys(runner.suites)
+		table.sort(names)
+	end
 
-	if not suite then
-		log("there is no suite %s. The suites: %s", tostring(suite_name), table.concat(table.keys(runner.suites), ", "))
+	local suites = {}
 
-		return
+	for _, name in ipairs(names) do
+		local suite = runner.suites[name]
+
+		if not suite then
+			log("there is no suite %s. The suites: %s", tostring(name), table.concat(table.keys(runner.suites), ", "))
+			push_log_out()
+
+			return
+		end
+
+		suites[#suites + 1] = suite
 	end
 
 	run = {
 		co = coroutine.create(function ()
-			run_suite(suite, career)
+			run_suites(suites, career)
 		end),
-		suite = suite,
 	}
 
 	resume()
@@ -1047,13 +1209,19 @@ mod:command("ut_equip","<suite> [career] | back - puts the weapon of a suite in 
 	end
 end)
 
-mod:command("ut_test", "list | stop | <suite> [career] - runs the in-game tests of a weapon", function (argument, career)
+mod:command("ut_test", "list | stop | all | <suite> [<suite> ...] [career] - runs the in-game tests of weapons", function (...)
+	local arguments = { ... }
+	local argument = arguments[1]
+
 	if argument == "list" or not argument then
 		log("suites: %s", table.concat(table.keys(runner.suites), ", "))
 	elseif argument == "stop" then
 		runner.stop()
 	else
-		runner.start(argument, career)
+		-- A career at the end runs the suites only as that career
+		local career = CareerSettings[arguments[#arguments]] and table.remove(arguments) or nil
+
+		runner.start(arguments, career)
 	end
 end)
 

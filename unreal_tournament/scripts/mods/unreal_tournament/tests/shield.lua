@@ -30,13 +30,11 @@ local function scenarios()
 		{
 			name = "punches by itself near an enemy",
 			run = function (t)
-				local target = t.spawn("chaos_marauder", 1.5)
+				local target = t.spawn_target(1.5)
 
 				if not t.expect(target, "the target could not be spawned") then
 					return
 				end
-
-				t.wait(1)
 
 				local before = shield.last_punch
 				local punched_while_held = false
