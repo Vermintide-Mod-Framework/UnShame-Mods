@@ -123,12 +123,13 @@ local CONFIG = {
 	damage_steps = 12,
 	-- The punch by how far the charge went, each up to the share of the charge given: the game's damage type, a two-handed hammer's light,
 	-- normal and heavy blows, which hit wide ("tank"), which chooses how the game shows a hit and a death (the hit effects: the push of the
-	-- body, its sounds); and the share of UT's damage it does, less for a short charge than UT's (a choice). Its stagger and the player's
-	-- own damage of a shield jump are still worked out from UT's damage.
+	-- body, its sounds); the share of UT's damage it does, less for a short charge than UT's (a choice); and how many enemies it gets
+	-- through, as the game's swing of that weight does (its cleave: the hammer's light, medium and heavy tank blows). Its stagger and the
+	-- player's own damage of a shield jump are still worked out from UT's damage.
 	damage_types = {
-		{ 1 / 3, "light_blunt_tank", 1 / 2 },
-		{ 2 / 3, "blunt_tank", 2 / 3 },
-		{ 1, "heavy_blunt_tank", 1 },
+		{ 1 / 3, "light_blunt_tank", 1 / 2, "cleave_distribution_tank_L" },
+		{ 2 / 3, "blunt_tank", 2 / 3, "cleave_distribution_tank_M" },
+		{ 1, "heavy_blunt_tank", 1, "cleave_distribution_tank_H" },
 	},
 	-- The bash out of a push is the blow of this third of the charge (above), its damage type and share, whatever its time held gives
 	bash_damage_type = 2,
@@ -236,20 +237,17 @@ local function damage_for_step(step)
 	return CONFIG.min_damage + (CONFIG.max_damage - CONFIG.min_damage) * step / (CONFIG.damage_steps - 1)
 end
 
--- Makes the damage profile of a punch of a step of the charge, of a damage type and a share of UT's damage, and returns the punch as a
--- melee action, for its hits (see melee_hit)
-local function make_punch_action(name, damage, damage_type, damage_share, charge_value)
+-- Makes the damage profile of a punch of a step of the charge, of a damage type, a share of UT's damage and the game's cleave, and
+-- returns the punch as a melee action, for its hits (see melee_hit)
+local function make_punch_action(name, damage, damage_type, damage_share, cleave, charge_value)
 	register_damage_profile(name, "shot_sniper", function (profile)
 		make_flat(profile, attack_power_for(damage * damage_share), impact_power_for(damage) * CONFIG.stagger_multiplier, damage_type)
 
 		-- It is a melee blow to the game (what talents, traits and buffs take it for), not the sniper shot the profile is made from
 		profile.charge_value = charge_value
 
-		-- The punch hurts the one thing it hits, as UT's trace does
-		profile.cleave_distribution = {
-			attack = 0.01,
-			impact = 0.01,
-		}
+		-- How many enemies it gets through (see punch)
+		profile.cleave_distribution = table.clone(PowerLevelTemplates[cleave])
 
 		-- (a critical hit too, which would have the sniper shot's own armor multipliers)
 		utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact, true)
@@ -277,17 +275,18 @@ local BASH_ACTIONS = {}
 for step = 0, CONFIG.damage_steps - 1 do
 	local damage = damage_for_step(step)
 	local share = step / (CONFIG.damage_steps - 1)
-	local damage_type, damage_share
+	local blow
+	local bash_blow = CONFIG.damage_types[CONFIG.bash_damage_type]
 
 	for _, entry in ipairs(CONFIG.damage_types) do
-		if not damage_type and share <= entry[1] + 0.0001 then
-			damage_type, damage_share = entry[2], entry[3]
+		if not blow and share <= entry[1] + 0.0001 then
+			blow = entry
 		end
 	end
 
 	-- (a charged punch is a heavy attack, and the bash a light one, as the game's push-stab is)
-	PUNCH_ACTIONS[step] = make_punch_action("ut_shield_punch_" .. step, damage, damage_type, damage_share, "heavy_attack")
-	BASH_ACTIONS[step] = make_punch_action("ut_shield_bash_" .. step, damage, CONFIG.damage_types[CONFIG.bash_damage_type][2], CONFIG.damage_types[CONFIG.bash_damage_type][3], "light_attack")
+	PUNCH_ACTIONS[step] = make_punch_action("ut_shield_punch_" .. step, damage, blow[2], blow[3], blow[4], "heavy_attack")
+	BASH_ACTIONS[step] = make_punch_action("ut_shield_bash_" .. step, damage, bash_blow[2], bash_blow[3], bash_blow[4], "light_attack")
 end
 
 -- The step of the charge after holding for some time (ShieldFire.DoFireEffect)
@@ -769,8 +768,9 @@ end
 
 -- Hits an enemy or a body with the punch as a melee blow hits it (ActionSweep, ActionShieldSlam): the sound, the blood and the hit reaction
 -- here, the talents, traits and buffs of a melee hit, and the damage on the server. A shield doesn't stop the punch. blow is the punch's
--- critical hit and melee boost, and index the number of this target among those it hits.
-local function melee_hit(action, punch_action, hit_unit, hit, direction, power_level, blow, index)
+-- critical hit and melee boost, and index the number of this target among those it hits. can_damage and can_stagger say whether it is
+-- still within the punch's cleave (see punch).
+local function melee_hit(action, punch_action, hit_unit, hit, direction, power_level, blow, index, can_damage, can_stagger)
 	local network_manager = Managers.state.network
 	local owner_unit = action.owner_unit
 	local attacker_unit_id = network_manager:unit_game_object_id(owner_unit)
@@ -820,7 +820,7 @@ local function melee_hit(action, punch_action, hit_unit, hit, direction, power_l
 		return
 	end
 
-	weapon_system:send_rpc_attack_hit(NetworkLookup.damage_sources[action.item_name], attacker_unit_id, hit_unit_id, NetworkLookup.hit_zones[zone_name], position, direction, NetworkLookup.damage_profiles[punch_action.damage_profile], "power_level", power_level, "hit_target_index", 1, "blocking", false, "shield_break_procced", false, "boost_curve_multiplier", blow.boost_curve_multiplier, "is_critical_strike", blow.is_critical_strike, "can_damage", true, "can_stagger", true, "first_hit", index == 1)
+	weapon_system:send_rpc_attack_hit(NetworkLookup.damage_sources[action.item_name], attacker_unit_id, hit_unit_id, NetworkLookup.hit_zones[zone_name], position, direction, NetworkLookup.damage_profiles[punch_action.damage_profile], "power_level", power_level, "hit_target_index", 1, "blocking", false, "shield_break_procced", false, "boost_curve_multiplier", blow.boost_curve_multiplier, "is_critical_strike", blow.is_critical_strike, "can_damage", can_damage, "can_stagger", can_stagger, "first_hit", index == 1)
 
 	if not action.is_server then
 		network_manager.network_transmit:send_rpc_server("rpc_weapon_blood", attacker_unit_id, attack_template_id)
@@ -853,6 +853,50 @@ local function body_hit(unit, from, direction)
 		-direction,
 		best,
 	}
+end
+
+-- How many enemies a punch gets through, as a melee swing works it out when it starts (ActionSweep.client_owner_start_action): the most
+-- hit mass its damage and its stagger get through, from the profile's cleave and the player's power, and whether a critical hit gets
+-- through all of them (a talent's)
+local function cleave_of(owner_unit, damage_profile, power_level, is_critical_strike)
+	local buff_extension = ScriptUnit.extension(owner_unit, "buff_system")
+	local cleave_power_level = ActionUtils.scale_power_levels(power_level, "cleave", owner_unit, Managers.state.difficulty:get_difficulty())
+
+	cleave_power_level = buff_extension:apply_buffs_to_value(cleave_power_level, "power_level_melee")
+	cleave_power_level = buff_extension:apply_buffs_to_value(cleave_power_level, "power_level_melee_cleave")
+
+	local max_attack, max_impact = ActionUtils.get_max_targets(damage_profile, cleave_power_level)
+
+	max_attack = buff_extension:apply_buffs_to_value(max_attack or 1, "increased_max_targets")
+	max_impact = buff_extension:apply_buffs_to_value(max_impact or 1, "increased_max_targets")
+
+	if buff_extension:has_buff_perk("potion_armor_penetration") then
+		max_impact = max_impact * 2
+	end
+
+	return max_attack, max_impact, is_critical_strike and buff_extension:has_buff_perk("crit_unlimited_cleave")
+end
+
+-- The hit mass of an enemy, as a melee swing counts it (ActionSweep._get_target_hit_mass): its breed's on this difficulty, less while it
+-- is staggered, and as buffs change it. A shield doesn't stop the punch, so it is never the mass of a block.
+local function hit_mass(owner_unit, unit)
+	local breed = Unit.get_data(unit, "breed")
+	local difficulty_rank = Managers.state.difficulty:get_difficulty_rank()
+	local mass = breed.hit_mass_counts and (breed.hit_mass_counts[difficulty_rank] or breed.hit_mass_counts[2]) or breed.hit_mass_count or 1
+	local game = Managers.state.network:game()
+	local go_id = Managers.state.unit_storage:go_id(unit)
+
+	if not breed.is_player and game and go_id and NetworkLookup.bt_action_names[GameSession.game_object_field(game, go_id, "bt_action_name")] == "stagger" then
+		mass = mass * 0.75
+	end
+
+	local target_buff_extension = ScriptUnit.has_extension(unit, "buff_system")
+
+	if target_buff_extension then
+		mass = target_buff_extension:apply_buffs_to_value(mass, "hit_mass_amount")
+	end
+
+	return ScriptUnit.extension(owner_unit, "buff_system"):apply_buffs_to_value(mass, "hit_mass_reduction")
 end
 
 -- When each player's charge started, on the machine that owns their actions
@@ -913,37 +957,63 @@ local function punch(action, t, power_level, bash)
 	-- (with no HUD extension, so the critical hit's mark on the crosshair isn't left on: a swing takes it off when it ends)
 	action:_handle_critical_strike(blow.is_critical_strike, buff_extension, nil, ScriptUnit.has_extension(owner_unit, "first_person_system"), "on_critical_sweep", "Play_player_combat_crit_swing_2D")
 
-	-- Every enemy and every body in reach takes the punch as a hit (a body at its part nearest the player). A body that is down already is
-	-- pushed at that zone as the game pushes a body for a hit, here and on the other machines; the game doesn't for a hit on one that is
-	-- dead. What the punch kills is thrown.
+	-- The enemies and bodies in reach take the punch as a hit (a body at its part nearest the player), the nearest first. A body that is down
+	-- already is pushed at that zone as the game pushes a body for a hit, here and on the other machines; the game doesn't for a hit on one
+	-- that is dead. What the punch kills is thrown. How many enemies it gets through is a melee swing's cleave (ActionSweep): each living
+	-- one adds its hit mass, and once that is the punch's most, the rest are not hit. One that is hit past what its damage or its stagger
+	-- gets through is hit without that. Bodies cost nothing.
+	local max_attack, max_impact, unlimited = cleave_of(owner_unit, DamageProfileTemplates[punch_action.damage_profile], power_level, blow.is_critical_strike)
+	local mass = 0
 	local index = 0
 
 	for _, target in ipairs(targets) do
+		target.distance = target.hit and target.hit[2] or Vector3.distance(origin, POSITION_LOOKUP[target.unit] or Unit.world_position(target.unit, 0))
+	end
+
+	table.sort(targets, function (a, b)
+		return a.distance < b.distance
+	end)
+
+	for _, target in ipairs(targets) do
 		local alive = HEALTH_ALIVE[target.unit]
-		local hit_on_target = target.hit
-		local zone = hit_zone_name(hit_on_target)
+		local can_damage, can_stagger = true, true
+		local missed = false
 
-		-- (a hit on the head goes to the body)
-		if not hit_on_target or zone and NOT_PUNCHED[zone] then
-			hit_on_target = body_hit(target.unit, origin, direction)
+		if alive and not unlimited then
+			if mass >= math.max(max_attack, max_impact) then
+				missed = true
+			else
+				can_damage, can_stagger = mass <= max_attack, mass <= max_impact
+				mass = mass + hit_mass(owner_unit, target.unit)
+			end
 		end
 
-		if hit_on_target then
-			index = index + 1
+		if not missed then
+			local hit_on_target = target.hit
+			local zone = hit_zone_name(hit_on_target)
 
-			melee_hit(action, punch_action, target.unit, hit_on_target, direction, power_level, blow, index)
-		end
+			-- (a hit on the head goes to the body)
+			if not hit_on_target or zone and NOT_PUNCHED[zone] then
+				hit_on_target = body_hit(target.unit, origin, direction)
+			end
 
-		if alive then
-			throw_hit(target.unit, direction, true, hit_on_target and hit_on_target[1], force)
-		elseif hit_on_target then
-			local body_zone = hit_zone_name(hit_on_target)
-			local id = Managers.state.unit_storage:go_id(target.unit)
+			if hit_on_target then
+				index = index + 1
 
-			push_body(target.unit, body_zone, direction)
+				melee_hit(action, punch_action, target.unit, hit_on_target, direction, power_level, blow, index, can_damage, can_stagger)
+			end
 
-			if id and body_zone then
-				mod:network_send("ut_shield_body_push", "others", id, body_zone, Vector3.x(direction), Vector3.y(direction), Vector3.z(direction))
+			if alive then
+				throw_hit(target.unit, direction, true, hit_on_target and hit_on_target[1], force)
+			elseif hit_on_target then
+				local body_zone = hit_zone_name(hit_on_target)
+				local id = Managers.state.unit_storage:go_id(target.unit)
+
+				push_body(target.unit, body_zone, direction)
+
+				if id and body_zone then
+					mod:network_send("ut_shield_body_push", "others", id, body_zone, Vector3.x(direction), Vector3.y(direction), Vector3.z(direction))
+				end
 			end
 		end
 	end
@@ -1377,24 +1447,7 @@ mod:hook(BTCrazyJumpAction, "run", function (func, self, unit, blackboard, t, dt
 		end
 	end
 
-	local result = func(self, unit, blackboard, t, dt)
-
-	-- TEMPORARY: what was seen when a gutter runner pins a player whose shield is up
-	local target_unit = blackboard.target_unit
-
-	if result == "done" and target_unit and shield_is_up(target_unit) and data and data.overlap_context and data.overlap_context.spine_node then
-		local game = Managers.state.network:game()
-		local go_id = Managers.state.unit_storage:go_id(target_unit)
-		local face = game and go_id and Vector3.normalize(GameSession.game_object_field(game, go_id, "aim_direction"))
-		local neck = Unit.world_position(unit, data.overlap_context.spine_node)
-		local center = POSITION_LOOKUP[target_unit] + Vector3(0, 0, CONFIG.reach_height * UNIT)
-		local offset = neck - center
-		local to_player = Vector3.normalize(-offset + Vector3(0, 0, CONFIG.reflect_up_offset * UNIT))
-
-		mod:echo("pounce pinned: state %s, across %.2f m, up %.2f m, speed %.1f, dot %s", tostring(state), Vector3.length(Vector3.flat(offset)), Vector3.z(offset), Vector3.length(blackboard.locomotion_extension:current_velocity()), face and string.format("%.2f", Vector3.dot(face, to_player)) or "-")
-	end
-
-	return result
+	return func(self, unit, blackboard, t, dt)
 end)
 
 -- Whether a player's shield stops what comes at them from a place, by UT's arc (see mod.shield.reflect): it gets to their cylinder on
