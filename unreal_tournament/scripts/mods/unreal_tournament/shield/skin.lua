@@ -66,6 +66,8 @@ local CONFIG = {
 	shove_damping = 0.65,
 	-- The colour of the charge on the overcharge bar: ShieldGun.HudColor (R, G, B)
 	charge_bar_color = { 0, 188, 121 },
+	-- The alpha of the bar's marks, as UIWidgets.create_overcharge_bar_widget makes them
+	charge_mark_alpha = 204,
 	-- Where the charge bar's middle is on the 1920 by 1080 screen, from its bottom left: the middle of the ammo counter, which is 383 by
 	-- 86, 50 from the right and 100 from the bottom (equipment_ui_definitions.lua, ammo_background). The counter is scaled by the HUD
 	-- scale and the bar is not, so at another HUD scale than 100 they are a little apart.
@@ -548,6 +550,13 @@ local function show_charge_bar(bar_ui, player)
 
 	if style.frame then
 		style.frame.color[1] = 0
+	end
+
+	-- (the marks as the widget is made with them, set each frame: a build of the mod that hid them left them hidden on the same widget)
+	for _, name in ipairs({ "min_threshold", "max_threshold" }) do
+		if style[name] then
+			style[name].color[1] = CONFIG.charge_mark_alpha
+		end
 	end
 
 	return true
