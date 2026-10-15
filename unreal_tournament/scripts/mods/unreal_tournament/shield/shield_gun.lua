@@ -1147,15 +1147,6 @@ function mod.shield.reflect(from, to, radius, attacker_unit, ignore_unit)
 		end
 	end
 
-	-- TEMPORARY: what the test sees for a beam
-	if radius == 0 then
-		local go_id = best_unit and Managers.state.unit_storage:go_id(best_unit)
-		local face = go_id and Vector3.normalize(GameSession.game_object_field(game, go_id, "aim_direction"))
-		local to_player = best_unit and Vector3.normalize(best_center - Vector3.lerp(from, to, best_t) + Vector3(0, 0, CONFIG.reflect_up_offset * UNIT))
-
-		mod:echo("beam reflect: length %.1f, player %s, shield up %s, dot %s", Vector3.distance(from, to), tostring(best_unit ~= nil), tostring(best_unit and shield_is_up(best_unit) or false), face and to_player and string.format("%.2f", Vector3.dot(face, to_player)) or "-")
-	end
-
 	if not best_unit or not shield_is_up(best_unit) then
 		return
 	end
