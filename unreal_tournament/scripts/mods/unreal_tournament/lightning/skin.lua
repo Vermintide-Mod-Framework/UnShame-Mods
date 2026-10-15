@@ -29,21 +29,18 @@ local CONFIG = {
 	arc_jitter = 0.05,
 	arc_intensity = 1.2,
 	-- The flare where the bolt starts and ends (the lower half of LightningBoltT). It is 30 units wide, the size of NewLightningBolt's
-	-- particles, and it fades out quickly. The bolt has 30 particles (mStartParticles), and each draws the flare at the start of the
-	-- bolt, added together, which makes its middle white and leaves a bright edge (lightning_flare_bright is that).
+	-- particles. In pictures of UT2004 taken 25 ms apart, it starts at 9 times the texture, which makes a white disk with a blue rim, and
+	-- dims evenly until it is gone 0.4 s after the shot, showing the ring and the spikes on the way.
 	flare_size = 30,
-	flare_life = 0.25,
-	flare_intensity = 3,
-	flare_hold = 0.06, -- seconds at full brightness before it fades
-	-- The brightness of the white disk in the player's view. The game's tone mapping darkens what is added to the screen.
-	flare_view_intensity = 1.6,
+	flare_life = 0.4,
+	flare_intensity = 9,
 	-- Where the flare is in the player's view (right, forward, up, UT units from the eye) and how wide it is. SniperRifle.EffectOffset
 	-- is (28, 100, -26), and these are fitted to a picture of UT2004, which has the eye's bob and the view's height in it too.
-	flare_view_offset = {25, 100, -18.6},
-	flare_view_size = 41,
-	-- The flare in the player's view is drawn at this share of the distance to the weapon's muzzle. UT draws it behind the shroud at
-	-- the front of the weapon and in front of the rest.
-	flare_view_nearer = 0.9,
+	flare_view_offset = {25, 100, -19.8},
+	flare_view_size = 44,
+	-- The flare in the player's view is drawn at this share of the distance to the weapon's muzzle. UT draws it in the world, behind the
+	-- whole weapon.
+	flare_view_depth = 1.2,
 	-- BlueSparks (20 particles of 0.8 to 1.2 s that fly out at 250 to 350 units a second) at the end of the bolt, and
 	-- ChildBlueSparks (10 particles) at the end of an arc
 	spark_count = 20,
@@ -180,9 +177,7 @@ local function flare(position, size, material)
 			1,
 			1,
 		},
-		fade_in = 0,
-		fade_out = CONFIG.flare_hold,
-		intensity = material and CONFIG.flare_view_intensity or CONFIG.flare_intensity,
+		intensity = CONFIG.flare_intensity,
 		life = CONFIG.flare_life,
 		position = position,
 		size = size,
@@ -280,7 +275,7 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
 		local _, camera_rotation = utils.camera_pose()
 		-- (UT's view of 90 degrees across at 16 by 9 is 0.5625 of a tangent up and down)
 		local scale = math.tan(api.weapon_vertical_fov() / 2) / 0.5625
-		local ahead = Vector3.dot(muzzle - camera_position, Quaternion.forward(camera_rotation)) * CONFIG.flare_view_nearer
+		local ahead = Vector3.dot(muzzle - camera_position, Quaternion.forward(camera_rotation)) * CONFIG.flare_view_depth
 		local offset = CONFIG.flare_view_offset
 		local position = camera_position + Quaternion.forward(camera_rotation) * ahead + Quaternion.right(camera_rotation) * (ahead * offset[1] / offset[2] * scale) + Quaternion.up(camera_rotation) * (ahead * offset[3] / offset[2] * scale)
 

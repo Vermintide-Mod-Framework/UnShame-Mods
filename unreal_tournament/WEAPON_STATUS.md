@@ -78,7 +78,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Multi-load at 1, 2 and 3 rounds | - | - |
 | `/loaded` | - | - |
 | **Effects** | | |
-| Muzzle flash | no: UT has a big flare, here faint | no: faint next to UT |
+| Muzzle flash | no: open. UT's flare starts at 9 times its texture (a white disk with a blue rim) and fades evenly to nothing in 0.4 s. It has those numbers and reads its texture linearly (particle_weapon_linear), but was not compared with UT again after that. The other effects read their textures as srgb, which makes their faint parts much fainter than UT's. | no: faint next to UT (see the Lightning Gun) |
 | Projectile model | - | - |
 | Trail | ok (bolt) | no: the tracer is not seen |
 | Flare | - | - |

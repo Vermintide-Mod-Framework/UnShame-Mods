@@ -3,7 +3,7 @@ import sys, os, struct, zlib
 # Makes the effect textures and the scope textures of the Lightning Gun, from the UModel exports in <export dir> (XEffects, XWeapons_rc
 # and XGameShaders exported there, see README.md):
 #   units/ut/fx/lightning_bolt, lightning_charge, blue_spark: UT's LightningBoltT, LightningChargeT and pcl_BlueSpark, each with the
-#       material fx_<name> that adds its colour to the screen (the same as make_fx_assets.py makes)
+#       material fx_<name> that adds its colour to the screen (the same as make_fx_assets.py makes, except for the flare: see LINEAR)
 #   ui/ut/lightning_scope_*: the textures of the scope's overlay (SniperRifle.RenderOverlays) as gui materials, in the file
 #       ui/ut/lightning_scope.material: the ring (SniperFocus), the four arrows (SniperArrows), and the scan lines and lens of the
 #       screen (XGameShaders.ZoomFB, a multiply of the screen that is turned here into black with an alpha, which is as near as the
@@ -19,17 +19,12 @@ from convert_weapon import read_tga, write_png
 # name: the tga, and which part of it (first row, last row, first column, last column, each as a share of the size of the texture).
 # LightningBoltT is two pictures: the streak of lightning in the top half, and the flare in the bottom half. UT's bolt draws each from
 # the half it needs. LightningChargeT is four pictures (the charge's emitter has 2 columns and 2 rows of tiles), which a spark picks from.
-# The textures that are made brighter: each colour times this, up to white. NewLightningBolt's 30 particles each add the flare at the
-# start of the bolt, and UT adds them up to white, which makes a white disk with a bright edge where the texture is faint.
-BRIGHTER = {'lightning_flare_bright': 30}
-
 # The textures that are turned a quarter, because they are drawn on a beam
 TURNED = ('lightning_bolt',)
 
 FX = {
     'lightning_bolt': ('XEffects/Texture/LightningBoltT.tga', (0, 0.5, 0, 1)),
     'lightning_flare': ('XEffects/Texture/LightningBoltT.tga', (0.5, 1, 0, 1)),
-    'lightning_flare_bright': ('XEffects/Texture/LightningBoltT.tga', (0.5, 1, 0, 1)),
     'lightning_charge_0': ('XEffects/Texture/LightningChargeT.tga', (0, 0.5, 0, 0.5)),
     'lightning_charge_1': ('XEffects/Texture/LightningChargeT.tga', (0, 0.5, 0.5, 1)),
     'lightning_charge_2': ('XEffects/Texture/LightningChargeT.tga', (0.5, 1, 0, 0.5)),
@@ -52,7 +47,7 @@ TEXTURE_TEMPLATE = '''common = {
 		mipmap_keep_original = false
 		mipmap_num_smallest_steps_to_discard = 0
 		resident_mips = 0
-		srgb = true
+		srgb = %(srgb)s
 		streamable = false
 	}
 }
@@ -63,10 +58,15 @@ win32 = {
 }
 '''
 
+# UT adds an effect's texture to the screen as it is. The particle materials draw after tone mapping, onto the screen's colours, but
+# units/ut/fx/particle reads its texture as srgb, which turns each value v into about v^2.2 and leaves the faint parts of the texture
+# much fainter than UT's. particle_linear reads the values as they are. Only the flare uses it so far, as it was checked against UT.
+LINEAR = ('lightning_flare',)
+
 FX_MATERIAL = '''material_contexts = {
 	surface_material = ""
 }
-parent_material = "units/ut/fx/particle"
+parent_material = "units/ut/fx/%(parent)s"
 textures = {
 	texture_map = "units/ut/fx/%(name)s"
 }
@@ -85,9 +85,11 @@ GUI_MATERIAL = '''%(name)s = {
 }
 '''
 
-def write_texture(directory, name, width, height, rows):
+# An effect's texture is marked as not srgb, so that its smaller mipmaps are made from its values as they are, as its material reads them
+def write_texture(directory, name, width, height, rows, srgb=True):
     write_png('%s/%s/%s.png' % (REPO, directory, name), width, height, rows)
-    open('%s/%s/%s.texture' % (REPO, directory, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % {'path': directory + '/' + name})
+    open('%s/%s/%s.texture' % (REPO, directory, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % {
+        'path': directory + '/' + name, 'srgb': 'true' if srgb else 'false'})
 
 for name, (tga, crop) in FX.items():
     width, height, rows = read_tga('%s/%s' % (EXPORT, tga))
@@ -99,17 +101,14 @@ for name, (tga, crop) in FX.items():
         height = len(rows)
         width = last - first
 
-    if name in BRIGHTER:
-        factor = BRIGHTER[name]
-        rows = [bytes(min(255, v * factor) if i % 4 != 3 else v for i, v in enumerate(row)) for row in rows]
-
     if name in TURNED:
         # (the skin's beam maps v along its length, so a streak that runs along u is turned a quarter, as split_flak_trail.py does)
         rows = [b''.join(rows[y][x * 4:x * 4 + 4] for y in range(height)) for x in range(width)]
         width, height = height, width
 
-    write_texture('units/ut/fx', name, width, height, rows)
-    open('%s/units/ut/fx/fx_%s.material' % (REPO, name), 'w', newline='\n').write(FX_MATERIAL % {'name': name})
+    write_texture('units/ut/fx', name, width, height, rows, srgb=name not in LINEAR)
+    open('%s/units/ut/fx/fx_%s.material' % (REPO, name), 'w', newline='\n').write(FX_MATERIAL % {
+        'name': name, 'parent': 'particle_linear' if name in LINEAR else 'particle'})
     print('fx', name, width, height)
 
 # The scope. UT draws the ring and the arrows with the alpha of their textures.

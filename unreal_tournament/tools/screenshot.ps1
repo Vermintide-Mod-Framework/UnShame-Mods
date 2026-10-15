@@ -88,6 +88,16 @@ foreach ($other in (Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and 
 [GameWindow]::Focus($window)
 Start-Sleep -Milliseconds 400
 
+# A picture is of the screen where the window is, so it is only taken while the window is in front. Otherwise it would show whatever
+# covers the game.
+function Assert-InFront {
+    if ([GameWindow]::GetForegroundWindow() -ne $window) {
+        throw "The game's window ($Target) is not in front, so no picture was taken: it would show what covers the game."
+    }
+}
+
+Assert-InFront
+
 $rect = New-Object GameWindow+RECT
 [void][GameWindow]::GetClientRect($window, [ref]$rect)
 
@@ -114,31 +124,54 @@ $origin.Y = $top
 $width = $right - $left
 $height = $bottom - $top
 # With -Burst, that many pictures are taken one after the other, Interval milliseconds apart, as <Path>_1.png, <Path>_2.png and so on. The
-# window is only brought to the front once, so they come fast. It is for catching something that lasts a moment.
-# With -Click, the mouse button is pressed for a moment just before the first picture, so the pictures show what a shot does from its start
-if ($Click -ne "") {
-    $down, $up = if ($Click -eq "left") { 0x0002, 0x0004 } else { 0x0008, 0x0010 }
+# window is only brought to the front once, and the pictures are all taken before any is saved, so they come fast. It is for catching
+# something that lasts a moment.
+# With -Click, the mouse button is pressed just before the first picture and let go after the last, so the pictures show what a shot does
+# from its start. The time of each picture after the press is printed.
+$clock = [System.Diagnostics.Stopwatch]::StartNew()
+$down, $up = if ($Click -eq "left") { 0x0002, 0x0004 } else { 0x0008, 0x0010 }
 
+if ($Click -ne "") {
     # (a game takes a moment after its window comes to the front before it reads the mouse)
     Start-Sleep -Milliseconds 300
     [GameWindow]::Button($down)
-    Start-Sleep -Milliseconds 100
-    [GameWindow]::Button($up)
+    $clock.Restart()
 }
 
+$bitmaps = @()
+$times = @()
+
 for ($index = 1; $index -le $Burst; $index++) {
+    if ([GameWindow]::GetForegroundWindow() -ne $window) {
+        if ($Click -ne "") { [GameWindow]::Button($up) }
+        foreach ($taken in $bitmaps) { $taken.Dispose() }
+        Assert-InFront
+    }
+
     $bitmap = New-Object System.Drawing.Bitmap $width, $height
     $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
 
     $graphics.CopyFromScreen($origin.X, $origin.Y, 0, 0, (New-Object System.Drawing.Size $width, $height))
-
-    $file = if ($Burst -gt 1) { [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($Path), [System.IO.Path]::GetFileNameWithoutExtension($Path) + "_" + $index + ".png") } else { $Path }
-
-    $bitmap.Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
+    $times += $clock.ElapsedMilliseconds
     $graphics.Dispose()
-    $bitmap.Dispose()
+    $bitmaps += $bitmap
 
     if ($index -lt $Burst) { Start-Sleep -Milliseconds $Interval }
 }
 
+if ($Click -ne "") {
+    [GameWindow]::Button($up)
+}
+
+for ($index = 1; $index -le $Burst; $index++) {
+    $file = if ($Burst -gt 1) { [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($Path), [System.IO.Path]::GetFileNameWithoutExtension($Path) + "_" + $index + ".png") } else { $Path }
+
+    $bitmaps[$index - 1].Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
+    $bitmaps[$index - 1].Dispose()
+}
+
 Write-Host "Saved $Path ($width x $height, $Burst picture(s))"
+
+if ($Burst -gt 1) {
+    Write-Host ("Times (ms): " + ($times -join " "))
+}

@@ -106,10 +106,14 @@ if (-not $ready) {
 # The Keep has to finish loading
 Start-Sleep -Seconds 15
 
-# The Keep opens the hero selection the first time. Confirm closes it, as the log says whether it is open.
+# The Keep opens the hero selection the first time, and the log says so. Confirm closes it (closing it is not in the log). The button only
+# takes a click after the mouse has been over it for a moment, so the mouse is moved there first.
 $text = Read-Shared (Get-NewLog).FullName
 
-if ($text.LastIndexOf("[GameModeInn] Start menu opened") -gt $text.LastIndexOf("[GameModeInn] Start menu closed")) {
+if ($text -match "\[GameModeInn\] Start menu opened") {
+    Write-Host "Closing the hero selection..."
+    & (Join-Path $PSScriptRoot "game_input.ps1") -Move "960,1018"
+    Start-Sleep -Seconds 1
     & (Join-Path $PSScriptRoot "game_input.ps1") -Click "960,1018"
     Start-Sleep -Seconds 2
 }
