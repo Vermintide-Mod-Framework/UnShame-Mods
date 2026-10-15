@@ -156,6 +156,7 @@ local CONFIG = {
 	-- (CollisionHeight above the feet).
 	spin_inverse_inertia = 4,
 	spin_sideways_scale = 2.5,
+}
 
 local UNIT = CONFIG.meters_per_uu
 
