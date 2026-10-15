@@ -156,6 +156,11 @@ local CONFIG = {
 	-- (CollisionHeight above the feet).
 	spin_inverse_inertia = 4,
 	spin_sideways_scale = 2.5,
+	-- The push of a body that is down already, as the game pushes a body for a hit (GenericHitReactionExtension._do_push: Actor.push on the
+	-- push actors of the zone it hit), with the forces of a hit effect's push. These are near the strongest the game's hit effects have
+	-- (explosions' 300): a choice.
+	body_push_distal = 250,
+	body_push_vertical = 100,
 }
 
 local UNIT = CONFIG.meters_per_uu
@@ -455,6 +460,37 @@ local function throw_hit(unit, direction, alive, at)
 	end
 end
 
+-- Pushes a body that is down already, at the zone it was hit, the way the game pushes a body for a hit (GenericHitReactionExtension._do_push)
+local function push_body(unit, zone_name, direction)
+	local breed = Unit.get_data(unit, "breed")
+	local zone = breed and breed.hit_zones and breed.hit_zones[zone_name]
+	local push_actors = zone and zone.push_actors
+
+	if not push_actors then
+		return
+	end
+
+	local force = (Vector3.normalize(Vector3.flat(direction)) * CONFIG.body_push_distal + Vector3(0, 0, CONFIG.body_push_vertical)) * ((breed.scale_death_push or 1) * 0.25)
+	local velocity = Vector3.normalize(force) * 60
+	local mass = Vector3.length(force) / #push_actors
+
+	for _, name in ipairs(push_actors) do
+		local actor = Unit.actor(unit, name)
+
+		if actor then
+			Actor.push(actor, velocity, mass)
+		end
+	end
+end
+
+mod:network_register("ut_shield_body_push", function (_, id, zone_name, x, y, z)
+	local unit = Managers.state.unit_storage:unit(id)
+
+	if unit and Unit.alive(unit) then
+		push_body(unit, zone_name, Vector3(x, y, z))
+	end
+end)
+
 -- What the punch does to a thing that is not a character, as a melee swing does (ActionSweep.hit_level_object and the attack of a unit
 -- with health): doors, barrels and the like take its damage
 local function hit_object(action, hit_unit, hit, direction, damage_profile_name, power_level)
@@ -563,9 +599,9 @@ local function punch(action, t, power_level, bash)
 
 	local force = CONFIG.min_force + scale * (CONFIG.max_force - CONFIG.min_force)
 
-	-- Every enemy and every body in reach takes the punch as a hit, and the game pushes the body as it does for any hit
-	-- (GenericHitReactionExtension: the hit zone's push actors). A body is hit at its part nearest the player. What the punch kills is
-	-- thrown on top of that.
+	-- Every enemy and every body in reach takes the punch as a hit (a body at its part nearest the player). A body that is down already is
+	-- pushed at that zone as the game pushes a body for a hit, here and on the other machines; the game doesn't for a hit on one that is
+	-- dead. What the punch kills is thrown.
 	for _, target in ipairs(targets) do
 		local alive = HEALTH_ALIVE[target.unit]
 		local hit_on_target = target.hit
@@ -582,6 +618,15 @@ local function punch(action, t, power_level, bash)
 
 		if alive then
 			throw_hit(target.unit, direction, true, hit_on_target and hit_on_target[1])
+		elseif hit_on_target then
+			local body_zone = hit_zone_name(hit_on_target)
+			local id = Managers.state.unit_storage:go_id(target.unit)
+
+			push_body(target.unit, body_zone, direction)
+
+			if id and body_zone then
+				mod:network_send("ut_shield_body_push", "others", id, body_zone, Vector3.x(direction), Vector3.y(direction), Vector3.z(direction))
+			end
 		end
 	end
 
