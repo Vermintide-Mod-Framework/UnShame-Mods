@@ -367,8 +367,9 @@ local function ready_to_fire()
 end
 
 local function update_charge(skin, dt, api)
-	-- While zoomed UT draws the scope instead of the weapon, and the charge with it (SniperRifle.RenderOverlays)
-	if not ready_to_fire() or lightning.zoom.zoomed then
+	-- While zoomed UT draws the scope instead of the weapon, and the charge with it (SniperRifle.RenderOverlays). The sparks belong
+	-- to the model in the player's view, so they are not drawn while the view is not the first person one either.
+	if not ready_to_fire() or lightning.zoom.zoomed or not api.shown_in_first_person() then
 		charge_time = 0
 
 		return

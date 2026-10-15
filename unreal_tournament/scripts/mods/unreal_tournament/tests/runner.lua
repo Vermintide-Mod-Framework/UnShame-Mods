@@ -994,15 +994,20 @@ mod:command("ut_3p", "on | off - the third person view, for looking at the weapo
 		return
 	end
 
-	if argument == "off" then
-		Development.set_parameter("third_person_mode", false)
-		Unit.set_data(player.camera_follow_unit, "camera", "settings_node", "first_person_node")
-		first_person_extension:set_first_person_mode(true)
-	else
-		Development.set_parameter("third_person_mode", true)
-		Unit.set_data(player.camera_follow_unit, "camera", "settings_node", "over_shoulder")
-		first_person_extension:set_first_person_mode(false)
+	-- The game's own third person mode (a debug setting): with it on, the camera's follow state is the one over the shoulder
+	-- (CharacterStateHelper.change_camera_state), and the character's mesh and the weapons in its hands are shown. In the released game
+	-- Development.set_parameter does nothing, and Development.parameter reads this table.
+	local on = argument ~= "off"
+
+	Development._hardcoded_dev_params.third_person_mode = on or nil
+	CharacterStateHelper.change_camera_state(player, "follow")
+
+	-- The camera over the shoulder is so near the head that the game fades the character out, so the camera that follows from further
+	-- behind is used instead
+	if on then
+		Managers.state.entity:system("camera_system"):external_state_change(player, "follow_third_person")
 	end
+	first_person_extension:set_first_person_mode(not on)
 end)
 
 mod:command("ut_equip","<suite> [career] | back - puts the weapon of a suite in your hands, or puts your loadout back", function (argument, career)

@@ -112,7 +112,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Fade near the camera | - | - |
 | Outline | - | - |
 | Bots holding it | - | - |
-| Your character in the third person view | - | - |
+| Your character in the third person view | open: /ut_3p (the game's third_person_mode) shows the weapon in the hand but puts the camera at the head, where the character is faded out, so it can't be compared with UT yet. The charge sparks no longer show in it. | - |
 | **Multiplayer** | | |
 | As host | ok | ok |
 | As client | - | - |
