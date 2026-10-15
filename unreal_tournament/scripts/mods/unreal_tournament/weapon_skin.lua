@@ -285,12 +285,13 @@ local function new(def)
 		return fp.first_person_unit, Vector3(at.x * ratio, at.y, at.z * ratio)
 	end
 
-	-- How far the bob moves the weapon in the view, in UT units (right, up). UT moves the weapon by WeaponBob(BobDamping) and the eye by
-	-- WalkBob (CalcDrawOffset, EyePosition), so in the view the weapon moves by the difference. This game's camera doesn't bob, so only
-	-- the difference is used.
+	-- How far the bob moves the weapon in the view, in UT units (right, up). UT moves the weapon by WeaponBob(BobDamping) (CalcDrawOffset)
+	-- and the eye by twice WalkBob: PlayerController.CalcFirstPersonView adds WalkBob to EyePosition, which has WalkBob in it already. So
+	-- in the view the weapon moves by the difference, and with a BobDamping near 2 it hardly moves. This game's camera doesn't bob like
+	-- that, so only the difference is used.
 	local function view_bob()
-		local right = (CONFIG.bob_damping - 1) * (skin.walk_right or 0)
-		local up = (0.45 + 0.55 * CONFIG.bob_damping - 1) * (skin.walk_up or 0)
+		local right = (CONFIG.bob_damping - 2) * (skin.walk_right or 0)
+		local up = (0.45 + 0.55 * CONFIG.bob_damping - 2) * (skin.walk_up or 0)
 
 		return right, up
 	end

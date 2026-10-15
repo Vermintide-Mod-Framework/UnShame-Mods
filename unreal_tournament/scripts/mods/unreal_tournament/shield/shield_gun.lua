@@ -288,6 +288,27 @@ mod.dummy_start_callbacks.shield_gun = function (action, new_action, t, power_le
 	end
 end
 
+-- The charge can end without a punch: on a ladder, when stunned, when the weapon is put away, and so on. The game then finishes the
+-- action, and the skin stops showing the charge. When the button is let go the charge finishes the same way just before the punch starts
+-- ("new_interupting_action"), and the punch still needs when it started, so that is kept then.
+mod.dummy_finish_callbacks.shield_gun = function (action, reason)
+	local current = action.current_action
+
+	if not current or not current.ut_shield_charge then
+		return
+	end
+
+	local owner_unit = action.owner_unit
+
+	if reason ~= "new_interupting_action" then
+		charge_started[owner_unit] = nil
+	end
+
+	if utils.is_local_player_unit(owner_unit) then
+		mod.shield.charge_started = nil
+	end
+end
+
 -- The actions
 
 local function chain(action, sub_action, input, start_time)
