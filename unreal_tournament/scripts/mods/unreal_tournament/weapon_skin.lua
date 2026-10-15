@@ -28,6 +28,8 @@ local mod = get_mod("unreal_tournament")
 --   bob, bob_damping, bob_smoothing, ut_ground_speed: the weapon's sway (Pawn.CheckBob, Pawn.WeaponBob)
 --   blend_time: seconds it takes one animation to blend into the next
 --   idle_speed: how fast the idle animation plays compared to its own rate (the weapon's IdleAnimRate, or 1 if it has none)
+--   select_speed: how fast the pickup animation plays compared to its own rate (the weapon's SelectAnimRate). Without it the animation
+--       lasts as long as the game's wield of the base weapon.
 --   alt_pose_right/forward/up (UT units) and alt_pose_roll/pitch/yaw (degrees): a second place for the model in the view, for example
 --       held sideways. The roll puts the right side down, the pitch points the muzzle up, and the yaw points it to the left. The
 --       weapon's file moves the model there with skin.alt_pose, from 0 (where UT has it) to 1.
@@ -482,7 +484,10 @@ local function new(def)
 		-- The game has just shown its own weapon, which is the one that is wielded now, so it is hidden again here.
 		fp:hide_weapons(HIDE_REASON, true)
 		hide_game_weapon(fp)
-		self.play(CONFIG.pickup_animation or "Pickup", wield_time())
+
+		local pickup = CONFIG.pickup_animation or "Pickup"
+
+		self.play(pickup, CONFIG.select_speed and self.animation_duration(pickup) / CONFIG.select_speed or wield_time())
 		place(fp)
 		Unit.set_unit_visibility(unit, game_shows_weapon(fp))
 	end

@@ -21,7 +21,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Base weapon when the mod is disabled | - | - |
 | **First person** | | |
 | Position and size against UT | ok (blend with UT) | ok (side by side) |
-| Pickup animation | - | - |
+| Pickup animation | ok (UT's SelectAnimRate 1.25, side by side with UT) | ok (SelectAnimRate 1.3636) |
 | Idle animation speed | - | - |
 | Fire animation of each mode | ok (Fire at UT's FireAnimRate 1.25, frames side by side with UT 25 ms apart; zoom has none) | - |
 | Animation length against the fire rate | - | - |
@@ -90,7 +90,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Vanilla effects playing on top | - | - |
 | **Sounds** | | |
 | Fire | ok (sound plays) | ok |
-| Alt fire | - | - |
+| Alt fire | ok (the zoom: BZoomIn1 and BZoomOut1, which LightningZoomIn and LightningZoomOut play as they are) | - |
 | Select | ok (sound plays) | ok |
 | Load | - | - |
 | Explosion | - | - |

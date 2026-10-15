@@ -140,7 +140,8 @@ WEAPONS = {
         # (SniperFire.PlayFiring: the charge up that follows a shot, if there is ammo for the next)
         ('ut_lightning_charge', SOUNDS + 'LightningGunChargeUp', False, -24, 0),
         ('ut_lightning_select', SOUNDS + 'SwitchToLightningGun', False, -24, 0),
-        # (SniperRifle.RenderOverlays: LightningZoomIn and LightningZoomOut)
+        # (SniperRifle.RenderOverlays: LightningZoomIn and LightningZoomOut. Each is a SoundGroup of one ProceduralSound, P1ZoomIn1 and
+        # P1ZoomOut1, which play BZoomIn1 and BZoomOut1 as they are: a modifier of 1 and no variance, read from WeaponSounds.uax)
         ('ut_lightning_zoom_in', SOUNDS + 'BZoomIn1', False, -26, 0),
         ('ut_lightning_zoom_out', SOUNDS + 'BZoomOut1', False, -26, 0),
         # (the bolt's hit: LightningBolt.PostBeginPlay)

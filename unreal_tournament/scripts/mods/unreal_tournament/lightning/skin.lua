@@ -543,6 +543,7 @@ local function new_skin(variant)
 		-- SniperRifle.uc
 		display_fov = 60,
 		draw_scale = 0.4,
+		select_speed = 1.25, -- SniperRifle.SelectAnimRate
 		offset_forward = 0,
 		offset_right = 2.3,
 		offset_up = 0,

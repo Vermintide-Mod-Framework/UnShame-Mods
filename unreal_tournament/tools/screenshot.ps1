@@ -1,7 +1,9 @@
 # Saves a picture of the running game's window as a PNG, so that what the game shows can be looked at from the command line. It never takes
 # a picture of anything else on the screen. The game is Vermintide 2, or Unreal Tournament 2004 (the reference for the weapons).
 #
-#   screenshot.ps1 -Path out.png [-Target launcher | ut2004] [-Burst 20 -Interval 50] [-Click left | right]
+#   screenshot.ps1 -Path out.png [-Target launcher | ut2004] [-Burst 20 -Interval 50] [-Click left | right] [-Key 9]
+#
+# -Key presses a number key just before the first picture (a weapon switch), as -Click presses a mouse button (see below).
 #
 # -Target launcher takes the picture of Vermintide 2's launcher window (the program in the game's folder) instead.
 # -Target ut2004 takes the picture of Unreal Tournament 2004's window.
@@ -14,7 +16,8 @@ param(
     [ValidateSet("game", "launcher", "ut2004")][string]$Target = "game",
     [int]$Burst = 1,
     [int]$Interval = 50,
-    [ValidateSet("", "left", "right")][string]$Click = ""
+    [ValidateSet("", "left", "right")][string]$Click = "",
+    [ValidatePattern("^[0-9]?$")][string]$Key = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -59,6 +62,19 @@ public static class GameWindow {
         input[0].type = 0;
         input[0].mi.dwFlags = flags;
         SendInput(1, input, Marshal.SizeOf(typeof(INPUT)));
+    }
+
+    // A key, by its scan code. The input is the same size as a mouse input, with the key's fields in its place.
+    [StructLayout(LayoutKind.Sequential)] public struct KEYBDINPUT { public ushort wVk; public ushort wScan; public uint dwFlags; public uint time; public IntPtr dwExtraInfo; }
+    [StructLayout(LayoutKind.Explicit)] public struct KEYINPUT { [FieldOffset(0)] public uint type; [FieldOffset(8)] public KEYBDINPUT ki; [FieldOffset(8)] public MOUSEINPUT mi; }
+    [DllImport("user32.dll", EntryPoint = "SendInput")] static extern uint SendKeyInput(uint count, KEYINPUT[] inputs, int size);
+
+    public static void Key(ushort scan, bool down) {
+        KEYINPUT[] input = new KEYINPUT[1];
+        input[0].type = 1;
+        input[0].ki.wScan = scan;
+        input[0].ki.dwFlags = 0x0008u | (down ? 0u : 0x0002u);
+        SendKeyInput(1, input, Marshal.SizeOf(typeof(KEYINPUT)));
     }
 }
 "@
@@ -136,6 +152,17 @@ if ($Click -ne "") {
     Start-Sleep -Milliseconds 300
     [GameWindow]::Button($down)
     $clock.Restart()
+}
+
+if ($Key -ne "") {
+    # The scan codes of the number keys: 1 is 2, up to 9, and 0 is 11
+    $scan = if ($Key -eq "0") { 11 } else { [int]$Key + 1 }
+
+    Start-Sleep -Milliseconds 300
+    [GameWindow]::Key($scan, $true)
+    $clock.Restart()
+    Start-Sleep -Milliseconds 60
+    [GameWindow]::Key($scan, $false)
 }
 
 $bitmaps = @()

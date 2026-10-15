@@ -391,6 +391,7 @@ local function new_skin(variant)
 		-- Minigun.uc
 		display_fov = 60,
 		draw_scale = 0.4,
+		select_speed = 1.3636, -- Weapon's default SelectAnimRate
 		offset_forward = 2,
 		offset_right = -1,
 		offset_up = 0,
