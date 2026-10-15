@@ -213,16 +213,21 @@ end
 
 -- Makes the damage profile of a punch of a step of the charge, of a damage type and a share of UT's damage, and returns what the punch is to
 -- the game's hit processing
-local function make_punch_action(name, damage, damage_type, damage_share)
+local function make_punch_action(name, damage, damage_type, damage_share, charge_value)
 	register_damage_profile(name, "shot_sniper", function (profile)
 		make_flat(profile, attack_power_for(damage * damage_share), impact_power_for(damage) * CONFIG.stagger_multiplier, damage_type)
+
+		-- It is a melee blow to the game (what talents, traits and buffs take it for), not the sniper shot the profile is made from
+		profile.charge_value = charge_value
 
 		-- The punch hurts the one thing it hits, as UT's trace does
 		profile.cleave_distribution = {
 			attack = 0.01,
 			impact = 0.01,
 		}
-		utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact)
+
+		-- (a critical hit too, which would have the sniper shot's own armor multipliers)
+		utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact, true)
 
 		-- A punch has no headshots, as in UT (and a hit on the head is moved to the body, see body_hit)
 		profile.no_headshot_boost = true
@@ -252,8 +257,9 @@ for step = 0, CONFIG.damage_steps - 1 do
 		end
 	end
 
-	PUNCH_ACTIONS[step] = make_punch_action("ut_shield_punch_" .. step, damage, damage_type, damage_share)
-	BASH_ACTIONS[step] = make_punch_action("ut_shield_bash_" .. step, damage, CONFIG.damage_types[CONFIG.bash_damage_type][2], CONFIG.damage_types[CONFIG.bash_damage_type][3])
+	-- (a charged punch is a heavy attack, and the bash a light one, as the game's push-stab is)
+	PUNCH_ACTIONS[step] = make_punch_action("ut_shield_punch_" .. step, damage, damage_type, damage_share, "heavy_attack")
+	BASH_ACTIONS[step] = make_punch_action("ut_shield_bash_" .. step, damage, CONFIG.damage_types[CONFIG.bash_damage_type][2], CONFIG.damage_types[CONFIG.bash_damage_type][3], "light_attack")
 end
 
 -- The step of the charge after holding for some time (ShieldFire.DoFireEffect)
