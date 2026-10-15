@@ -69,12 +69,6 @@ local CONFIG = {
 	charge_bar_color = { 0, 255, 164 },
 	-- The alpha of the bar's marks, as UIWidgets.create_overcharge_bar_widget makes them
 	charge_mark_alpha = 204,
-	-- Where the charge bar's middle is on the 1920 by 1080 screen, from its bottom left: the middle of the ammo counter, which is 383 by
-	-- 86, 50 from the right and 100 from the bottom (equipment_ui_definitions.lua, ammo_background). The counter is scaled by the HUD
-	-- scale and the bar is not, so at another HUD scale than 100 they are a little apart.
-	charge_bar_position = { 1920 - 50 - 383 / 2, 100 + 86 / 2 },
-	-- The overcharge bar is this far below the point it is placed at (overcharge_bar_ui_definitions.lua, charge_bar)
-	charge_bar_drop = 220,
 	inspect_pose_speed = 5,
 }
 
@@ -567,6 +561,30 @@ local function show_charge_bar(bar_ui, player)
 end
 
 local bar_definitions = local_require("scripts/ui/hud_ui/overcharge_bar_ui_definitions")
+local equipment_definitions = local_require("scripts/ui/hud_ui/equipment_ui_definitions")
+
+-- Where the copy is: on the ammo counter, from the nodes the game places the counter with (equipment_ui_definitions.lua: the HUD's
+-- scaled root, and the counter's panel at the bottom right), so it is on the counter at any resolution and HUD scale. The bar is in the
+-- middle of the panel.
+local function charge_bar_scenegraph()
+	local game = equipment_definitions.scenegraph_definition
+
+	return {
+		root_parent = table.clone(game.root_parent),
+		ammo_background_parent = table.clone(game.ammo_background_parent),
+		charge_bar = {
+			horizontal_alignment = "center",
+			parent = "ammo_background_parent",
+			vertical_alignment = "center",
+			position = {
+				0,
+				0,
+				1,
+			},
+			size = table.clone(bar_definitions.DEFAULT_BAR_SIZE),
+		},
+	}
+end
 
 -- Makes the copy of a player's overcharge bar, as the game makes the bar (OverchargeBarUI.create_ui_elements), with the same renderer.
 -- (The game's clears the renderer's queue of scenegraphs first, which is not done here, in the middle of the HUD's frame.) The game's
@@ -590,7 +608,7 @@ local function new_charge_bar(game_bar)
 		alpha_multiplier = 1,
 		snap_pixel_positions = true,
 	}
-	bar.ui_scenegraph = UISceneGraph.init_scenegraph(bar_definitions.scenegraph_definition)
+	bar.ui_scenegraph = UISceneGraph.init_scenegraph(charge_bar_scenegraph())
 	bar.charge_bar = UIWidget.init(definition)
 
 	return bar
@@ -602,11 +620,8 @@ local function draw_charge_bar(bar, game_bar, dt, player)
 		return
 	end
 
-	local position = bar.ui_scenegraph.screen_bottom_pivot.local_position
 	local ui_renderer = bar.ui_renderer
 
-	position[1] = CONFIG.charge_bar_position[1]
-	position[2] = CONFIG.charge_bar_position[2] + CONFIG.charge_bar_drop
 	bar.render_settings.alpha_multiplier = game_bar.render_settings.alpha_multiplier
 
 	UIRenderer.begin_pass(ui_renderer, bar.ui_scenegraph, bar.input_manager:get_service("ingame_menu"), dt, nil, bar.render_settings)
