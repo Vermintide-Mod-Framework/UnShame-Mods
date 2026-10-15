@@ -738,6 +738,59 @@ mod:command("slomo", "<number> - the speed of the game: below 1 slower, above 1 
 	mod:echo("slomo: %g", number)
 end)
 
+-- UT's cheat "god" (CheatManager.God): the player who uses it takes no damage, until they use it again. The damage is the host's to
+-- give, so the player's machine tells the host, which marks the character's health as invincible (the game's own flag, which
+-- PlayerUnitHealthExtension.add_damage looks at). A new character (after dying, or in the next level) is marked again.
+local god_mode = false
+local god_unit
+
+mod:network_register("ut_god", function (_, go_id, enabled)
+	local unit = Managers.player.is_server and Managers.state.unit_storage:unit(go_id)
+	local health_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "health_system")
+
+	if health_extension then
+		health_extension.is_invincible = enabled
+	end
+end)
+
+local function send_god_mode(unit)
+	local go_id = Managers.state.unit_storage:go_id(unit)
+
+	if go_id then
+		mod:network_send("ut_god", "all", go_id, god_mode)
+	end
+end
+
+mod:command("god", "- you take no damage, or take it again (UT's god)", function ()
+	local player = Managers.player:local_player_safe()
+	local unit = player and player.player_unit
+
+	god_mode = not god_mode
+
+	if unit and Unit.alive(unit) then
+		god_unit = unit
+
+		send_god_mode(unit)
+	end
+
+	mod:echo(god_mode and "God mode on" or "God mode off")
+end)
+
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	if not god_mode then
+		return
+	end
+
+	local player = Managers.player:local_player_safe()
+	local unit = player and player.player_unit
+
+	if unit and unit ~= god_unit and Unit.alive(unit) and Managers.state.unit_storage:go_id(unit) then
+		god_unit = unit
+
+		send_god_mode(unit)
+	end
+end
+
 -- Development command, like UT's "loaded": fills the ranged weapon's ammo, or sets it to the amount given
 mod:command("loaded", "[amount] - fills the ammo of the ranged weapon, or sets it to that (a whole number)", function (amount)
 	local number = tonumber(amount)

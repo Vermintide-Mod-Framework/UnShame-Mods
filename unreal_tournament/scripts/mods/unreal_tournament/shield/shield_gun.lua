@@ -1374,7 +1374,24 @@ mod:hook(BTCrazyJumpAction, "run", function (func, self, unit, blackboard, t, dt
 		end
 	end
 
-	return func(self, unit, blackboard, t, dt)
+	local result = func(self, unit, blackboard, t, dt)
+
+	-- TEMPORARY: what was seen when a gutter runner pins a player whose shield is up
+	local target_unit = blackboard.target_unit
+
+	if result == "done" and target_unit and shield_is_up(target_unit) and data and data.overlap_context and data.overlap_context.spine_node then
+		local game = Managers.state.network:game()
+		local go_id = Managers.state.unit_storage:go_id(target_unit)
+		local face = game and go_id and Vector3.normalize(GameSession.game_object_field(game, go_id, "aim_direction"))
+		local neck = Unit.world_position(unit, data.overlap_context.spine_node)
+		local center = POSITION_LOOKUP[target_unit] + Vector3(0, 0, CONFIG.reach_height * UNIT)
+		local offset = neck - center
+		local to_player = Vector3.normalize(-offset + Vector3(0, 0, CONFIG.reflect_up_offset * UNIT))
+
+		mod:echo("pounce pinned: state %s, across %.2f m, up %.2f m, speed %.1f, dot %s", tostring(state), Vector3.length(Vector3.flat(offset)), Vector3.z(offset), Vector3.length(blackboard.locomotion_extension:current_velocity()), face and string.format("%.2f", Vector3.dot(face, to_player)) or "-")
+	end
+
+	return result
 end)
 
 -- Whether a player's shield stops what comes at them from a place, by UT's arc (see mod.shield.reflect): it gets to their cylinder on
