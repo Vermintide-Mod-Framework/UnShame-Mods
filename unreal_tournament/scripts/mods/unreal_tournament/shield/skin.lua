@@ -438,26 +438,54 @@ end
 
 -- The charge is shown on the game's overcharge bar, which every player has and which shows while it is above 0. While the player
 -- charges the Shield Gun, the bar is the charge from empty to full (FullyChargedTime) instead of the overcharge, in the Shield Gun's
--- HudColor. Its first mark is MinHoldTime: a punch let go before it does the least damage. UT shows no charge; this is the mod's own.
+-- HudColor, without the overcharge's marks, icon and glow. UT shows no charge; this is the mod's own.
+local THRESHOLD_STYLES = {
+	"min_threshold",
+	"max_threshold",
+}
+
+-- The marks' own alpha, which the game sets only when the bar is made: put back when the bar shows the overcharge again
+local threshold_alpha = {}
+
+local function set_marks_shown(style, shown)
+	for _, name in ipairs(THRESHOLD_STYLES) do
+		local color = style[name] and style[name].color
+
+		if color then
+			threshold_alpha[name] = threshold_alpha[name] or color[1]
+			color[1] = shown and threshold_alpha[name] or 0
+		end
+	end
+end
+
 local function show_charge_bar(bar_ui, player)
 	local unit = player and player.player_unit
+	local style = bar_ui.charge_bar.style
 
 	if not shield.charge_started or not unit or not utils.is_local_player_unit(unit) or not shield.template_names[utils.wielded_template_name(unit)] then
+		set_marks_shown(style, true)
+
 		return false
 	end
 
 	local charged = (Managers.time:time("game") - shield.charge_started) / shield.fully_charged_time
-	local min_mark = shield.min_hold_time / shield.fully_charged_time
-	local widget = bar_ui.charge_bar
 
 	-- (40 is the overcharge that makes the bar its full width: OverchargeBarUI.update_bar_size)
-	bar_ui:update_bar_size(40, min_mark, 1)
-	bar_ui:set_charge_bar_fraction(player, math.min(charged, 1), min_mark, 1, 0)
+	bar_ui:update_bar_size(40, 0, 1)
+	bar_ui:set_charge_bar_fraction(player, math.min(charged, 1), 0, 1, 0)
 
 	for i = 1, 3 do
-		widget.style.bar_1.color[i + 1] = CONFIG.charge_bar_color[i]
-		widget.style.icon.color[i + 1] = CONFIG.charge_bar_color[i]
+		style.bar_1.color[i + 1] = CONFIG.charge_bar_color[i]
 	end
+
+	-- (the game sets the icon's and the glow's alpha by how far the bar is past its upper mark, every frame)
+	style.icon.color[1] = 0
+
+	if style.frame then
+		style.frame.color[1] = 0
+	end
+
+	set_marks_shown(style, false)
 
 	return true
 end
