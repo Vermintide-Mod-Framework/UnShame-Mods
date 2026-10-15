@@ -213,8 +213,9 @@ local function new(def)
 		self.debug("sound %s at %s: id %s", event, tostring(position), tostring(id))
 	end
 
+	-- (local_player_safe, as this runs every frame, in the menus too, where there is no network yet to ask for the player)
 	local function local_first_person()
-		local player = Managers.player and Managers.player:local_player()
+		local player = Managers.player and Managers.player:local_player_safe()
 		local owner = player and player.player_unit
 
 		return owner and Unit.alive(owner) and ScriptUnit.has_extension(owner, "first_person_system")
