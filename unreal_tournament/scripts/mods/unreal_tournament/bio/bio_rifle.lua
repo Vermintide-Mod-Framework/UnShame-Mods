@@ -743,12 +743,45 @@ local function visuals()
 	return mod.goop_visual_callbacks
 end
 
--- Where the globs that have landed are, on every machine, by the glob's id: { level, normal, position } (the vectors boxed). A player's
--- own glob looks here to see if it flies into one (see join_flying_globs).
+-- Where the globs that have landed are, on every machine, by the glob's id: { level, normal, position, carrier } (the vectors boxed). A
+-- player's own glob looks here to see if it flies into one (see join_flying_globs).
 local landed_globs = {}
 
-local function glob_landed(id, position, normal, level)
+-- What a glob landed on, so that it goes where that goes (a lift, a cart): the unit, the node of the part it hit, and the glob's place and
+-- the way it faces in that node's frame. Every machine follows it (follow_carriers below).
+local function make_carrier(unit, node, position, normal)
+	if not unit or not Unit.alive(unit) or not node or node < 0 then
+		return nil
+	end
+
+	local inverse = Matrix4x4.inverse(Unit.world_pose(unit, node))
+
+	return {
+		node = node,
+		normal = Vector3Box(Matrix4x4.transform_without_translation(inverse, normal)),
+		position = Vector3Box(Matrix4x4.transform(inverse, position)),
+		unit = unit,
+	}
+end
+
+-- The network's name for a carrier: the unit's id, whether it is a unit of the level, and the node (-1 for none)
+local function carrier_ids(unit, node)
+	local id, is_level_unit = unit and Unit.alive(unit) and Managers.state.network:game_object_or_level_id(unit)
+
+	if not id then
+		return -1, 0, -1
+	end
+
+	return id, is_level_unit and 1 or 0, node or 0
+end
+
+local function carrier_unit(id, is_level_unit)
+	return id >= 0 and Managers.state.network:game_object_or_level_unit(id, is_level_unit == 1) or nil
+end
+
+local function glob_landed(id, position, normal, level, on_unit, on_node)
 	landed_globs[id] = {
+		carrier = make_carrier(on_unit, on_node, position, normal),
 		level = level,
 		normal = Vector3Box(normal),
 		position = Vector3Box(position),
@@ -771,8 +804,8 @@ local function glob_ended(id)
 	visuals().stop(id)
 end
 
-mod:network_register("ut_bio_land", function (_, id, x, y, z, normal_x, normal_y, normal_z, level)
-	glob_landed(id, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), level)
+mod:network_register("ut_bio_land", function (_, id, x, y, z, normal_x, normal_y, normal_z, level, on_id, on_level_unit, on_node)
+	glob_landed(id, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), level, carrier_unit(on_id or -1, on_level_unit), on_node)
 end)
 
 mod:network_register("ut_bio_merge", function (_, id, level)
@@ -915,7 +948,7 @@ end
 
 -- BioGlob.Landed: a glob lands on a surface. It joins a glob that is there, or it sticks. A glob that is bigger than its core size
 -- throws off the rest as small globs. landing_velocity is the glob's velocity as it hit, in m/s.
-local function land(context, position, normal, landing_velocity, level, t)
+local function land(context, position, normal, landing_velocity, level, t, on_unit, on_node)
 	local joined = glob_to_join(position)
 
 	if joined then
@@ -956,8 +989,35 @@ local function land(context, position, normal, landing_velocity, level, t)
 	stuck[#stuck + 1] = glob
 
 	avoid_glob(glob)
-	glob_landed(glob.id, position, normal, level)
-	mod:network_send("ut_bio_land", "others", glob.id, position.x, position.y, position.z, normal.x, normal.y, normal.z, level)
+	glob_landed(glob.id, position, normal, level, on_unit, on_node)
+	mod:network_send("ut_bio_land", "others", glob.id, position.x, position.y, position.z, normal.x, normal.y, normal.z, level, carrier_ids(on_unit, on_node))
+end
+
+-- Globs that landed on something that moves go with it, on every machine. The host's own record of the glob, which the explosion and the
+-- touches use, goes with it too.
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	for id, landed in pairs(landed_globs) do
+		local carrier = landed.carrier
+
+		if carrier and Unit.alive(carrier.unit) then
+			local pose = Unit.world_pose(carrier.unit, carrier.node)
+			local position = Matrix4x4.transform(pose, carrier.position:unbox())
+			local normal = Vector3.normalize(Matrix4x4.transform_without_translation(pose, carrier.normal:unbox()))
+
+			if Vector3.distance(position, landed.position:unbox()) > 0.001 then
+				landed.position:store(position)
+				landed.normal:store(normal)
+				visuals().move(id, position, normal)
+
+				for _, glob in ipairs(stuck) do
+					if glob.id == id then
+						glob.position:store(position)
+						glob.normal:store(normal)
+					end
+				end
+			end
+		end
+	end
 end
 
 -- A player, a bot or an enemy that touches a glob that has landed makes it explode soon. This returns the units that are inside the
@@ -1124,7 +1184,7 @@ end
 
 -- Globs that hit something
 -- A glob lands on the machine of the player who fired it. The host handles it. For another player, this tells the host.
-mod:network_register("ut_bio_goo", function (_, owner_go_id, item_name, is_critical_strike, base_power, x, y, z, normal_x, normal_y, normal_z, velocity_x, velocity_y, velocity_z, level)
+mod:network_register("ut_bio_goo", function (_, owner_go_id, item_name, is_critical_strike, base_power, x, y, z, normal_x, normal_y, normal_z, velocity_x, velocity_y, velocity_z, level, on_id, on_level_unit, on_node)
 	if not Managers.player.is_server then
 		return
 	end
@@ -1141,24 +1201,26 @@ mod:network_register("ut_bio_goo", function (_, owner_go_id, item_name, is_criti
 		is_critical_strike = is_critical_strike,
 		item_name = item_name,
 		owner_unit = owner_unit,
-	}, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), Vector3(velocity_x, velocity_y, velocity_z), level, t)
+	}, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), Vector3(velocity_x, velocity_y, velocity_z), level, t, carrier_unit(on_id or -1, on_level_unit), on_node)
 end)
 
--- The way out of the wall, floor or ceiling that a glob hits is stored on the glob before it lands, because the game gives the
--- landing only the place.
+-- The way out of the wall, floor or ceiling that a glob hits, and what it hit (the unit and the node of the part), are stored on the glob
+-- before it lands, because the game gives the landing only the place.
 for _, function_name in ipairs({
 	"hit_level_unit",
 	"hit_non_level_unit",
 }) do
-	mod:hook(PlayerProjectileUnitExtension, function_name, function (func, self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
+	mod:hook(PlayerProjectileUnitExtension, function_name, function (func, self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, hit_actor, ...)
 		local action = self._current_action
 
 		if action and action.ut_bio_glob and hit_normal then
 			self._ut_bio_hit_normal = Vector3Box(hit_normal)
 			self._ut_bio_hit_direction = Vector3Box(hit_direction)
+			self._ut_bio_hit_unit = hit_unit
+			self._ut_bio_hit_node = hit_actor and Actor.node(hit_actor) or 0
 		end
 
-		return func(self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
+		return func(self, impact_data, hit_unit, hit_position, hit_direction, hit_normal, hit_actor, ...)
 	end)
 end
 
@@ -1179,6 +1241,8 @@ mod.aoe_callbacks.ut_bio_glob = function (self, aoe_data, position)
 	local base_power = self.power_level / power_ratio(level)
 	local velocity = direction * speed
 
+	local on_unit, on_node = self._ut_bio_hit_unit, self._ut_bio_hit_node
+
 	if self._is_server then
 		local t = Managers.time:time("game")
 
@@ -1188,10 +1252,10 @@ mod.aoe_callbacks.ut_bio_glob = function (self, aoe_data, position)
 				is_critical_strike = self._is_critical_strike,
 				item_name = self.item_name,
 				owner_unit = self._owner_unit,
-			}, position, normal, velocity, level, t)
+			}, position, normal, velocity, level, t, on_unit, on_node)
 		end
 	else
-		mod:network_send("ut_bio_goo", "others", Managers.state.unit_storage:go_id(self._owner_unit), self.item_name, self._is_critical_strike or false, base_power, position.x, position.y, position.z, normal.x, normal.y, normal.z, velocity.x, velocity.y, velocity.z, level)
+		mod:network_send("ut_bio_goo", "others", Managers.state.unit_storage:go_id(self._owner_unit), self.item_name, self._is_critical_strike or false, base_power, position.x, position.y, position.z, normal.x, normal.y, normal.z, velocity.x, velocity.y, velocity.z, level, carrier_ids(on_unit, on_node))
 	end
 end
 

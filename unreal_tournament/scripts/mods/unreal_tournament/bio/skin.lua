@@ -872,3 +872,14 @@ end
 mod.goop_visual_callbacks.stop = function (id)
 	landed[id] = nil
 end
+
+-- A glob on something that moves (a lift, a cart) goes with it. Its mesh and light follow the place; the splat stays on the surface where
+-- it landed, as the game's decals do.
+mod.goop_visual_callbacks.move = function (id, position, normal)
+	local entry = landed[id]
+
+	if entry then
+		entry.position:store(position)
+		entry.normal:store(normal)
+	end
+end
