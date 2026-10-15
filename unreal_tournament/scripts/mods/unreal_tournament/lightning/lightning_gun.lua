@@ -364,10 +364,11 @@ local function hit_unit_of(hit)
 	return (ActionUtils.redirect_shield_hit(unit, actor))
 end
 
--- Jumps the arcs from the place the bolt hit. Returns where each one ends. An arc that hits an enemy that is not the one the bolt
--- hit damages it.
+-- Jumps the arcs from the place the bolt hit. Returns where each one ends, and the normal of what it hit: the surface's, or the way
+-- back along the arc if it hit nothing (SniperFire.DoTrace). An arc that hits an enemy that is not the one the bolt hit damages it.
 local function jump_arcs(shot, origin, main_unit, world)
 	local arcs = {}
+	local normals = {}
 
 	for _ = 1, CONFIG.arc_count do
 		local direction = random_direction()
@@ -377,6 +378,7 @@ local function jump_arcs(shot, origin, main_unit, world)
 		local end_position = ends and hit[1] or origin + direction * CONFIG.arc_range
 
 		arcs[#arcs + 1] = end_position
+		normals[#normals + 1] = ends and hit[3] or -direction
 
 		if ends then
 			local unit = hit_unit_of(hit)
@@ -387,7 +389,7 @@ local function jump_arcs(shot, origin, main_unit, world)
 		end
 	end
 
-	return arcs
+	return arcs, normals
 end
 
 mod.handgun_start_callbacks.lightning = function (self, new_action)
@@ -411,14 +413,18 @@ mod.handgun_update_callbacks.lightning = function (self)
 	local hit_normal = hit and hit[3] or Vector3.zero()
 	-- The arcs start a little off the surface. A bolt that hits nothing has no arcs.
 	local arcs_start = hit and hit[1] + hit[3] * CONFIG.arc_start_offset or end_position
-	local arcs = hit and jump_arcs(self, arcs_start, hit_unit_of(hit), self.world) or {}
+	local arcs, arc_normals = {}, {}
+
+	if hit then
+		arcs, arc_normals = jump_arcs(self, arcs_start, hit_unit_of(hit), self.world)
+	end
 
 	-- The scope's charge bar and the sparks at the tip of the weapon follow the player's shots
 	if utils.is_local_player_unit(owner_unit) then
 		mod.lightning.last_fire_time = Managers.time:time("game")
 	end
 
-	mod.lightning.bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
+	mod.lightning.bolt(owner_unit, end_position, hit_normal, arcs, arcs_start, arc_normals)
 end
 
 -- What the skin is told (mod.lightning_bolt_callbacks in hooks.lua), and what is sent to the other players. The skin draws the bolt of
@@ -438,37 +444,48 @@ local function components(vector)
 	return Vector3.x(vector), Vector3.y(vector), Vector3.z(vector)
 end
 
-function mod.lightning.bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
+function mod.lightning.bolt(owner_unit, end_position, hit_normal, arcs, arcs_start, arc_normals)
 	for _, callback in pairs(mod.lightning_bolt_callbacks) do
-		callback(owner_unit, end_position, hit_normal, arcs, arcs_start)
+		callback(owner_unit, end_position, hit_normal, arcs, arcs_start, arc_normals)
 	end
 
-	local arc_1x, arc_1y, arc_1z = components(arcs[1])
-	local arc_2x, arc_2y, arc_2z = components(arcs[2])
-	local arc_3x, arc_3y, arc_3z = components(arcs[3])
+	-- The arcs go as a list of numbers: each arc's end and its normal
+	local arc_numbers = {}
+
+	for i = 1, #arcs do
+		local end_x, end_y, end_z = components(arcs[i])
+		local arc_normal_x, arc_normal_y, arc_normal_z = components(arc_normals[i])
+
+		for _, number in ipairs({ end_x, end_y, end_z, arc_normal_x, arc_normal_y, arc_normal_z }) do
+			arc_numbers[#arc_numbers + 1] = number
+		end
+	end
+
 	local end_x, end_y, end_z = components(end_position)
 	local normal_x, normal_y, normal_z = components(hit_normal)
 	local start_x, start_y, start_z = components(arcs_start)
 
-	mod:network_send("ut_lightning_bolt", "others", Managers.state.unit_storage:go_id(owner_unit), end_x, end_y, end_z, normal_x, normal_y, normal_z, start_x, start_y, start_z, arc_1x, arc_1y, arc_1z, arc_2x, arc_2y, arc_2z, arc_3x, arc_3y, arc_3z, #arcs)
+	mod:network_send("ut_lightning_bolt", "others", Managers.state.unit_storage:go_id(owner_unit), end_x, end_y, end_z, normal_x, normal_y, normal_z, start_x, start_y, start_z, arc_numbers)
 end
 
-mod:network_register("ut_lightning_bolt", function (_, owner_go_id, x, y, z, normal_x, normal_y, normal_z, start_x, start_y, start_z, a1x, a1y, a1z, a2x, a2y, a2z, a3x, a3y, a3z, arc_count)
+mod:network_register("ut_lightning_bolt", function (_, owner_go_id, x, y, z, normal_x, normal_y, normal_z, start_x, start_y, start_z, arc_numbers)
 	local unit = Managers.state.unit_storage:unit(owner_go_id)
 
 	if not unit or not Unit.alive(unit) then
 		return
 	end
 
-	local ends = { Vector3(a1x, a1y, a1z), Vector3(a2x, a2y, a2z), Vector3(a3x, a3y, a3z) }
-	local arcs = {}
+	local arcs, arc_normals = {}, {}
 
-	for i = 1, arc_count do
-		arcs[i] = ends[i]
+	for i = 1, #arc_numbers - 5, 6 do
+		local n = arc_numbers
+
+		arcs[#arcs + 1] = Vector3(n[i], n[i + 1], n[i + 2])
+		arc_normals[#arc_normals + 1] = Vector3(n[i + 3], n[i + 4], n[i + 5])
 	end
 
 	for _, callback in pairs(mod.lightning_bolt_callbacks) do
-		callback(unit, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), arcs, Vector3(start_x, start_y, start_z))
+		callback(unit, Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), arcs, Vector3(start_x, start_y, start_z), arc_normals)
 	end
 end)
 

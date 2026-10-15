@@ -18,11 +18,11 @@ local CONFIG = {
 	fire_animation_rate = 1.25, -- SniperFire.FireAnimRate: the Fire animation plays this much faster than its own rate
 	-- NewLightningBolt (PT_Branch) is 30 particles of size 30, each out of place by up to 5 units (mPosDev). It is drawn as a line of
 	-- parts of the streak texture (the upper half of LightningBoltT), each bolt_width units wide and twice that long, so the streak keeps
-	-- the shape it has in the texture, as it does in pictures of UT2004. The corners between the parts are out of line by up to
-	-- bolt_jitter units. How PT_Branch lays the texture along the bolt is in UT's engine, not its scripts. It is the same emitter as the
-	-- flare, so it fades the same way (flare_life). In pictures of UT2004 its streaks look like the texture added once (white middles,
-	-- thin blue edges), while the flare is 9 times the texture: the particles all add their flare at the start, but their streaks lie
-	-- along the bolt.
+	-- the shape it has in the texture. The corners between the parts are out of line by up to bolt_jitter units. How PT_Branch lays the
+	-- texture along the bolt is in UT's engine, not its scripts: one part for each of the 30 particles, squeezed along a short bolt,
+	-- looked like a hatched band in pictures, not UT's thin ragged line. It is the same emitter as the flare, so it fades the same way
+	-- (flare_life). In pictures of UT2004 its streaks look like the texture added once (white middles, thin blue edges), while the flare
+	-- is 9 times the texture: the particles all add their flare at the start, but their streaks lie along the bolt.
 	bolt_width = 30, -- UT units
 	bolt_jitter = 5, -- UT units
 	bolt_intensity = 1,
@@ -133,7 +133,6 @@ local function draw_bolt(from, to, width, jitter, life, intensity)
 	end
 
 	local count = math.clamp(math.ceil(length / (2 * width)), 1, MAX_BOLT_PARTS)
-
 	local direction = offset * (1 / length)
 	local across = Vector3.cross(direction, Vector3.up())
 
@@ -286,7 +285,7 @@ local function bolt_start(owner_unit)
 end
 
 -- Draws a bolt that was fired. It runs on the machine of the shooter and, with the same numbers, on the others.
-local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
+local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start, arc_normals)
 	local start = bolt_start(owner_unit)
 
 	if not start then
@@ -324,15 +323,15 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
 		flare(end_position + towards_camera * (size / 2), size)
 	end
 
-	-- Each arc throws its sparks from where it starts. They go along the normal of what the arc hit, or back along the arc if it hit
-	-- nothing (SniperFire.DoTrace). The arc's hit normal is not known here, so the way back along the arc stands for it in both cases.
-	for _, arc_end in ipairs(arcs) do
+	-- Each arc throws its sparks from where it starts, along the normal of what the arc hit, or back along the arc if it hit nothing
+	-- (SniperFire.DoTrace, which lightning_gun.lua works out)
+	for i, arc_end in ipairs(arcs) do
 		draw_bolt(arcs_start, arc_end, CONFIG.arc_width * UNIT, CONFIG.arc_jitter * UNIT, CONFIG.arc_life, CONFIG.arc_intensity)
 
-		local back = arcs_start - arc_end
+		local normal = arc_normals[i]
 
-		if Vector3.length(back) > 0.01 then
-			sparks(arcs_start, Vector3.normalize(back))
+		if normal and Vector3.length(normal) > 0.01 then
+			sparks(arcs_start, Vector3.normalize(normal))
 		end
 	end
 
@@ -340,12 +339,12 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
 	skin_apis[1].play_sound_at("ut_lightning_impact_3d", start)
 end
 
-mod.lightning_bolt_callbacks.lightning_skin = function (owner_unit, end_position, hit_normal, arcs, arcs_start)
+mod.lightning_bolt_callbacks.lightning_skin = function (owner_unit, end_position, hit_normal, arcs, arcs_start, arc_normals)
 	if not skin_apis[1] then
 		return
 	end
 
-	show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
+	show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start, arc_normals or {})
 
 	-- The shot's own sounds are played for the player in the shot's action (see below). For the others they come from the weapon.
 	if not utils.is_local_player_unit(owner_unit) then

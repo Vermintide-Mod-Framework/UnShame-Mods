@@ -81,7 +81,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Muzzle flash | ok (white disk with a blue rim, size, place and fade side by side with UT; it reads its texture linearly, as UT adds it) | no: faint next to UT (see the Lightning Gun) |
 | Projectile model | - | - |
 | Trail | no: the bolt starts in the flare and has UT's width, brightness and fade, but its streak repeats the texture's zigzag evenly where UT's is ragged and branches (PT_Branch is in UT's engine, not its scripts). The arcs are the same. | no: the tracer is not seen |
-| Flare | ok (where the bolt hits, whole, not cut by the wall) | - |
+| Flare | ok (where the bolt hits, whole, not cut by the wall; the arcs' sparks burst out along what each arc hit, as many as UT's, bright at the head; UT's are thinner) | - |
 | Smoke | - | - |
 | Explosion shape | - | - |
 | Explosion brightness | - | - |
