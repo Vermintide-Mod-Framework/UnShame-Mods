@@ -120,16 +120,14 @@ local CONFIG = {
 	max_damage = 150,
 	-- The damage is a profile for each of this many steps between the two
 	damage_steps = 12,
-	-- The punch does this share of UT's damage, which was too much in this game: a choice. Its stagger and the player's own damage of a
-	-- shield jump are still worked out from UT's damage.
-	damage_multiplier = 0.5,
-	-- The game's damage type of the punch, by how far the charge went: a two-handed hammer's light, normal and heavy blows, which hit wide
-	-- ("tank"). It chooses how the game shows a hit and a death (the hit effects: the push of the body, its sounds). Each holds up to the
-	-- share of the charge given.
+	-- The punch by how far the charge went, each up to the share of the charge given: the game's damage type, a two-handed hammer's light,
+	-- normal and heavy blows, which hit wide ("tank"), which chooses how the game shows a hit and a death (the hit effects: the push of the
+	-- body, its sounds); and the share of UT's damage it does, less for a short charge than UT's (a choice). Its stagger and the player's
+	-- own damage of a shield jump are still worked out from UT's damage.
 	damage_types = {
-		{ 1 / 3, "light_blunt_tank" },
-		{ 2 / 3, "blunt_tank" },
-		{ 1, "heavy_blunt_tank" },
+		{ 1 / 3, "light_blunt_tank", 1 / 2 },
+		{ 2 / 3, "blunt_tank", 2 / 3 },
+		{ 1, "heavy_blunt_tank", 1 },
 	},
 	-- ShieldFire: punching a wall hurts the player MinSelfDamage + SelfDamageScale * the damage. UT's DeathMatch.ReduceDamage halves a
 	-- player's own damage in a game with bots at the lower skills, and the Rocket Launcher and the Flak Cannon of the mod take that half too.
@@ -205,16 +203,16 @@ for step = 0, CONFIG.damage_steps - 1 do
 	local damage = damage_for_step(step)
 
 	local share = step / (CONFIG.damage_steps - 1)
-	local damage_type
+	local damage_type, damage_share
 
 	for _, entry in ipairs(CONFIG.damage_types) do
 		if not damage_type and share <= entry[1] + 0.0001 then
-			damage_type = entry[2]
+			damage_type, damage_share = entry[2], entry[3]
 		end
 	end
 
 	register_damage_profile(name, "shot_sniper", function (profile)
-		make_flat(profile, attack_power_for(damage * CONFIG.damage_multiplier), impact_power_for(damage) * CONFIG.stagger_multiplier, damage_type)
+		make_flat(profile, attack_power_for(damage * damage_share), impact_power_for(damage) * CONFIG.stagger_multiplier, damage_type)
 
 		-- The punch hurts the one thing it hits, as UT's trace does
 		profile.cleave_distribution = {
