@@ -373,36 +373,62 @@ end
 
 -- The things that are not characters (is_object, but not bodies, which are targets) in the same cone within the range, as a melee swing
 -- hits whatever it passes through. Each is { unit, hit }, with the hit of a ray from the player to it that nothing else stops (characters
--- don't).
+-- don't). Two kinds of bodies are looked for: what a melee swing hits (filter_melee_sweep: doors, barrels, standards), and the bodies of
+-- props that move, which only explosions find (filter_explosion_overlap: a lantern that hangs, as the Link Gun finds it). A body of the
+-- second kind is reached if no wall is in the way.
+local OBJECT_FILTERS = { "filter_melee_sweep", "filter_explosion_overlap" }
+
 local function objects_in_reach(owner_unit, physics_world, origin, direction, range)
 	local min_dot = math.cos(math.rad(CONFIG.hit_angle / 2))
-	local actors, num_actors = PhysicsWorld.immediate_overlap(physics_world, "shape", "sphere", "position", origin, "size", range * UNIT, "types", "both", "collision_filter", "filter_melee_sweep")
 	local objects = {}
 	local found = {}
 
-	for i = 1, num_actors or 0 do
-		local actor = actors[i]
-		local unit = actor and Actor.unit(actor)
-		local to = unit and Actor.position(actor) - origin
-		local distance = to and Vector3.length(to)
+	for _, filter in ipairs(OBJECT_FILTERS) do
+		local actors, num_actors = PhysicsWorld.immediate_overlap(physics_world, "shape", "sphere", "position", origin, "size", range * UNIT, "types", "both", "collision_filter", filter)
 
-		if unit and not found[unit] and not Unit.get_data(unit, "breed") and is_object(unit, actor, owner_unit) and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot then
-			local hits = PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, range * UNIT, "all", "collision_filter", "filter_melee_sweep")
+		for i = 1, num_actors or 0 do
+			local actor = actors[i]
+			local unit = actor and Actor.unit(actor)
+			local to = unit and Actor.position(actor) - origin
+			local distance = to and Vector3.length(to)
 
-			for j = 1, #(hits or {}) do
-				local hit_unit = hits[j][4] and Actor.unit(hits[j][4])
+			if unit and not found[unit] and not Unit.get_data(unit, "breed") and is_object(unit, actor, owner_unit) and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot then
+				local hit
 
-				if hit_unit == unit then
+				if filter == "filter_melee_sweep" then
+					local hits = PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, range * UNIT, "all", "collision_filter", filter)
+
+					for j = 1, #(hits or {}) do
+						local hit_unit = hits[j][4] and Actor.unit(hits[j][4])
+
+						if hit_unit == unit then
+							hit = hits[j]
+
+							break
+						elseif hit_unit ~= owner_unit and not (hit_unit and Unit.get_data(hit_unit, "breed")) then
+							-- (a wall or another thing in the way)
+							break
+						end
+					end
+				elseif not Actor.is_static(actor) then
+					local wall, _, wall_distance = PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, distance, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
+
+					if not wall or wall_distance >= distance - 0.05 then
+						hit = {
+							Actor.position(actor),
+							distance,
+							-to / distance,
+							actor,
+						}
+					end
+				end
+
+				if hit then
 					found[unit] = true
 					objects[#objects + 1] = {
-						hit = hits[j],
+						hit = hit,
 						unit = unit,
 					}
-
-					break
-				elseif hit_unit ~= owner_unit and not (hit_unit and Unit.get_data(hit_unit, "breed")) then
-					-- (a wall or another thing in the way)
-					break
 				end
 			end
 		end
@@ -620,10 +646,47 @@ local function hit_zone_name(hit)
 	return zone and zone.name
 end
 
+-- A thing with no health is hit as a melee swing hits the level (ActionSweep): the game sets where the hit was and where it came from on
+-- the unit and gives it the flow event of a hit, and the level does the rest, such as a lantern that hangs swinging or coming down. The
+-- flow event is each machine's own, so the others are told what was hit, and give it too.
+local function give_simple_damage(unit, actor, position, direction)
+	Unit.set_flow_variable(unit, "hit_actor", actor)
+	Unit.set_flow_variable(unit, "hit_direction", direction)
+	Unit.set_flow_variable(unit, "hit_position", position)
+	Unit.flow_event(unit, "lua_simple_damage")
+end
+
+mod:network_register("ut_shield_simple_damage", function (_, id, is_level_unit, actor_index, x, y, z, direction_x, direction_y, direction_z)
+	local unit = Managers.state.network:game_object_or_level_unit(id, is_level_unit == 1)
+	local actor = unit and Unit.alive(unit) and actor_index < Unit.num_actors(unit) and Unit.actor(unit, actor_index)
+
+	if actor then
+		give_simple_damage(unit, actor, Vector3(x, y, z), Vector3(direction_x, direction_y, direction_z))
+	end
+end)
+
+local function simple_damage(unit, actor, position, direction)
+	give_simple_damage(unit, actor, position, direction)
+
+	local id, is_level_unit = Managers.state.network:game_object_or_level_id(unit)
+
+	for i = 0, id and Unit.num_actors(unit) - 1 or -1 do
+		if Unit.actor(unit, i) == actor then
+			mod:network_send("ut_shield_simple_damage", "others", id, is_level_unit and 1 or 0, i, Vector3.x(position), Vector3.y(position), Vector3.z(position), Vector3.x(direction), Vector3.y(direction), Vector3.z(direction))
+
+			break
+		end
+	end
+end
+
 -- What the punch does to a thing that is not a character, as a melee swing does (ActionSweep.hit_level_object and the attack of a unit
--- with health): doors, barrels and the like take its damage
+-- with health): doors, barrels and the like take its damage, and a thing with no health gets the hit above
 local function hit_object(action, hit_unit, hit, direction, damage_profile_name, power_level, blow)
-	if not ScriptUnit.has_extension(hit_unit, "health_system") or Unit.get_data(hit_unit, "allow_melee_damage") == false then
+	if not ScriptUnit.has_extension(hit_unit, "health_system") then
+		simple_damage(hit_unit, hit[4], hit[1], direction)
+
+		return
+	elseif Unit.get_data(hit_unit, "allow_melee_damage") == false then
 		return
 	end
 
@@ -731,71 +794,19 @@ end
 -- When each player's charge started, on the machine that owns their actions
 local charge_started = {}
 
--- TEMPORARY: names the units of the level near the crosshair line from the eyes (within 10 m, a part or the unit itself within 0.6 m of
--- the line), whatever their collision, to find out what a hanging lantern is to the game
-local function debug_crosshair(owner_unit)
-	local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
-
-	if not first_person_extension or not utils.is_local_player_unit(owner_unit) then
-		return
-	end
-
-	local position = first_person_extension:current_position()
-	local direction = Quaternion.forward(first_person_extension:current_rotation())
-	local found = {}
-
-	local function near_line(point)
-		local along = Vector3.dot(point - position, direction)
-
-		return along > 0 and along < 10 and Vector3.distance(position + direction * along, point) < 0.6, along
-	end
-
-	for _, unit in ipairs(World.units(Managers.world:world("level_world"))) do
-		if unit ~= owner_unit and Unit.alive(unit) then
-			local num_actors = Unit.num_actors(unit)
-			local dynamic = 0
-			local near, along = near_line(Unit.world_position(unit, 0))
-
-			for i = 0, num_actors - 1 do
-				local actor = Unit.actor(unit, i)
-
-				if actor then
-					local actor_near, actor_along = near_line(Actor.position(actor))
-
-					dynamic = dynamic + (Actor.is_dynamic(actor) and 1 or 0)
-
-					if actor_near and (not near or actor_along < along) then
-						near, along = true, actor_along
-					end
-				end
-			end
-
-			if near then
-				found[#found + 1] = {
-					along = along,
-					text = string.format("%s %.1fm, %d parts, %d dynamic%s", Unit.debug_name(unit), along, num_actors, dynamic, ScriptUnit.has_extension(unit, "health_system") and ", health" or ""),
-				}
-			end
-		end
-	end
-
-	table.sort(found, function (a, b)
-		return a.along < b.along
-	end)
-
-	for i = 1, math.min(#found, 6) do
-		mod:echo("near the crosshair: %s", found[i].text)
-	end
-
-	if #found == 0 then
-		mod:echo("near the crosshair: nothing")
-	end
+-- TEMPORARY: describes a thing that is hit, to compare what the punch hits with what a melee swing hits
+local function debug_describe(unit, actor)
+	return string.format("%s, part %s, %s%s", Unit.debug_name(unit), actor and (Actor.is_static(actor) and "static" or Actor.is_physical(actor) and "physical" or "kinematic") or "none", ScriptUnit.has_extension(unit, "health_system") and "health" or "no health", Unit.get_data(unit, "breed") and ", character" or "")
 end
+
+mod:hook_safe(ActionSweep, "_play_environmental_effect", function (self, weapon_rotation, current_action, hit_unit, hit_position, hit_normal, hit_actor)
+	if utils.is_local_player_unit(self.owner_unit) and Unit.alive(hit_unit) then
+		mod:echo("melee swing hit: %s", debug_describe(hit_unit, hit_actor))
+	end
+end)
 
 local function punch(action, t, power_level, bash)
 	local owner_unit = action.owner_unit
-
-	debug_crosshair(owner_unit)
 	local hold_time = charge_started[owner_unit] and t - charge_started[owner_unit] or 0
 	local step, scale = charge_step(hold_time)
 	local range = bash and CONFIG.bash_range or CONFIG.hit_range
@@ -901,6 +912,16 @@ local function punch(action, t, power_level, bash)
 				hit = hit,
 				unit = hit_unit,
 			}
+		end
+	end
+
+	if utils.is_local_player_unit(owner_unit) then
+		for _, object in ipairs(objects) do
+			mod:echo("punch hit: %s", debug_describe(object.unit, object.hit[4]))
+		end
+
+		if #objects == 0 then
+			mod:echo("punch hit: no objects")
 		end
 	end
 
