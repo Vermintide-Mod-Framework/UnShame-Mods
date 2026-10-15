@@ -776,16 +776,23 @@ end
 -- The game's hitscan shotguns run the buffs that trigger on a hit, such as the headshot ammo trait, only for the first pellet that
 -- hits, once per shot (ActionShotgun's check_buffs). The chunks are projectiles that would each run them. Here a shot runs them
 -- once, and once more if a chunk gets a headshot after a hit that was not one, so a headshot by any chunk counts.
+-- The shell's explosion is the same shot as the chunks it throws, which are made as it goes off: the area damage system runs the
+-- buffs for each enemy in the explosion (as an "aoe" attack of the weapon), and those count with the chunks' hits.
 -- The entry is shots[owner unit] = { t = the spawn time of the shot, hit = whether they have run, head = whether they have run
 -- for a headshot }.
 local shots = {}
 local chunk_in_hit
+local ITEM_KEY = mod.items.weapons.flak_cannon.key
 
-mod:hook(DamageUtils, "buff_on_attack", function (func, unit, hit_unit, attack_type, is_critical_strike, hit_zone_name, ...)
+mod:hook(DamageUtils, "buff_on_attack", function (func, unit, hit_unit, attack_type, is_critical_strike, hit_zone_name, target_number, send_to_server, buff_type, unmodified, damage_source, ...)
 	local chunk = chunk_in_hit
+	local spawn_t = chunk and chunk._ut_flak_spawn_t
 
-	if chunk and chunk._ut_flak_spawn_t then
-		local spawn_t = chunk._ut_flak_spawn_t
+	if not spawn_t and attack_type == "aoe" and damage_source == ITEM_KEY then
+		spawn_t = Managers.time:time("game")
+	end
+
+	if spawn_t then
 		local shot = shots[unit]
 
 		if not shot or math.abs(shot.t - spawn_t) >= CONFIG.shot_window then
@@ -803,7 +810,7 @@ mod:hook(DamageUtils, "buff_on_attack", function (func, unit, hit_unit, attack_t
 		shot.head = shot.head or head
 	end
 
-	return func(unit, hit_unit, attack_type, is_critical_strike, hit_zone_name, ...)
+	return func(unit, hit_unit, attack_type, is_critical_strike, hit_zone_name, target_number, send_to_server, buff_type, unmodified, damage_source, ...)
 end)
 
 mod.hit_enemy_callbacks.ut_flak_chunk = function (func, self, is_owner, impact_data, hit_unit, hit_position, hit_direction, hit_normal, ...)
