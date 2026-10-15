@@ -182,6 +182,9 @@ for step = 0, CONFIG.damage_steps - 1 do
 			impact = 0.01,
 		}
 		utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact)
+
+		-- A punch has no headshots, as in UT (and a hit on the head is moved to the body, see body_hit)
+		profile.no_headshot_boost = true
 	end)
 
 	-- What a punch is, to the game's hit processing
@@ -189,6 +192,7 @@ for step = 0, CONFIG.damage_steps - 1 do
 		damage_profile = name,
 		hit_effect = "melee_hit_hammers_2h",
 		ignore_shield_hit = true,
+		no_headshot_sound = true,
 	}
 end
 
@@ -450,8 +454,25 @@ local function hit_object(action, hit_unit, hit, direction, damage_profile_name,
 	end
 end
 
+-- The zones a punch doesn't hit: "afro" is the bigger zone for near misses, and a punch has no headshots
+local NOT_PUNCHED = {
+	afro = true,
+	head = true,
+	neck = true,
+}
+
+-- The zone of an enemy that a hit is on
+local function hit_zone_name(hit)
+	local actor = hit and hit[4]
+	local unit = actor and Actor.unit(actor)
+	local breed = unit and Unit.get_data(unit, "breed")
+	local zone = breed and breed.hit_zones_lookup and breed.hit_zones_lookup[Actor.node(actor)]
+
+	return zone and zone.name
+end
+
 -- A hit on a body at its part nearest a point, as a ray's hit is ({ position, distance, normal, actor }). Only a part that is a hit zone
--- of the body's breed will do (not "afro"), because the game looks the zone up.
+-- of the body's breed will do, because the game looks the zone up, and not one of NOT_PUNCHED.
 local function body_hit(unit, from, direction)
 	local breed = Unit.get_data(unit, "breed")
 	local lookup = breed and breed.hit_zones_lookup
@@ -461,7 +482,7 @@ local function body_hit(unit, from, direction)
 		local actor = Unit.actor(unit, i)
 		local zone = actor and lookup and lookup[Actor.node(actor)]
 
-		if zone and zone.name ~= "afro" then
+		if zone and not NOT_PUNCHED[zone.name] then
 			local distance = Vector3.distance(Actor.position(actor), from)
 
 			if not best or distance < best_distance then
@@ -526,7 +547,13 @@ local function punch(action, t, power_level, bash)
 	-- thrown on top of that.
 	for _, target in ipairs(targets) do
 		local alive = HEALTH_ALIVE[target.unit]
-		local hit_on_target = target.hit or body_hit(target.unit, origin, direction)
+		local hit_on_target = target.hit
+		local zone = hit_zone_name(hit_on_target)
+
+		-- (a hit on the head goes to the body)
+		if not hit_on_target or zone and NOT_PUNCHED[zone] then
+			hit_on_target = body_hit(target.unit, origin, direction)
+		end
 
 		if hit_on_target then
 			DamageUtils.process_projectile_hit(action.world, action.item_name, owner_unit, action.is_server, { hit_on_target }, punch_action, direction, true, nil, nil, false, power_level)
