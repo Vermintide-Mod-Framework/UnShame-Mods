@@ -51,8 +51,9 @@ local CONFIG = {
 	charge_colors = { { 45 / 255, 220 / 255, 45 / 255 }, { 65 / 255, 250 / 255, 65 / 255 } },
 	-- The length of shieldgun_charge, which loops while the gun charges (the bank's ut_shield_charge)
 	charge_sound_length = 2.03, -- seconds
-	-- The shove of a push (UT has no push): the gun and the shield go this far ahead in the view, in UT units, over shove_out seconds, and
-	-- come back over shove_back. The shield is up for the shove. These numbers are a guess.
+	-- The shove of a push (UT has no push): the gun and the shield go shove_forward ahead in the view, in UT units, over shove_out
+	-- seconds. They stay there while both buttons are held for a bash, and the bash punches from there (its Fire animation and rings).
+	-- Then they come back over shove_back. The shield is up while they are out, but for the bash. These numbers are a guess.
 	shove_forward = 10,
 	shove_out = 0.1,
 	shove_back = 0.3,
@@ -79,6 +80,15 @@ local VARIANTS = {
 }
 
 local skin_apis = {}
+
+-- Whether the player holds both buttons, which after a push makes a bash
+local function local_player_holds_both()
+	local player = Managers.player and Managers.player:local_player()
+	local unit = player and player.player_unit
+	local input_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "input_system")
+
+	return input_extension and input_extension:get("action_one_hold") and input_extension:get("action_two_hold") or false
+end
 
 -- Whether the player's own character is blocking, which is the shield being up
 local function local_player_blocking()
@@ -142,7 +152,8 @@ local function force_rings(api)
 			locked = function ()
 				local age = math.max(0, Managers.time:time("game") - born)
 
-				return view_point(api, skin, forward + CONFIG.ring_speed * age, right, up)
+				-- (from where the gun is: a bash punches from the end of the shove)
+				return view_point(api, skin, forward + CONFIG.shove_forward * (skin.alt_pose or 0) + CONFIG.ring_speed * age, right, up)
 			end,
 			growth = CONFIG.ring_growth * scale,
 			life = CONFIG.ring_life,
@@ -310,20 +321,23 @@ local function update_state(api, skin, dt)
 		force_rings(api)
 	end
 
-	-- The shove of a push: out and back (alt_pose moves the model, and the shield follows it)
-	local since_push = shield.last_push and Managers.time:time("game") - shield.last_push or math.huge
-	local pushing = since_push < CONFIG.shove_out + CONFIG.shove_back
+	-- The shove of a push, held out for a bash and through it. alt_pose moves the model (1 is the shove's distance), and the shield and
+	-- the bash's rings follow it.
+	local t = Managers.time:time("game")
+	local since_push = shield.last_push and t - shield.last_push or math.huge
+	local since_bash = shield.last_bash and shield.last_push and shield.last_bash >= shield.last_push and t - shield.last_bash or math.huge
+	local bashing = since_bash < api.animation_duration("Fire")
+	local held_out = since_push < CONFIG.shove_out or bashing or since_bash == math.huge and since_push < shield.bash_window_end and local_player_holds_both()
+	local shove = skin.alt_pose or 0
 
-	if since_push < CONFIG.shove_out then
-		skin.alt_pose = since_push / CONFIG.shove_out
-	elseif pushing then
-		skin.alt_pose = 1 - (since_push - CONFIG.shove_out) / CONFIG.shove_back
+	if held_out then
+		skin.alt_pose = math.min(1, shove + dt / CONFIG.shove_out)
 	else
-		skin.alt_pose = 0
+		skin.alt_pose = math.max(0, shove - dt / CONFIG.shove_back)
 	end
 
-	-- The shield is up while blocking and while shoving. It goes down for a bash, whose Fire animation is not cut short.
-	local shield_up = blocking or pushing
+	-- The shield is up while blocking, and while the gun is out but for a bash. A bash's Fire animation is not cut short when it goes down.
+	local shield_up = blocking or skin.alt_pose > 0 and not bashing
 
 	if shield_up ~= skin.shield_up then
 		skin.shield_up = shield_up

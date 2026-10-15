@@ -91,8 +91,18 @@ end
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
-	-- ShieldFire.ShieldRange: how far the punch reaches from the player, in UT units
+	-- ShieldFire.ShieldRange: how far a wall can be for a punch to throw the player off it (the shield jump), in UT units
 	range = 112,
+	-- How far the punch reaches what it hits, and the bash out of a push, in UT units. They are longer than UT's ShieldRange on
+	-- purpose: these numbers are a guess.
+	hit_range = 150,
+	bash_range = 200,
+	-- DamTypeShieldImpact's throw of a body (xPawn.PlayDying): KDeathVel along the way the punch went, which is lifted by half its
+	-- length (Force * (X + 0.5 up)), and KDeathUpKick up, in UT units a second. It is the same for a body that is hit when it is dead,
+	-- and for anything loose that the punch hits. A body is thrown once it falls, if it dies within ragdoll_window seconds of the hit.
+	ragdoll_speed = 450,
+	ragdoll_up = 300,
+	ragdoll_window = 1.5,
 	-- The punch reaches from the middle of the player (Instigator.Location), not from the eyes: xPawn's CollisionHeight (44) above the
 	-- feet, and CrouchHeight (29) when crouched, in UT units. So the floor is in reach while looking up to 67 degrees from straight down.
 	reach_height = 44,
@@ -142,6 +152,8 @@ mod.shield = {
 	charge_started = nil, -- when the charge started, or nil
 	last_punch = nil, -- when the last punch was
 	fully_charged_time = CONFIG.fully_charged_time,
+	-- How long after a push a bash can come, while both buttons are held
+	bash_window_end = CONFIG.bash_window[2],
 }
 
 -- Damage profiles: one for each step of the charge
@@ -182,13 +194,29 @@ local function charge_step(hold_time)
 	return math.floor(scale * (CONFIG.damage_steps - 1) + 0.5), scale
 end
 
--- What is in reach in front of a player: the first thing the ray from their middle, the way they look, hits within the range, and
--- whether it is an enemy
-local function raycast(physics_world, origin, direction)
-	return PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, CONFIG.range * UNIT, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
+-- What is in reach in front of a player: the first thing the ray from their middle, the way they look, hits within the range (UT
+-- units), and whether it is an enemy. The ray finds enemies and the level as a shot does, and the things a melee swing hits (doors,
+-- barrels, loose things, bodies) as the swing does (filter_melee_sweep), whichever is nearer.
+local function raycast(physics_world, origin, direction, range)
+	return PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, range * UNIT, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
 end
 
-local function in_reach(owner_unit, physics_world)
+-- The first thing a melee swing would hit along the ray that is not a character: one with health (a door, a barrel), or one that
+-- moves (a loose thing, a body)
+local function first_object_hit(physics_world, origin, direction, range, owner_unit)
+	local hits = PhysicsWorld.immediate_raycast(physics_world, origin, direction, range * UNIT, "all", "collision_filter", "filter_melee_sweep")
+
+	for i = 1, #(hits or {}) do
+		local actor = hits[i][4]
+		local unit = actor and Actor.unit(actor)
+
+		if unit and unit ~= owner_unit and (ScriptUnit.has_extension(unit, "health_system") and not Unit.get_data(unit, "breed") or Actor.is_dynamic(actor)) then
+			return hits[i]
+		end
+	end
+end
+
+local function in_reach(owner_unit, physics_world, range)
 	local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
 
 	if not first_person_extension then
@@ -199,7 +227,12 @@ local function in_reach(owner_unit, physics_world)
 	local height = status_extension and status_extension:is_crouching() and CONFIG.reach_height_crouched or CONFIG.reach_height
 	local origin = Unit.local_position(owner_unit, 0) + Vector3(0, 0, height * UNIT)
 	local direction = Quaternion.forward(first_person_extension:current_rotation())
-	local hit = first_beam_hit(raycast(physics_world, origin, direction), owner_unit)
+	local hit = first_beam_hit(raycast(physics_world, origin, direction, range), owner_unit)
+	local object = first_object_hit(physics_world, origin, direction, range, owner_unit)
+
+	if object and (not hit or object[2] < hit[2]) then
+		hit = object
+	end
 
 	if not hit then
 		return nil, nil, direction
@@ -207,7 +240,7 @@ local function in_reach(owner_unit, physics_world)
 
 	local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
 
-	return hit, Unit.get_data(hit_unit, "breed") ~= nil, direction
+	return hit, Unit.get_data(hit_unit, "breed") ~= nil and HEALTH_ALIVE[hit_unit] or false, direction
 end
 
 -- The charge ends by itself when an enemy comes into reach (ShieldFire.Timer). The game asks this every frame while the charge goes
@@ -224,7 +257,7 @@ local function enemy_in_reach(unit)
 	next_auto_test[unit] = t + CONFIG.auto_fire_test_freq
 
 	local world = Managers.world:world("level_world")
-	local _, is_enemy = in_reach(unit, World.get_data(world, "physics_world"))
+	local _, is_enemy = in_reach(unit, World.get_data(world, "physics_world"), CONFIG.hit_range)
 
 	return is_enemy == true
 end
@@ -255,14 +288,100 @@ local function push_player(owner_unit, direction, force)
 	locomotion_extension:set_wanted_velocity(velocity)
 end
 
+-- Bodies and loose things that a punch throws (DamTypeShieldImpact's death throw). A body is thrown once it falls: its parts move by
+-- physics only then. This runs on every machine, because the physics of bodies is each machine's own, so the machine of the punch
+-- tells the others.
+local throws = {}
+
+local function add_throw(unit, velocity)
+	throws[unit] = {
+		t = Managers.time:time("game"),
+		velocity = Vector3Box(velocity),
+	}
+end
+
+-- Returns whether anything of the unit moved
+local function throw_now(unit, velocity)
+	local thrown = false
+
+	for i = 0, Unit.num_actors(unit) - 1 do
+		local actor = Unit.actor(unit, i)
+
+		if actor and Actor.is_dynamic(actor) then
+			Actor.set_velocity(actor, velocity)
+
+			thrown = true
+		end
+	end
+
+	return thrown
+end
+
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	local t = Managers.time:time("game")
+
+	for unit, throw in pairs(throws) do
+		if not Unit.alive(unit) or t - throw.t > CONFIG.ragdoll_window then
+			throws[unit] = nil
+		elseif not HEALTH_ALIVE[unit] and throw_now(unit, throw.velocity:unbox()) then
+			throws[unit] = nil
+		end
+	end
+end
+
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	table.clear(throws)
+end
+
+mod:network_register("ut_shield_throw", function (_, id, is_level_unit, x, y, z)
+	local unit = Managers.state.network:game_object_or_level_unit(id, is_level_unit == 1)
+
+	if unit and Unit.alive(unit) then
+		add_throw(unit, Vector3(x, y, z))
+	end
+end)
+
+-- Throws what the punch hit, here and on the other machines
+local function throw_hit(unit, direction)
+	local shot = Vector3.normalize(direction + Vector3(0, 0, 0.5))
+	local velocity = (shot * CONFIG.ragdoll_speed + Vector3(0, 0, CONFIG.ragdoll_up)) * UNIT
+	local id, is_level_unit = Managers.state.network:game_object_or_level_id(unit)
+
+	add_throw(unit, velocity)
+
+	if id then
+		mod:network_send("ut_shield_throw", "others", id, is_level_unit and 1 or 0, Vector3.x(velocity), Vector3.y(velocity), Vector3.z(velocity))
+	end
+end
+
+-- What the punch does to a thing that is not a character, as a melee swing does (ActionSweep.hit_level_object and the attack of a unit
+-- with health): doors, barrels and the like take its damage
+local function hit_object(action, hit_unit, hit, direction, damage_profile_name, power_level)
+	if not ScriptUnit.has_extension(hit_unit, "health_system") or Unit.get_data(hit_unit, "allow_melee_damage") == false then
+		return
+	end
+
+	local network_manager = Managers.state.network
+	local _, is_level_unit = network_manager:game_object_or_level_id(hit_unit)
+	local damage_profile = DamageProfileTemplates[damage_profile_name]
+
+	if is_level_unit then
+		DamageUtils.damage_level_unit(hit_unit, action.owner_unit, "full", power_level, nil, false, damage_profile, 1, direction, action.item_name)
+	else
+		local weapon_system = Managers.state.entity:system("weapon_system")
+
+		weapon_system:send_rpc_attack_hit(NetworkLookup.damage_sources[action.item_name], network_manager:unit_game_object_id(action.owner_unit), network_manager:unit_game_object_id(hit_unit), NetworkLookup.hit_zones.full, hit[1], direction, NetworkLookup.damage_profiles[damage_profile_name], "power_level", power_level, "hit_target_index", 1, "blocking", false, "boost_curve_multiplier", 0, "is_critical_strike", false)
+	end
+end
+
 -- When each player's charge started, on the machine that owns their actions
 local charge_started = {}
 
-local function punch(action, t, power_level)
+local function punch(action, t, power_level, bash)
 	local owner_unit = action.owner_unit
 	local hold_time = charge_started[owner_unit] and t - charge_started[owner_unit] or 0
 	local step, scale = charge_step(hold_time)
-	local hit, is_enemy, direction = in_reach(owner_unit, action.physics_world)
+	local hit, is_enemy, direction = in_reach(owner_unit, action.physics_world, bash and CONFIG.bash_range or CONFIG.hit_range)
 
 	charge_started[owner_unit] = nil
 
@@ -275,9 +394,24 @@ local function punch(action, t, power_level)
 		return
 	end
 
+	local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
+	local punch_action = PUNCH_ACTIONS[step]
+
 	if is_enemy then
-		DamageUtils.process_projectile_hit(action.world, action.item_name, owner_unit, action.is_server, { hit }, PUNCH_ACTIONS[step], direction, true, nil, nil, false, power_level)
-	elseif utils.is_local_player_unit(owner_unit) then
+		DamageUtils.process_projectile_hit(action.world, action.item_name, owner_unit, action.is_server, { hit }, punch_action, direction, true, nil, nil, false, power_level)
+		throw_hit(hit_unit, direction)
+
+		return
+	end
+
+	hit_object(action, hit_unit, hit, direction, punch_action.damage_profile, power_level)
+
+	if Actor.is_dynamic(hit[4]) then
+		throw_hit(hit_unit, direction)
+	end
+
+	-- Anything else near enough throws the player off it, as UT's punch of anything that is not a pawn does
+	if hit[2] <= CONFIG.range * UNIT and utils.is_local_player_unit(owner_unit) and not Actor.is_dynamic(hit[4]) then
 		push_player(owner_unit, direction, CONFIG.min_force + scale * (CONFIG.max_force - CONFIG.min_force))
 	end
 end
@@ -290,7 +424,11 @@ mod.dummy_start_callbacks.shield_gun = function (action, new_action, t, power_le
 			mod.shield.charge_started = t
 		end
 	elseif new_action.ut_shield_punch then
-		punch(action, t, power_level)
+		if new_action.ut_shield_bash and utils.is_local_player_unit(action.owner_unit) then
+			mod.shield.last_bash = t
+		end
+
+		punch(action, t, power_level, new_action.ut_shield_bash)
 	end
 end
 
