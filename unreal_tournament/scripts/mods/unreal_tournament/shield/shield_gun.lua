@@ -191,7 +191,19 @@ mod.shield = {
 	fully_charged_time = CONFIG.fully_charged_time,
 	-- How long after a push a bash can come, while both buttons are held
 	bash_window_end = CONFIG.bash_window[2],
+	-- Where on the charge (0 to FullyChargedTime, as a share) the punch becomes the next blow (damage_types), for the charge bar
+	charge_marks = {},
 }
+
+-- A step is the charge's share between MinHoldTime and FullyChargedTime, rounded (charge_step below). A blow holds up to the last step at or
+-- under its share, so the next starts where the charge rounds to the step after that.
+for i = 1, #CONFIG.damage_types - 1 do
+	local last_step = math.floor(CONFIG.damage_types[i][1] * (CONFIG.damage_steps - 1) + 0.0001)
+	local scale = (last_step + 0.5) / (CONFIG.damage_steps - 1)
+	local hold_time = CONFIG.min_hold_time + scale * (CONFIG.fully_charged_time - CONFIG.min_hold_time)
+
+	mod.shield.charge_marks[i] = hold_time / CONFIG.fully_charged_time
+end
 
 -- Damage profiles: one for each step of the charge
 

@@ -520,26 +520,8 @@ end
 
 -- The charge is shown on the game's overcharge bar, which every player has and which shows while it is above 0. While the player holds
 -- the Shield Gun, the bar is the charge from empty to full (FullyChargedTime) instead of the overcharge, where the ammo counter is, in
--- the Shield Gun's HudColor, without the overcharge's marks, icon and glow. UT shows no charge; this is the mod's own.
-local THRESHOLD_STYLES = {
-	"min_threshold",
-	"max_threshold",
-}
-
--- The marks' own alpha, which the game sets only when the bar is made: put back when the bar shows the overcharge again
-local threshold_alpha = {}
-
-local function set_marks_shown(style, shown)
-	for _, name in ipairs(THRESHOLD_STYLES) do
-		local color = style[name] and style[name].color
-
-		if color then
-			threshold_alpha[name] = threshold_alpha[name] or color[1]
-			color[1] = shown and threshold_alpha[name] or 0
-		end
-	end
-end
-
+-- the Shield Gun's HudColor, without the overcharge's icon and glow. Its two marks are where the punch becomes the next blow
+-- (shield.charge_marks). UT shows no charge; this is the mod's own.
 local function show_charge_bar(bar_ui, player)
 	local unit = player and player.player_unit
 	local style = bar_ui.charge_bar.style
@@ -547,16 +529,15 @@ local function show_charge_bar(bar_ui, player)
 	bar_ui.ut_shield_charge = unit and utils.is_local_player_unit(unit) and shield.template_names[utils.wielded_template_name(unit)] or nil
 
 	if not bar_ui.ut_shield_charge then
-		set_marks_shown(style, true)
-
 		return false
 	end
 
 	local charged = shield.charge_started and (Managers.time:time("game") - shield.charge_started) / shield.fully_charged_time or 0
+	local first_mark, second_mark = shield.charge_marks[1], shield.charge_marks[2]
 
 	-- (40 is the overcharge that makes the bar its full width: OverchargeBarUI.update_bar_size)
-	bar_ui:update_bar_size(40, 0, 1)
-	bar_ui:set_charge_bar_fraction(player, math.min(charged, 1), 0, 1, 0)
+	bar_ui:update_bar_size(40, first_mark, second_mark)
+	bar_ui:set_charge_bar_fraction(player, math.min(charged, 1), first_mark, second_mark, 0)
 
 	for i = 1, 3 do
 		style.bar_1.color[i + 1] = CONFIG.charge_bar_color[i]
@@ -568,8 +549,6 @@ local function show_charge_bar(bar_ui, player)
 	if style.frame then
 		style.frame.color[1] = 0
 	end
-
-	set_marks_shown(style, false)
 
 	return true
 end
