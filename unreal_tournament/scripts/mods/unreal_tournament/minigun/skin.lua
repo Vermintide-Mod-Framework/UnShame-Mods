@@ -24,9 +24,9 @@ local CONFIG = {
 	flash_draw_scale = 0.9,
 	flash_life = {0.1, 0.15},
 	flash_attenuation = 0.2,
-	-- How xEmitter sizes a mesh particle is in UT's engine, not its scripts: the scales above drew it 2.5 times as wide as in pictures
-	-- of UT2004, so they are multiplied by this
-	flash_fit = 0.4,
+	-- How xEmitter scales a mesh particle by its size is in UT's engine, not its scripts. The numbers above drew the flash twice as
+	-- wide as pictures of UT2004 show it, so they are multiplied by this (fitted to those pictures).
+	flash_fit = 0.5,
 	flash_intensity = 1,
 	-- The third person flash (NewMinigunMFlash): four flames in a row along the barrel, each smaller and further out
 	flame_offsets = {8, 16, 24, 32}, -- UT units from the muzzle
@@ -170,12 +170,20 @@ end
 -- is placed for that, so it is among the model's parts and in front of the barrels, not hidden by them as a particle of the world is.
 -- world_unit is the meters of a UT unit there. The texture is a sheet of 4 that UT picks from at random (mRandTextures); a mesh here
 -- has one of them for its whole life, where UT also steps through them (mTileAnimation).
+-- The emitter has room for 5 meshes (mMaxParticles), as many as a round makes, so the meshes of a round take the places of the last
+-- round's: those end when the next round's start.
+local flash_round = 0
+
 local function first_person_flash(follow, world_unit)
 	local _, camera_rotation = utils.camera_pose()
 
 	if not camera_rotation then
 		return
 	end
+
+	flash_round = flash_round + 1
+
+	local round = flash_round
 
 	-- (the mesh is made at 0.02 m per UT unit)
 	local factor = world_unit / UNIT * CONFIG.flash_draw_scale * CONFIG.flash_fit
@@ -186,6 +194,8 @@ local function first_person_flash(follow, world_unit)
 		local start = random_between(CONFIG.flash_scale)
 
 		particles.mesh({
+			-- FB_Brighten: the texture holds the hue and its alpha the strength (make_weapon_fx.py), so it is blended, not added
+			additive = 0,
 			brightness = function (fraction)
 				return CONFIG.flash_intensity * attenuation(fraction, CONFIG.flash_attenuation)
 			end,
@@ -194,7 +204,9 @@ local function first_person_flash(follow, world_unit)
 				1,
 				1,
 			},
-			follow = follow,
+			follow = function ()
+				return flash_round == round and follow() or nil
+			end,
 			life = life,
 			material = "units/ut/fx/fx_weapon_minigun_burst_" .. tile,
 			rotation = camera_rotation,

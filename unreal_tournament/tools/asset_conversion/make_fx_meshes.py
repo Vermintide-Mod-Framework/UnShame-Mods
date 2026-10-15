@@ -141,10 +141,15 @@ def to_game(point):
     # (UT's x forward, y right, z up: this game's x right, y forward, z up)
     return (point[1] * UNIT, point[0] * UNIT, point[2] * UNIT)
 
-def make_static(unit_name, mesh_file, export=EXPORT):
+def make_static(unit_name, mesh_file, export=EXPORT, tile=None):
+    # tile: (columns, rows, column, row) for a mesh whose UVs cover one tile of a sheet of tiles (UT steps through them with
+    # mTileAnimation). The UVs are made to cover the whole texture, as the sheet is cut into a texture for each tile.
     points, wedges, triangles = static_mesh('%s/StaticMesh/%s.pskx' % (export, mesh_file))
     positions = [to_game(p) for p in points]
     position_index = [wedges[w][0] for t in triangles for w in t]
+    if tile:
+        columns, rows, column, row = tile
+        wedges = [(i, u * columns - column, v * rows - row) for i, u, v in wedges]
     uvs = [(u, 1.0 - v) for _, u, v in wedges]
     uv_index = [w for t in triangles for w in t]
 
@@ -179,5 +184,6 @@ if __name__ == '__main__':
     make_static('sphere', 'TexPropSphere', SCRATCH + '/umodel/out13/Editor')
     make_vortex('vortex', 'ShockVortexMesh')
     make_static('flak_flash_mesh', 'FlakMuzFlashMesh', SCRATCH + '/umodel/out34/XEffects')
-    make_static('minigun_flash_mesh', 'MinigunMuzFlash1stMesh', SCRATCH + '/umodel/out36/XEffects')
+    # (its UVs are in the tile of column 0 and row 1 of Minigun_burst's 2 by 2)
+    make_static('minigun_flash_mesh', 'MinigunMuzFlash1stMesh', SCRATCH + '/umodel/out36/XEffects', (2, 2, 0, 1))
     make_static('shell_casing_mesh', 'ShellCasing', SCRATCH + '/umodel/out36/XEffects')

@@ -27,6 +27,9 @@ TEXTURES = {
 
 SRGB = ('shell_casing',)
 
+# The textures that UT draws with FB_Brighten (see write)
+BRIGHTEN = ('minigun_burst',)
+
 # The textures that are turned a quarter, because they are drawn on a beam, which lays v along its length (TracerShot is a streak along
 # u, the way NewTracer's sprite moves: PTDU_Right)
 TURNED = ('tracer_shot',)
@@ -73,10 +76,24 @@ variables = {
 }
 '''
 
-def write(name, width, height, rows, linear, weapon=False):
-    if linear:
-        # UT's additive styles (and MinigunMuzFlash1stFinal's FB_Brighten) leave out the texture's alpha, while the particle material
-        # multiplies the colour by it, so it is made opaque here (Minigun_burst's alpha is at most 97 of 255)
+def write(name, width, height, rows, linear, weapon=False, brighten=False):
+    if brighten:
+        # FB_Brighten (MinigunMuzFlash1stFinal) is c + d * (1 - c): the colour brightens the screen, but less where it is already
+        # bright. The particle material draws c * a + d * (1 - a) with "additive" 0, so the texture is made its colour's hue
+        # (c / max(c)) with max(c) as its alpha: that is c + d * (1 - max(c)).
+        out = []
+        for row in rows:
+            line = bytearray(row)
+            for x in range(0, len(line), 4):
+                top = max(line[x], line[x + 1], line[x + 2])
+                for c in range(3):
+                    line[x + c] = line[x + c] * 255 // top if top else 0
+                line[x + 3] = top
+            out.append(bytes(line))
+        rows = out
+    elif linear:
+        # UT's additive styles leave out the texture's alpha, while the particle material multiplies the colour by it, so it is made
+        # opaque here
         rows = [bytes(255 if i % 4 == 3 else v for i, v in enumerate(row)) for row in rows]
     write_png('%s/units/ut/fx/%s.png' % (REPO, name), width, height, rows)
     open('%s/units/ut/fx/%s.texture' % (REPO, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % {
@@ -95,7 +112,7 @@ for name, (tga, columns, rows_count) in TEXTURES.items():
         width, height = height, width
 
     if columns == 1 and rows_count == 1:
-        write(name, width, height, rows, name not in SRGB, name in WEAPON)
+        write(name, width, height, rows, name not in SRGB, name in WEAPON, name in BRIGHTEN)
         print('texture', name, width, height)
 
         continue
@@ -107,6 +124,6 @@ for name, (tga, columns, rows_count) in TEXTURES.items():
         # (a row from read_tga is four bytes for each pixel)
         tile = [line[4 * column * tile_width:4 * (column + 1) * tile_width] for line in rows[row * tile_height:(row + 1) * tile_height]]
 
-        write('%s_%d' % (name, index), tile_width, tile_height, tile, name not in SRGB, name in WEAPON)
+        write('%s_%d' % (name, index), tile_width, tile_height, tile, name not in SRGB, name in WEAPON, name in BRIGHTEN)
 
     print('sheet', name, columns * rows_count, 'tiles of', tile_width, tile_height)
