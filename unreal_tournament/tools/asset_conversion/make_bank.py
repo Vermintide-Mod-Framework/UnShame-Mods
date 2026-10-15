@@ -5,7 +5,7 @@ import struct, os, sys
 # compiles it with: the .wwise_bank (the bank for each platform), the .wwise_metadata (what the engine knows of each event) and the
 # .wwise_dep (that they go together). The bank is made like the ones the game has (see "What was found" in README.md), from objects of
 # a bank known to work: the sounds are PCM, with no parent and the output bus that the game's sounds use, an event is played by an action.
-# Usage: make_bank.py <weapon> <scratch dir>        (weapons are in WEAPONS below, the dir has umodel/out5 and umodel/out8)
+# Usage: make_bank.py <weapon> <scratch dir>        (weapons are in WEAPONS below, the dir has umodel/out5, out8, out10 and out35: out35 is all of WeaponSounds)
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 OUT = REPO + '/wwise/unreal_tournament'
@@ -13,7 +13,7 @@ OUT = REPO + '/wwise/unreal_tournament'
 # The sounds of each weapon: event name, wav (relative to the scratch dir's umodel), if it is heard from where it is (3D) or from the
 # head, volume in dB, and for those from where they are the distance in meters they are heard from
 SHOCK = 'out5/WeaponSounds/Sound/'
-SOUNDS = 'out8/WeaponSounds/Sound/'
+SOUNDS = 'out35/WeaponSounds/Sound/'
 NEW_SOUNDS = 'out8/NewWeaponSounds/Sound/'
 # (the male announcer pack of UT2004, the one its reward announcements are by default: umodel_64 -game=ut2 -export -sounds -out=out10
 # announcermale2k4. The names of the kills are the ones MultiKillMessage.KillSoundName has)
@@ -68,8 +68,8 @@ WEAPONS = {
         ('ut_rocket_alt_fire', SOUNDS + 'BRocketLauncherAltFire', False, -22, 0),
         ('ut_rocket_load', SOUNDS + 'BRocketLauncherLoad', False, -22, 0),
         ('ut_rocket_plunger', SOUNDS + 'RocketLauncherPlunger', False, -22, 0),
-        ('ut_rocket_lock', 'out35/WeaponSounds/Sound/BLockOn1', False, -22, 0),
-        ('ut_rocket_seek_lost', 'out35/WeaponSounds/Sound/BSeekLost1', False, -22, 0),
+        ('ut_rocket_lock', SOUNDS + 'BLockOn1', False, -22, 0),
+        ('ut_rocket_seek_lost', SOUNDS + 'BSeekLost1', False, -22, 0),
         ('ut_rocket_select', SOUNDS + 'SwitchToRocketLauncher', False, -24, 0),
         ('ut_rocket_fire_3d', SOUNDS + 'BRocketLauncherFire', True, -22, 40),
         ('ut_rocket_load_3d', SOUNDS + 'BRocketLauncherLoad', True, -26, 25),
@@ -175,7 +175,28 @@ def attenuation_object(attenuation_id, distance):
 
     return bytes(body)
 
-def pcm_wem(path, start=0.0):
+# Sounds that UT plays at a pitch of their own: they are made that much faster (and higher) here, as Unreal plays them
+PITCH = {
+    # (SniperFire.PlayFiring plays it with a pitch of 1.1)
+    'ut_lightning_charge': 1.1,
+}
+
+# Plays 16 bit samples faster by a factor, by reading them at that step, between two samples in a line
+def faster(pcm, channels, factor):
+    count = len(pcm) // (2 * channels)
+    samples = struct.unpack('<%dh' % (count * channels), pcm[:count * channels * 2])
+    out = []
+    for i in range(int((count - 1) / factor)):
+        position = i * factor
+        first = int(position)
+        share = position - first
+        for c in range(channels):
+            a = samples[first * channels + c]
+            b = samples[(first + 1) * channels + c]
+            out.append(int(round(a + (b - a) * share)))
+    return struct.pack('<%dh' % len(out), *out)
+
+def pcm_wem(path, start=0.0, pitch=1.0):
     d = open(path, 'rb').read()
     channels, rate = struct.unpack('<HI', d[22:24] + d[24:28])
     bits = struct.unpack('<H', d[34:36])[0]
@@ -190,6 +211,8 @@ def pcm_wem(path, start=0.0):
         pcm = b''.join(struct.pack('<h', (s - 128) * 256) for s in pcm)
     # (from this many seconds in: the end of a sound is a sound of its own)
     pcm = pcm[int(start * rate) * channels * 2:]
+    if pitch != 1.0:
+        pcm = faster(pcm, channels, pitch)
     config = {1: b'\x01\x41', 2: b'\x02\x31'}[channels]
     fmt = struct.pack('<HHIIHH', 0xFFFE, channels, rate, rate * channels * 2, channels * 2, 16) + b'\x06\x00\x00\x00' + config + b'\x00\x00'
     body = b'WAVE' + b'fmt ' + struct.pack('<I', len(fmt)) + fmt + b'JUNK' + struct.pack('<I', 4) + b'\0\0\0\0' + b'data' + struct.pack('<I', len(pcm)) + pcm
@@ -206,8 +229,9 @@ def main():
     for event, wav, is_3d, volume, distance in sounds:
         # (a wav can be followed by @ and the second to start from)
         path, _, start = wav.partition('@')
-        wem, seconds = pcm_wem('%s/umodel/%s.wav' % (scratch, path), float(start or 0))
-        media_id = fnv1('ut_media_' + os.path.basename(wav))
+        pitch = PITCH.get(event, 1.0)
+        wem, seconds = pcm_wem('%s/umodel/%s.wav' % (scratch, path), float(start or 0), pitch)
+        media_id = fnv1('ut_media_' + os.path.basename(wav) + ('' if pitch == 1.0 else '_pitch_%g' % pitch))
         media[media_id] = wem
         sound_id, action_id = fnv1('ut_sound_' + event), fnv1('ut_action_' + event)
         body = bytearray(SOUND_3D if is_3d else SOUND_2D)

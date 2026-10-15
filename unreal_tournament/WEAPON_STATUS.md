@@ -92,7 +92,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Fire | ok (sound plays) | ok |
 | Alt fire | ok (the zoom: BZoomIn1 and BZoomOut1, which LightningZoomIn and LightningZoomOut play as they are) | - |
 | Select | ok (sound plays) | ok |
-| Load | - | - |
+| Load | ok (the charge-up after a shot, at the pitch of 1.1 that SniperFire.PlayFiring gives it) | - |
 | Explosion | - | - |
 | Lock beep | - | - |
 | Volumes | - | - |
