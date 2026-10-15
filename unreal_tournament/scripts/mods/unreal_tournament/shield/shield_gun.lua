@@ -833,17 +833,6 @@ end
 -- When each player's charge started, on the machine that owns their actions
 local charge_started = {}
 
--- TEMPORARY: describes a thing that is hit, to compare what the punch hits with what a melee swing hits
-local function debug_describe(unit, actor)
-	return string.format("%s, part %s, %s%s", Unit.debug_name(unit), actor and (Actor.is_static(actor) and "static" or Actor.is_physical(actor) and "physical" or "kinematic") or "none", ScriptUnit.has_extension(unit, "health_system") and "health" or "no health", Unit.get_data(unit, "breed") and ", character" or "")
-end
-
-mod:hook_safe(ActionSweep, "_play_environmental_effect", function (self, weapon_rotation, current_action, hit_unit, hit_position, hit_normal, hit_actor)
-	if utils.is_local_player_unit(self.owner_unit) and Unit.alive(hit_unit) then
-		mod:echo("melee swing hit: %s", debug_describe(hit_unit, hit_actor))
-	end
-end)
-
 local function punch(action, t, power_level, bash)
 	local owner_unit = action.owner_unit
 	local hold_time = charge_started[owner_unit] and t - charge_started[owner_unit] or 0
@@ -951,16 +940,6 @@ local function punch(action, t, power_level, bash)
 				hit = hit,
 				unit = hit_unit,
 			}
-		end
-	end
-
-	if utils.is_local_player_unit(owner_unit) then
-		for _, object in ipairs(objects) do
-			mod:echo("punch hit: %s", debug_describe(object.unit, object.hit[4]))
-		end
-
-		if #objects == 0 then
-			mod:echo("punch hit: no objects")
 		end
 	end
 
