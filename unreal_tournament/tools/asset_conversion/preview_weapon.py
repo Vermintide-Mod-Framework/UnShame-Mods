@@ -65,6 +65,15 @@ WEAPONS = {
         'offset': (-1, 2, 0),
         'pivot': (500 / 65536 * 360, 0, 0),
     },
+    'assault': {
+        'psk': 'NewWeapons2004/SkeletalMesh/AssaultRifle.psk',
+        'textures': ['units/ut/assault/assault_rifle_assaultrifletex0.png'],
+        'lua': 'scripts/mods/unreal_tournament/assault/skin_animations.lua',
+        'display_fov': 70,
+        'draw_scale': 0.8,
+        'offset': (5.5, 4, -6),
+        'pivot': (0, 400 / 65536 * 360, 0),
+    },
     'shield': {
         'psk': 'Weapons/SkeletalMesh/ShieldGun_1st.psk',
         'textures': ['units/ut/shield/shield_gun_shieldtex0.png'],

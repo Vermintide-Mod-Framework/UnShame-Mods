@@ -443,11 +443,19 @@ mod:hook_safe(ActionDummy, "client_owner_start_action", function (self, new_acti
 	end
 end)
 
-mod:hook_safe(ActionDummy, "finish", function (self)
+-- And when they end, with the game's reason ("hold_input_released" when the button they are held with is let go)
+--   mod.dummy_finish_callbacks[name] = function (action_dummy, reason)
+mod.dummy_finish_callbacks = {}
+
+mod:hook_safe(ActionDummy, "finish", function (self, reason)
 	if self.current_action and self.current_action.anim_event == "inspect_start" then
 		for _, callback in pairs(mod.inspect_callbacks) do
 			callback(self, false)
 		end
+	end
+
+	for _, callback in pairs(mod.dummy_finish_callbacks) do
+		callback(self, reason)
 	end
 end)
 
@@ -766,4 +774,33 @@ mod:hook(BTBotShootAction, "_fire_shot", function (func, self, shoot_blackboard,
 	end
 
 	return func(self, shoot_blackboard, action_data, input_extension, t)
+end)
+
+-- The Bounty Hunter's talent "power level on clip size" (activate_buff_stacks_based_on_clip_size) adds one buff for each round of the
+-- ranged weapon's clip, every frame, until there are as many as the clip holds. Its buff stops at 20 stacks, so with a bigger clip it
+-- adds more every frame until the game runs out of buffs and stops. The mod's weapons keep all their ammo in the clip (the Assault
+-- Rifle's 200, the Minigun's 300), so the talent is shown a clip of no more than its buff's own limit, which is all it can give.
+mod:hook(BuffFunctionTemplates.functions, "activate_buff_stacks_based_on_clip_size", function (func, unit, buff, params, ...)
+	local inventory_extension = Unit.alive(unit) and ScriptUnit.has_extension(unit, "inventory_system")
+	local slot_data = inventory_extension and inventory_extension:get_slot_data("slot_ranged")
+	local item_template = slot_data and BackendUtils.get_item_template(slot_data.item_data)
+	local ammo_data = item_template and item_template.ammo_data
+	local stack_template = buff.template and BuffUtils.get_buff_template(buff.template.buff_to_add)
+	local limit = stack_template and stack_template.buffs and stack_template.buffs[1].max_stacks
+	local clip = ammo_data and ammo_data.ammo_per_clip
+
+	if not limit or not clip or clip <= limit then
+		return func(unit, buff, params, ...)
+	end
+
+	ammo_data.ammo_per_clip = limit
+
+	-- An error must not leave the clip changed
+	local ok, error_message = pcall(func, unit, buff, params, ...)
+
+	ammo_data.ammo_per_clip = clip
+
+	if not ok then
+		error(error_message, 0)
+	end
 end)

@@ -28,6 +28,8 @@ local mod = get_mod("unreal_tournament")
 --   bob, bob_damping, bob_smoothing, ut_ground_speed: the weapon's sway (Pawn.CheckBob, Pawn.WeaponBob)
 --   blend_time: seconds it takes one animation to blend into the next
 --   idle_speed: how fast the idle animation plays compared to its own rate (the weapon's IdleAnimRate, or 1 if it has none)
+--   mirror: the model is drawn mirrored from left to right, as the second of two (the Assault Rifle's). unit_name is then a mirrored copy
+--       of the mesh (convert_weapon.py's mirror_unit).
 --   select_speed: how fast the pickup animation plays compared to its own rate (the weapon's SelectAnimRate). Without it the animation
 --       lasts as long as the game's wield of the base weapon.
 --   alt_pose_right/forward/up (UT units) and alt_pose_roll/pitch/yaw (degrees): a second place for the model in the view, for example
@@ -318,8 +320,9 @@ local function new(def)
 
 	-- Returns whether the game would show its own weapon now. The game also hides the weapon for reasons of its own.
 	local function game_shows_weapon(fp)
+		-- (the reasons of the skins are not the game's: a weapon drawn as two models has two skins, each with its own reason)
 		for reason in pairs(fp.hide_weapon_reasons) do
-			if reason ~= HIDE_REASON then
+			if string.sub(reason, 1, 8) ~= "ut_skin_" then
 				return false
 			end
 		end
@@ -703,6 +706,17 @@ local function new(def)
 
 		local right, forward, up = image(Quaternion.right(rotation)), image(Quaternion.forward(rotation)), image(Quaternion.up(rotation))
 
+		-- A mirrored model (UT's second rifle in the other hand, AssaultRifle.RenderDualOverlay) is the same pose reflected from left to
+		-- right in the view. UT mirrors the mesh and turns its offset, its yaw and its roll to the other side, which is the same thing. The
+		-- unit is a mirrored copy of the mesh (convert_weapon.py, mirror_unit), so that its faces are not drawn inside out: the reflection
+		-- of the view times the reflection of the mesh is a turn. Its first axis is the reflected one, turned back.
+		if CONFIG.mirror then
+			right = Vector3(right.x, -right.y, -right.z)
+			forward = Vector3(-forward.x, forward.y, forward.z)
+			up = Vector3(-up.x, up.y, up.z)
+			position = Vector3(-position.x, position.y, position.z)
+		end
+
 		Unit.set_local_pose(skin.unit, 0, Matrix4x4(right.x, right.y, right.z, forward.x, forward.y, forward.z, up.x, up.y, up.z, position.x, position.y, position.z))
 
 		-- The other bones are posed relative to the root's move, in the meters of the mesh.
@@ -710,6 +724,12 @@ local function new(def)
 			local o = (b - 1) * 7
 			local node_rotation = Quaternion.from_elements(pose[o + 1], pose[o + 2], pose[o + 3], pose[o + 4])
 			local node_position = Vector3(pose[o + 5], pose[o + 6], pose[o + 7]) * CONFIG.model_meters_per_unit
+
+			-- (in a mirrored mesh, the parts are mirrored too: to the other side, and turning the other way about the other axes)
+			if CONFIG.mirror then
+				node_rotation = Quaternion.from_elements(pose[o + 1], -pose[o + 2], -pose[o + 3], pose[o + 4])
+				node_position = Vector3(-node_position.x, node_position.y, node_position.z)
+			end
 			local node_scale = skin.node_scales and skin.node_scales[b]
 			local stretch = CONFIG.stretches and CONFIG.stretches[bones[b]]
 

@@ -130,10 +130,15 @@ WEAPONS = {
     ],
     'assault_rifle': [
         ('ut_assault_fire', SOUNDS + 'BAssaultRifleFire', False, -22, 0),
-        ('ut_assault_alt_fire', SOUNDS + 'BAssaultRifleAltFire', False, -22, 0),
+        # (AssaultGrenade.FireSound and ReloadSound: the grenade's shot, and the drum turning to the next one)
+        ('ut_assault_alt_fire', NEW_SOUNDS + 'NewGrenadeShoot', False, -22, 0),
+        ('ut_assault_grenade_load', SOUNDS + 'BReload9', False, -26, 0),
         ('ut_assault_select', SOUNDS + 'SwitchToAssaultRifle', False, -24, 0),
         ('ut_assault_fire_3d', SOUNDS + 'BAssaultRifleFire', True, -22, 40),
-        ('ut_assault_alt_fire_3d', SOUNDS + 'BAssaultRifleAltFire', True, -22, 40),
+        ('ut_assault_alt_fire_3d', NEW_SOUNDS + 'NewGrenadeShoot', True, -22, 40),
+        # (Grenade.ImpactSound P1GrenFloor1 and its explosion, BExplosion3)
+        ('ut_assault_grenade_bounce_3d', SOUNDS + 'BGrenfloor1', True, -24, 25),
+        ('ut_assault_grenade_explosion_3d', SOUNDS + 'BExplosion3', True, -14, 80),
     ],
     'lightning_gun': [
         ('ut_lightning_fire', SOUNDS + 'BLightningGunFire', False, -22, 0),

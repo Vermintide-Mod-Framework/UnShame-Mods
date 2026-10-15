@@ -35,6 +35,10 @@ unit = [
 	"units/ut/redeemer/redeemer"
 	"units/ut/redeemer/pickup"
 	"units/ut/redeemer/missile"
+	"units/ut/assault/assault_rifle"
+	"units/ut/assault/assault_rifle_left"
+	"units/ut/assault/pickup"
+	"units/ut/assault/grenade"
 	"units/ut/fx/quad"
 	"units/ut/fx/coil"
 	"units/ut/fx/sphere"
@@ -65,6 +69,7 @@ material = [
 	"units/ut/minigun/*"
 	"units/ut/shield/*"
 	"units/ut/redeemer/*"
+	"units/ut/assault/*"
 	"units/ut/fx/fx_*"
 ]
 

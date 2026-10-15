@@ -15,7 +15,7 @@ needs its own copy from a base of that hero, because the animations, units and a
 | Link Gun | open, see below | all four Kerillian careers | Deepwood Staff: woods | on the Deepwood Staff, Sister of the Thorn only |
 | Shield Gun | six melee bases, see below | everyone | see below | in progress (charge and punch, auto punch, shield jump, block as the shield, UT model and sounds) |
 | Lightning Gun | Handgun (`es_handgun`, `dr_handgun`) | Mercenary, Huntsman, Foot Knight, Ironbreaker, Ranger | none | done (third person, inspect and bots not yet checked against UT) |
-| Assault Rifle (akimbo) | Brace of Pistols (`wh_brace_of_pistols`) or Repeating Pistols (`wh_repeating_pistols`); Drakefire Pistols (`dr_drake_pistol`) | Zealot, Bounty Hunter, Captain, Ironbreaker | none | not started |
+| Assault Rifle (akimbo) | Brace of Pistols (`wh_brace_of_pistols`) or Repeating Pistols (`wh_repeating_pistols`); Drakefire Pistols (`dr_drake_pistol`) | Zealot, Bounty Hunter, Captain, Ironbreaker | none | in progress (Brace of Pistols only: two rifles, rounds with UT's spread, charged bouncing grenades, UT models and sounds; the Drakefire Pistols, the grenade count, the grenade smoke and NewExplosionB are open) |
 | Minigun | Repeater: `es_repeating_handgun`; `wh_repeating_pistols` or `wh_crossbow_repeater` | Mercenary, Huntsman, Foot Knight, Zealot, Bounty Hunter, Captain | none | not started |
 | Redeemer | Trollhammer Torpedo (`dr_deus_01`) | Ironbreaker | grass | in progress (missile, six-wave blast, one missile, UT model, sounds; the guided missile and the blast's look are open) |
 

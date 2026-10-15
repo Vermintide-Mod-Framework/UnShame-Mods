@@ -69,6 +69,17 @@ local function log(text, ...)
 	mod:echo("[ut_test] " .. text, ...)
 end
 
+-- The game writes its console log to the file in blocks of 32 KB, so the last lines of a suite can wait there for minutes.
+-- Printing a block of filler pushes them into the file, where tools/run_tests.ps1 reads them.
+local LOG_BLOCK = 32768
+local FILLER_LINE = string.rep("-", 1023)
+
+local function push_log_out()
+	for _ = 1, LOG_BLOCK / (#FILLER_LINE + 1) do
+		print(FILLER_LINE)
+	end
+end
+
 -- The player
 local function local_player()
 	return Managers.player and Managers.player:local_player_safe()
@@ -699,6 +710,7 @@ local function run_suite(suite, only_career)
 	end
 
 	log("%s: %d passed, %d failed, %d skipped", suite.name, summary.passed, summary.failed, summary.skipped)
+	push_log_out()
 
 	if current_level_key() ~= original_level then
 		log("going back to %s", original_level)
@@ -819,6 +831,7 @@ local function step(dt)
 
 	if run.error then
 		log("the suite broke: %s", tostring(run.error))
+		push_log_out()
 
 		if run.restore_flags then
 			run.restore_flags()

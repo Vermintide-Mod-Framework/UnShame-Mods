@@ -221,6 +221,20 @@ WEAPONS['shield'] = {
     'lua': 'scripts/mods/unreal_tournament/shield/skin_animations.lua',
 }
 
+# The Assault Rifle (NewWeapons2004.AssaultRifle, UT2004's own; the old one of UT2003 is Weapons.AssaultRifle_1st)
+WEAPONS['assault'] = {
+    'psk': 'NewWeapons2004/SkeletalMesh/AssaultRifle.psk',
+    'psa': 'NewWeapons2004/MeshAnimation/AssaultRifle.psa',
+    'materials': [('UT2004Weapons/Texture/AssaultRifleTex0.tga', 'opaque')],
+    'scale': 0.0125,
+    'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
+    'locators': ['Bone_Flash a', 'Bone_Flash b'],
+    'roughness': 0.9,
+    'unit': 'units/ut/assault/assault_rifle',
+    'mirror_unit': 'units/ut/assault/assault_rifle_left',
+    'lua': 'scripts/mods/unreal_tournament/assault/skin_animations.lua',
+}
+
 # The Redeemer (Weapons.Redeemer_1st)
 WEAPONS['redeemer'] = {
     'psk': 'Weapons/SkeletalMesh/Redeemer_1st.psk',
@@ -467,69 +481,82 @@ def main():
         return ('\t\t\t{\n\t\t\t\tchannels = [ {\n\t\t\t\t\t\tindex = 0\n\t\t\t\t\t\tname = "%s"\n\t\t\t\t\t\ttype = "%s"\n\t\t\t\t\t} ]\n'
                 '\t\t\t\tdata = [ %s ]\n\t\t\t\tsize = %d\n\t\t\t\tstride = %d\n\t\t\t}') % (sname, ctype, values, size, stride)
 
-    shared = [
-        stream('POSITION', 'CT_FLOAT3', 12, fl([c for p in P for c in p]), len(P)),
-        stream('NORMAL', 'CT_FLOAT3', 12, fl([c for n in normals for c in n]), len(normals)),
-        stream('TEXCOORD', 'CT_FLOAT2', 8, fl([x for pi, u, v in wedges for x in (u, 1.0 - v)]), len(wedges)),
-    ]
-    identity = '1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1'
-    geometries, nodes, renderables = [], {}, []
-    for (bone, mat), tris in sorted(pieces.items()):
-        gname = 'g_%s_%d' % (sjson_node_name(bone)[2:], mat)
-        pos_idx, uv_idx, bin_data, tan_data = [], [], [], []
-        for a, b, c in tris:
-            pa, pb_, pc_ = wedges[a][0], wedges[b][0], wedges[c][0]
-            pos_idx += [pa, pb_, pc_]
-            uv_idx += [a, b, c]
-            e1, e2 = sub(P[pb_], P[pa]), sub(P[pc_], P[pa])
-            du1, dv1 = wedges[b][1] - wedges[a][1], wedges[b][2] - wedges[a][2]
-            du2, dv2 = wedges[c][1] - wedges[a][1], wedges[c][2] - wedges[a][2]
-            det = du1 * dv2 - du2 * dv1
-            if abs(det) < 1e-12:
-                t, bn = (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)
-            else:
-                r = 1.0 / det
-                t = norm(tuple((e1[k] * dv2 - e2[k] * dv1) * r for k in range(3)))
-                bn = norm(tuple((e2[k] * du1 - e1[k] * du2) * r for k in range(3)))
-            for _ in range(3):
-                tan_data += list(t)
-                bin_data += list(bn)
-        n_idx = len(pos_idx)
-        seq = list(range(n_idx))
-        streams = shared + [stream('BINORMAL', 'CT_FLOAT3', 12, fl(bin_data), n_idx), stream('TANGENT', 'CT_FLOAT3', 12, fl(tan_data), n_idx)]
-        index_streams = [pos_idx, pos_idx, uv_idx, seq, seq]
-        geometries.append(
-            '\t%s = {\n\t\tindices = {\n\t\t\tsize = %d\n\t\t\tstreams = [ %s ]\n\t\t\ttype = "TRIANGLE_LIST"\n\t\t}\n'
-            '\t\tmaterials = [\n\t\t\t{\n\t\t\t\tname = "m_%d"\n\t\t\t\tprimitives = [ %s ]\n\t\t\t} ]\n'
-            '\t\tsmoothing = [ %s ]\n\t\tstreams = [\n%s ]\n\t}\n'
-            % (gname, n_idx, ' '.join('[ %s ]' % il(s) for s in index_streams), mat, il(range(len(tris))), il([1] * len(tris)), '\n'.join(streams)))
-        nodes.setdefault(bone, []).append(gname)
-        renderables.append(gname)
-        print('geometry', gname, 'triangles', len(tris))
+    # The unit, and with 'mirror_unit' a copy of it mirrored from left to right (for a weapon held in each hand, as UT draws its second
+    # Assault Rifle): its points and normals go to the other side, and its triangles are turned the other way round, so that their
+    # front faces stay the ones that are drawn. Both use the same materials.
+    variants = [(cfg['unit'], False)] + ([(cfg['mirror_unit'], True)] if cfg.get('mirror_unit') else [])
+    unmirrored_P, unmirrored_normals, unmirrored_pieces = P, normals, pieces
+    for unit_path, mirrored in variants:
+        if mirrored:
+            P = [(-x, y, z) for x, y, z in unmirrored_P]
+            normals = [(-x, y, z) for x, y, z in unmirrored_normals]
+            pieces = {key: [(a, c, b) for a, b, c in tris] for key, tris in unmirrored_pieces.items()}
+        else:
+            P, normals, pieces = unmirrored_P, unmirrored_normals, unmirrored_pieces
+        shared = [
+            stream('POSITION', 'CT_FLOAT3', 12, fl([c for p in P for c in p]), len(P)),
+            stream('NORMAL', 'CT_FLOAT3', 12, fl([c for n in normals for c in n]), len(normals)),
+            stream('TEXCOORD', 'CT_FLOAT2', 8, fl([x for pi, u, v in wedges for x in (u, 1.0 - v)]), len(wedges)),
+        ]
+        identity = '1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1'
+        geometries, nodes, renderables = [], {}, []
+        for (bone, mat), tris in sorted(pieces.items()):
+            gname = 'g_%s_%d' % (sjson_node_name(bone)[2:], mat)
+            pos_idx, uv_idx, bin_data, tan_data = [], [], [], []
+            for a, b, c in tris:
+                pa, pb_, pc_ = wedges[a][0], wedges[b][0], wedges[c][0]
+                pos_idx += [pa, pb_, pc_]
+                uv_idx += [a, b, c]
+                e1, e2 = sub(P[pb_], P[pa]), sub(P[pc_], P[pa])
+                du1, dv1 = wedges[b][1] - wedges[a][1], wedges[b][2] - wedges[a][2]
+                du2, dv2 = wedges[c][1] - wedges[a][1], wedges[c][2] - wedges[a][2]
+                det = du1 * dv2 - du2 * dv1
+                if abs(det) < 1e-12:
+                    t, bn = (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)
+                else:
+                    r = 1.0 / det
+                    t = norm(tuple((e1[k] * dv2 - e2[k] * dv1) * r for k in range(3)))
+                    bn = norm(tuple((e2[k] * du1 - e1[k] * du2) * r for k in range(3)))
+                for _ in range(3):
+                    tan_data += list(t)
+                    bin_data += list(bn)
+            n_idx = len(pos_idx)
+            seq = list(range(n_idx))
+            streams = shared + [stream('BINORMAL', 'CT_FLOAT3', 12, fl(bin_data), n_idx), stream('TANGENT', 'CT_FLOAT3', 12, fl(tan_data), n_idx)]
+            index_streams = [pos_idx, pos_idx, uv_idx, seq, seq]
+            geometries.append(
+                '\t%s = {\n\t\tindices = {\n\t\t\tsize = %d\n\t\t\tstreams = [ %s ]\n\t\t\ttype = "TRIANGLE_LIST"\n\t\t}\n'
+                '\t\tmaterials = [\n\t\t\t{\n\t\t\t\tname = "m_%d"\n\t\t\t\tprimitives = [ %s ]\n\t\t\t} ]\n'
+                '\t\tsmoothing = [ %s ]\n\t\tstreams = [\n%s ]\n\t}\n'
+                % (gname, n_idx, ' '.join('[ %s ]' % il(s) for s in index_streams), mat, il(range(len(tris))), il([1] * len(tris)), '\n'.join(streams)))
+            nodes.setdefault(bone, []).append(gname)
+            renderables.append(gname)
+            print('geometry', gname, 'triangles', len(tris))
 
-    # a node for each bone that has a mesh (the pieces hang off it) and for each locator
-    locator_bones = [bone_names.index(n) for n in cfg['locators']]
-    node_text = []
-    for bone in used_bones:
-        node_text.append('\t\t\t%s = {\n\t\t\t\tgeometries = [ %s ]\n\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t}\n'
-                         % (sjson_node_name(bone), ' '.join('"%s"' % g for g in nodes[bone]), identity))
-    for bone in locator_bones:
-        node_text.append('\t\t\t%s = {\n\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t}\n' % (sjson_node_name(bone), identity))
-    text = ('\ngeometries = {\n%s}\nnodes = {\n\troot = {\n\t\tchildren = {\n%s\t\t}\n\t\tlocal = [ %s ]\n\t}\n}\nsource_path = "convert_weapon"\n'
-            % (''.join(geometries), ''.join(node_text), identity))
-    raw = text.encode('latin1')
-    open('%s/%s.bsi' % (REPO, cfg['unit']), 'wb').write(b'bsiz' + struct.pack('<I', len(raw)) + zlib.compress(raw))
-    print('wrote', cfg['unit'] + '.bsi', len(raw), 'bytes raw')
+        # a node for each bone that has a mesh (the pieces hang off it) and for each locator
+        locator_bones = [bone_names.index(n) for n in cfg['locators']]
+        node_text = []
+        for bone in used_bones:
+            node_text.append('\t\t\t%s = {\n\t\t\t\tgeometries = [ %s ]\n\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t}\n'
+                             % (sjson_node_name(bone), ' '.join('"%s"' % g for g in nodes[bone]), identity))
+        for bone in locator_bones:
+            node_text.append('\t\t\t%s = {\n\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t}\n' % (sjson_node_name(bone), identity))
+        text = ('\ngeometries = {\n%s}\nnodes = {\n\troot = {\n\t\tchildren = {\n%s\t\t}\n\t\tlocal = [ %s ]\n\t}\n}\nsource_path = "convert_weapon"\n'
+                % (''.join(geometries), ''.join(node_text), identity))
+        raw = text.encode('latin1')
+        open('%s/%s.bsi' % (REPO, unit_path), 'wb').write(b'bsiz' + struct.pack('<I', len(raw)) + zlib.compress(raw))
+        print('wrote', unit_path + '.bsi', len(raw), 'bytes raw')
 
-    # the unit, the materials and the textures
-    used_materials = sorted(set(m for b, m in pieces))
-    unit_text = 'materials = {\n' + ''.join('\tm_%d = "%s/%s_m%d"\n' % (m, unit_dir, unit_base, m) for m in used_materials) + '}\nrenderables = {\n'
-    # (the renderables of a unit are the nodes that have geometry, by the name of the node: the geometries of a node are its pieces)
-    for g in [sjson_node_name(b) for b in used_bones]:
-        unit_text += ('\t%s = {\n\t\talways_keep = false\n\t\tculling = "disabled"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
-                      '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n') % g
-    unit_text += '}\n'
-    open('%s/%s.unit' % (REPO, cfg['unit']), 'w', newline='\n').write(unit_text)
+        # the unit, the materials and the textures
+        used_materials = sorted(set(m for b, m in pieces))
+        unit_text = 'materials = {\n' + ''.join('\tm_%d = "%s/%s_m%d"\n' % (m, unit_dir, unit_base, m) for m in used_materials) + '}\nrenderables = {\n'
+        # (the renderables of a unit are the nodes that have geometry, by the name of the node: the geometries of a node are its pieces)
+        for g in [sjson_node_name(b) for b in used_bones]:
+            unit_text += ('\t%s = {\n\t\talways_keep = false\n\t\tculling = "disabled"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
+                          '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n') % g
+        unit_text += '}\n'
+        open('%s/%s.unit' % (REPO, unit_path), 'w', newline='\n').write(unit_text)
+    P, normals, pieces = unmirrored_P, unmirrored_normals, unmirrored_pieces
     done_textures = {}
     for m in used_materials:
         tga, kind = cfg['materials'][m][:2]

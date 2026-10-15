@@ -66,6 +66,19 @@ STATICS = {
         'scale': 0.01,
         'unit': 'units/ut/shield/pickup',
     },
+    'assault_pickup': {
+        'pskx': 'NewWeaponPickups/StaticMesh/AssaultPickupSM.pskx',
+        'materials': [('UT2004Weapons/Texture/AssaultRifleTex0.tga', 'opaque')],
+        'scale': 0.01,
+        'unit': 'units/ut/assault/pickup',
+    },
+    'assault_grenade': {
+        'pskx': 'WeaponStaticMesh/StaticMesh/GrenadeMesh.pskx',
+        'materials': [('WeaponSkins/Texture/GrenadeTex.tga', 'opaque')],
+        'scale': 0.06,
+        'unit': 'units/ut/assault/grenade',
+        'culling': 'disabled',
+    },
     'redeemer_pickup': {
         'pskx': 'WeaponStaticMesh/StaticMesh/RedeemerPickup.pskx',
         'materials': [('WeaponSkins/Texture/RedeemerTex0.tga', 'opaque'), ('WeaponSkins/Texture/Rmissle.tga', 'opaque')],
