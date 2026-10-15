@@ -91,6 +91,10 @@ local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
 	-- ShieldFire.ShieldRange: how far the punch reaches from the player, in UT units
 	range = 112,
+	-- The punch reaches from the middle of the player (Instigator.Location), not from the eyes: xPawn's CollisionHeight (44) above the
+	-- feet, and CrouchHeight (29) when crouched, in UT units. So the floor is in reach while looking up to 67 degrees from straight down.
+	reach_height = 44,
+	reach_height_crouched = 29,
 	-- ShieldFire.MinHoldTime and FullyChargedTime: held for MinHoldTime or less, the punch does MinDamage; held for FullyChargedTime or
 	-- more, MaxDamage; in between, in a line
 	min_hold_time = 0.4,
@@ -172,7 +176,8 @@ local function charge_step(hold_time)
 	return math.floor(scale * (CONFIG.damage_steps - 1) + 0.5), scale
 end
 
--- What is in reach in front of a player: the first thing the ray from their eyes hits within the range, and whether it is an enemy
+-- What is in reach in front of a player: the first thing the ray from their middle, the way they look, hits within the range, and
+-- whether it is an enemy
 local function raycast(physics_world, origin, direction)
 	return PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, CONFIG.range * UNIT, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
 end
@@ -184,7 +189,9 @@ local function in_reach(owner_unit, physics_world)
 		return nil
 	end
 
-	local origin = first_person_extension:current_position()
+	local status_extension = ScriptUnit.has_extension(owner_unit, "status_system")
+	local height = status_extension and status_extension:is_crouching() and CONFIG.reach_height_crouched or CONFIG.reach_height
+	local origin = Unit.local_position(owner_unit, 0) + Vector3(0, 0, height * UNIT)
 	local direction = Quaternion.forward(first_person_extension:current_rotation())
 	local hit = first_beam_hit(raycast(physics_world, origin, direction), owner_unit)
 
