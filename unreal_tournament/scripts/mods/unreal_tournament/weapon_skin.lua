@@ -295,6 +295,20 @@ local function new(def)
 		end
 
 		Unit.set_unit_visibility(fp.first_person_attachment_unit, false)
+
+		-- The ammo that a weapon holds in a hand (the Trollhammer's torpedo) is a unit of its own, which the weapon's animations show
+		-- again (SimpleInventoryExtension.show_first_person_ammo)
+		local equipment = fp.inventory_extension and fp.inventory_extension:equipment()
+
+		if equipment then
+			for _, field in ipairs({ "right_hand_ammo_unit_1p", "left_hand_ammo_unit_1p" }) do
+				local ammo_unit = equipment[field]
+
+				if ammo_unit and Unit.alive(ammo_unit) then
+					Unit.set_unit_visibility(ammo_unit, false)
+				end
+			end
+		end
 	end
 
 	local function show_game_weapon(fp)

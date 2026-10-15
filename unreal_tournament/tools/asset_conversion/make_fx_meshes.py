@@ -12,6 +12,8 @@ import struct, zlib, os, sys
 #                       ShellCasing, into <scratch>/umodel/out36)
 #   units/ut/fx/shield_mesh  WeaponStaticMesh.Shield, the Shield Gun's shield (ShieldEffect) (umodel -export WeaponStaticMesh.usx Shield,
 #                       into <scratch>/umodel/out38): a dish 3 units deep and 20 across, facing along x
+#   units/ut/fx/explosion_ring, explosion_sphere  ParticleMeshes.ExplosionRing (a flat ring 512 units across) and ExplosionSphere (256
+#                       across), the meshes of the Redeemer's blast (umodel -export ParticleMeshes.usx, into <scratch>/umodel/out38)
 # They are made in meters, a UT unit being 0.02 m (as everything of the effects is), turned from UT's axes (x forward, y right, z up) to
 # this game's (x right, y forward, z up), which makes the mesh the other way round: the long axis of the coil is y.
 # One material slot, m_fx, as the quad of the particles has (units/ut/fx/quad): the effects set the material of the texture they want.
@@ -190,3 +192,5 @@ if __name__ == '__main__':
     make_static('minigun_flash_mesh', 'MinigunMuzFlash1stMesh', SCRATCH + '/umodel/out36/XEffects', (2, 2, 0, 1))
     make_static('shell_casing_mesh', 'ShellCasing', SCRATCH + '/umodel/out36/XEffects')
     make_static('shield_mesh', 'Shield', SCRATCH + '/umodel/out38/WeaponStaticMesh')
+    make_static('explosion_ring', 'ExplosionRing', SCRATCH + '/umodel/out38/ParticleMeshes')
+    make_static('explosion_sphere', 'ExplosionSphere', SCRATCH + '/umodel/out38/ParticleMeshes')

@@ -34,6 +34,9 @@ TEXTURES = {
     'smoke_puff': ('EpicParticles/Texture/Smokepuff.tga', 1, 1),
     'smoke_puff2': ('EpicParticles/Texture/Smokepuff2.tga', 1, 1),
     'flame_gradient': ('EpicParticles/Texture/FlameGradient.tga', 1, 1),
+    'burn_flare': ('EpicParticles/Texture/BurnFlare1.tga', 1, 1),
+    'soft_flare': ('EpicParticles/Texture/SoftFlare.tga', 1, 1),
+    'white_streak': ('EpicParticles/Texture/WhiteStreak01aw.tga', 1, 1),
 }
 
 # (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
@@ -44,7 +47,7 @@ BRIGHTEN = ('minigun_burst', 'shield_elec')
 
 # The textures that are turned a quarter, because they are drawn on a beam, which lays v along its length (TracerShot is a streak along
 # u, the way NewTracer's sprite moves: PTDU_Right)
-TURNED = ('tracer_shot', 'shield_charge_spark')
+TURNED = ('tracer_shot', 'shield_charge_spark', 'white_streak')
 
 # The textures of which only the top half is used: FlakTrailTex is a streak above a dot, and a line particle (PT_Line) is the streak
 TOP_HALF = ('shield_charge_spark',)

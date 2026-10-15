@@ -16,6 +16,8 @@ local mod = get_mod("unreal_tournament")
 --       after it.
 --   fade_in, fade_out: UT's FadeInEndTime and FadeOutStartTime, in seconds. The particle is fully visible from fade_in until fade_out.
 --       They are used instead of attenuation.
+--   size_by, color_by: functions of how far into its life the particle is (0 to 1) that return its size, and its color { r, g, b }, in
+--       place of size and growth, and of color (UT's SizeScale and ColorScale).
 --   spin: turns per second. The angle it starts at is random, or spec.angle in degrees (0 keeps a sprite upright on the screen).
 --   position: where it is. velocity, drag: where it goes and how fast that slows down (per second).
 --   follow: a function that returns where the particle is now, or nothing when it should end.
@@ -145,6 +147,8 @@ local function add(kind, spec)
 		material_name = material,
 		scale = spec.scale,
 		brightness_by = spec.brightness,
+		size_by = spec.size_by,
+		color_by = spec.color_by,
 		growth = spec.growth or 0,
 		additive = spec.additive or 1,
 		own_material = spec.material ~= nil,
@@ -248,7 +252,7 @@ end
 local function place(particle, dt, camera_position, camera_rotation)
 	local unit = particle.entry.unit
 	local fraction = particle.age / particle.life
-	local size = particle.size and math.max(0, particle.size + particle.growth * particle.age)
+	local size = particle.size_by and particle.size_by(math.max(0, fraction)) or particle.size and math.max(0, particle.size + particle.growth * particle.age)
 
 	local light = particle.intensity * (particle.brightness_by and particle.brightness_by(fraction) or brightness(particle))
 	local position, rotation, scale
@@ -386,7 +390,9 @@ local function place(particle, dt, camera_position, camera_rotation)
 	Unit.set_local_position(unit, 0, position)
 	Unit.set_local_rotation(unit, 0, rotation)
 	Unit.set_local_scale(unit, 0, scale)
-	Unit.set_vector3_for_materials(unit, "tint", Vector3(particle.color[1], particle.color[2], particle.color[3]))
+	local color = particle.color_by and particle.color_by(math.max(0, fraction)) or particle.color
+
+	Unit.set_vector3_for_materials(unit, "tint", Vector3(color[1], color[2], color[3]))
 	Unit.set_scalar_for_materials(unit, "intensity", light)
 	Unit.set_scalar_for_materials(unit, "additive", particle.additive)
 
