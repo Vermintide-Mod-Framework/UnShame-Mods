@@ -5,15 +5,16 @@ local mod = get_mod("unreal_tournament")
 
 local runner = mod.test_runner
 
--- Records the bolts that happen while a test runs
+-- Records the bolts that happen while a test runs. The vectors are kept in boxes, as a vector only lasts its frame. The arcs are only
+-- counted.
 local bolts = {}
 
 mod.lightning_bolt_callbacks.ut_test = function (owner_unit, end_position, hit_normal, arcs)
 	if mod.test_recording then
 		bolts[#bolts + 1] = {
-			arcs = arcs,
-			end_position = end_position,
-			hit_normal = hit_normal,
+			arc_count = #arcs,
+			end_position = Vector3Box(end_position),
+			hit = Vector3.length(hit_normal) > 0,
 			owner_unit = owner_unit,
 			time = Managers.time:time("game"),
 		}
@@ -55,7 +56,7 @@ local function scenarios()
 				t.expect(before - (t.ammo() or 0) == 1, "the shot used %s ammo, not 1", tostring(before - (t.ammo() or 0)))
 
 				if bolts[1] then
-					t.expect(#bolts[1].arcs == 3 or Vector3.length(bolts[1].hit_normal) == 0, "%d arcs jumped, not 3", #bolts[1].arcs)
+					t.expect(bolts[1].arc_count == 3 or not bolts[1].hit, "%d arcs jumped, not 3", bolts[1].arc_count)
 				end
 			end,
 		},
@@ -126,10 +127,12 @@ local function scenarios()
 				end
 
 				local health_extension = ScriptUnit.extension(target, "health_system")
+
+				-- A moment for the target to settle. Its health is only set some frames after it is spawned.
+				t.wait(1)
+
 				local before = health_extension:current_health()
 
-				-- A moment for the target to settle
-				t.wait(1)
 				start_recording()
 				t.press("action_one", 0.1)
 				t.wait(1)
@@ -143,7 +146,7 @@ local function scenarios()
 				if bolts[1] then
 					-- Vectors are made on the main thread, and the engine refuses them in a coroutine
 					local distance = t.on_main_thread(function ()
-						return Unit.alive(target) and Vector3.length(bolts[1].end_position - Unit.world_position(target, 0)) or -1
+						return Unit.alive(target) and Vector3.length(bolts[1].end_position:unbox() - Unit.world_position(target, 0)) or -1
 					end)
 
 					mod:echo("[ut_test] the bolt ended %.2f m from the marauder", distance)

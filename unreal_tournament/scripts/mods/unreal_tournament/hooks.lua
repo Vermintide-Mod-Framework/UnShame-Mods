@@ -343,7 +343,34 @@ mod:hook_safe(ActionHandgun, "client_owner_start_action", function (self, new_ac
 	end
 end)
 
-mod:hook_safe(ActionHandgun, "client_owner_post_update", function (self)
+-- The shot sends flow events to the game's weapon unit, which start the game's own effects of the shot (lua_bullet_trail is the tracer).
+-- A UT weapon draws its own, so its action can name events to drop: action.ut_dropped_flow_events = { [event_name] = true }.
+mod:hook(ActionHandgun, "client_owner_post_update", function (func, self, ...)
+	local dropped = self.current_action and self.current_action.ut_dropped_flow_events
+
+	if dropped then
+		local flow_event = Unit.flow_event
+
+		Unit.flow_event = function (unit, event_name, ...)
+			if dropped[event_name] then
+				return
+			end
+
+			return flow_event(unit, event_name, ...)
+		end
+
+		-- An error must not leave Unit.flow_event replaced
+		local ok, error_message = pcall(func, self, ...)
+
+		Unit.flow_event = flow_event
+
+		if not ok then
+			error(error_message, 0)
+		end
+	else
+		func(self, ...)
+	end
+
 	for _, callback in pairs(mod.handgun_update_callbacks) do
 		callback(self)
 	end

@@ -15,19 +15,22 @@ local particles = mod.skin_particles
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
-	-- NewLightningBolt lasts half a second. It is drawn as a line of parts of the streak texture, each bolt_segment meters long and
-	-- bolt_width wide. A part is out of line by bolt_jitter. UT's bolt is a thin bright line with small zigzags.
-	bolt_width = 6, -- UT units
-	bolt_life = 0.5,
-	bolt_segment = 2,
-	bolt_jitter = 0.04,
-	bolt_intensity = 1.2,
-	-- ChildLightningBolt: the arcs are 15 units wide, and jump about more
-	arc_width = 4,
+	fire_animation_rate = 1.25, -- SniperFire.FireAnimRate: the Fire animation plays this much faster than its own rate
+	-- NewLightningBolt (PT_Branch) is 30 particles of size 30, each out of place by up to 5 units (mPosDev). It is drawn as a line of
+	-- parts of the streak texture (the upper half of LightningBoltT), each bolt_width units wide and twice that long, so the streak keeps
+	-- the shape it has in the texture, as it does in pictures of UT2004. The corners between the parts are out of line by up to
+	-- bolt_jitter units. How PT_Branch lays the texture along the bolt is in UT's engine, not its scripts. It is the same emitter as the
+	-- flare, so it fades the same way (flare_life). In pictures of UT2004 its streaks look like the texture added once (white middles,
+	-- thin blue edges), while the flare is 9 times the texture: the particles all add their flare at the start, but their streaks lie
+	-- along the bolt.
+	bolt_width = 30, -- UT units
+	bolt_jitter = 5, -- UT units
+	bolt_intensity = 1,
+	-- ChildLightningBolt: 10 particles of size 15, out of place by up to 15 units
+	arc_width = 15,
+	arc_jitter = 15,
 	arc_life = 0.5,
-	arc_segment = 0.6,
-	arc_jitter = 0.05,
-	arc_intensity = 1.2,
+	arc_intensity = 1,
 	-- The flare where the bolt starts and ends (the lower half of LightningBoltT). It is 30 units wide, the size of NewLightningBolt's
 	-- particles. In pictures of UT2004 taken 25 ms apart, it starts at 9 times the texture, which makes a white disk with a blue rim, and
 	-- dims evenly until it is gone 0.4 s after the shot, showing the ring and the spikes on the way.
@@ -41,15 +44,21 @@ local CONFIG = {
 	-- The flare in the player's view is drawn at this share of the distance to the weapon's muzzle. UT draws it in the world, behind the
 	-- whole weapon.
 	flare_view_depth = 1.2,
-	-- BlueSparks (20 particles of 0.8 to 1.2 s that fly out at 250 to 350 units a second) at the end of the bolt, and
-	-- ChildBlueSparks (10 particles) at the end of an arc
-	spark_count = 20,
+	-- ChildBlueSparks: each arc (ChildLightningBolt) throws 10 sparks from where it starts, which is where the bolt hit. They fly along
+	-- the arc's hit normal, up to 0.6 off it in each axis (mDirDev), at 250 to 350 units a second, slowed by 0.2 of their speed a second
+	-- (mAirResistance), and last 0.8 to 1.2 s. Each is a line (PT_Line) 2 to 3 units wide that thins by 3 units a second. Its length
+	-- goes with its speed: spark_length seconds of its travel, which is UT's mSpawnVecB.X of 5 in hundredths of a second, fitted to
+	-- pictures of UT2004. They are twice as bright as the texture (ScaleGlow).
+	spark_count = 10,
 	spark_life = {0.8, 1.2},
 	spark_speed = {250, 350},
-	spark_size = 12, -- UT units. UT's size is 1 to 2, of a line particle.
-	spark_drag = 1.5, -- per second
-	spark_intensity = 1.6,
-	arc_spark_count = 10,
+	spark_direction_spread = 0.6,
+	spark_air_resistance = 0.2,
+	spark_width = {2, 3}, -- UT units
+	spark_thinning = 3, -- UT units a second
+	spark_length = 0.05, -- seconds of travel
+	spark_attenuation = 0.1,
+	spark_intensity = 2,
 	-- LightningCharge: 10 sparks a second at the tip, each 0.2 s long and 5 units across, one of the four pictures of the texture,
 	-- turned at random. They stop while the weapon cannot fire (its next shot is not yet due, or it has no ammo).
 	-- The emitter is 30 units behind the muzzle (LightningCharge.RelativeLocation), inside the glass at the front, and each spark is up
@@ -109,24 +118,20 @@ local function random_between(range)
 	return range[1] + (range[2] - range[1]) * math.random()
 end
 
-local function random_direction()
-	local direction = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1)
+-- The most parts a bolt is drawn with. A long bolt has longer parts instead, far away where they are small on the screen.
+local MAX_BOLT_PARTS = 100
 
-	if Vector3.length(direction) < 0.001 then
-		return Vector3.up()
-	end
-
-	return Vector3.normalize(direction)
-end
-
--- The bolt: a line of parts, each a streak of the texture, out of line by a little. A part runs from the end of the one before it.
-local function draw_bolt(from, to, width, segment_length, jitter, life, intensity)
+-- The bolt: a line of parts, each a streak of the texture twice as long as it is wide, out of line by a little. A part runs from the
+-- end of the one before it.
+local function draw_bolt(from, to, width, jitter, life, intensity)
 	local offset = to - from
 	local length = Vector3.length(offset)
 
 	if length < 0.01 then
 		return
 	end
+
+	local count = math.clamp(math.ceil(length / (2 * width)), 1, MAX_BOLT_PARTS)
 
 	local direction = offset * (1 / length)
 	local across = Vector3.cross(direction, Vector3.up())
@@ -138,7 +143,6 @@ local function draw_bolt(from, to, width, segment_length, jitter, life, intensit
 	across = Vector3.normalize(across)
 
 	local other = Vector3.cross(direction, across)
-	local count = math.max(1, math.ceil(length / segment_length))
 	local previous = from
 
 	for i = 1, count do
@@ -186,28 +190,40 @@ local function flare(position, size, material)
 	})
 end
 
--- The sparks that fly out from where the bolt or an arc ends, away from the surface it hit
-local function sparks(position, normal, count)
-	local up = Vector3.length(normal) > 0.01 and normal or Vector3.up()
+-- The sparks an arc throws from where it starts (ChildBlueSparks), along the arc's hit normal. Each is a streak from where it is back
+-- along its velocity, drawn as a beam that follows it.
+local function sparks(position, normal)
+	local spread = CONFIG.spark_direction_spread
+	local air = CONFIG.spark_air_resistance
 
-	for _ = 1, count do
-		local direction = Vector3.normalize(up + random_direction())
+	for _ = 1, CONFIG.spark_count do
+		local direction = Vector3.normalize(normal + Vector3(random_between({-spread, spread}), random_between({-spread, spread}), random_between({-spread, spread})))
+		local velocity = Vector3Box(direction * (random_between(CONFIG.spark_speed) * UNIT))
+		local start = Vector3Box(position)
+		local born = Managers.time:time("game")
+		local width = random_between(CONFIG.spark_width)
 
-		particles.sprite({
-			attenuation = 0.1,
+		particles.beam({
+			attenuation = CONFIG.spark_attenuation,
 			color = {
 				1,
 				1,
 				1,
 			},
-			drag = CONFIG.spark_drag,
 			intensity = CONFIG.spark_intensity,
 			life = random_between(CONFIG.spark_life),
-			position = position,
-			size = CONFIG.spark_size * UNIT,
-			growth = -CONFIG.spark_size * UNIT / 1.2,
-			texture = "blue_spark",
-			velocity = direction * (random_between(CONFIG.spark_speed) * UNIT),
+			size = width * UNIT,
+			growth = -CONFIG.spark_thinning * UNIT,
+			texture = "blue_spark_line",
+			-- The air slows it by air times its speed a second, so its speed is v * e^(-air * t) and it has gone
+			-- v * (1 - e^(-air * t)) / air.
+			track = function ()
+				local speed_left = math.exp(-air * (Managers.time:time("game") - born))
+				local initial = velocity:unbox()
+				local at = start:unbox() + initial * ((1 - speed_left) / air)
+
+				return at - initial * (speed_left * CONFIG.spark_length), at
+			end,
 		})
 	end
 end
@@ -246,6 +262,21 @@ local function bolt_start(owner_unit)
 				end
 			end
 
+			-- UT starts the bolt at EffectOffset from the eye, 100 units ahead, where it draws the flare. Here it starts that far ahead
+			-- on the line through the flare's place on the screen (flare_view_offset, in a view of 90 degrees across), so that it comes
+			-- out of the flare.
+			local camera_position, camera_rotation = utils.camera_pose()
+			local player = Managers.player:local_player()
+
+			if camera_position and player then
+				local offset = CONFIG.flare_view_offset
+				-- (UT's view of 90 degrees across at 16 by 9 is 0.5625 of a tangent up and down)
+				local scale = math.tan(Managers.state.camera:fov(player.viewport_name) / 2) / 0.5625
+				local ray = Quaternion.forward(camera_rotation) + Quaternion.right(camera_rotation) * (offset[1] / offset[2] * scale) + Quaternion.up(camera_rotation) * (offset[3] / offset[2] * scale)
+
+				return camera_position + ray * (offset[2] * UNIT)
+			end
+
 			return api.muzzle_position()
 		end
 	end
@@ -257,12 +288,11 @@ end
 local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
 	local start = bolt_start(owner_unit)
 
-
 	if not start then
 		return
 	end
 
-	draw_bolt(start, end_position, CONFIG.bolt_width * UNIT, CONFIG.bolt_segment, CONFIG.bolt_jitter, CONFIG.bolt_life, CONFIG.bolt_intensity)
+	draw_bolt(start, end_position, CONFIG.bolt_width * UNIT, CONFIG.bolt_jitter * UNIT, CONFIG.flare_life, CONFIG.bolt_intensity)
 
 	local camera_position = utils.camera_pose()
 	local api = utils.is_local_player_unit(owner_unit) and first_person_api()
@@ -284,15 +314,25 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start)
 		flare(start, CONFIG.flare_size * UNIT)
 	end
 
-	-- A bolt that hit something makes sparks and flares there
+	-- The flare where the bolt ends. In UT it is drawn whole even where it reaches into the surface that was hit, so here it is moved
+	-- towards the camera by half its size, which keeps the surface from cutting it.
 	if Vector3.length(hit_normal) > 0.01 then
-		flare(end_position, CONFIG.flare_size * UNIT)
-		sparks(end_position, hit_normal, CONFIG.spark_count)
+		local size = CONFIG.flare_size * UNIT
+		local towards_camera = camera_position and Vector3.normalize(camera_position - end_position) or hit_normal
+
+		flare(end_position + towards_camera * (size / 2), size)
 	end
 
+	-- Each arc throws its sparks from where it starts. They go along the normal of what the arc hit, or back along the arc if it hit
+	-- nothing (SniperFire.DoTrace). The arc's hit normal is not known here, so the way back along the arc stands for it in both cases.
 	for _, arc_end in ipairs(arcs) do
-		draw_bolt(arcs_start, arc_end, CONFIG.arc_width * UNIT, CONFIG.arc_segment, CONFIG.arc_jitter, CONFIG.arc_life, CONFIG.arc_intensity)
-		sparks(arc_end, Vector3.zero(), CONFIG.arc_spark_count)
+		draw_bolt(arcs_start, arc_end, CONFIG.arc_width * UNIT, CONFIG.arc_jitter * UNIT, CONFIG.arc_life, CONFIG.arc_intensity)
+
+		local back = arcs_start - arc_end
+
+		if Vector3.length(back) > 0.01 then
+			sparks(arcs_start, Vector3.normalize(back))
+		end
 	end
 
 	-- NewLightningBolt.PostBeginPlay plays the impact sound where the bolt starts
@@ -573,7 +613,7 @@ mod.handgun_start_callbacks.lightning_skin = function (action, new_action)
 		local skin = api.state()
 
 		if skin and utils.is_local_player_unit(owner_unit) then
-			api.play("Fire")
+			api.play("Fire", api.animation_duration("Fire") / CONFIG.fire_animation_rate)
 			api.play_sound("ut_lightning_fire")
 
 			-- SniperFire.PlayFiring: the charge up after the shot, if there is ammo for another

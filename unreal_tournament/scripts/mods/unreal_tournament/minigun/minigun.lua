@@ -149,6 +149,12 @@ local function fire_chain_actions(own_action, loop_name, interval)
 	}
 end
 
+-- The flow events of the game's handgun shot that start its tracer (ActionHandgun.client_owner_post_update)
+local DROPPED_FLOW_EVENTS = {
+	lua_bullet_trail = true,
+	lua_bullet_trail_set = true,
+}
+
 -- Builds a round of the gun's. The first round has the wind up before it, and the rounds after it follow at the fire rate.
 local function build_shot(source, mode, first)
 	local action = table.clone(source)
@@ -169,6 +175,8 @@ local function build_shot(source, mode, first)
 	action.ut_minigun = mode
 	action.ut_minigun_first = first
 	action.ut_spread = alt and CONFIG.alt_spread or CONFIG.primary_spread
+	-- The repeating handgun's own tracer is not drawn (hooks.lua): the skin draws UT's
+	action.ut_dropped_flow_events = DROPPED_FLOW_EVENTS
 	action.allowed_chain_actions = fire_chain_actions(own_action, "loop", fire_time + interval)
 
 	-- The other button's shot is not in this action's chain, so it cannot start while this one runs (UT's fire modes are exclusive)

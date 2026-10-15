@@ -106,16 +106,19 @@ if (-not $ready) {
 # The Keep has to finish loading
 Start-Sleep -Seconds 15
 
-# The Keep opens the hero selection the first time, and the log says so. Confirm closes it (closing it is not in the log). The button only
-# takes a click after the mouse has been over it for a moment, so the mouse is moved there first.
-$text = Read-Shared (Get-NewLog).FullName
+# The Keep always opens the hero selection after the game starts. Confirm closes it. The log is written too late to say whether it is
+# open yet, so the click is always made (in the Keep it is only a swing of the weapon). The button only takes a click once it has seen
+# the mouse move onto it, so the mouse is moved next to it, then onto it, and pressed a moment later where it is. The screen can come up
+# some seconds after the Keep has loaded, so this is done three times, 5 s apart.
+Write-Host "Closing the hero selection..."
 
-if ($text -match "\[GameModeInn\] Start menu opened") {
-    Write-Host "Closing the hero selection..."
+for ($try = 1; $try -le 3; $try++) {
+    & (Join-Path $PSScriptRoot "game_input.ps1") -Move "950,1010"
+    Start-Sleep -Milliseconds 500
     & (Join-Path $PSScriptRoot "game_input.ps1") -Move "960,1018"
     Start-Sleep -Seconds 1
-    & (Join-Path $PSScriptRoot "game_input.ps1") -Click "960,1018"
-    Start-Sleep -Seconds 2
+    & (Join-Path $PSScriptRoot "game_input.ps1") -Press -Hold 120
+    Start-Sleep -Seconds 5
 }
 
 Write-Host "The game is in the Keep."

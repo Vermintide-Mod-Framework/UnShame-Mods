@@ -7,6 +7,7 @@
 #   game_input.ps1 -Type "loaded"      types letters, digits and spaces as keys
 #   game_input.ps1 -Chat "/ut_equip lightning"   opens the chat of Vermintide 2, types the text, and sends it
 #   game_input.ps1 -Press [-Right] [-Hold 900]   a click where the mouse is (the right button with -Right), held that many milliseconds
+#   game_input.ps1 -Turn 300,0         moves the mouse by that much (in steps of 10), which turns the view in first person
 #   -Target launcher sends it to Vermintide 2's launcher window instead of the game
 #   -Target ut2004 sends it to Unreal Tournament 2004
 #
@@ -17,6 +18,7 @@ param(
     [string]$Key = "",
     [string]$Click = "",
     [string]$Move = "",
+    [string]$Turn = "",
     [string]$Type = "",
     [string]$Chat = "",
     [int]$Hold = 80,
@@ -88,6 +90,16 @@ public static class GameInput {
         input[0].u.mi.dx = (int)((x - left) * 65535L / (width - 1));
         input[0].u.mi.dy = (int)((y - top) * 65535L / (height - 1));
         input[0].u.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK;
+        SendInput(1, input, Marshal.SizeOf(typeof(INPUT)));
+    }
+
+    // A mouse move by an amount, as input. A game in first person turns the view by it.
+    public static void MoveBy(int dx, int dy) {
+        INPUT[] input = new INPUT[1];
+        input[0].type = 0;
+        input[0].u.mi.dx = dx;
+        input[0].u.mi.dy = dy;
+        input[0].u.mi.dwFlags = MOUSEEVENTF_MOVE;
         SendInput(1, input, Marshal.SizeOf(typeof(INPUT)));
     }
 
@@ -189,6 +201,18 @@ function Move-Mouse($place) {
 
 if ($Move -ne "") {
     Move-Mouse (Parse-Place $Move)
+}
+
+if ($Turn -ne "") {
+    # Small steps, a frame apart, as a hand on the mouse would make
+    $parts = $Turn.Split(",")
+    $dx, $dy = [int]$parts[0], [int]$parts[1]
+    $steps = [Math]::Max(1, [Math]::Ceiling([Math]::Max([Math]::Abs($dx), [Math]::Abs($dy)) / 10))
+
+    for ($i = 1; $i -le $steps; $i++) {
+        [GameInput]::MoveBy([int]($dx * $i / $steps) - [int]($dx * ($i - 1) / $steps), [int]($dy * $i / $steps) - [int]($dy * ($i - 1) / $steps))
+        Start-Sleep -Milliseconds 10
+    }
 }
 
 if ($Click -ne "") {

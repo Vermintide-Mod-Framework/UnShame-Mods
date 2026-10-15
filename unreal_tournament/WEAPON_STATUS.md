@@ -23,13 +23,13 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Position and size against UT | ok (blend with UT) | ok (side by side) |
 | Pickup animation | - | - |
 | Idle animation speed | - | - |
-| Fire animation of each mode | ok (Fire; zoom has none) | - |
+| Fire animation of each mode | ok (Fire at UT's FireAnimRate 1.25, frames side by side with UT 25 ms apart; zoom has none) | - |
 | Animation length against the fire rate | - | - |
 | Parts that move by code | - | - |
 | Inspect pose | - | - |
 | Inspect: first second of movement | - | - |
 | Vanilla model or arms showing | - | - |
-| Vanilla flash or particles showing | - | - |
+| Vanilla flash or particles showing | ok (the handgun's orange tracer is dropped) | ok (the same) |
 | Crosshair | - | - |
 | Ammo number | - | - |
 | Bob and sway | - | - |
@@ -44,7 +44,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Spread | - | - |
 | Rapid shots | - | - |
 | **Damage** | | |
-| Normal enemies | - | - |
+| Normal enemies | no: open. The test "damages an enemy" fails: a marauder spawned in the Keep has 0 health before it is hit, so the test can't measure damage there (the bolt does end on it) | no: the same |
 | Armored enemies | - | - |
 | Monsters | - | - |
 | Shields | - | - |
@@ -78,10 +78,10 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Multi-load at 1, 2 and 3 rounds | - | - |
 | `/loaded` | - | - |
 | **Effects** | | |
-| Muzzle flash | no: open. UT's flare starts at 9 times its texture (a white disk with a blue rim) and fades evenly to nothing in 0.4 s. It has those numbers and reads its texture linearly (particle_weapon_linear), but was not compared with UT again after that. The other effects read their textures as srgb, which makes their faint parts much fainter than UT's. | no: faint next to UT (see the Lightning Gun) |
+| Muzzle flash | ok (white disk with a blue rim, size, place and fade side by side with UT; it reads its texture linearly, as UT adds it) | no: faint next to UT (see the Lightning Gun) |
 | Projectile model | - | - |
-| Trail | ok (bolt) | no: the tracer is not seen |
-| Flare | - | - |
+| Trail | no: the bolt starts in the flare and has UT's width, brightness and fade, but its streak repeats the texture's zigzag evenly where UT's is ragged and branches (PT_Branch is in UT's engine, not its scripts). The arcs are the same. | no: the tracer is not seen |
+| Flare | ok (where the bolt hits, whole, not cut by the wall) | - |
 | Smoke | - | - |
 | Explosion shape | - | - |
 | Explosion brightness | - | - |

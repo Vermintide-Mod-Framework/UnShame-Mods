@@ -132,6 +132,12 @@ local NO_HIT_EFFECT = "ut_lightning_impact"
 
 mod.silent_hit_effects[NO_HIT_EFFECT] = true
 
+-- The flow events of the game's handgun shot that start its tracer (ActionHandgun.client_owner_post_update)
+local DROPPED_FLOW_EVENTS = {
+	lua_bullet_trail = true,
+	lua_bullet_trail_set = true,
+}
+
 -- What an arc is, to the game's hit processing: an action with the profile of the arc.
 local ARC_ACTION = {
 	damage_profile = "ut_lightning_arc",
@@ -182,6 +188,8 @@ local function build_shot(original)
 	action.total_time = TOTAL_TIME
 	action.total_time_secondary = nil
 	action.ut_lightning_bolt = true
+	-- The game's tracer is not drawn: the bolt is the skin's (hooks.lua)
+	action.ut_dropped_flow_events = DROPPED_FLOW_EVENTS
 
 	if action.recoil_settings then
 		action.recoil_settings.vertical_climb = action.recoil_settings.vertical_climb * CONFIG.recoil_scale

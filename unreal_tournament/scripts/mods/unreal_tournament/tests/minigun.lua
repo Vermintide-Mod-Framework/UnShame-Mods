@@ -85,9 +85,12 @@ local function scenarios()
 				end
 
 				local health_extension = ScriptUnit.extension(target, "health_system")
+
+				-- Its health is only set some frames after it is spawned
+				t.wait(1)
+
 				local before = health_extension:current_health()
 
-				t.wait(1)
 				t.press("action_one", 0.8)
 				t.wait(0.5)
 
