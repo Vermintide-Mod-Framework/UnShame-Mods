@@ -306,7 +306,8 @@ local function enemy_in_reach(unit)
 	next_auto_test[unit] = t + CONFIG.auto_fire_test_freq
 
 	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
-	local _, is_enemy, direction, origin = in_reach(unit, physics_world, CONFIG.hit_range)
+	-- (it looks as far as UT's punch reached, which is less than the punch reaches here)
+	local _, is_enemy, direction, origin = in_reach(unit, physics_world, CONFIG.range)
 
 	if is_enemy then
 		return true
@@ -314,7 +315,7 @@ local function enemy_in_reach(unit)
 		return false
 	end
 
-	for _, target in ipairs(targets_in_reach(unit, physics_world, origin, direction, CONFIG.hit_range)) do
+	for _, target in ipairs(targets_in_reach(unit, physics_world, origin, direction, CONFIG.range)) do
 		if HEALTH_ALIVE[target.unit] then
 			return true
 		end
