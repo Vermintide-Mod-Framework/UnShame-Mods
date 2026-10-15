@@ -1154,7 +1154,8 @@ function mod.shield.reflect(from, to, radius, attacker_unit, ignore_unit, reache
 		return
 	end
 
-	local best_t, best_unit, best_center
+	-- (the players it gets to at the same point, as when it starts inside the reach of more than one, count by how near they are)
+	local best_t, best_unit, best_center, best_distance
 
 	for _, unit in ipairs(heroes.PLAYER_AND_BOT_UNITS) do
 		if (unit ~= attacker_unit or reaches_attacker) and unit ~= ignore_unit and Unit.alive(unit) then
@@ -1162,9 +1163,10 @@ function mod.shield.reflect(from, to, radius, attacker_unit, ignore_unit, reache
 			local height = status_extension and status_extension:is_crouching() and CONFIG.reach_height_crouched or CONFIG.reach_height
 			local center = POSITION_LOOKUP[unit] + Vector3(0, 0, height * UNIT)
 			local t = segment_cylinder(from, to, center, CONFIG.pawn_radius * UNIT + radius, height * UNIT)
+			local distance = t and Vector3.distance(Vector3.lerp(from, to, t), center)
 
-			if t and (not best_t or t < best_t) then
-				best_t, best_unit, best_center = t, unit, center
+			if t and (not best_t or t < best_t or t == best_t and distance < best_distance) then
+				best_t, best_unit, best_center, best_distance = t, unit, center, distance
 			end
 		end
 	end
