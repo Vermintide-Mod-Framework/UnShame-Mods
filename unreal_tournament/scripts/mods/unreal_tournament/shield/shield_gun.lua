@@ -268,16 +268,20 @@ local function targets_in_reach(owner_unit, physics_world, origin, direction, ra
 			local hits = raycast(physics_world, origin, to / distance, range)
 
 			for i = 1, #(hits or {}) do
-				local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hits[i][4]), hits[i][4])
+				local hit_actor = hits[i][4]
+				local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit_actor), hit_actor)
+				local breed = Unit.get_data(hit_unit, "breed")
+				local zone = breed and breed.hit_zones_lookup and breed.hit_zones_lookup[Actor.node(hit_actor)]
 
-				if hit_unit == unit then
+				-- (the "afro" zone is far bigger than the enemy, for near misses, and a hit on it does nothing: the ray goes on)
+				if hit_unit == unit and not (zone and zone.name == "afro") then
 					targets[#targets + 1] = {
 						hit = hits[i],
 						unit = unit,
 					}
 
 					break
-				elseif not Unit.get_data(hit_unit, "breed") then
+				elseif not breed then
 					-- (a wall in the way)
 					break
 				end
@@ -302,9 +306,11 @@ local function enemy_in_reach(unit)
 	next_auto_test[unit] = t + CONFIG.auto_fire_test_freq
 
 	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
-	local _, _, direction, origin = in_reach(unit, physics_world, CONFIG.hit_range)
+	local _, is_enemy, direction, origin = in_reach(unit, physics_world, CONFIG.hit_range)
 
-	if not origin then
+	if is_enemy then
+		return true
+	elseif not origin then
 		return false
 	end
 
@@ -451,9 +457,27 @@ local function punch(action, t, power_level, bash)
 	end
 
 	local punch_action = PUNCH_ACTIONS[step]
+	local targets = targets_in_reach(owner_unit, action.physics_world, origin, direction, range)
+
+	-- (the enemy straight ahead is always one: close up, its middle can be outside the cone)
+	if is_enemy then
+		local ahead = ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
+		local listed = false
+
+		for _, target in ipairs(targets) do
+			listed = listed or target.unit == ahead
+		end
+
+		if not listed then
+			targets[#targets + 1] = {
+				hit = hit,
+				unit = ahead,
+			}
+		end
+	end
 
 	-- Every enemy in reach takes the punch, and every body in reach is thrown
-	for _, target in ipairs(targets_in_reach(owner_unit, action.physics_world, origin, direction, range)) do
+	for _, target in ipairs(targets) do
 		if HEALTH_ALIVE[target.unit] then
 			DamageUtils.process_projectile_hit(action.world, action.item_name, owner_unit, action.is_server, { target.hit }, punch_action, direction, true, nil, nil, false, power_level)
 		end
