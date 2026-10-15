@@ -561,34 +561,23 @@ local function show_charge_bar(bar_ui, player)
 end
 
 local bar_definitions = local_require("scripts/ui/hud_ui/overcharge_bar_ui_definitions")
--- Where the ammo counter is: the panel of the equipment HUD that is shown (the mouse and keyboard one or the gamepad one, which places
--- it elsewhere), as it was laid out last
-local ammo_counter_scenegraph
+local keyboard_layout = local_require("scripts/ui/hud_ui/equipment_ui_definitions").scenegraph_definition
+local gamepad_layout = local_require("scripts/ui/hud_ui/gamepad_equipment_ui_definitions").scenegraph_definition
 
-for _, equipment_ui in ipairs({ EquipmentUI, GamePadEquipmentUI }) do
-	mod:hook_safe(equipment_ui, "update", function (self)
-		if self._is_visible ~= false and self.ui_scenegraph and self.ui_scenegraph.ammo_background then
-			ammo_counter_scenegraph = self.ui_scenegraph
-		end
-	end)
-end
+-- The copy's nodes: its panel is placed as the equipment HUD places the ammo counter's panel (the same node, under the same root that the
+-- HUD scale scales), and the bar is in the middle of it. Each equipment HUD places the counter its own way.
+local function charge_bar_scenegraph(layout, root_name, panel_name)
+	local panel = table.clone(layout[panel_name])
 
--- The copy's nodes: a root that stays as it is, so its child is placed in the HUD's own units, the units the counter's place is in
-local function charge_bar_scenegraph()
+	panel.parent = root_name
+
 	return {
-		screen = {
-			position = {
-				0,
-				0,
-				UILayer.hud_inventory,
-			},
-			size = {
-				1920,
-				1080,
-			},
-		},
+		[root_name] = table.clone(layout[root_name]),
+		panel = panel,
 		charge_bar = {
-			parent = "screen",
+			horizontal_alignment = "center",
+			parent = "panel",
+			vertical_alignment = "center",
 			position = {
 				0,
 				0,
@@ -599,22 +588,11 @@ local function charge_bar_scenegraph()
 	}
 end
 
--- Puts the copy in the middle of the ammo counter's panel, where the counter is now. Returns false while there is no counter.
-local function place_on_ammo_counter(bar)
-	local counter = ammo_counter_scenegraph and ammo_counter_scenegraph.ammo_background
+-- Whether the HUD shows the gamepad's equipment HUD, as the two decide it (EquipmentUI._handle_gamepad)
+local function uses_gamepad_layout()
+	local gamepad_active = Managers.input:is_device_active("gamepad") or not IS_WINDOWS
 
-	if not counter then
-		return false
-	end
-
-	local node = bar.ui_scenegraph.charge_bar
-	local position = node.local_position
-
-	position[1] = counter.world_position[1] + (counter.size[1] - node.size[1]) / 2
-	position[2] = counter.world_position[2] + (counter.size[2] - node.size[2]) / 2
-	position[3] = counter.world_position[3] + 1
-
-	return true
+	return (gamepad_active or UISettings.use_gamepad_hud_layout == "always") and UISettings.use_gamepad_hud_layout ~= "never"
 end
 
 -- Makes the copy of a player's overcharge bar, as the game makes the bar (OverchargeBarUI.create_ui_elements), with the same renderer.
@@ -639,19 +617,18 @@ local function new_charge_bar(game_bar)
 		alpha_multiplier = 1,
 		snap_pixel_positions = true,
 	}
-	bar.ui_scenegraph = UISceneGraph.init_scenegraph(charge_bar_scenegraph())
+	bar.keyboard_scenegraph = UISceneGraph.init_scenegraph(charge_bar_scenegraph(keyboard_layout, "root_parent", "ammo_background_parent"))
+	bar.gamepad_scenegraph = UISceneGraph.init_scenegraph(charge_bar_scenegraph(gamepad_layout, "root", "ammo_background"))
 	bar.charge_bar = UIWidget.init(definition)
 
 	return bar
 end
 
--- Draws the copy as the game draws its bar (OverchargeBarUI.update), at the ammo counter, as see-through as the game's bar is
+-- Draws the copy as the game draws its bar (OverchargeBarUI.update), where the ammo counter is placed, as see-through as the game's bar is
 local function draw_charge_bar(bar, game_bar, dt, player)
-	if not show_charge_bar(bar, player) then
-		return
-	end
+	bar.ui_scenegraph = uses_gamepad_layout() and bar.gamepad_scenegraph or bar.keyboard_scenegraph
 
-	if not place_on_ammo_counter(bar) then
+	if not show_charge_bar(bar, player) then
 		return
 	end
 
