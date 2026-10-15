@@ -731,8 +731,9 @@ end
 -- When each player's charge started, on the machine that owns their actions
 local charge_started = {}
 
--- TEMPORARY: names what a ray from the eyes along the crosshair hits with each filter, to find out what a hanging lantern is to the game
-local function debug_crosshair(owner_unit, physics_world)
+-- TEMPORARY: names the units of the level near the crosshair line from the eyes (within 10 m, a part or the unit itself within 0.6 m of
+-- the line), whatever their collision, to find out what a hanging lantern is to the game
+local function debug_crosshair(owner_unit)
 	local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
 
 	if not first_person_extension or not utils.is_local_player_unit(owner_unit) then
@@ -741,29 +742,60 @@ local function debug_crosshair(owner_unit, physics_world)
 
 	local position = first_person_extension:current_position()
 	local direction = Quaternion.forward(first_person_extension:current_rotation())
+	local found = {}
 
-	for _, filter in ipairs({ "filter_physics_projectile", "filter_physics_projectile_large", "filter_environment_overlap", "filter_player_ray_projectile_dynamic_only", "filter_ragdoll_secondary" }) do
-		local hits = PhysicsWorld.immediate_raycast(physics_world, position, direction, 10, "all", "collision_filter", filter)
-		local names = {}
+	local function near_line(point)
+		local along = Vector3.dot(point - position, direction)
 
-		for i = 1, #(hits or {}) do
-			local actor = hits[i][4]
-			local unit = actor and Actor.unit(actor)
+		return along > 0 and along < 10 and Vector3.distance(position + direction * along, point) < 0.6, along
+	end
 
-			-- (not the player's own character)
-			if unit ~= owner_unit and #names < 3 then
-				names[#names + 1] = string.format("%s %.1fm%s%s", unit and Unit.debug_name(unit) or "?", hits[i][2], actor and Actor.is_dynamic(actor) and " dynamic" or "", unit and ScriptUnit.has_extension(unit, "health_system") and " health" or "")
+	for _, unit in ipairs(World.units(Managers.world:world("level_world"))) do
+		if unit ~= owner_unit and Unit.alive(unit) then
+			local num_actors = Unit.num_actors(unit)
+			local dynamic = 0
+			local near, along = near_line(Unit.world_position(unit, 0))
+
+			for i = 0, num_actors - 1 do
+				local actor = Unit.actor(unit, i)
+
+				if actor then
+					local actor_near, actor_along = near_line(Actor.position(actor))
+
+					dynamic = dynamic + (Actor.is_dynamic(actor) and 1 or 0)
+
+					if actor_near and (not near or actor_along < along) then
+						near, along = true, actor_along
+					end
+				end
+			end
+
+			if near then
+				found[#found + 1] = {
+					along = along,
+					text = string.format("%s %.1fm, %d parts, %d dynamic%s", Unit.debug_name(unit), along, num_actors, dynamic, ScriptUnit.has_extension(unit, "health_system") and ", health" or ""),
+				}
 			end
 		end
+	end
 
-		mod:echo("%s: %s", filter, #names > 0 and table.concat(names, ", ") or "nothing")
+	table.sort(found, function (a, b)
+		return a.along < b.along
+	end)
+
+	for i = 1, math.min(#found, 6) do
+		mod:echo("near the crosshair: %s", found[i].text)
+	end
+
+	if #found == 0 then
+		mod:echo("near the crosshair: nothing")
 	end
 end
 
 local function punch(action, t, power_level, bash)
 	local owner_unit = action.owner_unit
 
-	debug_crosshair(owner_unit, action.physics_world)
+	debug_crosshair(owner_unit)
 	local hold_time = charge_started[owner_unit] and t - charge_started[owner_unit] or 0
 	local step, scale = charge_step(hold_time)
 	local range = bash and CONFIG.bash_range or CONFIG.hit_range
