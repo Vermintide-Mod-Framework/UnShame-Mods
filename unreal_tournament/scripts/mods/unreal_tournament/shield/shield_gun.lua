@@ -101,12 +101,14 @@ local CONFIG = {
 	-- The punch hits every enemy within its range in a cone this wide (degrees) about the way the player looks, that it can see. UT's
 	-- punch hits the one thing in front: this is the mod's own, and a guess.
 	hit_angle = 60,
-	-- DamTypeShieldImpact's throw of a body (xPawn.PlayDying): KDeathVel along the way the punch went, which is lifted by half its
-	-- length (Force * (X + 0.5 up)), and KDeathUpKick up, in UT units a second. It is the same for a body that is hit when it is dead,
-	-- and for anything loose that the punch hits. A body is thrown once it falls, if it dies within ragdoll_window seconds of the hit.
+	-- What the punch throws (see throws below). A body it kills gets the punch's momentum, Force * (X + 0.5 up) / Mass, and KDeathUpKick
+	-- up. A body that is down already and a loose thing get DamTypeShieldImpact's KDeathVel along the way the punch went, lifted by half,
+	-- and KDeathUpKick up. In UT units a second. A body is thrown once it falls, if it dies within ragdoll_window seconds of the hit, and
+	-- the throw is held for kill_hold seconds.
 	ragdoll_speed = 450,
 	ragdoll_up = 300,
 	ragdoll_window = 1.5,
+	kill_hold = 0.15,
 	-- The punch reaches from the middle of the player (Instigator.Location), not from the eyes: xPawn's CollisionHeight (44) above the
 	-- feet, and CrouchHeight (29) when crouched, in UT units. So the floor is in reach while looking up to 67 degrees from straight down.
 	reach_height = 44,
@@ -350,42 +352,68 @@ local function push_player(owner_unit, direction, force)
 	locomotion_extension:set_wanted_velocity(velocity)
 end
 
--- Bodies and loose things that a punch throws (DamTypeShieldImpact's death throw). A body is thrown once it falls: its parts move by
--- physics only then. This runs on every machine, because the physics of bodies is each machine's own, so the machine of the punch
--- tells the others.
+-- What a punch throws. This runs on every machine, because the physics of bodies is each machine's own, so the machine of the punch tells
+-- the others. There are three kinds:
+--   KILL: an enemy the punch hits. If it dies, its body is thrown with the punch's momentum once it falls (its parts move by physics only
+--       then), every part alike, as UT starts a ragdoll with a velocity (xPawn.PlayDying). The velocity is held for kill_hold seconds,
+--       because for its first moments the body is still moved by its animation, and the game pushes it too.
+--   BODY: a body that is down already. UT pushes it at the place it is hit (KAddImpulse at HitLocation), so here the part of it nearest
+--       the punch gets the push, and the rest of the body follows on its joints.
+--   LOOSE: a loose thing, which moves as a whole.
+local KILL, BODY, LOOSE = 1, 2, 3
 local throws = {}
 
-local function add_throw(unit, velocity)
+local function add_throw(unit, kind, velocity, at)
 	throws[unit] = {
+		at = Vector3Box(at),
+		kind = kind,
 		t = Managers.time:time("game"),
 		velocity = Vector3Box(velocity),
 	}
 end
 
--- Returns whether anything of the unit moved
-local function throw_now(unit, velocity)
-	local thrown = false
+-- Sets the velocity of the moving parts of a unit, or of only the one nearest a point. Returns whether anything moved.
+local function move_parts(unit, velocity, nearest_to)
+	local nearest, nearest_distance
 
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 
 		if actor and Actor.is_dynamic(actor) then
-			Actor.set_velocity(actor, velocity)
+			if nearest_to then
+				local distance = Vector3.distance(Actor.position(actor), nearest_to)
 
-			thrown = true
+				if not nearest or distance < nearest_distance then
+					nearest, nearest_distance = actor, distance
+				end
+			else
+				Actor.set_velocity(actor, velocity)
+
+				nearest = actor
+			end
 		end
 	end
 
-	return thrown
+	if nearest and nearest_to then
+		Actor.set_velocity(nearest, velocity)
+	end
+
+	return nearest ~= nil
 end
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	local t = Managers.time:time("game")
 
 	for unit, throw in pairs(throws) do
-		if not Unit.alive(unit) or t - throw.t > CONFIG.ragdoll_window then
+		local velocity = throw.velocity:unbox()
+
+		if not Unit.alive(unit) or t - throw.t > CONFIG.ragdoll_window or throw.thrown_t and t - throw.thrown_t > CONFIG.kill_hold then
 			throws[unit] = nil
-		elseif not HEALTH_ALIVE[unit] and throw_now(unit, throw.velocity:unbox()) then
+		elseif throw.kind == KILL then
+			if not HEALTH_ALIVE[unit] and move_parts(unit, velocity) then
+				throw.thrown_t = throw.thrown_t or t
+			end
+		elseif move_parts(unit, velocity, throw.kind == BODY and throw.at:unbox() or nil) then
 			throws[unit] = nil
 		end
 	end
@@ -395,24 +423,33 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(throws)
 end
 
-mod:network_register("ut_shield_throw", function (_, id, is_level_unit, x, y, z)
+mod:network_register("ut_shield_throw", function (_, id, is_level_unit, kind, x, y, z, at_x, at_y, at_z)
 	local unit = Managers.state.network:game_object_or_level_unit(id, is_level_unit == 1)
 
 	if unit and Unit.alive(unit) then
-		add_throw(unit, Vector3(x, y, z))
+		add_throw(unit, kind, Vector3(x, y, z), Vector3(at_x, at_y, at_z))
 	end
 end)
 
--- Throws what the punch hit, here and on the other machines
-local function throw_hit(unit, direction)
-	local shot = Vector3.normalize(direction + Vector3(0, 0, 0.5))
-	local velocity = (shot * CONFIG.ragdoll_speed + Vector3(0, 0, CONFIG.ragdoll_up)) * UNIT
+-- Throws what the punch hit, here and on the other machines. force is the punch's (MinForce to MaxForce), at is where it hit, and alive
+-- says whether a character was alive before the punch (which may have killed it).
+local function throw_hit(unit, direction, force, at, alive)
+	local kind = Unit.get_data(unit, "breed") and (alive and KILL or BODY) or LOOSE
+	local velocity
+
+	if kind == KILL then
+		-- (the punch's momentum on the body, Force * (X + 0.5 up) / Mass, and KDeathUpKick)
+		velocity = ((direction + Vector3(0, 0, 0.5)) * (force / CONFIG.ut_mass) + Vector3(0, 0, CONFIG.ragdoll_up)) * UNIT
+	else
+		velocity = (Vector3.normalize(direction + Vector3(0, 0, 0.5)) * CONFIG.ragdoll_speed + Vector3(0, 0, CONFIG.ragdoll_up)) * UNIT
+	end
+
 	local id, is_level_unit = Managers.state.network:game_object_or_level_id(unit)
 
-	add_throw(unit, velocity)
+	add_throw(unit, kind, velocity, at)
 
 	if id then
-		mod:network_send("ut_shield_throw", "others", id, is_level_unit and 1 or 0, Vector3.x(velocity), Vector3.y(velocity), Vector3.z(velocity))
+		mod:network_send("ut_shield_throw", "others", id, is_level_unit and 1 or 0, kind, Vector3.x(velocity), Vector3.y(velocity), Vector3.z(velocity), Vector3.x(at), Vector3.y(at), Vector3.z(at))
 	end
 end
 
@@ -477,13 +514,18 @@ local function punch(action, t, power_level, bash)
 		end
 	end
 
-	-- Every enemy in reach takes the punch, and every body in reach is thrown
+	local force = CONFIG.min_force + scale * (CONFIG.max_force - CONFIG.min_force)
+
+	-- Every enemy in reach takes the punch, and every body in reach is thrown. (A body is pushed where the punch meets it first, the part
+	-- nearest the player.)
 	for _, target in ipairs(targets) do
-		if HEALTH_ALIVE[target.unit] then
+		local alive = HEALTH_ALIVE[target.unit]
+
+		if alive then
 			DamageUtils.process_projectile_hit(action.world, action.item_name, owner_unit, action.is_server, { target.hit }, punch_action, direction, true, nil, nil, false, power_level)
 		end
 
-		throw_hit(target.unit, direction)
+		throw_hit(target.unit, direction, force, origin, alive)
 	end
 
 	-- The thing straight ahead, if it is not an enemy: a door or a barrel takes the punch as from a melee swing, a loose thing is thrown,
@@ -501,12 +543,12 @@ local function punch(action, t, power_level, bash)
 	hit_object(action, hit_unit, hit, direction, punch_action.damage_profile, power_level)
 
 	if Actor.is_dynamic(hit[4]) then
-		throw_hit(hit_unit, direction)
+		throw_hit(hit_unit, direction, force, hit[1], false)
 	end
 
 	-- Anything else near enough throws the player off it, as UT's punch of anything that is not a pawn does
 	if hit[2] <= CONFIG.range * UNIT and utils.is_local_player_unit(owner_unit) and not Actor.is_dynamic(hit[4]) then
-		push_player(owner_unit, direction, CONFIG.min_force + scale * (CONFIG.max_force - CONFIG.min_force))
+		push_player(owner_unit, direction, force)
 	end
 end
 
