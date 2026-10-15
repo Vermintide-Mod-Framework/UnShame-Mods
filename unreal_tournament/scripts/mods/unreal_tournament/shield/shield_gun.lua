@@ -148,7 +148,14 @@ local CONFIG = {
 	-- armor. UT has no armor, and the punch's force is not stopped by it.
 	armor_attack = {1, 1, 1, 1, 1, 0.8},
 	armor_impact = {1, 1, 1, 1, 1, 1},
-}
+	-- The punch's stagger is this many times what its damage gives. UT's punch throws a pawn back with all its momentum (650 to 1000
+	-- units a second), far more than a stagger of its damage. This number is a choice.
+	stagger_multiplier = 2,
+	-- The spin of a body the punch kills (xPawn.PlayDying): RagInvInertia times where it was hit from its middle, across the throw, with
+	-- the hit's sideways distance made RagSpinScale times longer, in UT's rotation units (65536 a turn). The middle is the pawn's
+	-- (CollisionHeight above the feet).
+	spin_inverse_inertia = 4,
+	spin_sideways_scale = 2.5,
 
 local UNIT = CONFIG.meters_per_uu
 
@@ -174,7 +181,7 @@ for step = 0, CONFIG.damage_steps - 1 do
 	local damage = damage_for_step(step)
 
 	register_damage_profile(name, "shot_sniper", function (profile)
-		make_flat(profile, attack_power_for(damage), impact_power_for(damage), "blunt")
+		make_flat(profile, attack_power_for(damage), impact_power_for(damage) * CONFIG.stagger_multiplier, "blunt")
 
 		-- The punch hurts the one thing it hits, as UT's trace does
 		profile.cleave_distribution = {
@@ -364,16 +371,17 @@ end
 local KILL, LOOSE = 1, 2
 local throws = {}
 
-local function add_throw(unit, kind, velocity)
+local function add_throw(unit, kind, velocity, spin)
 	throws[unit] = {
 		kind = kind,
+		spin = Vector3Box(spin),
 		t = Managers.time:time("game"),
 		velocity = Vector3Box(velocity),
 	}
 end
 
--- Sets the velocity of the moving parts of a unit. Returns whether anything moved.
-local function move_parts(unit, velocity)
+-- Sets the velocity and the spin (radians a second, about each axis) of the moving parts of a unit. Returns whether anything moved.
+local function move_parts(unit, velocity, spin)
 	local moved = false
 
 	for i = 0, Unit.num_actors(unit) - 1 do
@@ -381,6 +389,7 @@ local function move_parts(unit, velocity)
 
 		if actor and Actor.is_dynamic(actor) then
 			Actor.set_velocity(actor, velocity)
+			Actor.set_angular_velocity(actor, spin)
 
 			moved = true
 		end
@@ -393,15 +402,15 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	local t = Managers.time:time("game")
 
 	for unit, throw in pairs(throws) do
-		local velocity = throw.velocity:unbox()
+		local velocity, spin = throw.velocity:unbox(), throw.spin:unbox()
 
 		if not Unit.alive(unit) or t - throw.t > CONFIG.ragdoll_window or throw.thrown_t and t - throw.thrown_t > CONFIG.kill_hold then
 			throws[unit] = nil
 		elseif throw.kind == KILL then
-			if not HEALTH_ALIVE[unit] and move_parts(unit, velocity) then
+			if not HEALTH_ALIVE[unit] and move_parts(unit, velocity, spin) then
 				throw.thrown_t = throw.thrown_t or t
 			end
-		elseif move_parts(unit, velocity) then
+		elseif move_parts(unit, velocity, spin) then
 			throws[unit] = nil
 		end
 	end
@@ -411,26 +420,37 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(throws)
 end
 
-mod:network_register("ut_shield_throw", function (_, id, is_level_unit, kind, x, y, z)
+mod:network_register("ut_shield_throw", function (_, id, is_level_unit, kind, x, y, z, spin_x, spin_y, spin_z)
 	local unit = Managers.state.network:game_object_or_level_unit(id, is_level_unit == 1)
 
 	if unit and Unit.alive(unit) then
-		add_throw(unit, kind, Vector3(x, y, z))
+		add_throw(unit, kind, Vector3(x, y, z), Vector3(spin_x or 0, spin_y or 0, spin_z or 0))
 	end
 end)
 
--- Throws what the punch hit, here and on the other machines. alive says that it is an enemy that was alive before the punch (which may
--- have killed it), not a loose thing.
-local function throw_hit(unit, direction, alive)
-	local kind = alive and KILL or LOOSE
-	local velocity = (Vector3.normalize(direction + Vector3(0, 0, 0.5)) * CONFIG.ragdoll_speed + Vector3(0, 0, CONFIG.ragdoll_up)) * UNIT
+-- The spin of a body the punch kills (xPawn.PlayDying), from where it was hit, in radians a second
+local function death_spin(unit, at, shot)
+	local middle = Unit.world_position(unit, 0) + Vector3(0, 0, CONFIG.reach_height * UNIT)
+	local from_middle = (at - middle) / UNIT
 
+	from_middle = Vector3(Vector3.x(from_middle) * CONFIG.spin_sideways_scale, Vector3.y(from_middle) * CONFIG.spin_sideways_scale, Vector3.z(from_middle))
+
+	return Vector3.cross(from_middle, shot) * (CONFIG.spin_inverse_inertia * 2 * math.pi / 65536)
+end
+
+-- Throws what the punch hit, here and on the other machines. alive says that it is an enemy that was alive before the punch (which may
+-- have killed it), not a loose thing. at is where the punch hit it.
+local function throw_hit(unit, direction, alive, at)
+	local kind = alive and KILL or LOOSE
+	local shot = Vector3.normalize(direction + Vector3(0, 0, 0.5)) * CONFIG.ragdoll_speed
+	local velocity = (shot + Vector3(0, 0, CONFIG.ragdoll_up)) * UNIT
+	local spin = alive and at and death_spin(unit, at, shot) or Vector3.zero()
 	local id, is_level_unit = Managers.state.network:game_object_or_level_id(unit)
 
-	add_throw(unit, kind, velocity)
+	add_throw(unit, kind, velocity, spin)
 
 	if id then
-		mod:network_send("ut_shield_throw", "others", id, is_level_unit and 1 or 0, kind, Vector3.x(velocity), Vector3.y(velocity), Vector3.z(velocity))
+		mod:network_send("ut_shield_throw", "others", id, is_level_unit and 1 or 0, kind, Vector3.x(velocity), Vector3.y(velocity), Vector3.z(velocity), Vector3.x(spin), Vector3.y(spin), Vector3.z(spin))
 	end
 end
 
@@ -560,7 +580,7 @@ local function punch(action, t, power_level, bash)
 		end
 
 		if alive then
-			throw_hit(target.unit, direction, true)
+			throw_hit(target.unit, direction, true, hit_on_target and hit_on_target[1])
 		end
 	end
 
