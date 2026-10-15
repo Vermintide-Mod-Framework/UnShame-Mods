@@ -542,6 +542,9 @@ local function show_charge_bar(bar_ui, player)
 	bar_ui:update_bar_size(40, first_mark, second_mark)
 	bar_ui:set_charge_bar_fraction(player, math.min(charged, 1), first_mark, second_mark, 0)
 
+	-- (the fill is a rectangle as long as the charge, see new_charge_bar)
+	style.bar_1.size[1] = bar_ui.charge_bar.content.size[1] * style.bar_1.gradient_threshold
+
 	for i = 1, 3 do
 		style.bar_1.color[i + 1] = CONFIG.charge_bar_color[i]
 	end
@@ -566,9 +569,19 @@ end
 local bar_definitions = local_require("scripts/ui/hud_ui/overcharge_bar_ui_definitions")
 
 -- Makes the copy of a player's overcharge bar, as the game makes the bar (OverchargeBarUI.create_ui_elements), with the same renderer.
--- (The game's clears the renderer's queue of scenegraphs first, which is not done here, in the middle of the HUD's frame.)
+-- (The game's clears the renderer's queue of scenegraphs first, which is not done here, in the middle of the HUD's frame.) The game's
+-- fill is its material with how full it is set on the material, which every bar drawn with that material shares in a frame. So the copy's
+-- fill is a rectangle of its colour instead, and the game's bar keeps its own.
 local function new_charge_bar(game_bar)
 	local bar = setmetatable({}, getmetatable(game_bar))
+	local definition = UIWidgets.create_overcharge_bar_widget("charge_bar", nil, nil, nil, nil, bar_definitions.DEFAULT_BAR_SIZE)
+
+	for _, pass in ipairs(definition.element.passes) do
+		if pass.style_id == "bar_1" then
+			pass.pass_type = "rect"
+			pass.texture_id = nil
+		end
+	end
 
 	bar.ui_renderer = game_bar.ui_renderer
 	bar.input_manager = game_bar.input_manager
@@ -578,7 +591,7 @@ local function new_charge_bar(game_bar)
 		snap_pixel_positions = true,
 	}
 	bar.ui_scenegraph = UISceneGraph.init_scenegraph(bar_definitions.scenegraph_definition)
-	bar.charge_bar = UIWidget.init(UIWidgets.create_overcharge_bar_widget("charge_bar", nil, nil, nil, nil, bar_definitions.DEFAULT_BAR_SIZE))
+	bar.charge_bar = UIWidget.init(definition)
 
 	return bar
 end
