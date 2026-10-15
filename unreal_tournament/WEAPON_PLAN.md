@@ -17,7 +17,7 @@ needs its own copy from a base of that hero, because the animations, units and a
 | Lightning Gun | Handgun (`es_handgun`, `dr_handgun`) | Mercenary, Huntsman, Foot Knight, Ironbreaker, Ranger | none | done (third person, inspect and bots not yet checked against UT) |
 | Assault Rifle (akimbo) | Brace of Pistols (`wh_brace_of_pistols`) or Repeating Pistols (`wh_repeating_pistols`); Drakefire Pistols (`dr_drake_pistol`) | Zealot, Bounty Hunter, Captain, Ironbreaker | none | not started |
 | Minigun | Repeater: `es_repeating_handgun`; `wh_repeating_pistols` or `wh_crossbow_repeater` | Mercenary, Huntsman, Foot Knight, Zealot, Bounty Hunter, Captain | none | not started |
-| Redeemer | Trollhammer Torpedo (`dr_deus_01`) | Ironbreaker | grass | not started |
+| Redeemer | Trollhammer Torpedo (`dr_deus_01`) | Ironbreaker | grass | in progress (missile, six-wave blast, one missile, UT model, sounds; the guided missile and the blast's look are open) |
 
 ## Careers without a weapon
 

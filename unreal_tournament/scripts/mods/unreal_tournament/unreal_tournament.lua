@@ -99,6 +99,8 @@ mod:dofile("scripts/mods/unreal_tournament/minigun/minigun")
 mod:dofile("scripts/mods/unreal_tournament/minigun/skin")
 mod:dofile("scripts/mods/unreal_tournament/shield/shield_gun")
 mod:dofile("scripts/mods/unreal_tournament/shield/skin")
+mod:dofile("scripts/mods/unreal_tournament/redeemer/redeemer")
+mod:dofile("scripts/mods/unreal_tournament/redeemer/skin")
 -- Crafting for those items.
 mod:dofile("scripts/mods/unreal_tournament/crafting")
 
@@ -114,10 +116,11 @@ mod:dofile("scripts/mods/unreal_tournament/tests/flak")
 mod:dofile("scripts/mods/unreal_tournament/tests/lightning")
 mod:dofile("scripts/mods/unreal_tournament/tests/minigun")
 mod:dofile("scripts/mods/unreal_tournament/tests/shield")
+mod:dofile("scripts/mods/unreal_tournament/tests/redeemer")
 
 -- This message appears in the chat each time the mod is loaded or reloaded, so you can tell which build is running. The build
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 931)")
+	mod:echo("Unreal Tournament loaded (build 932)")
 end

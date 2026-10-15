@@ -28,9 +28,16 @@ TEXTURES = {
     # (ForceRingA's rings of the punch and ShieldCharge's sparks of the charge)
     'force_ring': ('XEffectMat/Texture/shock_ring_b.tga', 1, 1),
     'shield_charge_spark': ('XEffects/Texture/FlakTrailTex.tga', 1, 1),
+    # The Redeemer (NewRedeemerTrail's flames and smoke, RedeemerExplosion's puffs and the gradient of its ring and sphere)
+    'redeemer_flame': ('AW-2004Explosions/Texture/Part_explode2.tga', 4, 4),
+    'redeemer_smoke': ('AW-2004Particles/Texture/MuchSmoke1.tga', 4, 4),
+    'smoke_puff': ('EpicParticles/Texture/Smokepuff.tga', 1, 1),
+    'smoke_puff2': ('EpicParticles/Texture/Smokepuff2.tga', 1, 1),
+    'flame_gradient': ('EpicParticles/Texture/FlameGradient.tga', 1, 1),
 }
 
-SRGB = ('shell_casing',)
+# (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
+SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff')
 
 # The textures that UT draws with FB_Brighten (see write)
 BRIGHTEN = ('minigun_burst', 'shield_elec')
