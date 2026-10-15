@@ -64,8 +64,9 @@ local CONFIG = {
 	shove_hold = 0.65,
 	shove_frequency = 32,
 	shove_damping = 0.65,
-	-- The colour of the charge on the overcharge bar: ShieldGun.HudColor (R, G, B)
-	charge_bar_color = { 0, 188, 121 },
+	-- The colour of the charge on the overcharge bar (R, G, B): ShieldGun.HudColor (0, 188, 121) made as bright as it goes, its
+	-- strongest part at 255, because the bar's texture darkens it (a choice)
+	charge_bar_color = { 0, 255, 164 },
 	-- The alpha of the bar's marks, as UIWidgets.create_overcharge_bar_widget makes them
 	charge_mark_alpha = 204,
 	-- Where the charge bar's middle is on the 1920 by 1080 screen, from its bottom left: the middle of the ammo counter, which is 383 by
