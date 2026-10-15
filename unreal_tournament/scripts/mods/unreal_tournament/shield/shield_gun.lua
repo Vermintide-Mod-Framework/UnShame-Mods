@@ -108,6 +108,9 @@ local CONFIG = {
 	ragdoll_up = 300,
 	ragdoll_window = 1.5,
 	kill_hold = 0.15,
+	-- A body the punch kills is thrown this share as fast, as the game pushes it too for a heavy blow, and its spin moves it: a choice.
+	-- (Its spin is still worked out from UT's throw.)
+	kill_throw_share = 0.5,
 	-- The punch reaches from the middle of the player (Instigator.Location), not from the eyes: xPawn's CollisionHeight (44) above the
 	-- feet, and CrouchHeight (29) when crouched, in UT units. So the floor is in reach while looking up to 67 degrees from straight down.
 	reach_height = 44,
@@ -494,7 +497,7 @@ end
 local function throw_hit(unit, direction, alive, at)
 	local kind = alive and KILL or LOOSE
 	local shot = Vector3.normalize(direction + Vector3(0, 0, 0.5)) * CONFIG.ragdoll_speed
-	local velocity = (shot + Vector3(0, 0, CONFIG.ragdoll_up)) * UNIT
+	local velocity = (shot + Vector3(0, 0, CONFIG.ragdoll_up)) * (UNIT * (alive and CONFIG.kill_throw_share or 1))
 	local spin = alive and at and death_spin(unit, at, shot) or Vector3.zero()
 	local id, is_level_unit = Managers.state.network:game_object_or_level_id(unit)
 
