@@ -156,6 +156,8 @@ local CONFIG = {
 	-- (CollisionHeight above the feet).
 	spin_inverse_inertia = 4,
 	spin_sideways_scale = 2.5,
+	-- The spin is this many times UT's, which looked too little in this game: a choice
+	spin_multiplier = 3,
 	-- The push of a body that is down already, as the game pushes a body for a hit (GenericHitReactionExtension._do_push: Actor.push on the
 	-- push actors of the zone it hit), with the forces of a hit effect's push. These are near the strongest the game's hit effects have
 	-- (explosions' 300): a choice.
@@ -452,7 +454,7 @@ local function death_spin(unit, at, shot)
 
 	from_middle = Vector3(Vector3.x(from_middle) * CONFIG.spin_sideways_scale, Vector3.y(from_middle) * CONFIG.spin_sideways_scale, Vector3.z(from_middle))
 
-	return Vector3.cross(from_middle, shot) * (CONFIG.spin_inverse_inertia * 2 * math.pi / 65536)
+	return Vector3.cross(from_middle, shot) * (CONFIG.spin_inverse_inertia * CONFIG.spin_multiplier * 2 * math.pi / 65536)
 end
 
 -- Throws what the punch hit, here and on the other machines. alive says that it is an enemy that was alive before the punch (which may
