@@ -58,6 +58,12 @@ local CONFIG = {
 	shove_back = 0.3,
 	-- The colour of the charge on the overcharge bar: ShieldGun.HudColor (R, G, B)
 	charge_bar_color = { 0, 188, 121 },
+	-- Where the charge bar's middle is on the 1920 by 1080 screen, from its bottom left: the middle of the ammo counter, which is 383 by
+	-- 86, 50 from the right and 100 from the bottom (equipment_ui_definitions.lua, ammo_background). The counter is scaled by the HUD
+	-- scale and the bar is not, so at another HUD scale than 100 they are a little apart.
+	charge_bar_position = { 1920 - 50 - 383 / 2, 100 + 86 / 2 },
+	-- The overcharge bar is this far below the point it is placed at (overcharge_bar_ui_definitions.lua, charge_bar)
+	charge_bar_drop = 220,
 	inspect_pose_speed = 5,
 	inspect_sway = 5,
 	inspect_sway_speed = 1.8,
@@ -436,9 +442,9 @@ mod.inspect_callbacks.shield_skin = function (action, started)
 	end
 end
 
--- The charge is shown on the game's overcharge bar, which every player has and which shows while it is above 0. While the player
--- charges the Shield Gun, the bar is the charge from empty to full (FullyChargedTime) instead of the overcharge, in the Shield Gun's
--- HudColor, without the overcharge's marks, icon and glow. UT shows no charge; this is the mod's own.
+-- The charge is shown on the game's overcharge bar, which every player has and which shows while it is above 0. While the player holds
+-- the Shield Gun, the bar is the charge from empty to full (FullyChargedTime) instead of the overcharge, where the ammo counter is, in
+-- the Shield Gun's HudColor, without the overcharge's marks, icon and glow. UT shows no charge; this is the mod's own.
 local THRESHOLD_STYLES = {
 	"min_threshold",
 	"max_threshold",
@@ -462,13 +468,15 @@ local function show_charge_bar(bar_ui, player)
 	local unit = player and player.player_unit
 	local style = bar_ui.charge_bar.style
 
-	if not shield.charge_started or not unit or not utils.is_local_player_unit(unit) or not shield.template_names[utils.wielded_template_name(unit)] then
+	bar_ui.ut_shield_charge = unit and utils.is_local_player_unit(unit) and shield.template_names[utils.wielded_template_name(unit)] or nil
+
+	if not bar_ui.ut_shield_charge then
 		set_marks_shown(style, true)
 
 		return false
 	end
 
-	local charged = (Managers.time:time("game") - shield.charge_started) / shield.fully_charged_time
+	local charged = shield.charge_started and (Managers.time:time("game") - shield.charge_started) / shield.fully_charged_time or 0
 
 	-- (40 is the overcharge that makes the bar its full width: OverchargeBarUI.update_bar_size)
 	bar_ui:update_bar_size(40, 0, 1)
@@ -496,6 +504,15 @@ mod:hook(OverchargeBarUI, "_update_overcharge", function (func, self, player, t)
 	end
 
 	return func(self, player, t)
+end)
+
+-- The game places the bar below the crosshair every frame it is drawn. The charge bar is placed where the ammo counter is.
+mod:hook(OverchargeBarUI, "_apply_crosshair_position", function (func, self, x, y)
+	if self.ut_shield_charge then
+		return func(self, CONFIG.charge_bar_position[1], CONFIG.charge_bar_position[2] + CONFIG.charge_bar_drop)
+	end
+
+	return func(self, x, y)
 end)
 
 -- The melee weapon's own swings are not played on the player's own first person unit: their sounds are in the animations. The skin's
