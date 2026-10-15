@@ -125,12 +125,12 @@ local CONFIG = {
 	-- normal and heavy blows, which hit wide ("tank"), which chooses how the game shows a hit and a death (the hit effects: the push of the
 	-- body, its sounds); the share of UT's damage it does, less for a short charge than UT's (a choice); and how many enemies it gets
 	-- through, as a swing with the game's cleave of that name does, or the game's default cleave (DefaultCleaveDistribution, for a blow
-	-- with none of its own) if it has none: a choice. Its stagger and the player's own damage of a shield jump are still worked out from
-	-- UT's damage.
+	-- with none of its own) if it has none: light tank blows, the heaviest the dual hammers' light one (a choice). Its stagger and the
+	-- player's own damage of a shield jump are still worked out from UT's damage.
 	damage_types = {
 		{ 1 / 3, "light_blunt_tank", 1 / 2 },
-		{ 2 / 3, "blunt_tank", 2 / 3 },
-		{ 1, "heavy_blunt_tank", 1 },
+		{ 2 / 3, "blunt_tank", 2 / 3, "cleave_distribution_tank_spiked_L" },
+		{ 1, "heavy_blunt_tank", 1, "cleave_distribution_tank_dual_L" },
 	},
 	-- The bash out of a push is the blow of this third of the charge (above), its damage type and share, whatever its time held gives
 	bash_damage_type = 2,
