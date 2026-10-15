@@ -427,11 +427,19 @@ end)
 --   mod.inspect_callbacks[name] = function (action_dummy, started)
 mod.inspect_callbacks = {}
 
-mod:hook_safe(ActionDummy, "client_owner_start_action", function (self, new_action)
+-- Dummy actions (and the melee start, which is one) that a weapon of the mod made. They run on the machine that owns the action.
+--   mod.dummy_start_callbacks[name] = function (action_dummy, new_action, t, power_level)
+mod.dummy_start_callbacks = {}
+
+mod:hook_safe(ActionDummy, "client_owner_start_action", function (self, new_action, t, chain_action_data, power_level)
 	if new_action.anim_event == "inspect_start" then
 		for _, callback in pairs(mod.inspect_callbacks) do
 			callback(self, true)
 		end
+	end
+
+	for _, callback in pairs(mod.dummy_start_callbacks) do
+		callback(self, new_action, t, power_level)
 	end
 end)
 

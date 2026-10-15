@@ -382,7 +382,7 @@ local function new(def)
 	end
 
 	local function current_pose()
-		local pose = sample(skin.animation, skin.time, skin.animation == (CONFIG.idle_animation or "Idle"))
+		local pose = sample(skin.animation, skin.time, skin.looping or skin.animation == (CONFIG.idle_animation or "Idle"))
 
 		if skin.blend_from and skin.blend_left > 0 then
 			pose = blend_poses(skin.blend_from, pose, 1 - skin.blend_left / CONFIG.blend_time)
@@ -392,7 +392,8 @@ local function new(def)
 	end
 
 	-- Plays an animation and blends into it from the pose of the one that is playing. If a duration is given, the animation lasts that long.
-	function self.play(name, duration)
+	-- With looping, it plays over and over until another one is played (UT's LoopAnim).
+	function self.play(name, duration, looping)
 		self.debug("%s", name)
 
 		if skin.animation then
@@ -402,6 +403,7 @@ local function new(def)
 
 		skin.animation = name
 		skin.hold = nil
+		skin.looping = looping
 		skin.time = 0
 		skin.speed = duration and self.animation_duration(name) / duration or name == (CONFIG.idle_animation or "Idle") and CONFIG.idle_speed or 1
 	end
@@ -604,7 +606,7 @@ local function new(def)
 
 		local duration = self.animation_duration(skin.animation)
 
-		if skin.animation == (CONFIG.idle_animation or "Idle") then
+		if skin.looping or skin.animation == (CONFIG.idle_animation or "Idle") then
 			skin.time = skin.time % duration
 		elseif skin.hold and skin.time >= duration then
 			-- A held animation stays on its last frame until skin.hold is cleared, or another animation is played.
