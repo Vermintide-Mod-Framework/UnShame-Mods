@@ -51,11 +51,11 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Headshots | - | - | - | - | - |
 | Crits | - | - | - | - | - |
 | Damage against the other UT weapons | - | - | - | - | - |
-| Self damage | - | - | - | ok (from the outermost wave, scaled as the Rocket Launcher's) | ok (the grenade's, reduced as the Rocket Launcher's) |
+| Self damage | - | - | open: UT's 8 + 0.3 of the damage for a punch at a wall, halved as the Rocket Launcher's; not checked in the game | ok (from the outermost wave, scaled as the Rocket Launcher's) | ok (the grenade's, reduced as the Rocket Launcher's) |
 | Explosion radius | - | - | - | ok (six waves growing over 1.3 s, tests; scaled down as the Rocket Launcher's) | ok (150 units, scaled as the Rocket Launcher's) |
 | Explosion falloff | - | - | - | - | - |
 | Momentum | - | - | - | - | - |
-| Weapon jumping | - | - | ok in the game: a full punch at the floor throws the player up and back. Its self damage (8 + 0.3 of the damage) is left out | - | - |
+| Weapon jumping | - | - | ok in the game: a full punch at the floor throws the player up and back, with 0.6 of the momentum, as UT's own momentum is | - | - |
 | Ragdolls | - | - | - | - | - |
 | Banners and barrels | - | - | - | - | - |
 | **Projectiles** | | | | | |

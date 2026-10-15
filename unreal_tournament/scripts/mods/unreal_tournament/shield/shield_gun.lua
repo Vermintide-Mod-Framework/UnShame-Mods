@@ -120,6 +120,19 @@ local CONFIG = {
 	max_damage = 150,
 	-- The damage is a profile for each of this many steps between the two
 	damage_steps = 12,
+	-- The game's damage type of the punch, by how far the charge went: a two-handed hammer's light, normal and heavy blows, which hit wide
+	-- ("tank"). It chooses how the game shows a hit and a death (the hit effects: the push of the body, its sounds). Each holds up to the
+	-- share of the charge given.
+	damage_types = {
+		{ 1 / 3, "light_blunt_tank" },
+		{ 2 / 3, "blunt_tank" },
+		{ 1, "heavy_blunt_tank" },
+	},
+	-- ShieldFire: punching a wall hurts the player MinSelfDamage + SelfDamageScale * the damage. UT's DeathMatch.ReduceDamage halves a
+	-- player's own damage in a game with bots at the lower skills, and the Rocket Launcher and the Flak Cannon of the mod take that half too.
+	min_self_damage = 8,
+	self_damage_scale = 0.3,
+	self_damage_share = 0.5,
 	-- ShieldFire.FireRate: after a punch, the next charge starts this long after
 	fire_rate = 0.6,
 	-- The bash out of a push (not UT's: see build_bash): the shield is down this long after it, the length of UT's Fire animation
@@ -188,8 +201,17 @@ for step = 0, CONFIG.damage_steps - 1 do
 	local name = "ut_shield_punch_" .. step
 	local damage = damage_for_step(step)
 
+	local share = step / (CONFIG.damage_steps - 1)
+	local damage_type
+
+	for _, entry in ipairs(CONFIG.damage_types) do
+		if not damage_type and share <= entry[1] + 0.0001 then
+			damage_type = entry[2]
+		end
+	end
+
 	register_damage_profile(name, "shot_sniper", function (profile)
-		make_flat(profile, attack_power_for(damage), impact_power_for(damage) * CONFIG.stagger_multiplier, "blunt")
+		make_flat(profile, attack_power_for(damage), impact_power_for(damage) * CONFIG.stagger_multiplier, damage_type)
 
 		-- The punch hurts the one thing it hits, as UT's trace does
 		profile.cleave_distribution = {
@@ -661,9 +683,15 @@ local function punch(action, t, power_level, bash)
 		throw_hit(hit_unit, direction, false)
 	end
 
-	-- Anything else near enough throws the player off it, as UT's punch of anything that is not a pawn does
-	if hit[2] <= CONFIG.range * UNIT and utils.is_local_player_unit(owner_unit) and not Actor.is_dynamic(hit[4]) then
-		push_player(owner_unit, direction, force)
+	-- Anything else near enough throws the player off it and hurts them, as UT's punch of anything that is not a pawn does
+	if hit[2] <= CONFIG.range * UNIT and not Actor.is_dynamic(hit[4]) then
+		local self_damage = (CONFIG.min_self_damage + CONFIG.self_damage_scale * damage_for_step(step)) * CONFIG.self_damage_share
+
+		utils.apply_self_damage(owner_unit, hit[1], -direction, action.item_name, self_damage)
+
+		if utils.is_local_player_unit(owner_unit) then
+			push_player(owner_unit, direction, force)
+		end
 	end
 end
 
