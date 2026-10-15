@@ -51,7 +51,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Headshots | - | - | - | - | - |
 | Crits | - | - | - | - | - |
 | Damage against the other UT weapons | - | - | - | - | - |
-| Self damage | - | - | open: UT's 8 + 0.3 of the damage for a punch at a wall, halved as the Rocket Launcher's; not checked in the game | ok (from the outermost wave, scaled as the Rocket Launcher's) | ok (the grenade's, reduced as the Rocket Launcher's) |
+| Self damage | - | - | open: UT's 8 + 0.3 of the damage for a punch at a wall, a quarter of it (half as the Rocket Launcher's, and half again); not checked in the game | ok (from the outermost wave, scaled as the Rocket Launcher's) | ok (the grenade's, reduced as the Rocket Launcher's) |
 | Explosion radius | - | - | - | ok (six waves growing over 1.3 s, tests; scaled down as the Rocket Launcher's) | ok (150 units, scaled as the Rocket Launcher's) |
 | Explosion falloff | - | - | - | - | - |
 | Momentum | - | - | - | - | - |

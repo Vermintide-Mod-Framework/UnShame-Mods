@@ -134,9 +134,10 @@ local CONFIG = {
 	bash_damage_type = 2,
 	-- ShieldFire: punching a wall hurts the player MinSelfDamage + SelfDamageScale * the damage. UT's DeathMatch.ReduceDamage halves a
 	-- player's own damage in a game with bots at the lower skills, and the Rocket Launcher and the Flak Cannon of the mod take that half too.
+	-- The shield jump takes half of that again, as the punch does less damage than UT's (a choice).
 	min_self_damage = 8,
 	self_damage_scale = 0.3,
-	self_damage_share = 0.5,
+	self_damage_share = 0.25,
 	-- ShieldFire.FireRate: after a punch, the next charge starts this long after
 	fire_rate = 0.6,
 	-- The bash out of a push (not UT's: see build_bash): the shield is down this long after it, the length of UT's Fire animation
