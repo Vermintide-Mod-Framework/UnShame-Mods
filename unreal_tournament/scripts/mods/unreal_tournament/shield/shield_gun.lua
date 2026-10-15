@@ -279,8 +279,13 @@ local function raycast(physics_world, origin, direction, range)
 	return PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, range * UNIT, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
 end
 
--- The first thing a melee swing would hit along the ray that is not a character: one with health (a door, a barrel), or one that
+-- Whether a melee swing that hits this actor hits a thing that is not a character: one with health (a door, a barrel), or one that
 -- moves (a loose thing, a body)
+local function is_object(unit, actor, owner_unit)
+	return unit ~= owner_unit and (ScriptUnit.has_extension(unit, "health_system") and not Unit.get_data(unit, "breed") or Actor.is_dynamic(actor))
+end
+
+-- The first such thing along the ray
 local function first_object_hit(physics_world, origin, direction, range, owner_unit)
 	local hits = PhysicsWorld.immediate_raycast(physics_world, origin, direction, range * UNIT, "all", "collision_filter", "filter_melee_sweep")
 
@@ -288,7 +293,7 @@ local function first_object_hit(physics_world, origin, direction, range, owner_u
 		local actor = hits[i][4]
 		local unit = actor and Actor.unit(actor)
 
-		if unit and unit ~= owner_unit and (ScriptUnit.has_extension(unit, "health_system") and not Unit.get_data(unit, "breed") or Actor.is_dynamic(actor)) then
+		if unit and is_object(unit, actor, owner_unit) then
 			return hits[i]
 		end
 	end
@@ -364,6 +369,46 @@ local function targets_in_reach(owner_unit, physics_world, origin, direction, ra
 	end
 
 	return targets
+end
+
+-- The things that are not characters (is_object, but not bodies, which are targets) in the same cone within the range, as a melee swing
+-- hits whatever it passes through. Each is { unit, hit }, with the hit of a ray from the player to it that nothing else stops (characters
+-- don't).
+local function objects_in_reach(owner_unit, physics_world, origin, direction, range)
+	local min_dot = math.cos(math.rad(CONFIG.hit_angle / 2))
+	local actors, num_actors = PhysicsWorld.immediate_overlap(physics_world, "shape", "sphere", "position", origin, "size", range * UNIT, "types", "both", "collision_filter", "filter_melee_sweep")
+	local objects = {}
+	local found = {}
+
+	for i = 1, num_actors or 0 do
+		local actor = actors[i]
+		local unit = actor and Actor.unit(actor)
+		local to = unit and Actor.position(actor) - origin
+		local distance = to and Vector3.length(to)
+
+		if unit and not found[unit] and not Unit.get_data(unit, "breed") and is_object(unit, actor, owner_unit) and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot then
+			local hits = PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, range * UNIT, "all", "collision_filter", "filter_melee_sweep")
+
+			for j = 1, #(hits or {}) do
+				local hit_unit = hits[j][4] and Actor.unit(hits[j][4])
+
+				if hit_unit == unit then
+					found[unit] = true
+					objects[#objects + 1] = {
+						hit = hits[j],
+						unit = unit,
+					}
+
+					break
+				elseif hit_unit ~= owner_unit and not (hit_unit and Unit.get_data(hit_unit, "breed")) then
+					-- (a wall or another thing in the way)
+					break
+				end
+			end
+		end
+	end
+
+	return objects
 end
 
 -- The charge ends by itself when an enemy comes into reach (ShieldFire.Timer). The game asks this every frame while the charge goes
@@ -776,25 +821,39 @@ local function punch(action, t, power_level, bash)
 		end
 	end
 
-	-- The thing straight ahead, if it is not an enemy: a door or a barrel takes the punch as from a melee swing, a loose thing is thrown,
-	-- and a wall near enough throws the player off it
-	if not hit or is_enemy then
+	-- Every thing in reach that is not a character: a door or a barrel takes the punch as from a melee swing, and a loose thing is thrown.
+	-- The one straight ahead is always one.
+	local objects = objects_in_reach(owner_unit, action.physics_world, origin, direction, range)
+	local hit_unit = hit and not is_enemy and ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
+
+	if hit_unit and not Unit.get_data(hit_unit, "breed") and is_object(hit_unit, hit[4], owner_unit) then
+		local listed = false
+
+		for _, object in ipairs(objects) do
+			listed = listed or object.unit == hit_unit
+		end
+
+		if not listed then
+			objects[#objects + 1] = {
+				hit = hit,
+				unit = hit_unit,
+			}
+		end
+	end
+
+	for _, object in ipairs(objects) do
+		hit_object(action, object.unit, object.hit, direction, punch_action.damage_profile, power_level, blow)
+
+		if Actor.is_dynamic(object.hit[4]) then
+			throw_hit(object.unit, direction, false)
+		end
+	end
+
+	if not hit_unit or Unit.get_data(hit_unit, "breed") then
 		return
 	end
 
-	local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
-
-	if Unit.get_data(hit_unit, "breed") then
-		return
-	end
-
-	hit_object(action, hit_unit, hit, direction, punch_action.damage_profile, power_level, blow)
-
-	if Actor.is_dynamic(hit[4]) then
-		throw_hit(hit_unit, direction, false)
-	end
-
-	-- Anything else near enough throws the player off it and hurts them, as UT's punch of anything that is not a pawn does
+	-- Anything else near enough straight ahead throws the player off it and hurts them, as UT's punch of anything that is not a pawn does
 	if hit[2] <= CONFIG.range * UNIT and not Actor.is_dynamic(hit[4]) then
 		local self_damage = (CONFIG.min_self_damage + CONFIG.self_damage_scale * damage_for_step(step)) * CONFIG.self_damage_share
 
