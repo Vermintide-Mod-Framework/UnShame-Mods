@@ -1162,7 +1162,8 @@ function mod.shield.reflect(from, to, radius, attacker_unit, ignore_unit, reache
 			local status_extension = ScriptUnit.has_extension(unit, "status_system")
 			local height = status_extension and status_extension:is_crouching() and CONFIG.reach_height_crouched or CONFIG.reach_height
 			local center = POSITION_LOOKUP[unit] + Vector3(0, 0, height * UNIT)
-			local t = segment_cylinder(from, to, center, CONFIG.pawn_radius * UNIT + radius, height * UNIT)
+			-- (a shot as wide as radius gets to the cylinder grown by radius, up and down as well as across)
+			local t = segment_cylinder(from, to, center, CONFIG.pawn_radius * UNIT + radius, height * UNIT + radius)
 			local distance = t and Vector3.distance(Vector3.lerp(from, to, t), center)
 
 			if t and (not best_t or t < best_t or t == best_t and distance < best_distance) then
