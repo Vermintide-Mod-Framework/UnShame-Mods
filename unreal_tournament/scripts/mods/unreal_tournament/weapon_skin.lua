@@ -747,6 +747,10 @@ local function new(def)
 
 		-- How many meters a UT unit of the model is across the view. Effects drawn on the model use it to be as big as the model.
 		skin.unit_scale = CONFIG.draw_scale * across_scale
+		-- How many meters a UT unit of the view is across it and along it, without the model's DrawScale. Effects that UT draws with the
+		-- weapon's projection (Canvas.DrawActor with DisplayFOV) are placed and scaled with these.
+		skin.view_across_scale = across_scale
+		skin.view_forward_scale = forward_scale
 	end
 
 	mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)

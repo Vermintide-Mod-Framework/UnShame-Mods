@@ -119,5 +119,5 @@ mod:dofile("scripts/mods/unreal_tournament/tests/shield")
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 929)")
+	mod:echo("Unreal Tournament loaded (build 930)")
 end

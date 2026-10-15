@@ -10,6 +10,8 @@ import struct, zlib, os, sys
 #   units/ut/fx/minigun_flash_mesh  XEffects.MinigunMuzFlash1stMesh, the Minigun's first person muzzle flash, and
 #   units/ut/fx/shell_casing_mesh  XEffects.ShellCasing, the shell of ShellSpewer (umodel -export XEffects.u MinigunMuzFlash1stMesh and
 #                       ShellCasing, into <scratch>/umodel/out36)
+#   units/ut/fx/shield_mesh  WeaponStaticMesh.Shield, the Shield Gun's shield (ShieldEffect) (umodel -export WeaponStaticMesh.usx Shield,
+#                       into <scratch>/umodel/out38): a dish 3 units deep and 20 across, facing along x
 # They are made in meters, a UT unit being 0.02 m (as everything of the effects is), turned from UT's axes (x forward, y right, z up) to
 # this game's (x right, y forward, z up), which makes the mesh the other way round: the long axis of the coil is y.
 # One material slot, m_fx, as the quad of the particles has (units/ut/fx/quad): the effects set the material of the texture they want.
@@ -187,3 +189,4 @@ if __name__ == '__main__':
     # (its UVs are in the tile of column 0 and row 1 of Minigun_burst's 2 by 2)
     make_static('minigun_flash_mesh', 'MinigunMuzFlash1stMesh', SCRATCH + '/umodel/out36/XEffects', (2, 2, 0, 1))
     make_static('shell_casing_mesh', 'ShellCasing', SCRATCH + '/umodel/out36/XEffects')
+    make_static('shield_mesh', 'Shield', SCRATCH + '/umodel/out38/WeaponStaticMesh')

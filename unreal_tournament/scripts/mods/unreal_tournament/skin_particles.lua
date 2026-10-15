@@ -33,7 +33,7 @@ local mod = get_mod("unreal_tournament")
 --   particles.beam(spec): goes from spec.from to spec.to. spec.size is how wide it is, and it faces the camera around its length.
 --       Instead of the two points, spec.track can be a function that returns from and to, or nothing when the beam should end.
 --   particles.mesh(spec): a mesh (units/ut/fx/coil, sphere, vortex, made by tools/asset_conversion/make_fx_meshes.py) at spec.position.
---       It is turned by spec.rotation, or it faces the camera with spec.face_camera (its z axis is the way it faces). It also turns by
+--       It is turned by spec.rotation (or a function that returns it each frame), or it faces the camera with spec.face_camera (its z axis is the way it faces). It also turns by
 --       spec.spin about spec.spin_axis, a vector in the mesh's own axes. spec.scale is a function of how far into its life the mesh
 --       is (0 to 1) that returns its scale, either a number or a vector in the mesh's axes. spec.brightness is the same for how bright
 --       it is, and replaces fade_in, fade_out and attenuation. spec.unit is the unit. For a mesh with frames, each a unit, spec.unit is the
@@ -169,7 +169,9 @@ local function add(kind, spec)
 		particle.normal = Vector3Box(spec.normal)
 	end
 
-	if spec.rotation then
+	if type(spec.rotation) == "function" then
+		particle.rotation_by = spec.rotation
+	elseif spec.rotation then
 		particle.rotation = QuaternionBox(spec.rotation)
 	end
 
@@ -311,7 +313,7 @@ local function place(particle, dt, camera_position, camera_rotation)
 		-- function for how far into its life it is, and it shows the frame that the frame function names.
 		local axis = particle.spin_axis and particle.spin_axis:unbox() or Vector3(0, 0, 1)
 		-- A mesh that always faces the camera, like UT's bAlwaysFaceCamera, has its z axis pointing the way it faces, as a quad does.
-		local base = particle.face_camera and facing(-Quaternion.forward(camera_rotation), Quaternion.up(camera_rotation)) or particle.rotation:unbox()
+		local base = particle.face_camera and facing(-Quaternion.forward(camera_rotation), Quaternion.up(camera_rotation)) or particle.rotation_by and particle.rotation_by() or particle.rotation:unbox()
 
 		rotation = Quaternion.multiply(base, Quaternion.axis_angle(axis, particle.angle + particle.spin * particle.age))
 		scale = particle.scale(fraction)

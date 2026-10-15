@@ -23,12 +23,14 @@ TEXTURES = {
     'minigun_flame': ('AW-2004Explosions/Texture/Part_explode2s.tga', 4, 4),
     'tracer_shot': ('AW-2004Particles/Texture/TracerShot.tga', 1, 1),
     'shell_casing': ('XEffects/Texture/ShellCasingTex.tga', 1, 1),
+    # The Shield Gun (ShieldEffect's Shield3rdFB: its material is units/ut/fx/fx_shield, made by make_combo_materials.py)
+    'shield_elec': ('XEffectMat/Texture/shield_elec_green_a.tga', 1, 1),
 }
 
 SRGB = ('shell_casing',)
 
 # The textures that UT draws with FB_Brighten (see write)
-BRIGHTEN = ('minigun_burst',)
+BRIGHTEN = ('minigun_burst', 'shield_elec')
 
 # The textures that are turned a quarter, because they are drawn on a beam, which lays v along its length (TracerShot is a streak along
 # u, the way NewTracer's sprite moves: PTDU_Right)

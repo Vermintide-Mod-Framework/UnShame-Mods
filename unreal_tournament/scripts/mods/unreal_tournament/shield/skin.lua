@@ -11,8 +11,15 @@ local mod = get_mod("unreal_tournament")
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local animations = mod:dofile("scripts/mods/unreal_tournament/shield/skin_animations")
+local particles = mod.skin_particles
 
 local CONFIG = {
+	-- ShieldGun.PlayerViewOffset (forward, right, up) and DisplayFOV, which CalcDrawOffset scales the offset by (0.9 / DisplayFOV * 100)
+	view_offset = {2, -0.7, -2.7},
+	display_fov = 60,
+	-- ShieldGun.EffectOffset (forward, right, up): where GetEffectStart is from the weapon, and ShieldEffect's DrawScale
+	effect_offset = {15, 5.5, 2},
+	shield_draw_scale = 1.8,
 	inspect_pose_speed = 5,
 	inspect_sway = 5,
 	inspect_sway_speed = 1.8,
@@ -38,6 +45,63 @@ local function local_player_blocking()
 	local status_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "status_system")
 
 	return status_extension and status_extension:is_blocking() or false
+end
+
+-- The shield while it is up (ShieldAltFire.DrawMuzzleFlash): UT's Shield mesh at GetEffectStart, turned as the view is, drawn with the weapon's
+-- projection. Here it has the material that draws with the weapon's field of view (fx_shield), placed and scaled in the view as the model is
+-- (weapon_skin.lua), and it pans its texture by its age. It ends when the shield goes down or the model is gone.
+local function show_shield(api)
+	local skin = api.state()
+
+	if not skin then
+		return
+	end
+
+	local mesh_unit = 0.02 -- meters of a UT unit of the mesh (make_fx_meshes.py)
+	local offset_scale = 90 / CONFIG.display_fov
+	local forward = CONFIG.view_offset[1] * offset_scale + CONFIG.effect_offset[1]
+	local right = CONFIG.view_offset[2] * offset_scale + CONFIG.effect_offset[2]
+	local up = CONFIG.view_offset[3] * offset_scale + CONFIG.effect_offset[3]
+
+	particles.mesh({
+		additive = 0,
+		brightness = function ()
+			return 1
+		end,
+		color = {
+			1,
+			1,
+			1,
+		},
+		follow = function ()
+			local now = api.state()
+			local camera_position, camera_rotation = utils.camera_pose()
+
+			if now ~= skin or not skin.blocking or not camera_position or not skin.view_across_scale then
+				return nil
+			end
+
+			local across, along = skin.view_across_scale, skin.view_forward_scale
+
+			return camera_position + Quaternion.right(camera_rotation) * (right * across) + Quaternion.forward(camera_rotation) * (forward * along) + Quaternion.up(camera_rotation) * (up * across)
+		end,
+		-- (the mesh's dish faces along its y, which is the way the view looks, and it is not turned about anything else)
+		angle = 0,
+		rotation = function ()
+			local _, camera_rotation = utils.camera_pose()
+
+			return camera_rotation or Quaternion.identity()
+		end,
+		life = math.huge,
+		material = "units/ut/fx/fx_shield",
+		scale = function ()
+			local across = (skin.view_across_scale or 0.01) / mesh_unit * CONFIG.shield_draw_scale
+			local along = (skin.view_forward_scale or 0.01) / mesh_unit * CONFIG.shield_draw_scale
+
+			return Vector3(across, along, across)
+		end,
+		unit = "units/ut/fx/shield_mesh",
+	})
 end
 
 -- The animations follow what the gun does (ShieldFire and ShieldAltFire): the charge plays Charge over FullyChargedTime and then loops
@@ -76,6 +140,7 @@ local function update_state(api, skin)
 
 		if blocking then
 			api.play("Shield", nil, true)
+			show_shield(api)
 
 			skin.shield_sound = api.play_sound("ut_shield_up")
 		else

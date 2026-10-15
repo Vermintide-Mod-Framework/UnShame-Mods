@@ -247,3 +247,28 @@ open('%s/units/ut/bio/bio_rifle_m2.material' % REPO, 'w', newline='\n').write(
     'material_contexts = {\n\tsurface_material = ""\n}\nparent_material = "units/ut/fx/fx_bio_goo_graph"\ntextures = {\n'
     '\tgoo_map = "units/ut/bio/bio_rifle_brinnergoo"\n\tbubbles_map = "units/ut/bio/bio_rifle_brinnerbubbles"\n}\nvariables = {\n}\n')
 print('wrote fx_bio_goo_graph.material and bio_rifle_m2.material, %d nodes' % len(goo.nodes))
+
+# ---------------------------------------------------------------- the Shield Gun's shield
+# ShieldEffect's FinalBlend Shield3rdFB (XEffectMat): FB_Brighten of the Shader Shader3, whose diffuse is the TexPanner TexPanner2 (PanDirection
+# yaw 16384: along V, PanRate 0.2) of the TexOscillator TexOscillator2 (OT_Pan along U, amplitude 0.1, rate 0.2 a second) of the texture
+# shield_elec_green_a. The texture (units/ut/fx/shield_elec, make_weapon_fx.py) has FB_Brighten baked into it: its hue in the colour and its
+# strength in the alpha, so blending it by its alpha is c + d * (1 - c). The oscillation is left out: it sways the lines by a tenth of the
+# texture every five seconds. It is drawn with the weapons' field of view, as UT draws it with the weapon (ShieldAltFire.DrawMuzzleFlash), and
+# the texture is read as it is (not srgb).
+LINEAR_SAMPLE_OPTIONS = ('5dd59b3d-1762-4a14-9930-7500230ef3db', 'f669a3a6-0376-4187-840e-80000e2939d5', 'e94e53e6-49b6-4194-a747-8f064a5932e0')
+shield = Graph()
+shield.add('out', 'core/stingray_renderer/output_nodes/unlit_base', OUT_OPTIONS + (CUSTOM_FOV,))
+shield.add('uv', 'core/shader_nodes/texture_coordinate0')
+shield.add('time', 'core/shader_nodes/material_variable', export=float_variable('age', 'Age', 0), title='Age')
+shield.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
+shield.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
+shield.add('additive', 'core/shader_nodes/material_variable', export=float_variable('additive', 'Additive', 0), title='Additive')
+shield.connect('additive', 'out', IN_OUT_ADDITIVE)
+panned(shield, 'pan', 0, 0.2)
+shield.add('lines', 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('lines_map'), title='lines_map')
+shield.connect('pan', 'lines', IN_SAMPLE_UV)
+multiply(shield, 'color', 'lines', 'tint', 'rgb')
+multiply(shield, 'opacity', 'lines', 'intensity', 'a')
+shield.connect('color', 'out', IN_OUT_BASE_COLOR)
+shield.connect('opacity', 'out', IN_OUT_OPACITY)
+write('shield', shield, {'lines_map': 'shield_elec'})
