@@ -333,16 +333,17 @@ local function new(def)
 
 		Unit.set_unit_visibility(fp.first_person_attachment_unit, false)
 
-		-- The ammo that a weapon holds in a hand (the Trollhammer's torpedo) is a unit of its own, which the weapon's animations show
-		-- again (SimpleInventoryExtension.show_first_person_ammo)
+		-- The weapon's units themselves too, because an animation of the weapon can show them from its flow, which the hide reason
+		-- above doesn't undo (Kruber's bastard sword, on inspect). The ammo that a weapon holds in a hand (the Trollhammer's torpedo) is
+		-- a unit of its own, which the weapon's animations show again (SimpleInventoryExtension.show_first_person_ammo).
 		local equipment = fp.inventory_extension and fp.inventory_extension:equipment()
 
 		if equipment then
-			for _, field in ipairs({ "right_hand_ammo_unit_1p", "left_hand_ammo_unit_1p" }) do
-				local ammo_unit = equipment[field]
+			for _, field in ipairs({ "right_hand_wielded_unit", "left_hand_wielded_unit", "right_hand_ammo_unit_1p", "left_hand_ammo_unit_1p" }) do
+				local game_unit = equipment[field]
 
-				if ammo_unit and Unit.alive(ammo_unit) then
-					Unit.set_unit_visibility(ammo_unit, false)
+				if game_unit and Unit.alive(game_unit) then
+					Unit.set_unit_visibility(game_unit, false)
 				end
 			end
 		end

@@ -203,6 +203,8 @@ local CONFIG = {
 	reflected_missile_explosion = "fireball_charged",
 	pounce_radius = 1.5,
 	pounce_fatigue_type = "blocked_jump_slam",
+	-- A lifeleech's grab that gets to a player's shield fails, as when they dodge it, for the stamina of blocking a jump attack too
+	grab_fatigue_type = "blocked_jump_slam",
 }
 
 local UNIT = CONFIG.meters_per_uu
@@ -1373,6 +1375,50 @@ mod:hook(BTCrazyJumpAction, "run", function (func, self, unit, blackboard, t, dt
 	end
 
 	return func(self, unit, blackboard, t, dt)
+end)
+
+-- Whether a player's shield stops what comes at them from a place, by UT's arc (see mod.shield.reflect): it gets to their cylinder on
+-- the side that faces that place. If it does, the shield pays for it.
+local function shield_stops(unit, from, attacker_unit, fatigue_type)
+	local game = Managers.state.network:game()
+	local go_id = Managers.state.unit_storage:go_id(unit)
+
+	if not game or not go_id or not shield_is_up(unit) then
+		return false
+	end
+
+	local status_extension = ScriptUnit.extension(unit, "status_system")
+	local height = status_extension:is_crouching() and CONFIG.reach_height_crouched or CONFIG.reach_height
+	local center = POSITION_LOOKUP[unit] + Vector3(0, 0, height * UNIT)
+	local hit = center + Vector3.normalize(from - center) * (CONFIG.pawn_radius * UNIT)
+	local to_player = Vector3.normalize(center - hit + Vector3(0, 0, CONFIG.reflect_up_offset * UNIT))
+	local face = Vector3.normalize(GameSession.game_object_field(game, go_id, "aim_direction"))
+
+	if Vector3.dot(face, to_player) >= CONFIG.reflect_dot then
+		return false
+	end
+
+	pay_for_reflection(unit, attacker_unit, fatigue_type)
+
+	return true
+end
+
+-- A lifeleech's grab (BTCorruptorGrabAction, on the host) is a beam that flies to the player and takes them when it is near enough. It
+-- fails at the shield, from where the beam is, when it would take them (after the action's grab_delay, if it has one).
+mod:hook(BTCorruptorGrabAction, "grab_player", function (func, self, t, unit, blackboard)
+	local action = blackboard.action
+	local target_unit = blackboard.corruptor_target
+	local due = not action.grab_delay or blackboard.grab_at and t >= blackboard.grab_at
+
+	if due and target_unit and blackboard.projectile_position and shield_stops(target_unit, blackboard.projectile_position:unbox(), unit, CONFIG.grab_fatigue_type) then
+		blackboard.grab_at = nil
+		blackboard.attack_success = false
+		blackboard.attack_aborted = true
+
+		return
+	end
+
+	return func(self, t, unit, blackboard)
 end)
 
 mod:hook(BTCrazyJumpAction, "check_colliding_players", function (func, self, unit, blackboard, pos)
