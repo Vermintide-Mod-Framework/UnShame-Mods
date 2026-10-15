@@ -284,6 +284,29 @@ local function new(def)
 		return fp.first_person_unit, Vector3(at.x * ratio, at.y, at.z * ratio)
 	end
 
+	-- A point of the view in UT units from the eye (forward, right, up), where the weapon's projection draws it, moved by the weapon's
+	-- bob as the model is (UT's GetEffectStart adds CalcDrawOffset, which has the bob in it). Returns the first person unit, which the
+	-- model is linked to, and the point in its frame (x right, y ahead, z up), for particles that are linked to the unit so that they
+	-- move with the model (skin_particles.lua).
+	function self.view_point_in_view(forward, right, up)
+		local fp = local_first_person()
+
+		if not skin or not fp or not skin.view_across_scale then
+			return nil
+		end
+
+		local across, along = skin.view_across_scale, skin.view_forward_scale
+		local bob_right = CONFIG.bob_damping * (skin.walk_right or 0)
+		local bob_up = (0.45 + 0.55 * CONFIG.bob_damping) * (skin.walk_up or 0)
+		local x = across * (right + bob_right)
+
+		if CONFIG.mirror then
+			x = -x
+		end
+
+		return fp.first_person_unit, Vector3(x, along * forward, across * (up + bob_up))
+	end
+
 	-- Returns how long the game takes to wield the weapon. The weapon can't be used for that long.
 	local function wield_time()
 		return rawget(Weapons, CONFIG.template).actions.action_wield.default.wield_cooldown

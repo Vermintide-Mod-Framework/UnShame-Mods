@@ -23,7 +23,8 @@ local mod = get_mod("unreal_tournament")
 --   follow: a function that returns where the particle is now, or nothing when it should end.
 --   locked: used instead of follow. A function that returns a unit and the particle's position in that unit's frame. For the first
 --       person unit the frame is at the camera, looking along y. The particle is linked to the unit and placed in pre_render, so it
---       doesn't trail behind what it follows. It returns nothing when the particle should end.
+--       doesn't trail behind what it follows. It returns nothing when the particle should end. A beam's returns the unit and both of
+--       its ends. A locked disc's normal and a locked mesh's rotation are in the unit's frame too.
 --   delay: seconds before the particle shows.
 --   additive: 1 (the default) adds its color to the screen. 0 blends it as the transparency of its texture says (smoke).
 --   falloff: how far a light reaches, in meters (only for particles.light).
@@ -255,10 +256,10 @@ local function place(particle, dt, camera_position, camera_rotation)
 	local size = particle.size_by and particle.size_by(math.max(0, fraction)) or particle.size and math.max(0, particle.size + particle.growth * particle.age)
 
 	local light = particle.intensity * (particle.brightness_by and particle.brightness_by(fraction) or brightness(particle))
-	local position, rotation, scale
+	local position, rotation, scale, locked_to
 
 	if particle.locked then
-		local parent, local_position = particle.locked()
+		local parent, local_position, other_end = particle.locked()
 
 		if not parent then
 			particle.age = particle.life
@@ -276,8 +277,10 @@ local function place(particle, dt, camera_position, camera_rotation)
 			particle.parent = parent
 		end
 
-		-- The position is in the parent's frame, which is the camera's.
+		-- The position is in the parent's frame, which is the camera's, so the camera is at its origin.
 		position = local_position
+		locked_to = other_end
+		camera_position = Vector3.zero()
 		camera_rotation = Quaternion.identity()
 	elseif particle.follow then
 		position = particle.follow()
@@ -354,7 +357,9 @@ local function place(particle, dt, camera_position, camera_rotation)
 	elseif particle.kind == "beam" then
 		local from, to
 
-		if particle.track then
+		if particle.locked then
+			from, to = position, locked_to
+		elseif particle.track then
 			from, to = particle.track()
 
 			if not from then

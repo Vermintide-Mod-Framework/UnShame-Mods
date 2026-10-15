@@ -20,15 +20,22 @@ local CONFIG = {
 	-- ShieldGun.EffectOffset (forward, right, up): where GetEffectStart is from the weapon, and ShieldEffect's DrawScale
 	effect_offset = {15, 5.5, 2},
 	shield_draw_scale = 1.8,
+	-- UT draws the effects at GetEffectStart before the gun, without depth (ShieldGun.RenderOverlays), so the gun covers them. Here they
+	-- are drawn this many times further from the eye and this many times bigger, which looks the same, and that puts them behind the
+	-- gun: they start 18 UT units ahead, and the gun reaches about 35 (the mesh is 79 units ahead of its origin, at DrawScale 0.4).
+	-- A wall nearer than they are drawn hides them, so it is no more than it needs to be.
+	behind_gun = 3,
 	-- ForceRingA, the rings of a punch: 16 a second for 0.2 s, each 0.25 s long, flying forward at 100 units a second from GetEffectStart,
-	-- 1 unit across and growing by 100 a second, dimming from the start (mAttenKa 0), of the colour (32, 0, 32) added
+	-- 1 unit across and growing by 100 a second, dimming from the start (mAttenKa 0), added. Its colour is (B=32,R=32): the fields that
+	-- a struct in defaultproperties leaves out keep the parent's, and xEmitter's is white, so green is 255. That makes the purple
+	-- shock ring green.
 	ring_rate = 16,
 	ring_time = 0.2,
 	ring_life = 0.25,
 	ring_speed = 100, -- UT units a second
 	ring_size = 1, -- UT units
 	ring_growth = 100, -- UT units a second
-	ring_color = { 32 / 255, 0, 32 / 255 },
+	ring_color = { 32 / 255, 1, 32 / 255 },
 	-- ShieldCharge, the sparks of the charge (ShieldFire.Timer): lines that appear up to 5 units from GetEffectStart (mPosDev) and fly
 	-- towards it, at ChargeScale * 15 units a second, 20 + ChargeScale * 10 a second, each lasting max(ChargeScale / 30, 0.2) s, where
 	-- ChargeScale is the time charged, up to FullyChargedTime. A line is 0.2 to 0.4 units wide and 0.05 s of its travel long (mSpawnVecB.X 5),
@@ -69,19 +76,23 @@ local function local_player_blocking()
 	return status_extension and status_extension:is_blocking() or false
 end
 
--- A point of the player's view in UT units from the eye (forward, right, up), where the weapon's projection draws it: the meters of a UT unit
--- across the view and along it are the model's (weapon_skin.lua). Effects that UT draws with the weapon (Canvas.DrawActor with DisplayFOV)
--- are placed with it and have the materials that draw with the weapon's field of view.
-local function view_point(skin, forward, right, up)
-	local camera_position, camera_rotation = utils.camera_pose()
-
-	if not camera_position or not skin.view_across_scale then
+-- A point of the player's view in UT units from the eye (forward, right, up), where the weapon's projection draws it, moved by the gun's
+-- bob (weapon_skin.lua) and pushed back behind the gun (behind_gun). Effects that UT draws with the weapon (Canvas.DrawActor with
+-- DisplayFOV) are placed with it and have the materials that draw with the weapon's field of view. It returns the first person unit, which
+-- the gun is linked to, and the point in its frame, for particles that are linked to the unit (skin_particles.lua, locked), so that they
+-- move with the gun. It returns nothing once the skin is gone.
+local function view_point(api, skin, forward, right, up)
+	if api.state() ~= skin then
 		return nil
 	end
 
-	local across, along = skin.view_across_scale, skin.view_forward_scale
+	local parent, point = api.view_point_in_view(forward, right, up)
 
-	return camera_position + Quaternion.right(camera_rotation) * (right * across) + Quaternion.forward(camera_rotation) * (forward * along) + Quaternion.up(camera_rotation) * (up * across)
+	if not parent then
+		return nil
+	end
+
+	return parent, point * CONFIG.behind_gun
 end
 
 -- GetEffectStart: the weapon's place (PlayerViewOffset, scaled by CalcDrawOffset) and EffectOffset from it, as forward, right, up
@@ -98,14 +109,14 @@ end
 -- The rings of a punch (ForceRingA): discs that face the way the view looks and fly ahead
 local function force_rings(api)
 	local skin = api.state()
-	local _, camera_rotation = utils.camera_pose()
 
-	if not skin or not camera_rotation then
+	if not skin then
 		return
 	end
 
 	local forward, right, up = effect_start()
 	local count = math.floor(CONFIG.ring_rate * CONFIG.ring_time) + 1
+	local scale = (skin.view_across_scale or 0.01) * CONFIG.behind_gun
 
 	for i = 1, count do
 		local delay = (i - 1) / CONFIG.ring_rate
@@ -115,20 +126,17 @@ local function force_rings(api)
 			attenuation = 0,
 			color = CONFIG.ring_color,
 			delay = delay,
-			follow = function ()
-				if api.state() ~= skin then
-					return nil
-				end
-
+			locked = function ()
 				local age = math.max(0, Managers.time:time("game") - born)
 
-				return view_point(skin, forward + CONFIG.ring_speed * age, right, up)
+				return view_point(api, skin, forward + CONFIG.ring_speed * age, right, up)
 			end,
-			growth = CONFIG.ring_growth * (skin.view_across_scale or 0.01),
+			growth = CONFIG.ring_growth * scale,
 			life = CONFIG.ring_life,
 			material = "units/ut/fx/fx_weapon_force_ring",
-			normal = Quaternion.forward(camera_rotation),
-			size = CONFIG.ring_size * (skin.view_across_scale or 0.01),
+			-- (ahead, in the frame of the first person unit)
+			normal = Vector3(0, 1, 0),
+			size = CONFIG.ring_size * scale,
 			texture = "force_ring",
 		})
 	end
@@ -165,25 +173,21 @@ local function charge_sparks(api, skin, dt)
 			},
 			life = math.max(charged / 30, CONFIG.charge_min_life),
 			material = "units/ut/fx/fx_weapon_shield_charge_spark",
-			size = random_between(CONFIG.charge_width) * (skin.view_across_scale or 0.01),
+			size = random_between(CONFIG.charge_width) * (skin.view_across_scale or 0.01) * CONFIG.behind_gun,
 			texture = "shield_charge_spark",
 			-- (it flies towards the middle: ST_Explode with a speed below 0)
-			track = function ()
-				if api.state() ~= skin then
-					return nil
-				end
-
+			locked = function ()
 				local age = Managers.time:time("game") - born
 				local at = math.max(0, distance - speed * age) / distance
 				local tail = math.max(0, distance - speed * (age - CONFIG.charge_length)) / distance
-				local head = view_point(skin, center_forward + x * at, center_right + y * at, center_up + z * at)
-				local back = view_point(skin, center_forward + x * tail, center_right + y * tail, center_up + z * tail)
+				local parent, head = view_point(api, skin, center_forward + x * at, center_right + y * at, center_up + z * at)
+				local _, back = view_point(api, skin, center_forward + x * tail, center_right + y * tail, center_up + z * tail)
 
-				if not head or not back then
+				if not parent or not back then
 					return nil
 				end
 
-				return back, head
+				return parent, back, head
 			end,
 		})
 	end
@@ -212,25 +216,22 @@ local function show_shield(api)
 			1,
 			1,
 		},
-		follow = function ()
-			if api.state() ~= skin or not skin.blocking then
+		locked = function ()
+			if not skin.blocking then
 				return nil
 			end
 
-			return view_point(skin, forward, right, up)
+			return view_point(api, skin, forward, right, up)
 		end,
-		-- (the mesh's dish faces along its y, which is the way the view looks, and it is not turned about anything else)
+		-- (the mesh's dish faces along its y, which is the way the view looks in the frame of the first person unit, and it is not turned
+		-- about anything else)
 		angle = 0,
-		rotation = function ()
-			local _, camera_rotation = utils.camera_pose()
-
-			return camera_rotation or Quaternion.identity()
-		end,
+		rotation = Quaternion.identity(),
 		life = math.huge,
 		material = "units/ut/fx/fx_shield",
 		scale = function ()
-			local across = (skin.view_across_scale or 0.01) / mesh_unit * CONFIG.shield_draw_scale
-			local along = (skin.view_forward_scale or 0.01) / mesh_unit * CONFIG.shield_draw_scale
+			local across = (skin.view_across_scale or 0.01) / mesh_unit * CONFIG.shield_draw_scale * CONFIG.behind_gun
+			local along = (skin.view_forward_scale or 0.01) / mesh_unit * CONFIG.shield_draw_scale * CONFIG.behind_gun
 
 			return Vector3(across, along, across)
 		end,
