@@ -55,6 +55,11 @@ local CONFIG = {
 	momentum_full_speed = 9, -- m/s
 	momentum_damage_bonus = 0.25, -- the bonus at full speed: 0.25 is 25% more damage
 	momentum_grace = 0.1, -- seconds
+	-- Fall damage, as UT's Pawn.TakeFallingDamage: landing faster than MaxFallSpeed hurts 100 * (speed - MaxFallSpeed) / MaxFallSpeed,
+	-- however far the fall was. UT speeds are turned into this game's by the ratio of the jumps (UT's JumpZ against this mod's jump), as
+	-- the weapon jumps are. That makes MaxFallSpeed about 20 m/s, a fall of about 14 m with the gravity above.
+	ut_max_fall_speed = 1200, -- UT units a second
+	ut_jump_speed = 340, -- UT units a second
 }
 
 -- The Movement option switches off all the movement in this file. The hooks then do what the game does.
@@ -528,6 +533,11 @@ mod:hook_safe(PlayerCharacterStateFalling, "update", function (self, unit, input
 	end
 end)
 
+-- The player's upward speed in the air, last time their movement was updated, for each unit
+local fall_speeds = setmetatable({}, {
+	__mode = "k",
+})
+
 -- Gravity
 -- The player's gravity is applied while their movement is updated. It is multiplied only during that update. Other code, such as
 -- levels and effects, also changes the player's gravity scale, and it must see its own value.
@@ -558,6 +568,11 @@ mod:hook(PlayerUnitLocomotionExtension, "update_script_driven_movement", functio
 	self._script_driven_gravity_scale = gravity_scale
 
 	local velocity = self.velocity_current:unbox()
+
+	-- (the upward speed in the air before the player lands, for the fall damage below)
+	if not self:is_on_ground() then
+		fall_speeds[unit] = velocity.z
+	end
 
 	if not calculate_fall_velocity or velocity.z <= 0 or moved_dt <= 0 then
 		return
@@ -590,11 +605,45 @@ mod:hook(GenericStatusExtension, "add_dodge_cooldown", function (func, self, ...
 	return func(self, ...)
 end)
 
--- No fall damage. The game removes the next landing's damage when this flag is set, so it is set again on every update. The
--- player also loses the camera shake of a hard landing.
+-- UT's fall damage (see ut_max_fall_speed) in place of the game's, which goes by how far the player fell. The game's is taken away by
+-- the flag that removes the next landing's damage, set on every update. The landing is the game's (GenericStatusExtension.update_falling,
+-- on the player's own machine), with the same exceptions: bots, the Keep and riding in a transport take none. The Shield Gun's shield
+-- can take some of it (mod.shield.absorb_fall).
+local function take_falling_damage(status_extension)
+	local unit = status_extension.unit
+	local speed = fall_speeds[unit]
+
+	fall_speeds[unit] = nil
+
+	if not speed or status_extension.is_bot or global_is_inside_inn or status_extension.inside_transport_unit then
+		return
+	end
+
+	local jump_speed = PlayerUnitMovementSettings.get_movement_settings_table(unit).jump.initial_vertical_speed * CONFIG.jump_speed_multiplier
+	local max_speed = CONFIG.ut_max_fall_speed * jump_speed / CONFIG.ut_jump_speed
+
+	if -speed <= max_speed then
+		return
+	end
+
+	local damage = 100 * (-speed - max_speed) / max_speed
+
+	if mod.shield and mod.shield.absorb_fall then
+		damage = mod.shield.absorb_fall(unit, damage)
+	end
+
+	if damage > 0 then
+		DamageUtils.add_damage_network(unit, unit, damage, "full", "kinetic", nil, Vector3.up(), "ground_impact", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 1)
+	end
+end
+
 mod:hook(GenericStatusExtension, "update_falling", function (func, self, ...)
 	if is_movement_enabled() then
 		self.ignore_next_fall_damage = true
+
+		if self.locomotion_extension:is_on_ground() and not self.on_ladder then
+			take_falling_damage(self)
+		end
 	end
 
 	return func(self, ...)

@@ -196,6 +196,10 @@ local CONFIG = {
 	-- which throws it back. The game snaps a pounce onto a player from 2 m and pins whoever is within 1 m of it, so a pounce reaches the
 	-- shield pounce_radius meters out from the player's cylinder (2 m from their middle). These cost the stamina of blocking a shot and
 	-- a jump attack.
+	-- ShieldGun.AdjustPlayerDamage: the shield takes up to this much of a fall's damage (its DamageMax for Fell), if it is up and the
+	-- player looks down into the fall, for the stamina of a blocked attack
+	fall_absorb = 20,
+	fall_fatigue_type = "blocked_attack",
 	reflected_missile_explosion = "fireball_charged",
 	pounce_radius = 1.5,
 	pounce_fatigue_type = "blocked_jump_slam",
@@ -1231,6 +1235,27 @@ mod:hook(PlayerProjectileImpactUnitExtension, "update", function (func, self, un
 end)
 
 mod.shield.max_reflections = CONFIG.max_reflections
+
+-- What is left of a fall's damage (movement.lua) after the shield takes its part. UT's arc is from where the fall hits, the player's
+-- middle, so it is under them, and the player has to look down into it (CheckReflect's HitDir is straight up).
+function mod.shield.absorb_fall(unit, damage)
+	local game = Managers.state.network:game()
+	local go_id = Managers.state.unit_storage:go_id(unit)
+
+	if not game or not go_id or not shield_is_up(unit) then
+		return damage
+	end
+
+	local face = Vector3.normalize(GameSession.game_object_field(game, go_id, "aim_direction"))
+
+	if Vector3.dot(face, Vector3.up()) >= CONFIG.reflect_dot then
+		return damage
+	end
+
+	pay_for_reflection(unit, unit, CONFIG.fall_fatigue_type)
+
+	return damage - math.min(damage, CONFIG.fall_absorb)
+end
 
 -- A sorcerer's magic missile (BTCastMissileAction.launch_magic_missile: Burblespue's and the Drachenfels sorcerer's) flies at a
 -- player and blows up where it hits (the "direct_impact" impact, an explosion of the sorcerer's that hurts players). The host moves it
