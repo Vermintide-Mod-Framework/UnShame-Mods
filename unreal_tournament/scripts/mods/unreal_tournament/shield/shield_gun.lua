@@ -279,10 +279,10 @@ local function raycast(physics_world, origin, direction, range)
 	return PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, range * UNIT, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
 end
 
--- Whether a melee swing that hits this actor hits a thing that is not a character: one with health (a door, a barrel), or one that
--- moves (a loose thing, a body)
+-- Whether a melee swing that hits this actor hits a thing that is not a character: one with health (a door, a barrel), or one whose part
+-- is not a static part of the level (a loose thing, a body, a lantern that hangs, which hangs by a kinematic part)
 local function is_object(unit, actor, owner_unit)
-	return unit ~= owner_unit and (ScriptUnit.has_extension(unit, "health_system") and not Unit.get_data(unit, "breed") or Actor.is_dynamic(actor))
+	return unit ~= owner_unit and (ScriptUnit.has_extension(unit, "health_system") and not Unit.get_data(unit, "breed") or not Actor.is_static(actor))
 end
 
 -- The first such thing along the ray
