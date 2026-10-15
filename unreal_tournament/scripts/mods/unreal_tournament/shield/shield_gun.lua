@@ -731,8 +731,36 @@ end
 -- When each player's charge started, on the machine that owns their actions
 local charge_started = {}
 
+-- TEMPORARY: names what a ray from the eyes along the crosshair hits with each filter, to find out what a hanging lantern is to the game
+local function debug_crosshair(owner_unit, physics_world)
+	local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
+
+	if not first_person_extension or not utils.is_local_player_unit(owner_unit) then
+		return
+	end
+
+	local position = first_person_extension:current_position()
+	local direction = Quaternion.forward(first_person_extension:current_rotation())
+
+	for _, filter in ipairs({ "filter_melee_sweep", "filter_player_ray_projectile_static_only", "filter_player_ray_projectile" }) do
+		local hits = PhysicsWorld.immediate_raycast(physics_world, position, direction, 10, "all", "collision_filter", filter)
+		local names = {}
+
+		for i = 1, math.min(#(hits or {}), 3) do
+			local actor = hits[i][4]
+			local unit = actor and Actor.unit(actor)
+
+			names[#names + 1] = string.format("%s %.1fm%s%s", unit and Unit.debug_name(unit) or "?", hits[i][2], actor and Actor.is_dynamic(actor) and " dynamic" or "", unit and ScriptUnit.has_extension(unit, "health_system") and " health" or "")
+		end
+
+		mod:echo("%s: %s", filter, #names > 0 and table.concat(names, ", ") or "nothing")
+	end
+end
+
 local function punch(action, t, power_level, bash)
 	local owner_unit = action.owner_unit
+
+	debug_crosshair(owner_unit, action.physics_world)
 	local hold_time = charge_started[owner_unit] and t - charge_started[owner_unit] or 0
 	local step, scale = charge_step(hold_time)
 	local range = bash and CONFIG.bash_range or CONFIG.hit_range
