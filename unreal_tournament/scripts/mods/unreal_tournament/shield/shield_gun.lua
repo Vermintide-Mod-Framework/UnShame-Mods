@@ -964,6 +964,7 @@ local function punch(action, t, power_level, bash)
 	-- gets through is hit without that. Bodies cost nothing.
 	local max_attack, max_impact, unlimited = cleave_of(owner_unit, DamageProfileTemplates[punch_action.damage_profile], power_level, blow.is_critical_strike)
 	local mass = 0
+	local hit_enemy = false
 	local index = 0
 
 	for _, target in ipairs(targets) do
@@ -1001,6 +1002,8 @@ local function punch(action, t, power_level, bash)
 				index = index + 1
 
 				melee_hit(action, punch_action, target.unit, hit_on_target, direction, power_level, blow, index, can_damage, can_stagger)
+
+				hit_enemy = hit_enemy or alive
 			end
 
 			if alive then
@@ -1050,8 +1053,10 @@ local function punch(action, t, power_level, bash)
 		return
 	end
 
-	-- Anything else near enough straight ahead throws the player off it and hurts them, as UT's punch of anything that is not a pawn does
-	if hit[2] <= CONFIG.range * UNIT and not Actor.is_dynamic(hit[4]) then
+	-- Anything else near enough straight ahead throws the player off it and hurts them, as UT's punch of anything that is not a pawn does.
+	-- A punch that hit an enemy doesn't: UT's one trace either hits a pawn or pushes the player off what it hit, and here the cone can
+	-- have an enemy in it while the ray straight ahead hits the floor.
+	if hit[2] <= CONFIG.range * UNIT and not Actor.is_dynamic(hit[4]) and not hit_enemy then
 		local self_damage = (CONFIG.min_self_damage + CONFIG.self_damage_scale * damage_for_step(step)) * CONFIG.self_damage_share
 
 		utils.apply_self_damage(owner_unit, hit[1], -direction, action.item_name, self_damage)
