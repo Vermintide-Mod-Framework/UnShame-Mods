@@ -406,8 +406,11 @@ local function new_skin(setting_id)
 			muzzle_up = 0,
 			menu_yaw = 180,
 		},
-		on_create = function ()
+		on_create = function (skin)
 			api.play_sound("ut_shield_select")
+
+			-- (a punch from before the gun was put away is not played again when it is taken out)
+			skin.seen_punch = shield.last_punch
 		end,
 		on_update = function (skin, dt)
 			skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
