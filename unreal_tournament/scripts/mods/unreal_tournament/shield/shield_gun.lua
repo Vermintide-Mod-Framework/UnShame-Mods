@@ -101,10 +101,9 @@ local CONFIG = {
 	-- The punch hits every enemy within its range in a cone this wide (degrees) about the way the player looks, that it can see. UT's
 	-- punch hits the one thing in front: this is the mod's own, and a guess.
 	hit_angle = 60,
-	-- What the punch throws (see throws below). A body it kills gets the punch's momentum, Force * (X + 0.5 up) / Mass, and KDeathUpKick
-	-- up. A body that is down already and a loose thing get DamTypeShieldImpact's KDeathVel along the way the punch went, lifted by half,
-	-- and KDeathUpKick up. In UT units a second. A body is thrown once it falls, if it dies within ragdoll_window seconds of the hit, and
-	-- the throw is held for kill_hold seconds.
+	-- What the punch throws (see throws below): DamTypeShieldImpact's death throw (xPawn.PlayDying), KDeathVel along the way the punch
+	-- went (its momentum, Force * (X + 0.5 up), so lifted by half) and KDeathUpKick up, in UT units a second. A body is thrown once it
+	-- falls, if it dies within ragdoll_window seconds of the hit, and the throw is held for kill_hold seconds.
 	ragdoll_speed = 450,
 	ragdoll_up = 300,
 	ragdoll_window = 1.5,
@@ -352,53 +351,38 @@ local function push_player(owner_unit, direction, force)
 	locomotion_extension:set_wanted_velocity(velocity)
 end
 
--- What a punch throws. This runs on every machine, because the physics of bodies is each machine's own, so the machine of the punch tells
--- the others. There are three kinds:
+-- What a punch throws, besides the push that the game gives a body for any hit. This runs on every machine, because the physics of bodies
+-- is each machine's own, so the machine of the punch tells the others. There are two kinds:
 --   KILL: an enemy the punch hits. If it dies, its body is thrown with the punch's momentum once it falls (its parts move by physics only
 --       then), every part alike, as UT starts a ragdoll with a velocity (xPawn.PlayDying). The velocity is held for kill_hold seconds,
 --       because for its first moments the body is still moved by its animation, and the game pushes it too.
---   BODY: a body that is down already. UT pushes it at the place it is hit (KAddImpulse at HitLocation), so here the part of it nearest
---       the punch gets the push, and the rest of the body follows on its joints.
 --   LOOSE: a loose thing, which moves as a whole.
-local KILL, BODY, LOOSE = 1, 2, 3
+local KILL, LOOSE = 1, 2
 local throws = {}
 
-local function add_throw(unit, kind, velocity, at)
+local function add_throw(unit, kind, velocity)
 	throws[unit] = {
-		at = Vector3Box(at),
 		kind = kind,
 		t = Managers.time:time("game"),
 		velocity = Vector3Box(velocity),
 	}
 end
 
--- Sets the velocity of the moving parts of a unit, or of only the one nearest a point. Returns whether anything moved.
-local function move_parts(unit, velocity, nearest_to)
-	local nearest, nearest_distance
+-- Sets the velocity of the moving parts of a unit. Returns whether anything moved.
+local function move_parts(unit, velocity)
+	local moved = false
 
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 
 		if actor and Actor.is_dynamic(actor) then
-			if nearest_to then
-				local distance = Vector3.distance(Actor.position(actor), nearest_to)
+			Actor.set_velocity(actor, velocity)
 
-				if not nearest or distance < nearest_distance then
-					nearest, nearest_distance = actor, distance
-				end
-			else
-				Actor.set_velocity(actor, velocity)
-
-				nearest = actor
-			end
+			moved = true
 		end
 	end
 
-	if nearest and nearest_to then
-		Actor.set_velocity(nearest, velocity)
-	end
-
-	return nearest ~= nil
+	return moved
 end
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
@@ -413,7 +397,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 			if not HEALTH_ALIVE[unit] and move_parts(unit, velocity) then
 				throw.thrown_t = throw.thrown_t or t
 			end
-		elseif move_parts(unit, velocity, throw.kind == BODY and throw.at:unbox() or nil) then
+		elseif move_parts(unit, velocity) then
 			throws[unit] = nil
 		end
 	end
@@ -423,33 +407,26 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(throws)
 end
 
-mod:network_register("ut_shield_throw", function (_, id, is_level_unit, kind, x, y, z, at_x, at_y, at_z)
+mod:network_register("ut_shield_throw", function (_, id, is_level_unit, kind, x, y, z)
 	local unit = Managers.state.network:game_object_or_level_unit(id, is_level_unit == 1)
 
 	if unit and Unit.alive(unit) then
-		add_throw(unit, kind, Vector3(x, y, z), Vector3(at_x, at_y, at_z))
+		add_throw(unit, kind, Vector3(x, y, z))
 	end
 end)
 
--- Throws what the punch hit, here and on the other machines. force is the punch's (MinForce to MaxForce), at is where it hit, and alive
--- says whether a character was alive before the punch (which may have killed it).
-local function throw_hit(unit, direction, force, at, alive)
-	local kind = Unit.get_data(unit, "breed") and (alive and KILL or BODY) or LOOSE
-	local velocity
-
-	if kind == KILL then
-		-- (the punch's momentum on the body, Force * (X + 0.5 up) / Mass, and KDeathUpKick)
-		velocity = ((direction + Vector3(0, 0, 0.5)) * (force / CONFIG.ut_mass) + Vector3(0, 0, CONFIG.ragdoll_up)) * UNIT
-	else
-		velocity = (Vector3.normalize(direction + Vector3(0, 0, 0.5)) * CONFIG.ragdoll_speed + Vector3(0, 0, CONFIG.ragdoll_up)) * UNIT
-	end
+-- Throws what the punch hit, here and on the other machines. alive says that it is an enemy that was alive before the punch (which may
+-- have killed it), not a loose thing.
+local function throw_hit(unit, direction, alive)
+	local kind = alive and KILL or LOOSE
+	local velocity = (Vector3.normalize(direction + Vector3(0, 0, 0.5)) * CONFIG.ragdoll_speed + Vector3(0, 0, CONFIG.ragdoll_up)) * UNIT
 
 	local id, is_level_unit = Managers.state.network:game_object_or_level_id(unit)
 
-	add_throw(unit, kind, velocity, at)
+	add_throw(unit, kind, velocity)
 
 	if id then
-		mod:network_send("ut_shield_throw", "others", id, is_level_unit and 1 or 0, kind, Vector3.x(velocity), Vector3.y(velocity), Vector3.z(velocity), Vector3.x(at), Vector3.y(at), Vector3.z(at))
+		mod:network_send("ut_shield_throw", "others", id, is_level_unit and 1 or 0, kind, Vector3.x(velocity), Vector3.y(velocity), Vector3.z(velocity))
 	end
 end
 
@@ -471,6 +448,34 @@ local function hit_object(action, hit_unit, hit, direction, damage_profile_name,
 
 		weapon_system:send_rpc_attack_hit(NetworkLookup.damage_sources[action.item_name], network_manager:unit_game_object_id(action.owner_unit), network_manager:unit_game_object_id(hit_unit), NetworkLookup.hit_zones.full, hit[1], direction, NetworkLookup.damage_profiles[damage_profile_name], "power_level", power_level, "hit_target_index", 1, "blocking", false, "boost_curve_multiplier", 0, "is_critical_strike", false)
 	end
+end
+
+-- A hit on a body at its part nearest a point, as a ray's hit is ({ position, distance, normal, actor }). Only a part that is a hit zone
+-- of the body's breed will do (not "afro"), because the game looks the zone up.
+local function body_hit(unit, from, direction)
+	local breed = Unit.get_data(unit, "breed")
+	local lookup = breed and breed.hit_zones_lookup
+	local best, best_distance
+
+	for i = 0, Unit.num_actors(unit) - 1 do
+		local actor = Unit.actor(unit, i)
+		local zone = actor and lookup and lookup[Actor.node(actor)]
+
+		if zone and zone.name ~= "afro" then
+			local distance = Vector3.distance(Actor.position(actor), from)
+
+			if not best or distance < best_distance then
+				best, best_distance = actor, distance
+			end
+		end
+	end
+
+	return best and {
+		Actor.position(best),
+		best_distance,
+		-direction,
+		best,
+	}
 end
 
 -- When each player's charge started, on the machine that owns their actions
@@ -516,16 +521,20 @@ local function punch(action, t, power_level, bash)
 
 	local force = CONFIG.min_force + scale * (CONFIG.max_force - CONFIG.min_force)
 
-	-- Every enemy in reach takes the punch, and every body in reach is thrown. (A body is pushed where the punch meets it first, the part
-	-- nearest the player.)
+	-- Every enemy and every body in reach takes the punch as a hit, and the game pushes the body as it does for any hit
+	-- (GenericHitReactionExtension: the hit zone's push actors). A body is hit at its part nearest the player. What the punch kills is
+	-- thrown on top of that.
 	for _, target in ipairs(targets) do
 		local alive = HEALTH_ALIVE[target.unit]
+		local hit_on_target = target.hit or body_hit(target.unit, origin, direction)
 
-		if alive then
-			DamageUtils.process_projectile_hit(action.world, action.item_name, owner_unit, action.is_server, { target.hit }, punch_action, direction, true, nil, nil, false, power_level)
+		if hit_on_target then
+			DamageUtils.process_projectile_hit(action.world, action.item_name, owner_unit, action.is_server, { hit_on_target }, punch_action, direction, true, nil, nil, false, power_level)
 		end
 
-		throw_hit(target.unit, direction, force, origin, alive)
+		if alive then
+			throw_hit(target.unit, direction, true)
+		end
 	end
 
 	-- The thing straight ahead, if it is not an enemy: a door or a barrel takes the punch as from a melee swing, a loose thing is thrown,
@@ -543,7 +552,7 @@ local function punch(action, t, power_level, bash)
 	hit_object(action, hit_unit, hit, direction, punch_action.damage_profile, power_level)
 
 	if Actor.is_dynamic(hit[4]) then
-		throw_hit(hit_unit, direction, force, hit[1], false)
+		throw_hit(hit_unit, direction, false)
 	end
 
 	-- Anything else near enough throws the player off it, as UT's punch of anything that is not a pawn does
@@ -558,7 +567,6 @@ mod.dummy_start_callbacks.shield_gun = function (action, new_action, t, power_le
 
 		if utils.is_local_player_unit(action.owner_unit) then
 			mod.shield.charge_started = t
-			mod.shield.charge_unit = action.owner_unit
 		end
 	elseif new_action.ut_shield_punch then
 		if new_action.ut_shield_bash and utils.is_local_player_unit(action.owner_unit) then
@@ -582,23 +590,26 @@ mod.push_start_callbacks.shield_gun = function (action, new_action, t)
 	end
 end
 
--- A charge of a character that is gone is over: the game does not finish the action of a player who dies, and the charge would show
--- on the gun of the next one
+-- What the gun did belongs to the character that did it. When the player's character changes (they died, or the level changed), it is
+-- all forgotten: the game doesn't finish the actions of a player who dies, so a charge would go on, and the game's clock can start over
+-- with a level, so an old push would look like one that is still going.
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
-	if not mod.shield.charge_started then
+	local player = Managers.player:local_player_safe()
+	local unit = player and player.player_unit
+
+	if unit == mod.shield.player_unit then
 		return
 	end
 
-	local player = Managers.player:local_player_safe()
-
-	if not player or player.player_unit ~= mod.shield.charge_unit or not Unit.alive(mod.shield.charge_unit) then
-		if mod.shield.charge_unit then
-			charge_started[mod.shield.charge_unit] = nil
-		end
-
-		mod.shield.charge_started = nil
-		mod.shield.charge_unit = nil
+	if mod.shield.player_unit then
+		charge_started[mod.shield.player_unit] = nil
 	end
+
+	mod.shield.player_unit = unit
+	mod.shield.charge_started = nil
+	mod.shield.last_push = nil
+	mod.shield.last_bash = nil
+	mod.shield.last_punch = nil
 end
 
 -- The charge can end without a punch: on a ladder, when stunned, when the weapon is put away, and so on. The game then finishes the

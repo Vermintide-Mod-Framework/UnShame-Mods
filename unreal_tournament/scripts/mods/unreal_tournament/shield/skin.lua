@@ -348,8 +348,9 @@ local function update_state(api, skin, dt)
 	-- The shove of a push, held out for a bash and through it. alt_pose moves the model (1 is the shove's distance), and the shield and
 	-- the bash's rings follow it.
 	local t = Managers.time:time("game")
-	local since_push = shield.last_push and t - shield.last_push or math.huge
-	local since_bash = shield.last_bash and shield.last_push and shield.last_bash >= shield.last_push and t - shield.last_bash or math.huge
+	-- (a time after now is from before the game's clock started over, and is no push)
+	local since_push = shield.last_push and t >= shield.last_push and t - shield.last_push or math.huge
+	local since_bash = shield.last_bash and shield.last_push and shield.last_bash >= shield.last_push and t >= shield.last_bash and t - shield.last_bash or math.huge
 	local bashing = since_bash < api.animation_duration("Fire")
 	local held_out = since_push < CONFIG.shove_out or bashing or since_bash == math.huge and since_push < shield.bash_window_end and local_player_holds_both()
 	local shove = skin.alt_pose or 0
