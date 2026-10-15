@@ -1064,12 +1064,18 @@ end
 
 -- Reflection (see reflect_dot in CONFIG)
 
--- Where a segment from `from` to `to` first gets to an upright cylinder, as the share of the way along it, or nil if it doesn't
+-- Where a segment from `from` to `to` first gets to an upright cylinder, as the share of the way along it (0 if it starts inside), or
+-- nil if it doesn't
 local function segment_cylinder(from, to, center, radius, half_height)
 	local dx, dy, dz = Vector3.x(to) - Vector3.x(from), Vector3.y(to) - Vector3.y(from), Vector3.z(to) - Vector3.z(from)
 	local fx, fy = Vector3.x(from) - Vector3.x(center), Vector3.y(from) - Vector3.y(center)
 	local fz = Vector3.z(from) - Vector3.z(center)
 	local best
+
+	-- (a segment that starts inside it gets to it where it starts: a gutter runner that jumps from up close)
+	if fx * fx + fy * fy <= radius * radius and math.abs(fz) <= half_height then
+		return 0
+	end
 
 	-- (its side)
 	local a = dx * dx + dy * dy
