@@ -211,8 +211,8 @@ local function damage_for_step(step)
 	return CONFIG.min_damage + (CONFIG.max_damage - CONFIG.min_damage) * step / (CONFIG.damage_steps - 1)
 end
 
--- Makes the damage profile of a punch of a step of the charge, of a damage type and a share of UT's damage, and returns what the punch is to
--- the game's hit processing
+-- Makes the damage profile of a punch of a step of the charge, of a damage type and a share of UT's damage, and returns the punch as a
+-- melee action, for its hits (see melee_hit)
 local function make_punch_action(name, damage, damage_type, damage_share, charge_value)
 	register_damage_profile(name, "shot_sniper", function (profile)
 		make_flat(profile, attack_power_for(damage * damage_share), impact_power_for(damage) * CONFIG.stagger_multiplier, damage_type)
@@ -233,10 +233,13 @@ local function make_punch_action(name, damage, damage_type, damage_share, charge
 		profile.no_headshot_boost = true
 	end)
 
+	-- A melee swing for its critical hits, with the sounds of a two-handed hammer's hits
 	return {
+		additional_critical_strike_chance = 0,
 		damage_profile = name,
-		hit_effect = "melee_hit_hammers_2h",
-		ignore_shield_hit = true,
+		impact_sound_event = "hammer_2h_hit",
+		kind = "sweep",
+		no_damage_impact_sound_event = "blunt_hit_armour",
 		no_headshot_sound = true,
 	}
 end
@@ -555,26 +558,6 @@ mod:network_register("ut_shield_body_push", function (_, id, zone_name, x, y, z)
 	end
 end)
 
--- What the punch does to a thing that is not a character, as a melee swing does (ActionSweep.hit_level_object and the attack of a unit
--- with health): doors, barrels and the like take its damage
-local function hit_object(action, hit_unit, hit, direction, damage_profile_name, power_level)
-	if not ScriptUnit.has_extension(hit_unit, "health_system") or Unit.get_data(hit_unit, "allow_melee_damage") == false then
-		return
-	end
-
-	local network_manager = Managers.state.network
-	local _, is_level_unit = network_manager:game_object_or_level_id(hit_unit)
-	local damage_profile = DamageProfileTemplates[damage_profile_name]
-
-	if is_level_unit then
-		DamageUtils.damage_level_unit(hit_unit, action.owner_unit, "full", power_level, nil, false, damage_profile, 1, direction, action.item_name)
-	else
-		local weapon_system = Managers.state.entity:system("weapon_system")
-
-		weapon_system:send_rpc_attack_hit(NetworkLookup.damage_sources[action.item_name], network_manager:unit_game_object_id(action.owner_unit), network_manager:unit_game_object_id(hit_unit), NetworkLookup.hit_zones.full, hit[1], direction, NetworkLookup.damage_profiles[damage_profile_name], "power_level", power_level, "hit_target_index", 1, "blocking", false, "boost_curve_multiplier", 0, "is_critical_strike", false)
-	end
-end
-
 -- The zones a punch doesn't hit: "afro" is the bigger zone for near misses, and a punch has no headshots
 local NOT_PUNCHED = {
 	afro = true,
@@ -590,6 +573,86 @@ local function hit_zone_name(hit)
 	local zone = breed and breed.hit_zones_lookup and breed.hit_zones_lookup[Actor.node(actor)]
 
 	return zone and zone.name
+end
+
+-- What the punch does to a thing that is not a character, as a melee swing does (ActionSweep.hit_level_object and the attack of a unit
+-- with health): doors, barrels and the like take its damage
+local function hit_object(action, hit_unit, hit, direction, damage_profile_name, power_level, blow)
+	if not ScriptUnit.has_extension(hit_unit, "health_system") or Unit.get_data(hit_unit, "allow_melee_damage") == false then
+		return
+	end
+
+	local network_manager = Managers.state.network
+	local _, is_level_unit = network_manager:game_object_or_level_id(hit_unit)
+	local damage_profile = DamageProfileTemplates[damage_profile_name]
+
+	if is_level_unit then
+		DamageUtils.damage_level_unit(hit_unit, action.owner_unit, "full", power_level, blow.boost_curve_multiplier, blow.is_critical_strike, damage_profile, 1, direction, action.item_name)
+	else
+		local weapon_system = Managers.state.entity:system("weapon_system")
+
+		weapon_system:send_rpc_attack_hit(NetworkLookup.damage_sources[action.item_name], network_manager:unit_game_object_id(action.owner_unit), network_manager:unit_game_object_id(hit_unit), NetworkLookup.hit_zones.full, hit[1], direction, NetworkLookup.damage_profiles[damage_profile_name], "power_level", power_level, "hit_target_index", 1, "blocking", false, "boost_curve_multiplier", blow.boost_curve_multiplier, "is_critical_strike", blow.is_critical_strike)
+	end
+end
+
+-- Hits an enemy or a body with the punch as a melee blow hits it (ActionSweep, ActionShieldSlam): the sound, the blood and the hit reaction
+-- here, the talents, traits and buffs of a melee hit, and the damage on the server. A shield doesn't stop the punch. blow is the punch's
+-- critical hit and melee boost, and index the number of this target among those it hits.
+local function melee_hit(action, punch_action, hit_unit, hit, direction, power_level, blow, index)
+	local network_manager = Managers.state.network
+	local owner_unit = action.owner_unit
+	local attacker_unit_id = network_manager:unit_game_object_id(owner_unit)
+	local hit_unit_id = network_manager:unit_game_object_id(hit_unit)
+	local breed = Unit.get_data(hit_unit, "breed")
+
+	if not attacker_unit_id or not hit_unit_id or not breed then
+		return
+	end
+
+	local zone_name = hit_zone_name(hit) or "torso"
+	local position = hit[1]
+	local damage_profile = DamageProfileTemplates[punch_action.damage_profile]
+	local alive = HEALTH_ALIVE[hit_unit]
+	local sound_effect_extension = ScriptUnit.has_extension(owner_unit, "sound_effect_system")
+
+	if sound_effect_extension and alive then
+		sound_effect_extension:add_hit()
+	end
+
+	-- (what ActionSweep reads of the action that hits)
+	local sweep = {
+		_overridable_settings = punch_action,
+		item_name = action.item_name,
+		owner_unit = owner_unit,
+		weapon_unit = action.weapon_unit,
+		world = action.world,
+	}
+
+	ActionSweep._play_character_impact(sweep, action.is_server, owner_unit, hit_unit, breed, position, zone_name, punch_action, damage_profile, 1, power_level, direction, false, blow.boost_curve_multiplier, blow.is_critical_strike)
+
+	-- (the buffs only for a living enemy, so that hitting bodies doesn't set them off)
+	local buff_result
+
+	if alive then
+		buff_result = DamageUtils.buff_on_attack(owner_unit, hit_unit, damage_profile.charge_value, blow.is_critical_strike, zone_name, index, true, DamageUtils.get_item_buff_type(action.item_name), nil, action.item_name)
+	end
+
+	local weapon_system = Managers.state.entity:system("weapon_system")
+	local attack_template_id = NetworkLookup.attack_templates[damage_profile.default_target.attack_template]
+
+	weapon_system:rpc_weapon_blood(nil, attacker_unit_id, attack_template_id)
+	Managers.state.blood:add_enemy_blood(position, hit_unit)
+
+	-- (a buff can kill the enemy itself)
+	if buff_result == "killing_blow" then
+		return
+	end
+
+	weapon_system:send_rpc_attack_hit(NetworkLookup.damage_sources[action.item_name], attacker_unit_id, hit_unit_id, NetworkLookup.hit_zones[zone_name], position, direction, NetworkLookup.damage_profiles[punch_action.damage_profile], "power_level", power_level, "hit_target_index", 1, "blocking", false, "shield_break_procced", false, "boost_curve_multiplier", blow.boost_curve_multiplier, "is_critical_strike", blow.is_critical_strike, "can_damage", true, "can_stagger", true, "first_hit", index == 1)
+
+	if not action.is_server then
+		network_manager.network_transmit:send_rpc_server("rpc_weapon_blood", attacker_unit_id, attack_template_id)
+	end
 end
 
 -- A hit on a body at its part nearest a point, as a ray's hit is ({ position, distance, normal, actor }). Only a part that is a hit zone
@@ -663,9 +726,26 @@ local function punch(action, t, power_level, bash)
 
 	local force = CONFIG.min_force + scale * (CONFIG.max_force - CONFIG.min_force)
 
+	-- The punch is a melee swing: it can be a critical hit, and the career's melee boost adds to it, as a swing's start has them (ActionSweep)
+	local buff_extension = ScriptUnit.has_extension(owner_unit, "buff_system")
+	local has_melee_boost, boost_curve_multiplier = ActionUtils.get_melee_boost(owner_unit)
+	local blow = {
+		boost_curve_multiplier = boost_curve_multiplier,
+		is_critical_strike = ActionUtils.is_critical_strike(owner_unit, punch_action, t) or has_melee_boost,
+	}
+
+	if buff_extension then
+		buff_extension:trigger_procs("on_sweep")
+	end
+
+	-- (with no HUD extension, so the critical hit's mark on the crosshair isn't left on: a swing takes it off when it ends)
+	action:_handle_critical_strike(blow.is_critical_strike, buff_extension, nil, ScriptUnit.has_extension(owner_unit, "first_person_system"), "on_critical_sweep", "Play_player_combat_crit_swing_2D")
+
 	-- Every enemy and every body in reach takes the punch as a hit (a body at its part nearest the player). A body that is down already is
 	-- pushed at that zone as the game pushes a body for a hit, here and on the other machines; the game doesn't for a hit on one that is
 	-- dead. What the punch kills is thrown.
+	local index = 0
+
 	for _, target in ipairs(targets) do
 		local alive = HEALTH_ALIVE[target.unit]
 		local hit_on_target = target.hit
@@ -677,7 +757,9 @@ local function punch(action, t, power_level, bash)
 		end
 
 		if hit_on_target then
-			DamageUtils.process_projectile_hit(action.world, action.item_name, owner_unit, action.is_server, { hit_on_target }, punch_action, direction, true, nil, nil, false, power_level)
+			index = index + 1
+
+			melee_hit(action, punch_action, target.unit, hit_on_target, direction, power_level, blow, index)
 		end
 
 		if alive then
@@ -706,7 +788,7 @@ local function punch(action, t, power_level, bash)
 		return
 	end
 
-	hit_object(action, hit_unit, hit, direction, punch_action.damage_profile, power_level)
+	hit_object(action, hit_unit, hit, direction, punch_action.damage_profile, power_level, blow)
 
 	if Actor.is_dynamic(hit[4]) then
 		throw_hit(hit_unit, direction, false)
