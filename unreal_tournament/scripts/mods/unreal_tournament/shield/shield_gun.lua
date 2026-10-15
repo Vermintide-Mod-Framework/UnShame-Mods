@@ -386,22 +386,33 @@ local function add_throw(unit, kind, velocity, spin)
 	}
 end
 
--- Sets the velocity and the spin (radians a second, about each axis) of the moving parts of a unit. Returns whether anything moved.
+-- Sets the velocity and the spin (radians a second, about each axis) of the moving parts of a unit, as one body: each part also moves
+-- with the spin about the middle of the parts, so that the whole body turns, not each part in its place. Returns whether anything moved.
 local function move_parts(unit, velocity, spin)
-	local moved = false
+	local actors = {}
+	local middle = Vector3.zero()
 
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 
 		if actor and Actor.is_dynamic(actor) then
-			Actor.set_velocity(actor, velocity)
-			Actor.set_angular_velocity(actor, spin)
-
-			moved = true
+			actors[#actors + 1] = actor
+			middle = middle + Actor.position(actor)
 		end
 	end
 
-	return moved
+	if #actors == 0 then
+		return false
+	end
+
+	middle = middle / #actors
+
+	for _, actor in ipairs(actors) do
+		Actor.set_velocity(actor, velocity + Vector3.cross(spin, Actor.position(actor) - middle))
+		Actor.set_angular_velocity(actor, spin)
+	end
+
+	return true
 end
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
