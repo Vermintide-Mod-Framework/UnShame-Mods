@@ -459,6 +459,16 @@ mod:hook_safe(ActionDummy, "finish", function (self, reason)
 	end
 end)
 
+-- Pushes (the push out of a block). They run on the machine that owns the action.
+--   mod.push_start_callbacks[name] = function (action_push, new_action, t)
+mod.push_start_callbacks = {}
+
+mod:hook_safe(ActionPushStagger, "client_owner_start_action", function (self, new_action, t)
+	for _, callback in pairs(mod.push_start_callbacks) do
+		callback(self, new_action, t)
+	end
+end)
+
 -- Animation events that the game plays on the player's own first person unit, by the weapon's template. Some weapon sounds (the
 -- blunderbuss's shot) are in the animation, not in a Lua sound event that hud_sound_callbacks could take over. The first person unit
 -- and the arms are hidden anyway while a skin is shown, so a skin can drop these events.

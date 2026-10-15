@@ -7,6 +7,8 @@ local mod = get_mod("unreal_tournament")
 --       throws the player away from it (the shield jump).
 --   Right button: the base weapon's block. UT's shield blocks what comes from the front and is drained by what it stops, which is what
 --       the game's block and stamina do. The skin draws UT's shield while it is up.
+--   Left button while blocking: the base weapon's push, which the skin draws as a shove of the shield. Both buttons held after it: a bash,
+--       a punch as strong as a charge held since the push, with the shield down for a moment. UT has no push; this is the mod's own.
 -- Each hero has a melee weapon to be a copy of, so the weapon is six items of the mod that share everything but the base.
 -- The skin (skin.lua) draws all of it, and this file only sets what it does to the game.
 
@@ -105,6 +107,10 @@ local CONFIG = {
 	damage_steps = 12,
 	-- ShieldFire.FireRate: after a punch, the next charge starts this long after
 	fire_rate = 0.6,
+	-- The bash out of a push (not UT's: see build_bash): the shield is down this long after it, the length of UT's Fire animation
+	bash_shield_down = 0.5,
+	-- A base weapon without a push-stab gets one at these times into the push, the bastard sword's
+	bash_window = {0.4, 0.8},
 	-- ShieldFire.AutoFireTestFreq: how often the charge looks for an enemy in reach
 	auto_fire_test_freq = 0.15,
 	-- ShieldFire.MinForce and MaxForce: the push of a punch, UT's momentum. A wall pushes the player back with SelfForceScale (1) of
@@ -288,6 +294,19 @@ mod.dummy_start_callbacks.shield_gun = function (action, new_action, t, power_le
 	end
 end
 
+-- A push counts as the start of a charge, so that the bash out of it is as strong as a charge held that long
+mod.push_start_callbacks.shield_gun = function (action, new_action, t)
+	if not new_action.ut_shield_push then
+		return
+	end
+
+	charge_started[action.owner_unit] = t
+
+	if utils.is_local_player_unit(action.owner_unit) then
+		mod.shield.last_push = t
+	end
+end
+
 -- The charge can end without a punch: on a ladder, when stunned, when the weapon is put away, and so on. The game then finishes the
 -- action, and the skin stops showing the charge. When the button is let go the charge finishes the same way just before the punch starts
 -- ("new_interupting_action"), and the punch still needs when it started, so that is kept then.
@@ -369,6 +388,59 @@ local function build_punch(original, auto)
 	return action
 end
 
+-- The push out of the block is the base weapon's own (its stagger and stamina), which the skin draws as a shove of the shield. Its
+-- push-stab, both buttons held after the push, is the bash instead.
+local function build_push(original)
+	local action = table.clone(original)
+	local has_bash = false
+
+	action.ut_shield_push = true
+
+	-- (its other chains to the left button's attacks go to the charge: the base's attacks are not in the weapon)
+	for _, entry in ipairs(action.allowed_chain_actions or {}) do
+		if entry.action == "action_one" and entry.hold_required then
+			entry.sub_action = "bash"
+			has_bash = true
+		elseif entry.action == "action_one" then
+			entry.sub_action = "default"
+		end
+	end
+
+	if not has_bash then
+		action.allowed_chain_actions = action.allowed_chain_actions or {}
+		action.allowed_chain_actions[#action.allowed_chain_actions + 1] = {
+			action = "action_one",
+			doubleclick_window = 0,
+			end_time = CONFIG.bash_window[2],
+			input = "action_one_hold",
+			start_time = CONFIG.bash_window[1],
+			sub_action = "bash",
+			hold_required = {
+				"action_two_hold",
+				"action_one_hold",
+			},
+		}
+	end
+
+	return action
+end
+
+-- The bash: the shield goes down, the gun punches as hard as a charge held since the push started (the push starts it, see
+-- push_start_callbacks), and the shield can go up again after bash_shield_down. This is not in UT, which has no push.
+local function build_bash(original)
+	local action = build_punch(original, false)
+
+	action.ut_shield_bash = true
+	action.allowed_chain_actions = {
+		chain("action_one", "default", "action_one", CONFIG.fire_rate),
+		chain("action_one", "default", "action_one_hold", CONFIG.fire_rate),
+		chain("action_two", "default", "action_two_hold", CONFIG.bash_shield_down),
+		chain("action_wield", "default", "action_wield", 0),
+	}
+
+	return action
+end
+
 local function apply_template(template_name)
 	local template = rawget(Weapons, template_name)
 	local actions = template.actions
@@ -397,16 +469,18 @@ local function apply_template(template_name)
 		default = build_charge(original.default),
 		punch = build_punch(heavy, false),
 		punch_auto = build_punch(heavy, true),
+		push = original.push and build_push(original.push),
+		bash = original.push and build_bash(heavy),
 	}
 
-	-- The block does not push: UT's fire modes don't go together, so the button starts a charge again
+	-- The block keeps its push. Its other attacks out of the block (some weapons have a block attack) start a charge instead.
 	local block = actions.action_two and actions.action_two.default
 
 	if block and block.allowed_chain_actions then
 		local kept = {}
 
 		for _, entry in ipairs(block.allowed_chain_actions) do
-			if not (entry.action == "action_one" and entry.sub_action ~= "default") then
+			if not (entry.action == "action_one" and entry.sub_action ~= "default" and not (entry.sub_action == "push" and original.push)) then
 				kept[#kept + 1] = entry
 			end
 		end

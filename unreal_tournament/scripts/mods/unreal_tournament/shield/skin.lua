@@ -51,6 +51,11 @@ local CONFIG = {
 	charge_colors = { { 45 / 255, 220 / 255, 45 / 255 }, { 65 / 255, 250 / 255, 65 / 255 } },
 	-- The length of shieldgun_charge, which loops while the gun charges (the bank's ut_shield_charge)
 	charge_sound_length = 2.03, -- seconds
+	-- The shove of a push (UT has no push): the gun and the shield go this far ahead in the view, in UT units, over shove_out seconds, and
+	-- come back over shove_back. The shield is up for the shove. These numbers are a guess.
+	shove_forward = 10,
+	shove_out = 0.1,
+	shove_back = 0.3,
 	inspect_pose_speed = 5,
 	inspect_sway = 5,
 	inspect_sway_speed = 1.8,
@@ -218,11 +223,12 @@ local function show_shield(api)
 			1,
 		},
 		locked = function ()
-			if not skin.blocking then
+			if not skin.shield_up then
 				return nil
 			end
 
-			return view_point(api, skin, forward, right, up)
+			-- (the shove moves it ahead with the gun)
+			return view_point(api, skin, forward + CONFIG.shove_forward * (skin.alt_pose or 0), right, up)
 		end,
 		-- (the mesh's dish faces along its y, which is the way the view looks in the frame of the first person unit, and it is not turned
 		-- about anything else)
@@ -298,10 +304,25 @@ local function update_state(api, skin, dt)
 		force_rings(api)
 	end
 
-	if blocking ~= skin.blocking then
-		skin.blocking = blocking
+	-- The shove of a push: out and back (alt_pose moves the model, and the shield follows it)
+	local since_push = shield.last_push and Managers.time:time("game") - shield.last_push or math.huge
+	local pushing = since_push < CONFIG.shove_out + CONFIG.shove_back
 
-		if blocking then
+	if since_push < CONFIG.shove_out then
+		skin.alt_pose = since_push / CONFIG.shove_out
+	elseif pushing then
+		skin.alt_pose = 1 - (since_push - CONFIG.shove_out) / CONFIG.shove_back
+	else
+		skin.alt_pose = 0
+	end
+
+	-- The shield is up while blocking and while shoving. It goes down for a bash, whose Fire animation is not cut short.
+	local shield_up = blocking or pushing
+
+	if shield_up ~= skin.shield_up then
+		skin.shield_up = shield_up
+
+		if shield_up then
 			api.play("Shield", nil, true)
 			show_shield(api)
 
@@ -311,7 +332,7 @@ local function update_state(api, skin, dt)
 
 			skin.shield_sound = nil
 
-			if not charging then
+			if not charging and skin.animation ~= "Fire" then
 				api.play("Idle")
 			end
 		end
@@ -343,6 +364,8 @@ local function new_skin(setting_id)
 		pivot_pitch = 500 / 65536 * 360,
 		pivot_yaw = 500 / 65536 * 360,
 		bob_damping = 2.2,
+		-- The second place is the shove of a push (update_state)
+		alt_pose_forward = CONFIG.shove_forward,
 		-- The inspect pose turns the gun to show its side, like the other weapons. These numbers are a guess.
 		inspect_pose_right = -2,
 		inspect_pose_forward = 4,
