@@ -191,6 +191,14 @@ local CONFIG = {
 	pawn_radius = 25,
 	max_reflections = 3,
 	reflect_offset = 20,
+	-- The shield also reflects what UT has no counterpart of (the mod's own): a sorcerer's magic missile, which then blows up as this
+	-- explosion of the player's (the charged fireball's, which looks and sounds like the missile's own), and a gutter runner's pounce,
+	-- which throws it back. The game snaps a pounce onto a player from 2 m and pins whoever is within 1 m of it, so a pounce reaches the
+	-- shield pounce_radius meters out from the player's cylinder (2 m from their middle). These cost the stamina of blocking a shot and
+	-- a jump attack.
+	reflected_missile_explosion = "fireball_charged",
+	pounce_radius = 1.5,
+	pounce_fatigue_type = "blocked_jump_slam",
 }
 
 local UNIT = CONFIG.meters_per_uu
@@ -1095,14 +1103,14 @@ local function shield_is_up(unit)
 	return HEALTH_ALIVE[unit] and TEMPLATE_NAMES[utils.wielded_template_name(unit)] and status_extension and status_extension:is_blocking()
 end
 
--- The shield pays for a reflection as for a blocked shot, the way the game blocks one (DamageUtils.check_ranged_block): the block is
--- made here, and the player's own machine is told, which takes their stamina and shows the hit.
-local function pay_for_reflection(unit, attacker_unit)
+-- The shield pays for a reflection as for a blocked attack of the fatigue type, the way the game blocks a shot
+-- (DamageUtils.check_ranged_block): the block is made here, and the player's own machine is told, which takes their stamina and shows
+-- the hit.
+local function pay_for_reflection(unit, attacker_unit, fatigue_type)
 	local network_manager = Managers.state.network
 	local status_extension = ScriptUnit.extension(unit, "status_system")
 	local template = WeaponUtils.get_weapon_template(utils.wielded_template_name(unit))
 	local multiplier = template and template.block_fatigue_point_multiplier or 1
-	local fatigue_type = "blocked_ranged"
 
 	status_extension:blocked_attack(fatigue_type, attacker_unit, multiplier, true)
 
@@ -1123,9 +1131,10 @@ end
 -- Whether a shot from `from` to `to`, as wide as `radius` (meters), is reflected by a player's shield on its way. The shot is the
 -- attacker's, and ignore_unit is a player it has just left. Only the first player it gets to counts: a shot that gets to a player who
 -- doesn't reflect it hits them. The attacker's own shot doesn't get to them (a projectile's ProcessTouch skips its Instigator, which a
--- reflected one keeps), except a beam that was reflected already, with reaches_attacker (InstantFire.DoTrace: ReflectNum > 0). Returns
--- where it was reflected, how far along the way that is (meters), the way it goes on (the way the player looks), and the player.
-function mod.shield.reflect(from, to, radius, attacker_unit, ignore_unit, reaches_attacker)
+-- reflected one keeps), except a beam that was reflected already, with reaches_attacker (InstantFire.DoTrace: ReflectNum > 0). The
+-- shield's stamina pays as for a blocked attack of fatigue_type (a shot's, "blocked_ranged", if not given). Returns where it was
+-- reflected, how far along the way that is (meters), the way it goes on (the way the player looks), and the player.
+function mod.shield.reflect(from, to, radius, attacker_unit, ignore_unit, reaches_attacker, fatigue_type)
 	local heroes = Managers.state.side and Managers.state.side:get_side_from_name("heroes")
 	local game = Managers.state.network:game()
 
@@ -1162,7 +1171,7 @@ function mod.shield.reflect(from, to, radius, attacker_unit, ignore_unit, reache
 		return
 	end
 
-	pay_for_reflection(best_unit, attacker_unit)
+	pay_for_reflection(best_unit, attacker_unit, fatigue_type or "blocked_ranged")
 
 	return position, Vector3.distance(from, position), face, best_unit
 end
@@ -1222,6 +1231,128 @@ mod:hook(PlayerProjectileImpactUnitExtension, "update", function (func, self, un
 end)
 
 mod.shield.max_reflections = CONFIG.max_reflections
+
+-- A sorcerer's magic missile (BTCastMissileAction.launch_magic_missile: Burblespue's and the Drachenfels sorcerer's) flies at a
+-- player and blows up where it hits (the "direct_impact" impact, an explosion of the sorcerer's that hurts players). The host moves it
+-- and looks for what it hits, so the host reflects it. A reflected missile stops following its target and flies on the way the player
+-- with the shield looks, hits the enemies and the level instead of the players, and blows up as that player's explosion.
+local REFLECTED_MISSILE_IMPACT = "ut_reflected_missile"
+local MISSILE_IMPACTS = {
+	direct_impact = true,
+	[REFLECTED_MISSILE_IMPACT] = true,
+}
+
+ProjectileTemplates.impact_templates[REFLECTED_MISSILE_IMPACT] = {
+	server = {
+		execute = function (world, damage_source, projectile_unit, recent_impacts, num_impacts, owner_unit, explosion_template)
+			local projectile = ScriptUnit.has_extension(projectile_unit, "projectile_system")
+			local shield_unit = projectile and projectile._ut_reflected_by
+			local inventory_extension = shield_unit and HEALTH_ALIVE[shield_unit] and ScriptUnit.has_extension(shield_unit, "inventory_system")
+			local wielded = inventory_extension and inventory_extension:equipment().wielded
+			local career_extension = shield_unit and ScriptUnit.has_extension(shield_unit, "career_system")
+
+			if wielded and career_extension then
+				local position = Vector3Box.unbox(recent_impacts[ProjectileImpactDataIndex.POSITION])
+				local area_damage_system = Managers.state.entity:system("area_damage_system")
+
+				area_damage_system:create_explosion(shield_unit, position, Quaternion.identity(), CONFIG.reflected_missile_explosion, 1, wielded.name, career_extension:get_career_power_level(), false, shield_unit)
+			end
+
+			Managers.state.unit_spawner:mark_for_deletion(projectile_unit)
+
+			return true
+		end,
+	},
+	client = ProjectileTemplates.impact_templates.direct_impact.client,
+}
+
+-- Sends a missile on from a shield, reflect_offset out from the hit, as ProjectileTrueFlightLocomotionExtension.bounce sends one on
+local function reflect_missile(unit, impact_extension, projectile, position, direction, shield_unit)
+	local locomotion = impact_extension.locomotion_extension
+	local start = position + direction * (CONFIG.reflect_offset * UNIT)
+	local rotation = Quaternion.look(direction, Vector3.up())
+	local flat = Vector3.flat(direction)
+
+	-- (it looks for no target any more, so it flies straight)
+	locomotion.target_unit = nil
+	locomotion.position_target = nil
+	locomotion._find_target_func = function () end
+	locomotion.t = Managers.time:time("game")
+
+	locomotion.target_vector_boxed:store(Vector3.length(flat) > 0.001 and Vector3.normalize(flat) or Vector3(1, 0, 0))
+	locomotion.initial_position_boxed:store(start)
+	locomotion._current_position:store(start)
+
+	locomotion.radians = math.asin(math.clamp(Vector3.z(direction), -1, 1))
+
+	locomotion:_unit_set_position_rotation(unit, start, rotation)
+
+	local game = Managers.state.network:game()
+	local id = Managers.state.unit_storage:go_id(unit)
+
+	if game and id then
+		GameSession.set_game_object_field(game, id, "position", start)
+		GameSession.set_game_object_field(game, id, "rotation", rotation)
+	end
+
+	impact_extension.collision_filter = "filter_player_ray_projectile_no_player"
+	impact_extension.last_position = nil
+	projectile.impact_template_name = REFLECTED_MISSILE_IMPACT
+	projectile._ut_reflected_by = shield_unit
+end
+
+-- The host looks at a missile's way this frame before it looks for what the missile hit
+mod:hook(ProjectileRaycastImpactUnitExtension, "update", function (func, self, unit, input, dt, context, t)
+	local projectile = self.is_server and self.server_side_raycast and ScriptUnit.has_extension(unit, "projectile_system")
+	local locomotion = self.locomotion_extension
+
+	if projectile and MISSILE_IMPACTS[projectile.impact_template_name] and locomotion.true_flight_template_name and BLACKBOARDS[projectile.owner_unit] and locomotion:moved_this_frame() then
+		local position, _, direction, shield_unit = mod.shield.reflect(POSITION_LOOKUP[unit], Unit.local_position(unit, 0), 0, projectile.owner_unit, projectile._ut_reflected_by)
+
+		if position then
+			reflect_missile(unit, self, projectile, position, direction, shield_unit)
+
+			return
+		end
+	end
+
+	return func(self, unit, input, dt, context, t)
+end)
+
+-- A gutter runner's pounce (BTCrazyJumpAction, on the host) that gets to a player's shield throws the gutter runner back, the way the
+-- player looks, as fast as it came. It doesn't pin anyone for the rest of that jump, and it lands and goes on.
+mod:hook(BTCrazyJumpAction, "run", function (func, self, unit, blackboard, t, dt)
+	local data = blackboard.jump_data
+	local state = data and data.state
+	local in_air = state == "in_air" or state == "in_air_no_target" or state == "snapping"
+
+	if in_air and data.ut_reflected_jump ~= blackboard.last_jump and data.overlap_context and data.overlap_context.spine_node then
+		local locomotion = blackboard.locomotion_extension
+		local velocity = locomotion:current_velocity()
+		local from = Unit.world_position(unit, data.overlap_context.spine_node)
+		local position, _, direction = mod.shield.reflect(from, from + velocity * dt, CONFIG.pounce_radius, unit, nil, false, CONFIG.pounce_fatigue_type)
+
+		if position then
+			data.ut_reflected_jump = blackboard.last_jump
+			data.target_unit = nil
+			blackboard.target_unit = nil
+
+			locomotion:set_wanted_velocity(direction * Vector3.length(velocity))
+		end
+	end
+
+	return func(self, unit, blackboard, t, dt)
+end)
+
+mod:hook(BTCrazyJumpAction, "check_colliding_players", function (func, self, unit, blackboard, pos)
+	local data = blackboard.jump_data
+
+	if data and data.ut_reflected_jump and data.ut_reflected_jump == blackboard.last_jump then
+		return nil
+	end
+
+	return func(self, unit, blackboard, pos)
+end)
 
 -- The actions
 
