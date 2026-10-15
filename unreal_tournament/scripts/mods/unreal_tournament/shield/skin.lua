@@ -65,8 +65,6 @@ local CONFIG = {
 	-- The overcharge bar is this far below the point it is placed at (overcharge_bar_ui_definitions.lua, charge_bar)
 	charge_bar_drop = 220,
 	inspect_pose_speed = 5,
-	inspect_sway = 5,
-	inspect_sway_speed = 1.8,
 }
 
 local shield = mod.shield
@@ -416,9 +414,8 @@ local function new_skin(setting_id)
 			skin.shield_up = false
 		end,
 		on_update = function (skin, dt)
+			-- (the inspect pose comes in and goes out, and holds still in between)
 			skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
-			skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
-			skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
 
 			update_state(api, skin, dt)
 		end,
