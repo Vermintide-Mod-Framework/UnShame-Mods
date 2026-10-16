@@ -4,6 +4,7 @@ local mod = get_mod("unreal_tournament")
 -- The numbers expected are UT's (XWeapons/RocketFire, RocketMultiFire and RocketProj) as the mod turns them into this game's.
 
 local runner = mod.test_runner
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
 local definition = mod.items.weapons.rocket_launcher
 
@@ -97,8 +98,8 @@ end
 local MONSTERS = { "chaos_spawn", "skaven_rat_ogre", "chaos_troll", "skaven_stormfiend", "beastmen_minotaur" }
 local MONSTER_DISTANCE = 12
 
--- Where each hit zone of a unit is: the first actor of the zone, as { zone, x, y, z }. The afro (the zone around the whole body for near
--- misses) and aux (not a part of the body) are left out.
+-- Where each hit zone of a unit is: the middle of the first actor of the zone (its origin is at a joint, which can be at the edge of the
+-- part), as { zone, x, y, z }. The afro (the zone around the whole body for near misses) and aux (not a part of the body) are left out.
 local NOT_BODY = {
 	afro = true,
 	aux = true,
@@ -113,7 +114,7 @@ local function hit_zone_points(t, unit)
 			local actor = not NOT_BODY[zone] and actor_name and Unit.actor(unit, actor_name)
 
 			if actor then
-				local position = Actor.position(actor)
+				local position = Actor.center_of_mass(actor)
 
 				points[#points + 1] = { zone, Vector3.x(position), Vector3.y(position), Vector3.z(position) }
 			end
@@ -127,9 +128,22 @@ local function hit_zone_points(t, unit)
 	end)
 end
 
--- Holds the secondary button with the crosshair on a point of a monster, and says whether the lock came and which enemies the rockets
--- went for. The rockets are fired at the end, and the lock is gone once they have landed.
-local function locks_on(t, x, y, z)
+-- The unit the crosshair is on: the first thing a ray along the aim meets that is the level or an enemy's body (not its afro), as the
+-- lock looks for it
+local function under_crosshair(t)
+	return t.on_main_thread(function ()
+		local first_person_extension = ScriptUnit.extension(t.unit(), "first_person_system")
+		local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+		local hits = PhysicsWorld.immediate_raycast_actors(physics_world, first_person_extension:current_position(), Quaternion.forward(first_person_extension:current_rotation()), 50, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
+		local hit = utils.first_beam_hit(hits, t.unit())
+
+		return hit and ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
+	end)
+end
+
+-- Holds the secondary button where the crosshair is, and says whether the lock came and which enemies the rockets went for. The rockets
+-- are fired at the end, and the lock is gone once they have landed.
+local function locks_on(t)
 	local locked = false
 
 	mod.rocket_lock_callbacks.ut_test = function (owner_unit, is_locked)
@@ -140,7 +154,6 @@ local function locks_on(t, x, y, z)
 
 	local rockets, observe = watch_rockets(t)
 
-	t.aim_at_point(x, y, z)
 	t.hold("action_two")
 	t.watch(1.2, observe)
 	t.release("action_two")
@@ -173,6 +186,8 @@ local function monster_scenario(breed_name, crowded)
 
 			t.wait(3)
 
+			local tried = 0
+
 			for _, point in ipairs(hit_zone_points(t, monster)) do
 				-- (each try fires its rockets, so the ammo is filled again, and the rats are made again)
 				t.refill()
@@ -191,8 +206,18 @@ local function monster_scenario(breed_name, crowded)
 					t.wait(1)
 				end
 
-				if HEALTH_ALIVE[monster] then
-					local locked, targets = locks_on(t, point[2], point[3], point[4])
+				t.aim_at_point(point[2], point[3], point[4])
+
+				-- (a part can be inside the body, or a rat can stand in front of it: then the crosshair is not on the monster, and the
+				-- part is not tried)
+				local on = under_crosshair(t)
+
+				if on ~= monster then
+					t.log("the crosshair aimed at its %s is on %s, not on it: not tried", point[1], on and tostring(Unit.get_data(on, "breed") and Unit.get_data(on, "breed").name or "the level") or "nothing")
+				elseif HEALTH_ALIVE[monster] then
+					tried = tried + 1
+
+					local locked, targets = locks_on(t)
 					local others = 0
 
 					for _, target in ipairs(targets) do
@@ -209,6 +234,8 @@ local function monster_scenario(breed_name, crowded)
 					t.remove(rat)
 				end
 			end
+
+			t.expect(tried >= 3, "only %d parts of its body could be aimed at", tried)
 		end,
 	}
 end
