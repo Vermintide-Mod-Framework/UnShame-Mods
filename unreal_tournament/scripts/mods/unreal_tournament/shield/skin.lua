@@ -426,13 +426,14 @@ local GRIPS = {
 		follow_game_unit = 2,
 	},
 	-- The Volley Crossbow's pose: the game links the crossbow to the left hand's node, so the mesh is linked there and turned as the
-	-- node is (and the billhook or the hammer in the right hand stays hidden)
+	-- node is (and the billhook or the hammer in the right hand stays hidden). The node's forward points to the hero's left, so the mesh is
+	-- turned a quarter to point ahead.
 	shield_gun_wh = {
 		hand_node = "j_leftweaponattach",
 		grip_right = 0,
 		grip_forward = 0,
 		grip_up = 0,
-		yaw = 0,
+		yaw = -90,
 		pitch = 0,
 		roll = 0,
 		follow_game_unit = 3,

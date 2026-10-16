@@ -251,6 +251,16 @@ local function facing(front, top)
 	return Quaternion.look(top, front)
 end
 
+-- Returns whether the player sees their first person view. A locked particle is linked to the first person unit, which the game doesn't
+-- hide in a third person view (it hides the arms and the weapons), so the particle is hidden then.
+local function first_person_shown()
+	local player = Managers.player:local_player()
+	local unit = player and player.player_unit
+	local first_person_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "first_person_system")
+
+	return first_person_extension and first_person_extension:first_person_mode_active() or false
+end
+
 local function place(particle, dt, camera_position, camera_rotation)
 	local unit = particle.entry.unit
 	local fraction = particle.age / particle.life
@@ -408,7 +418,7 @@ local function place(particle, dt, camera_position, camera_rotation)
 		Unit.set_scalar_for_materials(unit, "age", particle.age)
 	end
 
-	Unit.set_unit_visibility(unit, true)
+	Unit.set_unit_visibility(unit, not particle.locked or first_person_shown())
 	World.update_unit(particle.world, unit)
 end
 
