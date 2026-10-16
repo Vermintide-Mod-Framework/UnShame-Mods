@@ -32,6 +32,7 @@ unit = [
 	"units/ut/minigun/pickup"
 	"units/ut/shield/shield_gun"
 	"units/ut/shield/pickup"
+	"units/ut/shield/third_person"
 	"units/ut/redeemer/redeemer"
 	"units/ut/redeemer/pickup"
 	"units/ut/redeemer/missile"

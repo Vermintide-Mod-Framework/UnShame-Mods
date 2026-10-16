@@ -1,14 +1,15 @@
 import sys, os, subprocess
 
-# Converts static meshes of UT2004 (the pickups of the weapons, which are the third person, and the meshes of the projectiles), exported
-# with UModel as pskx, to units: a bsi (psk2bsi.py), a unit, a material and a texture.
+# Converts static meshes of UT2004 (the pickups of the weapons, the meshes of the projectiles, and the third person meshes of the weapons in
+# their reference pose), exported with UModel as pskx or psk, to units: a bsi (psk2bsi.py), a unit, a material and a texture.
 # Usage: convert_static.py <name> <umodel export dir>      (the meshes are in STATICS below)
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.dirname(__file__))
 from convert_weapon import read_tga, write_png, TEXTURE_TEMPLATE, material_text
 
-# pskx: the mesh; materials: the texture (tga) and kind of each material of it; scale: meters a UT unit of the mesh is as it is drawn
+# pskx: the mesh; materials: the texture (tga) and kind of each material of it; roughness: of the materials (the standard's 0.33 if not
+# given: shiny); scale: meters a UT unit of the mesh is as it is drawn
 # (the DrawScale of its actor is in it: a pickup of the weapon in the hand is 0.011, 0.02 meters a unit and 0.55)
 STATICS = {
     'flak_pickup': {
@@ -65,6 +66,16 @@ STATICS = {
         'materials': [('WeaponSkins/Texture/ShieldTex0.tga', 'opaque')],
         'scale': 0.01,
         'unit': 'units/ut/shield/pickup',
+    },
+    # The third person: the mesh of the weapon's attachment class (ShieldAttachment), which UT draws in a player's hand at
+    # xWeaponAttachment's DrawScale 0.4. It is a skeletal mesh, taken in its reference pose.
+    'shield_3rd': {
+        'pskx': 'Weapons/SkeletalMesh/ShieldGun_3rd.psk',
+        'materials': [('WeaponSkins/Texture/ShieldTex0.tga', 'opaque')],
+        'scale': 0.02 * 0.4,
+        # (UT's ShieldTex0 is a plain texture, with no specular: matte, as the other weapons' bodies)
+        'roughness': 0.9,
+        'unit': 'units/ut/shield/third_person',
     },
     'assault_pickup': {
         'pskx': 'NewWeaponPickups/StaticMesh/AssaultPickupSM.pskx',
@@ -135,6 +146,6 @@ def main():
         w, h, rows = read_tga(export + '/' + tga)
         write_png('%s/%s.png' % (REPO, texture), w, h, rows)
         open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
-        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(material_text(kind, texture, opacity, world=name.endswith('_pickup')))
+        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(material_text(kind, texture, opacity, roughness=cfg.get('roughness'), world=name.endswith(('_pickup', '_3rd'))))
 
 main()

@@ -402,8 +402,31 @@ local function update_state(api, skin, dt)
 	end
 end
 
+-- How the third person mesh sits in the hand (weapon_skin_third_person.lua), by the copy of the weapon: each hero holds it in the pose
+-- of a weapon of their own (shield_gun.lua's pose_3p), which puts the hand differently. The mesh's origin is its grip, where UT holds it.
+local GRIPS = {
+	default = {
+		grip_right = 0,
+		grip_forward = 0,
+		grip_up = 0,
+		yaw = 0,
+		pitch = 0,
+		roll = 0,
+	},
+	-- The grudge-raker's pose: the stock along the right forearm, the left hand under the front, pointing ahead, left and down
+	shield_gun_dr = {
+		grip_right = 0,
+		grip_forward = 0,
+		grip_up = 0,
+		yaw = 30,
+		pitch = -15,
+		roll = 0,
+	},
+}
+
 local function new_skin(setting_id)
 	local definition = mod.items.weapons[setting_id]
+	local grip = GRIPS[setting_id] or GRIPS.default
 	local api
 
 	api = mod.weapon_skin.new({
@@ -443,26 +466,27 @@ local function new_skin(setting_id)
 		inspect_pivot_right = 0,
 		inspect_pivot_forward = 20,
 		inspect_pivot_up = 0,
-		-- WeaponStaticMesh.ShieldGunPickup. The game links a melee weapon to the right hand's node.
+		-- Weapons.ShieldGun_3rd, ShieldAttachment's mesh (convert_static.py shield_3rd), at UT's size in a player's hand: it runs
+		-- along its forward, with the emitter ahead. The game links a melee weapon to the right hand's node.
 		third_person = {
 			id = setting_id,
 			template = definition.template,
-			unit_name = "units/ut/shield/pickup",
+			unit_name = "units/ut/shield/third_person",
 			hand_node = "j_rightweaponattach",
-			meters_per_unit = 0.01,
-			scale = 0.5,
-			grip_right = 0,
-			grip_forward = 0,
-			grip_up = 0,
-			yaw = -60,
-			pitch = 0,
-			roll = 0,
+			meters_per_unit = 0.02 * 0.4,
+			scale = 1,
+			grip_right = grip.grip_right,
+			grip_forward = grip.grip_forward,
+			grip_up = grip.grip_up,
+			yaw = grip.yaw,
+			pitch = grip.pitch,
+			roll = grip.roll,
 			follow_game_unit = 1,
 			follow_calibrate_seconds = 1,
 			muzzle_right = 0,
-			muzzle_forward = 30,
-			muzzle_up = 0,
-			menu_yaw = 180,
+			muzzle_forward = 68,
+			muzzle_up = 8,
+			menu_yaw = -90,
 		},
 		on_create = function (skin)
 			api.play_sound("ut_shield_select")

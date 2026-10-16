@@ -8,6 +8,7 @@
 #   game_input.ps1 -Chat "/ut_equip lightning"   opens the chat of Vermintide 2, types the text, and sends it
 #   game_input.ps1 -Press [-Right] [-Hold 900]   a click where the mouse is (the right button with -Right), held that many milliseconds
 #   game_input.ps1 -Turn 300,0         moves the mouse by that much (in steps of 10), which turns the view in first person
+#   game_input.ps1 -Drag 1400,600,300,0  holds the left button at that place while the cursor moves by that much (turns the hero in a menu)
 #   -Target launcher sends it to Vermintide 2's launcher window instead of the game
 #   -Target ut2004 sends it to Unreal Tournament 2004
 #
@@ -19,6 +20,7 @@ param(
     [string]$Click = "",
     [string]$Move = "",
     [string]$Turn = "",
+    [string]$Drag = "",
     [string]$Type = "",
     [string]$Chat = "",
     [int]$Hold = 80,
@@ -219,6 +221,27 @@ if ($Click -ne "") {
     Move-Mouse (Parse-Place $Click)
     Start-Sleep -Milliseconds 150
     [GameInput]::Button($true, $false)
+    Start-Sleep -Milliseconds 80
+    [GameInput]::Button($false, $false)
+}
+
+if ($Drag -ne "") {
+    # The left button held from a place while the cursor moves by an amount, in small steps a frame apart (turning the hero in a menu)
+    $parts = $Drag.Split(",")
+    $start = Parse-Place ("{0},{1}" -f $parts[0], $parts[1])
+    $dx, $dy = [int]$parts[2], [int]$parts[3]
+    $steps = [Math]::Max(1, [Math]::Ceiling([Math]::Max([Math]::Abs($dx), [Math]::Abs($dy)) / 10))
+
+    Move-Mouse $start
+    Start-Sleep -Milliseconds 150
+    [GameInput]::Button($true, $false)
+    Start-Sleep -Milliseconds 80
+
+    for ($i = 1; $i -le $steps; $i++) {
+        [void][GameInput]::SetCursorPos($start[0] + [int]($dx * $i / $steps), $start[1] + [int]($dy * $i / $steps))
+        Start-Sleep -Milliseconds 16
+    }
+
     Start-Sleep -Milliseconds 80
     [GameInput]::Button($false, $false)
 }
