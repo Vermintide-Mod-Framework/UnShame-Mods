@@ -500,6 +500,35 @@ local function new(def)
 	-- TEMPORARY: every model this skin made, to count the ones still alive
 	local debug_units = {}
 
+	-- TEMPORARY: who unlinks the model that is shown, with the call stack in the console log
+	if not rawget(_G, "ut_debug_unlink") then
+		local unlink_unit = World.unlink_unit
+
+		rawset(_G, "ut_debug_unlink", unlink_unit)
+
+		World.unlink_unit = function (world, unit, ...)
+			for _, check in ipairs(rawget(_G, "ut_debug_skin_units") or {}) do
+				if check() == unit then
+					mod:echo("a skin's model was unlinked")
+					print(debug.traceback("[ut_debug_unlink]", 2))
+				end
+			end
+
+			return unlink_unit(world, unit, ...)
+		end
+
+		mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+			World.unlink_unit = unlink_unit
+			rawset(_G, "ut_debug_unlink", nil)
+			rawset(_G, "ut_debug_skin_units", nil)
+		end
+	end
+
+	rawset(_G, "ut_debug_skin_units", rawget(_G, "ut_debug_skin_units") or {})
+	table.insert(rawget(_G, "ut_debug_skin_units"), function ()
+		return skin and skin.unit
+	end)
+
 	local function skin_units_alive()
 		local count = 0
 
