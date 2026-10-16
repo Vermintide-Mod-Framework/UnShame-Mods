@@ -23,7 +23,7 @@ needs its own copy from a base of that hero, because the animations, units and a
 
 - Slayer: the Shield Gun only. He has the game's Throwing Axes.
 - Grail Knight: the Shield Gun only. No ranged item of the game lists him.
-- Warrior Priest: the Shield Gun only. No ranged item lists him either, and his ranged slot takes melee weapons as well.
+- Warrior Priest: none, by choice. No ranged item lists him, and his third person body has only his own weapons' animations.
 - Engineer: the Bio Rifle and the Shield Gun. His only ranged weapon in the game is the steam pistol.
 - Ranger: the Bio Rifle, the Lightning Gun and the Shield Gun.
 
@@ -33,9 +33,9 @@ needs its own copy from a base of that hero, because the animations, units and a
   weapon: a melee-style template with 3 javelins as ammo, and ammo pickups blocked. The bows reach Shade, Handmaiden and Waywatcher
   but not the Sister. The base also decides the resource. UT's Link Gun uses ammo (220 at most, 2 for a bolt, 1 for a beam hit, none
   while linked to a teammate), and the staff uses the heat meter that the mod's costs are built on (see `link/link_gun.lua`).
-- Shield Gun. A melee base for each hero, so six registrations: Kruber's Bastard Sword (lake), Bardin's Cog Hammer (cog), Sienna's
-  Ghost Scythe (shovel), Victor's Billhook (scorpion), Kerillian's Spear (none), and the Warrior Priest's one-handed Hammer (bless).
-  The Thornsister had no melee item in the item list.
+- Shield Gun. A melee base for each hero, so five registrations: Kruber's Bastard Sword (lake), Bardin's Cog Hammer (cog), Sienna's
+  Ghost Scythe (shovel), Victor's Billhook (scorpion) and Kerillian's Spear (none). The Billhook doesn't reach the Warrior Priest,
+  who has none. The Thornsister had no melee item in the item list.
 - Assault Rifle. UT2004's rifle has a dual mode (`bDualMode`), and this one is always akimbo. The skins place one model in the first
   person view and one on the character, so a pair needs a second model for the other hand, in both. Bardin's only dual-wield
   weapon is the Drakefire Pistols, which only the Ironbreaker has. The Ranger and the Engineer need `can_wield` widened on it.

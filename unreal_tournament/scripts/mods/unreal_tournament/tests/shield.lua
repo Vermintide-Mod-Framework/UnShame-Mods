@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
--- The Shield Gun's in-game tests (see runner.lua). Run them with /ut_test shield (Kruber's), shield_dr, shield_bw, shield_wh, shield_we
--- and shield_priest. They run in the runner's level, Righteous Stand.
+-- The Shield Gun's in-game tests (see runner.lua). Run them with /ut_test shield (Kruber's), shield_dr, shield_bw, shield_wh and
+-- shield_we. They run in the runner's level, Righteous Stand.
 
 local runner = mod.test_runner
 local shield = mod.shield
@@ -998,7 +998,6 @@ for _, variant in ipairs({
 	{ name = "shield_bw", setting_id = "shield_gun_bw", careers = { "bw_adept" } },
 	{ name = "shield_wh", setting_id = "shield_gun_wh", careers = { "wh_captain" } },
 	{ name = "shield_we", setting_id = "shield_gun_we", careers = { "we_shade" } },
-	{ name = "shield_priest", setting_id = "shield_gun_priest", careers = { "wh_priest" } },
 }) do
 	local definition = mod.items.weapons[variant.setting_id]
 

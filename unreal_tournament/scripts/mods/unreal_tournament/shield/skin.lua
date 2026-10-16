@@ -80,7 +80,6 @@ local VARIANTS = {
 	"shield_gun_bw",
 	"shield_gun_wh",
 	"shield_gun_we",
-	"shield_gun_priest",
 }
 
 local skin_apis = {}

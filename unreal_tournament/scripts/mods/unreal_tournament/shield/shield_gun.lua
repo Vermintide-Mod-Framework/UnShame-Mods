@@ -71,15 +71,6 @@ local VARIANTS = {
 		key = "ut_shield_gun_we",
 		template = "ut_shield_gun_we_template",
 	},
-	{
-		base_item = "wh_1h_hammer",
-		deus_copy = "deus_wh_1h_hammer",
-		id = "shield_gun_priest",
-		key = "ut_shield_gun_priest",
-		template = "ut_shield_gun_priest_template",
-		-- (the Warrior Priest's third person body is his own, with the animations of his weapons, so his copy keeps the hammer's: the
-		-- crossbow's are not known to be in it)
-	},
 }
 
 for _, variant in ipairs(VARIANTS) do
