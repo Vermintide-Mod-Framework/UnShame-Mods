@@ -349,6 +349,16 @@ local function in_reach(owner_unit, physics_world, range)
 	local height = status_extension and status_extension:is_crouching() and CONFIG.reach_height_crouched or CONFIG.reach_height
 	local origin = Unit.local_position(owner_unit, 0) + Vector3(0, 0, height * UNIT)
 	local direction = Quaternion.forward(first_person_extension:current_rotation())
+	local eye = first_person_extension:current_position()
+
+	-- The enemy the crosshair is on. The crosshair is at the eye: close up, a ray from the middle along the view passes under it.
+	local ahead = first_beam_hit(without_bodies(raycast(physics_world, eye, direction, range)), owner_unit)
+	local ahead_unit = ahead and ActionUtils.redirect_shield_hit(Actor.unit(ahead[4]), ahead[4])
+
+	if ahead_unit and Unit.get_data(ahead_unit, "breed") and HEALTH_ALIVE[ahead_unit] then
+		return ahead, true, direction, origin, eye
+	end
+
 	local hit = first_beam_hit(without_bodies(raycast(physics_world, origin, direction, range)), owner_unit)
 	local object = first_object_hit(physics_world, origin, direction, range, owner_unit)
 
@@ -357,16 +367,17 @@ local function in_reach(owner_unit, physics_world, range)
 	end
 
 	if not hit then
-		return nil, nil, direction, origin
+		return nil, nil, direction, origin, eye
 	end
 
 	local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
 
-	return hit, Unit.get_data(hit_unit, "breed") ~= nil and HEALTH_ALIVE[hit_unit] or false, direction, origin
+	return hit, Unit.get_data(hit_unit, "breed") ~= nil and HEALTH_ALIVE[hit_unit] or false, direction, origin, eye
 end
 
 -- The enemies and bodies in the cone of the punch (hit_angle) within the range, that a ray from the player reaches without a wall in
--- the way. Each is { unit, hit }: the hit is where that ray meets it, as a shot's hit is.
+-- the way. Each is { unit, hit }: the hit is where that ray meets it, as a shot's hit is. The cone is about the crosshair, so the origin
+-- is the eye.
 local function targets_in_reach(owner_unit, physics_world, origin, direction, range)
 	local world = Managers.world:world("level_world")
 	local min_dot = math.cos(math.rad(CONFIG.hit_angle / 2))
@@ -502,7 +513,7 @@ local function enemy_in_reach(unit)
 
 	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
 	-- (it looks as far as UT's punch reached, which is less than the punch reaches here)
-	local _, is_enemy, direction, origin = in_reach(unit, physics_world, CONFIG.range)
+	local _, is_enemy, direction, origin, eye = in_reach(unit, physics_world, CONFIG.range)
 
 	if is_enemy then
 		return true
@@ -510,7 +521,7 @@ local function enemy_in_reach(unit)
 		return false
 	end
 
-	for _, target in ipairs(targets_in_reach(unit, physics_world, origin, direction, CONFIG.range)) do
+	for _, target in ipairs(targets_in_reach(unit, physics_world, eye, direction, CONFIG.range)) do
 		if HEALTH_ALIVE[target.unit] then
 			return true
 		end
@@ -927,7 +938,7 @@ local function punch(action, t, power_level, bash)
 	local hold_time = charge_started[owner_unit] and t - charge_started[owner_unit] or 0
 	local step, scale = charge_step(hold_time)
 	local range = bash and CONFIG.bash_range or CONFIG.hit_range
-	local hit, is_enemy, direction, origin = in_reach(owner_unit, action.physics_world, range)
+	local hit, is_enemy, direction, origin, eye = in_reach(owner_unit, action.physics_world, range)
 
 	charge_started[owner_unit] = nil
 
@@ -941,7 +952,7 @@ local function punch(action, t, power_level, bash)
 	end
 
 	local punch_action = bash and BASH_ACTIONS[step] or PUNCH_ACTIONS[step]
-	local targets = targets_in_reach(owner_unit, action.physics_world, origin, direction, range)
+	local targets = targets_in_reach(owner_unit, action.physics_world, eye, direction, range)
 
 	-- (the enemy straight ahead is always one: close up, its middle can be outside the cone)
 	if is_enemy then
@@ -988,7 +999,7 @@ local function punch(action, t, power_level, bash)
 	local hit_enemy = false
 
 	for _, target in ipairs(targets) do
-		target.distance = target.hit and target.hit[2] or Vector3.distance(origin, POSITION_LOOKUP[target.unit] or Unit.world_position(target.unit, 0))
+		target.distance = target.hit and target.hit[2] or Vector3.distance(eye, POSITION_LOOKUP[target.unit] or Unit.world_position(target.unit, 0))
 	end
 
 	table.sort(targets, function (a, b)
@@ -1043,7 +1054,7 @@ local function punch(action, t, power_level, bash)
 
 	-- Every thing in reach that is not a character: a door or a barrel takes the punch as from a melee swing, and a loose thing is thrown.
 	-- The one straight ahead is always one.
-	local objects = objects_in_reach(owner_unit, action.physics_world, origin, direction, range)
+	local objects = objects_in_reach(owner_unit, action.physics_world, eye, direction, range)
 	local hit_unit = hit and not is_enemy and ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
 
 	if hit_unit and not Unit.get_data(hit_unit, "breed") and is_object(hit_unit, hit[4], owner_unit) then

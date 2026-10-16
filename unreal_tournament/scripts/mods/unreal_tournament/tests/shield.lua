@@ -6,6 +6,24 @@ local mod = get_mod("unreal_tournament")
 local runner = mod.test_runner
 local shield = mod.shield
 
+-- The game keeps up to 24 bodies of dead enemies, counting the living ones, and takes the oldest away past that: it freezes them to use
+-- again (UnitSpawner.update_death_watch_list, BreedFreezer), which takes them out of the physics. In a horde a body can be frozen a frame
+-- after it dies. With no bodies kept, every dead rat is frozen that soon. Runs fn so, and keeps the bodies again after it.
+local function without_bodies(fn)
+	local max, min = RagdollSettings.max_num_ragdolls, RagdollSettings.min_num_ragdolls
+
+	RagdollSettings.max_num_ragdolls = 0
+	RagdollSettings.min_num_ragdolls = 0
+
+	local ok, problem = pcall(fn)
+
+	RagdollSettings.max_num_ragdolls, RagdollSettings.min_num_ragdolls = max, min
+
+	if not ok then
+		error(problem, 0)
+	end
+end
+
 local function scenarios()
 	return {
 		{
@@ -113,6 +131,92 @@ local function scenarios()
 				t.expect(standing < math.huge and moving < math.huge, "no punch hit")
 				t.expect(speed > 4.5, "the punch in a dodge came at %.1f m/s, too slow for a bonus", speed)
 				t.expect(moving >= standing * (1 + bonus * 0.7), "a punch at %.1f m/s did %.1f, %.0f%% more than one standing (%.1f), not %.0f%%", speed, moving, (moving / standing - 1) * 100, standing, bonus * 100)
+			end,
+		},
+		{
+			-- The game crashed in its physics during hordes, with the Shield Gun: a punch throws the bodies it kills for a while after
+			-- it, and the game can take them out of the physics in that time. The game crashing is the failure.
+			name = "a punch kills enemies whose bodies the game takes away at once",
+			run = function (t)
+				local rats = t.spawn_group("skaven_clan_rat", 5, 1.5)
+				local dead, frozen = {}, {}
+
+				if not t.expect(#rats == 5, "the rats could not be spawned") then
+					return
+				end
+
+				-- Every frame, which rats died and which of the dead the game froze
+				local function watch()
+					for _, rat in ipairs(rats) do
+						dead[rat] = dead[rat] or not HEALTH_ALIVE[rat]
+						frozen[rat] = frozen[rat] or FROZEN[rat]
+					end
+				end
+
+				runner.frame_watchers[#runner.frame_watchers + 1] = watch
+
+				t.wait(1)
+
+				-- A punch throws the rats back out of reach, so the player goes up to one still standing before each punch
+				local ok, problem = pcall(without_bodies, function ()
+					for _ = 1, 20 do
+						local target
+
+						for _, rat in ipairs(rats) do
+							if not dead[rat] then
+								target = rat
+
+								break
+							end
+						end
+
+						if not target then
+							break
+						end
+
+						t.on_main_thread(function ()
+							local player = t.unit()
+							local at = Unit.world_position(target, 0)
+							local away = Vector3.normalize(Vector3.flat(Unit.world_position(player, 0) - at))
+
+							runner.move_player(player, at + away * 1.2)
+						end)
+						t.aim_at(target)
+						t.press("action_one", 1)
+						t.wait(0.5)
+					end
+
+					t.wait(2)
+				end)
+
+				for i = #runner.frame_watchers, 1, -1 do
+					if runner.frame_watchers[i] == watch then
+						table.remove(runner.frame_watchers, i)
+					end
+				end
+
+				if not ok then
+					error(problem, 0)
+				end
+
+				local killed, taken = 0, 0
+
+				for _, rat in ipairs(rats) do
+					if dead[rat] then
+						killed = killed + 1
+
+						-- (the runner does not take it away again)
+						t.remove(rat)
+					end
+
+					if frozen[rat] then
+						taken = taken + 1
+					end
+				end
+
+				t.log("%d rats killed, %d of them frozen", killed, taken)
+				t.expect(killed == #rats, "the punches killed %d of the %d rats", killed, #rats)
+				t.expect(taken > 0, "the game froze none of the bodies")
 			end,
 		},
 		{
