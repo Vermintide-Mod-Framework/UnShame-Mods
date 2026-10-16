@@ -425,7 +425,21 @@ local GRIPS = {
 		roll = 0,
 		follow_game_unit = 2,
 	},
+	-- The Volley Crossbow's pose: the game links the crossbow to the left hand's node, so the mesh is linked there and turned as the
+	-- node is (and the billhook or the hammer in the right hand stays hidden)
+	shield_gun_wh = {
+		hand_node = "j_leftweaponattach",
+		grip_right = 0,
+		grip_forward = 0,
+		grip_up = 0,
+		yaw = 0,
+		pitch = 0,
+		roll = 0,
+		follow_game_unit = 3,
+	},
 }
+
+GRIPS.shield_gun_priest = GRIPS.shield_gun_wh
 
 local function new_skin(setting_id)
 	local definition = mod.items.weapons[setting_id]
@@ -475,7 +489,7 @@ local function new_skin(setting_id)
 			id = setting_id,
 			template = definition.template,
 			unit_name = "units/ut/shield/third_person",
-			hand_node = "j_rightweaponattach",
+			hand_node = grip.hand_node or "j_rightweaponattach",
 			meters_per_unit = 0.02 * 0.4,
 			scale = 1,
 			grip_right = grip.grip_right,

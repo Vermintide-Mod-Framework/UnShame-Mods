@@ -56,6 +56,10 @@ local VARIANTS = {
 		id = "shield_gun_wh",
 		key = "ut_shield_gun_wh",
 		template = "ut_shield_gun_wh_template",
+		-- The Volley Crossbow's pose, which has no shove of its own: the push sends the melee weapons' push event
+		pose_3p = "to_repeating_crossbow",
+		punch_3p = "attack_shoot",
+		push_3p = "attack_push",
 	},
 	{
 		base_item = "we_spear",
@@ -70,6 +74,10 @@ local VARIANTS = {
 		id = "shield_gun_priest",
 		key = "ut_shield_gun_priest",
 		template = "ut_shield_gun_priest_template",
+		-- (the Warrior Priest is the same hero, held the same way)
+		pose_3p = "to_repeating_crossbow",
+		punch_3p = "attack_shoot",
+		push_3p = "attack_push",
 	},
 }
 

@@ -19,7 +19,9 @@ local mod = get_mod("unreal_tournament")
 --   follow_game_unit: the mesh moves with the game's unit of the weapon, which the game animates with the arms. The mesh is turned
 --       from the game's unit by the way the unit is turned after follow_calibrate_seconds of being held. With follow_game_unit = 2
 --       there is no calibration: pitch, roll and yaw are relative to the unit's own axes. That is for a weapon whose unit is still
---       moving into place when it would be calibrated, such as the Repeating Crossbow.
+--       moving into place when it would be calibrated, such as the Repeating Crossbow. With follow_game_unit = 3 the mesh is turned
+--       as the hand's node is, as a unit the game links to that node is. Pitch, roll and yaw are relative to the node's axes. That is
+--       for a hero who holds the weapon in the pose of another weapon, whose unit is not in that hand.
 --   fade_mesh, fade_material: a material with a "fade" variable, for a material that the engine's near-camera fade doesn't reach.
 --
 -- The game's unit (the staff, the blunderbuss and so on) stays, hidden. The mesh is linked to the same node of the character, and it
@@ -97,7 +99,11 @@ local function new(def, looks)
 			end
 		end
 
-		local rotation = Quaternion.multiply(Quaternion.inverse(Unit.world_rotation(entry.character, entry.hand_node)), wanted)
+		local rotation = Quaternion.identity()
+
+		if config.follow_game_unit ~= 3 then
+			rotation = Quaternion.multiply(Quaternion.inverse(Unit.world_rotation(entry.character, entry.hand_node)), wanted)
+		end
 
 		rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(config.pitch, config.roll, config.yaw))
 
