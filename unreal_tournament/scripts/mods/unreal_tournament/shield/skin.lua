@@ -646,6 +646,8 @@ local function third_person_rings(api, unit)
 		return
 	end
 
+	-- (the way the gun pointed at the punch, for a frame where it is gone)
+	local rotation_box = QuaternionBox(rotation)
 	local meters = THIRD_PERSON.meters_per_uu
 	local count = math.floor(THIRD_PERSON.ring_rate * THIRD_PERSON.ring_time) + 1
 
@@ -671,7 +673,12 @@ local function third_person_rings(api, unit)
 			growth = THIRD_PERSON.ring_growth * meters,
 			life = THIRD_PERSON.ring_life,
 			material = "units/ut/fx/fx_force_ring",
-			normal = Quaternion.forward(rotation),
+			-- (it faces the way the gun points now, as it flies the way the gun points now)
+			normal = function ()
+				local now_rotation = api.third_person.muzzle_rotation(unit)
+
+				return Quaternion.forward(now_rotation or rotation_box:unbox())
+			end,
 			size = THIRD_PERSON.ring_size * meters,
 			texture = "force_ring",
 		})
