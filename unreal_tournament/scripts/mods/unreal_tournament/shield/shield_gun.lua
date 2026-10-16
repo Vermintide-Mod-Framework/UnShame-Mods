@@ -966,9 +966,20 @@ local function punch(action, t, power_level, bash)
 
 		if not listed then
 			targets[#targets + 1] = {
+				ahead = true,
 				hit = hit,
 				unit = ahead,
 			}
+		end
+	end
+
+	-- (for now: a punch that would hit the player who punches says how they came to be a target)
+	for _, target in ipairs(targets) do
+		if target.unit == owner_unit then
+			local hit_actor = target.hit and target.hit[4]
+			local hit_unit = hit_actor and Actor.unit(hit_actor)
+
+			mod:echo("[ut_damage_trace] the punch has its puncher as a target, %s; the ray hit %s (%s) at %s m", target.ahead and "straight ahead" or "in its cone", tostring(hit_unit), tostring(hit_unit and Unit.get_data(hit_unit, "unit_name")), tostring(target.hit and target.hit[2]))
 		end
 	end
 

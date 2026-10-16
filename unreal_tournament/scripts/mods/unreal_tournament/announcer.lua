@@ -329,7 +329,16 @@ mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_
 	-- (for now: what hurts the player that they did themselves, with the calls that led to it)
 	if damage_amount > 0 and (attacker_unit == self.unit or source_attacker_unit == self.unit) and utils.is_local_player_unit(self.unit) then
 		mod:echo("[ut_damage_trace] %.1f %s damage from %s to %s", damage_amount, tostring(damage_type), tostring(damage_source_name), tostring(hit_zone_name))
-		print(debug.traceback("[ut_damage_trace]", 2))
+		-- (every call, which debug.traceback cuts in the middle)
+		for level = 2, 60 do
+			local info = debug.getinfo(level, "Sln")
+
+			if not info then
+				break
+			end
+
+			print(string.format("[ut_damage_trace] %s:%d %s", info.short_src, info.currentline, tostring(info.name)))
+		end
 	end
 
 	if (spree == 0 and next(call_out_kills) == nil) or damage_amount <= 0 or not attacker_unit then
