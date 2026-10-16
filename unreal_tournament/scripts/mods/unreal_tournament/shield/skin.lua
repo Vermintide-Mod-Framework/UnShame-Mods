@@ -536,9 +536,6 @@ local function show_charge_bar(bar_ui, player)
 	bar_ui:update_bar_size(40, first_mark, second_mark)
 	bar_ui:set_charge_bar_fraction(player, math.min(charged, 1), first_mark, second_mark, 0)
 
-	-- (the fill is a rectangle as long as the charge, see new_charge_bar)
-	style.bar_1.size[1] = bar_ui.charge_bar.content.size[1] * style.bar_1.gradient_threshold
-
 	for i = 1, 3 do
 		style.bar_1.color[i + 1] = CONFIG.charge_bar_color[i]
 	end
@@ -595,22 +592,45 @@ local function uses_gamepad_layout()
 	return (gamepad_active or UISettings.use_gamepad_hud_layout == "always") and UISettings.use_gamepad_hud_layout ~= "never"
 end
 
--- Makes the copy of a player's overcharge bar, as the game makes the bar (OverchargeBarUI.create_ui_elements), with the same renderer.
--- (The game's clears the renderer's queue of scenegraphs first, which is not done here, in the middle of the HUD's frame.) The game's
--- fill is its material with how full it is set on the material, which every bar drawn with that material shares in a frame. So the copy's
--- fill is a rectangle of its colour instead, and the game's bar keeps its own.
+-- The copies' renderer. The bar's fill is its material with how full it is set on the material (UIRenderer.draw_gradient_mask_texture),
+-- and every bar a gui draws with that material in a frame gets the last one set. So the copies draw with a gui of their own, made as the
+-- HUD's renderer is made (IngameUI.create_ui_renderer), whose material is not the game bar's, and the game's bar keeps its own fill.
+local charge_bar_renderer, charge_bar_world
+
+local function charge_bar_renderer_now()
+	local world = Managers.world:has_world("level_world") and Managers.world:world("level_world")
+
+	if not world then
+		return
+	end
+
+	if charge_bar_world ~= world then
+		charge_bar_renderer = IngameUI.create_ui_renderer(nil, world, false, false, Managers.mechanism:current_mechanism_name())
+		charge_bar_world = world
+	end
+
+	return charge_bar_renderer
+end
+
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+	if charge_bar_renderer and Managers.world:has_world("level_world") and Managers.world:world("level_world") == charge_bar_world then
+		UIRenderer.destroy(charge_bar_renderer, charge_bar_world)
+	end
+
+	charge_bar_renderer, charge_bar_world = nil, nil
+end
+
+-- The renderer's guis go with the level's world. The next level's world can be given the same handle, so it is forgotten when the level
+-- ends, and the next one makes its own.
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	charge_bar_renderer, charge_bar_world = nil, nil
+end
+
+-- Makes the copy of a player's overcharge bar, as the game makes the bar (OverchargeBarUI.create_ui_elements)
 local function new_charge_bar(game_bar)
 	local bar = setmetatable({}, getmetatable(game_bar))
 	local definition = UIWidgets.create_overcharge_bar_widget("charge_bar", nil, nil, nil, nil, bar_definitions.DEFAULT_BAR_SIZE)
 
-	for _, pass in ipairs(definition.element.passes) do
-		if pass.style_id == "bar_1" then
-			pass.pass_type = "rect"
-			pass.texture_id = nil
-		end
-	end
-
-	bar.ui_renderer = game_bar.ui_renderer
 	bar.input_manager = game_bar.input_manager
 	bar._side = game_bar._side
 	bar.render_settings = {
@@ -632,8 +652,13 @@ local function draw_charge_bar(bar, game_bar, dt, player)
 		return
 	end
 
-	local ui_renderer = bar.ui_renderer
+	local ui_renderer = charge_bar_renderer_now()
 
+	if not ui_renderer then
+		return
+	end
+
+	bar.ui_renderer = ui_renderer
 	bar.render_settings.alpha_multiplier = game_bar.render_settings.alpha_multiplier
 
 	UIRenderer.begin_pass(ui_renderer, bar.ui_scenegraph, bar.input_manager:get_service("ingame_menu"), dt, nil, bar.render_settings)
