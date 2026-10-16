@@ -592,11 +592,20 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 
 	if not player or player.player_unit ~= flying_unit or not Unit.alive(flying_unit) then
 		flying_unit = nil
-
-		return
 	end
+end
 
-	fly(flying_unit)
+-- The flight goes on in the states of the character's movement, where the input of the frame is read (it is gone by the mod's update).
+-- On the ground it is the walking and standing states, which it leaves when it goes up.
+for _, state in ipairs({
+	PlayerCharacterStateWalking,
+	PlayerCharacterStateStanding,
+}) do
+	mod:hook_safe(state, "update", function (self, unit)
+		if unit == flying_unit then
+			fly(unit)
+		end
+	end)
 end
 
 mod:hook_safe(PlayerCharacterStateFalling, "update", function (self, unit, input, dt, context, t)
