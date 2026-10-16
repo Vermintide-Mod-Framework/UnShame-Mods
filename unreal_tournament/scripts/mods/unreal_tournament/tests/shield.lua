@@ -27,6 +27,9 @@ local HORDE = {
 -- The kinds of damage that "how long a body is moved by its death animation" kills with
 local DEATH_KINDS = { "blunt", "blunt_tank", "slashing", "cutting", "drakegun", "drakegun_shot", "burninating", "burn", "fire_grenade_glance", "grenade", "arrow_poison_dot", "bleed", "warpfire_ground" }
 
+-- How many times "a punch never hits the player who punches" punches a block of rats
+local SELF_HIT_ROUNDS = 5
+
 -- How many bodies "a punch on a pinned body" pins and punches
 local PIN_ROUNDS = 5
 -- The speed of the bolts that pin it: a part is pinned to what is within 0.3 s of flight, and slides there in the share of 0.3 s that
@@ -754,6 +757,47 @@ local function scenarios()
 				end)
 
 				t.expect(killed > 0, "no enemy was killed")
+			end,
+		},
+		{
+			-- The punch picks the enemy straight ahead with a ray, then casts rays from the eye at the enemies in its cone. The engine
+			-- fills the same tables with each ray's hits, and a ray from the eye can start in the player's own head: the hit straight ahead
+			-- that the punch kept became the player, who was punched. Here light punches go at a block of rats close ahead, with others
+			-- in the cone, and the player must take nothing from the gun.
+			name = "a punch never hits the player who punches",
+			run = function (t)
+				t.hurtable(true)
+
+				local damage = t.track_damage(t.unit())
+
+				for _ = 1, SELF_HIT_ROUNDS do
+					local rats = t.spawn_group("skaven_clan_rat", 10, 1.2)
+
+					if not t.expect(#rats > 0, "the rats could not be spawned") then
+						return
+					end
+
+					t.wait(1)
+					t.aim_at(rats[3])
+					t.press("action_one", 0.1)
+					t.wait(1)
+
+					for _, rat in ipairs(rats) do
+						t.remove(rat)
+					end
+
+					t.go_to_start()
+				end
+
+				local from_gun = 0
+
+				for _, hit in ipairs(damage.hits) do
+					if hit.source and string.find(hit.source, "ut_shield_gun", 1, true) then
+						from_gun = from_gun + hit.amount
+					end
+				end
+
+				t.expect(from_gun == 0, "the player took %.1f damage from their own punches", from_gun)
 			end,
 		},
 		{
