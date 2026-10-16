@@ -325,7 +325,13 @@ end)
 
 -- An enemy hurting the player ends a spree and starts the count of the call outs again. The player's own weapons (and overcharge) and
 -- their allies don't. The one who hurts is the unit that did the damage, and an enemy is a unit with a breed that is not a player's.
-mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_unit, damage_amount, _, _, _, _, _, _, source_attacker_unit)
+mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_unit, damage_amount, hit_zone_name, damage_type, _, _, damage_source_name, _, source_attacker_unit)
+	-- (for now: what hurts the player that they did themselves, with the calls that led to it)
+	if damage_amount > 0 and (attacker_unit == self.unit or source_attacker_unit == self.unit) and utils.is_local_player_unit(self.unit) then
+		mod:echo("[ut_damage_trace] %.1f %s damage from %s to %s", damage_amount, tostring(damage_type), tostring(damage_source_name), tostring(hit_zone_name))
+		print(debug.traceback("[ut_damage_trace]", 2))
+	end
+
 	if (spree == 0 and next(call_out_kills) == nil) or damage_amount <= 0 or not attacker_unit then
 		return
 	end
