@@ -56,6 +56,10 @@ local REAL_HORDE = {
 	time = 240, -- s
 }
 
+-- How far ahead of the player "the shield stops an exploding barrel" sets off the barrel: inside the explosion's full damage radius
+-- (1.75 m)
+local BARREL_DISTANCE = 1.5 -- m
+
 -- Takes a body away as the game does in a horde: it keeps up to 24 enemies, living and dead, and past that takes the oldest bodies off
 -- its list (UnitSpawner.update_death_watch_list). The body's death reaction then gives it to the BreedFreezer, which takes it out of the
 -- physics to use it again.
@@ -800,6 +804,93 @@ local function scenarios()
 				end
 
 				t.expect(from_gun == 0, "the player took %.1f damage from their own punches", from_gun)
+			end,
+		},
+		{
+			-- The shield stops an explosion from its front (shield_gun.lua: UT's ShieldGun.AdjustPlayerDamage), which the game's block
+			-- doesn't. An explosive barrel is set off ahead, once with the shield up towards it, once without: the first must not hurt the
+			-- player, and the second must, which shows the barrel's explosion reaches them.
+			name = "the shield stops an exploding barrel",
+			run = function (t)
+				t.hurtable(true)
+
+				local function explode_barrel(shielded)
+					local loaded = false
+					local barrel
+
+					-- PickupSystem.spawn_pickup_async passes its callback on as the unit's extension data, so the barrel's package is
+					-- loaded here and the barrel spawned once it is.
+					t.on_main_thread(function ()
+						Managers.level_transition_handler.pickup_package_loader:request_pickup("explosive_barrel", function ()
+							loaded = true
+						end)
+					end)
+
+					if not t.expect(t.wait_until(function ()
+						return loaded
+					end, 10, "the barrel's package to load"), "the barrel's package did not load") then
+						return nil
+					end
+
+					t.on_main_thread(function ()
+						local player = t.unit()
+						local first_person_extension = ScriptUnit.extension(player, "first_person_system")
+						local flat = Vector3.normalize(Vector3.flat(Quaternion.forward(first_person_extension:current_rotation())))
+						local position = Unit.local_position(player, 0) + flat * BARREL_DISTANCE
+
+						barrel = Managers.state.entity:system("pickup_system"):spawn_pickup("explosive_barrel", position, Quaternion.identity(), false, "dropped")
+					end)
+
+					if not t.expect(barrel, "the barrel could not be spawned") then
+						return nil
+					end
+
+					t.wait(1)
+					t.heal()
+					t.aim_at(barrel)
+
+					if shielded then
+						t.hold("action_two")
+						t.wait(0.5)
+					end
+
+					local damage = t.track_damage(t.unit())
+
+					-- The first hit lights the barrel, and the second, 0.2 s or more later, sets it off
+					for _ = 1, 2 do
+						t.on_main_thread(function ()
+							if Unit.alive(barrel) then
+								local player = t.unit()
+
+								DamageUtils.add_damage_network(barrel, player, 10, "full", "blunt", Unit.world_position(barrel, 0), Vector3(0, 0, -1), "wh_1h_hammer", nil, player)
+							end
+						end)
+						t.wait(0.3)
+					end
+
+					t.wait(1)
+
+					if shielded then
+						t.release("action_two")
+					end
+
+					t.on_main_thread(function ()
+						if Unit.alive(barrel) then
+							t.expect(false, "the barrel did not explode")
+							Managers.state.unit_spawner:mark_for_deletion(barrel)
+						end
+					end)
+
+					t.log("%s: the player took %.1f", shielded and "with the shield up" or "without the shield", damage.total)
+
+					return damage.total
+				end
+
+				local shielded = explode_barrel(true)
+				local unshielded = explode_barrel(false)
+
+				t.expect(unshielded and unshielded > 0, "the barrel's explosion did not reach the player without the shield")
+				t.expect(shielded == 0, "the shield let %.1f of the barrel's explosion through", shielded or -1)
 			end,
 		},
 		{
