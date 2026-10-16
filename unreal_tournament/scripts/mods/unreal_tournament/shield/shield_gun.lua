@@ -960,6 +960,7 @@ local function punch(action, t, power_level, bash)
 	local max_attack, max_impact, unlimited = cleave_of(owner_unit, DamageProfileTemplates[punch_action.damage_profile], power_level, blow.is_critical_strike)
 	local mass = 0
 	local index = 0
+	local hit_enemy = false
 
 	for _, target in ipairs(targets) do
 		target.distance = target.hit and target.hit[2] or Vector3.distance(origin, POSITION_LOOKUP[target.unit] or Unit.world_position(target.unit, 0))
@@ -996,6 +997,8 @@ local function punch(action, t, power_level, bash)
 				index = index + 1
 
 				melee_hit(action, punch_action, target.unit, hit_on_target, direction, power_level, blow, index, can_damage, can_stagger)
+
+				hit_enemy = hit_enemy or alive
 			end
 
 			if alive then
@@ -1044,8 +1047,8 @@ local function punch(action, t, power_level, bash)
 		end
 	end
 
-	-- A punch that hit anything in its cone (an enemy, a body, a thing) doesn't throw the player
-	if not hit_unit or Unit.get_data(hit_unit, "breed") or index > 0 or #objects > 0 then
+	-- A punch that hit an enemy or a thing in its cone doesn't throw the player. A body doesn't stop it.
+	if not hit_unit or Unit.get_data(hit_unit, "breed") or hit_enemy or #objects > 0 then
 		return
 	end
 
