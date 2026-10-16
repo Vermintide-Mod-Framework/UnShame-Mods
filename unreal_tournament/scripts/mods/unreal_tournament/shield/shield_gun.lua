@@ -37,8 +37,11 @@ local VARIANTS = {
 		id = "shield_gun_dr",
 		key = "ut_shield_gun_dr",
 		template = "ut_shield_gun_dr_template",
-		-- How the hero holds it in third person and on the hero screen (the hero's wield animation of another weapon): the grudge-raker's
+		-- How the hero holds it in third person and on the hero screen (the hero's wield animation of another weapon): the grudge-raker's.
+		-- The punches are its shot there, and the push its shove.
 		pose_3p = "to_grudge_raker",
+		punch_3p = "attack_shoot",
+		push_3p = "attack_push",
 	},
 	{
 		base_item = "bw_ghost_scythe",
@@ -93,7 +96,7 @@ for _, variant in ipairs(VARIANTS) do
 	local template_name = mod.items.weapons[variant.id].template
 
 	TEMPLATE_NAMES[template_name] = true
-	POSES_3P[template_name] = variant.pose_3p
+	POSES_3P[template_name] = variant.pose_3p and variant
 end
 
 local CONFIG = {
@@ -1765,15 +1768,24 @@ local function apply_template(template_name)
 	template.tooltip_detail = template.tooltip_compare
 
 	-- The pose in third person: the game plays wield_anim_3p there, and the hero screen only the one for the career (any career: the
-	-- item is only the hero's). First person keeps the base weapon's, which the skin hides.
-	local pose = POSES_3P[template_name]
+	-- item is only the hero's). The actions' anim_event_3p is what the body plays for them there. First person keeps the base weapon's,
+	-- which the skin hides.
+	local variant = POSES_3P[template_name]
 
-	if pose then
-		template.wield_anim_3p = pose
+	if variant then
+		template.wield_anim_3p = variant.pose_3p
 		template.wield_anim_career_3p = {}
 
 		for career_name in pairs(CareerSettings) do
-			template.wield_anim_career_3p[career_name] = pose
+			template.wield_anim_career_3p[career_name] = variant.pose_3p
+		end
+
+		for name, action in pairs(actions.action_one) do
+			if name == "punch" or name == "punch_auto" or name == "bash" then
+				action.anim_event_3p = variant.punch_3p
+			elseif name == "push" then
+				action.anim_event_3p = variant.push_3p
+			end
 		end
 	end
 end
