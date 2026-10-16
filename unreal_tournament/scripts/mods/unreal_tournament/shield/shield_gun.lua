@@ -56,12 +56,13 @@ local VARIANTS = {
 		id = "shield_gun_wh",
 		key = "ut_shield_gun_wh",
 		template = "ut_shield_gun_wh_template",
-		-- The Volley Crossbow's pose, which has no shove of its own: the push sends the melee weapons' push event. The shield is its aim.
+		-- The Volley Crossbow's pose, which has no shove of its own: the push sends the melee weapons' push event. The shield and the
+		-- charge are its aim, and the punch is its shot out of the aim.
 		pose_3p = "to_repeating_crossbow",
 		punch_3p = "attack_shoot",
 		push_3p = "attack_push",
-		block_3p = "to_zoom",
-		block_end_3p = "to_unzoom",
+		aim_3p = "to_zoom",
+		aim_end_3p = "to_unzoom",
 	},
 	{
 		base_item = "we_spear",
@@ -80,8 +81,8 @@ local VARIANTS = {
 		pose_3p = "to_repeating_crossbow",
 		punch_3p = "attack_shoot",
 		push_3p = "attack_push",
-		block_3p = "to_zoom",
-		block_end_3p = "to_unzoom",
+		aim_3p = "to_zoom",
+		aim_end_3p = "to_unzoom",
 	},
 }
 
@@ -1840,10 +1841,22 @@ local function apply_template(template_name)
 			end
 		end
 
-		-- The game plays the block's end event on the body too, and the pose's own end event after it
-		if block and variant.block_3p then
-			block.anim_event_3p = variant.block_3p
-			block.anim_end_event_3p = variant.block_end_3p
+		-- The shield and the charge go into the aim, and the punch comes out of it. The aim ends when one of them ends with nothing after
+		-- it: a punch that the next charge follows stays in the aim. (The game plays the base's end event on the body too, before this.)
+		if variant.aim_3p then
+			local function not_chained(_, end_reason)
+				return end_reason ~= "new_interupting_action"
+			end
+
+			-- (the block is last, as a weapon may have none)
+			for _, action in ipairs({ actions.action_one.default, actions.action_one.punch, actions.action_one.punch_auto, block }) do
+				if action.ut_shield_charge or action == block then
+					action.anim_event_3p = variant.aim_3p
+				end
+
+				action.anim_end_event_3p = variant.aim_end_3p
+				action.anim_end_event_condition_func = not_chained
+			end
 		end
 	end
 end
