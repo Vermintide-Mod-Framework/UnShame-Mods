@@ -309,6 +309,21 @@ local function is_object(unit, actor, owner_unit)
 	return unit ~= owner_unit and (ScriptUnit.has_extension(unit, "health_system") and not Unit.get_data(unit, "breed") or not Actor.is_static(actor))
 end
 
+-- The unit that a hit is on: an enemy's shield or the weapon it holds (a unit of its own, an AI inventory item) is the enemy, as a UT
+-- pawn's weapon doesn't stop a trace. A hit on the shield is moved to the arm that holds it (ActionUtils.redirect_shield_hit).
+local function owner_of(unit, actor)
+	unit, actor = ActionUtils.redirect_shield_hit(unit, actor)
+
+	local item_extension = ScriptUnit.has_extension(unit, "ai_inventory_item_system")
+	local wielder = item_extension and item_extension.wielding_unit
+
+	if wielder and Unit.alive(wielder) then
+		return wielder, actor
+	end
+
+	return unit, actor
+end
+
 -- The first such thing along the ray
 local function first_object_hit(physics_world, origin, direction, range, owner_unit)
 	local hits = PhysicsWorld.immediate_raycast(physics_world, origin, direction, range * UNIT, "all", "collision_filter", "filter_melee_sweep")
@@ -345,7 +360,7 @@ local function in_reach(owner_unit, physics_world, range)
 		return nil, nil, direction, origin
 	end
 
-	local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
+	local hit_unit = owner_of(Actor.unit(hit[4]), hit[4])
 
 	return hit, Unit.get_data(hit_unit, "breed") ~= nil and HEALTH_ALIVE[hit_unit] or false, direction, origin
 end
@@ -372,7 +387,7 @@ local function targets_in_reach(owner_unit, physics_world, origin, direction, ra
 
 			for i = 1, #(hits or {}) do
 				local hit_actor = hits[i][4]
-				local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit_actor), hit_actor)
+				local hit_unit = owner_of(Actor.unit(hit_actor), hit_actor)
 				local breed = Unit.get_data(hit_unit, "breed")
 				local zone = breed and breed.hit_zones_lookup and breed.hit_zones_lookup[Actor.node(hit_actor)]
 
@@ -416,7 +431,7 @@ local function objects_in_reach(owner_unit, physics_world, origin, direction, ra
 			local to = unit and Actor.position(actor) - origin
 			local distance = to and Vector3.length(to)
 
-			if unit and not found[unit] and not Unit.get_data(unit, "breed") and is_object(unit, actor, owner_unit) and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot then
+			if unit and not found[unit] and not Unit.get_data(owner_of(unit), "breed") and is_object(unit, actor, owner_unit) and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot then
 				local hit
 
 				if filter == "filter_melee_sweep" then
@@ -429,7 +444,7 @@ local function objects_in_reach(owner_unit, physics_world, origin, direction, ra
 							hit = hits[j]
 
 							break
-						elseif hit_unit ~= owner_unit and not (hit_unit and Unit.get_data(hit_unit, "breed")) then
+						elseif hit_unit ~= owner_unit and not (hit_unit and Unit.get_data(owner_of(hit_unit), "breed")) then
 							-- (a wall or another thing in the way)
 							break
 						end
@@ -925,7 +940,7 @@ local function punch(action, t, power_level, bash)
 
 	-- (the enemy straight ahead is always one: close up, its middle can be outside the cone)
 	if is_enemy then
-		local ahead = ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
+		local ahead = owner_of(Actor.unit(hit[4]), hit[4])
 		local listed = false
 
 		for _, target in ipairs(targets) do
@@ -1024,7 +1039,7 @@ local function punch(action, t, power_level, bash)
 	-- Every thing in reach that is not a character: a door or a barrel takes the punch as from a melee swing, and a loose thing is thrown.
 	-- The one straight ahead is always one.
 	local objects = objects_in_reach(owner_unit, action.physics_world, origin, direction, range)
-	local hit_unit = hit and not is_enemy and ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
+	local hit_unit = hit and not is_enemy and owner_of(Actor.unit(hit[4]), hit[4])
 
 	if hit_unit and not Unit.get_data(hit_unit, "breed") and is_object(hit_unit, hit[4], owner_unit) then
 		local listed = false
