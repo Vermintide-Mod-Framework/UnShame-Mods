@@ -584,7 +584,7 @@ local function push_part(unit, velocity, at)
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 
-		if actor and Actor.is_dynamic(actor) and Actor.is_physical(actor) then
+		if actor and utils.moved_by_physics(actor) then
 			local distance = Vector3.distance(Actor.center_of_mass(actor), at)
 
 			if not nearest or distance < nearest_distance then
@@ -609,7 +609,7 @@ local function move_parts(unit, velocity, spin)
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 
-		if actor and Actor.is_dynamic(actor) then
+		if actor and utils.moved_by_physics(actor) then
 			actors[#actors + 1] = actor
 			middle = middle + Actor.position(actor)
 		end
@@ -704,7 +704,8 @@ local function push_body(unit, zone_name, direction)
 	for _, name in ipairs(push_actors) do
 		local actor = Unit.actor(unit, name)
 
-		if actor then
+		-- (a part pinned to a wall is kinematic)
+		if actor and utils.moved_by_physics(actor) then
 			Actor.push(actor, velocity, mass)
 		end
 	end

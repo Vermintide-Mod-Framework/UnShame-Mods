@@ -695,7 +695,7 @@ local function throw_ragdoll(unit, velocity, spin)
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 
-		if actor and Actor.is_dynamic(actor) then
+		if actor and utils.moved_by_physics(actor) then
 			Actor.set_velocity(actor, velocity)
 
 			if spin then
@@ -933,7 +933,7 @@ local function push_bodies(world, shell, dt)
 			for i = 0, Unit.num_actors(unit) - 1 do
 				local actor = Unit.actor(unit, i)
 
-				if actor and Actor.is_dynamic(actor) then
+				if actor and utils.moved_by_physics(actor) then
 					local offset = Actor.position(actor) - position
 					local distance = Vector3.length(offset)
 

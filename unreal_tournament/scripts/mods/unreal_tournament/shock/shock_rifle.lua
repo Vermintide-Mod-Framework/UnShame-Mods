@@ -729,12 +729,12 @@ local function start_implosion(world, position)
 	}
 end
 
--- Returns where a ragdoll is, which is the position of its first dynamic actor. Returns nil if it is not a ragdoll yet.
+-- Returns where a ragdoll is, which is the position of its first part that physics moves. Returns nil if it is not a ragdoll yet.
 local function ragdoll_position(unit)
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 
-		if actor and Actor.is_dynamic(actor) then
+		if actor and utils.moved_by_physics(actor) then
 			return Actor.position(actor)
 		end
 	end
@@ -744,8 +744,8 @@ local function pull_ragdoll(unit, center, dt)
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 
-		-- Actors that are driven by animation, and are not ragdolled yet, are not dynamic.
-		if actor and Actor.is_dynamic(actor) then
+		-- (the parts that the animation moves are left alone: utils.moved_by_physics)
+		if actor and utils.moved_by_physics(actor) then
 			local offset = center - Actor.position(actor)
 			local distance = Vector3.length(offset)
 			local pull = offset * (CONFIG.implosion_pull / math.max(distance, CONFIG.implosion_pull_softening))

@@ -444,6 +444,14 @@ function utils.ut_ragdoll_throw(direction)
 	return velocity, spin
 end
 
+-- Whether physics moves a part. A part that the animation moves (kinematic: a living enemy's, a body's before it falls, its hit
+-- boxes, a part pinned to a wall) is dynamic too, but it must not be given a velocity: PhysX keeps such a part still and only
+-- moves it to where the animation puts it, and a velocity also wakes it up, which breaks that (the game crashed in a horde, in
+-- PhysX's update of the parts that animation moves). The game only moves parts that are physical.
+function utils.moved_by_physics(actor)
+	return Actor.is_dynamic(actor) and Actor.is_physical(actor)
+end
+
 -- Throws a ragdoll as above, away from a point. Returns whether it had any bodies that move.
 function utils.blast_ragdoll(unit, center)
 	local body_position
@@ -451,7 +459,7 @@ function utils.blast_ragdoll(unit, center)
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 
-		if actor and Actor.is_dynamic(actor) then
+		if actor and utils.moved_by_physics(actor) then
 			body_position = body_position or Actor.position(actor)
 		end
 	end
@@ -472,7 +480,7 @@ function utils.set_ragdoll_motion(unit, velocity, spin)
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 
-		if actor and Actor.is_dynamic(actor) then
+		if actor and utils.moved_by_physics(actor) then
 			Actor.set_velocity(actor, velocity)
 			Actor.set_angular_velocity(actor, spin)
 		end

@@ -4,7 +4,8 @@ local mod = get_mod("unreal_tournament")
 -- Lua error) twice a few minutes into a mission on Legend, in hordes, with the Shield Gun. The first time with the flak, the second in
 -- the level nurgle, as a Zealot with the Shield Gun and the Rocket Launcher. This plays that: the level's own enemies,
 -- hordes and bots, and more hordes sent, while the player punches the nearest enemy and now and then fires rockets at it. The game
--- crashing is the failure.
+-- crashing is the failure. It crashed so in one run of two before the weapons stopped giving velocities to the parts that the
+-- animation moves (utils.moved_by_physics), which they did hundreds of thousands of times a run; that is checked too.
 
 local runner = mod.test_runner
 
@@ -47,7 +48,7 @@ local function scenarios()
 
 				local attacks = 0
 				local stop_logging = runner.log_kinematic_pushes()
-				local ok, killed = pcall(t.fight_horde, FIGHT, function (nearest)
+				local ok, killed, motion_calls = pcall(t.fight_horde, FIGHT, function (nearest)
 					attacks = attacks + 1
 
 					if attacks % FIGHT.rockets_every == 0 then
@@ -77,6 +78,11 @@ local function scenarios()
 				end
 
 				t.expect(killed > 0, "no enemy was killed")
+
+				-- The mod changes no part that the animation moves (utils.moved_by_physics)
+				for where, count in pairs(motion_calls) do
+					t.expect(not string.find(where, "scripts/mods/", 1, true) or count[2] == 0, "%s was called on %d kinematic parts", where, count[2])
+				end
 			end,
 		},
 	}
