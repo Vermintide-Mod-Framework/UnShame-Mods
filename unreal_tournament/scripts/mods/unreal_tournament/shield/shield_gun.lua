@@ -1014,6 +1014,9 @@ local function punch(action, t, power_level, bash)
 	local step, scale = charge_step(hold_time)
 	local range = bash and CONFIG.bash_range or CONFIG.hit_range
 	local hit, is_enemy, direction, origin = in_reach(owner_unit, action.physics_world, range)
+	-- (what the part straight ahead is, before the punch's hits can break it and take the part away)
+	local hit_moves = hit and Actor.is_dynamic(hit[4])
+	local hit_static = hit and Actor.is_static(hit[4])
 
 	charge_started[owner_unit] = nil
 
@@ -1148,9 +1151,12 @@ local function punch(action, t, power_level, bash)
 	end
 
 	for _, object in ipairs(objects) do
+		-- (looked at before the hit, which can break the thing, and the part it hit is then gone)
+		local loose = not Actor.is_static(object.hit[4])
+
 		hit_object(action, object.unit, object.hit, direction, punch_action.damage_profile, power_level, blow)
 
-		if not Actor.is_static(object.hit[4]) then
+		if loose then
 			throw_hit(object.unit, direction, false, object.hit[1])
 		end
 	end
@@ -1162,7 +1168,7 @@ local function punch(action, t, power_level, bash)
 	-- Anything else near enough straight ahead throws the player off it and hurts them, as UT's punch of anything that is not a pawn does.
 	-- A punch that hit an enemy doesn't: UT's one trace either hits a pawn or pushes the player off what it hit, and here the cone can
 	-- have an enemy in it while the ray straight ahead hits the floor.
-	if hit[2] <= CONFIG.range * UNIT and not Actor.is_dynamic(hit[4]) and not hit_enemy then
+	if hit[2] <= CONFIG.range * UNIT and not hit_moves and not hit_enemy then
 		-- TEMPORARY: what the punch saw when it hurts the player
 		if utils.is_local_player_unit(owner_unit) then
 			local alive_targets, hit_targets = 0, index
@@ -1171,7 +1177,7 @@ local function punch(action, t, power_level, bash)
 				alive_targets = alive_targets + (HEALTH_ALIVE[target.unit] and 1 or 0)
 			end
 
-			mod:echo("self hit: ray on %s at %.2f m (static %s), targets %d (%d alive now), hits %d, cleave %.2f / %.2f, auto %s", Unit.debug_name(hit_unit), hit[2], tostring(Actor.is_static(hit[4])), #targets, alive_targets, hit_targets, max_attack, max_impact, tostring(mod.shield.debug_auto))
+			mod:echo("self hit: ray on %s at %.2f m (static %s), targets %d (%d alive now), hits %d, cleave %.2f / %.2f, auto %s", Unit.debug_name(hit_unit), hit[2], tostring(hit_static), #targets, alive_targets, hit_targets, max_attack, max_impact, tostring(mod.shield.debug_auto))
 		end
 
 		local self_damage = (CONFIG.min_self_damage + CONFIG.self_damage_scale * damage_for_step(step)) * CONFIG.self_damage_share
