@@ -497,12 +497,29 @@ local function new(def)
 
 	local place
 
+	-- TEMPORARY: every model this skin made, to count the ones still alive
+	local debug_units = {}
+
+	local function skin_units_alive()
+		local count = 0
+
+		for _, unit in ipairs(debug_units) do
+			if Unit.alive(unit) then
+				count = count + 1
+			end
+		end
+
+		return count
+	end
+
 	local function create(fp, skin_key)
 		destroy()
 		set_look(look_of(skin_key))
 
 		local world = Managers.world:world("level_world")
 		local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
+
+		debug_units[#debug_units + 1] = unit
 
 		-- A new unit starts in the pose of the file, a big model at the camera. It stays hidden until it is placed.
 		Unit.set_unit_visibility(unit, false)
@@ -906,7 +923,9 @@ local function new(def)
 			local local_position = Unit.local_position(skin.unit, 0)
 			local scale = Unit.local_scale(skin.unit, 0)
 
-			mod:echo("[%s] %s %.2f x%.2f, alt %s, inspect %s, bob %s %s, at %.2f %.2f %.2f, scale %.4f, linked to fp %s", CONFIG.name, tostring(skin.animation), skin.time or -1, skin.speed or -1, tostring(skin.alt_pose), tostring(skin.inspect_pose), tostring(skin.walk_right), tostring(skin.walk_up), local_position.x, local_position.y, local_position.z, Vector3.length(scale), tostring(Unit.alive(fp.first_person_unit)))
+			local camera = Unit.world_position(fp.first_person_unit, utils.camera_node(fp.first_person_unit))
+
+			mod:echo("[%s] %s %.2f x%.2f, alt %s, inspect %s, at %.2f %.2f %.2f, scale %.4f, %.2f m from the camera, %d units of the skin alive", CONFIG.name, tostring(skin.animation), skin.time or -1, skin.speed or -1, tostring(skin.alt_pose), tostring(skin.inspect_pose), local_position.x, local_position.y, local_position.z, Vector3.length(scale), Vector3.distance(Unit.world_position(skin.unit, 0), camera), skin_units_alive())
 		end
 	end
 
