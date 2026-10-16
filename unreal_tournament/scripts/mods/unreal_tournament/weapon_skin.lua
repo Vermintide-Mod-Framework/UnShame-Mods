@@ -896,6 +896,18 @@ local function new(def)
 
 			mod:echo("[%s] %s", CONFIG.name, why)
 		end
+
+		-- TEMPORARY: where the model is and what it plays, once a second
+		skin.debug_t = (skin.debug_t or 0) + dt
+
+		if skin.debug_t >= 1 then
+			skin.debug_t = 0
+
+			local local_position = Unit.local_position(skin.unit, 0)
+			local scale = Unit.local_scale(skin.unit, 0)
+
+			mod:echo("[%s] %s %.2f x%.2f, alt %s, inspect %s, bob %s %s, at %.2f %.2f %.2f, scale %.4f, linked to fp %s", CONFIG.name, tostring(skin.animation), skin.time or -1, skin.speed or -1, tostring(skin.alt_pose), tostring(skin.inspect_pose), tostring(skin.walk_right), tostring(skin.walk_up), local_position.x, local_position.y, local_position.z, Vector3.length(scale), tostring(Unit.alive(fp.first_person_unit)))
+		end
 	end
 
 	-- The game shows its weapon and arms again at times of its own, after the mod's update, so they are hidden again just before the
