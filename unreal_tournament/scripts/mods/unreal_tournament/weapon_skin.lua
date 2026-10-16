@@ -490,6 +490,9 @@ local function new(def)
 		end
 
 		self.debug("gone")
+
+		-- TEMPORARY
+		mod:echo("[%s] gone", CONFIG.name)
 	end
 
 	local place
@@ -539,6 +542,9 @@ local function new(def)
 		-- The game has just shown its own weapon, which is the one that is wielded now, so it is hidden again here.
 		fp:hide_weapons(HIDE_REASON, true)
 		hide_game_weapon(fp)
+
+		-- TEMPORARY
+		mod:echo("[%s] made", CONFIG.name)
 
 		local pickup = CONFIG.pickup_animation or "Pickup"
 
@@ -873,6 +879,23 @@ local function new(def)
 
 		Unit.set_unit_visibility(skin.unit, game_shows_weapon(fp) and not (CONFIG.hidden and CONFIG.hidden(skin)))
 		place(fp)
+
+		-- TEMPORARY: why the model is hidden, said once each time the reason changes
+		local reasons = {}
+
+		for reason in pairs(fp.hide_weapon_reasons) do
+			reasons[#reasons + 1] = reason
+		end
+
+		table.sort(reasons)
+
+		local why = string.format("reasons {%s}, first person %s, units visible %s, animation free %s, hidden %s", table.concat(reasons, ","), tostring(fp:first_person_mode_active()), tostring(fp:first_person_units_visible()), tostring(utils.character_animation_is_free(fp.unit)), tostring(CONFIG.hidden and CONFIG.hidden(skin) or false))
+
+		if why ~= skin.debug_why then
+			skin.debug_why = why
+
+			mod:echo("[%s] %s", CONFIG.name, why)
+		end
 	end
 
 	-- The game shows its weapon and arms again at times of its own, after the mod's update, so they are hidden again just before the
