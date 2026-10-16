@@ -37,6 +37,8 @@ local VARIANTS = {
 		id = "shield_gun_dr",
 		key = "ut_shield_gun_dr",
 		template = "ut_shield_gun_dr_template",
+		-- How the hero holds it in third person and on the hero screen (the hero's wield animation of another weapon): the grudge-raker's
+		pose_3p = "to_grudge_raker",
 	},
 	{
 		base_item = "bw_ghost_scythe",
@@ -85,9 +87,13 @@ for _, variant in ipairs(VARIANTS) do
 end
 
 local TEMPLATE_NAMES = {}
+local POSES_3P = {}
 
 for _, variant in ipairs(VARIANTS) do
-	TEMPLATE_NAMES[mod.items.weapons[variant.id].template] = true
+	local template_name = mod.items.weapons[variant.id].template
+
+	TEMPLATE_NAMES[template_name] = true
+	POSES_3P[template_name] = variant.pose_3p
 end
 
 local CONFIG = {
@@ -1757,6 +1763,19 @@ local function apply_template(template_name)
 		},
 	}
 	template.tooltip_detail = template.tooltip_compare
+
+	-- The pose in third person: the game plays wield_anim_3p there, and the hero screen only the one for the career (any career: the
+	-- item is only the hero's). First person keeps the base weapon's, which the skin hides.
+	local pose = POSES_3P[template_name]
+
+	if pose then
+		template.wield_anim_3p = pose
+		template.wield_anim_career_3p = {}
+
+		for career_name in pairs(CareerSettings) do
+			template.wield_anim_career_3p[career_name] = pose
+		end
+	end
 end
 
 -- The templates are the mod's own copies (items.register), so they are changed once
