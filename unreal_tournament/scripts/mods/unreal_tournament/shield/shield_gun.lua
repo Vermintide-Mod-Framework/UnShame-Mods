@@ -125,7 +125,7 @@ local CONFIG = {
 	-- normal and heavy blows, which hit wide ("tank"), which chooses how the game shows a hit and a death (the hit effects: the push of the
 	-- body, its sounds); the share of UT's damage it does, less than UT's (a choice); and how many enemies it gets
 	-- through, as a swing with the game's cleave of that name does (light to heavy tank blows that reach about half as far as the
-	-- two-handed hammer's: a choice). Its stagger is still worked out from UT's damage.
+	-- two-handed hammer's: a choice). Its stagger and the player's own damage of a shield jump are still worked out from UT's damage.
 	damage_types = {
 		{ 1 / 3, "light_blunt_tank", 1 / 2, "cleave_distribution_tank_spiked_L" },
 		{ 2 / 3, "blunt_tank", 1 / 2, "cleave_distribution_tank_dual_L" },
@@ -133,6 +133,11 @@ local CONFIG = {
 	},
 	-- The bash out of a push is the blow of this third of the charge (above), its damage type and share, whatever its time held gives
 	bash_damage_type = 2,
+	-- ShieldFire: punching a wall hurts the player MinSelfDamage + SelfDamageScale * the damage. UT's DeathMatch.ReduceDamage halves a
+	-- player's own damage in a game with bots at the lower skills, and the Rocket Launcher and the Flak Cannon of the mod take that half too.
+	min_self_damage = 8,
+	self_damage_scale = 0.3,
+	self_damage_share = 0.5,
 	-- ShieldFire.FireRate: after a punch, the next charge starts this long after
 	fire_rate = 0.6,
 	-- The bash out of a push (not UT's: see build_bash): the shield is down this long after it, the length of UT's Fire animation
@@ -1104,10 +1109,15 @@ local function punch(action, t, power_level, bash)
 		return
 	end
 
-	-- Anything else near enough straight ahead throws the player off it, as UT's punch of anything that is not a pawn does. Unlike UT's,
-	-- it doesn't hurt them.
-	if hit[2] <= CONFIG.range * UNIT and utils.is_local_player_unit(owner_unit) then
-		push_player(owner_unit, direction, force)
+	-- Anything else near enough straight ahead throws the player off it and hurts them, as UT's punch of anything that is not a pawn does
+	if hit[2] <= CONFIG.range * UNIT then
+		local self_damage = (CONFIG.min_self_damage + CONFIG.self_damage_scale * damage_for_step(step)) * CONFIG.self_damage_share
+
+		utils.apply_self_damage(owner_unit, hit[1], -direction, action.item_name, self_damage)
+
+		if utils.is_local_player_unit(owner_unit) then
+			push_player(owner_unit, direction, force)
+		end
 	end
 end
 

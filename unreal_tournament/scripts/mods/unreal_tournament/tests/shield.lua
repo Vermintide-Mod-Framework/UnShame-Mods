@@ -792,8 +792,9 @@ local function scenarios()
 
 				local from_gun = 0
 
+				-- (the punch's own hits, which are blows; a punch at the floor or a wall hurts the player too, as UT's, and that is fine)
 				for _, hit in ipairs(damage.hits) do
-					if hit.source and string.find(hit.source, "ut_shield_gun", 1, true) then
+					if hit.source and string.find(hit.source, "ut_shield_gun", 1, true) and hit.type ~= "drakegun" then
 						from_gun = from_gun + hit.amount
 					end
 				end
