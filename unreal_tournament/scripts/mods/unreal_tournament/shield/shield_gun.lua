@@ -338,6 +338,73 @@ local function first_object_hit(physics_world, origin, direction, range, owner_u
 	end
 end
 
+-- Where a segment from `from` to `to` first gets to an upright cylinder, as the share of the way along it (0 if it starts inside), or
+-- nil if it doesn't
+local function segment_cylinder(from, to, center, radius, half_height)
+	local dx, dy, dz = Vector3.x(to) - Vector3.x(from), Vector3.y(to) - Vector3.y(from), Vector3.z(to) - Vector3.z(from)
+	local fx, fy = Vector3.x(from) - Vector3.x(center), Vector3.y(from) - Vector3.y(center)
+	local fz = Vector3.z(from) - Vector3.z(center)
+	local best
+
+	-- (a segment that starts inside it gets to it where it starts: a gutter runner that jumps from up close)
+	if fx * fx + fy * fy <= radius * radius and math.abs(fz) <= half_height then
+		return 0
+	end
+
+	-- (its side)
+	local a = dx * dx + dy * dy
+	local b = 2 * (fx * dx + fy * dy)
+	local c = fx * fx + fy * fy - radius * radius
+	local discriminant = b * b - 4 * a * c
+
+	if a > 1e-8 and discriminant >= 0 then
+		local t = (-b - math.sqrt(discriminant)) / (2 * a)
+
+		if t >= 0 and t <= 1 and math.abs(fz + dz * t) <= half_height then
+			best = t
+		end
+	end
+
+	-- (its top and bottom)
+	if math.abs(dz) > 1e-8 then
+		for _, side in ipairs({ 1, -1 }) do
+			local t = (side * half_height - fz) / dz
+			local x, y = fx + dx * t, fy + dy * t
+
+			if t >= 0 and t <= 1 and (not best or t < best) and x * x + y * y <= radius * radius then
+				best = t
+			end
+		end
+	end
+
+	return best
+end
+
+-- The living enemy whose body the punch's line from `from` to `to` gets to first, and where on the line (meters from `from`). An enemy's
+-- body is its bulk as the game's explosions take it (DamageUtils.calculate_aoe_size: an upright cylinder, the breed's aoe_radius wide
+-- and aoe_height tall), as UT's trace meets a pawn's collision cylinder. Its hit zones are much thinner, and the line passes them by.
+local function enemy_on_line(owner_unit, from, to)
+	local world = Managers.world:world("level_world")
+	local length = Vector3.distance(from, to)
+	local best_unit, best_t
+
+	for unit in pairs(utils.units_in_radius(world, from, length + 2)) do
+		local breed = Unit.get_data(unit, "breed")
+
+		if HEALTH_ALIVE[unit] and DamageUtils.is_enemy(owner_unit, unit) then
+			local radius, height = DamageUtils.calculate_aoe_size(unit, breed)
+			local center = POSITION_LOOKUP[unit] + Vector3(0, 0, height / 2)
+			local t = segment_cylinder(from, to, center, radius, height / 2)
+
+			if t and (not best_t or t < best_t) then
+				best_unit, best_t = unit, t
+			end
+		end
+	end
+
+	return best_unit, best_t and best_t * length
+end
+
 local function in_reach(owner_unit, physics_world, range)
 	local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
 
@@ -364,6 +431,20 @@ local function in_reach(owner_unit, physics_world, range)
 
 	if aimed_unit and Unit.get_data(aimed_unit, "breed") and HEALTH_ALIVE[aimed_unit] then
 		return aimed, true, direction, origin
+	end
+
+	-- An enemy whose body the line from the middle gets to before what it hit is the one it hits (enemy_on_line), on its spine
+	local length = hit and hit[2] or range * UNIT
+	local enemy, distance = enemy_on_line(owner_unit, origin, origin + direction * length)
+	local spine = enemy and Unit.find_actor(enemy, "c_spine") and Unit.actor(enemy, "c_spine")
+
+	if spine then
+		return {
+			origin + direction * distance,
+			distance,
+			-direction,
+			spine,
+		}, true, direction, origin
 	end
 
 	if not hit then
@@ -1179,48 +1260,6 @@ mod.dummy_finish_callbacks.shield_gun = function (action, reason)
 end
 
 -- Reflection (see reflect_dot in CONFIG)
-
--- Where a segment from `from` to `to` first gets to an upright cylinder, as the share of the way along it (0 if it starts inside), or
--- nil if it doesn't
-local function segment_cylinder(from, to, center, radius, half_height)
-	local dx, dy, dz = Vector3.x(to) - Vector3.x(from), Vector3.y(to) - Vector3.y(from), Vector3.z(to) - Vector3.z(from)
-	local fx, fy = Vector3.x(from) - Vector3.x(center), Vector3.y(from) - Vector3.y(center)
-	local fz = Vector3.z(from) - Vector3.z(center)
-	local best
-
-	-- (a segment that starts inside it gets to it where it starts: a gutter runner that jumps from up close)
-	if fx * fx + fy * fy <= radius * radius and math.abs(fz) <= half_height then
-		return 0
-	end
-
-	-- (its side)
-	local a = dx * dx + dy * dy
-	local b = 2 * (fx * dx + fy * dy)
-	local c = fx * fx + fy * fy - radius * radius
-	local discriminant = b * b - 4 * a * c
-
-	if a > 1e-8 and discriminant >= 0 then
-		local t = (-b - math.sqrt(discriminant)) / (2 * a)
-
-		if t >= 0 and t <= 1 and math.abs(fz + dz * t) <= half_height then
-			best = t
-		end
-	end
-
-	-- (its top and bottom)
-	if math.abs(dz) > 1e-8 then
-		for _, side in ipairs({ 1, -1 }) do
-			local t = (side * half_height - fz) / dz
-			local x, y = fx + dx * t, fy + dy * t
-
-			if t >= 0 and t <= 1 and (not best or t < best) and x * x + y * y <= radius * radius then
-				best = t
-			end
-		end
-	end
-
-	return best
-end
 
 -- Whether a player holds the Shield Gun's shield up
 local function shield_is_up(unit)
