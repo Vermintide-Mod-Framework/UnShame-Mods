@@ -658,6 +658,43 @@ local function make_context(suite)
 		return spawned
 	end
 
+	-- Spawns a number of enemies at once, in rows across the way the player faces, starting that distance ahead, and returns them (as many
+	-- as spawned). They are removed after the scenario.
+	function t.spawn_group(breed_name, count, distance)
+		local spawned = {}
+
+		on_main_thread(function ()
+			local breed = Breeds[breed_name]
+			local origin, forward = aim()
+			local flat = Vector3.normalize(Vector3.flat(forward))
+			local side = Vector3.cross(flat, Vector3.up())
+
+			for i = 1, count do
+				local row, column = math.floor((i - 1) / 5), (i - 1) % 5
+				local above = origin + flat * (distance + row) + side * (column - 2) + Vector3(0, 0, 2)
+				local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world(), above, Vector3.down(), 8, "closest", "collision_filter", "filter_ai_line_of_sight_check")
+
+				if hit then
+					Managers.state.conflict:spawn_one(breed, above - Vector3(0, 0, hit_distance), nil, {
+						spawned_func = function (unit)
+							spawned[#spawned + 1] = unit
+						end,
+					}, Quaternion.look(-flat, Vector3.up()))
+				end
+			end
+		end)
+
+		t.wait_until(function ()
+			return #spawned >= count
+		end, CONFIG.spawn_timeout, "the enemies to spawn")
+
+		for _, unit in ipairs(spawned) do
+			scenario.spawned[#scenario.spawned + 1] = unit
+		end
+
+		return spawned
+	end
+
 	-- Turns the player to face the middle of a unit's body
 	function t.aim_at(unit)
 		on_main_thread(function ()
@@ -786,13 +823,20 @@ local function make_context(suite)
 		return record
 	end
 
-	-- Takes away an enemy the scenario spawned, before the scenario ends
+	-- Takes away an enemy the scenario spawned, before the scenario ends. It is taken off the list of what the runner takes away after the
+	-- scenario: the game keeps a unit it takes away for later (it freezes it), and taking it away twice crashes the game.
 	function t.remove(unit)
 		on_main_thread(function ()
 			if Unit.alive(unit) then
 				Managers.state.conflict:destroy_unit(unit, BLACKBOARDS[unit], "ut_test")
 			end
 		end)
+
+		for i = #scenario.spawned, 1, -1 do
+			if scenario.spawned[i] == unit then
+				table.remove(scenario.spawned, i)
+			end
+		end
 	end
 
 	-- A line in the results, for what a scenario found that is not a failure

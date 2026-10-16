@@ -123,10 +123,12 @@ mod:dofile("scripts/mods/unreal_tournament/tests/assault")
 mod:dofile("scripts/mods/unreal_tournament/tests/movement")
 mod:dofile("scripts/mods/unreal_tournament/tests/shock")
 mod:dofile("scripts/mods/unreal_tournament/tests/rocket")
+mod:dofile("scripts/mods/unreal_tournament/tests/bio")
+mod:dofile("scripts/mods/unreal_tournament/tests/announcer")
 
 -- This message appears in the chat each time the mod is loaded or reloaded, so you can tell which build is running. The build
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 1040)")
+	mod:echo("Unreal Tournament loaded (build 1041)")
 end
