@@ -490,56 +490,9 @@ local function new(def)
 		end
 
 		self.debug("gone")
-
-		-- TEMPORARY
-		mod:echo("[%s] gone", CONFIG.name)
 	end
 
 	local place
-
-	-- TEMPORARY: every model this skin made, to count the ones still alive
-	local debug_units = {}
-
-	-- TEMPORARY: who unlinks the model that is shown, with the call stack in the console log
-	if not rawget(_G, "ut_debug_unlink") then
-		local unlink_unit = World.unlink_unit
-
-		rawset(_G, "ut_debug_unlink", unlink_unit)
-
-		World.unlink_unit = function (world, unit, ...)
-			for _, check in ipairs(rawget(_G, "ut_debug_skin_units") or {}) do
-				if check() == unit then
-					mod:echo("a skin's model was unlinked")
-					print(debug.traceback("[ut_debug_unlink]", 2))
-				end
-			end
-
-			return unlink_unit(world, unit, ...)
-		end
-
-		mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
-			World.unlink_unit = unlink_unit
-			rawset(_G, "ut_debug_unlink", nil)
-			rawset(_G, "ut_debug_skin_units", nil)
-		end
-	end
-
-	rawset(_G, "ut_debug_skin_units", rawget(_G, "ut_debug_skin_units") or {})
-	table.insert(rawget(_G, "ut_debug_skin_units"), function ()
-		return skin and skin.unit
-	end)
-
-	local function skin_units_alive()
-		local count = 0
-
-		for _, unit in ipairs(debug_units) do
-			if Unit.alive(unit) then
-				count = count + 1
-			end
-		end
-
-		return count
-	end
 
 	local function create(fp, skin_key)
 		destroy()
@@ -547,8 +500,6 @@ local function new(def)
 
 		local world = Managers.world:world("level_world")
 		local unit = World.spawn_unit(world, CONFIG.unit_name, Vector3(0, 0, 0))
-
-		debug_units[#debug_units + 1] = unit
 
 		-- A new unit starts in the pose of the file, a big model at the camera. It stays hidden until it is placed.
 		Unit.set_unit_visibility(unit, false)
@@ -567,6 +518,8 @@ local function new(def)
 			look = current_look,
 			bob_speed = 0,
 			bob_time = 0,
+			-- (the first person unit the model is linked to: a character spawned again has a new one)
+			first_person_unit = fp.first_person_unit,
 			nodes = {},
 			unit = unit,
 			unit_scale = CONFIG.draw_scale * CONFIG.meters_per_unit,
@@ -588,9 +541,6 @@ local function new(def)
 		-- The game has just shown its own weapon, which is the one that is wielded now, so it is hidden again here.
 		fp:hide_weapons(HIDE_REASON, true)
 		hide_game_weapon(fp)
-
-		-- TEMPORARY
-		mod:echo("[%s] made", CONFIG.name)
 
 		local pickup = CONFIG.pickup_animation or "Pickup"
 
@@ -629,8 +579,10 @@ local function new(def)
 		end
 	end
 
+	-- The model goes with the first person unit it is linked to. That unit can be the one of a character that is no longer the player's
+	-- (the game spawns the character again when the inventory is closed after the loadout changed), so it is not asked whose it is.
 	mod.first_person_destroy_callbacks[CONFIG.id] = function (first_person_extension)
-		if skin and utils.is_local_player_unit(first_person_extension.unit) then
+		if skin and skin.first_person_unit == first_person_extension.first_person_unit then
 			destroy(true)
 		end
 	end
@@ -907,6 +859,15 @@ local function new(def)
 			return
 		end
 
+		-- The player has a new character, spawned again with the same weapon in hand, and the model hangs off the old one's first person
+		-- unit, which is gone. It is made again on the new one.
+		if skin.first_person_unit ~= fp.first_person_unit then
+			destroy(true)
+			create(fp, utils.wielded_skin(fp.unit))
+
+			return
+		end
+
 		-- A different skin was applied to the weapon that is held, on the Illusions page. Switch to its model.
 		local skin_key = utils.wielded_skin(fp.unit)
 
@@ -925,37 +886,6 @@ local function new(def)
 
 		Unit.set_unit_visibility(skin.unit, game_shows_weapon(fp) and not (CONFIG.hidden and CONFIG.hidden(skin)))
 		place(fp)
-
-		-- TEMPORARY: why the model is hidden, said once each time the reason changes
-		local reasons = {}
-
-		for reason in pairs(fp.hide_weapon_reasons) do
-			reasons[#reasons + 1] = reason
-		end
-
-		table.sort(reasons)
-
-		local why = string.format("reasons {%s}, first person %s, units visible %s, animation free %s, hidden %s", table.concat(reasons, ","), tostring(fp:first_person_mode_active()), tostring(fp:first_person_units_visible()), tostring(utils.character_animation_is_free(fp.unit)), tostring(CONFIG.hidden and CONFIG.hidden(skin) or false))
-
-		if why ~= skin.debug_why then
-			skin.debug_why = why
-
-			mod:echo("[%s] %s", CONFIG.name, why)
-		end
-
-		-- TEMPORARY: where the model is and what it plays, once a second
-		skin.debug_t = (skin.debug_t or 0) + dt
-
-		if skin.debug_t >= 1 then
-			skin.debug_t = 0
-
-			local local_position = Unit.local_position(skin.unit, 0)
-			local scale = Unit.local_scale(skin.unit, 0)
-
-			local camera = Unit.world_position(fp.first_person_unit, utils.camera_node(fp.first_person_unit))
-
-			mod:echo("[%s] %s %.2f x%.2f, alt %s, inspect %s, at %.2f %.2f %.2f, scale %.4f, %.2f m from the camera, %d units of the skin alive", CONFIG.name, tostring(skin.animation), skin.time or -1, skin.speed or -1, tostring(skin.alt_pose), tostring(skin.inspect_pose), local_position.x, local_position.y, local_position.z, Vector3.length(scale), Vector3.distance(Unit.world_position(skin.unit, 0), camera), skin_units_alive())
-		end
 	end
 
 	-- The game shows its weapon and arms again at times of its own, after the mod's update, so they are hidden again just before the

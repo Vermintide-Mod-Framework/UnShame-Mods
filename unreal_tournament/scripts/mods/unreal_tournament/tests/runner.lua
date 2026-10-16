@@ -1758,19 +1758,6 @@ mod:command("ut_probe", "- says how far the level is above the player and around
 	push_log_out()
 end)
 
--- Makes the game build the held weapon again, as it does when the weapon is upgraded or rerolled in the inventory
--- (HeroViewStateOverview's equip request)
-mod:command("ut_rebuild", "- builds the held weapon again, as an upgrade in the inventory does", function ()
-	local unit = player_unit()
-	local inventory_extension = inventory_extension_of(unit)
-	local equipment = inventory_extension and inventory_extension:equipment()
-	local slot_data = equipment and equipment.slots[equipment.wielded_slot]
-
-	if slot_data then
-		inventory_extension:create_equipment_in_slot(equipment.wielded_slot, slot_data.item_data.backend_id)
-	end
-end)
-
 -- Where the player stands, for a test that has to run at a certain place
 mod:command("ut_where", "- says where the player stands", function ()
 	local unit = player_unit()
