@@ -60,6 +60,13 @@ local REAL_HORDE = {
 -- (1.75 m)
 local BARREL_DISTANCE = 1.5 -- m
 
+-- The standard of "punches destroy a standard": how far ahead of the player it is planted, its health (a standard bearer's
+-- place_standard action gives it 10), and how many punches it may take
+local STANDARD_UNIT = "units/weapons/enemy/wpn_bm_standard_01/wpn_bm_standard_01_placed"
+local STANDARD_DISTANCE = 1.5 -- m
+local STANDARD_HEALTH = 10
+local STANDARD_MAX_PUNCHES = 10
+
 -- Takes a body away as the game does in a horde: it keeps up to 24 enemies, living and dead, and past that takes the oldest bodies off
 -- its list (UnitSpawner.update_death_watch_list). The body's death reaction then gives it to the BreedFreezer, which takes it out of the
 -- physics to use it again.
@@ -891,6 +898,79 @@ local function scenarios()
 
 				t.expect(unshielded and unshielded > 0, "the barrel's explosion did not reach the player without the shield")
 				t.expect(shielded == 0, "the shield let %.1f of the barrel's explosion through", shielded or -1)
+			end,
+		},
+		{
+			-- A standard only takes damage from melee attacks and a few damage sources (BeastmenStandardHealthExtension.add_damage). The
+			-- punch hits it as a melee swing hits it. A standard is planted ahead as a standard bearer plants it (BTPlaceStandardAction),
+			-- and punched until it falls.
+			name = "punches destroy a standard",
+			run = function (t)
+				-- Spawning the bearer loads the beastmen's package, which has the standard. The standard takes the bearer's side.
+				local bearer = t.spawn("beastmen_standard_bearer", 8)
+
+				if not t.expect(bearer, "the standard bearer could not be spawned") then
+					return
+				end
+
+				local spot = t.ground_at(STANDARD_DISTANCE, 0)
+				local standard
+
+				t.on_main_thread(function ()
+					if not spot or not Application.can_get("unit", STANDARD_UNIT) then
+						return
+					end
+
+					standard = Managers.state.unit_spawner:spawn_network_unit(STANDARD_UNIT, "standard_unit", {
+						health_system = {
+							health = STANDARD_HEALTH,
+						},
+						death_system = {
+							death_reaction_template = "standard",
+						},
+						ai_supplementary_system = {
+							standard_template_name = "healing_standard",
+							standard_bearer_unit = bearer,
+						},
+						ping_system = {
+							always_pingable = true,
+						},
+					}, Vector3(spot[1], spot[2], spot[3]))
+				end)
+
+				t.remove(bearer)
+
+				if not t.expect(standard, "the standard could not be spawned") then
+					return
+				end
+
+				t.wait(0.5)
+				t.aim_at_point(spot[1], spot[2], spot[3] + 1)
+
+				local punches = 0
+				local first_damage
+
+				while punches < STANDARD_MAX_PUNCHES and t.health_of(standard) > 0 do
+					local before = t.health_of(standard)
+
+					t.press("action_one", 0.1)
+					t.wait(0.8)
+
+					punches = punches + 1
+					first_damage = first_damage or before - t.health_of(standard)
+				end
+
+				local left = t.health_of(standard)
+
+				t.log("%d punches, the first did %.1f, the standard has %.1f of %d left", punches, first_damage or 0, left, STANDARD_HEALTH)
+				t.expect(first_damage and first_damage > 0, "the first punch did not damage the standard")
+				t.expect(left == 0, "%d punches did not destroy the standard", punches)
+
+				t.on_main_thread(function ()
+					if Unit.alive(standard) and HEALTH_ALIVE[standard] then
+						Managers.state.unit_spawner:mark_for_deletion(standard)
+					end
+				end)
 			end,
 		},
 		{
