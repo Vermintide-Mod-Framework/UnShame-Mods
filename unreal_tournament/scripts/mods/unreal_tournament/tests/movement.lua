@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
 -- The UT movement's in-game tests (see runner.lua). Run them with /ut_test movement. They run in the runner's level, Righteous Stand,
--- some of them in its named places. The weapon does not matter; the suite holds the Shield Gun.
+-- some of them in its named places.
 
 local runner = mod.test_runner
 
@@ -31,6 +31,10 @@ local CONFIG = {
 	max_time_at_top = 0.15, -- s
 	-- How far off a measured speed may be
 	speed_margin = 0.35, -- m/s
+	-- The momentum damage: this much more damage at the full speed, none up to the least speed
+	momentum_bonus = 0.25,
+	momentum_min_speed = 4.5, -- m/s
+	momentum_full_speed = 9, -- m/s
 }
 
 -- The game's jump speed and gravity for the player, and the player's way to the right on the ground
@@ -480,6 +484,89 @@ local function scenarios()
 			end,
 		},
 		{
+			name = "a melee hit while moving fast does more damage",
+			run = function (t)
+				skip_without_movement(t)
+
+				if not mod:get("momentum_damage") then
+					t.skip("the momentum damage is turned off")
+				end
+
+				-- A light attack of the game's sword (the suite's loadout) standing still, and one in a dodge forward at the enemy (about
+				-- 7 m/s, so about 14% more). Each is done three times and the least is taken, as a hit can be a critical hit.
+				t.on_main_thread(function ()
+					ScriptUnit.extension(t.unit(), "inventory_system"):wield("slot_melee")
+				end)
+				t.wait(1.5)
+
+				local function punch(moving)
+					local target = t.spawn_target(moving and 3.5 or 1.5)
+
+					if not target then
+						return nil
+					end
+
+					local damage = t.track_damage(target)
+					local speed_at_hit
+
+					-- (a light attack starts as the button is let go and hits about half a second later: the dodge comes in that time)
+					t.press("action_one", 0.05)
+
+					if moving then
+						t.wait(0.1)
+						t.move(0, 1)
+						t.tap("dodge")
+						t.move()
+					end
+
+					t.watch(0.8, function ()
+						if not speed_at_hit and damage.total > 0 then
+							local vx, vy = t.velocity()
+
+							speed_at_hit = math.sqrt(vx * vx + vy * vy)
+						end
+					end)
+					t.remove(target)
+					t.go_to_start()
+
+					return damage.total, speed_at_hit or 0
+				end
+
+				local standing, moving, speed = math.huge, math.huge, math.huge
+
+				-- (a swing in a dodge can pass the enemy: only the ones that hit count)
+				for _ = 1, 4 do
+					local damage = punch(false)
+
+					if damage and damage > 0 then
+						standing = math.min(standing, damage)
+					end
+
+					local at
+
+					damage, at = punch(true)
+
+					if damage and damage > 0 then
+						moving = math.min(moving, damage)
+						speed = math.min(speed, at)
+					end
+				end
+
+				t.on_main_thread(function ()
+					ScriptUnit.extension(t.unit(), "inventory_system"):wield("slot_ranged")
+				end)
+				t.wait(1.5)
+
+				-- The bonus the movement gives at the speed of the hit (movement.lua: 25% at 9 m/s, none up to 4.5 m/s), of which most has to
+				-- show, the damage being rounded
+				local bonus = CONFIG.momentum_bonus * math.max(speed - CONFIG.momentum_min_speed, 0) / (CONFIG.momentum_full_speed - CONFIG.momentum_min_speed)
+
+				t.expect(standing < math.huge and moving < math.huge, "a target could not be spawned")
+				t.expect(speed > CONFIG.momentum_min_speed, "the hit in a dodge came at %.1f m/s, too slow for a bonus", speed)
+				t.expect(moving >= standing * (1 + bonus * 0.7), "a hit at %.1f m/s did %.1f, %.0f%% more than one standing (%.1f), not %.0f%%", speed, moving, (moving / standing - 1) * 100, standing, bonus * 100)
+			end,
+		},
+		{
 			name = "with the movement off, the jump is the game's",
 			run = function (t)
 				local settings = movement_settings(t)
@@ -500,11 +587,18 @@ local function scenarios()
 	}
 end
 
+-- (the weapon in the hands is the Flak Cannon, and the melee slot gets the game's sword, whose swings are the game's own, for the momentum
+-- damage)
 runner.add_suite({
 	name = "movement",
-	item = mod.items.weapons.shield_gun.key,
-	template = mod.items.weapons.shield_gun.template,
-	slot = "slot_melee",
+	item = mod.items.weapons.flak_cannon.key,
+	template = mod.items.weapons.flak_cannon.template,
+	slot = "slot_ranged",
+	loadout = {
+		slot_melee = {
+			es_mercenary = "es_1h_sword",
+		},
+	},
 	careers = {
 		"es_mercenary",
 	},

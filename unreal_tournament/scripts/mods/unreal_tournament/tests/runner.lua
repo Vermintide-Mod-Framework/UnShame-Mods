@@ -2,31 +2,56 @@ local mod = get_mod("unreal_tournament")
 
 -- In-game tests. A suite is a weapon's tests: it sets up the character, career and weapon, runs its scenarios in a level that is loaded,
 -- and puts everything back. It is run with the chat command /ut_test <suite>, several with /ut_test <suite> <suite> ..., or all of them
--- with /ut_test all. It prints what passed and failed to the chat and to the game's console log.
+-- with /ut_test all. /ut_test <suite>:<words> runs only the scenarios whose names have the words (with _ for a space). It prints what
+-- passed and failed to the chat and to the game's console log.
+--
+-- The suites run in a mission, Righteous Stand (CONFIG.default_level), with the level kept empty and the player unhurt (the quiet flags).
+-- The level is loaded once for a run, and the player is taken back to the level they were in at the end.
 --
 -- A scenario is a function of the test context `t`. It runs as a coroutine, one step a frame, so it can wait for the game:
 --   t.wait(seconds)                      waits that long
 --   t.wait_until(condition, seconds, what)   waits until condition() is true, and returns false if it took longer than the seconds
 --   t.expect(condition, message, ...)    records a failure with the message (a format string) if the condition is false
 --   t.skip(reason)                       ends the scenario as skipped
+--   t.log(text, ...)                     a line in the results
 --   t.press(name, seconds, observer)     holds an input of the player ("action_one", "action_two") for that long, then lets go. The
 --                                        observer, if there is one, is called every frame while it is held.
+--   t.hold(name), t.release(name)        puts an input down and lets it go, for inputs that overlap
+--   t.tap(name)                          an input for one frame ("jump", "dodge", "crouch")
+--   t.move(x, y)                         holds the movement keys (x to the right, y forward); t.move() lets go
+--   t.set_input(name, value)             an input that stays at a value until it is set to nil
 --   t.watch(seconds, observer)           calls the observer every frame for that long
 --   t.unit()                             the player's unit
 --   t.ammo()                             the ranged weapon's ammo
---   t.refill()                           fills it
+--   t.refill()                           fills it and takes the overcharge away (done before each scenario)
+--   t.health(), t.heal()                 the player's health, and full health again
+--   t.hurtable(on)                       lets the player be hurt (still not killed) until the end of the scenario
+--   t.velocity(), t.position()           the player's velocity and the place of their feet, as x, y and z
+--   t.on_ground(), t.state()             whether the player is on the ground, and their character state ("standing", "falling", ...)
+--   t.overcharge(), t.wielded()          the player's overcharge, and the template of the weapon in their hands
+--   t.look(pitch, turn)                  turns the player to look that far up and that far to the left (degrees)
+--   t.go_to(name)                        puts the player in a named place of the level (CONFIG.named_places)
+--   t.go_to_start()                      puts the player back in the suite's place
 --   t.surface_ahead(distance)            where the player's aim hits the level within that distance, or nil
+--   t.ground_at(ahead, right)            where the ground is that far ahead and to the right, as { x, y, z }
 --   t.spawn(breed_name, distance)        spawns an enemy that distance ahead of the player on the ground, and returns it (nil if it could
 --                                        not be spawned). It is removed after the scenario.
+--   t.spawn_at(breed_name, x, y, z)      spawns an enemy there, facing the player
+--   t.spawn_group(breed_name, count, distance)   spawns that many in rows ahead
 --   t.spawn_target(distance)             spawns the enemy to shoot at (CONFIG.target_breed, which never attacks) that far ahead, waits
 --                                        for it to settle, and turns the player to face it
+--   t.remove(unit)                       takes an enemy away before the scenario ends
+--   t.health_of(unit)                    a unit's health, 0 when it is dead
+--   t.track_damage(unit)                 adds up all the damage the unit takes from now on, past what kills it, and keeps each hit
 --   t.aim_at(unit)                       turns the player to face the middle of a unit
 --   t.projectiles(filter)                the units of the player's projectiles whose action the filter accepts
 --   t.explosions()                       a list that is filled with the names of the explosions that happen from now on
+--   t.sounds(prefix)                     a list that is filled with the names of the sound events that start with the prefix
 --
 -- A suite is { name, item (the key of the weapon item), template, slot, careers (the careers it is run for), level (the level it is run
--- in, loaded if the player is in another one, and the player is taken back to the level they were in at the end), place (optional:
--- { level, position, yaw }, where the player is put instead of the level's place in CONFIG.places), scenarios = { { name, run } } }.
+-- in, if not the default one), fresh_level (the level is loaded again for it), loadout (optional: { [slot] = { [career] = item key } },
+-- items of other slots put in for the suite and put back after it), place (optional: { level, position, yaw }, where the
+-- player is put instead of the level's place in CONFIG.places), scenarios = { { name, run, place (a named place it starts in) } } }.
 --
 -- The tests change the player's loadout and career, and put them back at the end. The loadout is kept in the backend, so what has to be
 -- put back is saved in the settings while a suite runs, and put back the next time the mod loads if a suite was cut short.
@@ -1009,6 +1034,15 @@ local function setup_character(t, suite, career)
 		return false
 	end
 
+	-- (the items of the other slots the suite names, by the career)
+	for slot, items in pairs(suite.loadout or {}) do
+		if items[career] and not BackendUtils.try_set_loadout_item(career, slot, items[career]) then
+			log("%s is not in the inventory", items[career])
+
+			return false
+		end
+	end
+
 	-- The loadout is read when the player spawns, so the player is respawned even if the career is the same
 	Managers.state.network:request_profile(1, CareerSettings[career].profile_name, career, true)
 
@@ -1119,6 +1153,12 @@ end
 
 local function run_suite(suite, only_career)
 	local t = make_context(suite)
+
+	-- Puts the player back where the scenario started, in the middle of a scenario
+	function t.go_to_start()
+		go_to_place(t, suite)
+	end
+
 	local summary = {
 		failed = 0,
 		passed = 0,
@@ -1147,6 +1187,14 @@ local function run_suite(suite, only_career)
 			career = career,
 			slot = suite.slot,
 		}
+
+		for slot in pairs(suite.loadout or {}) do
+			restore[#restore + 1] = {
+				backend_id = BackendUtils.get_loadout_item_id(career, slot),
+				career = career,
+				slot = slot,
+			}
+		end
 	end
 
 	save_restore(restore)

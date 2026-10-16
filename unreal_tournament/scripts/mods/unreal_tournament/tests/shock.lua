@@ -353,6 +353,69 @@ local function scenarios()
 			end,
 		},
 		{
+			name = "the Instagib skin fires a beam that kills with both buttons, for no overcharge",
+			run = function (t)
+				-- The skin is the wielded slot's (utils.wielded_skin), and the rifle takes its fire modes from it every frame
+				local function set_skin(skin)
+					return t.on_main_thread(function ()
+						local equipment = ScriptUnit.extension(t.unit(), "inventory_system"):equipment()
+						local slot_data = equipment.slots[equipment.wielded_slot]
+						local before = slot_data.skin
+
+						slot_data.skin = skin
+
+						return before
+					end)
+				end
+
+				local targets = {}
+
+				for i, side in ipairs({ -1, 1 }) do
+					local ground = t.ground_at(6, side)
+
+					targets[i] = ground and t.spawn_at(runner.target_breed, ground[1], ground[2], ground[3])
+				end
+
+				if not t.expect(targets[1] and targets[2], "the targets could not be spawned") then
+					return
+				end
+
+				local skin = set_skin("ut_shock_rifle_skin_instagib")
+				local ok, error_message = pcall(function ()
+					t.wait(1)
+
+					local balls, observe = watch_balls(t)
+					local before = t.overcharge()
+
+					record_beams()
+
+					for i, button in ipairs({ "action_one", "action_two" }) do
+						local damage = t.track_damage(targets[i])
+
+						t.aim_at(targets[i])
+						t.press(button, 0.05, observe)
+						t.watch(1.3, observe)
+
+						t.expect(damage.total >= 200, "the %s beam did %.1f damage, not a kill of anything", button, damage.total)
+						t.expect(t.health_of(targets[i]) == 0, "the %s beam did not kill the target", button)
+					end
+
+					recording = false
+
+					t.expect(#beams == 2, "%d beams were fired, not 2", #beams)
+					t.expect(#balls == 0, "a ball was fired")
+					t.expect(t.overcharge() <= before + 0.01, "the beams cost %.2f overcharge", t.overcharge() - before)
+				end)
+
+				set_skin(skin)
+				t.wait(0.5)
+
+				if not ok then
+					error(error_message, 0)
+				end
+			end,
+		},
+		{
 			name = "overheating sets off a combo at the player",
 			run = function (t)
 				local explosions = t.explosions()
