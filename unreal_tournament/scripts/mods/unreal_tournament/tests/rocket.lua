@@ -94,8 +94,8 @@ local function load_and_fire(t, seconds, observe)
 	t.watch(0.5, observe)
 end
 
--- The monsters the lock is tried on, and how far ahead they stand (m)
-local MONSTERS = { "chaos_spawn", "skaven_rat_ogre", "chaos_troll", "skaven_stormfiend", "beastmen_minotaur" }
+-- The monsters the lock is tried on, and how far ahead they stand (m). The Chaos Spawn is the biggest and the most spread out.
+local MONSTERS = { "chaos_spawn" }
 local MONSTER_DISTANCE = 12
 
 -- Where each hit zone of a unit is: the middle of the first actor of the zone (its origin is at a joint, which can be at the edge of the
