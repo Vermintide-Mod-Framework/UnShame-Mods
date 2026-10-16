@@ -356,6 +356,16 @@ local function in_reach(owner_unit, physics_world, range)
 		hit = object
 	end
 
+	-- The enemy the crosshair is on is the one the punch hits. The ray from the middle passes under what the eyes aim at when the
+	-- player looks down at a small enemy, and UT's pawns are wide enough for its trace from the middle to reach them, this game's hit
+	-- zones are not.
+	local aimed = first_beam_hit(raycast(physics_world, first_person_extension:current_position(), direction, range), owner_unit)
+	local aimed_unit = aimed and owner_of(Actor.unit(aimed[4]), aimed[4])
+
+	if aimed_unit and Unit.get_data(aimed_unit, "breed") and HEALTH_ALIVE[aimed_unit] then
+		return aimed, true, direction, origin
+	end
+
 	if not hit then
 		return nil, nil, direction, origin
 	end
