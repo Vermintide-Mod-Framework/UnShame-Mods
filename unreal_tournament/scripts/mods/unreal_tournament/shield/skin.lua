@@ -424,6 +424,16 @@ local GRIPS = {
 		roll = 0,
 		follow_game_unit = 2,
 	},
+	-- The blunderbuss's pose, the same way
+	shield_gun = {
+		grip_right = 0,
+		grip_forward = 0,
+		grip_up = 0,
+		yaw = 0,
+		pitch = 0,
+		roll = 0,
+		follow_game_unit = 2,
+	},
 	-- The Volley Crossbow's pose: the game links the crossbow to the left hand's node, so the mesh is linked there and turned as the
 	-- node is (and the billhook or the hammer in the right hand stays hidden). It lies across the waist and points to the hero's left, as
 	-- the crossbow does. The left hand holds it under its front and the right hand is at its handle, as they hold the crossbow.

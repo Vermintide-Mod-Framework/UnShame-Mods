@@ -30,6 +30,10 @@ local VARIANTS = {
 		id = "shield_gun",
 		key = "ut_shield_gun",
 		template = "ut_shield_gun_template",
+		-- The blunderbuss's pose. The punches are its shot there, and the push its shove.
+		pose_3p = "to_blunderbuss",
+		punch_3p = "attack_shoot",
+		push_3p = "attack_push",
 	},
 	{
 		base_item = "dr_2h_cog_hammer",
