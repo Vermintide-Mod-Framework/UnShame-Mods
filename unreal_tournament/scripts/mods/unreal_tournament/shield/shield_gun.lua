@@ -215,6 +215,9 @@ local CONFIG = {
 	pounce_fatigue_type = "blocked_jump_slam",
 	-- A lifeleech's grab that gets to a player's shield fails, as when they dodge it, for the stamina of blocking a jump attack too
 	grab_fatigue_type = "blocked_jump_slam",
+	-- An explosion that the shield stops costs 6 fatigue points, half of the gun's 6 stamina shields of 2 points: UT's shield gives half
+	-- of the damage it stops from its charge of 100, and an explosion of its weapons does about 90
+	explosion_fatigue_type = "blocked_sv_sweep_2",
 }
 
 local UNIT = CONFIG.meters_per_uu
@@ -1565,6 +1568,21 @@ local function shield_stops(unit, from, attacker_unit, fatigue_type)
 
 	return true
 end
+
+-- An explosion (an exploding barrel, a bomb rat's bomb, a sorcerer's blast) that gets to a player from the front of their shield, by UT's
+-- arc from where it goes off, is stopped, as UT's shield stops the explosions of its weapons (ShieldGun.AdjustPlayerDamage: rockets,
+-- flak shells, grenades). The game's own block stops none. The shield pays as for a blocked attack of explosion_fatigue_type. UT's stops up
+-- to 100 damage of it, which is all of an explosion of its weapons; here it stops all of it. This is on the host, where explosions hurt.
+mod:hook(AreaDamageSystem, "_damage_unit", function (func, self, aoe_damage_data)
+	local hit_unit = aoe_damage_data.hit_unit
+	local attacker_unit = aoe_damage_data.attacker_unit
+
+	if Unit.alive(hit_unit) and Unit.alive(attacker_unit) and DamageUtils.is_player_unit(hit_unit) and shield_stops(hit_unit, aoe_damage_data.impact_position:unbox(), attacker_unit, CONFIG.explosion_fatigue_type) then
+		return
+	end
+
+	return func(self, aoe_damage_data)
+end)
 
 -- A lifeleech's grab (BTCorruptorGrabAction, on the host) is a beam that flies to the player and takes them when it is near enough. It
 -- fails at the shield, from where the beam is, when it would take them (after the action's grab_delay, if it has one).
