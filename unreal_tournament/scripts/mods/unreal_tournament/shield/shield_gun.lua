@@ -903,8 +903,6 @@ local function punch(action, t, power_level, bash)
 	local step, scale = charge_step(hold_time)
 	local range = bash and CONFIG.bash_range or CONFIG.hit_range
 	local hit, is_enemy, direction, origin = in_reach(owner_unit, action.physics_world, range)
-	-- (what the part straight ahead is, before the punch's hits can break it and take the part away)
-	local hit_moves = hit and Actor.is_dynamic(hit[4])
 
 	charge_started[owner_unit] = nil
 
@@ -1046,13 +1044,14 @@ local function punch(action, t, power_level, bash)
 		end
 	end
 
-	if not hit_unit or Unit.get_data(hit_unit, "breed") then
+	-- A punch that hit anything in its cone (an enemy, a body, a thing) doesn't throw the player
+	if not hit_unit or Unit.get_data(hit_unit, "breed") or index > 0 or #objects > 0 then
 		return
 	end
 
 	-- Anything else near enough straight ahead throws the player off it, as UT's punch of anything that is not a pawn does. Unlike UT's,
 	-- it doesn't hurt them.
-	if hit[2] <= CONFIG.range * UNIT and not hit_moves and utils.is_local_player_unit(owner_unit) then
+	if hit[2] <= CONFIG.range * UNIT and utils.is_local_player_unit(owner_unit) then
 		push_player(owner_unit, direction, force)
 	end
 end
