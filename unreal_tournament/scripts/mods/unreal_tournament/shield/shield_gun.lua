@@ -56,11 +56,12 @@ local VARIANTS = {
 		id = "shield_gun_wh",
 		key = "ut_shield_gun_wh",
 		template = "ut_shield_gun_wh_template",
-		-- The Volley Crossbow's pose, which has no shove of its own: the push sends the melee weapons' push event. The shield is its
-		-- aim, and so is a charge once it is held a while. The punch is its shot.
+		-- The Volley Crossbow's pose. The shield is its aim, and so is a charge once it is held a while. The punch is its shot. It has
+		-- no shove, so the push switches to the billhook's pose for the billhook's shove, and back after it.
 		pose_3p = "to_repeating_crossbow",
 		punch_3p = "attack_shoot",
 		push_3p = "attack_push",
+		push_pose_3p = "to_2h_billhook",
 		aim_3p = "to_zoom",
 		aim_end_3p = "to_unzoom",
 	},
@@ -77,10 +78,11 @@ local VARIANTS = {
 		id = "shield_gun_priest",
 		key = "ut_shield_gun_priest",
 		template = "ut_shield_gun_priest_template",
-		-- (the Warrior Priest is the same hero, held the same way)
+		-- (the Warrior Priest is the same hero, held the same way, with the hammer's shove)
 		pose_3p = "to_repeating_crossbow",
 		punch_3p = "attack_shoot",
 		push_3p = "attack_push",
+		push_pose_3p = "to_1h_hammer",
 		aim_3p = "to_zoom",
 		aim_end_3p = "to_unzoom",
 	},
@@ -1168,7 +1170,19 @@ end
 -- others. As [character unit] = { at = game time, event }.
 local aim_after_hold = {}
 
+-- The shove of a push that switches to a melee pose (VARIANTS' push_pose_3p). The game plays the push's own event (the pose) after the
+-- push has started, so the shove is sent after it, in the mod's next update, from the pose. As [character unit] = event.
+local shove_next_frame = {}
+
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	for unit, event in pairs(shove_next_frame) do
+		shove_next_frame[unit] = nil
+
+		if Unit.alive(unit) then
+			Managers.state.network:anim_event(unit, event)
+		end
+	end
+
 	if not next(aim_after_hold) then
 		return
 	end
@@ -1222,6 +1236,12 @@ mod.push_start_callbacks.shield_gun = function (action, new_action, t)
 	end
 
 	charge_started[action.owner_unit] = t
+
+	local variant = POSES_3P[utils.wielded_template_name(action.owner_unit)]
+
+	if variant and variant.push_pose_3p then
+		shove_next_frame[action.owner_unit] = variant.push_3p
+	end
 
 	if utils.is_local_player_unit(action.owner_unit) then
 		mod.shield.last_push = t
@@ -1872,6 +1892,12 @@ local function apply_template(template_name)
 		for name, action in pairs(actions.action_one) do
 			if name == "punch" or name == "punch_auto" or name == "bash" then
 				action.anim_event_3p = variant.punch_3p
+			elseif name == "push" and variant.push_pose_3p then
+				-- The push switches to the melee pose (the shove is sent after it, see shove_next_frame) and always switches
+				-- back when it ends, also when an action follows: the game ends it before the next one starts.
+				action.anim_event_3p = variant.push_pose_3p
+				action.anim_end_event_3p = variant.pose_3p
+				action.anim_end_event_condition_func = nil
 			elseif name == "push" then
 				action.anim_event_3p = variant.push_3p
 			end
@@ -1885,8 +1911,14 @@ local function apply_template(template_name)
 				return end_reason ~= "new_interupting_action"
 			end
 
-			-- (the block is last, as a weapon may have none)
-			for _, action in ipairs({ actions.action_one.default, actions.action_one.punch, actions.action_one.punch_auto, block }) do
+			-- The bash out of a push ends the aim too: the shield before the push started it. (A weapon may have no bash or no block, so
+			-- those are added last, and a missing one adds nothing.)
+			local ending = { actions.action_one.default, actions.action_one.punch, actions.action_one.punch_auto }
+
+			ending[#ending + 1] = actions.action_one.bash
+			ending[#ending + 1] = block
+
+			for _, action in ipairs(ending) do
 				if action == block then
 					action.anim_event_3p = variant.aim_3p
 				end
