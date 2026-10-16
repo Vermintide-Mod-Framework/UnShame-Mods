@@ -270,10 +270,10 @@ IN_CONSTANT_SCALAR = 'c4d6bc08-c489-430f-a836-ed490e59c3f9'
 LINEAR_SAMPLE_OPTIONS = ('5dd59b3d-1762-4a14-9930-7500230ef3db', 'f669a3a6-0376-4187-840e-80000e2939d5', 'e94e53e6-49b6-4194-a747-8f064a5932e0')
 
 # The shield's graph: the lines panned by pan_u and pan_v a second, faded by the alpha of the fade texture as it is, and with
-# lines_alpha by the lines' own alpha too
-def shield_graph(pan_u, pan_v, lines_alpha):
+# lines_alpha by the lines' own alpha too. In the world (a shield on another player) it is drawn with the camera's field of view.
+def shield_graph(pan_u, pan_v, lines_alpha, world=False):
     shield = Graph()
-    shield.add('out', 'core/stingray_renderer/output_nodes/unlit_base', OUT_OPTIONS + (CUSTOM_FOV,))
+    shield.add('out', 'core/stingray_renderer/output_nodes/unlit_base', OUT_OPTIONS + (() if world else (CUSTOM_FOV,)))
     shield.add('uv', 'core/shader_nodes/texture_coordinate0')
     shield.add('time', 'core/shader_nodes/material_variable', export=float_variable('age', 'Age', 0), title='Age')
     shield.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
@@ -311,6 +311,7 @@ def shield_graph(pan_u, pan_v, lines_alpha):
     return shield
 
 write('shield', shield_graph(0, 0.2, False), {'lines_map': 'shield_elec', 'fade_map': 'shield_elec'})
+write('shield_world', shield_graph(0, 0.2, False, True), {'lines_map': 'shield_elec', 'fade_map': 'shield_elec'})
 
 # ShieldEffect's other skin, ShieldRip3rdFB, which ShieldEffect.Flash shows for 0.2 seconds when the shield stops something: FB_Brighten of the
 # Combiner ShieldRipComb, the colour of the TexPanner ShieldRipPanner (PanDirection yaw 12000, PanRate 0.35) of shield_elec_green_rip_a,
@@ -318,3 +319,4 @@ write('shield', shield_graph(0, 0.2, False), {'lines_map': 'shield_elec', 'fade_
 # (units/ut/fx/shield_rip_elec and shield_edge, make_weapon_fx.py).
 RIP_PAN = 12000 / 65536 * 2 * math.pi
 write('shield_rip', shield_graph(0.35 * math.cos(RIP_PAN), 0.35 * math.sin(RIP_PAN), True), {'lines_map': 'shield_rip_elec', 'fade_map': 'shield_edge'})
+write('shield_rip_world', shield_graph(0.35 * math.cos(RIP_PAN), 0.35 * math.sin(RIP_PAN), True, True), {'lines_map': 'shield_rip_elec', 'fade_map': 'shield_edge'})

@@ -228,7 +228,22 @@ mod.shield = {
 	bash_window_end = CONFIG.bash_window[2],
 	-- Where on the charge (0 to FullyChargedTime, as a share) the punch becomes the next blow (damage_types), for the charge bar
 	charge_marks = {},
+	-- What any character's gun does, on the machine that owns their actions (the player's own, and the bots on the host), for the third
+	-- person: mod.shield.event_callbacks[name] = function (owner_unit, event), where event is one of mod.shield.events
+	event_callbacks = {},
+	events = {
+		charge = 1, -- the charge starts
+		charge_end = 2, -- the charge ends without a punch
+		punch = 3, -- the punch, or the bash out of a push
+		hit = 4, -- the shield stops something
+	},
 }
+
+local function tell(owner_unit, event)
+	for _, callback in pairs(mod.shield.event_callbacks) do
+		callback(owner_unit, event)
+	end
+end
 
 -- A step is the charge's share between MinHoldTime and FullyChargedTime, rounded (charge_step below). A blow holds up to the last step at or
 -- under its share, so the next starts where the charge rounds to the step after that.
@@ -977,6 +992,8 @@ local function punch(action, t, power_level, bash)
 		mod.shield.last_punch = t
 	end
 
+	tell(owner_unit, mod.shield.events.punch)
+
 	if not origin then
 		return
 	end
@@ -1137,6 +1154,8 @@ mod.dummy_start_callbacks.shield_gun = function (action, new_action, t, power_le
 		if utils.is_local_player_unit(action.owner_unit) then
 			mod.shield.charge_started = t
 		end
+
+		tell(action.owner_unit, mod.shield.events.charge)
 	elseif new_action.ut_shield_punch then
 		if new_action.ut_shield_bash and utils.is_local_player_unit(action.owner_unit) then
 			mod.shield.last_bash = t
@@ -1196,6 +1215,9 @@ mod.dummy_finish_callbacks.shield_gun = function (action, reason)
 	if reason ~= "new_interupting_action" then
 		charge_started[owner_unit] = nil
 	end
+
+	-- (a punch that follows is told after this)
+	tell(owner_unit, mod.shield.events.charge_end)
 
 	if utils.is_local_player_unit(owner_unit) then
 		mod.shield.charge_started = nil

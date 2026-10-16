@@ -520,14 +520,343 @@ for _, setting_id in ipairs(VARIANTS) do
 	new_skin(setting_id)
 end
 
--- The player's block stops something: the shield flashes
-mod.block_callbacks.shield_skin = function (status_extension)
-	if not utils.is_local_player_unit(status_extension.unit) then
+-- The third person: the Shield Gun of the other characters (players and bots), and the player's own in a third person view. The shield is
+-- up while the character blocks, which every machine knows. The charge, the punch and the shield stopping something are told by the
+-- machine that owns the character's actions (shield_gun.lua's events), which sends them to the others (ut_shield_3p). The effects are at
+-- the end of the gun in the character's hand, and the sounds come from the character.
+local THIRD_PERSON = {
+	-- The meters of a UT unit in the world (shield_gun.lua's meters_per_uu). UT's effects are actors of their own, at the world's scale.
+	meters_per_uu = 0.02,
+	-- ShieldEffect3rd: UT's Shield mesh at DrawScale 3.2, ahead of the player along the aim. Here it is at the end of the gun, facing the
+	-- way the gun points.
+	shield_draw_scale = 3.2,
+	-- ForceRing (ShieldAttachment.ThirdPersonEffects, at the gun's tip): 24 rings a second for 0.2 s, each 0.25 s long, flying out at 250
+	-- units a second with the gun, of size 1 and growing by 200 a second (xEmitter's sizes are a half width, so twice that across)
+	ring_rate = 24,
+	ring_time = 0.2,
+	ring_life = 0.25,
+	ring_speed = 250, -- UT units a second
+	ring_size = 2, -- UT units across
+	ring_growth = 400, -- UT units across, a second
+}
+
+local events = shield.events
+
+-- What each character's gun shows, as [unit] = { charge_started, spark_time, charge_sound, charge_sound_time, shield_up, shield_sound,
+-- flash_until }
+local characters = {}
+
+local function now()
+	return Managers.time:time("game")
+end
+
+-- The skin whose mesh the character holds in third person, or nil
+local function third_person_api(unit)
+	for _, api in ipairs(skin_apis) do
+		if api.third_person.muzzle_position(unit) then
+			return api
+		end
+	end
+end
+
+-- A sound that follows a character. Returns what is needed to stop it.
+local function play_on_unit(event, unit)
+	local id, _, wwise_world = WwiseUtils.trigger_unit_event(Managers.world:world("level_world"), event, unit)
+
+	return id and {
+		id = id,
+		wwise_world = wwise_world,
+	} or nil
+end
+
+local function stop_handle(handle)
+	if handle then
+		WwiseWorld.stop_event(handle.wwise_world, handle.id)
+	end
+end
+
+local function forget(unit)
+	local state = characters[unit]
+
+	if state then
+		stop_handle(state.charge_sound)
+		stop_handle(state.shield_sound)
+
+		characters[unit] = nil
+	end
+end
+
+-- The shield: a mesh at the end of the gun, for as long as life says and while the shield is up
+local function third_person_shield(api, unit, state, material, life, brightness)
+	local scale = THIRD_PERSON.shield_draw_scale * THIRD_PERSON.meters_per_uu / 0.02 -- (0.02: the meters of a UT unit of the mesh)
+
+	particles.mesh({
+		additive = 0,
+		angle = 0,
+		brightness = brightness,
+		color = {
+			1,
+			1,
+			1,
+		},
+		follow = function ()
+			if characters[unit] ~= state or not state.shield_up then
+				return nil
+			end
+
+			return api.third_person.muzzle_position(unit)
+		end,
+		life = life,
+		material = material,
+		-- (the mesh's dish faces along its y, as the gun's mesh points)
+		rotation = function ()
+			return api.third_person.muzzle_rotation(unit) or Quaternion.identity()
+		end,
+		scale = function ()
+			return Vector3(scale, scale, scale)
+		end,
+		unit = "units/ut/fx/shield_mesh",
+	})
+end
+
+-- The rings of a punch, which fly ahead of the gun and move with it, and the punch's sound
+local function third_person_rings(api, unit)
+	local muzzle = api.third_person.muzzle_position(unit)
+	local rotation = api.third_person.muzzle_rotation(unit)
+
+	if not muzzle then
 		return
 	end
 
-	for _, api in ipairs(skin_apis) do
-		flash_shield(api)
+	local meters = THIRD_PERSON.meters_per_uu
+	local count = math.floor(THIRD_PERSON.ring_rate * THIRD_PERSON.ring_time) + 1
+
+	for i = 1, count do
+		local delay = (i - 1) / THIRD_PERSON.ring_rate
+		local born = now() + delay
+
+		particles.disc({
+			attenuation = 0,
+			color = CONFIG.ring_color,
+			delay = delay,
+			follow = function ()
+				local position = api.third_person.muzzle_position(unit)
+
+				if not position then
+					return nil
+				end
+
+				local age = math.max(0, now() - born)
+
+				return position + Quaternion.forward(api.third_person.muzzle_rotation(unit)) * (THIRD_PERSON.ring_speed * age * meters)
+			end,
+			growth = THIRD_PERSON.ring_growth * meters,
+			life = THIRD_PERSON.ring_life,
+			material = "units/ut/fx/fx_force_ring",
+			normal = Quaternion.forward(rotation),
+			size = THIRD_PERSON.ring_size * meters,
+			texture = "force_ring",
+		})
+	end
+
+	api.play_sound_at("ut_shield_fire_3d", muzzle)
+end
+
+-- The sparks of the charge, made each frame while the gun charges: as the first person's, around the end of the gun at the world's scale
+-- (UT shows no charge on another player; this is the mod's own)
+local function third_person_sparks(api, unit, state, dt)
+	local charged = math.min(now() - state.charge_started, shield.fully_charged_time)
+	local interval = 1 / (CONFIG.charge_rate[1] + CONFIG.charge_rate[2] * charged)
+	local meters = THIRD_PERSON.meters_per_uu
+
+	state.spark_time = (state.spark_time or 0) + dt
+
+	while state.spark_time >= interval do
+		state.spark_time = state.spark_time - interval
+
+		local spread = CONFIG.charge_spread
+		local offset = Vector3(random_between({-spread, spread}), random_between({-spread, spread}), random_between({-spread, spread}))
+		local distance = math.max(Vector3.length(offset), 0.001)
+		local boxed = Vector3Box(offset * meters)
+		local speed = CONFIG.charge_speed * charged
+		local born = now()
+		local color = CONFIG.charge_colors[1]
+		local other = CONFIG.charge_colors[2]
+		local share = math.random()
+
+		particles.beam({
+			attenuation = 0.5,
+			color = {
+				color[1] + (other[1] - color[1]) * share,
+				color[2] + (other[2] - color[2]) * share,
+				color[3] + (other[3] - color[3]) * share,
+			},
+			life = math.max(charged / 30, CONFIG.charge_min_life),
+			material = "units/ut/fx/fx_shield_charge_spark",
+			size = random_between(CONFIG.charge_width) * meters,
+			texture = "shield_charge_spark",
+			-- (it flies towards the end of the gun)
+			track = function ()
+				local center = api.third_person.muzzle_position(unit)
+
+				if not center then
+					return nil
+				end
+
+				local age = now() - born
+				local at = math.max(0, distance - speed * age) / distance
+				local tail = math.max(0, distance - speed * (age - CONFIG.charge_length)) / distance
+				local reach = boxed:unbox()
+
+				return center + reach * tail, center + reach * at
+			end,
+		})
+	end
+end
+
+-- What a character's gun did, told on this machine
+local function on_event(unit, event)
+	local api = third_person_api(unit)
+
+	if not api or not api.third_person.shows_weapon(unit) then
+		return
+	end
+
+	local state = characters[unit] or {}
+
+	characters[unit] = state
+
+	if event == events.charge then
+		stop_handle(state.charge_sound)
+
+		state.charge_started = now()
+		state.spark_time = 0
+		state.charge_sound = play_on_unit("ut_shield_charge_3d", unit)
+		state.charge_sound_time = CONFIG.charge_sound_length
+	elseif event == events.charge_end or event == events.punch then
+		stop_handle(state.charge_sound)
+
+		state.charge_started = nil
+		state.charge_sound = nil
+
+		if event == events.punch then
+			third_person_rings(api, unit)
+		end
+	elseif event == events.hit and state.shield_up then
+		-- (its other skin for flash_time, as the first person's)
+		state.flash_until = now() + CONFIG.flash_time
+
+		third_person_shield(api, unit, state, "units/ut/fx/fx_shield_rip_world", CONFIG.flash_time, function ()
+			return 1
+		end)
+
+		local muzzle = api.third_person.muzzle_position(unit)
+
+		if muzzle then
+			api.play_sound_at("ut_shield_hit_3d", muzzle)
+		end
+	end
+end
+
+-- On the machine that owns the character's actions: shown here, and sent to the others
+shield.event_callbacks.skin_third_person = function (owner_unit, event)
+	on_event(owner_unit, event)
+
+	local go_id = Managers.state.unit_storage and Managers.state.unit_storage:go_id(owner_unit)
+
+	if go_id then
+		mod:network_send("ut_shield_3p", "others", go_id, event)
+	end
+end
+
+mod:network_register("ut_shield_3p", function (_, go_id, event)
+	local unit = Managers.state.unit_storage and Managers.state.unit_storage:unit(go_id)
+
+	if unit and Unit.alive(unit) then
+		on_event(unit, event)
+	end
+end)
+
+-- Each frame: the shield of each character that blocks, and the charge's sparks and sound. A character that no longer holds the gun in
+-- third person is forgotten.
+mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
+	local players = Managers.player and Managers.player:human_and_bot_players()
+	local seen = {}
+
+	for _, player in pairs(players or {}) do
+		local unit = player.player_unit
+		local api = unit and Unit.alive(unit) and third_person_api(unit)
+
+		if api and api.third_person.shows_weapon(unit) then
+			local state = characters[unit] or {}
+			local status_extension = ScriptUnit.has_extension(unit, "status_system")
+			local blocking = status_extension and status_extension:is_blocking() or false
+
+			characters[unit] = state
+			seen[unit] = true
+
+			if blocking ~= (state.shield_up or false) then
+				state.shield_up = blocking
+
+				if blocking then
+					third_person_shield(api, unit, state, "units/ut/fx/fx_shield_world", math.huge, function ()
+						return state.flash_until and now() < state.flash_until and 0 or 1
+					end)
+
+					state.shield_sound = play_on_unit("ut_shield_up_3d", unit)
+				else
+					stop_handle(state.shield_sound)
+
+					state.shield_sound = nil
+				end
+			end
+
+			-- (the charge sound loops as the first person's does)
+			if state.charge_started then
+				third_person_sparks(api, unit, state, dt)
+
+				state.charge_sound_time = state.charge_sound_time - dt
+
+				if state.charge_sound_time <= 0 then
+					state.charge_sound = play_on_unit("ut_shield_charge_3d", unit)
+					state.charge_sound_time = state.charge_sound_time + CONFIG.charge_sound_length
+				end
+			end
+		end
+	end
+
+	for unit in pairs(characters) do
+		if not seen[unit] then
+			forget(unit)
+		end
+	end
+end
+
+local function forget_all()
+	for unit in pairs(characters) do
+		forget(unit)
+	end
+end
+
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = forget_all
+mod.unload_callbacks[#mod.unload_callbacks + 1] = forget_all
+
+-- A block stops something: the shield flashes, in first person for the player, and in third person for everyone who sees the character.
+-- The machine that owns the character's actions tells the others: the player's own, and the host for its bots.
+mod.block_callbacks.shield_skin = function (status_extension)
+	local unit = status_extension.unit
+
+	if utils.is_local_player_unit(unit) then
+		for _, api in ipairs(skin_apis) do
+			flash_shield(api)
+		end
+	end
+
+	local player = Managers.player:owner(unit)
+	local owned_here = utils.is_local_player_unit(unit) or player and player.bot_player and Managers.player.is_server
+
+	if owned_here and shield.template_names[utils.wielded_template_name(unit)] then
+		shield.event_callbacks.skin_third_person(unit, events.hit)
 	end
 end
 

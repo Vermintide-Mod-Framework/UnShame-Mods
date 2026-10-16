@@ -336,6 +336,17 @@ local function new(def, looks)
 		return Unit.world_position(entry.unit, 0) + Quaternion.rotate(Unit.world_rotation(entry.unit, 0), offset)
 	end
 
+	-- Returns how the mesh in the character's hand is turned (its forward is the way the barrel points), or nil as muzzle_position does
+	function third_person.muzzle_rotation(character)
+		local entry = attached[character]
+
+		if not entry or not Unit.alive(entry.unit) then
+			return nil
+		end
+
+		return Unit.world_rotation(entry.unit, 0)
+	end
+
 	-- Returns how many meters one UT unit of the mesh is as a character holds it. Flashes are sized to match the mesh.
 	function third_person.meters_per_unit_of(character)
 		local config = attached[character] and attached[character].config or CONFIG
