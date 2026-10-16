@@ -27,8 +27,15 @@ local HORDE = {
 -- The kinds of damage that "how long a body is moved by its death animation" kills with
 local DEATH_KINDS = { "blunt", "blunt_tank", "slashing", "cutting", "drakegun", "drakegun_shot", "burninating", "burn", "fire_grenade_glance", "grenade", "arrow_poison_dot", "bleed", "warpfire_ground" }
 
--- How many times "a punch never hits the player who punches" punches a block of rats
-local SELF_HIT_ROUNDS = 5
+-- The horde of "a punch never hits the player who punches" (t.fight_horde): the player starts each dodge keep m from the nearest rat
+local SELF_HIT_HORDE = {
+	size = 30,
+	breeds = { "skaven_clan_rat", "skaven_slave" },
+	refill_below = 20,
+	distance = 6, -- m
+	keep = 3, -- m
+	time = 90, -- s
+}
 
 -- How many bodies "a punch on a pinned body" pins and punches
 local PIN_ROUNDS = 5
@@ -761,33 +768,27 @@ local function scenarios()
 		},
 		{
 			-- The punch picks the enemy straight ahead with a ray, then casts rays from the eye at the enemies in its cone. The engine
-			-- fills the same tables with each ray's hits, and a ray from the eye can start in the player's own head: the hit straight ahead
-			-- that the punch kept became the player, who was punched. Here light punches go at a block of rats close ahead, with others
-			-- in the cone, and the player must take nothing from the gun.
+			-- fills the same tables with each ray's hits. In a dodge forward the player's own body is a frame ahead of the eye, and the rays
+			-- from the eye meet it about 0.12 m out: the hit straight ahead that the punch kept became a part of the player, who was
+			-- punched. Here the player fights a horde, dodging at the nearest rat with the charge held (the gun punches by itself once the
+			-- rat comes into reach, at the dodge's speed), and must take nothing from the gun.
 			name = "a punch never hits the player who punches",
 			run = function (t)
 				t.hurtable(true)
 
 				local damage = t.track_damage(t.unit())
 
-				for _ = 1, SELF_HIT_ROUNDS do
-					local rats = t.spawn_group("skaven_clan_rat", 10, 1.2)
-
-					if not t.expect(#rats > 0, "the rats could not be spawned") then
-						return
-					end
-
-					t.wait(1)
-					t.aim_at(rats[3])
-					t.press("action_one", 0.1)
-					t.wait(1)
-
-					for _, rat in ipairs(rats) do
-						t.remove(rat)
-					end
-
-					t.go_to_start()
-				end
+				t.fight_horde(SELF_HIT_HORDE, function (nearest)
+					t.aim_at(nearest)
+					t.hold("action_one")
+					t.wait(0.2)
+					t.move(0, 1)
+					t.tap("dodge")
+					t.move()
+					t.wait(0.8)
+					t.release("action_one")
+					t.wait(0.3)
+				end)
 
 				local from_gun = 0
 
