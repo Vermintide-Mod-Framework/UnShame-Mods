@@ -96,7 +96,8 @@ end
 
 -- The monsters the lock is tried on, and how far ahead they stand (m). The Chaos Spawn is the biggest and the most spread out.
 local MONSTERS = { "chaos_spawn" }
-local MONSTER_DISTANCE = 12
+-- (close, so that its head and limbs are well off the aim at its middle)
+local MONSTER_DISTANCE = 7
 
 -- Where each hit zone of a unit is: the middle of the first actor of the zone (its origin is at a joint, which can be at the edge of the
 -- part), as { zone, x, y, z }. The afro (the zone around the whole body for near misses) and aux (not a part of the body) are left out.
@@ -171,8 +172,9 @@ local function locks_on(t)
 end
 
 -- Where the rats of a crowd stand, as { ahead, right } from the player in meters: in front of the monster beside the way to it, at its
--- sides, and behind it
-local CROWD = { { 8, -1.2 }, { 9, 1.4 }, { 11, -2.5 }, { 12, 2.5 }, { 15, -1 }, { 16, 1.5 } }
+-- sides, and in a block behind it, near the lines the crosshair takes to its parts. A rat behind it is seen past its body by a check of
+-- the level alone.
+local CROWD = { { 4.5, -1.2 }, { 5, 1.2 }, { 7, -2.5 }, { 7, 2.5 }, { 10, -1 }, { 10, 0 }, { 10, 1 }, { 12, -0.5 }, { 12, 0.5 } }
 
 local function monster_scenario(breed_name, crowded)
 	return {
