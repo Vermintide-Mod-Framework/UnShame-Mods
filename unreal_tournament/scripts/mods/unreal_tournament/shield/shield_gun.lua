@@ -77,12 +77,8 @@ local VARIANTS = {
 		id = "shield_gun_priest",
 		key = "ut_shield_gun_priest",
 		template = "ut_shield_gun_priest_template",
-		-- (the Warrior Priest is the same hero, held the same way)
-		pose_3p = "to_repeating_crossbow",
-		punch_3p = "attack_shoot",
-		push_3p = "attack_shoot",
-		aim_3p = "to_zoom",
-		aim_end_3p = "to_unzoom",
+		-- (the Warrior Priest's third person body is his own, with the animations of his weapons, so his copy keeps the hammer's: the
+		-- crossbow's are not known to be in it)
 	},
 }
 

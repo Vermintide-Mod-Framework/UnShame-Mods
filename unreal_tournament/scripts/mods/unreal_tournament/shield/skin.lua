@@ -440,8 +440,6 @@ local GRIPS = {
 	},
 }
 
-GRIPS.shield_gun_priest = GRIPS.shield_gun_wh
-
 local function new_skin(setting_id)
 	local definition = mod.items.weapons[setting_id]
 	local grip = GRIPS[setting_id] or GRIPS.default
