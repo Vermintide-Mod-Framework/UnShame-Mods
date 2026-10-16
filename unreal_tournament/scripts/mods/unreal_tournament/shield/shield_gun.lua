@@ -304,7 +304,12 @@ local function is_object(unit, actor, owner_unit)
 	return unit ~= owner_unit and (ScriptUnit.has_extension(unit, "health_system") and not Unit.get_data(unit, "breed") or not Actor.is_static(actor))
 end
 
--- The first such thing along the ray
+-- Whether the unit is a dead character
+local function is_body(unit)
+	return Unit.get_data(unit, "breed") ~= nil and not HEALTH_ALIVE[unit]
+end
+
+-- The first such thing along the ray, past the dead bodies
 local function first_object_hit(physics_world, origin, direction, range, owner_unit)
 	local hits = PhysicsWorld.immediate_raycast(physics_world, origin, direction, range * UNIT, "all", "collision_filter", "filter_melee_sweep")
 
@@ -312,10 +317,25 @@ local function first_object_hit(physics_world, origin, direction, range, owner_u
 		local actor = hits[i][4]
 		local unit = actor and Actor.unit(actor)
 
-		if unit and is_object(unit, actor, owner_unit) then
+		if unit and not is_body(unit) and is_object(unit, actor, owner_unit) then
 			return hits[i]
 		end
 	end
+end
+
+-- The hits of a ray without the dead bodies, which the ray goes through (the punch finds bodies with targets_in_reach)
+local function without_bodies(hits)
+	local kept = {}
+
+	for i = 1, #(hits or {}) do
+		local unit = ActionUtils.redirect_shield_hit(Actor.unit(hits[i][4]), hits[i][4])
+
+		if not is_body(unit) then
+			kept[#kept + 1] = hits[i]
+		end
+	end
+
+	return kept
 end
 
 local function in_reach(owner_unit, physics_world, range)
@@ -329,7 +349,7 @@ local function in_reach(owner_unit, physics_world, range)
 	local height = status_extension and status_extension:is_crouching() and CONFIG.reach_height_crouched or CONFIG.reach_height
 	local origin = Unit.local_position(owner_unit, 0) + Vector3(0, 0, height * UNIT)
 	local direction = Quaternion.forward(first_person_extension:current_rotation())
-	local hit = first_beam_hit(raycast(physics_world, origin, direction, range), owner_unit)
+	local hit = first_beam_hit(without_bodies(raycast(physics_world, origin, direction, range)), owner_unit)
 	local object = first_object_hit(physics_world, origin, direction, range, owner_unit)
 
 	if object and (not hit or object[2] < hit[2]) then
