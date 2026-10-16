@@ -87,6 +87,17 @@ local function retire_icon(old_table, base_icon)
 	end
 end
 
+-- A menu that is open when the mod is unloaded (the hero screen, for example) keeps the icon's name in its widgets and draws it after
+-- the reload, which crashes the game. So the menu is closed first. The next time it opens, it is made from the item tables, which have
+-- the base weapon's icon then.
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+	local ingame_ui = Managers.ui and Managers.ui._ingame_ui
+
+	if ingame_ui and ingame_ui.current_view then
+		ingame_ui:handle_transition("exit_menu")
+	end
+end
+
 -- Sets the icon on each table (an item or a skin), now or once the in-game UI has its renderers.
 local function set_icons(tables, icon)
 	local function set_icon()
