@@ -52,8 +52,7 @@ local mod = get_mod("unreal_tournament")
 --   t.sounds(prefix)                     a list that is filled with the names of the sound events that start with the prefix
 --
 -- A suite is { name, item (the key of the weapon item), template, slot, careers (the careers it is run for), level (the level it is run
--- in, if not the default one), fresh_level (the level is loaded again for it), live (the level is played as it is, with its enemies,
--- hordes and bots, instead of kept empty), loadout (optional: { [slot] = { [career] = item key } },
+-- in, if not the default one), fresh_level (the level is loaded again for it), loadout (optional: { [slot] = { [career] = item key } },
 -- items of other slots put in for the suite and put back after it), place (optional: { level, position, yaw }, where the
 -- player is put instead of the level's place in CONFIG.places), scenarios = { { name, run, place (a named place it starts in) } } }.
 --
@@ -145,11 +144,6 @@ local CONFIG = {
 		disable_ai_perception = true,
 		player_invincible = true,
 		-- Without it the game does not let the intro of a level be skipped
-		skippable_cutscenes = true,
-	},
-	-- The same for a suite that plays the level as it is (live): its enemies, hordes and bots come as in a game
-	live_flags = {
-		player_invincible = true,
 		skippable_cutscenes = true,
 	},
 }
@@ -903,16 +897,15 @@ local function make_context(suite)
 	-- each attack the player is put the settings' distance from the nearest enemy, and attack(nearest) attacks it. Says how many were
 	-- killed every 30 s, and returns that count and runner.watch_motion_calls's counts. The settings: size (how many enemies), breeds,
 	-- refill_below (more come once fewer stand), distance (m, how far ahead the block is), keep (m, how far from the nearest the player
-	-- stands) and time (s). Without breeds, nothing is spawned: the player fights the level's own enemies (a live suite's), and the game
-	-- sends a horde every horde_interval seconds (s, if given).
+	-- stands) and time (s).
 	function t.fight_horde(settings, attack)
 		local spots = {}
 		local seen = {}
 		local killed = 0
-		local last_fill, last_horde
+		local last_fill
 
 		-- The block is 8 by 8 places, 0.6 m apart
-		for row = 0, settings.breeds and 7 or -1 do
+		for row = 0, 7 do
 			for column = 0, 7 do
 				local ground = t.ground_at(settings.distance + row * 0.6, (column - 3.5) * 0.6)
 
@@ -922,7 +915,7 @@ local function make_context(suite)
 			end
 		end
 
-		if settings.breeds and #spots == 0 then
+		if #spots == 0 then
 			t.expect(false, "there is no room for the horde")
 
 			return 0, {}
@@ -964,7 +957,7 @@ local function make_context(suite)
 					-- (enemies take some frames to come out, and are counted once they have)
 					local now = Managers.time:time("game")
 
-					if settings.breeds and count < settings.refill_below and (not last_fill or now - last_fill > 3) then
+					if count < settings.refill_below and (not last_fill or now - last_fill > 3) then
 						last_fill = now
 
 						for i = 1, settings.size - count do
@@ -972,11 +965,6 @@ local function make_context(suite)
 
 							Managers.state.conflict:spawn_one(breed, Vector3(unpack(spots[math.random(#spots)])), nil, {}, Quaternion.identity())
 						end
-					end
-
-					if settings.horde_interval and (not last_horde or now - last_horde > settings.horde_interval) then
-						last_horde = now
-						runner.horde_wanted = true
 					end
 
 					if found then
@@ -1242,11 +1230,10 @@ local function setup_character(t, suite, career)
 end
 
 -- The game's flags for an empty level where nothing hurts the player. Returns the function that puts them back.
-local function set_quiet_flags(live)
+local function set_quiet_flags()
 	local previous = {}
-	local flags = live and CONFIG.live_flags or CONFIG.quiet_flags
 
-	for flag, value in pairs(flags) do
+	for flag, value in pairs(CONFIG.quiet_flags) do
 		previous[flag] = script_data[flag]
 		script_data[flag] = value
 	end
@@ -1256,7 +1243,7 @@ local function set_quiet_flags(live)
 			script_data[flag] = value
 		end
 
-		for flag in pairs(flags) do
+		for flag in pairs(CONFIG.quiet_flags) do
 			if previous[flag] == nil then
 				script_data[flag] = nil
 			end
@@ -1366,7 +1353,7 @@ local function run_suite(suite, only_career)
 		log("the game window has no focus: the game ignores input without it")
 	end
 
-	run.restore_flags = set_quiet_flags(suite.live)
+	run.restore_flags = set_quiet_flags()
 
 	-- The suite's level. A suite that needs a level as it is at the start (nothing has died in it yet) has it loaded again.
 	local level = suite.level or CONFIG.default_level
@@ -1626,35 +1613,13 @@ local function keep_calm(unit)
 	end
 end
 
--- A horde a test asks for (runner.horde_wanted) is sent from the conflict director's update, as the game's own debug horde is: the
--- horde is placed by the players' positions (Side.ENEMY_PLAYER_AND_BOT_POSITIONS), which are engine vectors that only last through
--- the frame's update, and the tests' update runs before they are set.
-mod:hook_safe(ConflictDirector, "update", function (self)
-	if not runner.horde_wanted then
-		return
-	end
-
-	runner.horde_wanted = nil
-
-	local ok, problem = pcall(self.debug_spawn_horde, self)
-
-	if not ok then
-		log("the horde could not come: %s", tostring(problem))
-	end
-end)
-
 function runner.calm(unit)
 	calmed[unit] = true
 
 	keep_calm(unit)
 end
 
--- The frames counted, for telling what happened in the same frame
-runner.frame = 0
-
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
-	runner.frame = runner.frame + 1
-
 	for unit in pairs(calmed) do
 		if HEALTH_ALIVE[unit] then
 			keep_calm(unit)
@@ -1718,62 +1683,6 @@ function runner.watch_motion_calls()
 		end
 
 		return counts
-	end
-end
-
--- The engine's calls that push a part (PhysX applies them as forces)
-local PUSH_CALLS = { "push", "add_impulse", "add_impulse_at", "add_velocity", "add_velocity_at", "add_angular_velocity", "add_torque", "add_torque_impulse" }
-
--- Logs, from now until the returned function is called, every part made kinematic (Actor.set_kinematic) and every push on a part that
--- is kinematic or was made so in the same frame, each with the line of script that did it and the frame (runner.frame). A crash
--- writes out the log up to it.
-function runner.log_kinematic_pushes()
-	local originals = {}
-	local made_kinematic = setmetatable({}, {
-		__mode = "k",
-	})
-
-	local function where()
-		local caller = debug.getinfo(3, "Sl")
-
-		return string.format("%s:%d", caller and caller.short_src or "?", caller and caller.currentline or 0)
-	end
-
-	originals.set_kinematic = Actor.set_kinematic
-	Actor.set_kinematic = function (actor, kinematic, ...)
-		local frame = runner.frame
-
-		if kinematic then
-			made_kinematic[actor] = frame
-		end
-
-		log("frame %d: set_kinematic %s on a part of %s, by %s", frame, tostring(kinematic), tostring(Actor.unit(actor)), where())
-
-		return originals.set_kinematic(actor, kinematic, ...)
-	end
-
-	for _, name in ipairs(PUSH_CALLS) do
-		local original = Actor[name]
-
-		if type(original) == "function" then
-			originals[name] = original
-			Actor[name] = function (actor, ...)
-				local frame = runner.frame
-				local kinematic = Actor.is_dynamic(actor) and not Actor.is_physical(actor)
-
-				if kinematic or made_kinematic[actor] == frame then
-					log("frame %d: %s on a %s part of %s, by %s", frame, name, kinematic and "kinematic" or "just made kinematic", tostring(Actor.unit(actor)), where())
-				end
-
-				return original(actor, ...)
-			end
-		end
-	end
-
-	return function ()
-		for name, original in pairs(originals) do
-			Actor[name] = original
-		end
 	end
 end
 
