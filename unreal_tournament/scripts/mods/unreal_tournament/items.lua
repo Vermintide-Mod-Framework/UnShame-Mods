@@ -62,8 +62,9 @@ end
 items.add_material_set = add_material_set
 
 -- The in-game UI makes its renderers when a level loads. A renderer made before the mod was loaded or reloaded can't find the icon's
--- material, because the game mounts the mod's resources again on a reload. So in a level, the items keep the base item's icon until the
--- next level.
+-- material, because the game mounts the mod's resources again on a reload. So in a level, the items show the game's placeholder icon
+-- until the next level. Every renderer has it.
+local PLACEHOLDER_ICON = "icons_placeholder"
 local icons_waiting = {}
 
 mod:hook_safe(IngameUI, "init", function (self)
@@ -80,16 +81,16 @@ end)
 
 -- After a reload, the renderers that the game made before it can't find the icon's material, and the game crashes when one draws it.
 -- The item tables from before the reload still have the icon, because the tab screen keeps the loadouts it made from them until the
--- player changes theirs. So those tables are given another icon: the base weapon's.
-local function retire_icon(old_table, base_icon)
+-- player changes theirs. So those tables are given the placeholder.
+local function retire_icon(old_table)
 	if old_table then
-		old_table.inventory_icon = base_icon
+		old_table.inventory_icon = PLACEHOLDER_ICON
 	end
 end
 
 -- A menu that is open when the mod is unloaded (the hero screen, for example) keeps the icon's name in its widgets and draws it after
 -- the reload, which crashes the game. So the menu is closed first. The next time it opens, it is made from the item tables, which have
--- the base weapon's icon then.
+-- the placeholder then.
 mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 	local ingame_ui = Managers.ui and Managers.ui._ingame_ui
 
@@ -107,6 +108,10 @@ local function set_icons(tables, icon)
 	end
 
 	if Managers.ui and Managers.ui._ingame_ui then
+		for _, icon_owner in ipairs(tables) do
+			icon_owner.inventory_icon = PLACEHOLDER_ICON
+		end
+
 		icons_waiting[#icons_waiting + 1] = set_icon
 	else
 		set_icon()
@@ -303,8 +308,8 @@ local function register_skins(definition, item)
 
 		set_icons({ skin_data, skin_item }, skin.icon or definition.icon)
 
-		retire_icon(WeaponSkins.skins[skin.key], WeaponSkins.skins[base_skin_key].inventory_icon)
-		retire_icon(ItemMasterList[skin.key], ItemMasterList[base_skin_key].inventory_icon)
+		retire_icon(WeaponSkins.skins[skin.key])
+		retire_icon(ItemMasterList[skin.key])
 
 		WeaponSkins.skins[skin.key] = skin_data
 		ItemMasterList[skin.key] = skin_item
@@ -400,7 +405,7 @@ function items.register(setting_id, definition)
 	add_material_set(definition.icon_materials)
 	set_icons({ item }, definition.icon)
 
-	retire_icon(ItemMasterList[definition.key], ItemMasterList[definition.base_item].inventory_icon)
+	retire_icon(ItemMasterList[definition.key])
 
 	ItemMasterList[definition.key] = item
 
