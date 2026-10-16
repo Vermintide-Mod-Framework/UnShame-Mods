@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
 -- The Lightning Gun's in-game tests (see runner.lua). Run them with /ut_test lightning (Kruber's) and /ut_test lightning_dr (Bardin's).
--- They run in the level the player is in, which is the Keep.
+-- They run in the runner's level, Righteous Stand.
 
 local runner = mod.test_runner
 

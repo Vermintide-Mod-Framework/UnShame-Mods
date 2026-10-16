@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
 -- The Shield Gun's in-game tests (see runner.lua). Run them with /ut_test shield (Kruber's), shield_dr, shield_bw, shield_wh, shield_we
--- and shield_priest. They run in the level the player is in, which is the Keep.
+-- and shield_priest. They run in the runner's level, Righteous Stand.
 
 local runner = mod.test_runner
 local shield = mod.shield

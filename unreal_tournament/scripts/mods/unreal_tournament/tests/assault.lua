@@ -1,7 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- The Assault Rifle's in-game tests (see runner.lua). Run them with /ut_test assault. They run in the level the player is in, which is the
--- Keep.
+-- The Assault Rifle's in-game tests (see runner.lua). Run them with /ut_test assault. They run in the runner's level, Righteous Stand.
 
 local runner = mod.test_runner
 local assault = mod.assault

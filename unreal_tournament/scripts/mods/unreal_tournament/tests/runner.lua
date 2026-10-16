@@ -35,6 +35,8 @@ local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
 local runner = {
 	suites = {},
+	-- Functions that are called every frame while a scenario runs (see t.track_damage)
+	frame_watchers = {},
 }
 
 local CONFIG = {
@@ -53,13 +55,47 @@ local CONFIG = {
 	-- The player looks this far below level in a place (degrees). An enemy's middle 5 m ahead, where most tests put it, is about that
 	-- far below the eyes of a tall career (1.7 m eyes, 0.8 m middle). Level aim goes over a clan rat's head.
 	place_pitch = -10,
+	-- The level the suites run in, unless a suite names another: Righteous Stand, a mission, where the game's own rules apply (the Keep
+	-- has none of the fall damage, for one)
+	default_level = "military",
 	-- Where the player is put after each respawn and before each test, for each level, so that what is ahead of them is the same every
-	-- time: the position (m) and the way they face (degrees about the up axis). A suite can name its own place.
+	-- time: the position (m) and the way they face (degrees about the up axis). A suite can name its own place. The other places of a
+	-- level are for the tests that need something there, by name (t.go_to).
 	places = {
 		-- The Keep's spawn point, facing the courtyard
 		inn_level_halloween = {
 			position = { -18.997, -0.246, 6.193 },
 			yaw = -90,
+		},
+		-- The square past the alley of the start, facing across it: flat for 8 m, and open for 28 m
+		military = {
+			position = { 154.329, 244.924, -17.457 },
+			yaw = 135,
+		},
+	},
+	-- (found with /ut_tp, /ut_where and /ut_probe)
+	named_places = {
+		military = {
+			-- Further out on the square, with nothing above
+			sky = {
+				position = { 147.2, 237.8, -17.4 },
+				yaw = 45,
+			},
+			-- Under the arch over the start's alley: a flat ceiling 4.8 m over the feet
+			ceiling = {
+				position = { 159.5, 250, -17.5 },
+				yaw = 135,
+			},
+			-- In the alley, facing along it, with its wall 1.1 m to the left and the other 3.5 m to the right
+			wall = {
+				position = { 162, 252.5, -17.5 },
+				yaw = 135,
+			},
+			-- On the low wall at the side of the square, facing the yard 4 m below it, which starts 1 m ahead
+			ledge = {
+				position = { 144.9, 240.1, -16.126 },
+				yaw = 45,
+			},
 		},
 	},
 	-- The game's flags (script_data) that a suite sets, so that the level is empty and nothing hurts the player, and puts back at the end
@@ -80,6 +116,9 @@ local CONFIG = {
 		skippable_cutscenes = true,
 	},
 }
+
+-- The enemy the suites shoot at (see target_breed)
+runner.target_breed = CONFIG.target_breed
 
 local RESTORE_SETTING = "test_restore"
 -- What /ut_equip replaced. It is put back the next time the mod loads, or with /ut_equip back.
@@ -170,7 +209,10 @@ local function install_input(unit)
 	service.get = function (self, key, ...)
 		local value = injected[key]
 
-		if value ~= nil then
+		-- (a vector is kept boxed, since a vector lasts only a frame: { vector = Vector3Box })
+		if type(value) == "table" and value.vector then
+			return value.vector:unbox()
+		elseif value ~= nil then
 			return value
 		end
 
@@ -187,6 +229,7 @@ function runner.restore_input()
 	end
 
 	table.clear(injected)
+	table.clear(runner.frame_watchers)
 end
 
 -- What a test waits for, which the update goes through one frame at a time
@@ -308,6 +351,52 @@ local function make_context(suite)
 		injected[name .. "_release"] = nil
 	end
 
+	-- Puts an input down and keeps it down until t.release, for inputs that overlap (holding one button and pressing another)
+	function t.hold(name)
+		injected[name] = true
+		injected[name .. "_hold"] = true
+
+		yield({
+			frames = 1,
+		})
+
+		injected[name] = nil
+	end
+
+	function t.release(name)
+		injected[name .. "_hold"] = nil
+		injected[name .. "_release"] = true
+
+		yield({
+			frames = 1,
+		})
+
+		injected[name .. "_release"] = nil
+	end
+
+	-- An input that is on for a single frame, such as "jump" or "dodge"
+	function t.tap(name)
+		injected[name] = true
+
+		yield({
+			frames = 1,
+		})
+
+		injected[name] = nil
+	end
+
+	-- Holds the movement keys: x to the right, y forward, each -1 to 1. No arguments lets go.
+	function t.move(x, y)
+		injected.move = x and {
+			vector = Vector3Box(x, y or 0, 0),
+		} or nil
+	end
+
+	-- An input that stays at a value until it is set to nil
+	function t.set_input(name, value)
+		injected[name] = value
+	end
+
 	function t.unit()
 		return player_unit()
 	end
@@ -326,11 +415,19 @@ local function make_context(suite)
 		return extension and extension:total_remaining_ammo()
 	end
 
+	-- Fills the ammo, and takes the overcharge away, so that each scenario starts with a weapon that has not been used
 	function t.refill()
 		local extension = ammo_extension()
 
 		if extension then
 			extension:add_ammo()
+		end
+
+		local unit = player_unit()
+		local overcharge_extension = unit and ScriptUnit.has_extension(unit, "overcharge_system")
+
+		if overcharge_extension and not overcharge_extension:are_you_exploding() then
+			overcharge_extension:remove_charge(overcharge_extension:get_overcharge_value())
 		end
 	end
 
@@ -349,6 +446,122 @@ local function make_context(suite)
 	end
 
 	t.on_main_thread = on_main_thread
+
+	-- Runs a function that uses the engine: on the main thread from a scenario, and as it is from an observer, which the update calls
+	local function engine(fn)
+		if coroutine.running() then
+			return on_main_thread(fn)
+		end
+
+		return fn()
+	end
+
+	local function extension(name)
+		local unit = player_unit()
+
+		return unit and ScriptUnit.has_extension(unit, name)
+	end
+
+	-- The player's health, with the temporary health
+	function t.health()
+		return engine(function ()
+			local health_extension = extension("health_system")
+
+			return health_extension and health_extension:current_health()
+		end)
+	end
+
+	-- Whether the player can be hurt. A suite makes them invincible. While hurtable, they still cannot die (player_unkillable). The
+	-- runner makes them invincible and heals them again after each scenario.
+	function t.hurtable(on)
+		script_data.player_invincible = not on
+		script_data.player_unkillable = on or nil
+		scenario.hurtable = on
+	end
+
+	function t.heal()
+		engine(function ()
+			local health_extension = extension("health_system")
+
+			if health_extension then
+				health_extension:reset()
+			end
+		end)
+	end
+
+	-- The player's velocity (m/s) as x, y and z
+	function t.velocity()
+		return unpack(engine(function ()
+			local locomotion_extension = extension("locomotion_system")
+
+			if not locomotion_extension then
+				return { 0, 0, 0 }
+			end
+
+			local velocity = locomotion_extension:current_velocity()
+
+			return { Vector3.x(velocity), Vector3.y(velocity), Vector3.z(velocity) }
+		end))
+	end
+
+	-- Where the player's feet are, as x, y and z
+	function t.position()
+		return unpack(engine(function ()
+			local unit = player_unit()
+
+			if not unit then
+				return { 0, 0, 0 }
+			end
+
+			local position = Unit.local_position(unit, 0)
+
+			return { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
+		end))
+	end
+
+	function t.on_ground()
+		return engine(function ()
+			local locomotion_extension = extension("locomotion_system")
+
+			return locomotion_extension ~= nil and locomotion_extension:is_on_ground()
+		end)
+	end
+
+	function t.overcharge()
+		return engine(function ()
+			local overcharge_extension = extension("overcharge_system")
+
+			return overcharge_extension and overcharge_extension:get_overcharge_value() or 0
+		end)
+	end
+
+	-- The template of the weapon in the player's hands
+	function t.wielded()
+		return engine(function ()
+			return utils.wielded_template_name(player_unit())
+		end)
+	end
+
+	-- The player's character state ("standing", "walking", "jumping", "falling", "dodging", ...)
+	function t.state()
+		return engine(function ()
+			local unit = player_unit()
+			local csm = unit and ScriptUnit.extension(unit, "character_state_machine_system").state_machine
+
+			return csm and csm.state_current and csm.state_current.name
+		end)
+	end
+
+	-- The health of a unit, 0 when it is dead or gone
+	function t.health_of(unit)
+		return engine(function ()
+			if not unit or not Unit.alive(unit) or not HEALTH_ALIVE[unit] then
+				return 0
+			end
+
+			return ScriptUnit.extension(unit, "health_system"):current_health()
+		end)
+	end
 
 	local function aim()
 		local unit = player_unit()
@@ -466,6 +679,156 @@ local function make_context(suite)
 		t.wait(0.1)
 	end
 
+	-- Turns the player to look this far up (degrees, negative is down), and this far to the left of the way they face (degrees)
+	function t.look(pitch, turn)
+		on_main_thread(function ()
+			local unit = player_unit()
+			local first_person_extension = unit and ScriptUnit.has_extension(unit, "first_person_system")
+
+			if not first_person_extension then
+				return
+			end
+
+			local forward = Quaternion.forward(first_person_extension:current_rotation())
+			local yaw = math.atan2(-Vector3.x(forward), Vector3.y(forward)) + math.rad(turn or 0)
+			local facing = Quaternion.axis_angle(Vector3.up(), yaw)
+			local tilt = Quaternion.axis_angle(Vector3.right(), math.rad(pitch or 0))
+
+			first_person_extension:set_rotation(Quaternion.multiply(facing, tilt))
+		end)
+
+		-- (the camera follows the view a frame later, see aim_at)
+		t.wait(0.1)
+	end
+
+	-- Spawns an enemy at a place given as x, y, z, facing the player. Removed after the scenario.
+	function t.spawn_at(breed_name, x, y, z)
+		local spawned
+
+		on_main_thread(function ()
+			local position = Vector3(x, y, z)
+			local to_player = Vector3.flat(Unit.local_position(player_unit(), 0) - position)
+			local facing = Vector3.length(to_player) > 0.01 and Vector3.normalize(to_player) or Vector3.forward()
+
+			Managers.state.conflict:spawn_one(Breeds[breed_name], position, nil, {
+				spawned_func = function (unit)
+					spawned = unit
+				end,
+			}, Quaternion.look(facing, Vector3.up()))
+		end)
+
+		if not t.wait_until(function ()
+			return spawned ~= nil
+		end, CONFIG.spawn_timeout, "the enemy to spawn") then
+			return nil
+		end
+
+		scenario.spawned[#scenario.spawned + 1] = spawned
+
+		return spawned
+	end
+
+	-- Where the ground is, a distance ahead of the player and a distance to their right, as x, y and z
+	function t.ground_at(ahead, right)
+		return on_main_thread(function ()
+			local origin, forward = aim()
+
+			if not origin then
+				return nil
+			end
+
+			local flat = Vector3.normalize(Vector3.flat(forward))
+			local side = Vector3.cross(flat, Vector3.up())
+			local above = origin + flat * ahead + side * (right or 0) + Vector3(0, 0, 2)
+			local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world(), above, Vector3.down(), 8, "closest", "collision_filter", "filter_ai_line_of_sight_check")
+
+			if not hit then
+				return nil
+			end
+
+			local ground = above - Vector3(0, 0, hit_distance)
+
+			return { Vector3.x(ground), Vector3.y(ground), Vector3.z(ground) }
+		end)
+	end
+
+	-- Adds up the damage a unit takes from now on, all of it, past what kills it: { total, hits }, with each hit as { amount, source,
+	-- type, attacker }. The game keeps the damage of the last frame (GenericHealthExtension.recent_damages), which is read every frame
+	-- until the scenario ends.
+	function t.track_damage(unit)
+		local record = {
+			hits = {},
+			total = 0,
+		}
+
+		runner.frame_watchers[#runner.frame_watchers + 1] = function ()
+			local health_extension = Unit.alive(unit) and ScriptUnit.has_extension(unit, "health_system")
+			local damages, length
+
+			if health_extension and health_extension.recent_damages then
+				damages, length = health_extension:recent_damages()
+			end
+
+			for i = 1, length or 0, DamageDataIndex.STRIDE do
+				local amount = damages[i + DamageDataIndex.DAMAGE_AMOUNT - 1]
+				local attacker = damages[i + DamageDataIndex.ATTACKER - 1]
+
+				record.total = record.total + amount
+				record.hits[#record.hits + 1] = {
+					amount = amount,
+					attacker = attacker and attacker == player_unit() and "self" or attacker and Unit.alive(attacker) and Unit.get_data(attacker, "breed") and Unit.get_data(attacker, "breed").name or "other",
+					source = damages[i + DamageDataIndex.DAMAGE_SOURCE_NAME - 1],
+					type = damages[i + DamageDataIndex.DAMAGE_TYPE - 1],
+				}
+			end
+		end
+
+		return record
+	end
+
+	-- Takes away an enemy the scenario spawned, before the scenario ends
+	function t.remove(unit)
+		on_main_thread(function ()
+			if Unit.alive(unit) then
+				Managers.state.conflict:destroy_unit(unit, BLACKBOARDS[unit], "ut_test")
+			end
+		end)
+	end
+
+	-- A line in the results, for what a scenario found that is not a failure
+	function t.log(text, ...)
+		log("%s: " .. text, scenario.name, ...)
+	end
+
+	-- Puts the player in a named place of the level (CONFIG.named_places), facing its way. Skips the scenario if the level has no
+	-- such place.
+	function t.go_to(name)
+		local places = CONFIG.named_places[current_level_key()]
+		local place = places and places[name]
+
+		if not place then
+			t.skip(string.format("%s has no place %s", tostring(current_level_key()), name))
+		end
+
+		on_main_thread(function ()
+			runner.move_player(player_unit(), Vector3(unpack(place.position)), place.yaw, place.pitch or 0)
+		end)
+		t.wait(0.5)
+	end
+
+	-- The names of the sound events the game plays from now on, of those that start with the prefix. The list is filled until the end
+	-- of the scenario.
+	function t.sounds(prefix)
+		local names = {}
+
+		runner.sound_watch = {
+			names = names,
+			prefix = prefix,
+		}
+
+		return names
+	end
+
 	function t.spawn_target(distance)
 		local target = t.spawn(CONFIG.target_breed, distance)
 
@@ -494,8 +857,11 @@ local function make_context(suite)
 		return found
 	end
 
+	-- (and names.positions[i] is where explosion i was, as { x, y, z })
 	function t.explosions()
-		local names = {}
+		local names = {
+			positions = {},
+		}
 
 		runner.explosion_watch = names
 
@@ -513,13 +879,23 @@ local function make_context(suite)
 	return t
 end
 
-mod.any_explosion_callbacks.ut_test = function (explosion_template)
+mod.any_explosion_callbacks.ut_test = function (explosion_template, position)
 	local watch = runner.explosion_watch
 
 	if watch then
 		watch[#watch + 1] = explosion_template.name
+		watch.positions[#watch] = { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
 	end
 end
+
+-- The sound events a scenario watches for (t.sounds)
+mod:hook_safe(WwiseWorld, "trigger_event", function (wwise_world, event_name)
+	local watch = runner.sound_watch
+
+	if watch and type(event_name) == "string" and string.sub(event_name, 1, #watch.prefix) == watch.prefix then
+		watch.names[#watch.names + 1] = event_name
+	end
+end)
 
 -- Putting the loadout back
 local function save_restore(entries)
@@ -737,12 +1113,13 @@ local function run_suite(suite, only_career)
 
 	run.restore_flags = set_quiet_flags()
 
-	local original_level = current_level_key()
+	-- The suite's level. A suite that needs a level as it is at the start (nothing has died in it yet) has it loaded again.
+	local level = suite.level or CONFIG.default_level
 
-	if suite.level and original_level ~= suite.level then
-		log("loading %s", suite.level)
+	if current_level_key() ~= level or suite.fresh_level then
+		log("loading %s", level)
 
-		if not load_level(t, suite.level) then
+		if not load_level(t, level) then
 			log("the level did not load")
 			run.restore_flags()
 			run.restore_flags = nil
@@ -768,6 +1145,8 @@ local function run_suite(suite, only_career)
 
 				t.scenario(scenario)
 				runner.explosion_watch = nil
+				runner.sound_watch = nil
+				table.clear(runner.frame_watchers)
 				t.refill()
 
 				-- Each scenario starts in the same place, whatever the last one did to where the player is and where they look
@@ -775,7 +1154,14 @@ local function run_suite(suite, only_career)
 					break
 				end
 
-				local ok, error_value = call_waiting(scenario_definition.run, t)
+				local ok, error_value = call_waiting(function ()
+					-- (a scenario can start in a named place of the level instead)
+					if scenario_definition.place then
+						t.go_to(scenario_definition.place)
+					end
+
+					scenario_definition.run(t)
+				end)
 
 				if not ok and not (type(error_value) == "table" and error_value.skip) then
 					scenario.failures[#scenario.failures + 1] = tostring(error_value)
@@ -794,7 +1180,15 @@ local function run_suite(suite, only_career)
 				end
 
 				runner.restore_input()
+				runner.sound_watch = nil
+				table.clear(runner.frame_watchers)
 				install_input(player_unit())
+
+				if scenario.hurtable then
+					t.hurtable(false)
+				end
+
+				t.heal()
 				t.wait(0.5)
 
 				if scenario.skipped then
@@ -830,11 +1224,6 @@ local function run_suite(suite, only_career)
 	log("%s: %d passed, %d failed, %d skipped", suite.name, summary.passed, summary.failed, summary.skipped)
 	push_log_out()
 
-	if current_level_key() ~= original_level then
-		log("going back to %s", original_level)
-		load_level(t, original_level)
-	end
-
 	return summary
 end
 
@@ -842,6 +1231,7 @@ end
 -- which is what tools/run_tests.ps1 waits for.
 local function run_suites(suites, career)
 	local original_career = player_career_name()
+	local original_level = current_level_key()
 	local total = {
 		failed = 0,
 		passed = 0,
@@ -858,6 +1248,12 @@ local function run_suites(suites, career)
 		total.failed = total.failed + summary.failed
 		total.passed = total.passed + summary.passed
 		total.skipped = total.skipped + summary.skipped
+	end
+
+	-- The player is taken back to the level they were in, once, after all the suites
+	if current_level_key() ~= original_level then
+		log("going back to %s", original_level)
+		load_level(make_context(suites[1]), original_level)
 	end
 
 	if original_career and player_career_name() ~= original_career then
@@ -885,13 +1281,33 @@ function runner.start(names, career)
 	local suites = {}
 
 	for _, name in ipairs(names) do
-		local suite = runner.suites[name]
+		-- (suite:words runs only the scenarios of the suite whose names have the words in them, with _ for a space)
+		local suite_name, words = string.match(name, "^([^:]+):(.+)$")
+
+		words = words and string.gsub(words, "_", " ")
+		local suite = runner.suites[suite_name or name]
 
 		if not suite then
 			log("there is no suite %s. The suites: %s", tostring(name), table.concat(table.keys(runner.suites), ", "))
 			push_log_out()
 
 			return
+		end
+
+		if words then
+			local only = {}
+
+			for _, scenario in ipairs(suite.scenarios) do
+				if string.find(scenario.name, words, 1, true) then
+					only[#only + 1] = scenario
+				end
+			end
+
+			suite = setmetatable({
+				scenarios = only,
+			}, {
+				__index = suite,
+			})
 		end
 
 		suites[#suites + 1] = suite
@@ -1011,6 +1427,10 @@ local function step(dt)
 		return
 	end
 
+	for _, watcher in ipairs(runner.frame_watchers) do
+		pcall(watcher)
+	end
+
 	local waiting = run.waiting
 
 	if not waiting then
@@ -1034,6 +1454,13 @@ local function step(dt)
 		end
 	elseif waiting.condition then
 		local ok, satisfied = pcall(waiting.condition)
+
+		-- (an error in what a test watches is said once, and the wait goes on)
+		if not ok and not waiting.error_said then
+			waiting.error_said = true
+
+			log("error in a watch: %s", tostring(satisfied))
+		end
 
 		if ok and satisfied then
 			resume(true)
@@ -1156,6 +1583,65 @@ mod:command("ut_quiet", "on | off - keeps the level empty and the player unhurt,
 	end
 end)
 
+-- For finding the places of a level: loading it, as a suite does, and moving the player to a point
+mod:command("ut_level", "<level> - loads a level, as the tests do (military is Righteous Stand)", function (level_key)
+	if not level_key or not LevelSettings[level_key] then
+		log("ut_level: there is no level %s", tostring(level_key))
+
+		return
+	end
+
+	Managers.mechanism:debug_load_level(level_key, 0)
+end)
+
+mod:command("ut_tp", "<x> <y> <z> [yaw] - puts the player there, facing that way (degrees)", function (x, y, z, yaw)
+	local unit = player_unit()
+
+	if not unit or not tonumber(z) then
+		log("ut_tp: there is no player, or no place")
+
+		return
+	end
+
+	runner.move_player(unit, Vector3(tonumber(x), tonumber(y), tonumber(z)), tonumber(yaw))
+end)
+
+-- How far the level is from the player: up, and level in eight ways around them, for finding a place under a ceiling or by a wall
+mod:command("ut_probe", "- says how far the level is above the player and around them", function ()
+	local unit = player_unit()
+
+	if not unit then
+		return
+	end
+
+	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+	local origin = Unit.local_position(unit, 0) + Vector3(0, 0, 0.9)
+	local forward = Vector3.normalize(Vector3.flat(Quaternion.forward(ScriptUnit.extension(unit, "first_person_system"):current_rotation())))
+	local function distance(direction)
+		local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world, origin, direction, 30, "closest", "collision_filter", "filter_player_mover")
+
+		return hit and string.format("%.1f", hit_distance) or "-"
+	end
+	local around = {}
+
+	for i = 0, 7 do
+		around[#around + 1] = distance(Quaternion.rotate(Quaternion.axis_angle(Vector3.up(), i * math.pi / 4), forward))
+	end
+
+	-- (the height of the ground ahead, every half meter, against the player's feet)
+	local heights = {}
+
+	for i = 1, 16 do
+		local above = origin + forward * (i * 0.5) + Vector3(0, 0, 3)
+		local hit, ground = PhysicsWorld.immediate_raycast(physics_world, above, Vector3.down(), 10, "closest", "collision_filter", "filter_player_mover")
+
+		heights[#heights + 1] = hit and string.format("%.1f", Vector3.z(ground) - Vector3.z(origin) + 0.9) or "-"
+	end
+
+	log("ut_probe: up %s, around from ahead to the left: %s; ground ahead: %s", distance(Vector3.up()), table.concat(around, " "), table.concat(heights, " "))
+	push_log_out()
+end)
+
 -- Where the player stands, for a test that has to run at a certain place
 mod:command("ut_where", "- says where the player stands", function ()
 	local unit = player_unit()
@@ -1167,8 +1653,10 @@ mod:command("ut_where", "- says where the player stands", function ()
 	end
 
 	local position = Unit.local_position(unit, 0)
+	local forward = Quaternion.forward(ScriptUnit.extension(unit, "first_person_system"):current_rotation())
+	local yaw = math.deg(math.atan2(-Vector3.x(forward), Vector3.y(forward)))
 
-	log("ut_where: %s Vector3(%.3f, %.3f, %.3f)", current_level_key(), Vector3.x(position), Vector3.y(position), Vector3.z(position))
+	log("ut_where: %s Vector3(%.3f, %.3f, %.3f) yaw %.0f", current_level_key(), Vector3.x(position), Vector3.y(position), Vector3.z(position), yaw)
 	push_log_out()
 end)
 

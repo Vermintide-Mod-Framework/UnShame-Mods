@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
 -- The Minigun's in-game tests (see runner.lua). Run them with /ut_test minigun (Kruber's) and /ut_test minigun_wh (Saltzpyre's). They run
--- in the level the player is in, which is the Keep.
+-- in the runner's level, Righteous Stand.
 
 local runner = mod.test_runner
 

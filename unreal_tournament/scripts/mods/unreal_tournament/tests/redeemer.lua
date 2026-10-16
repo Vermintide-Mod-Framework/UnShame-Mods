@@ -1,7 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- The Redeemer's in-game tests (see runner.lua). Run them with /ut_test redeemer. They run in the level the player is in, which is the
--- Keep.
+-- The Redeemer's in-game tests (see runner.lua). Run them with /ut_test redeemer. They run in the runner's level, Righteous Stand.
 
 local runner = mod.test_runner
 
