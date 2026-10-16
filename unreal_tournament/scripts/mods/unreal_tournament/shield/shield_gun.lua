@@ -1072,6 +1072,17 @@ local function punch(action, t, power_level, bash)
 	-- A punch that hit an enemy doesn't: UT's one trace either hits a pawn or pushes the player off what it hit, and here the cone can
 	-- have an enemy in it while the ray straight ahead hits the floor.
 	if hit[2] <= CONFIG.range * UNIT and not Actor.is_dynamic(hit[4]) and not hit_enemy then
+		-- TEMPORARY: what the punch saw when it hurts the player
+		if utils.is_local_player_unit(owner_unit) then
+			local alive_targets, hit_targets = 0, index
+
+			for _, target in ipairs(targets) do
+				alive_targets = alive_targets + (HEALTH_ALIVE[target.unit] and 1 or 0)
+			end
+
+			mod:echo("self hit: ray on %s at %.2f m (static %s), targets %d (%d alive now), hits %d, cleave %.2f / %.2f, auto %s", Unit.debug_name(hit_unit), hit[2], tostring(Actor.is_static(hit[4])), #targets, alive_targets, hit_targets, max_attack, max_impact, tostring(mod.shield.debug_auto))
+		end
+
 		local self_damage = (CONFIG.min_self_damage + CONFIG.self_damage_scale * damage_for_step(step)) * CONFIG.self_damage_share
 
 		utils.apply_self_damage(owner_unit, hit[1], -direction, action.item_name, self_damage)
@@ -1093,6 +1104,9 @@ mod.dummy_start_callbacks.shield_gun = function (action, new_action, t, power_le
 		if new_action.ut_shield_bash and utils.is_local_player_unit(action.owner_unit) then
 			mod.shield.last_bash = t
 		end
+
+		-- TEMPORARY: for the chat line of what the punch saw
+		mod.shield.debug_auto = new_action.ut_shield_auto or false
 
 		punch(action, t, power_level, new_action.ut_shield_bash)
 	end
@@ -1568,6 +1582,7 @@ local function build_punch(original, auto)
 	action.damage_window_start = nil
 	action.damage_window_end = nil
 	action.ut_shield_punch = true
+	action.ut_shield_auto = auto or nil
 	action.allowed_chain_actions = {
 		chain("action_one", "default", "action_one", CONFIG.fire_rate),
 		chain("action_one", "default", "action_one_hold", CONFIG.fire_rate),
