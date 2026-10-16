@@ -806,11 +806,16 @@ local function melee_hit(action, punch_action, hit_unit, hit, direction, power_l
 		sound_effect_extension:add_hit()
 	end
 
-	-- (what ActionSweep reads of the action that hits)
+	local weapon_system = Managers.state.entity:system("weapon_system")
+
+	-- (what ActionSweep reads of the action that hits; the hit is sent at once, with no wait for the swing's moment)
 	local sweep = {
+		_current_action = punch_action,
 		_overridable_settings = punch_action,
+		_time_to_hit = 0,
 		item_name = action.item_name,
 		owner_unit = owner_unit,
+		weapon_system = weapon_system,
 		weapon_unit = action.weapon_unit,
 		world = action.world,
 	}
@@ -824,7 +829,6 @@ local function melee_hit(action, punch_action, hit_unit, hit, direction, power_l
 		buff_result = DamageUtils.buff_on_attack(owner_unit, hit_unit, damage_profile.charge_value, blow.is_critical_strike, zone_name, index, true, DamageUtils.get_item_buff_type(action.item_name), nil, action.item_name)
 	end
 
-	local weapon_system = Managers.state.entity:system("weapon_system")
 	local attack_template_id = NetworkLookup.attack_templates[damage_profile.default_target.attack_template]
 
 	weapon_system:rpc_weapon_blood(nil, attacker_unit_id, attack_template_id)
@@ -835,7 +839,8 @@ local function melee_hit(action, punch_action, hit_unit, hit, direction, power_l
 		return
 	end
 
-	weapon_system:send_rpc_attack_hit(NetworkLookup.damage_sources[action.item_name], attacker_unit_id, hit_unit_id, NetworkLookup.hit_zones[zone_name], position, direction, NetworkLookup.damage_profiles[punch_action.damage_profile], "power_level", power_level, "hit_target_index", 1, "blocking", false, "shield_break_procced", false, "boost_curve_multiplier", blow.boost_curve_multiplier, "is_critical_strike", blow.is_critical_strike, "can_damage", can_damage, "can_stagger", can_stagger, "first_hit", index == 1)
+	-- (sent as a swing sends its hit, which is where the movement's momentum damage scales a hit's power)
+	ActionSweep._send_attack_hit(sweep, Managers.time:time("game"), NetworkLookup.damage_sources[action.item_name], attacker_unit_id, hit_unit_id, NetworkLookup.hit_zones[zone_name], position, direction, NetworkLookup.damage_profiles[punch_action.damage_profile], "power_level", power_level, "hit_target_index", 1, "blocking", false, "shield_break_procced", false, "boost_curve_multiplier", blow.boost_curve_multiplier, "is_critical_strike", blow.is_critical_strike, "can_damage", can_damage, "can_stagger", can_stagger, "first_hit", index == 1)
 
 	if not action.is_server then
 		network_manager.network_transmit:send_rpc_server("rpc_weapon_blood", attacker_unit_id, attack_template_id)

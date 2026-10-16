@@ -777,7 +777,8 @@ end
 -- hits, once per shot (ActionShotgun's check_buffs). The chunks are projectiles that would each run them. Here a shot runs them
 -- once, and once more if a chunk gets a headshot after a hit that was not one, so a headshot by any chunk counts.
 -- The shell's explosion is the same shot as the chunks it throws, which are made as it goes off: the area damage system runs the
--- buffs for each enemy in the explosion (as an "aoe" attack of the weapon), and those count with the chunks' hits.
+-- buffs for each enemy in the explosion (as an "aoe" attack of the weapon), and those count with the chunks' hits. So does the shell's
+-- own hit on an enemy, which sets the explosion off: it is the weapon's only "projectile" hit that is not a chunk's.
 -- The entry is shots[owner unit] = { t = the spawn time of the shot, hit = whether they have run, head = whether they have run
 -- for a headshot }.
 local shots = {}
@@ -788,7 +789,7 @@ mod:hook(DamageUtils, "buff_on_attack", function (func, unit, hit_unit, attack_t
 	local chunk = chunk_in_hit
 	local spawn_t = chunk and chunk._ut_flak_spawn_t
 
-	if not spawn_t and attack_type == "aoe" and damage_source == ITEM_KEY then
+	if not spawn_t and (attack_type == "aoe" or attack_type == "projectile") and damage_source == ITEM_KEY then
 		spawn_t = Managers.time:time("game")
 	end
 
