@@ -538,6 +538,9 @@ local THIRD_PERSON = {
 	ring_speed = 250, -- UT units a second
 	ring_size = 2, -- UT units across
 	ring_growth = 400, -- UT units across, a second
+	-- The charge's sparks are the first person's, this many times larger (their spread, width and speed), so that they show from a few
+	-- meters away (a choice)
+	charge_scale = 3,
 }
 
 local events = shield.events
@@ -662,12 +665,12 @@ local function third_person_rings(api, unit)
 	api.play_sound_at("ut_shield_fire_3d", muzzle)
 end
 
--- The sparks of the charge, made each frame while the gun charges: as the first person's, around the end of the gun at the world's scale
--- (UT shows no charge on another player; this is the mod's own)
+-- The sparks of the charge, made each frame while the gun charges: as the first person's, around the end of the gun, charge_scale times
+-- the world's scale (UT shows no charge on another player; this is the mod's own)
 local function third_person_sparks(api, unit, state, dt)
 	local charged = math.min(now() - state.charge_started, shield.fully_charged_time)
 	local interval = 1 / (CONFIG.charge_rate[1] + CONFIG.charge_rate[2] * charged)
-	local meters = THIRD_PERSON.meters_per_uu
+	local meters = THIRD_PERSON.meters_per_uu * THIRD_PERSON.charge_scale
 
 	state.spark_time = (state.spark_time or 0) + dt
 
