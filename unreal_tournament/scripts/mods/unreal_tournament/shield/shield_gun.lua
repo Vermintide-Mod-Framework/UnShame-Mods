@@ -56,8 +56,8 @@ local VARIANTS = {
 		id = "shield_gun_wh",
 		key = "ut_shield_gun_wh",
 		template = "ut_shield_gun_wh_template",
-		-- The Volley Crossbow's pose, which has no shove of its own: the push sends the melee weapons' push event. The shield and the
-		-- charge are its aim, and the punch is its shot out of the aim.
+		-- The Volley Crossbow's pose, which has no shove of its own: the push sends the melee weapons' push event. The shield is its
+		-- aim, and so is a charge once it is held a while. The punch is its shot.
 		pose_3p = "to_repeating_crossbow",
 		punch_3p = "attack_shoot",
 		push_3p = "attack_push",
@@ -1163,8 +1163,42 @@ local function punch(action, t, power_level, bash)
 	end
 end
 
+-- A charge of a copy whose third person pose has an aim (VARIANTS' aim_3p) goes into the aim once it has been held for min_hold_time, so
+-- that a quick punch is only the shot. The machine that owns the character's actions plays the event, which the game sends to the
+-- others. As [character unit] = { at = game time, event }.
+local aim_after_hold = {}
+
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	if not next(aim_after_hold) then
+		return
+	end
+
+	local t = Managers.time:time("game")
+
+	for unit, pending in pairs(aim_after_hold) do
+		if not Unit.alive(unit) then
+			aim_after_hold[unit] = nil
+		elseif t >= pending.at then
+			aim_after_hold[unit] = nil
+
+			Managers.state.network:anim_event(unit, pending.event)
+		end
+	end
+end
+
 mod.dummy_start_callbacks.shield_gun = function (action, new_action, t, power_level)
+	aim_after_hold[action.owner_unit] = nil
+
 	if new_action.ut_shield_charge then
+		local variant = POSES_3P[utils.wielded_template_name(action.owner_unit)]
+
+		if variant and variant.aim_3p then
+			aim_after_hold[action.owner_unit] = {
+				at = t + CONFIG.min_hold_time,
+				event = variant.aim_3p,
+			}
+		end
+
 		charge_started[action.owner_unit] = t
 
 		if utils.is_local_player_unit(action.owner_unit) then
@@ -1227,6 +1261,8 @@ mod.dummy_finish_callbacks.shield_gun = function (action, reason)
 	end
 
 	local owner_unit = action.owner_unit
+
+	aim_after_hold[owner_unit] = nil
 
 	if reason ~= "new_interupting_action" then
 		charge_started[owner_unit] = nil
@@ -1841,8 +1877,9 @@ local function apply_template(template_name)
 			end
 		end
 
-		-- The shield and the charge go into the aim, and the punch comes out of it. The aim ends when one of them ends with nothing after
-		-- it: a punch that the next charge follows stays in the aim. (The game plays the base's end event on the body too, before this.)
+		-- The shield goes into the aim, and so does a charge held for min_hold_time (see aim_after_hold). The punch comes out of it. The
+		-- aim ends when one of them ends with nothing after it: a punch that the next charge follows stays in the aim. (The game plays the
+		-- base's end event on the body too, before this.)
 		if variant.aim_3p then
 			local function not_chained(_, end_reason)
 				return end_reason ~= "new_interupting_action"
@@ -1850,7 +1887,7 @@ local function apply_template(template_name)
 
 			-- (the block is last, as a weapon may have none)
 			for _, action in ipairs({ actions.action_one.default, actions.action_one.punch, actions.action_one.punch_auto, block }) do
-				if action.ut_shield_charge or action == block then
+				if action == block then
 					action.anim_event_3p = variant.aim_3p
 				end
 
