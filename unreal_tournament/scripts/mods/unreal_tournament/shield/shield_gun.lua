@@ -77,7 +77,7 @@ for _, variant in ipairs(VARIANTS) do
 		name = "UT2004 Shield Gun",
 		type_name = "Shield Gun",
 		description = DESCRIPTION,
-		keywords = { "weapon_keyword_high_damage", "weapon_keyword_charged_attack", "weapon_keyword_damage_against_armoured" },
+		keywords = { "weapon_keyword_high_damage", "weapon_keyword_charged_attack", "weapon_keyword_armour_piercing" },
 		icon = "ut_shield_gun_icon",
 		icon_package = "resource_packages/unreal_tournament/icons",
 		icon_materials = "ui/ut/shield_gun_icon",
@@ -1700,21 +1700,22 @@ local function apply_template(template_name)
 		template[field] = game_shield[field]
 	end
 
-	-- The chart of the item's stats, from 0 to 7
+	-- The chart of the item's stats, from 0 to 7: the bash out of a push (light) and the charged punch (heavy). Both get through enemies
+	-- as the game's tank blows do (damage_types).
 	template.weapon_diagram = {
 		light_attack = {
 			[DamageTypes.ARMOR_PIERCING] = 5,
-			[DamageTypes.CLEAVE] = 0,
+			[DamageTypes.CLEAVE] = 3,
 			[DamageTypes.SPEED] = 3,
 			[DamageTypes.STAGGER] = 6,
 			[DamageTypes.DAMAGE] = 3,
 		},
 		heavy_attack = {
 			[DamageTypes.ARMOR_PIERCING] = 6,
-			[DamageTypes.CLEAVE] = 0,
+			[DamageTypes.CLEAVE] = 4,
 			[DamageTypes.SPEED] = 1,
 			[DamageTypes.STAGGER] = 7,
-			[DamageTypes.DAMAGE] = 7,
+			[DamageTypes.DAMAGE] = 6,
 		},
 	}
 

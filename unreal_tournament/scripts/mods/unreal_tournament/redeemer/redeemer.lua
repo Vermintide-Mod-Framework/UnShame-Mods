@@ -27,7 +27,7 @@ mod.items.register(SETTING_ID, {
 	name = "UT2004 Redeemer",
 	type_name = "Redeemer",
 	description = DESCRIPTION,
-	keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_damage_against_armoured" },
+	keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_armour_piercing" },
 	icon = "ut_redeemer_icon",
 	icon_package = "resource_packages/unreal_tournament/icons",
 	icon_materials = "ui/ut/redeemer_icon",
