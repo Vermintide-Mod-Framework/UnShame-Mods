@@ -52,7 +52,8 @@ local mod = get_mod("unreal_tournament")
 --   t.sounds(prefix)                     a list that is filled with the names of the sound events that start with the prefix
 --
 -- A suite is { name, item (the key of the weapon item), template, slot, careers (the careers it is run for), level (the level it is run
--- in, if not the default one), fresh_level (the level is loaded again for it), loadout (optional: { [slot] = { [career] = item key } },
+-- in, if not the default one), fresh_level (the level is loaded again for it), live (the level is played as it is, with its enemies,
+-- hordes and bots, instead of kept empty), loadout (optional: { [slot] = { [career] = item key } },
 -- items of other slots put in for the suite and put back after it), place (optional: { level, position, yaw }, where the
 -- player is put instead of the level's place in CONFIG.places), scenarios = { { name, run, place (a named place it starts in) } } }.
 --
@@ -144,6 +145,11 @@ local CONFIG = {
 		disable_ai_perception = true,
 		player_invincible = true,
 		-- Without it the game does not let the intro of a level be skipped
+		skippable_cutscenes = true,
+	},
+	-- The same for a suite that plays the level as it is (live): its enemies, hordes and bots come as in a game
+	live_flags = {
+		player_invincible = true,
 		skippable_cutscenes = true,
 	},
 }
@@ -893,6 +899,126 @@ local function make_context(suite)
 		end
 	end
 
+	-- Fights a horde for a while: enemies of the settings' kinds that attack come out in a block ahead, and more come once few stand. Before
+	-- each attack the player is put the settings' distance from the nearest enemy, and attack(nearest) attacks it. Says how many were
+	-- killed every 30 s, and returns that count and runner.watch_motion_calls's counts. The settings: size (how many enemies), breeds,
+	-- refill_below (more come once fewer stand), distance (m, how far ahead the block is), keep (m, how far from the nearest the player
+	-- stands) and time (s). Without breeds, nothing is spawned: the player fights the level's own enemies (a live suite's), and the game
+	-- sends a horde every horde_interval seconds (s, if given).
+	function t.fight_horde(settings, attack)
+		local spots = {}
+		local seen = {}
+		local killed = 0
+		local last_fill, last_horde
+
+		-- The block is 8 by 8 places, 0.6 m apart
+		for row = 0, settings.breeds and 7 or -1 do
+			for column = 0, 7 do
+				local ground = t.ground_at(settings.distance + row * 0.6, (column - 3.5) * 0.6)
+
+				if ground then
+					spots[#spots + 1] = ground
+				end
+			end
+		end
+
+		if settings.breeds and #spots == 0 then
+			t.expect(false, "there is no room for the horde")
+
+			return 0, {}
+		end
+
+		local stop_watching_motion = runner.watch_motion_calls()
+		local ok, problem = pcall(function ()
+			local started = Managers.time:time("game")
+			local said = started
+
+			while Managers.time:time("game") - started < settings.time do
+				-- The enemies standing, more if they are few, and the nearest of them
+				local state = on_main_thread(function ()
+					local player = player_unit()
+					local position = Unit.world_position(player, 0)
+					local found, found_distance
+					local count = 0
+
+					for _, unit in ipairs(Managers.state.conflict:spawned_enemies()) do
+						if HEALTH_ALIVE[unit] then
+							count = count + 1
+							seen[unit] = true
+
+							local distance = Vector3.distance(position, Unit.world_position(unit, 0))
+
+							if not found or distance < found_distance then
+								found, found_distance = unit, distance
+							end
+						end
+					end
+
+					for unit in pairs(seen) do
+						if not HEALTH_ALIVE[unit] then
+							seen[unit] = nil
+							killed = killed + 1
+						end
+					end
+
+					-- (enemies take some frames to come out, and are counted once they have)
+					local now = Managers.time:time("game")
+
+					if settings.breeds and count < settings.refill_below and (not last_fill or now - last_fill > 3) then
+						last_fill = now
+
+						for i = 1, settings.size - count do
+							local breed = Breeds[settings.breeds[i % #settings.breeds + 1]]
+
+							Managers.state.conflict:spawn_one(breed, Vector3(unpack(spots[math.random(#spots)])), nil, {}, Quaternion.identity())
+						end
+					end
+
+					if settings.horde_interval and (not last_horde or now - last_horde > settings.horde_interval) then
+						last_horde = now
+						runner.horde_wanted = true
+					end
+
+					if found then
+						local at = Unit.world_position(found, 0)
+
+						runner.move_player(player, at + Vector3.normalize(Vector3.flat(position - at)) * settings.keep)
+					end
+
+					return {
+						nearest = found,
+						standing = count,
+					}
+				end)
+
+				if state.nearest then
+					attack(state.nearest)
+				else
+					t.wait(1)
+				end
+
+				if Managers.time:time("game") - said > 30 then
+					said = Managers.time:time("game")
+
+					t.log("%d enemies killed, %d standing", killed, state.standing)
+				end
+			end
+		end)
+		local motion_calls = stop_watching_motion()
+
+		if not ok then
+			error(problem, 0)
+		end
+
+		for where, count in pairs(motion_calls) do
+			t.log("%s: %d calls, %d on a kinematic part, %d on a frozen unit", where, count[1], count[2], count[3])
+		end
+
+		t.log("%d enemies killed", killed)
+
+		return killed, motion_calls
+	end
+
 	-- A line in the results, for what a scenario found that is not a failure
 	function t.log(text, ...)
 		log("%s: " .. text, scenario.name, ...)
@@ -1116,10 +1242,11 @@ local function setup_character(t, suite, career)
 end
 
 -- The game's flags for an empty level where nothing hurts the player. Returns the function that puts them back.
-local function set_quiet_flags()
+local function set_quiet_flags(live)
 	local previous = {}
+	local flags = live and CONFIG.live_flags or CONFIG.quiet_flags
 
-	for flag, value in pairs(CONFIG.quiet_flags) do
+	for flag, value in pairs(flags) do
 		previous[flag] = script_data[flag]
 		script_data[flag] = value
 	end
@@ -1129,7 +1256,7 @@ local function set_quiet_flags()
 			script_data[flag] = value
 		end
 
-		for flag in pairs(CONFIG.quiet_flags) do
+		for flag in pairs(flags) do
 			if previous[flag] == nil then
 				script_data[flag] = nil
 			end
@@ -1239,7 +1366,7 @@ local function run_suite(suite, only_career)
 		log("the game window has no focus: the game ignores input without it")
 	end
 
-	run.restore_flags = set_quiet_flags()
+	run.restore_flags = set_quiet_flags(suite.live)
 
 	-- The suite's level. A suite that needs a level as it is at the start (nothing has died in it yet) has it loaded again.
 	local level = suite.level or CONFIG.default_level
@@ -1499,18 +1626,153 @@ local function keep_calm(unit)
 	end
 end
 
+-- A horde a test asks for (runner.horde_wanted) is sent from the conflict director's update, as the game's own debug horde is: the
+-- horde is placed by the players' positions (Side.ENEMY_PLAYER_AND_BOT_POSITIONS), which are engine vectors that only last through
+-- the frame's update, and the tests' update runs before they are set.
+mod:hook_safe(ConflictDirector, "update", function (self)
+	if not runner.horde_wanted then
+		return
+	end
+
+	runner.horde_wanted = nil
+
+	local ok, problem = pcall(self.debug_spawn_horde, self)
+
+	if not ok then
+		log("the horde could not come: %s", tostring(problem))
+	end
+end)
+
 function runner.calm(unit)
 	calmed[unit] = true
 
 	keep_calm(unit)
 end
 
+-- The frames counted, for telling what happened in the same frame
+runner.frame = 0
+
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	runner.frame = runner.frame + 1
+
 	for unit in pairs(calmed) do
 		if HEALTH_ALIVE[unit] then
 			keep_calm(unit)
 		else
 			calmed[unit] = nil
+		end
+	end
+end
+
+-- The engine's calls that change a part: those whose names start so (add_impulse, push, set_velocity, teleport_position, wake_up...).
+-- A part that animation moves (kinematic) must not be given a push, which PhysX applies as a force.
+local MOTION_CALL_PREFIXES = { "add_", "push", "set_", "teleport", "wake", "put_to_sleep" }
+
+-- Counts, from now until the returned function is called, the calls above by every script, the game's too: for each line that made
+-- one, how many, how many on a kinematic part, and how many on a unit the game froze. The returned function puts the calls back and
+-- gives the counts as { [where] = { calls, kinematic, frozen } }.
+function runner.watch_motion_calls()
+	local counts = {}
+	local originals = {}
+	local names = {}
+
+	for name, value in pairs(Actor) do
+		for _, prefix in ipairs(MOTION_CALL_PREFIXES) do
+			if type(value) == "function" and string.sub(name, 1, #prefix) == prefix then
+				names[#names + 1] = name
+			end
+		end
+	end
+
+	for _, name in ipairs(names) do
+		local original = Actor[name]
+
+		if type(original) == "function" then
+			originals[name] = original
+
+			Actor[name] = function (actor, ...)
+				local caller = debug.getinfo(2, "Sl")
+				local where = string.format("%s %s:%d", name, caller and caller.short_src or "?", caller and caller.currentline or 0)
+				local count = counts[where] or { 0, 0, 0 }
+				local unit = Actor.unit(actor)
+
+				counts[where] = count
+				count[1] = count[1] + 1
+
+				if Actor.is_dynamic(actor) and not Actor.is_physical(actor) then
+					count[2] = count[2] + 1
+				end
+
+				if unit and FROZEN[unit] then
+					count[3] = count[3] + 1
+				end
+
+				return original(actor, ...)
+			end
+		end
+	end
+
+	return function ()
+		for name, original in pairs(originals) do
+			Actor[name] = original
+		end
+
+		return counts
+	end
+end
+
+-- The engine's calls that push a part (PhysX applies them as forces)
+local PUSH_CALLS = { "push", "add_impulse", "add_impulse_at", "add_velocity", "add_velocity_at", "add_angular_velocity", "add_torque", "add_torque_impulse" }
+
+-- Logs, from now until the returned function is called, every part made kinematic (Actor.set_kinematic) and every push on a part that
+-- is kinematic or was made so in the same frame, each with the line of script that did it and the frame (runner.frame). A crash
+-- writes out the log up to it.
+function runner.log_kinematic_pushes()
+	local originals = {}
+	local made_kinematic = setmetatable({}, {
+		__mode = "k",
+	})
+
+	local function where()
+		local caller = debug.getinfo(3, "Sl")
+
+		return string.format("%s:%d", caller and caller.short_src or "?", caller and caller.currentline or 0)
+	end
+
+	originals.set_kinematic = Actor.set_kinematic
+	Actor.set_kinematic = function (actor, kinematic, ...)
+		local frame = runner.frame
+
+		if kinematic then
+			made_kinematic[actor] = frame
+		end
+
+		log("frame %d: set_kinematic %s on a part of %s, by %s", frame, tostring(kinematic), tostring(Actor.unit(actor)), where())
+
+		return originals.set_kinematic(actor, kinematic, ...)
+	end
+
+	for _, name in ipairs(PUSH_CALLS) do
+		local original = Actor[name]
+
+		if type(original) == "function" then
+			originals[name] = original
+			Actor[name] = function (actor, ...)
+				local frame = runner.frame
+				local kinematic = Actor.is_dynamic(actor) and not Actor.is_physical(actor)
+
+				if kinematic or made_kinematic[actor] == frame then
+					log("frame %d: %s on a %s part of %s, by %s", frame, name, kinematic and "kinematic" or "just made kinematic", tostring(Actor.unit(actor)), where())
+				end
+
+				return original(actor, ...)
+			end
+		end
+	end
+
+	return function ()
+		for name, original in pairs(originals) do
+			Actor[name] = original
 		end
 	end
 end

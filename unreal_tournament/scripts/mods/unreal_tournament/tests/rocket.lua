@@ -25,6 +25,16 @@ local CONFIG = {
 	min_jump_speed = 2, -- m/s
 }
 
+-- The horde of "firing into a horde" (t.fight_horde)
+local HORDE = {
+	size = 60,
+	breeds = { "skaven_clan_rat", "skaven_slave" },
+	refill_below = 40,
+	distance = 8, -- m
+	keep = 5, -- m
+	time = 240, -- s
+}
+
 local function is_rocket(action)
 	return action.ut_rocket
 end
@@ -468,6 +478,31 @@ local function scenarios()
 				t.expect(up >= CONFIG.min_jump_speed, "the rocket threw the player up at %.1f m/s at most", up)
 			end,
 		},
+	}
+
+	-- The game crashed in its physics in a horde, with the Rocket Launcher among the weapons. The explosions throw the bodies they kill.
+	-- The player fires single rockets and loaded ones at the nearest enemy of a horde that attacks (t.fight_horde). The game crashing is
+	-- the failure.
+	list[#list + 1] = {
+		name = "firing into a horde",
+		run = function (t)
+			local shots = 0
+			local killed = t.fight_horde(HORDE, function (nearest)
+				t.refill()
+				t.aim_at(nearest)
+				shots = shots + 1
+
+				if shots % 3 == 0 then
+					t.press("action_two", CONFIG.load_interval * 2 + 0.1)
+				else
+					t.press("action_one", 0.05)
+				end
+
+				t.wait(CONFIG.fire_rate)
+			end)
+
+			t.expect(killed > 0, "no enemy was killed")
+		end,
 	}
 
 	for _, breed_name in ipairs(MONSTERS) do
