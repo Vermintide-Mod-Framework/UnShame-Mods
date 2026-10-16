@@ -56,10 +56,12 @@ local VARIANTS = {
 		id = "shield_gun_wh",
 		key = "ut_shield_gun_wh",
 		template = "ut_shield_gun_wh_template",
-		-- The Volley Crossbow's pose, which has no shove of its own: the push sends the melee weapons' push event
+		-- The Volley Crossbow's pose, which has no shove of its own: the push sends the melee weapons' push event. The shield is its aim.
 		pose_3p = "to_repeating_crossbow",
 		punch_3p = "attack_shoot",
 		push_3p = "attack_push",
+		block_3p = "to_zoom",
+		block_end_3p = "to_unzoom",
 	},
 	{
 		base_item = "we_spear",
@@ -78,6 +80,8 @@ local VARIANTS = {
 		pose_3p = "to_repeating_crossbow",
 		punch_3p = "attack_shoot",
 		push_3p = "attack_push",
+		block_3p = "to_zoom",
+		block_end_3p = "to_unzoom",
 	},
 }
 
@@ -1834,6 +1838,12 @@ local function apply_template(template_name)
 			elseif name == "push" then
 				action.anim_event_3p = variant.push_3p
 			end
+		end
+
+		-- The game plays the block's end event on the body too, and the pose's own end event after it
+		if block and variant.block_3p then
+			block.anim_event_3p = variant.block_3p
+			block.anim_end_event_3p = variant.block_end_3p
 		end
 	end
 end
