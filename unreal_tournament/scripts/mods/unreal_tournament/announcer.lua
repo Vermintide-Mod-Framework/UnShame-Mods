@@ -333,6 +333,10 @@ mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_
 		local attacker_breed = attacker_unit and Unit.alive(attacker_unit) and Unit.get_data(attacker_unit, "breed")
 
 		mod:echo("damage taken: %.1f, type %s, source %s, attacker %s", damage_amount, tostring(damage_type), tostring(damage_source_name), attacker_unit == self.unit and "self" or attacker_breed and attacker_breed.name or tostring(attacker_unit))
+
+		if attacker_unit == self.unit then
+			print("[ut_damage_trace] " .. Script.callstack())
+		end
 	end
 
 	if (spree == 0 and next(call_out_kills) == nil) or damage_amount <= 0 or not attacker_unit then
