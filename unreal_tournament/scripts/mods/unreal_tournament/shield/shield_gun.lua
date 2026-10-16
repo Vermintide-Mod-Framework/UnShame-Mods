@@ -309,21 +309,6 @@ local function is_object(unit, actor, owner_unit)
 	return unit ~= owner_unit and (ScriptUnit.has_extension(unit, "health_system") and not Unit.get_data(unit, "breed") or not Actor.is_static(actor))
 end
 
--- The unit that a hit is on: an enemy's shield or the weapon it holds (a unit of its own, an AI inventory item) is the enemy, as a UT
--- pawn's weapon doesn't stop a trace. A hit on the shield is moved to the arm that holds it (ActionUtils.redirect_shield_hit).
-local function owner_of(unit, actor)
-	unit, actor = ActionUtils.redirect_shield_hit(unit, actor)
-
-	local item_extension = ScriptUnit.has_extension(unit, "ai_inventory_item_system")
-	local wielder = item_extension and item_extension.wielding_unit
-
-	if wielder and Unit.alive(wielder) then
-		return wielder, actor
-	end
-
-	return unit, actor
-end
-
 -- The first such thing along the ray
 local function first_object_hit(physics_world, origin, direction, range, owner_unit)
 	local hits = PhysicsWorld.immediate_raycast(physics_world, origin, direction, range * UNIT, "all", "collision_filter", "filter_melee_sweep")
@@ -336,73 +321,6 @@ local function first_object_hit(physics_world, origin, direction, range, owner_u
 			return hits[i]
 		end
 	end
-end
-
--- Where a segment from `from` to `to` first gets to an upright cylinder, as the share of the way along it (0 if it starts inside), or
--- nil if it doesn't
-local function segment_cylinder(from, to, center, radius, half_height)
-	local dx, dy, dz = Vector3.x(to) - Vector3.x(from), Vector3.y(to) - Vector3.y(from), Vector3.z(to) - Vector3.z(from)
-	local fx, fy = Vector3.x(from) - Vector3.x(center), Vector3.y(from) - Vector3.y(center)
-	local fz = Vector3.z(from) - Vector3.z(center)
-	local best
-
-	-- (a segment that starts inside it gets to it where it starts: a gutter runner that jumps from up close)
-	if fx * fx + fy * fy <= radius * radius and math.abs(fz) <= half_height then
-		return 0
-	end
-
-	-- (its side)
-	local a = dx * dx + dy * dy
-	local b = 2 * (fx * dx + fy * dy)
-	local c = fx * fx + fy * fy - radius * radius
-	local discriminant = b * b - 4 * a * c
-
-	if a > 1e-8 and discriminant >= 0 then
-		local t = (-b - math.sqrt(discriminant)) / (2 * a)
-
-		if t >= 0 and t <= 1 and math.abs(fz + dz * t) <= half_height then
-			best = t
-		end
-	end
-
-	-- (its top and bottom)
-	if math.abs(dz) > 1e-8 then
-		for _, side in ipairs({ 1, -1 }) do
-			local t = (side * half_height - fz) / dz
-			local x, y = fx + dx * t, fy + dy * t
-
-			if t >= 0 and t <= 1 and (not best or t < best) and x * x + y * y <= radius * radius then
-				best = t
-			end
-		end
-	end
-
-	return best
-end
-
--- The living enemy whose body the punch's line from `from` to `to` gets to first, and where on the line (meters from `from`). An enemy's
--- body is its bulk as the game's explosions take it (DamageUtils.calculate_aoe_size: an upright cylinder, the breed's aoe_radius wide
--- and aoe_height tall), as UT's trace meets a pawn's collision cylinder. Its hit zones are much thinner, and the line passes them by.
-local function enemy_on_line(owner_unit, from, to)
-	local world = Managers.world:world("level_world")
-	local length = Vector3.distance(from, to)
-	local best_unit, best_t
-
-	for unit in pairs(utils.units_in_radius(world, from, length + 2)) do
-		local breed = Unit.get_data(unit, "breed")
-
-		if HEALTH_ALIVE[unit] and DamageUtils.is_enemy(owner_unit, unit) then
-			local radius, height = DamageUtils.calculate_aoe_size(unit, breed)
-			local center = POSITION_LOOKUP[unit] + Vector3(0, 0, height / 2)
-			local t = segment_cylinder(from, to, center, radius, height / 2)
-
-			if t and (not best_t or t < best_t) then
-				best_unit, best_t = unit, t
-			end
-		end
-	end
-
-	return best_unit, best_t and best_t * length
 end
 
 local function in_reach(owner_unit, physics_world, range)
@@ -423,35 +341,11 @@ local function in_reach(owner_unit, physics_world, range)
 		hit = object
 	end
 
-	-- The enemy the crosshair is on is the one the punch hits. The ray from the middle passes under what the eyes aim at when the
-	-- player looks down at a small enemy, and UT's pawns are wide enough for its trace from the middle to reach them, this game's hit
-	-- zones are not.
-	local aimed = first_beam_hit(raycast(physics_world, first_person_extension:current_position(), direction, range), owner_unit)
-	local aimed_unit = aimed and owner_of(Actor.unit(aimed[4]), aimed[4])
-
-	if aimed_unit and Unit.get_data(aimed_unit, "breed") and HEALTH_ALIVE[aimed_unit] then
-		return aimed, true, direction, origin
-	end
-
-	-- An enemy whose body the line from the middle gets to before what it hit is the one it hits (enemy_on_line), on its spine
-	local length = hit and hit[2] or range * UNIT
-	local enemy, distance = enemy_on_line(owner_unit, origin, origin + direction * length)
-	local spine = enemy and Unit.find_actor(enemy, "c_spine") and Unit.actor(enemy, "c_spine")
-
-	if spine then
-		return {
-			origin + direction * distance,
-			distance,
-			-direction,
-			spine,
-		}, true, direction, origin
-	end
-
 	if not hit then
 		return nil, nil, direction, origin
 	end
 
-	local hit_unit = owner_of(Actor.unit(hit[4]), hit[4])
+	local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
 
 	return hit, Unit.get_data(hit_unit, "breed") ~= nil and HEALTH_ALIVE[hit_unit] or false, direction, origin
 end
@@ -478,7 +372,7 @@ local function targets_in_reach(owner_unit, physics_world, origin, direction, ra
 
 			for i = 1, #(hits or {}) do
 				local hit_actor = hits[i][4]
-				local hit_unit = owner_of(Actor.unit(hit_actor), hit_actor)
+				local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit_actor), hit_actor)
 				local breed = Unit.get_data(hit_unit, "breed")
 				local zone = breed and breed.hit_zones_lookup and breed.hit_zones_lookup[Actor.node(hit_actor)]
 
@@ -522,7 +416,7 @@ local function objects_in_reach(owner_unit, physics_world, origin, direction, ra
 			local to = unit and Actor.position(actor) - origin
 			local distance = to and Vector3.length(to)
 
-			if unit and not found[unit] and not Unit.get_data(owner_of(unit), "breed") and is_object(unit, actor, owner_unit) and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot then
+			if unit and not found[unit] and not Unit.get_data(unit, "breed") and is_object(unit, actor, owner_unit) and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot then
 				local hit
 
 				if filter == "filter_melee_sweep" then
@@ -535,7 +429,7 @@ local function objects_in_reach(owner_unit, physics_world, origin, direction, ra
 							hit = hits[j]
 
 							break
-						elseif hit_unit ~= owner_unit and not (hit_unit and Unit.get_data(owner_of(hit_unit), "breed")) then
+						elseif hit_unit ~= owner_unit and not (hit_unit and Unit.get_data(hit_unit, "breed")) then
 							-- (a wall or another thing in the way)
 							break
 						end
@@ -1016,7 +910,6 @@ local function punch(action, t, power_level, bash)
 	local hit, is_enemy, direction, origin = in_reach(owner_unit, action.physics_world, range)
 	-- (what the part straight ahead is, before the punch's hits can break it and take the part away)
 	local hit_moves = hit and Actor.is_dynamic(hit[4])
-	local hit_static = hit and Actor.is_static(hit[4])
 
 	charge_started[owner_unit] = nil
 
@@ -1034,7 +927,7 @@ local function punch(action, t, power_level, bash)
 
 	-- (the enemy straight ahead is always one: close up, its middle can be outside the cone)
 	if is_enemy then
-		local ahead = owner_of(Actor.unit(hit[4]), hit[4])
+		local ahead = ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
 		local listed = false
 
 		for _, target in ipairs(targets) do
@@ -1133,7 +1026,7 @@ local function punch(action, t, power_level, bash)
 	-- Every thing in reach that is not a character: a door or a barrel takes the punch as from a melee swing, and a loose thing is thrown.
 	-- The one straight ahead is always one.
 	local objects = objects_in_reach(owner_unit, action.physics_world, origin, direction, range)
-	local hit_unit = hit and not is_enemy and owner_of(Actor.unit(hit[4]), hit[4])
+	local hit_unit = hit and not is_enemy and ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
 
 	if hit_unit and not Unit.get_data(hit_unit, "breed") and is_object(hit_unit, hit[4], owner_unit) then
 		local listed = false
@@ -1169,17 +1062,6 @@ local function punch(action, t, power_level, bash)
 	-- A punch that hit an enemy doesn't: UT's one trace either hits a pawn or pushes the player off what it hit, and here the cone can
 	-- have an enemy in it while the ray straight ahead hits the floor.
 	if hit[2] <= CONFIG.range * UNIT and not hit_moves and not hit_enemy then
-		-- TEMPORARY: what the punch saw when it hurts the player
-		if utils.is_local_player_unit(owner_unit) then
-			local alive_targets, hit_targets = 0, index
-
-			for _, target in ipairs(targets) do
-				alive_targets = alive_targets + (HEALTH_ALIVE[target.unit] and 1 or 0)
-			end
-
-			mod:echo("self hit: ray on %s at %.2f m (static %s), targets %d (%d alive now), hits %d, cleave %.2f / %.2f, auto %s", Unit.debug_name(hit_unit), hit[2], tostring(hit_static), #targets, alive_targets, hit_targets, max_attack, max_impact, tostring(mod.shield.debug_auto))
-		end
-
 		local self_damage = (CONFIG.min_self_damage + CONFIG.self_damage_scale * damage_for_step(step)) * CONFIG.self_damage_share
 
 		utils.apply_self_damage(owner_unit, hit[1], -direction, action.item_name, self_damage)
@@ -1201,9 +1083,6 @@ mod.dummy_start_callbacks.shield_gun = function (action, new_action, t, power_le
 		if new_action.ut_shield_bash and utils.is_local_player_unit(action.owner_unit) then
 			mod.shield.last_bash = t
 		end
-
-		-- TEMPORARY: for the chat line of what the punch saw
-		mod.shield.debug_auto = new_action.ut_shield_auto or false
 
 		punch(action, t, power_level, new_action.ut_shield_bash)
 	end
@@ -1266,6 +1145,48 @@ mod.dummy_finish_callbacks.shield_gun = function (action, reason)
 end
 
 -- Reflection (see reflect_dot in CONFIG)
+
+-- Where a segment from `from` to `to` first gets to an upright cylinder, as the share of the way along it (0 if it starts inside), or
+-- nil if it doesn't
+local function segment_cylinder(from, to, center, radius, half_height)
+	local dx, dy, dz = Vector3.x(to) - Vector3.x(from), Vector3.y(to) - Vector3.y(from), Vector3.z(to) - Vector3.z(from)
+	local fx, fy = Vector3.x(from) - Vector3.x(center), Vector3.y(from) - Vector3.y(center)
+	local fz = Vector3.z(from) - Vector3.z(center)
+	local best
+
+	-- (a segment that starts inside it gets to it where it starts: a gutter runner that jumps from up close)
+	if fx * fx + fy * fy <= radius * radius and math.abs(fz) <= half_height then
+		return 0
+	end
+
+	-- (its side)
+	local a = dx * dx + dy * dy
+	local b = 2 * (fx * dx + fy * dy)
+	local c = fx * fx + fy * fy - radius * radius
+	local discriminant = b * b - 4 * a * c
+
+	if a > 1e-8 and discriminant >= 0 then
+		local t = (-b - math.sqrt(discriminant)) / (2 * a)
+
+		if t >= 0 and t <= 1 and math.abs(fz + dz * t) <= half_height then
+			best = t
+		end
+	end
+
+	-- (its top and bottom)
+	if math.abs(dz) > 1e-8 then
+		for _, side in ipairs({ 1, -1 }) do
+			local t = (side * half_height - fz) / dz
+			local x, y = fx + dx * t, fy + dy * t
+
+			if t >= 0 and t <= 1 and (not best or t < best) and x * x + y * y <= radius * radius then
+				best = t
+			end
+		end
+	end
+
+	return best
+end
 
 -- Whether a player holds the Shield Gun's shield up
 local function shield_is_up(unit)
@@ -1637,7 +1558,6 @@ local function build_punch(original, auto)
 	action.damage_window_start = nil
 	action.damage_window_end = nil
 	action.ut_shield_punch = true
-	action.ut_shield_auto = auto or nil
 	action.allowed_chain_actions = {
 		chain("action_one", "default", "action_one", CONFIG.fire_rate),
 		chain("action_one", "default", "action_one_hold", CONFIG.fire_rate),
