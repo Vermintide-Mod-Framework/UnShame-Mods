@@ -6,22 +6,52 @@ local mod = get_mod("unreal_tournament")
 local runner = mod.test_runner
 local shield = mod.shield
 
--- The game keeps up to 24 bodies of dead enemies, counting the living ones, and takes the oldest away past that: it freezes them to use
--- again (UnitSpawner.update_death_watch_list, BreedFreezer), which takes them out of the physics. In a horde a body can be frozen a frame
--- after it dies. With no bodies kept, every dead rat is frozen that soon. Runs fn so, and keeps the bodies again after it.
-local function without_bodies(fn)
-	local max, min = RagdollSettings.max_num_ragdolls, RagdollSettings.min_num_ragdolls
+-- How many frames after a body starts to fall (its parts move by physics) the game takes it away, for each rat of the scenario below.
+-- The punch throws a body from that frame for its kill_hold (0.15 s).
+local TAKE_AWAY_FRAMES = { 0, 2, 4, 6, 8 }
 
-	RagdollSettings.max_num_ragdolls = 0
-	RagdollSettings.min_num_ragdolls = 0
+-- Takes a body away as the game does in a horde: it keeps up to 24 enemies, living and dead, and past that takes the oldest bodies off
+-- its list (UnitSpawner.update_death_watch_list). The body's death reaction then gives it to the BreedFreezer, which takes it out of the
+-- physics to use it again.
+local function take_body_away(unit)
+	local spawner = Managers.state.unit_spawner
+	local death_data = spawner.unit_death_watch_lookup[unit]
 
-	local ok, problem = pcall(fn)
-
-	RagdollSettings.max_num_ragdolls, RagdollSettings.min_num_ragdolls = max, min
-
-	if not ok then
-		error(problem, 0)
+	if not death_data then
+		return false
 	end
+
+	local list, n = spawner.unit_death_watch_list, spawner.unit_death_watch_list_n
+
+	for i = 1, n do
+		if list[i] == death_data then
+			list[i] = list[n]
+			spawner.unit_death_watch_lookup[list[i].unit] = list[i]
+			list[n] = nil
+
+			break
+		end
+	end
+
+	spawner.unit_death_watch_lookup[unit] = nil
+	spawner.unit_death_watch_list_n = n - 1
+	spawner.unit_death_watch_list_dirty = true
+	death_data.data.remove = true
+
+	return true
+end
+
+-- Whether any part of the unit moves by physics
+local function falling(unit)
+	for i = 0, Unit.num_actors(unit) - 1 do
+		local actor = Unit.actor(unit, i)
+
+		if actor and Actor.is_dynamic(actor) and Actor.is_physical(actor) then
+			return true
+		end
+	end
+
+	return false
 end
 
 local function scenarios()
@@ -136,20 +166,29 @@ local function scenarios()
 		{
 			-- The game crashed in its physics during hordes, with the Shield Gun: a punch throws the bodies it kills for a while after
 			-- it, and the game can take them out of the physics in that time. The game crashing is the failure.
-			name = "a punch kills enemies whose bodies the game takes away at once",
+			name = "a punch kills enemies whose bodies the game takes away as they are thrown",
 			run = function (t)
-				local rats = t.spawn_group("skaven_clan_rat", 5, 1.5)
-				local dead, frozen = {}, {}
+				local rats = t.spawn_group("skaven_clan_rat", #TAKE_AWAY_FRAMES, 1.5)
+				local dead, falling_frames, taken, frozen = {}, {}, {}, {}
 
-				if not t.expect(#rats == 5, "the rats could not be spawned") then
+				if not t.expect(#rats == #TAKE_AWAY_FRAMES, "the rats could not be spawned") then
 					return
 				end
 
-				-- Every frame, which rats died and which of the dead the game froze
+				-- Every frame: which rats died, for how many frames each body has fallen, and which the game froze. A body is taken away
+				-- its number of frames after it starts to fall.
 				local function watch()
-					for _, rat in ipairs(rats) do
+					for i, rat in ipairs(rats) do
 						dead[rat] = dead[rat] or not HEALTH_ALIVE[rat]
 						frozen[rat] = frozen[rat] or FROZEN[rat]
+
+						if dead[rat] and not taken[rat] and Unit.alive(rat) and (falling_frames[rat] or falling(rat)) then
+							falling_frames[rat] = (falling_frames[rat] or -1) + 1
+
+							if falling_frames[rat] >= TAKE_AWAY_FRAMES[i] then
+								taken[rat] = take_body_away(rat)
+							end
+						end
 					end
 				end
 
@@ -158,7 +197,7 @@ local function scenarios()
 				t.wait(1)
 
 				-- A punch throws the rats back out of reach, so the player goes up to one still standing before each punch
-				local ok, problem = pcall(without_bodies, function ()
+				local ok, problem = pcall(function ()
 					for _ = 1, 20 do
 						local target
 
@@ -199,7 +238,7 @@ local function scenarios()
 					error(problem, 0)
 				end
 
-				local killed, taken = 0, 0
+				local killed, fell, froze = 0, 0, 0
 
 				for _, rat in ipairs(rats) do
 					if dead[rat] then
@@ -209,14 +248,13 @@ local function scenarios()
 						t.remove(rat)
 					end
 
-					if frozen[rat] then
-						taken = taken + 1
-					end
+					fell = fell + (falling_frames[rat] and 1 or 0)
+					froze = froze + (frozen[rat] and 1 or 0)
 				end
 
-				t.log("%d rats killed, %d of them frozen", killed, taken)
+				t.log("%d rats killed, %d fell, %d frozen", killed, fell, froze)
 				t.expect(killed == #rats, "the punches killed %d of the %d rats", killed, #rats)
-				t.expect(taken > 0, "the game froze none of the bodies")
+				t.expect(froze == #rats, "the game froze %d of the %d bodies", froze, #rats)
 			end,
 		},
 		{
