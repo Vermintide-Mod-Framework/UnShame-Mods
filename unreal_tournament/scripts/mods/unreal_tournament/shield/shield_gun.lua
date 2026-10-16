@@ -94,10 +94,10 @@ local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
 	-- ShieldFire.ShieldRange: how far a wall can be for a punch to throw the player off it (the shield jump), in UT units
 	range = 112,
-	-- How far the punch reaches what it hits, and the bash out of a push, in UT units. They are longer than UT's ShieldRange on
-	-- purpose: these numbers are a guess.
-	hit_range = 150,
-	bash_range = 200,
+	-- How far the punch reaches what it hits, and the bash out of a push, in UT units. The punch reaches as far as UT's ShieldRange,
+	-- and the bash a third farther (a choice).
+	hit_range = 112,
+	bash_range = 150,
 	-- The punch hits every enemy within its range in a cone this wide (degrees) about the way the player looks, that it can see. UT's
 	-- punch hits the one thing in front: this is the mod's own, and a guess.
 	hit_angle = 60,
@@ -123,13 +123,13 @@ local CONFIG = {
 	damage_steps = 12,
 	-- The punch by how far the charge went, each up to the share of the charge given: the game's damage type, a two-handed hammer's light,
 	-- normal and heavy blows, which hit wide ("tank"), which chooses how the game shows a hit and a death (the hit effects: the push of the
-	-- body, its sounds); the share of UT's damage it does, less for a short charge than UT's (a choice); and how many enemies it gets
+	-- body, its sounds); the share of UT's damage it does, less than UT's (a choice); and how many enemies it gets
 	-- through, as a swing with the game's cleave of that name does (light to heavy tank blows that reach about half as far as the
 	-- two-handed hammer's: a choice). Its stagger is still worked out from UT's damage.
 	damage_types = {
 		{ 1 / 3, "light_blunt_tank", 1 / 2, "cleave_distribution_tank_spiked_L" },
-		{ 2 / 3, "blunt_tank", 2 / 3, "cleave_distribution_tank_dual_L" },
-		{ 1, "heavy_blunt_tank", 1, "cleave_distribution_burning_tank_M" },
+		{ 2 / 3, "blunt_tank", 1 / 2, "cleave_distribution_tank_dual_L" },
+		{ 1, "heavy_blunt_tank", 2 / 3, "cleave_distribution_burning_tank_M" },
 	},
 	-- The bash out of a push is the blow of this third of the charge (above), its damage type and share, whatever its time held gives
 	bash_damage_type = 2,
