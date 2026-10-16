@@ -64,6 +64,8 @@ local function watch_rockets(t)
 					seen[unit] = {
 						action = extension._current_action,
 						positions = {},
+						-- (the enemy a homing rocket goes for)
+						target = locomotion_extension and locomotion_extension.target_unit,
 						true_flight = locomotion_extension and locomotion_extension.true_flight_template ~= nil,
 					}
 					seen[#seen + 1] = unit
@@ -91,8 +93,128 @@ local function load_and_fire(t, seconds, observe)
 	t.watch(0.5, observe)
 end
 
-local function scenarios()
+-- The monsters the lock is tried on, and how far ahead they stand (m)
+local MONSTERS = { "chaos_spawn", "skaven_rat_ogre", "chaos_troll", "skaven_stormfiend", "beastmen_minotaur" }
+local MONSTER_DISTANCE = 12
+
+-- Where each hit zone of a unit is: the first actor of the zone, as { zone, x, y, z }. The afro (the zone around the whole body for near
+-- misses) and aux (not a part of the body) are left out.
+local NOT_BODY = {
+	afro = true,
+	aux = true,
+}
+local function hit_zone_points(t, unit)
+	return t.on_main_thread(function ()
+		local breed = Unit.get_data(unit, "breed")
+		local points = {}
+
+		for zone, data in pairs(breed and breed.hit_zones or {}) do
+			local actor_name = data.actors and data.actors[1]
+			local actor = not NOT_BODY[zone] and actor_name and Unit.actor(unit, actor_name)
+
+			if actor then
+				local position = Actor.position(actor)
+
+				points[#points + 1] = { zone, Vector3.x(position), Vector3.y(position), Vector3.z(position) }
+			end
+		end
+
+		table.sort(points, function (a, b)
+			return a[1] < b[1]
+		end)
+
+		return points
+	end)
+end
+
+-- Holds the secondary button with the crosshair on a point of a monster, and says whether the lock came and which enemies the rockets
+-- went for. The rockets are fired at the end, and the lock is gone once they have landed.
+local function locks_on(t, x, y, z)
+	local locked = false
+
+	mod.rocket_lock_callbacks.ut_test = function (owner_unit, is_locked)
+		if owner_unit == t.unit() and is_locked then
+			locked = true
+		end
+	end
+
+	local rockets, observe = watch_rockets(t)
+
+	t.aim_at_point(x, y, z)
+	t.hold("action_two")
+	t.watch(1.2, observe)
+	t.release("action_two")
+	t.watch(2, observe)
+
+	mod.rocket_lock_callbacks.ut_test = nil
+
+	local targets = {}
+
+	for _, unit in ipairs(rockets) do
+		targets[#targets + 1] = rockets[unit].target or false
+	end
+
+	return locked, targets
+end
+
+-- Where the rats of a crowd stand, as { ahead, right } from the player in meters: in front of the monster beside the way to it, at its
+-- sides, and behind it
+local CROWD = { { 8, -1.2 }, { 9, 1.4 }, { 11, -2.5 }, { 12, 2.5 }, { 15, -1 }, { 16, 1.5 } }
+
+local function monster_scenario(breed_name, crowded)
 	return {
+		name = "a lock on a " .. breed_name .. " wherever the crosshair is on its body" .. (crowded and ", with rats around it" or ""),
+		run = function (t)
+			local monster = t.spawn(breed_name, MONSTER_DISTANCE)
+
+			if not t.expect(monster, "the %s could not be spawned", breed_name) then
+				return
+			end
+
+			t.wait(3)
+
+			for _, point in ipairs(hit_zone_points(t, monster)) do
+				-- (each try fires its rockets, so the ammo is filled again, and the rats are made again)
+				t.refill()
+
+				local rats = {}
+
+				if crowded then
+					t.look(0)
+
+					for _, place in ipairs(CROWD) do
+						local ground = t.ground_at(place[1], place[2])
+
+						rats[#rats + 1] = ground and t.spawn_at("skaven_clan_rat", ground[1], ground[2], ground[3])
+					end
+
+					t.wait(1)
+				end
+
+				if HEALTH_ALIVE[monster] then
+					local locked, targets = locks_on(t, point[2], point[3], point[4])
+					local others = 0
+
+					for _, target in ipairs(targets) do
+						if target ~= monster then
+							others = others + 1
+						end
+					end
+
+					t.expect(locked, "no lock with the crosshair on its %s", point[1])
+					t.expect(#targets > 0 and others == 0, "with the crosshair on its %s, %d of %d rockets went for another enemy or none", point[1], others, #targets)
+				end
+
+				for _, rat in ipairs(rats) do
+					t.remove(rat)
+				end
+			end
+		end,
+	}
+end
+
+local function scenarios()
+	local list = {
 		{
 			name = "all the ammo is in the clip",
 			run = function (t)
@@ -318,6 +440,13 @@ local function scenarios()
 			end,
 		},
 	}
+
+	for _, breed_name in ipairs(MONSTERS) do
+		list[#list + 1] = monster_scenario(breed_name)
+		list[#list + 1] = monster_scenario(breed_name, true)
+	end
+
+	return list
 end
 
 runner.add_suite({

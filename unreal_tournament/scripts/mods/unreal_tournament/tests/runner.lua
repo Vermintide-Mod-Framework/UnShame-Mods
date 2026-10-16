@@ -45,6 +45,7 @@ local mod = get_mod("unreal_tournament")
 --   t.health_of(unit)                    a unit's health, 0 when it is dead
 --   t.track_damage(unit)                 adds up all the damage the unit takes from now on, past what kills it, and keeps each hit
 --   t.aim_at(unit)                       turns the player to face the middle of a unit
+--   t.aim_at_point(x, y, z)              turns the player to face a point
 --   t.projectiles(filter)                the units of the player's projectiles whose action the filter accepts
 --   t.explosions()                       a list that is filled with the names of the explosions that happen from now on
 --   t.sounds(prefix)                     a list that is filled with the names of the sound events that start with the prefix
@@ -663,6 +664,8 @@ local function make_context(suite)
 
 			local optional_data = {
 				spawned_func = function (unit)
+					runner.calm(unit)
+
 					spawned = unit
 				end,
 			}
@@ -706,6 +709,8 @@ local function make_context(suite)
 				if hit then
 					Managers.state.conflict:spawn_one(breed, above - Vector3(0, 0, hit_distance), nil, {
 						spawned_func = function (unit)
+							runner.calm(unit)
+
 							spawned[#spawned + 1] = unit
 						end,
 					}, Quaternion.look(-flat, Vector3.up()))
@@ -745,6 +750,23 @@ local function make_context(suite)
 		t.wait(0.1)
 	end
 
+	-- Turns the player to face a point given as x, y, z
+	function t.aim_at_point(x, y, z)
+		on_main_thread(function ()
+			local player = player_unit()
+			local first_person_extension = player and ScriptUnit.has_extension(player, "first_person_system")
+
+			if first_person_extension then
+				local direction = Vector3.normalize(Vector3(x, y, z) - first_person_extension:current_position())
+
+				first_person_extension:set_rotation(Quaternion.look(direction, Vector3.up()))
+			end
+		end)
+
+		-- (the camera follows the view a frame later, see aim_at)
+		t.wait(0.1)
+	end
+
 	-- Turns the player to look this far up (degrees, negative is down), and this far to the left of the way they face (degrees)
 	function t.look(pitch, turn)
 		on_main_thread(function ()
@@ -778,6 +800,8 @@ local function make_context(suite)
 
 			Managers.state.conflict:spawn_one(Breeds[breed_name], position, nil, {
 				spawned_func = function (unit)
+					runner.calm(unit)
+
 					spawned = unit
 				end,
 			}, Quaternion.look(facing, Vector3.up()))
@@ -1449,6 +1473,45 @@ function runner.add_suite(suite)
 	runner.suites[suite.name] = suite
 end
 
+-- Makes an enemy see nobody and pick no one to go for, as the game's dummies do (breed_skaven_dummy_clan_rat), so that it stands
+-- where it was spawned. The game's flag for this (disable_ai_perception) is only read as the game starts. Being hit still gives an
+-- enemy a target (an alert, a stagger, a boss's own reaction), so the target is taken away again every frame, and alerts are not
+-- trusted (only_trust_your_own_eyes).
+local calmed = setmetatable({}, {
+	__mode = "k",
+})
+
+local function keep_calm(unit)
+	local ai_extension = ScriptUnit.has_extension(unit, "ai_system")
+	local blackboard = BLACKBOARDS[unit]
+
+	if ai_extension and ai_extension.set_perception then
+		ai_extension:set_perception("perception_no_seeing", "pick_no_targets")
+	end
+
+	if blackboard then
+		blackboard.only_trust_your_own_eyes = true
+		blackboard.target_unit = nil
+		blackboard.delayed_target_unit = nil
+	end
+end
+
+function runner.calm(unit)
+	calmed[unit] = true
+
+	keep_calm(unit)
+end
+
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	for unit in pairs(calmed) do
+		if HEALTH_ALIVE[unit] then
+			keep_calm(unit)
+		else
+			calmed[unit] = nil
+		end
+	end
+end
+
 -- Puts a suite's weapon in the player's hands, and leaves it there, for looking at it and playing with it. The loadout that is replaced
 -- is saved, as it is for a suite, and put back with /ut_equip back.
 function runner.equip(suite_name, career)
@@ -1685,7 +1748,9 @@ mod:command("ut_spawn", "<breed> [distance] - spawns an enemy that distance (5 m
 		return
 	end
 
-	Managers.state.conflict:spawn_one(breed, above - Vector3(0, 0, hit_distance), nil, {}, Quaternion.look(-flat, Vector3.up()))
+	Managers.state.conflict:spawn_one(breed, above - Vector3(0, 0, hit_distance), nil, {
+		spawned_func = runner.calm,
+	}, Quaternion.look(-flat, Vector3.up()))
 end)
 
 mod:command("ut_quiet", "on | off - keeps the level empty and the player unhurt, like a suite does", function (argument)

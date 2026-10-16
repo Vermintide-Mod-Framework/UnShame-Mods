@@ -781,24 +781,51 @@ local function wielding_rocket_launcher(unit)
 	return utils.wielded_template_name(unit) == TEMPLATE_NAME
 end
 
--- Returns the enemy closest to the aim that is in front of the player, close enough to the aim and not behind a wall. If no
--- enemy is on the aim, the current target stays the candidate while it is within the wider lock_keep_dot of the aim.
+-- Returns whether an enemy can be locked on to
+local function lockable(candidate)
+	local breed = HEALTH_ALIVE[candidate] and AiUtils.unit_breed(candidate)
+
+	return breed and not breed.no_autoaim and not breed.is_player
+end
+
+-- Returns the enemy whose body the crosshair is on, within the lock's range: the first thing a ray along the aim meets, if that is an
+-- enemy (its hit zones, not the afro around it for near misses) and not the level.
+local function enemy_under_crosshair(unit, physics_world, origin, forward)
+	local hits = PhysicsWorld.immediate_raycast_actors(physics_world, origin, forward, CONFIG.lock_range, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
+	local hit = utils.first_beam_hit(hits, unit)
+	-- (a hit on an enemy's shield is a hit on the enemy)
+	local hit_unit = hit and ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
+
+	if hit_unit and lockable(hit_unit) then
+		return hit_unit
+	end
+end
+
+-- Returns the enemy to lock on to. The enemy whose body the crosshair is on comes first: a big one is on the aim wherever it is aimed at,
+-- and an enemy nearer the aim's line elsewhere does not take its place. Otherwise it is the enemy closest to the aim that is in front of
+-- the player, close enough to the aim and not behind a wall. If no enemy is on the aim, the current target stays the candidate while it
+-- is within the wider lock_keep_dot of the aim.
 local function pick_lock_candidate(unit, first_person_extension, current_target)
 	local side = Managers.state.side.side_by_unit[unit]
 	local origin = first_person_extension:current_position()
 	local forward = Quaternion.forward(first_person_extension:current_rotation())
+	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+	local under_crosshair = enemy_under_crosshair(unit, physics_world, origin, forward)
+
+	if under_crosshair then
+		return under_crosshair
+	end
+
 	local ai_units = {}
 	local count = AiUtils.broadphase_query(origin + forward * (CONFIG.lock_range / 2), CONFIG.lock_range / 2 + 2, ai_units, side and side.enemy_broadphase_categories)
-	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
 	local best_unit
 	local best_dot = CONFIG.lock_aim_dot
 	local kept_unit
 
 	for i = 1, count do
 		local candidate = ai_units[i]
-		local breed = HEALTH_ALIVE[candidate] and AiUtils.unit_breed(candidate)
 
-		if breed and not breed.no_autoaim and not breed.is_player then
+		if lockable(candidate) then
 			local offset = spine_position(candidate) - origin
 			local distance = Vector3.length(offset)
 
