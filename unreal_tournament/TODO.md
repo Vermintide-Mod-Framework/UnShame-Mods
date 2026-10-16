@@ -14,3 +14,7 @@ Which careers get which weapon, and from which base, is in `WEAPON_PLAN.md`.
 6. **Minigun.** From the repeater.
 7. **Redeemer.** From the Trollhammer Torpedo.
 8. **Link Gun for all of Kerillian's careers.** The base and the resource (heat or ammo) are open.
+9. **Shield Gun for the Warrior Priest.** He can't use the Billhook, so his copy needs a base of his own (his one-handed hammer was
+   used before). His third person body is his own (`witch_hunter_warrior_priest`), with only his weapons' animations. Check with
+   `Unit.has_animation_event` which poses it has (the Volley Crossbow's `to_repeating_crossbow`, `to_zoom`, `to_unzoom` and
+   `attack_shoot`, or one of his own weapons') before choosing his third person pose and grip.
