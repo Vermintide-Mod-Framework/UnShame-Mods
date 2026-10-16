@@ -7,7 +7,8 @@ local mod = get_mod("unreal_tournament")
 --
 -- The suites run in a mission, Righteous Stand (CONFIG.default_level), on Legend (CONFIG.difficulty), with the level kept empty and the
 -- player unhurt (the quiet flags).
--- The level is loaded once for a run, and the player is taken back to the level they were in at the end.
+-- The level is loaded at the start of a run, whatever level the player is in, so that nothing is left in it from before, and the player
+-- is taken back to the level they were in at the end.
 --
 -- A scenario is a function of the test context `t`. It runs as a coroutine, one step a frame, so it can wait for the game:
 --   t.wait(seconds)                      waits that long
@@ -1242,10 +1243,10 @@ local function run_suite(suite, only_career)
 
 	-- The suite's level. A suite that needs a level as it is at the start (nothing has died in it yet) has it loaded again.
 	local level = suite.level or CONFIG.default_level
-	-- (the level is loaded again if it is at another difficulty)
+	-- (the level is loaded again if it is at another difficulty, and at the start of a run, so that nothing is left in it from before)
 	local wrong_difficulty = Managers.state.difficulty:get_difficulty() ~= CONFIG.difficulty
 
-	if current_level_key() ~= level or suite.fresh_level or wrong_difficulty then
+	if current_level_key() ~= level or suite.fresh_level or wrong_difficulty or not run.level_loaded then
 		log("loading %s", level)
 
 		if not load_level(t, level) then
@@ -1257,6 +1258,8 @@ local function run_suite(suite, only_career)
 
 			return
 		end
+
+		run.level_loaded = true
 	end
 
 	for _, career in ipairs(careers) do
