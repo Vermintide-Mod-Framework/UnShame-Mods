@@ -294,8 +294,23 @@ end
 -- What is in reach in front of a player: the first thing the ray from their middle, the way they look, hits within the range (UT
 -- units), and whether it is an enemy. The ray finds enemies and the level as a shot does, and the things a melee swing hits (doors,
 -- barrels, loose things, bodies) as the swing does (filter_melee_sweep), whichever is nearer.
+-- The engine fills the same tables with the hits of the next ray, so the hits of a ray that are kept past the next one are copies. A
+-- punch kept the hit straight ahead while it cast its rays at the enemies in its cone, and one of those started in the player's own
+-- head: the punch then hit the player.
+local function copies(hits)
+	local copied = {}
+
+	for i = 1, #(hits or {}) do
+		local hit = hits[i]
+
+		copied[i] = { hit[1], hit[2], hit[3], hit[4] }
+	end
+
+	return copied
+end
+
 local function raycast(physics_world, origin, direction, range)
-	return PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, range * UNIT, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
+	return copies(PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, range * UNIT, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only"))
 end
 
 -- Whether a melee swing that hits this actor hits a thing that is not a character: one with health (a door, a barrel), or one whose part
@@ -311,9 +326,9 @@ end
 
 -- The first such thing along the ray, past the dead bodies
 local function first_object_hit(physics_world, origin, direction, range, owner_unit)
-	local hits = PhysicsWorld.immediate_raycast(physics_world, origin, direction, range * UNIT, "all", "collision_filter", "filter_melee_sweep")
+	local hits = copies(PhysicsWorld.immediate_raycast(physics_world, origin, direction, range * UNIT, "all", "collision_filter", "filter_melee_sweep"))
 
-	for i = 1, #(hits or {}) do
+	for i = 1, #hits do
 		local actor = hits[i][4]
 		local unit = actor and Actor.unit(actor)
 
@@ -446,9 +461,9 @@ local function objects_in_reach(owner_unit, physics_world, origin, direction, ra
 				local hit
 
 				if filter == "filter_melee_sweep" then
-					local hits = PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, range * UNIT, "all", "collision_filter", filter)
+					local hits = copies(PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, range * UNIT, "all", "collision_filter", filter))
 
-					for j = 1, #(hits or {}) do
+					for j = 1, #hits do
 						local hit_unit = hits[j][4] and Actor.unit(hits[j][4])
 
 						if hit_unit == unit then
@@ -465,9 +480,9 @@ local function objects_in_reach(owner_unit, physics_world, origin, direction, ra
 
 					if not wall or wall_distance >= distance - 0.05 then
 						-- (where the ray meets the thing's surface, or its middle if the ray misses it)
-						local hits = PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, distance + 1, "all", "collision_filter", filter)
+						local hits = copies(PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, distance + 1, "all", "collision_filter", filter))
 
-						for j = 1, #(hits or {}) do
+						for j = 1, #hits do
 							if hits[j][4] and Actor.unit(hits[j][4]) == unit then
 								hit = hits[j]
 
