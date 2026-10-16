@@ -661,6 +661,7 @@ mod:hook(PlayerUnitLocomotionExtension, "update_script_driven_movement", functio
 	-- The game scales its dt by this inside the update, and clears it
 	local moved_dt = dt * (self._script_movement_time_scale or 1)
 	local start_z = Unit.local_position(unit, 0).z
+	local speed_before = self.velocity_current:unbox().z
 
 	self._script_driven_gravity_scale = gravity_scale * CONFIG.gravity_multiplier
 
@@ -669,17 +670,24 @@ mod:hook(PlayerUnitLocomotionExtension, "update_script_driven_movement", functio
 	self._script_driven_gravity_scale = gravity_scale
 
 	local velocity = self.velocity_current:unbox()
+	local mover = Unit.mover(unit)
 
-	-- (the upward speed in the air before the player lands, for the fall damage below)
+	-- The upward speed in the air before the player lands, for the fall damage below. The game's velocity is how far the mover moved
+	-- in the frame, and the floor cuts the move of the frame that reaches it short. That frame's speed is the one the player came
+	-- down with, and this frame's gravity.
 	if not self:is_on_ground() then
-		fall_speeds[unit] = velocity.z
+		if Mover.collides_down(mover) then
+			local gravity = PlayerUnitMovementSettings.get_movement_settings_table(unit).gravity_acceleration
+
+			fall_speeds[unit] = speed_before - gravity * gravity_scale * CONFIG.gravity_multiplier * moved_dt
+		else
+			fall_speeds[unit] = velocity.z
+		end
 	end
 
 	if not calculate_fall_velocity or velocity.z <= 0 or moved_dt <= 0 then
 		return
 	end
-
-	local mover = Unit.mover(unit)
 
 	if not Mover.collides_up(mover) and not Mover.collides_sides(mover) then
 		return

@@ -5,7 +5,8 @@ local mod = get_mod("unreal_tournament")
 -- with /ut_test all. /ut_test <suite>:<words> runs only the scenarios whose names have the words (with _ for a space). It prints what
 -- passed and failed to the chat and to the game's console log.
 --
--- The suites run in a mission, Righteous Stand (CONFIG.default_level), with the level kept empty and the player unhurt (the quiet flags).
+-- The suites run in a mission, Righteous Stand (CONFIG.default_level), on Legend (CONFIG.difficulty), with the level kept empty and the
+-- player unhurt (the quiet flags).
 -- The level is loaded once for a run, and the player is taken back to the level they were in at the end.
 --
 -- A scenario is a function of the test context `t`. It runs as a coroutine, one step a frame, so it can wait for the game:
@@ -83,6 +84,9 @@ local CONFIG = {
 	-- The level the suites run in, unless a suite names another: Righteous Stand, a mission, where the game's own rules apply (the Keep
 	-- has none of the fall damage, for one)
 	default_level = "military",
+	-- The difficulty the level is loaded at, Legend, so that the numbers do not change with the difficulty of the last game (the power
+	-- cap and the enemies' health are the difficulty's)
+	difficulty = "hardest",
 	-- Where the player is put after each respawn and before each test, for each level, so that what is ahead of them is the same every
 	-- time: the position (m) and the way they face (degrees about the up axis). A suite can name its own place. The other places of a
 	-- level are for the tests that need something there, by name (t.go_to).
@@ -1115,8 +1119,15 @@ local function load_level(t, level_key)
 
 	run.loading = true
 
+	-- (the game takes the difficulty of the next level from this setting first, LevelTransitionHandler.apply_defaults_to_level_data)
 	t.on_main_thread(function ()
+		local difficulty_setting = script_data.current_difficulty_setting
+
+		script_data.current_difficulty_setting = CONFIG.difficulty
+
 		Managers.mechanism:debug_load_level(level_key, 0)
+
+		script_data.current_difficulty_setting = difficulty_setting
 	end)
 
 	-- The level starts with an intro fly-over. It is skipped as soon as it starts, the way the game's own tests skip it, so the test begins in
@@ -1207,8 +1218,10 @@ local function run_suite(suite, only_career)
 
 	-- The suite's level. A suite that needs a level as it is at the start (nothing has died in it yet) has it loaded again.
 	local level = suite.level or CONFIG.default_level
+	-- (the level is loaded again if it is at another difficulty)
+	local wrong_difficulty = Managers.state.difficulty:get_difficulty() ~= CONFIG.difficulty
 
-	if current_level_key() ~= level or suite.fresh_level then
+	if current_level_key() ~= level or suite.fresh_level or wrong_difficulty then
 		log("loading %s", level)
 
 		if not load_level(t, level) then
@@ -1245,6 +1258,8 @@ local function run_suite(suite, only_career)
 				if not go_to_place(t, suite) then
 					break
 				end
+
+				run.lost_focus = false
 
 				local ok, error_value = call_waiting(function ()
 					-- (a scenario can start in a named place of the level instead)
@@ -1288,6 +1303,10 @@ local function run_suite(suite, only_career)
 					log("SKIP %s: %s", scenario.name, scenario.skipped)
 				elseif #scenario.failures > 0 then
 					summary.failed = summary.failed + 1
+
+					if run.lost_focus then
+						log("%s: the game window lost the focus while it ran, and the game ignored the input", scenario.name)
+					end
 				else
 					summary.passed = summary.passed + 1
 					log("PASS %s", scenario.name)
@@ -1521,6 +1540,11 @@ local function step(dt)
 
 	for _, watcher in ipairs(runner.frame_watchers) do
 		pcall(watcher)
+	end
+
+	-- (the game ignores the player's input without the focus, and a scenario that presses buttons then fails)
+	if not Window.has_focus() then
+		run.lost_focus = true
 	end
 
 	local waiting = run.waiting

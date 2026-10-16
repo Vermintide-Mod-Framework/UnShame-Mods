@@ -406,7 +406,8 @@ local function scenarios()
 				local settings = movement_settings(t)
 				local max_speed = CONFIG.ut_max_fall_speed * settings.jump * CONFIG.jump_multiplier / CONFIG.ut_jump_speed
 
-				for _, height in ipairs({ 8, 25 }) do
+				-- (the long fall three times: the landing frame falls on a different part of the last stretch each time)
+				for _, height in ipairs({ 8, 25, 25, 25 }) do
 					local x, y, z = t.position()
 					local taken = t.track_damage(t.unit())
 					local speed = 0
