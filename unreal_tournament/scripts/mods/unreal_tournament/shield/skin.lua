@@ -432,10 +432,10 @@ local function new_skin(setting_id)
 		-- The inspect pose brings the gun towards the middle of the view, level, and turns it to the left about its middle until it is nearly
 		-- across the view, with its right side towards the player. It is still held: it runs off the bottom and the right of the view. The
 		-- turn goes with the move, as the Rocket Launcher's does. The place was checked with preview_weapon.py shield: from 240 of 960
-		-- across and 267 of 540 down, to both edges.
+		-- across and 267 of 540 down, to both edges; it was lowered a little after that.
 		inspect_pose_right = -16,
 		inspect_pose_forward = 0,
-		inspect_pose_up = 2,
+		inspect_pose_up = 1,
 		inspect_pose_roll = 0,
 		inspect_pose_pitch = 0,
 		inspect_pose_yaw = 75,
