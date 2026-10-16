@@ -412,15 +412,18 @@ local GRIPS = {
 		yaw = 0,
 		pitch = 0,
 		roll = 0,
+		follow_game_unit = 1,
 	},
-	-- The grudge-raker's pose: the stock along the right forearm, the left hand under the front, pointing ahead, left and down
+	-- The grudge-raker's pose: the mesh is turned as the game's unit in the hand is, with no turn of its own, which holds it as the
+	-- grudge-raker is held (and on the hero screen too, where it then moves with the hand)
 	shield_gun_dr = {
 		grip_right = 0,
 		grip_forward = 0,
 		grip_up = 0,
-		yaw = 30,
-		pitch = -15,
+		yaw = 0,
+		pitch = 0,
 		roll = 0,
+		follow_game_unit = 2,
 	},
 }
 
@@ -481,7 +484,7 @@ local function new_skin(setting_id)
 			yaw = grip.yaw,
 			pitch = grip.pitch,
 			roll = grip.roll,
-			follow_game_unit = 1,
+			follow_game_unit = grip.follow_game_unit,
 			follow_calibrate_seconds = 1,
 			muzzle_right = 0,
 			muzzle_forward = 68,
