@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- Weapon skins in the menus. The hero on the equipment screen holds the weapon's mesh instead of the game's unit (weapon_skin_third_person.lua
+-- Weapon skins in the menus. The hero on the equipment screen holds the weapons' meshes instead of the game's units (weapon_skin_third_person.lua
 -- does the same in the world). The item inspection (LootItemUnitPreviewer) shows the mesh instead of the staff. The previewers keep
 -- spawning the game's units, so those are hidden and the mesh is shown in their place.
 
@@ -26,22 +26,37 @@ end
 
 -- The hero of the equipment screen (HeroPreviewer)
 
--- The previewers whose hero holds the mesh, as [previewer] = { character, skin }
+-- The previewer's slots that can hold a weapon with a skin, by the slot type it uses and the slot's name
+local SLOTS = {
+	melee = "slot_melee",
+	ranged = "slot_ranged",
+}
+
+-- The previewers whose hero holds a mesh, as [previewer] = { [slot type] = { character, skin } }
 local holding = {}
 
-local function release_hero(previewer)
-	local entry = holding[previewer]
+local function release_slot(previewer, slot_type)
+	local entries = holding[previewer]
+	local entry = entries and entries[slot_type]
 
 	if entry then
-		holding[previewer] = nil
+		entries[slot_type] = nil
 
 		entry.skin.third_person.release_from_menu(entry.character)
 	end
 end
 
--- The previewer's units for the ranged weapon (right and left hand)
-local function ranged_units(previewer)
-	local slot = InventorySettings.slots_by_name.slot_ranged
+local function release_hero(previewer)
+	for slot_type in pairs(SLOTS) do
+		release_slot(previewer, slot_type)
+	end
+
+	holding[previewer] = nil
+end
+
+-- The previewer's units for the weapon in a slot (right and left hand)
+local function slot_units(previewer, slot_name)
+	local slot = InventorySettings.slots_by_name[slot_name]
 	local equipment_units = previewer._equipment_units[slot.slot_index]
 	local units = {}
 
@@ -60,29 +75,31 @@ end
 for _, previewer_class in ipairs({ HeroPreviewer, MenuWorldPreviewer }) do
 	mod:hook_safe(previewer_class, "post_update", function (self)
 		local character = self.character_unit
-		local skin = character and Unit.alive(character) and skin_of(self:item_name_by_slot_type("ranged")) or nil
-		local item_info = self._item_info_by_slot.ranged
-		-- Most screens give the previewer the item's backend id, not its skin.
-		local skin_key = item_info and (item_info.skin_name or item_info.backend_id and Managers.backend:get_interface("items"):get_skin(item_info.backend_id))
-		local entry = holding[self]
 
-		if entry and (entry.skin ~= skin or entry.character ~= character) then
-			release_hero(self)
+		for slot_type, slot_name in pairs(SLOTS) do
+			local skin = character and Unit.alive(character) and skin_of(self:item_name_by_slot_type(slot_type)) or nil
+			local item_info = self._item_info_by_slot[slot_type]
+			-- Most screens give the previewer the item's backend id, not its skin.
+			local skin_key = item_info and (item_info.skin_name or item_info.backend_id and Managers.backend:get_interface("items"):get_skin(item_info.backend_id))
+			local entry = holding[self] and holding[self][slot_type]
+
+			if entry and (entry.skin ~= skin or entry.character ~= character) then
+				release_slot(self, slot_type)
+			end
+
+			if skin then
+				-- The mesh is shown while its weapon is in hand. The game's units of the slot stay hidden, in hand or not.
+				local visible = self._wielded_slot_type == slot_type and self.character_unit_visible ~= false
+
+				skin.third_person.hold_in_menu(character, self.world, slot_units(self, slot_name), visible, skin_key)
+
+				holding[self] = holding[self] or {}
+				holding[self][slot_type] = {
+					character = character,
+					skin = skin,
+				}
+			end
 		end
-
-		if not skin then
-			return
-		end
-
-		-- The mesh is shown while the ranged weapon is in hand.
-		local visible = self._wielded_slot_type == "ranged" and self.character_unit_visible ~= false
-
-		skin.third_person.hold_in_menu(character, self.world, ranged_units(self), visible, skin_key)
-
-		holding[self] = {
-			character = character,
-			skin = skin,
-		}
 	end)
 
 	-- The mesh is released before the previewer destroys its units.
