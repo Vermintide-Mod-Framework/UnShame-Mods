@@ -527,7 +527,86 @@ mod:hook_safe(PlayerCharacterStateJumping, "update", function (self, unit, input
 	end
 end)
 
+-- UT's cheats "fly" and "walk" (CheatManager.Fly and Walk, and PlayerController's state PlayerFlying): the player flies the way they
+-- look, forward, back and to the sides, with no gravity, and stops when no key is held. They still collide with the level. The speed is
+-- UT's AirSpeed, which is its GroundSpeed (440), so this game's run speed. "walk" lands them again. The fall from where the flight ends
+-- is the only one that counts. It works whether the Movement option is on or not.
+local flying_unit
+
+-- The velocity of the flight now
+local function flight_velocity(unit)
+	local input_extension = ScriptUnit.extension(unit, "input_system")
+	local first_person_extension = ScriptUnit.extension(unit, "first_person_system")
+	local move = CharacterStateHelper.get_movement_input(input_extension)
+	local rotation = first_person_extension:current_rotation()
+	local direction = Quaternion.forward(rotation) * Vector3.y(move) + Quaternion.right(rotation) * Vector3.x(move)
+
+	if Vector3.length(direction) < 0.01 then
+		return Vector3.zero()
+	end
+
+	return Vector3.normalize(direction) * PlayerUnitMovementSettings.get_movement_settings_table(unit).move_speed
+end
+
+local function fly(unit)
+	local locomotion_extension = ScriptUnit.extension(unit, "locomotion_system")
+	local velocity = flight_velocity(unit)
+
+	-- (a flight up from the ground leaves it, which makes the player fall: the falling state then keeps the flight going)
+	if locomotion_extension:is_on_ground() and Vector3.z(velocity) > 0.01 then
+		locomotion_extension:force_on_ground(false)
+	end
+
+	locomotion_extension:set_maximum_upwards_velocity(math.huge)
+	locomotion_extension:set_forced_velocity(velocity)
+	locomotion_extension:set_wanted_velocity(velocity)
+
+	-- (the height a fall is measured from is where the flight is; on the ground it would also start a landing every frame)
+	if not locomotion_extension:is_on_ground() then
+		ScriptUnit.extension(unit, "status_system"):set_falling_height(true, POSITION_LOOKUP[unit].z)
+	end
+end
+
+mod:command("fly", "- you fly the way you look, with no gravity, until /walk (UT's fly)", function ()
+	local player = Managers.player:local_player_safe()
+	local unit = player and player.player_unit
+
+	if unit and Unit.alive(unit) then
+		flying_unit = unit
+
+		mod:echo("You feel much lighter")
+	end
+end)
+
+mod:command("walk", "- ends /fly", function ()
+	flying_unit = nil
+end)
+
+-- The flight is the player's own character's. It ends with that character (a death, a new level).
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	if not flying_unit then
+		return
+	end
+
+	local player = Managers.player:local_player_safe()
+
+	if not player or player.player_unit ~= flying_unit or not Unit.alive(flying_unit) then
+		flying_unit = nil
+
+		return
+	end
+
+	fly(flying_unit)
+end
+
 mod:hook_safe(PlayerCharacterStateFalling, "update", function (self, unit, input, dt, context, t)
+	-- (after the falling state has set the speed it wants, the flight sets its own)
+	if unit == flying_unit then
+		fly(unit)
+
+		return
+	end
+
 	if is_movement_enabled() and not try_wall_dodge(self, unit, t) then
 		try_double_jump(self, unit, t)
 	end
@@ -548,6 +627,19 @@ local fall_speeds = setmetatable({}, {
 -- takes away the speed that goes into what the player hit. Here the upward speed is cut to what the player moved when the mover
 -- hit something, as the game already does for the speed sideways.
 mod:hook(PlayerUnitLocomotionExtension, "update_script_driven_movement", function (func, self, unit, dt, t, calculate_fall_velocity, ...)
+	-- (a flight has no gravity, see /fly)
+	if unit == flying_unit then
+		local gravity_scale = self._script_driven_gravity_scale
+
+		self._script_driven_gravity_scale = 0
+
+		func(self, unit, dt, t, calculate_fall_velocity, ...)
+
+		self._script_driven_gravity_scale = gravity_scale
+
+		return
+	end
+
 	if not is_movement_enabled() then
 		return func(self, unit, dt, t, calculate_fall_velocity, ...)
 	end
