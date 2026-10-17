@@ -306,8 +306,9 @@ local function new(def)
 	-- A point of the view in UT units from the eye (forward, right, up), where the weapon's projection draws it, moved by the weapon's
 	-- bob as the model is (UT's GetEffectStart adds CalcDrawOffset, which has the bob in it). Returns the first person unit, which the
 	-- model is linked to, and the point in its frame (x right, y ahead, z up), for particles that are linked to the unit so that they
-	-- move with the model (skin_particles.lua).
-	function self.view_point_in_view(forward, right, up)
+	-- move with the model (skin_particles.lua). distance_scale draws the point that many times further from the eye (1 if not given), for
+	-- an effect that is drawn further away and larger to look the same. The view shake moves it as far as the camera all the same.
+	function self.view_point_in_view(forward, right, up, distance_scale)
 		local fp = local_first_person()
 
 		if not skin or not fp or not skin.view_across_scale then
@@ -322,7 +323,7 @@ local function new(def)
 			x = -x
 		end
 
-		return fp.first_person_unit, Vector3(x, along * forward, across * (up + bob_up)) + view_shake_offset()
+		return fp.first_person_unit, Vector3(x, along * forward, across * (up + bob_up)) * (distance_scale or 1) + view_shake_offset()
 	end
 
 	-- Returns how long the game takes to wield the weapon. The weapon can't be used for that long.

@@ -144,13 +144,8 @@ local function view_point(api, skin, forward, right, up)
 		return nil
 	end
 
-	local parent, point = api.view_point_in_view(forward, right, up)
-
-	if not parent then
-		return nil
-	end
-
-	return parent, point * CONFIG.behind_gun
+	-- (behind_gun times further, but moved by the view shake as far as the camera is, or the shake would move it behind_gun times as far)
+	return api.view_point_in_view(forward, right, up, CONFIG.behind_gun)
 end
 
 -- GetEffectStart: the weapon's place (PlayerViewOffset, scaled by CalcDrawOffset) and EffectOffset from it, as forward, right, up
