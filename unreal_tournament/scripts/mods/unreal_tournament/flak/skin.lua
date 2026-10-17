@@ -377,8 +377,8 @@ skin_api = mod.weapon_skin.new({
 		scale = 1,
 		-- (moved back and up from the mesh's origin, set in the game)
 		grip_right = 0,
-		grip_forward = 20,
-		grip_up = -8,
+		grip_forward = 10,
+		grip_up = -4,
 		yaw = 0,
 		pitch = 0,
 		roll = 0,
