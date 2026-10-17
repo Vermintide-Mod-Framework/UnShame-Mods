@@ -124,7 +124,8 @@ end
 local INSTAGIB_SKIN = "ut_shock_rifle_skin_instagib"
 
 -- NewWeapons2004.NewShockRifle_3rd, ShockAttachment's mesh (convert_static.py shock_3rd), at UT's size in a player's hand: it runs along
--- its forward from its grip, which is its origin, to the muzzle (its Bone_Flash)
+-- its forward from its grip, which is its origin, to the muzzle (its Bone_Flash). It sits a little lower and further back in the hand
+-- than its origin, so that the hand holds the pistol grip.
 local THIRD_PERSON = {
 	id = SETTING_ID,
 	template = TEMPLATE_NAME,
@@ -133,8 +134,8 @@ local THIRD_PERSON = {
 	meters_per_unit = 0.02 * 0.4,
 	scale = 1,
 	grip_right = 0,
-	grip_forward = 0,
-	grip_up = 0,
+	grip_forward = 10,
+	grip_up = 8,
 	yaw = 0,
 	pitch = 0,
 	roll = 0,
