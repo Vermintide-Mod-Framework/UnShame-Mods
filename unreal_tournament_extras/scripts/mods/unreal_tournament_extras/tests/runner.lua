@@ -52,6 +52,7 @@ local ut = get_mod("unreal_tournament")
 --                                        (in the ranged slot if no slot is given), that stands and does only what the test tells it. It
 --                                        is taken away after the scenario.
 --   t.bot_aim(bot, unit), t.bot_press(bot, button)   turns the bot to face a unit, and has it press "fire" or "charge_shot"
+--   t.bot_look(bot, direction)           turns the bot to look along a direction ({ x, y, z })
 --   t.bot_defend(bot, on)                has the bot hold its block, or let it go
 --   t.after(fn)                          calls fn after the scenario, whether it passed or not
 --   t.aim_at(unit)                       turns the player to face the middle of a unit
@@ -1137,6 +1138,20 @@ local function make_context(suite)
 			if input_extension and Unit.alive(unit) then
 				input_extension:set_aim_position(Unit.world_position(unit, 0) + Vector3(0, 0, 1))
 				input_extension:set_aiming(true)
+			end
+		end)
+
+		t.wait(0.5)
+	end
+
+	-- Turns a bot of t.add_bot to look the way of a direction ({ x, y, z }), and keeps it looking there
+	function t.bot_look(bot, direction)
+		on_main_thread(function ()
+			local input_extension = Unit.alive(bot) and ScriptUnit.has_extension(bot, "input_system")
+
+			if input_extension then
+				input_extension:set_aim_rotation(Quaternion.look(Vector3(direction[1], direction[2], direction[3]), Vector3.up()))
+				input_extension:set_aiming(true, false, true)
 			end
 		end)
 

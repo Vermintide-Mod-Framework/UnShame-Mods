@@ -1459,6 +1459,8 @@ mod:hook(PlayerProjectileImpactUnitExtension, "update", function (func, self, un
 end)
 
 mod.shield.max_reflections = CONFIG.max_reflections
+-- (in meters: a reflected shot starts where it got to this cylinder, which the extras mod's tests aim from)
+mod.shield.pawn_radius = CONFIG.pawn_radius * UNIT
 
 -- What is left of a fall's damage (movement.lua) after the shield takes its part. UT's arc is from where the fall hits, the player's
 -- middle, so it is under them, and the player has to look down into it (CheckReflect's HitDir is straight up).

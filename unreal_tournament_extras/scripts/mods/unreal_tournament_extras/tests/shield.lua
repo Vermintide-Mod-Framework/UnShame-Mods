@@ -61,6 +61,16 @@ local SHOCK_SHOT_GAP = 2 -- s
 -- The second shield of the reflections from shield to shield: Bardin as an Ironbreaker (his second career) with his Shield Gun
 local SHIELD_BOT_PROFILE = "dwarf_ranger"
 local SHIELD_BOT_CAREER = 2
+-- The rat that the shot goes on to from Bardin's shield: on the open square ahead, 45 degrees to the other side of Sienna (the player,
+-- who faces Bardin, turns this far the other way to put it there), and this far from the player. From Bardin it is 46 degrees off the
+-- way to the player, inside his shield's arc, and the way to it passes 4 m from the player and 1.5 m from Sienna. (Behind the player
+-- is the alley of the start, whose walls were in the way.)
+local CHAIN_ENEMY_TURN = SHOCK_TURN + 45 -- degrees
+local CHAIN_ENEMY_DISTANCE = 5 -- m
+-- How high above its feet the rat's middle is, which the shot from Bardin's shield is sent at
+local CHAIN_ENEMY_MIDDLE = 0.7 -- m
+-- How high above Bardin's feet the player looks at him
+local CHAIN_AIM_HEIGHT = 1 -- m
 
 -- Turns the player to face the middle of a unit at once, from inside an observer of a frame (t.aim_at waits a little)
 local function face(t, unit)
@@ -198,12 +208,15 @@ local function shock_at_shield(t, button, what)
 end
 
 -- A Shock Rifle shot that one shield reflects into another is reflected again: the beam up to max_reflections times
--- (InstantFire.DoTrace), and the ball each time it gets to a shield (ShockProjectile.ProcessTouch). Sienna (a bot) shoots at the
--- player, who looks at Bardin (a bot with his Shield Gun's shield up, looking back at the player), SHOCK_TURN to the side of her, so
--- the shot goes from the player's shield to Bardin's and back. A ball is still Sienna's after every reflection, and a shooter's own
--- shield never reflects their ball, so the two shields are the others'. Each reflection is seen by a watch on mod.shield.reflect,
--- which every shot goes through. Returns the units whose shields reflected the shot, in order, the player and Bardin.
-local function shield_to_shield(t, button, count)
+-- (InstantFire.DoTrace), the ball each time it gets to a shield (ShockProjectile.ProcessTouch). Sienna (a bot) shoots at the player, who
+-- looks at Bardin (a bot with his Shield Gun's shield up) SHOCK_TURN to the side of her. With to_rat, Bardin looks at a rat on the square
+-- (CHAIN_ENEMY_TURN), so the shot goes from the player's shield to Bardin's and on to the rat. Without it, Bardin looks back at the player, so the
+-- shot goes back and forth between the two shields. The player looks at Bardin level, at CHAIN_AIM_HEIGHT, so the shot gets to his
+-- shield as high as it got to the player's (his middle is low: from there the shot went into the ground). A ball is still Sienna's
+-- after every reflection, and a shooter's own shield never reflects their ball, so the two shields are the others'. Each reflection is
+-- seen by a watch on mod.shield.reflect, which every shot goes through. Returns the reflections as text ("the player, Bardin, ..."),
+-- how many there were, and the damage the rat took.
+local function shield_to_shield(t, button, to_rat)
 	local player = t.unit()
 	local shooter = t.add_bot(SHOCK_BOT_PROFILE, SHOCK_BOT_CAREER, ut.items.weapons.shock_rifle.key, SHOCK_DISTANCE)
 
@@ -219,8 +232,43 @@ local function shield_to_shield(t, button, count)
 		return nil
 	end
 
-	t.aim_at(bardin)
-	t.bot_aim(bardin, player)
+	local rat
+
+	if to_rat then
+		t.look(0, CHAIN_ENEMY_TURN)
+
+		rat = t.spawn("skaven_clan_rat", CHAIN_ENEMY_DISTANCE)
+
+		if not t.expect(rat, "the rat could not be spawned") then
+			return nil
+		end
+	end
+
+	local at = t.on_main_thread(function ()
+		local position = Unit.local_position(bardin, 0)
+
+		return { Vector3.x(position), Vector3.y(position), Vector3.z(position) + CHAIN_AIM_HEIGHT }
+	end)
+
+	t.aim_at_point(at[1], at[2], at[3])
+
+	if rat then
+		-- (a reflected shot starts where it got to the shield's cylinder, on the side towards the player, and goes the way Bardin looks,
+		-- so he looks along the line from there to the rat's middle: looking at the rat from his eyes, the shot missed it)
+		local direction = t.on_main_thread(function ()
+			local bardin_position = Unit.local_position(bardin, 0)
+			local towards_player = Vector3.normalize(Vector3.flat(Unit.local_position(player, 0) - bardin_position))
+			local hit = bardin_position + towards_player * shield.pawn_radius + Vector3(0, 0, CHAIN_AIM_HEIGHT)
+			local way = Vector3.normalize(Unit.local_position(rat, 0) + Vector3(0, 0, CHAIN_ENEMY_MIDDLE) - hit)
+
+			return { Vector3.x(way), Vector3.y(way), Vector3.z(way) }
+		end)
+
+		t.bot_look(bardin, direction)
+	else
+		t.bot_aim(bardin, player)
+	end
+
 	t.bot_aim(shooter, player)
 	t.bot_defend(bardin, true)
 	t.hold("action_two")
@@ -233,7 +281,7 @@ local function shield_to_shield(t, button, count)
 		local position, distance, direction, unit = reflect(...)
 
 		if unit then
-			reflected_by[#reflected_by + 1] = unit
+			reflected_by[#reflected_by + 1] = unit == player and "the player" or unit == bardin and "Bardin" or "someone else"
 		end
 
 		return position, distance, direction, unit
@@ -243,34 +291,15 @@ local function shield_to_shield(t, button, count)
 		shield.reflect = reflect
 	end)
 
+	local damage = rat and t.track_damage(rat)
+
 	t.bot_press(shooter, button)
-	t.wait_until(function ()
-		return #reflected_by >= count
-	end, SHOCK_SHOT_TIME * 2, "the shot to be reflected")
+	t.wait(SHOCK_SHOT_TIME * 2)
 	t.release("action_two")
 
 	shield.reflect = reflect
 
-	return reflected_by, player, bardin
-end
-
--- Whether the shields that reflected a shot went from the player's to Bardin's and back, for the first count reflections, and whose
--- they were, in order, as text
-local function back_and_forth(reflected_by, player, bardin, count)
-	local names = {}
-	local alternates = true
-
-	for i, unit in ipairs(reflected_by) do
-		names[i] = unit == player and "the player" or unit == bardin and "Bardin" or "someone else"
-	end
-
-	for i = 1, count do
-		if reflected_by[i] ~= (i % 2 == 1 and player or bardin) then
-			alternates = false
-		end
-	end
-
-	return alternates, table.concat(names, ", ")
+	return table.concat(reflected_by, ", "), #reflected_by, damage and damage.total or 0
 end
 
 local function scenarios()
@@ -793,32 +822,52 @@ local function scenarios()
 			end,
 		},
 		{
-			-- A beam goes from shield to shield up to max_reflections times (see shield_to_shield): the player's, Bardin's, the player's,
-			-- and then it ends at Bardin
-			name = "the shield reflects a Shock Rifle beam into another shield",
+			-- A beam goes from the player's shield to Bardin's and on to a rat, which it hurts (see shield_to_shield)
+			name = "the shield reflects a Shock Rifle beam into another shield and on to a rat",
 			run = function (t)
-				local count = shield.max_reflections
-				local reflected_by, player, bardin = shield_to_shield(t, "fire", count)
+				local order, _, hurt = shield_to_shield(t, "fire", true)
 
-				if reflected_by then
-					t.expect(#reflected_by == count, "the beam was reflected %d times, not %d", #reflected_by, count)
-					local alternates, order = back_and_forth(reflected_by, player, bardin, count)
-
-					t.expect(alternates, "the beam did not go from the player's shield to Bardin's and back: %s", order)
+				if order then
+					t.expect(order == "the player, Bardin", "the beam was not reflected by the player's shield and then Bardin's, but by: %s", order)
+					t.expect(hurt > 0, "the beam did not hurt the rat after the two shields")
 				end
 			end,
 		},
 		{
-			-- A ball goes from shield to shield for as long as it gets to one (see shield_to_shield); three times is looked for
-			name = "the shield reflects a Shock Rifle ball into another shield",
+			-- A ball goes from the player's shield to Bardin's and on to a rat, which it hurts (see shield_to_shield)
+			name = "the shield reflects a Shock Rifle ball into another shield and on to a rat",
 			run = function (t)
-				local reflected_by, player, bardin = shield_to_shield(t, "charge_shot", 3)
+				local order, _, hurt = shield_to_shield(t, "charge_shot", true)
 
-				if reflected_by then
-					t.expect(#reflected_by >= 3, "the ball was reflected %d times, not 3 or more", #reflected_by)
-					local alternates, order = back_and_forth(reflected_by, player, bardin, 3)
+				if order then
+					t.expect(order == "the player, Bardin", "the ball was not reflected by the player's shield and then Bardin's, but by: %s", order)
+					t.expect(hurt > 0, "the ball did not hurt the rat after the two shields")
+				end
+			end,
+		},
+		{
+			-- A beam between two shields that face each other goes back and forth max_reflections times, and then ends at the shield
+			-- it gets to next (see shield_to_shield)
+			name = "the shield reflects a Shock Rifle beam back and forth at most max_reflections times",
+			run = function (t)
+				local order = shield_to_shield(t, "fire", false)
+				local expected = { "the player", "Bardin", "the player", "Bardin", "the player" }
 
-					t.expect(alternates, "the ball did not go from the player's shield to Bardin's and back: %s", order)
+				if order then
+					expected = table.concat(expected, ", ", 1, shield.max_reflections)
+					t.expect(order == expected, "the beam was reflected by %s, not by %s", order, expected)
+				end
+			end,
+		},
+		{
+			-- A ball between two shields that face each other goes back and forth for as long as it gets to one (see
+			-- shield_to_shield); three times is looked for
+			name = "the shield reflects a Shock Rifle ball back and forth",
+			run = function (t)
+				local order, count = shield_to_shield(t, "charge_shot", false)
+
+				if order then
+					t.expect(count >= 3 and string.find(order, "the player, Bardin, the player", 1, true) == 1, "the ball did not go back and forth three times or more, but: %s", order)
 				end
 			end,
 		},
