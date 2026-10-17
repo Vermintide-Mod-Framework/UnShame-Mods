@@ -334,13 +334,14 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 end
 
 -- Canvas.DrawTile: a piece of the texture (u, v, its width and height in texels, negative to flip it) drawn into a box of the screen
--- (x, y from the top left, width, height). The gui's y goes up from the bottom of the screen.
+-- (x, y from the top left, width, height). The gui's y goes up from the bottom of the screen, and its texture's v down from the top, as
+-- UT's does.
 local function tile(gui, screen_height, x, y, width, height, u, v, u_size, v_size)
 	local size = CONFIG.scope_texture_size
 	local u0, u1 = u / size, (u + u_size) / size
 	local v0, v1 = v / size, (v + v_size) / size
 
-	Gui.bitmap_uv(gui, "ut_sniper_scope", Vector2(u0, v1), Vector2(u1, v0), Vector3(x, screen_height - y - height, 1), Vector2(width, height), Color(255, 0, 0, 0))
+	Gui.bitmap_uv(gui, "ut_sniper_scope", Vector2(u0, v0), Vector2(u1, v1), Vector3(x, screen_height - y - height, 1), Vector2(width, height), Color(255, 0, 0, 0))
 end
 
 local function draw_scope()
