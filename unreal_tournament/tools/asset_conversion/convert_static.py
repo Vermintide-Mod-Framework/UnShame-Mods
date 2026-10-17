@@ -1,4 +1,4 @@
-import sys, os, subprocess
+import sys, os, math, struct, subprocess, tempfile
 
 # Converts static meshes of UT2004 (the pickups of the weapons, the meshes of the projectiles, and the third person meshes of the weapons in
 # their reference pose), exported with UModel as pskx or psk, to units: a bsi (psk2bsi.py), a unit, a material and a texture.
@@ -76,6 +76,14 @@ STATICS = {
         # (UT's ShieldTex0 is a plain texture, with no specular: matte, as the other weapons' bodies)
         'roughness': 0.9,
         'unit': 'units/ut/shield/third_person',
+        # UT's mesh puts the same part of the texture on both sides of the gun, flipped on one side, so the writing there reads backwards on
+        # that side (in UT too, where it is seen less). This mod departs from UT for its two big labels: see reflect_labels. Each is the
+        # middle of its writing in pixels of the texture, the angle the writing runs at (degrees, clockwise from the right), and how far
+        # the label reaches along the writing and across it.
+        'labels': [
+            (310, 201, 0, 36, 22),  # 16V
+            (255, 888, -45, 50, 24),  # 316V
+        ],
     },
     # The Sniper Rifle (UTClassic): its third person mesh (ClassicSniperAttachment, NewWeapons2004.Sniper3rd at DrawScale 0.16) and its
     # pickup (NewWeaponStatic.newsniperpickup), which the icon is made from
@@ -135,6 +143,51 @@ STATICS = {
     },
 }
 
+def reflect_labels(psk, rows, labels, material, folder):
+    """The faces of the mesh that show its first material's texture flipped are given the material of that index, and the texture for them is
+    a copy in which each label is reflected in place, back to front along its writing, so that the writing reads the right way on them too.
+    Only the texture's own pixels are moved. Returns the changed psk (written in the folder) and the copy's rows."""
+    data = bytearray(open(psk, 'rb').read())
+    chunks, pos = {}, 0
+    while pos + 32 <= len(data):
+        chunk = data[pos:pos + 20].split(b'\0')[0].decode('latin1')
+        _, size, count = struct.unpack('<iii', data[pos + 20:pos + 32])
+        chunks[chunk] = (size, count, pos + 32)
+        pos += 32 + size * count
+    size, count, start = chunks['VTXW0000']
+    uvs = [struct.unpack_from('<2f', data, start + i * size + 4) for i in range(count)]
+    face_chunk = 'FACE0000' if 'FACE0000' in chunks else 'FACE3200'
+    size, count, start = chunks[face_chunk]
+    flipped = 0
+    for i in range(count):
+        at = start + i * size
+        corners = struct.unpack_from('<3H' if face_chunk == 'FACE0000' else '<3I', data, at)
+        material_at = at + (6 if face_chunk == 'FACE0000' else 12)
+        (u0, v0), (u1, v1), (u2, v2) = [uvs[c] for c in corners]
+        # A face shows the texture the right way round when its corners, in the psk's order, go round the texture one way, and flipped when they
+        # go round it the other way (the psk's v runs down the texture, and psk2bsi turns the mesh without mirroring it)
+        if data[material_at] == 0 and (u1 - u0) * (v2 - v0) - (u2 - u0) * (v1 - v0) < 0:
+            data[material_at] = material
+            flipped += 1
+    print('faces that show the texture flipped', flipped)
+
+    copy = [bytearray(row) for row in rows]
+    for x, y, angle, along, across in labels:
+        f = (math.cos(math.radians(angle)), math.sin(math.radians(angle)))
+        s = (-f[1], f[0])
+        reach = int(along + across) + 1
+        # Each pixel of the label takes the pixel at the same place from the label's other end
+        for py in range(y - reach, y + reach + 1):
+            for px in range(x - reach, x + reach + 1):
+                a = (px - x) * f[0] + (py - y) * f[1]
+                b = (px - x) * s[0] + (py - y) * s[1]
+                if abs(a) <= along and abs(b) <= across:
+                    sx, sy = round(x - a * f[0] + b * s[0]), round(y - a * f[1] + b * s[1])
+                    copy[py][px * 4:px * 4 + 4] = rows[sy][sx * 4:sx * 4 + 4]
+    path = os.path.join(folder, os.path.basename(psk))
+    open(path, 'wb').write(data)
+    return path, [bytes(row) for row in copy]
+
 def main():
     name, export = sys.argv[1], sys.argv[2]
     cfg = STATICS[name]
@@ -142,24 +195,32 @@ def main():
     unit_base = os.path.basename(cfg['unit'])
     os.makedirs(REPO + '/' + unit_dir, exist_ok=True)
     geometry = 'g_' + unit_base
-    mat_names = ['m_%d' % i for i in range(len(cfg['materials']))]
-    subprocess.check_call([sys.executable, '-I', os.path.join(os.path.dirname(__file__), 'psk2bsi.py'), export + '/' + cfg['pskx'],
+    # (each material: its tga, its kind, its opacity, and the name and rows of its texture when they are not the tga's)
+    materials = [(m[0], m[1], m[2] if len(m) > 2 else None, None, None) for m in cfg['materials']]
+    psk = export + '/' + cfg['pskx']
+    folder = tempfile.TemporaryDirectory()
+    if cfg.get('labels'):
+        tga, kind, opacity = materials[0][:3]
+        w, h, rows = read_tga(export + '/' + tga)
+        psk, rows = reflect_labels(psk, rows, cfg['labels'], len(materials), folder.name)
+        materials.append((tga, kind, opacity, os.path.splitext(os.path.basename(tga))[0].lower() + '_reflected_labels', rows))
+    mat_names = ['m_%d' % i for i in range(len(materials))]
+    subprocess.check_call([sys.executable, '-I', os.path.join(os.path.dirname(__file__), 'psk2bsi.py'), psk,
                            '%s/%s.bsi' % (REPO, cfg['unit']), geometry, ','.join(mat_names), str(cfg['scale'])])
     # (the geometries psk2bsi made are named <prefix>_<index of the material>)
     unit_text = 'materials = {\n'
-    for i in range(len(cfg['materials'])):
+    for i in range(len(materials)):
         unit_text += '\tm_%d = "%s/%s_m%d"\n' % (i, unit_dir, unit_base, i)
     unit_text += '}\nrenderables = {\n'
-    for i in range(len(cfg['materials'])):
+    for i in range(len(materials)):
         unit_text += ('\t%s_%d = {\n\t\talways_keep = false\n\t\tculling = "%s"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
                       '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n') % (geometry, i, cfg.get('culling', 'bounding_volume'))
     unit_text += '}\n'
     open('%s/%s.unit' % (REPO, cfg['unit']), 'w', newline='\n').write(unit_text)
-    for i, material in enumerate(cfg['materials']):
-        tga, kind = material[:2]
-        opacity = material[2] if len(material) > 2 else None
-        texture = '%s/%s_%s' % (unit_dir, unit_base, os.path.splitext(os.path.basename(tga))[0].lower())
-        w, h, rows = read_tga(export + '/' + tga)
+    for i, (tga, kind, opacity, texture_name, rows) in enumerate(materials):
+        texture = '%s/%s_%s' % (unit_dir, unit_base, texture_name or os.path.splitext(os.path.basename(tga))[0].lower())
+        if rows is None:
+            w, h, rows = read_tga(export + '/' + tga)
         write_png('%s/%s.png' % (REPO, texture), w, h, rows)
         open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
         open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(material_text(kind, texture, opacity, roughness=cfg.get('roughness'), world=name.endswith(('_pickup', '_3rd'))))
