@@ -58,13 +58,30 @@ What the mod contains at the moment is in the code. `TODO.md` is what is not don
 
 ## Adding a weapon
 
-1. Convert its assets (`tools/asset_conversion/README.md`): the first person model, the third person mesh (the mesh of UT's attachment class,
-   `*_3rd`), the pickup (the icon is rendered from it), the effects, the sounds, the icon.
-2. The weapon's gameplay file registers the item (`items.register`), and builds its template, its damage profiles and explosion templates
-   (`utils.register_damage_profile`, `utils.register_explosion_template`).
-3. Its `skin.lua` calls `mod.weapon_skin.new` with the model's placement from UT's class (`PlayerViewOffset`, `PlayerViewPivot`, `DisplayFOV`), the
-   animations, the third person, and the effects.
-4. Add its files to the package and to the list of files loaded in `unreal_tournament.lua`, and its test suite to the extras mod.
+Nothing checks that a weapon is listed everywhere it has to be, so go through every step.
+
+1. **Assets** (`tools/asset_conversion/README.md`). Add the weapon's UT2004 packages to `PACKAGES` in `export.py` if they are not there.
+   Then add the weapon to the tables of the scripts that convert it:
+   - `WEAPONS` in `convert_weapon.py`: the first person model, its textures and its animations.
+   - `STATICS` in `convert_static.py`: the pickup, the third person mesh (the mesh of UT's attachment class, `*_3rd`) and the projectiles' meshes.
+   - `WEAPONS` in `make_bank.py`: its sound bank.
+   - The effects, with the scripts for them.
+   - The icon, rendered from the pickup with `render_icon.py`, with its `.texture` and `.material` next to it in `ui/ut`.
+2. **Package.** In `resource_packages/unreal_tournament/unreal_tournament.package`, add the weapon's units, its `units/ut/<weapon>/*`
+   materials, and its bank under `wwise_dep`. Scripts and the icon's files are picked up by wildcards.
+3. **Gameplay.** The weapon's folder in `scripts/mods/unreal_tournament/` has its gameplay file. It:
+   - registers the item with `items.register` (the other files find it as `items.weapons.<id>`);
+   - registers its damage profiles and explosion templates (`utils.register_damage_profile`, `utils.register_explosion_template`);
+   - changes its template in a function that it passes to `items.set_template_changes`. That function is run on the base weapon's copy each
+     time the mod is enabled, so turning the mod off puts the base weapon's template back.
+
+   A weapon whose bots have to fire it differently has a `bots.lua` as well.
+4. **Look.** Its `skin.lua` calls `mod.weapon_skin.new` with the model's placement from UT's class (`PlayerViewOffset`, `PlayerViewPivot`,
+   `DisplayFOV`), the animations, the third person, and the effects.
+5. **Loading.** Add its files to the list of files loaded in `unreal_tournament.lua`. They are loaded after the shared files.
+6. **Tests.** Add a suite to `../unreal_tournament_extras/scripts/mods/unreal_tournament_extras/tests/` and load it in
+   `unreal_tournament_extras.lua`.
+7. **Status.** Add a column for the weapon to `WEAPON_STATUS.md`, and what is left to `TODO.md`.
 
 ## Where things were learned
 
