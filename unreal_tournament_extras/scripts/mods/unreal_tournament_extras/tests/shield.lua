@@ -164,6 +164,8 @@ local function scenarios()
 				-- A punch standing still, and one in a dodge forward at the enemy (about 7 m/s). Each is done four times, and the least
 				-- of the ones that hit is taken, as a punch can be a critical hit. The bonus is the movement's (25% at 9 m/s, none up to
 				-- 4.5 m/s), most of which has to show.
+				-- The punch in the dodge is the gun's own, as the enemy comes into reach while the charge is held, so it lands in the dodge
+				-- whatever the reach is. It comes before min_hold_time, as the standing one does, so both are the least charged punch.
 				local function punch(moving)
 					local target = t.spawn_target(moving and 4 or 1.5)
 
@@ -174,22 +176,26 @@ local function scenarios()
 					local damage = t.track_damage(target)
 					local speed
 
-					if moving then
-						t.look(0)
-						t.move(0, 1)
-						t.tap("dodge")
-						t.move()
-						t.wait(0.1)
-					end
-
-					t.press("action_one", 0.1)
-					t.watch(0.8, function ()
+					local function watch_speed()
 						if not speed and damage.total > 0 then
 							local vx, vy = t.velocity()
 
 							speed = math.sqrt(vx * vx + vy * vy)
 						end
-					end)
+					end
+
+					if moving then
+						t.look(0)
+						t.move(0, 1)
+						t.tap("dodge")
+						t.move()
+						t.hold("action_one")
+						t.watch(0.8, watch_speed)
+						t.release("action_one")
+					else
+						t.press("action_one", 0.1)
+						t.watch(0.8, watch_speed)
+					end
 					t.remove(target)
 					t.go_to_start()
 					t.wait(0.7)

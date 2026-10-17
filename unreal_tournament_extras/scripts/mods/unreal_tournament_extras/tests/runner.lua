@@ -222,7 +222,7 @@ local function inventory_extension_of(unit)
 end
 
 -- Input that the tests press. It is put in front of the game's input service of the player, which is what the game reads the player's
--- buttons from. The game ignores the player's input while its window has no focus, so a test needs the window to be in front.
+-- buttons from.
 local injected = {}
 local patched_service
 
@@ -266,6 +266,17 @@ end
 
 -- What a test waits for, which the update goes through one frame at a time
 local run
+
+-- The game takes the player's input as blocked while the chat or a menu is open or the window has no focus, and then ignores the input
+-- and raises the block by itself (CharacterStateHelper: a block action starts on blocked input), which is the Shield Gun's shield. While a
+-- suite runs, the player's input is not taken as blocked, so a chat, a menu or another window in front changes nothing in the suite.
+mod:hook(PlayerInputExtension, "is_input_blocked", function (func, self, ...)
+	if run and self.unit == player_unit() then
+		return false
+	end
+
+	return func(self, ...)
+end)
 
 local function resume(value)
 	local ok, request = coroutine.resume(run.co, value)
@@ -1350,10 +1361,6 @@ local function run_suite(suite, only_career)
 
 	save_restore(restore)
 
-	if not Window.has_focus() then
-		log("the game window has no focus: the game ignores input without it")
-	end
-
 	run.restore_flags = set_quiet_flags()
 
 	-- The suite's level. A suite that needs a level as it is at the start (nothing has died in it yet) has it loaded again.
@@ -1401,8 +1408,6 @@ local function run_suite(suite, only_career)
 					break
 				end
 
-				run.lost_focus = false
-
 				local ok, error_value = call_waiting(function ()
 					-- (a scenario can start in a named place of the level instead)
 					if scenario_definition.place then
@@ -1445,10 +1450,6 @@ local function run_suite(suite, only_career)
 					log("SKIP %s: %s", scenario.name, scenario.skipped)
 				elseif #scenario.failures > 0 then
 					summary.failed = summary.failed + 1
-
-					if run.lost_focus then
-						log("%s: the game window lost the focus while it ran, and the game ignored the input", scenario.name)
-					end
 				else
 					summary.passed = summary.passed + 1
 					log("PASS %s", scenario.name)
@@ -1778,11 +1779,6 @@ local function step(dt)
 
 	for _, watcher in ipairs(runner.frame_watchers) do
 		pcall(watcher)
-	end
-
-	-- (the game ignores the player's input without the focus, and a scenario that presses buttons then fails)
-	if not Window.has_focus() then
-		run.lost_focus = true
 	end
 
 	local waiting = run.waiting
