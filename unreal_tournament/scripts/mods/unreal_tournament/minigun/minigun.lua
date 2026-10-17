@@ -175,9 +175,13 @@ local function build_shot(source, mode, first, hand, spray, volley)
 		action.anim_event_last_ammo = spray.anim_event_last_ammo
 	end
 
-	-- The characters take the aim with the first round, shoot the rest from it, and leave it when the rounds stop (not when the next
-	-- round follows), as the base weapon's alt fire does
+	-- The characters take the aim with the first round, hold it while the rounds come, with no animation of a shot, and leave it when
+	-- the rounds stop (not when the next round follows). The rounds keep their first person event, which the skin drops, because the game
+	-- only puts the recoil on a shot that plays one (WeaponUnitExtension.start_action).
 	if volley then
+		action.anim_event_1p = action.anim_event
+		action.anim_event = nil
+		action.anim_event_last_ammo = nil
 		action.anim_event_3p = first and volley.start or nil
 		action.anim_event_last_ammo_3p = first and volley.start or nil
 		action.anim_end_event_3p = volley.finish
@@ -246,9 +250,8 @@ local function apply_gun(template)
 	-- The shot comes from the game's repeating gun, whichever the template is a copy of
 	local source = rawget(Weapons, "repeating_handgun_template_1").actions.action_one.default
 	local hand = actions.action_one.default.weapon_action_hand
-	-- The characters play the base weapon's rapid fire (its bullet spray, the volley of the alt fire) for every round, instead of its
-	-- single shot: attack_shoot_fast for the repeating handgun, and attack_shoot for the repeater pistol. The repeater pistol's volley is
-	-- a shot from the aim of its alt fire (lock_target), which Saltzpyre takes as he fires.
+	-- Kruber plays the repeating handgun's rapid fire (its bullet spray, attack_shoot_fast) for every round, instead of its single shot.
+	-- Saltzpyre holds the aim of the repeater pistol's alt fire (lock_target) while he fires.
 	local spray = actions.action_one.bullet_spray
 	local aim = actions.action_two.default
 	local volley = VOLLEY_TEMPLATES[template.name] and {
