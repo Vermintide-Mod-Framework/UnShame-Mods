@@ -333,6 +333,19 @@ mod:hook(PlayerUnitFirstPerson, "apply_recoil", function (func, self, ...)
 	return func(self, ...)
 end)
 
+-- The game's aim (a bow's or a gun's zoom) sets the camera's node to its zoom, and to the first person view's after the shot
+-- (GenericStatusExtension.set_zooming and switch_variable_zoom). With the free camera that zoomed it and put it back behind the character
+-- after every shot, so the free camera's node is set again.
+for _, function_name in ipairs({ "set_zooming", "switch_variable_zoom" }) do
+	mod:hook_safe(GenericStatusExtension, function_name, function (self)
+		local camera_unit = self.player and self.player.camera_follow_unit
+
+		if self.unit == free_camera_unit and camera_unit and Unit.alive(camera_unit) then
+			Unit.set_data(camera_unit, "camera", "settings_node", FREE_CAMERA_PARAMS.camera_node)
+		end
+	end)
+end
+
 -- The character being turned to the camera (see below), while the inspection starts
 local turning_unit
 

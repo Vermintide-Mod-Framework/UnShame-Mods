@@ -52,11 +52,19 @@ function zoom.magnification()
 	return math.tan(math.rad(CONFIG.normal_fov / 2)) / math.tan(math.rad(zoom_fov() / 2))
 end
 
+-- The player's unit while they wield a weapon that zooms and see the first person view. The zoom is of that view: in a third person view
+-- (an inspection, the extras' /freecamera) there is none.
 local function local_wielding_zoom_weapon()
 	local player = Managers.player and Managers.player:local_player_safe()
 	local unit = player and player.player_unit
 
 	if not unit or not Unit.alive(unit) then
+		return nil
+	end
+
+	local first_person_extension = ScriptUnit.has_extension(unit, "first_person_system")
+
+	if not first_person_extension or not first_person_extension:first_person_mode_active() then
 		return nil
 	end
 
