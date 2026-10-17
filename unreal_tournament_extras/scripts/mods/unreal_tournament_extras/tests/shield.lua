@@ -47,7 +47,8 @@ local function scenarios()
 		{
 			name = "charge and punch",
 			every_hero = true,
-			run =function (t)
+			basic = true,
+			run = function (t)
 				local before = shield.last_punch
 				local charged = false
 
@@ -508,7 +509,7 @@ local function scenarios()
 		{
 			name = "block",
 			every_hero = true,
-			run =function (t)
+			run = function (t)
 				local blocked = false
 
 				t.press("action_two", 0.6, function ()
@@ -526,7 +527,7 @@ local function scenarios()
 end
 
 -- Each hero has their own Shield Gun, made from a different base weapon. Its charge, punch and block come from that weapon, so those
--- scenarios run for every hero, as one career of theirs. The others run only for Kruber.
+-- scenarios run for every hero. The others run only for Kruber. A hero's other careers only charge and punch.
 local function every_hero_scenarios()
 	local kept = {}
 
@@ -540,11 +541,11 @@ local function every_hero_scenarios()
 end
 
 for _, variant in ipairs({
-	{ name = "shield", setting_id = "shield_gun", career = "es_mercenary", scenarios = scenarios() },
-	{ name = "shield_dr", setting_id = "shield_gun_dr", career = "dr_ironbreaker", scenarios = every_hero_scenarios() },
-	{ name = "shield_bw", setting_id = "shield_gun_bw", career = "bw_adept", scenarios = every_hero_scenarios() },
-	{ name = "shield_wh", setting_id = "shield_gun_wh", career = "wh_captain", scenarios = every_hero_scenarios() },
-	{ name = "shield_we", setting_id = "shield_gun_we", career = "we_shade", scenarios = every_hero_scenarios() },
+	{ name = "shield", setting_id = "shield_gun", careers = { "es_mercenary", "es_knight" }, scenarios = scenarios() },
+	{ name = "shield_dr", setting_id = "shield_gun_dr", careers = { "dr_ironbreaker", "dr_slayer" }, scenarios = every_hero_scenarios() },
+	{ name = "shield_bw", setting_id = "shield_gun_bw", careers = { "bw_adept" }, scenarios = every_hero_scenarios() },
+	{ name = "shield_wh", setting_id = "shield_gun_wh", careers = { "wh_captain" }, scenarios = every_hero_scenarios() },
+	{ name = "shield_we", setting_id = "shield_gun_we", careers = { "we_shade" }, scenarios = every_hero_scenarios() },
 }) do
 	local definition = ut.items.weapons[variant.setting_id]
 
@@ -553,7 +554,7 @@ for _, variant in ipairs({
 		item = definition.key,
 		template = definition.template,
 		slot = "slot_melee",
-		careers = { variant.career },
+		careers = variant.careers,
 		scenarios = variant.scenarios,
 	})
 end

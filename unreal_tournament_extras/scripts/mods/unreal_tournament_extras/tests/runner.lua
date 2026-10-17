@@ -52,10 +52,11 @@ local ut = get_mod("unreal_tournament")
 --   t.explosions()                       a list that is filled with the names of the explosions that happen from now on
 --   t.sounds(prefix)                     a list that is filled with the names of the sound events that start with the prefix
 --
--- A suite is { name, item (the key of the weapon item), template, slot, careers (the careers it is run for), level (the level it is run
--- in, if not the default one), fresh_level (the level is loaded again for it), loadout (optional: { [slot] = { [career] = item key } },
--- items of other slots put in for the suite and put back after it), place (optional: { level, position, yaw }, where the
--- player is put instead of the level's place in CONFIG.places), scenarios = { { name, run, place (a named place it starts in) } } }.
+-- A suite is { name, item (the key of the weapon item), template, slot, careers (the careers it is run for: the first runs every
+-- scenario, the others only those marked basic), level (the level it is run in, if not the default one), fresh_level (the level is
+-- loaded again for it), loadout (optional: { [slot] = { [career] = item key } }, items of other slots put in for the suite and put
+-- back after it), place (optional: { level, position, yaw }, where the player is put instead of the level's place in CONFIG.places),
+-- scenarios = { { name, run, place (a named place it starts in), basic (it runs for every career of the suite) } } }.
 --
 -- The tests change the player's loadout and career, and put them back at the end. The loadout is kept in the backend, so what has to be
 -- put back is saved in the settings while a suite runs, and put back the next time the mod loads if a suite was cut short.
@@ -1390,7 +1391,20 @@ local function run_suite(suite, only_career)
 		if not setup_character(t, suite, career) then
 			summary.failed = summary.failed + 1
 		else
-			for _, scenario_definition in ipairs(suite.scenarios) do
+			-- The suite's first career runs every scenario. The other careers only run the basic ones.
+			local scenarios = suite.scenarios
+
+			if career ~= suite.careers[1] then
+				scenarios = {}
+
+				for _, scenario_definition in ipairs(suite.scenarios) do
+					if scenario_definition.basic then
+						scenarios[#scenarios + 1] = scenario_definition
+					end
+				end
+			end
+
+			for _, scenario_definition in ipairs(scenarios) do
 				local scenario = {
 					failures = {},
 					name = string.format("%s/%s/%s", suite.name, career, scenario_definition.name),

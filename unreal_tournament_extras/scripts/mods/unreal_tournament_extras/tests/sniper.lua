@@ -71,6 +71,8 @@ local function scenarios()
 		},
 		{
 			name = "fire",
+			every_hero = true,
+			basic = true,
 			run = function (t)
 				local before = t.ammo()
 
@@ -86,6 +88,7 @@ local function scenarios()
 		{
 			-- Where the shot is told to have hit (for the sparks and the sound) is on the target it was aimed at
 			name = "the hit is on the target",
+			every_hero = true,
 			run = function (t)
 				local target = t.spawn_target(5)
 
@@ -198,17 +201,23 @@ local function scenarios()
 	}
 end
 
+-- Each hero's shot is a copy of their own handgun's, with its animation and where it starts, so only the firing runs for Bardin. The
+-- rest is the same code for both. A hero's other careers only fire.
+local function every_hero_scenarios()
+	local kept = {}
+
+	for _, scenario in ipairs(scenarios()) do
+		if scenario.every_hero then
+			kept[#kept + 1] = scenario
+		end
+	end
+
+	return kept
+end
+
 for _, variant in ipairs({
-	{
-		careers = { "es_mercenary", "es_huntsman", "es_knight" },
-		name = "sniper",
-		setting_id = "sniper_rifle",
-	},
-	{
-		careers = { "dr_ironbreaker", "dr_ranger" },
-		name = "sniper_dr",
-		setting_id = "sniper_rifle_dr",
-	},
+	{ name = "sniper", setting_id = "sniper_rifle", careers = { "es_mercenary", "es_huntsman", "es_knight" }, scenarios = scenarios() },
+	{ name = "sniper_dr", setting_id = "sniper_rifle_dr", careers = { "dr_ironbreaker", "dr_ranger" }, scenarios = every_hero_scenarios() },
 }) do
 	local definition = ut.items.weapons[variant.setting_id]
 
@@ -218,6 +227,6 @@ for _, variant in ipairs({
 		template = definition.template,
 		slot = "slot_ranged",
 		careers = variant.careers,
-		scenarios = scenarios(),
+		scenarios = variant.scenarios,
 	})
 end

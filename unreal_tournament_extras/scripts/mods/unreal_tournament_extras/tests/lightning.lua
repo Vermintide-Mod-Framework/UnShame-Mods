@@ -1,8 +1,7 @@
 local mod = get_mod("unreal_tournament_extras")
 local ut = get_mod("unreal_tournament")
 
--- The Lightning Gun's in-game tests (see runner.lua), for each of Kerillian's careers. Run them with /ut_test lightning. They run in the
--- runner's level, Righteous Stand.
+-- The Lightning Gun's in-game tests (see runner.lua). Run them with /ut_test lightning. They run in the runner's level, Righteous Stand.
 
 local runner = mod.test_runner
 
@@ -103,6 +102,7 @@ local function scenarios()
 		},
 		{
 			name = "fire",
+			basic = true,
 			run = function (t)
 				local before = t.overcharge()
 
@@ -276,21 +276,13 @@ local function scenarios()
 	}
 end
 
-for _, variant in ipairs({
-	{
-		careers = { "we_waywatcher", "we_thornsister", "we_shade", "we_maidenguard" },
-		name = "lightning",
-		setting_id = "lightning_gun",
-	},
-}) do
-	local definition = ut.items.weapons[variant.setting_id]
+local definition = ut.items.weapons.lightning_gun
 
-	runner.add_suite({
-		name = variant.name,
-		item = definition.key,
-		template = definition.template,
-		slot = "slot_ranged",
-		careers = variant.careers,
-		scenarios = scenarios(),
-	})
-end
+runner.add_suite({
+	name = "lightning",
+	item = definition.key,
+	template = definition.template,
+	slot = "slot_ranged",
+	careers = { "we_waywatcher", "we_thornsister", "we_shade", "we_maidenguard" },
+	scenarios = scenarios(),
+})

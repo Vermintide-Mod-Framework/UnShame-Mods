@@ -42,6 +42,8 @@ local function scenarios()
 		},
 		{
 			name = "primary fire",
+			every_hero = true,
+			basic = true,
 			run = function (t)
 				local before = t.ammo()
 
@@ -65,6 +67,7 @@ local function scenarios()
 		},
 		{
 			name = "alt fire",
+			every_hero = true,
 			run = function (t)
 				record()
 				t.press("action_two", 2)
@@ -99,17 +102,23 @@ local function scenarios()
 	}
 end
 
+-- Saltzpyre's Minigun differs from Kruber's only in the hand its shots come from (its base weapon's), so only the firing runs for him.
+-- A hero's other careers only fire.
+local function every_hero_scenarios()
+	local kept = {}
+
+	for _, scenario in ipairs(scenarios()) do
+		if scenario.every_hero then
+			kept[#kept + 1] = scenario
+		end
+	end
+
+	return kept
+end
+
 for _, variant in ipairs({
-	{
-		careers = { "es_mercenary", "es_huntsman", "es_knight" },
-		name = "minigun",
-		setting_id = "minigun",
-	},
-	{
-		careers = { "wh_zealot", "wh_bountyhunter", "wh_captain" },
-		name = "minigun_wh",
-		setting_id = "minigun_wh",
-	},
+	{ name = "minigun", setting_id = "minigun", careers = { "es_mercenary", "es_huntsman", "es_knight" }, scenarios = scenarios() },
+	{ name = "minigun_wh", setting_id = "minigun_wh", careers = { "wh_captain", "wh_zealot", "wh_bountyhunter" }, scenarios = every_hero_scenarios() },
 }) do
 	local definition = ut.items.weapons[variant.setting_id]
 
@@ -119,6 +128,6 @@ for _, variant in ipairs({
 		template = definition.template,
 		slot = "slot_ranged",
 		careers = variant.careers,
-		scenarios = scenarios(),
+		scenarios = variant.scenarios,
 	})
 end

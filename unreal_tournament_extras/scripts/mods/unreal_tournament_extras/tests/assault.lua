@@ -34,6 +34,7 @@ local function scenarios()
 		},
 		{
 			name = "fire rate",
+			basic = true,
 			run = function (t)
 				rounds = 0
 				recording = true
@@ -75,6 +76,6 @@ runner.add_suite({
 	item = definition.key,
 	template = definition.template,
 	slot = "slot_ranged",
-	careers = { "wh_zealot", "wh_bountyhunter", "wh_captain" },
+	careers = { "wh_captain", "wh_zealot", "wh_bountyhunter" },
 	scenarios = scenarios(),
 })
