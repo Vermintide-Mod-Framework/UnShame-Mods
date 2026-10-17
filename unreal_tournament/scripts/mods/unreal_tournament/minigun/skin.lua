@@ -409,7 +409,7 @@ local function new_skin(variant)
 			grip_up = 0,
 			-- (turned about the left hand so that the gun's line runs through the right hand too, then a little to the right, set in the
 			-- game)
-			yaw = 8.2,
+			yaw = 14.2,
 			pitch = 9.9,
 			roll = 0,
 			-- In the world the minigun is turned as the game's gun in the hand is, which the game animates with the arms
