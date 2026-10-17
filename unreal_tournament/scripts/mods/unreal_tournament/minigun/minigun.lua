@@ -145,11 +145,18 @@ local DROPPED_FLOW_EVENTS = {
 
 -- Builds a round of the gun's. The first round has the wind up before it, and the rounds after it follow at the fire rate. The hand
 -- is the base weapon's: the repeating crossbow is held in the left hand, and the game crashes on an action for a hand with no weapon.
-local function build_shot(source, mode, first, hand)
+-- spray is the base weapon's own rapid fire, if it has one: its animation is made to be played a round after another.
+local function build_shot(source, mode, first, hand, spray)
 	local action = table.clone(source)
 	local alt = mode == "alt"
 
 	action.weapon_action_hand = hand
+
+	if spray then
+		action.anim_event = spray.anim_event
+		action.anim_event_last_ammo = spray.anim_event_last_ammo
+	end
+
 	local interval = alt and CONFIG.alt_rate or CONFIG.primary_rate
 	local wind_up = alt and CONFIG.alt_wind_up or CONFIG.primary_wind_up
 	local own_action = alt and "action_two" or "action_one"
@@ -209,14 +216,17 @@ local function apply_gun(template)
 	-- The shot comes from the game's repeating gun, whichever the template is a copy of
 	local source = rawget(Weapons, "repeating_handgun_template_1").actions.action_one.default
 	local hand = actions.action_one.default.weapon_action_hand
+	-- The characters play the repeating handgun's rapid fire (its bullet spray, attack_shoot_fast) for every round, instead of its single
+	-- shot. The repeating crossbow has no rapid fire, so it keeps its shot.
+	local spray = actions.action_one.bullet_spray
 
 	actions.action_one = {
-		default = build_shot(source, "primary", true, hand),
-		loop = build_shot(source, "primary", false, hand),
+		default = build_shot(source, "primary", true, hand, spray),
+		loop = build_shot(source, "primary", false, hand, spray),
 	}
 	actions.action_two = {
-		default = build_shot(source, "alt", true, hand),
-		loop = build_shot(source, "alt", false, hand),
+		default = build_shot(source, "alt", true, hand, spray),
+		loop = build_shot(source, "alt", false, hand, spray),
 	}
 
 	utils.set_actions_lookup_data(actions, template.name)
