@@ -288,6 +288,37 @@ function utils.shot_grouping(gap)
 	}
 end
 
+-- Puts UT's spread on the round of a game handgun action that is starting (self is ActionHandgun). The direction it gives the round is
+-- kept for utils.handgun_round_hit.
+function utils.set_handgun_spread(handgun_action, spread)
+	local spread_extension = handgun_action.spread_extension
+
+	if spread_extension then
+		spread_extension.get_randomised_spread = function (extension, rotation)
+			local spread_rotation = utils.ut_spread(rotation, spread)
+
+			extension._ut_last_rotation = QuaternionBox(spread_rotation)
+
+			return spread_rotation
+		end
+	end
+end
+
+-- Returns where the round of a game handgun action hit, and the normal of what it hit (the zero vector if nothing, and then the end is
+-- 100 m along). The ray goes the way set_handgun_spread sent the round, or along the aim.
+function utils.handgun_round_hit(handgun_action)
+	local owner_unit = handgun_action.owner_unit
+	local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
+	local origin, aim_rotation = first_person_extension:get_projectile_start_position_rotation()
+	local stored = handgun_action.spread_extension and handgun_action.spread_extension._ut_last_rotation
+	local rotation = stored and stored:unbox() or aim_rotation
+	local direction = Quaternion.forward(rotation)
+	local hits = PhysicsWorld.immediate_raycast_actors(handgun_action.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
+	local hit = utils.first_beam_hit(hits, owner_unit)
+
+	return hit and hit[1] or origin + direction * 100, hit and hit[3] or Vector3.zero()
+end
+
 -- Plays a sound that follows a unit. Returns a handle for utils.stop_sound, or nil if it didn't play.
 function utils.play_on_unit(event, unit)
 	local id, _, wwise_world = WwiseUtils.trigger_unit_event(Managers.world:world("level_world"), event, unit)

@@ -118,8 +118,6 @@ mod.minigun = {
 	last_shot_time = nil,
 }
 
-local ut_spread = utils.ut_spread
-
 -- Weapon template
 
 local function fire_chain_actions(own_action, loop_name, interval)
@@ -277,17 +275,7 @@ mod.handgun_start_callbacks.minigun = function (self, new_action)
 	end
 
 	-- UT's spread instead of the game's. The direction of the round is kept, for the tracer.
-	local spread_extension = self.spread_extension
-
-	if spread_extension then
-		spread_extension.get_randomised_spread = function (extension, rotation)
-			local spread_rotation = ut_spread(rotation, new_action.ut_spread)
-
-			extension._ut_last_rotation = QuaternionBox(spread_rotation)
-
-			return spread_rotation
-		end
-	end
+	utils.set_handgun_spread(self, new_action.ut_spread)
 end
 
 mod.handgun_update_callbacks.minigun = function (self)
@@ -299,15 +287,7 @@ mod.handgun_update_callbacks.minigun = function (self)
 
 	local owner_unit = self.owner_unit
 	local action = self.current_action
-	local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
-	local origin, aim_rotation = first_person_extension:get_projectile_start_position_rotation()
-	local stored = self.spread_extension and self.spread_extension._ut_last_rotation
-	local rotation = stored and stored:unbox() or aim_rotation
-	local direction = Quaternion.forward(rotation)
-	local hits = PhysicsWorld.immediate_raycast_actors(self.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
-	local hit = utils.first_beam_hit(hits, owner_unit)
-	local end_position = hit and hit[1] or origin + direction * 100
-	local hit_normal = hit and hit[3] or Vector3.zero()
+	local end_position, hit_normal = utils.handgun_round_hit(self)
 
 	mod.minigun.last_shot_time = Managers.time:time("game")
 	mod.minigun.last_mode = action.ut_minigun

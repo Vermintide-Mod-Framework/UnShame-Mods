@@ -152,8 +152,6 @@ mod.assault = {
 
 local assault = mod.assault
 
-local ut_spread = utils.ut_spread
-
 -- Each shooter's current spread and the time of their last round. The spread grows with each round and resets after a pause.
 local spreads = {}
 
@@ -181,18 +179,7 @@ mod.handgun_start_callbacks.assault = function (self, new_action)
 		assault.last_round = t
 	end
 
-	local spread = state.spread
-	local spread_extension = self.spread_extension
-
-	if spread_extension then
-		spread_extension.get_randomised_spread = function (extension, rotation)
-			local spread_rotation = ut_spread(rotation, spread)
-
-			extension._ut_last_rotation = QuaternionBox(spread_rotation)
-
-			return spread_rotation
-		end
-	end
+	utils.set_handgun_spread(self, state.spread)
 end
 
 -- Once a round is fired, finds where it hit and tells the skin, which draws the flash and the tracer
@@ -203,18 +190,9 @@ mod.handgun_update_callbacks.assault = function (self)
 
 	self._ut_assault_checked = true
 
-	local owner_unit = self.owner_unit
-	local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
-	local origin, aim_rotation = first_person_extension:get_projectile_start_position_rotation()
-	local stored = self.spread_extension and self.spread_extension._ut_last_rotation
-	local rotation = stored and stored:unbox() or aim_rotation
-	local direction = Quaternion.forward(rotation)
-	local hits = PhysicsWorld.immediate_raycast_actors(self.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
-	local hit = utils.first_beam_hit(hits, owner_unit)
-	local end_position = hit and hit[1] or origin + direction * 100
-	local hit_normal = hit and hit[3] or Vector3.zero()
+	local end_position, hit_normal = utils.handgun_round_hit(self)
 
-	mod.assault_round(owner_unit, end_position, hit_normal)
+	mod.assault_round(self.owner_unit, end_position, hit_normal)
 end
 
 -- Functions called with (owner_unit, end_position, hit_normal) for every round, on every machine. The skin adds one to draw the round.
