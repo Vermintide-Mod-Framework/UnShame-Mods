@@ -52,11 +52,15 @@ local ut = get_mod("unreal_tournament")
 --   t.explosions()                       a list that is filled with the names of the explosions that happen from now on
 --   t.sounds(prefix)                     a list that is filled with the names of the sound events that start with the prefix
 --
--- A suite is { name, item (the key of the weapon item), template, slot, careers (the careers it is run for: the first runs every
--- scenario, the others only those marked basic), level (the level it is run in, if not the default one), fresh_level (the level is
--- loaded again for it), loadout (optional: { [slot] = { [career] = item key } }, items of other slots put in for the suite and put
--- back after it), place (optional: { level, position, yaw }, where the player is put instead of the level's place in CONFIG.places),
--- scenarios = { { name, run, place (a named place it starts in), basic (it runs for every career of the suite) } } }.
+-- A suite is { name, item (the key of the weapon item), template, slot, careers (the careers it is run for), level (the level it is
+-- run in, if not the default one), fresh_level (the level is loaded again for it), loadout (optional: { [slot] = { [career] = item
+-- key } }, items of other slots put in for the suite and put back after it), place (optional: { level, position, yaw }, where the
+-- player is put instead of the level's place in CONFIG.places), scenarios = { { name, run, place (a named place it starts in), basic,
+-- every_hero } } }.
+--
+-- A weapon that each hero has a copy of gives heroes = { { item, template, careers } } instead of item, template and careers. The
+-- first career of the first hero runs every scenario. The first career of each other hero runs the scenarios marked every_hero (what
+-- their copy takes from its own base weapon) and basic. Every other career runs only the basic ones.
 --
 -- The tests change the player's loadout and career, and put them back at the end. The loadout is kept in the backend, so what has to be
 -- put back is saved in the settings while a suite runs, and put back the next time the mod loads if a suite was cut short.
@@ -1170,11 +1174,23 @@ local function go_to_place(t, suite)
 	return true
 end
 
+-- The hero of a suite whose careers have the career
+local function hero_of(suite, career)
+	for _, hero in ipairs(suite.heroes) do
+		for _, hero_career in ipairs(hero.careers) do
+			if hero_career == career then
+				return hero
+			end
+		end
+	end
+end
+
 -- Sets what a suite needs: the career, with the weapon in its slot, and the weapon in the player's hands. Returns false and says why if
 -- it could not.
 local function setup_character(t, suite, career)
 	local player = local_player()
 	local unit = player_unit()
+	local hero = hero_of(suite, career)
 
 	if not player or not unit then
 		log("there is no player unit: start a mission first")
@@ -1182,10 +1198,16 @@ local function setup_character(t, suite, career)
 		return false
 	end
 
-	local item = BackendUtils.try_set_loadout_item(career, suite.slot, suite.item)
+	if not hero then
+		log("%s is not a career of %s", career, suite.name)
+
+		return false
+	end
+
+	local item = BackendUtils.try_set_loadout_item(career, suite.slot, hero.item)
 
 	if not item then
-		log("%s is not in the inventory", suite.item)
+		log("%s is not in the inventory", hero.item)
 
 		return false
 	end
@@ -1229,7 +1251,7 @@ local function setup_character(t, suite, career)
 	inventory_extension_of(new_unit):wield(suite.slot)
 
 	if not t.wait_until(function ()
-		return utils.wielded_template_name(player_unit()) == suite.template
+		return utils.wielded_template_name(player_unit()) == hero.template
 	end, 10, "the weapon to be wielded") then
 		log("the weapon was not wielded")
 
@@ -1391,14 +1413,17 @@ local function run_suite(suite, only_career)
 		if not setup_character(t, suite, career) then
 			summary.failed = summary.failed + 1
 		else
-			-- The suite's first career runs every scenario. The other careers only run the basic ones.
+			-- The suite's first career runs every scenario, each other hero's first career those of their own copy, and the other careers
+			-- only the basic ones
 			local scenarios = suite.scenarios
 
 			if career ~= suite.careers[1] then
+				local first_of_hero = hero_of(suite, career).careers[1] == career
+
 				scenarios = {}
 
 				for _, scenario_definition in ipairs(suite.scenarios) do
-					if scenario_definition.basic then
+					if scenario_definition.basic or (first_of_hero and scenario_definition.every_hero) then
 						scenarios[#scenarios + 1] = scenario_definition
 					end
 				end
@@ -1604,6 +1629,27 @@ function runner.stop()
 end
 
 function runner.add_suite(suite)
+	-- A suite of one weapon is a suite of one hero. The careers of all the heroes are the suite's careers.
+	if suite.heroes then
+		suite.item = suite.heroes[1].item
+		suite.template = suite.heroes[1].template
+		suite.careers = {}
+
+		for _, hero in ipairs(suite.heroes) do
+			for _, career in ipairs(hero.careers) do
+				suite.careers[#suite.careers + 1] = career
+			end
+		end
+	else
+		suite.heroes = {
+			{
+				item = suite.item,
+				template = suite.template,
+				careers = suite.careers,
+			},
+		}
+	end
+
 	runner.suites[suite.name] = suite
 end
 
@@ -1739,7 +1785,7 @@ function runner.equip(suite_name, career)
 			end
 
 			if setup_character(t, suite, career) then
-				log("%s is in your hands as %s", suite.item, career)
+				log("%s is in your hands as %s", hero_of(suite, career).item, career)
 			end
 		end),
 		suite = suite,

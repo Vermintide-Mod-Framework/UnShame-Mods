@@ -1,8 +1,8 @@
 local mod = get_mod("unreal_tournament_extras")
 local ut = get_mod("unreal_tournament")
 
--- The Shield Gun's in-game tests (see runner.lua). Run them with /ut_test shield (Kruber's), shield_dr, shield_bw, shield_wh and
--- shield_we. They run in the runner's level, Righteous Stand.
+-- The Shield Gun's in-game tests (see runner.lua), for each hero's Shield Gun. Run them with /ut_test shield. They run in the runner's
+-- level, Righteous Stand.
 
 local runner = mod.test_runner
 local shield = ut.shield
@@ -526,35 +526,23 @@ local function scenarios()
 	}
 end
 
+local function hero(setting_id, careers)
+	local definition = ut.items.weapons[setting_id]
+
+	return { item = definition.key, template = definition.template, careers = careers }
+end
+
 -- Each hero has their own Shield Gun, made from a different base weapon. Its charge, punch and block come from that weapon, so those
--- scenarios run for every hero. The others run only for Kruber. A hero's other careers only charge and punch.
-local function every_hero_scenarios()
-	local kept = {}
-
-	for _, scenario in ipairs(scenarios()) do
-		if scenario.every_hero then
-			kept[#kept + 1] = scenario
-		end
-	end
-
-	return kept
-end
-
-for _, variant in ipairs({
-	{ name = "shield", setting_id = "shield_gun", careers = { "es_mercenary", "es_knight" }, scenarios = scenarios() },
-	{ name = "shield_dr", setting_id = "shield_gun_dr", careers = { "dr_ironbreaker", "dr_slayer" }, scenarios = every_hero_scenarios() },
-	{ name = "shield_bw", setting_id = "shield_gun_bw", careers = { "bw_adept" }, scenarios = every_hero_scenarios() },
-	{ name = "shield_wh", setting_id = "shield_gun_wh", careers = { "wh_captain" }, scenarios = every_hero_scenarios() },
-	{ name = "shield_we", setting_id = "shield_gun_we", careers = { "we_shade" }, scenarios = every_hero_scenarios() },
-}) do
-	local definition = ut.items.weapons[variant.setting_id]
-
-	runner.add_suite({
-		name = variant.name,
-		item = definition.key,
-		template = definition.template,
-		slot = "slot_melee",
-		careers = variant.careers,
-		scenarios = variant.scenarios,
-	})
-end
+-- scenarios run for every hero. The others run only for Kruber.
+runner.add_suite({
+	name = "shield",
+	slot = "slot_melee",
+	heroes = {
+		hero("shield_gun", { "es_mercenary", "es_knight" }),
+		hero("shield_gun_dr", { "dr_ironbreaker", "dr_slayer" }),
+		hero("shield_gun_bw", { "bw_adept" }),
+		hero("shield_gun_wh", { "wh_captain" }),
+		hero("shield_gun_we", { "we_shade" }),
+	},
+	scenarios = scenarios(),
+})

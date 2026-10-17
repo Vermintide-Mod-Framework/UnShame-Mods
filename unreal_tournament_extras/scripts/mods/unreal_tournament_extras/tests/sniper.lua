@@ -1,8 +1,8 @@
 local mod = get_mod("unreal_tournament_extras")
 local ut = get_mod("unreal_tournament")
 
--- The Sniper Rifle's in-game tests (see runner.lua). Run them with /ut_test sniper (Kruber's) and /ut_test sniper_dr (Bardin's). They run
--- in the runner's level, Righteous Stand.
+-- The Sniper Rifle's in-game tests (see runner.lua), for Kruber's and Bardin's. Run them with /ut_test sniper. They run in the runner's
+-- level, Righteous Stand.
 
 local runner = mod.test_runner
 
@@ -201,32 +201,20 @@ local function scenarios()
 	}
 end
 
+local function hero(setting_id, careers)
+	local definition = ut.items.weapons[setting_id]
+
+	return { item = definition.key, template = definition.template, careers = careers }
+end
+
 -- Each hero's shot is a copy of their own handgun's, with its animation and where it starts, so only the firing runs for Bardin. The
--- rest is the same code for both. A hero's other careers only fire.
-local function every_hero_scenarios()
-	local kept = {}
-
-	for _, scenario in ipairs(scenarios()) do
-		if scenario.every_hero then
-			kept[#kept + 1] = scenario
-		end
-	end
-
-	return kept
-end
-
-for _, variant in ipairs({
-	{ name = "sniper", setting_id = "sniper_rifle", careers = { "es_mercenary", "es_huntsman", "es_knight" }, scenarios = scenarios() },
-	{ name = "sniper_dr", setting_id = "sniper_rifle_dr", careers = { "dr_ironbreaker", "dr_ranger" }, scenarios = every_hero_scenarios() },
-}) do
-	local definition = ut.items.weapons[variant.setting_id]
-
-	runner.add_suite({
-		name = variant.name,
-		item = definition.key,
-		template = definition.template,
-		slot = "slot_ranged",
-		careers = variant.careers,
-		scenarios = variant.scenarios,
-	})
-end
+-- rest is the same code for both.
+runner.add_suite({
+	name = "sniper",
+	slot = "slot_ranged",
+	heroes = {
+		hero("sniper_rifle", { "es_mercenary", "es_huntsman", "es_knight" }),
+		hero("sniper_rifle_dr", { "dr_ironbreaker", "dr_ranger" }),
+	},
+	scenarios = scenarios(),
+})

@@ -1,8 +1,8 @@
 local mod = get_mod("unreal_tournament_extras")
 local ut = get_mod("unreal_tournament")
 
--- The Minigun's in-game tests (see runner.lua). Run them with /ut_test minigun (Kruber's) and /ut_test minigun_wh (Saltzpyre's). They run
--- in the runner's level, Righteous Stand.
+-- The Minigun's in-game tests (see runner.lua), for Kruber's and Saltzpyre's. Run them with /ut_test minigun. They run in the runner's
+-- level, Righteous Stand.
 
 local runner = mod.test_runner
 
@@ -102,32 +102,19 @@ local function scenarios()
 	}
 end
 
--- Saltzpyre's Minigun differs from Kruber's only in the hand its shots come from (its base weapon's), so only the firing runs for him.
--- A hero's other careers only fire.
-local function every_hero_scenarios()
-	local kept = {}
+local function hero(setting_id, careers)
+	local definition = ut.items.weapons[setting_id]
 
-	for _, scenario in ipairs(scenarios()) do
-		if scenario.every_hero then
-			kept[#kept + 1] = scenario
-		end
-	end
-
-	return kept
+	return { item = definition.key, template = definition.template, careers = careers }
 end
 
-for _, variant in ipairs({
-	{ name = "minigun", setting_id = "minigun", careers = { "es_mercenary", "es_huntsman", "es_knight" }, scenarios = scenarios() },
-	{ name = "minigun_wh", setting_id = "minigun_wh", careers = { "wh_captain", "wh_zealot", "wh_bountyhunter" }, scenarios = every_hero_scenarios() },
-}) do
-	local definition = ut.items.weapons[variant.setting_id]
-
-	runner.add_suite({
-		name = variant.name,
-		item = definition.key,
-		template = definition.template,
-		slot = "slot_ranged",
-		careers = variant.careers,
-		scenarios = variant.scenarios,
-	})
-end
+-- Saltzpyre's Minigun differs from Kruber's only in the hand its shots come from (its base weapon's), so only the firing runs for him
+runner.add_suite({
+	name = "minigun",
+	slot = "slot_ranged",
+	heroes = {
+		hero("minigun", { "es_mercenary", "es_huntsman", "es_knight" }),
+		hero("minigun_wh", { "wh_captain", "wh_zealot", "wh_bountyhunter" }),
+	},
+	scenarios = scenarios(),
+})
