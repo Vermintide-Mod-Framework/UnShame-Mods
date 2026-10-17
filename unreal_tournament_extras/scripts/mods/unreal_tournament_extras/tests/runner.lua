@@ -48,9 +48,9 @@ local ut = get_mod("unreal_tournament")
 --   t.remove(unit)                       takes an enemy away before the scenario ends
 --   t.health_of(unit)                    a unit's health, 0 when it is dead
 --   t.track_damage(unit)                 adds up all the damage the unit takes from now on, past what kills it, and keeps each hit
---   t.add_bot(profile_name, career_index, item_key, distance, slot)   adds a bot of that career that far ahead, with the item in hand
---                                        (in the ranged slot if no slot is given), that stands and does only what the test tells it. It
---                                        is taken away after the scenario.
+--   t.add_bot(profile_name, career_index, item_key, distance, slot, own_mind)   adds a bot of that career that far ahead, with the
+--                                        item in hand (in the ranged slot if no slot is given), that stands and does only what the test
+--                                        tells it, or plays as the game's bots do with own_mind. It is taken away after the scenario.
 --   t.bot_aim(bot, unit), t.bot_press(bot, button)   turns the bot to face a unit, and has it press "fire" or "charge_shot"
 --   t.bot_look(bot, direction)           turns the bot to look along a direction ({ x, y, z })
 --   t.bot_defend(bot, on)                has the bot hold its block, or let it go
@@ -1075,11 +1075,10 @@ local function make_context(suite)
 
 	-- Adds a bot, another player, of a hero's career (profile name, as "bright_wizard", and the career's index), that far ahead of the
 	-- player and facing them, with the item in its hand in the slot (the ranged slot if none is given). The runner keeps the game's own
-	-- bots off, so the bot is added
-	-- to the party as the game mode adds one (GameModeBase._add_bot_to_party), and the game spawns it. Its own mind (PlayerBotBase.update)
-	-- is stopped, so that it stands and does only what t.bot_aim and t.bot_press tell it. Returns its unit, or nil. It is taken away
-	-- after the scenario.
-	function t.add_bot(profile_name, career_index, item_key, distance, slot)
+	-- bots off, so the bot is added to the party as the game mode adds one (GameModeBase._add_bot_to_party), and the game spawns it. Its
+	-- own mind (PlayerBotBase.update) is stopped, so that it stands and does only what t.bot_aim and t.bot_press tell it, unless own_mind
+	-- is given: then it plays as the game's bots do. Returns its unit, or nil. It is taken away after the scenario.
+	function t.add_bot(profile_name, career_index, item_key, distance, slot, own_mind)
 		slot = slot or "slot_ranged"
 
 		local bot_player = on_main_thread(function ()
@@ -1108,7 +1107,10 @@ local function make_context(suite)
 				return false
 			end
 
-			ScriptUnit.extension(bot, "ai_system").update = function () end
+			if not own_mind then
+				ScriptUnit.extension(bot, "ai_system").update = function () end
+			end
+
 			runner.move_player(bot, position, math.deg(math.atan2(Vector3.x(flat), -Vector3.y(flat))))
 			ScriptUnit.extension(bot, "ai_navigation_system"):teleport(position)
 

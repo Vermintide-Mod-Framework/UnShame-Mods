@@ -35,8 +35,8 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Bob and sway | - | - | ok | - | - | - |
 | **Firing** | | | | | | |
 | Fire rate of each mode | ok (tests: 1.6 s) | ok (tests) | ok (FireRate 0.6 after a punch) | - | ok (tests: rounds at 0.088 s; grenades at 0.5 s + the charge) | ok (tests: 1.33 s) |
-| Second mode right after the first | - | - | - | - | - | - |
-| First mode right after the second | - | - | - | - | - | - |
+| Second mode right after the first | - | - | ok (tests: the shield goes up within 0.3 s of a punch) | - | - | - |
+| First mode right after the second | - | - | ok (tests: a punch right after the shield is let down) | - | - | - |
 | Hold, release and auto-fire | - | - | ok (tests: punch on release, auto punch with an enemy in reach) | - | ok (grenade charges while held, thrown on release, from each rifle in turn) | ok (tests: holding the button repeats the shot) |
 | Where shots start | - | - | ok (the punch's cone and ray start at the eye, where the crosshair is) | - | - | ok (tests: the hit is on the target aimed at) |
 | Shots start in the same place each time | - | - | n/a | - | - | - |
@@ -45,13 +45,13 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Rapid shots | - | - | n/a | - | - | - |
 | **Damage** | | | | | | |
 | Normal enemies | no: open. The test "damages an enemy" fails: a marauder spawned in the Keep has 0 health before it is hit, so the test can't measure damage there (the bolt does end on it) | no: the same | ok (tests: punches kill rats in a horde, a punch while moving fast does more damage, a punch never hits the player who punches); 40 to 150 by the charge, reaching 122 UT units (the bash 162); it gets through enemies as the game's lighter tank blows do | - | - | - |
-| Armored enemies | - | - | - | - | - | - |
-| Monsters | - | - | - | - | - | - |
+| Armored enemies | - | - | ok (tests: a punch hurts a Chaos warrior) | - | - | - |
+| Monsters | - | - | ok (tests: a punch hurts a rat ogre) | - | - | - |
 | Shields | - | - | - | - | - | - |
 | Headshots | - | - | - | - | - | ok (tests: double damage) |
 | Crits | - | - | - (the punch is a melee hit, with the game's melee crits) | - | - | - |
-| Damage against the other UT weapons | - | - | - (the shield reflects the Shock Rifle's beam and ball and the Link Gun's bolts, by UT's rules; tests for the beam and the ball, not run yet) | - | - | - |
-| Self damage | - | - | - (UT's 8 + 0.3 of the damage for a punch at a wall or the floor, halved as the Rocket Launcher's; none when the punch hits an enemy or a thing) | ok (from the outermost wave, scaled as the Rocket Launcher's) | ok (the grenade's, reduced as the Rocket Launcher's) | - |
+| Damage against the other UT weapons | - | - | ok (the shield reflects the Shock Rifle's beam and ball and the Link Gun's bolts, by UT's rules; tests: a bot's beam and ball, from shield to shield, back and forth at most 3 times for the beam) | - | - | - |
+| Self damage | - | - | ok (tests: a full punch at the floor hurts the player 26.5, UT's 8 + 0.3 of the damage, halved as the Rocket Launcher's; none when the punch hits an enemy or a thing) | ok (from the outermost wave, scaled as the Rocket Launcher's) | ok (the grenade's, reduced as the Rocket Launcher's) | - |
 | Explosion radius | - | - | n/a | ok (six waves growing over 1.3 s, tests; scaled down as the Rocket Launcher's) | ok (150 units, scaled as the Rocket Launcher's) | - |
 | Explosion falloff | - | - | n/a | - | - | - |
 | Momentum | - | - | - | - | - | - |
@@ -64,7 +64,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Lifetime | - | - | n/a | - | ok (2 s timer; tests) | - |
 | Hit size | - | - | n/a | - | - | - |
 | Draw distance | - | - | n/a | - | - | - |
-| Hitting other projectiles | - | - | - (the right button is the base weapon's block, made a shield block, with stamina in place of UT's shield ammo. From its front it stops shots and explosions, reflects sorcerers' magic missiles, throws back gutter runners' pounces and stops lifeleeches' grabs; tests: an exploding barrel; tests for the pounce and the grab, not run yet) | - | - | - |
+| Hitting other projectiles | - | - | ok (the right button is the base weapon's block, made a shield block, with stamina in place of UT's shield ammo. From its front it stops shots and explosions, reflects sorcerers' magic missiles, throws back gutter runners' pounces and stops lifeleeches' grabs; tests: an exploding barrel, a pounce, a grab) | - | - | - |
 | Lock-on, homing, bounce, link, goo, combo | - | - | n/a | - | ok (bounce: 0.5 into the wall, 0.8 along it, stops below 20) | - |
 | **Ammo** | | | | | | |
 | Max ammo | ok (40) | ok (300) | n/a (no ammo: the shield takes stamina) | ok (1, tests) | ok (200 rounds, 8 grenades; tests) | ok (35; tests) |
@@ -121,7 +121,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Damage on the client | - | - | ok | - | - | - |
 | Ammo on the client | - | - | n/a | - | - | - |
 | **Bots** | | | | | | |
-| Bots using it | - | - | - (a heavy attack charges until an enemy is in reach, as UT's bots do; a light one is a quick punch) | - | - | - |
+| Bots using it | - | - | ok (tests: a bot fights rats with it; a heavy attack charges until an enemy is in reach, as UT's bots do, and a light one is a quick punch) | - | - | - |
 | Range they shoot from | - | - | - (as far as the charge looks for an enemy) | - | - | - |
 | Allies in the way | - | - | - | - | - | - |
 | Look and sound of their shots | - | - | - | - | - | - |
@@ -132,7 +132,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Revive with it | - | - | - | - | - | - |
 | Knockdown | - | - | - | - | - | - |
 | Ledge hang | - | - | - | - | - | - |
-| Switching away mid-animation | - | - | - | - | - | - |
-| Switching back mid-animation | - | - | - | - | - | - |
+| Switching away mid-animation | - | - | ok (tests: putting it away while it charges doesn't punch) | - | - | - |
+| Switching back mid-animation | - | - | ok (tests: taken out again, it charges and punches) | - | - | - |
 | Errors in the console log | ok | ok | - | - | - | - |
 | Crash dumps | ok | ok | - | - | - | - |

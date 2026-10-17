@@ -42,6 +42,18 @@ local STANDARD_DISTANCE = 1.5 -- m
 local STANDARD_HEALTH = 10
 local STANDARD_MAX_PUNCHES = 10
 
+-- "a full punch at the floor hurts the player as UT's": how long the charge is held (past the full charge's 2.5 s), how far the player
+-- looks down, and the damage UT's punch of a wall does at a full charge, halved as shield_gun.lua halves it (MinSelfDamage 8 +
+-- SelfDamageScale 0.3 * 150, times 0.5)
+local FULL_CHARGE_TIME = 2.8 -- s
+local FLOOR_PITCH = -60 -- degrees
+local FULL_SELF_DAMAGE = 26.5
+
+-- "a bot punches enemies with it": the rats it is given to fight, how far ahead of the player they and the bot are, and how long it has
+local BOT_FIGHT_RATS = 3
+local BOT_FIGHT_DISTANCE = 4 -- m
+local BOT_FIGHT_TIME = 20 -- s
+
 -- The scenarios of an enemy's attack at the shield: how far ahead the enemy starts, and how long it is given to attack
 local ATTACK_DISTANCE = 8 -- m
 local ATTACK_TIME = 20 -- s
@@ -869,6 +881,167 @@ local function scenarios()
 				if order then
 					t.expect(count >= 3 and string.find(order, "the player, Bardin, the player", 1, true) == 1, "the ball did not go back and forth three times or more, but: %s", order)
 				end
+			end,
+		},
+		{
+			-- The punch chains to the shield at once (shield_gun.lua's build_punch: action_two from 0 s)
+			name = "the shield goes up right after a punch",
+			run = function (t)
+				local before = shield.last_punch
+
+				t.press("action_one", 0.1)
+
+				local blocked = false
+
+				t.hold("action_two")
+				t.watch(0.3, function ()
+					local status_extension = ScriptUnit.has_extension(t.unit(), "status_system")
+
+					blocked = blocked or status_extension and status_extension:is_blocking() or false
+				end)
+				t.release("action_two")
+
+				t.expect(shield.last_punch ~= before, "the quick press did not punch")
+				t.expect(blocked, "the shield did not go up within 0.3 s of the punch")
+			end,
+		},
+		{
+			-- Let down, the shield doesn't keep the gun from charging and punching
+			name = "a punch right after the shield",
+			run = function (t)
+				t.press("action_two", 0.5)
+
+				local before = shield.last_punch
+
+				t.press("action_one", 1)
+				t.wait(0.2)
+
+				t.expect(shield.last_punch ~= before, "the gun did not punch right after the shield was let down")
+			end,
+		},
+		{
+			-- The punch hurts what the game's blows of its kind hurt: an armoured enemy (a Chaos warrior) and a monster (a rat ogre). The
+			-- charge punches by itself with the enemy in reach.
+			name = "a punch hurts armoured enemies and monsters",
+			run = function (t)
+				for _, breed_name in ipairs({ "chaos_warrior", "skaven_rat_ogre" }) do
+					t.go_to_start()
+
+					local enemy = t.spawn(breed_name, 2)
+
+					if t.expect(enemy, "the %s could not be spawned", breed_name) then
+						t.wait(1)
+						t.aim_at(enemy)
+
+						local damage = t.track_damage(enemy)
+
+						t.press("action_one", 1.5)
+						t.wait(0.5)
+
+						t.expect(damage.total > 0, "the punch did not hurt the %s", breed_name)
+						t.log("%s: %.1f", breed_name, damage.total)
+						t.remove(enemy)
+					end
+				end
+			end,
+		},
+		{
+			-- A punch that hits a wall or the floor, and no enemy or thing, hurts the player as UT's punch of a wall does (ShieldFire:
+			-- MinSelfDamage + SelfDamageScale * the damage, halved)
+			name = "a full punch at the floor hurts the player as UT's",
+			run = function (t)
+				t.hurtable(true)
+				t.look(FLOOR_PITCH, 0)
+
+				local damage = t.track_damage(t.unit())
+
+				t.press("action_one", FULL_CHARGE_TIME)
+				t.wait(0.5)
+
+				local own = 0
+
+				for _, hit in ipairs(damage.hits) do
+					if hit.source and string.find(hit.source, "ut_shield_gun", 1, true) then
+						own = own + hit.amount
+					end
+				end
+
+				t.expect(math.abs(own - FULL_SELF_DAMAGE) < 0.5, "the punch at the floor hurt the player %.1f, not %.1f", own, FULL_SELF_DAMAGE)
+			end,
+		},
+		{
+			-- Putting the gun away while it charges ends the charge without a punch, and taken out again it charges and punches as before
+			name = "switching away while charging doesn't punch",
+			run = function (t)
+				local before = shield.last_punch
+
+				t.hold("action_one")
+				t.wait(1)
+				t.on_main_thread(function ()
+					ScriptUnit.extension(t.unit(), "inventory_system"):wield("slot_ranged")
+				end)
+				t.wait(1)
+				t.release("action_one")
+				t.wait(0.5)
+
+				t.expect(shield.last_punch == before, "the gun punched as it was put away")
+				t.expect(shield.charge_started == nil, "the charge went on after the gun was put away")
+
+				t.on_main_thread(function ()
+					ScriptUnit.extension(t.unit(), "inventory_system"):wield("slot_melee")
+				end)
+				t.wait(1.5)
+				t.press("action_one", 1)
+				t.wait(0.2)
+
+				t.expect(shield.last_punch ~= before, "the gun did not punch after it was taken out again")
+			end,
+		},
+		{
+			-- A bot holding it (Bardin, with his own mind, as the game's bots play) fights rats with it: its heavy attack holds the charge
+			-- until an enemy is in reach, and its light attack is a quick punch (shield_gun.lua's attack_meta_data)
+			name = "a bot punches enemies with it",
+			run = function (t)
+				local bardin = t.add_bot(SHIELD_BOT_PROFILE, SHIELD_BOT_CAREER, ut.items.weapons.shield_gun_dr.key, BOT_FIGHT_DISTANCE, "slot_melee", true)
+
+				if not t.expect(bardin, "Bardin could not be added") then
+					return
+				end
+
+				local rats = t.spawn_group("skaven_clan_rat", BOT_FIGHT_RATS, BOT_FIGHT_DISTANCE)
+				local damages = {}
+
+				-- (a bot takes no enemy of a group that has no target for its own as a target (PlayerBotBase._target_valid), and the
+				-- runner's rats are kept calm with none, so they are let attack)
+				t.on_main_thread(function ()
+					for _, rat in ipairs(rats) do
+						runner.provoke(rat)
+					end
+				end)
+
+				for i, rat in ipairs(rats) do
+					damages[i] = t.track_damage(rat)
+				end
+
+				local function by_bot()
+					local total = 0
+
+					for _, damage in ipairs(damages) do
+						for _, hit in ipairs(damage.hits) do
+							if hit.source == ut.items.weapons.shield_gun_dr.key then
+								total = total + hit.amount
+							end
+						end
+					end
+
+					return total
+				end
+
+				t.wait_until(function ()
+					return by_bot() > 0
+				end, BOT_FIGHT_TIME, "the bot to punch a rat")
+
+				t.expect(by_bot() > 0, "the bot did not hurt a rat with the Shield Gun in %d s", BOT_FIGHT_TIME)
 			end,
 		},
 		{
