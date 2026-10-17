@@ -12,6 +12,7 @@ local CONFIG = {
 }
 
 local standards = {}
+mod.standards = standards
 -- True while the damage of an explosion is being applied. The host applies it at once.
 local exploding = false
 
@@ -53,5 +54,3 @@ function standards.blow_up(impact_position, attacker_unit, radius, damage_profil
 		end
 	end
 end
-
-return standards

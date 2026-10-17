@@ -12,7 +12,7 @@ local mod = get_mod("unreal_tournament")
 --   Call outs of a number of kills with a weapon (DamageType.IncrementKills): Head Hunter for head shots, Flak Monkey for kills with the
 --     Flak Cannon, and Combo Whore for kills with a shock combo. The call out comes a moment after the kill that reaches the number.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 
 local CONFIG = {
 	-- UnrealPlayer.LogMultiKills: a kill counts as the next kill of a multi kill if it comes within this long after the last one. UT

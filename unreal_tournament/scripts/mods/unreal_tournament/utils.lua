@@ -1,9 +1,10 @@
 local mod = get_mod("unreal_tournament")
 
--- Helpers that more than one file uses. Load with mod:dofile("scripts/mods/unreal_tournament/utils").
+-- Helpers that more than one file uses, as mod.utils. unreal_tournament.lua loads this file once, before the others.
 local stagger_types = require("scripts/utils/stagger_types")
 
 local utils = {}
+mod.utils = utils
 
 -- Calling the game's functions
 
@@ -678,5 +679,3 @@ function utils.package_holder(reference_name)
 
 	return holder
 end
-
-return utils

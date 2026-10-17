@@ -3,7 +3,7 @@ local mod = get_mod("unreal_tournament")
 -- Particle effects that can be scaled. The game only loads its effects together with the characters and weapons that use them, and
 -- playing an effect that isn't loaded crashes the game. So an effect is only played when it is available.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 
 local CONFIG = {
 	-- Particle effects are scaled by linking them to a unit that has a scale, so an effect that needs a size gets an invisible helper
@@ -14,6 +14,7 @@ local CONFIG = {
 }
 
 local effects = {}
+mod.effects = effects
 
 effects.is_available = function (effect_name)
 	local ok, available = pcall(Application.can_get, "particles", effect_name)
@@ -135,5 +136,3 @@ end
 mod.update_callbacks[#mod.update_callbacks + 1] = effects.update
 mod.unload_callbacks[#mod.unload_callbacks + 1] = effects.clear
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = effects.clear
-
-return effects

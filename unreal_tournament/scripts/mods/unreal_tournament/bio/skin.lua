@@ -11,7 +11,7 @@ local mod = get_mod("unreal_tournament")
 --
 -- The assets were made with tools/asset_conversion.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/bio/skin_animations")
 local particles = mod.skin_particles
 

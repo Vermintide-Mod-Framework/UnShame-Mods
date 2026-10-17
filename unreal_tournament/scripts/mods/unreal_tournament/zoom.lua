@@ -9,7 +9,7 @@ local mod = get_mod("unreal_tournament")
 --   zoom.zoomed, zoom.magnification(): whether the view is zoomed, and how many times larger it is.
 -- While the view is zoomed, each weapon draws its scope, and the game's crosshair stays on top of it.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 
 local CONFIG = {
 	-- The field of view goes from the normal 90 degrees down by 88 degrees for each second the button is held, until the zoom level
@@ -26,6 +26,7 @@ local zoom = {
 	zooming = false,
 	zoomed = false,
 }
+mod.zoom = zoom
 
 local templates = {}
 
@@ -144,5 +145,3 @@ end
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = reset_zoom
 mod.disabled_callbacks[#mod.disabled_callbacks + 1] = reset_zoom
 mod.unload_callbacks[#mod.unload_callbacks + 1] = reset_zoom
-
-return zoom

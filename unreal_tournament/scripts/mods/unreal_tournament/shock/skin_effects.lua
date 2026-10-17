@@ -7,7 +7,7 @@ local mod = get_mod("unreal_tournament")
 --
 -- skin.lua calls these functions, because it knows when and where an effect happens.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local particles = mod.skin_particles
 
 local CONFIG = {

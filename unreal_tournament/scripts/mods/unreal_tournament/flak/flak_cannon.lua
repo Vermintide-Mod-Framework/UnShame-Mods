@@ -6,7 +6,7 @@ local mod = get_mod("unreal_tournament")
 --   RMB: lobs a shell that explodes when it hits something and throws flak chunks in all directions.
 -- The recoil is the Blunderbuss's own. There is no reload.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template
 local register_network_lookup = utils.register_network_lookup

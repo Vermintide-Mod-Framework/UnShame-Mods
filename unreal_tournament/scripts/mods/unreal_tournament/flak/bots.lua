@@ -5,7 +5,7 @@ local mod = get_mod("unreal_tournament")
 -- boss, or a cluster of enemies, a bot fires the shell. The shell is tossed up from the aim, so a target about as far as the shell
 -- flies (a level target at 10 to 12 m) is hit where the bot aims.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 
 local CONFIG = {
 	-- The shell is used against a target in this range, in meters. Nearer, its explosion (3 m) would hurt the bot. Further away, it

@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 
 -- Hooks of game functions that more than one weapon needs. The game lets a function be hooked only once, so the weapons don't hook
 -- these functions themselves. Each hook here runs a table of callbacks, and a weapon adds its own function to the table under a name.

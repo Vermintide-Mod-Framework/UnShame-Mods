@@ -9,7 +9,7 @@ local mod = get_mod("unreal_tournament")
 -- The assets were made with tools/asset_conversion (convert_weapon.py minigun, convert_static.py minigun_pickup, make_weapon_fx.py and
 -- make_bank.py minigun).
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/minigun/skin_animations")
 local particles = mod.skin_particles
 

@@ -20,9 +20,10 @@ local mod = get_mod("unreal_tournament")
 -- The backend doesn't have these items, so they are added to the inventory it loaded. The ids are fixed: the item's key for the
 -- blueprint, and key#number for crafted weapons (see crafting.lua). That way a loadout finds them again.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 
 local items = {}
+mod.items = items
 
 local definitions = {}
 
@@ -444,5 +445,3 @@ function items.register(setting_id, definition)
 		backend:get_interface("items"):make_dirty()
 	end
 end
-
-return items

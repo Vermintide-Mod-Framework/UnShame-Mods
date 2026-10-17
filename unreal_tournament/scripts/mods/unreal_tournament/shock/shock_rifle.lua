@@ -144,7 +144,7 @@ local BALL_GRAVITY_SETTINGS = "drake_pistols"
 
 -- New named data is registered below. It must exist on every peer in the same order, so everyone in the game needs the mod.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local effects = mod.effects
 local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template

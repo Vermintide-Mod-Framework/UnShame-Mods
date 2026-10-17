@@ -6,7 +6,7 @@ local mod = get_mod("unreal_tournament")
 --   Right button: the same at 5 rounds a second, for twice the damage and a tight spread.
 -- The two buttons do not fire at once. The skin (skin.lua) draws all of it. This file only sets what it does to the game.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local register_damage_profile = utils.register_damage_profile
 local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for

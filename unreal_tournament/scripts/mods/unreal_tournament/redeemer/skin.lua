@@ -8,7 +8,7 @@ local mod = get_mod("unreal_tournament")
 -- The assets were made with tools/asset_conversion (convert_weapon.py redeemer, convert_static.py redeemer_pickup and redeemer_missile,
 -- make_weapon_fx.py, render_icon.py and make_bank.py redeemer).
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/redeemer/skin_animations")
 local particles = mod.skin_particles
 

@@ -65,7 +65,7 @@ local ut = get_mod("unreal_tournament")
 -- The tests change the player's loadout and career, and put them back at the end. The loadout is kept in the backend, so what has to be
 -- put back is saved in the settings while a suite runs, and put back the next time the mod loads if a suite was cut short.
 
-local utils = ut:dofile("scripts/mods/unreal_tournament/utils")
+local utils = ut.utils
 
 local runner = {
 	suites = {},

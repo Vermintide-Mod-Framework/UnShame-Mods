@@ -9,7 +9,7 @@ local mod = get_mod("unreal_tournament")
 -- The assets were made with tools/asset_conversion (convert_weapon.py shield, convert_static.py shield_pickup, render_icon.py and
 -- make_bank.py shield_gun).
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/shield/skin_animations")
 local particles = mod.skin_particles
 

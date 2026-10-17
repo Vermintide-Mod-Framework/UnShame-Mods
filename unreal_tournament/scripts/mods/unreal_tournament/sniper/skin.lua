@@ -10,7 +10,7 @@ local mod = get_mod("unreal_tournament")
 -- classic_sniper_pickup, render_icon.py, make_sniper_scope.py, make_fx_assets.py and split_spark.py for the sparks, and make_bank.py
 -- sniper_rifle).
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/sniper/skin_animations")
 local particles = mod.skin_particles
 

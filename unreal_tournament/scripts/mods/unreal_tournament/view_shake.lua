@@ -10,11 +10,12 @@ local mod = get_mod("unreal_tournament")
 -- On each axis the offset moves at the rate until it reaches its limit, then turns back. Each time it turns, the limit is multiplied
 -- by (1 / time - 1), about -0.5 at first, and time goes down by a frame. Once time is down to 1, that axis stops.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 
 local UNIT = utils.UT_UNIT
 
 local view_shake = {}
+mod.view_shake = view_shake
 
 -- The current shake: a table for each axis (forward, right, up) with its offset, limit (most), rate and time. Nil when there is no shake.
 local axes
@@ -118,5 +119,3 @@ local function stop()
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = stop
-
-return view_shake

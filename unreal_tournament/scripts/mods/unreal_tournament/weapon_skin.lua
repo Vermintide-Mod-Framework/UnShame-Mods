@@ -54,7 +54,7 @@ local mod = get_mod("unreal_tournament")
 --   on_update_always(dt): runs every frame, whether the skin is shown or not
 --   on_give_back(), on_level_exit(): the weapon takes back and clears what is its own
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local third_person_module = mod:dofile("scripts/mods/unreal_tournament/weapon_skin_third_person")
 
 -- The skins, by id (used by /skin)
@@ -937,7 +937,7 @@ local function new(def)
 	return self
 end
 
-return {
+mod.weapon_skin = {
 	new = new,
 	-- The skins, by id
 	skins = skins,

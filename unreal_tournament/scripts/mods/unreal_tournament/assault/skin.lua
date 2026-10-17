@@ -11,7 +11,7 @@ local mod = get_mod("unreal_tournament")
 -- The assets were made with tools/asset_conversion (convert_weapon.py assault, convert_static.py assault_pickup and assault_grenade,
 -- render_icon.py and make_bank.py assault_rifle).
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/assault/skin_animations")
 local particles = mod.skin_particles
 

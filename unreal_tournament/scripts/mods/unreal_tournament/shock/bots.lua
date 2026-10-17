@@ -5,7 +5,7 @@ local mod = get_mod("unreal_tournament")
 -- enemies, a bot fires the ball (the secondary attack), waits for it to get near the target, and then fires the beam along the line
 -- the ball flew. The beam passes through the ball, and the ball goes off (see find_ball_hit_by_beam in shock_rifle.lua).
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 
 local TEMPLATE_NAME = mod.items.weapons.shock_rifle.template
 

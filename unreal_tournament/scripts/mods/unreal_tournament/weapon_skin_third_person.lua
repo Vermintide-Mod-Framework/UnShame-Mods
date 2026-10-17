@@ -32,7 +32,7 @@ local mod = get_mod("unreal_tournament")
 -- A weapon with skins (illusions) can hold a different mesh for one of them: looks = { [skin key] = a definition like the one above,
 -- for that mesh }. A character wielding the weapon with that skin holds that mesh.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 
 -- The third person of every weapon
 local instances = {}

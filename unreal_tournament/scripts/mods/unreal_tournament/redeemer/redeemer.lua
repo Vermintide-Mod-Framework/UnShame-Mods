@@ -8,7 +8,7 @@ local mod = get_mod("unreal_tournament")
 -- It holds one missile, as UT's does.
 -- The skin (skin.lua) draws all of it, and this file only sets what it does to the game.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template
 local make_flat = utils.make_flat

@@ -13,7 +13,7 @@ local mod = get_mod("unreal_tournament")
 -- Each hero has a melee weapon to be a copy of, so the weapon is six items of the mod that share everything but the base.
 -- The skin (skin.lua) draws all of it, and this file only sets what it does to the game.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local register_damage_profile = utils.register_damage_profile
 local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for

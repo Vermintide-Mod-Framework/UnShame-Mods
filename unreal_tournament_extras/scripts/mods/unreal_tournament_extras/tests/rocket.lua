@@ -5,7 +5,7 @@ local ut = get_mod("unreal_tournament")
 -- The numbers expected are UT's (XWeapons/RocketFire, RocketMultiFire and RocketProj) as the mod turns them into this game's.
 
 local runner = mod.test_runner
-local utils = ut:dofile("scripts/mods/unreal_tournament/utils")
+local utils = ut.utils
 
 local definition = ut.items.weapons.rocket_launcher
 

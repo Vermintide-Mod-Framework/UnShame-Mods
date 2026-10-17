@@ -14,7 +14,7 @@ local mod = get_mod("unreal_tournament")
 -- as wide as the level's square root times the radius of a level 1 glob.
 -- The ammo is the clip, so there is no reload.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local with_valid_positions = utils.with_valid_positions
 local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template

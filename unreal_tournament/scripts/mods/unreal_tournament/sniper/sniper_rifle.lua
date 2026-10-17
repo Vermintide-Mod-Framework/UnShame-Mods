@@ -7,7 +7,7 @@ local mod = get_mod("unreal_tournament")
 -- All of the ammo is in the gun, so there is no reload. Kruber's handgun and Bardin's are separate templates, so the weapon is two items
 -- of the mod that share everything but the base. The skin (skin.lua) draws all of it, and this file only sets what it does to the game.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local register_damage_profile = utils.register_damage_profile
 local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for

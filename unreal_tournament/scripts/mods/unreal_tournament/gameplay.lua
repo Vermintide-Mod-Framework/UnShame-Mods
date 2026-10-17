@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 
 -- Gameplay options
 local CONFIG = {

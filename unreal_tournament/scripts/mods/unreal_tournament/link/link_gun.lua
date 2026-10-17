@@ -35,7 +35,7 @@ local mod = get_mod("unreal_tournament")
 -- from the staff in the hands. The player tells the others where it ends, and they draw it from the staff of the player's
 -- character. They also hear a drone while something is linked, and a gust for every yank.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local effects = mod.effects
 local with_valid_positions = utils.with_valid_positions
 local register_damage_profile = utils.register_damage_profile

@@ -9,7 +9,7 @@ local mod = get_mod("unreal_tournament")
 -- The assets were made with tools/asset_conversion (convert_weapon.py sniper, convert_static.py sniper_pickup, make_sniper_screen.py,
 -- make_lightning_assets.py and make_bank.py lightning_gun).
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/lightning/skin_animations")
 local particles = mod.skin_particles
 

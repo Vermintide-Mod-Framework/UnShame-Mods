@@ -59,27 +59,33 @@ mod.on_game_state_changed = function (status, state_name)
 	end
 end
 
+-- The shared files. Each puts itself on mod under its own name (mod.utils, mod.items and so on), so they are loaded once, in this
+-- order, before the weapons.
+
+-- Helpers (mod.utils)
+mod:dofile("scripts/mods/unreal_tournament/utils")
+
 -- The hooks on the game's functions that the weapons share, and the callback tables those hooks run
 mod:dofile("scripts/mods/unreal_tournament/hooks")
 
--- The weapons as items of their own. Each weapon's file registers its item.
-mod.items = mod:dofile("scripts/mods/unreal_tournament/items")
+-- The weapons as items of their own (mod.items). Each weapon's file registers its item.
+mod:dofile("scripts/mods/unreal_tournament/items")
 
--- The scaled particle effects of the weapons. All weapons share this one copy.
-mod.effects = mod:dofile("scripts/mods/unreal_tournament/effects")
+-- The scaled particle effects of the weapons (mod.effects)
+mod:dofile("scripts/mods/unreal_tournament/effects")
 
--- What lets the weapons damage beastmen standards (banners). All weapons share this one copy.
-mod.standards = mod:dofile("scripts/mods/unreal_tournament/standards")
+-- What lets the weapons damage beastmen standards (mod.standards)
+mod:dofile("scripts/mods/unreal_tournament/standards")
 
--- The particles of the weapon skins, which are UT2004's effects. All skins share this one copy.
-mod.skin_particles = mod:dofile("scripts/mods/unreal_tournament/skin_particles")
+-- The particles of the weapon skins, which are UT2004's effects (mod.skin_particles)
+mod:dofile("scripts/mods/unreal_tournament/skin_particles")
 
--- What the weapon skins have in common. A weapon's own file calls mod.weapon_skin.new with the parts that are its own.
-mod.weapon_skin = mod:dofile("scripts/mods/unreal_tournament/weapon_skin")
+-- What the weapon skins have in common (mod.weapon_skin). A weapon's own file calls mod.weapon_skin.new with the parts that are its own.
+mod:dofile("scripts/mods/unreal_tournament/weapon_skin")
 
--- UT's view shake of a shot, and UT's zoom of the sniper weapons (the Lightning Gun and the Sniper Rifle). Shared by the weapons.
-mod.view_shake = mod:dofile("scripts/mods/unreal_tournament/view_shake")
-mod.zoom = mod:dofile("scripts/mods/unreal_tournament/zoom")
+-- UT's view shake of a shot (mod.view_shake), and UT's zoom of the Lightning Gun and the Sniper Rifle (mod.zoom)
+mod:dofile("scripts/mods/unreal_tournament/view_shake")
+mod:dofile("scripts/mods/unreal_tournament/zoom")
 
 -- The weapons. Each has a folder with its gameplay (<weapon>.lua) and its skin (skin.lua, with its animations and effects). Each
 -- also has a folder of the same name in units/ut with its models.
@@ -125,5 +131,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 1184)")
+	mod:echo("Unreal Tournament loaded (build 1185)")
 end

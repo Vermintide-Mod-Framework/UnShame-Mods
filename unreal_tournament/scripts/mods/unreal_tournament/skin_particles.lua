@@ -45,9 +45,10 @@ local mod = get_mod("unreal_tournament")
 --
 -- Vectors can't be kept from one frame to the next, so they are kept in boxes.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = mod.utils
 
 local particles = {}
+mod.skin_particles = particles
 
 local UNIT_NAME = "units/ut/fx/quad"
 local LIGHT_UNIT_NAME = "units/ut/fx/light"
@@ -512,5 +513,3 @@ mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 
 	clear()
 end
-
-return particles
