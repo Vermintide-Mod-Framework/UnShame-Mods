@@ -16,9 +16,12 @@ local particles = mod.skin_particles
 local CONFIG = {
 	-- The first person flash's DrawScale (MinigunMuzFlash1st, see muzzle_flash.lua)
 	flash_draw_scale = 0.9,
-	-- The third person flash (NewMinigunMFlash): four flames in a row along the barrel, each smaller and further out
+	-- The third person flash (NewMinigunMFlash): four flames in a row along the barrel, each smaller and further out, the last two up to 8
+	-- units further at random (StartLocationOffset and StartLocationRange). The emitter is attached to the gun but not scaled by its
+	-- DrawScale, so these are UT units of the world. A UE2 sprite's size (StartSizeRange) is its radius: it is drawn twice as wide.
 	flame_offsets = {8, 16, 24, 32}, -- UT units from the muzzle
-	flame_sizes = {17, 12, 7, 4}, -- UT units
+	flame_offset_ranges = {0, 0, 8, 8}, -- UT units
+	flame_sizes = {{15, 20}, {10, 15}, {5, 10}, {2.5, 5}}, -- UT units
 	flame_life = 0.1,
 	-- NewTracer: a sprite along its velocity that flies at 10000 units a second to where the round hit, less the pullback, and is
 	-- there only if that is farther than the minimum. It is 10 units wide and 20 long times 0.002 of its speed (ScaleSizeXByVelocity),
@@ -140,9 +143,13 @@ local function turn_bone(pose, bone, angle, pivot)
 	pose[o + 7] = py * sin_angle + pz * cos_angle + pivot[2]
 end
 
--- The flash in the hand of a character: flames in a row along the way the round goes
-local function third_person_flash(muzzle, direction, scale)
+-- The flash in the hand of a character: flames in a row along the way the round goes, in UT units of the world
+local function third_person_flash(muzzle, direction)
+	local scale = UNIT
+
 	for i, offset in ipairs(CONFIG.flame_offsets) do
+		offset = offset + math.random() * CONFIG.flame_offset_ranges[i]
+
 		particles.sprite({
 			attenuation = 0,
 			color = {
@@ -152,7 +159,7 @@ local function third_person_flash(muzzle, direction, scale)
 			},
 			life = CONFIG.flame_life,
 			position = muzzle + direction * (offset * scale),
-			size = CONFIG.flame_sizes[i] * scale,
+			size = 2 * random_between(CONFIG.flame_sizes[i]) * scale,
 			spin = (math.random() * 2 - 1) * 0.3,
 			texture = "minigun_flame_" .. math.random(0, 15),
 		})
@@ -367,7 +374,7 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 
 	local direction = Vector3.normalize(end_position - muzzle)
 
-	third_person_flash(muzzle, direction, api.third_person.meters_per_unit_of(owner_unit))
+	third_person_flash(muzzle, direction)
 	tracer(owner_unit, muzzle, end_position, interval)
 
 	-- The barrels turn while rounds come, at the speed of the mode
