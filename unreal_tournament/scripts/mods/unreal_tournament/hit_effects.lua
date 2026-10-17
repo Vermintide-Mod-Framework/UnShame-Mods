@@ -5,9 +5,9 @@ local mod = get_mod("unreal_tournament")
 --       Sniper Rifle's SniperWallHitEffect.
 --   hit_effects.impact_smoke(position, normal): pclImpactSmoke, the puffs of xHeavyWallHitEffect and ExploWallHit.
 --   hit_effects.small_explosion(position, normal): SmallExplosion, the fire of ExploWallHit (the Minigun's alt fire).
--- They are xEmitters, whose code is not in UT's source: a particle's size (mSizeRange) is taken as half its width, as a UE2 sprite's
--- size is its radius, and it fades out from mAttenKa of its life (0.2 unless the class sets it). Their directions are the surface's
--- normal turned by a random share of mDirDev on each axis, and their places are moved by a random share of mPosDev.
+-- They are xEmitters, whose code is not in UT's source: a puff's or a fire's size (mSizeRange) is taken as its width (twice that
+-- looked too big next to UT), and a particle fades out from mAttenKa of its life (0.2 unless the class sets it). Their directions are
+-- the surface's normal turned by a random share of mDirDev on each axis, and their places are moved by a random share of mPosDev.
 -- The textures were made with tools/asset_conversion (make_fx_assets.py and split_spark.py for the sparks, make_weapon_fx.py for the
 -- smoke and the fire).
 
@@ -30,7 +30,7 @@ local CONFIG = {
 	spark_intensity = 2,
 	spark_gravity = 950, -- UT units a second squared
 	-- pclImpactSmoke: 7 puffs, each after up to 0.1 s (mDelayRange), for 0.5 to 1.5 s, flying at 10 to 60 units a second off the surface,
-	-- spread by 0.15 on each axis, up to 8 units out of place, 10 to 25 units in size (20 to 50 across), turned at random, with a random
+	-- spread by 0.15 on each axis, up to 8 units out of place, 10 to 25 units across, turned at random, with a random
 	-- tile of EmitSmoke_t. They are STY_Translucent (c + d * (1 - c)) and dark: mColorRange 20 to 40 of 255, twice that (ScaleGlow).
 	smoke_count = 7,
 	smoke_delay = { 0, 0.1 },
@@ -38,16 +38,16 @@ local CONFIG = {
 	smoke_speed = { 10, 60 },
 	smoke_spread = 0.15,
 	smoke_position_spread = 8, -- UT units
-	smoke_size = { 10, 25 }, -- UT units (half widths)
+	smoke_size = { 10, 25 }, -- UT units across
 	smoke_tiles = 16,
 	smoke_brightness = { 20 / 255 * 2, 40 / 255 * 2 },
 	-- SmallExplosion: a RocketExplosion of 4 pieces of fire (Rexpt), for 0.5 to 1 s, drifting at 3 to 10 units a second any way off the
-	-- surface (mDirDev 1 on each axis), 20 to 40 units in size (40 to 80 across), turned at random, added
+	-- surface (mDirDev 1 on each axis), 20 to 40 units across, turned at random, added
 	explosion_count = 4,
 	explosion_life = { 0.5, 1 },
 	explosion_speed = { 3, 10 },
 	explosion_spread = 1,
-	explosion_size = { 20, 40 }, -- UT units (half widths)
+	explosion_size = { 20, 40 }, -- UT units across
 	-- xEmitter's mAttenKa: the share of a particle's life after which it fades
 	attenuation = 0.2,
 }
@@ -131,7 +131,7 @@ function hit_effects.impact_smoke(position, normal)
 			intensity = random_between(CONFIG.smoke_brightness),
 			life = random_between(CONFIG.smoke_life),
 			position = scattered(position, CONFIG.smoke_position_spread),
-			size = 2 * random_between(CONFIG.smoke_size) * UNIT,
+			size = random_between(CONFIG.smoke_size) * UNIT,
 			texture = "impact_smoke_" .. math.random(0, CONFIG.smoke_tiles - 1),
 			velocity = deviated(normal, CONFIG.smoke_spread) * (random_between(CONFIG.smoke_speed) * UNIT),
 		})
@@ -145,7 +145,7 @@ function hit_effects.small_explosion(position, normal)
 			attenuation = CONFIG.attenuation,
 			life = random_between(CONFIG.explosion_life),
 			position = position,
-			size = 2 * random_between(CONFIG.explosion_size) * UNIT,
+			size = random_between(CONFIG.explosion_size) * UNIT,
 			texture = "small_explosion",
 			velocity = deviated(normal, CONFIG.explosion_spread) * (random_between(CONFIG.explosion_speed) * UNIT),
 		})
