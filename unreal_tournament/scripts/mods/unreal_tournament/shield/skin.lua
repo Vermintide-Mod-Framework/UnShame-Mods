@@ -424,12 +424,12 @@ local GRIPS = {
 		roll = 0,
 		follow_game_unit = 2,
 	},
-	-- The blunderbuss's pose, the same way
+	-- The blunderbuss's pose, the same way, turned a little to the hero's left, as the blunderbuss points
 	shield_gun = {
 		grip_right = 0,
 		grip_forward = 0,
 		grip_up = 0,
-		yaw = 0,
+		yaw = 6,
 		pitch = 0,
 		roll = 0,
 		follow_game_unit = 2,
