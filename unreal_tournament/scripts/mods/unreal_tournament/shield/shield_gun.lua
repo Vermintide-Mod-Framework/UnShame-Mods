@@ -116,10 +116,11 @@ local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
 	-- ShieldFire.ShieldRange: how far a wall can be for a punch to throw the player off it (the shield jump), in UT units
 	range = 112,
-	-- How far the punch reaches what it hits, and the bash out of a push, in UT units. The punch reaches as far as UT's ShieldRange,
-	-- and the bash a third farther (a choice).
-	hit_range = 112,
-	bash_range = 150,
+	-- How far the punch reaches what it hits, and the bash out of a push, in UT units, and how far the charge looks for an enemy to punch
+	-- by itself. Farther than UT's ShieldRange (a choice): at 112 units, dodging into an enemy slid the player off it before the charge
+	-- found it in reach.
+	hit_range = 131,
+	bash_range = 175,
 	-- The punch hits every enemy within its range in a cone this wide (degrees) about the way the player looks, that it can see. UT's
 	-- punch hits the one thing in front: this is the mod's own, and a guess.
 	hit_angle = 60,
@@ -572,8 +573,8 @@ local function enemy_in_reach(unit)
 	next_auto_test[unit] = t + CONFIG.auto_fire_test_freq
 
 	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
-	-- (it looks as far as UT's punch reached, which is less than the punch reaches here)
-	local _, is_enemy, direction, origin, eye = in_reach(unit, physics_world, CONFIG.range)
+	-- (as far as the punch reaches)
+	local _, is_enemy, direction, origin, eye = in_reach(unit, physics_world, CONFIG.hit_range)
 
 	if is_enemy then
 		return true
@@ -581,7 +582,7 @@ local function enemy_in_reach(unit)
 		return false
 	end
 
-	for _, target in ipairs(targets_in_reach(unit, physics_world, eye, direction, CONFIG.range)) do
+	for _, target in ipairs(targets_in_reach(unit, physics_world, eye, direction, CONFIG.hit_range)) do
 		if HEALTH_ALIVE[target.unit] then
 			return true
 		end
@@ -1849,7 +1850,7 @@ local function apply_template(template_name)
 	-- auto release). That is told the game's way (attack_chain, WeaponUtils.add_bot_meta_data_chain_actions). Without it the heavy attack
 	-- looked for a second release in the charge, which has only one, and did nothing. The base weapon's own chains name its attacks, which
 	-- this weapon doesn't have. The bot attacks from as far as the charge looks for an enemy.
-	local reach = CONFIG.range * UNIT
+	local reach = CONFIG.hit_range * UNIT
 
 	template.attack_meta_data = {
 		tap_attack = {

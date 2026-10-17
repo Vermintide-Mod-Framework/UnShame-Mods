@@ -165,9 +165,7 @@ local function scenarios()
 				-- of the ones that hit is taken, as a punch can be a critical hit. The bonus is the movement's (25% at 9 m/s, none up to
 				-- 4.5 m/s), most of which has to show.
 				-- The punch in the dodge is the gun's own, as the enemy comes into reach while the charge is held, so it lands in the dodge
-				-- whatever the reach is. It comes before min_hold_time, as the standing one does, so both are the least charged punch. The
-				-- player looks at the enemy's middle, as a player does: looking level, the punch goes over a rat's head, the more so in the
-				-- dodge's hop, and the gun doesn't find it in reach before the player slides off it.
+				-- whatever the reach is. It comes before min_hold_time, as the standing one does, so both are the least charged punch.
 				local function punch(moving)
 					local target = t.spawn_target(moving and 4 or 1.5)
 
@@ -187,13 +185,7 @@ local function scenarios()
 					end
 
 					if moving then
-						local spine = t.on_main_thread(function ()
-							local position = Unit.world_position(target, Unit.node(target, "j_spine"))
-
-							return { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
-						end)
-
-						t.aim_at_point(spine[1], spine[2], spine[3])
+						t.look(0)
 						t.move(0, 1)
 						t.tap("dodge")
 						t.move()
