@@ -74,6 +74,11 @@ local VARIANTS = {
 		id = "shield_gun_we",
 		key = "ut_shield_gun_we",
 		template = "ut_shield_gun_we_template",
+		-- The Life Staff's pose (the Sister of the Thorn's: every career of hers has the same third person body, and so its animations).
+		-- The punches are its shot. It has no shove, so the push is its shot too.
+		pose_3p = "to_life_staff",
+		punch_3p = "attack_shoot",
+		push_3p = "attack_shoot",
 	},
 }
 

@@ -552,6 +552,18 @@ local GRIPS = {
 		roll = 0,
 		follow_game_unit = 3,
 	},
+	-- The Life Staff's pose: the game links the staff to the left hand's node (AttachmentNodeLinking.one_handed_melee_weapon.left), so the
+	-- mesh is linked there and turned as the node is, as for the Volley Crossbow
+	shield_gun_we = {
+		hand_node = "j_leftweaponattach",
+		grip_right = 0,
+		grip_forward = 0,
+		grip_up = 0,
+		yaw = 0,
+		pitch = 0,
+		roll = 0,
+		follow_game_unit = 3,
+	},
 }
 
 local function new_skin(setting_id)
