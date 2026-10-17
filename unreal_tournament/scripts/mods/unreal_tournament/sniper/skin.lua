@@ -251,36 +251,8 @@ mod.handgun_start_callbacks.sniper_skin = function (action, new_action)
 	end
 end
 
--- The scope, drawn over the player's view while zoomed. It has a screen gui of its own in the level's world, as the Lightning Gun's
--- scope does (see its skin for why).
-local scope_gui, scope_world
-
-local function scope_gui_now()
-	local world = Managers.world:has_world("level_world") and Managers.world:world("level_world")
-
-	if not world then
-		return
-	end
-
-	if scope_world ~= world then
-		scope_gui = World.create_screen_gui(world, "immediate", "material", "ui/ut/sniper_scope")
-		scope_world = world
-	end
-
-	return scope_gui
-end
-
-mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
-	if scope_gui and Managers.world:has_world("level_world") and Managers.world:world("level_world") == scope_world then
-		World.destroy_gui(scope_world, scope_gui)
-	end
-
-	scope_gui, scope_world = nil, nil
-end
-
-mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
-	scope_gui, scope_world = nil, nil
-end
+-- The scope, drawn over the player's view while zoomed. It has a screen gui of its own in the level's world (utils.level_screen_gui).
+local scope_gui_now = utils.level_screen_gui("ui/ut/sniper_scope")
 
 -- Canvas.DrawTile: a piece of the texture (u, v, its width and height in texels, negative to flip it) drawn into a box of the screen
 -- (x, y from the top left, width, height). The gui's y goes up from the bottom of the screen, and its texture's v down from the top, as

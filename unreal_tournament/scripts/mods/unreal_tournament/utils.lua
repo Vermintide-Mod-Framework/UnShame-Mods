@@ -319,6 +319,41 @@ function utils.handgun_round_hit(handgun_action)
 	return hit and hit[1] or origin + direction * 100, hit and hit[3] or Vector3.zero()
 end
 
+-- Returns a function that gives a screen gui in the level's world, made with the materials of material_file, for drawing over the
+-- view, or nil outside a level. The game's own renderer only gets the mod's materials when a level starts, so after a mod reload it
+-- wouldn't draw them until the next level. The gui belongs to the level's world, so each level gets a new one.
+function utils.level_screen_gui(material_file)
+	local gui, gui_world
+
+	mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+		if gui and Managers.world:has_world("level_world") and Managers.world:world("level_world") == gui_world then
+			World.destroy_gui(gui_world, gui)
+		end
+
+		gui, gui_world = nil, nil
+	end
+
+	-- The next level's world can be given the same handle, so the gui is forgotten when the level ends
+	mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+		gui, gui_world = nil, nil
+	end
+
+	return function ()
+		local world = Managers.world:has_world("level_world") and Managers.world:world("level_world")
+
+		if not world then
+			return
+		end
+
+		if gui_world ~= world then
+			gui = World.create_screen_gui(world, "immediate", "material", material_file)
+			gui_world = world
+		end
+
+		return gui
+	end
+end
+
 -- Plays a sound that follows a unit. Returns a handle for utils.stop_sound, or nil if it didn't play.
 function utils.play_on_unit(event, unit)
 	local id, _, wwise_world = WwiseUtils.trigger_unit_event(Managers.world:world("level_world"), event, unit)

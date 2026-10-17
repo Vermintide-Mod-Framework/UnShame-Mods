@@ -417,39 +417,8 @@ end
 
 -- The scope is drawn over the player's view while zoomed: the lens and scan lines, the ring, the four arrows, and the bar at the right
 -- that shows how long it is until the next shot (red to blue as it charges, green when ready).
--- It has a screen gui of its own, made with its materials in the level's world, where the in-game user interface draws too. The game's
--- own renderer only gets the mod's materials when a level starts, so with it the scope would not show after the mod is reloaded until
--- the next level. A new level has a new world, which gets a new gui.
-local scope_gui, scope_world
-
-local function scope_gui_now()
-	local world = Managers.world:has_world("level_world") and Managers.world:world("level_world")
-
-	if not world then
-		return
-	end
-
-	if scope_world ~= world then
-		scope_gui = World.create_screen_gui(world, "immediate", "material", "ui/ut/lightning_scope")
-		scope_world = world
-	end
-
-	return scope_gui
-end
-
-mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
-	if scope_gui and Managers.world:has_world("level_world") and Managers.world:world("level_world") == scope_world then
-		World.destroy_gui(scope_world, scope_gui)
-	end
-
-	scope_gui, scope_world = nil, nil
-end
-
--- The gui goes with the level's world. The next level's world can be given the same handle, so the gui is forgotten when the level ends,
--- and the next one makes its own.
-mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
-	scope_gui, scope_world = nil, nil
-end
+-- It has a screen gui of its own in the level's world (utils.level_screen_gui).
+local scope_gui_now = utils.level_screen_gui("ui/ut/lightning_scope")
 
 local function draw_scope(ingame_ui)
 	if not lightning.zoom.zoomed then
