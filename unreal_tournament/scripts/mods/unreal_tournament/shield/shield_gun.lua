@@ -1844,6 +1844,40 @@ local function apply_template(template_name)
 		action_one = actions.action_one,
 	}, template_name)
 
+	-- Bots (BTBotMeleeAction): a light attack lets go of the charge at once, which is a quick punch. A heavy attack holds the charge until
+	-- it punches by itself, when an enemy is in reach, as UT's bots hold the Shield Gun's fire and let it go off by itself (ShieldFire's
+	-- auto release). That is told the game's way (attack_chain, WeaponUtils.add_bot_meta_data_chain_actions). Without it the heavy attack
+	-- looked for a second release in the charge, which has one, and did nothing. The base weapon's own chains name its attacks, which
+	-- this weapon doesn't have. The bot attacks from as far as the charge looks for an enemy.
+	local reach = CONFIG.range * UNIT
+
+	template.attack_meta_data = {
+		tap_attack = {
+			arc = 1,
+			max_range = reach,
+		},
+		hold_attack = {
+			arc = 2,
+			max_range = reach,
+			attack_chain = {
+				start_action_name = "action_one",
+				start_sub_action_name = "default",
+				transitions = {
+					action_one = {
+						default = {
+							bot_wait_input = "hold_attack",
+							bot_wanted_input = "hold_attack",
+							wanted_action_name = "action_one",
+							wanted_sub_action_name = "punch_auto",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	WeaponUtils.add_bot_meta_data_chain_actions(actions, template.attack_meta_data.hold_attack.attack_chain.transitions)
+
 	template.tooltip_compare = {
 		light = {
 			action_name = "action_one",
