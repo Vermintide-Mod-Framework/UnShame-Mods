@@ -937,8 +937,31 @@ local function new(def)
 	return self
 end
 
+-- For a weapon with a skin for each of its templates: returns the one of these skins whose model the player sees now
+local function shown_skin(apis)
+	for _, api in ipairs(apis) do
+		if api.state() then
+			return api
+		end
+	end
+end
+
+-- For a weapon with a skin for each of its templates: returns where the barrel of the mesh in a character's hand ends, and the skin
+-- of that mesh
+local function held_muzzle(apis, character)
+	for _, api in ipairs(apis) do
+		local muzzle = api.third_person.muzzle_position(character)
+
+		if muzzle then
+			return muzzle, api
+		end
+	end
+end
+
 mod.weapon_skin = {
 	new = new,
+	shown_skin = shown_skin,
+	held_muzzle = held_muzzle,
 	-- The skins, by id
 	skins = skins,
 }

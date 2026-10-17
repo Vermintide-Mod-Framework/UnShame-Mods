@@ -77,21 +77,14 @@ end
 
 local random_between = utils.random_between
 
--- The skin whose model the player sees, and the one whose mesh a character holds
 local function first_person_api()
-	for _, api in ipairs(skin_apis) do
-		if api.state() then
-			return api
-		end
-	end
+	return mod.weapon_skin.shown_skin(skin_apis)
 end
 
 local function third_person_api(character)
-	for _, api in ipairs(skin_apis) do
-		if api.third_person.muzzle_position(character) then
-			return api
-		end
-	end
+	local _, api = mod.weapon_skin.held_muzzle(skin_apis, character)
+
+	return api
 end
 
 -- The flash at the end of the barrel in the player's view (as the Assault Rifle's: see the Minigun's skin)

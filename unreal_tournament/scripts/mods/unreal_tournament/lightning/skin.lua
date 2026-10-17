@@ -233,24 +233,12 @@ local function sparks(position, normal)
 	end
 end
 
--- Each template has a skin of its own, and a character holds the weapon of one of them. These find the skin that has the weapon in
--- the player's own view, and the one whose mesh a character holds.
 local function first_person_api()
-	for _, api in ipairs(skin_apis) do
-		if api.state() then
-			return api
-		end
-	end
+	return mod.weapon_skin.shown_skin(skin_apis)
 end
 
 local function third_person_muzzle(character)
-	for _, api in ipairs(skin_apis) do
-		local muzzle = api.third_person.muzzle_position(character)
-
-		if muzzle then
-			return muzzle, api
-		end
-	end
+	return mod.weapon_skin.held_muzzle(skin_apis, character)
 end
 
 -- Where the bolt of a character starts: the weapon in the player's own view, or the end of the weapon in the character's hand

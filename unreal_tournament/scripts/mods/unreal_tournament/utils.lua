@@ -243,6 +243,27 @@ function utils.ut_spread(rotation, spread)
 	return Quaternion.look(Vector3.normalize(direction), Vector3.up())
 end
 
+-- Returns where a projectile starts, as UT's ProjectileFire puts it (ProjSpawnOffset): forward, right and down meters from the eye at
+-- position. A projectile that would start behind a wall starts at the wall instead, because ProjectileFire.DoFireEffect traces to it.
+function utils.projectile_start(position, rotation, forward, right, down)
+	position = utils.as_vector(position)
+
+	-- The game's spread rolls the rotation of a shot by a random angle about the way it points, whatever the spread numbers are. So
+	-- right and up are taken from the way it points alone. Otherwise the offset would turn about the aim from shot to shot.
+	local level = Quaternion.look(Quaternion.forward(rotation), Vector3.up())
+	local offset = Quaternion.forward(level) * forward + Quaternion.right(level) * right - Quaternion.up(level) * down
+	local distance = Vector3.length(offset)
+	local direction = offset * (1 / distance)
+	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+	local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world, position, direction, distance, "closest", "collision_filter", "filter_ai_line_of_sight_check")
+
+	if hit then
+		return position + direction * math.max(hit_distance - 0.05, 0)
+	end
+
+	return position + offset
+end
+
 -- Groups other players' projectiles into shots. The projectiles of one shot (a spread, a salvo) reach this machine one after another,
 -- so a projectile that starts less than gap seconds after its player's last shot is part of that shot. Returns a table with
 -- is_new_shot(owner_unit), which records the shot when it is new, and clear().

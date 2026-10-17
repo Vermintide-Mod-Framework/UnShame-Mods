@@ -96,23 +96,12 @@ end
 local random_between = utils.random_between
 local random_direction = utils.random_direction
 
--- Each template has a skin of its own, and a character holds the weapon of one of them
 local function first_person_api()
-	for _, api in ipairs(skin_apis) do
-		if api.state() then
-			return api
-		end
-	end
+	return mod.weapon_skin.shown_skin(skin_apis)
 end
 
 local function third_person_muzzle(character)
-	for _, api in ipairs(skin_apis) do
-		local muzzle = api.third_person.muzzle_position(character)
-
-		if muzzle then
-			return muzzle, api
-		end
-	end
+	return mod.weapon_skin.held_muzzle(skin_apis, character)
 end
 
 -- Turns the pose of a bone about an axis along the mesh's own right through a point, by an angle in radians

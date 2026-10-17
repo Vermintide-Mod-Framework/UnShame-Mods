@@ -946,24 +946,9 @@ local function update_lock_on(dt)
 end
 
 -- Returns where a rocket starts: in front of the camera, to its right and below it, like RocketFire.ProjSpawnOffset (25, 6 and -6
--- units). A rocket that would start behind a wall starts at the wall instead, because RocketFire.DoFireEffect traces to it.
+-- units, see utils.projectile_start)
 local function start_position(position, rotation)
-	position = utils.as_vector(position)
-
-	-- The game's spread rolls the rotation of a shot by a random angle about the way it points, whatever the spread numbers are.
-	-- So right and up are taken from the way it points alone. Otherwise the offset would turn about the aim from shot to shot.
-	local level = Quaternion.look(Quaternion.forward(rotation), Vector3.up())
-	local offset = Quaternion.forward(level) * CONFIG.start_forward + Quaternion.right(level) * CONFIG.start_right - Quaternion.up(level) * CONFIG.start_down
-	local distance = Vector3.length(offset)
-	local direction = offset * (1 / distance)
-	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
-	local hit, _, hit_distance = PhysicsWorld.immediate_raycast(physics_world, position, direction, distance, "closest", "collision_filter", "filter_ai_line_of_sight_check")
-
-	if hit then
-		return position + direction * math.max(hit_distance - 0.05, 0)
-	end
-
-	return position + offset
+	return utils.projectile_start(position, rotation, CONFIG.start_forward, CONFIG.start_right, CONFIG.start_down)
 end
 
 -- The rockets start where UT's do. A rocket fired while there is a lock is a true flight projectile with the locked enemy as its
