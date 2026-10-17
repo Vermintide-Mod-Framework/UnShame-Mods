@@ -297,6 +297,12 @@ local function new(def)
 		return right, up
 	end
 
+	-- How far a weapon's view shake moves the camera now (view_shake.lua), in meters in the first person unit's axes. The model and its
+	-- effects are moved as far, as UT moves the weapon with the shake (CalcDrawOffset), so they stay where they are on the screen.
+	local function view_shake_offset()
+		return mod.view_shake and mod.view_shake.offset() or Vector3.zero()
+	end
+
 	-- A point of the view in UT units from the eye (forward, right, up), where the weapon's projection draws it, moved by the weapon's
 	-- bob as the model is (UT's GetEffectStart adds CalcDrawOffset, which has the bob in it). Returns the first person unit, which the
 	-- model is linked to, and the point in its frame (x right, y ahead, z up), for particles that are linked to the unit so that they
@@ -316,7 +322,7 @@ local function new(def)
 			x = -x
 		end
 
-		return fp.first_person_unit, Vector3(x, along * forward, across * (up + bob_up))
+		return fp.first_person_unit, Vector3(x, along * forward, across * (up + bob_up)) + view_shake_offset()
 	end
 
 	-- Returns how long the game takes to wield the weapon. The weapon can't be used for that long.
@@ -709,7 +715,7 @@ local function new(def)
 			across_scale * (CONFIG.draw_scale * move.x + CONFIG.offset_right * offset_scale + bob_right + alt * CONFIG.alt_pose_right + inspect * CONFIG.inspect_pose_right),
 			forward_scale * (CONFIG.draw_scale * move.y + CONFIG.offset_forward * offset_scale + alt * CONFIG.alt_pose_forward + inspect * CONFIG.inspect_pose_forward),
 			across_scale * (CONFIG.draw_scale * move.z + CONFIG.offset_up * offset_scale + bob_up + alt * CONFIG.alt_pose_up + inspect * CONFIG.inspect_pose_up)
-		)
+		) + view_shake_offset()
 		local size = CONFIG.draw_scale / CONFIG.model_meters_per_unit
 		local rotation = Quaternion.multiply(pivot, Quaternion.from_elements(pose[1], pose[2], pose[3], pose[4]))
 

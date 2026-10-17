@@ -1,9 +1,12 @@
 local mod = get_mod("unreal_tournament")
 
 -- UT's view shake of a weapon's shot (WeaponFire.ShakeOffsetMag, ShakeOffsetRate and ShakeOffsetTime; PlayerController.ShakeView,
--- ViewShake and CheckShake), for the player on this machine. It moves the camera, not the weapon, as UT moves the view.
+-- ViewShake and CheckShake), for the player on this machine. It moves the camera, and the first person weapon with it: UT adds the
+-- shake to where it draws the weapon too (Pawn.CalcDrawOffset adds CameraShake), so the weapon stays where it is on the screen while
+-- the world shakes. weapon_skin.lua moves the model by view_shake.offset().
 --   view_shake.start(magnitude, rate, time): magnitude and rate are { forward, right, up } in UT units and UT units a second, and time is
 --       UT's ShakeOffsetTime. A shake replaces one that is smaller (by the length of its magnitude).
+--   view_shake.offset(): how far the shake moves the camera now, in meters along the view's axes: right, forward, up.
 -- On each axis the offset moves at the rate until it reaches the most it may be, then turns back. Each time it turns, the most is
 -- multiplied by (1 / time - 1), about -0.5 at first, and time goes down by a frame. Once time is down to 1 that axis stops.
 
@@ -101,6 +104,14 @@ mod:hook_safe(CameraManager, "_apply_offset", function (self, camera_data)
 
 	camera_data.position = camera_data.position + offset * CONFIG.meters_per_uu
 end)
+
+function view_shake.offset()
+	if not axes then
+		return Vector3.zero()
+	end
+
+	return Vector3(axes[2].offset, axes[1].offset, axes[3].offset) * CONFIG.meters_per_uu
+end
 
 local function stop()
 	axes = nil
