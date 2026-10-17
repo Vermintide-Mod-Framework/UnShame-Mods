@@ -2,18 +2,18 @@ import sys, os
 from formats import read_tga, write_png
 from resources import texture_text, particle_material_text
 
-# Splits the sheets of the frames of UT2004's explosion (ExplosionTex: we1_frames and exp2_frames, 4 by 4 frames each, exported with UModel
-# into umodel/out36) into one texture for each frame: explosion_a_0 to explosion_a_15 and explosion_b_0 to explosion_b_15. NewExplosionA
-# plays one of the two sheets on each of its fireballs, and the skins show the frames one after the other.
-# Usage: split_explosion.py <scratch dir>     (run after make_fx_assets.py)
+# Splits the sheets of the frames of UT2004's explosion (ExplosionTex: we1_frames and exp2_frames, 4 by 4 frames each) into one
+# texture for each frame: explosion_a_0 to explosion_a_15 and explosion_b_0 to explosion_b_15. NewExplosionA plays one of the two
+# sheets on each of its fireballs, and the skins show the frames one after the other.
+# Usage: split_explosion.py <export dir>     (run after make_fx_assets.py)
 
-SCRATCH = sys.argv[1]
+EXPORT = sys.argv[1]
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 FX = REPO + '/units/ut/fx'
 COLUMNS = ROWS = 4
 
 for sheet, prefix in (('we1_frames', 'explosion_a'), ('exp2_frames', 'explosion_b')):
-    w, h, rows = read_tga('%s/umodel/out36/ExplosionTex/Texture/%s.tga' % (SCRATCH, sheet))
+    w, h, rows = read_tga('%s/ExplosionTex/Texture/%s.tga' % (EXPORT, sheet))
     tile_w, tile_h = w // COLUMNS, h // ROWS
 
     for index in range(COLUMNS * ROWS):

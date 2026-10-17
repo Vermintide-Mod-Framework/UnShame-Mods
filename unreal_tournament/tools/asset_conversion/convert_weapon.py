@@ -8,7 +8,6 @@ from resources import texture_text
 # rigid per bone), a node for each of those bones, a bsi, a unit, materials, textures, and the animations as Lua, with the pose
 # of each bone for each frame.
 # Usage: convert_weapon.py <weapon> <umodel export dir>      (weapons are in WEAPONS below)
-# Needs the UModel export of the mesh, its animations and its textures (see README.md).
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 

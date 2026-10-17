@@ -6,22 +6,13 @@ from resources import texture_text, particle_material_text
 # stacked: a streak that runs across the tile (along u), and a glow for the head of the trail.
 # The skin's beam maps v along its length, so the streak tile is turned a quarter (transposed).
 # The glow tile has a bright white middle that looks like a solid dot, so the glow textures are generated instead.
-# Usage: split_flak_trail.py <scratch dir>     (run after make_fx_assets.py, which writes flak_trail.png the first time)
+# Usage: split_flak_trail.py <export dir>     (run after make_fx_assets.py, which writes flak_trail.png the first time)
 
-SCRATCH = sys.argv[1]
+EXPORT = sys.argv[1]
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 FX = REPO + '/units/ut/fx'
 
-tga = None
-for export in ('out4', 'out9', 'out11'):
-    path = '%s/umodel/%s/XEffects/Texture/FlakTrailTex.tga' % (SCRATCH, export)
-
-    if os.path.exists(path):
-        tga = path
-
-        break
-
-w, h, rows = read_tga(tga)
+w, h, rows = read_tga(EXPORT + '/XEffects/Texture/FlakTrailTex.tga')
 tile = h // 2
 
 

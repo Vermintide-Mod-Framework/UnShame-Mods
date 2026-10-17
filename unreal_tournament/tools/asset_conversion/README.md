@@ -5,36 +5,36 @@ Local tools that produced `units/ut/*`, `ui/ut/*`, `wwise/unreal_tournament/*`, 
 
 ## Setup
 
-- **UModel** (UE Viewer, gildor.org) exports the game's files. It is run with `-game=ut2` against the UT2004 folder:
+- **UModel** (UE Viewer, gildor.org) exports the game's files. `export.py` runs it for every package the scripts read, into one folder:
 
-      umodel_64 -path="<UT2004>" -game=ut2 -export -out=<dir> <package> [<object> [<class>]]
+      export.py <UT2004 dir> <export dir> [<path of umodel_64.exe>]
 
-  (`-sounds` for the sounds). The classes' default properties (view offsets, fire rates, spreads) are not in UModel's exports: they were read
-  from the source of UT2004 on GitHub (`gh api repos/Deaod/UT2004/contents/<package>/<Class>.uc`).
-- **A scratch folder** that holds the exports in `umodel/out<n>` folders. A script that needs an export takes the scratch folder as its argument
-  and reads the folders named in its own header. A script that converts one weapon takes the export folder itself: a weapon's mesh, its
-  animations and its textures have to be in that one folder (export `Weapons`, `WeaponSkins` and `WeaponStaticMesh` into it).
+  Each package is in a folder of its own name there (`<export dir>/<package>/<class>/<object>`), and every script that reads the game's
+  files takes that folder as its argument. A script that needs another package has it added to `PACKAGES` in `export.py`. The classes'
+  default properties (view offsets, fire rates, spreads) are not in UModel's exports: they are read from the source of UT2004
+  (`gh api repos/Deaod/UT2004/contents/<package>/<Class>.uc`).
 - **Python 3.** The scripts need no packages. (The tools in `../game_data` are for reading the game's own files, and have a few.)
 
 ## The tools
 
 | Script | Makes | From |
 |---|---|---|
+| `export.py <UT2004 dir> <export dir> [umodel]` | the export folder that the other scripts read | the UT2004 packages in its `PACKAGES` |
 | `convert_weapon.py <weapon> <export dir>` | the first person model of a weapon: `units/ut/<weapon>`, its materials and textures, and its animations as Lua. The weapons are in `WEAPONS`: `flak`, `rocket`, `bio`, `link`, `sniper`, `shock2003` | the psk and psa of the weapon, its textures |
 | `convert_static.py <name> <export dir>` | static meshes: the pickups (the third person) and the meshes of the projectiles. The meshes are in `STATICS`: `flak_pickup`, `flak_chunk`, `flak_shell`, `shock2003_pickup`, `link_pickup`, `sniper_pickup`, `bio_pickup`, `rocket_pickup`, `rocket_proj` | a pskx and its texture |
 | `psk2bsi.py` | a mesh in the SDK's `.bsi` format (what the two above use) | a psk or pskx |
 | `tga2png.py in.tga out.png [tint]` | a texture as a png, with an optional tint | a tga |
-| `make_anim_assets.py <scratch>` | the animations of the UT2004 Shock Rifle (`shock/skin_animations.lua`) | `umodel/out3` |
-| `make_chamber_material.py <scratch>` | the Shock Rifle's chamber, a shader graph (UT2004's ShockPowerShader) | `umodel/out3`, `out6` |
+| `make_anim_assets.py <export dir>` | the animations of the UT2004 Shock Rifle (`shock/skin_animations.lua`) | `NewWeapons2004` |
+| `make_chamber_material.py <export dir>` | the Shock Rifle's chamber, a shader graph (UT2004's ShockPowerShader) | `UT2004Weapons` |
 | `make_combo_materials.py` | the materials of the combo's sphere and vortex and of the ball's dark sphere, as shader graphs | the effect textures made by `make_fx_assets.py` |
-| `make_fx_assets.py <scratch>` | the textures of the effects of all the weapons (`units/ut/fx/<name>.png`, with a `fx_<name>` material each), the quad that the particles are drawn on, and the unlit material that adds its colour to the screen | `umodel/out4`, `out9`, `out11` |
-| `make_fx_meshes.py <scratch>` | the meshes of the effects: `coil`, `sphere`, `vortex`, `light`, `flak_flash_mesh` | `umodel/out11`, `out13`, `out34` |
-| `split_flak_trail.py <scratch>` | the Flak Cannon's trail streak (turned a quarter, for a beam) and the generated glows of the chunk and of the shell | `umodel/out4`, `out9`, `out11` |
-| `split_smoke.py <scratch>` | `smoke_0` to `smoke_15`: the 16 puffs of UT's smoke sheet, one texture each (a smoke particle shows one of them) | `umodel/out9` |
+| `make_fx_assets.py <export dir>` | the textures of the effects of all the weapons (`units/ut/fx/<name>.png`, with a `fx_<name>` material each), the quad that the particles are drawn on, and the unlit material that adds its colour to the screen | `XEffects`, `XEffectMat` and others |
+| `make_fx_meshes.py <export dir>` | the meshes of the effects: `coil`, `sphere`, `vortex`, `light`, `flak_flash_mesh` | `XEffects`, `Editor` and others |
+| `split_flak_trail.py <export dir>` | the Flak Cannon's trail streak (turned a quarter, for a beam) and the generated glows of the chunk and of the shell | `XEffects` |
+| `split_smoke.py <export dir>` | `smoke_0` to `smoke_15`: the 16 puffs of UT's smoke sheet, one texture each (a smoke particle shows one of them) | `XEffects` |
 | `make_sniper_screen.py <export dir>` | the Lightning Gun's screen (UT2004's SniperScreen1C, the scope's readout blended with scan lines), as a tga in the export folder where `convert_weapon.py sniper` reads it | `WeaponSkins` exported there |
 | `make_lightning_assets.py <export dir>` | the Lightning Gun's effects (`units/ut/fx/lightning_bolt`, `lightning_flare`, `lightning_charge_0` to `_3`, `blue_spark`, each with its `fx_` material) and the textures and gui materials of its scope (`ui/ut/lightning_scope*`) | `XEffects`, `XWeapons_rc` and `XGameShaders` exported there |
-| `make_flak_flash.py <scratch> [name]` | the texture of the first person muzzle flash of the Flak Cannon (`flak_flash`, the default) or of the Bio Rifle (`bio_flash`) | `umodel/out33` (`XGameShaders`) |
-| `make_bank.py <weapon> <scratch>` | the sound banks in `wwise/unreal_tournament`: a bank with an event for each sound, written by hand. The weapons are in `WEAPONS`: `announcer`, `shock_rifle`, `flak_cannon`, `rocket_launcher`, `bio_rifle`, `link_gun`, `lightning_gun` | the sounds exported with `-sounds`: `umodel/out5`, `out8`, `out10`, `out35` |
+| `make_flak_flash.py <export dir> [name]` | the texture of the first person muzzle flash of the Flak Cannon (`flak_flash`, the default) or of the Bio Rifle (`bio_flash`) | `XGameShaders` |
+| `make_bank.py <weapon> <export dir>` | the sound banks in `wwise/unreal_tournament`: a bank with an event for each sound, written by hand. The weapons are in `WEAPONS`: `announcer`, `shock_rifle`, `flak_cannon`, `rocket_launcher`, `bio_rifle`, `link_gun`, `lightning_gun` | `WeaponSounds`, `NewWeaponSounds`, `AnnouncerMale2K4`, `XEffects` |
 | `render_icon.py in.bsi out.png size yaw pitch roll textures [fill]` | an inventory icon from a converted pickup | a bsi and its textures |
 | `preview_weapon.py <weapon> <export dir> out.png [inspect numbers]` | a picture of a first person weapon in its idle or inspect pose, placed the way `weapon_skin.lua` does | a psk |
 | `formats.py`, `quat.py`, `resources.py` | nothing: what the scripts share (reading and writing TGA, PNG, psk and psa; quaternions; the text of `.texture` files and of the effects' materials) | |
@@ -47,12 +47,7 @@ after it). `make_combo_materials.py` needs the textures of `make_fx_assets.py`. 
 
 ### Weapons
 
-1. **Export** the weapon, for instance (the first person model, its animations and its textures, into one folder):
-
-       umodel_64 -path="<UT2004>" -game=ut2 -export -out=<dir> Weapons
-       umodel_64 -path="<UT2004>" -game=ut2 -export -out=<dir> WeaponSkins
-       umodel_64 -path="<UT2004>" -game=ut2 -export -out=<dir> WeaponStaticMesh <Pickup> StaticMesh
-
+1. **Export** with `export.py`, after adding the weapon's packages to its `PACKAGES` if they are not there.
 2. `convert_weapon.py <weapon> <dir>` writes the unit and `skin_animations.lua`, and `convert_static.py <name> <dir>` the pickup and the
    projectiles. The UT2004 Shock Rifle came first, from `NewWeapons2004` (`ShockRifle`, its psk and psa, with `psk2bsi.py`, `tga2png.py` and
    `make_anim_assets.py`), and has its own units in `units/ut/shock`.

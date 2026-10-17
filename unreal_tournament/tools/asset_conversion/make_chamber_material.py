@@ -16,9 +16,9 @@ import os, sys, shutil
 # What is here: all of it but the cube map (the world's reflection: the mesh's cube map would need a cubemap texture). The glow is the
 # material's "intensity" (the skin sets it: 0 just after a shot, 1 when it is all back), and the liquid's share of the blend over the
 # glass is half of it. The chamber is half see through, drained or not, lit by itself (the shader's self illumination).
-# Usage: make_chamber_material.py <scratch dir>      (needs the UModel export of the textures: umodel/out3 and out6)
+# Usage: make_chamber_material.py <export dir>
 
-SCRATCH = sys.argv[1]
+EXPORT = sys.argv[1]
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 UNITS = REPO + '/units/ut/shock'
 
@@ -27,8 +27,8 @@ from formats import read_tga, write_png
 from resources import texture_text
 
 # the textures
-for name, tga in (('shock_power_df', SCRATCH + '/umodel/out3/UT2004Weapons/Texture/PowerGel.tga'),
-                  ('shock_glass', SCRATCH + '/umodel/out6/UT2004Weapons/Texture/ShockGlass.tga')):
+for name, tga in (('shock_power_df', EXPORT + '/UT2004Weapons/Texture/PowerGel.tga'),
+                  ('shock_glass', EXPORT + '/UT2004Weapons/Texture/ShockGlass.tga')):
     w, h, rows = read_tga(tga)
     write_png('%s/%s.png' % (UNITS, name), w, h, rows)
     # (not sRGB: UT does its sums on the colours as they are in the texture, which are then shown as they are, see the end of the graph)

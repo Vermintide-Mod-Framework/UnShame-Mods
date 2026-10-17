@@ -3,7 +3,7 @@ import sys, os
 # Makes the Sniper Rifle's scope (UTClassic.ClassicSniperRifle.RenderOverlays): the texture it draws its overlay from in pieces,
 # NewSniperRifle.COGAssaultZoomedCrosshair, as ui/ut/sniper_scope.png, with a gui material in ui/ut/sniper_scope.material. UT draws it
 # black, with the texture's alpha.
-# Usage: make_sniper_scope.py <export dir>        (NewSniperRifle exported there: umodel_64 -game=ut2 -export NewSniperRifle)
+# Usage: make_sniper_scope.py <export dir>
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 EXPORT = sys.argv[1]

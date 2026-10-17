@@ -10,8 +10,7 @@ import os, sys, zlib, struct
 # The mesh is made in meters, a UT unit being 0.02 m, with the DrawScale of the glob (1.2) in it. A raw vertex is scaled by the mesh map (0.04,
 # 0.04, 0.08). The z axis of the mesh is the way a glob that has landed faces away from its surface.
 # Each triangle is made once. (Made for both sides, the front and the back of a see through glob are both drawn, and it is not see through.)
-# Usage: make_goop_mesh.py <umodel export dir of XWeapons_rc.u, the folder that has VertMesh>
-#        (umodel -game=ut2 -export -out=<dir> XWeapons_rc.u GoopMesh)
+# Usage: make_goop_mesh.py <export dir>
 
 sys.path.insert(0, os.path.dirname(__file__))
 import make_fx_meshes as fx
@@ -21,7 +20,7 @@ DRAW_SCALE = 1.2
 MESH_MAP = (0.04, 0.04, 0.08)
 SEQUENCES = {'flying': (3, 11), 'hit': (20, 18), 'drip': (40, 39), 'slide': (83, 39)}  # (the first frame, how many)
 
-frames, triangles, polygon_uvs, frame = fx.vertex_mesh('GoopMesh', EXPORT)
+frames, triangles, polygon_uvs, frame = fx.vertex_mesh('GoopMesh', EXPORT + '/XWeapons_rc')
 position_index = [v for t in triangles for v in t]
 uvs = [(polygon_uvs[i][2 * k], 1.0 - polygon_uvs[i][2 * k + 1]) for i in range(len(triangles)) for k in range(3)]
 uv_index = list(range(len(uvs)))

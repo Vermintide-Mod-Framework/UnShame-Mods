@@ -1,29 +1,26 @@
 import struct, zlib, os, sys
 from formats import read_chunks as chunks
 
-# Makes the units of the meshes of the Shock Rifle's effects, from the UModel export of XEffects (<scratch>/umodel/out11, see README.md):
+# Makes the units of the meshes of the effects, from the UModel export (export.py):
 #   units/ut/fx/coil    ShockCoil: a prism that turns about the beam (static mesh, 30 long: ShockBeamCoil makes pieces of it along the beam)
-#   units/ut/fx/sphere  Editor.TexPropSphere (a static mesh of 960 triangles, 128 units in radius, from Editor.u: umodel -export "System/Editor.u" TexPropSphere,
-#                       into <scratch>/umodel/out13), the mesh of ShockComboSphereDark
+#   units/ut/fx/sphere  Editor.TexPropSphere (a static mesh of 960 triangles, 128 units in radius), the mesh of ShockComboSphereDark
 #   units/ut/fx/vortex  ShockVortexMesh (a vertex mesh of UT's first format, .3d), its first frame: a flat disc that faces the camera
-#   units/ut/fx/flak_flash_mesh  XEffects.FlakMuzFlashMesh, the Flak Cannon's first person muzzle flash (umodel -export XEffects.u FlakMuzFlashMesh, into
-#                       <scratch>/umodel/out34); its long axis is y, the way the barrel points
+#   units/ut/fx/flak_flash_mesh  XEffects.FlakMuzFlashMesh, the Flak Cannon's first person muzzle flash; its long axis is y, the way the
+#                       barrel points
 #   units/ut/fx/minigun_flash_mesh  XEffects.MinigunMuzFlash1stMesh, the Minigun's first person muzzle flash, and
-#   units/ut/fx/shell_casing_mesh  XEffects.ShellCasing, the shell of ShellSpewer (umodel -export XEffects.u MinigunMuzFlash1stMesh and
-#                       ShellCasing, into <scratch>/umodel/out36)
-#   units/ut/fx/shield_mesh  WeaponStaticMesh.Shield, the Shield Gun's shield (ShieldEffect) (umodel -export WeaponStaticMesh.usx Shield,
-#                       into <scratch>/umodel/out38): a dish 3 units deep and 20 across, facing along x
+#   units/ut/fx/shell_casing_mesh  XEffects.ShellCasing, the shell of ShellSpewer
+#   units/ut/fx/shield_mesh  WeaponStaticMesh.Shield, the Shield Gun's shield (ShieldEffect): a dish 3 units deep and 20 across, facing along x
 #   units/ut/fx/explosion_ring, explosion_sphere  ParticleMeshes.ExplosionRing (a flat ring 512 units across) and ExplosionSphere (256
-#                       across), the meshes of the Redeemer's blast (umodel -export ParticleMeshes.usx, into <scratch>/umodel/out38)
+#                       across), the meshes of the Redeemer's blast
 # They are made in meters, a UT unit being 0.02 m (as everything of the effects is), turned from UT's axes (x forward, y right, z up) to
 # this game's (x right, y forward, z up), which makes the mesh the other way round: the long axis of the coil is y.
 # One material slot, m_fx, as the quad of the particles has (units/ut/fx/quad): the effects set the material of the texture they want.
-# Usage: make_fx_meshes.py <scratch dir>
+# Usage: make_fx_meshes.py <export dir>
 
-SCRATCH = sys.argv[1] if len(sys.argv) > 1 else ''
+EXPORT = sys.argv[1] if len(sys.argv) > 1 else ''
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 FX = REPO + '/units/ut/fx'
-EXPORT = SCRATCH + '/umodel/out11/XEffects'
+XEFFECTS = EXPORT + '/XEffects'
 UNIT = 0.02
 
 def static_mesh(path):
@@ -44,7 +41,7 @@ def static_mesh(path):
 
     return points, wedges, triangles
 
-def vertex_mesh(name, export=EXPORT):
+def vertex_mesh(name, export=XEFFECTS):
     # UT's first mesh format: <name>_d.3d has the polygons, <name>_a.3d the frames, a vertex of which is 11, 11 and 10 bits
     d = open('%s/VertMesh/%s_d.3d' % (export, name), 'rb').read()
     a = open('%s/VertMesh/%s_a.3d' % (export, name), 'rb').read()
@@ -132,7 +129,7 @@ def to_game(point):
     # (UT's x forward, y right, z up: this game's x right, y forward, z up)
     return (point[1] * UNIT, point[0] * UNIT, point[2] * UNIT)
 
-def make_static(unit_name, mesh_file, export=EXPORT, tile=None):
+def make_static(unit_name, mesh_file, export=XEFFECTS, tile=None):
     # tile: (columns, rows, column, row) for a mesh whose UVs cover one tile of a sheet of tiles (UT steps through them with
     # mTileAnimation). The UVs are made to cover the whole texture, as the sheet is cut into a texture for each tile.
     points, wedges, triangles = static_mesh('%s/StaticMesh/%s.pskx' % (export, mesh_file))
@@ -172,12 +169,12 @@ def make_light(unit_name):
 if __name__ == '__main__':
     make_static('coil', 'ShockCoil')
     make_light('light')
-    make_static('sphere', 'TexPropSphere', SCRATCH + '/umodel/out13/Editor')
+    make_static('sphere', 'TexPropSphere', EXPORT + '/Editor')
     make_vortex('vortex', 'ShockVortexMesh')
-    make_static('flak_flash_mesh', 'FlakMuzFlashMesh', SCRATCH + '/umodel/out34/XEffects')
+    make_static('flak_flash_mesh', 'FlakMuzFlashMesh')
     # (its UVs are in the tile of column 0 and row 1 of Minigun_burst's 2 by 2)
-    make_static('minigun_flash_mesh', 'MinigunMuzFlash1stMesh', SCRATCH + '/umodel/out36/XEffects', (2, 2, 0, 1))
-    make_static('shell_casing_mesh', 'ShellCasing', SCRATCH + '/umodel/out36/XEffects')
-    make_static('shield_mesh', 'Shield', SCRATCH + '/umodel/out38/WeaponStaticMesh')
-    make_static('explosion_ring', 'ExplosionRing', SCRATCH + '/umodel/out38/ParticleMeshes')
-    make_static('explosion_sphere', 'ExplosionSphere', SCRATCH + '/umodel/out38/ParticleMeshes')
+    make_static('minigun_flash_mesh', 'MinigunMuzFlash1stMesh', tile=(2, 2, 0, 1))
+    make_static('shell_casing_mesh', 'ShellCasing')
+    make_static('shield_mesh', 'Shield', EXPORT + '/WeaponStaticMesh')
+    make_static('explosion_ring', 'ExplosionRing', EXPORT + '/ParticleMeshes')
+    make_static('explosion_sphere', 'ExplosionSphere', EXPORT + '/ParticleMeshes')

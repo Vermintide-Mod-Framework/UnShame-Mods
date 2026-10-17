@@ -5,22 +5,20 @@ import struct, os, sys
 # compiles it with: the .wwise_bank (the bank for each platform), the .wwise_metadata (what the engine knows of each event) and the
 # .wwise_dep (that they go together). The bank is made like the ones the game has (see "What was found" in README.md), from objects of
 # a bank known to work: the sounds are PCM, with no parent and the output bus that the game's sounds use, an event is played by an action.
-# Usage: make_bank.py <weapon> <scratch dir>        (weapons are in WEAPONS below, the dir has umodel/out5, out8, out10 and out35: out35 is all of WeaponSounds)
+# Usage: make_bank.py <weapon> <export dir>        (weapons are in WEAPONS below)
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 OUT = REPO + '/wwise/unreal_tournament'
 
-# The sounds of each weapon: event name, wav (relative to the scratch dir's umodel), if it is heard from where it is (3D) or from the
+# The sounds of each weapon: event name, wav (relative to the export dir), if it is heard from where it is (3D) or from the
 # head, volume in dB, and for those from where they are the distance in meters they are heard from
-SHOCK = 'out5/WeaponSounds/Sound/'
-SOUNDS = 'out35/WeaponSounds/Sound/'
-NEW_SOUNDS = 'out8/NewWeaponSounds/Sound/'
-# (the male announcer pack of UT2004, the one its reward announcements are by default: umodel_64 -game=ut2 -export -sounds -out=out10
-# announcermale2k4. The names of the kills are the ones MultiKillMessage.KillSoundName has)
-ANNOUNCER = 'out10/announcermale2k4/Sound/'
-# (the Sniper Rifle's sounds and the impacts of its bullet: umodel_64 -game=ut2 -export -sounds -out=out41 NewWeaponSounds, and XEffects)
-SNIPER = 'out41/NewWeaponSounds/Sound/'
-IMPACTS = 'out41/XEffects/Sound/'
+SOUNDS = 'WeaponSounds/Sound/'
+NEW_SOUNDS = 'NewWeaponSounds/Sound/'
+# (the male announcer pack of UT2004, the one its reward announcements are by default. The names of the kills are the ones
+# MultiKillMessage.KillSoundName has)
+ANNOUNCER = 'announcermale2k4/Sound/'
+# (the impacts of the Sniper Rifle's bullet)
+IMPACTS = 'XEffects/Sound/'
 WEAPONS = {
     'announcer': [
         ('ut_announcer_double_kill', ANNOUNCER + 'Double_Kill', False, -18, 0),
@@ -45,15 +43,15 @@ WEAPONS = {
         ('ut_announcer_combo_whore', ANNOUNCER + 'Combowhore', False, -18, 0),
     ],
     'shock_rifle': [
-        ('ut_shock_fire', SHOCK + 'BShockRifleFire', False, -22, 0),
-        ('ut_shock_alt_fire', SHOCK + 'BShockRifleAltFire', False, -22, 0),
-        ('ut_shock_select', SHOCK + 'SwitchToShockRifle', False, -24, 0),
-        ('ut_shock_fire_3d', SHOCK + 'BShockRifleFire', True, -22, 40),
-        ('ut_shock_alt_fire_3d', SHOCK + 'BShockRifleAltFire', True, -22, 40),
-        ('ut_shock_projectile_3d', SHOCK + 'ShockRifleProjectile', True, -30, 25),
-        ('ut_shock_explosion_3d', SHOCK + 'ShockRifleExplosion', True, -20, 50),
+        ('ut_shock_fire', SOUNDS + 'BShockRifleFire', False, -22, 0),
+        ('ut_shock_alt_fire', SOUNDS + 'BShockRifleAltFire', False, -22, 0),
+        ('ut_shock_select', SOUNDS + 'SwitchToShockRifle', False, -24, 0),
+        ('ut_shock_fire_3d', SOUNDS + 'BShockRifleFire', True, -22, 40),
+        ('ut_shock_alt_fire_3d', SOUNDS + 'BShockRifleAltFire', True, -22, 40),
+        ('ut_shock_projectile_3d', SOUNDS + 'ShockRifleProjectile', True, -30, 25),
+        ('ut_shock_explosion_3d', SOUNDS + 'ShockRifleExplosion', True, -20, 50),
         # (louder than the other sounds of the rifle: it is played as the beam's shot is, and was lost under it)
-        ('ut_shock_combo_3d', SHOCK + 'ShockComboFire', True, -16, 60),
+        ('ut_shock_combo_3d', SOUNDS + 'ShockComboFire', True, -16, 60),
     ],
     'flak_cannon': [
         ('ut_flak_fire', SOUNDS + 'BFlakCannonFire', False, -22, 0),
@@ -162,9 +160,9 @@ WEAPONS = {
     ],
     # The Sniper Rifle (UTClassic.ClassicSniperRifle). Its zoom sounds are the Lightning Gun's.
     'sniper_rifle': [
-        ('ut_sniper_fire', SNIPER + 'NewSniperShot', False, -22, 0),
-        ('ut_sniper_select', SNIPER + 'NewSniper_load', False, -24, 0),
-        ('ut_sniper_fire_3d', SNIPER + 'NewSniperShot', True, -22, 50),
+        ('ut_sniper_fire', NEW_SOUNDS + 'NewSniperShot', False, -22, 0),
+        ('ut_sniper_select', NEW_SOUNDS + 'NewSniper_load', False, -24, 0),
+        ('ut_sniper_fire_3d', NEW_SOUNDS + 'NewSniperShot', True, -22, 50),
         # (SniperWallHitEffect.ImpactSounds: one of the six where the bullet hits, at 2.5 times the volume, heard within 200 units)
         ('ut_sniper_impact_1_3d', IMPACTS + 'Impact1Snd', True, -18, 4),
         ('ut_sniper_impact_2_3d', IMPACTS + 'Impact2Snd', True, -18, 4),
@@ -244,7 +242,7 @@ def pcm_wem(path, start=0.0, pitch=1.0):
     return b'RIFF' + struct.pack('<I', len(body)) + body, len(pcm) / (rate * channels * 2)
 
 def main():
-    weapon, scratch = sys.argv[1], sys.argv[2]
+    weapon, export = sys.argv[1], sys.argv[2]
     sounds = WEAPONS[weapon]
     bank_name = 'ut_' + weapon
     bank_id = fnv1(bank_name)
@@ -255,7 +253,7 @@ def main():
         # (a wav can be followed by @ and the second to start from)
         path, _, start = wav.partition('@')
         pitch = PITCH.get(event, 1.0)
-        wem, seconds = pcm_wem('%s/umodel/%s.wav' % (scratch, path), float(start or 0), pitch)
+        wem, seconds = pcm_wem('%s/%s.wav' % (export, path), float(start or 0), pitch)
         media_id = fnv1('ut_media_' + os.path.basename(wav) + ('' if pitch == 1.0 else '_pitch_%g' % pitch))
         media[media_id] = wem
         sound_id, action_id = fnv1('ut_sound_' + event), fnv1('ut_action_' + event)

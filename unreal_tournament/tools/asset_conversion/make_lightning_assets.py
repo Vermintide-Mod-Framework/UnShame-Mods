@@ -1,14 +1,13 @@
 import sys, os, struct, zlib
 
-# Makes the effect textures and the scope textures of the Lightning Gun, from the UModel exports in <export dir> (XEffects, XWeapons_rc
-# and XGameShaders exported there, see README.md):
+# Makes the effect textures and the scope textures of the Lightning Gun, from the UModel export (export.py):
 #   units/ut/fx/lightning_bolt, lightning_charge, blue_spark_line: UT's LightningBoltT, LightningChargeT and pcl_BlueSpark, each with the
 #       material fx_<name> that adds its colour to the screen (the same as make_fx_assets.py makes, except for the flare: see LINEAR)
 #   ui/ut/lightning_scope_*: the textures of the scope's overlay (SniperRifle.RenderOverlays) as gui materials, in the file
 #       ui/ut/lightning_scope.material: the ring (SniperFocus), the four arrows (SniperArrows), and the scan lines and lens of the
 #       screen (XGameShaders.ZoomFB, a multiply of the screen that is turned here into black with an alpha, which is as near as the
 #       user interface's blend gets)
-# Usage: make_lightning_assets.py <umodel export dir>
+# Usage: make_lightning_assets.py <export dir>
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 EXPORT = sys.argv[1]

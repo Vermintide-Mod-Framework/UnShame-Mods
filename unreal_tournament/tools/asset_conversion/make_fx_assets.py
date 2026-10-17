@@ -2,10 +2,9 @@ import struct, zlib, os, sys
 from formats import read_tga, write_png
 from resources import texture_text, particle_material_text
 
-# Makes the assets of the effects of the skins: the textures of UT2004's effects (exported with UModel to <scratch>/umodel/out4),
-# a unit with a quad, and the materials: one unlit material that adds its color to the screen, and one derived from it for each
-# texture. Usage: make_fx_assets.py <scratch dir>
-SCRATCH = sys.argv[1]
+# Makes the assets of the effects of the skins: the textures of UT2004's effects, a unit with a quad, and the materials: one unlit
+# material that adds its color to the screen, and one derived from it for each texture. Usage: make_fx_assets.py <export dir>
+EXPORT = sys.argv[1]
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 FX = REPO + '/units/ut/fx'
 os.makedirs(FX, exist_ok=True)
@@ -47,9 +46,9 @@ TEXTURES = {
     'link_ring_yellow': 'XEffectMat/Texture/link_ring_yellow.tga',
     'link_projectile_splash': 'XEffectMat/Texture/Link_projectile_splash.tga',
     'smoke': 'XEffects/Texture/SmokeAlphab_t.tga',
-    # the Shield Gun's sparks when the shield stops something (ShieldSparks; out9, exported with: XEffectMat ShieldSpark)
+    # the Shield Gun's sparks when the shield stops something (ShieldSparks)
     'shield_spark': 'XEffectMat/Texture/ShieldSpark.tga',
-    # the sparks of a bullet that hits a wall (WallSparks, the Sniper Rifle's SniperWallHitEffect; out9, exported with: XEffects pcl_Spark)
+    # the sparks of a bullet that hits a wall (WallSparks, the Sniper Rifle's SniperWallHitEffect)
     'wall_spark': 'XEffects/Texture/pcl_Spark.tga',
     # the meshes of the combo and of the beam (ShockComboSphereDark's electricity, the others are above)
     'shock_electricity': 'DeployableTex/Texture/C_T_Electricity_SG.tga',
@@ -67,18 +66,10 @@ DERIVED = {
     'bio_splat_mask': ('XEffects/Texture/xbiosplat.tga', lambda r, g, b, a: ((max(0, min(255, (128 - r) * 255 // 104)),) * 3) + (255,)),
 }
 
-def find(tga):
-    # (out4 has the effects of the Shock Rifle, out9 those of the others: static meshes and the textures of XEffects)
-    for export in ('out4', 'out9', 'out11'):
-        path = '%s/umodel/%s/%s' % (SCRATCH, export, tga)
-
-        if os.path.exists(path):
-            return path
-
-    raise FileNotFoundError(tga)
-
 # Textures that are wider than they are high and are drawn as sprites
 SQUARE = ('rocket_flare',)
+# Textures that are masks, not colors: not sRGB, and with no particle material
+MASKS = ('bio_splat_mask',)
 
 def derived_rows(rows, make):
     out = []
@@ -94,7 +85,7 @@ def derived_rows(rows, make):
     return out
 
 for name, tga in list(TEXTURES.items()) + [(name, derived[0]) for name, derived in DERIVED.items()]:
-    w, h, rows = read_tga(find(tga))
+    w, h, rows = read_tga(EXPORT + '/' + tga)
 
     if name in DERIVED:
         rows = derived_rows(rows, DERIVED[name][1])
@@ -106,8 +97,11 @@ for name, tga in list(TEXTURES.items()) + [(name, derived[0]) for name, derived 
         h = w
 
     write_png('%s/%s.png' % (FX, name), w, h, rows)
-    open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(texture_text('units/ut/fx/' + name))
-    open('%s/fx_%s.material' % (FX, name), 'w', newline='\n').write(particle_material_text(name))
+    open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(texture_text('units/ut/fx/' + name, srgb=name not in MASKS))
+
+    if name not in MASKS:
+        open('%s/fx_%s.material' % (FX, name), 'w', newline='\n').write(particle_material_text(name))
+
     print('texture', name, w, h)
 
 # ---------------------------------------------------------------- the quad: in the xy plane, 1 by 1, its front is +z

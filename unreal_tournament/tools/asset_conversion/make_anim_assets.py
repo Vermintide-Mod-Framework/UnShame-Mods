@@ -1,17 +1,16 @@
 # Makes the animations of the UT2004 Shock Rifle's model (its chamber is a shader graph, see make_chamber_material.py) as Lua:
 # scripts/mods/unreal_tournament/shock/skin_animations.lua
-# Usage: make_anim_assets.py <scratch dir>      (the dir has umodel/out3, the export of NewWeapons2004's ShockRifle, see README.md)
+# Usage: make_anim_assets.py <export dir>
 import struct, math, zlib, os, sys
 from formats import read_chunks as chunks
 from quat import qmul, qconj, rotate
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-SCRATCH = sys.argv[1]
-OUT = SCRATCH + '/umodel/out3'
+EXPORT = sys.argv[1]
 
 # ---------------------------------------------------------------- animation keys
-psk = chunks(OUT + '/NewWeapons2004/SkeletalMesh/ShockRifle.psk')
-psa = chunks(OUT + '/NewWeapons2004/MeshAnimation/ShockRifle.psa')
+psk = chunks(EXPORT + '/NewWeapons2004/SkeletalMesh/ShockRifle.psk')
+psa = chunks(EXPORT + '/NewWeapons2004/MeshAnimation/ShockRifle.psa')
 s, c, b = psk['REFSKELT']
 q_ref = struct.unpack_from('<4f', b, 76)
 p_ref = struct.unpack_from('<3f', b, 92)
@@ -30,9 +29,9 @@ def to_model(v):  # psk (x forward, y left, z up) -> the model's (right, forward
 def fmt(values):
     return ', '.join(('%.6f' % v).rstrip('0').rstrip('.') for v in values)
 
-lines = ['-- The root bone of the animations of the UT2004 Shock Rifle (NewWeapons2004.ShockRifle), against its mesh, as a',
-         '-- rotation of the mesh (x, y, z, w) and a move of it in UT units (right, forward, up): one row of the frames each.',
-         '-- Made from the psa by make_anim_assets.py, never to be committed.', 'return {']
+lines = ['-- The animations of the UT2004 Shock Rifle (NewWeapons2004.ShockRifle): the pose of its root bone in each frame, relative to its mesh. A frame is',
+         '-- a rotation of the mesh (x, y, z, w) and a move of it in UT units (right, forward, up).',
+         "-- Generated from the psa by tools/asset_conversion/make_anim_assets.py: don't edit it by hand.", 'return {']
 for name, rate, first, num in anims:
     if name == 'PutDown':
         continue  # the game has no animation of putting a weapon down

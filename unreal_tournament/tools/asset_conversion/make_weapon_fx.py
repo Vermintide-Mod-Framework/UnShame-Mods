@@ -1,13 +1,12 @@
 import sys, os
 
-# Makes the effect textures of the Minigun, Shield Gun, Assault Rifle and Redeemer from the UModel exports in <export dir> (XEffects,
-# XGameShaders, AW-2004Explosions, AW-2004Particles, WeaponSkins and so on, exported into that one folder, see README.md): each as
+# Makes the effect textures of the Minigun, Shield Gun, Assault Rifle and Redeemer from the UModel export (export.py): each as
 # units/ut/fx/<name>.png and .texture, with the material fx_<name> that adds its colour to the screen (the same as make_fx_assets.py
 # makes). A sheet of tiles (a texture with columns and rows of pictures, which UT's emitters pick from) is cut into one texture for each
 # tile, named <name>_0, <name>_1 and so on from the top left.
 # The effects that UT adds to the screen are read linearly (units/ut/fx/particle_linear, see make_lightning_assets.py): the values of the
 # texture are added as they are. The shell casing is blended, not added, so it keeps the srgb read.
-# Usage: make_weapon_fx.py <umodel export dir>
+# Usage: make_weapon_fx.py <export dir>
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 EXPORT = sys.argv[1]
