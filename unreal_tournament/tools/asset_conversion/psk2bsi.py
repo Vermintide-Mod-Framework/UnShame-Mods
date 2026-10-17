@@ -97,13 +97,16 @@ for mat in sorted(tris_by_mat):
                  % (name, name, identity))
     print('geometry', name, 'material', mat_names[mat], 'triangles', len(tris))
 
-# The second bone of the skeleton (the muzzle: 'tip' to UT) as a node of its own, where it is in the model (the root bone turns
-# the bone by its own rotation and moves it by its position)
+# The muzzle ('tip' to UT) as a node of its own, where it is in the model (the root bone turns the bone by its own rotation and
+# moves it by its position). It is the bone named for the flash, or else the second bone of the skeleton. The Minigun's second
+# bone is its barrels, and its flash is the third.
 rs, rc, rb = chunks['REFSKELT']
 if rc > 1:
+    names = [rb[i * rs:i * rs + 64].split(b'\0')[0].decode('latin1').lower() for i in range(rc)]
+    muzzle = next((i for i in range(1, rc) if 'flash' in names[i] or names[i] == 'tip'), 1)
     root_q = struct.unpack_from('<4f', rb, 76)
     root_p = struct.unpack_from('<3f', rb, 92)
-    child_p = struct.unpack_from('<3f', rb, rs + 92)
+    child_p = struct.unpack_from('<3f', rb, muzzle * rs + 92)
     turned = rotate(root_q, child_p)
     tip = tuple(turned[i] + root_p[i] for i in range(3))
     tip_local = '1 0 0 0 0 1 0 0 0 0 1 0 %s %s %s 1' % (fl([-tip[1] * scale]), fl([tip[0] * scale]), fl([tip[2] * scale]))

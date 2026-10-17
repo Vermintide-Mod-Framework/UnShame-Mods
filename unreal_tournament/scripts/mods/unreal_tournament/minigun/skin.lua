@@ -393,27 +393,29 @@ local function new_skin(variant)
 		inspect_pivot_right = 0,
 		inspect_pivot_forward = 30,
 		inspect_pivot_up = 0,
-		-- WeaponStaticMesh.MinigunPickup (DrawScale 0.5). Its barrels run along the mesh's own +Y, and the grip is under its middle.
+		-- UT's third person mesh of the weapon (MinigunAttachment's Weapons.Minigun_3rd) at UT's size in a player's hand (DrawScale 0.4).
+		-- Its origin is the grip, and its barrels run along its forward, to the muzzle (the mesh's flash bone). Its barrels don't turn.
 		third_person = {
 			id = variant.id,
 			template = definition.template,
-			unit_name = "units/ut/minigun/pickup",
+			unit_name = "units/ut/minigun/third_person",
 			-- The game links the repeating gun and the crossbow to the left hand's node
 			hand_node = "j_leftweaponattach",
-			meters_per_unit = 0.01,
-			scale = 0.5,
+			meters_per_unit = 0.02 * 0.4,
+			scale = 1,
 			grip_right = 0,
-			grip_forward = -10,
-			grip_up = -10,
-			yaw = -60,
+			grip_forward = 0,
+			grip_up = 0,
+			yaw = 0,
 			pitch = 0,
 			roll = 0,
-			follow_game_unit = 1,
+			-- In the world the minigun is turned as the game's gun in the hand is, which the game animates with the arms
+			follow_game_unit = 2,
 			follow_calibrate_seconds = 1,
-			muzzle_right = 0,
-			muzzle_forward = 85,
-			muzzle_up = 0,
-			menu_yaw = 180,
+			muzzle_right = -2.8,
+			muzzle_forward = 147,
+			muzzle_up = 14.7,
+			menu_yaw = -90,
 		},
 		on_create = function ()
 			api.play_sound("ut_minigun_select")

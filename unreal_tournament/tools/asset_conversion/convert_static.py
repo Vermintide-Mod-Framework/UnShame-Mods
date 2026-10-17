@@ -75,6 +75,14 @@ STATICS = {
         'scale': 0.01,
         'unit': 'units/ut/minigun/pickup',
     },
+    # The Minigun's third person mesh (MinigunAttachment's Weapons.Minigun_3rd, at xWeaponAttachment's DrawScale 0.4), with the pickup's
+    # material, which has the same texture (MinigunTex0)
+    'minigun_3rd': {
+        'pskx': 'Weapons/SkeletalMesh/Minigun_3rd.psk',
+        'materials': [('units/ut/minigun/pickup_m0', 'existing')],
+        'scale': 0.02 * 0.4,
+        'unit': 'units/ut/minigun/third_person',
+    },
     'shield_pickup': {
         'pskx': 'WeaponStaticMesh/StaticMesh/ShieldGunPickup.pskx',
         'materials': [('WeaponSkins/Texture/ShieldTex0.tga', 'opaque')],
