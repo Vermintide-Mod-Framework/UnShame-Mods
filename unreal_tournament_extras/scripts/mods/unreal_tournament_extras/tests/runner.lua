@@ -48,6 +48,9 @@ local ut = get_mod("unreal_tournament")
 --   t.remove(unit)                       takes an enemy away before the scenario ends
 --   t.health_of(unit)                    a unit's health, 0 when it is dead
 --   t.track_damage(unit)                 adds up all the damage the unit takes from now on, past what kills it, and keeps each hit
+--   t.add_bot(profile_name, career_index, item_key, distance)   adds a bot of that career that far ahead, with the item in hand, that
+--                                        stands and does only what the test tells it. It is taken away after the scenario.
+--   t.bot_aim(bot, unit), t.bot_press(bot, button)   turns the bot to face a unit, and has it press "fire" or "charge_shot"
 --   t.aim_at(unit)                       turns the player to face the middle of a unit
 --   t.aim_at_point(x, y, z)              turns the player to face a point
 --   t.projectiles(filter)                the units of the player's projectiles whose action the filter accepts
@@ -1060,6 +1063,88 @@ local function make_context(suite)
 		return names
 	end
 
+	-- Adds a bot, another player, of a hero's career (profile name, as "bright_wizard", and the career's index), that far ahead of the
+	-- player and facing them, with the item in its hand in the ranged slot. The runner keeps the game's own bots off, so the bot is added
+	-- to the party as the game mode adds one (GameModeBase._add_bot_to_party), and the game spawns it. Its own mind (PlayerBotBase.update)
+	-- is stopped, so that it stands and does only what t.bot_aim and t.bot_press tell it. Returns its unit, or nil. It is taken away
+	-- after the scenario.
+	function t.add_bot(profile_name, career_index, item_key, distance)
+		local bot_player = on_main_thread(function ()
+			local game_mode = Managers.state.game_mode:game_mode()
+
+			return game_mode:_add_bot_to_party(1, FindProfileIndex(profile_name), career_index)
+		end)
+
+		scenario.bots[#scenario.bots + 1] = bot_player
+
+		if not t.wait_until(function ()
+			return bot_player.player_unit and Unit.alive(bot_player.player_unit) and ScriptUnit.has_extension(bot_player.player_unit, "inventory_system")
+		end, CONFIG.spawn_timeout, "the bot to spawn") then
+			return nil
+		end
+
+		local bot = bot_player.player_unit
+
+		-- (the game wields what it equips a moment after the spawn)
+		t.wait(1)
+
+		local placed = on_main_thread(function ()
+			local position, flat = ground_ahead(distance)
+
+			if not position then
+				return false
+			end
+
+			ScriptUnit.extension(bot, "ai_system").update = function () end
+			runner.move_player(bot, position, math.deg(math.atan2(Vector3.x(flat), -Vector3.y(flat))))
+			ScriptUnit.extension(bot, "ai_navigation_system"):teleport(position)
+
+			local inventory_extension = ScriptUnit.extension(bot, "inventory_system")
+
+			inventory_extension:destroy_slot("slot_ranged", true)
+			inventory_extension:add_equipment("slot_ranged", ItemMasterList[item_key])
+			inventory_extension:wield("slot_ranged")
+
+			return true
+		end)
+
+		if not placed then
+			return nil
+		end
+
+		t.wait(1)
+
+		return bot
+	end
+
+	-- Turns a bot of t.add_bot to face the middle of a unit, and keeps it facing there
+	function t.bot_aim(bot, unit)
+		on_main_thread(function ()
+			local input_extension = Unit.alive(bot) and ScriptUnit.has_extension(bot, "input_system")
+
+			if input_extension and Unit.alive(unit) then
+				input_extension:set_aim_position(Unit.world_position(unit, 0) + Vector3(0, 0, 1))
+				input_extension:set_aiming(true)
+			end
+		end)
+
+		t.wait(0.5)
+	end
+
+	-- Has a bot of t.add_bot press a button for a frame: "fire" (its left button) or "charge_shot" (its right button), as the bot's
+	-- own mind presses them (PlayerBotInput)
+	function t.bot_press(bot, button)
+		on_main_thread(function ()
+			local input_extension = Unit.alive(bot) and ScriptUnit.has_extension(bot, "input_system")
+
+			if input_extension then
+				input_extension[button](input_extension)
+			end
+		end)
+
+		t.wait(0.1)
+	end
+
 	function t.spawn_target(distance)
 		local target = t.spawn(CONFIG.target_breed, distance)
 
@@ -1462,6 +1547,7 @@ local function run_suite(suite, only_career)
 					failures = {},
 					name = string.format("%s/%s/%s", suite.name, career, scenario_definition.name),
 					spawned = {},
+					bots = {},
 				}
 
 				t.scenario(scenario)
@@ -1504,6 +1590,13 @@ local function run_suite(suite, only_career)
 					end
 
 					Managers.state.conflict:destroy_all_units()
+
+					-- (the bots of t.add_bot, as the game mode takes away its own: GameModeBase._remove_bot_update_safe)
+					for _, bot_player in ipairs(scenario.bots) do
+						if bot_player then
+							Managers.state.game_mode:game_mode():_remove_bot_update_safe(bot_player)
+						end
+					end
 				end)
 
 				runner.restore_input()
