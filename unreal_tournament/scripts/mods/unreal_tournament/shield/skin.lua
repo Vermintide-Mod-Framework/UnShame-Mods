@@ -553,17 +553,17 @@ local GRIPS = {
 		follow_game_unit = 3,
 	},
 	-- The Life Staff's pose: the game links the staff to the left hand's node (AttachmentNodeLinking.one_handed_melee_weapon.left), so the
-	-- mesh is linked there. It is not turned as the hand is: the staff's held second attack (the shield and the charge) turns the hand
-	-- so far that the gun would point up. It points the way the hero faces, level.
+	-- mesh is linked there and turned as the node is, as for the Volley Crossbow, and turned a little over a quarter to the hero's right to
+	-- point ahead
 	shield_gun_we = {
 		hand_node = "j_leftweaponattach",
 		grip_right = 0,
 		grip_forward = 0,
 		grip_up = 0,
-		yaw = 0,
+		yaw = -100,
 		pitch = 0,
 		roll = 0,
-		follow_game_unit = 0,
+		follow_game_unit = 3,
 	},
 }
 

@@ -75,13 +75,11 @@ local VARIANTS = {
 		key = "ut_shield_gun_we",
 		template = "ut_shield_gun_we_template",
 		-- The Life Staff's pose (the Sister of the Thorn's: every career of hers has the same third person body, and so its animations).
-		-- The punches are its shot. It has no shove, so the push is its shot too. The shield is its held second attack (the charge of its
-		-- spirit storm), and so is a charge once it is held a while.
+		-- The punches are its shot. It has no shove, so the push is its shot too. Its held second attack is not the shield: it turns the
+		-- hand so far that the gun would point up.
 		pose_3p = "to_life_staff",
 		punch_3p = "attack_shoot",
 		push_3p = "attack_shoot",
-		aim_3p = "attack_charge_fireball",
-		aim_end_3p = "attack_finished",
 	},
 }
 
