@@ -336,8 +336,8 @@ mod:hook(CharacterStateHelper, "change_camera_state", function (func, player, st
 	return func(player, state, params)
 end)
 
--- With the free camera, the game's inspect key turns the character to face the way the camera looks, with the game's own turn to a
--- rotation (PlayerUnitFirstPerson.force_look_rotation). Their pitch stays as it was.
+-- With the free camera, the game's inspect key turns the character to look the way the camera looks, sideways and up and down, with the
+-- game's own turn to a rotation (PlayerUnitFirstPerson.force_look_rotation, which also keeps the pitch within the game's limits).
 mod:hook(PlayerCharacterStateInspecting, "on_enter", function (func, self, unit, ...)
 	if unit ~= free_camera_unit then
 		return func(self, unit, ...)
@@ -353,12 +353,11 @@ mod:hook(PlayerCharacterStateInspecting, "on_enter", function (func, self, unit,
 		error(error_message, 0)
 	end
 
-	local first_person_extension = self.first_person_extension
 	local camera_rotation = Managers.state.camera:camera_rotation(self.player.viewport_name)
 	local yaw = Quaternion(Vector3.up(), Quaternion.yaw(camera_rotation))
-	local pitch = Quaternion(Vector3.right(), Quaternion.pitch(first_person_extension:current_rotation()))
+	local pitch = Quaternion(Vector3.right(), Quaternion.pitch(camera_rotation))
 
-	first_person_extension:force_look_rotation(Quaternion.multiply(yaw, pitch))
+	self.first_person_extension:force_look_rotation(Quaternion.multiply(yaw, pitch))
 end)
 
 mod:hook(PlayerUnitFirstPerson, "set_first_person_mode", function (func, self, active, ...)
