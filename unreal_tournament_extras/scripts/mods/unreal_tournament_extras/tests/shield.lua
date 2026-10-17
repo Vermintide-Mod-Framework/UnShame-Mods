@@ -740,7 +740,8 @@ local function scenarios()
 								local at = Unit.world_position(found, 0)
 								local away = Vector3.normalize(Vector3.flat(position - at))
 
-								runner.move_player(player, at + away * 1.2)
+								-- (close enough that the punch reaches it: from 1.2 m it didn't)
+								runner.move_player(player, at + away * 0.8)
 							end
 
 							return found
