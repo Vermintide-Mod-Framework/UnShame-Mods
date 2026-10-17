@@ -124,7 +124,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Bots using it | - | - | ok (tests: a bot fights rats with it; a heavy attack charges until an enemy is in reach, as UT's bots do, and a light one is a quick punch) | - | - | - |
 | Range they shoot from | - | - | ok (tests: a bot punches only with an enemy within the punch's reach) | - | - | - |
 | Allies in the way | - | - | ok (tests: a bot fighting rats around the player never hurts them) | - | - | - |
-| Look and sound of their shots | - | - | - | - | - | - |
+| Look and sound of their shots | - | - | ok | - | - | - |
 | **Stability** | | | | | | |
 | Mod reload with it wielded | - | - | - | - | - | - |
 | Level change while firing | - | - | - | - | - | - |
