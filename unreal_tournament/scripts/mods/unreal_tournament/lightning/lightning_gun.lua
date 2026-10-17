@@ -24,9 +24,13 @@ local DESCRIPTION = "The Lightning Gun is a high-power energy rifle capable of a
 -- Kerillian's careers. The Sister of the Thorn is the staff's own.
 local CAREERS = { "we_shade", "we_maidenguard", "we_waywatcher", "we_thornsister" }
 
-mod.items.register("lightning_gun", {
-	key = "ut_lightning_gun",
-	template = "ut_lightning_gun_template",
+local SETTING_ID = "lightning_gun"
+local ITEM_KEY = "ut_lightning_gun"
+local TEMPLATE_NAME = "ut_lightning_gun_template"
+
+mod.items.register(SETTING_ID, {
+	key = ITEM_KEY,
+	template = TEMPLATE_NAME,
 	base_item = "we_life_staff",
 	deus_copy = "deus_we_life_staff",
 	can_wield = CAREERS,
@@ -39,13 +43,11 @@ mod.items.register("lightning_gun", {
 	icon_materials = "ui/ut/lightning_gun_icon",
 })
 
-local TEMPLATE_NAME = mod.items.weapons.lightning_gun.template
 local TEMPLATE_NAMES = {
 	[TEMPLATE_NAME] = true,
 }
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- Unreal unit to meters
 	-- The heat of a bolt: the Beam Staff's charged shot's (8 of the 40 a player can take), so five bolts heat the gun to the top and a
 	-- sixth overheats it. UT's gun has 40 rounds instead.
 	bolt_overcharge = PlayerUnitStatusSettings.overcharge_values.beam_staff_sniper,

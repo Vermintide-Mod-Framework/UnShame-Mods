@@ -14,7 +14,6 @@ local animations = mod:dofile("scripts/mods/unreal_tournament/lightning/skin_ani
 local particles = mod.skin_particles
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
 	fire_animation_rate = 1.25, -- SniperFire.FireAnimRate: the Fire animation plays this much faster than its own rate
 	-- NewLightningBolt (PT_Branch) is 30 particles of size 30, each out of place by up to 5 units (mPosDev). It is drawn as a line of
 	-- parts of the streak texture (the upper half of LightningBoltT), each bolt_width units wide and twice that long, so the streak keeps
@@ -96,7 +95,7 @@ local CONFIG = {
 	inspect_sway_speed = 1.8, -- radians per second
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 local lightning = mod.lightning
 

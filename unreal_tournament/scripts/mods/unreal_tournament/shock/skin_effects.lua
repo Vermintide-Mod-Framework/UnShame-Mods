@@ -7,12 +7,10 @@ local mod = get_mod("unreal_tournament")
 --
 -- skin.lua calls these functions, because it knows when and where an effect happens.
 
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local particles = mod.skin_particles
 
 local CONFIG = {
-	-- How many meters a UT unit is in the world. It is the same as in shock_rifle.lua. A player is 88 units high.
-	meters_per_unit = 0.02,
-
 	-- The beam (ShockBeamEffect) is made of pieces beam_piece_length long and beam_width wide. Each piece lasts beam_life.
 	beam_piece_length = 150,
 	beam_width = 36,
@@ -214,7 +212,7 @@ local CONFIG = {
 	spin = 0.3,
 }
 
-local UNIT = CONFIG.meters_per_unit
+local UNIT = utils.UT_UNIT
 
 local fx = {}
 

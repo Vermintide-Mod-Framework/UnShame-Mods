@@ -6,9 +6,13 @@ local mod = get_mod("unreal_tournament")
 --   A beam that hits a ball detonates it in a large "shock combo" explosion.
 -- The skin (skin.lua) draws all of it. This file only sets what it does to the game.
 
-mod.items.register("shock_rifle", {
-	key = "ut_shock_rifle",
-	template = "ut_shock_rifle_template",
+local SETTING_ID = "shock_rifle"
+local ITEM_KEY = "ut_shock_rifle"
+local TEMPLATE_NAME = "ut_shock_rifle_template"
+
+mod.items.register(SETTING_ID, {
+	key = ITEM_KEY,
+	template = TEMPLATE_NAME,
 	base_item = "bw_skullstaff_beam",
 	deus_copy = "deus_bw_skullstaff_beam",
 	-- The careers are the Beam Staff's, plus the Necromancer, which is a DLC career that has its own staffs.
@@ -46,7 +50,6 @@ mod.items.register("shock_rifle", {
 	},
 })
 
-local TEMPLATE_NAME = mod.items.weapons.shock_rifle.template
 local INSTAGIB_SKIN = "ut_shock_rifle_skin_instagib"
 
 local CONFIG = {
@@ -80,7 +83,6 @@ local CONFIG = {
 	beam_attack_power = 0.7, -- the multiplier on the weapon's power level, which sets the damage
 	beam_impact_power = 0.3, -- the same multiplier for the stagger
 	combo_damage_multiplier = 200 / 45,
-	meters_per_uu = 0.02, -- Unreal unit to meters (a UT2004 player is about 88 uu or 1.8 m)
 	-- UT2004's ShockProjectile.DamageRadius is 150, but 3 m covers a lot of a horde in a game of this scale.
 	ball_explosion_radius_uu = 90,
 	combo_explosion_radius_uu = 190, -- UT2004's ShockProjectile.ComboRadius is 275, which would be 5.5 m here
@@ -234,7 +236,7 @@ register_explosion_template("ut_shock_ball_explosion", {
 		-- The shooter is hurt separately. See ball_self_damage.
 		ignore_attacker_unit = true,
 		max_damage_radius = CONFIG.explosion_full_damage_radius,
-		radius = CONFIG.ball_explosion_radius_uu * CONFIG.meters_per_uu,
+		radius = CONFIG.ball_explosion_radius_uu * utils.UT_UNIT,
 		use_attacker_power_level = true,
 	},
 })
@@ -249,7 +251,7 @@ register_explosion_template("ut_shock_combo_explosion", {
 		-- The shooter is handled separately. See apply_combo_self_damage.
 		ignore_attacker_unit = true,
 		max_damage_radius = CONFIG.explosion_full_damage_radius,
-		radius = CONFIG.combo_explosion_radius_uu * CONFIG.meters_per_uu,
+		radius = CONFIG.combo_explosion_radius_uu * utils.UT_UNIT,
 		use_attacker_power_level = true,
 		camera_effect = {
 			far_distance = 25,
@@ -407,8 +409,8 @@ local function build_ball_action()
 			local position = Unit.world_position(first_person_unit, 0)
 			local rotation = Unit.local_rotation(first_person_unit, 0)
 
-			position = position + Quaternion.forward(rotation) * (CONFIG.ball_spawn_forward_uu * CONFIG.meters_per_uu)
-				+ Quaternion.right(rotation) * (CONFIG.ball_spawn_right_uu * CONFIG.meters_per_uu)
+			position = position + Quaternion.forward(rotation) * (CONFIG.ball_spawn_forward_uu * utils.UT_UNIT)
+				+ Quaternion.right(rotation) * (CONFIG.ball_spawn_right_uu * utils.UT_UNIT)
 
 			return position, rotation
 		end,
@@ -842,7 +844,7 @@ end
 
 -- The combo damages the beastmen standards (banners) in its radius. The beam does not, because a standard drops its damage.
 local function blow_up_standards(impact_position, attacker_unit)
-	mod.standards.blow_up(impact_position, attacker_unit, ExplosionTemplates.ut_shock_combo_explosion.explosion.radius, DamageProfileTemplates.ut_shock_combo_explosion, CONFIG.combo_standard_power_level, mod.items.weapons.shock_rifle.key)
+	mod.standards.blow_up(impact_position, attacker_unit, ExplosionTemplates.ut_shock_combo_explosion.explosion.radius, DamageProfileTemplates.ut_shock_combo_explosion, CONFIG.combo_standard_power_level, ITEM_KEY)
 end
 
 mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_position, _, before)

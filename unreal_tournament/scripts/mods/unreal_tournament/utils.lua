@@ -214,6 +214,9 @@ function utils.set_headshot_multiplier(profile, multiplier)
 	profile.default_target.boost_curve_coefficient_headshot = 1
 end
 
+-- Meters in one Unreal unit of the world. A UT2004 player is 88 units high, about 1.8 m.
+utils.UT_UNIT = 0.02
+
 -- The Shock Rifle's beam is the reference for damage in UT2004's units: its 45 damage is an attack power of 0.7 and an impact power
 -- of 0.3.
 utils.UT_REFERENCE_DAMAGE = 45

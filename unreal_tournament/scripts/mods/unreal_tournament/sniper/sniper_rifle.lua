@@ -57,7 +57,6 @@ for _, variant in ipairs(VARIANTS) do
 end
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- Unreal unit to meters
 	-- ClassicSniperAmmo.MaxAmmo. It is all the clip, so there is no reload.
 	max_ammo = 35,
 	-- ClassicSniperFire.FireRate. After a shot, the next one can be made once this much time has passed.

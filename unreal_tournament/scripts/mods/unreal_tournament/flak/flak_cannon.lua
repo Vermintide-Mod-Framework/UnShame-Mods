@@ -14,9 +14,13 @@ local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
-mod.items.register("flak_cannon", {
-	key = "ut_flak_cannon",
-	template = "ut_flak_cannon_template",
+local SETTING_ID = "flak_cannon"
+local ITEM_KEY = "ut_flak_cannon"
+local TEMPLATE_NAME = "ut_flak_cannon_template"
+
+mod.items.register(SETTING_ID, {
+	key = ITEM_KEY,
+	template = TEMPLATE_NAME,
 	base_item = "es_blunderbuss",
 	deus_copy = "deus_es_blunderbuss",
 	name = "UT2004 Flak Cannon",
@@ -28,10 +32,7 @@ mod.items.register("flak_cannon", {
 	icon_materials = "ui/ut/flak_cannon_icon",
 })
 
-local TEMPLATE_NAME = mod.items.weapons.flak_cannon.template
-
 local CONFIG = {
-	meters_per_uu = 0.02, -- Unreal unit to meters
 	-- All of the ammo. The Blunderbuss has 16. It is all the clip, so there is no reload.
 	max_ammo = 20,
 	-- Flak chunk
@@ -252,7 +253,7 @@ register_explosion_template("ut_flak_shell_explosion", {
 		-- The shooter is hurt separately. See shell_self_damage.
 		ignore_attacker_unit = true,
 		max_damage_radius = CONFIG.shell_explosion_full_damage_radius,
-		radius = CONFIG.shell_explosion_radius_uu * CONFIG.meters_per_uu,
+		radius = CONFIG.shell_explosion_radius_uu * utils.UT_UNIT,
 		use_attacker_power_level = true,
 		camera_effect = {
 			far_distance = 20,
@@ -783,7 +784,6 @@ end
 -- for a headshot }.
 local shots = {}
 local chunk_in_hit
-local ITEM_KEY = mod.items.weapons.flak_cannon.key
 
 mod:hook(DamageUtils, "buff_on_attack", function (func, unit, hit_unit, attack_type, is_critical_strike, hit_zone_name, target_number, send_to_server, buff_type, unmodified, damage_source, ...)
 	local chunk = chunk_in_hit

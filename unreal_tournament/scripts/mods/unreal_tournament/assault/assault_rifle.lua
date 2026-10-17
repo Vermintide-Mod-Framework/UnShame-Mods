@@ -22,10 +22,12 @@ local impact_power_for = utils.impact_power_for
 local DESCRIPTION = "Inexpensive and easily produced, the AR770 provides a lightweight 5.56mm combat solution that is most effective against unarmored foes. The optional M355 Grenade Launcher provides the punch that makes this weapon effective against heavily armored enemies."
 
 local SETTING_ID = "assault_rifle"
+local ITEM_KEY = "ut_assault_rifle"
+local TEMPLATE_NAME = "ut_assault_rifle_template"
 
 mod.items.register(SETTING_ID, {
-	key = "ut_assault_rifle",
-	template = "ut_assault_rifle_template",
+	key = ITEM_KEY,
+	template = TEMPLATE_NAME,
 	base_item = "wh_brace_of_pistols",
 	deus_copy = "deus_wh_brace_of_pistols",
 	name = "UT2004 Assault Rifle",
@@ -37,10 +39,7 @@ mod.items.register(SETTING_ID, {
 	icon_materials = "ui/ut/assault_rifle_icon",
 })
 
-local TEMPLATE_NAME = mod.items.weapons[SETTING_ID].template
-
 local CONFIG = {
-	meters_per_uu = 0.02,
 	-- AssaultAmmo.MaxAmmo. All the ammo is the clip, so there is no reload.
 	max_ammo = 200,
 	-- AssaultFire: DamageMin and DamageMax 7, FireRate 0.16, which bDualMode makes 0.55 of it
@@ -89,7 +88,7 @@ local CONFIG = {
 	recoil_climb = 0.08,
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 -- Damage
 
@@ -288,8 +287,8 @@ local function explode(grenade, position)
 		return
 	end
 
-	Managers.state.entity:system("area_damage_system"):create_explosion(grenade.owner_unit, position, Quaternion.identity(), EXPLOSION, 1, mod.items.weapons[SETTING_ID].key, grenade.power_level or 500, false, grenade.owner_unit)
-	utils.apply_explosion_self_damage(grenade.owner_unit, position, mod.items.weapons[SETTING_ID].key, ExplosionTemplates[EXPLOSION].explosion, CONFIG.grenade_self_damage)
+	Managers.state.entity:system("area_damage_system"):create_explosion(grenade.owner_unit, position, Quaternion.identity(), EXPLOSION, 1, ITEM_KEY, grenade.power_level or 500, false, grenade.owner_unit)
+	utils.apply_explosion_self_damage(grenade.owner_unit, position, ITEM_KEY, ExplosionTemplates[EXPLOSION].explosion, CONFIG.grenade_self_damage)
 	mod:network_send("ut_assault_grenade_end", "others", grenade.id)
 end
 

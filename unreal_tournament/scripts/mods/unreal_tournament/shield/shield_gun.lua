@@ -113,7 +113,6 @@ for _, variant in ipairs(VARIANTS) do
 end
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- Unreal unit to meters
 	-- ShieldFire.ShieldRange: how far a wall can be for a punch to throw the player off it (the shield jump), in UT units
 	range = 112,
 	-- How far the punch reaches what it hits, and the bash out of a push, in UT units, and how far the charge looks for an enemy to punch
@@ -234,7 +233,7 @@ local CONFIG = {
 	explosion_fatigue_type = "blocked_sv_sweep_2",
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 -- What the gun does now, on the player's own machine, for the skin
 mod.shield = {

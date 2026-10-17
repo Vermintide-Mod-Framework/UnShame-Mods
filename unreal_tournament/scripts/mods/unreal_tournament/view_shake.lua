@@ -10,9 +10,9 @@ local mod = get_mod("unreal_tournament")
 -- On each axis the offset moves at the rate until it reaches the most it may be, then turns back. Each time it turns, the most is
 -- multiplied by (1 / time - 1), about -0.5 at first, and time goes down by a frame. Once time is down to 1 that axis stops.
 
-local CONFIG = {
-	meters_per_uu = 0.02, -- meters in one Unreal unit of the world
-}
+local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+
+local UNIT = utils.UT_UNIT
 
 local view_shake = {}
 
@@ -102,7 +102,7 @@ mod:hook_safe(CameraManager, "_apply_offset", function (self, camera_data)
 	local rotation = camera_data.rotation
 	local offset = Quaternion.forward(rotation) * axes[1].offset + Quaternion.right(rotation) * axes[2].offset + Quaternion.up(rotation) * axes[3].offset
 
-	camera_data.position = camera_data.position + offset * CONFIG.meters_per_uu
+	camera_data.position = camera_data.position + offset * UNIT
 end)
 
 function view_shake.offset()
@@ -110,7 +110,7 @@ function view_shake.offset()
 		return Vector3.zero()
 	end
 
-	return Vector3(axes[2].offset, axes[1].offset, axes[3].offset) * CONFIG.meters_per_uu
+	return Vector3(axes[2].offset, axes[1].offset, axes[3].offset) * UNIT
 end
 
 local function stop()

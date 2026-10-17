@@ -37,7 +37,6 @@ local CHAMBER_LOAD_FIRST = 8
 local CHAMBER_LOAD_LAST = 21
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
 	-- FlakMuzFlash1st is the flash of a shot. In UT it is a mesh 28 units across (DrawScale 2.2) that grows 7 a second. Here it is a sprite.
 	muzzle_size = 90,
 	muzzle_growth = 120,
@@ -99,7 +98,7 @@ local CONFIG = {
 	inspect_sway_speed = 1.8, -- radians per second
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 local skin_api
 

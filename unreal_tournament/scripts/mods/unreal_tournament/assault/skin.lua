@@ -20,7 +20,6 @@ local TEMPLATE_NAME = mod.items.weapons[SETTING_ID].template
 local assault = mod.assault
 
 local CONFIG = {
-	meters_per_uu = 0.02,
 	-- AssaultMuzFlash1st: the Minigun's flash (MinigunMuzFlash1st) at DrawScale 1.2. See the Minigun's skin for what it is.
 	flash_count = 5,
 	flash_scale = { 0.05, 0.08 },
@@ -38,7 +37,7 @@ local CONFIG = {
 	inspect_sway_speed = 1.8,
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 local skin_apis = {}
 

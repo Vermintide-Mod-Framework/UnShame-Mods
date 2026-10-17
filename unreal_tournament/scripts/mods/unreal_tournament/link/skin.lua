@@ -16,7 +16,6 @@ local TEMPLATE_NAME = mod.items.weapons.link_gun.template
 local SETTING_ID = "link_gun"
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
 	-- LinkMuzFlash is the flash of a shot.
 	muzzle_size = 45,
 	muzzle_growth = 100,
@@ -38,7 +37,7 @@ local CONFIG = {
 	shot_gap = 0.1,
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 local skin_api
 

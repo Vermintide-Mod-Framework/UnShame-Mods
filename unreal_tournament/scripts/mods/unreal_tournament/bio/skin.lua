@@ -19,7 +19,6 @@ local TEMPLATE_NAME = mod.items.weapons.bio_rifle.template
 local SETTING_ID = "bio_rifle"
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
 	-- BioMuzFlash1st is a flash that lasts 0.1 to 0.15 s, in the player's view and in the character's hand. It is UT's mesh, the Flak
 	-- Cannon's flash mesh with the Bio Rifle's own texture, pointing the way the camera looks. Its size is this many times the mesh at the
 	-- start of its life and at the end of it, which is muzzle_life. They are the Flak Cannon's, which is the same mesh. The brightness is
@@ -125,7 +124,7 @@ local CONFIG = {
 	shot_gap = 0.1,
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 local skin_api
 

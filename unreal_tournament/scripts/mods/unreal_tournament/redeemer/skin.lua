@@ -16,7 +16,6 @@ local SETTING_ID = "redeemer"
 local TEMPLATE_NAME = mod.items.weapons[SETTING_ID].template
 
 local CONFIG = {
-	meters_per_uu = 0.02,
 	-- RedeemerProjectile.RotationRate: the missile turns about its length by 50000 of 65536 a second
 	missile_turns_per_second = 50000 / 65536,
 	-- The missile's flight sound (AmbientSound redeemer_flight) is played again when it ends
@@ -43,7 +42,7 @@ local CONFIG = {
 	inspect_sway_speed = 1.8,
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 local skin_api
 

@@ -42,9 +42,13 @@ local register_damage_profile = utils.register_damage_profile
 
 local stagger_types = require("scripts/utils/stagger_types")
 
-mod.items.register("link_gun", {
-	key = "ut_link_gun",
-	template = "ut_link_gun_template",
+local SETTING_ID = "link_gun"
+local ITEM_KEY = "ut_link_gun"
+local TEMPLATE_NAME = "ut_link_gun_template"
+
+mod.items.register(SETTING_ID, {
+	key = ITEM_KEY,
+	template = TEMPLATE_NAME,
 	base_item = "we_life_staff",
 	deus_copy = "deus_we_life_staff",
 	name = "UT2004 Link Gun",
@@ -55,8 +59,6 @@ mod.items.register("link_gun", {
 	icon_package = "resource_packages/unreal_tournament/icons",
 	icon_materials = "ui/ut/link_gun_icon",
 })
-
-local TEMPLATE_NAME = mod.items.weapons.link_gun.template
 
 local CONFIG = {
 	-- The event that puts the staff in its stance. Inspecting and venting end with it.
@@ -155,7 +157,7 @@ local CONFIG = {
 	dot_power_level = 500,
 	dot_interval = 1,
 	dot_overcharge = 1, -- the heat of every application of the poison, on top of the heat of the beam
-	dot_damage_source = mod.items.weapons.link_gun.key,
+	dot_damage_source = ITEM_KEY,
 	-- A monster is an enemy too big to be held, so it is linked but not held. Once it has moved monster_move_distance from where it
 	-- was when it was linked, or the owner tries to yank it, the owner is launched towards it. This is the state of being launched
 	-- by the game's monsters. The launch speed is monster_pull_per_meter of the monster's distance, between the min and the max

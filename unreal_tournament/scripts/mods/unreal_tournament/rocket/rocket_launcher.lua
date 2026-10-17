@@ -15,9 +15,13 @@ local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
-mod.items.register("rocket_launcher", {
-	key = "ut_rocket_launcher",
-	template = "ut_rocket_launcher_template",
+local SETTING_ID = "rocket_launcher"
+local ITEM_KEY = "ut_rocket_launcher"
+local TEMPLATE_NAME = "ut_rocket_launcher_template"
+
+mod.items.register(SETTING_ID, {
+	key = ITEM_KEY,
+	template = TEMPLATE_NAME,
 	base_item = "wh_crossbow_repeater",
 	deus_copy = "deus_wh_crossbow_repeater",
 	name = "UT2004 Rocket Launcher",
@@ -29,8 +33,6 @@ mod.items.register("rocket_launcher", {
 	icon_materials = "ui/ut/rocket_launcher_icon",
 })
 
-local TEMPLATE_NAME = mod.items.weapons.rocket_launcher.template
-
 -- A rocket goes where the crosshair is. It has no spread, while the crossbow's default would scatter it a little.
 local SPREAD_TEMPLATE = "ut_rocket"
 
@@ -40,7 +42,6 @@ local SPIRAL_ACTION = "zoomed_shot_spiral" -- the sub action for a salvo that is
 register_network_lookup("sub_actions", SPIRAL_ACTION)
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- Unreal unit to meters
 	-- Rocket
 	-- RocketProj.Speed is 1350 uu/s. That is 27 m/s by size and 12 m/s by run speed, so this is in between. The action's unit is
 	-- m/s * 100.
@@ -193,7 +194,7 @@ register_explosion_template("ut_rocket_explosion", {
 		-- The shooter is hurt separately. See rocket_self_damage.
 		ignore_attacker_unit = true,
 		max_damage_radius = CONFIG.rocket_explosion_full_damage_radius,
-		radius = CONFIG.rocket_explosion_radius_uu * CONFIG.meters_per_uu,
+		radius = CONFIG.rocket_explosion_radius_uu * utils.UT_UNIT,
 		use_attacker_power_level = true,
 		camera_effect = {
 			far_distance = 20,

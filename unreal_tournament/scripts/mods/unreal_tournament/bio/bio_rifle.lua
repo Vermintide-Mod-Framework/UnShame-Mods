@@ -22,9 +22,13 @@ local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
-mod.items.register("bio_rifle", {
-	key = "ut_bio_rifle",
-	template = "ut_bio_rifle_template",
+local SETTING_ID = "bio_rifle"
+local ITEM_KEY = "ut_bio_rifle"
+local TEMPLATE_NAME = "ut_bio_rifle_template"
+
+mod.items.register(SETTING_ID, {
+	key = ITEM_KEY,
+	template = TEMPLATE_NAME,
 	base_item = "dr_steam_pistol",
 	deus_copy = "deus_dr_steam_pistol",
 	name = "UT2004 Bio Rifle",
@@ -37,12 +41,9 @@ mod.items.register("bio_rifle", {
 	icon_materials = "ui/ut/bio_rifle_icon",
 })
 
-local TEMPLATE_NAME = mod.items.weapons.bio_rifle.template
-
 local CONFIG = {
-	-- Sizes and distances use UT's 0.02 m for each Unreal unit (uu). Speeds are 0.75 of that, so the globs are slower, and the gravity
-	-- is lowered to match, which keeps the drop of a glob over a distance the same as in UT.
-	meters_per_uu = 0.02,
+	-- Sizes and distances use UT's meters for each Unreal unit (uu, utils.UT_UNIT). Speeds are 0.75 of that, so the globs are slower,
+	-- and the gravity is lowered to match, which keeps the drop of a glob over a distance the same as in UT.
 	speed_scale = 0.75,
 	gravity = -10.7, -- m/s^2, UT's 950 uu/s^2 (19 m/s^2) times speed_scale squared
 	-- BioAmmo.MaxAmmo. All of it is the clip, so there is no reload.
@@ -132,7 +133,7 @@ local CONFIG = {
 	fire_sound = "player_combat_weapon_staff_fireball_fire",
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 -- The goop level of a glob is carried by the scale of its projectile. The scale goes from 0 to 1, and 0 is a level 1 glob. The blast
 -- radius of a level is the radius of level 1 times the level's square root, so the scale is made to follow the square root.
@@ -1327,7 +1328,7 @@ for _, template_name in ipairs({ "ut_bio_blast", "ut_bio_blast_air" }) do
 		}
 
 		if owner_unit and utils.is_local_player_unit(owner_unit) then
-			utils.apply_explosion_self_damage(owner_unit, position, mod.items.weapons.bio_rifle.key, explosion, blast_damage(level) * CONFIG.self_damage_share)
+			utils.apply_explosion_self_damage(owner_unit, position, ITEM_KEY, explosion, blast_damage(level) * CONFIG.self_damage_share)
 		end
 
 		utils.apply_explosion_push(position, explosion, CONFIG.jump_speed * math.sqrt(level))

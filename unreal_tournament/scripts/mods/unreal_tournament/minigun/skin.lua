@@ -14,7 +14,6 @@ local animations = mod:dofile("scripts/mods/unreal_tournament/minigun/skin_anima
 local particles = mod.skin_particles
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
 	-- The first person flash (MinigunMuzFlash1st): 5 meshes (MinigunMuzFlash1stMesh) at the muzzle for every round (mNumPerFlash),
 	-- turned at random about the barrel, each lasting 0.1 to 0.15 seconds. A mesh's scale starts at 0.05 to 0.08 and grows by 3 a second
 	-- (mSizeRange, mGrowthRate), times the emitter's DrawScale of 0.9. It brightens until 0.2 of its life and dims after (mAttenKa).
@@ -72,7 +71,7 @@ local CONFIG = {
 	inspect_sway_speed = 1.8,
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 local minigun = mod.minigun
 

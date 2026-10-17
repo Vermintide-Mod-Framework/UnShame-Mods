@@ -19,7 +19,6 @@ local TEMPLATE_NAME = mod.items.weapons.rocket_launcher.template
 local SETTING_ID = "rocket_launcher"
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- meters in one Unreal unit of the world (a player is 88 units high)
 	-- RocketMuzFlash1st: a flash that lasts 0.15 s. UT draws it as meshes, and here it is a sprite.
 	muzzle_size = 70,
 	muzzle_growth = 80,
@@ -108,7 +107,7 @@ local CONFIG = {
 	},
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 -- The index of the barrel's bone in the animations' list of bones
 local BARREL_BONE

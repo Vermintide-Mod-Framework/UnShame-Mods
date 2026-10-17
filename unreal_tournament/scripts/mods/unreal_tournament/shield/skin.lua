@@ -14,8 +14,6 @@ local animations = mod:dofile("scripts/mods/unreal_tournament/shield/skin_animat
 local particles = mod.skin_particles
 
 local CONFIG = {
-	-- The meters of a UT unit in the world (shield_gun.lua's meters_per_uu)
-	meters_per_uu = 0.02,
 	-- ShieldGun.PlayerViewOffset (forward, right, up) and DisplayFOV, which CalcDrawOffset scales the offset by (0.9 / DisplayFOV * 100)
 	view_offset = {2, -0.7, -2.7},
 	display_fov = 60,
@@ -103,6 +101,9 @@ local CONFIG = {
 	charge_mark_alpha = 204,
 	inspect_pose_speed = 5,
 }
+
+-- UT's effects are actors of their own, at the world's scale
+local UNIT = utils.UT_UNIT
 
 local shield = mod.shield
 
@@ -403,10 +404,9 @@ local function flash_shield(api)
 
 	if camera_position then
 		local forward, right, up = effect_start()
-		local meters = CONFIG.meters_per_uu
-		local point = Vector3(right, forward, up) * (CONFIG.behind_gun * meters)
+		local point = Vector3(right, forward, up) * (CONFIG.behind_gun * UNIT)
 
-		hit_sparks(camera_position + Quaternion.rotate(camera_rotation, point), camera_rotation, meters, CONFIG.hit_sparks_scatter[1])
+		hit_sparks(camera_position + Quaternion.rotate(camera_rotation, point), camera_rotation, UNIT, CONFIG.hit_sparks_scatter[1])
 	end
 end
 
@@ -699,8 +699,6 @@ end
 -- machine that owns the character's actions (shield_gun.lua's events), which sends them to the others (ut_shield_3p). The effects are at
 -- the end of the gun in the character's hand, and the sounds come from the character.
 local THIRD_PERSON = {
-	-- UT's effects are actors of their own, at the world's scale (CONFIG.meters_per_uu)
-	meters_per_uu = CONFIG.meters_per_uu,
 	-- ShieldEffect3rd: UT's Shield mesh at DrawScale 3.2, ahead of the player along the aim. Here it is at the end of the gun, facing the
 	-- way the gun points.
 	shield_draw_scale = 3.2,
@@ -765,7 +763,7 @@ end
 
 -- The shield: a mesh at the end of the gun, for as long as life says and while the shield is up
 local function third_person_shield(api, unit, state, material, life, brightness)
-	local scale = THIRD_PERSON.shield_draw_scale * THIRD_PERSON.meters_per_uu / 0.02 -- (0.02: the meters of a UT unit of the mesh)
+	local scale = THIRD_PERSON.shield_draw_scale * UNIT / 0.02 -- (0.02: the meters of a UT unit of the mesh)
 
 	particles.mesh({
 		additive = 0,
@@ -807,7 +805,7 @@ local function third_person_rings(api, unit)
 
 	-- (the way the gun pointed at the punch, for a frame where it is gone)
 	local rotation_box = QuaternionBox(rotation)
-	local meters = THIRD_PERSON.meters_per_uu
+	local meters = UNIT
 	local count = math.floor(THIRD_PERSON.ring_rate * THIRD_PERSON.ring_time) + 1
 
 	for i = 1, count do
@@ -851,7 +849,7 @@ end
 local function third_person_sparks(api, unit, state, dt)
 	local charged = math.min(now() - state.charge_started, shield.fully_charged_time)
 	local interval = 1 / (CONFIG.charge_rate[1] + CONFIG.charge_rate[2] * charged)
-	local meters = THIRD_PERSON.meters_per_uu * THIRD_PERSON.charge_scale
+	local meters = UNIT * THIRD_PERSON.charge_scale
 
 	state.spark_time = (state.spark_time or 0) + dt
 
@@ -939,7 +937,7 @@ local function on_event(unit, event)
 
 		if muzzle then
 			api.play_sound_at("ut_shield_hit_3d", muzzle)
-			hit_sparks(muzzle, api.third_person.muzzle_rotation(unit), THIRD_PERSON.meters_per_uu, CONFIG.hit_sparks_scatter[2])
+			hit_sparks(muzzle, api.third_person.muzzle_rotation(unit), UNIT, CONFIG.hit_sparks_scatter[2])
 		end
 	end
 end

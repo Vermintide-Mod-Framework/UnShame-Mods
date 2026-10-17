@@ -15,7 +15,6 @@ local animations = mod:dofile("scripts/mods/unreal_tournament/sniper/skin_animat
 local particles = mod.skin_particles
 
 local CONFIG = {
-	meters_per_uu = 0.02, -- meters in one Unreal unit of the world
 	-- ClassicSniperFire.FireAnims and FireAnimRate: a shot plays one of the three at random, this much faster than its own rate
 	fire_animations = { "Fire1", "Fire2", "Fire3" },
 	fire_animation_rate = 1.5,
@@ -69,7 +68,7 @@ local CONFIG = {
 	inspect_sway_speed = 1.8,
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 local sniper = mod.sniper
 

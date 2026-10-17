@@ -18,10 +18,12 @@ local impact_power_for = utils.impact_power_for
 local DESCRIPTION = "The first time you witness this miniature nuclear device in action, you'll agree it is the most powerful weapon in the Tournament. Launch a slow-moving but utterly devastating missile, but make sure you're out of its impressive blast radius before it impacts."
 
 local SETTING_ID = "redeemer"
+local ITEM_KEY = "ut_redeemer"
+local TEMPLATE_NAME = "ut_redeemer_template"
 
 mod.items.register(SETTING_ID, {
-	key = "ut_redeemer",
-	template = "ut_redeemer_template",
+	key = ITEM_KEY,
+	template = TEMPLATE_NAME,
 	base_item = "dr_deus_01",
 	deus_copy = "deus_dr_deus_01",
 	name = "UT2004 Redeemer",
@@ -33,10 +35,7 @@ mod.items.register(SETTING_ID, {
 	icon_materials = "ui/ut/redeemer_icon",
 })
 
-local TEMPLATE_NAME = mod.items.weapons[SETTING_ID].template
-
 local CONFIG = {
-	meters_per_uu = 0.02, -- Unreal unit to meters
 	-- RedeemerProjectile.Speed is 1000 units a second. The Rocket Launcher's 1350 is 2200 here (the action's unit is m/s * 100), so
 	-- this is the same share of it.
 	missile_speed = 2200 * 1000 / 1350,
@@ -69,7 +68,7 @@ local CONFIG = {
 	bot_max_range = 80,
 }
 
-local UNIT = CONFIG.meters_per_uu
+local UNIT = utils.UT_UNIT
 
 -- The direct hit only staggers: the damage is the blast, as in UT, where the missile blows up on what it touches.
 register_damage_profile("ut_redeemer", "staff_fireball", function (profile)
