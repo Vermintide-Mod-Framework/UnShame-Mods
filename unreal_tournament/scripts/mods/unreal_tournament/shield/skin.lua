@@ -41,6 +41,11 @@ local CONFIG = {
 	ring_size = 2, -- UT units across
 	ring_growth = 200, -- UT units across, a second
 	ring_color = { 32 / 255, 1, 32 / 255 },
+	-- Next to a picture of UT's, the rings were too big, too bright and too slow, so they are drawn at this share of UT's size and
+	-- brightness, and play this many times faster (the same path in less time). This is the mod's own.
+	ring_view_scale = 0.5,
+	ring_intensity = 0.4,
+	ring_time_scale = 2,
 	-- ShieldCharge, the sparks of the charge (ShieldFire.Timer): lines that appear up to 5 units from GetEffectStart (mPosDev) and fly
 	-- towards it, at ChargeScale * 15 units a second, 20 + ChargeScale * 10 a second, each lasting max(ChargeScale / 30, 0.2) s, where
 	-- ChargeScale is the time charged, up to FullyChargedTime. A line is 0.2 to 0.4 units in size (xEmitter's sizes are a half width, so
@@ -169,24 +174,26 @@ local function force_rings(api)
 
 	local forward, right, up = effect_start()
 	local count = math.floor(CONFIG.ring_rate * CONFIG.ring_time) + 1
-	local scale = (skin.view_across_scale or 0.01) * CONFIG.behind_gun
+	local scale = (skin.view_across_scale or 0.01) * CONFIG.behind_gun * CONFIG.ring_view_scale
+	local quicker = CONFIG.ring_time_scale
 
 	for i = 1, count do
-		local delay = (i - 1) / CONFIG.ring_rate
+		local delay = (i - 1) / (CONFIG.ring_rate * quicker)
 		local born = Managers.time:time("game") + delay
 
 		particles.disc({
 			attenuation = 0,
 			color = CONFIG.ring_color,
 			delay = delay,
+			intensity = CONFIG.ring_intensity,
 			locked = function ()
 				local age = math.max(0, Managers.time:time("game") - born)
 
 				-- (from where the gun is: a bash punches from the end of the shove)
-				return view_point(api, skin, forward + CONFIG.shove_forward * (skin.alt_pose or 0) + CONFIG.ring_speed * age, right, up)
+				return view_point(api, skin, forward + CONFIG.shove_forward * (skin.alt_pose or 0) + CONFIG.ring_speed * quicker * age, right, up)
 			end,
-			growth = CONFIG.ring_growth * scale,
-			life = CONFIG.ring_life,
+			growth = CONFIG.ring_growth * quicker * scale,
+			life = CONFIG.ring_life / quicker,
 			material = "units/ut/fx/fx_weapon_force_ring",
 			-- (ahead, in the frame of the first person unit)
 			normal = Vector3(0, 1, 0),
