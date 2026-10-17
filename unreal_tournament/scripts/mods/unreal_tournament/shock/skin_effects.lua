@@ -240,19 +240,8 @@ local RED_COIL = {
 	0,
 }
 
-local function between(range)
-	return range[1] + (range[2] - range[1]) * math.random()
-end
-
-local function random_direction()
-	local direction = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1)
-
-	if Vector3.length(direction) < 0.001 then
-		return Vector3.up()
-	end
-
-	return Vector3.normalize(direction)
-end
+local random_between = utils.random_between
+local random_direction = utils.random_direction
 
 local function random_spin()
 	return (math.random() * 2 - 1) * CONFIG.spin
@@ -358,7 +347,7 @@ function fx.ball_muzzle_flash(follow, scale, locked)
 			follow = follow,
 			locked = locked,
 			life = CONFIG.ball_flash_life,
-			size = between(CONFIG.ball_flash_size) * scale,
+			size = random_between(CONFIG.ball_flash_size) * scale,
 			spin = random_spin(),
 			texture = "shock_flare_b",
 		})
@@ -378,7 +367,7 @@ local function impact(position, normal, red)
 			life = CONFIG.impact_flare_life,
 			normal = normal,
 			position = lifted,
-			size = between(CONFIG.impact_flare_size) * UNIT,
+			size = random_between(CONFIG.impact_flare_size) * UNIT,
 			spin = random_spin(),
 			texture = "shock_flare_a",
 		})
@@ -427,7 +416,7 @@ local function coil(start, stop, red)
 
 	for i = 0, count - 1 do
 		-- A vector can't be kept from one frame to the next, so the scale is made again each time it is asked for.
-		local radius = CONFIG.coil_radius_scale * between(CONFIG.coil_size)
+		local radius = CONFIG.coil_radius_scale * random_between(CONFIG.coil_size)
 		-- The last piece is only as long as what is left of the beam, so the coil does not go past the end of the beam.
 		local piece_scale = CONFIG.coil_length_scale * math.min(1, (length - i * piece_length) / piece_length)
 

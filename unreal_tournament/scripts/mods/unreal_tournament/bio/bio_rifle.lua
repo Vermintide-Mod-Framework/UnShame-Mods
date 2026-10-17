@@ -723,15 +723,7 @@ local function spawn_glob(context, position, velocity, level)
 	ActionUtils.spawn_player_projectile(context.owner_unit, position, Quaternion.look(direction, up), scale_to_send(level), angle, target_vector, speed * 100, context.item_name, TEMPLATE_NAME, CHILD_ACTION_NAME, CHILD_SUB_ACTION, context.is_critical_strike, context.base_power * power_ratio(level))
 end
 
-local function random_direction()
-	local direction = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1)
-
-	if Vector3.length(direction) < 0.001 or Vector3.length(direction) > 1 then
-		return random_direction()
-	end
-
-	return Vector3.normalize(direction)
-end
+local random_direction = utils.random_direction
 
 -- Globs that have landed
 -- Only the host keeps these. It has the enemies, and it makes the explosions. Each is { id, context, position, normal (boxes), level,

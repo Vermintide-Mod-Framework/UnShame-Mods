@@ -81,17 +81,8 @@ for _, setting_id in ipairs(VARIANTS) do
 	TEMPLATE_NAMES[mod.items.weapons[setting_id].template] = true
 end
 
-local function random_between(range)
-	return range[1] + (range[2] - range[1]) * math.random()
-end
-
-local function attenuation(fraction, ka)
-	if fraction < ka then
-		return fraction / ka
-	end
-
-	return (1 - fraction) / (1 - ka)
-end
+local random_between = utils.random_between
+local attenuation = particles.attenuation
 
 -- The skin whose model the player sees, and the one whose mesh a character holds
 local function first_person_api()

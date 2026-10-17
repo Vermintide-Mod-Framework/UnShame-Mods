@@ -216,7 +216,8 @@ function particles.light(spec)
 end
 
 -- Returns how bright a particle is at a fraction of its life. This is UT's attenuation: it brightens until ka and dims from there.
-local function fade(fraction, ka)
+-- The skins use it for effects they draw themselves.
+function particles.attenuation(fraction, ka)
 	if ka <= 0 then
 		return 1 - fraction
 	elseif ka >= 1 then
@@ -232,7 +233,7 @@ end
 -- FadeInEndTime and FadeOutStartTime, which multiply together), or else the attenuation.
 local function brightness(particle)
 	if not particle.fade_in and not particle.fade_out then
-		return math.max(0, fade(particle.age / particle.life, particle.attenuation))
+		return math.max(0, particles.attenuation(particle.age / particle.life, particle.attenuation))
 	end
 
 	local result = 1

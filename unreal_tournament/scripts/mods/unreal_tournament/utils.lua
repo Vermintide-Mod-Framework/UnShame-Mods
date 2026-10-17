@@ -217,6 +217,45 @@ end
 -- Meters in one Unreal unit of the world. A UT2004 player is 88 units high, about 1.8 m.
 utils.UT_UNIT = 0.02
 
+-- Returns a random number between range[1] and range[2], as UT's Range values are picked
+function utils.random_between(range)
+	return range[1] + (range[2] - range[1]) * math.random()
+end
+
+-- Returns a random direction, every direction as likely as any other (UT's VRand). Points outside the unit sphere are thrown away,
+-- or directions toward the corners of the cube would come up more often.
+function utils.random_direction()
+	local direction = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1)
+	local length = Vector3.length(direction)
+
+	if length < 0.001 or length > 1 then
+		return utils.random_direction()
+	end
+
+	return direction / length
+end
+
+-- Returns the aim moved by UT's random spread: a random direction, a random share of the spread long (InstantFire.DoFireEffect)
+function utils.ut_spread(rotation, spread)
+	local direction = Quaternion.forward(rotation) + utils.random_direction() * (spread * math.random())
+
+	return Quaternion.look(Vector3.normalize(direction), Vector3.up())
+end
+
+-- Plays a sound that follows a unit. Returns a handle for utils.stop_sound, or nil if it didn't play.
+function utils.play_on_unit(event, unit)
+	local id, _, wwise_world = WwiseUtils.trigger_unit_event(Managers.world:world("level_world"), event, unit)
+
+	return id and { id = id, wwise_world = wwise_world } or nil
+end
+
+-- Stops a sound that utils.play_on_unit started. The handle can be nil.
+function utils.stop_sound(handle)
+	if handle then
+		WwiseWorld.stop_event(handle.wwise_world, handle.id)
+	end
+end
+
 -- The Shock Rifle's beam is the reference for damage in UT2004's units: its 45 damage is an attack power of 0.7 and an impact power
 -- of 0.3.
 utils.UT_REFERENCE_DAMAGE = 45

@@ -117,7 +117,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 			-- Pressing the button while zoomed zooms out
 			end_zoom()
 		else
-			-- ToggleZoom: StartZoom
+			-- Pressing the button while not zoomed starts zooming in (UT's ToggleZoom calls StartZoom)
 			zoom.level = 0
 			zoom.zooming = true
 			zoom.zoomed = true
@@ -128,7 +128,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 		if input_extension:get("action_two_hold") then
 			zoom.level = math.min(zoom.level + dt, CONFIG.max_level)
 		else
-			-- StopZoom: the zoom stays where it is
+			-- Letting go of the button keeps the zoom where it is (UT's StopZoom)
 			zoom.zooming = false
 		end
 	end

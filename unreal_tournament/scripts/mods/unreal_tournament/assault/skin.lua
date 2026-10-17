@@ -25,10 +25,10 @@ local CONFIG = {
 	flash_scale = { 0.05, 0.08 },
 	flash_growth = 3,
 	flash_draw_scale = 1.2,
-	flash_fit = 0.5, -- (the Minigun's fit to pictures of UT2004)
+	flash_fit = 0.5, -- the Minigun's value, which was fitted to pictures of UT2004
 	flash_life = { 0.1, 0.15 },
 	flash_attenuation = 0.2,
-	-- Grenade: RandSpin(25000) as it flies, of 65536 a second, about a random axis
+	-- Grenade: RandSpin(25000). It spins about a random axis at 25000 of UT's rotation units a second, where 65536 is a full turn.
 	grenade_spin = 25000 / 65536,
 	-- A bounce faster than this plays the impact sound (Grenade.HitWall)
 	bounce_sound_speed = 250, -- UT units a second
@@ -41,17 +41,8 @@ local UNIT = utils.UT_UNIT
 
 local skin_apis = {}
 
-local function random_between(range)
-	return range[1] + (range[2] - range[1]) * math.random()
-end
-
-local function attenuation(fraction, ka)
-	if fraction < ka then
-		return fraction / ka
-	end
-
-	return (1 - fraction) / (1 - ka)
-end
+local random_between = utils.random_between
+local attenuation = particles.attenuation
 
 -- The flash of a round at the muzzle of a rifle in the player's view (see the Minigun's skin)
 local function flash(api)
@@ -102,7 +93,8 @@ local function play_both(name, duration)
 	end
 end
 
--- The rounds: on the player's own machine the rifles' animation, flash and sound; for the others the sound from the character
+-- Called for each round. If the player on this machine fired it, both rifles play the fire animation, flash and sound. Otherwise the
+-- sound plays at the shooter's muzzle.
 mod.assault_round_callbacks.assault_skin = function (owner_unit)
 	local right = skin_apis[1]
 
@@ -128,7 +120,7 @@ mod.assault_round_callbacks.assault_skin = function (owner_unit)
 	end
 end
 
--- The grenades: UT's mesh, turning as it flies, on every machine
+-- The grenade models, by grenade id. Every machine spawns one for each grenade in flight and spins it as it flies.
 local grenade_units = {}
 
 local function destroy_grenade_unit(id)
@@ -189,7 +181,8 @@ local function clear_grenades()
 	end
 end
 
--- The explosion (NewExplosionB, much like the Rocket Launcher's NewExplosionA) and its sound
+-- The grenade's explosion plays the Rocket Launcher's explosion and sound. UT's grenade explosion (NewExplosionB) looks much like the
+-- rocket's (NewExplosionA).
 mod.skin_explosion_callbacks[assault.explosion] = function (world, position, rotation, scale)
 	local rocket = mod.skin_explosion_callbacks.ut_rocket_explosion
 
@@ -233,7 +226,8 @@ local function new_skin(id, mirror)
 		inspect_pivot_right = 0,
 		inspect_pivot_forward = 20,
 		inspect_pivot_up = 0,
-		-- NewWeaponPickups.AssaultPickupSM, one in each hand, as the game holds the brace of pistols (AttachmentNodeLinking)
+		-- The third person model is UT's pickup mesh (NewWeaponPickups.AssaultPickupSM). There is one in each hand, where the game puts the
+		-- brace of pistols (AttachmentNodeLinking).
 		third_person = {
 			id = id,
 			template = TEMPLATE_NAME,
@@ -290,7 +284,7 @@ mod.inspect_callbacks.assault_skin = function (action, started)
 	end
 end
 
--- The pistols' own shots and reloads are not played on the player's own first person unit: the skin's models play UT's
+-- The first person unit does not play the pistols' shot and reload animations. The skin's models play UT's animations instead.
 mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return string.find(event, "attack", 1, true) ~= nil or string.find(event, "reload", 1, true) ~= nil or event == "lock_target"
 end

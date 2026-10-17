@@ -152,17 +152,7 @@ mod.assault = {
 
 local assault = mod.assault
 
--- UT's spread: the aim is moved by a random direction, a random share of the spread long (InstantFire.DoFireEffect)
-local function ut_spread(rotation, spread)
-	local direction = Quaternion.forward(rotation)
-	local random = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1)
-
-	if Vector3.length(random) < 0.001 then
-		return rotation
-	end
-
-	return Quaternion.look(Vector3.normalize(direction + Vector3.normalize(random) * (spread * math.random())), Vector3.up())
-end
+local ut_spread = utils.ut_spread
 
 -- Each shooter's current spread and the time of their last round. The spread grows with each round and resets after a pause.
 local spreads = {}

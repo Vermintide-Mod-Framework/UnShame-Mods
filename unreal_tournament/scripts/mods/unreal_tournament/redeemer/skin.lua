@@ -46,9 +46,7 @@ local UNIT = utils.UT_UNIT
 
 local skin_api
 
-local function random_between(range)
-	return range[1] + (range[2] - range[1]) * math.random()
-end
+local random_between = utils.random_between
 
 -- The missiles in flight, on every machine
 local missiles = {}

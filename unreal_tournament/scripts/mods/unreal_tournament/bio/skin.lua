@@ -128,9 +128,7 @@ local UNIT = utils.UT_UNIT
 
 local skin_api
 
-local function random_between(range)
-	return range[1] + (range[2] - range[1]) * math.random()
-end
+local random_between = utils.random_between
 
 -- The globs that have landed, as { position, normal (boxes), level, token } for each id. A glob that is gone or has changed gets a new
 -- token, and the sprite of the old one stops by itself when it asks for its place and finds a different token.
@@ -232,19 +230,8 @@ local function send_charge(owner_unit, stage)
 	end
 end
 
--- Plays a sound that follows a player's unit. Returns what is needed to stop it.
-local function play_on_unit(event, unit)
-	local world = Managers.world:world("level_world")
-	local id, _, wwise_world = WwiseUtils.trigger_unit_event(world, event, unit)
-
-	return id and { id = id, wwise_world = wwise_world } or nil
-end
-
-local function stop_handle(handle)
-	if handle then
-		WwiseWorld.stop_event(handle.wwise_world, handle.id)
-	end
-end
+local play_on_unit = utils.play_on_unit
+local stop_handle = utils.stop_sound
 
 local function stop_remote_charge(unit)
 	local remote = remote_charges[unit]

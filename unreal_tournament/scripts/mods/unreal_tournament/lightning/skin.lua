@@ -122,9 +122,7 @@ for _, variant in ipairs(TEMPLATES) do
 	TEMPLATE_NAMES[mod.items.weapons[variant.setting_id].template] = true
 end
 
-local function random_between(range)
-	return range[1] + (range[2] - range[1]) * math.random()
-end
+local random_between = utils.random_between
 
 -- The most parts a bolt is drawn with. A long bolt has longer parts instead, far away where they are small on the screen.
 local MAX_BOLT_PARTS = 100

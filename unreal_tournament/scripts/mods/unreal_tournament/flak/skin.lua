@@ -106,20 +106,6 @@ local skin_api
 -- where it was }
 local visuals = {}
 
-local function random_between(range)
-	return range[1] + (range[2] - range[1]) * math.random()
-end
-
-local function random_direction()
-	local direction = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1)
-
-	if Vector3.length(direction) < 0.001 then
-		return Vector3.up()
-	end
-
-	return Vector3.normalize(direction)
-end
-
 local function destroy_visual(visual)
 	if Unit.alive(visual.unit) then
 		World.destroy_unit(visual.world, visual.unit)

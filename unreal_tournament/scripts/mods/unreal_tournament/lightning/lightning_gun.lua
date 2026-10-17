@@ -361,15 +361,7 @@ end
 -- The bolt and its arcs. The game's own shot damages what the bolt hits. This works out where the bolt ends, jumps the arcs, and tells
 -- the skin what to draw. It runs on the machine that owns the shot, which is the player's, or the host's for its bots.
 
-local function random_direction()
-	local direction = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1)
-
-	if Vector3.length(direction) < 0.001 then
-		return Vector3.up()
-	end
-
-	return Vector3.normalize(direction)
-end
+local random_direction = utils.random_direction
 
 local function raycast(physics_world, origin, direction)
 	return PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")

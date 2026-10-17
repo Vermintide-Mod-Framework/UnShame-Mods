@@ -5,10 +5,10 @@ local mod = get_mod("unreal_tournament")
 -- shake to where it draws the weapon too (Pawn.CalcDrawOffset adds CameraShake), so the weapon stays where it is on the screen while
 -- the world shakes. weapon_skin.lua moves the model by view_shake.offset().
 --   view_shake.start(magnitude, rate, time): magnitude and rate are { forward, right, up } in UT units and UT units a second, and time is
---       UT's ShakeOffsetTime. A shake replaces one that is smaller (by the length of its magnitude).
+--       UT's ShakeOffsetTime. A new shake replaces the current one only if its magnitude is longer.
 --   view_shake.offset(): how far the shake moves the camera now, in meters along the view's axes: right, forward, up.
--- On each axis the offset moves at the rate until it reaches the most it may be, then turns back. Each time it turns, the most is
--- multiplied by (1 / time - 1), about -0.5 at first, and time goes down by a frame. Once time is down to 1 that axis stops.
+-- On each axis the offset moves at the rate until it reaches its limit, then turns back. Each time it turns, the limit is multiplied
+-- by (1 / time - 1), about -0.5 at first, and time goes down by a frame. Once time is down to 1, that axis stops.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
@@ -16,7 +16,7 @@ local UNIT = utils.UT_UNIT
 
 local view_shake = {}
 
--- The shake now, as three axes of { offset, most, rate, time }, or nil
+-- The current shake: a table for each axis (forward, right, up) with its offset, limit (most), rate and time. Nil when there is no shake.
 local axes
 
 function view_shake.start(magnitude, rate, time)
@@ -46,7 +46,7 @@ function view_shake.start(magnitude, rate, time)
 	end
 end
 
--- (CheckShake for one axis)
+-- Moves one axis of the shake by a frame, as UT's CheckShake does.
 local function update_axis(axis, dt)
 	if axis.rate == 0 then
 		return
@@ -93,7 +93,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	end
 end
 
--- (the game moves the camera by its offset here, after its other effects)
+-- The game moves the camera by its offsets in this function, after its other effects. The shake is added at the same point.
 mod:hook_safe(CameraManager, "_apply_offset", function (self, camera_data)
 	if not axes then
 		return

@@ -104,19 +104,8 @@ for index, name in ipairs(animations.bones) do
 	end
 end
 
-local function random_between(range)
-	return range[1] + (range[2] - range[1]) * math.random()
-end
-
-local function random_direction()
-	local direction = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1)
-
-	if Vector3.length(direction) < 0.001 then
-		return Vector3.up()
-	end
-
-	return Vector3.normalize(direction)
-end
+local random_between = utils.random_between
+local random_direction = utils.random_direction
 
 -- Each template has a skin of its own, and a character holds the weapon of one of them
 local function first_person_api()
@@ -155,14 +144,7 @@ local function turn_bone(pose, bone, angle, pivot)
 	pose[o + 7] = py * sin_angle + pz * cos_angle + pivot[2]
 end
 
--- UT's attenuation: brightens until ka of the life and dims from there
-local function attenuation(fraction, ka)
-	if fraction < ka then
-		return fraction / ka
-	end
-
-	return (1 - fraction) / (1 - ka)
-end
+local attenuation = particles.attenuation
 
 -- The first person flash of a round, at the muzzle of the model in the player's own view. UT attaches it to the weapon, so it is drawn
 -- with the weapon. Here it has the material that draws with the model's field of view (fx_weapon_*), at the muzzle of the model as it

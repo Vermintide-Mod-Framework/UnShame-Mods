@@ -194,19 +194,8 @@ function mod.rocket_homing_on(target)
 	return false
 end
 
-local function random_between(range)
-	return range[1] + (range[2] - range[1]) * math.random()
-end
-
-local function random_direction()
-	local direction = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1)
-
-	if Vector3.length(direction) < 0.001 then
-		return Vector3.up()
-	end
-
-	return Vector3.normalize(direction)
-end
+local random_between = utils.random_between
+local random_direction = utils.random_direction
 
 local function destroy_visual(visual)
 	if Unit.alive(visual.unit) then

@@ -156,9 +156,7 @@ local function effect_start()
 	return CONFIG.view_offset[1] * offset_scale + CONFIG.effect_offset[1], CONFIG.view_offset[2] * offset_scale + CONFIG.effect_offset[2], CONFIG.view_offset[3] * offset_scale + CONFIG.effect_offset[3]
 end
 
-local function random_between(range)
-	return range[1] + (range[2] - range[1]) * math.random()
-end
+local random_between = utils.random_between
 
 -- The rings of a punch (ForceRingA): discs that face the way the view looks and fly ahead
 local function force_rings(api)
@@ -734,21 +732,8 @@ local function third_person_api(unit)
 	end
 end
 
--- A sound that follows a character. Returns what is needed to stop it.
-local function play_on_unit(event, unit)
-	local id, _, wwise_world = WwiseUtils.trigger_unit_event(Managers.world:world("level_world"), event, unit)
-
-	return id and {
-		id = id,
-		wwise_world = wwise_world,
-	} or nil
-end
-
-local function stop_handle(handle)
-	if handle then
-		WwiseWorld.stop_event(handle.wwise_world, handle.id)
-	end
-end
+local play_on_unit = utils.play_on_unit
+local stop_handle = utils.stop_sound
 
 local function forget(unit)
 	local state = characters[unit]
