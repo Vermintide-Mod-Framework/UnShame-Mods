@@ -156,7 +156,7 @@ local DROPPED_FLOW_EVENTS = {
 
 -- Builds a round of the gun's. The first round has the wind up before it, and the rounds after it follow at the fire rate. The hand
 -- is the base weapon's: the repeating crossbow is held in the left hand, and the game crashes on an action for a hand with no weapon.
--- spray is the base weapon's own rapid fire, if it has one: its animation is made to be played a round after another.
+-- spray is the repeating handgun's rapid fire: its animation is made to be played a round after another.
 local function build_shot(source, mode, first, hand, spray)
 	local action = table.clone(source)
 	local alt = mode == "alt"
@@ -229,8 +229,8 @@ local function apply_gun(template)
 	local source = rawget(Weapons, "repeating_handgun_template_1").actions.action_one.default
 	local hand = actions.action_one.default.weapon_action_hand
 	-- The characters play the repeating handgun's rapid fire (its bullet spray, attack_shoot_fast) for every round, instead of its single
-	-- shot. The repeating crossbow has no rapid fire, so it keeps its shot.
-	local spray = actions.action_one.bullet_spray
+	-- shot. The repeating crossbow has no rapid fire, so Saltzpyre plays the handgun's too.
+	local spray = rawget(Weapons, "repeating_handgun_template_1").actions.action_one.bullet_spray
 
 	actions.action_one = {
 		default = build_shot(source, "primary", true, hand, spray),
