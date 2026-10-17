@@ -55,6 +55,8 @@ local CONFIG = {
 	-- front). Each axis goes through this point of the mesh (forward, up, in the mesh's units).
 	barrel_pivot = { 0, 8.8 },
 	gear_pivot = { 17.85, 10.87 },
+	-- Which way the barrels turn, in first and third person: 1 or -1. -1 is the way UT's turn (checked in the game).
+	barrel_direction = -1,
 	-- The third person mesh's barrels are a geometry of their own (convert_static.py minigun_3rd). They turn about the barrel bone's place
 	-- (right, forward, up, in the mesh's UT units) at these turns a second while rounds come, and stop this long after the last round
 	-- (MinigunAttachment.UpdateRoll and UpdateRollTime). The shells fly from the ejector bone, on the gun's right.
@@ -404,7 +406,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 				roll.turns = 0
 			end
 
-			roll.angle = (roll.angle + roll.turns * 360 * dt) % 360
+			roll.angle = (roll.angle + CONFIG.barrel_direction * roll.turns * 360 * dt) % 360
 
 			for _, api in ipairs(skin_apis) do
 				local unit, config = api.third_person.held_mesh(character)
@@ -491,8 +493,8 @@ local function new_skin(variant)
 			skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
 			skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
 
-			-- The barrels turn by how fast they are going (Minigun.UpdateRoll)
-			skin.barrel_angle = ((skin.barrel_angle or 0) + minigun.turns_per_second * 360 * dt) % 360
+			-- The barrels turn by how fast they are going (Minigun.UpdateRoll), the way UT's do
+			skin.barrel_angle = ((skin.barrel_angle or 0) + CONFIG.barrel_direction * minigun.turns_per_second * 360 * dt) % 360
 
 			update_sounds(api, dt)
 		end,
