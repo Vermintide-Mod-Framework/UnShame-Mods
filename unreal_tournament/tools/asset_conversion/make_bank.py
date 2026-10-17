@@ -122,6 +122,8 @@ WEAPONS = {
         ('ut_shield_hit_3d', SOUNDS + 'BShieldReflection', True, -22, 30),
         # (the charge on another player: UT's AmbientSound on the pawn while it charges)
         ('ut_shield_charge_3d', SOUNDS + 'shieldgun_charge', True, -26, 25),
+        # (another player raising the shield: ShieldAltFire's FireSound, which UT plays for the others and not for the owner)
+        ('ut_shield_regen_3d', SOUNDS + 'BTranslocatorModuleRegeneration', True, -30, 25),
     ],
     'redeemer': [
         ('ut_redeemer_fire', SOUNDS + 'redeemer_shoot', False, -18, 0),
