@@ -23,6 +23,9 @@ TEXTURES = {
     'minigun_flame': ('AW-2004Explosions/Texture/Part_explode2s.tga', 4, 4),
     'tracer_shot': ('AW-2004Particles/Texture/TracerShot.tga', 1, 1),
     'shell_casing': ('XEffects/Texture/ShellCasingTex.tga', 1, 1),
+    # (where its rounds hit a wall: pclImpactSmoke's puffs and SmallExplosion's fire, a RocketExplosion)
+    'impact_smoke': ('XEffects/Texture/EmitSmoke_t.tga', 4, 4),
+    'small_explosion': ('XEffects/Texture/Rexpt.tga', 1, 1),
     # The Shield Gun (ShieldEffect's Shield3rdFB: its material is units/ut/fx/fx_shield, made by make_combo_materials.py)
     'shield_elec': ('XEffectMat/Texture/shield_elec_green_a.tga', 1, 1),
     # (ShieldRip3rdFB, the shield as it stops something: its lines and the fade of its rim)
@@ -45,8 +48,8 @@ TEXTURES = {
 # (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
 SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff')
 
-# The textures that UT draws with FB_Brighten (see write)
-BRIGHTEN = ('minigun_burst',)
+# The textures that UT draws with FB_Brighten (see write), or as STY_Translucent, which is the same: c + d * (1 - c)
+BRIGHTEN = ('minigun_burst', 'impact_smoke')
 
 # The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield, made by
 # make_combo_materials.py, which does FB_Brighten itself and fades by the alpha)

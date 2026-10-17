@@ -3,7 +3,8 @@ local mod = get_mod("unreal_tournament")
 -- Minigun skin: how UT2004's Minigun looks and sounds.
 --
 -- weapon_skin.lua does the model, its placement and animations, the bob and the third person. This file does what is the Minigun's own:
--- the barrels that turn (Minigun.UpdateRoll), the muzzle flash, the shells, the tracers, and the sounds of the winding and the fire.
+-- the barrels that turn (Minigun.UpdateRoll), the muzzle flash, the shells, the tracers, the hits on walls, and the sounds of the winding
+-- and the fire.
 -- The gameplay is in minigun.lua. This file only draws it, and is told what happens through the hook tables in hooks.lua.
 --
 -- The assets were made with tools/asset_conversion (convert_weapon.py minigun, convert_static.py minigun_pickup and minigun_3rd,
@@ -63,6 +64,18 @@ local CONFIG = {
 	-- front). Each axis goes through this point of the mesh (forward, up, in the mesh's units).
 	barrel_pivot = { 0, 8.8 },
 	gear_pivot = { 17.85, 10.87 },
+	-- Where a round hits a wall (see mod.hit_effects): how far from the viewer the others' hits are drawn, how often the primary fire's
+	-- leave a puff of dust, and the impact sounds (xHeavyWallHitEffect's, of which the Sniper Rifle's bank has six of the ten)
+	hit_effect_distance = 2000, -- UT units
+	hit_smoke_chance = 0.5,
+	impact_sounds = {
+		"ut_sniper_impact_1_3d",
+		"ut_sniper_impact_2_3d",
+		"ut_sniper_impact_3_3d",
+		"ut_sniper_impact_4_3d",
+		"ut_sniper_impact_5_3d",
+		"ut_sniper_impact_6_3d",
+	},
 	-- Which way the barrels turn, in first and third person: 1 or -1. -1 is the way UT's turn (checked in the game).
 	barrel_direction = -1,
 	-- The third person mesh's barrels are a geometry of their own (convert_static.py minigun_3rd). They turn about the barrel bone's place
@@ -348,12 +361,35 @@ local function round_sound(api, mode)
 end
 
 -- A round by any player, on every machine
-mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_position, hit_normal)
+mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_position, hit_normal, hit_level)
 	if not skin_apis[1] then
 		return
 	end
 
 	local interval = mode == "alt" and CONFIG.tracer_alt_interval or CONFIG.tracer_interval
+
+	-- Where a round hits a wall, as MinigunAttachment.ThirdPersonEffects: the primary fire's sparks and, half the time, a puff of dust
+	-- (xHeavyWallHitEffect), and the alt fire's small explosion in dust (ExploWallHit), with one of the impact sounds. UT draws the
+	-- others' hits only near the viewer.
+	if hit_level then
+		local camera_position = utils.camera_pose()
+		local near = utils.is_local_player_unit(owner_unit) or camera_position and Vector3.distance(camera_position, end_position) < CONFIG.hit_effect_distance * UNIT
+
+		if near then
+			if mode == "alt" then
+				mod.hit_effects.impact_smoke(end_position, hit_normal)
+				mod.hit_effects.small_explosion(end_position, hit_normal)
+			else
+				if math.random() < CONFIG.hit_smoke_chance then
+					mod.hit_effects.impact_smoke(end_position, hit_normal)
+				end
+
+				mod.hit_effects.wall_sparks(end_position, hit_normal)
+			end
+
+			skin_apis[1].play_sound_at(CONFIG.impact_sounds[math.random(#CONFIG.impact_sounds)], end_position)
+		end
+	end
 
 	if utils.is_local_player_unit(owner_unit) then
 		local api = first_person_api()

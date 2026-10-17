@@ -80,6 +80,9 @@ mod:dofile("scripts/mods/unreal_tournament/standards")
 -- The particles of the weapon skins, which are UT2004's effects (mod.skin_particles)
 mod:dofile("scripts/mods/unreal_tournament/skin_particles")
 
+-- UT's effects where a bullet hits a wall, which the Sniper Rifle and the Minigun draw (mod.hit_effects)
+mod:dofile("scripts/mods/unreal_tournament/hit_effects")
+
 -- The Minigun's first person flash, which the Assault Rifle and the Sniper Rifle also use (mod.minigun_muzzle_flash)
 mod:dofile("scripts/mods/unreal_tournament/minigun/muzzle_flash")
 
@@ -134,5 +137,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 1243)")
+	mod:echo("Unreal Tournament loaded (build 1244)")
 end

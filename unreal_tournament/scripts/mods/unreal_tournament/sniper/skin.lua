@@ -39,20 +39,6 @@ local CONFIG = {
 	smoke_rise = 27, -- UT units a second
 	smoke_ahead = 25,
 	smoke_up = 10,
-	-- WallSparks, where the bullet hits (SniperWallHitEffect): 8 lines at once, 0.5 to 0.8 s long, flying at 50 to 300 units a second
-	-- off the surface, spread by 0.6 on each axis (mDirDev), up to 0.8 units out of place, 3 to 2 units wide (half widths, shrinking
-	-- by 4 a second), 0.05 s of their travel long (mSpawnVecB.X 5), dimming from the start, added, twice as bright as the texture
-	-- (ScaleGlow). They fall: xEmitter's code is not in UT's source, so the zone's gravity is used for all of them, without their mass.
-	spark_count = 8,
-	spark_life = { 0.5, 0.8 },
-	spark_speed = { 50, 300 },
-	spark_spread = 0.6,
-	spark_position_spread = 0.8,
-	spark_width = { 6, 4 }, -- UT units across
-	spark_growth = -8, -- UT units across, a second
-	spark_length = 0.05, -- seconds of travel
-	spark_intensity = 2,
-	spark_gravity = 950, -- UT units a second squared
 	-- The scope (ClassicSniperRifle.RenderOverlays): pieces of its texture drawn black around the view, sized for a screen 1024 wide.
 	-- It draws a charge bar too, but its place and size are never set, so it is not seen.
 	scope_texture_size = 512,
@@ -141,59 +127,6 @@ local function smoke(position)
 	end
 end
 
--- The sparks where the bullet hits, off the surface. Each is a line along its way (the body of the texture) with a glow at its front.
-local function wall_sparks(position, normal)
-	local spread = CONFIG.spark_spread
-	local now = Managers.time:time("game")
-
-	for _ = 1, CONFIG.spark_count do
-		local direction = Vector3.normalize(normal + Vector3(random_between({ -spread, spread }), random_between({ -spread, spread }), random_between({ -spread, spread })))
-		local place = position + Vector3(random_between({ -1, 1 }), random_between({ -1, 1 }), random_between({ -1, 1 })) * (CONFIG.spark_position_spread * UNIT)
-		local start = Vector3Box(place)
-		local velocity = Vector3Box(direction * (random_between(CONFIG.spark_speed) * UNIT))
-		local fall = CONFIG.spark_gravity * UNIT
-		local width = random_between(CONFIG.spark_width) * UNIT
-		local life = random_between(CONFIG.spark_life)
-
-		-- Returns where the spark's head is, and where its tail is
-		local function spark()
-			local age = Managers.time:time("game") - now
-			local moving = velocity:unbox() - Vector3(0, 0, fall * age)
-			local head = start:unbox() + velocity:unbox() * age - Vector3(0, 0, 0.5 * fall * age * age)
-			local speed = Vector3.length(moving)
-			local heading = speed > 0.001 and moving * (1 / speed) or Vector3.up()
-
-			return head, head - heading * math.max(width, speed * CONFIG.spark_length)
-		end
-
-		particles.beam({
-			attenuation = 0,
-			growth = CONFIG.spark_growth * UNIT,
-			intensity = CONFIG.spark_intensity,
-			life = life,
-			size = width,
-			texture = "wall_spark_body",
-			track = function ()
-				local head, tail = spark()
-
-				return tail, head
-			end,
-		})
-		particles.sprite({
-			angle = 0,
-			attenuation = 0,
-			follow = function ()
-				return (spark())
-			end,
-			growth = CONFIG.spark_growth * UNIT,
-			intensity = CONFIG.spark_intensity,
-			life = life,
-			size = width,
-			texture = "wall_spark_head",
-		})
-	end
-end
-
 -- A shot: the sparks and one of the six sounds where it hit, on every machine. The others also see the flash and the smoke at the rifle
 -- in the character's hand, and hear the shot.
 sniper.shot_callbacks.sniper_skin = function (owner_unit, hit_position, hit_normal)
@@ -204,7 +137,7 @@ sniper.shot_callbacks.sniper_skin = function (owner_unit, hit_position, hit_norm
 	end
 
 	if hit_position then
-		wall_sparks(hit_position, hit_normal)
+		mod.hit_effects.wall_sparks(hit_position, hit_normal)
 		api.play_sound_at("ut_sniper_impact_" .. math.random(1, 6) .. "_3d", hit_position)
 	end
 

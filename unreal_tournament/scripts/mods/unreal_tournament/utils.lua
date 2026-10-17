@@ -304,8 +304,9 @@ function utils.set_handgun_spread(handgun_action, spread)
 	end
 end
 
--- Returns where the round of a game handgun action hit, and the normal of what it hit (the zero vector if nothing, and then the end is
--- 100 m along). The ray goes the way set_handgun_spread sent the round, or along the aim.
+-- Returns where the round of a game handgun action hit, the normal of what it hit (the zero vector if nothing, and then the end is
+-- 100 m along), and whether what it hit is the level or a prop, not a character. The ray goes the way set_handgun_spread sent the round,
+-- or along the aim.
 function utils.handgun_round_hit(handgun_action)
 	local owner_unit = handgun_action.owner_unit
 	local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
@@ -315,8 +316,9 @@ function utils.handgun_round_hit(handgun_action)
 	local direction = Quaternion.forward(rotation)
 	local hits = PhysicsWorld.immediate_raycast_actors(handgun_action.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
 	local hit = utils.first_beam_hit(hits, owner_unit)
+	local hit_level = hit and not Unit.get_data(Actor.unit(hit[4]), "breed") or false
 
-	return hit and hit[1] or origin + direction * 100, hit and hit[3] or Vector3.zero()
+	return hit and hit[1] or origin + direction * 100, hit and hit[3] or Vector3.zero(), hit_level
 end
 
 -- Returns a function that gives a screen gui in the level's world, made with the materials of material_file, for drawing over the

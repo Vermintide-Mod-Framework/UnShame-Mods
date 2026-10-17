@@ -206,8 +206,9 @@ local function build_shot(source, mode, first, hand, spray, volley)
 	action.ut_minigun = mode
 	action.ut_minigun_first = first
 	action.ut_spread = alt and CONFIG.alt_spread or CONFIG.primary_spread
-	-- The repeating handgun's own tracer is not drawn (hooks.lua): the skin draws UT's
+	-- The repeating handgun's own tracer is not drawn, nor its effects where a round hits a wall (hooks.lua): the skin draws UT's
 	action.ut_dropped_flow_events = DROPPED_FLOW_EVENTS
+	action.ut_silent_level_hits = true
 	-- The other button's shot can only follow once this round's time is over, so the two never fire at once (UT's fire modes are
 	-- exclusive)
 	action.allowed_chain_actions = fire_chain_actions(own_action, "loop", fire_time + interval)
@@ -336,26 +337,27 @@ mod.handgun_update_callbacks.minigun = function (self)
 
 	local owner_unit = self.owner_unit
 	local action = self.current_action
-	local end_position, hit_normal = utils.handgun_round_hit(self)
+	local end_position, hit_normal, hit_level = utils.handgun_round_hit(self)
 
 	mod.minigun.last_shot_time = Managers.time:time("game")
 	mod.minigun.last_mode = action.ut_minigun
 
-	mod.minigun_shot(owner_unit, action.ut_minigun, end_position, hit_normal)
+	mod.minigun_shot(owner_unit, action.ut_minigun, end_position, hit_normal, hit_level)
 end
 
--- What the skin is told (mod.minigun_shot_callbacks in hooks.lua), and what is sent to the other players, who see the same tracers from
--- the weapon of the player's character.
-function mod.minigun_shot(owner_unit, mode, end_position, hit_normal)
+-- What the skin is told (mod.minigun_shot_callbacks in hooks.lua), and what is sent to the other players, who see the same tracers and
+-- hits from the weapon of the player's character.
+function mod.minigun_shot(owner_unit, mode, end_position, hit_normal, hit_level)
 	for _, callback in pairs(mod.minigun_shot_callbacks) do
-		callback(owner_unit, mode, end_position, hit_normal)
+		callback(owner_unit, mode, end_position, hit_normal, hit_level)
 	end
 
 	mod:network_send("ut_minigun_shot", "others", Managers.state.unit_storage:go_id(owner_unit), mode == "alt" and 1 or 0,
-		Vector3.x(end_position), Vector3.y(end_position), Vector3.z(end_position), Vector3.x(hit_normal), Vector3.y(hit_normal), Vector3.z(hit_normal))
+		Vector3.x(end_position), Vector3.y(end_position), Vector3.z(end_position), Vector3.x(hit_normal), Vector3.y(hit_normal), Vector3.z(hit_normal),
+		hit_level and 1 or 0)
 end
 
-mod:network_register("ut_minigun_shot", function (_, owner_go_id, alt, x, y, z, normal_x, normal_y, normal_z)
+mod:network_register("ut_minigun_shot", function (_, owner_go_id, alt, x, y, z, normal_x, normal_y, normal_z, hit_level)
 	local unit = Managers.state.unit_storage:unit(owner_go_id)
 
 	if not unit or not Unit.alive(unit) then
@@ -363,7 +365,7 @@ mod:network_register("ut_minigun_shot", function (_, owner_go_id, alt, x, y, z, 
 	end
 
 	for _, callback in pairs(mod.minigun_shot_callbacks) do
-		callback(unit, alt == 1 and "alt" or "primary", Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z))
+		callback(unit, alt == 1 and "alt" or "primary", Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), hit_level == 1)
 	end
 end)
 
