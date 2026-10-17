@@ -53,6 +53,9 @@ local CONFIG = {
 	charge_width = {0.4, 0.8}, -- UT units
 	charge_length = 0.05, -- seconds of travel
 	charge_colors = { { 45 / 255, 220 / 255, 45 / 255 }, { 65 / 255, 250 / 255, 65 / 255 } },
+	-- The emitter spins about the world's vertical, to the right as seen from above (PHYS_Rotating, RotationRate.Yaw 16000), and its
+	-- sparks are placed relative to it (mPosRelative), so each one swings round the middle by this much for each second of its age
+	charge_spin = 16000 / 65536 * 360, -- degrees a second
 	-- ShieldSparks, the sparks when the shield stops something (ShieldEffect3rd.Flash): 16 lines at once, each starting up to 0.1 s
 	-- late, lasting 0.4 to 0.6 s and flying at 150 to 300 units a second along the shield's facing, spread by up to 0.9 on each axis
 	-- (mDirDev). They start up to 6 units from their place on each axis (mPosDev), and the place is a random spot hit_sparks_scatter
@@ -193,6 +196,17 @@ local function force_rings(api)
 	end
 end
 
+-- Turns a point of the view (forward, right, up, as UT's X, Y and Z) about the world's vertical by the given degrees, to the right as
+-- seen from above, as UT's yaw turns. rotation is the view's. (Rodrigues' formula, in the view's axes, where the world's up is a.)
+local function spin_in_view(rotation, forward, right, up, degrees)
+	local af, ar, au = Vector3.z(Quaternion.forward(rotation)), Vector3.z(Quaternion.right(rotation)), Vector3.z(Quaternion.up(rotation))
+	local angle = math.rad(degrees)
+	local c, s = math.cos(angle), math.sin(angle)
+	local along = (af * forward + ar * right + au * up) * (1 - c)
+
+	return forward * c + (ar * up - au * right) * s + af * along, right * c + (au * forward - af * up) * s + ar * along, up * c + (af * right - ar * forward) * s + au * along
+end
+
 -- The sparks of the charge (ShieldCharge), made each frame while the gun charges
 local function charge_sparks(api, skin, dt)
 	local charged = math.min(Managers.time:time("game") - shield.charge_started, shield.fully_charged_time)
@@ -225,13 +239,20 @@ local function charge_sparks(api, skin, dt)
 			material = "units/ut/fx/fx_weapon_shield_charge_spark",
 			size = random_between(CONFIG.charge_width) * (skin.view_across_scale or 0.01) * CONFIG.behind_gun,
 			texture = "shield_charge_spark",
-			-- (it flies towards the middle: ST_Explode with a speed below 0)
+			-- (it flies towards the middle: ST_Explode with a speed below 0, and swings round it as the emitter spins)
 			locked = function ()
 				local age = Managers.time:time("game") - born
 				local at = math.max(0, distance - speed * age) / distance
 				local tail = math.max(0, distance - speed * (age - CONFIG.charge_length)) / distance
-				local parent, head = view_point(api, skin, center_forward + x * at, center_right + y * at, center_up + z * at)
-				local _, back = view_point(api, skin, center_forward + x * tail, center_right + y * tail, center_up + z * tail)
+				local first_person_unit = api.view_point_in_view(0, 0, 0)
+
+				if not first_person_unit then
+					return nil
+				end
+
+				local sx, sy, sz = spin_in_view(Unit.world_rotation(first_person_unit, 0), x, y, z, CONFIG.charge_spin * age)
+				local parent, head = view_point(api, skin, center_forward + sx * at, center_right + sy * at, center_up + sz * at)
+				local _, back = view_point(api, skin, center_forward + sx * tail, center_right + sy * tail, center_up + sz * tail)
 
 				if not parent or not back then
 					return nil
@@ -856,7 +877,8 @@ local function third_person_sparks(api, unit, state, dt)
 			material = "units/ut/fx/fx_shield_charge_spark",
 			size = random_between(CONFIG.charge_width) * meters,
 			texture = "shield_charge_spark",
-			-- (it flies towards the end of the gun)
+			-- (it flies towards the end of the gun, and swings round it as the first person's do: to the right as seen from above, which
+			-- is a turn below 0 about the world's up)
 			track = function ()
 				local center = api.third_person.muzzle_position(unit)
 
@@ -867,7 +889,7 @@ local function third_person_sparks(api, unit, state, dt)
 				local age = now() - born
 				local at = math.max(0, distance - speed * age) / distance
 				local tail = math.max(0, distance - speed * (age - CONFIG.charge_length)) / distance
-				local reach = boxed:unbox()
+				local reach = Quaternion.rotate(Quaternion(Vector3.up(), -math.rad(CONFIG.charge_spin * age)), boxed:unbox())
 
 				return center + reach * tail, center + reach * at
 			end,
