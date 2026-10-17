@@ -404,6 +404,13 @@ local function apply_flak_cannon(template)
 	-- This tells the bot shooting that this is the Flak Cannon (see bots.lua).
 	template.attack_meta_data.ut_flak = true
 
+	-- A bot shoots only the enemies its ranged weapon is good against (BTConditions.has_target_and_ammo_greater_than). The Blunderbuss's
+	-- are infantry, berserkers, specials and armour. The Flak Cannon's are bosses too, which bots.lua fires the shell at.
+	local attack_meta_data = template.attack_meta_data
+
+	attack_meta_data.effective_against = bit.bor(attack_meta_data.effective_against or 0, BreedCategory.Boss)
+	attack_meta_data.effective_against_combined = bit.bor(attack_meta_data.effective_against, attack_meta_data.effective_against_charged or 0)
+
 	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
 	template.ammo_data.max_ammo = CONFIG.max_ammo
 	template.ammo_data.ammo_per_clip = template.ammo_data.max_ammo
