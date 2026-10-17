@@ -29,6 +29,8 @@ local VARIANTS = {
 		id = "minigun_wh",
 		key = "ut_minigun_wh",
 		template = "ut_minigun_wh_template",
+		-- The characters fire from the aim of the base weapon's alt fire (see apply_gun)
+		volley = true,
 	},
 }
 
@@ -50,8 +52,12 @@ end
 
 local TEMPLATE_NAMES = {}
 
+-- The templates whose characters fire from the aim of the base weapon's alt fire
+local VOLLEY_TEMPLATES = {}
+
 for _, variant in ipairs(VARIANTS) do
 	TEMPLATE_NAMES[mod.items.weapons[variant.id].template] = true
+	VOLLEY_TEMPLATES[variant.template] = variant.volley
 end
 
 local CONFIG = {
@@ -156,8 +162,9 @@ local DROPPED_FLOW_EVENTS = {
 
 -- Builds a round of the gun's. The first round has the wind up before it, and the rounds after it follow at the fire rate. The hand
 -- is the base weapon's, as the game crashes on an action for a hand with no weapon.
--- spray is the base weapon's own rapid fire, if it has one: its animation is made to be played a round after another.
-local function build_shot(source, mode, first, hand, spray)
+-- spray is the base weapon's own rapid fire, if it has one: its animation is made to be played a round after another. volley is the
+-- aim of the base weapon's alt fire that the rapid fire is shot from, if the characters take it: { start, finish } animations.
+local function build_shot(source, mode, first, hand, spray, volley)
 	local action = table.clone(source)
 	local alt = mode == "alt"
 
@@ -166,6 +173,17 @@ local function build_shot(source, mode, first, hand, spray)
 	if spray then
 		action.anim_event = spray.anim_event
 		action.anim_event_last_ammo = spray.anim_event_last_ammo
+	end
+
+	-- The characters take the aim with the first round, shoot the rest from it, and leave it when the rounds stop (not when the next
+	-- round follows), as the base weapon's alt fire does
+	if volley then
+		action.anim_event_3p = first and volley.start or nil
+		action.anim_event_last_ammo_3p = first and volley.start or nil
+		action.anim_end_event_3p = volley.finish
+		action.anim_end_event_condition_func = function (unit, end_reason)
+			return end_reason ~= "new_interupting_action"
+		end
 	end
 
 	local interval = alt and CONFIG.alt_rate or CONFIG.primary_rate
@@ -229,16 +247,22 @@ local function apply_gun(template)
 	local source = rawget(Weapons, "repeating_handgun_template_1").actions.action_one.default
 	local hand = actions.action_one.default.weapon_action_hand
 	-- The characters play the base weapon's rapid fire (its bullet spray, the volley of the alt fire) for every round, instead of its
-	-- single shot: attack_shoot_fast for the repeating handgun, and attack_shoot for the repeater pistol.
+	-- single shot: attack_shoot_fast for the repeating handgun, and attack_shoot for the repeater pistol. The repeater pistol's volley is
+	-- a shot from the aim of its alt fire (lock_target), which Saltzpyre takes as he fires.
 	local spray = actions.action_one.bullet_spray
+	local aim = actions.action_two.default
+	local volley = VOLLEY_TEMPLATES[template.name] and {
+		start = aim.anim_event,
+		finish = aim.anim_end_event,
+	}
 
 	actions.action_one = {
-		default = build_shot(source, "primary", true, hand, spray),
-		loop = build_shot(source, "primary", false, hand, spray),
+		default = build_shot(source, "primary", true, hand, spray, volley),
+		loop = build_shot(source, "primary", false, hand, spray, volley),
 	}
 	actions.action_two = {
-		default = build_shot(source, "alt", true, hand, spray),
-		loop = build_shot(source, "alt", false, hand, spray),
+		default = build_shot(source, "alt", true, hand, spray, volley),
+		loop = build_shot(source, "alt", false, hand, spray, volley),
 	}
 
 	utils.set_actions_lookup_data(actions, template.name)
