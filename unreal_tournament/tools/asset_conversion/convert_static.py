@@ -8,8 +8,10 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.dirname(__file__))
 from convert_weapon import read_tga, write_png, TEXTURE_TEMPLATE, material_text
 
-# pskx: the mesh; materials: the texture (tga) and kind of each material of it; roughness: of the materials (the standard's 0.33 if not
-# given: shiny); scale: meters a UT unit of the mesh is as it is drawn
+# pskx: the mesh; materials: the texture (tga) and kind of each material of it; roughness: of the materials, one for all or
+# { index = roughness } (0.9 if not given: matte, as UT's weapon bodies are plain textures with no specular; only what shines in UT
+# has less, such as the Bio Rifle's glass); scale: meters a UT unit of the mesh is as it is drawn; culling: of the unit's meshes
+# ("disabled" if not given, so that the engine doesn't cull them by their distance: small ones vanished at a distance)
 # (the DrawScale of its actor is in it: a pickup of the weapon in the hand is 0.011, 0.02 meters a unit and 0.55)
 STATICS = {
     'flak_pickup': {
@@ -40,6 +42,8 @@ STATICS = {
     'bio_pickup': {
         'pskx': 'WeaponStaticMesh/StaticMesh/BioRiflePickup.pskx',
         'materials': [('WeaponSkins/Texture/BioRifleTex0.tga', 'opaque'), ('WeaponSkins/Texture/BioRifleGlass0.tga', 'alpha', 0.5)],
+        # (the glass of the tank shines, as the first person's does: WeaponSkins.BioRifleGlassRef has a specular map and a reflection)
+        'roughness': {0: 0.9, 1: 0.12},
         'scale': 0.012,
         'unit': 'units/ut/bio/pickup',
     },
@@ -205,6 +209,11 @@ def reflect_labels(psk, rows, labels, material, folder):
     open(path, 'wb').write(data)
     return path, [bytes(row) for row in copy]
 
+def roughness_of(cfg, index):
+    roughness = cfg.get('roughness', 0.9)
+
+    return roughness.get(index, 0.9) if isinstance(roughness, dict) else roughness
+
 def main():
     name, export = sys.argv[1], sys.argv[2]
     cfg = STATICS[name]
@@ -232,7 +241,7 @@ def main():
     unit_text += '}\nrenderables = {\n'
     for i in range(len(materials)):
         unit_text += ('\t%s_%d = {\n\t\talways_keep = false\n\t\tculling = "%s"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
-                      '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n') % (geometry, i, cfg.get('culling', 'bounding_volume'))
+                      '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n') % (geometry, i, cfg.get('culling', 'disabled'))
     unit_text += '}\n'
     open('%s/%s.unit' % (REPO, cfg['unit']), 'w', newline='\n').write(unit_text)
     for i, (tga, kind, opacity, texture_name, rows) in enumerate(materials):
@@ -243,6 +252,6 @@ def main():
             w, h, rows = read_tga(export + '/' + tga)
         write_png('%s/%s.png' % (REPO, texture), w, h, rows)
         open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
-        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(material_text(kind, texture, opacity, roughness=cfg.get('roughness'), world=name.endswith(('_pickup', '_3rd'))))
+        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(material_text(kind, texture, opacity, roughness=roughness_of(cfg, i), world=name.endswith(('_pickup', '_3rd'))))
 
 main()

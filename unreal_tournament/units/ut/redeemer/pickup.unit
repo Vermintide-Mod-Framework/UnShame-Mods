@@ -5,7 +5,7 @@ materials = {
 renderables = {
 	g_pickup_0 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
@@ -14,7 +14,7 @@ renderables = {
 	}
 	g_pickup_1 = {
 		always_keep = false
-		culling = "bounding_volume"
+		culling = "disabled"
 		generate_uv_unwrap = false
 		occluder = false
 		shadow_caster = false
