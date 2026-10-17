@@ -68,7 +68,10 @@ public static class GameKeys {
         Send((ushort)c, 0, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP);
     }
 
+    // Windows only lets a program bring a window to the front if it sent the last input, so an Alt press and release is sent first
     public static void Focus(IntPtr window) {
+        Send(0, 0x12, 0);
+        Send(0, 0x12, KEYEVENTF_KEYUP);
         ShowWindow(window, 9);
         uint ignored;
         uint foreground = GetWindowThreadProcessId(GetForegroundWindow(), out ignored);
@@ -94,12 +97,17 @@ function Get-Game {
 
 function Focus-Game {
     $game = Get-Game
-    [GameKeys]::Focus($game.MainWindowHandle)
-    Start-Sleep -Milliseconds 500
 
-    if ([GameKeys]::GetForegroundWindow() -ne $game.MainWindowHandle) {
-        throw "Could not bring the game window to the front."
+    for ($try = 0; $try -lt 5; $try++) {
+        [GameKeys]::Focus($game.MainWindowHandle)
+        Start-Sleep -Milliseconds 500
+
+        if ([GameKeys]::GetForegroundWindow() -eq $game.MainWindowHandle) {
+            return
+        }
     }
+
+    throw "Could not bring the game window to the front."
 }
 
 function Press-Keys([int[]]$scans) {

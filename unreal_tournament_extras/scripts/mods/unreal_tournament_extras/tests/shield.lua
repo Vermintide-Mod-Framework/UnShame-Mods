@@ -254,15 +254,23 @@ local function shield_to_shield(t, button, count)
 	return reflected_by, player, bardin
 end
 
--- Whether the shields that reflected a shot went from the player's to Bardin's and back, for the first count reflections
+-- Whether the shields that reflected a shot went from the player's to Bardin's and back, for the first count reflections, and whose
+-- they were, in order, as text
 local function back_and_forth(reflected_by, player, bardin, count)
+	local names = {}
+	local alternates = true
+
+	for i, unit in ipairs(reflected_by) do
+		names[i] = unit == player and "the player" or unit == bardin and "Bardin" or "someone else"
+	end
+
 	for i = 1, count do
 		if reflected_by[i] ~= (i % 2 == 1 and player or bardin) then
-			return false
+			alternates = false
 		end
 	end
 
-	return true
+	return alternates, table.concat(names, ", ")
 end
 
 local function scenarios()
@@ -794,7 +802,9 @@ local function scenarios()
 
 				if reflected_by then
 					t.expect(#reflected_by == count, "the beam was reflected %d times, not %d", #reflected_by, count)
-					t.expect(back_and_forth(reflected_by, player, bardin, count), "the beam did not go from the player's shield to Bardin's and back")
+					local alternates, order = back_and_forth(reflected_by, player, bardin, count)
+
+					t.expect(alternates, "the beam did not go from the player's shield to Bardin's and back: %s", order)
 				end
 			end,
 		},
@@ -806,7 +816,9 @@ local function scenarios()
 
 				if reflected_by then
 					t.expect(#reflected_by >= 3, "the ball was reflected %d times, not 3 or more", #reflected_by)
-					t.expect(back_and_forth(reflected_by, player, bardin, 3), "the ball did not go from the player's shield to Bardin's and back")
+					local alternates, order = back_and_forth(reflected_by, player, bardin, 3)
+
+					t.expect(alternates, "the ball did not go from the player's shield to Bardin's and back: %s", order)
 				end
 			end,
 		},

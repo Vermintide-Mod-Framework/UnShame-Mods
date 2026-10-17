@@ -1561,27 +1561,36 @@ local function run_suite(suite, only_career)
 	end
 
 	for _, career in ipairs(careers) do
-		log("%s as %s", suite.name, career)
+		-- The suite's first career runs every scenario, each other hero's first career those of their own copy, and the other careers
+		-- only the basic ones
+		local scenarios = suite.scenarios
 
-		if not setup_character(t, suite, career) then
-			summary.failed = summary.failed + 1
-		else
-			-- The suite's first career runs every scenario, each other hero's first career those of their own copy, and the other careers
-			-- only the basic ones
-			local scenarios = suite.scenarios
+		if career ~= suite.careers[1] then
+			local first_of_hero = hero_of(suite, career).careers[1] == career
 
-			if career ~= suite.careers[1] then
-				local first_of_hero = hero_of(suite, career).careers[1] == career
+			scenarios = {}
 
-				scenarios = {}
-
-				for _, scenario_definition in ipairs(suite.scenarios) do
-					if scenario_definition.basic or (first_of_hero and scenario_definition.every_hero) then
-						scenarios[#scenarios + 1] = scenario_definition
-					end
+			for _, scenario_definition in ipairs(suite.scenarios) do
+				if scenario_definition.basic or (first_of_hero and scenario_definition.every_hero) then
+					scenarios[#scenarios + 1] = scenario_definition
 				end
 			end
+		end
 
+		-- (a career with none of the scenarios to run, as when only some of a suite's are asked for, is not set up at all)
+		local ready = #scenarios > 0
+
+		if ready then
+			log("%s as %s", suite.name, career)
+
+			ready = setup_character(t, suite, career)
+
+			if not ready then
+				summary.failed = summary.failed + 1
+			end
+		end
+
+		if ready then
 			for _, scenario_definition in ipairs(scenarios) do
 				local scenario = {
 					failures = {},
