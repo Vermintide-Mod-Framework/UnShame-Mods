@@ -304,8 +304,14 @@ end
 -- Muzzle flashes. `follow` is a function that returns where the muzzle is. `scale` is how many meters a UT unit is there, because the
 -- gun's model is drawn at a scale of its own.
 
--- UT lights the weapon for 0.15 s with each shot, of the beam and of the ball (xWeaponAttachment.WeaponLight)
+-- UT lights the weapon for 0.15 s with each shot, of the beam and of the ball (xWeaponAttachment.WeaponLight). It is the third person
+-- attachment's light: UT's first person gun is not lit by it, and here a light at the first person muzzle lit the gun purple. So there is
+-- none in the player's own first person view (locked).
 local function fire_light(follow, locked)
+	if locked then
+		return
+	end
+
 	particles.light({
 		brightness = steady,
 		color = CONFIG.light_color,
@@ -313,7 +319,6 @@ local function fire_light(follow, locked)
 		follow = follow,
 		intensity = CONFIG.fire_light_intensity,
 		life = CONFIG.fire_light_life,
-		locked = locked,
 	})
 end
 
