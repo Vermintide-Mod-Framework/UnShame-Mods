@@ -405,7 +405,7 @@ local function new_skin(variant)
 			scale = 1,
 			-- (moved back from the mesh's origin, set in the game)
 			grip_right = 0,
-			grip_forward = 20,
+			grip_forward = 80,
 			grip_up = 0,
 			yaw = 0,
 			pitch = 0,
