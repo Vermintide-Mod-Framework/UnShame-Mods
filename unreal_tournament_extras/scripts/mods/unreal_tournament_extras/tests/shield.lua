@@ -167,8 +167,9 @@ local function scenarios()
 				-- The punch in the dodge is the gun's own, as the enemy comes into reach while the charge is held, so it lands in the dodge
 				-- whatever the reach is. It comes before min_hold_time, as the standing one does, so both are the least charged punch.
 				local function punch(moving)
-					-- (far enough that the dodge doesn't reach the enemy and slide off it before the punch)
-					local target = t.spawn_target(moving and 6 or 1.5)
+					-- (far enough that the dodge doesn't reach the enemy and slide off it before the punch, at 4 m, and near enough that the
+					-- dodge is still fast at the punch, which it wasn't at 6 m)
+					local target = t.spawn_target(moving and 5 or 1.5)
 
 					if not target then
 						return nil
