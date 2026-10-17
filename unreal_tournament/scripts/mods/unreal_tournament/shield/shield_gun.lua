@@ -67,7 +67,6 @@ local VARIANTS = {
 		push_3p = "attack_shoot",
 		aim_3p = "to_zoom",
 		aim_end_3p = "to_unzoom",
-		charge_aims = true,
 	},
 	{
 		base_item = "we_spear",
@@ -77,7 +76,7 @@ local VARIANTS = {
 		template = "ut_shield_gun_we_template",
 		-- The Life Staff's pose (the Sister of the Thorn's: every career of hers has the same third person body, and so its animations).
 		-- The punches are its shot. It has no shove, so the push is its shot too. The shield is its held second attack (the charge of its
-		-- spirit storm).
+		-- spirit storm), and so is a charge once it is held a while.
 		pose_3p = "to_life_staff",
 		punch_3p = "attack_shoot",
 		push_3p = "attack_shoot",
@@ -1163,7 +1162,7 @@ local function punch(action, t, power_level, bash)
 	end
 end
 
--- A charge of a copy whose charge aims (VARIANTS' charge_aims) goes into the aim once it has been held for min_hold_time, so
+-- A charge of a copy whose third person pose has an aim (VARIANTS' aim_3p) goes into the aim once it has been held for min_hold_time, so
 -- that a quick punch is only the shot. The machine that owns the character's actions plays the event, which the game sends to the
 -- others. As [character unit] = { at = game time, event }.
 local aim_after_hold = {}
@@ -1192,7 +1191,7 @@ mod.dummy_start_callbacks.shield_gun = function (action, new_action, t, power_le
 	if new_action.ut_shield_charge then
 		local variant = POSES_3P[utils.wielded_template_name(action.owner_unit)]
 
-		if variant and variant.charge_aims then
+		if variant and variant.aim_3p then
 			aim_after_hold[action.owner_unit] = {
 				at = t + CONFIG.min_hold_time,
 				event = variant.aim_3p,
@@ -1877,7 +1876,7 @@ local function apply_template(template_name)
 			end
 		end
 
-		-- The shield goes into the aim, and so does a charge held for min_hold_time where it aims (charge_aims, see aim_after_hold). The punch comes out of it. The
+		-- The shield goes into the aim, and so does a charge held for min_hold_time (see aim_after_hold). The punch comes out of it. The
 		-- aim ends when one of them ends with nothing after it: a punch that the next charge follows stays in the aim. (The game plays the
 		-- base's end event on the body too, before this.)
 		if variant.aim_3p then
