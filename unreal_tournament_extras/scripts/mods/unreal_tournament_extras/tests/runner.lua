@@ -43,6 +43,8 @@ local ut = get_mod("unreal_tournament")
 --   t.spawn_group(breed_name, count, distance)   spawns that many in rows ahead
 --   t.spawn_target(distance)             spawns the enemy to shoot at (CONFIG.target_breed, which never attacks) that far ahead, waits
 --                                        for it to settle, and turns the player to face it
+--   t.shot_damage(at_head)               spawns a target 5 m ahead, aims at its head or its middle, fires once, and returns the damage
+--                                        it took
 --   t.remove(unit)                       takes an enemy away before the scenario ends
 --   t.health_of(unit)                    a unit's health, 0 when it is dead
 --   t.track_damage(unit)                 adds up all the damage the unit takes from now on, past what kills it, and keeps each hit
@@ -1070,6 +1072,32 @@ local function make_context(suite)
 		t.aim_at(target)
 
 		return target
+	end
+
+	function t.shot_damage(at_head)
+		local target = t.spawn_target(5)
+
+		if not t.expect(target, "the target could not be spawned") then
+			return nil
+		end
+
+		if at_head then
+			local head = t.on_main_thread(function ()
+				local position = Unit.world_position(target, Unit.node(target, "j_head"))
+
+				return { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
+			end)
+
+			t.aim_at_point(head[1], head[2], head[3])
+		end
+
+		local damage = t.track_damage(target)
+
+		t.press("action_one", 0.1)
+		t.wait(0.5)
+		t.remove(target)
+
+		return damage.total
 	end
 
 	function t.projectiles(filter)

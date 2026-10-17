@@ -30,33 +30,6 @@ local function stop_recording()
 	mod.test_recording = nil
 end
 
--- Spawns a target, aims at its head or its middle, fires once, and returns the damage it took
-local function shot_damage(t, at_head)
-	local target = t.spawn_target(5)
-
-	if not t.expect(target, "the target could not be spawned") then
-		return nil
-	end
-
-	if at_head then
-		local head = t.on_main_thread(function ()
-			local position = Unit.world_position(target, Unit.node(target, "j_head"))
-
-			return { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
-		end)
-
-		t.aim_at_point(head[1], head[2], head[3])
-	end
-
-	local damage = t.track_damage(target)
-
-	t.press("action_one", 0.1)
-	t.wait(0.5)
-	t.remove(target)
-
-	return damage.total
-end
-
 local function scenarios()
 	return {
 		{
@@ -183,9 +156,9 @@ local function scenarios()
 				local body, head = math.huge, math.huge
 
 				for _ = 1, 3 do
-					body = math.min(body, shot_damage(t, false) or math.huge)
+					body = math.min(body, t.shot_damage(false) or math.huge)
 					t.wait(1)
-					head = math.min(head, shot_damage(t, true) or math.huge)
+					head = math.min(head, t.shot_damage(true) or math.huge)
 					t.wait(1)
 				end
 
