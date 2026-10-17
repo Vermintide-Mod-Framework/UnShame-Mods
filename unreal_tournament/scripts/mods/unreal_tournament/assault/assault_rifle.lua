@@ -10,7 +10,7 @@ local mod = get_mod("unreal_tournament")
 -- it was fired at, a set number of times, and its fuse starts when it is fired. UT's grenade loses speed at each bounce, comes to rest,
 -- and goes off 2 seconds after it first touches something. So the shooter's machine sends the throw, each machine flies the grenade
 -- itself, and the shooter's machine makes the explosion.
--- The skin (skin.lua) draws all of it, and this file only sets what it does to the game.
+-- skin.lua draws the rifles, the flashes and the grenades. This file is the gameplay.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local register_damage_profile = utils.register_damage_profile
@@ -164,7 +164,7 @@ local function ut_spread(rotation, spread)
 	return Quaternion.look(Vector3.normalize(direction + Vector3.normalize(random) * (spread * math.random())), Vector3.up())
 end
 
--- The spread of each shooter, and when they last fired
+-- Each shooter's current spread and the time of their last round. The spread grows with each round and resets after a pause.
 local spreads = {}
 
 mod.handgun_start_callbacks.assault = function (self, new_action)
@@ -205,7 +205,7 @@ mod.handgun_start_callbacks.assault = function (self, new_action)
 	end
 end
 
--- The rounds of the player: what the skin draws (a flash at the muzzle of the rifle that fired)
+-- Once a round is fired, finds where it hit and tells the skin, which draws the flash and the tracer
 mod.handgun_update_callbacks.assault = function (self)
 	if self._ut_assault_checked or self.state == "waiting_to_shoot" or not (self.current_action and self.current_action.ut_assault) then
 		return
@@ -227,7 +227,7 @@ mod.handgun_update_callbacks.assault = function (self)
 	mod.assault_round(owner_unit, end_position, hit_normal)
 end
 
--- What the skin is told about a round, on every machine
+-- Functions called with (owner_unit, end_position, hit_normal) for every round, on every machine. The skin adds one to draw the round.
 mod.assault_round_callbacks = {}
 
 function mod.assault_round(owner_unit, end_position, hit_normal)
@@ -249,8 +249,6 @@ mod:network_register("ut_assault_round", function (_, owner_go_id, x, y, z, norm
 end)
 
 -- Grenades
-
-local next_grenade_id = 0
 
 -- Adds a grenade in flight, on every machine. The shooter's machine makes its explosion; the others drop it when the explosion comes.
 local function add_grenade(id, owner_unit, position, velocity, local_owner)
@@ -334,7 +332,7 @@ local function fly(grenade, dt, physics_world)
 	local velocity = grenade.velocity:unbox() - Vector3(0, 0, CONFIG.grenade_gravity * UNIT * dt)
 	local target = position + velocity * dt
 
-	-- An enemy in the way sets it off at once (only the shooter's machine, which makes the explosion)
+	-- An enemy in the way sets it off at once. Only the shooter's machine checks, because it makes the explosion.
 	if grenade.local_owner then
 		local enemy_hit, enemy_position = raycast(physics_world, position, target, "filter_player_ray_projectile_ai_only")
 
@@ -413,7 +411,7 @@ local function throw(action, hold_time)
 	local side = fire_left[owner_unit] and -1 or 1
 	local start = eye + forward * (offset[1] * UNIT) + right * (side * offset[2] * UNIT) + up * (offset[3] * UNIT)
 
-	-- (a wall between the eye and the start moves the start to the wall)
+	-- If a wall is between the eye and the start, the grenade starts at the wall
 	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
 	local hit, hit_position = raycast(physics_world, eye, start, "filter_player_ray_projectile_static_only")
 
@@ -426,10 +424,7 @@ local function throw(action, hold_time)
 	local speed = math.clamp(CONFIG.grenade_speed_min + hold_time * CONFIG.grenade_speed_gain, CONFIG.grenade_speed_min, CONFIG.grenade_speed_max) + own_speed
 	local velocity = forward * (speed * UNIT)
 
-	next_grenade_id = next_grenade_id + 1
-
-	local id = Network.peer_id() .. ":" .. next_grenade_id
-	local grenade = add_grenade(id, owner_unit, start, velocity, true)
+	local grenade = add_grenade(Application.guid(), owner_unit, start, velocity, true)
 
 	grenade.left = fire_left[owner_unit]
 	grenade.power_level = action.power_level
@@ -545,8 +540,8 @@ local function build_round(source)
 	return action
 end
 
--- The grenade's charge: held with the button, and the grenade goes when it is let go (see above). The next shot of either kind can come
--- after the grenade's fire rate.
+-- The grenade's charge. It lasts while the button is held, and the grenade is thrown when it is let go. The next shot of either kind
+-- can come once the grenade's fire rate has passed.
 local function build_charge(source)
 	local action = table.clone(source)
 
@@ -565,7 +560,7 @@ local function build_charge(source)
 	action.allowed_chain_actions = {
 		chain("action_wield", "default", "action_wield"),
 	}
-	-- (there must be a grenade, and the last one must be the grenade's fire rate ago)
+	-- The charge can start only with a grenade left, and once the grenade's fire rate has passed since the last one
 	action.condition_func = function (unit)
 		if not utils.is_local_player_unit(unit) then
 			return true
@@ -638,7 +633,7 @@ local function apply_template()
 	template.tooltip_detail = template.tooltip_compare
 end
 
--- The template is the mod's own copy (items.register), so it is changed once
+-- items.register made this template as the mod's own copy, so it is changed here once, when the file loads
 apply_template()
 
 assault.template_name = TEMPLATE_NAME

@@ -738,7 +738,6 @@ end
 -- rand3, expire, drips, inside }. The context is who fired it: { owner_unit, item_name, is_critical_strike, base_power }, where the
 -- base power is the power of a level 10 glob.
 local stuck = {}
-local next_glob_id = 0
 
 local function visuals()
 	return mod.goop_visual_callbacks
@@ -972,12 +971,11 @@ local function land(context, position, normal, landing_velocity, level, t, on_un
 		stuck[1].drips = false
 	end
 
-	next_glob_id = next_glob_id + 1
-
 	local glob = {
 		ceiling = is_ceiling(normal),
 		context = context,
-		id = next_glob_id,
+		-- Sent to the other machines, so it must not clash with another player's glob
+		id = Application.guid(),
 		inside = {},
 		level = level,
 		normal = Vector3Box(normal),
