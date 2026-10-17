@@ -552,15 +552,16 @@ local GRIPS = {
 		roll = 0,
 		follow_game_unit = 3,
 	},
-	-- The scythe's own pose (the base weapon's), held in both hands: the mesh is turned as the game's scythe is, and tipped a quarter so
-	-- that it lies along the shaft, which runs along the scythe's own z (its origin is in the right hand)
+	-- The scythe's own pose (the base weapon's), held in both hands: the mesh is turned as the game's scythe is, tipped a quarter so that
+	-- it lies along the shaft, which runs along the scythe's own z (its origin is in the right hand), pointing down the shaft, and rolled a
+	-- quarter to stand upright
 	shield_gun_bw = {
 		grip_right = 0,
 		grip_forward = 0,
 		grip_up = 0,
 		yaw = 0,
-		pitch = 90,
-		roll = 0,
+		pitch = -90,
+		roll = 90,
 		follow_game_unit = 2,
 	},
 	-- The Life Staff's pose: the game links the staff to the left hand's node (AttachmentNodeLinking.one_handed_melee_weapon.left), so the
