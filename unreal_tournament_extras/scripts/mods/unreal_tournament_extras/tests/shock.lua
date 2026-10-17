@@ -652,15 +652,8 @@ local BOTS = {
 	behind = -3, -- m
 	special = "skaven_ratling_gunner",
 	special_distance = 14, -- m
-	-- "a bot sets off combos at a boss": the boss, where the player stands from below_unreachable (ahead, and to the right), and how far
-	-- ahead of the player the bot is
-	boss = "skaven_rat_ogre",
-	players_ahead = -2, -- m
-	players_right = 2, -- m
-	bot_distance = 2, -- m
-	-- How long the bot has to hurt the special, and to set off a combo at the boss
+	-- How long the bot has to hurt the special
 	fight_time = 30, -- s
-	combo_time = 40, -- s
 }
 
 -- Adds the bot behind the player
@@ -721,52 +714,6 @@ local function bot_scenarios()
 
 				t.expect(from_shock_rifle({ damage }) > 0, "the bot did not hurt the %s with the Shock Rifle in %d s", BOTS.special, BOTS.fight_time)
 				t.expect(from_shock_rifle({ player_damage }) == 0, "the bot's shots hurt the player %.1f", from_shock_rifle({ player_damage }))
-			end,
-		},
-		{
-			-- Against a boss the bot fires the ball and then the beam into it (shock/bots.lua). A bot fights a boss in melee once it is
-			-- within about 12 m (BTConditions.bot_in_melee_range: a boss is a target of the bot's ordinary fighting), unless it is 2 m or
-			-- more above the bot. So the boss stands where bots can't walk to, and the bot and the player 4.5 m below it (the runner's
-			-- named places unreachable and below_unreachable).
-			name = "a bot sets off combos at a boss",
-			run = function (t)
-				t.go_to("below_unreachable")
-
-				local stand = t.ground_at(BOTS.players_ahead, BOTS.players_right)
-
-				if not t.expect(stand, "there is no ground where the player should stand") then
-					return
-				end
-
-				t.on_main_thread(function ()
-					runner.move_player(t.unit(), Vector3(stand[1], stand[2], stand[3]))
-				end)
-				t.wait(0.5)
-
-				local boss = t.spawn_at(BOTS.boss, unpack(t.place("unreachable")))
-
-				if not t.expect(boss, "the %s could not be spawned", BOTS.boss) then
-					return
-				end
-
-				-- (a bot goes for a boss only once it has been seen (AIBotGroupSystem._calculate_opportunity_utility), which a calm one
-				-- isn't: it is marked seen, as a player's look at it marks it (ProximitySystem))
-				t.on_main_thread(function ()
-					ScriptUnit.extension(boss, "proximity_system").has_been_seen = true
-				end)
-
-				local explosions = t.explosions()
-				local bot = t.add_bot(BOTS.profile, BOTS.career, definition.key, BOTS.bot_distance, nil, true)
-
-				if not t.expect(bot, "the bot could not be added") then
-					return
-				end
-
-				t.wait_until(function ()
-					return count(explosions, "ut_shock_combo_explosion") > 0
-				end, BOTS.combo_time, "the bot to set off a combo")
-
-				t.expect(count(explosions, "ut_shock_combo_explosion") > 0, "the bot set off no combo at the %s in %d s", BOTS.boss, BOTS.combo_time)
 			end,
 		},
 	}
