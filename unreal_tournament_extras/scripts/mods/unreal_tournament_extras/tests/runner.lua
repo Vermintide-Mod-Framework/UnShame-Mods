@@ -1462,16 +1462,21 @@ local function run_suite(suite, only_career)
 					log("FAIL %s: error: %s", scenario.name, tostring(error_value))
 				end
 
-				-- What the scenario made is taken away
-				if #scenario.spawned > 0 then
-					t.on_main_thread(function ()
-						for _, spawned in ipairs(scenario.spawned) do
-							if Unit.alive(spawned) then
-								Managers.state.conflict:destroy_unit(spawned, BLACKBOARDS[spawned], "ut_test")
-							end
+				-- What the scenario made is taken away, and then every enemy left. The game spawns queued enemies one a frame, so the
+				-- queue is waited out first, or the rest would come out in the next scenario. Not every spawn is recorded (t.fight_horde).
+				t.wait_until(function ()
+					return Managers.state.conflict.spawn_queue_size == 0
+				end, 5, "the queued enemies to spawn")
+
+				t.on_main_thread(function ()
+					for _, spawned in ipairs(scenario.spawned) do
+						if Unit.alive(spawned) then
+							Managers.state.conflict:destroy_unit(spawned, BLACKBOARDS[spawned], "ut_test")
 						end
-					end)
-				end
+					end
+
+					Managers.state.conflict:destroy_all_units()
+				end)
 
 				runner.restore_input()
 				runner.sound_watch = nil
