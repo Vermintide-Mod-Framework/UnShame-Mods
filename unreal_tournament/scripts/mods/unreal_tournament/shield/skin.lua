@@ -552,6 +552,17 @@ local GRIPS = {
 		roll = 0,
 		follow_game_unit = 3,
 	},
+	-- The scythe's own pose (the base weapon's), held across the body in both hands: the mesh is turned as the game's scythe is, with no
+	-- turn of its own, so it lies along the shaft
+	shield_gun_bw = {
+		grip_right = 0,
+		grip_forward = 0,
+		grip_up = 0,
+		yaw = 0,
+		pitch = 0,
+		roll = 0,
+		follow_game_unit = 2,
+	},
 	-- The Life Staff's pose: the game links the staff to the left hand's node (AttachmentNodeLinking.one_handed_melee_weapon.left), so the
 	-- mesh is linked there and turned as the node is, as for the Volley Crossbow, and turned well over a quarter to the hero's right to
 	-- point ahead
