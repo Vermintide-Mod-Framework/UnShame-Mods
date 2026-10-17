@@ -42,6 +42,149 @@ local STANDARD_DISTANCE = 1.5 -- m
 local STANDARD_HEALTH = 10
 local STANDARD_MAX_PUNCHES = 10
 
+-- The scenarios of an enemy's attack at the shield: how far ahead the enemy starts, and how long it is given to attack
+local ATTACK_DISTANCE = 8 -- m
+local ATTACK_TIME = 20 -- s
+-- After the shield stopped an attack, how long the player keeps the shield up and is watched, in case the enemy tries again
+local ATTACK_AFTER = 3 -- s
+
+-- The Shock Rifle's shots at the shield: the enemy that stands for the shooter, how far ahead it is, and how high above its feet the shot
+-- starts and the player is aimed at
+local SHOCK_SHOOTER = "skaven_clan_rat"
+local SHOCK_DISTANCE = 6 -- m
+local SHOCK_HEIGHT = 1.2 -- m
+-- How long a ball has to get to the shield
+local SHOCK_BALL_TIME = 2 -- s
+
+-- Turns the player to face the middle of a unit at once, from inside an observer of a frame (t.aim_at waits a little)
+local function face(t, unit)
+	local first_person_extension = Unit.alive(t.unit()) and ScriptUnit.has_extension(t.unit(), "first_person_system")
+
+	if first_person_extension and Unit.alive(unit) then
+		local direction = Vector3.normalize(Unit.world_position(unit, 0) + Vector3(0, 0, 1) - first_person_extension:current_position())
+
+		first_person_extension:set_rotation(Quaternion.look(direction, Vector3.up()))
+	end
+end
+
+local function stamina_spent(t)
+	local status_extension = ScriptUnit.has_extension(t.unit(), "status_system")
+
+	return status_extension and status_extension:current_fatigue() or 0
+end
+
+-- Spawns an enemy of the breed ahead and lets it attack the player, who faces it all the while, with the shield up or not. With the
+-- shield up, it waits until the shield stops the attack (it costs stamina) and a while after. Without it, it waits until the attack
+-- takes the player. Returns whether the attack took the player (taken(status_extension): pounced, grabbed) and whether the shield
+-- stopped one. The enemy is killed at the end, which lets the player go.
+local function let_attack(t, breed_name, shielded, taken)
+	local enemy = t.spawn(breed_name, ATTACK_DISTANCE)
+
+	if not t.expect(enemy, "the %s could not be spawned", breed_name) then
+		return nil
+	end
+
+	t.aim_at(enemy)
+
+	if shielded then
+		t.hold("action_two")
+		t.wait(0.5)
+	end
+
+	local was_taken, stopped = false, false
+	local stamina = t.on_main_thread(function ()
+		runner.provoke(enemy)
+
+		return stamina_spent(t)
+	end)
+
+	local function watch()
+		face(t, enemy)
+
+		local status_extension = ScriptUnit.has_extension(t.unit(), "status_system")
+
+		was_taken = was_taken or status_extension and taken(status_extension) or false
+		stopped = stopped or stamina_spent(t) > stamina
+	end
+
+	t.wait_until(function ()
+		watch()
+
+		return was_taken or stopped
+	end, ATTACK_TIME, shielded and "the attack to get to the shield" or "the attack to take the player")
+
+	if shielded then
+		t.watch(ATTACK_AFTER, watch)
+		t.release("action_two")
+	end
+
+	t.on_main_thread(function ()
+		if HEALTH_ALIVE[enemy] then
+			AiUtils.kill_unit(enemy, t.unit())
+		end
+	end)
+	t.wait(2)
+
+	return was_taken, stopped
+end
+
+-- Whether a ball of the Shock Rifle flying at the player from an enemy ahead is reflected by the shield (shield_gun.lua's hook of
+-- PlayerProjectileImpactUnitExtension.update). No other player can fire at the player, so the ball is fired as the player's own
+-- (the projectile system only makes players' shots), from the enemy, and its impact is made the enemy's, which is what the shield
+-- looks at. A reflected ball is a new ball of the player's that the shield doesn't touch again (_ut_reflected_by).
+local function reflected_ball(t, shooter)
+	local shock_rifle = ut.items.weapons.shock_rifle
+	local action = WeaponUtils.get_weapon_template(shock_rifle.template).actions.action_two.default
+	local player, before = nil, {}
+
+	t.on_main_thread(function ()
+		player = t.unit()
+
+		local projectile_system = Managers.state.entity:system("projectile_system")
+
+		for unit in pairs(projectile_system.player_projectile_units[player] or {}) do
+			before[unit] = true
+		end
+
+		local origin = POSITION_LOOKUP[shooter] + Vector3(0, 0, SHOCK_HEIGHT)
+		local direction = Vector3.normalize(POSITION_LOOKUP[player] + Vector3(0, 0, SHOCK_HEIGHT) - origin)
+		local flat = Vector3.normalize(Vector3.flat(direction))
+		local power_level = ScriptUnit.extension(player, "career_system"):get_career_power_level()
+
+		-- (out of the enemy's own body, which the ball would hit)
+		origin = origin + flat
+
+		ActionUtils.spawn_player_projectile(player, origin, Quaternion.look(direction, Vector3.up()), 100, math.asin(Vector3.z(direction)), flat, action.speed, shock_rifle.key, shock_rifle.template, "action_two", "default", false, power_level, nil, 0)
+
+		for unit in pairs(projectile_system.player_projectile_units[player] or {}) do
+			local impact_extension = not before[unit] and ScriptUnit.has_extension(unit, "projectile_impact_system")
+
+			if impact_extension then
+				impact_extension.owner_unit = shooter
+				before[unit] = true
+			end
+		end
+	end)
+
+	local reflected = false
+
+	t.wait_until(function ()
+		local projectile_system = Managers.state.entity:system("projectile_system")
+
+		for unit in pairs(projectile_system.player_projectile_units[player] or {}) do
+			local extension = not before[unit] and ScriptUnit.has_extension(unit, "projectile_system")
+
+			if extension and extension._ut_reflected_by == player then
+				reflected = true
+			end
+		end
+
+		return reflected
+	end, SHOCK_BALL_TIME, "the ball to be reflected")
+
+	return reflected
+end
+
 local function scenarios()
 	return {
 		{
@@ -504,6 +647,136 @@ local function scenarios()
 						Managers.state.unit_spawner:mark_for_deletion(standard)
 					end
 				end)
+			end,
+		},
+		{
+			-- A gutter runner's pounce that gets to the shield throws it back (shield_gun.lua's hook of BTCrazyJumpAction.run). It
+			-- is let pounce once with the shield up towards it, which must cost the shield's stamina and not pin the player, and once
+			-- without, which must pin them: that shows the pounce reaches them.
+			name = "the shield throws back a gutter runner's pounce",
+			run = function (t)
+				local function pounced(status_extension)
+					return status_extension:is_pounced_down()
+				end
+
+				local taken, stopped = let_attack(t, "skaven_gutter_runner", true, pounced)
+
+				t.expect(stopped, "the gutter runner's pounce never got to the shield")
+				t.expect(not taken, "the gutter runner pinned the player through the shield")
+
+				local unshielded = let_attack(t, "skaven_gutter_runner", false, pounced)
+
+				t.expect(unshielded, "the gutter runner did not pin the player without the shield")
+			end,
+		},
+		{
+			-- A lifeleech's grab fails at the shield (shield_gun.lua's hook of BTCorruptorGrabAction.grab_player), as when the player
+			-- dodges it. The same as the pounce: once with the shield up, once without.
+			name = "the shield stops a lifeleech's grab",
+			run = function (t)
+				local function grabbed(status_extension)
+					return status_extension:is_grabbed_by_corruptor()
+				end
+
+				local taken, stopped = let_attack(t, "chaos_corruptor_sorcerer", true, grabbed)
+
+				t.expect(stopped, "the lifeleech's grab never got to the shield")
+				t.expect(not taken, "the lifeleech grabbed the player through the shield")
+
+				local unshielded = let_attack(t, "chaos_corruptor_sorcerer", false, grabbed)
+
+				t.expect(unshielded, "the lifeleech did not grab the player without the shield")
+			end,
+		},
+		{
+			-- A Shock Rifle beam that gets to the shield goes on the way the player looks (mod.shield.reflect, from the Shock Rifle's
+			-- trace of its beam). No other player can fire one at the player, so the beam is traced from an enemy ahead, as the Shock
+			-- Rifle traces any player's beam. With the shield up it must end at the shield and go on the way the player looks, for
+			-- stamina. Without it, it must not be reflected.
+			name = "the shield reflects a Shock Rifle beam",
+			run = function (t)
+				local shooter = t.spawn(SHOCK_SHOOTER, SHOCK_DISTANCE)
+
+				if not t.expect(shooter, "the shooter could not be spawned") then
+					return
+				end
+
+				local function trace(shielded)
+					t.aim_at(shooter)
+
+					if shielded then
+						t.hold("action_two")
+						t.wait(0.5)
+					end
+
+					local result = t.on_main_thread(function ()
+						local player = t.unit()
+						local stamina = stamina_spent(t)
+						local origin = POSITION_LOOKUP[shooter] + Vector3(0, 0, SHOCK_HEIGHT)
+						local direction = Vector3.normalize(POSITION_LOOKUP[player] + Vector3(0, 0, SHOCK_HEIGHT) - origin)
+						local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+						local pieces = ut.shock_trace_beam(shooter, physics_world, origin, direction)
+						local look = Quaternion.forward(ScriptUnit.extension(player, "first_person_system"):current_rotation())
+						local first_end = pieces[1].end_position:unbox()
+
+						return {
+							pieces = #pieces,
+							-- (how far the first piece ends from the player's middle, across)
+							miss = Vector3.length(Vector3.flat(first_end - POSITION_LOOKUP[player])),
+							along_look = pieces[2] and Vector3.dot(pieces[2].direction:unbox(), look) or 0,
+							stamina = stamina_spent(t) > stamina,
+						}
+					end)
+
+					if shielded then
+						t.release("action_two")
+					end
+
+					return result
+				end
+
+				local shielded = trace(true)
+
+				t.expect(shielded.pieces >= 2, "the beam was not reflected by the shield (%d pieces)", shielded.pieces)
+				t.expect(shielded.miss < 1, "the beam was reflected %.1f m from the player", shielded.miss)
+				t.expect(shielded.along_look > 0.99, "the reflected beam did not go the way the player looks (%.2f)", shielded.along_look)
+				t.expect(shielded.stamina, "the reflection cost no stamina")
+
+				local unshielded = trace(false)
+
+				t.expect(unshielded.pieces == 1, "the beam was reflected without the shield (%d pieces)", unshielded.pieces)
+			end,
+		},
+		{
+			-- A Shock Rifle ball that gets to the shield is sent on the way the player looks as a new ball (ShockProjectile.ProcessTouch),
+			-- for stamina. See reflected_ball for how the ball is fired at the player.
+			name = "the shield reflects a Shock Rifle ball",
+			run = function (t)
+				local shooter = t.spawn(SHOCK_SHOOTER, SHOCK_DISTANCE)
+
+				if not t.expect(shooter, "the shooter could not be spawned") then
+					return
+				end
+
+				t.aim_at(shooter)
+				t.hold("action_two")
+				t.wait(0.5)
+
+				local stamina = t.on_main_thread(function ()
+					return stamina_spent(t)
+				end)
+				local reflected = reflected_ball(t, shooter)
+				local paid = t.on_main_thread(function ()
+					return stamina_spent(t) > stamina
+				end)
+
+				t.release("action_two")
+				t.expect(reflected, "the ball was not reflected by the shield")
+				t.expect(paid, "the reflection cost no stamina")
+
+				t.wait(1)
+
+				t.expect(not reflected_ball(t, shooter), "the ball was reflected without the shield")
 			end,
 		},
 		{

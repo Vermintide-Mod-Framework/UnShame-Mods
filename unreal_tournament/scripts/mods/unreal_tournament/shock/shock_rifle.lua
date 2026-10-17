@@ -999,6 +999,9 @@ local function trace_beam(owner_unit, physics_world, origin, direction, hits)
 	return pieces
 end
 
+-- (the extras mod's Shield Gun tests trace a beam from an enemy with it, as there is no other player to fire one at the player)
+mod.shock_trace_beam = trace_beam
+
 -- The way of each player's last shot, from the game's shot (below) to the end of the action's update, which draws it
 local beam_pieces = {}
 

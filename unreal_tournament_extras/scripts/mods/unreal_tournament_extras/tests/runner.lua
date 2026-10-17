@@ -1715,6 +1715,23 @@ function runner.calm(unit)
 	keep_calm(unit)
 end
 
+-- Lets an enemy that was calmed see and pick its targets again, as its breed does, so that it attacks the player
+function runner.provoke(unit)
+	calmed[unit] = nil
+
+	local ai_extension = ScriptUnit.has_extension(unit, "ai_system")
+	local blackboard = BLACKBOARDS[unit]
+	local breed = blackboard and blackboard.breed
+
+	if ai_extension and ai_extension.set_perception and breed then
+		ai_extension:set_perception(breed.perception, breed.target_selection)
+	end
+
+	if blackboard then
+		blackboard.only_trust_your_own_eyes = false
+	end
+end
+
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	for unit in pairs(calmed) do
 		if HEALTH_ALIVE[unit] then
