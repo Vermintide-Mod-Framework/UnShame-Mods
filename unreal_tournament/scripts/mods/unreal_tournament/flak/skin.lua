@@ -375,9 +375,10 @@ skin_api = mod.weapon_skin.new({
 		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.02 * 0.4,
 		scale = 1,
+		-- (moved back and up from the mesh's origin, set in the game)
 		grip_right = 0,
-		grip_forward = 0,
-		grip_up = 0,
+		grip_forward = 20,
+		grip_up = -8,
 		yaw = 0,
 		pitch = 0,
 		roll = 0,
