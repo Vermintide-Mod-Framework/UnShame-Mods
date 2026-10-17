@@ -63,6 +63,9 @@ local CONFIG = {
 	-- front). Each axis goes through this point of the mesh (forward, up, in the mesh's units).
 	barrel_pivot = { 0, 8.8 },
 	gear_pivot = { 17.85, 10.87 },
+	-- The least time between two of the characters' shot animations, for the repeating crossbow's, which has no rapid fire: the time its
+	-- shot leaves before the next (repeating_crossbows.lua, the start_time of its chain)
+	shot_animation_interval = 0.4, -- seconds
 	-- Which way the barrels turn, in first and third person: 1 or -1. -1 is the way UT's turn (checked in the game).
 	barrel_direction = -1,
 	-- The third person mesh's barrels are a geometry of their own (convert_static.py minigun_3rd). They turn about the barrel bone's place
@@ -554,13 +557,33 @@ mod.inspect_callbacks.minigun_skin = function (action, started)
 end
 
 -- The repeating gun's own shot animations and sounds are not played on the player's own first person unit. The skin's model plays UT's.
+-- When each character's shot animation was last played
+local last_shot_animation = setmetatable({}, {
+	__mode = "k",
+})
+
 for template_name in pairs(TEMPLATE_NAMES) do
 	mod.first_person_animation_filters[template_name] = function (event)
 		return string.find(event, "attack_shoot", 1, true) ~= nil or string.find(event, "reload", 1, true) ~= nil
 	end
 
-	-- The reload animation is not played on the characters, because the weapon has no reload.
-	mod.third_person_animation_filters[template_name] = function (event)
-		return string.find(event, "reload", 1, true) ~= nil
+	-- The reload animation is not played on the characters, because the weapon has no reload. The repeating crossbow's shot (Saltzpyre's)
+	-- is not made for a round after another, so it is played again only once the time the crossbow leaves between its shots is over.
+	mod.third_person_animation_filters[template_name] = function (event, unit)
+		if string.find(event, "reload", 1, true) then
+			return true
+		end
+
+		if event == "attack_shoot" or event == "attack_shoot_last" then
+			local now = Managers.time:time("game")
+
+			if now - (last_shot_animation[unit] or -math.huge) < CONFIG.shot_animation_interval then
+				return true
+			end
+
+			last_shot_animation[unit] = now
+		end
+
+		return false
 	end
 end
