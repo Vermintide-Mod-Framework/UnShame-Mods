@@ -12,6 +12,7 @@ mod.sniper.shot_callbacks.ut_test = function (owner_unit, hit_position)
 	if mod.test_recording then
 		shots[#shots + 1] = {
 			hit = hit_position ~= nil,
+			hit_position = hit_position and Vector3Box(hit_position),
 			owner_unit = owner_unit,
 			time = Managers.time:time("game"),
 		}
@@ -79,6 +80,43 @@ local function scenarios()
 
 				t.expect(#shots == 1, "%d shots were made, not 1", #shots)
 				t.expect(before - (t.ammo() or 0) == 1, "the shot used %s ammo, not 1", tostring(before - (t.ammo() or 0)))
+			end,
+		},
+		{
+			-- Where the shot is told to have hit (for the sparks and the sound) is on the target it was aimed at
+			name = "the hit is on the target",
+			run = function (t)
+				local target = t.spawn_target(5)
+
+				if not t.expect(target, "the target could not be spawned") then
+					return
+				end
+
+				-- (the spine is taken before the shot, as a kill throws the body)
+				local spine = t.on_main_thread(function ()
+					local position = Unit.world_position(target, Unit.node(target, "j_spine"))
+
+					return { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
+				end)
+
+				start_recording()
+				t.press("action_one", 0.1)
+				t.wait(0.5)
+				stop_recording()
+
+				if not t.expect(shots[1] and shots[1].hit, "the shot hit nothing") then
+					return
+				end
+
+				local distance, from_eye = unpack(t.on_main_thread(function ()
+					local hit = shots[1].hit_position:unbox()
+					local first_person_extension = ScriptUnit.extension(t.unit(), "first_person_system")
+
+					return { Vector3.distance(hit, Vector3(spine[1], spine[2], spine[3])), Vector3.distance(hit, first_person_extension:current_position()) }
+				end))
+
+				t.log("the hit is %.2f m from the target's spine and %.2f m from the eye", distance, from_eye)
+				t.expect(distance < 1, "the hit is %.2f m from the target", distance)
 			end,
 		},
 		{
