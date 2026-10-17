@@ -59,4 +59,6 @@ needs its own copy from a base of that hero, because the animations, units and a
 ## Not planned
 
 - Impact Hammer: out of scope.
+- Versus: out of scope. The weapons are for the heroes' careers; the Versus careers (the Skaven players, and the heroes' Versus-only
+  weapons such as the Engineer's Trollhammer Torpedo) are not given any.
 - Not in the plan so far: Translocator, Ion Painter, Mine Layer, AVRiL, Grenade Launcher and the Bombing Run ball launcher.
