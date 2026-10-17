@@ -16,7 +16,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$GameFolder = "E:\SteamLibrary\steamapps\common\Warhammer Vermintide 2"
+. (Join-Path $PSScriptRoot "game_paths.ps1")
+
+$GameFolder = Get-GameFolder "vermintide2"
 $LogFolder = Join-Path $env:APPDATA "Fatshark\Vermintide 2\console_logs"
 $SteamAppId = "552500"
 

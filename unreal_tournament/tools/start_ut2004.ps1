@@ -19,7 +19,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$GameFolder = "E:\SteamLibrary\steamapps\common\Unreal Tournament 2004"
+. (Join-Path $PSScriptRoot "game_paths.ps1")
+
+$GameFolder = Get-GameFolder "ut2004"
 $InputScript = Join-Path $PSScriptRoot "game_input.ps1"
 
 Add-Type -TypeDefinition @"

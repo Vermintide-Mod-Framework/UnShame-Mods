@@ -1,3 +1,6 @@
 /.temp
 **/bundleV[12]
 *.processed
+__pycache__/
+# Where the games are on each machine (see unreal_tournament/tools/game_paths.ps1)
+unreal_tournament/tools/game_paths.json
