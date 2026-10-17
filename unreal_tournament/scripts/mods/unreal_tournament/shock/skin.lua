@@ -30,13 +30,11 @@ local CONFIG = {
 	chamber_intensity = 1,
 	-- The color of the overcharge bar between its thresholds. It is ShockControl's color (R192 G0 B255), the liquid's. The game's is orange.
 	overcharge_bar_color = { 192, 0, 255 },
-	vent_pulse_speed = 14, -- radians per second, of the liquid's brightness pulsing while the heat is vented
-	vent_pulse_swing = 0.3, -- how much brighter and dimmer the liquid gets while pulsing, as a multiple of its brightness
-	-- Overheating is the game's overcharge explosion, which lasts a few seconds before it goes off. During it the liquid pulses fast
-	-- between its normal brightness and a brighter one, and the model is held sideways (the alt_pose_* values in the definition below).
+	-- While the heat is vented, the chamber drains to its glass and fills again, over and over, as it does after a shot
+	vent_pulse_speed = 14, -- radians per second
+	-- Overheating is the game's overcharge explosion, which lasts a few seconds before it goes off. During it the chamber drains and
+	-- fills fast, and the model is held sideways (the alt_pose_* values in the definition below).
 	overheat_pulse_speed = 45, -- radians per second
-	overheat_brightness_min = 1, -- as a multiple of the liquid's brightness
-	overheat_brightness_max = 2.2,
 	alt_pose_speed = 6, -- how fast the model moves to the sideways pose and back, per second
 	-- UT2004 has no inspect animation. The rifle is brought in, turned to show its side, and sways slowly while the key is held.
 	inspect_pose_speed = 5, -- how fast the model moves to the pose and back, per second
@@ -60,12 +58,11 @@ local function update_chamber(skin, dt)
 	-- As in UT, the chamber has no glow after a shot and gets it back as the time to the next shot passes (ShockRifle.RenderOverlays):
 	-- drained, it is the glass alone (make_chamber_material.py).
 	local glow = 1 - math.clamp((skin.cooldown_end - Managers.time:time("game")) / skin.cooldown, 0, 1)
-	local brightness = 1
 
-	-- The liquid also pulses while the heat is vented.
+	-- While the heat is vented, it drains and fills, from the glow it has
 	if skin.venting then
 		skin.vent_time = skin.vent_time + dt
-		brightness = brightness * (1 + CONFIG.vent_pulse_swing * math.sin(skin.vent_time * CONFIG.vent_pulse_speed))
+		glow = glow * (0.5 + 0.5 * math.cos(skin.vent_time * CONFIG.vent_pulse_speed))
 	end
 
 	local first_person_extension = skin_api.local_first_person()
@@ -83,10 +80,8 @@ local function update_chamber(skin, dt)
 	if overheating then
 		skin.overheat_time = (skin.overheat_time or 0) + dt
 
-		local pulse = 0.5 + 0.5 * math.sin(skin.overheat_time * CONFIG.overheat_pulse_speed)
-
-		-- While overheating the liquid is as bright as it gets, however long ago the last shot was.
-		brightness = CONFIG.overheat_brightness_min + (CONFIG.overheat_brightness_max - CONFIG.overheat_brightness_min) * pulse
+		-- (from full, however long ago the last shot was)
+		glow = 0.5 + 0.5 * math.cos(skin.overheat_time * CONFIG.overheat_pulse_speed)
 	else
 		skin.overheat_time = 0
 	end
@@ -99,7 +94,6 @@ local function update_chamber(skin, dt)
 	local material = Mesh.material(Unit.mesh(skin.unit, "g_shock_1"), "m_power")
 
 	Material.set_scalar(material, "intensity", CONFIG.chamber_intensity * glow)
-	Material.set_scalar(material, "brightness", brightness)
 end
 
 local function update_balls(dt)
@@ -129,26 +123,29 @@ end
 -- HUD.RedColor) and a red beam, coil, flash and impact (ShockBeamCoilB and the B effects).
 local INSTAGIB_SKIN = "ut_shock_rifle_skin_instagib"
 
+-- NewWeapons2004.NewShockRifle_3rd, ShockAttachment's mesh (convert_static.py shock_3rd), at UT's size in a player's hand: it runs along
+-- its forward from its grip, which is its origin, to the muzzle (its Bone_Flash)
 local THIRD_PERSON = {
 	id = SETTING_ID,
 	template = TEMPLATE_NAME,
-	unit_name = "units/ut/shock/pickup",
+	unit_name = "units/ut/shock/third_person",
 	hand_node = "j_rightweaponattach",
-	meters_per_unit = 0.011,
-	scale = 0.65,
+	meters_per_unit = 0.02 * 0.4,
+	scale = 1,
 	grip_right = 0,
-	grip_forward = -31,
-	grip_up = 6,
+	grip_forward = 0,
+	grip_up = 0,
 	yaw = 0,
 	pitch = 0,
 	roll = 0,
 	muzzle_right = 0,
-	muzzle_forward = 51.7,
-	muzzle_up = 10,
-	-- The engine's fade near the camera does not reach the chamber's material, so the skin fades it by distance (see
-	-- weapon_skin_third_person.lua).
-	fade_mesh = "g_pickup_1",
-	fade_material = "m_power",
+	muzzle_forward = 86.7,
+	muzzle_up = 13.8,
+	menu_yaw = -90,
+	-- The engine's fade near the camera does not reach the chamber's material (the mesh's second, m_1), so the skin fades it by
+	-- distance (see weapon_skin_third_person.lua).
+	fade_mesh = "g_third_person_1",
+	fade_material = "m_1",
 }
 
 local INSTAGIB_THIRD_PERSON = {}
@@ -158,7 +155,7 @@ for key, value in pairs(THIRD_PERSON) do
 end
 
 INSTAGIB_THIRD_PERSON.materials = {
-	m_power = "units/ut/shock/shock_rifle_power_instagib",
+	m_1 = "units/ut/shock/shock_rifle_power_instagib",
 }
 
 skin_api = mod.weapon_skin.new({
@@ -237,25 +234,25 @@ skin_api = mod.weapon_skin.new({
 			inspect_pose_roll = -20,
 			inspect_pose_pitch = 12,
 			inspect_pose_yaw = 64,
-			-- WeaponStaticMesh.ShockRiflePickup. Its barrel runs along the mesh's own Y, like the Flak Cannon's pickup. The hand
-			-- holds the pistol grip.
+			-- Weapons.ShockRifle_3rd, UT2003's ShockAttachment mesh (convert_static.py shock2003_3rd), at UT's size in a player's hand,
+			-- along its forward from its grip to the muzzle, as the UT2004 one
 			third_person = {
 				id = SETTING_ID,
 				template = TEMPLATE_NAME,
-				unit_name = "units/ut/shock2003/pickup",
+				unit_name = "units/ut/shock2003/third_person",
 				hand_node = "j_rightweaponattach",
-				meters_per_unit = 0.011,
-				scale = 0.46,
-				grip_right = 46,
+				meters_per_unit = 0.02 * 0.4,
+				scale = 1,
+				grip_right = 0,
 				grip_forward = 0,
-				grip_up = 4,
-				yaw = -90,
+				grip_up = 0,
+				yaw = 0,
 				pitch = 0,
 				roll = 0,
-				muzzle_right = -86.2,
-				muzzle_forward = 0,
-				muzzle_up = 15,
-				menu_yaw = 180,
+				muzzle_right = 0,
+				muzzle_forward = 130.4,
+				muzzle_up = 9.5,
+				menu_yaw = -90,
 			},
 		},
 	},

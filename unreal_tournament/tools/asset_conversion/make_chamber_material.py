@@ -153,16 +153,10 @@ add_node('blend', 'core/shader_nodes/lerp')
 connect('glass', 'blend', IN_LERP_A, 'rgb')
 connect('modulated', 'blend', IN_LERP_B)
 connect('control_alpha', 'blend', IN_LERP_W)
-# (the "brightness": how bright the liquid is, which the skin makes pulse while the weapon overheats or vents, without the liquid going
-# away: it is not the intensity, which is how much of it there is)
-add_node('brightness', 'core/shader_nodes/material_variable', export=variable('brightness', 'Brightness', 'float', 1), title='Brightness')
-add_node('brightened', 'core/shader_nodes/mul')
-connect('blend', 'brightened', IN_MUL_A)
-connect('brightness', 'brightened', IN_MUL_B)
 # UT does its sums on gamma colours and shows them as they are: the result (at most 1) is made the light that is shown as it
 # (the reflection of the cube map, which UT adds, is not here: a gain and a lift in its place, for the light it adds)
 add_node('gain', 'core/shader_nodes/mul')
-connect('brightened', 'gain', IN_MUL_A)
+connect('blend', 'gain', IN_MUL_A)
 constant('gain', IN_MUL_B, 1.5)
 add_node('lift', 'core/shader_nodes/add')
 connect('gain', 'lift', IN_ADD_A)
@@ -206,7 +200,7 @@ for n, (node_id, node_type, options, export, samplers, title) in enumerate(nodes
     if title:
         text += '\t\t\ttitle = "%s"\n' % title
     text += '\t\t\ttype = "%s"\n\t\t}\n' % node_type
-text += '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tbrightness = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\tfade = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\tcontrol_color = {\n\t\ttype = "vector3"\n\t\tvalue = [\n\t\t\t0.752941\n\t\t\t0\n\t\t\t1\n\t\t]\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n}\n'
+text += '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tfade = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\tcontrol_color = {\n\t\ttype = "vector3"\n\t\tvalue = [\n\t\t\t0.752941\n\t\t\t0\n\t\t\t1\n\t\t]\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n}\n'
 # Two graphs: the chamber of the pickup (and of the character's hand), and the chamber of the first person rifle, which is drawn with the game's
 # custom FOV for weapons (the option HAS_CUSTOM_FOV of unlit_base), as the game's own first person weapons are: it is that option that makes the
 # outlines of other players not be drawn over it, see units/ut/weapon_standard.material.

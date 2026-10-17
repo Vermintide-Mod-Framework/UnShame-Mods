@@ -85,6 +85,23 @@ STATICS = {
             (255, 888, -45, 50, 24),  # 316V
         ],
     },
+    # The Shock Rifle's third person: ShockAttachment's mesh (NewWeapons2004.NewShockRifle_3rd at xWeaponAttachment's DrawScale 0.4). Its
+    # materials are the pickup's: the body (ShockRifleTex0) and the chamber, the gel and glass of make_chamber_material.py (UT's
+    # PurpleShockFinal has the same graph as the first person's ShockPowerFinal, with a constant colour in place of ShockControl).
+    'shock_3rd': {
+        'pskx': 'NewWeapons2004/SkeletalMesh/NewShockRifle_3rd.psk',
+        'materials': [('units/ut/shock/shock_rifle_body', 'existing'), ('units/ut/shock/shock_rifle_power', 'existing')],
+        'scale': 0.02 * 0.4,
+        'unit': 'units/ut/shock/third_person',
+    },
+    # UT2003's Shock Rifle third person (Weapons.ShockRifle_3rd, its ShockAttachment's mesh before UT2004's), for the UT2003 look, with the
+    # UT2003 pickup's material (ShockTex0)
+    'shock2003_3rd': {
+        'pskx': 'Weapons/SkeletalMesh/ShockRifle_3rd.psk',
+        'materials': [('units/ut/shock2003/pickup_m0', 'existing')],
+        'scale': 0.02 * 0.4,
+        'unit': 'units/ut/shock2003/third_person',
+    },
     # The Sniper Rifle (UTClassic): its third person mesh (ClassicSniperAttachment, NewWeapons2004.Sniper3rd at DrawScale 0.16) and its
     # pickup (NewWeaponStatic.newsniperpickup), which the icon is made from
     'classic_sniper_3rd': {
@@ -209,8 +226,9 @@ def main():
                            '%s/%s.bsi' % (REPO, cfg['unit']), geometry, ','.join(mat_names), str(cfg['scale'])])
     # (the geometries psk2bsi made are named <prefix>_<index of the material>)
     unit_text = 'materials = {\n'
-    for i in range(len(materials)):
-        unit_text += '\tm_%d = "%s/%s_m%d"\n' % (i, unit_dir, unit_base, i)
+    for i, (tga, kind) in enumerate(m[:2] for m in materials):
+        # (a material of the kind 'existing' is one the mod has already, named in place of the tga, and nothing is made for it)
+        unit_text += '\tm_%d = "%s"\n' % (i, tga if kind == 'existing' else '%s/%s_m%d' % (unit_dir, unit_base, i))
     unit_text += '}\nrenderables = {\n'
     for i in range(len(materials)):
         unit_text += ('\t%s_%d = {\n\t\talways_keep = false\n\t\tculling = "%s"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
@@ -218,6 +236,8 @@ def main():
     unit_text += '}\n'
     open('%s/%s.unit' % (REPO, cfg['unit']), 'w', newline='\n').write(unit_text)
     for i, (tga, kind, opacity, texture_name, rows) in enumerate(materials):
+        if kind == 'existing':
+            continue
         texture = '%s/%s_%s' % (unit_dir, unit_base, texture_name or os.path.splitext(os.path.basename(tga))[0].lower())
         if rows is None:
             w, h, rows = read_tga(export + '/' + tga)

@@ -12,9 +12,9 @@ lua = [
 
 unit = [
 	"units/ut/shock/shock_rifle"
-	"units/ut/shock/pickup"
+	"units/ut/shock/third_person"
 	"units/ut/shock2003/shock_rifle"
-	"units/ut/shock2003/pickup"
+	"units/ut/shock2003/third_person"
 	"units/ut/flak/flak_cannon"
 	"units/ut/flak/pickup"
 	"units/ut/flak/chunk"
