@@ -67,7 +67,7 @@ Nothing checks that a weapon is listed everywhere it has to be, so go through ev
    - `STATICS` in `convert_static.py`: the pickup, the third person mesh (the mesh of UT's attachment class, `*_3rd`) and the projectiles' meshes.
    - `WEAPONS` in `make_bank.py`: its sound bank.
    - The effects, with the scripts for them.
-   - The icon, rendered from the pickup with `render_icon.py`, with its `.texture` and `.material` next to it in `ui/ut`.
+   - `ICONS` in `make_icons.py`: the icon, rendered from the pickup, with its `.texture` and `.material`.
 2. **Package.** In `resource_packages/unreal_tournament/unreal_tournament.package`, add the weapon's units, its `units/ut/<weapon>/*`
    materials, and its bank under `wwise_dep`. Scripts and the icon's files are picked up by wildcards.
 3. **Gameplay.** The weapon's folder in `scripts/mods/unreal_tournament/` has its gameplay file. It:

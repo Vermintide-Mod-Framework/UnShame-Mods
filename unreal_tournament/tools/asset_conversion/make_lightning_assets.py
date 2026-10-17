@@ -14,7 +14,7 @@ EXPORT = sys.argv[1]
 
 sys.path.insert(0, os.path.dirname(__file__))
 from formats import read_tga, write_png
-from resources import texture_text, particle_material_text
+from resources import texture_text, particle_material_text, gui_material_text
 
 # name: the tga, and which part of it (first row, last row, first column, last column, each as a share of the size of the texture).
 # LightningBoltT is two pictures: the streak of lightning in the top half, and the flare in the bottom half. UT's bolt draws each from
@@ -38,17 +38,6 @@ FX = {
 # much fainter than UT's. particle_linear reads the values as they are. The flare, the bolt and the sparks use it (checked against
 # pictures of UT2004).
 LINEAR = ('lightning_flare', 'lightning_bolt', 'blue_spark_line')
-
-GUI_MATERIAL = '''%(name)s = {
-	material_contexts = {
-		surface_material = ""
-	}
-	shader = "gui:DIFFUSE_MAP"
-	textures = {
-		diffuse_map = "ui/ut/%(texture)s"
-	}
-}
-'''
 
 # An effect's texture is marked as not srgb, so that its smaller mipmaps are made from its values as they are, as its material reads them
 def write_texture(directory, name, width, height, rows, srgb=True):
@@ -106,6 +95,6 @@ print('scope lens')
 materials = ''
 
 for name in list(SCOPE) + ['lightning_scope_lens']:
-    materials += GUI_MATERIAL % {'name': 'ut_' + name, 'texture': name}
+    materials += gui_material_text('ut_' + name, 'ui/ut/' + name)
 
 open('%s/ui/ut/lightning_scope.material' % REPO, 'w', newline='\n').write(materials)

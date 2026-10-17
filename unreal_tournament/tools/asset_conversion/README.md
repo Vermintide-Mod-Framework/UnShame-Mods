@@ -33,11 +33,12 @@ What each script makes, and the tables in it that say what it converts, are in i
 |---|---|
 | `convert_weapon.py <weapon> <export dir>` | a first person model: its unit, materials and textures, and its animations as Lua. The weapons are in `WEAPONS` |
 | `convert_static.py <name> <export dir>` | a static mesh as a unit: the pickups, the third person meshes and the projectiles. The meshes are in `STATICS` |
-| `make_anim_assets.py <export dir>` | the animations of the UT2004 Shock Rifle, which came before `convert_weapon.py` |
+| `convert_shock.py <export dir>` | the UT2004 Shock Rifle, which came before `convert_weapon.py`: its model, pickup, body texture and materials, and animations |
 | `make_chamber_material.py <export dir>` | the Shock Rifle's chamber, as a shader graph |
 | `make_sniper_screen.py <export dir>` | the Lightning Gun's screen texture, written into the export folder for `convert_weapon.py` |
 | `make_bank.py <weapon> <export dir>` | a sound bank in `wwise/unreal_tournament`. The banks are in `WEAPONS` |
-| `render_icon.py in.bsi out.png size yaw pitch roll textures [fill [mirror]]` | an inventory icon from a converted pickup (see Icons) |
+| `make_icons.py [name ...]` | the inventory icons in `ui/ut`, with their textures and gui materials, from the pickups (see Icons). The icons are in `ICONS` |
+| `render_icon.py in.bsi out.png size yaw pitch roll textures [fill [mirror]]` | one icon from a converted pickup; `make_icons.py` runs it |
 
 **Effects**
 
@@ -59,23 +60,23 @@ What each script makes, and the tables in it that say what it converts, are in i
 | Script | Makes |
 |---|---|
 | `preview_weapon.py <weapon> <export dir> out.png [inspect numbers]` | a picture of a first person weapon, placed the way `weapon_skin.lua` does (see Checks) |
-| `psk2bsi.py in.psk out.bsi prefix materials [scale]` | a psk or pskx as a `.bsi` mesh. `convert_static.py` runs it |
+| `psk2bsi.py in.psk out.bsi prefix materials [scale]` | a psk or pskx as a `.bsi` mesh. `convert_static.py` and `convert_shock.py` run it |
 | `tga2png.py in.tga out.png [tint]` | a tga as a png, with an optional tint |
-| `formats.py`, `quat.py`, `resources.py` | nothing: what the scripts share (TGA, PNG, psk and psa; quaternions; the text of `.texture` files and effect materials) |
+| `formats.py`, `quat.py`, `resources.py` | nothing: what the scripts share (TGA, PNG, psk and psa; quaternions; the text of `.texture` files, effect materials and gui materials) |
 
 ### Order
 
 - `make_fx_assets.py` writes UT's textures as they are, and the `split_*.py` scripts replace some of them. Run the splits again after it.
 - `make_sniper_screen.py` before `convert_weapon.py sniper`, which reads the screen it writes.
 - `make_combo_materials.py` after `convert_weapon.py bio`: it replaces the material of the goop in the Bio Rifle's tank with a shader graph.
+- `make_icons.py` after the pickups, which it renders.
 
 ### Weapons
 
 1. **Export** with `export.py`, after adding the weapon's packages to its `PACKAGES` if they are not there.
 2. `convert_weapon.py <weapon> <dir>` writes the unit and `skin_animations.lua`, and `convert_static.py <name> <dir>` the pickup and the
-   projectiles. The UT2004 Shock Rifle came first, from `NewWeapons2004` (`ShockRifle`, its psk and psa, with `psk2bsi.py`, `tga2png.py` and
-   `make_anim_assets.py`), and has its own units in `units/ut/shock`.
-3. The effects, the sounds and the icon of the weapon: the scripts above.
+   projectiles. The UT2004 Shock Rifle came first and has a script of its own, `convert_shock.py`, for its units in `units/ut/shock`.
+3. The effects, the sounds and the icon of the weapon: the scripts above. The icon is an entry in `make_icons.py`'s `ICONS`.
 4. The weapon's skin is `scripts/mods/unreal_tournament/<weapon>/skin.lua`, which places the model, plays the animations, and draws the effects.
 
 The UT2003 Shock Rifle (the weapon's second skin: UT2004 keeps it as `ShockRifle.bUseOldWeaponMesh`) is `Weapons.ShockRifle_1st`, with
@@ -85,12 +86,11 @@ drawn is `ShockRifle.uc`'s `OldPlayerViewOffset` and `OldPlayerViewPivot`.
 
 ### Icons
 
-`render_icon.py in.bsi out.png size yaw pitch roll body.png[,power.png] [fill [mirror]]` renders a converted mesh (a pickup's bsi, with the textures
-of its geometries in order) into an icon with a transparent background. `fill` is how much of the picture the mesh takes up (0.92 if it is
-not given: the item's frame covers the edges of an icon, the Flak Cannon's is 0.72). The icons are made with the pickup of each weapon, for
-instance `pickup.bsi out.png 256 -70 0 35 <texture>` for the Flak Cannon and the UT2003 Shock Rifle, and `20 0 35` for the UT2004 Shock
-Rifle. The Bio Rifle's is rendered from the side with its orange band, pointing up and to the left, and mirrored (`256 -70 0 -35 <textures> 0.74 mirror`)
-so that it points up and to the right as the others do. Each icon's `.texture` and `.material` (a gui material that `items.lua` registers in the UI's renderers) are next to it in `ui/ut`, in a
+`make_icons.py` makes every icon in its `ICONS` from the weapon's converted pickup, with `render_icon.py`. `render_icon.py in.bsi out.png size
+yaw pitch roll body.png[,power.png] [fill [mirror]]` renders a mesh (a pickup's bsi, with the textures of its geometries in order) into an icon
+with a transparent background. The yaw turns the muzzle to the top right, as the game's icons have it. `fill` is how much of the picture
+the mesh takes up (0.92 if it is not given; the item's frame covers the edges of an icon, so most are 0.72). A weapon whose side to show
+points the other way is mirrored. Each icon's `.texture` and `.material` (a gui material that `items.lua` registers in the UI's renderers) are next to it in `ui/ut`, in a
 package of their own (`resource_packages/unreal_tournament/icons`) that is listed in `unreal_tournament.mod` (the game only loads the
 packages that are) and that the mod keeps a handle to, so that it stays loaded when the mod is reloaded: the renderers hold the material
 locked, and the game fails when it is unloaded.

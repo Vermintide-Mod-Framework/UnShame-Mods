@@ -37,6 +37,17 @@ variables = {
 }
 '''
 
+GUI_MATERIAL_TEMPLATE = '''%(name)s = {
+	material_contexts = {
+		surface_material = ""
+	}
+	shader = "gui:DIFFUSE_MAP"
+	textures = {
+		diffuse_map = "%(path)s"
+	}
+}
+'''
+
 
 def texture_text(path, srgb=True):
     """The .texture of the png at path (from the repository's root, without its extension)."""
@@ -46,3 +57,8 @@ def texture_text(path, srgb=True):
 def particle_material_text(name, parent='particle'):
     """The material of an effect's texture, units/ut/fx/<name>, on one of the particle materials in units/ut/fx."""
     return PARTICLE_MATERIAL_TEMPLATE % {'name': name, 'parent': parent}
+
+
+def gui_material_text(name, path):
+    """A gui material named name that draws the texture at path. A .material file can have several."""
+    return GUI_MATERIAL_TEMPLATE % {'name': name, 'path': path}

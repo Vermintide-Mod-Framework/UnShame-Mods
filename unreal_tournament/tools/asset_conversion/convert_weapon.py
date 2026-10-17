@@ -15,6 +15,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 # its order) the texture (a tga, relative to the export dir) and the kind ('opaque', 'alpha': see MATERIAL_KINDS). scale: meters a UT
 # unit of the mesh is. animations: (name in the psa, name here). locators: bones with no mesh whose place is wanted (muzzle).
 # skip_materials: materials (by index) whose faces are left out. A texture 'solid:rrggbb' is a plain color.
+# textures: more tgas to convert next to the unit's own textures, for a material that another script makes.
 WEAPONS = {
     'flak': {
         'psk': 'Weapons/SkeletalMesh/Flak_1st.psk',
@@ -72,6 +73,8 @@ WEAPONS['bio'] = {
     # the body, the glass of the tank, and what is in the tank (the bubbles)
     'materials': [('WeaponSkins/Texture/BioRifleTex0.tga', 'opaque'), ('WeaponSkins/Texture/BioRifleGlass0.tga', 'alpha', 0.5),
                   ('WeaponSkins/Texture/BRInnerBubbles.tga', 'alpha', 0.8)],
+    # the goop, which make_combo_materials.py's material for the tank draws under the bubbles
+    'textures': ['WeaponSkins/Texture/BRInnerGoo.tga'],
     'scale': 0.0125,
     'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire'), ('HOLD', 'Hold')],
     'locators': ['Bone_Flash'],
@@ -501,6 +504,12 @@ def main():
             open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(texture_text(texture))
             done_textures[texture] = True
         open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture, opacity, first_person=True, roughness=cfg['roughness'].get(m) if isinstance(cfg.get('roughness'), dict) else cfg.get('roughness')))
+
+    for tga in cfg.get('textures', ()):
+        texture = '%s/%s_%s' % (unit_dir, unit_base, os.path.splitext(os.path.basename(tga))[0].lower())
+        w, h, rows = read_tga(export + '/' + tga)
+        write_png('%s/%s.png' % (REPO, texture), w, h, rows)
+        open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(texture_text(texture))
 
     # the animations: the pose of each bone (the root's move first: it is how the whole mesh is moved) against the mesh in its
     # reference pose, in the model's axes and UT units

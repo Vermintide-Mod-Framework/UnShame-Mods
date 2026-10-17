@@ -1,6 +1,6 @@
 -- The animations of the UT2004 Shock Rifle (NewWeapons2004.ShockRifle): the pose of its root bone in each frame, relative to its mesh. A frame is
 -- a rotation of the mesh (x, y, z, w) and a move of it in UT units (right, forward, up).
--- Generated from the psa by tools/asset_conversion/make_anim_assets.py: don't edit it by hand.
+-- Generated from the psa by tools/asset_conversion/convert_shock.py: don't edit it by hand.
 return {
 	Pickup = {
 		rate = 30,
