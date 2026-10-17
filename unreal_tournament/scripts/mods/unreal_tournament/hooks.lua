@@ -346,20 +346,14 @@ mod:hook_safe(ActionHandgun, "client_owner_start_action", function (self, new_ac
 	end
 end)
 
--- Whether the game's effects of a hit on a wall or a prop are skipped now, while a shot whose action has ut_silent_level_hits is made
--- (see the hooks of EffectHelper below)
-local level_hits_silent = false
-
 -- The shot sends flow events to the game's weapon unit, which start the game's own effects of the shot (lua_bullet_trail is the tracer).
--- A UT weapon draws its own, so its action can name events to drop: action.ut_dropped_flow_events = { [event_name] = true }. An action
--- with ut_silent_level_hits = true doesn't play the game's effects where its rounds hit walls and props, as the weapon draws UT's there.
--- Its hits on enemies keep the game's.
+-- A UT weapon draws its own, so its action can name events to drop: action.ut_dropped_flow_events = { [event_name] = true }.
 mod:hook(ActionHandgun, "client_owner_post_update", function (func, self, ...)
-	local action = self.current_action
-	local dropped = action and action.ut_dropped_flow_events
-	local flow_event = Unit.flow_event
+	local dropped = self.current_action and self.current_action.ut_dropped_flow_events
 
 	if dropped then
+		local flow_event = Unit.flow_event
+
 		Unit.flow_event = function (unit, event_name, ...)
 			if dropped[event_name] then
 				return
@@ -367,18 +361,17 @@ mod:hook(ActionHandgun, "client_owner_post_update", function (func, self, ...)
 
 			return flow_event(unit, event_name, ...)
 		end
-	end
 
-	level_hits_silent = action and action.ut_silent_level_hits or false
+		-- An error must not leave Unit.flow_event replaced
+		local ok, error_message = pcall(func, self, ...)
 
-	-- An error must not leave Unit.flow_event replaced, or the level's hits silent
-	local ok, error_message = pcall(func, self, ...)
+		Unit.flow_event = flow_event
 
-	Unit.flow_event = flow_event
-	level_hits_silent = false
-
-	if not ok then
-		error(error_message, 0)
+		if not ok then
+			error(error_message, 0)
+		end
+	else
+		func(self, ...)
 	end
 
 	for _, callback in pairs(mod.handgun_update_callbacks) do
@@ -714,18 +707,17 @@ end
 -- Hit effects that do nothing. A weapon that draws its own impact adds an effect name here (mod.silent_hit_effects[name] = true) and
 -- uses it as its action's hit_effect. The game needs a name there, and sends it to the other players as a number from a lookup table.
 -- That table is full, and adding a name is an error, so these names can't be sent. The hooks below skip playing and sending them.
--- Walls and props, and enemies (flesh, armor), each have a local and a remote function, so all four are hooked. The ones of walls and
--- props are also skipped while a shot of an action with ut_silent_level_hits is made (see ActionHandgun's hook above).
+-- Walls and props, and enemies (flesh, armor), each have a local and a remote function, so all four are hooked.
 mod.silent_hit_effects = {}
 
-for function_name, level in pairs({
-	play_surface_material_effects = true,
-	remote_play_surface_material_effects = true,
-	play_skinned_surface_material_effects = false,
-	remote_play_skinned_surface_material_effects = false,
+for _, function_name in ipairs({
+	"play_surface_material_effects",
+	"remote_play_surface_material_effects",
+	"play_skinned_surface_material_effects",
+	"remote_play_skinned_surface_material_effects",
 }) do
 	mod:hook(EffectHelper, function_name, function (func, effect_name, ...)
-		if mod.silent_hit_effects[effect_name] or level and level_hits_silent then
+		if mod.silent_hit_effects[effect_name] then
 			return
 		end
 

@@ -206,9 +206,8 @@ local function build_shot(source, mode, first, hand, spray, volley)
 	action.ut_minigun = mode
 	action.ut_minigun_first = first
 	action.ut_spread = alt and CONFIG.alt_spread or CONFIG.primary_spread
-	-- The repeating handgun's own tracer is not drawn, nor its effects where a round hits a wall (hooks.lua): the skin draws UT's
+	-- The repeating handgun's own tracer is not drawn (hooks.lua): the skin draws UT's
 	action.ut_dropped_flow_events = DROPPED_FLOW_EVENTS
-	action.ut_silent_level_hits = true
 	-- The other button's shot can only follow once this round's time is over, so the two never fire at once (UT's fire modes are
 	-- exclusive)
 	action.allowed_chain_actions = fire_chain_actions(own_action, "loop", fire_time + interval)

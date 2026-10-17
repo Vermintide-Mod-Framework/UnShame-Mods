@@ -370,7 +370,7 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 
 	-- Where a round hits a wall, as MinigunAttachment.ThirdPersonEffects: the primary fire's sparks and, half the time, a puff of dust
 	-- (xHeavyWallHitEffect), and the alt fire's small explosion in dust (ExploWallHit), with one of the impact sounds. UT draws the
-	-- others' hits only near the viewer.
+	-- others' hits only near the viewer. The game's own impact of the round is there too.
 	if hit_level then
 		local camera_position = utils.camera_pose()
 		local near = utils.is_local_player_unit(owner_unit) or camera_position and Vector3.distance(camera_position, end_position) < CONFIG.hit_effect_distance * UNIT
