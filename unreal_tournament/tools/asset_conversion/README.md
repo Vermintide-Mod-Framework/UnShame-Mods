@@ -19,31 +19,55 @@ Local tools that produced `units/ut/*`, `ui/ut/*`, `wwise/unreal_tournament/*`, 
 
 | Script | Makes | From |
 |---|---|---|
-| `export.py <UT2004 dir> <export dir> [umodel]` | the export folder that the other scripts read | the UT2004 packages in its `PACKAGES` |
-| `convert_weapon.py <weapon> <export dir>` | the first person model of a weapon: `units/ut/<weapon>`, its materials and textures, and its animations as Lua. The weapons are in `WEAPONS`: `flak`, `rocket`, `bio`, `link`, `sniper`, `shock2003` | the psk and psa of the weapon, its textures |
-| `convert_static.py <name> <export dir>` | static meshes: the pickups (the third person) and the meshes of the projectiles. The meshes are in `STATICS`: `flak_pickup`, `flak_chunk`, `flak_shell`, `shock2003_pickup`, `link_pickup`, `sniper_pickup`, `bio_pickup`, `rocket_pickup`, `rocket_proj` | a pskx and its texture |
-| `psk2bsi.py` | a mesh in the SDK's `.bsi` format (what the two above use) | a psk or pskx |
-| `tga2png.py in.tga out.png [tint]` | a texture as a png, with an optional tint | a tga |
-| `make_anim_assets.py <export dir>` | the animations of the UT2004 Shock Rifle (`shock/skin_animations.lua`) | `NewWeapons2004` |
-| `make_chamber_material.py <export dir>` | the Shock Rifle's chamber, a shader graph (UT2004's ShockPowerShader) | `UT2004Weapons` |
-| `make_combo_materials.py` | the materials of the combo's sphere and vortex and of the ball's dark sphere, as shader graphs | the effect textures made by `make_fx_assets.py` |
-| `make_fx_assets.py <export dir>` | the textures of the effects of all the weapons (`units/ut/fx/<name>.png`, with a `fx_<name>` material each), the quad that the particles are drawn on, and the unlit material that adds its colour to the screen | `XEffects`, `XEffectMat` and others |
-| `make_fx_meshes.py <export dir>` | the meshes of the effects: `coil`, `sphere`, `vortex`, `light`, `flak_flash_mesh` | `XEffects`, `Editor` and others |
-| `split_flak_trail.py <export dir>` | the Flak Cannon's trail streak (turned a quarter, for a beam) and the generated glows of the chunk and of the shell | `XEffects` |
-| `split_smoke.py <export dir>` | `smoke_0` to `smoke_15`: the 16 puffs of UT's smoke sheet, one texture each (a smoke particle shows one of them) | `XEffects` |
-| `make_sniper_screen.py <export dir>` | the Lightning Gun's screen (UT2004's SniperScreen1C, the scope's readout blended with scan lines), as a tga in the export folder where `convert_weapon.py sniper` reads it | `WeaponSkins` exported there |
-| `make_lightning_assets.py <export dir>` | the Lightning Gun's effects (`units/ut/fx/lightning_bolt`, `lightning_flare`, `lightning_charge_0` to `_3`, `blue_spark`, each with its `fx_` material) and the textures and gui materials of its scope (`ui/ut/lightning_scope*`) | `XEffects`, `XWeapons_rc` and `XGameShaders` exported there |
-| `make_flak_flash.py <export dir> [name]` | the texture of the first person muzzle flash of the Flak Cannon (`flak_flash`, the default) or of the Bio Rifle (`bio_flash`) | `XGameShaders` |
-| `make_bank.py <weapon> <export dir>` | the sound banks in `wwise/unreal_tournament`: a bank with an event for each sound, written by hand. The weapons are in `WEAPONS`: `announcer`, `shock_rifle`, `flak_cannon`, `rocket_launcher`, `bio_rifle`, `link_gun`, `lightning_gun` | `WeaponSounds`, `NewWeaponSounds`, `AnnouncerMale2K4`, `XEffects` |
-| `render_icon.py in.bsi out.png size yaw pitch roll textures [fill]` | an inventory icon from a converted pickup | a bsi and its textures |
-| `preview_weapon.py <weapon> <export dir> out.png [inspect numbers]` | a picture of a first person weapon in its idle or inspect pose, placed the way `weapon_skin.lua` does | a psk |
-| `formats.py`, `quat.py`, `resources.py` | nothing: what the scripts share (reading and writing TGA, PNG, psk and psa; quaternions; the text of `.texture` files and of the effects' materials) | |
+What each script makes, and the tables in it that say what it converts, are in its header. Most take the export folder as their argument.
+
+**The export**
+
+| Script | Makes |
+|---|---|
+| `export.py <UT2004 dir> <export dir> [umodel]` | the export folder, from the packages in `PACKAGES` |
+
+**Weapons**
+
+| Script | Makes |
+|---|---|
+| `convert_weapon.py <weapon> <export dir>` | a first person model: its unit, materials and textures, and its animations as Lua. The weapons are in `WEAPONS` |
+| `convert_static.py <name> <export dir>` | a static mesh as a unit: the pickups, the third person meshes and the projectiles. The meshes are in `STATICS` |
+| `make_anim_assets.py <export dir>` | the animations of the UT2004 Shock Rifle, which came before `convert_weapon.py` |
+| `make_chamber_material.py <export dir>` | the Shock Rifle's chamber, as a shader graph |
+| `make_sniper_screen.py <export dir>` | the Lightning Gun's screen texture, written into the export folder for `convert_weapon.py` |
+| `make_bank.py <weapon> <export dir>` | a sound bank in `wwise/unreal_tournament`. The banks are in `WEAPONS` |
+| `render_icon.py in.bsi out.png size yaw pitch roll textures [fill [mirror]]` | an inventory icon from a converted pickup (see Icons) |
+
+**Effects**
+
+| Script | Makes |
+|---|---|
+| `make_fx_assets.py <export dir>` | effect textures as UT has them, each with its `fx_` material, the quad the particles are drawn on, and the material they all derive from |
+| `make_weapon_fx.py <export dir>` | effect textures of the later weapons, with sheets of tiles cut into a texture for each tile |
+| `make_lightning_assets.py <export dir>` | the Lightning Gun's effect textures, and its scope as gui materials |
+| `make_sniper_scope.py <export dir>` | the Sniper Rifle's scope, as a gui material |
+| `make_flak_flash.py <export dir> [name]` | the texture of a first person muzzle flash drawn on `flak_flash_mesh` |
+| `split_flak_trail.py <export dir>`, `split_smoke.py <export dir>`, `split_explosion.py <export dir>`, `split_spark.py` | textures cut from UT's sheets, or generated where UT's look wrong here |
+| `make_fx_meshes.py <export dir>` | the meshes of the effects, and the light |
+| `make_goop_mesh.py <export dir>` | the Bio Rifle's glob: a unit for each frame of its animations |
+| `make_decal_unit.py` | the box that the Bio Rifle's splat is projected from |
+| `make_combo_materials.py` | the effects' shader graphs, for what UT pans or combines: the combo, the dark sphere, the goop, the shield |
+
+**Checks and pieces**
+
+| Script | Makes |
+|---|---|
+| `preview_weapon.py <weapon> <export dir> out.png [inspect numbers]` | a picture of a first person weapon, placed the way `weapon_skin.lua` does (see Checks) |
+| `psk2bsi.py in.psk out.bsi prefix materials [scale]` | a psk or pskx as a `.bsi` mesh. `convert_static.py` runs it |
+| `tga2png.py in.tga out.png [tint]` | a tga as a png, with an optional tint |
+| `formats.py`, `quat.py`, `resources.py` | nothing: what the scripts share (TGA, PNG, psk and psa; quaternions; the text of `.texture` files and effect materials) |
 
 ### Order
 
-`make_fx_assets.py` writes the textures of the effects as they are in UT, and then `split_flak_trail.py` and `split_smoke.py` replace or add
-to those that are cut or generated (running `make_fx_assets.py` again writes `flak_trail.png` as the sheet it is, so the split is run again
-after it). `make_combo_materials.py` needs the textures of `make_fx_assets.py`. `make_fx_meshes.py` and `make_flak_flash.py` are independent.
+- `make_fx_assets.py` writes UT's textures as they are, and the `split_*.py` scripts replace some of them. Run the splits again after it.
+- `make_sniper_screen.py` before `convert_weapon.py sniper`, which reads the screen it writes.
+- `make_combo_materials.py` after `convert_weapon.py bio`: it replaces the material of the goop in the Bio Rifle's tank with a shader graph.
 
 ### Weapons
 
@@ -61,7 +85,7 @@ drawn is `ShockRifle.uc`'s `OldPlayerViewOffset` and `OldPlayerViewPivot`.
 
 ### Icons
 
-`render_icon.py in.bsi out.png size yaw pitch roll body.png[,power.png] [fill]` renders a converted mesh (a pickup's bsi, with the textures
+`render_icon.py in.bsi out.png size yaw pitch roll body.png[,power.png] [fill [mirror]]` renders a converted mesh (a pickup's bsi, with the textures
 of its geometries in order) into an icon with a transparent background. `fill` is how much of the picture the mesh takes up (0.92 if it is
 not given: the item's frame covers the edges of an icon, the Flak Cannon's is 0.72). The icons are made with the pickup of each weapon, for
 instance `pickup.bsi out.png 256 -70 0 35 <texture>` for the Flak Cannon and the UT2003 Shock Rifle, and `20 0 35` for the UT2004 Shock
