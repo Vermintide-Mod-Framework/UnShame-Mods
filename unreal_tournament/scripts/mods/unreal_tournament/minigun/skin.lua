@@ -37,8 +37,12 @@ local CONFIG = {
 	effect_offset = {18, 100, -16},
 	tracer_intensity = 1,
 	-- ShellSpewer: the shells (the ShellCasing mesh, at a scale of mSizeRange 10 times DrawScale 0.05) fly out of the gun's ejector at
-	-- 200 to 250 units a second and fall, for 0.5 to 1 s, turning as they go
+	-- 200 to 250 units a second and fall, for 0.5 to 1 s, turning as they go. They go out to the right and up, and each is off that by a
+	-- random share of mDirDev: up to half its speed more or less outwards, a fifth along the gun and 0.6 up or down, so some fly far and
+	-- some high.
 	shell_speed = {200, 250}, -- UT units a second
+	shell_up = 0.6, -- of the speed
+	shell_deviation = {0.5, 0.2, 0.6}, -- out, along the gun, up
 	shell_life = {0.5, 1},
 	shell_scale = 0.5,
 	shell_gravity = 950, -- UT units a second squared (PhysicsVolume's)
@@ -208,8 +212,12 @@ end
 -- drawn like the flash with the model's field of view, in the space of the model, where a UT unit is world_unit meters. In third person
 -- a UT unit is the world's. It is placed from the ejector, which moves with the gun, by how far it has flown. rotation is how it starts
 -- out turned.
-local function shell(ejector, right, up, world_unit, rotation)
-	local velocity = Vector3Box(right * random_between(CONFIG.shell_speed) + up * (random_between(CONFIG.shell_speed) * 0.6) + random_direction() * 30)
+local function shell(ejector, right, forward, up, world_unit, rotation)
+	local deviation = CONFIG.shell_deviation
+	local out = 1 + random_between({-deviation[1], deviation[1]})
+	local along = random_between({-deviation[2], deviation[2]})
+	local rise = CONFIG.shell_up + random_between({-deviation[3], deviation[3]})
+	local velocity = Vector3Box((right * out + forward * along + up * rise) * random_between(CONFIG.shell_speed))
 	local flown = Vector3Box(Vector3.zero())
 	local up_box = Vector3Box(up)
 	local last = Managers.time:time("game")
@@ -342,7 +350,7 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 			if camera_rotation then
 				shell(function ()
 					return api.state() and api.muzzle_model_position("b_bone_caseejector") or nil
-				end, Quaternion.right(camera_rotation), Quaternion.up(camera_rotation), world_unit, camera_rotation)
+				end, Quaternion.right(camera_rotation), Quaternion.forward(camera_rotation), Quaternion.up(camera_rotation), world_unit, camera_rotation)
 			end
 
 			return
@@ -375,7 +383,7 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 
 	shell(function ()
 		return api.third_person.point_position(owner_unit, ejector[1], ejector[2], ejector[3])
-	end, Quaternion.right(rotation), Quaternion.up(rotation), UNIT, rotation)
+	end, Quaternion.right(rotation), Quaternion.forward(rotation), Quaternion.up(rotation), UNIT, rotation)
 
 	if not utils.is_local_player_unit(owner_unit) then
 		-- The others hear the gun from where it is, once for each time its sound would start again
