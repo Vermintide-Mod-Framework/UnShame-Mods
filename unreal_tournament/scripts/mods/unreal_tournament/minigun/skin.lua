@@ -405,7 +405,7 @@ local function new_skin(variant)
 			scale = 1,
 			-- (moved back from the mesh's origin, set in the game)
 			grip_right = 0,
-			grip_forward = 80,
+			grip_forward = 72,
 			grip_up = 0,
 			-- (turned about the left hand so that the gun's line runs through the right hand too, then a little to the right, set in the
 			-- game)
