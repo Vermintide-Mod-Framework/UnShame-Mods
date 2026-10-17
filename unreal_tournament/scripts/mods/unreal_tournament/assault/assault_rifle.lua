@@ -138,7 +138,8 @@ mod.explosion_push_speeds[EXPLOSION] = function ()
 	return CONFIG.grenade_jump_speed
 end
 
--- What the skin draws, and the player's grenades
+-- The rifle's state: the grenades in flight, and the player's grenade count and timing. The skin reads the explosion's name from it, and
+-- the tests the grenade count.
 mod.assault = {
 	explosion = EXPLOSION,
 	grenades = {}, -- the grenades in flight, on every machine: { id, owner_unit, position, velocity, ... }
