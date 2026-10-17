@@ -531,7 +531,10 @@ end)
 -- look, forward, back and to the sides, with no gravity, and stops when no key is held. They still collide with the level. The speed is
 -- UT's AirSpeed, which is its GroundSpeed (440), so this game's run speed. "walk" lands them again. The fall from where the flight ends
 -- is the only one that counts. It works whether the Movement option is on or not.
+-- UT's cheat "ghost" (CheatManager.Ghost) is the same flight through walls: the player is moved by the game's own movement without the
+-- mover (update_script_driven_no_mover_movement), which nothing blocks, and the mover is kept with them.
 local flying_unit
+local ghost = false
 
 -- The velocity of the flight now
 local function flight_velocity(unit)
@@ -558,7 +561,12 @@ local function fly(unit)
 	end
 
 	locomotion_extension:set_maximum_upwards_velocity(math.huge)
-	locomotion_extension:set_forced_velocity(velocity)
+
+	-- (the movement without the mover takes only the wanted velocity, and a forced one would be left for the first move after the ghost)
+	if not ghost then
+		locomotion_extension:set_forced_velocity(velocity)
+	end
+
 	locomotion_extension:set_wanted_velocity(velocity)
 
 	-- (the height a fall is measured from is where the flight is; on the ground it would also start a landing every frame)
@@ -573,13 +581,27 @@ mod:command("fly", "- you fly the way you look, with no gravity, until /walk (UT
 
 	if unit and Unit.alive(unit) then
 		flying_unit = unit
+		ghost = false
 
 		mod:echo("You feel much lighter")
 	end
 end)
 
-mod:command("walk", "- ends /fly", function ()
+mod:command("ghost", "- you fly the way you look, through walls, until /walk (UT's ghost)", function ()
+	local player = Managers.player:local_player_safe()
+	local unit = player and player.player_unit
+
+	if unit and Unit.alive(unit) then
+		flying_unit = unit
+		ghost = true
+
+		mod:echo("You feel ethereal")
+	end
+end)
+
+mod:command("walk", "- ends /fly and /ghost", function ()
 	flying_unit = nil
+	ghost = false
 end)
 
 -- The flight is the player's own character's. It ends with that character (a death, a new level).
@@ -592,6 +614,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 
 	if not player or player.player_unit ~= flying_unit or not Unit.alive(flying_unit) then
 		flying_unit = nil
+		ghost = false
 	end
 end
 
@@ -636,6 +659,14 @@ local fall_speeds = setmetatable({}, {
 -- takes away the speed that goes into what the player hit. Here the upward speed is cut to what the player moved when the mover
 -- hit something, as the game already does for the speed sideways.
 mod:hook(PlayerUnitLocomotionExtension, "update_script_driven_movement", function (func, self, unit, dt, t, calculate_fall_velocity, ...)
+	-- (a ghost moves without the mover, which is put where they are, see /ghost)
+	if unit == flying_unit and ghost then
+		self:update_script_driven_no_mover_movement(unit, dt, t)
+		Mover.set_position(Unit.mover(unit), Unit.local_position(unit, 0))
+
+		return
+	end
+
 	-- (a flight has no gravity, see /fly)
 	if unit == flying_unit then
 		local gravity_scale = self._script_driven_gravity_scale

@@ -76,7 +76,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Load sound when ammo comes back | - | - | - | - | - |
 | Shot during a load animation | - | - | - | - | - |
 | Multi-load at 1, 2 and 3 rounds | - | - | - | - | - |
-| `/loaded` | - | - | - | - | - |
+| `/allammo` | - | - | - | - | - |
 | **Effects** | | | | | |
 | Muzzle flash | ok (white disk with a blue rim, size, place and fade side by side with UT; it reads its texture linearly, as UT adds it) | no: close. UT's mesh with the tile of Minigun_burst its UVs use, blended as FB_Brighten (c + d(1 - c)), 5 a round that replace the last round's. Place and size match pictures of UT; ours is a more saturated orange where UT's is paler. | close: ShieldCharge's green lines while charging, dim as UT's; ForceRingA's rings on a punch show as a purple haze beside the gun where UT's are a faint arc mostly hidden behind it (how xEmitter sizes a disc is in UT's engine) | - | close: AssaultMuzFlash1st is the Minigun's flash at DrawScale 1.2, so it has the Minigun's colour difference |
 | Projectile model | - | ok (the shells are UT's ShellCasing mesh, drawn with the gun) | - | ok (RedeemerMissile, turning, with its light and flight sound) | ok (UT's grenade mesh, spinning) |

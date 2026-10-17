@@ -791,12 +791,12 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	end
 end
 
--- Development command, like UT's "loaded": fills the ranged weapon's ammo, or sets it to the amount given
-mod:command("loaded", "[amount] - fills the ammo of the ranged weapon, or sets it to that (a whole number)", function (amount)
+-- UT's cheat "allammo" (CheatManager.AllAmmo): fills the ranged weapon's ammo, or sets it to the amount given
+mod:command("allammo", "[amount] - fills the ammo of the ranged weapon, or sets it to that (a whole number)", function (amount)
 	local number = tonumber(amount)
 
 	if amount and (not number or number ~= math.floor(number) or number < 0) then
-		mod:echo("loaded: a whole number, or nothing to fill it")
+		mod:echo("allammo: a whole number, or nothing to fill it")
 
 		return
 	end
@@ -808,7 +808,7 @@ mod:command("loaded", "[amount] - fills the ammo of the ranged weapon, or sets i
 	local ammo_extension = slot_data and GearUtils.get_ammo_extension(slot_data.right_unit_1p, slot_data.left_unit_1p)
 
 	if not ammo_extension then
-		mod:echo("loaded: no ranged weapon with ammo")
+		mod:echo("allammo: no ranged weapon with ammo")
 
 		return
 	end
@@ -826,7 +826,7 @@ mod:command("loaded", "[amount] - fills the ammo of the ranged weapon, or sets i
 		ammo_extension:add_ammo()
 	end
 
-	mod:echo("loaded: %d", ammo_extension:total_remaining_ammo())
+	mod:echo("allammo: %d", ammo_extension:total_remaining_ammo())
 end)
 
 -- How bots shoot a weapon of the mod. The game's bot shooting (BTBotShootAction) is hooked once, here, because a function can be hooked

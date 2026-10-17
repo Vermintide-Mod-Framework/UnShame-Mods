@@ -22,7 +22,8 @@ local function is_option_on(setting_id)
 end
 
 -- No Bots: the game modes have a flag that says there are no bots, and they remove any existing bots when it is set. The flag is set
--- for the length of the call that handles the bots.
+-- for the length of the call that handles the bots. /addbots and /killbots (cheats.lua) set how many bots there may be (mod.bot_cap), with
+-- the game's own cap on the number of bots, which is set for the call the same way.
 for _, game_mode_name in ipairs({
 	"GameModeAdventure",
 	"GameModeDeus",
@@ -33,14 +34,20 @@ for _, game_mode_name in ipairs({
 	if game_mode then
 		mod:hook(game_mode, "_handle_bots", function (func, self, ...)
 			local bots_disabled = script_data.ai_bots_disabled
+			local bot_cap = script_data.cap_num_bots
 
 			if is_option_on("no_bots") then
 				script_data.ai_bots_disabled = true
 			end
 
+			if mod.bot_cap then
+				script_data.cap_num_bots = mod.bot_cap
+			end
+
 			func(self, ...)
 
 			script_data.ai_bots_disabled = bots_disabled
+			script_data.cap_num_bots = bot_cap
 		end)
 	end
 end
