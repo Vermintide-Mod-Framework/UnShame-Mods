@@ -488,6 +488,22 @@ local function new(def, looks)
 						mod:echo("    box: half sizes %.3f %.3f %.3f, along the unit's (%.2f %.2f %.2f) (%.2f %.2f %.2f) (%.2f %.2f %.2f), middle (%.3f %.3f %.3f)", Vector3.x(box_radius), Vector3.y(box_radius), Vector3.z(box_radius), Vector3.x(x), Vector3.y(x), Vector3.z(x), Vector3.x(y), Vector3.y(y), Vector3.z(y), Vector3.x(z), Vector3.y(z), Vector3.z(z), Vector3.x(middle), Vector3.y(middle), Vector3.z(middle))
 					end
 				end
+
+				-- Where the hands are on the skin's mesh, in the mesh's own UT units (right, forward, up), as the grip and the muzzle are
+				local entry = attached[character]
+
+				if entry and Unit.alive(entry.unit) then
+					local units_per_meter = 1 / (entry.config.meters_per_unit * entry.config.scale)
+					local inverse = Quaternion.inverse(Unit.world_rotation(entry.unit, 0))
+
+					for _, node_name in ipairs({ "j_leftweaponattach", "j_rightweaponattach", "j_lefthand", "j_righthand" }) do
+						if Unit.has_node(character, node_name) then
+							local offset = Quaternion.rotate(inverse, Unit.world_position(character, Unit.node(character, node_name)) - Unit.world_position(entry.unit, 0)) * units_per_meter
+
+							mod:echo("  %s on the mesh: %.1f right, %.1f forward, %.1f up", node_name, Vector3.x(offset), Vector3.y(offset), Vector3.z(offset))
+						end
+					end
+				end
 			end
 		end
 	end
