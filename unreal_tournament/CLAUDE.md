@@ -62,7 +62,8 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
 - The framework lets a mod hook a function once: a second `mod:hook` on the same function is refused. Shared hooks are in `hooks.lua`, with tables
   of callbacks that the weapons add to.
 - Things that crash the game: a unit of the mod alive when its package is unloaded; playing an effect that is not loaded
-  (`effects.is_available`); spawning a projectile unit that is not loaded; a career equipping an item it is not locked to (`can_wield`);
+  (the game's effects the mod plays are named with `effects.game_effect` and must be in a package the game always loads: the `effects`
+  test checks them); spawning a projectile unit that is not loaded; a career equipping an item it is not locked to (`can_wield`);
   passing a boxed vector to an engine function (`utils.as_vector`).
 - Vectors are userdata (`Vector3.x(v)`, not `v.x`); `Quaternion.from_euler_angles_xyz` takes degrees; `POSITION_LOOKUP[player_unit]` is not a plain
   vector.

@@ -89,8 +89,8 @@ local CONFIG = {
 	explosion_flash_growth = 500,
 	explosion_flash_life = 0.25,
 	explosion_flash_intensity = 0.5,
-	-- The game's own explosion, with its smoke and the mark it leaves, is played together with the flash if the game has it loaded
-	explosion_effect = "fx/wpnfx_frag_grenade_impact",
+	-- The game's own explosion, with its smoke and the mark it leaves, is played together with the flash
+	explosion_effect = mod.effects.game_effect("fx/wpnfx_frag_grenade_impact"),
 	-- Another player's shot is recognized by its first chunk. Chunks that start further apart than this many seconds are another shot.
 	shot_gap = 0.25,
 	inspect_pose_speed = 5, -- how fast the model moves to the inspect pose and back, per second

@@ -102,7 +102,7 @@ local CONFIG = {
 	-- Combo: the blast, which the skin draws, is followed by everything that died being pulled back to the center, like in UT.
 	-- The ring of the game's own effect (Kruber's shockwave) bends the light behind it, which the skin's effects cannot do. One
 	-- ring is played where the combo goes off, turned to face the player, at combo_distortion_scale times the effect's own size.
-	combo_ring_effect = "fx/chr_kruber_shockwave",
+	combo_ring_effect = mod.effects.game_effect("fx/chr_kruber_shockwave"),
 	combo_distortion_scale = 0.7,
 	-- How high above the effect's origin its ring is, in meters. The effect is made to be played at a character's feet.
 	combo_ring_height = 1,

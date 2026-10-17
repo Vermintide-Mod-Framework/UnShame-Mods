@@ -36,7 +36,6 @@ local mod = get_mod("unreal_tournament")
 -- character. They also hear a drone while something is linked, and a gust for every yank.
 
 local utils = mod.utils
-local effects = mod.effects
 local with_valid_positions = utils.with_valid_positions
 local register_damage_profile = utils.register_damage_profile
 
@@ -99,7 +98,7 @@ local CONFIG = {
 	rescue_max_tries = 4,
 	beam_aim_curve_gain = 1.3, -- how much the aim bows the first half of the beam, on top of beam_aim_curve
 	beam_hang_share = 0.7, -- how much of what hangs and lags a beam bends the first half by
-	ally_effect = "fx/thornsister_buff", -- what is seen on a linked ally, played again every ally_effect_interval
+	ally_effect = mod.effects.game_effect("fx/thornsister_buff"), -- what is seen on a linked ally, played again every ally_effect_interval
 	ally_effect_interval = 0.8, -- seconds
 	ally_attack_grace = 0.5, -- seconds the beam still costs heat after the ally's attack
 	-- Enemy: it is held by being staggered over and over, with stagger_duration for each stagger. Each new stagger is given when
@@ -2092,11 +2091,6 @@ end
 -- that follows them, played again every ally_effect_interval seconds while they are linked. Everyone sees it, because the host,
 -- which makes the link work, tells the others each time.
 local function play_ally_effect(world, unit)
-	-- An effect that is not loaded crashes the game.
-	if not effects.is_available(CONFIG.ally_effect) then
-		return
-	end
-
 	local effect_id = World.create_particles(world, CONFIG.ally_effect, Unit.world_position(unit, 0), Quaternion.identity())
 
 	World.link_particles(world, effect_id, unit, Unit.node(unit, "root_point"), Matrix4x4.identity(), "stop")

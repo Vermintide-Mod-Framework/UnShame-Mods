@@ -1,7 +1,8 @@
 local mod = get_mod("unreal_tournament")
 
--- Particle effects that can be scaled. The game only loads its effects together with the characters and weapons that use them, and
--- playing an effect that isn't loaded crashes the game. So an effect is only played when it is available.
+-- The game's particle effects, played as they are or scaled. Playing an effect that isn't loaded crashes the game, so the mod only plays
+-- effects from packages the game always loads: resource_packages/ingame, and the DLC packages, which boot.lua loads for every DLC
+-- whether it is owned or not.
 
 local utils = mod.utils
 
@@ -16,21 +17,19 @@ local CONFIG = {
 local effects = {}
 mod.effects = effects
 
-effects.is_available = function (effect_name)
-	local ok, available = pcall(Application.can_get, "particles", effect_name)
+-- The game's effects that the mod plays, as a set of names. The extras mod's effects test checks that each is loaded.
+effects.game_effects = {}
 
-	return ok and available
+-- Names a game effect that the mod plays, and returns the name. Every game effect the mod plays is named with this.
+effects.game_effect = function (effect_name)
+	effects.game_effects[effect_name] = true
+
+	return effect_name
 end
 
--- Plays the effect as it is, at its own size, if it is available. Returns whether it was played.
+-- Plays the effect as it is, at its own size.
 effects.create = function (world, effect_name, position, rotation)
-	if not effects.is_available(effect_name) then
-		return false
-	end
-
 	World.create_particles(world, effect_name, position, rotation or Quaternion.identity())
-
-	return true
 end
 
 local timed_effects = {}
@@ -44,13 +43,8 @@ local function destroy_timed_effect(effect)
 	end
 end
 
--- Starts the effect at the scale if it is available, and returns it, or returns nil if it isn't available. The effect goes on until
--- effects.stop or effects.destroy.
+-- Starts the effect at the scale and returns it. The effect goes on until effects.stop or effects.destroy.
 effects.start = function (world, effect_name, position, scale, rotation)
-	if not effects.is_available(effect_name) then
-		return nil
-	end
-
 	rotation = rotation or Quaternion.identity()
 
 	local unit = Managers.state.unit_spawner:spawn_local_unit(CONFIG.fx_unit_name, position, Quaternion.identity())
@@ -79,18 +73,12 @@ end
 -- Removes the effect at once.
 effects.destroy = destroy_timed_effect
 
--- Plays the effect at the scale if it is available. Returns whether it was played.
+-- Plays the effect at the scale.
 effects.play = function (world, effect_name, position, scale, rotation)
 	local effect = effects.start(world, effect_name, position, scale, rotation)
 
-	if not effect then
-		return false
-	end
-
 	effect.age = 0
 	timed_effects[#timed_effects + 1] = effect
-
-	return true
 end
 
 -- Plays an effect that is a ring in its own plane. The ring sits at the height above the effect's origin, at the scale, and is turned
@@ -100,7 +88,7 @@ effects.play_facing = function (world, effect_name, position, scale, height)
 	local camera_position, camera_rotation = utils.camera_pose()
 
 	if not camera_position then
-		return false
+		return
 	end
 
 	-- The effect's z axis is the way it faces, which is towards the camera.
@@ -108,7 +96,7 @@ effects.play_facing = function (world, effect_name, position, scale, height)
 	local rotation = Quaternion.look(Quaternion.up(camera_rotation), front)
 
 	-- The ring is above the effect's origin and is turned about that origin, so the origin is moved to put the ring on the position.
-	return effects.play(world, effect_name, position - Quaternion.rotate(rotation, Vector3(0, 0, height * scale)), scale, rotation)
+	effects.play(world, effect_name, position - Quaternion.rotate(rotation, Vector3(0, 0, height * scale)), scale, rotation)
 end
 
 effects.update = function (dt)

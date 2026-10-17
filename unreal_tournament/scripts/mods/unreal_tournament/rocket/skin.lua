@@ -47,9 +47,9 @@ local CONFIG = {
 		0.85,
 	},
 	rocket_sound_seconds = 1.87, -- length of the rocket's sound loop (RocketLauncherProjectile)
-	-- The explosion (NewExplosionA) has the game's own explosion, with its smoke and the mark it leaves (only if the game has it
-	-- loaded), a flash, and three fireballs. Each fireball plays a sheet of 16 frames. All three use the same sheet, one of two.
-	explosion_effect = "fx/wpnfx_frag_grenade_impact",
+	-- The explosion (NewExplosionA) has the game's own explosion, with its smoke and the mark it leaves, a flash, and three fireballs.
+	-- Each fireball plays a sheet of 16 frames. All three use the same sheet, one of two.
+	explosion_effect = mod.effects.game_effect("fx/wpnfx_frag_grenade_impact"),
 	explosion_flash_size = 300,
 	explosion_flash_growth = 500,
 	explosion_flash_life = 0.25,

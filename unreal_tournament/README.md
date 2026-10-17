@@ -36,8 +36,9 @@ What the mod contains at the moment is in the code. `TODO.md` is what is not don
 - **Skins.** `weapon_skin.new(...)` makes the first person model: the game's own unit is hidden, the mod's model is shown and posed every frame
   from the Lua animation tables. Its third person holds the mesh in the hand of every character that wields the weapon, and in the hero and item
   screens.
-- **Effects** are sprites, beams and meshes drawn by `skin_particles.lua`, because UT's emitters cannot be exported. The game's own effects are
-  only played if they are loaded (`effects.is_available`).
+- **Effects** are sprites, beams and meshes drawn by `skin_particles.lua`, because UT's emitters cannot be exported. The game's own effects
+  that the mod plays are only ones from packages the game always loads (`resource_packages/ingame` and the DLC packages). They are named
+  with `effects.game_effect`, and the `effects` test checks that each is loaded.
 - **A career that equips an item it is not locked to crashes the game**, so an item of its own is locked to the careers of the weapon it is a
   copy of (`can_wield`).
 - **Units that are alive when the mod's package is unloaded crash the game**, so everything the mod spawns is destroyed on level exit and on
