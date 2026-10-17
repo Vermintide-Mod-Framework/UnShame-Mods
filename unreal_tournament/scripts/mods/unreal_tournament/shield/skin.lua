@@ -552,17 +552,16 @@ local GRIPS = {
 		roll = 0,
 		follow_game_unit = 3,
 	},
-	-- The scythe's own pose (the base weapon's), held in both hands: the mesh is turned as the game's scythe is, tipped a quarter so that
-	-- it lies along the shaft, which runs along the scythe's own z (its origin is in the right hand), pointing down the shaft, rolled a
-	-- quarter to stand upright, and turned a little to the hero's right
+	-- Sienna has no weapon held like a gun. As her Shock Rifle is: in the right hand, pointing the way she faces, level, and not turned
+	-- with the scythe she holds
 	shield_gun_bw = {
 		grip_right = 0,
 		grip_forward = 0,
 		grip_up = 0,
-		yaw = -15,
-		pitch = -90,
-		roll = -90,
-		follow_game_unit = 2,
+		yaw = 0,
+		pitch = 0,
+		roll = 0,
+		follow_game_unit = 0,
 	},
 	-- The Life Staff's pose: the game links the staff to the left hand's node (AttachmentNodeLinking.one_handed_melee_weapon.left), so the
 	-- mesh is linked there and turned as the node is, as for the Volley Crossbow, and turned well over a quarter to the hero's right to
