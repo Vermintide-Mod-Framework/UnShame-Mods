@@ -43,9 +43,9 @@ local CONFIG = {
 	ring_color = { 32 / 255, 1, 32 / 255 },
 	-- Next to a picture of UT's, the rings were too big, too bright and too slow, so they are drawn at this share of UT's size and
 	-- brightness, and play this many times faster (the same path in less time). This is the mod's own.
-	ring_view_scale = 0.5,
-	ring_intensity = 0.4,
-	ring_time_scale = 2,
+	ring_view_scale = 0.75,
+	ring_intensity = 0.7,
+	ring_time_scale = 1.5,
 	-- ShieldCharge, the sparks of the charge (ShieldFire.Timer): lines that appear up to 5 units from GetEffectStart (mPosDev) and fly
 	-- towards it, at ChargeScale * 15 units a second, 20 + ChargeScale * 10 a second, each lasting max(ChargeScale / 30, 0.2) s, where
 	-- ChargeScale is the time charged, up to FullyChargedTime. A line is 0.2 to 0.4 units in size (xEmitter's sizes are a half width, so
