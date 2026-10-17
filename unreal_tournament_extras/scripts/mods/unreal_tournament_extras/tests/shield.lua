@@ -18,7 +18,7 @@ local HORDE = {
 	distance = 3, -- m
 	spacing = 0.6, -- m
 	-- How long the player punches
-	time = 150, -- s
+	time = 37.5, -- s
 }
 
 -- The horde of "a punch never hits the player who punches" (t.fight_horde): the player starts each dodge keep m from the nearest rat
