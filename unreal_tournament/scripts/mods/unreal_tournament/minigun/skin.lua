@@ -36,7 +36,7 @@ local CONFIG = {
 	-- Minigun.EffectOffset: where the tracers start in the player's view (right, forward, up, UT units from the eye)
 	effect_offset = {18, 100, -16},
 	tracer_intensity = 1,
-	-- ShellSpewer: the shells (the ShellCasing mesh, at a scale of mSizeRange 10 times DrawScale 0.05) fly out of the gun's ejector at
+	-- ShellSpewer: the shells (the ShellCasing mesh, 8.6 units long) fly out of the gun's ejector at
 	-- 200 to 250 units a second and fall, for 0.5 to 1 s, turning as they go. They go out to the right and up, and each is off that by a
 	-- random share of mDirDev: up to half its speed more or less outwards, a fifth along the gun and 0.6 up or down, so some fly far and
 	-- some high.
@@ -44,7 +44,8 @@ local CONFIG = {
 	shell_up = 0.6, -- of the speed
 	shell_deviation = {0.5, 0.2, 0.6}, -- out, along the gun, up
 	shell_life = {0.5, 1},
-	shell_scale = 0.5,
+	-- The shell's size. mSizeRange 10 times DrawScale 0.05 would be 0.5, which looked too big next to UT's (set in the game).
+	shell_scale = 0.35,
 	shell_gravity = 950, -- UT units a second squared (PhysicsVolume's)
 	shell_spin = 12, -- radians a second, at most, each way
 	-- The winding sound plays while the barrels turn at less than full speed. The fire sound loops, so it is started again when its
@@ -350,7 +351,8 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 			if camera_rotation then
 				shell(function ()
 					return api.state() and api.muzzle_model_position("b_bone_caseejector") or nil
-				end, Quaternion.right(camera_rotation), Quaternion.forward(camera_rotation), Quaternion.up(camera_rotation), world_unit, camera_rotation)
+				end, Quaternion.right(camera_rotation), Quaternion.forward(camera_rotation), Quaternion.up(camera_rotation), world_unit,
+					camera_rotation)
 			end
 
 			return
