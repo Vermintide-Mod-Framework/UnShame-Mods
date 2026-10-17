@@ -365,33 +365,29 @@ skin_api = mod.weapon_skin.new({
 	inspect_pivot_right = 24.7,
 	inspect_pivot_forward = 55,
 	inspect_pivot_up = -38.7,
-	-- WeaponStaticMesh.FlakCannonPickup (DrawScale 0.55). Its barrel runs along the mesh's own Y, and the grip is under its back.
+	-- UT's third person mesh of the weapon (FlakAttachment's Weapons.Flak_3rd) at UT's size in a player's hand (DrawScale 0.4). Its origin
+	-- is the grip, and its barrel runs along its forward, to the muzzle (the mesh's tip bone).
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
-		unit_name = "units/ut/flak/pickup",
+		unit_name = "units/ut/flak/third_person",
 		-- The game links the blunderbuss, the crossbow and the Drakegun to the left hand's node (AttachmentNodeLinking.rifles).
 		hand_node = "j_leftweaponattach",
-		meters_per_unit = 0.011,
-		-- UT's third person mesh is as long as the pickup would be without its DrawScale. That is about half the height of a player's
-		-- mesh (113 units against 233), or 0.85 m for a character of 1.8 m.
-		scale = 0.7,
-		grip_right = 42,
+		meters_per_unit = 0.02 * 0.4,
+		scale = 1,
+		grip_right = 0,
 		grip_forward = 0,
-		grip_up = -6,
-		yaw = -60,
+		grip_up = 0,
+		yaw = 0,
 		pitch = 0,
 		roll = 0,
-		-- In the world the cannon moves with the game's Blunderbuss, which the game animates with the arms. At first the cannon points
-		-- the way the character faces, as it does on the hero screen. A second after it is held, the way the unit is turned from that
-		-- is stored. If the character was not standing as it should at that moment, /skin flak_cannon 3p follow_recalibrate 1 measures
-		-- it again, and follow_game_unit 0 turns the following off.
-		follow_game_unit = 1,
+		-- In the world the cannon is turned as the game's Blunderbuss in the hand is, which the game animates with the arms
+		follow_game_unit = 2,
 		follow_calibrate_seconds = 1,
-		muzzle_right = -56,
-		muzzle_forward = 0,
-		muzzle_up = 12,
-		menu_yaw = 180,
+		muzzle_right = 0,
+		muzzle_forward = 98,
+		muzzle_up = 8,
+		menu_yaw = -90,
 	},
 	on_create = function ()
 		skin_api.play_sound("ut_flak_select")

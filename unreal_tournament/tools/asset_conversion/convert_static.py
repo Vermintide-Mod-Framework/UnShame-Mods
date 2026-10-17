@@ -22,6 +22,14 @@ STATICS = {
         'scale': 0.011,
         'unit': 'units/ut/flak/pickup',
     },
+    # The Flak Cannon's third person mesh (FlakAttachment's Weapons.Flak_3rd, at xWeaponAttachment's DrawScale 0.4), with the pickup's
+    # material, which has the same texture (Flak3rdperson)
+    'flak_3rd': {
+        'pskx': 'Weapons/SkeletalMesh/Flak_3rd.psk',
+        'materials': [('units/ut/flak/pickup_m0', 'existing')],
+        'scale': 0.02 * 0.4,
+        'unit': 'units/ut/flak/third_person',
+    },
     'shock2003_pickup': {
         'pskx': 'WeaponStaticMesh/StaticMesh/ShockRiflePickup.pskx',
         'materials': [('WeaponSkins/Texture/ShockTex0.tga', 'opaque')],

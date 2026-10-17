@@ -17,6 +17,7 @@ unit = [
 	"units/ut/shock2003/third_person"
 	"units/ut/flak/flak_cannon"
 	"units/ut/flak/pickup"
+	"units/ut/flak/third_person"
 	"units/ut/flak/chunk"
 	"units/ut/flak/shell"
 	"units/ut/rocket/rocket_launcher"
