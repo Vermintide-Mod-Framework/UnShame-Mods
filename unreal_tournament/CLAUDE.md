@@ -10,8 +10,8 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
   it fails.
 - Every commit has its build number: in `scripts/mods/unreal_tournament/unreal_tournament.lua`, `(build N)` with N the number of commits
   (`git rev-list --count HEAD`) plus one. Bump it, build, commit, **and push**, for every change, on this branch too. Do not ask whether to commit.
-- Edit code with the Edit and Write tools, not with Python or sed scripts through the shell (they have mangled backslashes and line endings). The
-  files of the flak and the shock have CRLF line endings: keep them.
+- Edit code with the Edit and Write tools, not with Python or sed scripts through the shell (they have mangled backslashes and line endings). Every
+  text file has LF line endings (`.gitattributes` in the `mods` folder).
 - The game can be started and driven from here with the scripts in `tools/` (PowerShell). `run_tests.ps1 -Suite <suite>` does the whole loop: it
   starts the game if it is not running (`start_game.ps1`: the game's program directly, without the launcher, and Enter on Start Game and on
   Adventure in the main menu), runs the in-game suite, and prints its results. It notices a crash (the game's process is gone), prints the
