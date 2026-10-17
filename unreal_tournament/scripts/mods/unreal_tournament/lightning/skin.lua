@@ -574,15 +574,16 @@ local function new_skin(variant)
 		inspect_pivot_right = 0,
 		inspect_pivot_forward = 30,
 		inspect_pivot_up = 0,
-		-- The lockout pose (see lockout_pose_speed): on its side, lower and to the left
-		alt_pose_right = -4,
-		alt_pose_forward = -2,
-		alt_pose_up = -5,
-		alt_pose_roll = -75,
+		-- The lockout pose (see lockout_pose_speed): turned on its side, lower and further right, in the corner of the view
+		alt_pose_right = 2,
+		alt_pose_forward = 0,
+		alt_pose_up = -3,
+		alt_pose_roll = -40,
 		alt_pose_pitch = 0,
-		alt_pose_yaw = 10,
+		alt_pose_yaw = 0,
 		-- WeaponStaticMesh.SniperRiflePickup (DrawScale 0.45). The game links the staff to the left hand's node
-		-- (AttachmentNodeLinking.one_handed_melee_weapon.left). The staff is held upright, so the mesh is turned from the hand's node.
+		-- (AttachmentNodeLinking.one_handed_melee_weapon.left), whose forward points out to the hero's left. The mesh is turned a quarter
+		-- from it, so it points ahead from the hand at her side.
 		third_person = {
 			id = variant.id,
 			template = definition.template,
@@ -593,7 +594,7 @@ local function new_skin(variant)
 			grip_right = 0,
 			grip_forward = 0,
 			grip_up = -8,
-			yaw = 0,
+			yaw = -90,
 			pitch = 0,
 			roll = 0,
 			follow_game_unit = 3,
