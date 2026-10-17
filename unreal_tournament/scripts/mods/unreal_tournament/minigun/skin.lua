@@ -40,12 +40,11 @@ local CONFIG = {
 	-- Minigun.EffectOffset: where the tracers start in the player's view (right, forward, up, UT units from the eye)
 	effect_offset = {18, 100, -16},
 	tracer_intensity = 1,
-	-- ShellSpewer: the shells (the ShellCasing mesh, 8.6 units long) fly out of the gun's ejector at
-	-- 200 to 250 units a second and fall, for 0.5 to 1 s, turning as they go. They go out to the right and up, and each is off that by a
-	-- random share of shell_deviation: up to half its speed more or less outwards, and some of it along the gun and up or down, so some
-	-- fly far and some high. ShellSpewer's mDirDev (0.5, 0.2 and 0.6) looked too even next to UT, so the last two are wider (set in the
-	-- game).
-	shell_speed = {200, 250}, -- UT units a second
+	-- ShellSpewer: the shells (the ShellCasing mesh, 8.6 units long) fly out of the gun's ejector and fall, for 0.5 to 1 s, turning as
+	-- they go. They go out to the right and up, and each is off that by a random share of shell_deviation: up to half its speed more or
+	-- less outwards, and some of it along the gun and up or down, so some fly far and some high. ShellSpewer's mSpeedRange (200 to 250)
+	-- and mDirDev (0.5, 0.2 and 0.6) looked too even next to UT, so the speeds and the last two are wider (set in the game).
+	shell_speed = {100, 300}, -- UT units a second
 	shell_up = 0.8, -- of the speed
 	shell_deviation = {0.5, 0.4, 1}, -- out, along the gun, up
 	shell_life = {0.5, 1},
