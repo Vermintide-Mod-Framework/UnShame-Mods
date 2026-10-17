@@ -13,21 +13,14 @@ local mod = get_mod("unreal_tournament")
 
 local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/assault/skin_animations")
-local particles = mod.skin_particles
 
 local SETTING_ID = "assault_rifle"
 local TEMPLATE_NAME = mod.items.weapons[SETTING_ID].template
 local assault = mod.assault
 
 local CONFIG = {
-	-- AssaultMuzFlash1st: the Minigun's flash (MinigunMuzFlash1st) at DrawScale 1.2. See the Minigun's skin for what it is.
-	flash_count = 5,
-	flash_scale = { 0.05, 0.08 },
-	flash_growth = 3,
+	-- AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2 (see minigun/muzzle_flash.lua)
 	flash_draw_scale = 1.2,
-	flash_fit = 0.5, -- the Minigun's value, which was fitted to pictures of UT2004
-	flash_life = { 0.1, 0.15 },
-	flash_attenuation = 0.2,
 	-- Grenade: RandSpin(25000). It spins about a random axis at 25000 of UT's rotation units a second, where 65536 is a full turn.
 	grenade_spin = 25000 / 65536,
 	-- A bounce faster than this plays the impact sound (Grenade.HitWall)
@@ -41,47 +34,17 @@ local UNIT = utils.UT_UNIT
 
 local skin_apis = {}
 
-local random_between = utils.random_between
-local attenuation = particles.attenuation
-
 -- The flash of a round at the muzzle of a rifle in the player's view (see the Minigun's skin)
 local function flash(api)
 	local skin = api.state()
-	local _, camera_rotation = utils.camera_pose()
 
-	if not skin or not camera_rotation then
+	if not skin then
 		return
 	end
 
-	local world_unit = (skin.unit_scale or UNIT) / api.draw_scale()
-	local factor = world_unit / UNIT * CONFIG.flash_draw_scale * CONFIG.flash_fit
-
-	for _ = 1, CONFIG.flash_count do
-		local tile = math.random(0, 3)
-		local life = random_between(CONFIG.flash_life)
-		local start = random_between(CONFIG.flash_scale)
-
-		particles.mesh({
-			additive = 0,
-			brightness = function (fraction)
-				return attenuation(fraction, CONFIG.flash_attenuation)
-			end,
-			color = { 1, 1, 1 },
-			follow = function ()
-				return api.state() == skin and api.muzzle_model_position() or nil
-			end,
-			life = life,
-			material = "units/ut/fx/fx_weapon_minigun_burst_" .. tile,
-			rotation = camera_rotation,
-			scale = function (fraction)
-				return (start + CONFIG.flash_growth * fraction * life) * factor
-			end,
-			spin = 0,
-			angle = math.random() * 360,
-			spin_axis = Vector3(0, 1, 0),
-			unit = "units/ut/fx/minigun_flash_mesh",
-		})
-	end
+	mod.minigun_muzzle_flash(api, function ()
+		return api.state() == skin and api.muzzle_model_position() or nil
+	end, (skin.unit_scale or UNIT) / api.draw_scale(), CONFIG.flash_draw_scale)
 end
 
 -- Plays an animation on both rifles
