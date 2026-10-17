@@ -75,10 +75,9 @@ local VARIANTS = {
 		key = "ut_shield_gun_we",
 		template = "ut_shield_gun_we_template",
 		-- The Life Staff's pose (the Sister of the Thorn's: every career of hers has the same third person body, and so its animations).
-		-- The punches are its shot. It has no shove, so the push is its shot too. Its held second attack is not the shield: it turns the
-		-- hand so far that the gun would point up.
+		-- It has no shove, so the push is its shot. The punches and the bash have no animation. Its held second attack is not the shield:
+		-- it turns the hand so far that the gun would point up.
 		pose_3p = "to_life_staff",
-		punch_3p = "attack_shoot",
 		push_3p = "attack_shoot",
 	},
 }
@@ -1867,8 +1866,13 @@ local function apply_template(template_name)
 		end
 
 		for name, action in pairs(actions.action_one) do
-			if name == "punch" or name == "punch_auto" or name == "bash" then
+			if (name == "punch" or name == "punch_auto" or name == "bash") and variant.punch_3p then
 				action.anim_event_3p = variant.punch_3p
+			elseif name == "punch" or name == "punch_auto" or name == "bash" then
+				-- (with no punch_3p the body plays nothing for them: without an event of its own, the game would play the base weapon's
+				-- attack. First person doesn't play the base's attacks either, see the skin's first_person_animation_filters.)
+				action.anim_event = nil
+				action.anim_end_event = nil
 			elseif name == "push" then
 				action.anim_event_3p = variant.push_3p
 			end
