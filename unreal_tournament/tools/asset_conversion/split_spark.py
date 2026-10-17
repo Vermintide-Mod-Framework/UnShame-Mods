@@ -1,9 +1,10 @@
 import os, struct, zlib
 
-# Splits UT2004's green link spark texture (link_spark_green, which make_fx_assets.py converts as it is) into the two things it is made of:
-# the top half is the body of a spark, a line that fades in from the tail and ends sharply at the head, lying along the texture's x axis, and
-# the bottom half is the head, a round glow. A spark is drawn as a body along its way with a head at its front. The body is turned so that it
-# lies along the texture's y axis, which is the length of a beam's quad (its tail is at the top of the texture, where y is lowest).
+# Splits UT2004's spark textures (link_spark_green, the Link Gun's, and shield_spark, the Shield Gun's, which make_fx_assets.py converts as
+# they are) into the two things each is made of: the top half is the body of a spark, a line that fades in from the tail and ends sharply
+# at the head, lying along the texture's x axis, and the bottom half is the head, a round glow. Both textures have them in the same places.
+# A spark is drawn as a body along its way with a head at its front. The body is turned so that it lies along the texture's y axis, which
+# is the length of a beam's quad (its tail is at the top of the texture, where y is lowest).
 # Usage: split_spark.py     (run after make_fx_assets.py)
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -76,17 +77,19 @@ def write(name, width, height, pixels):
     print('wrote', name, width, height)
 
 
-width, height, rows = read_png(FX + '/link_spark_green.png')
-
 # The body: the rows of the top half that have the line, turned so that the tail is at the top and the head at the bottom.
 BODY_ROWS = (16, 48)
-body_height = BODY_ROWS[1] - BODY_ROWS[0]
-body = [[pixel(rows, x, BODY_ROWS[0] + column) for column in range(body_height)] for x in range(width)]
-
-write('link_spark_green_body', body_height, width, body)
-
 # The head: the square of the bottom half that has the glow.
 HEAD = (16, 80, 48, 112)
-head = [[pixel(rows, x, y) for x in range(HEAD[0], HEAD[2])] for y in range(HEAD[1], HEAD[3])]
 
-write('link_spark_green_head', HEAD[2] - HEAD[0], HEAD[3] - HEAD[1], head)
+for name in ('link_spark_green', 'shield_spark'):
+    width, height, rows = read_png('%s/%s.png' % (FX, name))
+
+    body_height = BODY_ROWS[1] - BODY_ROWS[0]
+    body = [[pixel(rows, x, BODY_ROWS[0] + column) for column in range(body_height)] for x in range(width)]
+
+    write(name + '_body', body_height, width, body)
+
+    head = [[pixel(rows, x, y) for x in range(HEAD[0], HEAD[2])] for y in range(HEAD[1], HEAD[3])]
+
+    write(name + '_head', HEAD[2] - HEAD[0], HEAD[3] - HEAD[1], head)

@@ -45,6 +45,8 @@ TEXTURES = {
     'link_ring_yellow': 'XEffectMat/Texture/link_ring_yellow.tga',
     'link_projectile_splash': 'XEffectMat/Texture/Link_projectile_splash.tga',
     'smoke': 'XEffects/Texture/SmokeAlphab_t.tga',
+    # the Shield Gun's sparks when the shield stops something (ShieldSparks; out9, exported with: XEffectMat ShieldSpark)
+    'shield_spark': 'XEffectMat/Texture/ShieldSpark.tga',
     # the meshes of the combo and of the beam (ShockComboSphereDark's electricity, the others are above)
     'shock_electricity': 'DeployableTex/Texture/C_T_Electricity_SG.tga',
     # the dark sphere of the explosion of the ball (ShockDarkFB's texture)

@@ -14,6 +14,8 @@ local animations = mod:dofile("scripts/mods/unreal_tournament/shield/skin_animat
 local particles = mod.skin_particles
 
 local CONFIG = {
+	-- The meters of a UT unit in the world (shield_gun.lua's meters_per_uu)
+	meters_per_uu = 0.02,
 	-- ShieldGun.PlayerViewOffset (forward, right, up) and DisplayFOV, which CalcDrawOffset scales the offset by (0.9 / DisplayFOV * 100)
 	view_offset = {2, -0.7, -2.7},
 	display_fov = 60,
@@ -51,6 +53,23 @@ local CONFIG = {
 	charge_width = {0.4, 0.8}, -- UT units
 	charge_length = 0.05, -- seconds of travel
 	charge_colors = { { 45 / 255, 220 / 255, 45 / 255 }, { 65 / 255, 250 / 255, 65 / 255 } },
+	-- ShieldSparks, the sparks when the shield stops something (ShieldEffect3rd.Flash): 16 lines at once, each starting up to 0.1 s
+	-- late, lasting 0.4 to 0.6 s and flying at 150 to 300 units a second along the shield's facing, spread by up to 0.9 on each axis
+	-- (mDirDev). They start up to 6 units from their place on each axis (mPosDev), and the place is a random spot hit_sparks_scatter
+	-- units from the shield (VRand times 12 in first person, 8 in third). A line is 5 units wide, shrinking by 8 a second (sizes are
+	-- half widths), and 0.02 s of its travel long (mSpawnVecB.X 2), dimming from the start (mAttenKa 0), added. They fall: xEmitter's
+	-- code (native) is not in UT's source, so the zone's gravity, 950 units a second squared, is used for all of them, without their mass.
+	hit_sparks = 16,
+	hit_spark_delay = 0.1, -- seconds
+	hit_spark_life = {0.4, 0.6}, -- seconds
+	hit_spark_speed = {150, 300}, -- UT units a second
+	hit_spark_spread = 0.9,
+	hit_spark_position_spread = 6, -- UT units
+	hit_sparks_scatter = {12, 8}, -- UT units: first person, third person
+	hit_spark_width = 5, -- UT units
+	hit_spark_growth = -8, -- UT units a second
+	hit_spark_length = 0.02, -- seconds of travel
+	hit_spark_gravity = 950, -- UT units a second squared
 	-- The length of shieldgun_charge, which loops while the gun charges (the bank's ut_shield_charge)
 	charge_sound_length = 2.03, -- seconds
 	-- The shove of a push (UT has no push). The gun and the shield move on a spring, which goes shove_frequency radians a second and is
@@ -272,6 +291,69 @@ local function show_shield(api)
 	end)
 end
 
+-- The sparks of the shield stopping something (ShieldSparks, see CONFIG), in the world: from around origin, along the way rotation faces.
+-- meters is the meters of a UT unit, and scatter how far from origin they start, in UT units. Each spark is a line along its way (the
+-- body of the texture) with a glow at its front (the head), as the Bio Rifle's sparks are (split_spark.py).
+local function hit_sparks(origin, rotation, meters, scatter)
+	local forward, right, up = Quaternion.forward(rotation), Quaternion.right(rotation), Quaternion.up(rotation)
+	local forward_box = Vector3Box(forward)
+	local spread, position_spread = CONFIG.hit_spark_spread, CONFIG.hit_spark_position_spread
+	local now = Managers.time:time("game")
+
+	for _ = 1, CONFIG.hit_sparks do
+		-- (a random direction, as VRand)
+		local z, angle = math.random() * 2 - 1, math.random() * math.pi * 2
+		local across = math.sqrt(1 - z * z)
+		local around = Vector3(across * math.cos(angle), across * math.sin(angle), z)
+		local offset = around * scatter + forward * random_between({-position_spread, position_spread}) + right * random_between({-position_spread, position_spread}) + up * random_between({-position_spread, position_spread})
+		local direction = Vector3.normalize(forward * (1 + random_between({-spread, spread})) + right * random_between({-spread, spread}) + up * random_between({-spread, spread}))
+		local start = Vector3Box(origin + offset * meters)
+		local velocity = Vector3Box(direction * (random_between(CONFIG.hit_spark_speed) * meters))
+		local delay = math.random() * CONFIG.hit_spark_delay
+		local born = now + delay
+		local life = random_between(CONFIG.hit_spark_life)
+		local width = CONFIG.hit_spark_width * meters
+		local fall = CONFIG.hit_spark_gravity * meters
+
+		-- Returns where the spark's head is, and where its tail is
+		local function spark()
+			local age = math.max(0, Managers.time:time("game") - born)
+			local moving = velocity:unbox() - Vector3(0, 0, fall * age)
+			local head = start:unbox() + velocity:unbox() * age - Vector3(0, 0, 0.5 * fall * age * age)
+			local speed = Vector3.length(moving)
+			local heading = speed > 0.001 and moving * (1 / speed) or forward_box:unbox()
+
+			return head, head - heading * math.max(width, speed * CONFIG.hit_spark_length)
+		end
+
+		particles.beam({
+			attenuation = 0,
+			delay = delay,
+			growth = CONFIG.hit_spark_growth * meters,
+			life = life,
+			size = width,
+			texture = "shield_spark_body",
+			track = function ()
+				local head, tail = spark()
+
+				return tail, head
+			end,
+		})
+		particles.sprite({
+			angle = 0,
+			attenuation = 0,
+			delay = delay,
+			follow = function ()
+				return (spark())
+			end,
+			growth = CONFIG.hit_spark_growth * meters,
+			life = life,
+			size = width,
+			texture = "shield_spark_head",
+		})
+	end
+end
+
 -- The shield stopping something (ShieldEffect.Flash): its other skin (fx_shield_rip) for flash_time, and BShieldReflection
 local function flash_shield(api)
 	local skin = api.state()
@@ -286,6 +368,18 @@ local function flash_shield(api)
 		return 1
 	end)
 	api.play_sound("ut_shield_hit")
+
+	-- The sparks start where the shield is drawn in the view (behind_gun times GetEffectStart, in the world's UT units). UT starts them
+	-- 20 units above its third person shield, which is lower than the eye. (a departure)
+	local camera_position, camera_rotation = utils.camera_pose()
+
+	if camera_position then
+		local forward, right, up = effect_start()
+		local meters = CONFIG.meters_per_uu
+		local point = Vector3(right, forward, up) * (CONFIG.behind_gun * meters)
+
+		hit_sparks(camera_position + Quaternion.rotate(camera_rotation, point), camera_rotation, meters, CONFIG.hit_sparks_scatter[1])
+	end
 end
 
 -- The animations follow what the gun does (ShieldFire and ShieldAltFire): the charge plays Charge over FullyChargedTime and then loops
@@ -547,8 +641,8 @@ end
 -- machine that owns the character's actions (shield_gun.lua's events), which sends them to the others (ut_shield_3p). The effects are at
 -- the end of the gun in the character's hand, and the sounds come from the character.
 local THIRD_PERSON = {
-	-- The meters of a UT unit in the world (shield_gun.lua's meters_per_uu). UT's effects are actors of their own, at the world's scale.
-	meters_per_uu = 0.02,
+	-- UT's effects are actors of their own, at the world's scale (CONFIG.meters_per_uu)
+	meters_per_uu = CONFIG.meters_per_uu,
 	-- ShieldEffect3rd: UT's Shield mesh at DrawScale 3.2, ahead of the player along the aim. Here it is at the end of the gun, facing the
 	-- way the gun points.
 	shield_draw_scale = 3.2,
@@ -786,6 +880,7 @@ local function on_event(unit, event)
 
 		if muzzle then
 			api.play_sound_at("ut_shield_hit_3d", muzzle)
+			hit_sparks(muzzle, api.third_person.muzzle_rotation(unit), THIRD_PERSON.meters_per_uu, CONFIG.hit_sparks_scatter[2])
 		end
 	end
 end
