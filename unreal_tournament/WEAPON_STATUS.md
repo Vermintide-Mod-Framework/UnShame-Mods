@@ -9,30 +9,30 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Name in the inventory | ok | ok | ok | ok | ok | - |
 | Icon in the inventory | ok (points up-right) | ok (points up-right) | ok (points up-right) | ok (points up-right) | ok (points up-right) | - |
 | Description | ok (UT's, shortened) | ok | ok (UT's, shortened) | - | ok (UT's, shortened) | - |
-| Keywords | ok | ok | - (high damage, charged attack, armour piercing) | - | - | - |
-| Stat chart | ok (a guess) | ok (a guess) | - (the punch's cleave as tank blows: 3 for the bash, 4 for a charged punch; heavy damage 6) | - | - | - |
+| Keywords | ok | ok | ok (high damage, charged attack, armour piercing) | - | - | - |
+| Stat chart | ok (a guess) | ok (a guess) | ok (the punch's cleave as tank blows: 3 for the bash, 4 for a charged punch; heavy damage 6) | - | - | - |
 | Which careers can equip it | ok (the Deepwood Staff's copy for all four of Kerillian's careers; tests for each) | ok (repeating handgun and repeating crossbow items) | ok (five items: a melee weapon of each hero; the Warrior Priest's was taken out and is on the TODO list; tests for each) | ok (Ironbreaker, the Trollhammer's) | ok (the Brace of Pistols: Zealot, Bounty Hunter, Captain; tests for each) | ok (Kruber's and Bardin's handguns; tests for each) |
 | Chaos Wastes copy | - | - | - (each copy has its base's Chaos Wastes weapon) | - | - | - |
 | Crafting | - | - | - | - | - | - |
 | Hero screen: model and its place | ok (in the left hand, pointing ahead, on the Waystalker) | - | ok (UT's third person mesh at a player's DrawScale 0.4, in each hero's pose and grip, set in the game) | - | - | - |
-| Item screen: model and its turn | - | - | - | - | - | - |
-| Tab screen after a mod reload | no: the icon shows after the next level (game limit) | - | - | - | - | - |
+| Item screen: model and its turn | - | - | ok | - | - | - |
+| Tab screen after a mod reload | no: the icon shows after the next level (game limit) | - | ok | - | - | - |
 | Equipping and switching weapons | ok | ok | ok | - | ok | - |
 | Base weapon when the mod is disabled | - | - | - (the template goes back to the base weapon's) | - | - | - |
 | **First person** | | | | | | |
 | Position and size against UT | ok (blend with UT) | ok (side by side) | close: same size, UT's about 15 px higher and a little more tilted (the offline render agrees with the game) | ok (side by side; the Trollhammer's torpedo is hidden) | ok (side by side with UT's two rifles; the left one is UT's mesh mirrored, as RenderDualOverlay draws it) | - |
 | Pickup animation | ok (UT's SelectAnimRate 1.25, side by side with UT) | ok (SelectAnimRate 1.3636) | ok (SelectAnimRate 1.3636) | - | ok (SelectAnimRate 1.3636, both rifles) | - |
-| Idle animation speed | - | - | - | - | - | - |
+| Idle animation speed | - | - | ok | - | - | - |
 | Fire animation of each mode | ok (Fire at UT's FireAnimRate 1.25, frames side by side with UT 25 ms apart; zoom has none) | - | ok (Charge over 2.5 s, Charged loop, Fire, Shield loop) | - | - | - |
-| Animation length against the fire rate | - | - | - | - | - | - |
-| Parts that move by code | - | - | - | - | - | - |
+| Animation length against the fire rate | - | - | ok | - | - | - |
+| Parts that move by code | - | - | ok | - | - | - |
 | Inspect pose | - | - | ok (set in the game) | - | - | - |
-| Inspect: first second of movement | - | - | - | - | - | - |
+| Inspect: first second of movement | - | - | ok | - | - | - |
 | Vanilla model or arms showing | - | - | ok (the base weapon's units are hidden every frame, in the inspect too) | - | ok (the pistols and their ammo units are hidden) | - |
-| Vanilla flash or particles showing | ok (the handgun's orange tracer is dropped) | ok (the same) | - | - | - | - |
-| Crosshair | ok (the game's crosshair stays on while zoomed, over the scope; the scope side by side with UT: lens, ring, arrows, bar, under the HUD, shows right after a mod reload) | - | - | - | - | ok (the scope side by side with UT: brackets, ring, darkened edges) |
+| Vanilla flash or particles showing | ok (the handgun's orange tracer is dropped) | ok (the same) | ok | - | - | - |
+| Crosshair | ok (the game's crosshair stays on while zoomed, over the scope; the scope side by side with UT: lens, ring, arrows, bar, under the HUD, shows right after a mod reload) | - | ok | - | - | ok (the scope side by side with UT: brackets, ring, darkened edges) |
 | Ammo number | - | - | ok (the charge is a bar on the ammo counter in UT's green; the game's own bar still shows a wizard's overcharge) | - | no: the rounds are the clip; the grenade count (8) is not drawn | - |
-| Bob and sway | - | - | - | - | - | - |
+| Bob and sway | - | - | ok | - | - | - |
 | **Firing** | | | | | | |
 | Fire rate of each mode | ok (tests: 1.6 s) | ok (tests) | ok (FireRate 0.6 after a punch) | - | ok (tests: rounds at 0.088 s; grenades at 0.5 s + the charge) | ok (tests: 1.33 s) |
 | Second mode right after the first | - | - | - | - | - | - |
