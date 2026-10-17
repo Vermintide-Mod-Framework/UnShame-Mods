@@ -53,6 +53,56 @@ local FULL_SELF_DAMAGE = 26.5
 local BOT_FIGHT_RATS = 3
 local BOT_FIGHT_DISTANCE = 4 -- m
 local BOT_FIGHT_TIME = 20 -- s
+-- "a bot punches only what is in reach": how much farther than the punch's reach a rat's feet may be from the bot's, when it punches
+-- (the reach is from the eyes to the rat's body, which is about this wide)
+local BOT_REACH_MARGIN = 0.6 -- m
+
+-- The shield scenarios: how far ahead the enemy with a shield stands, and how long the charge of a charged punch is held (past a third
+-- of the charge, which breaks shields: shield_gun.lua's shield_break_share)
+local SHIELD_ENEMY_DISTANCE = 1.5 -- m
+local SHIELD_BREAK_HOLD = 1.5 -- s
+
+-- Has the gun punch an enemy with a shield ahead, charged past a third or not, and returns the damage it took and whether its shield
+-- is broken. A charged punch is charged facing away, as the charge punches by itself once an enemy is in reach, and then the player
+-- turns to the enemy, so the punch comes at once.
+local function punch_shield(t, breed_name, charged)
+	local enemy = t.spawn(breed_name, SHIELD_ENEMY_DISTANCE)
+
+	if not t.expect(enemy, "the %s could not be spawned", breed_name) then
+		return nil
+	end
+
+	-- (an enemy's shield blocks only while it holds it up, which a horde's enemies do from their spawn and the others once they fight:
+	-- AIShieldUserExtension. The runner's enemy is calm, so its shield is put up as a horde's is.)
+	t.on_main_thread(function ()
+		ScriptUnit.extension(enemy, "ai_shield_system"):set_is_blocking(true)
+	end)
+	t.wait(1)
+
+	local damage = t.track_damage(enemy)
+
+	if charged then
+		t.look(0, 180)
+		t.hold("action_one")
+		t.wait(SHIELD_BREAK_HOLD)
+		t.aim_at(enemy)
+		t.wait(0.3)
+		t.release("action_one")
+	else
+		t.aim_at(enemy)
+		t.press("action_one", 0.1)
+	end
+
+	t.wait(0.5)
+
+	local broken = t.on_main_thread(function ()
+		local shield_extension = Unit.alive(enemy) and ScriptUnit.has_extension(enemy, "ai_shield_system")
+
+		return shield_extension and shield_extension.shield_broken or false
+	end)
+
+	return damage.total, broken
+end
 
 -- The scenarios of an enemy's attack at the shield: how far ahead the enemy starts, and how long it is given to attack
 local ATTACK_DISTANCE = 8 -- m
@@ -999,17 +1049,25 @@ local function scenarios()
 		},
 		{
 			-- A bot holding it (Bardin, with his own mind, as the game's bots play) fights rats with it: its heavy attack holds the charge
-			-- until an enemy is in reach, and its light attack is a quick punch (shield_gun.lua's attack_meta_data)
-			name = "a bot punches enemies with it",
+			-- until an enemy is in reach, and its light attack is a quick punch (shield_gun.lua's attack_meta_data). The rats come at the
+			-- player, so the bot fights them around the player. It must hurt the rats, punch only with a rat in its reach, and never hurt
+			-- the player.
+			name = "a bot fights enemies with it",
 			run = function (t)
-				local bardin = t.add_bot(SHIELD_BOT_PROFILE, SHIELD_BOT_CAREER, ut.items.weapons.shield_gun_dr.key, BOT_FIGHT_DISTANCE, "slot_melee", true)
+				local gun = ut.items.weapons.shield_gun_dr.key
+				local bardin = t.add_bot(SHIELD_BOT_PROFILE, SHIELD_BOT_CAREER, gun, BOT_FIGHT_DISTANCE, "slot_melee", true)
 
 				if not t.expect(bardin, "Bardin could not be added") then
 					return
 				end
 
+				t.hurtable(true)
+
 				local rats = t.spawn_group("skaven_clan_rat", BOT_FIGHT_RATS, BOT_FIGHT_DISTANCE)
 				local damages = {}
+				local player_damage = t.track_damage(t.unit())
+				-- (how far the nearest living rat was from the bot at each of its punches)
+				local punches = {}
 
 				-- (a bot takes no enemy of a group that has no target for its own as a target (PlayerBotBase._target_valid), and the
 				-- runner's rats are kept calm with none, so they are let attack)
@@ -1023,12 +1081,32 @@ local function scenarios()
 					damages[i] = t.track_damage(rat)
 				end
 
-				local function by_bot()
+				shield.event_callbacks.ut_test_bot = function (owner_unit, event)
+					if owner_unit ~= bardin or event ~= shield.events.punch then
+						return
+					end
+
+					local nearest = math.huge
+
+					for _, rat in ipairs(rats) do
+						if HEALTH_ALIVE[rat] then
+							nearest = math.min(nearest, Vector3.distance(Unit.local_position(rat, 0), Unit.local_position(bardin, 0)))
+						end
+					end
+
+					punches[#punches + 1] = nearest
+				end
+
+				t.after(function ()
+					shield.event_callbacks.ut_test_bot = nil
+				end)
+
+				local function from_gun(damage_records)
 					local total = 0
 
-					for _, damage in ipairs(damages) do
+					for _, damage in ipairs(damage_records) do
 						for _, hit in ipairs(damage.hits) do
-							if hit.source == ut.items.weapons.shield_gun_dr.key then
+							if hit.source == gun then
 								total = total + hit.amount
 							end
 						end
@@ -1038,10 +1116,58 @@ local function scenarios()
 				end
 
 				t.wait_until(function ()
-					return by_bot() > 0
+					return from_gun(damages) > 0
 				end, BOT_FIGHT_TIME, "the bot to punch a rat")
 
-				t.expect(by_bot() > 0, "the bot did not hurt a rat with the Shield Gun in %d s", BOT_FIGHT_TIME)
+				-- (the fight goes on a while longer, for more of its punches)
+				t.wait(5)
+
+				local farthest = 0
+
+				for _, distance in ipairs(punches) do
+					farthest = math.max(farthest, distance)
+				end
+
+				t.log("the bot punched %d times, at most %.1f m from the nearest rat", #punches, farthest)
+				t.expect(from_gun(damages) > 0, "the bot did not hurt a rat with the Shield Gun in %d s", BOT_FIGHT_TIME)
+				t.expect(farthest <= shield.reach + BOT_REACH_MARGIN, "the bot punched with the nearest rat %.1f m away, out of its reach (%.1f m)", farthest, shield.reach)
+				t.expect(from_gun({ player_damage }) == 0, "the bot's punches hurt the player %.1f", from_gun({ player_damage }))
+			end,
+		},
+		{
+			-- A punch from less than a third of the charge glances off an enemy's shield: no damage, and the shield stays
+			-- (shield_gun.lua's shield_break_share)
+			name = "a light punch glances off a shield",
+			run = function (t)
+				local damage, broken = punch_shield(t, "skaven_clan_rat_with_shield", false)
+
+				if damage then
+					t.expect(damage == 0, "the light punch hurt the rat through its shield (%.1f)", damage)
+					t.expect(not broken, "the light punch broke the rat's shield")
+				end
+			end,
+		},
+		{
+			-- A punch charged past a third breaks an enemy's shield
+			name = "a charged punch breaks a shield",
+			run = function (t)
+				local _, broken = punch_shield(t, "skaven_clan_rat_with_shield", true)
+
+				if broken ~= nil then
+					t.expect(broken, "the charged punch did not break the rat's shield")
+				end
+			end,
+		},
+		{
+			-- A shield that can't be broken (a shielded Stormvermin's) stops a charged punch too
+			name = "a charged punch glances off a shield that can't be broken",
+			run = function (t)
+				local damage, broken = punch_shield(t, "skaven_storm_vermin_with_shield", true)
+
+				if damage then
+					t.expect(damage == 0, "the charged punch hurt the Stormvermin through its shield (%.1f)", damage)
+					t.expect(not broken, "the charged punch broke the Stormvermin's shield")
+				end
 			end,
 		},
 		{

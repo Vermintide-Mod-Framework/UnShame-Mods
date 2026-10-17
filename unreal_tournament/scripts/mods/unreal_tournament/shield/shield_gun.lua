@@ -156,6 +156,10 @@ local CONFIG = {
 	},
 	-- The bash out of a push is the blow of this third of the charge (above), its damage type and share, whatever its time held gives
 	bash_damage_type = 2,
+	-- An enemy's shield stops a punch from less of the charge than this share of it (the light third above), which glances off it as a
+	-- light attack glances off a shield. A punch from this much on breaks the shield, as the game's heavy attacks that have shield_break
+	-- do, unless the shield can't be broken (an unbreakable_shield breed), which stops it too. UT has no shields to punch: a choice.
+	shield_break_share = 1 / 3,
 	-- ShieldFire: punching a wall hurts the player MinSelfDamage + SelfDamageScale * the damage. UT's DeathMatch.ReduceDamage halves a
 	-- player's own damage in a game with bots at the lower skills, and the Rocket Launcher and the Flak Cannon of the mod take that half too.
 	min_self_damage = 8,
@@ -295,6 +299,9 @@ local function make_punch_action(name, damage, damage_type, damage_share, cleave
 
 		-- A punch has no headshots, as in UT (and a hit on the head is moved to the body, see body_hit)
 		profile.no_headshot_boost = true
+
+		-- Whether it breaks a shield is the charge's (see shield_break_share), not the sniper shot's, which breaks every shield
+		profile.shield_break = nil
 	end)
 
 	-- A melee swing for its critical hits, with the sounds of a two-handed hammer's hits
@@ -855,10 +862,10 @@ local function hit_object(action, hit_unit, hit, direction, damage_profile_name,
 end
 
 -- Hits an enemy or a body with the punch as a melee blow hits it (ActionSweep, ActionShieldSlam): the sound, the blood and the hit reaction
--- here, the talents, traits and buffs of a melee hit, and the damage on the server. A shield doesn't stop the punch. blow is the punch's
--- critical hit and melee boost, and index the number of this target among those it hits. can_damage and can_stagger say whether it is
--- still within the punch's cleave (see punch).
-local function melee_hit(action, punch_action, hit_unit, hit, direction, power_level, blow, index, can_damage, can_stagger)
+-- here, the talents, traits and buffs of a melee hit, and the damage on the server. blow is the punch's critical hit and melee boost, and
+-- index the number of this target among those it hits. can_damage and can_stagger say whether it is still within the punch's cleave (see
+-- punch). blocking is the enemy's shield stopping the punch, and shield_break the punch breaking it (see shield_break_share).
+local function melee_hit(action, punch_action, hit_unit, hit, direction, power_level, blow, index, can_damage, can_stagger, blocking, shield_break)
 	local network_manager = Managers.state.network
 	local owner_unit = action.owner_unit
 	local attacker_unit_id = network_manager:unit_game_object_id(owner_unit)
@@ -893,7 +900,7 @@ local function melee_hit(action, punch_action, hit_unit, hit, direction, power_l
 		world = action.world,
 	}
 
-	ActionSweep._play_character_impact(sweep, action.is_server, owner_unit, hit_unit, breed, position, zone_name, punch_action, damage_profile, 1, power_level, direction, false, blow.boost_curve_multiplier, blow.is_critical_strike)
+	ActionSweep._play_character_impact(sweep, action.is_server, owner_unit, hit_unit, breed, position, zone_name, punch_action, damage_profile, 1, power_level, direction, blocking or false, blow.boost_curve_multiplier, blow.is_critical_strike)
 
 	-- (the buffs only for a living enemy, so that hitting bodies doesn't set them off)
 	local buff_result
@@ -913,7 +920,7 @@ local function melee_hit(action, punch_action, hit_unit, hit, direction, power_l
 	end
 
 	-- (sent as a swing sends its hit, which is where the movement's momentum damage scales a hit's power)
-	ActionSweep._send_attack_hit(sweep, Managers.time:time("game"), NetworkLookup.damage_sources[action.item_name], attacker_unit_id, hit_unit_id, NetworkLookup.hit_zones[zone_name], position, direction, NetworkLookup.damage_profiles[punch_action.damage_profile], "power_level", power_level, "hit_target_index", 1, "blocking", false, "shield_break_procced", false, "boost_curve_multiplier", blow.boost_curve_multiplier, "is_critical_strike", blow.is_critical_strike, "can_damage", can_damage, "can_stagger", can_stagger, "first_hit", index == 1)
+	ActionSweep._send_attack_hit(sweep, Managers.time:time("game"), NetworkLookup.damage_sources[action.item_name], attacker_unit_id, hit_unit_id, NetworkLookup.hit_zones[zone_name], position, direction, NetworkLookup.damage_profiles[punch_action.damage_profile], "power_level", power_level, "hit_target_index", 1, "blocking", blocking or false, "shield_break_procced", shield_break or false, "boost_curve_multiplier", blow.boost_curve_multiplier, "is_critical_strike", blow.is_critical_strike, "can_damage", can_damage, "can_stagger", can_stagger, "first_hit", index == 1)
 
 	if not action.is_server then
 		network_manager.network_transmit:send_rpc_server("rpc_weapon_blood", attacker_unit_id, attack_template_id)
@@ -971,11 +978,17 @@ local function cleave_of(owner_unit, damage_profile, power_level, is_critical_st
 end
 
 -- The hit mass of an enemy, as a melee swing counts it (ActionSweep._get_target_hit_mass): its breed's on this difficulty, less while it
--- is staggered, and as buffs change it. A shield doesn't stop the punch, so it is never the mass of a block.
-local function hit_mass(owner_unit, unit)
+-- is staggered, and as buffs change it. An enemy whose shield stops the punch (blocking) counts the mass of its block.
+local function hit_mass(owner_unit, unit, blocking)
 	local breed = Unit.get_data(unit, "breed")
 	local difficulty_rank = Managers.state.difficulty:get_difficulty_rank()
-	local mass = breed.hit_mass_counts and (breed.hit_mass_counts[difficulty_rank] or breed.hit_mass_counts[2]) or breed.hit_mass_count or 1
+	local mass
+
+	if blocking then
+		mass = breed.hit_mass_counts_block and (breed.hit_mass_counts_block[difficulty_rank] or breed.hit_mass_counts_block[2]) or breed.hit_mass_count_block
+	end
+
+	mass = mass or breed.hit_mass_counts and (breed.hit_mass_counts[difficulty_rank] or breed.hit_mass_counts[2]) or breed.hit_mass_count or 1
 	local game = Managers.state.network:game()
 	local go_id = Managers.state.unit_storage:go_id(unit)
 
@@ -1042,6 +1055,7 @@ local function punch(action, t, power_level, bash)
 	local has_melee_boost, boost_curve_multiplier = ActionUtils.get_melee_boost(owner_unit)
 	local blow = {
 		boost_curve_multiplier = boost_curve_multiplier,
+		breaks_shields = scale >= CONFIG.shield_break_share,
 		is_critical_strike = ActionUtils.is_critical_strike(owner_unit, punch_action, t) or has_melee_boost,
 	}
 
@@ -1074,13 +1088,17 @@ local function punch(action, t, power_level, bash)
 		local alive = HEALTH_ALIVE[target.unit]
 		local can_damage, can_stagger = true, true
 		local missed = false
+		-- (an enemy's shield in the way stops the punch, or the punch breaks it: see shield_break_share. The server breaks the shield
+		-- of a blocked hit that breaks shields, unless it can't be broken: WeaponSystem.rpc_attack_hit, DamageUtils.server_apply_hit.)
+		local blocking = alive and AiUtils.attack_is_shield_blocked(target.unit, owner_unit)
+		local shield_break = blocking and blow.breaks_shields
 
 		if alive and not unlimited then
 			if mass >= math.max(max_attack, max_impact) then
 				missed = true
 			else
 				can_damage, can_stagger = mass <= max_attack, mass <= max_impact
-				mass = mass + hit_mass(owner_unit, target.unit)
+				mass = mass + hit_mass(owner_unit, target.unit, blocking)
 			end
 		end
 
@@ -1096,7 +1114,7 @@ local function punch(action, t, power_level, bash)
 			if hit_on_target then
 				index = index + 1
 
-				melee_hit(action, punch_action, target.unit, hit_on_target, direction, power_level, blow, index, can_damage, can_stagger)
+				melee_hit(action, punch_action, target.unit, hit_on_target, direction, power_level, blow, index, can_damage, can_stagger, blocking, shield_break)
 
 				hit_enemy = hit_enemy or alive
 			end
@@ -1459,6 +1477,8 @@ mod:hook(PlayerProjectileImpactUnitExtension, "update", function (func, self, un
 end)
 
 mod.shield.max_reflections = CONFIG.max_reflections
+-- (in meters: how far the punch reaches, which the extras mod's tests check the bots' punches against)
+mod.shield.reach = CONFIG.hit_range * UNIT
 -- (in meters: a reflected shot starts where it got to this cylinder, which the extras mod's tests aim from)
 mod.shield.pawn_radius = CONFIG.pawn_radius * UNIT
 

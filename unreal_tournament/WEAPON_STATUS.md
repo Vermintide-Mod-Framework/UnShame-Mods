@@ -47,7 +47,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Normal enemies | no: open. The test "damages an enemy" fails: a marauder spawned in the Keep has 0 health before it is hit, so the test can't measure damage there (the bolt does end on it) | no: the same | ok (tests: punches kill rats in a horde, a punch while moving fast does more damage, a punch never hits the player who punches); 40 to 150 by the charge, reaching 122 UT units (the bash 162); it gets through enemies as the game's lighter tank blows do | - | - | - |
 | Armored enemies | - | - | ok (tests: a punch hurts a Chaos warrior) | - | - | - |
 | Monsters | - | - | ok (tests: a punch hurts a rat ogre) | - | - | - |
-| Shields | - | - | - | - | - | - |
+| Shields | - | - | ok (a punch from the first third of the charge glances off a shield, one charged past it breaks the shield, and an unbreakable one stops both; tests for each) | - | - | - |
 | Headshots | - | - | - | - | - | ok (tests: double damage) |
 | Crits | - | - | - (the punch is a melee hit, with the game's melee crits) | - | - | - |
 | Damage against the other UT weapons | - | - | ok (the shield reflects the Shock Rifle's beam and ball and the Link Gun's bolts, by UT's rules; tests: a bot's beam and ball, from shield to shield, back and forth at most 3 times for the beam) | - | - | - |
@@ -122,8 +122,8 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Ammo on the client | - | - | n/a | - | - | - |
 | **Bots** | | | | | | |
 | Bots using it | - | - | ok (tests: a bot fights rats with it; a heavy attack charges until an enemy is in reach, as UT's bots do, and a light one is a quick punch) | - | - | - |
-| Range they shoot from | - | - | - (as far as the charge looks for an enemy) | - | - | - |
-| Allies in the way | - | - | - | - | - | - |
+| Range they shoot from | - | - | ok (tests: a bot punches only with an enemy within the punch's reach) | - | - | - |
+| Allies in the way | - | - | ok (tests: a bot fighting rats around the player never hurts them) | - | - | - |
 | Look and sound of their shots | - | - | - | - | - | - |
 | **Stability** | | | | | | |
 | Mod reload with it wielded | - | - | - | - | - | - |
