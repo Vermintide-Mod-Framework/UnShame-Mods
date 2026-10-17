@@ -11,28 +11,4 @@ local CONFIG = {
 	ally_clearance = 4,
 }
 
-mod.bot_shot_callbacks.ut_rocket = function (func, self, shoot_blackboard, action_data, input_extension, t)
-	local target_unit = shoot_blackboard.target_unit
-	local bot_unit = shoot_blackboard.ut_unit
-
-	if not bot_unit or not HEALTH_ALIVE[target_unit] then
-		return func(self, shoot_blackboard, action_data, input_extension, t)
-	end
-
-	local target_position = POSITION_LOOKUP[target_unit]
-	local distance = Vector3.distance(POSITION_LOOKUP[bot_unit], target_position)
-
-	if distance < CONFIG.min_range then
-		return
-	end
-
-	for _, player in pairs(Managers.player:players()) do
-		local player_unit = player.player_unit
-
-		if player_unit and Unit.alive(player_unit) and Vector3.distance(POSITION_LOOKUP[player_unit], target_position) < CONFIG.ally_clearance then
-			return
-		end
-	end
-
-	return func(self, shoot_blackboard, action_data, input_extension, t)
-end
+mod.bot_shot_callbacks.ut_rocket = mod.utils.explosive_bot_shot(CONFIG.min_range, CONFIG.ally_clearance)

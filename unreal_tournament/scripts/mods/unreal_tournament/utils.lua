@@ -354,6 +354,36 @@ function utils.level_screen_gui(material_file)
 	end
 end
 
+-- Returns a callback for mod.bot_shot_callbacks that keeps a bot from firing an explosive where it would hurt the bot or a player: at
+-- a target nearer than min_range, or with a player or another bot within ally_clearance of the target (meters). Otherwise the game's
+-- own bot shooting goes on.
+function utils.explosive_bot_shot(min_range, ally_clearance)
+	return function (func, self, shoot_blackboard, action_data, input_extension, t)
+		local target_unit = shoot_blackboard.target_unit
+		local bot_unit = shoot_blackboard.ut_unit
+
+		if not bot_unit or not HEALTH_ALIVE[target_unit] then
+			return func(self, shoot_blackboard, action_data, input_extension, t)
+		end
+
+		local target_position = POSITION_LOOKUP[target_unit]
+
+		if Vector3.distance(POSITION_LOOKUP[bot_unit], target_position) < min_range then
+			return
+		end
+
+		for _, player in pairs(Managers.player:players()) do
+			local player_unit = player.player_unit
+
+			if player_unit and Unit.alive(player_unit) and player_unit ~= bot_unit and Vector3.distance(POSITION_LOOKUP[player_unit], target_position) < ally_clearance then
+				return
+			end
+		end
+
+		return func(self, shoot_blackboard, action_data, input_extension, t)
+	end
+end
+
 -- Plays a sound that follows a unit. Returns a handle for utils.stop_sound, or nil if it didn't play.
 function utils.play_on_unit(event, unit)
 	local id, _, wwise_world = WwiseUtils.trigger_unit_event(Managers.world:world("level_world"), event, unit)
