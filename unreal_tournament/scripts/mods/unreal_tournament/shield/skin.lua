@@ -561,7 +561,7 @@ local GRIPS = {
 		grip_up = 0,
 		yaw = 0,
 		pitch = -90,
-		roll = 90,
+		roll = -90,
 		follow_game_unit = 2,
 	},
 	-- The Life Staff's pose: the game links the staff to the left hand's node (AttachmentNodeLinking.one_handed_melee_weapon.left), so the
