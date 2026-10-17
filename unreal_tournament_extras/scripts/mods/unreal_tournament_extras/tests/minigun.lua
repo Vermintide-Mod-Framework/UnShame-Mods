@@ -137,7 +137,7 @@ local function hero(setting_id, careers)
 	return { item = definition.key, template = definition.template, careers = careers }
 end
 
--- Saltzpyre's Minigun differs from Kruber's only in the hand its shots come from (its base weapon's), so only the firing runs for him
+-- Saltzpyre's Minigun differs from Kruber's only in its base weapon (the repeater pistol), so only the firing runs for him
 runner.add_suite({
 	name = "minigun",
 	slot = "slot_ranged",

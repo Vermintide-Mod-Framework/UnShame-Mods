@@ -63,9 +63,9 @@ local CONFIG = {
 	-- front). Each axis goes through this point of the mesh (forward, up, in the mesh's units).
 	barrel_pivot = { 0, 8.8 },
 	gear_pivot = { 17.85, 10.87 },
-	-- The least time between two of the characters' shot animations, for the repeating crossbow's, which has no rapid fire: the time its
-	-- shot leaves before the next (repeating_crossbows.lua, the start_time of its chain)
-	shot_animation_interval = 0.4, -- seconds
+	-- The least time between two of the characters' shot animations, for the repeater pistol's (attack_shoot), which is made for a shot at
+	-- a time: the soonest its shot can follow the last (repeating_pistols.lua, the start_time of its chain on a click)
+	shot_animation_interval = 0.1, -- seconds
 	-- Which way the barrels turn, in first and third person: 1 or -1. -1 is the way UT's turn (checked in the game).
 	barrel_direction = -1,
 	-- The third person mesh's barrels are a geometry of their own (convert_static.py minigun_3rd). They turn about the barrel bone's place
@@ -96,6 +96,34 @@ local TEMPLATES = {
 	{
 		id = "minigun_wh",
 		setting_id = "minigun_wh",
+	},
+}
+
+-- How each hero holds the mesh in third person (see weapon_skin_third_person.lua), in the pose of the base weapon. The mesh is turned as
+-- the game's weapon in the hand is, which the game animates with the arms.
+local GRIPS = {
+	-- The repeating handgun's pose: the game links the gun to the right hand, and the left holds its front. The mesh is linked to the
+	-- left hand's node, moved back and to the left from the mesh's origin, and tipped up so that the gun's line runs through the right
+	-- hand too (set in the game).
+	minigun = {
+		hand_node = "j_leftweaponattach",
+		grip_right = -15,
+		grip_forward = 60,
+		grip_up = 0,
+		yaw = 0,
+		pitch = 9.9,
+		roll = 0,
+	},
+	-- The repeater pistol's pose: the game links the pistol to the right hand, and the left is free. The mesh is linked to the right
+	-- hand's node, at the point of it where Kruber's right hand is.
+	minigun_wh = {
+		hand_node = "j_rightweaponattach",
+		grip_right = -5.9,
+		grip_forward = 13.2,
+		grip_up = -0.2,
+		yaw = 0,
+		pitch = 0,
+		roll = 0,
 	},
 }
 
@@ -446,6 +474,7 @@ end
 
 local function new_skin(variant)
 	local definition = mod.items.weapons[variant.setting_id]
+	local grip = GRIPS[variant.setting_id]
 	local api
 
 	api = mod.weapon_skin.new({
@@ -480,24 +509,21 @@ local function new_skin(variant)
 		inspect_pivot_forward = 30,
 		inspect_pivot_up = 0,
 		-- UT's third person mesh of the weapon (MinigunAttachment's Weapons.Minigun_3rd) at UT's size in a player's hand (DrawScale 0.4).
-		-- Its origin is the grip, and its barrels run along its forward, to the muzzle (the mesh's flash bone). Its barrels don't turn.
+		-- Its origin is at its back, and its barrels run along its forward, to the muzzle (the mesh's flash bone). How each hero holds it
+		-- is in GRIPS.
 		third_person = {
 			id = variant.id,
 			template = definition.template,
 			unit_name = "units/ut/minigun/third_person",
-			-- The game links the repeating gun and the crossbow to the left hand's node
-			hand_node = "j_leftweaponattach",
+			hand_node = grip.hand_node,
 			meters_per_unit = 0.02 * 0.4,
 			scale = 1,
-			-- (moved back and to the left from the mesh's origin, and tipped up so that the gun's line runs through the right hand too, set
-			-- in the game)
-			grip_right = -15,
-			grip_forward = 60,
-			grip_up = 0,
-			yaw = 0,
-			pitch = 9.9,
-			roll = 0,
-			-- In the world the minigun is turned as the game's gun in the hand is, which the game animates with the arms
+			grip_right = grip.grip_right,
+			grip_forward = grip.grip_forward,
+			grip_up = grip.grip_up,
+			yaw = grip.yaw,
+			pitch = grip.pitch,
+			roll = grip.roll,
 			follow_game_unit = 2,
 			follow_calibrate_seconds = 1,
 			muzzle_right = -2.8,
@@ -567,8 +593,8 @@ for template_name in pairs(TEMPLATE_NAMES) do
 		return string.find(event, "attack_shoot", 1, true) ~= nil or string.find(event, "reload", 1, true) ~= nil
 	end
 
-	-- The reload animation is not played on the characters, because the weapon has no reload. The repeating crossbow's shot (Saltzpyre's)
-	-- is not made for a round after another, so it is played again only once the time the crossbow leaves between its shots is over.
+	-- The reload animation is not played on the characters, because the weapon has no reload. The repeater pistol's shot (Saltzpyre's) is
+	-- made for a shot at a time, so it is played again only once the soonest the pistol shoots again is over.
 	mod.third_person_animation_filters[template_name] = function (event, unit)
 		if string.find(event, "reload", 1, true) then
 			return true

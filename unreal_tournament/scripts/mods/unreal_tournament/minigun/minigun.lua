@@ -14,7 +14,7 @@ local impact_power_for = utils.impact_power_for
 
 local DESCRIPTION = "The Schultz-Metzger T23-A 23mm rotary cannon is capable of firing both high-velocity caseless ammunition and cased rounds. With an unloaded weight of only 8 kilograms, the T23 is portable and maneuverable, easily worn across the back when employing the optional carrying strap."
 
--- The items. Kruber's careers have a repeating gun, and Saltzpyre's a repeating crossbow, and they are separate templates.
+-- The items. Kruber's careers have a repeating gun, and Saltzpyre's a repeater pistol, and they are separate templates.
 local VARIANTS = {
 	{
 		base_item = "es_repeating_handgun",
@@ -24,8 +24,8 @@ local VARIANTS = {
 		template = "ut_minigun_template",
 	},
 	{
-		base_item = "wh_crossbow_repeater",
-		deus_copy = "deus_wh_crossbow_repeater",
+		base_item = "wh_repeating_pistols",
+		deus_copy = "deus_wh_repeating_pistols",
 		id = "minigun_wh",
 		key = "ut_minigun_wh",
 		template = "ut_minigun_wh_template",
@@ -155,7 +155,7 @@ local DROPPED_FLOW_EVENTS = {
 }
 
 -- Builds a round of the gun's. The first round has the wind up before it, and the rounds after it follow at the fire rate. The hand
--- is the base weapon's: the repeating crossbow is held in the left hand, and the game crashes on an action for a hand with no weapon.
+-- is the base weapon's, as the game crashes on an action for a hand with no weapon.
 -- spray is the base weapon's own rapid fire, if it has one: its animation is made to be played a round after another.
 local function build_shot(source, mode, first, hand, spray)
 	local action = table.clone(source)
@@ -228,8 +228,8 @@ local function apply_gun(template)
 	-- The shot comes from the game's repeating gun, whichever the template is a copy of
 	local source = rawget(Weapons, "repeating_handgun_template_1").actions.action_one.default
 	local hand = actions.action_one.default.weapon_action_hand
-	-- The characters play the repeating handgun's rapid fire (its bullet spray, attack_shoot_fast) for every round, instead of its single
-	-- shot. The repeating crossbow has no rapid fire, so it keeps its shot (see skin.lua for how often it is played).
+	-- The characters play the base weapon's rapid fire (its bullet spray, the volley of the alt fire) for every round, instead of its
+	-- single shot: attack_shoot_fast for the repeating handgun, and attack_shoot for the repeater pistol.
 	local spray = actions.action_one.bullet_spray
 
 	actions.action_one = {
