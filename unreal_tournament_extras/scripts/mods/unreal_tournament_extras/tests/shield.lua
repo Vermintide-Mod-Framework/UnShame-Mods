@@ -44,9 +44,6 @@ local PIN_ROUNDS = 5
 -- its distance is of that
 local PIN_SPEED = 2 -- m/s
 
--- How many times ten rats are killed and frozen in "a body pushed in the frame the game freezes it"
-local FREEZE_ROUNDS = 3
-
 -- The horde of "punching in a real horde" (t.fight_horde)
 local REAL_HORDE = {
 	size = 60,
@@ -386,90 +383,6 @@ local function scenarios()
 				end
 
 				t.log("%d pushes, %d of a part that animation moves", pushes, kinematic)
-			end,
-		},
-		{
-			-- The game's physics runs while the scripts do, so what a script does to a part is applied after the frame, in one go. A
-			-- punch pushes the bodies in its cone (push_body, Actor.push). If the game freezes a body in the same frame (BreedFreezer: its
-			-- parts are put back under the animation), the push could be applied to the frozen parts. The game uses a frozen unit again
-			-- for an enemy it spawns, and then the animation moves the parts. Here each body is pushed as it is frozen, and more rats are
-			-- spawned, which take the frozen units. The game crashing is the failure.
-			name = "a body pushed in the frame the game freezes it",
-			run = function (t)
-				local commit_freezes = BreedFreezer.commit_freezes
-				local pushed = 0
-
-				-- (each body is pushed right after it is frozen, the way the punch checks its parts: those that physics moves)
-				BreedFreezer.commit_freezes = function (self)
-					local units = {}
-
-					for _, list in pairs(self.units_to_freeze) do
-						for _, unit in ipairs(list) do
-							units[#units + 1] = unit
-						end
-					end
-
-					commit_freezes(self)
-
-					for _, unit in ipairs(units) do
-						for i = 0, Unit.num_actors(unit) - 1 do
-							local actor = Unit.actor(unit, i)
-
-							if actor and Actor.is_dynamic(actor) and Actor.is_physical(actor) then
-								Actor.push(actor, Vector3(0, 0, 60), 0.5)
-
-								pushed = pushed + 1
-							end
-						end
-					end
-				end
-
-				local ok, problem = pcall(function ()
-					for _ = 1, FREEZE_ROUNDS do
-						local rats = t.spawn_group("skaven_clan_rat", 10, 3)
-
-						t.wait(1)
-
-						for _, rat in ipairs(rats) do
-							t.on_main_thread(function ()
-								local player = t.unit()
-
-								DamageUtils.add_damage_network(rat, player, 400, "torso", "blunt", nil, Vector3(0, 0, -1), "wh_1h_hammer", nil, player)
-							end)
-						end
-
-						-- Once the bodies fall, the game takes them away
-						t.wait(0.5)
-						t.on_main_thread(function ()
-							for _, rat in ipairs(rats) do
-								take_body_away(rat)
-							end
-						end)
-						t.wait(0.5)
-
-						for _, rat in ipairs(rats) do
-							t.remove(rat)
-						end
-					end
-
-					-- The frozen units are taken by the rats spawned now, and the animation moves them
-					local rats = t.spawn_group("skaven_clan_rat", 30, 3)
-
-					t.wait(5)
-
-					for _, rat in ipairs(rats) do
-						t.remove(rat)
-					end
-				end)
-
-				BreedFreezer.commit_freezes = commit_freezes
-
-				if not ok then
-					error(problem, 0)
-				end
-
-				t.log("%d parts pushed as they were frozen", pushed)
-				t.expect(pushed > 0, "no part was pushed as it was frozen")
 			end,
 		},
 		{

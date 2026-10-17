@@ -1398,6 +1398,7 @@ local function run_suite(suite, only_career)
 				}
 
 				t.scenario(scenario)
+				log("RUNNING %s", scenario.name)
 				runner.explosion_watch = nil
 				runner.sound_watch = nil
 				table.clear(runner.frame_watchers)
