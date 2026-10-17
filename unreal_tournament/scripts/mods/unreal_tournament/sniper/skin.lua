@@ -427,9 +427,8 @@ local function new_skin(setting_id)
 		inspect_pivot_forward = 30,
 		inspect_pivot_up = 0,
 		-- NewWeapons2004.Sniper3rd (ClassicSniperAttachment, DrawScale 0.16). The game links the handgun to the left hand's node
-		-- (AttachmentNodeLinking.rifles), and the mesh turns with the game's handgun in that hand. The mesh's muzzle is along its forward,
-		-- and the handgun's forward points back, so the mesh is turned half round. It is moved so that the right hand holds the
-		-- thumbhole grip of the stock and the left hand the handguard (set by looking at it on the hero screen).
+		-- (AttachmentNodeLinking.rifles), and the mesh turns with the game's handgun in that hand, as it is (checked on the hero screen and
+		-- in third person for Kruber and Bardin).
 		third_person = {
 			id = setting_id,
 			template = definition.template,
@@ -438,9 +437,9 @@ local function new_skin(setting_id)
 			meters_per_unit = 0.02 * 0.16,
 			scale = 1,
 			grip_right = 0,
-			grip_forward = -40,
+			grip_forward = 0,
 			grip_up = 0,
-			yaw = 180,
+			yaw = 0,
 			pitch = 0,
 			roll = 0,
 			follow_game_unit = 2,
