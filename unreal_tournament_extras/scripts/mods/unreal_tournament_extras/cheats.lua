@@ -318,6 +318,21 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	end
 end
 
+-- A shot's recoil sets the character's look to the camera's rotation, which is their own view without the free camera
+-- (PlayerUnitFirstPerson.apply_recoil). With it, the camera looks elsewhere, so that is not done. While the camera's recoil plays, the
+-- game takes the recoil from the character's own look instead, which is kept.
+mod:hook(PlayerUnitFirstPerson, "apply_recoil", function (func, self, ...)
+	if self.unit == free_camera_unit then
+		local is_recoiling, recoil_offset = Managers.state.camera:is_recoiling()
+
+		if not (is_recoiling and recoil_offset) then
+			return
+		end
+	end
+
+	return func(self, ...)
+end)
+
 -- The character being turned to the camera (see below), while the inspection starts
 local turning_unit
 
