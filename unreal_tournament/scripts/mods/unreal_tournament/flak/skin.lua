@@ -313,16 +313,12 @@ end
 
 -- A shot by another player, as seen on this machine: the flash and the sound come from the end of the barrel of the mesh in their
 -- hand. They play once for all the chunks of a shot that start together.
-local last_remote_shot = {}
+local remote_shots = utils.shot_grouping(CONFIG.shot_gap)
 
 local function remote_shot(owner_unit, sound_event)
-	local now = Managers.time:time("game")
-
-	if last_remote_shot[owner_unit] and now - last_remote_shot[owner_unit] < CONFIG.shot_gap then
+	if not remote_shots.is_new_shot(owner_unit) then
 		return
 	end
-
-	last_remote_shot[owner_unit] = now
 
 	local muzzle = skin_api.third_person.muzzle_position(owner_unit)
 
@@ -462,7 +458,7 @@ skin_api = mod.weapon_skin.new({
 	on_update_always = update_visuals,
 	on_level_exit = function ()
 		clear_visuals()
-		table.clear(last_remote_shot)
+		remote_shots.clear()
 	end,
 })
 

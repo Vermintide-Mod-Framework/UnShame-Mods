@@ -243,6 +243,30 @@ function utils.ut_spread(rotation, spread)
 	return Quaternion.look(Vector3.normalize(direction), Vector3.up())
 end
 
+-- Groups other players' projectiles into shots. The projectiles of one shot (a spread, a salvo) reach this machine one after another,
+-- so a projectile that starts less than gap seconds after its player's last shot is part of that shot. Returns a table with
+-- is_new_shot(owner_unit), which records the shot when it is new, and clear().
+function utils.shot_grouping(gap)
+	local last_shot = {}
+
+	return {
+		is_new_shot = function (owner_unit)
+			local now = Managers.time:time("game")
+
+			if last_shot[owner_unit] and now - last_shot[owner_unit] < gap then
+				return false
+			end
+
+			last_shot[owner_unit] = now
+
+			return true
+		end,
+		clear = function ()
+			table.clear(last_shot)
+		end,
+	}
+end
+
 -- Plays a sound that follows a unit. Returns a handle for utils.stop_sound, or nil if it didn't play.
 function utils.play_on_unit(event, unit)
 	local id, _, wwise_world = WwiseUtils.trigger_unit_event(Managers.world:world("level_world"), event, unit)

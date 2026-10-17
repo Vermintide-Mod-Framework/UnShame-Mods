@@ -41,7 +41,8 @@ local UNIT = utils.UT_UNIT
 
 local skin_api
 
-local last_remote_shot = {}
+local remote_shots = utils.shot_grouping(CONFIG.shot_gap)
+
 -- The time at which each beam's sound is played again, for each beam state
 local beam_sound_time = setmetatable({}, {
 	__mode = "k",
@@ -108,7 +109,7 @@ skin_api = mod.weapon_skin.new({
 		skin_api.play_sound("ut_link_select")
 	end,
 	on_level_exit = function ()
-		table.clear(last_remote_shot)
+		remote_shots.clear()
 	end,
 })
 
@@ -168,17 +169,11 @@ mod.skin_init_callbacks.link_bolt = function (projectile)
 				return skin_api.state() == skin and skin_api.muzzle_position() or nil
 			end, in_third_person and third_person.meters_per_unit or skin.unit_scale)
 		end
-	else
-		local now = Managers.time:time("game")
-
-		if not last_remote_shot[owner_unit] or now - last_remote_shot[owner_unit] >= CONFIG.shot_gap then
-			last_remote_shot[owner_unit] = now
-
-			muzzle_flash(function ()
-				return third_person.muzzle_position(owner_unit)
-			end, third_person.meters_per_unit)
-			skin_api.play_sound_at("ut_link_fire_3d", Unit.world_position(game_unit, 0))
-		end
+	elseif remote_shots.is_new_shot(owner_unit) then
+		muzzle_flash(function ()
+			return third_person.muzzle_position(owner_unit)
+		end, third_person.meters_per_unit)
+		skin_api.play_sound_at("ut_link_fire_3d", Unit.world_position(game_unit, 0))
 	end
 end
 
