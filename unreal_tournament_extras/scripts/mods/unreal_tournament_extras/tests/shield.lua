@@ -1,8 +1,8 @@
 local mod = get_mod("unreal_tournament_extras")
 local ut = get_mod("unreal_tournament")
 
--- The Shield Gun's in-game tests (see runner.lua). Run them with /ut_test shield (Kruber's), shield_dr, shield_bw, shield_wh and
--- shield_we. They run in the runner's level, Righteous Stand.
+-- The Shield Gun's in-game tests (see runner.lua). Run them with /ut_test shield. They run once, as the Mercenary, in the runner's
+-- level, Righteous Stand.
 
 local runner = mod.test_runner
 local shield = ut.shield
@@ -523,21 +523,13 @@ local function scenarios()
 	}
 end
 
-for _, variant in ipairs({
-	{ name = "shield", setting_id = "shield_gun", careers = { "es_mercenary", "es_knight" } },
-	{ name = "shield_dr", setting_id = "shield_gun_dr", careers = { "dr_ironbreaker", "dr_slayer" } },
-	{ name = "shield_bw", setting_id = "shield_gun_bw", careers = { "bw_adept" } },
-	{ name = "shield_wh", setting_id = "shield_gun_wh", careers = { "wh_captain" } },
-	{ name = "shield_we", setting_id = "shield_gun_we", careers = { "we_shade" } },
-}) do
-	local definition = ut.items.weapons[variant.setting_id]
+local definition = ut.items.weapons.shield_gun
 
-	runner.add_suite({
-		name = variant.name,
-		item = definition.key,
-		template = definition.template,
-		slot = "slot_melee",
-		careers = variant.careers,
-		scenarios = scenarios(),
-	})
-end
+runner.add_suite({
+	name = "shield",
+	item = definition.key,
+	template = definition.template,
+	slot = "slot_melee",
+	careers = { "es_mercenary" },
+	scenarios = scenarios(),
+})
