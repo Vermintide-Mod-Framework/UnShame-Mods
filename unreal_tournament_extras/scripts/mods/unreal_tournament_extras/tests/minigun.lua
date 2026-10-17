@@ -80,6 +80,35 @@ local function scenarios()
 			end,
 		},
 		{
+			-- The other button is pressed while a round runs and the first is let go: the other mode fires once the round is over
+			name = "switching modes while firing fires the other mode",
+			run = function (t)
+				for _, order in ipairs({ { "action_one", "action_two", "alt" }, { "action_two", "action_one", "primary" } }) do
+					local first, second, second_mode = unpack(order)
+
+					t.hold(first)
+					t.wait(1)
+					record()
+					t.hold(second)
+					t.release(first)
+					t.wait(1.5)
+					t.release(second)
+					stop_recording()
+
+					local switched = 0
+
+					for _, shot in ipairs(shots) do
+						if shot.mode == second_mode then
+							switched = switched + 1
+						end
+					end
+
+					t.expect(switched >= 3, "%d %s rounds in 1.5 s after switching to it", switched, second_mode)
+					t.wait(1)
+				end
+			end,
+		},
+		{
 			name = "damages an enemy",
 			run = function (t)
 				local target = t.spawn_target(5)

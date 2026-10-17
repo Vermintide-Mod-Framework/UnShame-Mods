@@ -120,7 +120,12 @@ mod.minigun = {
 
 -- Weapon template
 
+-- After a round, a held button fires the next round of its mode. The game starts an action only on a press, and a press of the other
+-- button while a round runs is lost, so the other mode follows a round when its button is held too, with its wind up. The round's own
+-- button comes first, so while both are held the mode that was firing goes on.
 local function fire_chain_actions(own_action, loop_name, interval)
+	local other_action = own_action == "action_one" and "action_two" or "action_one"
+
 	return {
 		{
 			action = "action_wield",
@@ -133,6 +138,12 @@ local function fire_chain_actions(own_action, loop_name, interval)
 			input = own_action .. "_hold",
 			start_time = interval,
 			sub_action = loop_name,
+		},
+		{
+			action = other_action,
+			input = other_action .. "_hold",
+			start_time = interval,
+			sub_action = "default",
 		},
 	}
 end
@@ -175,9 +186,10 @@ local function build_shot(source, mode, first, hand, spray)
 	action.ut_spread = alt and CONFIG.alt_spread or CONFIG.primary_spread
 	-- The repeating handgun's own tracer is not drawn (hooks.lua): the skin draws UT's
 	action.ut_dropped_flow_events = DROPPED_FLOW_EVENTS
+	-- The other button's shot can only follow once this round's time is over, so the two never fire at once (UT's fire modes are
+	-- exclusive)
 	action.allowed_chain_actions = fire_chain_actions(own_action, "loop", fire_time + interval)
 
-	-- The other button's shot is not in this action's chain, so it cannot start while this one runs (UT's fire modes are exclusive)
 	if action.recoil_settings then
 		action.recoil_settings.climb_duration = 0.05
 		action.recoil_settings.restore_duration = 0.2
