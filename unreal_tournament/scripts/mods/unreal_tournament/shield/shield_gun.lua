@@ -1847,7 +1847,7 @@ local function apply_template(template_name)
 	-- Bots (BTBotMeleeAction): a light attack lets go of the charge at once, which is a quick punch. A heavy attack holds the charge until
 	-- it punches by itself, when an enemy is in reach, as UT's bots hold the Shield Gun's fire and let it go off by itself (ShieldFire's
 	-- auto release). That is told the game's way (attack_chain, WeaponUtils.add_bot_meta_data_chain_actions). Without it the heavy attack
-	-- looked for a second release in the charge, which has one, and did nothing. The base weapon's own chains name its attacks, which
+	-- looked for a second release in the charge, which has only one, and did nothing. The base weapon's own chains name its attacks, which
 	-- this weapon doesn't have. The bot attacks from as far as the charge looks for an enemy.
 	local reach = CONFIG.range * UNIT
 

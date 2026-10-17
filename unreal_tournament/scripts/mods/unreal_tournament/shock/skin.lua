@@ -30,7 +30,6 @@ local CONFIG = {
 	chamber_intensity = 1,
 	-- The color of the overcharge bar between its thresholds. It is ShockControl's color (R192 G0 B255), the liquid's. The game's is orange.
 	overcharge_bar_color = { 192, 0, 255 },
-	shot_flash = 0.9, -- how much brighter the liquid is just after a shot, as a multiple of its brightness. It has settled by the next shot.
 	vent_pulse_speed = 14, -- radians per second, of the liquid's brightness pulsing while the heat is vented
 	vent_pulse_swing = 0.3, -- how much brighter and dimmer the liquid gets while pulsing, as a multiple of its brightness
 	-- Overheating is the game's overcharge explosion, which lasts a few seconds before it goes off. During it the liquid pulses fast
@@ -58,10 +57,10 @@ local balls = {}
 
 -- Updates the chamber's glow and the poses. It runs every frame.
 local function update_chamber(skin, dt)
-	-- In UT the chamber has no glow after a shot and gets it back as the time to the next shot passes. Here the liquid flashes
-	-- brighter at the shot and settles back as the time to the next shot passes. It never goes dark.
-	local since_shot = math.clamp((skin.cooldown_end - Managers.time:time("game")) / skin.cooldown, 0, 1)
-	local brightness = 1 + CONFIG.shot_flash * since_shot * since_shot
+	-- As in UT, the chamber has no glow after a shot and gets it back as the time to the next shot passes (ShockRifle.RenderOverlays):
+	-- drained, it is the glass alone (make_chamber_material.py).
+	local glow = 1 - math.clamp((skin.cooldown_end - Managers.time:time("game")) / skin.cooldown, 0, 1)
+	local brightness = 1
 
 	-- The liquid also pulses while the heat is vented.
 	if skin.venting then
@@ -99,7 +98,7 @@ local function update_chamber(skin, dt)
 
 	local material = Mesh.material(Unit.mesh(skin.unit, "g_shock_1"), "m_power")
 
-	Material.set_scalar(material, "intensity", CONFIG.chamber_intensity)
+	Material.set_scalar(material, "intensity", CONFIG.chamber_intensity * glow)
 	Material.set_scalar(material, "brightness", brightness)
 end
 

@@ -13,9 +13,10 @@ import os, sys, shutil
 #       (along -V, 0.1 of the texture a second), times the ShockControl color
 #   ShockControl: R192 G0 B255, and its alpha is 128 times how much the glow has come back after a shot (ShockRifle.RenderOverlays)
 #   Final blend: FB_AlphaModulate (the alpha of the control, the glow, modulates what is added)
-# What is here: all of it but the cube map (the world's reflection: the mesh's cube map would need a cubemap texture), the glass
-# share of the blend is half of the glow and the glow is the material's "intensity" (the skin sets it); the liquid is blended over what
-# is in the chamber, half see through at full glow (the alpha of the control), lit by itself (the shader's self illumination).
+# What is here: all of it but the cube map (the world's reflection: the mesh's cube map would need a cubemap texture). The glow is the
+# material's "intensity" (the skin sets it: 0 just after a shot, 1 when it is all back), and the liquid's share of the blend over the
+# glass is half of it. The chamber is half see through at full glow and solid glass when drained, lit by itself (the shader's self
+# illumination).
 # Usage: make_chamber_material.py <scratch dir>      (needs the UModel export of the textures: umodel/out3 and out6)
 
 SCRATCH = sys.argv[1]
@@ -141,17 +142,18 @@ connect('control_color', 'control', IN_MUL_B)
 add_node('modulated', 'core/shader_nodes/mul')
 connect('control', 'modulated', IN_MUL_A)
 constant('modulated', IN_MUL_B, 2)
-# Combiner0: the glass over it, by the alpha of the control (128 of 255 when the glow is all back, less before)
+# Combiner0: the glass, with the liquid over it by the alpha of the control (128 of 255 when the glow is all back, less before, none just
+# after a shot): a drained chamber is the glass alone, as in UT
 add_node('glass', 'core/shader_nodes/sample_texture', (ADDRESS_WRAP, FILTER_LINEAR, SRGB), samplers=sampler('glass_map'), title='ShockGlass')
 connect('uv', 'glass', IN_SAMPLE_UV)
 add_node('intensity', 'core/shader_nodes/material_variable', export=variable('intensity', 'Intensity', 'float', 1), title='Intensity')
-add_node('glass_weight', 'core/shader_nodes/mul')
-connect('intensity', 'glass_weight', IN_MUL_A)
-constant('glass_weight', IN_MUL_B, 0.5)
+add_node('control_alpha', 'core/shader_nodes/mul')
+connect('intensity', 'control_alpha', IN_MUL_A)
+constant('control_alpha', IN_MUL_B, 0.5)
 add_node('blend', 'core/shader_nodes/lerp')
-connect('modulated', 'blend', IN_LERP_A)
-connect('glass', 'blend', IN_LERP_B, 'rgb')
-connect('glass_weight', 'blend', IN_LERP_W)
+connect('glass', 'blend', IN_LERP_A, 'rgb')
+connect('modulated', 'blend', IN_LERP_B)
+connect('control_alpha', 'blend', IN_LERP_W)
 # (the "brightness": how bright the liquid is, which the skin makes pulse while the weapon overheats or vents, without the liquid going
 # away: it is not the intensity, which is how much of it there is)
 add_node('brightness', 'core/shader_nodes/material_variable', export=variable('brightness', 'Brightness', 'float', 1), title='Brightness')
@@ -172,15 +174,19 @@ add_node('light', 'core/shader_nodes/power')
 connect('shown', 'light', IN_POWER_A)
 constant('light', IN_POWER_B, 2.2)
 connect('light', 'out', IN_OUT_BASE_COLOR)
-# (the alpha of the control, 128 of 255 when the glow is all there: the liquid is half see through, UT's final blend modulates by it)
+# (one less the alpha of the control: half see through with all the glow, as before, and the glass solid when it is drained, as UT's is
+# next to it. Without the glow, the chamber took its glass away with it)
 # (times how much the chamber is faded: the skin sets "fade" from the distance of the camera, 1 is all there. The materials of the third person
 # fade out when the camera is close, which this shader has no option for)
 add_node('fade', 'core/shader_nodes/material_variable', export=variable('fade', 'Fade', 'float', 1), title='Fade')
+add_node('solid', 'core/shader_nodes/subtract')
+constant('solid', IN_SUB_A, 1)
+connect('control_alpha', 'solid', IN_SUB_B)
 add_node('opacity', 'core/shader_nodes/mul')
-connect('glass_weight', 'opacity', IN_MUL_A)
+connect('solid', 'opacity', IN_MUL_A)
 connect('fade', 'opacity', IN_MUL_B)
 connect('opacity', 'out', IN_OUT_OPACITY)
-# (blended, not added, at half the opacity: the liquid is half see through in UT, and the glow takes it away after a shot)
+# (blended, not added: the glass and the liquid cover what is in the chamber, the liquid half see through)
 constant('out', IN_OUT_ADDITIVE, 0)
 
 text = 'shader = {\n\tconnections = [\n'
