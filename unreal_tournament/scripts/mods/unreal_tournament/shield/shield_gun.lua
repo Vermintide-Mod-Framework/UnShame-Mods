@@ -10,7 +10,8 @@ local mod = get_mod("unreal_tournament")
 --       skin draws UT's shield while it is up.
 --   Left button while blocking: the base weapon's push, which the skin draws as a shove of the shield. Both buttons held after it: a bash,
 --       a punch as strong as a charge held since the push, with the shield down for a moment. UT has no push; this is the mod's own.
--- Each hero has a melee weapon to be a copy of, so the weapon is six items of the mod that share everything but the base.
+-- Each hero has a melee weapon to be a copy of, so the weapon is five items of the mod that share everything but the base. (The Warrior
+-- Priest's is on the TODO list.)
 -- The skin (skin.lua) draws all of it, and this file only sets what it does to the game.
 
 local utils = mod.utils
