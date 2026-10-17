@@ -48,9 +48,12 @@ local ut = get_mod("unreal_tournament")
 --   t.remove(unit)                       takes an enemy away before the scenario ends
 --   t.health_of(unit)                    a unit's health, 0 when it is dead
 --   t.track_damage(unit)                 adds up all the damage the unit takes from now on, past what kills it, and keeps each hit
---   t.add_bot(profile_name, career_index, item_key, distance)   adds a bot of that career that far ahead, with the item in hand, that
---                                        stands and does only what the test tells it. It is taken away after the scenario.
+--   t.add_bot(profile_name, career_index, item_key, distance, slot)   adds a bot of that career that far ahead, with the item in hand
+--                                        (in the ranged slot if no slot is given), that stands and does only what the test tells it. It
+--                                        is taken away after the scenario.
 --   t.bot_aim(bot, unit), t.bot_press(bot, button)   turns the bot to face a unit, and has it press "fire" or "charge_shot"
+--   t.bot_defend(bot, on)                has the bot hold its block, or let it go
+--   t.after(fn)                          calls fn after the scenario, whether it passed or not
 --   t.aim_at(unit)                       turns the player to face the middle of a unit
 --   t.aim_at_point(x, y, z)              turns the player to face a point
 --   t.projectiles(filter)                the units of the player's projectiles whose action the filter accepts
@@ -118,6 +121,12 @@ local CONFIG = {
 	-- (found with /ut_tp, /ut_where and /ut_probe)
 	named_places = {
 		military = {
+			-- At the foot of the stairs 11 m ahead of the start, facing the same way: flat for 12 m, with nothing above. A gutter runner
+			-- spawned near the stairs gets stuck on them.
+			below_stairs = {
+				position = { 143.02, 233.61, -19.381 },
+				yaw = 135,
+			},
 			-- Further out on the square, with nothing above
 			sky = {
 				position = { 147.2, 237.8, -17.4 },
@@ -1064,11 +1073,14 @@ local function make_context(suite)
 	end
 
 	-- Adds a bot, another player, of a hero's career (profile name, as "bright_wizard", and the career's index), that far ahead of the
-	-- player and facing them, with the item in its hand in the ranged slot. The runner keeps the game's own bots off, so the bot is added
+	-- player and facing them, with the item in its hand in the slot (the ranged slot if none is given). The runner keeps the game's own
+	-- bots off, so the bot is added
 	-- to the party as the game mode adds one (GameModeBase._add_bot_to_party), and the game spawns it. Its own mind (PlayerBotBase.update)
 	-- is stopped, so that it stands and does only what t.bot_aim and t.bot_press tell it. Returns its unit, or nil. It is taken away
 	-- after the scenario.
-	function t.add_bot(profile_name, career_index, item_key, distance)
+	function t.add_bot(profile_name, career_index, item_key, distance, slot)
+		slot = slot or "slot_ranged"
+
 		local bot_player = on_main_thread(function ()
 			local game_mode = Managers.state.game_mode:game_mode()
 
@@ -1101,9 +1113,9 @@ local function make_context(suite)
 
 			local inventory_extension = ScriptUnit.extension(bot, "inventory_system")
 
-			inventory_extension:destroy_slot("slot_ranged", true)
-			inventory_extension:add_equipment("slot_ranged", ItemMasterList[item_key])
-			inventory_extension:wield("slot_ranged")
+			inventory_extension:destroy_slot(slot, true)
+			inventory_extension:add_equipment(slot, ItemMasterList[item_key])
+			inventory_extension:wield(slot)
 
 			return true
 		end)
@@ -1129,6 +1141,34 @@ local function make_context(suite)
 		end)
 
 		t.wait(0.5)
+	end
+
+	-- Has a bot of t.add_bot hold its block (its right button with a melee weapon) from now on, or let it go. The bot's input takes the
+	-- block for one frame each time it is asked (PlayerBotInput.defend), so it is asked every frame.
+	function t.bot_defend(bot, on)
+		scenario.defending = scenario.defending or {}
+		scenario.defending[bot] = on or nil
+
+		if not scenario.defend_watcher then
+			scenario.defend_watcher = true
+
+			local defending = scenario.defending
+
+			runner.frame_watchers[#runner.frame_watchers + 1] = function ()
+				for unit in pairs(defending) do
+					local input_extension = Unit.alive(unit) and ScriptUnit.has_extension(unit, "input_system")
+
+					if input_extension then
+						input_extension:defend()
+					end
+				end
+			end
+		end
+	end
+
+	-- Calls fn on the main thread after the scenario, whether it passed or not, before what it made is taken away
+	function t.after(fn)
+		scenario.after[#scenario.after + 1] = fn
 	end
 
 	-- Has a bot of t.add_bot press a button for a frame: "fire" (its left button) or "charge_shot" (its right button), as the bot's
@@ -1548,6 +1588,7 @@ local function run_suite(suite, only_career)
 					name = string.format("%s/%s/%s", suite.name, career, scenario_definition.name),
 					spawned = {},
 					bots = {},
+					after = {},
 				}
 
 				t.scenario(scenario)
@@ -1583,6 +1624,14 @@ local function run_suite(suite, only_career)
 				end, 5, "the queued enemies to spawn")
 
 				t.on_main_thread(function ()
+					for _, fn in ipairs(scenario.after) do
+						local ok, error_value = pcall(fn)
+
+						if not ok then
+							log("error after %s: %s", scenario.name, tostring(error_value))
+						end
+					end
+
 					for _, spawned in ipairs(scenario.spawned) do
 						if Unit.alive(spawned) then
 							Managers.state.conflict:destroy_unit(spawned, BLACKBOARDS[spawned], "ut_test")

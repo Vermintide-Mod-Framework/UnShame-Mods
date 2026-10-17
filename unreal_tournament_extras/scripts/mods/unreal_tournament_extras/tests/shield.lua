@@ -58,6 +58,9 @@ local SHOCK_TURN = 30 -- degrees
 -- How long after the bot fires its shot is given to get to the shield and on to the enemy, and how long the bot waits between shots
 local SHOCK_SHOT_TIME = 1.5 -- s
 local SHOCK_SHOT_GAP = 2 -- s
+-- The second shield of the reflections from shield to shield: Bardin as an Ironbreaker (his second career) with his Shield Gun
+local SHIELD_BOT_PROFILE = "dwarf_ranger"
+local SHIELD_BOT_CAREER = 2
 
 -- Turns the player to face the middle of a unit at once, from inside an observer of a frame (t.aim_at waits a little)
 local function face(t, unit)
@@ -81,6 +84,10 @@ end
 -- takes the player. Returns whether the attack took the player (taken(status_extension): pounced, grabbed) and whether the shield
 -- stopped one. The enemy is killed at the end, which lets the player go.
 local function let_attack(t, breed_name, shielded, taken)
+	-- (the enemy is spawned ahead of the player, so the player is put back each time, facing the way they started: they faced the
+	-- last enemy. It is below the stairs, which a gutter runner gets stuck on.)
+	t.go_to("below_stairs")
+
 	local enemy = t.spawn(breed_name, ATTACK_DISTANCE)
 
 	if not t.expect(enemy, "the %s could not be spawned", breed_name) then
@@ -162,12 +169,12 @@ local function shock_at_shield(t, button, what)
 		local stamina = t.on_main_thread(function ()
 			return stamina_spent(t)
 		end)
+		local paid = false
 
+		-- (a blocked shot costs a quarter of a stamina point, which comes back within a second, so it is watched for as it happens)
 		t.bot_press(bot, button)
-		t.wait(SHOCK_SHOT_TIME)
-
-		local paid = t.on_main_thread(function ()
-			return stamina_spent(t) > stamina
+		t.watch(SHOCK_SHOT_TIME, function ()
+			paid = paid or stamina_spent(t) > stamina
 		end)
 
 		if shielded then
@@ -188,6 +195,74 @@ local function shock_at_shield(t, button, what)
 
 	t.expect(not paid_unshielded, "the %s cost stamina without the shield", what)
 	t.expect(hurt_unshielded == 0, "the %s hurt the enemy without the shield (%.1f)", what, hurt_unshielded)
+end
+
+-- A Shock Rifle shot that one shield reflects into another is reflected again: the beam up to max_reflections times
+-- (InstantFire.DoTrace), and the ball each time it gets to a shield (ShockProjectile.ProcessTouch). Sienna (a bot) shoots at the
+-- player, who looks at Bardin (a bot with his Shield Gun's shield up, looking back at the player), SHOCK_TURN to the side of her, so
+-- the shot goes from the player's shield to Bardin's and back. A ball is still Sienna's after every reflection, and a shooter's own
+-- shield never reflects their ball, so the two shields are the others'. Each reflection is seen by a watch on mod.shield.reflect,
+-- which every shot goes through. Returns the units whose shields reflected the shot, in order, the player and Bardin.
+local function shield_to_shield(t, button, count)
+	local player = t.unit()
+	local shooter = t.add_bot(SHOCK_BOT_PROFILE, SHOCK_BOT_CAREER, ut.items.weapons.shock_rifle.key, SHOCK_DISTANCE)
+
+	if not t.expect(shooter, "Sienna could not be added") then
+		return nil
+	end
+
+	t.look(0, -SHOCK_TURN)
+
+	local bardin = t.add_bot(SHIELD_BOT_PROFILE, SHIELD_BOT_CAREER, ut.items.weapons.shield_gun_dr.key, SHOCK_DISTANCE, "slot_melee")
+
+	if not t.expect(bardin, "Bardin could not be added") then
+		return nil
+	end
+
+	t.aim_at(bardin)
+	t.bot_aim(bardin, player)
+	t.bot_aim(shooter, player)
+	t.bot_defend(bardin, true)
+	t.hold("action_two")
+	t.wait(0.5)
+
+	local reflected_by = {}
+	local reflect = shield.reflect
+
+	shield.reflect = function (...)
+		local position, distance, direction, unit = reflect(...)
+
+		if unit then
+			reflected_by[#reflected_by + 1] = unit
+		end
+
+		return position, distance, direction, unit
+	end
+
+	t.after(function ()
+		shield.reflect = reflect
+	end)
+
+	t.bot_press(shooter, button)
+	t.wait_until(function ()
+		return #reflected_by >= count
+	end, SHOCK_SHOT_TIME * 2, "the shot to be reflected")
+	t.release("action_two")
+
+	shield.reflect = reflect
+
+	return reflected_by, player, bardin
+end
+
+-- Whether the shields that reflected a shot went from the player's to Bardin's and back, for the first count reflections
+local function back_and_forth(reflected_by, player, bardin, count)
+	for i = 1, count do
+		if reflected_by[i] ~= (i % 2 == 1 and player or bardin) then
+			return false
+		end
+	end
+
+	return true
 end
 
 local function scenarios()
@@ -707,6 +782,32 @@ local function scenarios()
 			name = "the shield reflects a Shock Rifle ball",
 			run = function (t)
 				shock_at_shield(t, "charge_shot", "ball")
+			end,
+		},
+		{
+			-- A beam goes from shield to shield up to max_reflections times (see shield_to_shield): the player's, Bardin's, the player's,
+			-- and then it ends at Bardin
+			name = "the shield reflects a Shock Rifle beam into another shield",
+			run = function (t)
+				local count = shield.max_reflections
+				local reflected_by, player, bardin = shield_to_shield(t, "fire", count)
+
+				if reflected_by then
+					t.expect(#reflected_by == count, "the beam was reflected %d times, not %d", #reflected_by, count)
+					t.expect(back_and_forth(reflected_by, player, bardin, count), "the beam did not go from the player's shield to Bardin's and back")
+				end
+			end,
+		},
+		{
+			-- A ball goes from shield to shield for as long as it gets to one (see shield_to_shield); three times is looked for
+			name = "the shield reflects a Shock Rifle ball into another shield",
+			run = function (t)
+				local reflected_by, player, bardin = shield_to_shield(t, "charge_shot", 3)
+
+				if reflected_by then
+					t.expect(#reflected_by >= 3, "the ball was reflected %d times, not 3 or more", #reflected_by)
+					t.expect(back_and_forth(reflected_by, player, bardin, 3), "the ball did not go from the player's shield to Bardin's and back")
+				end
 			end,
 		},
 		{
