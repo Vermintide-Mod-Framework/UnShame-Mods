@@ -328,18 +328,36 @@ local function new(def, looks)
 		end
 	end
 
-	-- Returns where the barrel ends, for the flash of a shot. Returns nil if the character holds the game's weapon.
-	function third_person.muzzle_position(character)
+	-- Returns the mesh in the character's hand and its definition, or nil if the character holds the game's weapon
+	function third_person.held_mesh(character)
 		local entry = attached[character]
 
 		if not entry or not Unit.alive(entry.unit) then
 			return nil
 		end
 
-		local config = entry.config
-		local offset = Vector3(config.muzzle_right, config.muzzle_forward, config.muzzle_up) * config.meters_per_unit * config.scale
+		return entry.unit, entry.config
+	end
 
-		return Unit.world_position(entry.unit, 0) + Quaternion.rotate(Unit.world_rotation(entry.unit, 0), offset)
+	-- Returns where a point of the mesh in the character's hand is (right, forward and up, in the mesh's UT units), or nil if the
+	-- character holds the game's weapon
+	function third_person.point_position(character, right, forward, up)
+		local unit, config = third_person.held_mesh(character)
+
+		if not unit then
+			return nil
+		end
+
+		local offset = Vector3(right, forward, up) * config.meters_per_unit * config.scale
+
+		return Unit.world_position(unit, 0) + Quaternion.rotate(Unit.world_rotation(unit, 0), offset)
+	end
+
+	-- Returns where the barrel ends, for the flash of a shot. Returns nil if the character holds the game's weapon.
+	function third_person.muzzle_position(character)
+		local _, config = third_person.held_mesh(character)
+
+		return config and third_person.point_position(character, config.muzzle_right, config.muzzle_forward, config.muzzle_up)
 	end
 
 	-- Returns how the mesh in the character's hand is turned (its forward is the way the barrel points), or nil as muzzle_position does

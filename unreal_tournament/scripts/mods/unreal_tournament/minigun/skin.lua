@@ -6,8 +6,8 @@ local mod = get_mod("unreal_tournament")
 -- the barrels that turn (Minigun.UpdateRoll), the muzzle flash, the shells, the tracers, and the sounds of the winding and the fire.
 -- The gameplay is in minigun.lua. This file only draws it, and is told what happens through the hook tables in hooks.lua.
 --
--- The assets were made with tools/asset_conversion (convert_weapon.py minigun, convert_static.py minigun_pickup, make_weapon_fx.py and
--- make_bank.py minigun).
+-- The assets were made with tools/asset_conversion (convert_weapon.py minigun, convert_static.py minigun_pickup and minigun_3rd,
+-- make_weapon_fx.py and make_bank.py minigun).
 
 local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/minigun/skin_animations")
@@ -55,6 +55,17 @@ local CONFIG = {
 	-- front). Each axis goes through this point of the mesh (forward, up, in the mesh's units).
 	barrel_pivot = { 0, 8.8 },
 	gear_pivot = { 17.85, 10.87 },
+	-- The third person mesh's barrels are a geometry of their own (convert_static.py minigun_3rd). They turn about the barrel bone's place
+	-- (right, forward, up, in the mesh's UT units) at these turns a second while rounds come, and stop this long after the last round
+	-- (MinigunAttachment.UpdateRoll and UpdateRollTime). The shells fly from the ejector bone, on the gun's right.
+	third_person_barrels = "g_third_person_0_barrels",
+	third_person_barrel_pivot = { -2.76, 46.24, 8.16 },
+	third_person_barrel_turns = {
+		primary = 3,
+		alt = 1,
+	},
+	third_person_roll_stop = 0.2, -- seconds
+	third_person_ejector = { 6.6, 38.3, 12.7 },
 	inspect_pose_speed = 5,
 	inspect_sway = 5,
 	inspect_sway_speed = 1.8,
@@ -144,6 +155,8 @@ end
 -- A tracer: a streak that flies from the muzzle to where the round hit
 local last_tracer_time = {}
 local last_remote_sound = {}
+-- How the barrels of the mesh in each character's hand turn: { angle in degrees, turns a second, time of the last round }
+local rolls = {}
 
 local function tracer(owner_unit, start, end_position, interval)
 	local now = Managers.time:time("game")
@@ -189,15 +202,15 @@ local function tracer(owner_unit, start, end_position, interval)
 	})
 end
 
--- A shell leaves the ejector and falls: UT's ShellCasing mesh. ShellSpewer is attached to the weapon, so like the flash it is drawn with
--- the model's field of view, in the space of the model in the player's view, where a UT unit is world_unit meters. It is placed from the
--- ejector, which moves with the model, by how far it has flown.
-local function shell(ejector, right, up, world_unit)
+-- A shell leaves the ejector and falls: UT's ShellCasing mesh. ShellSpewer is attached to the weapon, so in the player's own view it is
+-- drawn like the flash with the model's field of view, in the space of the model, where a UT unit is world_unit meters. In third person
+-- a UT unit is the world's. It is placed from the ejector, which moves with the gun, by how far it has flown. rotation is how it starts
+-- out turned.
+local function shell(ejector, right, up, world_unit, rotation)
 	local velocity = Vector3Box(right * random_between(CONFIG.shell_speed) + up * (random_between(CONFIG.shell_speed) * 0.6) + random_direction() * 30)
 	local flown = Vector3Box(Vector3.zero())
 	local up_box = Vector3Box(up)
 	local last = Managers.time:time("game")
-	local _, camera_rotation = utils.camera_pose()
 
 	particles.mesh({
 		additive = 0,
@@ -228,7 +241,7 @@ local function shell(ejector, right, up, world_unit)
 		end,
 		life = random_between(CONFIG.shell_life),
 		material = "units/ut/fx/fx_weapon_shell_casing",
-		rotation = camera_rotation or Quaternion.identity(),
+		rotation = rotation,
 		scale = function ()
 			return CONFIG.shell_scale * world_unit / UNIT
 		end,
@@ -327,7 +340,7 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 			if camera_rotation then
 				shell(function ()
 					return api.state() and api.muzzle_model_position("b_bone_caseejector") or nil
-				end, Quaternion.right(camera_rotation), Quaternion.up(camera_rotation), world_unit)
+				end, Quaternion.right(camera_rotation), Quaternion.up(camera_rotation), world_unit, camera_rotation)
 			end
 
 			return
@@ -345,6 +358,23 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 	third_person_flash(muzzle, direction, api.third_person.meters_per_unit_of(owner_unit))
 	tracer(owner_unit, muzzle, end_position, interval)
 
+	-- The barrels turn while rounds come, at the speed of the mode
+	local roll = rolls[owner_unit] or {
+		angle = 0,
+	}
+
+	rolls[owner_unit] = roll
+	roll.turns = CONFIG.third_person_barrel_turns[mode]
+	roll.last = Managers.time:time("game")
+
+	-- The shells fly out of the ejector to the gun's right
+	local rotation = api.third_person.muzzle_rotation(owner_unit)
+	local ejector = CONFIG.third_person_ejector
+
+	shell(function ()
+		return api.third_person.point_position(owner_unit, ejector[1], ejector[2], ejector[3])
+	end, Quaternion.right(rotation), Quaternion.up(rotation), UNIT, rotation)
+
 	if not utils.is_local_player_unit(owner_unit) then
 		-- The others hear the gun from where it is, once for each time its sound would start again
 		local now = Managers.time:time("game")
@@ -354,6 +384,40 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 			last_remote_sound[owner_unit] = now
 
 			api.play_sound_at(mode == "alt" and "ut_minigun_alt_fire_3d" or "ut_minigun_fire_3d", muzzle)
+		end
+	end
+end
+
+-- Turns the barrels of the meshes in the characters' hands about the barrel bone, and stops them a moment after the last round
+mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
+	if not next(rolls) or not Managers.time:has_timer("game") then
+		return
+	end
+
+	local now = Managers.time:time("game")
+
+	for character, roll in pairs(rolls) do
+		if not Unit.alive(character) then
+			rolls[character] = nil
+		else
+			if now - roll.last > CONFIG.third_person_roll_stop then
+				roll.turns = 0
+			end
+
+			roll.angle = (roll.angle + roll.turns * 360 * dt) % 360
+
+			for _, api in ipairs(skin_apis) do
+				local unit, config = api.third_person.held_mesh(character)
+
+				if unit and Unit.has_node(unit, CONFIG.third_person_barrels) then
+					local node = Unit.node(unit, CONFIG.third_person_barrels)
+					local pivot = Vector3(unpack(CONFIG.third_person_barrel_pivot)) * config.meters_per_unit
+					local rotation = Quaternion.axis_angle(Vector3.forward(), math.rad(roll.angle))
+
+					Unit.set_local_rotation(unit, node, rotation)
+					Unit.set_local_position(unit, node, pivot - Quaternion.rotate(rotation, pivot))
+				end
+			end
 		end
 	end
 end
@@ -445,6 +509,7 @@ local function new_skin(variant)
 		on_level_exit = function ()
 			table.clear(last_tracer_time)
 			table.clear(last_remote_sound)
+			table.clear(rolls)
 			sound.fire_id = nil
 		end,
 	})

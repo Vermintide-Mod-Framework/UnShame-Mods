@@ -76,10 +76,12 @@ STATICS = {
         'unit': 'units/ut/minigun/pickup',
     },
     # The Minigun's third person mesh (MinigunAttachment's Weapons.Minigun_3rd, at xWeaponAttachment's DrawScale 0.4), with the pickup's
-    # material, which has the same texture (MinigunTex0)
+    # material, which has the same texture (MinigunTex0). parts: the barrels, which UT turns by their bone (MinigunAttachment.UpdateRoll),
+    # are a geometry of their own (see psk2bsi.py), so that the skin can turn them too.
     'minigun_3rd': {
         'pskx': 'Weapons/SkeletalMesh/Minigun_3rd.psk',
         'materials': [('units/ut/minigun/pickup_m0', 'existing')],
+        'parts': {'Bone Barrels': 'barrels'},
         'scale': 0.02 * 0.4,
         'unit': 'units/ut/minigun/third_person',
     },
@@ -244,17 +246,20 @@ def main():
         psk, rows = reflect_labels(psk, rows, cfg['labels'], len(materials), folder.name)
         materials.append((tga, kind, opacity, os.path.splitext(os.path.basename(tga))[0].lower() + '_reflected_labels', rows))
     mat_names = ['m_%d' % i for i in range(len(materials))]
+    parts = cfg.get('parts', {})
     subprocess.check_call([sys.executable, os.path.join(os.path.dirname(__file__), 'psk2bsi.py'), psk,
-                           '%s/%s.bsi' % (REPO, cfg['unit']), geometry, ','.join(mat_names), str(cfg['scale'])])
-    # (the geometries psk2bsi made are named <prefix>_<index of the material>)
+                           '%s/%s.bsi' % (REPO, cfg['unit']), geometry, ','.join(mat_names), str(cfg['scale'])]
+                          + ([','.join('%s=%s' % entry for entry in parts.items())] if parts else []))
+    # (the geometries psk2bsi made are named <prefix>_<index of the material>, and <prefix>_<index>_<part> for the parts)
     unit_text = 'materials = {\n'
     for i, (tga, kind) in enumerate(m[:2] for m in materials):
         # (a material of the kind 'existing' is one the mod has already, named in place of the tga, and nothing is made for it)
         unit_text += '\tm_%d = "%s"\n' % (i, tga if kind == 'existing' else '%s/%s_m%d' % (unit_dir, unit_base, i))
     unit_text += '}\nrenderables = {\n'
     for i in range(len(materials)):
-        unit_text += ('\t%s_%d = {\n\t\talways_keep = false\n\t\tculling = "%s"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
-                      '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n') % (geometry, i, cfg.get('culling', 'disabled'))
+        for suffix in [''] + ['_' + part for part in parts.values()]:
+            unit_text += ('\t%s_%d%s = {\n\t\talways_keep = false\n\t\tculling = "%s"\n\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n'
+                          '\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n') % (geometry, i, suffix, cfg.get('culling', 'disabled'))
     unit_text += '}\n'
     open('%s/%s.unit' % (REPO, cfg['unit']), 'w', newline='\n').write(unit_text)
     for i, (tga, kind, opacity, texture_name, rows) in enumerate(materials):
