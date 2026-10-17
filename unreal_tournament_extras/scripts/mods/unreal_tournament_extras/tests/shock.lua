@@ -652,8 +652,11 @@ local BOTS = {
 	behind = -3, -- m
 	special = "skaven_ratling_gunner",
 	special_distance = 14, -- m
-	-- "a bot sets off combos at a boss": the boss, and how far ahead of the player the bot is
+	-- "a bot sets off combos at a boss": the boss, where the player stands from below_unreachable (ahead, and to the right), and how far
+	-- ahead of the player the bot is
 	boss = "skaven_rat_ogre",
+	players_ahead = -2, -- m
+	players_right = 2, -- m
 	bot_distance = 2, -- m
 	-- How long the bot has to hurt the special, and to set off a combo at the boss
 	fight_time = 30, -- s
@@ -728,6 +731,17 @@ local function bot_scenarios()
 			name = "a bot sets off combos at a boss",
 			run = function (t)
 				t.go_to("below_unreachable")
+
+				local stand = t.ground_at(BOTS.players_ahead, BOTS.players_right)
+
+				if not t.expect(stand, "there is no ground where the player should stand") then
+					return
+				end
+
+				t.on_main_thread(function ()
+					runner.move_player(t.unit(), Vector3(stand[1], stand[2], stand[3]))
+				end)
+				t.wait(0.5)
 
 				local boss = t.spawn_at(BOTS.boss, unpack(t.place("unreachable")))
 
