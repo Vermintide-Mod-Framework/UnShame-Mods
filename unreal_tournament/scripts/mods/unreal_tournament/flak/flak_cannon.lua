@@ -374,57 +374,12 @@ local function build_shell_launcher(original)
 	return action
 end
 
--- The template is shared game state, so it is patched in place. What is changed is saved, and it is put back when the mod is
--- disabled or unloaded.
-local saved = {}
-
 local PROJECTILE_UNIT_TEMPLATES = {
 	"drake_pistol_shot",
 	"grenade",
 }
 
-local function restore_blunderbuss()
-	local original = saved.original
-	local template = rawget(Weapons, TEMPLATE_NAME)
-
-	if not original or not template then
-		return
-	end
-
-	local actions = template.actions
-
-	actions.action_one.default = original.action_one_default
-	actions.action_two.default = original.action_two_default
-
-	for _, name in ipairs(CHUNK_ACTIONS) do
-		actions[CHUNK_ACTION_NAME][name] = nil
-	end
-
-	for _, name in ipairs(BURST_ACTIONS) do
-		actions[CHUNK_ACTION_NAME][name] = nil
-	end
-
-	actions[SHELL_ACTION_NAME][SHELL_ACTION] = nil
-	template.attack_meta_data.ut_flak = nil
-
-	for _, name in ipairs(PROJECTILE_UNIT_TEMPLATES) do
-		template.required_projectile_unit_templates[name] = original.required_projectile_unit_templates[name]
-	end
-
-	for key, value in pairs(original.ammo_data or {}) do
-		template.ammo_data[key] = value
-	end
-
-	saved.original = nil
-end
-
-local function apply_flak_cannon()
-	local template = rawget(Weapons, TEMPLATE_NAME)
-
-	if not template then
-		return
-	end
-
+local function apply_flak_cannon(template)
 	-- The chart of the item's stats, from 0 to 7. The primary fire is the normal attack, and the shell is the heavy one.
 	template.weapon_diagram = {
 		light_attack = {
@@ -444,24 +399,7 @@ local function apply_flak_cannon()
 	}
 
 	local actions = template.actions
-	local original = {
-		action_one_default = actions.action_one.default,
-		action_two_default = actions.action_two.default,
-		required_projectile_unit_templates = {},
-		ammo_data = {
-			reload_time = template.ammo_data.reload_time,
-			ammo_immediately_available = template.ammo_data.ammo_immediately_available,
-			ammo_per_clip = template.ammo_data.ammo_per_clip,
-			ammo_per_reload = template.ammo_data.ammo_per_reload,
-			max_ammo = template.ammo_data.max_ammo,
-		},
-	}
-
-	for _, name in ipairs(PROJECTILE_UNIT_TEMPLATES) do
-		original.required_projectile_unit_templates[name] = template.required_projectile_unit_templates[name]
-	end
-
-	saved.original = original
+	local blunderbuss_shot = actions.action_one.default
 
 	-- This tells the bot shooting that this is the Flak Cannon (see bots.lua).
 	template.attack_meta_data.ut_flak = true
@@ -474,13 +412,13 @@ local function apply_flak_cannon()
 	-- Nothing should need a reload, but the game may still start one when the weapon is wielded, so the reload is made short.
 	template.ammo_data.reload_time = 0.2
 
-	local primary = build_shot(original.action_one_default, CONFIG.primary_fire_rate)
+	local primary = build_shot(blunderbuss_shot, CONFIG.primary_fire_rate)
 
 	primary.shot_count = CONFIG.chunk_count
 	primary.ut_flak_chunks = true
 
 	actions.action_one.default = primary
-	actions.action_two.default = build_shell_launcher(original.action_one_default)
+	actions.action_two.default = build_shell_launcher(blunderbuss_shot)
 
 	for bounces = 0, #CHUNK_ACTIONS - 1 do
 		actions[CHUNK_ACTION_NAME][CHUNK_ACTIONS[bounces + 1]] = build_chunk_action(bounces)
@@ -1001,19 +939,11 @@ end
 -- The mod holds its own references to the units of the projectiles while the weapon is enabled.
 local packages = utils.package_holder("unreal_tournament_flak")
 
-local function enable_flak_cannon()
+mod.items.set_template_changes(TEMPLATE_NAME, apply_flak_cannon)
+
+mod.enabled_callbacks[#mod.enabled_callbacks + 1] = function ()
 	packages.load_projectile_units(PROJECTILE_UNIT_TEMPLATES)
-	apply_flak_cannon()
 end
-
--- This runs when the mod is disabled or unloaded.
-local function disable_flak_cannon()
-	restore_blunderbuss()
-end
-
-mod.enabled_callbacks[#mod.enabled_callbacks + 1] = enable_flak_cannon
-mod.disabled_callbacks[#mod.disabled_callbacks + 1] = disable_flak_cannon
-mod.unload_callbacks[#mod.unload_callbacks + 1] = disable_flak_cannon
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	update_ragdoll_throws()

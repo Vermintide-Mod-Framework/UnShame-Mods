@@ -268,6 +268,47 @@ end)
 -- The registered definitions by id, for example items.weapons.shock_rifle.template
 items.weapons = {}
 
+-- Each weapon's template as items.register made it: a copy of the base weapon's. With the mod switched off, the template goes back to
+-- this, so the item works as its base weapon.
+local base_copies = {}
+
+-- The function of each weapon that turns its template into the mod's weapon, by template name
+local template_changes = {}
+
+local function reset_template(template_name)
+	local template = rawget(Weapons, template_name)
+
+	-- The table is kept, and only its contents are replaced, because the game holds on to it
+	table.clear(template)
+
+	for key, value in pairs(table.clone(base_copies[template_name])) do
+		template[key] = value
+	end
+
+	return template
+end
+
+-- Sets the function that turns a weapon's template into the mod's weapon: change(template). It runs on a fresh copy of the base
+-- weapon's template each time the mod is switched on.
+function items.set_template_changes(template_name, change)
+	template_changes[template_name] = change
+end
+
+mod.enabled_callbacks[#mod.enabled_callbacks + 1] = function ()
+	for template_name, change in pairs(template_changes) do
+		change(reset_template(template_name))
+	end
+end
+
+local function reset_all_templates()
+	for template_name in pairs(template_changes) do
+		reset_template(template_name)
+	end
+end
+
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = reset_all_templates
+mod.unload_callbacks[#mod.unload_callbacks + 1] = reset_all_templates
+
 -- Registers the weapon's skins: entries in the game's skin tables and item list, copied from the base weapon's default skin.
 local function register_skins(definition, item)
 	if not definition.skins then
@@ -395,6 +436,8 @@ function items.register(setting_id, definition)
 
 	-- These are the green words under the power.
 	template.tooltip_keywords = definition.keywords
+
+	base_copies[definition.template] = table.clone(template)
 
 	for text_id, text in pairs(definition.texts or {}) do
 		texts[text_id] = text

@@ -1787,8 +1787,8 @@ local SHIELD_FIELDS = {
 	"sound_event_block_within_arc",
 }
 
-local function apply_template(template_name)
-	local template = rawget(Weapons, template_name)
+local function apply_template(template)
+	local template_name = template.name
 	local actions = template.actions
 	local original = actions.action_one
 	local heavy = original.heavy_attack or original.heavy_attack_left or original.default
@@ -1944,9 +1944,8 @@ local function apply_template(template_name)
 	end
 end
 
--- The templates are the mod's own copies (items.register), so they are changed once
 for template_name in pairs(TEMPLATE_NAMES) do
-	apply_template(template_name)
+	mod.items.set_template_changes(template_name, apply_template)
 end
 
 mod.shield.template_names = TEMPLATE_NAMES

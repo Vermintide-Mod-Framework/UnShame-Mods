@@ -276,42 +276,7 @@ local needs_release = setmetatable({}, {
 	__mode = "k",
 })
 
--- The template is shared game state, so it is patched in place. What is changed is saved, and it is put back when the mod is
--- disabled or unloaded.
-local saved = {}
-
-local function restore_crossbow()
-	local original = saved.original
-	local template = rawget(Weapons, TEMPLATE_NAME)
-
-	if not original or not template then
-		return
-	end
-
-	local actions = template.actions
-
-	actions.action_one.default = original.action_one_default
-	actions.action_one.zoomed_shot = original.action_one_zoomed_shot
-	actions.action_one[SPIRAL_ACTION] = nil
-	actions.action_two.default = original.action_two_default
-	template.attack_meta_data.ut_rocket = nil
-	template.attack_meta_data.can_charge_shot = original.can_charge_shot
-	template.attack_meta_data.max_range = original.max_range
-
-	for key, value in pairs(original.ammo_data) do
-		template.ammo_data[key] = value
-	end
-
-	saved.original = nil
-end
-
-local function apply_rocket_launcher()
-	local template = rawget(Weapons, TEMPLATE_NAME)
-
-	if not template then
-		return
-	end
-
+local function apply_rocket_launcher(template)
 	template.default_spread_template = SPREAD_TEMPLATE
 
 	-- The chart of the item's stats, from 0 to 7. The single rocket is the normal attack, and the loaded salvo is the heavy one.
@@ -333,22 +298,11 @@ local function apply_rocket_launcher()
 	}
 
 	local actions = template.actions
-	local original = {
-		action_one_default = actions.action_one.default,
-		action_one_zoomed_shot = actions.action_one.zoomed_shot,
-		action_two_default = actions.action_two.default,
-		can_charge_shot = template.attack_meta_data.can_charge_shot,
-		max_range = template.attack_meta_data.max_range,
-		ammo_data = {
-			reload_time = template.ammo_data.reload_time,
-			ammo_immediately_available = template.ammo_data.ammo_immediately_available,
-			ammo_per_clip = template.ammo_data.ammo_per_clip,
-			ammo_per_reload = template.ammo_data.ammo_per_reload,
-			max_ammo = template.ammo_data.max_ammo,
-		},
+	local crossbow = {
+		shot = actions.action_one.default,
+		zoomed_shot = actions.action_one.zoomed_shot,
+		aim = actions.action_two.default,
 	}
-
-	saved.original = original
 
 	-- This tells the bot shooting that this is the Rocket Launcher (see bots.lua). Bots fire single rockets. The crossbow's
 	-- charged shot is the aiming, which loads rockets here, so bots must not use it.
@@ -364,17 +318,17 @@ local function apply_rocket_launcher()
 	-- Nothing should need a reload, but the game may still start one when the weapon is wielded, so the reload is made short.
 	template.ammo_data.reload_time = 0.2
 
-	actions.action_one.default = build_rocket_action(original.action_one_default, false)
-	actions.action_one.zoomed_shot = build_rocket_action(original.action_one_zoomed_shot, true)
+	actions.action_one.default = build_rocket_action(crossbow.shot, false)
+	actions.action_one.zoomed_shot = build_rocket_action(crossbow.zoomed_shot, true)
 
-	local spiral = build_rocket_action(original.action_one_zoomed_shot, true)
+	local spiral = build_rocket_action(crossbow.zoomed_shot, true)
 
 	spiral.ut_rocket_spiral = true
 	spiral.lookup_data.sub_action_name = SPIRAL_ACTION
 	actions.action_one[SPIRAL_ACTION] = spiral
 
 	-- The aiming loads the rockets. It has no zoom, because UT has none, and it does not slow the player down while loading.
-	local aim = table.clone(original.action_two_default)
+	local aim = table.clone(crossbow.aim)
 	local original_condition = aim.condition_func
 
 	aim.ut_rocket_aim = true
@@ -1187,9 +1141,7 @@ mod.explosion_callbacks.ut_rocket_explosion = function (world, position)
 	}
 end
 
-mod.enabled_callbacks[#mod.enabled_callbacks + 1] = apply_rocket_launcher
-mod.disabled_callbacks[#mod.disabled_callbacks + 1] = restore_crossbow
-mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_crossbow
+mod.items.set_template_changes(TEMPLATE_NAME, apply_rocket_launcher)
 
 -- A rocket explodes when it touches a Flak shell or a Shock ball (RocketProj.ProcessTouch and their bProjTarget). The shell also
 -- explodes when a rocket gets near it. See flak_cannon.lua.

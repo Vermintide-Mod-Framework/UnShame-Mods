@@ -230,54 +230,7 @@ local function build_shot(original)
 	return action
 end
 
--- The template is shared game state, so it is patched in place. What is changed is saved, and it is put back when the mod is disabled
--- or unloaded.
-local saved = {}
-
-local ATTACK_META_DATA_FIELDS = {
-	"can_charge_shot",
-	"charged_attack_action_name",
-	"max_range",
-}
-
--- The template's own fields that are replaced
-local TEMPLATE_FIELDS = {
-	"crosshair_style",
-	"on_wield",
-	"synced_states",
-	"tooltip_compare",
-	"tooltip_detail",
-}
-
-local function restore_staff(template_name)
-	local original = saved[template_name]
-	local template = rawget(Weapons, template_name)
-
-	if not original or not template then
-		return
-	end
-
-	template.actions.action_one = original.action_one
-	template.actions.action_two = original.action_two
-
-	for _, field in ipairs(TEMPLATE_FIELDS) do
-		template[field] = original[field]
-	end
-
-	for _, field in ipairs(ATTACK_META_DATA_FIELDS) do
-		template.attack_meta_data[field] = original.attack_meta_data[field]
-	end
-
-	saved[template_name] = nil
-end
-
-local function apply_staff(template_name)
-	local template = rawget(Weapons, template_name)
-
-	if not template then
-		return
-	end
-
+local function apply_staff(template)
 	-- The chart of the item's stats, from 0 to 7. The bolt is the normal attack.
 	template.weapon_diagram = {
 		light_attack = {
@@ -298,21 +251,6 @@ local function apply_staff(template_name)
 
 	local actions = template.actions
 	local attack_meta_data = template.attack_meta_data
-	local original = {
-		action_one = actions.action_one,
-		action_two = actions.action_two,
-		attack_meta_data = {},
-	}
-
-	for _, field in ipairs(TEMPLATE_FIELDS) do
-		original[field] = template[field]
-	end
-
-	for _, field in ipairs(ATTACK_META_DATA_FIELDS) do
-		original.attack_meta_data[field] = attack_meta_data[field]
-	end
-
-	saved[template_name] = original
 
 	-- The shot is replaced, and the staff's charged attack is taken away: the zoom is done by this file (see below). Everything else
 	-- stays untouched, including the venting, wield, inspect and the career actions.
@@ -323,7 +261,7 @@ local function apply_staff(template_name)
 
 	utils.set_actions_lookup_data({
 		action_one = actions.action_one,
-	}, template_name)
+	}, template.name)
 
 	-- The staff's wield lights trails on the fingers of the first person arms, and its charged attack more. The skin hides the arms,
 	-- but not their effects.
@@ -350,13 +288,7 @@ local function apply_staff(template_name)
 	template.tooltip_detail = template.tooltip_compare
 end
 
-local function apply_lightning_guns()
-	apply_staff(TEMPLATE_NAME)
-end
-
-local function restore_lightning_guns()
-	restore_staff(TEMPLATE_NAME)
-end
+mod.items.set_template_changes(TEMPLATE_NAME, apply_staff)
 
 -- The bolt and its arcs. The game's own shot damages what the bolt hits. This works out where the bolt ends, jumps the arcs, and tells
 -- the skin what to draw. It runs on the machine that owns the shot, which is the player's, or the host's for its bots.
@@ -531,8 +463,3 @@ mod.zoom.register(TEMPLATE_NAME)
 
 mod.lightning.zoom = mod.zoom
 
--- The weapon is enabled with the mod. The mod's own copies of the templates are patched, and put back when the mod is switched off
--- or unloaded.
-mod.enabled_callbacks[#mod.enabled_callbacks + 1] = apply_lightning_guns
-mod.disabled_callbacks[#mod.disabled_callbacks + 1] = restore_lightning_guns
-mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_lightning_guns

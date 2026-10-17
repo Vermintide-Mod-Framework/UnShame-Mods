@@ -451,52 +451,10 @@ local function build_ball_action()
 	return action
 end
 
--- The staff template is shared game state, so it is patched in place. Every value that is changed is saved, and it is put back
--- when the weapon is disabled and when the mod is unloaded.
+-- The two sets of fire modes, normal and Instagib, and which one the template has now (see sync_instagib_actions)
+local fire_modes = {}
 
-local saved = {}
-local ATTACK_META_DATA_FIELDS = {
-	"can_charge_shot",
-	"charged_attack_action_name",
-	"fire_input",
-	"max_range",
-	"ut_shock",
-}
-
-local function restore_beam_staff()
-	local original = saved.original
-	local template = rawget(Weapons, TEMPLATE_NAME)
-
-	if not original or not template then
-		return
-	end
-
-	local actions = template.actions
-
-	actions.action_one = original.action_one
-	actions.action_two = original.action_two
-	saved.normal_actions = nil
-	saved.instagib_actions = nil
-	saved.instagib_active = false
-
-	for _, field in ipairs(ATTACK_META_DATA_FIELDS) do
-		template.attack_meta_data[field] = original.attack_meta_data[field]
-	end
-
-	template.tooltip_compare = original.tooltip_compare
-	template.tooltip_detail = original.tooltip_detail
-	template.required_projectile_unit_templates.fireball_charged = original.ball_projectile_units_required
-
-	saved.original = nil
-end
-
-local function apply_shock_rifle()
-	local template = rawget(Weapons, TEMPLATE_NAME)
-
-	if not template then
-		return
-	end
-
+local function apply_shock_rifle(template)
 	-- The chart of the item's stats, from 0 to 7. The beam is the normal attack, and the ball is the heavy one.
 	template.weapon_diagram = {
 		light_attack = {
@@ -517,20 +475,6 @@ local function apply_shock_rifle()
 
 	local actions = template.actions
 	local attack_meta_data = template.attack_meta_data
-	local original = {
-		action_one = actions.action_one,
-		action_two = actions.action_two,
-		attack_meta_data = {},
-		tooltip_compare = template.tooltip_compare,
-		tooltip_detail = template.tooltip_detail,
-		ball_projectile_units_required = template.required_projectile_unit_templates.fireball_charged,
-	}
-
-	for _, field in ipairs(ATTACK_META_DATA_FIELDS) do
-		original.attack_meta_data[field] = attack_meta_data[field]
-	end
-
-	saved.original = original
 
 	-- Only the two fire modes are replaced. Everything else stays untouched, including wield, inspect, reload, the career actions
 	-- and any changes other mods made to the template.
@@ -542,11 +486,11 @@ local function apply_shock_rifle()
 	}
 
 	-- The Instagib skin's actions put the beam on both buttons (see sync_instagib_actions).
-	saved.normal_actions = {
+	fire_modes.normal = {
 		action_one = actions.action_one,
 		action_two = actions.action_two,
 	}
-	saved.instagib_actions = {
+	fire_modes.instagib = {
 		action_one = {
 			default = build_beam_action("action_one", "action_two"),
 		},
@@ -554,9 +498,10 @@ local function apply_shock_rifle()
 			default = build_beam_action("action_two", "action_one"),
 		},
 	}
+	fire_modes.instagib_active = false
 
-	utils.set_actions_lookup_data(saved.normal_actions, TEMPLATE_NAME)
-	utils.set_actions_lookup_data(saved.instagib_actions, TEMPLATE_NAME)
+	utils.set_actions_lookup_data(fire_modes.normal, TEMPLATE_NAME)
+	utils.set_actions_lookup_data(fire_modes.instagib, TEMPLATE_NAME)
 
 	-- The bot AI and the tooltips refer to the charged and blast sub actions, which were removed.
 	attack_meta_data.can_charge_shot = false
@@ -920,7 +865,7 @@ end)
 local function sync_instagib_actions()
 	local template = rawget(Weapons, TEMPLATE_NAME)
 
-	if not template or not saved.instagib_actions then
+	if not template or not fire_modes.instagib then
 		return
 	end
 
@@ -929,13 +874,13 @@ local function sync_instagib_actions()
 	local unit = player and player.player_unit
 	local wanted = unit ~= nil and Unit.alive(unit) and utils.wielded_template_name(unit) == TEMPLATE_NAME and utils.wielded_skin(unit) == INSTAGIB_SKIN
 
-	if wanted == (saved.instagib_active or false) then
+	if wanted == fire_modes.instagib_active then
 		return
 	end
 
-	saved.instagib_active = wanted
+	fire_modes.instagib_active = wanted
 
-	local actions = wanted and saved.instagib_actions or saved.normal_actions
+	local actions = wanted and fire_modes.instagib or fire_modes.normal
 
 	template.actions.action_one = actions.action_one
 	template.actions.action_two = actions.action_two
@@ -971,18 +916,19 @@ end
 -- The weapon's package list is built when the staff's packages are loaded, which may be before this mod patched the template.
 -- Spawning a projectile unit that is not loaded crashes the game. So the mod holds its own reference to the ball's unit while it
 -- is enabled.
-local function enable_shock_rifle()
+mod.items.set_template_changes(TEMPLATE_NAME, apply_shock_rifle)
+
+mod.enabled_callbacks[#mod.enabled_callbacks + 1] = function ()
 	packages.load_projectile_units({"fireball_charged"})
-	apply_shock_rifle()
 end
 
--- This runs when the mod is switched off or unloaded.
+-- This runs when the mod is switched off or unloaded. The template goes back to the Beam Staff's (items.lua), so the fire modes are
+-- forgotten.
 local function disable_shock_rifle()
-	restore_beam_staff()
+	table.clear(fire_modes)
 	clear_implosions()
 end
 
-mod.enabled_callbacks[#mod.enabled_callbacks + 1] = enable_shock_rifle
 mod.disabled_callbacks[#mod.disabled_callbacks + 1] = disable_shock_rifle
 mod.unload_callbacks[#mod.unload_callbacks + 1] = disable_shock_rifle
 

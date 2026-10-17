@@ -216,8 +216,7 @@ local function build_shot(source)
 	return action
 end
 
-local function apply_template()
-	local template = rawget(Weapons, TEMPLATE_NAME)
+local function apply_template(template)
 	local actions = template.actions
 
 	template.weapon_diagram = {
@@ -254,5 +253,4 @@ local function apply_template()
 	template.attack_meta_data.minimum_range = CONFIG.bot_min_range
 end
 
--- The template is the mod's own copy (items.register), so it is changed once
-apply_template()
+mod.items.set_template_changes(TEMPLATE_NAME, apply_template)

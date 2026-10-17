@@ -186,55 +186,7 @@ local function build_shot(source, mode, first, hand)
 	return action
 end
 
-local saved = {}
-
-local ATTACK_META_DATA_FIELDS = {
-	"can_charge_shot",
-	"charged_attack_action_name",
-	"fire_input",
-	"max_range",
-	"ut_minigun",
-}
-
-local AMMO_DATA_FIELDS = {
-	"ammo_per_clip",
-	"ammo_per_reload",
-	"max_ammo",
-	"reload_time",
-}
-
-local function restore_gun(template_name)
-	local original = saved[template_name]
-	local template = rawget(Weapons, template_name)
-
-	if not original or not template then
-		return
-	end
-
-	template.actions.action_one = original.action_one
-	template.actions.action_two = original.action_two
-	template.tooltip_compare = original.tooltip_compare
-	template.tooltip_detail = original.tooltip_detail
-
-	for _, field in ipairs(ATTACK_META_DATA_FIELDS) do
-		template.attack_meta_data[field] = original.attack_meta_data[field]
-	end
-
-	for _, field in ipairs(AMMO_DATA_FIELDS) do
-		template.ammo_data[field] = original.ammo_data[field]
-	end
-
-	template.ammo_data.ammo_immediately_available = original.ammo_immediately_available
-	saved[template_name] = nil
-end
-
-local function apply_gun(template_name)
-	local template = rawget(Weapons, template_name)
-
-	if not template then
-		return
-	end
-
+local function apply_gun(template)
 	-- The chart of the item's stats, from 0 to 7. The rounds are the normal attack.
 	template.weapon_diagram = {
 		light_attack = {
@@ -255,29 +207,10 @@ local function apply_gun(template_name)
 
 	local actions = template.actions
 	local attack_meta_data = template.attack_meta_data
-	local original = {
-		action_one = actions.action_one,
-		action_two = actions.action_two,
-		ammo_data = {},
-		ammo_immediately_available = template.ammo_data.ammo_immediately_available,
-		attack_meta_data = {},
-		tooltip_compare = template.tooltip_compare,
-		tooltip_detail = template.tooltip_detail,
-	}
-
-	for _, field in ipairs(ATTACK_META_DATA_FIELDS) do
-		original.attack_meta_data[field] = attack_meta_data[field]
-	end
-
-	for _, field in ipairs(AMMO_DATA_FIELDS) do
-		original.ammo_data[field] = template.ammo_data[field]
-	end
-
-	saved[template_name] = original
 
 	-- The shot comes from the game's repeating gun, whichever the template is a copy of
 	local source = rawget(Weapons, "repeating_handgun_template_1").actions.action_one.default
-	local hand = original.action_one.default.weapon_action_hand
+	local hand = actions.action_one.default.weapon_action_hand
 
 	actions.action_one = {
 		default = build_shot(source, "primary", true, hand),
@@ -288,7 +221,7 @@ local function apply_gun(template_name)
 		loop = build_shot(source, "alt", false, hand),
 	}
 
-	utils.set_actions_lookup_data(actions, template_name)
+	utils.set_actions_lookup_data(actions, template.name)
 
 	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
 	template.ammo_data.max_ammo = CONFIG.max_ammo
@@ -317,16 +250,8 @@ local function apply_gun(template_name)
 	template.tooltip_detail = template.tooltip_compare
 end
 
-local function apply_guns()
-	for template_name in pairs(TEMPLATE_NAMES) do
-		apply_gun(template_name)
-	end
-end
-
-local function restore_guns()
-	for template_name in pairs(TEMPLATE_NAMES) do
-		restore_gun(template_name)
-	end
+for template_name in pairs(TEMPLATE_NAMES) do
+	mod.items.set_template_changes(template_name, apply_gun)
 end
 
 -- The shot. The game's own shot does the damage. This puts UT's spread on it, and tells the skin about each round. It runs on the
@@ -452,7 +377,3 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	mod.minigun.spin = 0
 	mod.minigun.mode = nil
 end
-
-mod.enabled_callbacks[#mod.enabled_callbacks + 1] = apply_guns
-mod.disabled_callbacks[#mod.disabled_callbacks + 1] = restore_guns
-mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_guns

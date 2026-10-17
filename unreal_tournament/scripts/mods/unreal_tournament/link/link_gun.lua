@@ -307,9 +307,6 @@ utils.register_network_lookup("buff_templates", ALLY_BUFF)
 utils.register_network_lookup("buff_templates", ALLY_BUFF_FADING)
 
 -- Weapon template
--- The template is shared game state, so it is patched in place. What is changed is saved, and it is put back when the mod is
--- disabled or unloaded.
-local saved = {}
 
 -- The overcharge lockout has an animation that stays until the weapon has cooled down, even after a weapon swap. This is the
 -- overcharge extension of the player who wields the staff.
@@ -424,43 +421,6 @@ local function update_bolts()
 	end
 end
 
-local function restore_staff()
-	local original = saved.original
-	local template = rawget(Weapons, TEMPLATE_NAME)
-
-	if not original or not template then
-		return
-	end
-
-	local actions = template.actions
-
-	for name, saved in pairs(original.primary_actions) do
-		local action = actions.action_one[name]
-
-		-- What the mod added is taken away, and what it changed is put back.
-		for key in pairs(action) do
-			if saved.fields[key] == nil then
-				action[key] = nil
-			end
-		end
-
-		for key, value in pairs(saved.fields) do
-			action[key] = value
-		end
-
-		action.impact_data.damage_profile = saved.damage_profile
-	end
-
-	actions.weapon_reload.default.anim_end_event = original.reload_anim_end_event
-
-	local inspect = actions.action_inspect.action_inspect_hold
-
-	inspect.anim_end_event = original.inspect_anim_end_event
-
-	actions.action_two.default = original.action_two_default
-
-	saved.original = nil
-end
 
 -- The beam effect of the staff comes with packages that the game only loads for the player who plays the Thornsister. For the
 -- other players it loads only the third person staff. So the mod holds a reference to the staff in the hands and to the
@@ -471,10 +431,8 @@ local BEAM_PACKAGES = {
 	"resource_packages/careers/we_thornsister",
 }
 
-local function apply_link_gun()
-	local template = rawget(Weapons, TEMPLATE_NAME)
-
-	if not template or not has_staff then
+local function apply_link_gun(template)
+	if not has_staff then
 		return
 	end
 
@@ -500,26 +458,7 @@ local function apply_link_gun()
 
 	local actions = template.actions
 	local reload = actions.weapon_reload.default
-	local original = {
-		action_two_default = actions.action_two.default,
-		primary_actions = {},
-		reload_anim_end_event = reload.anim_end_event,
-	}
-
-	-- The whole action is saved, so its fields can be put back as they were.
-	for _, name in ipairs({
-		"default",
-		"default_chain",
-	}) do
-		local action = actions.action_one[name]
-
-		original.primary_actions[name] = {
-			damage_profile = action.impact_data.damage_profile,
-			fields = table.shallow_copy(action),
-		}
-	end
-
-	saved.original = original
+	local staff_beam = actions.action_two.default
 
 	-- The thorns are one stunning bolt at a time that speeds up, fired again and again while the button is held. The shot has no
 	-- animation of its own. The staff stays in its stance, and the hand does not cast.
@@ -528,7 +467,8 @@ local function apply_link_gun()
 		"default_chain",
 	}) do
 		local action = actions.action_one[name]
-		local saved = original.primary_actions[name].fields
+		local staff_chains = action.allowed_chain_actions
+		local staff_shoot_fx = action.on_shoot_particle_fx
 		local chains = {
 			{
 				action = "action_one",
@@ -539,7 +479,7 @@ local function apply_link_gun()
 		}
 
 		-- The chains to the other actions are open from the start, because an action has only the one bolt.
-		for _, chain in ipairs(saved.allowed_chain_actions) do
+		for _, chain in ipairs(staff_chains) do
 			if chain.action ~= "action_one" then
 				local open_chain = table.clone(chain)
 
@@ -557,8 +497,8 @@ local function apply_link_gun()
 		action.num_shots = 1
 		action.overcharge_type = "ut_link_bolt"
 		-- The effect of the shot is played at the hand that holds the staff. The game has it at the right hand.
-		action.on_shoot_particle_fx = saved.on_shoot_particle_fx and {
-			effect = saved.on_shoot_particle_fx.effect,
+		action.on_shoot_particle_fx = staff_shoot_fx and {
+			effect = staff_shoot_fx.effect,
 			node_name = CONFIG.bolt_link_node,
 		} or nil
 		action.projectile_info = bolt_projectile_info()
@@ -574,14 +514,13 @@ local function apply_link_gun()
 	-- Inspecting ends in the stance.
 	local inspect = actions.action_inspect.action_inspect_hold
 
-	original.inspect_anim_end_event = inspect.anim_end_event
 	inspect.anim_end_event = CONFIG.idle_pose_event
 
 	-- Venting ends in the stance too.
 	reload.anim_end_event = CONFIG.idle_pose_event
 
 	-- The beam is a charge that is held, and it adds the heat of the beam while it is held. The rest is in the callback below.
-	local beam = table.clone(original.action_two_default)
+	local beam = table.clone(staff_beam)
 
 	-- The beam has no animation of its own, like the bolts, so the stance stays.
 	beam.anim_end_event = nil
@@ -3759,15 +3698,10 @@ local function clear_beams()
 	table.clear(bolts)
 end
 
-mod.enabled_callbacks[#mod.enabled_callbacks + 1] = apply_link_gun
+mod.items.set_template_changes(TEMPLATE_NAME, apply_link_gun)
 
-local function give_back()
-	clear_beams()
-	restore_staff()
-end
-
-mod.disabled_callbacks[#mod.disabled_callbacks + 1] = give_back
-mod.unload_callbacks[#mod.unload_callbacks + 1] = give_back
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = clear_beams
+mod.unload_callbacks[#mod.unload_callbacks + 1] = clear_beams
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	clear_beams()

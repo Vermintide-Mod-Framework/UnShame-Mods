@@ -565,8 +565,7 @@ local function build_charge(source)
 	return action
 end
 
-local function apply_template()
-	local template = rawget(Weapons, TEMPLATE_NAME)
+local function apply_template(template)
 	local actions = template.actions
 
 	template.weapon_diagram = {
@@ -623,8 +622,7 @@ local function apply_template()
 	template.tooltip_detail = template.tooltip_compare
 end
 
--- items.register made this template as the mod's own copy, so it is changed here once, when the file loads
-apply_template()
+mod.items.set_template_changes(TEMPLATE_NAME, apply_template)
 
 assault.template_name = TEMPLATE_NAME
 assault.fire_rate = CONFIG.fire_rate

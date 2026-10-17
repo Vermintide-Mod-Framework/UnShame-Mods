@@ -424,56 +424,7 @@ local function build_charge_action()
 	}
 end
 
--- The template is shared game state, so it is patched in place. What is changed is saved, and it is put back when the mod is disabled
--- or unloaded.
-local saved = {}
-
-local AMMO_FIELDS = {
-	"ammo_immediately_available",
-	"ammo_per_clip",
-	"ammo_per_reload",
-	"max_ammo",
-	"play_reload_anim_on_wield_reload",
-	"reload_time",
-	"should_update_anim_ammo",
-}
-
-local function restore_pistol()
-	local original = saved.original
-	local template = rawget(Weapons, TEMPLATE_NAME)
-
-	if not original or not template then
-		return
-	end
-
-	local actions = template.actions
-
-	actions.action_one.default = original.action_one_default
-	actions.action_one.shoot_charged = original.action_one_shoot_charged
-	actions[CHILD_ACTION_NAME][CHILD_SUB_ACTION] = nil
-	actions.action_two.default = original.action_two_default
-	template.default_spread_template = original.default_spread_template
-	template.attack_meta_data.ut_bio = nil
-	template.attack_meta_data.max_range = original.max_range
-
-	for _, field in ipairs(AMMO_FIELDS) do
-		template.ammo_data[field] = original.ammo_data[field]
-	end
-
-	for _, name in ipairs(PROJECTILE_UNIT_TEMPLATES) do
-		template.required_projectile_unit_templates[name] = original.required_projectile_unit_templates[name]
-	end
-
-	saved.original = nil
-end
-
-local function apply_bio_rifle()
-	local template = rawget(Weapons, TEMPLATE_NAME)
-
-	if not template then
-		return
-	end
-
+local function apply_bio_rifle(template)
 	-- The stat chart, from 0 to 7, set by hand against the Rocket Launcher's (its rocket is 60 damage and 6 on the chart) and the Flak Cannon's
 	-- (its chunk and its shell). The small glob is the light attack (26 damage), and the big glob is the heavy one (140). The goop does a
 	-- fifth less against armor, which puts its armor piercing between the chunk's and the shell's.
@@ -495,28 +446,12 @@ local function apply_bio_rifle()
 	}
 
 	local actions = template.actions
-	local original = {
-		action_one_default = actions.action_one.default,
-		action_one_shoot_charged = actions.action_one.shoot_charged,
-		action_two_default = actions.action_two.default,
-		ammo_data = {},
-		default_spread_template = template.default_spread_template,
-		max_range = template.attack_meta_data.max_range,
-		required_projectile_unit_templates = {},
-	}
-
-	for _, field in ipairs(AMMO_FIELDS) do
-		original.ammo_data[field] = template.ammo_data[field]
-	end
 
 	template.required_projectile_unit_templates = template.required_projectile_unit_templates or {}
 
 	for _, name in ipairs(PROJECTILE_UNIT_TEMPLATES) do
-		original.required_projectile_unit_templates[name] = template.required_projectile_unit_templates[name]
 		template.required_projectile_unit_templates[name] = true
 	end
-
-	saved.original = original
 
 	-- This tells the bot shooting that this is the Bio Rifle (see bots.lua).
 	template.attack_meta_data.ut_bio = true
@@ -1325,14 +1260,11 @@ for _, template_name in ipairs({ "ut_bio_blast", "ut_bio_blast_air" }) do
 	end
 end
 
-local function enable_bio_rifle()
-	packages.load_projectile_units(PROJECTILE_UNIT_TEMPLATES)
-	apply_bio_rifle()
-end
+mod.items.set_template_changes(TEMPLATE_NAME, apply_bio_rifle)
 
-mod.enabled_callbacks[#mod.enabled_callbacks + 1] = enable_bio_rifle
-mod.disabled_callbacks[#mod.disabled_callbacks + 1] = restore_pistol
-mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_pistol
+mod.enabled_callbacks[#mod.enabled_callbacks + 1] = function ()
+	packages.load_projectile_units(PROJECTILE_UNIT_TEMPLATES)
+end
 
 -- The globs are cleared when the mod is unloaded and when a level is left.
 local function clear_all()
