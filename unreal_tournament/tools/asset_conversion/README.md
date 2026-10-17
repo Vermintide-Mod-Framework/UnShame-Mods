@@ -17,15 +17,14 @@ Local tools that produced `units/ut/*`, `ui/ut/*`, `wwise/unreal_tournament/*`, 
 
 ## The tools
 
-| Script | Makes | From |
-|---|---|---|
 What each script makes, and the tables in it that say what it converts, are in its header. Most take the export folder as their argument.
 
-**The export**
+**First**
 
 | Script | Makes |
 |---|---|
 | `export.py <UT2004 dir> <export dir> [umodel]` | the export folder, from the packages in `PACKAGES` |
+| `make_base_materials.py <SDK dir>` | the materials the weapons' materials derive from (the SDK's standard ones with the options the mod needs), and the texture category |
 
 **Weapons**
 
@@ -44,7 +43,7 @@ What each script makes, and the tables in it that say what it converts, are in i
 
 | Script | Makes |
 |---|---|
-| `make_fx_assets.py <export dir>` | effect textures as UT has them, each with its `fx_` material, the quad the particles are drawn on, and the material they all derive from |
+| `make_fx_assets.py <export dir>` | effect textures as UT has them, each with its `fx_` material, the quad the particles are drawn on, and the particle materials they derive from |
 | `make_weapon_fx.py <export dir>` | effect textures of the later weapons, with sheets of tiles cut into a texture for each tile |
 | `make_lightning_assets.py <export dir>` | the Lightning Gun's effect textures, and its scope as gui materials |
 | `make_sniper_scope.py <export dir>` | the Sniper Rifle's scope, as a gui material |

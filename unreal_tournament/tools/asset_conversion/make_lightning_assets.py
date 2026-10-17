@@ -38,6 +38,9 @@ FX = {
 # much fainter than UT's. particle_linear reads the values as they are. The flare, the bolt and the sparks use it (checked against
 # pictures of UT2004).
 LINEAR = ('lightning_flare', 'lightning_bolt', 'blue_spark_line')
+# The flare is also drawn with the weapon in the player's view, so it also gets fx_weapon_<name>, which draws with the weapon model's field
+# of view (as make_weapon_fx.py's WEAPON do)
+WEAPON = ('lightning_flare',)
 
 # An effect's texture is marked as not srgb, so that its smaller mipmaps are made from its values as they are, as its material reads them
 def write_texture(directory, name, width, height, rows, srgb=True):
@@ -62,6 +65,11 @@ for name, (tga, crop) in FX.items():
     write_texture('units/ut/fx', name, width, height, rows, srgb=name not in LINEAR)
     open('%s/units/ut/fx/fx_%s.material' % (REPO, name), 'w', newline='\n').write(particle_material_text(
         name, 'particle_linear' if name in LINEAR else 'particle'))
+
+    if name in WEAPON:
+        open('%s/units/ut/fx/fx_weapon_%s.material' % (REPO, name), 'w', newline='\n').write(particle_material_text(
+            name, 'particle_weapon_linear' if name in LINEAR else 'particle_weapon'))
+
     print('fx', name, width, height)
 
 # The scope. UT draws the ring and the arrows with the alpha of their textures.

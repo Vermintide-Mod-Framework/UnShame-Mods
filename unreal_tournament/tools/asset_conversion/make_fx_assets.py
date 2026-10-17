@@ -190,25 +190,39 @@ LAYER_TRANSPARENT, DOUBLE_SIDED, BLEND_TRANSPARENT, DISABLE_DEPTH_WRITE = (
     'c8d8b754-c567-4c7b-9cbd-8acab22beff5', '8df1b8f7-17c2-4ae4-8c4e-25517ec1df46',
     '435e14e4-556d-4ac1-af14-8dafe63aff8f', '7b8bc0bf-c453-49d2-9415-0e80fec1039f')
 
-material = 'shader = {\n\tconnections = [\n'
-material += connection(UV, TEX, SAMPLE_UV)
-material += connection(TEX, MUL_COLOR, MUL_A, 'rgb')
-material += connection(TINT, MUL_COLOR, MUL_B)
-material += connection(MUL_COLOR, OUT, BASE_COLOR)
-material += connection(TEX, MUL_OPACITY, MUL_A, 'a')
-material += connection(INTENSITY, MUL_OPACITY, MUL_B)
-material += connection(MUL_OPACITY, OUT, OPACITY)
-material += connection(ADDITIVE, OUT, ADDITIVE_INPUT)
-material += '\t]\n\tconstants = [\n\t]\n\tgroups = [\n\t]\n\tnodes = [\n'
-material += node(OUT, 'core/stingray_renderer/output_nodes/unlit_base', (1280, 0), (LAYER_TRANSPARENT, DOUBLE_SIDED, BLEND_TRANSPARENT, DISABLE_DEPTH_WRITE))
-material += node(UV, 'core/shader_nodes/texture_coordinate0', (0, 0))
-material += node(TEX, 'core/shader_nodes/sample_texture', (300, 0), (ADDRESS_CLAMP, FILTER_LINEAR, SRGB),
-                 samplers='\t\t\t\ttexture_map = {\n\t\t\t\t\tdisplay_name = "Texture"\n\t\t\t\t\tslot_name = "texture_map"\n\t\t\t\t}\n', title='Texture')
-material += node(TINT, 'core/shader_nodes/material_variable', (300, 200), export=variable('tint', 'Tint', 'float3', None), title='Tint')
-material += node(INTENSITY, 'core/shader_nodes/material_variable', (300, 300), export=variable('intensity', 'Intensity', 'float', 1), title='Intensity')
-material += node(ADDITIVE, 'core/shader_nodes/material_variable', (300, 400), export=variable('additive', 'Additive', 'float', 1), title='Additive')
-material += node(MUL_COLOR, 'core/shader_nodes/mul', (700, 0))
-material += node(MUL_OPACITY, 'core/shader_nodes/mul', (700, 200))
-material += '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tadditive = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\ttint = {\n\t\ttype = "vector3"\n\t\tvalue = [\n\t\t\t1\n\t\t\t1\n\t\t\t1\n\t\t]\n\t}\n}\n'
-open(FX + '/particle.material', 'w', newline='\n').write(material)
+# The sampler's linear read (the texture's values as they are, not turned from srgb), and the unlit output's custom field of view (the
+# weapon model's)
+LINEAR = 'e94e53e6-49b6-4194-a747-8f064a5932e0'
+CUSTOM_FOV = 'b2556764-e8e9-47cf-9ecc-f53b5d5d73c7'
+
+def particle_material(linear, weapon):
+    material = 'shader = {\n\tconnections = [\n'
+    material += connection(UV, TEX, SAMPLE_UV)
+    material += connection(TEX, MUL_COLOR, MUL_A, 'rgb')
+    material += connection(TINT, MUL_COLOR, MUL_B)
+    material += connection(MUL_COLOR, OUT, BASE_COLOR)
+    material += connection(TEX, MUL_OPACITY, MUL_A, 'a')
+    material += connection(INTENSITY, MUL_OPACITY, MUL_B)
+    material += connection(MUL_OPACITY, OUT, OPACITY)
+    material += connection(ADDITIVE, OUT, ADDITIVE_INPUT)
+    material += '\t]\n\tconstants = [\n\t]\n\tgroups = [\n\t]\n\tnodes = [\n'
+    material += node(OUT, 'core/stingray_renderer/output_nodes/unlit_base', (1280, 0),
+                     (LAYER_TRANSPARENT, DOUBLE_SIDED, BLEND_TRANSPARENT, DISABLE_DEPTH_WRITE) + ((CUSTOM_FOV,) if weapon else ()))
+    material += node(UV, 'core/shader_nodes/texture_coordinate0', (0, 0))
+    material += node(TEX, 'core/shader_nodes/sample_texture', (300, 0), (ADDRESS_CLAMP, FILTER_LINEAR, LINEAR if linear else SRGB),
+                     samplers='\t\t\t\ttexture_map = {\n\t\t\t\t\tdisplay_name = "Texture"\n\t\t\t\t\tslot_name = "texture_map"\n\t\t\t\t}\n', title='Texture')
+    material += node(TINT, 'core/shader_nodes/material_variable', (300, 200), export=variable('tint', 'Tint', 'float3', None), title='Tint')
+    material += node(INTENSITY, 'core/shader_nodes/material_variable', (300, 300), export=variable('intensity', 'Intensity', 'float', 1), title='Intensity')
+    material += node(ADDITIVE, 'core/shader_nodes/material_variable', (300, 400), export=variable('additive', 'Additive', 'float', 1), title='Additive')
+    material += node(MUL_COLOR, 'core/shader_nodes/mul', (700, 0))
+    material += node(MUL_OPACITY, 'core/shader_nodes/mul', (700, 200))
+    material += '\t]\n\tversion = 3\n}\ntextures = {\n}\nvariables = {\n\tadditive = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\tintensity = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n\ttint = {\n\t\ttype = "vector3"\n\t\tvalue = [\n\t\t\t1\n\t\t\t1\n\t\t\t1\n\t\t]\n\t}\n}\n'
+
+    return material
+
+# particle reads its texture as srgb; the _linear ones read the values as they are (see make_lightning_assets.py). The _weapon ones draw
+# with the weapon model's field of view, for the effects that are drawn with the weapon in the player's view.
+for name, linear, weapon in (('particle', False, False), ('particle_linear', True, False), ('particle_weapon', False, True),
+                             ('particle_weapon_linear', True, True)):
+    open('%s/%s.material' % (FX, name), 'w', newline='\n').write(particle_material(linear, weapon))
 print('wrote the quad and the materials')
