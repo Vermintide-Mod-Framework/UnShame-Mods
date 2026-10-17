@@ -53,6 +53,11 @@ local VARIANTS = {
 		id = "shield_gun_bw",
 		key = "ut_shield_gun_bw",
 		template = "ut_shield_gun_bw_template",
+		-- The staffs' pose, as the Shock Rifle has (it is a copy of the beam staff). The punches and the push are the beam staff's
+		-- quick shot, the Shock Rifle's shot.
+		pose_3p = "to_staff",
+		punch_3p = "attack_shoot_beam_spark",
+		push_3p = "attack_shoot_beam_spark",
 	},
 	{
 		base_item = "wh_2h_billhook",

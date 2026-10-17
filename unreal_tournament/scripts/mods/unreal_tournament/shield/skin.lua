@@ -552,8 +552,8 @@ local GRIPS = {
 		roll = 0,
 		follow_game_unit = 3,
 	},
-	-- Sienna has no weapon held like a gun. As her Shock Rifle is: in the right hand, pointing the way she faces, level, and not turned
-	-- with the scythe she holds
+	-- Sienna has no weapon held like a gun. In the staffs' pose, as her Shock Rifle is held: in the right hand, pointing the way she faces,
+	-- level
 	shield_gun_bw = {
 		grip_right = 0,
 		grip_forward = 0,
