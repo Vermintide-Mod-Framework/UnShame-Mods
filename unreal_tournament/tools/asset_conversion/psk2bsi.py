@@ -1,4 +1,6 @@
 import sys, struct, zlib, math
+from formats import read_chunks, read_psk
+from quat import rotate
 
 # Usage: psk2bsi.py in.psk out.bsi geometry_prefix material0,material1,... [scale]
 # One geometry per PSK material index, named <prefix>_<index>, with the material named by the list.
@@ -6,38 +8,9 @@ src, dst, prefix, mat_list = sys.argv[1:5]
 mat_names = mat_list.split(',')
 scale = float(sys.argv[5]) if len(sys.argv) > 5 else 1.0
 
-data = open(src, 'rb').read()
-pos = 0
-chunks = {}
-while pos + 32 <= len(data):
-    cid = data[pos:pos + 20].split(b'\0')[0].decode('latin1')
-    typeflag, size, count = struct.unpack('<iii', data[pos + 20:pos + 32])
-    chunks[cid] = (size, count, data[pos + 32:pos + 32 + size * count])
-    pos += 32 + size * count
-
-psize, pcount, pbody = chunks['PNTS0000']
-points = [struct.unpack_from('<3f', pbody, i * psize) for i in range(pcount)]
-
-wsize, wcount, wbody = chunks['VTXW0000']
-wedges = []
-for i in range(wcount):
-    off = i * wsize
-    pi = struct.unpack_from('<H', wbody, off)[0] if wsize == 16 else struct.unpack_from('<I', wbody, off)[0]
-    u, v = struct.unpack_from('<2f', wbody, off + 4)
-    wedges.append((pi, u, v))
-
-fkey = 'FACE0000' if 'FACE0000' in chunks else 'FACE3200'
-fsize, fcount, fbody = chunks[fkey]
-faces = []
-for i in range(fcount):
-    off = i * fsize
-    if fkey == 'FACE0000':
-        w0, w1, w2 = struct.unpack_from('<3H', fbody, off)
-        mat = fbody[off + 6]
-    else:
-        w0, w1, w2 = struct.unpack_from('<3I', fbody, off)
-        mat = fbody[off + 12]
-    faces.append((w0, w1, w2, mat))
+chunks = read_chunks(src)
+points, wedges, psk_faces = read_psk(src)
+faces = [corners + (material,) for corners, material in psk_faces]
 
 msize, mcount, mbody = chunks['MATT0000']
 psk_materials = [mbody[i * msize:i * msize + 64].split(b'\0')[0].decode('latin1') for i in range(mcount)]
@@ -126,19 +99,12 @@ for mat in sorted(tris_by_mat):
 
 # The second bone of the skeleton (the muzzle: 'tip' to UT) as a node of its own, where it is in the model (the root bone turns
 # the bone by its own rotation and moves it by its position)
-def qmul(a, b):
-    ax, ay, az, aw = a
-    bx, by, bz, bw = b
-    return (aw * bx + ax * bw + ay * bz - az * by, aw * by - ax * bz + ay * bw + az * bx,
-            aw * bz + ax * by - ay * bx + az * bw, aw * bw - ax * bx - ay * by - az * bz)
-
 rs, rc, rb = chunks['REFSKELT']
 if rc > 1:
     root_q = struct.unpack_from('<4f', rb, 76)
     root_p = struct.unpack_from('<3f', rb, 92)
     child_p = struct.unpack_from('<3f', rb, rs + 92)
-    conj = (-root_q[0], -root_q[1], -root_q[2], root_q[3])
-    turned = qmul(qmul(root_q, (child_p[0], child_p[1], child_p[2], 0)), conj)[:3]
+    turned = rotate(root_q, child_p)
     tip = tuple(turned[i] + root_p[i] for i in range(3))
     tip_local = '1 0 0 0 0 1 0 0 0 0 1 0 %s %s %s 1' % (fl([-tip[1] * scale]), fl([tip[0] * scale]), fl([tip[2] * scale]))
     nodes.append('\t\t\ttip = {\n\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t}\n' % tip_local)

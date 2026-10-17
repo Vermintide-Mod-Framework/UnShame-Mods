@@ -1,4 +1,7 @@
-import sys, os, struct, zlib
+import sys, os
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'asset_conversion'))
+import formats
 
 # Puts two screenshots (the same size, as screenshot.ps1 makes them) together in one picture, so that a weapon in Vermintide 2 can be
 # compared with the same weapon in Unreal Tournament 2004. It needs no packages.
@@ -11,66 +14,15 @@ import sys, os, struct, zlib
 #   red-cyan  a in the red channel and b in green and blue: where they agree it is gray, and a mismatch shows as a color fringe
 # The numbers at the end crop both to that part of the picture first (in pixels).
 
+# Returns a picture as (width, height, rows), each row a list of (r, g, b)
 def read_png(path):
-    d = open(path, 'rb').read()
-    pos = 8
-    idat = b''
-    while pos < len(d):
-        length, = struct.unpack('>I', d[pos:pos + 4])
-        kind = d[pos + 4:pos + 8]
-        body = d[pos + 8:pos + 8 + length]
+    width, height, channels, rows = formats.read_png(path)
 
-        if kind == b'IHDR':
-            width, height, depth, color = struct.unpack('>IIBB', body[:10])
-        elif kind == b'IDAT':
-            idat += body
+    return width, height, [[formats.rgb_at(rows, channels, x, y) for x in range(width)] for y in range(height)]
 
-        pos += 12 + length
-
-    assert depth == 8 and color in (2, 6), 'only 8 bit rgb and rgba'
-    channels = 3 if color == 2 else 4
-    raw = zlib.decompress(idat)
-    stride = width * channels
-    rows = []
-    previous = bytearray(stride)
-    offset = 0
-
-    for _ in range(height):
-        kind = raw[offset]
-        line = bytearray(raw[offset + 1:offset + 1 + stride])
-        offset += 1 + stride
-
-        for i in range(stride):
-            left = line[i - channels] if i >= channels else 0
-            up = previous[i]
-            up_left = previous[i - channels] if i >= channels else 0
-
-            if kind == 1:
-                line[i] = (line[i] + left) & 255
-            elif kind == 2:
-                line[i] = (line[i] + up) & 255
-            elif kind == 3:
-                line[i] = (line[i] + (left + up) // 2) & 255
-            elif kind == 4:
-                p = left + up - up_left
-                pa, pb, pc = abs(p - left), abs(p - up), abs(p - up_left)
-                line[i] = (line[i] + (left if pa <= pb and pa <= pc else up if pb <= pc else up_left)) & 255
-
-        previous = line
-        rows.append([tuple(line[x * channels:x * channels + 3]) for x in range(width)])
-
-    return width, height, rows
-
+# Writes rows of (r, g, b) as an RGB png
 def write_png(path, rows):
-    height, width = len(rows), len(rows[0])
-    raw = b''.join(b'\0' + bytes(c for pixel in row for c in pixel) for row in rows)
-
-    def chunk(kind, body):
-        c = struct.pack('>I', len(body)) + kind + body
-        return c + struct.pack('>I', zlib.crc32(kind + body) & 0xffffffff)
-
-    open(path, 'wb').write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)) +
-                           chunk(b'IDAT', zlib.compress(raw, 6)) + chunk(b'IEND', b''))
+    formats.write_png(path, len(rows[0]), len(rows), [bytes(c for pixel in row for c in pixel) for row in rows], channels=3)
 
 def main():
     mode, a_path, b_path, out = sys.argv[1:5]

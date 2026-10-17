@@ -1,4 +1,6 @@
-import os, struct, zlib
+import os
+from formats import read_png, write_png
+from resources import texture_text, particle_material_text
 
 # Splits UT2004's spark textures (link_spark_green, the Link Gun's, shield_spark, the Shield Gun's, and wall_spark, a bullet's, which
 # make_fx_assets.py converts as they are) into the two things each is made of: the top half is the body of a spark, a line that fades in from the tail and ends sharply
@@ -10,70 +12,16 @@ import os, struct, zlib
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 FX = REPO + '/units/ut/fx'
 
-# (the helpers of make_fx_assets.py, without running its conversion)
-source = open(os.path.join(os.path.dirname(__file__), 'make_fx_assets.py'), encoding='utf8').read()
-helpers = source[source.index('def write_png'):source.index('TEXTURE_TEMPLATE = ')]
-material_start = source.index('MATERIAL_TEMPLATE = ')
-templates = source[source.index('TEXTURE_TEMPLATE = '):source.index("'''\n", material_start + 25) + 4]
-exec(helpers)
-exec(templates)
-
-
-def read_png(path):
-    data = open(path, 'rb').read()
-    position, compressed = 8, b''
-
-    while position < len(data):
-        size, tag = struct.unpack('>I4s', data[position:position + 8])
-        body = data[position + 8:position + 8 + size]
-
-        if tag == b'IHDR':
-            width, height = struct.unpack('>II', body[:8])
-        elif tag == b'IDAT':
-            compressed += body
-
-        position += 12 + size
-
-    raw = zlib.decompress(compressed)
-    stride = width * 4 + 1
-    previous = bytearray(width * 4)
-    rows = []
-
-    for y in range(height):
-        kind, line = raw[y * stride], bytearray(raw[y * stride + 1:(y + 1) * stride])
-
-        for i in range(len(line)):
-            a = line[i - 4] if i >= 4 else 0
-            b = previous[i]
-            c = previous[i - 4] if i >= 4 else 0
-
-            if kind == 1:
-                line[i] = (line[i] + a) & 255
-            elif kind == 2:
-                line[i] = (line[i] + b) & 255
-            elif kind == 3:
-                line[i] = (line[i] + ((a + b) >> 1)) & 255
-            elif kind == 4:
-                p = a + b - c
-                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
-                line[i] = (line[i] + (a if pa <= pb and pa <= pc else (b if pb <= pc else c))) & 255
-
-        previous = line
-        rows.append(line)
-
-    return width, height, rows
-
-
 def pixel(rows, x, y):
     return bytes(rows[y][4 * x:4 * x + 4])
 
 
 def write(name, width, height, pixels):
-    rows = [b'\0' + b''.join(pixels[y]) for y in range(height)]
+    rows = [b''.join(pixels[y]) for y in range(height)]
 
     write_png('%s/%s.png' % (FX, name), width, height, rows)
-    open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % {'name': name})
-    open('%s/fx_%s.material' % (FX, name), 'w', newline='\n').write(MATERIAL_TEMPLATE % {'name': name})
+    open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(texture_text('units/ut/fx/' + name))
+    open('%s/fx_%s.material' % (FX, name), 'w', newline='\n').write(particle_material_text(name))
     print('wrote', name, width, height)
 
 
@@ -83,7 +31,7 @@ BODY_ROWS = (16, 48)
 HEAD = (16, 80, 48, 112)
 
 for name in ('link_spark_green', 'shield_spark', 'wall_spark'):
-    width, height, rows = read_png('%s/%s.png' % (FX, name))
+    width, height, _, rows = read_png('%s/%s.png' % (FX, name))
 
     body_height = BODY_ROWS[1] - BODY_ROWS[0]
     body = [[pixel(rows, x, BODY_ROWS[0] + column) for column in range(body_height)] for x in range(width)]

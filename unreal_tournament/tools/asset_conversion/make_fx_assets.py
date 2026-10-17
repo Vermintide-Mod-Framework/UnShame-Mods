@@ -1,4 +1,6 @@
 import struct, zlib, os, sys
+from formats import read_tga, write_png
+from resources import texture_text, particle_material_text
 
 # Makes the assets of the effects of the skins: the textures of UT2004's effects (exported with UModel to <scratch>/umodel/out4),
 # a unit with a quad, and the materials: one unlit material that adds its color to the screen, and one derived from it for each
@@ -65,82 +67,6 @@ DERIVED = {
     'bio_splat_mask': ('XEffects/Texture/xbiosplat.tga', lambda r, g, b, a: ((max(0, min(255, (128 - r) * 255 // 104)),) * 3) + (255,)),
 }
 
-def read_tga(path):
-    d = open(path, 'rb').read()
-    idlen, cmtype, imgtype = d[0], d[1], d[2]
-    w, h = struct.unpack('<HH', d[12:16])
-    bpp, desc = d[16], d[17]
-    bp = bpp // 8
-    p = 18 + idlen
-    px = bytearray()
-    if imgtype == 2:
-        px = bytearray(d[p:p + w * h * bp])
-    else:
-        while len(px) < w * h * bp:
-            head = d[p]
-            p += 1
-            n = (head & 0x7f) + 1
-            if head & 0x80:
-                px += d[p:p + bp] * n
-                p += bp
-            else:
-                px += d[p:p + n * bp]
-                p += n * bp
-    top_first = bool(desc & 0x20)
-    rows = []
-    for y in range(h):
-        sy = y if top_first else h - 1 - y
-        out = bytearray()
-        for x in range(w):
-            o = (sy * w + x) * bp
-            out += bytes((px[o + 2], px[o + 1], px[o], px[o + 3] if bp == 4 else 255))
-        rows.append(b'\0' + bytes(out))
-    return w, h, rows
-
-def write_png(path, w, h, rows):
-    def chunk(tag, body):
-        c = struct.pack('>I', len(body)) + tag + body
-        return c + struct.pack('>I', zlib.crc32(tag + body) & 0xffffffff)
-    open(path, 'wb').write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0)) +
-                           chunk(b'IDAT', zlib.compress(b''.join(rows), 6)) + chunk(b'IEND', b''))
-
-TEXTURE_TEMPLATE = '''common = {
-	input = {
-		filename = "units/ut/fx/%(name)s"
-	}
-	output = {
-		apply_processing = true
-		category = "texture_categories/ut"
-		cut_alpha_threshold = 0.5
-		enable_cut_alpha_threshold = false
-		format = "DXT5"
-		mipmap_filter = "kaiser"
-		mipmap_filter_wrap_mode = "mirror"
-		mipmap_keep_original = false
-		mipmap_num_smallest_steps_to_discard = 0
-		resident_mips = 0
-		srgb = true
-		streamable = false
-	}
-}
-win32 = {
-	output = {
-		mipmap_num_largest_steps_to_discard = 0
-	}
-}
-'''
-
-MATERIAL_TEMPLATE = '''material_contexts = {
-	surface_material = ""
-}
-parent_material = "units/ut/fx/particle"
-textures = {
-	texture_map = "units/ut/fx/%(name)s"
-}
-variables = {
-}
-'''
-
 def find(tga):
     # (out4 has the effects of the Shock Rifle, out9 those of the others: static meshes and the textures of XEffects)
     for export in ('out4', 'out9', 'out11'):
@@ -158,9 +84,9 @@ def derived_rows(rows, make):
     out = []
 
     for row in rows:
-        pixels = bytearray(b'\0')
+        pixels = bytearray()
 
-        for i in range(1, len(row), 4):
+        for i in range(0, len(row), 4):
             pixels += bytes(make(row[i], row[i + 1], row[i + 2], row[i + 3]))
 
         out.append(bytes(pixels))
@@ -175,13 +101,13 @@ for name, tga in list(TEXTURES.items()) + [(name, derived[0]) for name, derived 
 
     if name in SQUARE:
         # (a sprite is a square: a texture that is wider than it is high is put in the middle of one, so that it is not stretched)
-        blank = b'\0' + bytes(4 * w)
+        blank = bytes(4 * w)
         rows = [blank] * ((w - h) // 2) + rows + [blank] * (w - h - (w - h) // 2)
         h = w
 
     write_png('%s/%s.png' % (FX, name), w, h, rows)
-    open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % {'name': name})
-    open('%s/fx_%s.material' % (FX, name), 'w', newline='\n').write(MATERIAL_TEMPLATE % {'name': name})
+    open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(texture_text('units/ut/fx/' + name))
+    open('%s/fx_%s.material' % (FX, name), 'w', newline='\n').write(particle_material_text(name))
     print('texture', name, w, h)
 
 # ---------------------------------------------------------------- the quad: in the xy plane, 1 by 1, its front is +z

@@ -37,7 +37,7 @@ Local tools that produced `units/ut/*`, `ui/ut/*`, `wwise/unreal_tournament/*`, 
 | `make_bank.py <weapon> <scratch>` | the sound banks in `wwise/unreal_tournament`: a bank with an event for each sound, written by hand. The weapons are in `WEAPONS`: `announcer`, `shock_rifle`, `flak_cannon`, `rocket_launcher`, `bio_rifle`, `link_gun`, `lightning_gun` | the sounds exported with `-sounds`: `umodel/out5`, `out8`, `out10`, `out35` |
 | `render_icon.py in.bsi out.png size yaw pitch roll textures [fill]` | an inventory icon from a converted pickup | a bsi and its textures |
 | `preview_weapon.py <weapon> <export dir> out.png [inspect numbers]` | a picture of a first person weapon in its idle or inspect pose, placed the way `weapon_skin.lua` does | a psk |
-| `render_psk2.py` | a check (below) | |
+| `formats.py`, `quat.py`, `resources.py` | nothing: what the scripts share (reading and writing TGA, PNG, psk and psa; quaternions; the text of `.texture` files and of the effects' materials) | |
 
 ### Order
 
@@ -82,7 +82,6 @@ locked, and the game fails when it is unloaded.
   and (with the numbers) an inspect pose: `right forward up roll pitch yaw` and where it turns about, `inspect_pose_*` and `inspect_pivot_*`
   of the skin. It agrees with the game to within a few pixels. Only the root bone is posed (the rest of the model is in its reference pose),
   and the lighting is a simple shading. The weapons it knows are in its `WEAPONS`.
-- `render_psk2.py` is a software render of a mesh with outward faces only.
 
 ## What was found
 

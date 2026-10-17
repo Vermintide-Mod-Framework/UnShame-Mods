@@ -1,4 +1,7 @@
 import sys, os, struct, zlib, math, re
+from formats import read_chunks as chunks, read_tga, write_png
+from quat import qmul, qconj, rotate
+from resources import texture_text
 
 # Converts the first person model of a UT2004 weapon (a skeletal mesh and its animations, exported with UModel) to what this mod
 # uses: one geometry for each material of each bone (the mesh is split by the bone that has most of a vertex: UT's weapons are
@@ -29,19 +32,7 @@ WEAPONS = {
     },
 }
 
-# ---------------------------------------------------------------- quaternions (x, y, z, w) and vectors
-def qmul(a, b):
-    ax, ay, az, aw = a
-    bx, by, bz, bw = b
-    return (aw * bx + ax * bw + ay * bz - az * by, aw * by - ax * bz + ay * bw + az * bx,
-            aw * bz + ax * by - ay * bx + az * bw, aw * bw - ax * bx - ay * by - az * bz)
-
-def qconj(a):
-    return (-a[0], -a[1], -a[2], a[3])
-
-def rotate(q, v):
-    return qmul(qmul(q, (v[0], v[1], v[2], 0)), qconj(q))[:3]
-
+# ---------------------------------------------------------------- vectors
 def add(a, b):
     return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
 
@@ -57,82 +48,6 @@ def q_to_model(q):  # the same turn, in the model's axes (the vector part is tur
 def fmt(values):
     return ' '.join(('%.6f' % v).rstrip('0').rstrip('.') if round(v, 6) != 0 else '0' for v in values)
 
-def chunks(path):
-    d = open(path, 'rb').read()
-    pos = 0
-    ch = {}
-    while pos + 32 <= len(d):
-        cid = d[pos:pos + 20].split(b'\0')[0].decode('latin1')
-        t, s, c = struct.unpack('<iii', d[pos + 20:pos + 32])
-        ch[cid] = (s, c, d[pos + 32:pos + 32 + s * c])
-        pos += 32 + s * c
-    return ch
-
-# ---------------------------------------------------------------- tga -> png
-def read_tga(path):
-    d = open(path, 'rb').read()
-    idlen, cmtype, imgtype = d[0], d[1], d[2]
-    w, h = struct.unpack('<HH', d[12:16])
-    bpp, desc = d[16], d[17]
-    bp = bpp // 8
-    p = 18 + idlen
-    px = bytearray()
-    if imgtype == 2:
-        px = bytearray(d[p:p + w * h * bp])
-    else:
-        while len(px) < w * h * bp:
-            head = d[p]
-            p += 1
-            n = (head & 0x7f) + 1
-            if head & 0x80:
-                px += d[p:p + bp] * n
-                p += bp
-            else:
-                px += d[p:p + n * bp]
-                p += n * bp
-    rows = []
-    for y in range(h):
-        sy = y if desc & 0x20 else h - 1 - y
-        out = bytearray()
-        for x in range(w):
-            o = (sy * w + x) * bp
-            out += bytes((px[o + 2], px[o + 1], px[o], px[o + 3] if bp == 4 else 255))
-        rows.append(bytes(out))
-    return w, h, rows
-
-def write_png(path, w, h, rows):
-    def chunk(tag, body):
-        c = struct.pack('>I', len(body)) + tag + body
-        return c + struct.pack('>I', zlib.crc32(tag + body) & 0xffffffff)
-    raw = b''.join(b'\0' + r for r in rows)
-    open(path, 'wb').write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0)) +
-                           chunk(b'IDAT', zlib.compress(raw, 6)) + chunk(b'IEND', b''))
-
-TEXTURE_TEMPLATE = '''common = {
-	input = {
-		filename = "%s"
-	}
-	output = {
-		apply_processing = true
-		category = "texture_categories/ut"
-		cut_alpha_threshold = 0.5
-		enable_cut_alpha_threshold = false
-		format = "DXT5"
-		mipmap_filter = "kaiser"
-		mipmap_filter_wrap_mode = "mirror"
-		mipmap_keep_original = false
-		mipmap_num_smallest_steps_to_discard = 0
-		resident_mips = 0
-		srgb = true
-		streamable = false
-	}
-}
-win32 = {
-	output = {
-		mipmap_num_largest_steps_to_discard = 0
-	}
-}
-'''
 
 # (the weapons are lit by the level, as the game's own are: brighter in the sun and dark in the shade)
 WEAPONS['rocket'] = {
@@ -584,7 +499,7 @@ def main():
             else:
                 w, h, rows = read_tga(export + '/' + tga)
             write_png('%s/%s.png' % (REPO, texture), w, h, rows)
-            open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
+            open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(texture_text(texture))
             done_textures[texture] = True
         open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture, opacity, first_person=True, roughness=cfg['roughness'].get(m) if isinstance(cfg.get('roughness'), dict) else cfg.get('roughness')))
 

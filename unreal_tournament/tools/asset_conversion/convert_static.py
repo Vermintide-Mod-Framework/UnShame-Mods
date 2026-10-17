@@ -6,7 +6,9 @@ import sys, os, math, struct, subprocess, tempfile
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.dirname(__file__))
-from convert_weapon import read_tga, write_png, TEXTURE_TEMPLATE, material_text
+from convert_weapon import material_text
+from formats import read_tga, write_png, chunk_offsets
+from resources import texture_text
 
 # pskx: the mesh; materials: the texture (tga) and kind of each material of it; roughness: of the materials, one for all or
 # { index = roughness } (0.9 if not given: matte, as UT's weapon bodies are plain textures with no specular; only what shines in UT
@@ -169,12 +171,7 @@ def reflect_labels(psk, rows, labels, material, folder):
     a copy in which each label is reflected in place, back to front along its writing, so that the writing reads the right way on them too.
     Only the texture's own pixels are moved. Returns the changed psk (written in the folder) and the copy's rows."""
     data = bytearray(open(psk, 'rb').read())
-    chunks, pos = {}, 0
-    while pos + 32 <= len(data):
-        chunk = data[pos:pos + 20].split(b'\0')[0].decode('latin1')
-        _, size, count = struct.unpack('<iii', data[pos + 20:pos + 32])
-        chunks[chunk] = (size, count, pos + 32)
-        pos += 32 + size * count
+    chunks = chunk_offsets(data)
     size, count, start = chunks['VTXW0000']
     uvs = [struct.unpack_from('<2f', data, start + i * size + 4) for i in range(count)]
     face_chunk = 'FACE0000' if 'FACE0000' in chunks else 'FACE3200'
@@ -231,7 +228,7 @@ def main():
         psk, rows = reflect_labels(psk, rows, cfg['labels'], len(materials), folder.name)
         materials.append((tga, kind, opacity, os.path.splitext(os.path.basename(tga))[0].lower() + '_reflected_labels', rows))
     mat_names = ['m_%d' % i for i in range(len(materials))]
-    subprocess.check_call([sys.executable, '-I', os.path.join(os.path.dirname(__file__), 'psk2bsi.py'), psk,
+    subprocess.check_call([sys.executable, os.path.join(os.path.dirname(__file__), 'psk2bsi.py'), psk,
                            '%s/%s.bsi' % (REPO, cfg['unit']), geometry, ','.join(mat_names), str(cfg['scale'])])
     # (the geometries psk2bsi made are named <prefix>_<index of the material>)
     unit_text = 'materials = {\n'
@@ -251,7 +248,7 @@ def main():
         if rows is None:
             w, h, rows = read_tga(export + '/' + tga)
         write_png('%s/%s.png' % (REPO, texture), w, h, rows)
-        open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(TEXTURE_TEMPLATE % texture)
+        open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(texture_text(texture))
         open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(material_text(kind, texture, opacity, roughness=roughness_of(cfg, i), world=name.endswith(('_pickup', '_3rd'))))
 
 main()

@@ -1,4 +1,5 @@
 import struct, zlib, os, sys
+from formats import read_chunks as chunks
 
 # Makes the units of the meshes of the Shock Rifle's effects, from the UModel export of XEffects (<scratch>/umodel/out11, see README.md):
 #   units/ut/fx/coil    ShockCoil: a prism that turns about the beam (static mesh, 30 long: ShockBeamCoil makes pieces of it along the beam)
@@ -24,20 +25,6 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 FX = REPO + '/units/ut/fx'
 EXPORT = SCRATCH + '/umodel/out11/XEffects'
 UNIT = 0.02
-
-def chunks(path):
-    d = open(path, 'rb').read()
-    i = 0
-    out = {}
-
-    while i < len(d):
-        name = d[i:i + 20].split(b'\0')[0].decode()
-        flags, size, count = struct.unpack('<iii', d[i + 20:i + 32])
-        i += 32
-        out[name] = (size, count, d[i:i + size * count])
-        i += size * count
-
-    return out
 
 def static_mesh(path):
     # (points, wedges: (point, u, v), triangles of wedges)

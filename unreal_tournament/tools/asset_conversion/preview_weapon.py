@@ -1,4 +1,6 @@
-import sys, os, math, struct, zlib
+import sys, os, math
+from formats import read_png, rgb_at, write_png, read_psk
+from quat import qmul, rotate, axis_angle
 
 # A software preview of a first person weapon of the mod, drawn the way weapon_skin.lua places it: the weapon's idle pose, the view offset
 # and pivot of UT's weapon class, and optionally the inspect pose (the offsets, the turn, and the point it turns about). It is for checking
@@ -104,94 +106,16 @@ WEAPONS = {
     },
 }
 
-# ---------------------------------------------------------------- quaternions (x, y, z, w) and vectors
-def qmul(a, b):
-    ax, ay, az, aw = a
-    bx, by, bz, bw = b
-    return (aw * bx + ax * bw + ay * bz - az * by, aw * by - ax * bz + ay * bw + az * bx,
-            aw * bz + ax * by - ay * bx + az * bw, aw * bw - ax * bx - ay * by - az * bz)
-
-def conj(q):
-    return (-q[0], -q[1], -q[2], q[3])
-
-def rotate(q, v):
-    return qmul(qmul(q, (v[0], v[1], v[2], 0)), conj(q))[:3]
-
-def axis_angle(axis, angle):
-    s = math.sin(angle / 2)
-    return (axis[0] * s, axis[1] * s, axis[2] * s, math.cos(angle / 2))
-
 # PlayerViewPivot as a turn in this game's axes, as weapon_skin.lua does it: yaw about up, pitch about right, roll about forward
 def pivot_rotation(yaw, pitch, roll):
     return qmul(axis_angle((0, 0, 1), -math.radians(yaw)), qmul(axis_angle((1, 0, 0), math.radians(pitch)), axis_angle((0, 1, 0), -math.radians(roll))))
 
 # ---------------------------------------------------------------- files
-def read_png(path):
-    data = open(path, 'rb').read()
-    pos, idat = 8, b''
-    while pos < len(data):
-        length, tag = struct.unpack('>I4s', data[pos:pos + 8])
-        body = data[pos + 8:pos + 8 + length]
-        if tag == b'IHDR':
-            w, h, depth, ctype = struct.unpack('>IIBB', body[:10])
-            assert depth == 8 and ctype in (0, 2, 4, 6), 'unsupported png'
-        elif tag == b'IDAT':
-            idat += body
-        pos += 12 + length
-    channels = {0: 1, 2: 3, 4: 2, 6: 4}[ctype]
-    raw = zlib.decompress(idat)
-    stride = w * channels
-    rows, previous, p = [], bytearray(stride), 0
-    for _ in range(h):
-        filter_type = raw[p]
-        line = bytearray(raw[p + 1:p + 1 + stride])
-        p += 1 + stride
-        for i in range(stride):
-            a = line[i - channels] if i >= channels else 0
-            b = previous[i]
-            c = previous[i - channels] if i >= channels else 0
-            if filter_type == 1:
-                line[i] = (line[i] + a) & 255
-            elif filter_type == 2:
-                line[i] = (line[i] + b) & 255
-            elif filter_type == 3:
-                line[i] = (line[i] + ((a + b) >> 1)) & 255
-            elif filter_type == 4:
-                pa, pb, pc = abs(b - c), abs(a - c), abs(a + b - 2 * c)
-                line[i] = (line[i] + (a if pa <= pb and pa <= pc else (b if pb <= pc else c))) & 255
-        rows.append(line)
-        previous = line
+# Returns a texture as (width, height, pixel), where pixel(x, y) is its colour
+def read_texture(path):
+    width, height, channels, rows = read_png(path)
 
-    def pixel(x, y):
-        o = x * channels
-        row = rows[y]
-        return (row[o], row[o + 1], row[o + 2]) if channels >= 3 else (row[o], row[o], row[o])
-
-    return w, h, pixel
-
-def write_png(path, rows):
-    def chunk(tag, body):
-        c = struct.pack('>I', len(body)) + tag + body
-        return c + struct.pack('>I', zlib.crc32(tag + body) & 0xffffffff)
-
-    raw = b''.join(b'\0' + b''.join(bytes(p) for p in row) for row in rows)
-    open(path, 'wb').write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', WIDTH, HEIGHT, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(raw)) + chunk(b'IEND', b''))
-
-def read_psk(path):
-    data = open(path, 'rb').read()
-    pos, chunks = 0, {}
-    while pos + 32 <= len(data):
-        name = data[pos:pos + 20].split(b'\0')[0].decode('latin1')
-        _, size, count = struct.unpack('<iii', data[pos + 20:pos + 32])
-        chunks[name] = (size, count, data[pos + 32:pos + 32 + size * count])
-        pos += 32 + size * count
-    size, count, body = chunks['PNTS0000']
-    points = [struct.unpack_from('<3f', body, i * size) for i in range(count)]
-    size, count, body = chunks['VTXW0000']
-    wedges = [(struct.unpack_from('<H', body, i * size)[0],) + struct.unpack_from('<2f', body, i * size + 4) for i in range(count)]
-    size, count, body = chunks['FACE0000']
-    faces = [(struct.unpack_from('<3H', body, i * size), body[i * size + 6]) for i in range(count)]
-    return points, wedges, faces
+    return width, height, lambda x, y: rgb_at(rows, channels, x, y)
 
 def idle_root_pose(lua_path):
     # (the first frame of Idle, its first bone, the root: a rotation (x, y, z, w) and a move (right, forward, up in UT units))
@@ -205,7 +129,7 @@ def idle_root_pose(lua_path):
 def preview(weapon, export_dir, out_path, inspect=(0, 0, 0, 0, 0, 0), pivot_point=(0, 0, 0)):
     config = WEAPONS[weapon]
     points, wedges, faces = read_psk(os.path.join(export_dir, config['psk']))
-    textures = [read_png(os.path.join(REPO, t)) if t else None for t in config['textures']]
+    textures = [read_texture(os.path.join(REPO, t)) if t else None for t in config['textures']]
     rotation, move = idle_root_pose(os.path.join(REPO, config['lua']))
     pivot = pivot_rotation(*config['pivot'])
     offset_scale = 90 / config['display_fov']
@@ -280,7 +204,7 @@ def preview(weapon, export_dir, out_path, inspect=(0, 0, 0, 0, 0, 0), pivot_poin
                 r, g, bl = pixel(int(u * tw) % tw, int(v * th) % th)
                 image[y][x] = (min(255, int(r * shade)), min(255, int(g * shade)), min(255, int(bl * shade)))
 
-    write_png(out_path, image)
+    write_png(out_path, WIDTH, HEIGHT, [b''.join(bytes(p) for p in row) for row in image], channels=3)
     print('wrote', out_path)
 
 if __name__ == '__main__':

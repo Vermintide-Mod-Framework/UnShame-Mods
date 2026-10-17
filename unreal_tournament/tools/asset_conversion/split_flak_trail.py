@@ -1,4 +1,6 @@
 import sys, os
+from formats import read_tga, write_png
+from resources import texture_text, particle_material_text
 
 # Splits UT2004's FlakTrailTex, which make_fx_assets.py converts as it is, into the two textures the skin uses. The texture is two tiles
 # stacked: a streak that runs across the tile (along u), and a glow for the head of the trail.
@@ -6,22 +8,9 @@ import sys, os
 # The glow tile has a bright white middle that looks like a solid dot, so the glow textures are generated instead.
 # Usage: split_flak_trail.py <scratch dir>     (run after make_fx_assets.py, which writes flak_trail.png the first time)
 
-sys.argv = [sys.argv[0], sys.argv[1]]
 SCRATCH = sys.argv[1]
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 FX = REPO + '/units/ut/fx'
-
-sys.path.insert(0, os.path.dirname(__file__))
-import importlib.util
-
-# (the helpers of make_fx_assets.py, without running its conversion)
-source = open(os.path.join(os.path.dirname(__file__), 'make_fx_assets.py'), encoding='utf8').read()
-helpers = source[source.index('def read_tga'):source.index('TEXTURE_TEMPLATE = ')]
-material_start = source.index('MATERIAL_TEMPLATE = ')
-templates = source[source.index('TEXTURE_TEMPLATE = '):source.index("'''\n", material_start + 25) + 4]
-import struct, zlib
-exec(helpers)
-exec(templates)
 
 tga = None
 for export in ('out4', 'out9', 'out11'):
@@ -37,14 +26,14 @@ tile = h // 2
 
 
 def pixels(row):
-    # (a row of the png: the filter byte, then four bytes for each pixel)
-    return [row[1 + 4 * x:5 + 4 * x] for x in range(w)]
+    # (a row is four bytes for each pixel)
+    return [row[4 * x:4 + 4 * x] for x in range(w)]
 
 
 def write(name, width, height, new_rows):
     write_png('%s/%s.png' % (FX, name), width, height, new_rows)
-    open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % {'name': name})
-    open('%s/fx_%s.material' % (FX, name), 'w', newline='\n').write(MATERIAL_TEMPLATE % {'name': name})
+    open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(texture_text('units/ut/fx/' + name))
+    open('%s/fx_%s.material' % (FX, name), 'w', newline='\n').write(particle_material_text(name))
     print('texture', name, width, height)
 
 
@@ -52,14 +41,14 @@ def write(name, width, height, new_rows):
 streak = [pixels(row) for row in rows[:tile]]
 turned = []
 for x in range(w):
-    turned.append(b'\0' + b''.join(streak[y][x] for y in range(tile)))
+    turned.append(b''.join(streak[y][x] for y in range(tile)))
 write('flak_trail', tile, w, turned)
 
 def glow_texture(name, color, brightness_at):
     # A disc: brightness_at(distance) is the brightness from 0 at the middle to 1 at the edge of the texture
     pixels_out = []
     for y in range(tile):
-        row = bytes([0])
+        row = bytes()
         for x in range(w):
             distance = (((x + 0.5) / w - 0.5) ** 2 + ((y + 0.5) / tile - 0.5) ** 2) ** 0.5 * 2
             brightness = brightness_at(min(distance, 1))

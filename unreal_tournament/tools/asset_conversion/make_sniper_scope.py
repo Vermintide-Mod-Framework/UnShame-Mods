@@ -9,7 +9,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 EXPORT = sys.argv[1]
 
 sys.path.insert(0, os.path.dirname(__file__))
-from convert_weapon import read_tga, write_png
+from formats import read_tga, write_png
 
 TEXTURE = '''common = {
 	input = {

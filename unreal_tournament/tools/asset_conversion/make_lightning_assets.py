@@ -14,7 +14,8 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 EXPORT = sys.argv[1]
 
 sys.path.insert(0, os.path.dirname(__file__))
-from convert_weapon import read_tga, write_png
+from formats import read_tga, write_png
+from resources import texture_text, particle_material_text
 
 # name: the tga, and which part of it (first row, last row, first column, last column, each as a share of the size of the texture).
 # LightningBoltT is two pictures: the streak of lightning in the top half, and the flare in the bottom half. UT's bolt draws each from
@@ -33,48 +34,11 @@ FX = {
     'blue_spark_line': ('XEffects/Texture/pcl_BlueSpark.tga', (0, 0.5, 0, 1)),
 }
 
-TEXTURE_TEMPLATE = '''common = {
-	input = {
-		filename = "%(path)s"
-	}
-	output = {
-		apply_processing = true
-		category = "texture_categories/ut"
-		cut_alpha_threshold = 0.5
-		enable_cut_alpha_threshold = false
-		format = "DXT5"
-		mipmap_filter = "kaiser"
-		mipmap_filter_wrap_mode = "mirror"
-		mipmap_keep_original = false
-		mipmap_num_smallest_steps_to_discard = 0
-		resident_mips = 0
-		srgb = %(srgb)s
-		streamable = false
-	}
-}
-win32 = {
-	output = {
-		mipmap_num_largest_steps_to_discard = 0
-	}
-}
-'''
-
 # UT adds an effect's texture to the screen as it is. The particle materials draw after tone mapping, onto the screen's colours, but
 # units/ut/fx/particle reads its texture as srgb, which turns each value v into about v^2.2 and leaves the faint parts of the texture
 # much fainter than UT's. particle_linear reads the values as they are. The flare, the bolt and the sparks use it (checked against
 # pictures of UT2004).
 LINEAR = ('lightning_flare', 'lightning_bolt', 'blue_spark_line')
-
-FX_MATERIAL = '''material_contexts = {
-	surface_material = ""
-}
-parent_material = "units/ut/fx/%(parent)s"
-textures = {
-	texture_map = "units/ut/fx/%(name)s"
-}
-variables = {
-}
-'''
 
 GUI_MATERIAL = '''%(name)s = {
 	material_contexts = {
@@ -90,8 +54,7 @@ GUI_MATERIAL = '''%(name)s = {
 # An effect's texture is marked as not srgb, so that its smaller mipmaps are made from its values as they are, as its material reads them
 def write_texture(directory, name, width, height, rows, srgb=True):
     write_png('%s/%s/%s.png' % (REPO, directory, name), width, height, rows)
-    open('%s/%s/%s.texture' % (REPO, directory, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % {
-        'path': directory + '/' + name, 'srgb': 'true' if srgb else 'false'})
+    open('%s/%s/%s.texture' % (REPO, directory, name), 'w', newline='\n').write(texture_text(directory + '/' + name, srgb))
 
 for name, (tga, crop) in FX.items():
     width, height, rows = read_tga('%s/%s' % (EXPORT, tga))
@@ -109,8 +72,8 @@ for name, (tga, crop) in FX.items():
         width, height = height, width
 
     write_texture('units/ut/fx', name, width, height, rows, srgb=name not in LINEAR)
-    open('%s/units/ut/fx/fx_%s.material' % (REPO, name), 'w', newline='\n').write(FX_MATERIAL % {
-        'name': name, 'parent': 'particle_linear' if name in LINEAR else 'particle'})
+    open('%s/units/ut/fx/fx_%s.material' % (REPO, name), 'w', newline='\n').write(particle_material_text(
+        name, 'particle_linear' if name in LINEAR else 'particle'))
     print('fx', name, width, height)
 
 # The scope. UT draws the ring and the arrows with the alpha of their textures.

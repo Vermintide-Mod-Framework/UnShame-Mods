@@ -6,7 +6,7 @@ import sys, os, struct
 # Usage: make_sniper_screen.py <umodel export dir>
 
 sys.path.insert(0, os.path.dirname(__file__))
-from convert_weapon import read_tga
+from formats import read_tga
 
 export = sys.argv[1]
 width, height, screen = read_tga(export + '/WeaponSkins/Texture/SniperScreen1.tga')

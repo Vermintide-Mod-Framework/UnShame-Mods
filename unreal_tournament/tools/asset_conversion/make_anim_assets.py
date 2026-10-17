@@ -2,36 +2,14 @@
 # scripts/mods/unreal_tournament/shock/skin_animations.lua
 # Usage: make_anim_assets.py <scratch dir>      (the dir has umodel/out3, the export of NewWeapons2004's ShockRifle, see README.md)
 import struct, math, zlib, os, sys
+from formats import read_chunks as chunks
+from quat import qmul, qconj, rotate
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SCRATCH = sys.argv[1]
 OUT = SCRATCH + '/umodel/out3'
 
 # ---------------------------------------------------------------- animation keys
-def chunks(path):
-    d = open(path, 'rb').read()
-    pos = 0
-    ch = {}
-    while pos + 32 <= len(d):
-        cid = d[pos:pos + 20].split(b'\0')[0].decode('latin1')
-        t, s, c = struct.unpack('<iii', d[pos + 20:pos + 32])
-        ch[cid] = (s, c, d[pos + 32:pos + 32 + s * c])
-        pos += 32 + s * c
-    return ch
-
-def qmul(a, b):
-    ax, ay, az, aw = a
-    bx, by, bz, bw = b
-    return (aw * bx + ax * bw + ay * bz - az * by, aw * by - ax * bz + ay * bw + az * bx,
-            aw * bz + ax * by - ay * bx + az * bw, aw * bw - ax * bx - ay * by - az * bz)
-
-def qconj(a):
-    return (-a[0], -a[1], -a[2], a[3])
-
-def rotate(q, v):
-    r = qmul(qmul(q, (v[0], v[1], v[2], 0)), qconj(q))
-    return r[:3]
-
 psk = chunks(OUT + '/NewWeapons2004/SkeletalMesh/ShockRifle.psk')
 psa = chunks(OUT + '/NewWeapons2004/MeshAnimation/ShockRifle.psa')
 s, c, b = psk['REFSKELT']

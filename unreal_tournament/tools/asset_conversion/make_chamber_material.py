@@ -23,7 +23,8 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 UNITS = REPO + '/units/ut/shock'
 
 sys.path.insert(0, os.path.dirname(__file__))
-from convert_weapon import read_tga, write_png, TEXTURE_TEMPLATE
+from formats import read_tga, write_png
+from resources import texture_text
 
 # the textures
 for name, tga in (('shock_power_df', SCRATCH + '/umodel/out3/UT2004Weapons/Texture/PowerGel.tga'),
@@ -31,7 +32,7 @@ for name, tga in (('shock_power_df', SCRATCH + '/umodel/out3/UT2004Weapons/Textu
     w, h, rows = read_tga(tga)
     write_png('%s/%s.png' % (UNITS, name), w, h, rows)
     # (not sRGB: UT does its sums on the colours as they are in the texture, which are then shown as they are, see the end of the graph)
-    open('%s/%s.texture' % (UNITS, name), 'w', newline='\n').write((TEXTURE_TEMPLATE % ('units/ut/shock/' + name)).replace('srgb = true', 'srgb = false'))
+    open('%s/%s.texture' % (UNITS, name), 'w', newline='\n').write(texture_text('units/ut/shock/' + name, srgb=False))
 
 def guid(n):
     return 'c0de0000-0000-4000-8000-%012d' % n

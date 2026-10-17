@@ -13,7 +13,8 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 EXPORT = sys.argv[1]
 
 sys.path.insert(0, os.path.dirname(__file__))
-from convert_weapon import read_tga, write_png
+from formats import read_tga, write_png
+from resources import texture_text, particle_material_text
 
 # name: (the tga, columns, rows). A texture that is not a sheet has 1 and 1.
 TEXTURES = {
@@ -64,43 +65,6 @@ TOP_HALF = ('shield_charge_spark',)
 # parts. The Minigun's flash and shells are attached to the weapon (MinigunFire.InitEffects, Minigun.PostBeginPlay).
 WEAPON = ('minigun_burst', 'shell_casing', 'force_ring', 'shield_charge_spark')
 
-TEXTURE_TEMPLATE = '''common = {
-	input = {
-		filename = "units/ut/fx/%(name)s"
-	}
-	output = {
-		apply_processing = true
-		category = "texture_categories/ut"
-		cut_alpha_threshold = 0.5
-		enable_cut_alpha_threshold = false
-		format = "DXT5"
-		mipmap_filter = "kaiser"
-		mipmap_filter_wrap_mode = "mirror"
-		mipmap_keep_original = false
-		mipmap_num_smallest_steps_to_discard = 0
-		resident_mips = 0
-		srgb = %(srgb)s
-		streamable = false
-	}
-}
-win32 = {
-	output = {
-		mipmap_num_largest_steps_to_discard = 0
-	}
-}
-'''
-
-MATERIAL_TEMPLATE = '''material_contexts = {
-	surface_material = ""
-}
-parent_material = "units/ut/fx/%(parent)s"
-textures = {
-	texture_map = "units/ut/fx/%(name)s"
-}
-variables = {
-}
-'''
-
 def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_alpha=False):
     if keep_alpha:
         pass
@@ -123,13 +87,12 @@ def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_
         # opaque here
         rows = [bytes(255 if i % 4 == 3 else v for i, v in enumerate(row)) for row in rows]
     write_png('%s/units/ut/fx/%s.png' % (REPO, name), width, height, rows)
-    open('%s/units/ut/fx/%s.texture' % (REPO, name), 'w', newline='\n').write(TEXTURE_TEMPLATE % {
-        'name': name, 'srgb': 'false' if linear else 'true'})
-    open('%s/units/ut/fx/fx_%s.material' % (REPO, name), 'w', newline='\n').write(MATERIAL_TEMPLATE % {
-        'name': name, 'parent': 'particle_linear' if linear else 'particle'})
+    open('%s/units/ut/fx/%s.texture' % (REPO, name), 'w', newline='\n').write(texture_text('units/ut/fx/' + name, not linear))
+    open('%s/units/ut/fx/fx_%s.material' % (REPO, name), 'w', newline='\n').write(particle_material_text(
+        name, 'particle_linear' if linear else 'particle'))
     if weapon:
-        open('%s/units/ut/fx/fx_weapon_%s.material' % (REPO, name), 'w', newline='\n').write(MATERIAL_TEMPLATE % {
-            'name': name, 'parent': 'particle_weapon_linear' if linear else 'particle_weapon'})
+        open('%s/units/ut/fx/fx_weapon_%s.material' % (REPO, name), 'w', newline='\n').write(particle_material_text(
+            name, 'particle_weapon_linear' if linear else 'particle_weapon'))
 
 for name, (tga, columns, rows_count) in TEXTURES.items():
     width, height, rows = read_tga('%s/%s' % (EXPORT, tga))

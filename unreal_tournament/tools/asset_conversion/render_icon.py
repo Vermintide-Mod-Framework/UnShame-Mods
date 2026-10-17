@@ -1,4 +1,5 @@
-import sys, re, zlib, struct, math
+import sys, re, zlib, math
+from formats import read_png, rgb_at, write_png
 
 # Usage: render_icon.py in.bsi out.png size yaw pitch roll texture0.png[,texture1.png...] [fill [mirror]]
 # (mirror turns the picture about its vertical axis: a weapon is rendered from the side that shows what it has, pointing up and to the left, and the
@@ -15,56 +16,14 @@ MIRROR = len(sys.argv) > 9 and sys.argv[9] == 'mirror'
 SUPER = 3
 
 
-def read_png(path):
-    data = open(path, 'rb').read()
-    pos = 8
-    idat = b''
-    while pos < len(data):
-        length, tag = struct.unpack('>I4s', data[pos:pos + 8])
-        body = data[pos + 8:pos + 8 + length]
-        if tag == b'IHDR':
-            w, h, depth, ctype, _, _, interlace = struct.unpack('>IIBBBBB', body)
-            assert depth == 8 and interlace == 0 and ctype in (0, 2, 4, 6), 'unsupported png'
-        elif tag == b'IDAT':
-            idat += body
-        pos += 12 + length
-    channels = {0: 1, 2: 3, 4: 2, 6: 4}[ctype]
-    raw = zlib.decompress(idat)
-    stride = w * channels
-    rows = []
-    prev = bytearray(stride)
-    p = 0
-    for _ in range(h):
-        ft = raw[p]
-        line = bytearray(raw[p + 1:p + 1 + stride])
-        p += 1 + stride
-        for i in range(stride):
-            a = line[i - channels] if i >= channels else 0
-            b = prev[i]
-            c = prev[i - channels] if i >= channels else 0
-            if ft == 1:
-                line[i] = (line[i] + a) & 255
-            elif ft == 2:
-                line[i] = (line[i] + b) & 255
-            elif ft == 3:
-                line[i] = (line[i] + ((a + b) >> 1)) & 255
-            elif ft == 4:
-                pa, pb, pc = abs(b - c), abs(a - c), abs(a + b - 2 * c)
-                pr = a if pa <= pb and pa <= pc else (b if pb <= pc else c)
-                line[i] = (line[i] + pr) & 255
-        rows.append(line)
-        prev = line
+# Returns a texture as (width, height, pixel), where pixel(x, y) is its colour
+def read_texture(path):
+    width, height, channels, rows = read_png(path)
 
-    def get(x, y):
-        o = x * channels
-        row = rows[y]
-        if channels in (3, 4):
-            return row[o], row[o + 1], row[o + 2]
-        return row[o], row[o], row[o]
-    return w, h, get
+    return width, height, lambda x, y: rgb_at(rows, channels, x, y)
 
 
-textures = [read_png(path) for path in texture_paths]
+textures = [read_texture(path) for path in texture_paths]
 
 raw = zlib.decompress(open(src, 'rb').read()[8:]).decode('latin1')
 
@@ -166,7 +125,7 @@ for g, (pos_idx, uv_idx) in enumerate(geometries):
 # Down to the size: the average of the covered samples, the coverage is the alpha
 rows = []
 for y in range(size):
-    row = bytearray([0])
+    row = bytearray()
     for x in range(size):
         r = g = b = n = 0
         for j in range(SUPER):
@@ -179,16 +138,10 @@ for y in range(size):
         else:
             row += bytes((0, 0, 0, 0))
     if MIRROR:
-        # (turned about the vertical axis of the picture: each pixel is 4 bytes after the filter byte)
-        row = bytearray([0]) + b''.join(bytes(row[1 + 4 * x:5 + 4 * x]) for x in reversed(range(size)))
+        # (turned about the vertical axis of the picture: each pixel is 4 bytes)
+        row = b''.join(bytes(row[4 * x:4 + 4 * x]) for x in reversed(range(size)))
 
     rows.append(bytes(row))
 
-
-def chunk(tag, body):
-    c = struct.pack('>I', len(body)) + tag + body
-    return c + struct.pack('>I', zlib.crc32(tag + body) & 0xffffffff)
-
-
-open(dst, 'wb').write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', size, size, 8, 6, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(b''.join(rows))) + chunk(b'IEND', b''))
+write_png(dst, size, size, rows)
 print('wrote', dst)
