@@ -15,8 +15,7 @@ import os, sys, shutil
 #   Final blend: FB_AlphaModulate (the alpha of the control, the glow, modulates what is added)
 # What is here: all of it but the cube map (the world's reflection: the mesh's cube map would need a cubemap texture). The glow is the
 # material's "intensity" (the skin sets it: 0 just after a shot, 1 when it is all back), and the liquid's share of the blend over the
-# glass is half of it. The chamber is half see through at full glow and solid glass when drained, lit by itself (the shader's self
-# illumination).
+# glass is half of it. The chamber is half see through, drained or not, lit by itself (the shader's self illumination).
 # Usage: make_chamber_material.py <scratch dir>      (needs the UModel export of the textures: umodel/out3 and out6)
 
 SCRATCH = sys.argv[1]
@@ -174,16 +173,13 @@ add_node('light', 'core/shader_nodes/power')
 connect('shown', 'light', IN_POWER_A)
 constant('light', IN_POWER_B, 2.2)
 connect('light', 'out', IN_OUT_BASE_COLOR)
-# (one less the alpha of the control: half see through with all the glow, as before, and the glass solid when it is drained, as UT's is
-# next to it. Without the glow, the chamber took its glass away with it)
+# (half see through, with or without the glow: the rod inside shows through UT's glass, drained and full alike, next to it in UT. When
+# the see through followed the glow, the drained chamber took its glass away with it)
 # (times how much the chamber is faded: the skin sets "fade" from the distance of the camera, 1 is all there. The materials of the third person
 # fade out when the camera is close, which this shader has no option for)
 add_node('fade', 'core/shader_nodes/material_variable', export=variable('fade', 'Fade', 'float', 1), title='Fade')
-add_node('solid', 'core/shader_nodes/subtract')
-constant('solid', IN_SUB_A, 1)
-connect('control_alpha', 'solid', IN_SUB_B)
 add_node('opacity', 'core/shader_nodes/mul')
-connect('solid', 'opacity', IN_MUL_A)
+constant('opacity', IN_MUL_A, 0.5)
 connect('fade', 'opacity', IN_MUL_B)
 connect('opacity', 'out', IN_OUT_OPACITY)
 # (blended, not added: the glass and the liquid cover what is in the chamber, the liquid half see through)
