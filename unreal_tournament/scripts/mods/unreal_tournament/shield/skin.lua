@@ -553,13 +553,13 @@ local GRIPS = {
 		follow_game_unit = 3,
 	},
 	-- The scythe's own pose (the base weapon's), held in both hands: the mesh is turned as the game's scythe is, tipped a quarter so that
-	-- it lies along the shaft, which runs along the scythe's own z (its origin is in the right hand), pointing down the shaft, and rolled a
-	-- quarter to stand upright
+	-- it lies along the shaft, which runs along the scythe's own z (its origin is in the right hand), pointing down the shaft, rolled a
+	-- quarter to stand upright, and turned a little to the hero's right
 	shield_gun_bw = {
 		grip_right = 0,
 		grip_forward = 0,
 		grip_up = 0,
-		yaw = 0,
+		yaw = -15,
 		pitch = -90,
 		roll = -90,
 		follow_game_unit = 2,
