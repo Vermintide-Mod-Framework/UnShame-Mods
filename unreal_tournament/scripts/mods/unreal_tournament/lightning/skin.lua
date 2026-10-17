@@ -530,15 +530,6 @@ end
 
 mod.ingame_ui_post_update_callbacks.lightning_scope = draw_scope
 
--- While the view is zoomed, the game's crosshair is not drawn: the scope has its own.
-mod:hook(CrosshairUI, "draw", function (func, self, ...)
-	if lightning.zoom.zoomed then
-		return
-	end
-
-	return func(self, ...)
-end)
-
 -- The skin definition
 local function new_skin(variant)
 	local definition = mod.items.weapons[variant.setting_id]

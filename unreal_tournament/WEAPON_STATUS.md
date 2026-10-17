@@ -11,10 +11,10 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Description | ok (UT's, shortened) | ok | ok (UT's, shortened) | - | ok (UT's, shortened) |
 | Keywords | ok | ok | - | - | - |
 | Stat chart | ok (a guess) | ok (a guess) | - | - | - |
-| Which careers can equip it | ok (two items: Kruber's handgun and Bardin's) | ok (repeating handgun and repeating crossbow items) | ok (six items: a melee weapon of each hero; tests for each) | ok (Ironbreaker, the Trollhammer's) | ok (the Brace of Pistols: Zealot, Bounty Hunter, Captain; tests for each) |
+| Which careers can equip it | ok (the Deepwood Staff's copy for all four of Kerillian's careers; tests for each) | ok (repeating handgun and repeating crossbow items) | ok (six items: a melee weapon of each hero; tests for each) | ok (Ironbreaker, the Trollhammer's) | ok (the Brace of Pistols: Zealot, Bounty Hunter, Captain; tests for each) |
 | Chaos Wastes copy | - | - | - | - | - |
 | Crafting | - | - | - | - | - |
-| Hero screen: model and its place | ok (held, size 0.5) | - | - | - | - |
+| Hero screen: model and its place | ok (in the left hand, pointing ahead, on the Waystalker) | - | - | - | - |
 | Item screen: model and its turn | - | - | - | - | - |
 | Tab screen after a mod reload | no: the icon shows after the next level (game limit) | - | - | - | - |
 | Equipping and switching weapons | ok | ok | ok | - | ok |

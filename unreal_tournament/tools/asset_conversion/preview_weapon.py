@@ -56,6 +56,15 @@ WEAPONS = {
         'offset': (2.3, 0, 0),
         'pivot': (0, 0, 0),
     },
+    'classic_sniper': {
+        'psk': 'SniperAnims/SkeletalMesh/SniperRifle_1st.psk',
+        'textures': ['units/ut/sniper/sniper_rifle_newsniper1.png', 'units/ut/sniper/sniper_rifle_sniper2.png'],
+        'lua': 'scripts/mods/unreal_tournament/sniper/skin_animations.lua',
+        'display_fov': 60,
+        'draw_scale': 0.48,
+        'offset': (5.3, 27.7, -10.6),
+        'pivot': (90, 0, 0),
+    },
     'minigun': {
         'psk': 'Weapons/SkeletalMesh/Minigun_1st.psk',
         'textures': ['units/ut/minigun/minigun_miniguntex0.png'],

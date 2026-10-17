@@ -14,7 +14,8 @@ needs its own copy from a base of that hero, because the animations, units and a
 | Rocket Launcher | Repeating Crossbow (`wh_crossbow_repeater`) | Zealot, Bounty Hunter, Captain | none | done |
 | Link Gun | open, see below | all four Kerillian careers | Deepwood Staff: woods | on the Deepwood Staff, Sister of the Thorn only |
 | Shield Gun | six melee bases, see below | everyone | see below | in progress (charge and punch, auto punch, shield jump, block as the shield, UT model and sounds) |
-| Lightning Gun | Handgun (`es_handgun`, `dr_handgun`) | Mercenary, Huntsman, Foot Knight, Ironbreaker, Ranger | none | done (third person, inspect and bots not yet checked against UT) |
+| Lightning Gun | Deepwood Staff (`we_life_staff`) | all four Kerillian careers | woods | done (heat and the staff's overheat instead of ammo; inspect and bots not yet checked against UT) |
+| Sniper Rifle (UT2004's classic one) | Handgun (`es_handgun`, `dr_handgun`) | Mercenary, Huntsman, Foot Knight, Ironbreaker, Ranger | none | in progress |
 | Assault Rifle (akimbo) | Brace of Pistols (`wh_brace_of_pistols`) or Repeating Pistols (`wh_repeating_pistols`); Drakefire Pistols (`dr_drake_pistol`) | Zealot, Bounty Hunter, Captain, Ironbreaker | none | in progress (Brace of Pistols only: two rifles, rounds with UT's spread, charged bouncing grenades, UT models and sounds; the Drakefire Pistols, the grenade count, the grenade smoke and NewExplosionB are open) |
 | Minigun | Repeater: `es_repeating_handgun`; `wh_repeating_pistols` or `wh_crossbow_repeater` | Mercenary, Huntsman, Foot Knight, Zealot, Bounty Hunter, Captain | none | not started |
 | Redeemer | Trollhammer Torpedo (`dr_deus_01`) | Ironbreaker | grass | in progress (missile, six-wave blast, one missile, UT model, sounds; the guided missile and the blast's look are open) |
@@ -25,7 +26,7 @@ needs its own copy from a base of that hero, because the animations, units and a
 - Grail Knight: the Shield Gun only. No ranged item of the game lists him.
 - Warrior Priest: none, by choice. No ranged item lists him, and his third person body has only his own weapons' animations.
 - Engineer: the Bio Rifle and the Shield Gun. His only ranged weapon in the game is the steam pistol.
-- Ranger: the Bio Rifle, the Lightning Gun and the Shield Gun.
+- Ranger: the Bio Rifle, the Sniper Rifle and the Shield Gun.
 
 ## Notes
 
@@ -39,7 +40,10 @@ needs its own copy from a base of that hero, because the animations, units and a
 - Assault Rifle. UT2004's rifle has a dual mode (`bDualMode`), and this one is always akimbo. The skins place one model in the first
   person view and one on the character, so a pair needs a second model for the other hand, in both. Bardin's only dual-wield
   weapon is the Drakefire Pistols, which only the Ironbreaker has. The Ranger and the Engineer need `can_wield` widened on it.
-- Lightning Gun. Kruber's handgun and Bardin's handgun are separate templates (`handgun_template_1` and `handgun_template_2`), so it
+- Lightning Gun. The Deepwood Staff's item lists only the Sister of the Thorn, but all four of Kerillian's careers share one third
+  person body (`way_watcher`), which has the staff's animations, so the copy lists all four. Heat belongs to the career, not the weapon
+  (`OverchargeData[career]`): the other three careers have none, which would overheat them as Sienna does, so they get the Sister's.
+- Sniper Rifle. Kruber's handgun and Bardin's handgun are separate templates (`handgun_template_1` and `handgun_template_2`), so it
   is two registrations. The Engineer has no handgun.
 - Redeemer. The Trollhammer Torpedo is Ironbreaker only. The Engineer has it only in Versus.
 - The Necromancer can carry any staff in the game, but the local item list shows only her own staff. So the staff weapons name her

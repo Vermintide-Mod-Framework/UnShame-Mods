@@ -71,7 +71,7 @@ local CONFIG = {
 	hit_spark_length = 0.02, -- seconds of travel
 	hit_spark_gravity = 950, -- UT units a second squared
 	-- ShieldFire.ShakeOffsetMag, ShakeOffsetRate and ShakeOffsetTime: a punch moves the view back by up to 20 units at 1000 a second,
-	-- and it swings back and forth for a few frames (see view_shake). It has no turn (ShakeRotMag is 0).
+	-- and it swings back and forth for a few frames (see view_shake.lua). It has no turn (ShakeRotMag is 0).
 	shake_offset = -20, -- UT units, along the view
 	shake_rate = -1000, -- UT units a second
 	shake_time = 2,
@@ -387,60 +387,10 @@ local function flash_shield(api)
 	end
 end
 
--- A punch shakes the view (ShieldFire's ShakeOffset settings, see CONFIG). This is UT's PlayerController.ViewShake and CheckShake: the
--- offset moves at the rate until it reaches the most it may be, then turns back, and each time it turns the most is multiplied by
--- (1 / time - 1), about -0.5, and time goes down by a frame. Once time is down to 1 the shake ends. A shake replaces one that is smaller.
--- The offset moves the camera along the way it looks, and not the gun, as UT moves the view and not the weapon.
-local view_shake
-
+-- A punch shakes the view (ShieldFire's ShakeOffset settings, see CONFIG, and view_shake.lua)
 local function start_view_shake()
-	if view_shake and math.abs(view_shake.most) >= math.abs(CONFIG.shake_offset) then
-		return
-	end
-
-	view_shake = {
-		offset = 0,
-		most = CONFIG.shake_offset,
-		rate = CONFIG.shake_rate,
-		time = CONFIG.shake_time,
-	}
+	mod.view_shake.start({ CONFIG.shake_offset, 0, 0 }, { CONFIG.shake_rate, 0, 0 }, CONFIG.shake_time)
 end
-
-mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
-	local shake = view_shake
-
-	if not shake then
-		return
-	end
-
-	shake.offset = shake.offset + dt * shake.rate
-
-	if math.abs(shake.offset) < math.abs(shake.most) then
-		return
-	end
-
-	shake.offset = shake.most
-
-	if shake.time > 1 then
-		if shake.time * math.abs(shake.most / shake.rate) <= 1 then
-			shake.most = shake.most * (1 / shake.time - 1)
-		else
-			shake.most = -shake.most
-		end
-
-		shake.time = shake.time - dt
-		shake.rate = -shake.rate
-	else
-		view_shake = nil
-	end
-end
-
--- (the game moves the camera by its offset here, after its other effects)
-mod:hook_safe(CameraManager, "_apply_offset", function (self, camera_data)
-	if view_shake then
-		camera_data.position = camera_data.position + Quaternion.forward(camera_data.rotation) * (view_shake.offset * CONFIG.meters_per_uu)
-	end
-end)
 
 -- The animations follow what the gun does (ShieldFire and ShieldAltFire): the charge plays Charge over FullyChargedTime and then loops
 -- Charged (PlayPreFire, ShieldGun.AnimEnd), the punch plays Fire, and the shield loops Shield while it is up.

@@ -77,6 +77,22 @@ STATICS = {
         'roughness': 0.9,
         'unit': 'units/ut/shield/third_person',
     },
+    # The Sniper Rifle (UTClassic): its third person mesh (ClassicSniperAttachment, NewWeapons2004.Sniper3rd at DrawScale 0.16) and its
+    # pickup (NewWeaponStatic.newsniperpickup), which the icon is made from
+    'classic_sniper_3rd': {
+        'pskx': 'NewWeapons2004/SkeletalMesh/Sniper3rd.psk',
+        'materials': [('newsniperrifle/Texture/Sniper1.tga', 'opaque')],
+        'scale': 0.02 * 0.16,
+        'roughness': 0.9,
+        'unit': 'units/ut/sniper/third_person',
+    },
+    'classic_sniper_pickup': {
+        'pskx': 'NewWeaponStatic/StaticMesh/newsniperpickup.pskx',
+        'materials': [('newsniperrifle/Texture/Sniper1.tga', 'opaque')],
+        'scale': 0.02 * 0.21,
+        'roughness': 0.9,
+        'unit': 'units/ut/sniper/pickup',
+    },
     'assault_pickup': {
         'pskx': 'NewWeaponPickups/StaticMesh/AssaultPickupSM.pskx',
         'materials': [('UT2004Weapons/Texture/AssaultRifleTex0.tga', 'opaque')],

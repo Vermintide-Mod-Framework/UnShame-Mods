@@ -1,9 +1,10 @@
 # Starts Unreal Tournament 2004 in a Deathmatch level with a weapon of each kind, so that the weapons can be looked at and played from the
 # command line (screenshot.ps1 and game_input.ps1 take -Target ut2004). It is the reference for how the mod's weapons look and behave.
 #
-#   start_ut2004.ps1 [-Map DM-IronDeity] [-Bots 0] [-Restart]
+#   start_ut2004.ps1 [-Map DM-IronDeity] [-Bots 0] [-Mutator UTClassic.MutUseSniper] [-Restart]
 #
 #   -Restart  closes the game first if it is running
+#   -Mutator  a mutator for the match, such as UTClassic.MutUseSniper, which gives the classic Sniper Rifle in place of the Lightning Gun
 #
 # The game is started with the level as its argument, so it skips the menus. Then it gets through the rest: Fire to start the match, the
 # countdown, and the console command "loaded" for all weapons. The game's window is moved to the top left of the screen, because its bottom
@@ -12,6 +13,7 @@
 param(
     [string]$Map = "DM-IronDeity",
     [int]$Bots = 0,
+    [string]$Mutator = "",
     [switch]$Restart
 )
 
@@ -51,7 +53,7 @@ if (Get-Game) {
 }
 
 Write-Host "Starting the game..."
-Start-Process -FilePath (Join-Path $GameFolder "System\UT2004.exe") -ArgumentList "${Map}?game=XGame.xDeathMatch?numbots=${Bots}" -WorkingDirectory (Join-Path $GameFolder "System") -RedirectStandardOutput (Join-Path $env:TEMP "ut2004_stdout.txt") -RedirectStandardError (Join-Path $env:TEMP "ut2004_stderr.txt")
+Start-Process -FilePath (Join-Path $GameFolder "System\UT2004.exe") -ArgumentList ("${Map}?game=XGame.xDeathMatch?numbots=${Bots}" + $(if ($Mutator) { "?mutator=${Mutator}" } else { "" })) -WorkingDirectory (Join-Path $GameFolder "System") -RedirectStandardOutput (Join-Path $env:TEMP "ut2004_stdout.txt") -RedirectStandardError (Join-Path $env:TEMP "ut2004_stderr.txt")
 
 # The game shows a small window with its logo first. The game's own window is the one that is large.
 $game = $null

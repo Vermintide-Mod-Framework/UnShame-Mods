@@ -9,7 +9,7 @@ Each is an item of its own (`items.register`), UT2004's look always on, no setti
 Which careers get which weapon, and from which base, is in `WEAPON_PLAN.md`.
 
 3. **Shield Gun.** For everyone, including the melee-only careers. A melee base for each hero.
-4. **Lightning Gun.** From the handgun.
+4. **Lightning Gun.** From the Deepwood Staff, for Kerillian.
 5. **Assault Rifle.** Akimbo. Needs a second model for the other hand.
 6. **Minigun.** From the repeater.
 7. **Redeemer.** From the Trollhammer Torpedo.

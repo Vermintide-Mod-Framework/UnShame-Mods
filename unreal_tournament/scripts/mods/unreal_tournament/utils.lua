@@ -205,6 +205,15 @@ function utils.make_flat(profile, attack_power, impact_power, damage_type)
 	profile.armor_modifier_far = nil
 end
 
+-- A hit on the head does this many times the damage of a hit on the body, up to 2, as UT's HeadShotDamageMult. The game adds the damage
+-- times its boost curve at the profile's headshot_boost (0.5 if it has none), and every curve ends at 1, so a boost of 1 doubles it. The
+-- action's own headshot_multiplier is not what the game uses for this. The players' talents and properties that raise head shots still
+-- do.
+function utils.set_headshot_multiplier(profile, multiplier)
+	profile.default_target.headshot_boost = math.clamp(multiplier - 1, 0, 1)
+	profile.default_target.boost_curve_coefficient_headshot = 1
+end
+
 -- The Shock Rifle's beam is the reference for damage in UT2004's units: its 45 damage is an attack power of 0.7 and an impact power
 -- of 0.3.
 utils.UT_REFERENCE_DAMAGE = 45

@@ -195,6 +195,20 @@ WEAPONS['sniper'] = {
     'lua': 'scripts/mods/unreal_tournament/lightning/skin_animations.lua',
 }
 
+# The Sniper Rifle (UTClassic.ClassicSniperRifle: SniperAnims.SniperRifle_1st, with its textures in NewSniperRifle). Its second
+# material is the back of the scope. It has three fire animations, which the shot picks from at random (ClassicSniperFire.FireAnims).
+WEAPONS['classic_sniper'] = {
+    'psk': 'SniperAnims/SkeletalMesh/SniperRifle_1st.psk',
+    'psa': 'SniperAnims/MeshAnimation/SniperRifleAnims.psa',
+    'materials': [('newsniperrifle/Texture/NewSniper1.tga', 'opaque'), ('newsniperrifle/Texture/sniper2.tga', 'opaque')],
+    'scale': 0.0125,
+    'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire1', 'Fire1'), ('Fire2', 'Fire2'), ('fire3', 'Fire3'), ('PutDown', 'PutDown')],
+    'locators': ['Dummy01'],
+    'roughness': 0.9,
+    'unit': 'units/ut/sniper/sniper_rifle',
+    'lua': 'scripts/mods/unreal_tournament/sniper/skin_animations.lua',
+}
+
 # The Minigun (Weapons.Minigun_1st). Its barrels and gear are turned by code (Minigun.UpdateRoll).
 WEAPONS['minigun'] = {
     'psk': 'Weapons/SkeletalMesh/Minigun_1st.psk',

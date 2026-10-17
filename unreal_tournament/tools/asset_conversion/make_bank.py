@@ -18,6 +18,9 @@ NEW_SOUNDS = 'out8/NewWeaponSounds/Sound/'
 # (the male announcer pack of UT2004, the one its reward announcements are by default: umodel_64 -game=ut2 -export -sounds -out=out10
 # announcermale2k4. The names of the kills are the ones MultiKillMessage.KillSoundName has)
 ANNOUNCER = 'out10/announcermale2k4/Sound/'
+# (the Sniper Rifle's sounds and the impacts of its bullet: umodel_64 -game=ut2 -export -sounds -out=out41 NewWeaponSounds, and XEffects)
+SNIPER = 'out41/NewWeaponSounds/Sound/'
+IMPACTS = 'out41/XEffects/Sound/'
 WEAPONS = {
     'announcer': [
         ('ut_announcer_double_kill', ANNOUNCER + 'Double_Kill', False, -18, 0),
@@ -156,6 +159,19 @@ WEAPONS = {
         # (the bolt's hit: LightningBolt.PostBeginPlay)
         ('ut_lightning_impact_3d', SOUNDS + 'BLightningGunImpact', True, -20, 50),
         ('ut_lightning_fire_3d', SOUNDS + 'BLightningGunFire', True, -22, 50),
+    ],
+    # The Sniper Rifle (UTClassic.ClassicSniperRifle). Its zoom sounds are the Lightning Gun's.
+    'sniper_rifle': [
+        ('ut_sniper_fire', SNIPER + 'NewSniperShot', False, -22, 0),
+        ('ut_sniper_select', SNIPER + 'NewSniper_load', False, -24, 0),
+        ('ut_sniper_fire_3d', SNIPER + 'NewSniperShot', True, -22, 50),
+        # (SniperWallHitEffect.ImpactSounds: one of the six where the bullet hits, at 2.5 times the volume, heard within 200 units)
+        ('ut_sniper_impact_1_3d', IMPACTS + 'Impact1Snd', True, -18, 4),
+        ('ut_sniper_impact_2_3d', IMPACTS + 'Impact2Snd', True, -18, 4),
+        ('ut_sniper_impact_3_3d', IMPACTS + 'Impact5Snd', True, -18, 4),
+        ('ut_sniper_impact_4_3d', IMPACTS + 'Impact3', True, -18, 4),
+        ('ut_sniper_impact_5_3d', IMPACTS + 'Impact1', True, -18, 4),
+        ('ut_sniper_impact_6_3d', IMPACTS + 'Impact2', True, -18, 4),
     ],
 }
 

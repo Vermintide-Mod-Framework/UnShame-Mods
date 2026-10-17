@@ -47,8 +47,59 @@ local function locked_out(t)
 	return check()
 end
 
+-- Spawns a target, aims at its head or its middle, fires once, and returns the damage it took
+local function bolt_damage(t, at_head)
+	local target = t.spawn_target(5)
+
+	if not t.expect(target, "the target could not be spawned") then
+		return nil
+	end
+
+	if at_head then
+		local head = t.on_main_thread(function ()
+			local position = Unit.world_position(target, Unit.node(target, "j_head"))
+
+			return { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
+		end)
+
+		t.aim_at_point(head[1], head[2], head[3])
+	end
+
+	local damage = t.track_damage(target)
+
+	t.press("action_one", 0.1)
+	t.wait(0.5)
+	t.remove(target)
+
+	return damage.total
+end
+
 local function scenarios()
 	return {
+		{
+			-- A hit on the head does twice the damage of a hit on the body (SniperFire.HeadShotDamageMult), or more with a career's
+			-- talents
+			name = "head shots do double damage",
+			run = function (t)
+				-- The smallest of three bolts each, which leaves out critical hits (the Shade's passive makes them common)
+				local body, head = math.huge, math.huge
+
+				for _ = 1, 3 do
+					body = math.min(body, bolt_damage(t, false) or math.huge)
+					t.wait(1.8)
+					head = math.min(head, bolt_damage(t, true) or math.huge)
+					t.wait(1.8)
+				end
+
+				if body == math.huge or head == math.huge then
+					return
+				end
+
+				t.log("a bolt to the body did %.1f, to the head %.1f", body, head)
+				t.expect(body > 0, "the bolt to the body did no damage")
+				t.expect(head >= body * 1.8, "the bolt to the head did %.1f, not twice the %.1f of the body", head, body)
+			end,
+		},
 		{
 			name = "fire",
 			run = function (t)

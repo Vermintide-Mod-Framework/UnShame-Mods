@@ -77,6 +77,10 @@ mod.skin_particles = mod:dofile("scripts/mods/unreal_tournament/skin_particles")
 -- What the weapon skins have in common. A weapon's own file calls mod.weapon_skin.new with the parts that are its own.
 mod.weapon_skin = mod:dofile("scripts/mods/unreal_tournament/weapon_skin")
 
+-- UT's view shake of a shot, and UT's zoom of the sniper weapons (the Lightning Gun and the Sniper Rifle). Shared by the weapons.
+mod.view_shake = mod:dofile("scripts/mods/unreal_tournament/view_shake")
+mod.zoom = mod:dofile("scripts/mods/unreal_tournament/zoom")
+
 -- The weapons. Each has a folder with its gameplay (<weapon>.lua) and its skin (skin.lua, with its animations and effects). Each
 -- also has a folder of the same name in units/ut with its models.
 mod:dofile("scripts/mods/unreal_tournament/shock/shock_rifle")
@@ -95,6 +99,8 @@ mod:dofile("scripts/mods/unreal_tournament/link/link_gun")
 mod:dofile("scripts/mods/unreal_tournament/link/skin")
 mod:dofile("scripts/mods/unreal_tournament/lightning/lightning_gun")
 mod:dofile("scripts/mods/unreal_tournament/lightning/skin")
+mod:dofile("scripts/mods/unreal_tournament/sniper/sniper_rifle")
+mod:dofile("scripts/mods/unreal_tournament/sniper/skin")
 mod:dofile("scripts/mods/unreal_tournament/minigun/minigun")
 mod:dofile("scripts/mods/unreal_tournament/minigun/skin")
 mod:dofile("scripts/mods/unreal_tournament/shield/shield_gun")
@@ -116,6 +122,7 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 mod.test_runner = mod:dofile("scripts/mods/unreal_tournament/tests/runner")
 mod:dofile("scripts/mods/unreal_tournament/tests/flak")
 mod:dofile("scripts/mods/unreal_tournament/tests/lightning")
+mod:dofile("scripts/mods/unreal_tournament/tests/sniper")
 mod:dofile("scripts/mods/unreal_tournament/tests/minigun")
 mod:dofile("scripts/mods/unreal_tournament/tests/shield")
 mod:dofile("scripts/mods/unreal_tournament/tests/redeemer")
@@ -130,5 +137,5 @@ mod:dofile("scripts/mods/unreal_tournament/tests/announcer")
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 1102)")
+	mod:echo("Unreal Tournament loaded (build 1103)")
 end
