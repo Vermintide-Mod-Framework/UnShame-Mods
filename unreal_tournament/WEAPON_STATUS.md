@@ -86,8 +86,8 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Explosion shape | - | - | n/a | close: RedeemerExplosion's ten emitters with UT's numbers (puffs, flares, streaks, ring and spheres) and IonCore; the same sequence as UT's over 2 s | no: the Rocket Launcher's NewExplosionA in place of NewExplosionB | - |
 | Explosion brightness | - | - | n/a | - | - | - |
 | Explosion size | - | - | n/a | - | - | - |
-| Impact marks | - | - | - | - | - | - |
-| Vanilla effects playing on top | - | - | - | - | - | - |
+| Impact marks | - | - | ok | - | - | - |
+| Vanilla effects playing on top | - | - | ok | - | - | - |
 | **Sounds** | | | | | | |
 | Fire | ok (sound plays) | ok | ok (BShieldGunFire) | - | ok | - |
 | Alt fire | ok (the zoom: BZoomIn1 and BZoomOut1, which LightningZoomIn and LightningZoomOut play as they are) | - | ok (BShield1 while the shield is up) | no: the guided missile (RedeemerGuidedFire) is not made; the right button is the Trollhammer's block | ok (NewGrenadeShoot and the load sound) | - |
@@ -95,30 +95,30 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Load | ok (the charge-up after a shot, at the pitch of 1.1 that SniperFire.PlayFiring gives it) | - | ok (the charge sound) | - | - | - |
 | Explosion | - | - | n/a | - | ok (BExplosion3) | - |
 | Lock beep | - | - | n/a | - | - | - |
-| Volumes | - | - | - | - | - | - |
-| Vanilla sounds playing on top | - | - | - | - | - | - |
-| What others hear of a shot | - | - | - (the punch in 3D; another player raising the shield is heard with UT's regeneration sound, which UT plays for the others) | - | - | - |
-| What others hear of a load | - | - | - (the charge loop in 3D) | - | - | - |
-| Loops after unwielding | - | - | - | - | - | - |
-| Loops after death | - | - | - | - | - | - |
-| Loops after the level ends | - | - | - | - | - | - |
+| Volumes | - | - | ok | - | - | - |
+| Vanilla sounds playing on top | - | - | ok | - | - | - |
+| What others hear of a shot | - | - | ok (the punch in 3D; another player raising the shield is heard with UT's regeneration sound, which UT plays for the others) | - | - | - |
+| What others hear of a load | - | - | ok (the charge loop in 3D) | - | - | - |
+| Loops after unwielding | - | - | ok | - | - | - |
+| Loops after death | - | - | ok | - | - | - |
+| Loops after the level ends | - | - | ok | - | - | - |
 | **Third person** | | | | | | |
 | Size | - | - | ok (UT's ShieldGun_3rd at a player's DrawScale 0.4) | - | - | - |
 | Position in the hand | - | - | ok (each hero's grip, set in the game) | - | - | - |
 | Angle | - | - | ok (the same) | - | - | - |
-| Vanilla model showing | - | - | - | - | - | - |
-| Muzzle flash position | - | - | - (the charge's sparks, the punch's rings and the shield at the end of the gun) | - | - | - |
+| Vanilla model showing | - | - | ok | - | - | - |
+| Muzzle flash position | - | - | ok (the charge's sparks, the punch's rings and the shield at the end of the gun) | - | - | - |
 | Shot animation for others | - | - | ok (each hero's pose and push; the punches have no animation for Sienna and Kerillian, whose push is their staff's shot) | - | - | - |
-| Fade near the camera | - | - | - | - | - | - |
-| Outline | - | - | - | - | - | - |
-| Bots holding it | - | - | - | - | - | - |
-| Your character in the third person view | open: /ut_3p (the game's third_person_mode) shows the weapon in the hand but puts the camera at the head, where the character is faded out, so it can't be compared with UT yet. The charge sparks no longer show in it. | - | - (the first person effects are hidden in it, and the third person ones show) | - | - | - |
+| Fade near the camera | - | - | ok | - | - | - |
+| Outline | - | - | ok | - | - | - |
+| Bots holding it | - | - | ok | - | - | - |
+| Your character in the third person view | open: /ut_3p (the game's third_person_mode) shows the weapon in the hand but puts the camera at the head, where the character is faded out, so it can't be compared with UT yet. The charge sparks no longer show in it. | - | ok (the first person effects are hidden in it, and the third person ones show) | - | - | - |
 | **Multiplayer** | | | | | | |
-| As host | ok | ok | - | - | - | - |
-| As client | - | - | - | - | - | - |
+| As host | ok | ok | ok | - | - | - |
+| As client | - | - | ok | - | - | - |
 | Others seeing projectiles | - | - | n/a | - | - | - |
 | Others seeing explosions | - | - | n/a | - | - | - |
-| Damage on the client | - | - | - | - | - | - |
+| Damage on the client | - | - | ok | - | - | - |
 | Ammo on the client | - | - | n/a | - | - | - |
 | **Bots** | | | | | | |
 | Bots using it | - | - | - (a heavy attack charges until an enemy is in reach, as UT's bots do; a light one is a quick punch) | - | - | - |
