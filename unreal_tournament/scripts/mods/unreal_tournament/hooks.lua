@@ -773,21 +773,3 @@ mod:hook(BuffFunctionTemplates.functions, "activate_buff_stacks_based_on_clip_si
 		error(error_message, 0)
 	end
 end)
-
--- Returns whether the player list (Tab) is up
-local function player_list_is_active()
-	local ingame_ui = Managers.ui and Managers.ui._ingame_ui
-	local player_list = ingame_ui and ingame_ui.ingame_hud and ingame_ui.ingame_hud:component("IngamePlayerListUI")
-
-	return player_list ~= nil and player_list:is_active()
-end
-
--- A right click with the player list up turns the cursor on, and the weapon still gets that click. The game's weapons only block, aim
--- or start a charge on it, but some of the mod's fire. So the mod's weapons ignore the right button while the list is up.
-mod:hook(PlayerInputExtension, "get", function (func, self, input_key, ...)
-	if (input_key == "action_two" or input_key == "action_two_hold") and mod.items.template_names[utils.wielded_template_name(self.unit) or ""] and player_list_is_active() then
-		return nil
-	end
-
-	return func(self, input_key, ...)
-end)

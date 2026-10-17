@@ -267,9 +267,6 @@ end)
 -- The registered definitions by id, for example items.weapons.shock_rifle.template
 items.weapons = {}
 
--- The templates of the registered weapons, as a set
-items.template_names = {}
-
 -- Registers the weapon's skins: entries in the game's skin tables and item list, copied from the base weapon's default skin.
 local function register_skins(definition, item)
 	if not definition.skins then
@@ -361,7 +358,6 @@ end)
 
 function items.register(setting_id, definition)
 	items.weapons[setting_id] = definition
-	items.template_names[definition.template] = true
 
 	local base_template = rawget(Weapons, ItemMasterList[definition.base_item].template)
 	local template = table.clone(base_template)
