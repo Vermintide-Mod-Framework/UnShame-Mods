@@ -6,8 +6,10 @@ local mod = get_mod("unreal_tournament")
 --       0.02 and grows by 0.02 a round, up to 0.12, and goes back once the button is let go for half a second.
 --   Right button: held, it charges the grenade launcher; let go, it lobs a grenade that bounces off walls, and goes off two seconds
 --       after it first touches something, or at once on an enemy. The longer it is held (up to a second), the further it goes.
--- The grenades are not the game's projectiles, which need a unit that the game sends to the others: each machine flies them itself
--- from what the shooter's machine sends, and the shooter's machine makes their explosions.
+-- The grenades are not the game's projectiles, because those don't bounce as UT's grenade does. A game projectile bounces at the speed
+-- it was fired at, a set number of times, and its fuse starts when it is fired. UT's grenade loses speed at each bounce, comes to rest,
+-- and goes off 2 seconds after it first touches something. So the shooter's machine sends the throw, each machine flies the grenade
+-- itself, and the shooter's machine makes the explosion.
 -- The skin (skin.lua) draws all of it, and this file only sets what it does to the game.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
