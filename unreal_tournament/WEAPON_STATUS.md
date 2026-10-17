@@ -30,7 +30,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Inspect: first second of movement | - | - | - | - | - | - |
 | Vanilla model or arms showing | - | - | - | - | ok (the pistols and their ammo units are hidden) | - |
 | Vanilla flash or particles showing | ok (the handgun's orange tracer is dropped) | ok (the same) | - | - | - | - |
-| Crosshair | ok (hidden while zoomed; the scope side by side with UT: lens, ring, arrows, bar, under the HUD, shows right after a mod reload) | - | - | - | - | ok (the scope side by side with UT: brackets, ring, darkened edges) |
+| Crosshair | ok (the game's crosshair stays on while zoomed, over the scope; the scope side by side with UT: lens, ring, arrows, bar, under the HUD, shows right after a mod reload) | - | - | - | - | ok (the scope side by side with UT: brackets, ring, darkened edges) |
 | Ammo number | - | - | - | - | no: the rounds are the clip; the grenade count (8) is not drawn | - |
 | Bob and sway | - | - | - | - | - | - |
 | **Firing** | | | | | | |

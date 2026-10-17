@@ -7,7 +7,7 @@ local mod = get_mod("unreal_tournament")
 -- set it for the frame. The state is of the player on this machine.
 --   zoom.register(template_name): the weapon zooms this way while it is in the player's hands.
 --   zoom.zoomed, zoom.magnification(): whether the view is zoomed, and how many times larger it is.
--- While the view is zoomed, the game's crosshair is not drawn: each weapon draws its scope.
+-- While the view is zoomed, each weapon draws its scope, and the game's crosshair stays on top of it.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 
@@ -144,13 +144,5 @@ end
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = reset_zoom
 mod.disabled_callbacks[#mod.disabled_callbacks + 1] = reset_zoom
 mod.unload_callbacks[#mod.unload_callbacks + 1] = reset_zoom
-
-mod:hook(CrosshairUI, "draw", function (func, self, ...)
-	if zoom.zoomed then
-		return
-	end
-
-	return func(self, ...)
-end)
 
 return zoom
