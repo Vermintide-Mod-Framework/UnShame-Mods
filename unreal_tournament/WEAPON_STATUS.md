@@ -121,7 +121,7 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Damage on the client | - | - | ok | - | - | - | ok |
 | Ammo on the client | - | - | n/a | - | - | - | n/a |
 | **Bots** | | | | | | | |
-| Bots using it | - | - | ok (tests: a bot fights rats with it; a heavy attack charges until an enemy is in reach, as UT's bots do, and a light one is a quick punch) | - | - | - | ok (tests: a bot shoots a special past the player; bosses within its reach a bot fights in melee, as the game's bots do; it fires the ball at elites, bosses and crowds: bots.lua) |
+| Bots using it | - | - | ok (tests: a bot fights rats with it; a heavy attack charges until an enemy is in reach, as UT's bots do, and a light one is a quick punch) | - | - | - | ok (tests: a bot shoots a special past the player, and a boss it can't reach; bosses within its reach a bot fights in melee, as the game's bots do; it fires the ball at elites, bosses and crowds: bots.lua) |
 | Range they shoot from | - | - | ok (tests: a bot punches only with an enemy within the punch's reach) | - | - | - | ok (tests: a special 17 m away) |
 | Allies in the way | - | - | ok (tests: a bot fighting rats around the player never hurts them) | - | - | - | ok (tests: a bot shooting past the player never hurts them) |
 | Look and sound of their shots | - | - | ok | - | - | - | ok |

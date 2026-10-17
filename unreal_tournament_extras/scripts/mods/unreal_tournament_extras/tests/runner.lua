@@ -34,6 +34,7 @@ local ut = get_mod("unreal_tournament")
 --   t.overcharge(), t.wielded()          the player's overcharge, and the template of the weapon in their hands
 --   t.look(pitch, turn)                  turns the player to look that far up and that far to the left (degrees)
 --   t.go_to(name)                        puts the player in a named place of the level (CONFIG.named_places)
+--   t.place(name)                        where a named place of the level is, as { x, y, z }
 --   t.go_to_start()                      puts the player back in the suite's place
 --   t.surface_ahead(distance)            where the player's aim hits the level within that distance, or nil
 --   t.ground_at(ahead, right)            where the ground is that far ahead and to the right, as { x, y, z }
@@ -127,6 +128,16 @@ local CONFIG = {
 			below_stairs = {
 				position = { 143.02, 233.61, -19.381 },
 				yaw = 135,
+			},
+			-- Where a boss stands that bots can't walk to, for "a bot shoots a boss it can't reach", and below it, 4.5 m lower and 9 m away,
+			-- where the players stand
+			unreachable = {
+				position = { 119.393, 223.069, -19.057 },
+				yaw = 165,
+			},
+			below_unreachable = {
+				position = { 115.914, 214.897, -23.535 },
+				yaw = 145,
 			},
 			-- Further out on the square, with nothing above
 			sky = {
@@ -1046,6 +1057,14 @@ local function make_context(suite)
 
 	-- Puts the player in a named place of the level (CONFIG.named_places), facing its way. Skips the scenario if the level has no
 	-- such place.
+	-- Where a named place of the level is, as { x, y, z }, or nil if the level has no such place
+	function t.place(name)
+		local places = CONFIG.named_places[current_level_key()]
+		local place = places and places[name]
+
+		return place and { unpack(place.position) }
+	end
+
 	function t.go_to(name)
 		local places = CONFIG.named_places[current_level_key()]
 		local place = places and places[name]
