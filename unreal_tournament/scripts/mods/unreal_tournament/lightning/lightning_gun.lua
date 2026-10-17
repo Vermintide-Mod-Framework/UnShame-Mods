@@ -1,12 +1,16 @@
 local mod = get_mod("unreal_tournament")
 
--- Lightning Gun: a copy of a handgun with its fire modes replaced, the same way the Shock Rifle is a copy of the Beam Staff. The
--- numbers come from UT2004 (XWeapons/SniperRifle, SniperFire and SniperZoom).
+-- Lightning Gun: Kerillian's, a copy of the Deepwood Staff with its fire modes replaced, the same way the Shock Rifle is a copy of the
+-- Beam Staff. The numbers come from UT2004 (XWeapons/SniperRifle, SniperFire and SniperZoom).
 --   Left button: fires a lightning bolt that hits at once. After it hits, three short arcs of lightning jump from the place it hit
 --       to enemies near it. A hit on the head does double damage.
 --   Right button: zooms. Holding it zooms in, until it is let go, and the zoom stays. Pressing it again zooms out.
--- Kruber's handgun and Bardin's are separate templates, so the weapon is two items of the mod that share everything but the base.
--- The skin (skin.lua) draws all of it, and this file only sets what it does to the game.
+--   Reload: vents the heat, as the staff does.
+-- UT's Lightning Gun has 40 rounds of ammo. Here a bolt adds heat instead, as much as the Beam Staff's charged shot, and overheating
+-- is the Deepwood Staff's: the player loses part of their health and the gun is locked out while the heat cools.
+-- The staff is the Sister of the Thorn's only, so the copy is given to all four of Kerillian's careers. They have the same third person
+-- body (way_watcher), whose animations the staff uses. The skin (skin.lua) draws all of it, and this file only sets what it does to
+-- the game.
 
 local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
 local register_damage_profile = utils.register_damage_profile
@@ -17,50 +21,38 @@ local first_beam_hit = utils.first_beam_hit
 
 local DESCRIPTION = "The Lightning Gun is a high-power energy rifle capable of ablating even the heaviest carapace armor. Acquisition of a target at long range requires a steady hand, but the anti-jitter effect of the optical system reduces the weapon's learning curve significantly."
 
--- The two items. The careers of each are those of its base.
-local VARIANTS = {
-	{
-		base_item = "es_handgun",
-		deus_copy = "deus_es_handgun",
-		id = "lightning_gun",
-		key = "ut_lightning_gun",
-		template = "ut_lightning_gun_template",
-	},
-	{
-		base_item = "dr_handgun",
-		deus_copy = "deus_dr_handgun",
-		id = "lightning_gun_dr",
-		key = "ut_lightning_gun_dr",
-		template = "ut_lightning_gun_dr_template",
-	},
+-- Kerillian's careers. The Sister of the Thorn is the staff's own.
+local CAREERS = { "we_shade", "we_maidenguard", "we_waywatcher", "we_thornsister" }
+
+mod.items.register("lightning_gun", {
+	key = "ut_lightning_gun",
+	template = "ut_lightning_gun_template",
+	base_item = "we_life_staff",
+	deus_copy = "deus_we_life_staff",
+	can_wield = CAREERS,
+	name = "UT2004 Lightning Gun",
+	type_name = "Lightning Gun",
+	description = DESCRIPTION,
+	keywords = { "weapon_keyword_high_damage", "weapon_keyword_sniper", "weapon_keyword_overheat" },
+	icon = "ut_lightning_gun_icon",
+	icon_package = "resource_packages/unreal_tournament/icons",
+	icon_materials = "ui/ut/lightning_gun_icon",
+})
+
+local TEMPLATE_NAME = mod.items.weapons.lightning_gun.template
+local TEMPLATE_NAMES = {
+	[TEMPLATE_NAME] = true,
 }
-
-for _, variant in ipairs(VARIANTS) do
-	mod.items.register(variant.id, {
-		key = variant.key,
-		template = variant.template,
-		base_item = variant.base_item,
-		deus_copy = variant.deus_copy,
-		name = "UT2004 Lightning Gun",
-		type_name = "Lightning Gun",
-		description = DESCRIPTION,
-		keywords = { "weapon_keyword_high_damage", "weapon_keyword_sniper", "weapon_keyword_headshotting" },
-		icon = "ut_lightning_gun_icon",
-		icon_package = "resource_packages/unreal_tournament/icons",
-		icon_materials = "ui/ut/lightning_gun_icon",
-	})
-end
-
-local TEMPLATE_NAMES = {}
-
-for _, variant in ipairs(VARIANTS) do
-	TEMPLATE_NAMES[mod.items.weapons[variant.id].template] = true
-end
 
 local CONFIG = {
 	meters_per_uu = 0.02, -- Unreal unit to meters
-	-- All of the ammo (UT's Lightning Gun holds up to 40). It is all the clip, so there is no reload.
-	max_ammo = 40,
+	-- The heat of a bolt: the Beam Staff's charged shot's (8 of the 40 a player can take), so five bolts heat the gun to the top and a
+	-- sixth overheats it. UT's gun has 40 rounds instead.
+	bolt_overcharge = PlayerUnitStatusSettings.overcharge_values.beam_staff_sniper,
+	-- Every career of Kerillian overheats as the Sister of the Thorn does with the staff (her OverchargeData): she loses 40% of her
+	-- health, the staff is locked out until the heat is gone, and there is no explosion. The other careers have no data of their own,
+	-- which would make them overheat as Sienna does, losing all of their health.
+	overheat_like = "we_thornsister",
 	-- SniperFire.FireRate. After a shot, the next one can be made once this much time has passed.
 	fire_rate = 1.6,
 	chain_margin = 0.15, -- seconds
@@ -84,7 +76,7 @@ local CONFIG = {
 	-- An arc goes for an enemy within this of where the bolt hit, the nearest first and one each, and the arcs left over go in random
 	-- directions, as UT's all do. This is the mod's own: UT's arcs only hit what happens to be in their way. A choice, half their range.
 	arc_seek_range = 3, -- m
-	-- How far a bot shoots from, in meters. The handgun's own is the bot's sight.
+	-- How far a bot shoots from, in meters
 	bot_max_range = 60,
 	-- The camera shake of a shot is the handgun's recoil, scaled by this.
 	recoil_scale = 0.5,
@@ -97,6 +89,25 @@ local CONFIG = {
 }
 
 local TOTAL_TIME = CONFIG.fire_rate + CONFIG.chain_margin
+
+PlayerUnitStatusSettings.overcharge_values.ut_lightning_bolt = CONFIG.bolt_overcharge
+
+-- The overheating of the Sister of the Thorn for the careers that have none of their own. The game reads it when it spawns a
+-- character, so a career has it from its next spawn.
+local overheat_given = {}
+
+for _, career_name in ipairs(CAREERS) do
+	if not OverchargeData[career_name] then
+		OverchargeData[career_name] = table.clone(OverchargeData[CONFIG.overheat_like])
+		overheat_given[#overheat_given + 1] = career_name
+	end
+end
+
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+	for _, career_name in ipairs(overheat_given) do
+		OverchargeData[career_name] = nil
+	end
+end
 
 -- Spread: the bolt hits exactly where the crosshair is.
 utils.zero_spread_template("ut_lightning_bolt", "handgun")
@@ -150,12 +161,19 @@ local ARC_ACTION = {
 
 -- Weapon template
 
--- The actions that can follow a shot. Holding the button repeats the shot, as in UT. The zoom is not an action.
+-- The actions that can follow a shot. Holding the button repeats the shot, as in UT, and the heat can be vented. The zoom is not an
+-- action.
 local function fire_chain_actions()
 	local entries = {
 		{
 			action = "action_wield",
 			input = "action_wield",
+			start_time = 0.4,
+			sub_action = "default",
+		},
+		{
+			action = "weapon_reload",
+			input = "weapon_reload",
 			start_time = 0.4,
 			sub_action = "default",
 		},
@@ -173,13 +191,27 @@ local function fire_chain_actions()
 	return entries
 end
 
--- Builds the handgun's shot, with its ammo, recoil and animation. It can be repeated after UT's fire time, and it has no reload.
+-- Builds the shot from Kruber's handgun's, which hits at once, with its recoil. It adds heat instead of using ammo, can't be fired while
+-- the gun is locked out, and can be repeated after UT's fire time. The animation of the characters is the staff's shot.
 local function build_shot(original)
 	local action = table.clone(original)
 
 	action.active_reload_time = nil
 	action.allowed_chain_actions = fire_chain_actions()
+	action.ammo_usage = nil
+	action.anim_event = "attack_shoot"
+	action.anim_event_last_ammo = nil
+	action.anim_event_no_ammo_left = nil
 	action.anim_event_secondary = nil
+	action.overcharge_type = "ut_lightning_bolt"
+	-- (the staff is the left hand's, as its own actions say)
+	action.weapon_action_hand = "left"
+	action.condition_func = function (action_user)
+		local overcharge_extension = ScriptUnit.extension(action_user, "overcharge_system")
+
+		return overcharge_extension:are_you_locked_out() == false
+	end
+	action.chain_condition_func = action.condition_func
 	action.damage_profile = "ut_lightning_bolt"
 	action.headshot_multiplier = CONFIG.headshot_multiplier
 	action.hit_effect = NO_HIT_EFFECT
@@ -209,17 +241,18 @@ local ATTACK_META_DATA_FIELDS = {
 	"can_charge_shot",
 	"charged_attack_action_name",
 	"max_range",
-	"ut_lightning",
 }
 
-local AMMO_DATA_FIELDS = {
-	"ammo_per_clip",
-	"ammo_per_reload",
-	"max_ammo",
-	"reload_time",
+-- The template's own fields that are replaced
+local TEMPLATE_FIELDS = {
+	"crosshair_style",
+	"on_wield",
+	"synced_states",
+	"tooltip_compare",
+	"tooltip_detail",
 }
 
-local function restore_handgun(template_name)
+local function restore_staff(template_name)
 	local original = saved[template_name]
 	local template = rawget(Weapons, template_name)
 
@@ -229,22 +262,19 @@ local function restore_handgun(template_name)
 
 	template.actions.action_one = original.action_one
 	template.actions.action_two = original.action_two
-	template.tooltip_compare = original.tooltip_compare
-	template.tooltip_detail = original.tooltip_detail
+
+	for _, field in ipairs(TEMPLATE_FIELDS) do
+		template[field] = original[field]
+	end
 
 	for _, field in ipairs(ATTACK_META_DATA_FIELDS) do
 		template.attack_meta_data[field] = original.attack_meta_data[field]
 	end
 
-	for _, field in ipairs(AMMO_DATA_FIELDS) do
-		template.ammo_data[field] = original.ammo_data[field]
-	end
-
-	template.ammo_data.ammo_immediately_available = original.ammo_immediately_available
 	saved[template_name] = nil
 end
 
-local function apply_handgun(template_name)
+local function apply_staff(template_name)
 	local template = rawget(Weapons, template_name)
 
 	if not template then
@@ -274,27 +304,23 @@ local function apply_handgun(template_name)
 	local original = {
 		action_one = actions.action_one,
 		action_two = actions.action_two,
-		ammo_data = {},
-		ammo_immediately_available = template.ammo_data.ammo_immediately_available,
 		attack_meta_data = {},
-		tooltip_compare = template.tooltip_compare,
-		tooltip_detail = template.tooltip_detail,
 	}
+
+	for _, field in ipairs(TEMPLATE_FIELDS) do
+		original[field] = template[field]
+	end
 
 	for _, field in ipairs(ATTACK_META_DATA_FIELDS) do
 		original.attack_meta_data[field] = attack_meta_data[field]
 	end
 
-	for _, field in ipairs(AMMO_DATA_FIELDS) do
-		original.ammo_data[field] = template.ammo_data[field]
-	end
-
 	saved[template_name] = original
 
-	-- Only the shot is replaced, and the aim action is taken away: the zoom is done by this file (see below). Everything else stays
-	-- untouched, including wield, inspect and the career actions.
+	-- The shot is replaced, and the staff's charged attack is taken away: the zoom is done by this file (see below). Everything else
+	-- stays untouched, including the venting, wield, inspect and the career actions.
 	actions.action_one = {
-		default = build_shot(original.action_one.default),
+		default = build_shot(Weapons.handgun_template_1.actions.action_one.default),
 	}
 	actions.action_two = nil
 
@@ -302,20 +328,17 @@ local function apply_handgun(template_name)
 		action_one = actions.action_one,
 	}, template_name)
 
-	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
-	template.ammo_data.max_ammo = CONFIG.max_ammo
-	template.ammo_data.ammo_per_clip = CONFIG.max_ammo
-	template.ammo_data.ammo_per_reload = CONFIG.max_ammo
-	template.ammo_data.ammo_immediately_available = true
-	-- Nothing should need a reload, but the game may still start one when the weapon is wielded, so the reload is made short.
-	template.ammo_data.reload_time = 0.2
+	-- The staff's wield lights trails on the fingers of the first person arms, and its charged attack more. The skin hides the arms,
+	-- but not their effects.
+	template.on_wield = nil
+	template.synced_states = nil
+	-- A rifle's crosshair, not the staff's arrows
+	template.crosshair_style = "default"
 
-	-- The bot AI and the tooltips refer to the zoomed shot, which was removed.
+	-- The bot AI and the tooltips refer to the staff's charged attack, which was removed.
 	attack_meta_data.can_charge_shot = false
 	attack_meta_data.charged_attack_action_name = nil
 	attack_meta_data.max_range = CONFIG.bot_max_range
-	-- This tells the bot shooting that this is the Lightning Gun (see bots.lua).
-	attack_meta_data.ut_lightning = true
 
 	template.tooltip_compare = {
 		light = {
@@ -331,15 +354,11 @@ local function apply_handgun(template_name)
 end
 
 local function apply_lightning_guns()
-	for template_name in pairs(TEMPLATE_NAMES) do
-		apply_handgun(template_name)
-	end
+	apply_staff(TEMPLATE_NAME)
 end
 
 local function restore_lightning_guns()
-	for template_name in pairs(TEMPLATE_NAMES) do
-		restore_handgun(template_name)
-	end
+	restore_staff(TEMPLATE_NAME)
 end
 
 -- The bolt and its arcs. The game's own shot damages what the bolt hits. This works out where the bolt ends, jumps the arcs, and tells

@@ -60,7 +60,7 @@ local CONFIG = {
 	spark_attenuation = 0.1,
 	spark_intensity = 2,
 	-- LightningCharge: 10 sparks a second at the tip, each 0.2 s long and 5 units across, one of the four pictures of the texture,
-	-- turned at random. They stop while the weapon cannot fire (its next shot is not yet due, or it has no ammo).
+	-- turned at random. They stop while the weapon cannot fire (its next shot is not yet due, or it has no ammo: here, it is locked out).
 	-- The emitter is 30 units behind the muzzle (LightningCharge.RelativeLocation), inside the glass at the front, and each spark is up
 	-- to 10 units from there along the barrel (mPosDev). It is attached to the model, so these are the model's units, with its DrawScale.
 	charge_rate = 10,
@@ -89,6 +89,9 @@ local CONFIG = {
 	scope_bar_height = 180,
 	-- How long a shot lights up the weapon's third person model
 	inspect_pose_speed = 5, -- how fast the model moves to the inspect pose and back, per second
+	-- While the gun is locked out by overheating, it is held turned on its side, low, as the Deepwood Staff is held across the view then
+	-- (the mod's own: UT's gun doesn't overheat). It moves there and back at this rate a second.
+	lockout_pose_speed = 4,
 	inspect_sway = 5, -- degrees of yaw each way while inspecting
 	inspect_sway_speed = 1.8, -- radians per second
 }
@@ -102,11 +105,16 @@ local TEMPLATES = {
 		id = "lightning_gun",
 		setting_id = "lightning_gun",
 	},
-	{
-		id = "lightning_gun_dr",
-		setting_id = "lightning_gun_dr",
-	},
 }
+
+-- Whether the local player's gun is locked out by overheating (the Deepwood Staff's overheat, see lightning_gun.lua)
+local function locked_out()
+	local player = Managers.player and Managers.player:local_player()
+	local unit = player and player.player_unit
+	local overcharge_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "overcharge_system")
+
+	return overcharge_extension and overcharge_extension:are_you_locked_out() or false
+end
 
 local TEMPLATE_NAMES = {}
 local skin_apis = {}
@@ -363,7 +371,7 @@ local function ready_to_fire()
 	local now = Managers.time:time("game")
 	local last_fire = lightning.last_fire_time
 
-	return (not last_fire or now - last_fire >= lightning.fire_rate) and not utils.local_ranged_out_of_ammo()
+	return (not last_fire or now - last_fire >= lightning.fire_rate) and not locked_out()
 end
 
 local function update_charge(skin, dt, api)
@@ -531,7 +539,7 @@ mod:hook(CrosshairUI, "draw", function (func, self, ...)
 	return func(self, ...)
 end)
 
--- Skin definitions, one for each of the two templates
+-- The skin definition
 local function new_skin(variant)
 	local definition = mod.items.weapons[variant.setting_id]
 	local api
@@ -566,8 +574,15 @@ local function new_skin(variant)
 		inspect_pivot_right = 0,
 		inspect_pivot_forward = 30,
 		inspect_pivot_up = 0,
-		-- WeaponStaticMesh.SniperRiflePickup (DrawScale 0.45). The game links the handgun to the left hand's node
-		-- (AttachmentNodeLinking.rifles), as it does the blunderbuss.
+		-- The lockout pose (see lockout_pose_speed): on its side, lower and to the left
+		alt_pose_right = -4,
+		alt_pose_forward = -2,
+		alt_pose_up = -5,
+		alt_pose_roll = -75,
+		alt_pose_pitch = 0,
+		alt_pose_yaw = 10,
+		-- WeaponStaticMesh.SniperRiflePickup (DrawScale 0.45). The game links the staff to the left hand's node
+		-- (AttachmentNodeLinking.one_handed_melee_weapon.left). The staff is held upright, so the mesh is turned from the hand's node.
 		third_person = {
 			id = variant.id,
 			template = definition.template,
@@ -578,10 +593,10 @@ local function new_skin(variant)
 			grip_right = 0,
 			grip_forward = 0,
 			grip_up = -8,
-			yaw = -60,
+			yaw = 0,
 			pitch = 0,
 			roll = 0,
-			follow_game_unit = 1,
+			follow_game_unit = 3,
 			follow_calibrate_seconds = 1,
 			muzzle_right = 0,
 			muzzle_forward = 76,
@@ -597,6 +612,7 @@ local function new_skin(variant)
 		end,
 		on_update = function (skin, dt)
 			skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
+			skin.alt_pose = (skin.alt_pose or 0) + ((locked_out() and 1 or 0) - (skin.alt_pose or 0)) * math.min(1, CONFIG.lockout_pose_speed * dt)
 			skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
 			skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
 
@@ -642,8 +658,8 @@ mod.handgun_start_callbacks.lightning_skin = function (action, new_action)
 			api.play("Fire", api.animation_duration("Fire") / CONFIG.fire_animation_rate)
 			api.play_sound("ut_lightning_fire")
 
-			-- SniperFire.PlayFiring: the charge up after the shot, if there is ammo for another
-			if not utils.local_ranged_out_of_ammo() then
+			-- SniperFire.PlayFiring: the charge up after the shot, if there is ammo for another. Here, if the gun is not locked out.
+			if not locked_out() then
 				api.play_sound("ut_lightning_charge")
 			end
 		end
@@ -661,15 +677,10 @@ mod.inspect_callbacks.lightning_skin = function (action, started)
 	end
 end
 
--- The handgun's shot and reload sounds and animations are the game's own, so they are not played on the player's own first person unit.
--- The skin's model plays UT's animations instead.
+-- The staff's shot animation is the game's own, so it is not played on the player's own first person unit. The skin's model plays UT's
+-- animations instead.
 for template_name in pairs(TEMPLATE_NAMES) do
 	mod.first_person_animation_filters[template_name] = function (event)
-		return event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil or string.find(event, "zoom", 1, true) ~= nil
-	end
-
-	-- The reload animation is not played on the characters, because the weapon has no reload.
-	mod.third_person_animation_filters[template_name] = function (event)
-		return string.find(event, "reload", 1, true) ~= nil
+		return event == "attack_shoot" or event == "attack_shoot_last"
 	end
 end

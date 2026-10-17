@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
--- The Lightning Gun's in-game tests (see runner.lua). Run them with /ut_test lightning (Kruber's) and /ut_test lightning_dr (Bardin's).
--- They run in the runner's level, Righteous Stand.
+-- The Lightning Gun's in-game tests (see runner.lua), for each of Kerillian's careers. Run them with /ut_test lightning. They run in the
+-- runner's level, Righteous Stand.
 
 local runner = mod.test_runner
 
@@ -31,29 +31,40 @@ local function stop_recording()
 	mod.test_recording = nil
 end
 
+-- Whether the player's gun is locked out by overheating. It is asked from the scenario and from a wait's condition, which the runner
+-- calls on the main thread already.
+local function locked_out(t)
+	local function check()
+		local overcharge_extension = ScriptUnit.extension(t.unit(), "overcharge_system")
+
+		return overcharge_extension:are_you_locked_out()
+	end
+
+	if coroutine.running() then
+		return t.on_main_thread(check)
+	end
+
+	return check()
+end
+
 local function scenarios()
 	return {
 		{
-			name = "has ammo",
-			run = function (t)
-				local ammo = t.ammo()
-
-				t.expect(ammo ~= nil, "the weapon has no ammo extension")
-				t.expect(ammo and ammo > 0, "the weapon has no ammo: %s", tostring(ammo))
-			end,
-		},
-		{
 			name = "fire",
 			run = function (t)
-				local before = t.ammo()
+				local before = t.overcharge()
 
 				start_recording()
 				t.press("action_one", 0.1)
 				t.wait(0.5)
 				stop_recording()
 
+				local heat = t.overcharge() - before
+				local cost = PlayerUnitStatusSettings.overcharge_values.ut_lightning_bolt
+
 				t.expect(#bolts == 1, "%d bolts were made, not 1", #bolts)
-				t.expect(before - (t.ammo() or 0) == 1, "the shot used %s ammo, not 1", tostring(before - (t.ammo() or 0)))
+				-- (the heat starts to cool half a second after the shot)
+				t.expect(math.abs(heat - cost) <= cost * 0.1, "the shot added %.2f heat, not %.2f", heat, cost)
 
 				if bolts[1] then
 					t.expect(bolts[1].arc_count == 3 or not bolts[1].hit, "%d arcs jumped, not 3", bolts[1].arc_count)
@@ -63,9 +74,10 @@ local function scenarios()
 		{
 			name = "fire rate",
 			run = function (t)
-				-- Holding the button repeats the shot every 1.6 seconds: shots at 0, 1.6, 3.2, 4.8 and 6.4
+				-- Holding the button repeats the shot every 1.6 seconds: shots at 0, 1.6, 3.2 and 4.8. A fifth would heat the gun to the
+				-- top.
 				start_recording()
-				t.press("action_one", 7)
+				t.press("action_one", 5.3)
 				t.wait(0.5)
 				stop_recording()
 
@@ -75,20 +87,70 @@ local function scenarios()
 					times[#times + 1] = string.format("%.2f", bolt.time - bolts[1].time)
 				end
 
-				t.expect(#bolts == 5, "%d bolts were made in 7.5 seconds, not 5 (at %s)", #bolts, table.concat(times, ", "))
+				t.expect(#bolts == 4, "%d bolts were made in 5.8 seconds, not 4 (at %s)", #bolts, table.concat(times, ", "))
+				t.expect(not locked_out(t), "four bolts overheated the gun")
 			end,
 		},
 		{
-			name = "no reload",
+			-- The Deepwood Staff's overheat: the player loses 40% of their health, and the gun is locked out until the heat is gone. Bolts
+			-- can't be fired while it is. The heat cools between bolts, so it takes 7 at the fire rate.
+			name = "overheating locks the gun out",
 			run = function (t)
-				local before = t.ammo()
+				t.hurtable(true)
+				t.heal()
 
+				local health = t.health()
+
+				start_recording()
+				t.hold("action_one")
+
+				local overheated = t.wait_until(function ()
+					return locked_out(t)
+				end, 15, "the gun to overheat")
+
+				t.release("action_one")
+				t.wait(0.5)
+				stop_recording()
+
+				local fired = #bolts
+
+				t.expect(overheated, "%d bolts did not overheat the gun (heat %.1f)", fired, t.overcharge())
+				t.expect(fired == 7, "%d bolts were fired before the gun overheated, not 7", fired)
+
+				local lost = health - t.health()
+
+				t.log("%d bolts, the overheat took %.0f of %.0f health", fired, lost, health)
+				t.expect(math.abs(lost / health - 0.4) < 0.05, "overheating took %.0f%% of the player's health, not 40%%", lost / health * 100)
+
+				start_recording()
+				t.press("action_one", 1)
+				t.wait(0.3)
+				stop_recording()
+
+				t.expect(#bolts == 0, "%d bolts were fired while the gun was locked out", #bolts)
+
+				t.expect(t.wait_until(function ()
+					return not locked_out(t)
+				end, 30, "the lockout to end"), "the gun was still locked out after 30 seconds")
+			end,
+		},
+		{
+			name = "venting removes heat",
+			run = function (t)
 				t.press("action_one", 0.1)
 				t.wait(1.8)
 				t.press("action_one", 0.1)
-				t.wait(1.8)
+				t.wait(0.3)
 
-				t.expect(before - (t.ammo() or 0) == 2, "two shots used %s ammo", tostring(before - (t.ammo() or 0)))
+				local before = t.overcharge()
+
+				t.press("weapon_reload", 1.5)
+				t.wait(0.2)
+
+				local after = t.overcharge()
+
+				t.log("venting took the heat from %.1f to %.1f", before, after)
+				t.expect(after < before * 0.5, "venting took the heat only from %.1f to %.1f", before, after)
 			end,
 		},
 		{
@@ -164,14 +226,9 @@ end
 
 for _, variant in ipairs({
 	{
-		careers = { "es_mercenary", "es_huntsman", "es_knight" },
+		careers = { "we_waywatcher", "we_thornsister", "we_shade", "we_maidenguard" },
 		name = "lightning",
 		setting_id = "lightning_gun",
-	},
-	{
-		careers = { "dr_ironbreaker", "dr_ranger" },
-		name = "lightning_dr",
-		setting_id = "lightning_gun_dr",
 	},
 }) do
 	local definition = mod.items.weapons[variant.setting_id]
