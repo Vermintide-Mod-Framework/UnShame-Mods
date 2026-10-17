@@ -1,4 +1,5 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- The Lightning Gun's in-game tests (see runner.lua), for each of Kerillian's careers. Run them with /ut_test lightning. They run in the
 -- runner's level, Righteous Stand.
@@ -9,7 +10,7 @@ local runner = mod.test_runner
 -- counted.
 local bolts = {}
 
-mod.lightning_bolt_callbacks.ut_test = function (owner_unit, end_position, hit_normal, arcs)
+ut.lightning_bolt_callbacks.ut_test = function (owner_unit, end_position, hit_normal, arcs)
 	if mod.test_recording then
 		bolts[#bolts + 1] = {
 			arc_count = #arcs,
@@ -207,7 +208,7 @@ local function scenarios()
 		{
 			name = "zoom",
 			run = function (t)
-				local zoom = mod.lightning.zoom
+				local zoom = ut.lightning.zoom
 
 				t.expect(not zoom.zoomed, "the weapon starts zoomed")
 
@@ -282,7 +283,7 @@ for _, variant in ipairs({
 		setting_id = "lightning_gun",
 	},
 }) do
-	local definition = mod.items.weapons[variant.setting_id]
+	local definition = ut.items.weapons[variant.setting_id]
 
 	runner.add_suite({
 		name = variant.name,

@@ -1,4 +1,5 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- The Redeemer's in-game tests (see runner.lua). Run them with /ut_test redeemer. They run in the runner's level, Righteous Stand.
 
@@ -8,7 +9,7 @@ local runner = mod.test_runner
 local blasts = {}
 local recording = false
 
-mod.any_explosion_callbacks.ut_test_redeemer = function (explosion_template)
+ut.any_explosion_callbacks.ut_test_redeemer = function (explosion_template)
 	if recording and string.find(explosion_template.name, "ut_redeemer_wave_", 1, true) then
 		blasts[#blasts + 1] = explosion_template.name
 	end
@@ -42,7 +43,7 @@ local function scenarios()
 	}
 end
 
-local definition = mod.items.weapons.redeemer
+local definition = ut.items.weapons.redeemer
 
 runner.add_suite({
 	name = "redeemer",

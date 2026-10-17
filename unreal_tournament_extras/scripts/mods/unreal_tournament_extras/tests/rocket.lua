@@ -1,12 +1,13 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- The Rocket Launcher's in-game tests (see runner.lua). Run them with /ut_test rocket. They run in the runner's level, Righteous Stand.
 -- The numbers expected are UT's (XWeapons/RocketFire, RocketMultiFire and RocketProj) as the mod turns them into this game's.
 
 local runner = mod.test_runner
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = ut:dofile("scripts/mods/unreal_tournament/utils")
 
-local definition = mod.items.weapons.rocket_launcher
+local definition = ut.items.weapons.rocket_launcher
 
 local CONFIG = {
 	-- All the ammo, which is all in the clip
@@ -157,7 +158,7 @@ end
 local function locks_on(t)
 	local locked = false
 
-	mod.rocket_lock_callbacks.ut_test = function (owner_unit, is_locked)
+	ut.rocket_lock_callbacks.ut_test = function (owner_unit, is_locked)
 		if owner_unit == t.unit() and is_locked then
 			locked = true
 		end
@@ -170,7 +171,7 @@ local function locks_on(t)
 	t.release("action_two")
 	t.watch(2, observe)
 
-	mod.rocket_lock_callbacks.ut_test = nil
+	ut.rocket_lock_callbacks.ut_test = nil
 
 	local targets = {}
 
@@ -422,7 +423,7 @@ local function scenarios()
 
 				local locked = false
 
-				mod.rocket_lock_callbacks.ut_test = function (owner_unit, is_locked)
+				ut.rocket_lock_callbacks.ut_test = function (owner_unit, is_locked)
 					if owner_unit == t.unit() then
 						locked = is_locked
 					end
@@ -439,7 +440,7 @@ local function scenarios()
 				t.release("action_two")
 				t.watch(2, observe)
 
-				mod.rocket_lock_callbacks.ut_test = nil
+				ut.rocket_lock_callbacks.ut_test = nil
 
 				local homing = 0
 

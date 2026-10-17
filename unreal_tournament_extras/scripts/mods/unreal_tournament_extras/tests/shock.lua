@@ -1,11 +1,12 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- The Shock Rifle's in-game tests (see runner.lua). Run them with /ut_test shock. They run in the runner's level, Righteous Stand. The
 -- numbers expected are UT's (XWeapons/ShockBeamFire, ShockProjFire and ShockProjectile) as the mod turns them into this game's.
 
 local runner = mod.test_runner
 
-local definition = mod.items.weapons.shock_rifle
+local definition = ut.items.weapons.shock_rifle
 local overcharge_values = PlayerUnitStatusSettings.overcharge_values
 
 local CONFIG = {
@@ -45,7 +46,7 @@ end
 local beams = {}
 local recording = false
 
-mod.shock_beam_callbacks.ut_test = function (owner_unit, start_position, end_position, hit_normal, reflected)
+ut.shock_beam_callbacks.ut_test = function (owner_unit, start_position, end_position, hit_normal, reflected)
 	local player = Managers.player:local_player()
 
 	if recording and not reflected and player and owner_unit == player.player_unit then

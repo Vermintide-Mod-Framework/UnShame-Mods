@@ -1,4 +1,5 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- In-game tests. A suite is a weapon's tests: it sets up the character, career and weapon, runs its scenarios in a level that is loaded,
 -- and puts everything back. It is run with the chat command /ut_test <suite>, several with /ut_test <suite> <suite> ..., or all of them
@@ -59,7 +60,7 @@ local mod = get_mod("unreal_tournament")
 -- The tests change the player's loadout and career, and put them back at the end. The loadout is kept in the backend, so what has to be
 -- put back is saved in the settings while a suite runs, and put back the next time the mod loads if a suite was cut short.
 
-local utils = mod:dofile("scripts/mods/unreal_tournament/utils")
+local utils = ut:dofile("scripts/mods/unreal_tournament/utils")
 
 local runner = {
 	suites = {},
@@ -1091,7 +1092,7 @@ local function make_context(suite)
 	return t
 end
 
-mod.any_explosion_callbacks.ut_test = function (explosion_template, position)
+ut.any_explosion_callbacks.ut_test = function (explosion_template, position)
 	local watch = runner.explosion_watch
 
 	if watch then
@@ -1883,7 +1884,7 @@ end
 
 mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 	runner.restore_input()
-	mod.any_explosion_callbacks.ut_test = nil
+	ut.any_explosion_callbacks.ut_test = nil
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()

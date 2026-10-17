@@ -1,22 +1,23 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- The Assault Rifle's in-game tests (see runner.lua). Run them with /ut_test assault. They run in the runner's level, Righteous Stand.
 
 local runner = mod.test_runner
-local assault = mod.assault
+local assault = ut.assault
 
 -- The rounds and the grenade explosions that are made while a test runs
 local rounds = 0
 local explosions = 0
 local recording = false
 
-mod.assault_round_callbacks.ut_test = function (owner_unit)
+ut.assault_round_callbacks.ut_test = function (owner_unit)
 	if recording and Managers.player:local_player().player_unit == owner_unit then
 		rounds = rounds + 1
 	end
 end
 
-mod.any_explosion_callbacks.ut_test_assault = function (explosion_template)
+ut.any_explosion_callbacks.ut_test_assault = function (explosion_template)
 	if recording and explosion_template.name == assault.explosion then
 		explosions = explosions + 1
 	end
@@ -67,7 +68,7 @@ local function scenarios()
 	}
 end
 
-local definition = mod.items.weapons.assault_rifle
+local definition = ut.items.weapons.assault_rifle
 
 runner.add_suite({
 	name = "assault",

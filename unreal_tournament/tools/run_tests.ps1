@@ -1,12 +1,13 @@
-# Runs a suite of the mod's in-game tests (scripts/mods/unreal_tournament/tests) in the running game, from the command line, and prints
-# the results. The game has to be running with the mod, and its window gets the keyboard focus while this runs.
+# Runs a suite of the mod's in-game tests (the extras mod's, unreal_tournament_extras/scripts/mods/unreal_tournament_extras/tests) in
+# the running game, from the command line, and prints the results. The game has to be running with both mods, and its window gets the
+# keyboard focus while this runs.
 #
 #   run_tests.ps1 -Suite flak [-Career es_mercenary] [-Build] [-Reload] [-TimeoutSeconds 600]
 #   run_tests.ps1 -Suite flak,shield,assault    several suites, one after the other
 #   run_tests.ps1 -Suite all                    every suite
 #   run_tests.ps1 -Build -Reload          without a suite: builds, and reloads the mods in the running game
 #
-#   -Build   builds the mod first (vmb build, from the mods folder)
+#   -Build   builds both mods first (vmb build, from the mods folder)
 #   -Reload  reloads the mods in the game (Ctrl+Shift+R, the framework's hotkey) and waits for the reload to show in the log
 #
 # If the game is not running, it is started first (start_game.ps1) and taken to the Keep, so this one script does everything.
@@ -259,7 +260,7 @@ function Run-Suite {
 if ($Build) {
     Write-Host "Building..."
     Push-Location $ModsFolder
-    & "..\vmb.exe" build unreal_tournament -f . --rc ../vmb-rc | Out-Host
+    & "..\vmb.exe" build unreal_tournament unreal_tournament_extras -f . --rc ../vmb-rc | Out-Host
     Pop-Location
 }
 

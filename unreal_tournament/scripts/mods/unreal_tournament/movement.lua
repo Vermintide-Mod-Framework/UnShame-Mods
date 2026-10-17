@@ -575,34 +575,27 @@ local function fly(unit)
 	end
 end
 
-mod:command("fly", "- you fly the way you look, with no gravity, until /walk (UT's fly)", function ()
-	local player = Managers.player:local_player_safe()
-	local unit = player and player.player_unit
+-- The chat commands /fly, /ghost and /walk are in the extras mod (unreal_tournament_extras), which calls these.
+mod.flight = {
+	-- Starts the flight of the player's own character, through walls for a ghost. Returns whether there is a character to fly.
+	start = function (as_ghost)
+		local player = Managers.player:local_player_safe()
+		local unit = player and player.player_unit
 
-	if unit and Unit.alive(unit) then
+		if not unit or not Unit.alive(unit) then
+			return false
+		end
+
 		flying_unit = unit
+		ghost = as_ghost
+
+		return true
+	end,
+	stop = function ()
+		flying_unit = nil
 		ghost = false
-
-		mod:echo("You feel much lighter")
-	end
-end)
-
-mod:command("ghost", "- you fly the way you look, through walls, until /walk (UT's ghost)", function ()
-	local player = Managers.player:local_player_safe()
-	local unit = player and player.player_unit
-
-	if unit and Unit.alive(unit) then
-		flying_unit = unit
-		ghost = true
-
-		mod:echo("You feel ethereal")
-	end
-end)
-
-mod:command("walk", "- ends /fly and /ghost", function ()
-	flying_unit = nil
-	ghost = false
-end)
+	end,
+}
 
 -- The flight is the player's own character's. It ends with that character (a death, a new level).
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()

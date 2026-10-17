@@ -1,4 +1,5 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- The Sniper Rifle's in-game tests (see runner.lua). Run them with /ut_test sniper (Kruber's) and /ut_test sniper_dr (Bardin's). They run
 -- in the runner's level, Righteous Stand.
@@ -8,7 +9,7 @@ local runner = mod.test_runner
 -- Records the shots that happen while a test runs: when, and whether they hit something
 local shots = {}
 
-mod.sniper.shot_callbacks.ut_test = function (owner_unit, hit_position)
+ut.sniper.shot_callbacks.ut_test = function (owner_unit, hit_position)
 	if mod.test_recording then
 		shots[#shots + 1] = {
 			hit = hit_position ~= nil,
@@ -153,7 +154,7 @@ local function scenarios()
 		{
 			name = "zoom",
 			run = function (t)
-				local zoom = mod.zoom
+				local zoom = ut.zoom
 
 				t.expect(not zoom.zoomed, "the weapon starts zoomed")
 
@@ -209,7 +210,7 @@ for _, variant in ipairs({
 		setting_id = "sniper_rifle_dr",
 	},
 }) do
-	local definition = mod.items.weapons[variant.setting_id]
+	local definition = ut.items.weapons[variant.setting_id]
 
 	runner.add_suite({
 		name = variant.name,

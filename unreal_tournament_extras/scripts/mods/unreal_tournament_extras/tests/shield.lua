@@ -1,10 +1,11 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- The Shield Gun's in-game tests (see runner.lua). Run them with /ut_test shield (Kruber's), shield_dr, shield_bw, shield_wh and
 -- shield_we. They run in the runner's level, Righteous Stand.
 
 local runner = mod.test_runner
-local shield = mod.shield
+local shield = ut.shield
 
 -- How many frames after a body starts to fall (its parts move by physics) the game takes it away, for each rat of the scenario below.
 -- The punch throws a body from that frame for its kill_hold (0.15 s).
@@ -156,7 +157,7 @@ local function scenarios()
 		{
 			name = "a punch while moving fast does more damage",
 			run = function (t)
-				if mod:get("ut_movement") == false or not mod:get("momentum_damage") then
+				if ut:get("ut_movement") == false or not ut:get("momentum_damage") then
 					t.skip("the movement or its momentum damage is turned off")
 				end
 
@@ -999,7 +1000,7 @@ for _, variant in ipairs({
 	{ name = "shield_wh", setting_id = "shield_gun_wh", careers = { "wh_captain" } },
 	{ name = "shield_we", setting_id = "shield_gun_we", careers = { "we_shade" } },
 }) do
-	local definition = mod.items.weapons[variant.setting_id]
+	local definition = ut.items.weapons[variant.setting_id]
 
 	runner.add_suite({
 		name = variant.name,

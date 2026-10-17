@@ -1,4 +1,5 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- The UT movement's in-game tests (see runner.lua). Run them with /ut_test movement. They run in the runner's level, Righteous Stand,
 -- some of them in its named places.
@@ -98,7 +99,7 @@ local function highest(samples, field)
 end
 
 local function skip_without_movement(t)
-	if mod:get("ut_movement") == false then
+	if ut:get("ut_movement") == false then
 		t.skip("the UT movement is turned off")
 	end
 end
@@ -489,7 +490,7 @@ local function scenarios()
 			run = function (t)
 				skip_without_movement(t)
 
-				if not mod:get("momentum_damage") then
+				if not ut:get("momentum_damage") then
 					t.skip("the momentum damage is turned off")
 				end
 
@@ -571,15 +572,15 @@ local function scenarios()
 			name = "with the movement off, the jump is the game's",
 			run = function (t)
 				local settings = movement_settings(t)
-				local was = mod:get("ut_movement")
+				local was = ut:get("ut_movement")
 
-				mod:set("ut_movement", false)
+				ut:set("ut_movement", false)
 				t.wait(0.1)
 				t.tap("jump")
 
 				local up = highest(record(t, 0.3), "vz")
 
-				mod:set("ut_movement", was)
+				ut:set("ut_movement", was)
 				t.wait(1)
 
 				t.expect(math.abs(up - settings.jump) <= CONFIG.speed_margin, "the jump went up at %.2f m/s, not the game's %.2f", up, settings.jump)
@@ -592,8 +593,8 @@ end
 -- damage)
 runner.add_suite({
 	name = "movement",
-	item = mod.items.weapons.flak_cannon.key,
-	template = mod.items.weapons.flak_cannon.template,
+	item = ut.items.weapons.flak_cannon.key,
+	template = ut.items.weapons.flak_cannon.template,
 	slot = "slot_ranged",
 	loadout = {
 		slot_melee = {

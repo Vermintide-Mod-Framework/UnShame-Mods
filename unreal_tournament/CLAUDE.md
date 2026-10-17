@@ -5,8 +5,8 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
 
 ## Workflow
 
-- Build from the `mods` folder (`E:\Git\vmb\mods`): `../vmb.exe build unreal_tournament -f . --rc ../vmb-rc`. **Read the output for errors before
-  committing**: a build with a Lua error still produces files, and a broken commit has been pushed that way. Only report a build to the user if
+- Build from the `mods` folder (`E:\Git\vmb\mods`): `../vmb.exe build unreal_tournament unreal_tournament_extras -f . --rc ../vmb-rc` (the
+  extras mod, `../unreal_tournament_extras`, has the chat commands and the tests). **Read the output for errors before committing**: a build with a Lua error still produces files, and a broken commit has been pushed that way. Only report a build to the user if
   it fails.
 - Every commit has its build number: in `scripts/mods/unreal_tournament/unreal_tournament.lua`, `(build N)` with N the number of commits
   (`git rev-list --count HEAD`) plus one. Bump it, build, commit, **and push**, for every change, on this branch too. Do not ask whether to commit.
@@ -29,7 +29,9 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
   job presses fire: `game_input.ps1 -Press -Hold 100`) and put two of them together with `tools/compare_images.py` (side by side, blended,
   difference, checkerboard), cropped to the weapon. Compare, change, and compare again.
 - The game's own logs and crash dumps: `%APPDATA%\Fatshark\Vermintide 2\console_logs` and `crash_dumps`. Look at them when told about a crash.
-- In-game tests are in `scripts/mods/unreal_tournament/tests` (`runner.lua`, and a suite for each weapon). `/ut_test <suite>` runs one (or
+- In-game tests are in the extras mod, `../unreal_tournament_extras/scripts/mods/unreal_tournament_extras/tests` (`runner.lua`, and a suite for
+  each weapon). A test reaches this mod's tables through `ut` (`get_mod("unreal_tournament")`), and registers its commands and hooks on its own
+  mod. `/ut_test <suite>` runs one (or
   `tools/run_tests.ps1 -Suite <suite>`; several with `-Suite a,b` or `-Suite all`, in one command): it loads its level, sets the career and weapon, and goes back to the Keep. The results are lines that
   start with `[ut_test]` in the console log. The game's engine calls that use the world or physics are made on the main thread
   (`t.on_main_thread`), because a coroutine's references are refused.

@@ -1,11 +1,12 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- The Flak Cannon's in-game tests (see runner.lua). Run them with /ut_test flak. They run in the runner's level, Righteous Stand. The
 -- numbers expected are UT's (XWeapons/FlakFire, FlakAltFire, FlakChunk and FlakShell) as the mod turns them into this game's.
 
 local runner = mod.test_runner
 
-local definition = mod.items.weapons.flak_cannon
+local definition = ut.items.weapons.flak_cannon
 
 local CONFIG = {
 	-- All the ammo, which is all in the clip

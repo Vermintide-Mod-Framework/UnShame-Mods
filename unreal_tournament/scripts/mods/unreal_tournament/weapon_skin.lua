@@ -902,7 +902,7 @@ local function new(def)
 		end
 	end
 
-	-- Development commands (/skin): print what the skin does, play an animation, or set a number of the definition.
+	-- Development commands (the extras mod's /skin): print what the skin does, play an animation, or set a number of the definition.
 	function self.command(command, name, value)
 		if command == "debug" then
 			debug_enabled = not debug_enabled
@@ -929,23 +929,6 @@ local function new(def)
 
 	return self
 end
-
-mod:command("skin", "<weapon> debug | report | play <animation> | set <number> <value> | 3p <number> <value> - the weapon skins", function (id, ...)
-	local skin = id and skins[id]
-
-	if skin then
-		skin.command(...)
-	else
-		local names = {}
-
-		for name in pairs(skins) do
-			names[#names + 1] = name
-		end
-
-		table.sort(names)
-		mod:echo("skin: one of %s", table.concat(names, ", "))
-	end
-end)
 
 return {
 	new = new,

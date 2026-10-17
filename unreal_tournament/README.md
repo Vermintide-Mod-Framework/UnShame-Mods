@@ -16,6 +16,10 @@ What the mod contains at the moment is in the code. `TODO.md` is what is not don
 - Each weapon has a folder of its own: the gameplay, the look (`skin.lua`) and the animations of its model.
 - `units/ut`, `ui/ut`, `wwise` and `texture_categories` are the assets, made by `tools/asset_conversion`. `resource_packages` says what is loaded.
 - `tools/` has the tools for converting UT2004's assets (`asset_conversion`) and for reading the game's own files (`game_data`).
+- `../unreal_tournament_extras` is a second mod that needs this one: UT's console commands as chat commands, the development commands
+  and the in-game tests. It is kept apart so that this mod is only the weapons and the movement. It reaches this mod's tables and functions
+  through `get_mod("unreal_tournament")`, so it must be below this mod in the launcher's load order, and its `.mod` file stops the game
+  with a message if it isn't.
 
 ## How it fits together
 
@@ -39,14 +43,14 @@ What the mod contains at the moment is in the code. `TODO.md` is what is not don
 
 ## Working on it
 
-- **Build** from the `mods` folder: `../vmb.exe build unreal_tournament -f . --rc ../vmb-rc`. The output has the compile errors: read it. A build
-  with a Lua error still writes files, and a broken commit is easy to push.
+- **Build** from the `mods` folder: `../vmb.exe build unreal_tournament unreal_tournament_extras -f . --rc ../vmb-rc`. The output has the
+  compile errors: read it. A build with a Lua error still writes files, and a broken commit is easy to push.
 - **Build number.** `unreal_tournament.lua` echoes `Unreal Tournament loaded (build N)` when the mod loads. N is the number of commits plus one,
   so a commit carries its own number, and a screenshot says which build it is.
 - **Test in game.** The mod can be reloaded in game without a restart. The game's logs are in `%APPDATA%\Fatshark\Vermintide 2\console_logs` and
   its crash dumps in `crash_dumps`.
-- **Chat commands** for development are defined with `mod:command` in the code: changing a skin's numbers while playing, the speed of the game,
-  and others.
+- **Chat commands** are in the extras mod: UT's cheats (`cheats.lua`), changing a skin's numbers while playing (`/skin`), and the commands of the
+  tests (`tests/runner.lua`).
 - **Placing a model** (idle, inspect, third person) can be checked without the game: `tools/asset_conversion/preview_weapon.py`.
 - **Commit** each change, with the build number, and push.
 

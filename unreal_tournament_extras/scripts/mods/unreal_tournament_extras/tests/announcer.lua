@@ -1,4 +1,5 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- The announcer's in-game tests (see runner.lua). Run them with /ut_test announcer. They run in the runner's level, Righteous Stand, which
 -- is loaded again for them, because first blood is the first kill of a level. The kills are made by damage the player deals with a weapon
@@ -8,8 +9,8 @@ local mod = get_mod("unreal_tournament")
 
 local runner = mod.test_runner
 
-local flak = mod.items.weapons.flak_cannon
-local shock = mod.items.weapons.shock_rifle
+local flak = ut.items.weapons.flak_cannon
+local shock = ut.items.weapons.shock_rifle
 
 local CONFIG = {
 	-- A kill this soon after the last is the next of a multi kill
@@ -183,7 +184,7 @@ local function scenarios()
 
 				-- (a melee weapon's hit: the game tells a ranged hit by its attack, or by the slot of the weapon when it has none)
 				kill(t, rats[1], {
-					source = mod.items.weapons.shield_gun.key,
+					source = ut.items.weapons.shield_gun.key,
 					zone = "head",
 				})
 				t.wait(CONFIG.multi_kill_window + 0.3)
@@ -280,10 +281,10 @@ local function scenarios()
 				local sounds = t.sounds("ut_announcer_combo_whore")
 				local rats = t.spawn_group(CONFIG.counted_breed, 15, 6)
 
-				-- The combo's kills as the Shock Rifle reports them (mod.shock_combo_callbacks), 15 at a time
+				-- The combo's kills as the Shock Rifle reports them (ut.shock_combo_callbacks), 15 at a time
 				for _ = 1, CONFIG.call_out / #rats do
 					t.on_main_thread(function ()
-						mod.shock_combo_callbacks.announcer(t.unit(), rats)
+						ut.shock_combo_callbacks.announcer(t.unit(), rats)
 					end)
 					t.wait(0.2)
 				end
@@ -317,16 +318,16 @@ local function scenarios()
 		{
 			name = "with the announcer off, nothing is announced",
 			run = function (t)
-				local was = mod:get("announcer")
+				local was = ut:get("announcer")
 				local sounds = t.sounds("ut_announcer_")
 
-				mod:set("announcer", false)
+				ut:set("announcer", false)
 
 				local ok, error_message = pcall(function ()
 					kill_many(t, 3)
 				end)
 
-				mod:set("announcer", was)
+				ut:set("announcer", was)
 
 				if not ok then
 					error(error_message, 0)
@@ -342,7 +343,7 @@ local function scenarios()
 		local run = list[i].run
 
 		list[i].run = function (t)
-			if not mod:get("announcer") then
+			if not ut:get("announcer") then
 				t.skip("the announcer is turned off")
 			end
 

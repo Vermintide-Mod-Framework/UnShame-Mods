@@ -1,11 +1,12 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- The Bio Rifle's in-game tests (see runner.lua). Run them with /ut_test bio. They run in the runner's level, Righteous Stand. The
 -- numbers expected are UT's (XWeapons/BioFire, BioChargedFire and BioGlob) as the mod turns them into this game's.
 
 local runner = mod.test_runner
 
-local definition = mod.items.weapons.bio_rifle
+local definition = ut.items.weapons.bio_rifle
 
 local CONFIG = {
 	-- All the ammo, which is all in the clip
@@ -49,9 +50,9 @@ end
 local landings = {}
 local recording = false
 
-local skin_land = mod.goop_visual_callbacks.land
+local skin_land = ut.goop_visual_callbacks.land
 
-mod.goop_visual_callbacks.land = function (id, position, normal, level, ...)
+ut.goop_visual_callbacks.land = function (id, position, normal, level, ...)
 	if recording then
 		landings[#landings + 1] = {
 			level = level,
@@ -78,7 +79,7 @@ end
 local function explosion_times(t, name)
 	local times = {}
 
-	mod.any_explosion_callbacks.ut_test_bio = function (explosion_template)
+	ut.any_explosion_callbacks.ut_test_bio = function (explosion_template)
 		if explosion_template.name == name then
 			times[#times + 1] = Managers.time:time("game")
 		end
@@ -89,7 +90,7 @@ end
 
 local function stop_recording()
 	recording = false
-	mod.any_explosion_callbacks.ut_test_bio = nil
+	ut.any_explosion_callbacks.ut_test_bio = nil
 end
 
 -- Watches the player's globs from now on: the ones fired, in order, with where each was every frame and its goop level
@@ -110,7 +111,7 @@ local function watch_globs(t, filter)
 			if not earlier[unit] then
 				if not seen[unit] then
 					seen[unit] = {
-						level = mod.bio_goop.level_of_scale(ScriptUnit.extension(unit, "projectile_system").scale),
+						level = ut.bio_goop.level_of_scale(ScriptUnit.extension(unit, "projectile_system").scale),
 						positions = {},
 					}
 					seen[#seen + 1] = unit

@@ -1,4 +1,5 @@
-local mod = get_mod("unreal_tournament")
+local mod = get_mod("unreal_tournament_extras")
+local ut = get_mod("unreal_tournament")
 
 -- The Minigun's in-game tests (see runner.lua). Run them with /ut_test minigun (Kruber's) and /ut_test minigun_wh (Saltzpyre's). They run
 -- in the runner's level, Righteous Stand.
@@ -9,7 +10,7 @@ local runner = mod.test_runner
 local shots = {}
 local recording = false
 
-mod.minigun_shot_callbacks.ut_test = function (owner_unit, mode, end_position)
+ut.minigun_shot_callbacks.ut_test = function (owner_unit, mode, end_position)
 	if recording then
 		shots[#shots + 1] = {
 			mode = mode,
@@ -110,7 +111,7 @@ for _, variant in ipairs({
 		setting_id = "minigun_wh",
 	},
 }) do
-	local definition = mod.items.weapons[variant.setting_id]
+	local definition = ut.items.weapons[variant.setting_id]
 
 	runner.add_suite({
 		name = variant.name,
