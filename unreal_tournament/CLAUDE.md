@@ -56,6 +56,9 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
 
 - Comments are plain, short, clear sentences that say what the code does or why. 
 - Match the surrounding code's naming and layout; tuning numbers are in each file's `CONFIG` with the units in a comment.
+- An illusion (an item's `skins` in `items.register`, picked on the game's Illusions page) can change gameplay, not only the look: the
+  Shock Rifle's Instagib illusion has its own damage, fire rate and heat (`utils.wielded_skin`). This is not the same as a weapon
+  skin (`weapon_skin.lua` and each weapon's `skin.lua`), which only draws the weapon.
 - The framework lets a mod hook a function once: a second `mod:hook` on the same function is refused. Shared hooks are in `hooks.lua`, with tables
   of callbacks that the weapons add to.
 - Things that crash the game: a unit of the mod alive when its package is unloaded; playing an effect that is not loaded
