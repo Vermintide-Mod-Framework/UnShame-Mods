@@ -403,13 +403,12 @@ local function new_skin(variant)
 			hand_node = "j_leftweaponattach",
 			meters_per_unit = 0.02 * 0.4,
 			scale = 1,
-			-- (moved back from the mesh's origin, set in the game)
-			grip_right = 0,
-			grip_forward = 72,
+			-- (moved back and to the left from the mesh's origin, and tipped up so that the gun's line runs through the right hand too, set
+			-- in the game)
+			grip_right = -15,
+			grip_forward = 60,
 			grip_up = 0,
-			-- (turned about the left hand so that the gun's line runs through the right hand too, then a little to the right, set in the
-			-- game)
-			yaw = 14.2,
+			yaw = 0,
 			pitch = 9.9,
 			roll = 0,
 			-- In the world the minigun is turned as the game's gun in the hand is, which the game animates with the arms
