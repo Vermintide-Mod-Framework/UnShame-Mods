@@ -44,6 +44,11 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
 - Replies are short and plain: what was done, what was found, what is open. No recap of the conversation, no build times.
 - Do not offer to do what was already decided or decline what was asked. Ask a question only when the answer changes what is done.
 
+## Assets
+
+- No asset may be AI generated: not models, textures, sounds, animations or icons. An asset is only ever made programmatically, by code in
+  `tools/` that converts or builds it, so that it can be made again from its source.
+
 ## Code
 
 - Comments are plain, short, clear sentences that say what the code does or why. 
