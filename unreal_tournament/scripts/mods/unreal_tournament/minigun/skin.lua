@@ -42,11 +42,12 @@ local CONFIG = {
 	tracer_intensity = 1,
 	-- ShellSpewer: the shells (the ShellCasing mesh, 8.6 units long) fly out of the gun's ejector at
 	-- 200 to 250 units a second and fall, for 0.5 to 1 s, turning as they go. They go out to the right and up, and each is off that by a
-	-- random share of mDirDev: up to half its speed more or less outwards, a fifth along the gun and 0.6 up or down, so some fly far and
-	-- some high.
+	-- random share of shell_deviation: up to half its speed more or less outwards, and some of it along the gun and up or down, so some
+	-- fly far and some high. ShellSpewer's mDirDev (0.5, 0.2 and 0.6) looked too even next to UT, so the last two are wider (set in the
+	-- game).
 	shell_speed = {200, 250}, -- UT units a second
-	shell_up = 0.6, -- of the speed
-	shell_deviation = {0.5, 0.2, 0.6}, -- out, along the gun, up
+	shell_up = 0.8, -- of the speed
+	shell_deviation = {0.5, 0.4, 1}, -- out, along the gun, up
 	shell_life = {0.5, 1},
 	-- The shell's size. mSizeRange 10 times DrawScale 0.05 would be 0.5, which looked too big next to UT's (set in the game).
 	shell_scale = 0.35,
