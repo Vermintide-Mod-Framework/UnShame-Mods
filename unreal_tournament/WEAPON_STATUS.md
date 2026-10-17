@@ -36,24 +36,24 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | **Firing** | | | | | | | |
 | Fire rate of each mode | ok (tests: 1.6 s) | ok (tests) | ok (FireRate 0.6 after a punch) | - | ok (tests: rounds at 0.088 s; grenades at 0.5 s + the charge) | ok (tests: 1.33 s) | ok (tests: the beam's 0.7 s; the ball's 0.6 s) |
 | Second mode right after the first | - | - | ok (tests: the shield goes up within 0.3 s of a punch) | - | - | - | ok (tests: the ball waits for the beam's fire rate) |
-| First mode right after the second | - | - | ok (tests: a punch right after the shield is let down) | - | - | - | - |
+| First mode right after the second | - | - | ok (tests: a punch right after the shield is let down) | - | - | - | ok (tests: the beam waits for the ball's 0.6 s) |
 | Hold, release and auto-fire | - | - | ok (tests: punch on release, auto punch with an enemy in reach) | - | ok (grenade charges while held, thrown on release, from each rifle in turn) | ok (tests: holding the button repeats the shot) | ok (tests: holding fire repeats the beam at its fire rate) |
-| Where shots start | - | - | ok (the punch's cone and ray start at the eye, where the crosshair is) | - | - | ok (tests: the hit is on the target aimed at) | - (the ball 24 UT units ahead of the eye and 8 to the right: ProjSpawnOffset) |
-| Shots start in the same place each time | - | - | n/a | - | - | - | - |
+| Where shots start | - | - | ok (the punch's cone and ray start at the eye, where the crosshair is) | - | - | ok (tests: the hit is on the target aimed at) | ok (tests: the ball starts 8 UT units to the right of the eye, level with it: ProjSpawnOffset) |
+| Shots start in the same place each time | - | - | n/a | - | - | - | ok (tests) |
 | Shots in a line | - | - | n/a | - | - | - | - |
 | Spread | - | - | n/a (the punch hits what is in its cone) | - | ok (UT's: 0.02, 0.02 more a round up to 0.12, back after 0.5 s) | - | n/a (none, as UT's) |
 | Rapid shots | - | - | n/a | - | - | - | - |
 | **Damage** | | | | | | | |
 | Normal enemies | no: open. The test "damages an enemy" fails: a marauder spawned in the Keep has 0 health before it is hit, so the test can't measure damage there (the bolt does end on it) | no: the same | ok (tests: punches kill rats in a horde, a punch while moving fast does more damage, a punch never hits the player who punches); 40 to 150 by the charge, reaching 122 UT units (the bash 162); it gets through enemies as the game's lighter tank blows do | - | - | - | ok (tests: a beam hurts what it hits and stops at the first enemy; a ball explodes on what it hits and hurts it) |
-| Armored enemies | - | - | ok (tests: a punch hurts a Chaos warrior) | - | - | - | - (0.8 of the damage against armour, 0.5 against super armour) |
-| Monsters | - | - | ok (tests: a punch hurts a rat ogre) | - | - | - | - (1.5 of the damage) |
+| Armored enemies | - | - | ok (tests: a punch hurts a Chaos warrior) | - | - | - | ok (tests: 0.5 of the damage against a Chaos warrior, whose body is super armour) |
+| Monsters | - | - | ok (tests: a punch hurts a rat ogre) | - | - | - | ok (tests: 1.5 of the damage against a rat ogre, taken down to 0.45 by the game's boss_damage_reduction) |
 | Shields | - | - | ok (a punch from the first third of the charge glances off a shield, one charged past it breaks the shield, and an unbreakable one stops both; tests for each) | - | - | - | - |
 | Headshots | - | - | - | - | - | ok (tests: double damage) | - |
 | Crits | - | - | - (the punch is a melee hit, with the game's melee crits) | - | - | - | - |
 | Damage against the other UT weapons | - | - | ok (the shield reflects the Shock Rifle's beam and ball and the Link Gun's bolts, by UT's rules; tests: a bot's beam and ball, from shield to shield, back and forth at most 3 times for the beam) | - | - | - | ok (tests: a beam into a ball makes a combo, which hurts much more than a beam; the Shield Gun's shield reflects the beam and the ball) |
 | Self damage | - | - | ok (tests: a full punch at the floor hurts the player 26.5, UT's 8 + 0.3 of the damage, halved as the Rocket Launcher's; none when the punch hits an enemy or a thing) | ok (from the outermost wave, scaled as the Rocket Launcher's) | ok (the grenade's, reduced as the Rocket Launcher's) | - | ok (tests: a ball at the feet hurts the player; the combo hurts its shooter, 100 at the middle) |
-| Explosion radius | - | - | n/a | ok (six waves growing over 1.3 s, tests; scaled down as the Rocket Launcher's) | ok (150 units, scaled as the Rocket Launcher's) | - | - (the ball's 90 UT units and the combo's 190, smaller than UT's 150 and 275) |
-| Explosion falloff | - | - | n/a | - | - | - | - (full damage within 0.5 m, then less and less to the radius) |
+| Explosion radius | - | - | n/a | ok (six waves growing over 1.3 s, tests; scaled down as the Rocket Launcher's) | ok (150 units, scaled as the Rocket Launcher's) | - | ok (tests: the ball's 90 UT units: it hurts an enemy 1.2 m away and not one 2.6 m away; the combo's 190, smaller than UT's 150 and 275) |
+| Explosion falloff | - | - | n/a | - | - | - | ok (tests: full damage within 0.5 m, then less and less to the radius) |
 | Momentum | - | - | - | - | - | - | - |
 | Weapon jumping | - | - | ok in the game: a full punch at the floor throws the player up and back, with 0.6 of the momentum, as UT's own momentum is | - | - | - | ok (tests: a ball at the feet throws the player up) |
 | Ragdolls | - | - | - | - | - | - | - (the combo pulls what it killed back to its middle, as UT's) |
@@ -121,9 +121,9 @@ UT2004 where there is something to compare with. `no`: wrong or missing, with wh
 | Damage on the client | - | - | ok | - | - | - | ok |
 | Ammo on the client | - | - | n/a | - | - | - | n/a |
 | **Bots** | | | | | | | |
-| Bots using it | - | - | ok (tests: a bot fights rats with it; a heavy attack charges until an enemy is in reach, as UT's bots do, and a light one is a quick punch) | - | - | - | - (they fire the beam, and at elites, bosses and crowds the ball and then the beam into it: bots.lua) |
-| Range they shoot from | - | - | ok (tests: a bot punches only with an enemy within the punch's reach) | - | - | - | - |
-| Allies in the way | - | - | ok (tests: a bot fighting rats around the player never hurts them) | - | - | - | - |
+| Bots using it | - | - | ok (tests: a bot fights rats with it; a heavy attack charges until an enemy is in reach, as UT's bots do, and a light one is a quick punch) | - | - | - | ok (tests: a bot shoots a special past the player, and sets off combos at a boss it can't reach; bosses within its reach a bot fights in melee, as the game's bots do) |
+| Range they shoot from | - | - | ok (tests: a bot punches only with an enemy within the punch's reach) | - | - | - | ok (tests: a special 17 m away) |
+| Allies in the way | - | - | ok (tests: a bot fighting rats around the player never hurts them) | - | - | - | ok (tests: a bot shooting past the player never hurts them) |
 | Look and sound of their shots | - | - | ok | - | - | - | ok |
 | **Stability** | | | | | | | |
 | Mod reload with it wielded | - | - | - | - | - | - | - |

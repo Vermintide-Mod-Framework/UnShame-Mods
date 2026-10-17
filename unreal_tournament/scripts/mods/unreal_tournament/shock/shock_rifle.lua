@@ -510,6 +510,10 @@ local function apply_shock_rifle(template)
 	attack_meta_data.max_range = 50
 	-- This tells the bot shooting that this is the Shock Rifle (see bots.lua).
 	attack_meta_data.ut_shock = true
+	-- A bot shoots only the enemies its ranged weapon is good against (BTConditions.has_target_and_ammo_greater_than). The Beam Staff's are
+	-- infantry, berserkers, specials and armour. The Shock Rifle's are bosses and super armour too, which bots.lua sets off combos at.
+	attack_meta_data.effective_against = bit.bor(attack_meta_data.effective_against or 0, BreedCategory.Boss, BreedCategory.SuperArmor)
+	attack_meta_data.effective_against_combined = bit.bor(attack_meta_data.effective_against, attack_meta_data.effective_against_charged or 0)
 
 	template.tooltip_compare = {
 		light = {

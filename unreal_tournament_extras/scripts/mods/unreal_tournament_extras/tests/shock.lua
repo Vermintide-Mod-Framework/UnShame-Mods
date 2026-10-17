@@ -24,6 +24,22 @@ local CONFIG = {
 	combo_extra_beams = 3,
 	-- The ball's explosion throws the player up at least this fast when it goes off at their feet
 	min_jump_speed = 2, -- m/s
+	-- Where a ball starts from the player's eye (ShockProjFire.ProjSpawnOffset: 24 ahead and 8 to the right, in UT units), with this
+	-- much either way, and how much two shots may differ
+	ball_start_right = 8 * ut.utils.UT_UNIT, -- m
+	ball_start_margin = 0.05, -- m
+	ball_start_same = 0.02, -- m
+	-- The beam's damage against armour and monsters, of its damage against an enemy with none (shock_rifle.lua's armor_attack), with this
+	-- much either way, by the breeds it is tried on. A Chaos warrior's body is super armour (its primary_armor_category), 0.5. A rat
+	-- ogre is a monster, 1.5, and a boss, whose damage the game takes down to 0.45 (DamageUtils.calculate_damage's boss_damage_reduction).
+	armour_breeds = {
+		{ "chaos_warrior", 0.5 },
+		{ "skaven_rat_ogre", 1.5 * 0.45 },
+	},
+	armour_margin = 0.1,
+	-- The ball's explosion: the enemies beside the one it hits, this far from it (inside the radius of 90 UT units, 1.8 m, and outside)
+	inside_radius = 1.2, -- m
+	outside_radius = 2.6, -- m
 }
 
 local function is_ball(action)
@@ -96,6 +112,38 @@ local function watch_balls(t)
 			end
 		end
 	end
+end
+
+-- The least damage of two beams at an enemy of the breed ahead (the least, as one can be a critical hit; a beam at one that is dead
+-- already isn't counted)
+local function beam_damage(t, breed_name)
+	t.go_to_start()
+
+	local enemy = t.spawn(breed_name, 5)
+
+	if not t.expect(enemy, "the %s could not be spawned", breed_name) then
+		return nil
+	end
+
+	t.wait(1)
+	t.aim_at(enemy)
+
+	local least
+
+	for _ = 1, 2 do
+		if t.health_of(enemy) > 0 then
+			local damage = t.track_damage(enemy)
+
+			t.press("action_one", 0.05)
+			t.wait(CONFIG.beam_fire_rate + 0.2)
+
+			least = math.min(least or math.huge, damage.total)
+		end
+	end
+
+	t.remove(enemy)
+
+	return least
 end
 
 local function scenarios()
@@ -442,6 +490,144 @@ local function scenarios()
 				t.wait(1)
 			end,
 		},
+		{
+			name = "the beam waits for the ball's fire rate",
+			run = function (t)
+				t.look(20)
+
+				local balls, observe = watch_balls(t)
+
+				record_beams()
+				t.press("action_two", 0.05, observe)
+				t.press("action_one", 1)
+				t.wait(0.2)
+				recording = false
+
+				local ball = balls[1] and balls[balls[1]].positions[1]
+
+				t.expect(ball ~= nil, "no ball was fired")
+				t.expect(#beams >= 1, "no beam was fired after the ball")
+
+				if ball and beams[1] then
+					t.expect(beams[1] - ball.t >= CONFIG.ball_fire_rate - 0.05, "the beam left %.2f s after the ball, before its %.2f s", beams[1] - ball.t, CONFIG.ball_fire_rate)
+				end
+			end,
+		},
+		{
+			-- A ball starts ProjSpawnOffset from the eye: to the right of it by Y, level with it, and ahead (it has flown on a little by the
+			-- frame it is seen, so only its place across the aim is measured). Two shots start in the same place.
+			name = "a ball starts to the right of the eye, in the same place each time",
+			run = function (t)
+				t.look(0)
+
+				local starts = {}
+
+				for i = 1, 2 do
+					local eye = t.on_main_thread(function ()
+						local first_person_extension = ScriptUnit.extension(t.unit(), "first_person_system")
+						local rotation = first_person_extension:current_rotation()
+
+						return {
+							position = Vector3Box(first_person_extension:current_position()),
+							right = Vector3Box(Quaternion.right(rotation)),
+							up = Vector3Box(Quaternion.up(rotation)),
+						}
+					end)
+					local balls, observe = watch_balls(t)
+
+					t.press("action_two", 0.05, observe)
+					t.watch(0.1, observe)
+
+					local first = balls[1] and balls[balls[1]].positions[1]
+
+					if not t.expect(first, "ball %d was not seen", i) then
+						return
+					end
+
+					local offset = Vector3(first.x, first.y, first.z) - eye.position:unbox()
+
+					starts[i] = {
+						right = Vector3.dot(offset, eye.right:unbox()),
+						up = Vector3.dot(offset, eye.up:unbox()),
+					}
+					t.wait(1)
+				end
+
+				for i, start in ipairs(starts) do
+					t.expect(math.abs(start.right - CONFIG.ball_start_right) <= CONFIG.ball_start_margin, "ball %d started %.2f m to the right of the eye, not %.2f", i, start.right, CONFIG.ball_start_right)
+					t.expect(math.abs(start.up) <= CONFIG.ball_start_margin, "ball %d started %.2f m above the eye, not level with it", i, start.up)
+				end
+
+				t.expect(math.abs(starts[1].right - starts[2].right) <= CONFIG.ball_start_same and math.abs(starts[1].up - starts[2].up) <= CONFIG.ball_start_same, "the two balls started in different places")
+			end,
+		},
+		{
+			-- The beam's damage is the armour's share of its damage against an enemy with none (a Chaos marauder)
+			name = "a beam hurts armoured enemies and monsters by their armour",
+			run = function (t)
+				local plain = beam_damage(t, "chaos_marauder")
+
+				if not plain or not t.expect(plain > 0, "the beam did not hurt the marauder") then
+					return
+				end
+
+				for _, entry in ipairs(CONFIG.armour_breeds) do
+					local breed_name, share = entry[1], entry[2]
+					local damage = beam_damage(t, breed_name)
+
+					if damage then
+						t.log("%s: %.1f, %.2f of the marauder's %.1f", breed_name, damage, damage / plain, plain)
+						t.expect(math.abs(damage / plain - share) <= CONFIG.armour_margin, "the beam did %.2f of its damage to the %s, not %.2f", damage / plain, breed_name, share)
+					end
+				end
+			end,
+		},
+		{
+			-- A ball goes off on the enemy it hits, and hurts the enemies around as far as its radius, less the farther they are, and none
+			-- past it
+			name = "a ball's explosion falls off to its radius",
+			run = function (t)
+				local hit = t.spawn_target(6)
+
+				if not t.expect(hit, "the target could not be spawned") then
+					return
+				end
+
+				local places = t.on_main_thread(function ()
+					local position = Unit.local_position(hit, 0)
+					local right = Quaternion.right(ScriptUnit.extension(t.unit(), "first_person_system"):current_rotation())
+					local side = Vector3.normalize(Vector3.flat(right))
+					local inside = position + side * CONFIG.inside_radius
+					local outside = position - side * CONFIG.outside_radius
+
+					return {
+						{ Vector3.x(inside), Vector3.y(inside), Vector3.z(inside) },
+						{ Vector3.x(outside), Vector3.y(outside), Vector3.z(outside) },
+					}
+				end)
+				local inside = t.spawn_at(runner.target_breed, unpack(places[1]))
+				local outside = t.spawn_at(runner.target_breed, unpack(places[2]))
+
+				if not t.expect(inside and outside, "the enemies beside it could not be spawned") then
+					return
+				end
+
+				t.wait(1)
+				t.aim_at(hit)
+
+				local damages = { t.track_damage(hit), t.track_damage(inside), t.track_damage(outside) }
+
+				t.press("action_two", 0.05)
+				t.wait(1)
+
+				local on_hit, near, far = damages[1].total, damages[2].total, damages[3].total
+
+				t.log("the one hit %.1f, %.1f m from it %.1f, %.1f m from it %.1f", on_hit, CONFIG.inside_radius, near, CONFIG.outside_radius, far)
+				t.expect(near > 0, "the explosion did not hurt the enemy %.1f m from it, inside its radius", CONFIG.inside_radius)
+				t.expect(near < on_hit, "the enemy %.1f m from the explosion took as much as the one it hit (%.1f, %.1f)", CONFIG.inside_radius, near, on_hit)
+				t.expect(far == 0, "the explosion hurt the enemy %.1f m from it, past its radius (%.1f)", CONFIG.outside_radius, far)
+			end,
+		},
 	}
 end
 
@@ -452,4 +638,133 @@ runner.add_suite({
 	slot = "slot_ranged",
 	careers = { "bw_adept" },
 	scenarios = scenarios(),
+})
+
+-- Bots with the Shock Rifle (shock/bots.lua). Only Sienna's careers have it, and a hero can't be a bot and the player at once, so these run
+-- in a suite of their own with the player as Kruber, and the bot is Sienna as a Battle Wizard, with her own mind.
+-- "a bot shoots enemies with it": the bot starts behind the player, so the player is in its way, and its target is a special ahead: from
+-- afar a bot goes for a special (an opportunity target, within 40 m: AIBotGroupSystem), and keeps its rifle out for it until it is
+-- within 2 m (BTConditions.bot_in_melee_range). A special is shot once it has been seen, which a calm one never is, so it attacks: a
+-- ratling gunner shoots at the player from where it stands.
+local BOTS = {
+	profile = "bright_wizard",
+	career = 1,
+	behind = -3, -- m
+	special = "skaven_ratling_gunner",
+	special_distance = 14, -- m
+	-- "a bot sets off combos at a boss": the boss, and how far ahead of the player the bot is
+	boss = "skaven_rat_ogre",
+	bot_distance = 2, -- m
+	-- How long the bot has to hurt the special, and to set off a combo at the boss
+	fight_time = 30, -- s
+	combo_time = 40, -- s
+}
+
+-- Adds the bot behind the player
+local function shock_bot(t)
+	local bot = t.add_bot(BOTS.profile, BOTS.career, definition.key, BOTS.behind, nil, true)
+
+	t.expect(bot, "the bot could not be added")
+
+	return bot
+end
+
+-- The damage from the Shock Rifle in records of t.track_damage
+local function from_shock_rifle(records)
+	local total = 0
+
+	for _, record in ipairs(records) do
+		for _, hit in ipairs(record.hits) do
+			if hit.source == definition.key then
+				total = total + hit.amount
+			end
+		end
+	end
+
+	return total
+end
+
+local function bot_scenarios()
+	return {
+		{
+			-- The bot shoots the special with the rifle, past the player in its way, and never hurts the player
+			name = "a bot shoots enemies with it",
+			run = function (t)
+				t.hurtable(true)
+
+				local special = t.spawn(BOTS.special, BOTS.special_distance)
+
+				if not t.expect(special, "the %s could not be spawned", BOTS.special) then
+					return
+				end
+
+				-- (a bot shoots a special only once it has been seen, which a calm one never is: shooting at the player makes it seen,
+				-- and a ratling gunner shoots from where it stands)
+				t.on_main_thread(function ()
+					runner.provoke(special)
+				end)
+
+				local damage = t.track_damage(special)
+				local player_damage = t.track_damage(t.unit())
+
+				if not shock_bot(t) then
+					return
+				end
+
+				t.wait_until(function ()
+					return from_shock_rifle({ damage }) > 0
+				end, BOTS.fight_time, "the bot to hurt the special")
+				t.wait(5)
+
+				t.expect(from_shock_rifle({ damage }) > 0, "the bot did not hurt the %s with the Shock Rifle in %d s", BOTS.special, BOTS.fight_time)
+				t.expect(from_shock_rifle({ player_damage }) == 0, "the bot's shots hurt the player %.1f", from_shock_rifle({ player_damage }))
+			end,
+		},
+		{
+			-- Against a boss the bot fires the ball and then the beam into it (shock/bots.lua). A bot fights a boss in melee once it is
+			-- within about 12 m (BTConditions.bot_in_melee_range: a boss is a target of the bot's ordinary fighting), unless it is 2 m or
+			-- more above the bot. So the boss stands where bots can't walk to, and the bot and the player 4.5 m below it (the runner's
+			-- named places unreachable and below_unreachable).
+			name = "a bot sets off combos at a boss",
+			run = function (t)
+				t.go_to("below_unreachable")
+
+				local boss = t.spawn_at(BOTS.boss, unpack(t.place("unreachable")))
+
+				if not t.expect(boss, "the %s could not be spawned", BOTS.boss) then
+					return
+				end
+
+				-- (a bot goes for a boss only once it has been seen (AIBotGroupSystem._calculate_opportunity_utility), which a calm one
+				-- isn't: it is marked seen, as a player's look at it marks it (ProximitySystem))
+				t.on_main_thread(function ()
+					ScriptUnit.extension(boss, "proximity_system").has_been_seen = true
+				end)
+
+				local explosions = t.explosions()
+				local bot = t.add_bot(BOTS.profile, BOTS.career, definition.key, BOTS.bot_distance, nil, true)
+
+				if not t.expect(bot, "the bot could not be added") then
+					return
+				end
+
+				t.wait_until(function ()
+					return count(explosions, "ut_shock_combo_explosion") > 0
+				end, BOTS.combo_time, "the bot to set off a combo")
+
+				t.expect(count(explosions, "ut_shock_combo_explosion") > 0, "the bot set off no combo at the %s in %d s", BOTS.boss, BOTS.combo_time)
+			end,
+		},
+	}
+end
+
+local flak_cannon = ut.items.weapons.flak_cannon
+
+runner.add_suite({
+	name = "shock_bots",
+	item = flak_cannon.key,
+	template = flak_cannon.template,
+	slot = "slot_ranged",
+	careers = { "es_mercenary" },
+	scenarios = bot_scenarios(),
 })
