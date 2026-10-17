@@ -12,7 +12,7 @@ Local tools that produced `units/ut/*`, `ui/ut/*`, `wwise/unreal_tournament/*`, 
   Each package is in a folder of its own name there (`<export dir>/<package>/<class>/<object>`), and every script that reads the game's
   files takes that folder as its argument. A script that needs another package has it added to `PACKAGES` in `export.py`. The classes'
   default properties (view offsets, fire rates, spreads) are not in UModel's exports: they are read from the source of UT2004
-  (`gh api repos/Deaod/UT2004/contents/<package>/<Class>.uc`).
+  (cloned from https://github.com/Deaod/UT2004, `<package>/<Class>.uc`).
 - **Python 3.** The scripts need no packages. (The tools in `../game_data` are for reading the game's own files, and have a few.)
 
 ## The tools

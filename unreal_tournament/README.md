@@ -68,5 +68,5 @@ What the mod contains at the moment is in the code. `TODO.md` is what is not don
 
 ## Where things were learned
 
-The game's source (`Vermintide-2-Source-Code`) is the reference for what the game does, and UT2004's source (`Deaod/UT2004` on GitHub) for what UT
-does. The framework's documentation is at vmf-docs.verminti.de. What was found out about the formats is in the READMEs of `tools/`.
+The game's source (`Vermintide-2-Source-Code`) is the reference for what the game does, and UT2004's source (cloned from https://github.com/Deaod/UT2004,
+`<package>/<Class>.uc`) for what UT does. The framework's documentation is at vmf-docs.verminti.de. What was found out about the formats is in the READMEs of `tools/`.

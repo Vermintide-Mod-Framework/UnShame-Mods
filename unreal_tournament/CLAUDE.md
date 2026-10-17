@@ -42,7 +42,7 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
 - They are exact and don't like guessing. Find the root cause (read the game's source for what it does, compare the host and client paths and the
   order of updates) and do not tune numbers hoping. Do not add speculative workarounds.
 - For a pose or a placement of a model, render it first (`tools/asset_conversion/preview_weapon.py`) and look, then change it.
-- For anything UT does, read UT2004's source (`gh api repos/Deaod/UT2004/contents/<package>/<Class>.uc`) and match it; where this mod departs from
+- For anything UT does, read UT2004's source (a local clone of https://github.com/Deaod/UT2004, `<package>/<Class>.uc`) and match it; where this mod departs from
   UT on purpose, say so in the code.
 - Replies are short and plain: what was done, what was found, what is open. No recap of the conversation, no build times.
 - Do not offer to do what was already decided or decline what was asked. Ask a question only when the answer changes what is done.
