@@ -2,9 +2,12 @@ local mod = get_mod("unreal_tournament")
 
 -- UT's MinigunMuzFlash1st, the first person flash of the Minigun. UT's AssaultMuzFlash1st is the same emitter at another DrawScale,
 -- and the Assault Rifle and the classic Sniper Rifle (ClassicSniperFire.FlashEmitterClass) use it, so the three skins share this.
---   mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale): shows the flash of one round. emitter is any value that names
---       the weapon's flash, so that each weapon's rounds replace only its own. follow returns the muzzle's position, or nil once the
---       flash should end. world_unit is the meters of a UT unit at the model. draw_scale is the emitter's DrawScale.
+--   mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale, locked): shows the flash of one round. emitter is any value that
+--       names the weapon's flash, so that each weapon's rounds replace only its own. follow returns the muzzle's position, or nil once
+--       the flash should end. world_unit is the meters of a UT unit at the model. draw_scale is the emitter's DrawScale. locked, if it is
+--       given, is used instead of follow: it returns the first person unit and the muzzle in its camera node's frame
+--       (weapon_skin's model_point_in_view), so the flash is linked to the unit and stays on the muzzle as the view turns, as UT's is
+--       attached to the weapon.
 
 local utils = mod.utils
 local particles = mod.skin_particles
@@ -34,12 +37,15 @@ local rounds = {}
 -- The flash is drawn with the model, in the material that uses the model's field of view (fx_weapon_*), so it is in front of the
 -- barrels and not hidden by them. The texture is a sheet of 4 that UT picks from at random (mRandTextures). A mesh here keeps one of
 -- them for its whole life, where UT also steps through them (mTileAnimation).
-function mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale)
+function mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale, locked)
 	local _, camera_rotation = utils.camera_pose()
 
 	if not camera_rotation then
 		return
 	end
+
+	-- A linked mesh is turned in the camera node's frame, where it faces ahead as it is
+	local rotation = locked and Quaternion.identity() or camera_rotation
 
 	local round = (rounds[emitter] or 0) + 1
 
@@ -60,12 +66,17 @@ function mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale)
 				return attenuation(fraction, CONFIG.attenuation)
 			end,
 			color = { 1, 1, 1 },
-			follow = function ()
+			follow = not locked and function ()
 				return rounds[emitter] == round and follow() or nil
-			end,
+			end or nil,
+			locked = locked and function ()
+				if rounds[emitter] == round then
+					return locked()
+				end
+			end or nil,
 			life = life,
 			material = "units/ut/fx/fx_weapon_minigun_burst_" .. tile,
-			rotation = camera_rotation,
+			rotation = rotation,
 			scale = function (fraction)
 				return (start + CONFIG.growth * fraction * life) * factor
 			end,

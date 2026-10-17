@@ -286,6 +286,23 @@ local function new(def)
 		return fp.first_person_unit, Vector3(at.x * ratio, at.y, at.z * ratio)
 	end
 
+	-- Returns the first person unit and where a node of the model is in its camera node's frame (x right, y ahead, z up), as the model is
+	-- drawn: for particles that are linked to the unit and drawn with the model's field of view (the fx_weapon_ materials), which stay on
+	-- the model as it moves. The node's place in the model comes from their world poses, and the model's place from its local pose, which
+	-- is the one that is drawn. Without a name it is the muzzle.
+	function self.model_point_in_view(node_name)
+		local fp = local_first_person()
+
+		if not skin or not Unit.alive(skin.unit) or not fp then
+			return nil
+		end
+
+		local node = node_name and Unit.has_node(skin.unit, node_name) and Unit.node(skin.unit, node_name) or skin.muzzle_node
+		local in_model = Matrix4x4.transform(Matrix4x4.inverse(Unit.world_pose(skin.unit, 0)), Unit.world_position(skin.unit, node))
+
+		return fp.first_person_unit, Matrix4x4.transform(Unit.local_pose(skin.unit, 0), in_model)
+	end
+
 	-- How far the bob moves the weapon in the view, in UT units (right, up). UT moves the weapon by WeaponBob(BobDamping) (CalcDrawOffset)
 	-- and the eye by twice WalkBob: PlayerController.CalcFirstPersonView adds WalkBob to EyePosition, which has WalkBob in it already. So
 	-- in the view the weapon moves by the difference, and with a BobDamping near 2 it hardly moves. This game's camera doesn't bob like

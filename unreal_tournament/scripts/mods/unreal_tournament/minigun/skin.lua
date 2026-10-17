@@ -184,12 +184,13 @@ local function turn_bone(pose, bone, angle, pivot)
 	pose[o + 7] = py * sin_angle + pz * cos_angle + pivot[2]
 end
 
--- The flash in the hand of a character: flames in a row along the way the round goes, in UT units of the world
-local function third_person_flash(muzzle, direction)
+-- The flash in the hand of a character: flames in a row along the barrels, in UT units of the world. They move with the gun, as UT's
+-- emitter is attached to the muzzle and its flames are placed relative to it (PTCS_Relative).
+local function third_person_flash(owner_unit, api)
 	local scale = UNIT
 
 	for i, offset in ipairs(CONFIG.flame_offsets) do
-		offset = offset + math.random() * CONFIG.flame_offset_ranges[i]
+		local distance = (offset + math.random() * CONFIG.flame_offset_ranges[i]) * scale
 
 		particles.sprite({
 			attenuation = 0,
@@ -198,8 +199,12 @@ local function third_person_flash(muzzle, direction)
 				1,
 				1,
 			},
+			follow = function ()
+				local muzzle = api.third_person.muzzle_position(owner_unit)
+
+				return muzzle and muzzle + Quaternion.forward(api.third_person.muzzle_rotation(owner_unit)) * distance or nil
+			end,
 			life = CONFIG.flame_life,
-			position = muzzle + direction * (offset * scale),
 			size = 2 * random_between(CONFIG.flame_sizes[i]) * scale,
 			spin = (math.random() * 2 - 1) * 0.3,
 			texture = "minigun_flame_" .. math.random(0, 15),
@@ -402,7 +407,11 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 
 			mod.minigun_muzzle_flash("minigun", function ()
 				return api.state() and api.muzzle_model_position() or nil
-			end, world_unit, CONFIG.flash_draw_scale)
+			end, world_unit, CONFIG.flash_draw_scale, function ()
+				if api.state() then
+					return api.model_point_in_view()
+				end
+			end)
 
 			-- MinigunAttachment.GetTracerStart: in the player's own view the tracer starts at Weapon.GetEffectStart, EffectOffset from
 			-- the eye (in a view of 90 degrees across)
@@ -436,9 +445,7 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 		return
 	end
 
-	local direction = Vector3.normalize(end_position - muzzle)
-
-	third_person_flash(muzzle, direction)
+	third_person_flash(owner_unit, api)
 	tracer(owner_unit, muzzle, end_position, interval)
 
 	-- The barrels turn while rounds come, at the speed of the mode
