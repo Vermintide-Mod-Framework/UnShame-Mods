@@ -18,8 +18,9 @@ local CONFIG = {
 	-- The first person flash's DrawScale (MinigunMuzFlash1st, see muzzle_flash.lua)
 	flash_draw_scale = 0.9,
 	-- The weapon's light (xWeaponAttachment.WeaponLight): every round turns it on for 0.15 s, the first person gun's in the player's own
-	-- view and the third person one's for the others. LightHue 30 of 255 and LightSaturation 150 (0 is all colour, 255 is white) are a
-	-- pale orange, and LightRadius 5 is in steps of 25 units: 2.5 m. UT pulses it (LT_Pulse), which here it doesn't.
+	-- view and the third person one's for the others. It is where those actors are: the first person gun is at the eye (CalcDrawOffset),
+	-- and the third person one in the hand, at the held mesh's origin. LightHue 30 of 255 and LightSaturation 150 (0 is all colour, 255
+	-- is white) are a pale orange, and LightRadius 5 is in steps of 25 units: 2.5 m. UT pulses it (LT_Pulse), which here it doesn't.
 	light_color = { 1, 0.85, 0.6 },
 	light_intensity = 1.5,
 	light_falloff = 2.5, -- meters
@@ -27,15 +28,13 @@ local CONFIG = {
 	-- The smoke at the muzzle in the player's own view (MinigunMuzzleSmoke): a round sets it to 30 puffs a second, and the rate falls
 	-- towards none by its own amount a second (Lerp(dt) in MuzzleSmoke.Tick) and stops below 1. A puff lasts 0.6 to 1.2 s, starts 15 to 20
 	-- units across and grows by 4 a second, is a grey of 70 to 113 out of 255, blended by the texture's alpha (STY_Alpha), and fades out
-	-- from a fifth of its life. It rises: its mass is -0.15 to -0.25 of the zone's gravity, and here it rises at the speed it has on
-	-- average, at half its life.
+	-- from a fifth of its life. It stays where it was made: its speed is 0, and how xEmitter turns its mass (-0.15 to -0.25) into a rise is
+	-- not in UT's scripts. Rising by that much of the zone's gravity sent it up in a column, where UT's stays by the muzzle.
 	smoke_rate = 30, -- puffs a second
 	smoke_life = { 0.6, 1.2 },
 	smoke_size = { 15, 20 }, -- UT units across
 	smoke_growth = 4, -- UT units across, a second
 	smoke_grey = { 70 / 255, 113 / 255 },
-	smoke_mass = { 0.15, 0.25 },
-	smoke_gravity = 950, -- UT units a second squared
 	smoke_attenuation = 0.2,
 	-- SmokeTex is a sheet of puffs (pclSmoke's mNumTileColumns and mNumTileRows, 4 by 4), and each puff is one of them (mRandTextures)
 	smoke_tiles = 16,
@@ -47,12 +46,13 @@ local CONFIG = {
 	flame_sizes = {{15, 20}, {10, 15}, {5, 10}, {2.5, 5}}, -- UT units
 	flame_life = 0.1,
 	-- NewTracer: a sprite along its velocity that flies at 10000 units a second to where the round hit, less the pullback, and is
-	-- there only if that is farther than the minimum. It is 10 units wide and 20 long times 0.002 of its speed (ScaleSizeXByVelocity),
-	-- grows to that in its first 0.03 s (SizeScale), and keeps its brightness. Its colour is the texture's times (1, 0.8, 0.5).
-	-- A tracer is made every tracer_interval seconds, for the primary and the alt fire.
+	-- there only if that is farther than the minimum. Its size is 10 across and 20 along times 0.002 of its speed (ScaleSizeXByVelocity),
+	-- and as a UE2 sprite's size is its radius, it is drawn 20 units wide and 800 long. It grows to that in its first 0.03 s (SizeScale),
+	-- and keeps its brightness. Its colour is the texture's times (1, 0.8, 0.5). A tracer is made every tracer_interval seconds, for the
+	-- primary and the alt fire.
 	tracer_speed = 10000, -- UT units a second
-	tracer_length = 400,
-	tracer_width = 10,
+	tracer_length = 800,
+	tracer_width = 20,
 	tracer_grow_time = 0.03,
 	tracer_color = { 1, 0.8, 0.5 },
 	tracer_pullback = 50,
@@ -280,7 +280,6 @@ local function update_smoke(api, world_unit, dt)
 	while smoke.owed >= 1 and muzzle do
 		local life = random_between(CONFIG.smoke_life)
 		local grey = random_between(CONFIG.smoke_grey)
-		local rise = random_between(CONFIG.smoke_mass) * CONFIG.smoke_gravity * life / 2
 
 		smoke.owed = smoke.owed - 1
 
@@ -293,7 +292,6 @@ local function update_smoke(api, world_unit, dt)
 			material = "units/ut/fx/fx_weapon_muzzle_smoke_" .. math.random(0, CONFIG.smoke_tiles - 1),
 			position = muzzle,
 			size = random_between(CONFIG.smoke_size) * world_unit,
-			velocity = Vector3(0, 0, rise * world_unit),
 		})
 	end
 
@@ -521,7 +519,7 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 
 			-- The gun's light, and the smoke, which the round keeps going
 			weapon_light(owner_unit, function ()
-				return api.state() and api.muzzle_position() or nil
+				return api.state() and (utils.camera_pose()) or nil
 			end)
 
 			smoke.rate = CONFIG.smoke_rate
@@ -560,7 +558,7 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 
 	third_person_flash(owner_unit, api)
 	weapon_light(owner_unit, function ()
-		return api.third_person.muzzle_position(owner_unit)
+		return api.third_person.point_position(owner_unit, 0, 0, 0)
 	end)
 	tracer(owner_unit, muzzle, end_position, interval)
 

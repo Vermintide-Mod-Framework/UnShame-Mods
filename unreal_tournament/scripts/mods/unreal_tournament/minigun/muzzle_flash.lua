@@ -25,9 +25,10 @@ local CONFIG = {
 	growth = 3, -- scale a second
 	life = {0.1, 0.15},
 	attenuation = 0.2,
-	-- How xEmitter scales a mesh particle by its size is in UT's engine, not its scripts. The numbers above drew the flash twice as
-	-- wide as pictures of UT2004 show it, so they are multiplied by this (fitted to those pictures).
-	fit = 0.5,
+	-- How xEmitter scales a mesh particle by its size is in UT's engine, not its scripts. The numbers above are taken as the mesh's scale.
+	-- (Half of that was fitted to pictures of UT2004 while the flash was drawn solid, with its brightest channel as its alpha. Blended as
+	-- UT's is, that is too small.)
+	fit = 1,
 }
 
 -- The emitter has room for 5 meshes (mMaxParticles), as many as a round makes, so a round's meshes end when the next round's start.
