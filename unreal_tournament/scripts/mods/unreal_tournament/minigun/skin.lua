@@ -587,7 +587,7 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 				tracer(owner_unit, camera_position + ray * (offset[2] * UNIT), end_position, interval)
 			end
 
-			-- The shells fly out of the ejector to the right of the gun, from where UT has the ejector in the world
+			-- The shells fly out of the ejector to the right of the gun, from where the ejector is seen, at UT's distance from the eye
 			local ejector = api.model_point_in_world("b_bone_caseejector")
 
 			if camera_rotation and ejector then

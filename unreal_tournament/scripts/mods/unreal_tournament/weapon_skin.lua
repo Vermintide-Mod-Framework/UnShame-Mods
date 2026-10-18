@@ -303,20 +303,28 @@ local function new(def)
 		return fp.first_person_unit, Matrix4x4.transform(Unit.local_pose(skin.unit, 0), in_model)
 	end
 
-	-- Returns where a node of the model would be in UT's world. UT places the weapon in the world in front of the eye, at the world's
-	-- scale, and draws it with its own field of view. So an effect that UT leaves in the world, like the Minigun's shells, starts at this
-	-- point and is drawn with the camera's field of view. On the screen, this point is nearer the middle than the drawn node.
+	-- Returns a point in the world for an effect that UT leaves in the world, like the Minigun's shells, which is drawn with the camera's
+	-- field of view: where a node of the model is seen, as far ahead of the eye as UT has the node in the world. UT places the weapon in
+	-- the world in front of the eye, at the world's scale, so the effect moves as far on the screen as UT's does.
 	function self.model_point_in_world(node_name)
 		local first_person_unit, point = self.model_point_in_view(node_name)
+		local seen = self.muzzle_position(node_name)
 
-		if not first_person_unit or not skin.view_across_scale then
+		if not first_person_unit or not seen or not skin.view_forward_scale then
 			return nil
 		end
 
-		local in_view = Vector3(point.x / skin.view_across_scale, point.y / skin.view_forward_scale, point.z / skin.view_across_scale)
-		local camera_node = utils.camera_node(first_person_unit)
+		local camera_manager = Managers.state.camera
+		local camera_position = camera_manager:camera_position("player_1")
+		local offset = seen - camera_position
+		local ahead = Vector3.dot(offset, Quaternion.forward(camera_manager:camera_rotation("player_1")))
+		local ut_ahead = point.y / skin.view_forward_scale * utils.UT_UNIT
 
-		return Unit.world_position(first_person_unit, camera_node) + Quaternion.rotate(Unit.world_rotation(first_person_unit, camera_node), in_view * utils.UT_UNIT)
+		if ahead <= 0 then
+			return nil
+		end
+
+		return camera_position + offset * (ut_ahead / ahead)
 	end
 
 	-- How far the bob moves the weapon in the view, in UT units (right, up). UT moves the weapon by WeaponBob(BobDamping) (CalcDrawOffset)
