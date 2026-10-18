@@ -6,17 +6,11 @@
 
 1. **Assault Rifle and Sniper Rifle.** Go through their columns of `WEAPON_STATUS.md`. The Assault Rifle now holds UT's third person
    mesh (NewAssaultRifle_3rd), whose grip and turn need setting in the game.
-2. **Redeemer as the Bounty Hunter's ability.** The Redeemer stops being a weapon (the Ironbreaker's Trollhammer copy goes). Instead the
-   Bounty Hunter's Locked and Loaded fires one Redeemer missile when he holds the Rocket Launcher, and stays the game's otherwise. The
-   missile and its six blast waves are the ones made now, without UT's guided missile. Its cooldown is 140 s, against the ability's 70.
-   - The ability's shot is an action on his career pistol (`ActionCareerWHBountyhunter`, a hitscan handgun action). It becomes a
-     projectile action, keeping what the game's action does when it finishes (the cooldown, the voice line).
-   - The missile's projectile is the Rocket Launcher's base's (the Volley Crossbow's), which is loaded when he holds it. A projectile
-     whose unit is not loaded crashes the game.
-   - The pistol is drawn as the Redeemer in both views (Redeemer_3rd is upside down in its file; UT holds it rolled and 35 units back
-     along the hand).
-   - His ability's talents (the shotgun blasts, the cooldown refund for hitting many enemies) and when bots use the ability need
-     deciding for the missile.
+2. **Redeemer as the Bounty Hunter's ability: the look.** It is made (redeemer.lua) and tested (redeemer, redeemer_vanilla). What is left
+   is looking at it in the game: the Redeemer in the player's view on the career pistol, and in the Bounty Hunter's left hand, whose
+   grip and turn are a start (Redeemer_3rd is upside down in its file; UT holds it rolled and 35 units back along the hand). His
+   ability's talents that choose the barrels (railgun, shotgun) do nothing with the Redeemer, which is one missile; the reload talent
+   still reloads the Rocket Launcher.
 3. **Link Gun for everyone.** Two weapons that share their code (the primary, linking allies, link stacking), each with its own alt
    and resource:
    - The regular Link Gun, UT2004's (`LinkFire`, `LinkAltFire`, `LinkProjectile`), for every career with a ranged slot. It uses
