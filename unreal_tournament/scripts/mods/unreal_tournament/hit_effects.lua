@@ -123,7 +123,8 @@ end
 function hit_effects.impact_smoke(position, normal)
 	for _ = 1, CONFIG.smoke_count do
 		particles.sprite({
-			-- (the texture holds the hue and its alpha the strength, see make_weapon_fx.py, so it is blended, not added)
+			-- (STY_Translucent: its material brightens what is behind it by its luminance, see make_combo_materials.py, with no added
+			-- part of its own)
 			additive = 0,
 			attenuation = CONFIG.attenuation,
 			color = { 1, 1, 1 },

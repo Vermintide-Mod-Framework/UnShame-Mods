@@ -291,24 +291,29 @@ def shield_graph(pan_u, pan_v, lines_alpha, world=False):
     else:
         multiply(shield, 'faded', 'lines', 'fade', 'rgb', 'a')
     multiply(shield, 'color', 'faded', 'tint')
-    shield.connect('color', 'out', IN_OUT_BASE_COLOR)
-    shield.connect('intensity', 'out', IN_OUT_OPACITY)
-    # (additive: 1 - the luminance of the colour, plus the particles' own additive, which is 0 for the shield)
-    shield.add('weights', 'core/shader_nodes/constant_vector3')
-    shield.constant('weights', IN_CONSTANT_VECTOR3, [0.2126, 0.7152, 0.0722])
-    shield.add('luminance', 'core/shader_nodes/dot')
-    shield.connect('color', 'luminance', IN_DOT_A)
-    shield.connect('weights', 'luminance', IN_DOT_B)
-    shield.add('one', 'core/shader_nodes/constant_scalar')
-    shield.constant('one', IN_CONSTANT_SCALAR, 1)
-    shield.add('see_through', 'core/shader_nodes/subtract')
-    shield.connect('one', 'see_through', IN_SUBTRACT_A)
-    shield.connect('luminance', 'see_through', IN_SUBTRACT_B)
-    shield.add('blend', 'core/shader_nodes/add')
-    shield.connect('see_through', 'blend', IN_ADD_A)
-    shield.connect('additive', 'blend', IN_ADD_B)
-    shield.connect('blend', 'out', IN_OUT_ADDITIVE)
+    brightened(shield)
     return shield
+
+# Draws a graph's 'color' node as FB_Brighten does, as near as one number for the three channels can: c + d * (1 - a), with a the
+# luminance of c (see the shield above). The opacity is the intensity, and additive is 1 - luminance plus the particles' own additive,
+# which they set to 0 for these.
+def brightened(graph):
+    graph.connect('color', 'out', IN_OUT_BASE_COLOR)
+    graph.connect('intensity', 'out', IN_OUT_OPACITY)
+    graph.add('weights', 'core/shader_nodes/constant_vector3')
+    graph.constant('weights', IN_CONSTANT_VECTOR3, [0.2126, 0.7152, 0.0722])
+    graph.add('luminance', 'core/shader_nodes/dot')
+    graph.connect('color', 'luminance', IN_DOT_A)
+    graph.connect('weights', 'luminance', IN_DOT_B)
+    graph.add('one', 'core/shader_nodes/constant_scalar')
+    graph.constant('one', IN_CONSTANT_SCALAR, 1)
+    graph.add('see_through', 'core/shader_nodes/subtract')
+    graph.connect('one', 'see_through', IN_SUBTRACT_A)
+    graph.connect('luminance', 'see_through', IN_SUBTRACT_B)
+    graph.add('blend', 'core/shader_nodes/add')
+    graph.connect('see_through', 'blend', IN_ADD_A)
+    graph.connect('additive', 'blend', IN_ADD_B)
+    graph.connect('blend', 'out', IN_OUT_ADDITIVE)
 
 write('shield', shield_graph(0, 0.2, False), {'lines_map': 'shield_elec', 'fade_map': 'shield_elec'})
 write('shield_world', shield_graph(0, 0.2, False, True), {'lines_map': 'shield_elec', 'fade_map': 'shield_elec'})
@@ -320,3 +325,27 @@ write('shield_world', shield_graph(0, 0.2, False, True), {'lines_map': 'shield_e
 RIP_PAN = 12000 / 65536 * 2 * math.pi
 write('shield_rip', shield_graph(0.35 * math.cos(RIP_PAN), 0.35 * math.sin(RIP_PAN), True), {'lines_map': 'shield_rip_elec', 'fade_map': 'shield_edge'})
 write('shield_rip_world', shield_graph(0.35 * math.cos(RIP_PAN), 0.35 * math.sin(RIP_PAN), True, True), {'lines_map': 'shield_rip_elec', 'fade_map': 'shield_edge'})
+
+# ---------------------------------------------------------------- the particles that UT draws with FB_Brighten
+# The Minigun's first person flash (MinigunMuzFlash1stFinal, FB_Brighten) and the dust where its rounds hit (pclImpactSmoke, STY_Translucent,
+# which is the same: c + d * (1 - c) for each channel) are drawn by these, as the shield is. The texture is read as it is (not srgb), and the
+# colour is its own, tinted. fx_particle_brighten_graph draws with the camera's field of view and fx_particle_weapon_brighten_graph with the
+# weapons'. make_weapon_fx.py derives a material of each of those textures from them.
+def brighten_graph(weapon):
+    graph = Graph()
+    graph.add('out', 'core/stingray_renderer/output_nodes/unlit_base', OUT_OPTIONS + ((CUSTOM_FOV,) if weapon else ()))
+    graph.add('uv', 'core/shader_nodes/texture_coordinate0')
+    # (the particles set the age of every material, which these don't use)
+    graph.add('time', 'core/shader_nodes/material_variable', export=float_variable('age', 'Age', 0), title='Age')
+    graph.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
+    graph.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
+    graph.add('additive', 'core/shader_nodes/material_variable', export=float_variable('additive', 'Additive', 0), title='Additive')
+    graph.add('texture', 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('texture_map'), title='texture_map')
+    graph.connect('uv', 'texture', IN_SAMPLE_UV)
+    multiply(graph, 'color', 'texture', 'tint', 'rgb')
+    brightened(graph)
+    return graph
+
+for name, weapon in (('particle_brighten', False), ('particle_weapon_brighten', True)):
+    open('%s/fx_%s_graph.material' % (FX, name), 'w', newline='\n').write(brighten_graph(weapon).text())
+    print('wrote fx_%s_graph.material' % name)

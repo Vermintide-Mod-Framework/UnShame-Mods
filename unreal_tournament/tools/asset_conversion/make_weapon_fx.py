@@ -48,7 +48,8 @@ TEXTURES = {
 # (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
 SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff')
 
-# The textures that UT draws with FB_Brighten (see write), or as STY_Translucent, which is the same: c + d * (1 - c)
+# The textures that UT draws with FB_Brighten, or as STY_Translucent, which is the same: c + d * (1 - c). They are read as they are, and
+# their materials are derived from fx_particle_brighten_graph and fx_particle_weapon_brighten_graph (make_combo_materials.py).
 BRIGHTEN = ('minigun_burst', 'impact_smoke')
 
 # The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield, made by
@@ -70,31 +71,19 @@ WEAPON = ('minigun_burst', 'shell_casing', 'force_ring', 'shield_charge_spark')
 def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_alpha=False):
     if keep_alpha:
         pass
-    elif brighten:
-        # FB_Brighten (MinigunMuzFlash1stFinal) is c + d * (1 - c): the colour brightens the screen, but less where it is already
-        # bright. The particle material draws c * a + d * (1 - a) with "additive" 0, so the texture is made its colour's hue
-        # (c / max(c)) with max(c) as its alpha: that is c + d * (1 - max(c)).
-        out = []
-        for row in rows:
-            line = bytearray(row)
-            for x in range(0, len(line), 4):
-                top = max(line[x], line[x + 1], line[x + 2])
-                for c in range(3):
-                    line[x + c] = line[x + c] * 255 // top if top else 0
-                line[x + 3] = top
-            out.append(bytes(line))
-        rows = out
     elif linear:
         # UT's additive styles leave out the texture's alpha, while the particle material multiplies the colour by it, so it is made
         # opaque here
         rows = [bytes(255 if i % 4 == 3 else v for i, v in enumerate(row)) for row in rows]
     write_png('%s/units/ut/fx/%s.png' % (REPO, name), width, height, rows)
     open('%s/units/ut/fx/%s.texture' % (REPO, name), 'w', newline='\n').write(texture_text('units/ut/fx/' + name, not linear))
-    open('%s/units/ut/fx/fx_%s.material' % (REPO, name), 'w', newline='\n').write(particle_material_text(
-        name, 'particle_linear' if linear else 'particle'))
+    if brighten:
+        parent, weapon_parent = 'fx_particle_brighten_graph', 'fx_particle_weapon_brighten_graph'
+    else:
+        parent, weapon_parent = ('particle_linear', 'particle_weapon_linear') if linear else ('particle', 'particle_weapon')
+    open('%s/units/ut/fx/fx_%s.material' % (REPO, name), 'w', newline='\n').write(particle_material_text(name, parent))
     if weapon:
-        open('%s/units/ut/fx/fx_weapon_%s.material' % (REPO, name), 'w', newline='\n').write(particle_material_text(
-            name, 'particle_weapon_linear' if linear else 'particle_weapon'))
+        open('%s/units/ut/fx/fx_weapon_%s.material' % (REPO, name), 'w', newline='\n').write(particle_material_text(name, weapon_parent))
 
 for name, (tga, columns, rows_count) in TEXTURES.items():
     width, height, rows = read_tga('%s/%s' % (EXPORT, tga))

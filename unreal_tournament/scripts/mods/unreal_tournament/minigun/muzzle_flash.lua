@@ -60,7 +60,8 @@ function mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale, locke
 		local start = random_between(CONFIG.scale)
 
 		particles.mesh({
-			-- FB_Brighten: the texture holds the hue and its alpha the strength (make_weapon_fx.py), so it is blended, not added
+			-- (FB_Brighten: its material brightens what is behind it by its luminance, see make_combo_materials.py, with no added part of
+			-- its own)
 			additive = 0,
 			brightness = function (fraction)
 				return attenuation(fraction, CONFIG.attenuation)
