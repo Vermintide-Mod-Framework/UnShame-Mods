@@ -201,6 +201,9 @@ local function build_shot(source, mode, first, hand, spray, volley)
 	action.fire_time = fire_time
 	action.headshot_multiplier = 1
 	action.reload_when_out_of_ammo = false
+	-- A hit on the player doesn't stop the rounds, as it doesn't in UT. Otherwise the game's hit reaction ends the round's action
+	-- (CharacterStateHelper), and a held button doesn't start the next one.
+	action.uninterruptible = true
 	action.total_time = fire_time + interval + CONFIG.chain_margin
 	action.total_time_secondary = nil
 	action.ut_minigun = mode
