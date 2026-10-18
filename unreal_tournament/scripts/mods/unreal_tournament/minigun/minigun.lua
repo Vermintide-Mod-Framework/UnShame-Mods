@@ -106,6 +106,8 @@ local function bullet_profile(profile, damage)
 		impact = 0.01,
 	}
 	set_armor_modifiers(profile)
+	-- (the game's head bonus is the profile's, not the action's headshot_multiplier, and shot_repeating leaves it at its default)
+	utils.set_headshot_multiplier(profile, 1)
 end
 
 register_damage_profile("ut_minigun_bullet", "shot_repeating", function (profile)
