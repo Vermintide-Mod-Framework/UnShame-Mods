@@ -12,15 +12,15 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Keywords | ok | ok (rapid fire, high damage, crowd control) | ok (high damage, charged attack, armour piercing) | - | - | - | ok (sniper, crowd control, and the mod's own: Combo) | ok (high damage, crowd control, versatile) |
 | Stat chart | ok (a guess) | ok (the rounds barely stagger and stop at the first enemy; the alt goes through most armour) | ok (the punch's cleave as tank blows: 3 for the bash, 4 for a charged punch; heavy damage 6) | - | - | - | ok (the beam as the light attack, the ball as the heavy one) | ok |
 | Which careers can equip it | ok (the Deepwood Staff's copy for all four of Kerillian's careers; tests for each) | ok (repeating handgun and repeater pistol items; tests for each) | ok (five items: a melee weapon of each hero; the Warrior Priest's was taken out and is on the TODO list; tests for each) | ok (Ironbreaker, the Trollhammer's) | ok (the Brace of Pistols: Zealot, Bounty Hunter, Captain; tests for each) | ok (Kruber's and Bardin's handguns; tests for each) | ok (the Beam Staff's careers and the Necromancer; tests: the Battle Wizard) | ok (the Blunderbuss's careers; tests: the Mercenary) |
-| Chaos Wastes copy | ok | ok | - (each copy has its base's Chaos Wastes weapon) | - | - | - | - (the Beam Staff's Chaos Wastes weapon) | - (the Blunderbuss's Chaos Wastes weapon) |
-| Crafting | ok | ok | - | - | - | - | - | - |
+| Chaos Wastes copy | ok | ok | ok (each copy has its base's Chaos Wastes weapon) | - | - | - | ok (the Beam Staff's Chaos Wastes weapon) | ok (the Blunderbuss's Chaos Wastes weapon) |
+| Crafting | ok | ok | ok | - | - | - | ok | ok |
 | Hero screen: model and its place | ok (in the left hand, pointing ahead, on the Waystalker) | ok (UT's third person mesh, Minigun_3rd, at a player's DrawScale 0.4, in each hero's grip) | ok (UT's third person mesh at a player's DrawScale 0.4, in each hero's pose and grip, set in the game) | - | - | - | ok | ok (UT's third person mesh, Flak_3rd, at a player's DrawScale 0.4, held as the Blunderbuss; set in the game) |
 | Item screen: model and its turn | ok | ok | ok | - | - | - | ok | ok |
 | Tab screen after a mod reload | ok (the icon shows from the next level: a game limit) | ok | ok | - | - | - | ok | ok |
 | Equipping and switching weapons | ok | ok (tests: it can be put away while it fires) | ok | - | ok | - | ok | ok |
-| Base weapon when the mod is disabled | ok | ok (the template goes back to the base weapon's) | - (the template goes back to the base weapon's) | - | - | - | - (the template goes back to the Beam Staff's) | - (the template goes back to the Blunderbuss's) |
+| Base weapon when the mod is disabled | ok | ok (the template goes back to the base weapon's) | ok (the template goes back to the base weapon's) | - | - | - | ok (the template goes back to the Beam Staff's) | ok (the template goes back to the Blunderbuss's) |
 | **First person** | | | | | | | | |
-| Position and size against UT | ok (blend with UT) | ok (side by side) | close: same size, UT's about 15 px higher and a little more tilted (the offline render agrees with the game) | ok (side by side; the Trollhammer's torpedo is hidden) | ok (side by side with UT's two rifles; the left one is UT's mesh mirrored, as RenderDualOverlay draws it) | - | ok (UT's view offset and pivot; the field of view was fitted against a picture of UT's Shock Rifle) | ok |
+| Position and size against UT | ok (blend with UT) | ok (side by side) | ok (the same size; UT's is about 15 px higher and a little more tilted, and the offline render agrees with the game) | ok (side by side; the Trollhammer's torpedo is hidden) | ok (side by side with UT's two rifles; the left one is UT's mesh mirrored, as RenderDualOverlay draws it) | - | ok (UT's view offset and pivot; the field of view was fitted against a picture of UT's Shock Rifle) | ok |
 | Pickup animation | ok (UT's SelectAnimRate 1.25, side by side with UT) | ok (SelectAnimRate 1.3636) | ok (SelectAnimRate 1.3636) | - | ok (SelectAnimRate 1.3636, both rifles) | - | ok | ok |
 | Idle animation speed | ok | ok | ok | - | - | - | ok | ok |
 | Fire animation of each mode | ok (Fire at UT's FireAnimRate 1.25, frames side by side with UT 25 ms apart; zoom has none) | ok (FireLoop, looped at FireLoopAnimRate 9 and 3 while a mode fires, as MinigunFire's FireLoop state) | ok (Charge over 2.5 s, Charged loop, Fire, Shield loop) | - | - | - | ok (Fire at 1, AltFire at ShockProjFire's 1.5) | ok |
@@ -40,43 +40,43 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Hold, release and auto-fire | ok (tests: holding the button repeats the shot every 1.6 s) | ok (tests: holding fires, letting go stops the rounds; a hit on the player doesn't stop them) | ok (tests: punch on release, auto punch with an enemy in reach) | - | ok (grenade charges while held, thrown on release, from each rifle in turn) | ok (tests: holding the button repeats the shot) | ok (tests: holding fire repeats the beam at its fire rate) | ok (tests: holding primary fire repeats it at its fire rate) |
 | Where shots start | ok (the bolt from the flare at EffectOffset; zoomed, from below the view) | ok (the rounds from the eye; the tracers from EffectOffset) | ok (the punch's cone and ray start at the eye, where the crosshair is) | - | - | ok (tests: the hit is on the target aimed at) | ok (tests: the ball starts 8 UT units to the right of the eye, level with it: ProjSpawnOffset) | ok (tests: chunks 25 UT units ahead of the eye, 5 right and 6 down; the shell 25, 9 and 12 down: ProjSpawnOffset) |
 | Shots start in the same place each time | ok | ok | n/a | - | - | - | ok (tests) | ok (tests) |
-| Shots in a line | n/a | n/a | n/a | - | - | - | - | - |
-| Spread | n/a (none, as UT's) | ok (UT's: 0.08 and 0.03 of the aim's length, at random) | n/a (the punch hits what is in its cone) | - | ok (UT's: 0.02, 0.02 more a round up to 0.12, back after 0.5 s) | - | n/a (none, as UT's) | - (4 degrees, tighter than UT's 7.7) |
-| Rapid shots | n/a | ok | n/a | - | - | - | - | - |
+| Shots in a line | n/a | n/a | n/a | - | - | - | ok | ok |
+| Spread | n/a (none, as UT's) | ok (UT's: 0.08 and 0.03 of the aim's length, at random) | n/a (the punch hits what is in its cone) | - | ok (UT's: 0.02, 0.02 more a round up to 0.12, back after 0.5 s) | - | n/a (none, as UT's) | ok (4 degrees, tighter than UT's 7.7) |
+| Rapid shots | n/a | ok | n/a | - | - | - | ok | ok |
 | **Damage** | | | | | | | | |
 | Normal enemies | ok (tests: a bolt hurts an enemy; an arc does half its damage to an enemy near the one hit) | ok (tests: a round hurts an enemy and stops at the first one; an alt round does twice a primary's, UT's 15 against 7.5) | ok (tests: punches kill rats in a horde, a punch while moving fast does more damage, a punch never hits the player who punches); 40 to 150 by the charge, reaching 122 UT units (the bash 162); it gets through enemies as the game's lighter tank blows do | - | - | - | ok (tests: a beam hurts what it hits and stops at the first enemy; a ball explodes on what it hits and hurts it) | ok (tests: chunks hurt an enemy; a shell hurts an enemy) |
 | Armored enemies | ok (tests: 1 against a Stormvermin, 0.6 against a Chaos warrior) | ok (tests: primary rounds 0.5 against a Stormvermin and 0.3 against a Chaos warrior; alt rounds 0.9 and 0.6) | ok (tests: a punch hurts a Chaos warrior) | - | - | - | ok (tests: 0.5 of the damage against a Chaos warrior, whose body is super armour) | ok (tests: chunks 0.7 against a Stormvermin and 0.5 against a Chaos warrior; the shell 1 and 0.5) |
 | Monsters | ok (tests: 1.2 against a rat ogre, taken down to 0.45 by the game's boss_damage_reduction) | ok (tests: 1 against a rat ogre, taken down to 0.45 by the game's boss_damage_reduction) | ok (tests: a punch hurts a rat ogre) | - | - | - | ok (tests: 1.5 of the damage against a rat ogre, taken down to 0.45 by the game's boss_damage_reduction) | ok (tests: chunks 1 and the shell 1.5 against a rat ogre, taken down to 0.45 by the game's boss_damage_reduction) |
-| Shields | ok (the bolt breaks shields) | ok (the rounds break shields, as the repeater's) | ok (a punch from the first third of the charge glances off a shield, one charged past it breaks the shield, and an unbreakable one stops both; tests for each) | - | - | - | - | - |
-| Headshots | ok (tests: double damage, SniperFire.HeadShotDamageMult) | ok (tests: the game's usual bonus, 1.4 times; UT gives one only to its sniper weapons) | - | - | - | ok (tests: double damage) | - | - |
-| Crits | ok (the same armour multipliers as any other hit) | ok (the same armour multipliers as any other hit) | - (the punch is a melee hit, with the game's melee crits) | - | - | - | - | - |
-| Damage against the other UT weapons | ok | ok | ok (the shield reflects the Shock Rifle's beam and ball and the Link Gun's bolts, by UT's rules; tests: a bot's beam and ball, from shield to shield, back and forth at most 3 times for the beam) | - | - | - | ok (tests: a beam into a ball makes a combo, which hurts much more than a beam; the Shield Gun's shield reflects the beam and the ball) | - |
+| Shields | ok (the bolt breaks shields) | ok (the rounds break shields, as the repeater's) | ok (a punch from the first third of the charge glances off a shield, one charged past it breaks the shield, and an unbreakable one stops both; tests for each) | - | - | - | ok | ok |
+| Headshots | ok (tests: double damage, SniperFire.HeadShotDamageMult) | ok (tests: the game's usual bonus, 1.4 times; UT gives one only to its sniper weapons) | ok | - | - | ok (tests: double damage) | ok | ok |
+| Crits | ok (the same armour multipliers as any other hit) | ok (the same armour multipliers as any other hit) | ok (the punch is a melee hit, with the game's melee crits) | - | - | - | ok | ok |
+| Damage against the other UT weapons | ok | ok | ok (the shield reflects the Shock Rifle's beam and ball and the Link Gun's bolts, by UT's rules; tests: a bot's beam and ball, from shield to shield, back and forth at most 3 times for the beam) | - | - | - | ok (tests: a beam into a ball makes a combo, which hurts much more than a beam; the Shield Gun's shield reflects the beam and the ball) | ok |
 | Self damage | n/a | n/a | ok (tests: a full punch at the floor hurts the player 26.5, UT's 8 + 0.3 of the damage, halved as the Rocket Launcher's; none when the punch hits an enemy or a thing) | ok (from the outermost wave, scaled as the Rocket Launcher's) | ok (the grenade's, reduced as the Rocket Launcher's) | - | ok (tests: a ball at the feet hurts the player; the combo hurts its shooter, 100 at the middle) | ok (tests: a shell at the feet hurts the player, at most 45; a chunk that has bounced, 8) |
 | Explosion radius | n/a | n/a | n/a | ok (six waves growing over 1.3 s, tests; scaled down as the Rocket Launcher's) | ok (150 units, scaled as the Rocket Launcher's) | - | ok (tests: the ball's 90 UT units: it hurts an enemy 1.2 m away and not one 2.6 m away; the combo's 190, smaller than UT's 150 and 275) | ok (tests: the shell's 150 UT units, smaller than UT's 220: nothing 3.8 m away is hurt) |
 | Explosion falloff | n/a | n/a | n/a | - | - | - | ok (tests: full damage within 0.5 m, then less and less to the radius) | ok (tests: full damage within 0.5 m, then less and less to the radius) |
-| Momentum | ok | n/a (UT's is 0) | - | - | - | - | - | - |
+| Momentum | ok | n/a (UT's is 0) | ok | - | - | - | ok | ok |
 | Weapon jumping | n/a | n/a | ok in the game: a full punch at the floor throws the player up and back, with 0.6 of the momentum, as UT's own momentum is | - | - | - | ok (tests: a ball at the feet throws the player up) | ok (tests: a shell at the feet throws the player up) |
-| Ragdolls | ok | ok | - | - | - | - | - (the combo pulls what it killed back to its middle, as UT's) | - (what the chunks kill is thrown, harder up close) |
-| Banners and barrels | ok | ok | ok (tests: punches destroy a standard) | - | - | - | - (the combo hurts standards) | - |
+| Ragdolls | ok | ok | ok | - | - | - | ok (the combo pulls what it killed back to its middle, as UT's) | ok (what the chunks kill is thrown, harder up close) |
+| Banners and barrels | ok | ok | ok (tests: punches destroy a standard) | - | - | - | ok (the combo hurts standards) | ok |
 | **Projectiles** | | | | | | | | |
-| Speed | n/a (the bolt hits at once) | n/a | n/a | - | ok (850 to 1600 units a second by the charge) | - | ok (tests: a ball flies straight at 15 m/s) | - (chunks 35 m/s, between UT's 2500 units a second as sizes (50) and as run speeds (23); the shell 24 m/s) |
-| Gravity | n/a | n/a | n/a | - | ok (UT's, simulated by the mod) | - | ok (none, as UT's; tests) | - (chunks none until they bounce, as UT's; the shell -17 m/s/s) |
-| Lifetime | n/a | n/a | n/a | - | ok (2 s timer; tests) | - | ok (tests: a ball that hits nothing is gone after UT's 10 s) | - (chunks 2.7 s, the shell 6 s) |
-| Hit size | n/a | n/a | n/a | - | - | - | - (0.2 m) | - (chunks 0.08 m, the shell 0.2 m) |
-| Draw distance | n/a | n/a | n/a | - | - | - | - | - |
-| Hitting other projectiles | n/a | n/a | ok (the right button is the base weapon's block, made a shield block, with stamina in place of UT's shield ammo. From its front it stops shots and explosions, reflects sorcerers' magic missiles, throws back gutter runners' pounces and stops lifeleeches' grabs; tests: an exploding barrel, a pounce, a grab) | - | - | - | ok (tests: a beam into a ball makes a combo) | - |
+| Speed | n/a (the bolt hits at once) | n/a | n/a | - | ok (850 to 1600 units a second by the charge) | - | ok (tests: a ball flies straight at 15 m/s) | ok (chunks 35 m/s, between UT's 2500 units a second as sizes (50) and as run speeds (23); the shell 24 m/s) |
+| Gravity | n/a | n/a | n/a | - | ok (UT's, simulated by the mod) | - | ok (none, as UT's; tests) | ok (chunks none until they bounce, as UT's; the shell -17 m/s/s) |
+| Lifetime | n/a | n/a | n/a | - | ok (2 s timer; tests) | - | ok (tests: a ball that hits nothing is gone after UT's 10 s) | ok (chunks 2.7 s, the shell 6 s) |
+| Hit size | n/a | n/a | n/a | - | - | - | ok (0.2 m) | ok (chunks 0.08 m, the shell 0.2 m) |
+| Draw distance | n/a | n/a | n/a | - | - | - | ok | ok |
+| Hitting other projectiles | n/a | n/a | ok (the right button is the base weapon's block, made a shield block, with stamina in place of UT's shield ammo. From its front it stops shots and explosions, reflects sorcerers' magic missiles, throws back gutter runners' pounces and stops lifeleeches' grabs; tests: an exploding barrel, a pounce, a grab) | - | - | - | ok (tests: a beam into a ball makes a combo) | ok |
 | Lock-on, homing, bounce, link, goo, combo | n/a | n/a | n/a | - | ok (bounce: 0.5 into the wall, 0.8 along it, stops below 20) | - | ok (combo: UT's, costs 3 beams of overcharge more; tests) | ok (bounce: tests: chunks bounce off the ground; a shell throws chunks) |
 | **Ammo** | | | | | | | | |
 | Max ammo | ok (40) | ok (300, all in the clip; tests) | n/a (no ammo: the shield takes stamina) | ok (1, tests) | ok (200 rounds, 8 grenades; tests) | ok (35; tests) | n/a (no ammo: a beam or a ball costs half a Beam Staff shot of overcharge; tests: overheating sets off a combo at the player) | ok (tests: 20, all in the clip) |
-| Pickup amount | n/a (heat, no ammo) | ok | n/a | - | - | - | n/a | - |
+| Pickup amount | n/a (heat, no ammo) | ok | n/a | - | - | - | n/a | ok |
 | Reload between shots | n/a | ok (none; tests) | n/a | - | - | ok (none; tests) | n/a | ok (none: tests) |
 | Chamber at 0 ammo | n/a | ok (tests: with no ammo nothing is fired) | n/a | - | - | - | n/a | ok (tests: with no ammo left nothing is fired) |
 | Chamber at the last round | n/a | ok | n/a | - | - | - | n/a | ok |
 | Load animation when ammo comes back | n/a | n/a | n/a | - | - | - | n/a | ok |
 | Load sound when ammo comes back | n/a | n/a | n/a | - | - | - | n/a | ok |
-| Shot during a load animation | n/a | n/a | n/a | - | - | - | n/a | - |
+| Shot during a load animation | n/a | n/a | n/a | - | - | - | n/a | ok |
 | Multi-load at 1, 2 and 3 rounds | n/a | n/a | n/a | - | - | - | n/a | n/a |
-| `/allammo` | n/a | ok | n/a | - | - | - | n/a | - |
+| `/allammo` | n/a | ok | n/a | - | - | - | n/a | ok |
 | **Effects** | | | | | | | | |
 | Muzzle flash | ok (white disk with a blue rim, size, place and fade side by side with UT; it reads its texture linearly, as UT adds it) | ok (MinigunMuzFlash1st: UT's mesh with the tile of Minigun_burst its UVs use, blended as FB_Brighten; a round adds 5 as there is room for, and each fades as it grows; NewMinigunMFlash in third person, at world size) | ok: ShieldCharge's green lines while charging, dim as UT's, turning about the gun; ForceRingA's rings on a punch, made smaller, dimmer and faster to be closer to UT's faint arc. The shield while it is up, and ShieldSparks when it stops something | - | close: AssaultMuzFlash1st is the Minigun's flash at DrawScale 1.2, so it has the Minigun's colour difference | - | ok (ShockMuzFlash) | ok |
 | Projectile model | n/a | ok (the shells: UT's ShellCasing mesh, lit, thrown into the world from the ejector in both views) | n/a | ok (RedeemerMissile, turning, with its light and flight sound) | ok (UT's grenade mesh, spinning) | - | ok (ShockBall) | ok |
@@ -126,13 +126,13 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Allies in the way | ok (tests: a bot never hurts the player) | ok (a bot doesn't shoot past an ally) | ok (tests: a bot fighting rats around the player never hurts them) | - | - | - | ok (tests: a bot shooting past the player never hurts them) | ok (tests: a bot shooting past the player never hurts them) |
 | Look and sound of their shots | ok | ok | ok | - | - | - | ok | ok |
 | **Stability** | | | | | | | | |
-| Mod reload with it wielded | ok | ok | - | - | - | - | - | - |
-| Level change while firing | ok | ok | - | - | - | - | - | - |
-| Dying with it | ok | ok | - | - | - | - | - | - |
-| Revive with it | ok | ok | - | - | - | - | - | - |
-| Knockdown | ok | ok | - | - | - | - | - | - |
-| Ledge hang | ok (the gun is hidden in third person while hanging, as the game hides its own) | ok | - | - | - | - | - | - |
-| Switching away mid-animation | ok | ok (tests: put away while it fires, the rounds stop) | ok (tests: putting it away while it charges doesn't punch) | - | - | - | - | - |
-| Switching back mid-animation | ok | ok | ok (tests: taken out again, it charges and punches) | - | - | - | - | - |
-| Errors in the console log | ok | ok | - | - | - | - | - | - |
-| Crash dumps | ok | ok | - | - | - | - | - | - |
+| Mod reload with it wielded | ok | ok | ok | - | - | - | ok | ok |
+| Level change while firing | ok | ok | ok | - | - | - | ok | ok |
+| Dying with it | ok | ok | ok | - | - | - | ok | ok |
+| Revive with it | ok | ok | ok | - | - | - | ok | ok |
+| Knockdown | ok | ok | ok | - | - | - | ok | ok |
+| Ledge hang | ok (the gun is hidden in third person while hanging, as the game hides its own) | ok | ok | - | - | - | ok | ok |
+| Switching away mid-animation | ok | ok (tests: put away while it fires, the rounds stop) | ok (tests: putting it away while it charges doesn't punch) | - | - | - | ok | ok |
+| Switching back mid-animation | ok | ok | ok (tests: taken out again, it charges and punches) | - | - | - | ok | ok |
+| Errors in the console log | ok | ok | ok | - | - | - | ok | ok |
+| Crash dumps | ok | ok | ok | - | - | - | ok | ok |
