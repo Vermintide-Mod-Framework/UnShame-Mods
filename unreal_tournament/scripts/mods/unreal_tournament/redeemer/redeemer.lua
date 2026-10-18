@@ -1,11 +1,10 @@
 local mod = get_mod("unreal_tournament")
 
--- Redeemer: a copy of the Trollhammer Torpedo with its shot replaced. The numbers come from UT2004 (XWeapons/Redeemer, RedeemerFire,
--- RedeemerProjectile and RedeemerAmmo).
---   Left button: fires a slow missile that flies straight until it hits something, and there it makes a nuclear blast: six waves that
---       reach further and further out over 1.3 seconds, each hurting everything in its reach.
---   Right button: the base weapon's block. UT's second mode steers the missile from its own view (RedeemerGuidedFire), which is not made.
--- It holds one missile, as UT's does.
+-- Redeemer: the Bounty Hunter's career ability (Locked and Loaded) while he holds the Rocket Launcher. Instead of the ability's two
+-- barrels he fires one slow missile that flies straight until it hits something, and there it makes a nuclear blast: six waves that
+-- reach further and further out over 1.3 seconds, each hurting everything in its reach. The numbers come from UT2004 (XWeapons/Redeemer,
+-- RedeemerFire, RedeemerProjectile). UT's second mode, which steers the missile from its own view (RedeemerGuidedFire), is not made.
+-- Without the Rocket Launcher the ability is the game's.
 -- The skin (skin.lua) draws all of it, and this file only sets what it does to the game.
 
 local utils = mod.utils
@@ -15,25 +14,15 @@ local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
-local DESCRIPTION = "The first time you witness this miniature nuclear device in action, you'll agree it is the most powerful weapon in the Tournament. Launch a slow-moving but utterly devastating missile, but make sure you're out of its impressive blast radius before it impacts."
+-- The Bounty Hunter's career weapon, the pistol he draws for his ability
+local TEMPLATE_NAME = "victor_bountyhunter_career_skill_weapon"
+local CAREER_NAME = "wh_bountyhunter"
+-- The sub-action of the ability's shot that is the Redeemer's, and the one that chooses between it and the game's own
+local SHOT_ACTION = "ut_redeemer"
+local SELECT_ACTION = "ut_redeemer_select"
+local SPREAD_TEMPLATE = "ut_redeemer"
 
-local SETTING_ID = "redeemer"
-local ITEM_KEY = "ut_redeemer"
-local TEMPLATE_NAME = "ut_redeemer_template"
-
-mod.items.register(SETTING_ID, {
-	key = ITEM_KEY,
-	template = TEMPLATE_NAME,
-	base_item = "dr_deus_01",
-	deus_copy = "deus_dr_deus_01",
-	name = "UT2004 Redeemer",
-	type_name = "Redeemer",
-	description = DESCRIPTION,
-	keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_armour_piercing" },
-	icon = "ut_redeemer_icon",
-	icon_package = "resource_packages/unreal_tournament/icons",
-	icon_materials = "ui/ut/redeemer_icon",
-})
+utils.register_network_lookup("sub_actions", SHOT_ACTION)
 
 local CONFIG = {
 	-- RedeemerProjectile.Speed is 1000 units a second. The Rocket Launcher's 1350 is 2200 here (the action's unit is m/s * 100), so
@@ -43,10 +32,8 @@ local CONFIG = {
 	missile_radius = 24, -- UT units, CollisionRadius
 	-- The game's gravity setting with the least gravity. UT's missile flies straight (PHYS_Projectile).
 	missile_gravity_settings = "spark",
-	-- RedeemerAmmo.MaxAmmo. All the ammo is the clip, so there is no reload.
-	max_ammo = 1,
-	-- RedeemerFire.FireRate
-	fire_interval = 1, -- seconds
+	-- The ability's cooldown with the Redeemer, in seconds. The game's Locked and Loaded is 70 s, and its longest abilities 120 to 140 s.
+	cooldown = 140,
 	-- RedeemerProjectile's blast (state Dying): HurtRadius six times, each with the whole Damage (250) and a radius that grows from 0.125
 	-- of DamageRadius (2000 units) to all of it, the first at once and the others 0.5, 0.7, 0.9, 1.1 and 1.3 s after. The Rocket
 	-- Launcher's damage and radius are reduced from UT's (90 to 60, and 220 units to 150), and these are reduced in the same way.
@@ -63,7 +50,7 @@ local CONFIG = {
 	-- armor. UT has no armor, and a nuclear blast is not stopped by it.
 	armor_attack = { 1, 1, 1, 1, 1, 1 },
 	armor_impact = { 1, 1, 1, 1, 1, 1 },
-	-- How far a bot shoots from, in meters. It should be well out of the blast.
+	-- How far a bot shoots from, in meters. It should be out of the blast (radius_uu, 27 m).
 	bot_min_range = 30,
 	bot_max_range = 80,
 }
@@ -119,9 +106,27 @@ for index, share in ipairs(CONFIG.wave_radii) do
 	})
 end
 
+-- Whether a character's career ability is the Redeemer now: a Bounty Hunter who holds the Rocket Launcher
+local function has_redeemer(unit)
+	local career_extension = unit and ScriptUnit.has_extension(unit, "career_system")
+
+	if not career_extension or career_extension:career_name() ~= CAREER_NAME then
+		return false
+	end
+
+	local inventory_extension = ScriptUnit.has_extension(unit, "inventory_system")
+	local slot_data = inventory_extension and inventory_extension:get_slot_data("slot_ranged")
+	local item_data = slot_data and slot_data.item_data
+
+	return item_data ~= nil and item_data.template == mod.items.weapons.rocket_launcher.template
+end
+
 mod.redeemer = {
 	wave_names = WAVE_NAMES,
 	radius = CONFIG.radius_uu * UNIT,
+	template = TEMPLATE_NAME,
+	has_redeemer = has_redeemer,
+	cooldown = CONFIG.cooldown,
 }
 
 -- The waves after the first, made by the machine of the player who fired: each is an explosion that the game sends to the others
@@ -178,11 +183,13 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(waves)
 end
 
--- Weapon template
+-- The ability's shot. The game's has two barrels: the upper one fires a projectile, the lower one a shotgun blast, and a push goes out
+-- around the shooter. The Redeemer's is the upper barrel's projectile alone, with the missile's speed and its blast, and no spread.
+-- The projectile's unit is the game's (bullet_temp), which is loaded for every Bounty Hunter. The skin draws the missile over it.
+utils.zero_spread_template(SPREAD_TEMPLATE, "bounty_hunter_handgun")
 
 local function build_shot(source)
 	local action = table.clone(source)
-	-- (the Trollhammer's own projectile, whose unit is loaded with the weapon: another weapon's unit is not, and spawning it crashes)
 	local projectile_info = table.clone(source.projectile_info)
 
 	projectile_info.gravity_settings = CONFIG.missile_gravity_settings
@@ -191,16 +198,13 @@ local function build_shot(source)
 	projectile_info.life_time = CONFIG.missile_lifetime
 
 	action.projectile_info = projectile_info
-	-- The skin plays UT's sound
-	action.fire_sound_event = nil
 	action.speed = CONFIG.missile_speed
-	action.angular_velocity = nil
-	action.timed_data = nil
+	action.railgun_spread_template = SPREAD_TEMPLATE
+	action.fire_time_upper = 0
 	action.ut_aoe_callback = "redeemer"
 	action.ut_init_flow_event_filter = "redeemer"
 	action.ut_skin_init_callback = "redeemer"
 	action.ut_redeemer = true
-	action.reload_when_out_of_ammo = false
 
 	-- The missile is a grenade, so the first thing it hits sets off the blast
 	action.impact_data = {
@@ -208,52 +212,181 @@ local function build_shot(source)
 		damage_profile = "ut_redeemer",
 		grenade = true,
 	}
-	action.total_time = CONFIG.fire_interval
-
-	for _, chain in ipairs(action.allowed_chain_actions or {}) do
-		if chain.action == "action_one" then
-			chain.start_time = CONFIG.fire_interval
-		end
-	end
 
 	return action
 end
 
-local function apply_template(template)
-	local actions = template.actions
+-- The ability's hold chains to the shot. It chains to a selector instead (the game's action_selector, as the Engineer's weapon has),
+-- which picks the Redeemer's shot for a Bounty Hunter who holds the Rocket Launcher and the game's own otherwise.
+local function apply_template()
+	local template = rawget(Weapons, TEMPLATE_NAME)
 
-	template.weapon_diagram = {
-		light_attack = {
-			[DamageTypes.ARMOR_PIERCING] = 7,
-			[DamageTypes.CLEAVE] = 7,
-			[DamageTypes.SPEED] = 1,
-			[DamageTypes.STAGGER] = 7,
-			[DamageTypes.DAMAGE] = 7,
+	if not template then
+		return
+	end
+
+	local release = template.actions.action_career_release
+
+	release[SHOT_ACTION] = build_shot(release.default)
+	release[SELECT_ACTION] = {
+		kind = "action_selector",
+		-- (the hand is looked at before the selector chooses: the pistol is in the left hand, and the right one is empty)
+		weapon_action_hand = "left",
+		default_action = {
+			sub_action = "default",
 		},
-		heavy_attack = {
-			[DamageTypes.ARMOR_PIERCING] = 0,
-			[DamageTypes.CLEAVE] = 0,
-			[DamageTypes.SPEED] = 0,
-			[DamageTypes.STAGGER] = 0,
-			[DamageTypes.DAMAGE] = 0,
+		conditional_actions = {
+			{
+				sub_action = SHOT_ACTION,
+				condition = function (talent_extension, buff_extension, weapon_extension, owner_unit)
+					return has_redeemer(owner_unit)
+				end,
+			},
 		},
 	}
 
-	actions.action_one.default = build_shot(actions.action_one.default)
-
 	utils.set_actions_lookup_data({
-		action_one = actions.action_one,
+		action_career_release = {
+			[SHOT_ACTION] = release[SHOT_ACTION],
+			[SELECT_ACTION] = release[SELECT_ACTION],
+		},
 	}, TEMPLATE_NAME)
 
-	template.ammo_data.max_ammo = CONFIG.max_ammo
-	template.ammo_data.ammo_per_clip = CONFIG.max_ammo
-	template.ammo_data.ammo_per_reload = CONFIG.max_ammo
-	template.ammo_data.ammo_immediately_available = true
-	template.ammo_data.reload_time = 0.2
-
-	template.attack_meta_data.minimum_charge_time = nil
-	template.attack_meta_data.max_range = CONFIG.bot_max_range
-	template.attack_meta_data.minimum_range = CONFIG.bot_min_range
+	for _, hold in pairs(template.actions.action_career_hold) do
+		for _, chain in ipairs(hold.allowed_chain_actions or {}) do
+			if chain.action == "action_career_release" and (chain.sub_action == "default" or chain.sub_action == SELECT_ACTION) then
+				chain.sub_action = SELECT_ACTION
+			end
+		end
+	end
 end
 
-mod.items.set_template_changes(TEMPLATE_NAME, apply_template)
+-- Puts the game's template back as it was
+local function restore_template()
+	local template = rawget(Weapons, TEMPLATE_NAME)
+
+	if not template then
+		return
+	end
+
+	for _, hold in pairs(template.actions.action_career_hold) do
+		for _, chain in ipairs(hold.allowed_chain_actions or {}) do
+			if chain.action == "action_career_release" and chain.sub_action == SELECT_ACTION then
+				chain.sub_action = "default"
+			end
+		end
+	end
+
+	template.actions.action_career_release[SHOT_ACTION] = nil
+	template.actions.action_career_release[SELECT_ACTION] = nil
+end
+
+apply_template()
+mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_template
+
+-- With the Redeemer only the upper barrel fires: the lower one and the push around the shooter are marked done before they come.
+-- The upper barrel fires the projectile whatever the ability's talents make it (they choose a railgun or a shotgun for each barrel).
+-- The skin plays the shot (mod.redeemer.skin_shot, from skin.lua).
+mod:hook(ActionCareerWHBountyhunter, "client_owner_start_action", function (func, self, new_action, ...)
+	func(self, new_action, ...)
+
+	if new_action.ut_redeemer then
+		self.upper_shoot_function = self._railgun_shoot
+		self.lower_shot_done = true
+		self.aoe_done = true
+
+		if mod.redeemer.skin_shot then
+			mod.redeemer.skin_shot(self)
+		end
+	end
+end)
+
+-- Bots. A Bounty Hunter bot uses the ability on its target within 15 m (BTConditions.can_activate.wh_bountyhunter), which is well inside
+-- the Redeemer's blast. With the Redeemer a bot uses it only on a target from bot_min_range to bot_max_range away, with no player or
+-- other bot within the blast's radius of it. The game's check that nothing is in the way is kept.
+mod:hook(BTConditions.can_activate, "wh_bountyhunter", function (func, blackboard)
+	local bot_unit = blackboard.unit
+
+	if not has_redeemer(bot_unit) then
+		return func(blackboard)
+	end
+
+	local target = blackboard.target_unit
+
+	if not ALIVE[target] or not BLACKBOARDS[target] then
+		return false
+	end
+
+	local target_position = POSITION_LOOKUP[target]
+	local distance = Vector3.distance(POSITION_LOOKUP[bot_unit], target_position)
+
+	if distance < CONFIG.bot_min_range or distance > CONFIG.bot_max_range then
+		return false
+	end
+
+	local radius = CONFIG.radius_uu * UNIT
+
+	for _, player in pairs(Managers.player:players()) do
+		local player_unit = player.player_unit
+
+		if player_unit ~= bot_unit and ALIVE[player_unit] and Vector3.distance(POSITION_LOOKUP[player_unit], target_position) < radius then
+			return false
+		end
+	end
+
+	local obstruction = blackboard.ranged_obstruction_by_static
+	local t = Managers.time:time("game")
+
+	return not (obstruction and obstruction.unit == target and t <= obstruction.timer + 3)
+end)
+
+-- The ability's cooldown is the Redeemer's while a Bounty Hunter holds the Rocket Launcher. The game starts the cooldown by adding its
+-- whole length (reduce_activated_ability_cooldown_percent(-1)), and a cooldown is never longer than its maximum, so the maximum is made
+-- longer by the difference (CareerExtension.modify_max_cooldown, which keeps how far along the cooldown is). It is checked every frame,
+-- for every character, as the Rocket Launcher can be put in or taken out at any time.
+local cooldown_bonus = setmetatable({}, {
+	__mode = "k",
+})
+
+local function set_cooldown_bonus(career_extension, bonus)
+	local applied = cooldown_bonus[career_extension] or 0
+
+	if bonus ~= applied then
+		career_extension:modify_max_cooldown(1, bonus - applied, 0)
+		cooldown_bonus[career_extension] = bonus
+	end
+end
+
+local function cooldown_bonus_of(unit)
+	if not has_redeemer(unit) then
+		return 0
+	end
+
+	local career_extension = ScriptUnit.extension(unit, "career_system")
+	local ability_data = career_extension:get_activated_ability_data()
+
+	return CONFIG.cooldown - (ability_data and ability_data.cooldown or CONFIG.cooldown)
+end
+
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	local player_manager = Managers.player
+
+	if not player_manager or not Managers.state.network then
+		return
+	end
+
+	for _, player in pairs(player_manager:players()) do
+		local unit = player.player_unit
+		local career_extension = unit and ALIVE[unit] and ScriptUnit.has_extension(unit, "career_system")
+
+		if career_extension and career_extension:career_name() == CAREER_NAME then
+			set_cooldown_bonus(career_extension, cooldown_bonus_of(unit))
+		end
+	end
+end
+
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+	for career_extension in pairs(cooldown_bonus) do
+		set_cooldown_bonus(career_extension, 0)
+	end
+end

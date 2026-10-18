@@ -265,6 +265,18 @@ mod:hook_safe(PlayFabMirrorAdventure, "inventory_request_cb", function (self)
 	add_to_inventory(self)
 end)
 
+-- Weapons the mod had and dropped: the Redeemer, which is now the Bounty Hunter's ability (redeemer.lua). A loadout that still holds
+-- one names an item that is no longer in the inventory, which the game repairs itself when it starts (PlayFabMirrorBase's broken item
+-- slots, fixCareerData). After a reload, a character can still hold the item table of a dropped weapon from before it, and the tab
+-- screen draws its icon, whose material is gone (see retire_icon).
+local DROPPED_KEYS = {
+	ut_redeemer = true,
+}
+
+for key in pairs(DROPPED_KEYS) do
+	retire_icon(rawget(ItemMasterList, key))
+end
+
 -- The registered definitions by id, for example items.weapons.shock_rifle.template
 items.weapons = {}
 

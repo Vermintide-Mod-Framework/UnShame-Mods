@@ -22,7 +22,8 @@ needs its own copy from a base of that hero, because the animations, units and a
   Drakefire Pistols (`dr_drake_pistol`), for the Zealot, Bounty Hunter, Captain and Ironbreaker.
 - Minigun: the repeaters (`es_repeating_handgun`, `wh_repeating_pistols`), for the Mercenary, Huntsman, Foot Knight, Zealot, Bounty
   Hunter and Captain.
-- Redeemer: the Trollhammer Torpedo (`dr_deus_01`, from the grass DLC), for the Ironbreaker.
+- Redeemer: not an item. It is the Bounty Hunter's career ability (Locked and Loaded) while he holds the Rocket Launcher, on his career
+  pistol (`victor_bountyhunter_career_skill_weapon`).
 
 The careers with few weapons:
 
@@ -46,7 +47,10 @@ Why the bases are what they are:
   (`OverchargeData[career]`): the other three careers have none, which would overheat them as Sienna does, so they get the Sister's.
 - Sniper Rifle. Kruber's handgun and Bardin's handgun are separate templates (`handgun_template_1` and `handgun_template_2`), so it
   is two registrations. The Engineer has no handgun.
-- Redeemer. The Trollhammer Torpedo is Ironbreaker only. The Engineer has it only in Versus.
+- Redeemer. In VT2 the ranged slot fills again from every ammo box, which would give a one-shot nuke back far too often. A career
+  ability comes back on a cooldown (140 s for the Redeemer, the game's longest is 140), and the Bounty Hunter's is a single shot from a
+  pistol he draws for it, which the game already fires as a projectile. Holding the Rocket Launcher turns it into the Redeemer, so the
+  game's ability is left as it is otherwise. UT's guided missile (its alt fire) is not made.
 - The Necromancer can carry any staff in the game, but the local item list shows only her own staff. So the staff weapons name her
   in `can_wield` themselves (the Shock Rifle does).
 - `items.register` copies the whole base item and clears its `required_dlc`, so a weapon of the mod does not need the DLC of its base
@@ -70,12 +74,12 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Line | Lightning Gun | Minigun | Shield Gun | Redeemer | Assault Rifle | Sniper Rifle | Shock Rifle | Flak Cannon | Bio Rifle | Rocket Launcher |
 |---|---|---|---|---|---|---|---|---|---|---|
 | **Item and menus** | | | | | | | | | | |
-| Name in the inventory | ok | ok | ok | ok | ok | - | ok | ok | ok | ok |
-| Icon in the inventory | ok (points up-right) | ok (points up-right) | ok (points up-right) | ok (points up-right) | ok (points up-right) | - | ok (points up-right; the UT2003 and Instagib illusions have their own) | ok (points up-right) | ok | ok |
+| Name in the inventory | ok | ok | ok | n/a (not an item: the Bounty Hunter's ability) | ok | - | ok | ok | ok | ok |
+| Icon in the inventory | ok (points up-right) | ok (points up-right) | ok (points up-right) | n/a | ok (points up-right) | - | ok (points up-right; the UT2003 and Instagib illusions have their own) | ok (points up-right) | ok | ok |
 | Description | ok (UT's, shortened) | ok (UT's, without its last words) | ok (UT's, shortened) | - | ok (UT's, shortened) | - | ok (UT's, shortened) | ok (UT's, shortened) | ok | ok |
 | Keywords | ok | ok (rapid fire, high damage, crowd control) | ok (high damage, charged attack, armour piercing) | - | - | - | ok (sniper, crowd control, and the mod's own: Combo) | ok (high damage, crowd control, versatile) | ok | ok |
 | Stat chart | ok (a guess) | ok (the rounds barely stagger and stop at the first enemy; the alt goes through most armour) | ok (the punch's cleave as tank blows: 3 for the bash, 4 for a charged punch; heavy damage 6) | - | - | - | ok (the beam as the light attack, the ball as the heavy one) | ok | ok | ok |
-| Which careers can equip it | ok (the Deepwood Staff's copy for all four of Kerillian's careers; tests for each) | ok (repeating handgun and repeater pistol items; tests for each) | ok (five items: a melee weapon of each hero; the Warrior Priest's was taken out and is on the TODO list; tests for each) | ok (Ironbreaker, the Trollhammer's) | ok (the Brace of Pistols: Zealot, Bounty Hunter, Captain; tests for each) | ok (Kruber's and Bardin's handguns; tests for each) | ok (the Beam Staff's careers and the Necromancer; tests: the Battle Wizard) | ok (the Blunderbuss's careers; tests: the Mercenary) | ok | ok |
+| Which careers can equip it | ok (the Deepwood Staff's copy for all four of Kerillian's careers; tests for each) | ok (repeating handgun and repeater pistol items; tests for each) | ok (five items: a melee weapon of each hero; the Warrior Priest's was taken out and is on the TODO list; tests for each) | ok (the Bounty Hunter's ability while he holds the Rocket Launcher, and the game's ability without it; tests) | ok (the Brace of Pistols: Zealot, Bounty Hunter, Captain; tests for each) | ok (Kruber's and Bardin's handguns; tests for each) | ok (the Beam Staff's careers and the Necromancer; tests: the Battle Wizard) | ok (the Blunderbuss's careers; tests: the Mercenary) | ok | ok |
 | Chaos Wastes copy | ok | ok | ok (each copy has its base's Chaos Wastes weapon) | - | - | - | ok (the Beam Staff's Chaos Wastes weapon) | ok (the Blunderbuss's Chaos Wastes weapon) | ok | ok |
 | Crafting | ok | ok | ok | - | - | - | ok | ok | ok | ok |
 | Hero screen: model and its place | ok (in the left hand, pointing ahead, on the Waystalker) | ok (UT's third person mesh, Minigun_3rd, at a player's DrawScale 0.4, in each hero's grip) | ok (UT's third person mesh at a player's DrawScale 0.4, in each hero's pose and grip, set in the game) | - | - | - | ok | ok (UT's third person mesh, Flak_3rd, at a player's DrawScale 0.4, held as the Blunderbuss; set in the game) | ok | ok |
@@ -84,7 +88,7 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Equipping and switching weapons | ok | ok (tests: it can be put away while it fires) | ok | - | ok | - | ok | ok | ok | ok |
 | Base weapon when the mod is disabled | ok | ok (the template goes back to the base weapon's) | ok (the template goes back to the base weapon's) | - | - | - | ok (the template goes back to the Beam Staff's) | ok (the template goes back to the Blunderbuss's) | ok | ok |
 | **First person** | | | | | | | | | | |
-| Position and size against UT | ok (blend with UT) | ok (side by side) | ok (the same size; UT's is about 15 px higher and a little more tilted, and the offline render agrees with the game) | ok (side by side; the Trollhammer's torpedo is hidden) | ok (side by side with UT's two rifles; the left one is UT's mesh mirrored, as RenderDualOverlay draws it) | - | ok (UT's view offset and pivot; the field of view was fitted against a picture of UT's Shock Rifle) | ok | ok | ok |
+| Position and size against UT | ok (blend with UT) | ok (side by side) | ok (the same size; UT's is about 15 px higher and a little more tilted, and the offline render agrees with the game) | - (side by side on the Trollhammer; not looked at on the career pistol) | ok (side by side with UT's two rifles; the left one is UT's mesh mirrored, as RenderDualOverlay draws it) | - | ok (UT's view offset and pivot; the field of view was fitted against a picture of UT's Shock Rifle) | ok | ok | ok |
 | Pickup animation | ok (UT's SelectAnimRate 1.25, side by side with UT) | ok (SelectAnimRate 1.3636) | ok (SelectAnimRate 1.3636) | - | ok (SelectAnimRate 1.3636, both rifles) | - | ok | ok | ok | ok |
 | Idle animation speed | ok | ok | ok | - | - | - | ok | ok | ok | ok |
 | Fire animation of each mode | ok (Fire at UT's FireAnimRate 1.25, frames side by side with UT 25 ms apart; zoom has none) | ok (FireLoop, looped at FireLoopAnimRate 9 and 3 while a mode fires, as MinigunFire's FireLoop state) | ok (Charge over 2.5 s, Charged loop, Fire, Shield loop) | - | - | - | ok (Fire at 1, AltFire at ShockProjFire's 1.5) | ok | ok | ok |
@@ -131,7 +135,7 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Hitting other projectiles | n/a | n/a | ok (the right button is the base weapon's block, made a shield block, with stamina in place of UT's shield ammo. From its front it stops shots and explosions, reflects sorcerers' magic missiles, throws back gutter runners' pounces and stops lifeleeches' grabs; tests: an exploding barrel, a pounce, a grab) | - | - | - | ok (tests: a beam into a ball makes a combo) | ok | ok | ok |
 | Lock-on, homing, bounce, link, goo, combo | n/a | n/a | n/a | - | ok (bounce: 0.5 into the wall, 0.8 along it, stops below 20) | - | ok (combo: UT's, costs 3 beams of overcharge more; tests) | ok (bounce: tests: chunks bounce off the ground; a shell throws chunks) | ok | ok |
 | **Ammo** | | | | | | | | | | |
-| Max ammo | ok (40) | ok (300, all in the clip; tests) | n/a (no ammo: the shield takes stamina) | ok (1, tests) | ok (200 rounds, 8 grenades; tests) | ok (35; tests) | n/a (no ammo: a beam or a ball costs half a Beam Staff shot of overcharge; tests: overheating sets off a combo at the player) | ok (tests: 20, all in the clip) | ok | ok |
+| Max ammo | ok (40) | ok (300, all in the clip; tests) | n/a (no ammo: the shield takes stamina) | n/a (one missile each time the ability is used; the cooldown is 140 s, tests) | ok (200 rounds, 8 grenades; tests) | ok (35; tests) | n/a (no ammo: a beam or a ball costs half a Beam Staff shot of overcharge; tests: overheating sets off a combo at the player) | ok (tests: 20, all in the clip) | ok | ok |
 | Pickup amount | n/a (heat, no ammo) | ok | n/a | - | - | - | n/a | ok | ok | ok |
 | Reload between shots | n/a | ok (none; tests) | n/a | - | - | ok (none; tests) | n/a | ok (none: tests) | ok | ok |
 | Chamber at 0 ammo | n/a | ok (tests: with no ammo nothing is fired) | n/a | - | - | - | n/a | ok (tests: with no ammo left nothing is fired) | ok | ok |
@@ -154,7 +158,7 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Vanilla effects playing on top | ok | ok (the game's impacts are kept on purpose) | ok | - | - | - | ok | ok | ok | ok |
 | **Sounds** | | | | | | | | | | |
 | Fire | ok (sound plays) | ok (NewMinigunFire, a loop from the first round until the button is let go; the winding while the barrels turn without it) | ok (BShieldGunFire) | - | ok | - | ok | ok | ok | ok |
-| Alt fire | ok (the zoom: BZoomIn1 and BZoomOut1, which LightningZoomIn and LightningZoomOut play as they are) | ok (minialtfireb, a loop) | ok (BShield1 while the shield is up) | no: the guided missile (RedeemerGuidedFire) is not made; the right button is the Trollhammer's block | ok (NewGrenadeShoot and the load sound) | - | ok | ok | ok | ok |
+| Alt fire | ok (the zoom: BZoomIn1 and BZoomOut1, which LightningZoomIn and LightningZoomOut play as they are) | ok (minialtfireb, a loop) | ok (BShield1 while the shield is up) | n/a (the guided missile, RedeemerGuidedFire, is not made: the ability has one shot) | ok (NewGrenadeShoot and the load sound) | - | ok | ok | ok | ok |
 | Select | ok (sound plays) | ok | ok | - | ok | - | ok | ok | ok | ok |
 | Load | ok (the charge-up after a shot, at the pitch of 1.1 that SniperFire.PlayFiring gives it) | n/a | ok (the charge sound) | - | - | - | n/a | ok | ok | ok |
 | Explosion | n/a | n/a | n/a | - | ok (BExplosion3) | - | ok | ok | ok | ok |

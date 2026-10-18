@@ -27,7 +27,6 @@ ICONS = {
     'lightning_gun': ('lightning/pickup.bsi', ['lightning/pickup_snipertex0.png'], 110, 0, 35, 0.72, False),
     'link_gun': ('link/pickup.bsi', ['link/pickup_linktex0.png'], -70, 0, 35, 0.72, False),
     'minigun': ('minigun/pickup.bsi', ['minigun/pickup_miniguntex0.png'], 110, 0, 35, 0.72, False),
-    'redeemer': ('redeemer/pickup.bsi', ['redeemer/pickup_redeemertex0.png', 'redeemer/pickup_rmissle.png'], 110, 0, 35, 0.72, False),
     'rocket_launcher': ('rocket/pickup.bsi', ['rocket/pickup_rockettex0.png'], 110, 0, 35, 0.72, False),
     'shield_gun': ('shield/pickup.bsi', ['shield/pickup_shieldtex0.png'], 110, 0, 35, 0.72, False),
     'shock_rifle': ('shock/pickup.bsi', ['shock/shock_body_df.png', 'shock/shock_power_df.png'], 20, 0, 35, None, False),

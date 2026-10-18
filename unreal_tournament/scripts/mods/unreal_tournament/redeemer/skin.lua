@@ -1,19 +1,21 @@
 local mod = get_mod("unreal_tournament")
 
--- Redeemer skin: how UT2004's Redeemer looks and sounds.
+-- Redeemer skin: how UT2004's Redeemer looks and sounds. It is drawn in place of the Bounty Hunter's career pistol while he holds the
+-- Rocket Launcher (the ability is the Redeemer then, see redeemer.lua).
 --
 -- weapon_skin.lua does the model, its placement and animations, the bob and the third person. This file does what is the Redeemer's own:
 -- the missile, its trail and light and sound, and the blast. The gameplay is in redeemer.lua.
 --
--- The assets were made with tools/asset_conversion (convert_weapon.py redeemer, convert_static.py redeemer_pickup and redeemer_missile,
--- make_weapon_fx.py, render_icon.py and make_bank.py redeemer).
+-- The assets were made with tools/asset_conversion (convert_weapon.py redeemer, convert_static.py redeemer_pickup (whose materials the
+-- third person mesh has), redeemer_3rd and redeemer_missile, make_weapon_fx.py and make_bank.py redeemer).
 
 local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/redeemer/skin_animations")
 local particles = mod.skin_particles
 
 local SETTING_ID = "redeemer"
-local TEMPLATE_NAME = mod.items.weapons[SETTING_ID].template
+-- The Bounty Hunter's career pistol, which is the Redeemer while he holds the Rocket Launcher (see redeemer.lua)
+local TEMPLATE_NAME = mod.redeemer.template
 
 local CONFIG = {
 	-- RedeemerProjectile.RotationRate: the missile turns about its length by 50000 of 65536 a second
@@ -205,6 +207,7 @@ skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
 	name = "redeemer",
 	template = TEMPLATE_NAME,
+	applies = mod.redeemer.has_redeemer,
 	unit_name = "units/ut/redeemer/redeemer",
 	animations = animations,
 	muzzle_node = "b_bone_flash",
@@ -234,25 +237,26 @@ skin_api = mod.weapon_skin.new({
 	inspect_pivot_forward = 20,
 	inspect_pivot_up = 0,
 	-- UT's third person mesh of the weapon (RedeemerAttachment's Weapons.Redeemer_3rd) at UT's size in a player's hand (DrawScale 0.4).
-	-- The game links the Trollhammer Torpedo to the right hand's node. The mesh's tube runs along its left, to its open end (it has no
-	-- flash bone), and the mesh is upside down: UT holds it rolled half a turn (RelativeRotation Roll 32768) and 35 units back along the
-	-- hand (RelativeLocation X -35, which is 87.5 of the mesh's units at its DrawScale). It is turned from the pickup's turn, whose barrel
-	-- ran along its forward, and flipped by the pitch. The grip and the turn are a start, to be set in the game.
+	-- The game links the career pistol to the left hand's node. The mesh's tube runs along its left, to its open end (it has no flash
+	-- bone), and the mesh is upside down: UT holds it rolled half a turn (RelativeRotation Roll 32768) and 35 units back along the hand
+	-- (RelativeLocation X -35, which is 87.5 of the mesh's units at its DrawScale). The ability is too short for a calibration, so the
+	-- mesh is turned from the pistol's own axes (follow_game_unit 2): the yaw puts the tube along the pistol's barrel and the roll turns
+	-- it the right way up.
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
+		applies = mod.redeemer.has_redeemer,
 		unit_name = "units/ut/redeemer/third_person",
-		hand_node = "j_rightweaponattach",
+		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.02 * 0.4,
 		scale = 1,
 		grip_right = -87.5,
 		grip_forward = 0,
 		grip_up = 0,
-		yaw = -150,
-		pitch = 180,
-		roll = 0,
-		follow_game_unit = 1,
-		follow_calibrate_seconds = 1,
+		yaw = -90,
+		pitch = 0,
+		roll = 180,
+		follow_game_unit = 2,
 		muzzle_right = -53.8,
 		muzzle_forward = 0,
 		muzzle_up = 8.8,
@@ -274,13 +278,13 @@ skin_api = mod.weapon_skin.new({
 
 mod.unload_callbacks[#mod.unload_callbacks + 1] = clear_missiles
 
--- The shot of the player: the animation and the sound
-mod:hook_safe(ActionGrenadeThrower, "client_owner_start_action", function (self, new_action)
-	if new_action.ut_redeemer and utils.is_local_player_unit(self.owner_unit) and skin_api.state() then
+-- The shot of the player: the animation and the sound (called by redeemer.lua when the ability's shot starts)
+mod.redeemer.skin_shot = function (action)
+	if utils.is_local_player_unit(action.owner_unit) and skin_api.state() then
 		skin_api.play("Fire")
 		skin_api.play_sound("ut_redeemer_fire")
 	end
-end)
+end
 
 -- Inspecting is the game's own action, held with the key
 mod.inspect_callbacks.redeemer_skin = function (action, started)
@@ -289,15 +293,6 @@ mod.inspect_callbacks.redeemer_skin = function (action, started)
 	if skin and utils.is_local_player_unit(action.owner_unit) then
 		skin.inspecting = started
 	end
-end
-
--- The Trollhammer's own shot animations are not played on the player's own first person unit: the skin's model plays UT's
-mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
-	return string.find(event, "attack_shoot", 1, true) ~= nil or string.find(event, "reload", 1, true) ~= nil
-end
-
-mod.third_person_animation_filters[TEMPLATE_NAME] = function (event)
-	return string.find(event, "reload", 1, true) ~= nil
 end
 
 -- The blast (RedeemerExplosion and IonCore), on every machine, for the first wave (the others are only damage). It is UT's emitters, each

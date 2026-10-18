@@ -18,7 +18,8 @@ local mod = get_mod("unreal_tournament")
 --
 -- A definition holds the numbers of the weapon's class in UT2004, and the files that tools/asset_conversion made:
 --   id, name: the weapon's id (flak_cannon, used by /skin) and its name in messages. template: the game weapon template this is the
---       skin of.
+--       skin of. applies(unit), if it is given: whether the skin draws the template for that character now (the Redeemer draws the
+--       Bounty Hunter's career pistol only while he holds the Rocket Launcher). third_person takes it too.
 --   unit_name, animations: the unit and its animations. animations is { bones = { "root", nodes... }, animations = { Name = { rate,
 --       frames } } }. A frame is seven numbers for each bone: a rotation (x, y, z, w) and a move (right, forward, up in UT units).
 --   muzzle_node: the node of the unit where the muzzle is
@@ -225,6 +226,16 @@ local function new(def)
 
 	local function item_template_name(item_data)
 		return item_data and BackendUtils.get_item_template(item_data).name
+	end
+
+	-- Whether the skin draws a template for a character now (CONFIG.applies)
+	local function applies(unit)
+		return not CONFIG.applies or CONFIG.applies(unit)
+	end
+
+	-- Whether a character wields the weapon the skin draws
+	local function wields_it(unit)
+		return utils.wielded_template_name(unit) == CONFIG.template and applies(unit)
 	end
 
 	-- Returns the muzzle's position in the world, as the camera sees it. The model is drawn with its own, narrower field of view
@@ -599,7 +610,7 @@ local function new(def)
 	mod.enabled_callbacks[#mod.enabled_callbacks + 1] = function ()
 		local fp = local_first_person()
 
-		if fp and not skin and utils.wielded_template_name(fp.unit) == CONFIG.template then
+		if fp and not skin and wields_it(fp.unit) then
 			create(fp, utils.wielded_skin(fp.unit))
 		end
 	end
@@ -635,7 +646,7 @@ local function new(def)
 
 	-- Makes the skin when the weapon is wielded.
 	mod.wield_callbacks[CONFIG.id] = function (inventory_extension, equipment, slot_data)
-		if slot_data and item_template_name(slot_data.item_data) == CONFIG.template then
+		if slot_data and item_template_name(slot_data.item_data) == CONFIG.template and applies(inventory_extension._unit) then
 			create(inventory_extension.first_person_extension, slot_data.skin)
 		end
 	end
@@ -656,7 +667,7 @@ local function new(def)
 				return false
 			end
 
-			if utils.wielded_template_name(first_person_extension.unit) ~= CONFIG.template then
+			if not wields_it(first_person_extension.unit) then
 				return false
 			end
 
@@ -884,7 +895,7 @@ local function new(def)
 		-- The weapon is in the player's hands without a skin. The game puts it back without wielding it at times (after the player was
 		-- pounced, or died and came back), and then its own weapon would show.
 		if not skin then
-			if fp and utils.wielded_template_name(fp.unit) == CONFIG.template then
+			if fp and wields_it(fp.unit) then
 				create(fp, utils.wielded_skin(fp.unit))
 			end
 
@@ -899,7 +910,7 @@ local function new(def)
 
 		-- The weapon is not wielded any more. Upgrading or rerolling the held weapon makes the game rebuild the inventory without
 		-- announcing that the weapon was put away, and the melee weapon would stay hidden.
-		if utils.wielded_template_name(fp.unit) ~= CONFIG.template then
+		if not wields_it(fp.unit) then
 			destroy()
 
 			return

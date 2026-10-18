@@ -4,7 +4,8 @@ local mod = get_mod("unreal_tournament")
 -- instead of the game's weapon. That is how this player sees them. Players without the mod see the game's own units. The characters
 -- are the player's own (in a third person view), the other players and the bots. weapon_skin.lua makes one of these for each weapon
 -- (mod.weapon_skin.new), from the weapon's definition:
---   id: the weapon's id. template: the game's template of the weapon.
+--   id: the weapon's id. template: the game's template of the weapon. applies(character), if it is given: whether the mesh replaces
+--       the template's weapon for that character now (the Redeemer, only for a Bounty Hunter who holds the Rocket Launcher).
 --   unit_name: the mesh (made by tools/asset_conversion/psk2bsi.py, with the pickup's DrawScale in it).
 --   materials: { slot = material } to set on the mesh.
 --   hand_node: where the game links the weapon to the character.
@@ -44,6 +45,11 @@ local function new(def, looks)
 
 	for key, value in pairs(def) do
 		CONFIG[key] = value
+	end
+
+	-- Whether a character wields the weapon the mesh replaces
+	local function wields_it(character)
+		return utils.wielded_template_name(character) == CONFIG.template and (not CONFIG.applies or CONFIG.applies(character))
 	end
 
 	-- Returns the definition for a look (a skin key), or the weapon's own definition if there is no look.
@@ -147,7 +153,7 @@ local function new(def, looks)
 
 		-- If the character still wields the weapon, its game units are shown again and their effects are started, with the same flow
 		-- event the game sends when it wields. A weapon that was put away, or one from an earlier wield, is left to the game.
-		if Unit.alive(character) and utils.wielded_template_name(character) == CONFIG.template then
+		if Unit.alive(character) and wields_it(character) then
 			for _, game_unit in ipairs(entry.units) do
 				if Unit.alive(game_unit) then
 					Unit.flow_event(game_unit, "lua_wield")
@@ -223,7 +229,7 @@ local function new(def, looks)
 	-- Returns the game's weapon unit of a character if the skin replaces it, which is when the character wields this weapon. Also
 	-- returns the units of both hands.
 	local function staff_to_replace(character)
-		if utils.wielded_template_name(character) ~= CONFIG.template then
+		if not wields_it(character) then
 			return nil
 		end
 
