@@ -8,6 +8,7 @@ from formats import read_chunks as chunks
 #   units/ut/fx/flak_flash_mesh  XEffects.FlakMuzFlashMesh, the Flak Cannon's first person muzzle flash; its long axis is y, the way the
 #                       barrel points
 #   units/ut/fx/minigun_flash_mesh  XEffects.MinigunMuzFlash1stMesh, the Minigun's first person muzzle flash, and
+#   units/ut/fx/minigun_flash_3rd_mesh  XEffects.MinigunFlashMesh, the mesh of the Rocket Launcher's third person flash (RocketMuzFlash3rd)
 #   units/ut/fx/shell_casing_mesh  XEffects.ShellCasing, the shell of ShellSpewer
 #   units/ut/fx/shield_mesh  WeaponStaticMesh.Shield, the Shield Gun's shield (ShieldEffect): a dish 3 units deep and 20 across, facing along x
 #   units/ut/fx/explosion_ring, explosion_sphere  ParticleMeshes.ExplosionRing (a flat ring 512 units across) and ExplosionSphere (256
@@ -174,6 +175,7 @@ if __name__ == '__main__':
     make_static('flak_flash_mesh', 'FlakMuzFlashMesh')
     # (its UVs are in the tile of column 0 and row 1 of Minigun_burst's 2 by 2)
     make_static('minigun_flash_mesh', 'MinigunMuzFlash1stMesh', tile=(2, 2, 0, 1))
+    make_static('minigun_flash_3rd_mesh', 'MinigunFlashMesh')
     make_static('shell_casing_mesh', 'ShellCasing')
     make_static('shield_mesh', 'Shield', EXPORT + '/WeaponStaticMesh')
     make_static('explosion_ring', 'ExplosionRing', EXPORT + '/ParticleMeshes')

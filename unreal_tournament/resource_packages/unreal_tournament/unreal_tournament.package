@@ -57,6 +57,7 @@ unit = [
 	"units/ut/fx/light"
 	"units/ut/fx/flak_flash_mesh"
 	"units/ut/fx/minigun_flash_mesh"
+	"units/ut/fx/minigun_flash_3rd_mesh"
 	"units/ut/fx/shell_casing_mesh"
 	"units/ut/fx/shield_mesh"
 	"units/ut/fx/explosion_ring"

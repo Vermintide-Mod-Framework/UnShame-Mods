@@ -17,7 +17,8 @@ from resources import texture_text, particle_material_text
 
 # name: (the tga, columns, rows). A texture that is not a sheet has 1 and 1.
 TEXTURES = {
-    # The Minigun (MinigunMuzFlash1st, MinigunFlash, NewMinigunMFlash, NewTracer, ShellSpewer)
+    # The Minigun (MinigunMuzFlash1st, MinigunFlash, NewMinigunMFlash, NewTracer, ShellSpewer). minigun_flash_3rd is MinigunFlashFinal's
+    # texture, which the Rocket Launcher's third person flash (RocketMuzFlash3rd) draws on its mesh.
     'minigun_burst': ('XGameShaders/Texture/Minigun_burst.tga', 2, 2),
     'minigun_flash_3rd': ('XGameShaders/Texture/minigunflash.tga', 1, 1),
     'minigun_flame': ('AW-2004Explosions/Texture/Part_explode2s.tga', 4, 4),
@@ -53,7 +54,7 @@ SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff', 'muzzle_smoke')
 
 # The textures that UT draws with FB_Brighten, or as STY_Translucent, which is the same: c + d * (1 - c). They are read as they are, and
 # their materials are derived from fx_particle_brighten_graph and fx_particle_weapon_brighten_graph (make_combo_materials.py).
-BRIGHTEN = ('minigun_burst', 'impact_smoke')
+BRIGHTEN = ('minigun_burst', 'impact_smoke', 'minigun_flash_3rd')
 
 # The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield, made by
 # make_combo_materials.py, which does FB_Brighten itself and fades by the alpha)

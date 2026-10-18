@@ -19,10 +19,26 @@ local TEMPLATE_NAME = mod.items.weapons.rocket_launcher.template
 local SETTING_ID = "rocket_launcher"
 
 local CONFIG = {
-	-- RocketMuzFlash1st: a flash that lasts 0.15 s. UT draws it as meshes, and here it is a sprite.
-	muzzle_size = 70,
-	muzzle_growth = 80,
-	muzzle_life = 0.15,
+	-- RocketMuzFlash1st: the Minigun's first person flash mesh (see minigun/muzzle_flash.lua), 5 of them for a shot, at a size of 0.4 that
+	-- does not grow, for 0.15 s, and dim (mColorRange 48, 40, 40 of 255). The emitter's DrawScale is 2.
+	muzzle_flash = {
+		count = 5,
+		scale = {0.4, 0.4},
+		growth = 0,
+		life = {0.15, 0.15},
+		attenuation = 0.2,
+		color = { 48 / 255, 40 / 255, 40 / 255 },
+	},
+	muzzle_flash_draw_scale = 2,
+	-- RocketMuzFlash3rd: one mesh (MinigunFlashMesh) for a shot, at a size of 0.12 that grows by 2.2 a second, for 0.15 to 0.2 s. fit is
+	-- the Minigun's (minigun/muzzle_flash.lua).
+	muzzle_flash_3rd = {
+		size = 0.12,
+		growth = 2.2,
+		life = {0.15, 0.2},
+		attenuation = 0.2,
+		fit = 0.5,
+	},
 	-- RocketProj: the mesh spins. Its RotationRate roll is 50000 out of 65536 for a full turn, per second.
 	rocket_turns_per_second = 50000 / 65536,
 	-- RocketCorona (RocketFlare): 1.2 times the 128 units of its texture, pulsing between 0.9 and 1.5. It sits at the back of the mesh,
@@ -327,20 +343,55 @@ local function add_visual(projectile)
 	return visual
 end
 
--- Shows a flash at the muzzle, either of the mesh in the character's hand or of the model in the player's own view.
-local function muzzle_flash(follow, scale)
-	particles.sprite({
-		color = {
-			1,
-			0.9,
-			0.7,
-		},
-		follow = follow,
-		growth = CONFIG.muzzle_growth * scale,
-		life = CONFIG.muzzle_life,
-		size = CONFIG.muzzle_size * scale,
-		spin = (math.random() * 2 - 1) * 0.2,
-		texture = "rocket_muzzle",
+-- The flash at the muzzle of the model in the player's own view, linked to it
+local function first_person_flash(skin)
+	mod.minigun_muzzle_flash("rocket", function ()
+		return skin_api.state() == skin and skin_api.muzzle_model_position() or nil
+	end, skin.unit_scale / skin_api.draw_scale(), CONFIG.muzzle_flash_draw_scale, function ()
+		if skin_api.state() == skin then
+			return skin_api.model_point_in_view()
+		end
+	end, CONFIG.muzzle_flash)
+end
+
+-- The flash at the muzzle of the mesh in a character's hand: one mesh along the barrel, turned at random about it. UT's emitter is
+-- attached to the mesh but not scaled by its DrawScale, so the mesh is in UT units of the world. Its scale is worked out as the
+-- Minigun's first person flash's is (minigun/muzzle_flash.lua's fit). The flash mesh points along its y, and the barrels run along the
+-- launcher's left (-x), so it is turned a quarter about z.
+local BARREL_TURN = Quaternion.axis_angle(Vector3(0, 0, 1), math.pi / 2)
+
+local function third_person_flash(owner_unit)
+	local third_person = skin_api.third_person
+	local settings = CONFIG.muzzle_flash_3rd
+	local life = random_between(settings.life)
+
+	if not third_person.muzzle_position(owner_unit) then
+		return
+	end
+
+	particles.mesh({
+		additive = 0,
+		brightness = function (fraction)
+			return particles.attenuation(fraction, settings.attenuation)
+		end,
+		color = { 1, 1, 1 },
+		follow = function ()
+			return third_person.muzzle_position(owner_unit)
+		end,
+		life = life,
+		material = "units/ut/fx/fx_minigun_flash_3rd",
+		rotation = function ()
+			local rotation = third_person.muzzle_rotation(owner_unit)
+
+			return rotation and Quaternion.multiply(rotation, BARREL_TURN) or Quaternion.identity()
+		end,
+		scale = function (fraction)
+			return (settings.size + settings.growth * fraction * life) * settings.fit
+		end,
+		spin = 0,
+		angle = math.random() * 360,
+		spin_axis = Vector3(0, 1, 0),
+		unit = "units/ut/fx/minigun_flash_3rd_mesh",
 	})
 end
 
@@ -355,9 +406,7 @@ local function remote_shot(owner_unit)
 
 	local muzzle = skin_api.third_person.muzzle_position(owner_unit)
 
-	muzzle_flash(function ()
-		return skin_api.third_person.muzzle_position(owner_unit)
-	end, skin_api.third_person.meters_per_unit)
+	third_person_flash(owner_unit)
 
 	if muzzle then
 		skin_api.play_sound_at("ut_rocket_fire_3d", muzzle)
@@ -626,17 +675,14 @@ local function shot(action, new_action)
 		turn_barrel(skin)
 	end
 
-	local in_third_person = third_person.shows_weapon(owner_unit)
-
 	skin_api.play(new_action.ut_rocket_salvo and "AltFire" or "Fire")
 	skin_api.play_sound(new_action.ut_rocket_salvo and "ut_rocket_alt_fire" or "ut_rocket_fire")
-	muzzle_flash(function ()
-		if in_third_person then
-			return third_person.muzzle_position(owner_unit)
-		end
 
-		return skin_api.state() == skin and skin_api.muzzle_position() or nil
-	end, in_third_person and third_person.meters_per_unit or skin.unit_scale)
+	if third_person.shows_weapon(owner_unit) then
+		third_person_flash(owner_unit)
+	else
+		first_person_flash(skin)
+	end
 end
 
 mod.crossbow_start_callbacks.rocket_skin = function (action, new_action)

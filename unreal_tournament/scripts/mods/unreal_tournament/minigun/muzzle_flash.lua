@@ -7,7 +7,8 @@ local mod = get_mod("unreal_tournament")
 --       the flash should end. world_unit is the meters of a UT unit at the model. draw_scale is the emitter's DrawScale. locked, if it is
 --       given, is used instead of follow: it returns the first person unit and the muzzle in its camera node's frame
 --       (weapon_skin's model_point_in_view), so the flash is linked to the unit and stays on the muzzle as the view turns, as UT's is
---       attached to the weapon.
+--       attached to the weapon. emitter_settings, if it is given, are the numbers of another emitter that draws the same mesh, in the
+--       form of CONFIG's (the Rocket Launcher's RocketMuzFlash1st).
 
 local utils = mod.utils
 local particles = mod.skin_particles
@@ -25,6 +26,7 @@ local CONFIG = {
 	growth = 3, -- scale a second
 	life = {0.1, 0.15},
 	attenuation = 0.2,
+	color = { 1, 1, 1 }, -- mColorRange, of 255
 	-- How xEmitter scales a mesh particle by its size is in UT's engine, not its scripts. The numbers above drew the flash twice as
 	-- wide as pictures of UT2004 show it, so they are multiplied by this (fitted to those pictures, and checked again side by side).
 	fit = 0.5,
@@ -41,7 +43,8 @@ end
 -- The flash is drawn with the model, in the material that uses the model's field of view (fx_weapon_*), so it is in front of the
 -- barrels and not hidden by them. The texture is a sheet of 4 that UT picks from at random (mRandTextures). A mesh here keeps one of
 -- them for its whole life, where UT also steps through them (mTileAnimation).
-function mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale, locked)
+function mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale, locked, emitter_settings)
+	local settings = emitter_settings or CONFIG
 	local _, camera_rotation = utils.camera_pose()
 
 	if not camera_rotation then
@@ -65,10 +68,10 @@ function mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale, locke
 	-- The mesh is made at 0.02 m per UT unit
 	local factor = world_unit / UNIT * draw_scale * CONFIG.fit
 
-	for _ = 1, CONFIG.count - #ends do
+	for _ = 1, settings.count - #ends do
 		local tile = math.random(0, 3)
-		local life = random_between(CONFIG.life)
-		local start = random_between(CONFIG.scale)
+		local life = random_between(settings.life)
+		local start = random_between(settings.scale)
 
 		ends[#ends + 1] = now + life
 
@@ -77,16 +80,16 @@ function mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale, locke
 			-- its own)
 			additive = 0,
 			brightness = function (fraction)
-				return attenuation(fraction, CONFIG.attenuation)
+				return attenuation(fraction, settings.attenuation)
 			end,
-			color = { 1, 1, 1 },
+			color = settings.color,
 			follow = not locked and follow or nil,
 			locked = locked or nil,
 			life = life,
 			material = "units/ut/fx/fx_weapon_minigun_burst_" .. tile,
 			rotation = rotation,
 			scale = function (fraction)
-				return (start + CONFIG.growth * fraction * life) * factor
+				return (start + settings.growth * fraction * life) * factor
 			end,
 			spin = 0,
 			angle = math.random() * 360,
