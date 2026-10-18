@@ -651,9 +651,13 @@ mod.inspect_callbacks.lightning_skin = function (action, started)
 end
 
 -- The staff's shot animation is the game's own, so it is not played on the player's own first person unit. The skin's model plays UT's
--- animations instead.
+-- animations instead. The characters don't play it either: UT's characters only hold the gun when they fire. Venting the heat is an
+-- action of its own (weapon_reload), whose animation is still played.
+local function is_shot_animation(event)
+	return event == "attack_shoot" or event == "attack_shoot_last"
+end
+
 for template_name in pairs(TEMPLATE_NAMES) do
-	mod.first_person_animation_filters[template_name] = function (event)
-		return event == "attack_shoot" or event == "attack_shoot_last"
-	end
+	mod.first_person_animation_filters[template_name] = is_shot_animation
+	mod.third_person_animation_filters[template_name] = is_shot_animation
 end
