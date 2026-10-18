@@ -17,10 +17,11 @@ local particles = mod.skin_particles
 local CONFIG = {
 	-- The first person flash's DrawScale (MinigunMuzFlash1st, see muzzle_flash.lua)
 	flash_draw_scale = 0.9,
-	-- The weapon's light (xWeaponAttachment.WeaponLight): every round turns it on for 0.15 s, the first person gun's in the player's own
-	-- view and the third person one's for the others. It is where those actors are: the first person gun is at the eye (CalcDrawOffset),
-	-- and the third person one in the hand, at the held mesh's origin. LightHue 30 of 255 and LightSaturation 150 (0 is all colour, 255
-	-- is white) are a pale orange, and LightRadius 5 is in steps of 25 units: 2.5 m. UT pulses it (LT_Pulse), which here it doesn't.
+	-- The weapon's light (xWeaponAttachment.WeaponLight): every round turns it on for 0.15 s, at the gun in a character's hand (the held
+	-- mesh's origin). In the player's own view UT lights the first person gun's light instead, which doesn't light that gun, as UT draws it
+	-- apart. A light here would light the gun the player holds, so there is none in that view (as for the Shock Rifle). LightHue 30 of
+	-- 255 and LightSaturation 150 (0 is all colour, 255 is white) are a pale orange, and LightRadius 5 is in steps of 25 units: 2.5 m. UT
+	-- pulses it (LT_Pulse), which here it doesn't.
 	light_color = { 1, 0.85, 0.6 },
 	light_intensity = 1.5,
 	light_falloff = 2.5, -- meters
@@ -517,11 +518,7 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 				end
 			end)
 
-			-- The gun's light, and the smoke, which the round keeps going
-			weapon_light(owner_unit, function ()
-				return api.state() and (utils.camera_pose()) or nil
-			end)
-
+			-- The smoke, which the round keeps going
 			smoke.rate = CONFIG.smoke_rate
 
 			-- MinigunAttachment.GetTracerStart: in the player's own view the tracer starts at Weapon.GetEffectStart, EffectOffset from
