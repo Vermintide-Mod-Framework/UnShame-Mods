@@ -47,6 +47,8 @@ TEXTURES = {
     'burn_flare': ('EpicParticles/Texture/BurnFlare1.tga', 1, 1),
     'soft_flare': ('EpicParticles/Texture/SoftFlare.tga', 1, 1),
     'white_streak': ('EpicParticles/Texture/WhiteStreak01aw.tga', 1, 1),
+    # (the texture of the Redeemer blast's bright sphere, whose material make_combo_materials.py makes: fx_ion_sphere)
+    'ion_burn': ('EpicParticles/Texture/IonBurn.tga', 1, 1),
 }
 
 # (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
@@ -56,9 +58,9 @@ SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff', 'muzzle_smoke')
 # their materials are derived from fx_particle_brighten_graph and fx_particle_weapon_brighten_graph (make_combo_materials.py).
 BRIGHTEN = ('minigun_burst', 'impact_smoke', 'minigun_flash_3rd')
 
-# The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield, made by
-# make_combo_materials.py, which does FB_Brighten itself and fades by the alpha)
-KEEP_ALPHA = ('shield_elec', 'shield_rip_elec', 'shield_edge')
+# The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield and the
+# Redeemer blast's fx_ion_sphere, made by make_combo_materials.py, which do FB_Brighten themselves and use the alpha)
+KEEP_ALPHA = ('shield_elec', 'shield_rip_elec', 'shield_edge', 'ion_burn')
 
 # The textures that are turned a quarter, because they are drawn on a beam, which lays v along its length (TracerShot is a streak along
 # u, the way NewTracer's sprite moves: PTDU_Right)

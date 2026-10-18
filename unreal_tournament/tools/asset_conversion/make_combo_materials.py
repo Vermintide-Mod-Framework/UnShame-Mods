@@ -393,3 +393,68 @@ def brighten_graph(weapon):
 for name, weapon in (('particle_brighten', False), ('particle_weapon_brighten', True)):
     open('%s/fx_%s_graph.material' % (FX, name), 'w', newline='\n').write(brighten_graph(weapon).text())
     print('wrote fx_%s_graph.material' % name)
+
+# ---------------------------------------------------------------- the Redeemer blast's bright sphere
+# RedeemerExplosion's MeshEmitter2 has no texture of its own, so UT draws it with its mesh's material: ExplosionSphere's IonSphereFinal
+# (EpicParticles), FB_Brighten of the Shader IonSphere, whose diffuse, opacity and self illumination are the Combiner Combiner4
+# (CO_AlphaBlend_With_Mask with no mask: the second layer over the first by the first's alpha) of two layers of the texture IonBurn,
+# which is 256 texels square (units/ut/fx/ion_burn, make_weapon_fx.py):
+#   the first, TexPanner5 (along U, half the texture a second) of TexScaler1 (U times 0.5, V times 1.5, V moved by 48 texels)
+#   the second, TexScaler2 (V times 2, moved by 64 texels) of TexPanner6 (along U, a texture a second the other way) of TexOscillator0
+#   (along V, a tenth of the texture each way, once a second)
+# A modifier changes the coordinates before the material inside it reads them. The particle sets the tint (the emitter's
+# ColorMultiplierRange, 0.7) and the intensity (its fade).
+IN_SIN = '0505200e-439a-476b-b6a6-d643cf80e20b'
+ion = Graph()
+common(ion)
+
+def vector2(graph, name, value):
+    graph.add(name, 'core/shader_nodes/constant_vector2')
+    graph.constant(name, IN_CONSTANT_VECTOR3, value)
+
+def scaled(graph, name, uv, scale, offset):
+    # (uv times scale, plus offset)
+    vector2(graph, name + '_scale', scale)
+    multiply(graph, name + '_times', uv, name + '_scale')
+    vector2(graph, name + '_offset', offset)
+    graph.add(name, 'core/shader_nodes/add')
+    graph.connect(name + '_times', name, IN_ADD_A)
+    graph.connect(name + '_offset', name, IN_ADD_B)
+
+def panned_from(graph, name, uv, speed_u, speed_v):
+    graph.add(name, 'core/shader_nodes/panner')
+    graph.connect(uv, name, IN_PAN_UV)
+    graph.connect('time', name, IN_PAN_TIME)
+    graph.constant(name, IN_PAN_SPEED_U, speed_u)
+    graph.constant(name, IN_PAN_SPEED_V, speed_v)
+
+def burn(graph, name, uv):
+    graph.add(name, 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('burn_map'), title='burn_map')
+    graph.connect(uv, name, IN_SAMPLE_UV)
+
+# The first layer
+panned_from(ion, 'pan_first', 'uv', 0.5, 0)
+scaled(ion, 'first_uv', 'pan_first', [0.5, 1.5], [0, 48 / 256])
+burn(ion, 'first', 'first_uv')
+# The second layer: the oscillation is a tenth of the texture along V times the sine of a turn a second
+scaled(ion, 'scale_second', 'uv', [1, 2], [0, 64 / 256])
+panned_from(ion, 'pan_second', 'scale_second', -1, 0)
+ion.add('turns', 'core/shader_nodes/mul')
+ion.connect('time', 'turns', IN_MUL_A)
+ion.constant('turns', IN_MUL_B, 2 * math.pi)
+ion.add('sine', 'core/shader_nodes/sin')
+ion.connect('turns', 'sine', IN_SIN)
+vector2(ion, 'swing', [0, 0.1])
+multiply(ion, 'sway', 'swing', 'sine')
+ion.add('second_uv', 'core/shader_nodes/add')
+ion.connect('pan_second', 'second_uv', IN_ADD_A)
+ion.connect('sway', 'second_uv', IN_ADD_B)
+burn(ion, 'second', 'second_uv')
+# The second over the first by the first's alpha, tinted, and drawn as FB_Brighten draws
+ion.add('mix', 'core/shader_nodes/lerp')
+ion.connect('second', 'mix', IN_LERP_A, 'rgb')
+ion.connect('first', 'mix', IN_LERP_B, 'rgb')
+ion.connect('first', 'mix', IN_LERP_W, 'a')
+multiply(ion, 'color', 'mix', 'tint')
+brightened(ion)
+write('ion_sphere', ion, {'burn_map': 'ion_burn'})

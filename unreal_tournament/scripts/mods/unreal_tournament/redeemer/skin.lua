@@ -557,12 +557,11 @@ local function streaks(center)
 	end
 end
 
--- The ring and the spheres (MeshEmitter0 to 2), with FlameGradient. The meshes are made at the size of UT's (0.02 m a unit), so their
--- scale is UT's.
+-- The ring and the spheres (MeshEmitter0 to 2). The meshes are made at the size of UT's (0.02 m a unit), so their scale is UT's. They
+-- are not turned: the emitters' StartSpinRange and SpinsPerSecondRange only apply with SpinParticles, which they don't have, so the
+-- ring lies flat.
 local function shells(center)
-	local ring_turn = Quaternion.multiply(Quaternion.axis_angle(Vector3(0, 0, 1), math.random() * 2 * math.pi), Quaternion.axis_angle(Vector3(1, 0, 0), math.random() * 2 * math.pi))
-
-	-- The ring: after 1 s, for 1 s, from 0.1 to 12.5 times its size, turned at random, orange to yellow to nothing
+	-- The ring: after 1 s, for 1 s, from 0.1 to 12.5 times its size, with FlameGradient, orange to yellow to nothing
 	particles.mesh({
 		brightness = function (fraction)
 			return fade(fraction, 1, 0.1)
@@ -575,22 +574,25 @@ local function shells(center)
 		life = 1,
 		material = "units/ut/fx/fx_flame_gradient",
 		position = center,
-		rotation = ring_turn,
+		rotation = Quaternion.identity(),
 		scale = function (fraction)
 			return 0.5 * keyed({ { 0, 0.2 }, { 1, 25 } }, fraction)
 		end,
 		unit = "units/ut/fx/explosion_ring",
 	})
 
-	-- The bright sphere: after 1.2 s, for 1 s, from 0.2 to 25 times its size (0.8 of it up and down), 0.7 of white, fading from 0.75 s
+	-- The bright sphere: after 1.2 s, for 1 s, from 0.2 to 25 times its size (0.8 of it up and down), fading from 0.75 s. It has no texture
+	-- of its own, so UT draws it with the mesh's material, IonSphereFinal: the fire of IonBurn, brightening what is behind it
+	-- (fx_ion_sphere, see make_combo_materials.py), at 0.7 of its colour (ColorMultiplierRange).
 	particles.mesh({
+		additive = 0,
 		brightness = function (fraction)
-			return 0.7 * fade(fraction, 1, nil, 0.75)
+			return fade(fraction, 1, nil, 0.75)
 		end,
-		color = { 1, 1, 1 },
+		color = { 0.7, 0.7, 0.7 },
 		delay = 1.2,
 		life = 1,
-		material = "units/ut/fx/fx_flame_gradient",
+		material = "units/ut/fx/fx_ion_sphere",
 		position = center,
 		rotation = Quaternion.identity(),
 		scale = function (fraction)
@@ -601,7 +603,8 @@ local function shells(center)
 		unit = "units/ut/fx/explosion_sphere",
 	})
 
-	-- The blended sphere: after 1.5 s, for 0.75 s, from 0.16 to 14.4 times its size, turning, white that fades out (PTDS_AlphaBlend)
+	-- The blended sphere: after 1.5 s, for 0.75 s, from 0.16 to 14.4 times its size, with FlameGradient, white that fades out
+	-- (PTDS_AlphaBlend)
 	particles.mesh({
 		additive = 0,
 		brightness = function (fraction)
@@ -616,8 +619,7 @@ local function shells(center)
 		scale = function (fraction)
 			return 0.8 * keyed({ { 0, 0.2 }, { 1, 18 } }, fraction)
 		end,
-		spin = random_between({ 0, 1 }),
-		spin_axis = Vector3.normalize(Vector3(math.random(), math.random(), math.random())),
+		spin = 0,
 		unit = "units/ut/fx/explosion_sphere",
 	})
 end
