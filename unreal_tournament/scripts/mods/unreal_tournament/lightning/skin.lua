@@ -100,6 +100,8 @@ local CONFIG = {
 	lockout_pose_speed = 4,
 	inspect_sway = 5, -- degrees of yaw each way while inspecting
 	inspect_sway_speed = 1.8, -- radians per second
+	-- The color of the overcharge bar between its thresholds and above them, where the game's are orange and red: white, like the bolt
+	overcharge_bar_color = { 255, 255, 255 },
 }
 
 local UNIT = utils.UT_UNIT
@@ -126,7 +128,10 @@ local TEMPLATE_NAMES = {}
 local skin_apis = {}
 
 for _, variant in ipairs(TEMPLATES) do
-	TEMPLATE_NAMES[mod.items.weapons[variant.setting_id].template] = true
+	local template_name = mod.items.weapons[variant.setting_id].template
+
+	TEMPLATE_NAMES[template_name] = true
+	mod.overcharge_bar_colors[template_name] = { color = CONFIG.overcharge_bar_color, above_max = true }
 end
 
 local random_between = utils.random_between

@@ -688,6 +688,39 @@ mod:hook(PlayerUnitOverchargeExtension, "add_charge", function (func, self, over
 	return func(self, overcharge_amount, charge_level, overcharge_type, ...)
 end)
 
+-- The color of the overcharge bar, by the template of the weapon in the ranged slot. The game makes the bar orange between its thresholds
+-- and red above them. A weapon can use its own color between them, and above them too:
+--   mod.overcharge_bar_colors[template] = { color = { red, green, blue }, above_max = true or nil }
+-- The game sets the bar's colors every frame after it works out the fraction, so this hook runs after that and changes them. The
+-- overcharge is the ranged weapon's, so it is the weapon in the ranged slot that counts, whatever is in the player's hands.
+mod.overcharge_bar_colors = {}
+
+mod:hook_safe(OverchargeBarUI, "set_charge_bar_fraction", function (self, player, _, min_threshold_fraction, max_threshold_fraction)
+	local unit = player.player_unit
+	local inventory_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "inventory_system")
+	local slot_data = inventory_extension and inventory_extension:get_slot_data("slot_ranged")
+	local item_data = slot_data and slot_data.item_data
+	local bar_color = item_data and mod.overcharge_bar_colors[item_data.template]
+
+	if not bar_color then
+		return
+	end
+
+	local fraction = self.charge_bar.content.internal_gradient_threshold
+
+	if fraction <= min_threshold_fraction or (fraction > max_threshold_fraction and not bar_color.above_max) then
+		return
+	end
+
+	local style = self.charge_bar.style
+	local color = bar_color.color
+
+	for i = 1, 3 do
+		style.bar_1.color[i + 1] = color[i]
+		style.icon.color[i + 1] = color[i]
+	end
+end)
+
 -- The mod framework only sends the mod's network messages to the players on its list of players that have the framework. When a
 -- level loads, the game removes the players and adds them again, and the framework can take a player off its list after it put them
 -- back. Then the mod's messages (the Shock Rifle's beam for the others, the Bio Rifle's goo from a client) go nowhere until the mod is

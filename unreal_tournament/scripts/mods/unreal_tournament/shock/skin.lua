@@ -463,30 +463,5 @@ mod.charge_finish_callbacks.shock_skin = function (action, reason)
 	end
 end
 
--- The overcharge bar is orange between its thresholds for every Sienna. With the Shock Rifle it is purple, like its liquid. The game
--- sets the bar's colors every frame after it works out the fraction, so this hook runs after that and changes them. The overcharge is
--- the ranged weapon's, so it is the weapon in the ranged slot that counts, whatever is in the player's hands.
-mod:hook_safe(OverchargeBarUI, "set_charge_bar_fraction", function (self, player, _, min_threshold_fraction, max_threshold_fraction)
-	local unit = player.player_unit
-	local inventory_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "inventory_system")
-	local slot_data = inventory_extension and inventory_extension:get_slot_data("slot_ranged")
-	local item_data = slot_data and slot_data.item_data
-
-	if not item_data or item_data.template ~= TEMPLATE_NAME then
-		return
-	end
-
-	local fraction = self.charge_bar.content.internal_gradient_threshold
-
-	if fraction <= min_threshold_fraction or fraction > max_threshold_fraction then
-		return
-	end
-
-	local style = self.charge_bar.style
-	local color = CONFIG.overcharge_bar_color
-
-	for i = 1, 3 do
-		style.bar_1.color[i + 1] = color[i]
-		style.icon.color[i + 1] = color[i]
-	end
-end)
+-- The overcharge bar is orange between its thresholds for every Sienna. With the Shock Rifle it is purple, like its liquid.
+mod.overcharge_bar_colors[TEMPLATE_NAME] = { color = CONFIG.overcharge_bar_color }
