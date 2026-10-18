@@ -1,7 +1,7 @@
 # What the finished weapons still inherit from their base weapons
 
-Made with the extras mod's `/ut_inherited` in the game (build 1282): each finished weapon's template compared with the template
-of the game weapon it is a copy of. A part that the mod sets to the same value as the base's is listed too, because the
+Made in the game at build 1282, with a command that has since been removed: each finished weapon's template compared with the
+template of the game weapon it is a copy of. The Minigun has been made on the shell of its base since (`utils.template_shell`). A part that the mod sets to the same value as the base's is listed too, because the
 comparison can't tell the two apart. A sub-action the base has none of by its name (made from a copy of one of the base's) is
 compared with the base's sub-action it shares the most with. The actions' lookup_data is left out. The damage profiles are
 not here: they are made with `utils.add_damage_profile`, with nothing from the game's.

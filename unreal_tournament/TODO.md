@@ -6,8 +6,7 @@
 ## Weapons made on the shell of their base
 
 A weapon keeps only what belongs to its base's animations, models and sounds (`utils.template_shell`), and sets everything else itself,
-as the Minigun does. What each finished weapon still takes from its base is in `INHERITED_FIELDS.md` (`/ut_inherited` in the game makes
-it again).
+as the Minigun does. What each finished weapon took from its base at build 1282 is in `INHERITED_FIELDS.md`.
 
 3. **The other finished weapons.** Shock Rifle, Bio Rifle, Flak Cannon, Rocket Launcher, Lightning Gun, Shield Gun: write out what
    they take from their base today, on the shell, as the Minigun's are. That changes nothing in the game.
