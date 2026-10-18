@@ -570,7 +570,7 @@ local function new_skin(variant)
 			-- axes, so with the barrel along the hand's forward after the yaw, tipping it up is the roll.)
 			yaw = -110,
 			pitch = 0,
-			roll = -15,
+			roll = -25,
 			follow_game_unit = 3,
 			follow_calibrate_seconds = 1,
 			muzzle_right = -2.8,
