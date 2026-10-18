@@ -560,7 +560,8 @@ local function new_skin(variant)
 			unit_name = "units/ut/lightning/third_person",
 			hand_node = "j_leftweaponattach",
 			meters_per_unit = 0.02 * 0.4,
-			scale = 1,
+			-- (a little smaller than UT's, where it is 70% of a player's height: it looked too big on Kerillian)
+			scale = 0.85,
 			grip_right = 0,
 			grip_forward = 0,
 			grip_up = 0,
