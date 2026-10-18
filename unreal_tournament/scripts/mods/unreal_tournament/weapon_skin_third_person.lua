@@ -136,6 +136,15 @@ local function new(def, looks)
 			World.destroy_unit(entry.world, entry.unit)
 		end
 
+		-- The game's units get their size back (see attach)
+		for i, game_unit in ipairs(entry.units) do
+			local scale = entry.unit_scales and entry.unit_scales[i]
+
+			if scale and Unit.alive(game_unit) then
+				Unit.set_local_scale(game_unit, 0, scale:unbox())
+			end
+		end
+
 		-- If the character still wields the weapon, its game units are shown again and their effects are started, with the same flow
 		-- event the game sends when it wields. A weapon that was put away, or one from an earlier wield, is left to the game.
 		if Unit.alive(character) and utils.wielded_template_name(character) == CONFIG.template then
@@ -184,10 +193,20 @@ local function new(def, looks)
 		}
 
 		-- The game's units are only hidden, and a hidden unit still shows its effects, such as the Beam Staff's flame. So this puts the
-		-- effects out with the same flow event the game sends when it unwields.
-		for _, game_unit in ipairs(units) do
+		-- effects out with the same flow event the game sends when it unwields. They are also made a thousandth of their size: the game
+		-- shows them again at times of its own (it shows the weapon in the hand as the character inspect starts), and one was seen for a
+		-- frame after it, past the hiding before each frame (hide_staffs).
+		local unit_scales = {}
+
+		for i, game_unit in ipairs(units) do
 			Unit.flow_event(game_unit, "lua_unwield")
+
+			unit_scales[i] = Vector3Box(Unit.local_scale(game_unit, 0))
+
+			Unit.set_local_scale(game_unit, 0, Vector3(0.001, 0.001, 0.001))
 		end
+
+		attached[character].unit_scales = unit_scales
 
 		World.link_unit(world, unit, 0, character, hand_node)
 
