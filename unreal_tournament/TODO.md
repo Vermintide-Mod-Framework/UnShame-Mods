@@ -23,7 +23,7 @@ as the Minigun does. What each finished weapon took from its base at build 1282 
 
 ## New weapons
 
-Each is an item of its own (`items.register`), UT2004's look always on, no setting. `WEAPON_CHECKLIST.md` is what to look at for a weapon.
+Each is an item of its own (`items.register`), UT2004's look always on, no setting. `WEAPON_STATUS.md` is what to look at for a weapon.
 Which careers get which weapon, and from which base, is in `WEAPON_PLAN.md`.
 
 8. **Shield Gun.** For everyone, including the melee-only careers. A melee base for each hero.
