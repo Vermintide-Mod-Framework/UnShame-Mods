@@ -165,7 +165,10 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 			table.remove(waves, index)
 
 			if Unit.alive(wave.owner_unit) then
-				Managers.state.entity:system("area_damage_system"):create_explosion(wave.owner_unit, wave.position:unbox(), Quaternion.identity(), wave.name, 1, wave.item_name, wave.power_level, wave.critical, wave.owner_unit)
+				local area_damage_system = Managers.state.entity:system("area_damage_system")
+
+				-- (the mod's update runs before the game's, so the units' positions are made current for the explosion)
+				utils.with_valid_positions(area_damage_system.create_explosion, area_damage_system, wave.owner_unit, wave.position:unbox(), Quaternion.identity(), wave.name, 1, wave.item_name, wave.power_level, wave.critical, wave.owner_unit)
 			end
 		end
 	end

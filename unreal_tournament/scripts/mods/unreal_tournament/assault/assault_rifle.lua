@@ -254,7 +254,10 @@ local function explode(grenade, position)
 		return
 	end
 
-	Managers.state.entity:system("area_damage_system"):create_explosion(grenade.owner_unit, position, Quaternion.identity(), EXPLOSION, 1, ITEM_KEY, grenade.power_level or 500, false, grenade.owner_unit)
+	local area_damage_system = Managers.state.entity:system("area_damage_system")
+
+	-- (the grenades fly in the mod's update, which runs before the game's, so the units' positions are made current for the explosion)
+	utils.with_valid_positions(area_damage_system.create_explosion, area_damage_system, grenade.owner_unit, position, Quaternion.identity(), EXPLOSION, 1, ITEM_KEY, grenade.power_level or 500, false, grenade.owner_unit)
 	utils.apply_explosion_self_damage(grenade.owner_unit, position, ITEM_KEY, ExplosionTemplates[EXPLOSION].explosion, CONFIG.grenade_self_damage)
 	mod:network_send("ut_assault_grenade_end", "others", grenade.id)
 end
