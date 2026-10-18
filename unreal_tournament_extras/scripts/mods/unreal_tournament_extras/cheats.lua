@@ -145,6 +145,16 @@ mod:command("suicide", "- you die at once (UT's suicide)", function ()
 	end
 end)
 
+-- Fills the career ability's bar at once (the cooldown runs on the machine of the player whose it is)
+mod:command("recharge", "- fills your career ability's bar at once", function ()
+	local _, unit = local_player_and_unit()
+	local career_extension = unit and ScriptUnit.has_extension(unit, "career_system")
+
+	if career_extension then
+		career_extension:reduce_activated_ability_cooldown_percent(1, 1, true)
+	end
+end)
+
 -- UT's "addbots" and "killbots" (DeathMatch.AddBots and KillBots): the hero bots. The game adds bots to the party's empty slots, up to
 -- its cap on the number of bots, and removes bots above it (GameModeAdventure._handle_bots). These set that cap for the call that handles
 -- the bots, so the game adds or removes them. Only the host has bots. The cap lasts until the level is left, as UT's last until the match
