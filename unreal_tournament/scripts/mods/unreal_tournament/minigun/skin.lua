@@ -288,8 +288,23 @@ local smoke = {
 	owed = 0,
 }
 
--- Makes the puffs of smoke that are due, at the model's muzzle, in the space of the model in the player's view (where a UT unit is
--- world_unit meters), drawn with its field of view. The rate falls as MuzzleSmoke's does.
+-- Where the smoke starts: Weapon.GetEffectStart, EffectOffset from the eye in the weapon's view (WeaponFire.DrawMuzzleFlash moves the
+-- smoke emitter there). It moves with the bob and the view shake, but not with the gun's animation, as the barrels' muzzle does.
+local function smoke_start(api)
+	local offset = CONFIG.effect_offset
+	local first_person_unit, point = api.view_point_in_view(offset[2], offset[1], offset[3])
+
+	if not first_person_unit then
+		return nil
+	end
+
+	local camera_node = utils.camera_node(first_person_unit)
+
+	return Unit.world_position(first_person_unit, camera_node) + Quaternion.rotate(Unit.world_rotation(first_person_unit, camera_node), point)
+end
+
+-- Makes the puffs of smoke that are due, in the space of the model in the player's view (where a UT unit is world_unit meters), drawn
+-- with its field of view. The rate falls as MuzzleSmoke's does.
 local function update_smoke(api, world_unit, dt)
 	if smoke.rate <= 0 then
 		return
@@ -297,7 +312,7 @@ local function update_smoke(api, world_unit, dt)
 
 	smoke.owed = smoke.owed + smoke.rate * dt
 
-	local muzzle = api.muzzle_model_position()
+	local muzzle = smoke_start(api)
 
 	while smoke.owed >= 1 and muzzle do
 		local life = random_between(CONFIG.smoke_life)
