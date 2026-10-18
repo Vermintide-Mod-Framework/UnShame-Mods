@@ -28,17 +28,17 @@ local CONFIG = {
 	light_life = 0.15,
 	-- The smoke at the muzzle in the player's own view (MinigunMuzzleSmoke): a round sets it to 30 puffs a second, and the rate falls
 	-- towards none by its own amount a second (Lerp(dt) in MuzzleSmoke.Tick) and stops below 1. A puff lasts 0.6 to 1.2 s, starts 15 to 20
-	-- units across and grows by 4 a second, is a grey of 70 to 113 out of 255, blended by the texture's alpha (STY_Alpha), and fades out
-	-- from a fifth of its life, so it thins out as it goes. It rises: its mass is -0.15 to -0.25 of the zone's gravity, and here it rises at
-	-- the speed it has on average, at half its life.
+	-- units across and grows by 4 a second, is a grey of 70 to 113 out of 255, and is blended by the texture's alpha (STY_Alpha). It
+	-- rises slowly (its mass is -0.15 to -0.25, which xEmitter turns into a rise in its engine, not its scripts), and fades from the start,
+	-- so the puffs stay together by the muzzle and thin out as they rise (both set in the game: rising by that much of the zone's gravity
+	-- sent them up in a long column, and fading only from a fifth of their life kept the column thick).
 	smoke_rate = 30, -- puffs a second
 	smoke_life = { 0.6, 1.2 },
 	smoke_size = { 15, 20 }, -- UT units across
 	smoke_growth = 4, -- UT units across, a second
 	smoke_grey = { 70 / 255, 113 / 255 },
-	smoke_mass = { 0.15, 0.25 },
-	smoke_gravity = 950, -- UT units a second squared
-	smoke_attenuation = 0.2,
+	smoke_rise = { 15, 30 }, -- UT units a second
+	smoke_attenuation = 0,
 	-- SmokeTex is a sheet of puffs (pclSmoke's mNumTileColumns and mNumTileRows, 4 by 4), and each puff is one of them (mRandTextures)
 	smoke_tiles = 16,
 	-- The third person flash (NewMinigunMFlash): four flames in a row along the barrel, each smaller and further out, the last two up to 8
@@ -281,7 +281,7 @@ local function update_smoke(api, world_unit, dt)
 	while smoke.owed >= 1 and muzzle do
 		local life = random_between(CONFIG.smoke_life)
 		local grey = random_between(CONFIG.smoke_grey)
-		local rise = random_between(CONFIG.smoke_mass) * CONFIG.smoke_gravity * life / 2
+		local rise = random_between(CONFIG.smoke_rise)
 
 		smoke.owed = smoke.owed - 1
 
