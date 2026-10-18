@@ -246,11 +246,13 @@ end
 local function apply_staff(template)
 	-- The chart of the item's stats, from 0 to 7. The bolt is the normal attack.
 	template.weapon_diagram = {
+		-- (full damage to armor and 1.2 to monsters; the arcs reach 3 more enemies for half damage; 0.47 of impact, where the repeater's
+		-- 0.3 shows 3)
 		light_attack = {
-			[DamageTypes.ARMOR_PIERCING] = 6,
-			[DamageTypes.CLEAVE] = 1,
+			[DamageTypes.ARMOR_PIERCING] = 7,
+			[DamageTypes.CLEAVE] = 3,
 			[DamageTypes.SPEED] = 2,
-			[DamageTypes.STAGGER] = 4,
+			[DamageTypes.STAGGER] = 5,
 			[DamageTypes.DAMAGE] = 7,
 		},
 		heavy_attack = {
