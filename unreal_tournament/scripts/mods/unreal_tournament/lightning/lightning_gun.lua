@@ -550,6 +550,25 @@ mod:network_register("ut_lightning_bolt", function (_, owner_go_id, x, y, z, nor
 	end
 end)
 
+-- Bots vent the heat above the threshold too. The game's bots start to vent only between half the threshold and just under it
+-- (bt_bot.lua's vent_overcharge), where venting doesn't hurt them, which suits the staves' small shots. A bolt adds 8 heat against a
+-- threshold of 10, so after two bolts a bot would wait seconds for the heat to cool before it could vent, and after more, close to a
+-- minute. Here a bot with the Lightning Gun starts to vent at any heat from half the threshold up, and takes the venting's damage above
+-- the threshold, as a player does.
+mod:hook(BTConditions, "should_vent_overcharge", function (func, blackboard, args, ...)
+	local inventory_extension = blackboard.inventory_extension
+	local slot_data = inventory_extension and inventory_extension:get_slot_data("slot_ranged")
+	local item_data = slot_data and slot_data.item_data
+
+	if blackboard.reloading or not item_data or not TEMPLATE_NAMES[item_data.template] or args.overcharge_limit_type ~= "threshold" then
+		return func(blackboard, args, ...)
+	end
+
+	local current, threshold = blackboard.overcharge_extension:current_overcharge_status()
+
+	return current / threshold >= args.start_min_percentage
+end)
+
 -- The zoom is UT's (zoom.lua)
 mod.zoom.register(TEMPLATE_NAME)
 

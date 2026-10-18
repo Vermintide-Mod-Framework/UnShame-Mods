@@ -476,8 +476,8 @@ runner.add_suite({
 
 -- Bots with the Lightning Gun (its attack_meta_data in lightning_gun.lua). A hero can't be a bot and the player at once, so these run in a
 -- suite of their own with the player as Sienna, and the bot is Kerillian as a Waystalker, with her own mind. The heat is the game's bot
--- tree's to watch (bt_bot.lua): a bot stops firing near the top of the heat, and vents while it is between half the threshold and the
--- threshold.
+-- tree's to watch (bt_bot.lua): a bot stops firing near the top of the heat, and vents from half the threshold up (the game's bots only
+-- up to the threshold, see lightning_gun.lua).
 local BOTS = {
 	profile = "wood_elf",
 	career = 1,
@@ -487,10 +487,10 @@ local BOTS = {
 	special_distance = 14, -- m
 	-- How long the bot has to hurt the special
 	fight_time = 30, -- s
-	-- The heat given to the bot to vent: just under the threshold of 10 (OverchargeData.we_thornsister). It cools by 1 a second, so the
-	-- bot has about 4 s to start venting before the heat is under half the threshold.
-	vent_heat = 9.5,
-	vent_time = 10, -- s
+	-- The heat given to the bot to vent: three bolts' worth, far over the threshold of 10 (OverchargeData.we_thornsister), where the
+	-- game's own bots wouldn't vent until it had cooled for about 20 s
+	vent_heat = 24,
+	vent_time = 5, -- s
 }
 
 -- The damage from the Lightning Gun in a record of t.track_damage
@@ -574,7 +574,7 @@ local function bot_scenarios()
 			end,
 		},
 		{
-			-- With no enemies about, a bot whose gun is hot vents it (the reload button)
+			-- With no enemies about, a bot whose gun is over the threshold vents it at once (the reload button)
 			name = "a bot vents its heat",
 			run = function (t)
 				local bot = t.add_bot(BOTS.profile, BOTS.career, definition.key, BOTS.behind, nil, true)
