@@ -16,15 +16,17 @@ local particles = mod.skin_particles
 local CONFIG = {
 	fire_animation_rate = 1.25, -- SniperFire.FireAnimRate: the Fire animation plays this much faster than its own rate
 	-- NewLightningBolt (PT_Branch) is 30 particles of size 30, each out of place by up to 5 units (mPosDev). It is drawn as a line of
-	-- parts of the streak texture (the upper half of LightningBoltT), each bolt_width units wide and twice that long, so the streak keeps
-	-- the shape it has in the texture. The corners between the parts are out of line by up to bolt_jitter units, about a quarter of a
-	-- part, which makes the bolt ragged as in pictures of UT2004 (at mPosDev's 5 the zigzag repeated evenly). How PT_Branch lays the
+	-- parts of the streak texture (the upper half of LightningBoltT), each bolt_width units wide and bolt_stretch times that long, so the
+	-- texture's zigzag is drawn out along the bolt. The corners between the parts are out of line by up to bolt_jitter units, about a
+	-- quarter of a part, which makes the bolt ragged as in pictures of UT2004 (at mPosDev's 5, and parts twice as long as wide, the
+	-- zigzag repeated evenly and tightly; set against those pictures). How PT_Branch lays the
 	-- texture along the bolt is in UT's engine, not its scripts: one part for each of the 30 particles, squeezed along a short bolt,
 	-- looked like a hatched band in pictures, not UT's thin ragged line. It is the same emitter as the flare, so it fades the same way
 	-- (flare_life). In pictures of UT2004 its streaks look like the texture added once (white middles, thin blue edges), while the flare
 	-- is 9 times the texture: the particles all add their flare at the start, but their streaks lie along the bolt.
 	bolt_width = 30, -- UT units
-	bolt_jitter = 15, -- UT units
+	bolt_stretch = 4, -- a part's length, in widths (the arcs' too)
+	bolt_jitter = 30, -- UT units
 	bolt_intensity = 1,
 	-- ChildLightningBolt: 10 particles of size 15, out of place by up to 15 units
 	arc_width = 15,
@@ -133,7 +135,7 @@ local random_between = utils.random_between
 -- The most parts a bolt is drawn with. A long bolt has longer parts instead, far away where they are small on the screen.
 local MAX_BOLT_PARTS = 100
 
--- The bolt: a line of parts, each a streak of the texture twice as long as it is wide, out of line by a little. A part runs from the
+-- The bolt: a line of parts, each a streak of the texture bolt_stretch times as long as it is wide, out of line by a little. A part runs from the
 -- end of the one before it.
 local function draw_bolt(from, to, width, jitter, life, intensity)
 	local offset = to - from
@@ -143,7 +145,7 @@ local function draw_bolt(from, to, width, jitter, life, intensity)
 		return
 	end
 
-	local count = math.clamp(math.ceil(length / (2 * width)), 1, MAX_BOLT_PARTS)
+	local count = math.clamp(math.ceil(length / (CONFIG.bolt_stretch * width)), 1, MAX_BOLT_PARTS)
 	local direction = offset * (1 / length)
 	local across = Vector3.cross(direction, Vector3.up())
 
