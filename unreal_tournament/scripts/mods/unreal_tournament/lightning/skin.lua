@@ -17,13 +17,14 @@ local CONFIG = {
 	fire_animation_rate = 1.25, -- SniperFire.FireAnimRate: the Fire animation plays this much faster than its own rate
 	-- NewLightningBolt (PT_Branch) is 30 particles of size 30, each out of place by up to 5 units (mPosDev). It is drawn as a line of
 	-- parts of the streak texture (the upper half of LightningBoltT), each bolt_width units wide and twice that long, so the streak keeps
-	-- the shape it has in the texture. The corners between the parts are out of line by up to bolt_jitter units. How PT_Branch lays the
+	-- the shape it has in the texture. The corners between the parts are out of line by up to bolt_jitter units, about a quarter of a
+	-- part, which makes the bolt ragged as in pictures of UT2004 (at mPosDev's 5 the zigzag repeated evenly). How PT_Branch lays the
 	-- texture along the bolt is in UT's engine, not its scripts: one part for each of the 30 particles, squeezed along a short bolt,
 	-- looked like a hatched band in pictures, not UT's thin ragged line. It is the same emitter as the flare, so it fades the same way
 	-- (flare_life). In pictures of UT2004 its streaks look like the texture added once (white middles, thin blue edges), while the flare
 	-- is 9 times the texture: the particles all add their flare at the start, but their streaks lie along the bolt.
 	bolt_width = 30, -- UT units
-	bolt_jitter = 5, -- UT units
+	bolt_jitter = 15, -- UT units
 	bolt_intensity = 1,
 	-- ChildLightningBolt: 10 particles of size 15, out of place by up to 15 units
 	arc_width = 15,
@@ -53,6 +54,10 @@ local CONFIG = {
 	spark_speed = {250, 350},
 	spark_direction_spread = 0.6,
 	spark_air_resistance = 0.2,
+	-- They fall: xEmitter pulls a particle by the zone's gravity times its mass (mMassRange 1.5 to 2.5), as a negative mass makes smoke
+	-- rise
+	spark_gravity = 950, -- UT units a second squared (PhysicsVolume's)
+	spark_mass = {1.5, 2.5},
 	spark_width = {2, 3}, -- UT units
 	spark_thinning = 3, -- UT units a second
 	spark_length = 0.05, -- seconds of travel
@@ -208,6 +213,9 @@ local function sparks(position, normal)
 		local start = Vector3Box(position)
 		local born = Managers.time:time("game")
 		local width = random_between(CONFIG.spark_width)
+		-- (the pull of gravity on it, and the speed it would fall at in the air: gravity / air)
+		local fall = CONFIG.spark_gravity * random_between(CONFIG.spark_mass) * UNIT
+		local terminal = Vector3Box(Vector3(0, 0, -fall / air))
 
 		particles.beam({
 			attenuation = CONFIG.spark_attenuation,
@@ -221,14 +229,17 @@ local function sparks(position, normal)
 			size = width * UNIT,
 			growth = -CONFIG.spark_thinning * UNIT,
 			texture = "blue_spark_line",
-			-- The air slows it by air times its speed a second, so its speed is v * e^(-air * t) and it has gone
-			-- v * (1 - e^(-air * t)) / air.
+			-- The air slows it by air times its speed a second, and gravity pulls it down. With w the speed it falls at in the end
+			-- (gravity / air), its velocity is w + (v - w) * e^(-air * t), and it has gone w * t + (v - w) * (1 - e^(-air * t)) / air.
 			track = function ()
-				local speed_left = math.exp(-air * (Managers.time:time("game") - born))
-				local initial = velocity:unbox()
-				local at = start:unbox() + initial * ((1 - speed_left) / air)
+				local age = Managers.time:time("game") - born
+				local speed_left = math.exp(-air * age)
+				local w = terminal:unbox()
+				local rest = velocity:unbox() - w
+				local at = start:unbox() + w * age + rest * ((1 - speed_left) / air)
+				local now = w + rest * speed_left
 
-				return at - initial * (speed_left * CONFIG.spark_length), at
+				return at - now * CONFIG.spark_length, at
 			end,
 		})
 	end
