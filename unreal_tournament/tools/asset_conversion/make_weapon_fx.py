@@ -23,6 +23,8 @@ TEXTURES = {
     'minigun_flame': ('AW-2004Explosions/Texture/Part_explode2s.tga', 4, 4),
     'tracer_shot': ('AW-2004Particles/Texture/TracerShot.tga', 1, 1),
     'shell_casing': ('XEffects/Texture/ShellCasingTex.tga', 1, 1),
+    # (the smoke at the muzzle in the player's view: MinigunMuzzleSmoke's SmokeTex, blended by its alpha: STY_Alpha)
+    'muzzle_smoke': ('XEffects/Texture/SmokeTex.tga', 1, 1),
     # (where its rounds hit a wall: pclImpactSmoke's puffs and SmallExplosion's fire, a RocketExplosion)
     'impact_smoke': ('XEffects/Texture/EmitSmoke_t.tga', 4, 4),
     'small_explosion': ('XEffects/Texture/Rexpt.tga', 1, 1),
@@ -46,7 +48,7 @@ TEXTURES = {
 }
 
 # (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
-SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff')
+SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff', 'muzzle_smoke')
 
 # The textures that UT draws with FB_Brighten, or as STY_Translucent, which is the same: c + d * (1 - c). They are read as they are, and
 # their materials are derived from fx_particle_brighten_graph and fx_particle_weapon_brighten_graph (make_combo_materials.py).
@@ -65,8 +67,9 @@ TOP_HALF = ('shield_charge_spark',)
 
 # The effects that UT draws with the weapon in the player's view (attached to it) also get fx_weapon_<name>, which draws with the
 # weapon model's field of view (units/ut/fx/particle_weapon_linear, or particle_weapon for an srgb one), so they are among the model's
-# parts. The Minigun's flash and shells are attached to the weapon (MinigunFire.InitEffects, Minigun.PostBeginPlay).
-WEAPON = ('minigun_burst', 'shell_casing', 'force_ring', 'shield_charge_spark')
+# parts. The Minigun's flash and shells are attached to the weapon (MinigunFire.InitEffects, Minigun.PostBeginPlay), and its smoke is
+# drawn with the weapon's field of view (WeaponFire.DrawMuzzleFlash).
+WEAPON = ('minigun_burst', 'shell_casing', 'muzzle_smoke', 'force_ring', 'shield_charge_spark')
 
 def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_alpha=False):
     if keep_alpha:
