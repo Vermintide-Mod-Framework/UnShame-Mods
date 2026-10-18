@@ -76,9 +76,12 @@ local CONFIG = {
 	primary_damage = 7.5,
 	alt_damage = 15,
 	-- The multipliers of the damage and the stagger for each armor type: unarmored, armored, monsters, players, berserkers and super
-	-- armor. UT has no armor. Small rounds are poor against it.
+	-- armor, for normal and critical hits. UT has no armor. The primary fire's small rounds are poor against it, and the alt fire's
+	-- heavier ones go through more of it.
 	armor_attack = {1, 0.5, 1, 1, 1, 0.3},
 	armor_impact = {1, 1, 1, 1, 1, 0.5},
+	alt_armor_attack = {1, 0.8, 1, 1, 1, 0.5},
+	alt_armor_impact = {1, 1, 1, 1, 1, 0.5},
 	-- MinigunFire.Spread and MinigunAltFire.Spread: each round is off the aim by a random share of this much of the aim's length
 	primary_spread = 0.08,
 	alt_spread = 0.03,
@@ -96,25 +99,21 @@ local CONFIG = {
 -- A round stops at the first enemy it hits, as UT's trace does. A round on the head has the game's usual bonus (shot_repeating's), as
 -- this game's guns all do, where UT gives one only to its sniper weapons.
 
-local function set_armor_modifiers(profile)
-	utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact)
-end
-
-local function bullet_profile(profile, damage)
+local function bullet_profile(profile, damage, armor_attack, armor_impact)
 	make_flat(profile, attack_power_for(damage), impact_power_for(damage), "shot_shotgun")
 
 	profile.cleave_distribution = {
 		attack = 0.01,
 		impact = 0.01,
 	}
-	set_armor_modifiers(profile)
+	utils.set_armor_modifiers(profile, armor_attack, armor_impact, true)
 end
 
 register_damage_profile("ut_minigun_bullet", "shot_repeating", function (profile)
-	bullet_profile(profile, CONFIG.primary_damage)
+	bullet_profile(profile, CONFIG.primary_damage, CONFIG.armor_attack, CONFIG.armor_impact)
 end)
 register_damage_profile("ut_minigun_alt_bullet", "shot_repeating", function (profile)
-	bullet_profile(profile, CONFIG.alt_damage)
+	bullet_profile(profile, CONFIG.alt_damage, CONFIG.alt_armor_attack, CONFIG.alt_armor_impact)
 end)
 
 -- The state of the local player's barrels and buttons, which the skin draws and plays
