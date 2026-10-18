@@ -1312,7 +1312,7 @@ local function make_context(suite)
 	end
 
 	-- A list that is filled with the buffs on attack that run for the player's hits with an item from now on (DamageUtils.buff_on_attack,
-	-- where the game's talents and traits proc): each as "attack type, hit zone"
+	-- where the game's talents and traits proc): each as "attack type, hit zone, target number"
 	function t.procs(item_key)
 		local list = {}
 
@@ -1367,7 +1367,7 @@ mod:hook(DamageUtils, "buff_on_attack", function (func, unit, hit_unit, attack_t
 	local watch = runner.proc_watch
 
 	if watch and unit == player_unit() and damage_source == watch.item_key and ran ~= false then
-		watch.list[#watch.list + 1] = string.format("%s %s", tostring(attack_type), tostring(hit_zone_name))
+		watch.list[#watch.list + 1] = string.format("%s %s %s", tostring(attack_type), tostring(hit_zone_name), tostring(target_number))
 	end
 
 	return ran

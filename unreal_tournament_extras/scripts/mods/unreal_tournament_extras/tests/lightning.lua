@@ -474,9 +474,9 @@ local function scenarios()
 			end,
 		},
 		{
-			-- The bolt and its arcs are one shot, so the game's buffs on attack (talents, traits) run once for it, as for the Flak Cannon's
-			-- shell, or twice when the second hit is on the head
-			name = "a bolt and its arcs proc once",
+			-- The bolt and its arcs are one shot, so the game's buffs on attack (talents, traits) run once for each enemy it hurts, numbered
+			-- as the targets of a shot that goes through enemies are: the bolt's is the first, and each arc's the next
+			name = "a bolt and its arcs run the buffs as the targets of one shot",
 			run = function (t)
 				cool(t)
 
@@ -513,12 +513,24 @@ local function scenarios()
 					end
 				end
 
-				local second_is_head = procs[2] and string.find(procs[2], "head", 1, true)
+				-- (each entry ends with its target number)
+				local numbers = {}
+
+				for _, proc in ipairs(procs) do
+					local number = tonumber(string.match(proc, "(%d+)$"))
+
+					if number then
+						numbers[number] = (numbers[number] or 0) + 1
+					end
+				end
 
 				t.log("%d enemies hurt, the buffs ran %d times (%s)", hurt, #procs, table.concat(procs, ", "))
 				t.expect(hurt > 1, "the arcs hurt no enemy beside the one hit")
-				t.expect(#procs >= 1, "the buffs did not run for the bolt")
-				t.expect(#procs <= 1 or #procs == 2 and second_is_head, "the buffs ran %d times for one bolt (%s)", #procs, table.concat(procs, ", "))
+				t.expect(#procs == hurt, "the buffs ran %d times for %d enemies hurt (%s)", #procs, hurt, table.concat(procs, ", "))
+
+				for number = 1, hurt do
+					t.expect(numbers[number] == 1, "the buffs ran %d times as target %d, not once (%s)", numbers[number] or 0, number, table.concat(procs, ", "))
+				end
 			end,
 		},
 		{

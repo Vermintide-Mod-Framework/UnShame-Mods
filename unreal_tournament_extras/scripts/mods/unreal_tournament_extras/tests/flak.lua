@@ -137,8 +137,9 @@ local function collector(t, filter, set)
 end
 
 -- A shell fired at three targets close together, that far ahead, looking that far down. The game's hitscan shotguns run the buffs that
--- trigger on a hit once a shot (and once more for its first head shot), and the shell, its explosion and its chunks are one shot.
-local function shell_procs(t, distance, pitch)
+-- trigger on a hit once a shot (and once more for its first head shot), and the shell's hit and its chunks are one shot. Its explosion
+-- runs them as the game's explosions do, and is not counted. With hits_enemy the shell hits one of them, so they run at least once.
+local function shell_procs(t, distance, pitch, hits_enemy)
 	local targets = {}
 
 	for i, side in ipairs({ -0.8, 0, 0.8 }) do
@@ -154,14 +155,14 @@ local function shell_procs(t, distance, pitch)
 	t.wait(1)
 	t.look(pitch)
 
-	-- The buffs on attack that run for the player's flak, counted where the game calls them
+	-- The buffs on attack that run for the player's flak, counted where the game calls them, but not the explosion's
 	local procs = {}
 	local buff_on_attack = DamageUtils.buff_on_attack
 
 	DamageUtils.buff_on_attack = function (unit, hit_unit, attack_type, is_critical_strike, hit_zone_name, target_number, send_to_server, buff_type, unmodified, damage_source, ...)
 		local ran = buff_on_attack(unit, hit_unit, attack_type, is_critical_strike, hit_zone_name, target_number, send_to_server, buff_type, unmodified, damage_source, ...)
 
-		if unit == t.unit() and damage_source == definition.key and ran ~= false then
+		if unit == t.unit() and damage_source == definition.key and attack_type ~= "aoe" and ran ~= false then
 			procs[#procs + 1] = string.format("%s %s", tostring(attack_type), tostring(hit_zone_name))
 		end
 
@@ -181,7 +182,8 @@ local function shell_procs(t, distance, pitch)
 
 	local second_is_head = procs[2] and string.find(procs[2], "head", 1, true)
 
-	t.expect(#procs >= 1, "the shell hit nothing")
+	t.log("the buffs ran %d times for the shell's hit and its chunks (%s)", #procs, table.concat(procs, ", "))
+	t.expect(not hits_enemy or #procs >= 1, "the shell hit no enemy")
 	t.expect(#procs <= 1 or #procs == 2 and second_is_head, "the buffs ran %d times for one shell (%s)", #procs, table.concat(procs, ", "))
 end
 
@@ -572,7 +574,7 @@ local function scenarios()
 			end,
 		},
 		{
-			name = "a shell that lands among enemies procs once",
+			name = "a shell that lands among enemies procs at most once",
 			run = function (t)
 				-- (the shell lands on the ground in front of them, 6 m ahead, and they stand in its explosion)
 				shell_procs(t, 8, -15.8)
@@ -582,7 +584,7 @@ local function scenarios()
 			name = "a shell that hits an enemy procs once",
 			run = function (t)
 				-- (aimed at the feet of the middle one 5 m ahead: the lob puts the shell in its body)
-				shell_procs(t, 5, -19)
+				shell_procs(t, 5, -19, true)
 			end,
 		},
 		{

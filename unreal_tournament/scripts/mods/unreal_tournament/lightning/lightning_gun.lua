@@ -412,12 +412,17 @@ end
 
 -- Jumps the arcs from the place the bolt hit. Returns where each one ends, and the normal of what it hit: the surface's, or the way
 -- back along the arc if it hit nothing (SniperFire.DoTrace). An arc that hits an enemy that is not the one the bolt hit damages it. The
--- arcs go for the enemies near (arc_targets) before they go in random directions. An arc's hit doesn't run the buffs on attack (talents
--- and traits): the bolt's own hit runs them, once for the shot, as the Flak Cannon's shell and the Shock Rifle's combo do.
+-- arcs go for the enemies near (arc_targets) before they go in random directions. An arc's hit runs the buffs on attack (talents and
+-- traits) as the next target of the bolt's shot, as the game's shots that go through enemies number them (the bolt's own hit is the
+-- first, DamageUtils._projectile_hit_character's target_number). An arc that hits an enemy that another arc has hit damages it again,
+-- but runs no buffs: it is not a new target.
 local function jump_arcs(shot, origin, main_unit, world)
 	local arcs = {}
 	local normals = {}
 	local targets = arc_targets(shot, origin, main_unit, world)
+	-- (the enemies the arcs have hit, and how many targets the shot has, the bolt's included)
+	local hit_units = {}
+	local target_number = 1
 
 	for i = 1, CONFIG.arc_count do
 		local target = targets[i]
@@ -434,7 +439,14 @@ local function jump_arcs(shot, origin, main_unit, world)
 			local unit = hit_unit_of(hit)
 
 			if unit ~= main_unit and Unit.get_data(unit, "breed") then
-				DamageUtils.process_projectile_hit(world, shot.item_name, shot.owner_unit, shot.is_server, { hit }, ARC_ACTION, direction, false, nil, nil, shot._is_critical_strike, shot.power_level)
+				local new_target = not hit_units[unit]
+
+				if new_target then
+					hit_units[unit] = true
+					target_number = target_number + 1
+				end
+
+				DamageUtils.process_projectile_hit(world, shot.item_name, shot.owner_unit, shot.is_server, { hit }, ARC_ACTION, direction, new_target, nil, nil, shot._is_critical_strike, shot.power_level, nil, target_number)
 			end
 		end
 	end

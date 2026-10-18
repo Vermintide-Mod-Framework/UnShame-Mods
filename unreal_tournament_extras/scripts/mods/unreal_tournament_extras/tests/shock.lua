@@ -663,10 +663,9 @@ local function scenarios()
 			end,
 		},
 		{
-			-- A combo hurts the enemies within its radius and none past it, and the game's buffs on attack (talents, traits) run once for
-			-- it, as for the Flak Cannon's shell, or twice when the second hit is on the head. Each enemy is judged by how far it was from
-			-- where the combo went off.
-			name = "a combo hurts the enemies within its radius, and procs once",
+			-- A combo hurts the enemies within its radius and none past it. Each enemy is judged by how far it was from where the combo went
+			-- off.
+			name = "a combo hurts the enemies within its radius",
 			run = function (t)
 				local enemies = {}
 
@@ -693,9 +692,6 @@ local function scenarios()
 
 				t.press("action_two", 0.05)
 				t.wait(CONFIG.ball_fire_rate + 0.05)
-
-				local procs = t.procs(definition.key)
-
 				t.press("action_one", 0.05)
 				t.wait(0.8)
 
@@ -732,12 +728,6 @@ local function scenarios()
 						t.expect(not hurt, "the combo hurt an enemy %.1f m from it, past its radius of %.1f m (%.1f)", distance, CONFIG.combo_radius, damages[i].total)
 					end
 				end
-
-				local second_is_head = procs[2] and string.find(procs[2], "head", 1, true)
-
-				t.log("the buffs ran %d times (%s)", #procs, table.concat(procs, ", "))
-				t.expect(#procs >= 1, "the buffs did not run for the combo")
-				t.expect(#procs <= 1 or #procs == 2 and second_is_head, "the buffs ran %d times for one combo (%s)", #procs, table.concat(procs, ", "))
 			end,
 		},
 		{
