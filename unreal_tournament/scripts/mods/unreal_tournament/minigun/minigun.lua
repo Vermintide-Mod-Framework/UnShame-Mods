@@ -371,6 +371,14 @@ local function apply_gun(template)
 		effective_against_charged = 0,
 		effective_against_combined = effective_against,
 		fire_input = "fire_hold",
+		-- Once a bot has fired, it holds the button for as long as this is true (BTBotShootAction), as with Bardin's rotary gun. Without
+		-- it, a bot presses only on the frames its aim is good enough, and each time it lets go the barrels' wind up starts again, so no
+		-- round ever leaves. It lets go when an ally or the level is in the way.
+		hold_fire_condition = function (t, blackboard)
+			local shoot_blackboard = blackboard and blackboard.shoot
+
+			return shoot_blackboard ~= nil and not shoot_blackboard.obstructed
+		end,
 		max_range = CONFIG.bot_max_range,
 		ut_minigun = true,
 	}
