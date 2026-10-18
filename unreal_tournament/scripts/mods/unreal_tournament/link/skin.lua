@@ -31,7 +31,9 @@ local CONFIG = {
 	-- LinkBeamEffect: the beam is the beam texture on each stretch of the curve. It is green, and gold while something is linked.
 	beam_width = 0.18, -- m
 	beam_life = 0.06, -- seconds. The beam is made again every frame.
-	beam_sound_seconds = 1.26, -- length of the beam's sound (BLinkGunBeam)
+	-- The beam's sound (BLinkGunBeam, LinkFire's AmbientSound) loops while the beam is drawn, and is stopped once it hasn't been for this
+	-- long
+	beam_sound_stop_after = 0.15, -- seconds
 	end_flare_size = 60,
 	-- Bolts of another player that start less than this far apart (in seconds) belong to the same shot
 	shot_gap = 0.1,
@@ -43,10 +45,40 @@ local skin_api
 
 local remote_shots = utils.shot_grouping(CONFIG.shot_gap)
 
--- The time at which each beam's sound is played again, for each beam state
-local beam_sound_time = setmetatable({}, {
-	__mode = "k",
-})
+-- The sound of each beam that is drawn, by its beam state: { the player's own (an id of skin_api.play_sound) or another's on their
+-- character (a handle of utils.play_on_unit), when it was last drawn }
+local beam_sounds = {}
+
+local function stop_beam_sound(entry)
+	if not Managers.world:has_world("level_world") then
+		return
+	end
+
+	if entry.id then
+		skin_api.stop_sound(entry.id)
+	else
+		utils.stop_sound(entry.handle)
+	end
+end
+
+-- Stops the sounds of the beams that are no longer drawn
+local function update_beam_sounds()
+	if not next(beam_sounds) or not Managers.time:has_timer("game") then
+		return
+	end
+
+	local now = Managers.time:time("game")
+
+	for state, entry in pairs(beam_sounds) do
+		if now - entry.drawn >= CONFIG.beam_sound_stop_after then
+			stop_beam_sound(entry)
+
+			beam_sounds[state] = nil
+		end
+	end
+end
+
+mod.update_callbacks[#mod.update_callbacks + 1] = update_beam_sounds
 
 -- Shows a flash at the muzzle, either of the mesh in the character's hand or of the model in the player's own view.
 local function muzzle_flash(follow, scale)
@@ -110,6 +142,12 @@ skin_api = mod.weapon_skin.new({
 	end,
 	on_level_exit = function ()
 		remote_shots.clear()
+
+		for _, entry in pairs(beam_sounds) do
+			stop_beam_sound(entry)
+		end
+
+		table.clear(beam_sounds)
 	end,
 })
 
@@ -193,8 +231,8 @@ mod.link_beam_callbacks.start_position = function (owner_unit)
 	return third_person.muzzle_position(owner_unit)
 end
 
--- Draws the beam: UT's beam texture on every stretch of the curve, drawn again each frame, and a flare where it ends. It also plays
--- the beam's sound, again each time it ends, because it is a loop in UT.
+-- Draws the beam: UT's beam texture on every stretch of the curve, drawn again each frame, and a flare where it ends. It also starts
+-- the beam's sound, which loops until the beam is no longer drawn (update_beam_sounds).
 mod.link_beam_callbacks.draw = function (state, points, count)
 	local linked = state.linked or state.target ~= nil
 	local texture = linked and "link_beam_yellow" or "link_beam_green"
@@ -222,13 +260,19 @@ mod.link_beam_callbacks.draw = function (state, points, count)
 		texture = linked and "link_ring_yellow" or "link_ring_green",
 	})
 
-	if not beam_sound_time[state] or now >= beam_sound_time[state] then
-		beam_sound_time[state] = now + CONFIG.beam_sound_seconds
+	local entry = beam_sounds[state]
+
+	if not entry then
+		entry = {}
 
 		if state.received then
-			skin_api.play_sound_at("ut_link_beam_3d", points[1])
+			entry.handle = Unit.alive(state.owner_unit) and utils.play_on_unit("ut_link_beam_3d", state.owner_unit) or nil
 		else
-			skin_api.play_sound("ut_link_beam")
+			entry.id = skin_api.play_sound("ut_link_beam")
 		end
+
+		beam_sounds[state] = entry
 	end
+
+	entry.drawn = now
 end

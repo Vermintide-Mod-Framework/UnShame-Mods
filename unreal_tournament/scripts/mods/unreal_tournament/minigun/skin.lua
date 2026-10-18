@@ -466,7 +466,8 @@ local function round_sound(api, mode)
 	end
 end
 
--- The others' fire, on their characters: { handle (utils.play_on_unit), mode, time of the last round } for each
+-- The fire heard from the characters (the others', and the player's own in a third person view): { handle (utils.play_on_unit), mode, time
+-- of the last round } for each
 local remote_fire = {}
 
 local function remote_round_sound(owner_unit, mode)
@@ -485,7 +486,7 @@ local function remote_round_sound(owner_unit, mode)
 	fire.last = Managers.time:time("game")
 end
 
--- Stops the others' fire once their rounds stop, or they are gone
+-- Stops the characters' fire once their rounds stop, or they are gone
 local function update_remote_sounds(now)
 	for owner_unit, fire in pairs(remote_fire) do
 		if not Unit.alive(owner_unit) or now - fire.last >= CONFIG.stop_after then
@@ -604,10 +605,8 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 		return api.third_person.point_position(owner_unit, ejector[1], ejector[2], ejector[3])
 	end, Quaternion.right(rotation), Quaternion.forward(rotation), Quaternion.up(rotation), UNIT, rotation)
 
-	-- The others hear the gun from where its holder is
-	if not utils.is_local_player_unit(owner_unit) then
-		remote_round_sound(owner_unit, mode)
-	end
+	-- The gun is heard from where its holder is: the others', and the player's own in a third person view
+	remote_round_sound(owner_unit, mode)
 end
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()

@@ -83,7 +83,6 @@ local CONFIG = {
 		0.28,
 		0.26,
 	},
-	shell_sound_seconds = 2.11, -- length of the shell's sound loop (BFlakCannonProjectile)
 	-- FlashExplosion: 150 units wide, growing 500 a second, lasting 0.25 s
 	explosion_flash_size = 150,
 	explosion_flash_growth = 500,
@@ -107,6 +106,11 @@ local skin_api
 local visuals = {}
 
 local function destroy_visual(visual)
+	-- (the shell's sound loops until it is stopped; when the level ends its world can be gone, and its sounds with it)
+	if visual.sound and Managers.world:has_world("level_world") then
+		utils.stop_sound(visual.sound)
+	end
+
 	if Unit.alive(visual.unit) then
 		World.destroy_unit(visual.world, visual.unit)
 	end
@@ -199,7 +203,6 @@ local function update_visuals(dt)
 
 			if visual.kind == "shell" then
 				visual.smoke_time = visual.smoke_time - dt
-				visual.sound_time = visual.sound_time - dt
 
 				if visual.smoke_time <= 0 then
 					visual.smoke_time = CONFIG.shell_smoke_interval
@@ -217,10 +220,9 @@ local function update_visuals(dt)
 					})
 				end
 
-				if visual.sound_time <= 0 then
-					visual.sound_time = CONFIG.shell_sound_seconds
-
-					skin_api.play_sound_at("ut_flak_shell_3d", position)
+				-- (the shell's sound, BFlakCannonProjectile, is its AmbientSound: it loops, on the shell, until the shell is gone)
+				if not visual.sound then
+					visual.sound = utils.play_on_unit("ut_flak_shell_3d", visual.unit)
 				end
 			end
 		end
@@ -247,7 +249,6 @@ local function add_visual(projectile, kind, unit_name)
 		previous = Vector3Box(position),
 		projectile = projectile,
 		smoke_time = 0,
-		sound_time = 0,
 		speed = 0,
 		trail_from = Vector3Box(position),
 		trail_time = 0,

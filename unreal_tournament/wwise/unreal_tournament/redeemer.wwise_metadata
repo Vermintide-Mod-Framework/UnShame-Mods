@@ -2,6 +2,6 @@ events = {
 	ut_redeemer_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.802 duration_max = 1.802 positioning = "2D" }
 	ut_redeemer_select = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.577 duration_max = 1.577 positioning = "2D" }
 	ut_redeemer_fire_3d = { attenuation_max = 60 duration_type = "OneShot" duration_min = 1.802 duration_max = 1.802 positioning = "3D" }
-	ut_redeemer_flight_3d = { attenuation_max = 80 duration_type = "OneShot" duration_min = 1.318 duration_max = 1.318 positioning = "3D" }
+	ut_redeemer_flight_3d = { attenuation_max = 80 duration_type = "Infinite" duration_min = 1.318 duration_max = 1.318 positioning = "3D" }
 	ut_redeemer_explosion_3d = { attenuation_max = 200 duration_type = "OneShot" duration_min = 3.142 duration_max = 3.142 positioning = "3D" }
 }

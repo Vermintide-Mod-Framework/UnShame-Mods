@@ -40,7 +40,6 @@ local CONFIG = {
 	inspect_pose_speed = 5, -- how fast the model moves to the pose and back, per second
 	inspect_sway = 5, -- degrees of yaw each way
 	inspect_sway_speed = 1.8, -- radians per second
-	projectile_sound_seconds = 1.795, -- length of the ball's sound (ShockRifleProjectile)
 	-- How fast each shot's animation plays (WeaponFire.FireAnimRate). ShockProjFire says 1.5, and ShockBeamFire leaves the default 1.
 	fire_animation_rates = {
 		Fire = 1,
@@ -100,20 +99,8 @@ local function update_balls(dt)
 	for i = #balls, 1, -1 do
 		local ball = balls[i]
 
-		-- The ball's sound is a loop in UT. It is played again each time it ends, from where the ball is.
-		ball.sound_time = (ball.sound_time or 0) - dt
-
-		if ball.sound_time <= 0 then
-			local position = ball.follow()
-
-			if position then
-				skin_api.play_sound_at("ut_shock_projectile_3d", position)
-
-				ball.sound_time = CONFIG.projectile_sound_seconds
-			end
-		end
-
 		if not fx.update_ball(ball, dt) then
+			utils.stop_sound(ball.sound)
 			table.remove(balls, i)
 		end
 	end
@@ -396,7 +383,7 @@ mod.init_callbacks.shock_ball = function (projectile)
 	-- has moved a frame further (past the surface). So the frame's impacts are checked as well as the game's own stop.
 	local impact_extension = projectile._impact_extension
 
-	balls[#balls + 1] = fx.new_ball(function ()
+	local ball = fx.new_ball(function ()
 		if not Unit.alive(unit) or projectile._stop_impacts then
 			return nil
 		end
@@ -407,6 +394,10 @@ mod.init_callbacks.shock_ball = function (projectile)
 
 		return Unit.world_position(unit, 0)
 	end)
+
+	-- (the ball's sound, ShockRifleProjectile, is its AmbientSound: it loops, on the ball, until the ball is gone)
+	ball.sound = utils.play_on_unit("ut_shock_projectile_3d", unit)
+	balls[#balls + 1] = ball
 
 	skin_api.debug("ball")
 end

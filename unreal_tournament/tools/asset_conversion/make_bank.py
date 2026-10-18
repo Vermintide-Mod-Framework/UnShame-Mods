@@ -190,6 +190,10 @@ ATTENUATION = bytes.fromhex('a07e632b00000000ffffffff010207000000000000000000090
 LOOPS = {
     # (MinigunFire.PlayAmbientSound: FiringSound while it fires, WindingSound while the barrels wind up and down)
     'ut_minigun_fire', 'ut_minigun_alt_fire', 'ut_minigun_wind', 'ut_minigun_fire_3d', 'ut_minigun_alt_fire_3d',
+    # (the projectiles' AmbientSounds: FlakShell, RocketProj, ShockProjectile and RedeemerProjectile)
+    'ut_flak_shell_3d', 'ut_rocket_projectile_3d', 'ut_shock_projectile_3d', 'ut_redeemer_flight_3d',
+    # (LinkFire's beam, ShieldFire's charge and BioChargedFire's goop: the AmbientSound of the one who holds the gun)
+    'ut_link_beam', 'ut_link_beam_3d', 'ut_shield_charge', 'ut_shield_charge_3d', 'ut_bio_goop_loop', 'ut_bio_goop_loop_3d',
 }
 
 # A sound object's properties start at this offset: their count, their ids, then a value of 4 bytes for each, in the order of the ids.

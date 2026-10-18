@@ -5,6 +5,6 @@ events = {
 	ut_flak_load = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.781 duration_max = 0.781 positioning = "2D" }
 	ut_flak_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 1.421 duration_max = 1.421 positioning = "3D" }
 	ut_flak_alt_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 1.333 duration_max = 1.333 positioning = "3D" }
-	ut_flak_shell_3d = { attenuation_max = 25 duration_type = "OneShot" duration_min = 2.113 duration_max = 2.113 positioning = "3D" }
+	ut_flak_shell_3d = { attenuation_max = 25 duration_type = "Infinite" duration_min = 2.113 duration_max = 2.113 positioning = "3D" }
 	ut_flak_explosion_3d = { attenuation_max = 50 duration_type = "OneShot" duration_min = 2.926 duration_max = 2.926 positioning = "3D" }
 }

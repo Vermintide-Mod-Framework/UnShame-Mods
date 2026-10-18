@@ -18,8 +18,6 @@ local TEMPLATE_NAME = mod.items.weapons[SETTING_ID].template
 local CONFIG = {
 	-- RedeemerProjectile.RotationRate: the missile turns about its length by 50000 of 65536 a second
 	missile_turns_per_second = 50000 / 65536,
-	-- The missile's flight sound (AmbientSound redeemer_flight) is played again when it ends
-	flight_sound_seconds = 1.318,
 	-- RedeemerProjectile's light: LightHue 28 (orange), LightRadius 6
 	light_color = { 1, 0.6, 0.2 },
 	light_intensity = 2,
@@ -55,6 +53,11 @@ local missiles = {}
 local last_direction = Vector3Box(Vector3.forward())
 
 local function destroy_missile(missile)
+	-- (the flight sound loops until it is stopped; when the level ends its world can be gone, and its sounds with it)
+	if missile.sound and Managers.world:has_world("level_world") then
+		utils.stop_sound(missile.sound)
+	end
+
 	if Unit.alive(missile.unit) then
 		World.destroy_unit(missile.world, missile.unit)
 	end
@@ -126,7 +129,6 @@ local function update_missiles(dt)
 
 			missile.previous:store(position)
 			missile.time = missile.time + dt
-			missile.sound_time = missile.sound_time - dt
 
 			if Vector3.length(moved) > 0.0001 then
 				missile.direction:store(Vector3.normalize(moved))
@@ -142,10 +144,9 @@ local function update_missiles(dt)
 			Unit.set_local_rotation(missile.unit, 0, Quaternion.multiply(Quaternion.look(direction, Vector3.up()), turn))
 			trail(missile, position, direction, dt)
 
-			if missile.sound_time <= 0 then
-				missile.sound_time = CONFIG.flight_sound_seconds
-
-				skin_api.play_sound_at("ut_redeemer_flight_3d", position)
+			-- (the flight sound, redeemer_flight, is the missile's AmbientSound: it loops, on the missile, until the missile is gone)
+			if not missile.sound then
+				missile.sound = utils.play_on_unit("ut_redeemer_flight_3d", missile.unit)
 			end
 		end
 	end
@@ -171,7 +172,6 @@ mod.skin_init_callbacks.redeemer = function (projectile)
 		previous = Vector3Box(position),
 		projectile = projectile,
 		smoke_time = 0,
-		sound_time = 0,
 		time = 0,
 		unit = World.spawn_unit(world, "units/ut/redeemer/missile", position),
 		world = world,

@@ -81,8 +81,6 @@ local CONFIG = {
 	shake_offset = -20, -- UT units, along the view
 	shake_rate = -1000, -- UT units a second
 	shake_time = 2,
-	-- The length of shieldgun_charge, which loops while the gun charges (the bank's ut_shield_charge)
-	charge_sound_length = 2.03, -- seconds
 	-- The shove of a push (UT has no push). The gun and the shield move on a spring, which goes shove_frequency radians a second and is
 	-- damped by shove_damping (1 is just enough not to swing past). They are pulled towards shove_forward ahead in the view (UT units) for
 	-- shove_out seconds, which takes them out quickly and a little past it. While both buttons are held for a bash they settle back to
@@ -437,23 +435,14 @@ local function update_state(api, skin, dt)
 		api.stop_sound(skin.charge_sound)
 
 		skin.charge_sound = api.play_sound("ut_shield_charge")
-		skin.charge_sound_time = CONFIG.charge_sound_length
 	elseif charging and not skin.charged and skin.animation == "Charge" and skin.time >= api.animation_duration("Charge") then
 		skin.charged = true
 
 		api.play("Charged", nil, true)
 	end
 
-	-- The charge sound is UT's AmbientSound while the gun charges, which loops. The bank's sounds play once, so it is played again
-	-- each time it ends. It stops when the charge does.
-	if charging then
-		skin.charge_sound_time = (skin.charge_sound_time or 0) - dt
-
-		if skin.charge_sound_time <= 0 then
-			skin.charge_sound = api.play_sound("ut_shield_charge")
-			skin.charge_sound_time = skin.charge_sound_time + CONFIG.charge_sound_length
-		end
-	elseif skin.charge_sound then
+	-- The charge sound is UT's AmbientSound while the gun charges, which loops (the bank's sound loops). It stops when the charge does.
+	if not charging and skin.charge_sound then
 		api.stop_sound(skin.charge_sound)
 
 		skin.charge_sound = nil
@@ -715,7 +704,7 @@ local THIRD_PERSON = {
 
 local events = shield.events
 
--- What each character's gun shows, as [unit] = { charge_started, spark_time, charge_sound, charge_sound_time, shield_up, shield_sound,
+-- What each character's gun shows, as [unit] = { charge_started, spark_time, charge_sound, shield_up, shield_sound,
 -- flash_until }
 local characters = {}
 
@@ -900,7 +889,6 @@ local function on_event(unit, event)
 		state.charge_started = now()
 		state.spark_time = 0
 		state.charge_sound = play_on_unit("ut_shield_charge_3d", unit)
-		state.charge_sound_time = CONFIG.charge_sound_length
 	elseif event == events.charge_end or event == events.punch then
 		stop_handle(state.charge_sound)
 
@@ -985,16 +973,8 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 				end
 			end
 
-			-- (the charge sound loops as the first person's does)
 			if state.charge_started then
 				third_person_sparks(api, unit, state, dt)
-
-				state.charge_sound_time = state.charge_sound_time - dt
-
-				if state.charge_sound_time <= 0 then
-					state.charge_sound = play_on_unit("ut_shield_charge_3d", unit)
-					state.charge_sound_time = state.charge_sound_time + CONFIG.charge_sound_length
-				end
 			end
 		end
 	end

@@ -46,7 +46,6 @@ local CONFIG = {
 		0.85,
 		0.85,
 	},
-	rocket_sound_seconds = 1.87, -- length of the rocket's sound loop (RocketLauncherProjectile)
 	-- The explosion (NewExplosionA) has the game's own explosion, with its smoke and the mark it leaves, a flash, and three fireballs.
 	-- Each fireball plays a sheet of 16 frames. All three use the same sheet, one of two.
 	explosion_effect = mod.effects.game_effect("fx/wpnfx_frag_grenade_impact"),
@@ -198,6 +197,11 @@ local random_between = utils.random_between
 local random_direction = utils.random_direction
 
 local function destroy_visual(visual)
+	-- (the rocket's sound loops until it is stopped; when the level ends its world can be gone, and its sounds with it)
+	if visual.sound and Managers.world:has_world("level_world") then
+		utils.stop_sound(visual.sound)
+	end
+
 	if Unit.alive(visual.unit) then
 		World.destroy_unit(visual.world, visual.unit)
 	end
@@ -233,7 +237,6 @@ local function update_visuals(dt)
 			visual.previous:store(position)
 			visual.time = visual.time + dt
 			visual.smoke_time = visual.smoke_time - dt
-			visual.sound_time = visual.sound_time - dt
 
 			if Vector3.length(moved) > 0.0001 then
 				visual.direction:store(Vector3.normalize(moved))
@@ -263,10 +266,9 @@ local function update_visuals(dt)
 				})
 			end
 
-			if visual.sound_time <= 0 then
-				visual.sound_time = CONFIG.rocket_sound_seconds
-
-				skin_api.play_sound_at("ut_rocket_projectile_3d", position)
+			-- (the rocket's sound, RocketLauncherProjectile, is its AmbientSound: it loops, on the rocket, until the rocket is gone)
+			if not visual.sound then
+				visual.sound = utils.play_on_unit("ut_rocket_projectile_3d", visual.unit)
 			end
 		end
 	end
@@ -287,7 +289,6 @@ local function add_visual(projectile)
 		previous = Vector3Box(position),
 		projectile = projectile,
 		smoke_time = 0,
-		sound_time = 0,
 		time = 0,
 		unit = unit,
 		world = world,

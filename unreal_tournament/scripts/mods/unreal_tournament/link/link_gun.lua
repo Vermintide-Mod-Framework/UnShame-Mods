@@ -3118,7 +3118,9 @@ local function update_remote_inputs(dt, t)
 			local state = states[owner_unit]
 
 			if not state then
-				state = {}
+				state = {
+					owner_unit = owner_unit,
+				}
 				states[owner_unit] = state
 			end
 
@@ -3190,7 +3192,9 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 	local state = states[owner_unit]
 
 	if not state then
-		state = {}
+		state = {
+			owner_unit = owner_unit,
+		}
 		states[owner_unit] = state
 	end
 
@@ -3327,7 +3331,7 @@ mod.charge_update_callbacks.link = function (self, dt, t, world)
 end
 
 -- The beams of the other players: where each ends, as it was told, and what is drawn, which follows that end
-local remote_beams = {} -- { [the unit of the player] = { end_position, aim, weight, lag, shown, received, drawn_at } }
+local remote_beams = {} -- { [the unit of the player] = { owner_unit, end_position, aim, weight, lag, shown, received, drawn_at } }
 local remote_points = {} -- the points of a beam
 
 local function remove_remote_beam(owner_unit)
@@ -3350,7 +3354,9 @@ mod:network_register("ut_link_beam", function (_, owner_go_id, x, y, z, aim_x, a
 	local beam = remote_beams[owner_unit]
 
 	if not beam then
-		beam = {}
+		beam = {
+			owner_unit = owner_unit,
+		}
 		remote_beams[owner_unit] = beam
 	end
 
