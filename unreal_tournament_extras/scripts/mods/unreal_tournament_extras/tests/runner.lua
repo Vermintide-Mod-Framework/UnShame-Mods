@@ -49,6 +49,7 @@ local ut = get_mod("unreal_tournament")
 --   t.remove(unit)                       takes an enemy away before the scenario ends
 --   t.health_of(unit)                    a unit's health, 0 when it is dead
 --   t.track_damage(unit)                 adds up all the damage the unit takes from now on, past what kills it, and keeps each hit
+--   t.power_against(breed_name, item_key)   the player's power multiplier against the breed with the item, from talents and gear
 --   t.add_bot(profile_name, career_index, item_key, distance, slot, own_mind)   adds a bot of that career that far ahead, with the
 --                                        item in hand (in the ranged slot if no slot is given), that stands and does only what the test
 --                                        tells it, or plays as the game's bots do with own_mind. It is taken away after the scenario.
@@ -923,6 +924,14 @@ local function make_context(suite)
 		return record
 	end
 
+	-- The player's power against a breed with an item, from their talents and the properties of their gear (power against skaven,
+	-- chaos, armoured and so on), as a multiplier. The game applies it to every hit (ActionUtils.apply_buffs_to_power_level_on_hit).
+	function t.power_against(breed_name, item_key)
+		return on_main_thread(function ()
+			return ActionUtils.apply_buffs_to_power_level_on_hit(player_unit(), 1, Breeds[breed_name], item_key, false)
+		end)
+	end
+
 	-- Takes away an enemy the scenario spawned, before the scenario ends. It is taken off the list of what the runner takes away after the
 	-- scenario: the game keeps a unit it takes away for later (it freezes it), and taking it away twice crashes the game.
 	function t.remove(unit)
@@ -1013,10 +1022,17 @@ local function make_context(suite)
 						end
 					end
 
+					-- (the player is put there only where it is on the level's navigation mesh, near the enemy's height: past the edge of
+					-- the square the player fell out of the level and died)
 					if found then
 						local at = Unit.world_position(found, 0)
+						local spot = at + Vector3.normalize(Vector3.flat(position - at)) * settings.keep
+						local nav_world = Managers.state.entity:system("ai_system"):nav_world()
+						local on_navmesh, z = GwNavQueries.triangle_from_position(nav_world, spot, 1, 1)
 
-						runner.move_player(player, at + Vector3.normalize(Vector3.flat(position - at)) * settings.keep)
+						if on_navmesh then
+							runner.move_player(player, Vector3(Vector3.x(spot), Vector3.y(spot), z))
+						end
 					end
 
 					return {
