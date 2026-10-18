@@ -271,6 +271,21 @@ def roughness_of(cfg, index):
 
     return roughness.get(index, 0.9) if isinstance(roughness, dict) else roughness
 
+# A weapon in a player's hand glows a little in UT: it takes its lighting from the player (InventoryAttachment.bUseLightingFromBase), who
+# has an AmbientGlow of 40 of 255 (UnrealPawn), so the side of it that faces away from the lights is not black. A third person mesh gets
+# that as the emissive of its materials: its own colour texture, times this.
+THIRD_PERSON_GLOW = 40 / 255
+
+def with_glow(text):
+    """The text of a material with the glow of a weapon in a player's hand added, or None if it has no colour texture to glow with."""
+    lines = [line for line in text.split('\n') if line.strip().startswith('color_map = ')]
+    if not lines:
+        return None
+    texture = lines[0].split('=', 1)[1].strip()
+    text = text.replace(lines[0] + '\n', lines[0] + '\n\temissive_map = %s\n' % texture, 1)
+    return text.rstrip('\n').rstrip('}') + ('\tuse_emissive_map = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n'
+                                            '\temissive_intensity = {\n\t\ttype = "scalar"\n\t\tvalue = %s\n\t}\n}\n' % round(THIRD_PERSON_GLOW, 4))
+
 def main():
     name, export = sys.argv[1], sys.argv[2]
     cfg = STATICS[name]
@@ -293,10 +308,18 @@ def main():
                            '%s/%s.bsi' % (REPO, cfg['unit']), geometry, ','.join(mat_names), str(cfg['scale'])]
                           + ([','.join('%s=%s' % entry for entry in parts.items())] if parts else []))
     # (the geometries psk2bsi made are named <prefix>_<index of the material>, and <prefix>_<index>_<part> for the parts)
+    third_person = name.endswith('_3rd')
     unit_text = 'materials = {\n'
     for i, (tga, kind) in enumerate(m[:2] for m in materials):
-        # (a material of the kind 'existing' is one the mod has already, named in place of the tga, and nothing is made for it)
-        unit_text += '\tm_%d = "%s"\n' % (i, tga if kind == 'existing' else '%s/%s_m%d' % (unit_dir, unit_base, i))
+        # (a material of the kind 'existing' is one the mod has already, named in place of the tga, and nothing is made for it. A third
+        # person mesh gets its own copy of it, with the glow, unless it has no colour texture.)
+        if kind == 'existing':
+            glowing = third_person and with_glow(open('%s/%s.material' % (REPO, tga)).read())
+            if glowing:
+                open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(glowing)
+            unit_text += '\tm_%d = "%s"\n' % (i, '%s/%s_m%d' % (unit_dir, unit_base, i) if glowing else tga)
+            continue
+        unit_text += '\tm_%d = "%s/%s_m%d"\n' % (i, unit_dir, unit_base, i)
     unit_text += '}\nrenderables = {\n'
     for i in range(len(materials)):
         for suffix in [''] + ['_' + part for part in parts.values()]:
@@ -312,6 +335,7 @@ def main():
             w, h, rows = read_tga(export + '/' + tga)
         write_png('%s/%s.png' % (REPO, texture), w, h, rows)
         open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(texture_text(texture))
-        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(material_text(kind, texture, opacity, roughness=roughness_of(cfg, i), world=name.endswith(('_pickup', '_3rd'))))
+        text = material_text(kind, texture, opacity, roughness=roughness_of(cfg, i), world=name.endswith(('_pickup', '_3rd')))
+        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, i), 'w', newline='\n').write(third_person and with_glow(text) or text)
 
 main()

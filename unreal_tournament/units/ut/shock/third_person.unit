@@ -1,5 +1,5 @@
 materials = {
-	m_0 = "units/ut/shock/shock_rifle_body"
+	m_0 = "units/ut/shock/third_person_m0"
 	m_1 = "units/ut/shock/shock_rifle_power"
 }
 renderables = {
