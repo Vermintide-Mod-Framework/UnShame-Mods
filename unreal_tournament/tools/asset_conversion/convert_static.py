@@ -206,7 +206,8 @@ STATICS = {
     'redeemer_missile': {
         'pskx': 'WeaponStaticMesh/StaticMesh/RedeemerMissile.pskx',
         'materials': [('WeaponSkins/Texture/RDMR_Missile.tga', 'opaque'), ('WeaponSkins/Texture/RDMR_Missile.tga', 'opaque')],
-        'scale': 0.04,
+        # (RedeemerProjectile's DrawScale is 0.5)
+        'scale': 0.02 * 0.5,
         'unit': 'units/ut/redeemer/missile',
         'culling': 'disabled',
     },
