@@ -572,7 +572,7 @@ local function new_skin(variant)
 			muzzle_right = -2.8,
 			muzzle_forward = 116.4,
 			muzzle_up = 9.6,
-			menu_yaw = 180,
+			menu_yaw = -90,
 		},
 		-- UT draws the scope in place of the weapon while zoomed (SniperRifle.RenderOverlays)
 		hidden = function ()
