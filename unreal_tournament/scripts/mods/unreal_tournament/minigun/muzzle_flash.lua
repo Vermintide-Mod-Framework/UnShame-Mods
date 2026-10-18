@@ -29,6 +29,9 @@ local CONFIG = {
 	color = { 1, 1, 1 }, -- mColorRange, of 255
 	-- How xEmitter scales a mesh particle by its size is in UT's engine, not its scripts. The numbers above drew the flash twice as
 	-- wide as pictures of UT2004 show it, so they are multiplied by this (fitted to those pictures, and checked again side by side).
+	-- This flash gets most of its size from growing, as the Rocket Launcher's third person one does, which also looks right halved.
+	-- The Rocket Launcher's first person flash does not grow and is drawn at its size as it is, so the halving is probably how UT
+	-- grows a particle.
 	fit = 0.5,
 }
 
@@ -66,7 +69,7 @@ function mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale, locke
 	end
 
 	-- The mesh is made at 0.02 m per UT unit
-	local factor = world_unit / UNIT * draw_scale * CONFIG.fit
+	local factor = world_unit / UNIT * draw_scale * settings.fit
 
 	for _ = 1, settings.count - #ends do
 		local tile = math.random(0, 3)
