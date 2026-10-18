@@ -45,7 +45,10 @@ local CONFIG = {
 	-- m/s * 100.
 	rocket_speed = 2200,
 	rocket_lifetime = 8, -- seconds
-	rocket_radius = 0.1, -- m, how easily a rocket hits things
+	-- How easily a rocket hits an enemy. UT's rocket is a point that hits a player's collision cylinder, 25 uu (0.5 m) in radius.
+	-- Here the rocket is a sphere that hits the enemy's body, which is about 0.2 m from its middle to its side, so the sphere
+	-- reaches the rest of the way. Walls are still hit by a ray.
+	rocket_radius = 0.3, -- m
 	-- How close a Flak shell or a Shock ball has to be for the rocket to explode on it. It is the same as the shell's.
 	projectile_touch_radius = 0.5, -- m
 	-- Where a rocket starts, measured from the camera: forward, to the right and down. UT's RocketFire.ProjSpawnOffset is 25, 6 and
