@@ -24,7 +24,6 @@ local CONFIG = {
 	-- It pulses (LT_Pulse): Unreal's engine multiplies its brightness by 0.6 + 0.39 * sin(a turn every LightPeriod / 35 seconds), so it
 	-- flickers between a fifth and all of it, 35 / 3 times a second.
 	light_color = { 1, 0.85, 0.6 },
-	light_intensity = 1.5,
 	light_falloff = 2.5, -- meters
 	light_life = 0.15,
 	light_period = 3, -- LightPeriod
@@ -284,7 +283,7 @@ local function weapon_light(owner_unit, follow)
 				return follow()
 			end
 		end,
-		intensity = CONFIG.light_intensity,
+		intensity = utils.WEAPON_LIGHT_INTENSITY,
 		life = CONFIG.light_life,
 	})
 end

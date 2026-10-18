@@ -218,6 +218,10 @@ end
 -- Meters in one Unreal unit of the world. A UT2004 player is 88 units high, about 1.8 m.
 utils.UT_UNIT = 0.02
 
+-- The intensity of a weapon's light in a character's hand (xWeaponAttachment.WeaponLight, LightBrightness 255) for this game's lights.
+-- UT's brightness has no measure here, so it was set in the game.
+utils.WEAPON_LIGHT_INTENSITY = 0.5
+
 -- Returns a random number between range[1] and range[2], as UT's Range values are picked
 function utils.random_between(range)
 	return range[1] + (range[2] - range[1]) * math.random()

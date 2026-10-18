@@ -119,7 +119,6 @@ local CONFIG = {
 	explosion_light_intensity = 3,
 	explosion_light_falloff = 2.5,
 	explosion_light_life = 0.5,
-	fire_light_intensity = 1.5,
 	fire_light_falloff = 2,
 	fire_light_life = 0.15,
 	combo_light_intensity = 2,
@@ -304,7 +303,7 @@ local function fire_light(follow, locked)
 		color = CONFIG.light_color,
 		falloff = CONFIG.fire_light_falloff,
 		follow = follow,
-		intensity = CONFIG.fire_light_intensity,
+		intensity = utils.WEAPON_LIGHT_INTENSITY,
 		life = CONFIG.fire_light_life,
 	})
 end
