@@ -253,7 +253,8 @@ print('wrote fx_bio_goo_graph.material and bio_rifle_m2.material, %d nodes' % le
 # ---------------------------------------------------------------- the Lightning Gun's screen
 # The first person mesh's second material, SniperScreen1C (WeaponSkins): a Combiner (CO_AlphaBlend_With_Mask) of the scope's readout,
 # SniperScreen1, over the TexPanner SniperScreen1P (the scan lines of SniperScreen1Pan, PanDirection yaw 16384: along V, PanRate 0.2), with
-# the panned lines' alpha as the mask. The mesh's V is turned over (convert_weapon.py), so the lines pan along -V here. It is lit as the rest of
+# the panned lines' alpha as the mask. The lines pan along +V here as in UT (checked in the game: the mesh's V being turned over by
+# convert_weapon.py doesn't turn the panning over, as the texture is stored the other way up too). It is lit as the rest of
 # the weapon is: the SDK's standard output node, with the options of units/ut/weapon_standard.material (its three, the weapons' custom field of
 # view, and the decal group 3), roughness 0.9 as the weapon's, and not metallic. The material that binds the textures is
 # units/ut/lightning/lightning_gun_m1.material.
@@ -265,7 +266,7 @@ screen.no_variables = True
 screen.add('out', 'core/stingray_renderer/output_nodes/standard_base', STANDARD_OPTIONS)
 screen.add('uv', 'core/shader_nodes/texture_coordinate0')
 screen.add('time', 'core/shader_nodes/current_time')
-panned(screen, 'pan_lines', 0, -0.2)
+panned(screen, 'pan_lines', 0, 0.2)
 texture(screen, 'readout', 'screen_map', 'uv')
 texture(screen, 'lines', 'lines_map', 'pan_lines')
 screen.add('mix', 'core/shader_nodes/lerp')
