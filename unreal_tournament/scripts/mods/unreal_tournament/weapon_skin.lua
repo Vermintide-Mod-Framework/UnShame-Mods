@@ -303,6 +303,22 @@ local function new(def)
 		return fp.first_person_unit, Matrix4x4.transform(Unit.local_pose(skin.unit, 0), in_model)
 	end
 
+	-- Returns where a node of the model would be in UT's world. UT places the weapon in the world in front of the eye, at the world's
+	-- scale, and draws it with its own field of view. So an effect that UT leaves in the world, like the Minigun's shells, starts at this
+	-- point and is drawn with the camera's field of view. On the screen, this point is nearer the middle than the drawn node.
+	function self.model_point_in_world(node_name)
+		local first_person_unit, point = self.model_point_in_view(node_name)
+
+		if not first_person_unit or not skin.view_across_scale then
+			return nil
+		end
+
+		local in_view = Vector3(point.x / skin.view_across_scale, point.y / skin.view_forward_scale, point.z / skin.view_across_scale)
+		local camera_node = utils.camera_node(first_person_unit)
+
+		return Unit.world_position(first_person_unit, camera_node) + Quaternion.rotate(Unit.world_rotation(first_person_unit, camera_node), in_view * utils.UT_UNIT)
+	end
+
 	-- How far the bob moves the weapon in the view, in UT units (right, up). UT moves the weapon by WeaponBob(BobDamping) (CalcDrawOffset)
 	-- and the eye by twice WalkBob: PlayerController.CalcFirstPersonView adds WalkBob to EyePosition, which has WalkBob in it already. So
 	-- in the view the weapon moves by the difference, and with a BobDamping near 2 it hardly moves. This game's camera doesn't bob like

@@ -116,3 +116,29 @@ for name, (tga, columns, rows_count) in TEXTURES.items():
         write('%s_%d' % (name, index), tile_width, tile_height, tile, name not in SRGB, name in WEAPON, name in BRIGHTEN, name in KEEP_ALPHA)
 
     print('sheet', name, columns * rows_count, 'tiles of', tile_width, tile_height)
+
+# The shell casing is also drawn lit (fx_shell_casing_lit): ShellSpewer's meshes are lit by the level (its Style is UT's default,
+# STY_Normal), which makes them dark grey. Unlit, the texture was drawn at full brightness. The parent is the SDK's standard
+# material, not world_standard, which fades out near the camera, where the player's own shells are.
+LIT_MATERIAL = '''material_contexts = {
+	surface_material = ""
+}
+parent_material = "core/stingray_renderer/shader_import/standard"
+textures = {
+	color_map = "units/ut/fx/%s"
+}
+variables = {
+	use_color_map = {
+		type = "scalar"
+		value = 1
+	}
+	roughness = {
+		type = "scalar"
+		value = 0.9
+	}
+}
+'''
+
+for name in ('shell_casing',):
+    open('%s/units/ut/fx/fx_%s_lit.material' % (REPO, name), 'w', newline='\n').write(LIT_MATERIAL % name)
+    print('lit material', name)

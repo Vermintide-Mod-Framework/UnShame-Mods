@@ -85,6 +85,12 @@ local CONFIG = {
 		primary = 0.18,
 		alt = 0.3,
 	}, -- seconds
+	-- While a mode fires, the gun loops its FireLoop animation, which shakes it, at this many times its own speed (FireLoopAnimRate). It
+	-- starts and stops with the fire sound, as both start and stop with MinigunFire's FireLoop state.
+	fire_loop_rate = {
+		primary = 9,
+		alt = 3,
+	},
 	-- MinigunFire's view shake, which each round starts for the player who fires (WeaponFire.ShakeView, see view_shake.lua): a turn of
 	-- 50 of 65536 each way on every axis, at 10000 a second, and an offset of 1 unit on every axis, at 1000 a second, both for 2
 	shake_turn = { 50, 50, 50 }, -- pitch, yaw, roll
@@ -367,10 +373,10 @@ local function tracer(owner_unit, start, end_position, interval)
 	})
 end
 
--- A shell leaves the ejector and falls: UT's ShellCasing mesh. ShellSpewer is attached to the weapon, so in the player's own view it is
--- drawn like the flash with the model's field of view, in the space of the model, where a UT unit is world_unit meters. In third person
--- a UT unit is the world's. It is placed from the ejector, which moves with the gun, by how far it has flown. rotation is how it starts
--- out turned.
+-- A shell leaves the ejector and falls: UT's ShellCasing mesh. It is placed from ejector, which returns where it started, by how far it
+-- has flown, where a UT unit is world_unit meters. rotation is how it starts out turned. It is drawn with the camera's field of view, in
+-- both views: ShellSpewer is attached to the weapon's bone, but UT doesn't draw it with the weapon (Weapon.RenderOverlays), and its shells
+-- stay in the world once they are out. They are lit by the level, as UT's are.
 local function shell(ejector, right, forward, up, world_unit, rotation)
 	local deviation = CONFIG.shell_deviation
 	local out = 1 + random_between({-deviation[1], deviation[1]})
@@ -409,7 +415,7 @@ local function shell(ejector, right, forward, up, world_unit, rotation)
 			return start + flown:unbox() * world_unit
 		end,
 		life = random_between(CONFIG.shell_life),
-		material = "units/ut/fx/fx_weapon_shell_casing",
+		material = "units/ut/fx/fx_shell_casing_lit",
 		rotation = rotation,
 		scale = function ()
 			return CONFIG.shell_scale * world_unit / UNIT
@@ -450,6 +456,9 @@ local function update_sounds(api, dt)
 	-- The fire stops as soon as its mode's button is let go (to stop, or to switch: the other mode's fire starts with its own first round)
 	if sound.fire_id and not minigun.held[sound.fire_mode] then
 		stop_fire_sound(api)
+
+		-- (and the gun goes back to its idle animation: MinigunFire's FireLoop.EndState)
+		api.play("Idle")
 	end
 
 	-- The winding plays while the barrels turn and the fire doesn't: as they wind up, and as they slow down
@@ -470,6 +479,10 @@ local function round_sound(api, mode)
 
 		sound.fire_mode = mode
 		sound.fire_id = api.play_sound(mode == "alt" and "ut_minigun_alt_fire" or "ut_minigun_fire")
+
+		if api.state() then
+			api.play("FireLoop", api.animation_duration("FireLoop") / CONFIG.fire_loop_rate[mode], true)
+		end
 	end
 end
 
@@ -574,11 +587,15 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 				tracer(owner_unit, camera_position + ray * (offset[2] * UNIT), end_position, interval)
 			end
 
-			-- The shells fly out of the ejector to the right of the gun
-			if camera_rotation then
+			-- The shells fly out of the ejector to the right of the gun, from where UT has the ejector in the world
+			local ejector = api.model_point_in_world("b_bone_caseejector")
+
+			if camera_rotation and ejector then
+				local start = Vector3Box(ejector)
+
 				shell(function ()
-					return api.state() and api.muzzle_model_position("b_bone_caseejector") or nil
-				end, Quaternion.right(camera_rotation), Quaternion.forward(camera_rotation), Quaternion.up(camera_rotation), world_unit,
+					return start:unbox()
+				end, Quaternion.right(camera_rotation), Quaternion.forward(camera_rotation), Quaternion.up(camera_rotation), UNIT,
 					camera_rotation)
 			end
 

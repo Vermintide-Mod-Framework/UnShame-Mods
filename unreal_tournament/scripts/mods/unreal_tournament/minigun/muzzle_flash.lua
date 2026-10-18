@@ -3,7 +3,7 @@ local mod = get_mod("unreal_tournament")
 -- UT's MinigunMuzFlash1st, the first person flash of the Minigun. UT's AssaultMuzFlash1st is the same emitter at another DrawScale,
 -- and the Assault Rifle and the classic Sniper Rifle (ClassicSniperFire.FlashEmitterClass) use it, so the three skins share this.
 --   mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale, locked): shows the flash of one round. emitter is any value that
---       names the weapon's flash, so that each weapon's rounds replace only its own. follow returns the muzzle's position, or nil once
+--       names the weapon's flash, which has room for a round's meshes of its own. follow returns the muzzle's position, or nil once
 --       the flash should end. world_unit is the meters of a UT unit at the model. draw_scale is the emitter's DrawScale. locked, if it is
 --       given, is used instead of follow: it returns the first person unit and the muzzle in its camera node's frame
 --       (weapon_skin's model_point_in_view), so the flash is linked to the unit and stays on the muzzle as the view turns, as UT's is
@@ -30,9 +30,13 @@ local CONFIG = {
 	fit = 0.5,
 }
 
--- The emitter has room for 5 meshes (mMaxParticles), as many as a round makes, so a round's meshes end when the next round's start.
--- This counts each emitter's rounds.
-local rounds = {}
+-- The emitter has room for 5 meshes (mMaxParticles). A round asks for 5 more (MinigunMuzFlash1st.Trigger), and gets as many as there is
+-- room for: the meshes that are there live out their life. This keeps when each emitter's meshes end.
+local mesh_ends = {}
+
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	table.clear(mesh_ends)
+end
 
 -- The flash is drawn with the model, in the material that uses the model's field of view (fx_weapon_*), so it is in front of the
 -- barrels and not hidden by them. The texture is a sheet of 4 that UT picks from at random (mRandTextures). A mesh here keeps one of
@@ -47,17 +51,26 @@ function mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale, locke
 	-- A linked mesh is turned in the camera node's frame, where it faces ahead as it is
 	local rotation = locked and Quaternion.identity() or camera_rotation
 
-	local round = (rounds[emitter] or 0) + 1
+	local now = Managers.time:time("game")
+	local ends = mesh_ends[emitter] or {}
 
-	rounds[emitter] = round
+	mesh_ends[emitter] = ends
+
+	for i = #ends, 1, -1 do
+		if ends[i] <= now then
+			table.remove(ends, i)
+		end
+	end
 
 	-- The mesh is made at 0.02 m per UT unit
 	local factor = world_unit / UNIT * draw_scale * CONFIG.fit
 
-	for _ = 1, CONFIG.count do
+	for _ = 1, CONFIG.count - #ends do
 		local tile = math.random(0, 3)
 		local life = random_between(CONFIG.life)
 		local start = random_between(CONFIG.scale)
+
+		ends[#ends + 1] = now + life
 
 		particles.mesh({
 			-- (FB_Brighten: its material brightens what is behind it by its luminance, see make_combo_materials.py, with no added part of
@@ -67,14 +80,8 @@ function mod.minigun_muzzle_flash(emitter, follow, world_unit, draw_scale, locke
 				return attenuation(fraction, CONFIG.attenuation)
 			end,
 			color = { 1, 1, 1 },
-			follow = not locked and function ()
-				return rounds[emitter] == round and follow() or nil
-			end or nil,
-			locked = locked and function ()
-				if rounds[emitter] == round then
-					return locked()
-				end
-			end or nil,
+			follow = not locked and follow or nil,
+			locked = locked or nil,
 			life = life,
 			material = "units/ut/fx/fx_weapon_minigun_burst_" .. tile,
 			rotation = rotation,
