@@ -343,8 +343,7 @@ skin_api = mod.weapon_skin.new({
 	-- UT's third person mesh of the weapon (BioAttachment's Weapons.BioRifle_3rd) at UT's size in a player's hand (DrawScale 0.4). Its
 	-- barrel runs along its forward to the muzzle (its Bone_Flash). The pickup's barrel ran along its right, so this is turned a quarter
 	-- less than the pickup was. Its origin is at the back of the body, and its handle hangs from the body's underside 17 to 38 units ahead
-	-- of the origin and 15 to 35 below it. The hand's node is ahead of the fist and above it, so the grip is a point ahead of the handle's
-	-- middle and above it, which puts the handle in the fist (set against a picture of the game).
+	-- of the origin and 15 to 35 below it. The grip puts the handle in the fist (set in the game).
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
@@ -354,8 +353,8 @@ skin_api = mod.weapon_skin.new({
 		meters_per_unit = 0.02 * 0.4,
 		scale = 1,
 		grip_right = 0,
-		grip_forward = 36,
-		grip_up = -16,
+		grip_forward = 10,
+		grip_up = 0,
 		yaw = 0,
 		pitch = 0,
 		roll = 0,
