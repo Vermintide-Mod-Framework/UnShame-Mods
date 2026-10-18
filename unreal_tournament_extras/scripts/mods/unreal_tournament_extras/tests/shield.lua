@@ -304,8 +304,6 @@ end
 -- how many there were, and the damage the rat took.
 local function shield_to_shield(t, button, to_rat)
 	local player = t.unit()
-	-- (the way Bardin is told to look, as { x, y, z })
-	local told = { 0, 0, 0 }
 	local shooter = t.add_bot(SHOCK_BOT_PROFILE, SHOCK_BOT_CAREER, ut.items.weapons.shock_rifle.key, SHOCK_DISTANCE)
 
 	if not t.expect(shooter, "Sienna could not be added") then
@@ -342,9 +340,6 @@ local function shield_to_shield(t, button, to_rat)
 		end
 	end
 
-	-- (what hurts the enemy before the shot)
-	local before_shot = rat and t.track_damage(rat)
-
 	-- (level, at the height of the player's eyes: the shot off the player's shield goes the way they look, so looking down at Bardin it
 	-- got to his shield half a meter lower than it got to the player's, and went past the rat's legs)
 	local at = t.on_main_thread(function ()
@@ -380,8 +375,6 @@ local function shield_to_shield(t, button, to_rat)
 			return { Vector3.x(way), Vector3.y(way), Vector3.z(way) }
 		end)
 
-		told = direction
-
 		t.bot_look(bardin, direction)
 	else
 		t.bot_aim(bardin, player)
@@ -409,62 +402,15 @@ local function shield_to_shield(t, button, to_rat)
 		shield.reflect = reflect
 	end)
 
-	if before_shot then
-		for _, hit in ipairs(before_shot.hits) do
-			t.log("before the shot the enemy took %.1f, %s from %s (%s)", hit.amount, tostring(hit.type), tostring(hit.attacker), tostring(hit.source))
-		end
-
-		t.log("before the shot the enemy is %s", t.health_of(rat) > 0 and "alive" or "dead")
-	end
-
 	local damage = rat and t.track_damage(rat)
-	-- (the beams that come off a shield, each as its start and end, to tell how far the last one passed from the rat when it missed)
-	local reflected_beams = {}
-
-	ut.shock_beam_callbacks.ut_test_chain = function (owner_unit, start_position, end_position, hit_normal, reflected)
-		if reflected then
-			reflected_beams[#reflected_beams + 1] = { Vector3Box(start_position), Vector3Box(end_position) }
-		end
-	end
-
-	t.after(function ()
-		ut.shock_beam_callbacks.ut_test_chain = nil
-	end)
 
 	t.bot_press(shooter, button)
 	t.wait(SHOCK_SHOT_TIME * 2)
 	t.release("action_two")
 
 	shield.reflect = reflect
-	ut.shock_beam_callbacks.ut_test_chain = nil
 
-	local hurt = damage and damage.total or 0
-
-	if rat and hurt == 0 and reflected_beams[1] then
-		local miss = t.on_main_thread(function ()
-			local last = reflected_beams[#reflected_beams]
-			local from, to = last[1]:unbox(), last[2]:unbox()
-			local middle = Unit.alive(rat) and Unit.local_position(rat, 0) + Vector3(0, 0, CHAIN_ENEMY_MIDDLE) or to
-			local along = math.clamp(Vector3.dot(middle - from, Vector3.normalize(to - from)), 0, Vector3.distance(from, to))
-			local nearest = from + Vector3.normalize(to - from) * along
-
-			-- Where the beam went from and to (heights above Bardin's feet and the enemy's, and how far each is from the enemy on the
-			-- ground), and the way Bardin looks against the way he was told to look
-			local bardin_feet = Unit.local_position(bardin, 0)
-			local enemy_feet = Unit.alive(rat) and Unit.local_position(rat, 0) or to
-			local bardin_look = Quaternion.forward(ScriptUnit.extension(bardin, "first_person_system"):current_rotation())
-			local beam_way = Vector3.normalize(to - from)
-			local function flat_distance(a, b)
-				return Vector3.length(Vector3.flat(a - b))
-			end
-
-			return string.format("the last reflected beam (%d) passed %.2f m from the rat's middle, %.2f m above it. It went from %.2f m above Bardin's feet, %.2f m from the enemy, to %.2f m above the enemy's feet, %.2f m from it. Its way %.2f %.2f %.2f, Bardin looks %.2f %.2f %.2f, he was told %.2f %.2f %.2f", #reflected_beams, Vector3.distance(nearest, middle), Vector3.z(nearest) - Vector3.z(middle), Vector3.z(from) - Vector3.z(bardin_feet), flat_distance(from, enemy_feet), Vector3.z(to) - Vector3.z(enemy_feet), flat_distance(to, enemy_feet), Vector3.x(beam_way), Vector3.y(beam_way), Vector3.z(beam_way), Vector3.x(bardin_look), Vector3.y(bardin_look), Vector3.z(bardin_look), told[1], told[2], told[3])
-		end)
-
-		t.log("%s", miss)
-	end
-
-	return table.concat(reflected_by, ", "), #reflected_by, hurt
+	return table.concat(reflected_by, ", "), #reflected_by, damage and damage.total or 0
 end
 
 local function scenarios()
@@ -1323,12 +1269,6 @@ local function scenarios()
 				t.log("the bot punched %d times, at most %.1f m from the nearest rat", #punches, farthest)
 				t.expect(from_gun(damages) > 0, "the bot did not hurt a rat with the Shield Gun in %d s", BOT_FIGHT_TIME)
 				t.expect(farthest <= shield.reach + BOT_REACH_MARGIN, "the bot punched with the nearest rat %.1f m away, out of its reach (%.1f m)", farthest, shield.reach)
-				for _, hit in ipairs(player_damage.hits) do
-					if hit.source == gun then
-						t.log("a hit of the gun on the player: %.1f, %s, from %s", hit.amount, tostring(hit.type), tostring(hit.attacker))
-					end
-				end
-
 				t.expect(from_gun({ player_damage }) == 0, "the bot's punches hurt the player %.1f", from_gun({ player_damage }))
 			end,
 		},
