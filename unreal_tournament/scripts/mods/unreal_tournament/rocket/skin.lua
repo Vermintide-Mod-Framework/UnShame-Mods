@@ -31,15 +31,14 @@ local CONFIG = {
 		color = { 1, 1, 1 },
 	},
 	muzzle_flash_draw_scale = 2,
-	-- RocketMuzFlash3rd: one mesh (MinigunFlashMesh, 220 units long) for a shot, at a size of 0.12 that grows by 2.2 a second, for 0.15 to
-	-- 0.2 s. The size is the mesh's scale as it is: in a picture of UT the flash is about 45 units long when it is brightest, which is
-	-- the mesh at about 0.2. (The Minigun's first person flash needs half, minigun/muzzle_flash.lua's fit, and this one does not.)
+	-- RocketMuzFlash3rd: one mesh (MinigunFlashMesh) for a shot, at a size of 0.12 that grows by 2.2 a second, for 0.15 to 0.2 s. fit is
+	-- the Minigun's (minigun/muzzle_flash.lua).
 	muzzle_flash_3rd = {
 		size = 0.12,
 		growth = 2.2,
 		life = {0.15, 0.2},
 		attenuation = 0.2,
-		fit = 1,
+		fit = 0.5,
 	},
 	-- RocketProj: the mesh spins. Its RotationRate roll is 50000 out of 65536 for a full turn, per second.
 	rocket_turns_per_second = 50000 / 65536,
@@ -357,8 +356,9 @@ local function first_person_flash(skin)
 end
 
 -- The flash at the muzzle of the mesh in a character's hand: one mesh along the barrel, turned at random about it. UT's emitter is
--- attached to the mesh but not scaled by its DrawScale, so the mesh is in UT units of the world (see muzzle_flash_3rd). The flash mesh
--- points along its y, and the barrels run along the launcher's left (-x), so it is turned a quarter about z.
+-- attached to the mesh but not scaled by its DrawScale, so the mesh is in UT units of the world. Its scale is worked out as the
+-- Minigun's first person flash's is (minigun/muzzle_flash.lua's fit). The flash mesh points along its y, and the barrels run along the
+-- launcher's left (-x), so it is turned a quarter about z.
 local function third_person_flash(owner_unit)
 	local third_person = skin_api.third_person
 	local settings = CONFIG.muzzle_flash_3rd
