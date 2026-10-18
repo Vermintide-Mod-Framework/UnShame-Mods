@@ -533,7 +533,8 @@ local function new_skin(variant)
 		offset_up = 0,
 		bob_damping = 2.3,
 		-- The inspect pose turns the rifle to show its left side, like the other weapons. These numbers are a guess.
-		inspect_pose_right = -2,
+		-- (to the right, so that the back of the gun, which the first person mesh doesn't have, stays off the screen as it turns)
+		inspect_pose_right = 15,
 		inspect_pose_forward = 4,
 		inspect_pose_up = 0,
 		inspect_pose_roll = 10,
