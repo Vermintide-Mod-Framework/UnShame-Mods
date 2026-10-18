@@ -155,7 +155,7 @@ local CHAIN_ENEMY_FROM_BARDIN = 2.5 -- m
 -- (bots' aim wavers), and the shot off his shield is that much higher or lower. A rat's body was missed that way.
 local CHAIN_ENEMY_BREED = "chaos_marauder"
 local CHAIN_ENEMY_MIDDLE = 1 -- m
--- How high above Bardin's feet the player looks at him
+-- How high above the feet Sienna's shot gets to the player's shield (t.bot_aim aims 1 m above them), and so to Bardin's
 local CHAIN_AIM_HEIGHT = 1 -- m
 
 -- Turns the player to face the middle of a unit at once, from inside an observer of a frame (t.aim_at waits a little)
@@ -297,8 +297,8 @@ end
 -- (InstantFire.DoTrace), the ball each time it gets to a shield (ShockProjectile.ProcessTouch). Sienna (a bot) shoots at the player, who
 -- looks at Bardin (a bot with his Shield Gun's shield up) SHOCK_TURN to the side of her. With to_rat, Bardin looks at a rat on the square
 -- (CHAIN_ENEMY_TURN), so the shot goes from the player's shield to Bardin's and on to the rat. Without it, Bardin looks back at the player, so the
--- shot goes back and forth between the two shields. The player looks at Bardin level, at CHAIN_AIM_HEIGHT, so the shot gets to his
--- shield as high as it got to the player's (his middle is low: from there the shot went into the ground). A ball is still Sienna's
+-- shot goes back and forth between the two shields. The player looks at Bardin level, so the shot gets to his shield as high as it got
+-- to the player's, CHAIN_AIM_HEIGHT (where Sienna aims). A ball is still Sienna's
 -- after every reflection, and a shooter's own shield never reflects their ball, so the two shields are the others'. Each reflection is
 -- seen by a watch on mod.shield.reflect, which every shot goes through. Returns the reflections as text ("the player, Bardin, ..."),
 -- how many there were, and the damage the rat took.
@@ -345,21 +345,36 @@ local function shield_to_shield(t, button, to_rat)
 	-- (what hurts the enemy before the shot)
 	local before_shot = rat and t.track_damage(rat)
 
+	-- (level, at the height of the player's eyes: the shot off the player's shield goes the way they look, so looking down at Bardin it
+	-- got to his shield half a meter lower than it got to the player's, and went past the rat's legs)
 	local at = t.on_main_thread(function ()
 		local position = Unit.local_position(bardin, 0)
+		local eye = ScriptUnit.extension(player, "first_person_system"):current_position()
 
-		return { Vector3.x(position), Vector3.y(position), Vector3.z(position) + CHAIN_AIM_HEIGHT }
+		return { Vector3.x(position), Vector3.y(position), Vector3.z(eye) }
 	end)
 
 	t.aim_at_point(at[1], at[2], at[3])
 
 	if rat then
-		-- (a reflected shot starts where it got to the shield's cylinder, on the side towards the player, and goes the way Bardin looks,
-		-- so he looks along the line from there to the rat's middle: looking at the rat from his eyes, the shot missed it)
+		-- (a reflected shot starts where it got to the shield's cylinder and goes the way the shield's holder looks, so Bardin looks along
+		-- the line from where the shot gets to his cylinder to the rat's middle. The shot off the player's shield starts where Sienna's
+		-- got to the player's cylinder, on the side towards her, and goes level the way the player looks, so it gets to Bardin's cylinder
+		-- off the line between the two by as much: taking the side of his cylinder towards the player, the shot passed 0.2 m beside the
+		-- rat.)
 		local direction = t.on_main_thread(function ()
+			local radius = shield.pawn_radius
+			local player_position = Unit.local_position(player, 0)
 			local bardin_position = Unit.local_position(bardin, 0)
-			local towards_player = Vector3.normalize(Vector3.flat(Unit.local_position(player, 0) - bardin_position))
-			local hit = bardin_position + towards_player * shield.pawn_radius + Vector3(0, 0, CHAIN_AIM_HEIGHT)
+			local towards_sienna = Vector3.normalize(Vector3.flat(Unit.local_position(shooter, 0) - player_position))
+			local start = player_position + towards_sienna * radius
+			local look = Vector3.normalize(Vector3.flat(Quaternion.forward(ScriptUnit.extension(player, "first_person_system"):current_rotation())))
+			-- (where the line from start along look gets to Bardin's cylinder, on the ground)
+			local offset = Vector3.flat(start - bardin_position)
+			local b = Vector3.dot(offset, look)
+			local c = Vector3.dot(offset, offset) - radius * radius
+			local along = b * b - c >= 0 and -b - math.sqrt(b * b - c) or Vector3.length(Vector3.flat(bardin_position - start)) - radius
+			local hit = Vector3.flat(start + look * along) + Vector3(0, 0, Vector3.z(bardin_position) + CHAIN_AIM_HEIGHT)
 			local way = Vector3.normalize(Unit.local_position(rat, 0) + Vector3(0, 0, CHAIN_ENEMY_MIDDLE) - hit)
 
 			return { Vector3.x(way), Vector3.y(way), Vector3.z(way) }
