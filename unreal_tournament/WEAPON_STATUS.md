@@ -126,13 +126,13 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Allies in the way | ok (tests: a bot never hurts the player) | ok (a bot doesn't shoot past an ally) | ok (tests: a bot fighting rats around the player never hurts them) | - | - | - | ok (tests: a bot shooting past the player never hurts them) | ok (tests: a bot shooting past the player never hurts them) |
 | Look and sound of their shots | ok | ok | ok | - | - | - | ok | ok |
 | **Stability** | | | | | | | | |
-| Mod reload with it wielded | - | ok | - | - | - | - | - | - |
-| Level change while firing | - | ok | - | - | - | - | - | - |
-| Dying with it | - | ok | - | - | - | - | - | - |
-| Revive with it | - | ok | - | - | - | - | - | - |
-| Knockdown | - | ok | - | - | - | - | - | - |
-| Ledge hang | - | ok | - | - | - | - | - | - |
-| Switching away mid-animation | - | ok (tests: put away while it fires, the rounds stop) | ok (tests: putting it away while it charges doesn't punch) | - | - | - | - | - |
-| Switching back mid-animation | - | ok | ok (tests: taken out again, it charges and punches) | - | - | - | - | - |
+| Mod reload with it wielded | ok | ok | - | - | - | - | - | - |
+| Level change while firing | ok | ok | - | - | - | - | - | - |
+| Dying with it | ok | ok | - | - | - | - | - | - |
+| Revive with it | ok | ok | - | - | - | - | - | - |
+| Knockdown | ok | ok | - | - | - | - | - | - |
+| Ledge hang | ok (the gun is hidden in third person while hanging, as the game hides its own) | ok | - | - | - | - | - | - |
+| Switching away mid-animation | ok | ok (tests: put away while it fires, the rounds stop) | ok (tests: putting it away while it charges doesn't punch) | - | - | - | - | - |
+| Switching back mid-animation | ok | ok | ok (tests: taken out again, it charges and punches) | - | - | - | - | - |
 | Errors in the console log | ok | ok | - | - | - | - | - | - |
 | Crash dumps | ok | ok | - | - | - | - | - | - |
