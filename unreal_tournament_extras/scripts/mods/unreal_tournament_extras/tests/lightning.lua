@@ -1,9 +1,33 @@
 local mod = get_mod("unreal_tournament_extras")
 local ut = get_mod("unreal_tournament")
 
--- The Lightning Gun's in-game tests (see runner.lua). Run them with /ut_test lightning. They run in the runner's level, Righteous Stand.
+-- The Lightning Gun's in-game tests (see runner.lua). Run them with /ut_test lightning, and the bots' with /ut_test lightning_bots. They
+-- run in the runner's level, Righteous Stand.
 
 local runner = mod.test_runner
+
+local CONFIG = {
+	-- SniperFire.FireRate, and how much sooner than that a second bolt may be recorded
+	fire_rate = 1.6, -- s
+	fire_rate_margin = 0.05, -- s
+	-- The damage of a bolt against armour and monsters, of the damage against an enemy with none (a Chaos marauder), with this much either
+	-- way (lightning_gun.lua's armor_attack). Only a first hit is compared, before the enemy is staggered. A Stormvermin is armoured, a
+	-- Chaos warrior's body is super armour, and a rat ogre is a monster and a boss, whose damage the game takes down to 0.45
+	-- (DamageUtils.calculate_damage's boss_damage_reduction).
+	plain_breed = "chaos_marauder",
+	armour_breeds = {
+		{ "skaven_storm_vermin", 1 },
+		{ "chaos_warrior", 0.6 },
+		{ "skaven_rat_ogre", 1.2 * 0.45 },
+	},
+	armour_margin = 0.1,
+	-- An arc does half of the bolt's damage (SniperFire.SecDamageMult)
+	arc_damage_ratio = 0.5,
+	arc_damage_margin = 0.1,
+	-- How far ahead the enemies that are shot stand, and how far to the side of the first one the enemy an arc goes for stands
+	enemy_distance = 5, -- m
+	arc_enemy_aside = 1.5, -- m
+}
 
 -- Records the bolts that happen while a test runs. The vectors are kept in boxes, as a vector only lasts its frame. The arcs are only
 -- counted.
@@ -47,6 +71,64 @@ local function locked_out(t)
 	return check()
 end
 
+-- Takes all the heat off a unit's gun, so that the bolts of a scenario don't add up to an overheat
+local function cool(t, unit)
+	t.on_main_thread(function ()
+		local overcharge_extension = ScriptUnit.extension(unit or t.unit(), "overcharge_system")
+
+		overcharge_extension:remove_charge(overcharge_extension:get_overcharge_value())
+	end)
+end
+
+-- Zooms out, if the view is zoomed
+local function zoom_out(t)
+	if ut.lightning.zoom.zoomed then
+		t.press("action_two", 0.1)
+		t.wait(0.2)
+	end
+end
+
+-- The damage of the first bolt that hits an enemy of a breed, enemy_distance ahead, aimed at its middle
+local function one_first_hit(t, breed_name)
+	t.go_to_start()
+	cool(t)
+
+	local enemy = t.spawn(breed_name, CONFIG.enemy_distance)
+
+	if not t.expect(enemy, "the %s could not be spawned", breed_name) then
+		return nil
+	end
+
+	t.wait(1)
+	t.aim_at(enemy)
+
+	local damage = t.track_damage(enemy)
+
+	t.press("action_one", 0.1)
+	t.wait(0.5)
+	t.remove(enemy)
+	-- (the next bolt can't come before the fire time)
+	t.wait(CONFIG.fire_rate)
+
+	return damage.hits[1] and damage.hits[1].amount
+end
+
+-- The smaller of two first hits: a critical hit does more, and a bolt aimed at the middle can hit the head, so one of the two is taken
+-- to be a plain one
+local function first_hit(t, breed_name)
+	local least
+
+	for _ = 1, 2 do
+		local damage = one_first_hit(t, breed_name)
+
+		if damage then
+			least = math.min(least or math.huge, damage)
+		end
+	end
+
+	return least
+end
+
 local function scenarios()
 	return {
 		{
@@ -56,6 +138,8 @@ local function scenarios()
 			run = function (t)
 				-- The smallest of three bolts each, which leaves out critical hits (the Shade's passive makes them common)
 				local body, head = math.huge, math.huge
+
+				cool(t)
 
 				for _ = 1, 3 do
 					body = math.min(body, t.shot_damage(false) or math.huge)
@@ -205,6 +289,136 @@ local function scenarios()
 			end,
 		},
 		{
+			-- The zoom button right after a shot works as at any other time: the shot turns into the zoom. Pressing it again after a
+			-- shot zooms out, and the press doesn't start the zoom again.
+			name = "the zoom button after a shot zooms in and out",
+			run = function (t)
+				local zoom = ut.lightning.zoom
+
+				t.press("action_one", 0.1)
+				t.wait(0.2)
+				t.press("action_two", 0.3)
+				t.wait(0.2)
+				t.expect(zoom.zoomed, "the zoom button after a shot did not zoom in")
+				t.wait(CONFIG.fire_rate)
+				t.press("action_one", 0.1)
+				t.wait(0.2)
+				t.press("action_two", 0.1)
+				t.wait(0.5)
+				t.expect(not zoom.zoomed, "the zoom button after a shot did not zoom out, or zoomed in again")
+				zoom_out(t)
+			end,
+		},
+		{
+			-- A shot can turn into the zoom at once and back, and the next bolt still waits for the fire time after the last one
+			name = "zooming doesn't shorten the fire time",
+			run = function (t)
+				cool(t)
+				start_recording()
+				t.press("action_one", 0.1)
+				t.hold("action_two")
+				t.press("action_one", 2)
+				t.release("action_two")
+				t.wait(0.3)
+				stop_recording()
+				zoom_out(t)
+
+				t.expect(#bolts == 2, "%d bolts were made, not 2", #bolts)
+
+				if bolts[2] then
+					local gap = bolts[2].time - bolts[1].time
+
+					t.log("the second bolt came %.2f s after the first", gap)
+					t.expect(gap >= CONFIG.fire_rate - CONFIG.fire_rate_margin, "the second bolt came %.2f s after the first, before the fire time of %.2f", gap, CONFIG.fire_rate)
+				end
+			end,
+		},
+		{
+			-- Inspecting the weapon ends the zoom, and the zoom button does nothing until the inspect ends
+			name = "inspecting ends the zoom and keeps it from starting",
+			run = function (t)
+				local zoom = ut.lightning.zoom
+
+				t.press("action_two", 0.3)
+				t.wait(0.2)
+
+				if not t.expect(zoom.zoomed, "the weapon did not zoom") then
+					return
+				end
+
+				t.hold("action_inspect")
+				t.wait(0.5)
+				t.expect(not zoom.zoomed, "inspecting did not end the zoom")
+				t.press("action_two", 0.3)
+				t.wait(0.2)
+
+				local zoomed = zoom.zoomed
+
+				t.release("action_inspect")
+				t.wait(0.5)
+				t.expect(not zoomed, "the zoom button zoomed while inspecting")
+				zoom_out(t)
+			end,
+		},
+		{
+			name = "bolts hurt armoured enemies and monsters by their armour",
+			run = function (t)
+				local plain = first_hit(t, CONFIG.plain_breed)
+
+				if not t.expect(plain, "a bolt did not hurt the %s", CONFIG.plain_breed) then
+					return
+				end
+
+				for _, entry in ipairs(CONFIG.armour_breeds) do
+					local breed_name, share = entry[1], entry[2]
+					local damage = first_hit(t, breed_name)
+
+					if t.expect(damage, "a bolt did not hurt the %s", breed_name) then
+						t.log("%s: %.2f, %.2f of the marauder's %.2f", breed_name, damage, damage / plain, plain)
+						t.expect(math.abs(damage / plain - share) <= CONFIG.armour_margin, "a bolt did %.2f of its damage to the %s, not %.2f", damage / plain, breed_name, share)
+					end
+				end
+			end,
+		},
+		{
+			-- An arc goes for an enemy near where the bolt hit and does half of the bolt's damage. It has the bolt's critical hit, so the
+			-- two are compared as they are.
+			name = "an arc hurts an enemy near the one hit for half the damage",
+			run = function (t)
+				cool(t)
+
+				local first = t.spawn(CONFIG.plain_breed, CONFIG.enemy_distance)
+				local aside = t.ground_at(CONFIG.enemy_distance, CONFIG.arc_enemy_aside)
+
+				if not t.expect(first and aside, "the enemies could not be spawned") then
+					return
+				end
+
+				local second = t.spawn_at(CONFIG.plain_breed, aside[1], aside[2], aside[3])
+
+				if not t.expect(second, "the second %s could not be spawned", CONFIG.plain_breed) then
+					return
+				end
+
+				t.wait(1)
+				t.aim_at(first)
+
+				local first_damage = t.track_damage(first)
+				local second_damage = t.track_damage(second)
+
+				t.press("action_one", 0.1)
+				t.wait(0.5)
+
+				local bolt = first_damage.hits[1] and first_damage.hits[1].amount
+				local arc = second_damage.hits[1] and second_damage.hits[1].amount
+
+				if t.expect(bolt, "the bolt did not hurt the enemy it was aimed at") and t.expect(arc, "no arc hurt the enemy beside it") then
+					t.log("the bolt did %.2f, the arc %.2f", bolt, arc)
+					t.expect(math.abs(arc / bolt - CONFIG.arc_damage_ratio) <= CONFIG.arc_damage_margin, "the arc did %.2f of the bolt's damage, not %.2f", arc / bolt, CONFIG.arc_damage_ratio)
+				end
+			end,
+		},
+		{
 			name = "damages an enemy",
 			run = function (t)
 				local target = t.spawn_target(5)
@@ -258,4 +472,140 @@ runner.add_suite({
 	slot = "slot_ranged",
 	careers = { "we_waywatcher", "we_thornsister", "we_shade", "we_maidenguard" },
 	scenarios = scenarios(),
+})
+
+-- Bots with the Lightning Gun (its attack_meta_data in lightning_gun.lua). A hero can't be a bot and the player at once, so these run in a
+-- suite of their own with the player as Sienna, and the bot is Kerillian as a Waystalker, with her own mind. The heat is the game's bot
+-- tree's to watch (bt_bot.lua): a bot stops firing near the top of the heat, and vents while it is between half the threshold and the
+-- threshold.
+local BOTS = {
+	profile = "wood_elf",
+	career = 1,
+	behind = -3, -- m
+	player_aside = 3, -- m to the right
+	special = "skaven_ratling_gunner",
+	special_distance = 14, -- m
+	-- How long the bot has to hurt the special
+	fight_time = 30, -- s
+	-- The heat given to the bot to vent: just under the threshold of 10 (OverchargeData.we_thornsister). It cools by 1 a second, so the
+	-- bot has about 4 s to start venting before the heat is under half the threshold.
+	vent_heat = 9.5,
+	vent_time = 10, -- s
+}
+
+-- The damage from the Lightning Gun in a record of t.track_damage
+local function from_lightning_gun(record)
+	local total = 0
+
+	for _, hit in ipairs(record.hits) do
+		if hit.source == definition.key then
+			total = total + hit.amount
+		end
+	end
+
+	return total
+end
+
+local function bot_scenarios()
+	return {
+		{
+			-- The bot shoots the special, never hurts the player, and never overheats the gun
+			name = "a bot shoots enemies with it",
+			run = function (t)
+				t.hurtable(true)
+
+				local special = t.spawn(BOTS.special, BOTS.special_distance)
+
+				if not t.expect(special, "the %s could not be spawned", BOTS.special) then
+					return
+				end
+
+				local aside = t.ground_at(0, BOTS.player_aside)
+
+				if not t.expect(aside, "there is no ground beside the player") then
+					return
+				end
+
+				-- (a bot shoots a special only once it has been seen, which a calm one never is: shooting at the player makes it seen)
+				t.on_main_thread(function ()
+					runner.provoke(special)
+				end)
+
+				local damage = t.track_damage(special)
+				local player_damage = t.track_damage(t.unit())
+				local bot = t.add_bot(BOTS.profile, BOTS.career, definition.key, BOTS.behind, nil, true)
+
+				if not t.expect(bot, "the bot could not be added") then
+					return
+				end
+
+				local locked = false
+
+				runner.frame_watchers[#runner.frame_watchers + 1] = function ()
+					local overcharge_extension = Unit.alive(bot) and ScriptUnit.has_extension(bot, "overcharge_system")
+
+					if overcharge_extension and overcharge_extension:are_you_locked_out() then
+						locked = true
+					end
+				end
+
+				t.on_main_thread(function ()
+					runner.move_player(t.unit(), Vector3(aside[1], aside[2], aside[3]))
+				end)
+				start_recording()
+				t.wait_until(function ()
+					return from_lightning_gun(damage) > 0
+				end, BOTS.fight_time, "the bot to hurt the special")
+				t.wait(5)
+				stop_recording()
+
+				local fired = 0
+
+				for _, bolt in ipairs(bolts) do
+					if bolt.owner_unit == bot then
+						fired = fired + 1
+					end
+				end
+
+				t.log("the bot fired %d bolts", fired)
+				t.expect(from_lightning_gun(damage) > 0, "the bot did not hurt the %s with the Lightning Gun in %d s", BOTS.special, BOTS.fight_time)
+				t.expect(from_lightning_gun(player_damage) == 0, "the bot's bolts hurt the player %.1f", from_lightning_gun(player_damage))
+				t.expect(not locked, "the bot overheated the gun")
+			end,
+		},
+		{
+			-- With no enemies about, a bot whose gun is hot vents it (the reload button)
+			name = "a bot vents its heat",
+			run = function (t)
+				local bot = t.add_bot(BOTS.profile, BOTS.career, definition.key, BOTS.behind, nil, true)
+
+				if not t.expect(bot, "the bot could not be added") then
+					return
+				end
+
+				t.on_main_thread(function ()
+					ScriptUnit.extension(bot, "overcharge_system"):add_charge(BOTS.vent_heat)
+				end)
+
+				local vented = t.wait_until(function ()
+					local overcharge_extension = Unit.alive(bot) and ScriptUnit.has_extension(bot, "overcharge_system")
+
+					return overcharge_extension and overcharge_extension.venting_overcharge
+				end, BOTS.vent_time, "the bot to vent")
+
+				t.expect(vented, "the bot did not vent %.1f heat in %d s", BOTS.vent_heat, BOTS.vent_time)
+			end,
+		},
+	}
+end
+
+local shock_rifle = ut.items.weapons.shock_rifle
+
+runner.add_suite({
+	name = "lightning_bots",
+	item = shock_rifle.key,
+	template = shock_rifle.template,
+	slot = "slot_ranged",
+	careers = { "bw_adept" },
+	scenarios = bot_scenarios(),
 })

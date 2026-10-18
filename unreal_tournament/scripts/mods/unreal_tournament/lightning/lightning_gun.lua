@@ -283,7 +283,6 @@ local function apply_staff(template)
 	}
 
 	local actions = template.actions
-	local attack_meta_data = template.attack_meta_data
 
 	-- The shot is replaced, and the staff's charged attack is replaced by UT's zoom. Everything else stays untouched, including the
 	-- venting, wield, inspect and the career actions.
@@ -332,10 +331,29 @@ local function apply_staff(template)
 	-- A rifle's crosshair, not the staff's arrows
 	template.crosshair_style = "default"
 
-	-- The bot AI and the tooltips refer to the staff's charged attack, which was removed.
-	attack_meta_data.can_charge_shot = false
-	attack_meta_data.charged_attack_action_name = nil
-	attack_meta_data.max_range = CONFIG.bot_max_range
+	-- How bots use it. The game's bot shooting presses the left button when its aim is on an enemy, and the shot waits for its fire
+	-- time. A bot aims at the head, which takes double damage, with the staff's aim for its charged shot, the long range one. It is used
+	-- against every kind of enemy, bosses too (the bolt does 1.2 times its damage to monsters). A bot doesn't shoot through an enemy in
+	-- the way, as the bolt stops at the first one. The heat is the game's bot tree's to watch (bt_bot.lua): a bot stops firing near the
+	-- top of the heat and vents.
+	local effective_against = bit.bor(BreedCategory.Infantry, BreedCategory.Shielded, BreedCategory.Berserker, BreedCategory.Boss, BreedCategory.Armored, BreedCategory.SuperArmor, BreedCategory.Special)
+
+	template.attack_meta_data = {
+		aim_at_node = "j_head",
+		aim_data = {
+			max_radius_pseudo_random_c = 0.01475,
+			min_radius_pseudo_random_c = 0.0557,
+			min_radius = math.pi / 72,
+			max_radius = math.pi / 16,
+		},
+		can_charge_shot = false,
+		effective_against = effective_against,
+		effective_against_charged = 0,
+		effective_against_combined = effective_against,
+		ignore_enemies_for_obstruction = false,
+		max_range = CONFIG.bot_max_range,
+		obstruction_fuzzyness_range = 1,
+	}
 
 	template.tooltip_compare = {
 		light = {
