@@ -544,10 +544,10 @@ local function new_skin(variant)
 		inspect_pivot_right = 0,
 		inspect_pivot_forward = 30,
 		inspect_pivot_up = 0,
-		-- The lockout pose (see lockout_pose_speed): turned on its side, lower and further right, in the corner of the view
+		-- The lockout pose (see lockout_pose_speed): turned on its side, raised and further right (set in the game)
 		alt_pose_right = 2,
 		alt_pose_forward = 0,
-		alt_pose_up = -3,
+		alt_pose_up = 3,
 		alt_pose_roll = -40,
 		alt_pose_pitch = 0,
 		alt_pose_yaw = 0,
