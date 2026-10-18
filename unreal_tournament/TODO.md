@@ -14,11 +14,12 @@ as the Minigun does. What each finished weapon took from its base at build 1282 
    (`action_one.push`) and block (`action_two.default`, with `max_fatigue_points` and `outer_block_*`). One set for all five, to
    be decided.
 5. **`weapon_type`.** What the game's talents and traits take each weapon for (the Bio Rifle is a BRACE_OF_PISTOLS, the Shock Rifle a
-   FIRE_STAFF, the Lightning Gun a LIFE_STAFF, the Minigun a REPEATING_HANDGUN or REPEATING_PISTOL). Keep or choose.
+   FIRE_STAFF, the Lightning Gun a LIFE_STAFF). Keep or choose. The Minigun keeps its base's, so that each hero's talents see his
+   own repeater.
 6. **Bots.** Each weapon's `attack_meta_data`: where bots aim, what they use it against, and whether they shoot past allies and
-   enemies in the way (the Minigun's bots don't shoot past an ally).
-7. **Wielding, reloading and inspecting.** The Minigun takes the game's `ActionTemplates.wield` and `reload` by name, and inspecting
-   from its base. Write them out, or keep them as the game's.
+   enemies in the way.
+7. **Wielding, reloading and inspecting.** These stay the game's: the Minigun takes `ActionTemplates.wield` and `reload` by name, and
+   inspecting from its base. The other weapons the same.
 
 ## New weapons
 
