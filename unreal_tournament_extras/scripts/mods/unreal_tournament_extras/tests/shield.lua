@@ -142,45 +142,19 @@ local SHOCK_SHOT_GAP = 2 -- s
 -- The second shield of the reflections from shield to shield: Bardin as an Ironbreaker (his second career) with his Shield Gun
 local SHIELD_BOT_PROFILE = "dwarf_ranger"
 local SHIELD_BOT_CAREER = 2
--- The enemy that the shot goes on to from Bardin's shield: on the open square ahead, 45 degrees to the other side of Sienna (the
--- player, who faces Bardin, turns this far the other way to put it there), about 5 m from the player (CHAIN_ENEMY_DISTANCES). From
--- Bardin it is about 46 degrees off the way to the player, inside his shield's arc, and the way to it passes 4 m from the player and
--- 1.5 m from Sienna. (Behind the player is the alley of the start, whose walls were in the way.)
+-- The enemy that the shot goes on to from Bardin's shield: CHAIN_ENEMY_FROM_BARDIN from him, towards the place on the open square
+-- CHAIN_ENEMY_TOWARDS from the player, 45 degrees to the other side of Sienna (the player, who faces Bardin, turns this far the other
+-- way to find it). From Bardin it is about 46 degrees off the way to the player, inside his shield's arc. Close to him, the shot off
+-- his shield gets to it however high it comes off. (Behind the player is the alley of the start, whose walls were in the way, and
+-- farther along the square are stairs, which a marauder spawned in.)
 local CHAIN_ENEMY_TURN = SHOCK_TURN + 45 -- degrees
+local CHAIN_ENEMY_TOWARDS = 5 -- m
+local CHAIN_ENEMY_FROM_BARDIN = 2.5 -- m
 -- The enemy at the end of the chain, and how high above its feet its middle is, which the shot from Bardin's shield is sent at. It is a
 -- tall one: the shot gets to Bardin's shield as high as Sienna's shot got to the player's, which her aim moves by half a meter or so
 -- (bots' aim wavers), and the shot off his shield is that much higher or lower. A rat's body was missed that way.
 local CHAIN_ENEMY_BREED = "chaos_marauder"
 local CHAIN_ENEMY_MIDDLE = 1 -- m
--- A marauder 5 m ahead stood in the stairs there, and the game killed it. So it stands at the first of these distances where the ground
--- is flat: as high within CHAIN_FLAT_MARGIN for CHAIN_FLAT_REACH either way along the line.
-local CHAIN_ENEMY_DISTANCES = { 5, 4.5, 5.5, 4, 6, 3.5 } -- m
-local CHAIN_FLAT_MARGIN = 0.1 -- m
-local CHAIN_FLAT_REACH = 0.6 -- m
-
--- The distance ahead, along the way the player looks, that the enemy at the end of the chain stands at (see CHAIN_ENEMY_DISTANCES)
-local function chain_enemy_distance(t)
-	for _, distance in ipairs(CHAIN_ENEMY_DISTANCES) do
-		local middle = t.ground_at(distance, 0)
-		local flat = middle ~= nil
-
-		for _, along in ipairs({ -CHAIN_FLAT_REACH, CHAIN_FLAT_REACH }) do
-			local ground = flat and t.ground_at(distance + along, 0)
-
-			flat = flat and ground ~= nil and math.abs(ground[3] - middle[3]) <= CHAIN_FLAT_MARGIN
-		end
-
-		if flat then
-			t.log("the enemy at the end of the chain stands %.1f m ahead", distance)
-
-			return distance
-		end
-	end
-
-	t.log("no level ground for the enemy at the end of the chain: it stands %.1f m ahead", CHAIN_ENEMY_DISTANCES[1])
-
-	return CHAIN_ENEMY_DISTANCES[1]
-end
 -- How high above Bardin's feet the player looks at him
 local CHAIN_AIM_HEIGHT = 1 -- m
 
@@ -349,7 +323,17 @@ local function shield_to_shield(t, button, to_rat)
 	if to_rat then
 		t.look(0, CHAIN_ENEMY_TURN)
 
-		rat = t.spawn(CHAIN_ENEMY_BREED, chain_enemy_distance(t))
+		local spot = t.on_main_thread(function ()
+			local first_person_extension = ScriptUnit.extension(player, "first_person_system")
+			local ahead = Vector3.normalize(Vector3.flat(Quaternion.forward(first_person_extension:current_rotation())))
+			local towards = Unit.local_position(player, 0) + ahead * CHAIN_ENEMY_TOWARDS
+			local from = Unit.local_position(bardin, 0)
+			local position = from + Vector3.normalize(Vector3.flat(towards - from)) * CHAIN_ENEMY_FROM_BARDIN
+
+			return { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
+		end)
+
+		rat = t.spawn_at(CHAIN_ENEMY_BREED, spot[1], spot[2], spot[3])
 
 		if not t.expect(rat, "the rat could not be spawned") then
 			return nil
