@@ -37,8 +37,8 @@ local CONFIG = {
 		{ "skaven_rat_ogre", 1 * 0.45 },
 	},
 	alt_armour_breeds = {
-		{ "skaven_storm_vermin", 1 },
-		{ "chaos_warrior", 1 },
+		{ "skaven_storm_vermin", 0.9 },
+		{ "chaos_warrior", 0.9 },
 		{ "skaven_rat_ogre", 1 * 0.45 },
 	},
 	armour_margin = 0.1,

@@ -85,10 +85,10 @@ local CONFIG = {
 	alt_damage = 15,
 	-- The multipliers of the damage and the stagger for each armor type: unarmored, armored, monsters, players, berserkers and super
 	-- armor, for normal and critical hits. UT has no armor. The primary fire's small rounds are poor against it, and the alt fire's
-	-- heavier ones go through all of it.
+	-- heavier ones go through most of it.
 	armor_attack = {1, 0.5, 1, 1, 1, 0.3},
 	armor_impact = {1, 1, 1, 1, 1, 0.5},
-	alt_armor_attack = {1, 1, 1, 1, 1, 1},
+	alt_armor_attack = {1, 0.9, 1, 1, 1, 0.9},
 	alt_armor_impact = {1, 1, 1, 1, 1, 0.5},
 	-- MinigunFire.Spread and MinigunAltFire.Spread: each round is off the aim by a random share of this much of the aim's length
 	primary_spread = 0.08,
@@ -303,7 +303,7 @@ local function apply_gun(template)
 
 	-- The chart of the item's stats, from 0 to 7. The rounds are the normal attack.
 	-- A round stops at the first enemy and barely staggers (0.05 and 0.1 of impact, where the repeater's 0.3 shows 3). The primary is poor
-	-- against armor (0.5) and the alt goes through all of it (1, where the repeater's 0.8 shows 5).
+	-- against armor (0.5) and the alt goes through most of it (0.9, where the repeater's 0.8 shows 5).
 	template.weapon_diagram = {
 		light_attack = {
 			[DamageTypes.ARMOR_PIERCING] = 2,
@@ -313,7 +313,7 @@ local function apply_gun(template)
 			[DamageTypes.DAMAGE] = 5,
 		},
 		heavy_attack = {
-			[DamageTypes.ARMOR_PIERCING] = 7,
+			[DamageTypes.ARMOR_PIERCING] = 6,
 			[DamageTypes.CLEAVE] = 1,
 			[DamageTypes.SPEED] = 4,
 			[DamageTypes.STAGGER] = 1,
