@@ -407,7 +407,8 @@ skin_api = mod.weapon_skin.new({
 		-- The game links the crossbow, the blunderbuss and the Drakegun to the left hand's node (AttachmentNodeLinking.repeating_crossbow).
 		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.02 * 0.4,
-		scale = 1,
+		-- (a little smaller than UT's: it looked too big on Saltzpyre)
+		scale = 0.9,
 		grip_right = 0,
 		grip_forward = 0,
 		grip_up = 0,
