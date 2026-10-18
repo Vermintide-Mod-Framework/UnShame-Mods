@@ -271,11 +271,8 @@ def roughness_of(cfg, index):
 
     return roughness.get(index, 0.9) if isinstance(roughness, dict) else roughness
 
-# A weapon in a player's hand glows a little in UT: it takes its lighting from the player (InventoryAttachment.bUseLightingFromBase), who
-# has an AmbientGlow of 40 of 255 (UnrealPawn), so the side of it that faces away from the lights is not black. A third person mesh gets
-# that as the emissive of its materials: its own colour texture, times this.
-THIRD_PERSON_GLOW = 40 / 255
-
+# A weapon in a player's hand glows a little in UT (see GLOW in scripts/mods/unreal_tournament/weapon_skin_third_person.lua). A third
+# person mesh's materials glow with their own colour texture, and the skin sets how much (emissive_intensity), so it is 0 here.
 def with_glow(text):
     """The text of a material with the glow of a weapon in a player's hand added, or None if it has no colour texture to glow with."""
     lines = [line for line in text.split('\n') if line.strip().startswith('color_map = ')]
@@ -284,7 +281,7 @@ def with_glow(text):
     texture = lines[0].split('=', 1)[1].strip()
     text = text.replace(lines[0] + '\n', lines[0] + '\n\temissive_map = %s\n' % texture, 1)
     return text.rstrip('\n').rstrip('}') + ('\tuse_emissive_map = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n'
-                                            '\temissive_intensity = {\n\t\ttype = "scalar"\n\t\tvalue = %s\n\t}\n}\n' % round(THIRD_PERSON_GLOW, 4))
+                                            '\temissive_intensity = {\n\t\ttype = "scalar"\n\t\tvalue = 0\n\t}\n}\n')
 
 def main():
     name, export = sys.argv[1], sys.argv[2]
