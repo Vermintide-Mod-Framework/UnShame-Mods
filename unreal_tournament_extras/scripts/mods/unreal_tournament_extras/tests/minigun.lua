@@ -54,6 +54,7 @@ ut.minigun_shot_callbacks.ut_test = function (owner_unit, mode, end_position)
 	if recording then
 		shots[#shots + 1] = {
 			mode = mode,
+			owner_unit = owner_unit,
 			time = Managers.time:time("game"),
 		}
 	end
@@ -80,7 +81,7 @@ local function button_of(mode)
 end
 
 -- The damage of the first round of a mode that hits an enemy of a breed, enemy_distance ahead: aimed at its middle, or at its head
-local function first_hit(t, breed_name, mode, at_head)
+local function one_first_hit(t, breed_name, mode, at_head)
 	t.go_to_start()
 
 	local enemy = t.spawn(breed_name, CONFIG.enemy_distance)
@@ -111,6 +112,22 @@ local function first_hit(t, breed_name, mode, at_head)
 	t.wait(1)
 
 	return damage.hits[1] and damage.hits[1].amount
+end
+
+-- The smaller of two first hits: a critical hit does more, and a round aimed at the middle can hit the head, so one of the two is taken
+-- to be a plain one
+local function first_hit(t, breed_name, mode, at_head)
+	local least
+
+	for _ = 1, 2 do
+		local damage = one_first_hit(t, breed_name, mode, at_head)
+
+		if damage then
+			least = math.min(least or math.huge, damage)
+		end
+	end
+
+	return least
 end
 
 -- Checks a mode's damage against each armour type, as a share of the damage against an enemy with none
@@ -399,11 +416,12 @@ runner.add_suite({
 
 -- Bots with the Minigun (its attack_meta_data in minigun.lua). A hero can't be a bot and the player at once, so these run in a suite of
 -- their own with the player as Sienna, and the bot is Kruber as a Mercenary, with his own mind. The special stands ahead and shoots at the
--- player, who is in the bot's way.
+-- player, who stands aside, out of the bot's way: a bot doesn't shoot through an ally with the repeater's settings.
 local BOTS = {
 	profile = "empire_soldier",
 	career = 1,
 	behind = -3, -- m
+	player_aside = 3, -- m to the right
 	special = "skaven_ratling_gunner",
 	special_distance = 14, -- m
 	-- How long the bot has to hurt the special
@@ -428,7 +446,7 @@ end
 local function bot_scenarios()
 	return {
 		{
-			-- The bot shoots the special, past the player in its way, and never hurts the player
+			-- The bot shoots the special, and never hurts the player
 			name = "a bot shoots enemies with it",
 			run = function (t)
 				t.hurtable(true)
@@ -436,6 +454,12 @@ local function bot_scenarios()
 				local special = t.spawn(BOTS.special, BOTS.special_distance)
 
 				if not t.expect(special, "the %s could not be spawned", BOTS.special) then
+					return
+				end
+
+				local aside = t.ground_at(0, BOTS.player_aside)
+
+				if not t.expect(aside, "there is no ground beside the player") then
 					return
 				end
 
@@ -447,15 +471,31 @@ local function bot_scenarios()
 				local damage = t.track_damage(special)
 				local player_damage = t.track_damage(t.unit())
 
-				if not t.expect(t.add_bot(BOTS.profile, BOTS.career, minigun.key, BOTS.behind, nil, true), "the bot could not be added") then
+				local bot = t.add_bot(BOTS.profile, BOTS.career, minigun.key, BOTS.behind, nil, true)
+
+				if not t.expect(bot, "the bot could not be added") then
 					return
 				end
 
+				t.on_main_thread(function ()
+					runner.move_player(t.unit(), Vector3(aside[1], aside[2], aside[3]))
+				end)
+				record()
 				t.wait_until(function ()
 					return from_minigun(damage) > 0
 				end, BOTS.fight_time, "the bot to hurt the special")
 				t.wait(5)
+				stop_recording()
 
+				local rounds = 0
+
+				for _, shot in ipairs(shots) do
+					if shot.owner_unit ~= t.unit() then
+						rounds = rounds + 1
+					end
+				end
+
+				t.log("the bot fired %d rounds", rounds)
 				t.expect(from_minigun(damage) > 0, "the bot did not hurt the %s with the Minigun in %d s", BOTS.special, BOTS.fight_time)
 				t.expect(from_minigun(player_damage) == 0, "the bot's rounds hurt the player %.1f", from_minigun(player_damage))
 			end,
