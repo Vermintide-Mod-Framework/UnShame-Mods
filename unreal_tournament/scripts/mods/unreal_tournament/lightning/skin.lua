@@ -44,9 +44,6 @@ local CONFIG = {
 	-- is (28, 100, -26), and these are fitted to a picture of UT2004, which has the eye's bob and the view's height in it too.
 	flare_view_offset = {25, 100, -19.8},
 	flare_view_size = 44,
-	-- The flare in the player's view is drawn at this share of the distance to the weapon's muzzle. UT draws it in the world, behind the
-	-- whole weapon.
-	flare_view_depth = 1.2,
 	-- ChildBlueSparks: each arc (ChildLightningBolt) throws 10 sparks from where it starts, which is where the bolt hit. They fly along
 	-- the arc's hit normal, up to 0.6 off it in each axis (mDirDev), at 250 to 350 units a second, slowed by 0.2 of their speed a second
 	-- (mAirResistance), and last 0.8 to 1.2 s. Each is a line (PT_Line) 2 to 3 units wide that thins by 3 units a second. Its length
@@ -307,18 +304,16 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start,
 	-- (while zoomed the weapon isn't drawn, and the flare is where the bolt starts, below the view, as UT's)
 	local muzzle = api and not api.third_person.shows_weapon(owner_unit) and not lightning.zoom.zoomed and api.muzzle_model_position()
 
-	if muzzle and camera_position then
-		-- In the player's own view UT spawns the bolt at EffectOffset from the eye (100 ahead, 28 to the right, 26 down, in a view of
-		-- 90 degrees across), and draws the flare there at the front of the weapon. Here it is drawn with the field of view of the
-		-- weapon's model, so that it is among the parts of the model, at the same place on the screen and as wide as UT's.
-		local _, camera_rotation = utils.camera_pose()
-		-- (UT's view of 90 degrees across at 16 by 9 is 0.5625 of a tangent up and down)
-		local scale = math.tan(api.weapon_vertical_fov() / 2) / 0.5625
-		local ahead = Vector3.dot(muzzle - camera_position, Quaternion.forward(camera_rotation)) * CONFIG.flare_view_depth
-		local offset = CONFIG.flare_view_offset
-		local position = camera_position + Quaternion.forward(camera_rotation) * ahead + Quaternion.right(camera_rotation) * (ahead * offset[1] / offset[2] * scale) + Quaternion.up(camera_rotation) * (ahead * offset[3] / offset[2] * scale)
+	local player = Managers.player:local_player()
 
-		flare(position, ahead * CONFIG.flare_view_size / offset[2] * scale, "units/ut/fx/fx_weapon_lightning_flare")
+	if muzzle and camera_position and player then
+		-- In the player's own view UT spawns the bolt at EffectOffset from the eye (100 ahead, 28 to the right, 26 down, in a view of
+		-- 90 degrees across), and draws the flare there in the world, behind the weapon. The flare is drawn where the bolt starts (see
+		-- bolt_start), as wide on the screen as UT's, so the two stay together as the view moves.
+		-- (UT's view of 90 degrees across at 16 by 9 is 0.5625 of a tangent up and down)
+		local scale = math.tan(Managers.state.camera:fov(player.viewport_name) / 2) / 0.5625
+
+		flare(start, CONFIG.flare_view_size * UNIT * scale)
 	else
 		flare(start, CONFIG.flare_size * UNIT)
 	end

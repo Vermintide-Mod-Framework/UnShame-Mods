@@ -38,9 +38,9 @@ FX = {
 # much fainter than UT's. particle_linear reads the values as they are. The flare, the bolt and the sparks use it (checked against
 # pictures of UT2004).
 LINEAR = ('lightning_flare', 'lightning_bolt', 'blue_spark_line')
-# The flare and the charge's sparks are also drawn with the weapon in the player's view, so they also get fx_weapon_<name>, which draws
-# with the weapon model's field of view (as make_weapon_fx.py's WEAPON do): the sparks are among the model's parts, which hide them
-WEAPON = ('lightning_flare', 'lightning_charge_0', 'lightning_charge_1', 'lightning_charge_2', 'lightning_charge_3')
+# The charge's sparks are also drawn with the weapon in the player's view, so they also get fx_weapon_<name>, which draws with the weapon
+# model's field of view (as make_weapon_fx.py's WEAPON do): the sparks are among the model's parts, which hide them
+WEAPON = ('lightning_charge_0', 'lightning_charge_1', 'lightning_charge_2', 'lightning_charge_3')
 
 # An effect's texture is marked as not srgb, so that its smaller mipmaps are made from its values as they are, as its material reads them
 def write_texture(directory, name, width, height, rows, srgb=True):
