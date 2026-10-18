@@ -13,10 +13,8 @@ local impact_power_for = utils.impact_power_for
 local DESCRIPTION = "The Schultz-Metzger T23-A 23mm rotary cannon is capable of firing both high-velocity caseless ammunition and cased rounds. With an unloaded weight of only 8 kilograms, the T23 is portable and maneuverable, easily worn across the back when employing the optional carrying strap."
 
 -- The items. Kruber's careers have a repeating gun, and Saltzpyre's a repeater pistol, and they are separate templates. What the two
--- copies set differently is here: so far the base weapons' own values, written out (see apply_gun).
---   weapon_type: what the game's talents, traits and properties take the weapon for.
---   dodge_count: how many dodges in a row go the full distance. spread_template, spread_lerp_speed: the game's spread of the crosshair
---       (each round has UT's own spread, see ut_spread). aim_assist: the aim assist for a controller.
+-- copies set differently is here, the base weapons' own values: the rest is the same for both (see apply_gun).
+--   weapon_type: what the game's talents, traits and properties take the weapon for, which each hero's own talents look for.
 --   update_anim_ammo: whether the gun's animations are told how much ammo is left. fire_at_gaze_setting: the setting of Tobii's eye
 --       tracking that fires where the player looks.
 local VARIANTS = {
@@ -27,21 +25,6 @@ local VARIANTS = {
 		key = "ut_minigun",
 		template = "ut_minigun_template",
 		weapon_type = "REPEATING_HANDGUN",
-		dodge_count = 1,
-		spread_template = "repeating_handgun",
-		spread_lerp_speed = 12,
-		aim_assist = {
-			always_auto_aim = true,
-			base_multiplier = 0.15,
-			effective_max_range = 10,
-			max_range = 22,
-			no_aim_input_multiplier = 0,
-			breed_scalars = {
-				skaven_clan_rat = 1,
-				skaven_slave = 1,
-				skaven_storm_vermin = 0.25,
-			},
-		},
 		update_anim_ammo = false,
 		fire_at_gaze_setting = false,
 	},
@@ -54,23 +37,6 @@ local VARIANTS = {
 		-- The characters fire from the aim of the base weapon's alt fire (see apply_gun)
 		volley = true,
 		weapon_type = "REPEATING_PISTOL",
-		dodge_count = 3,
-		spread_template = "repeating_pistol",
-		spread_lerp_speed = 5,
-		aim_assist = {
-			aim_at_node = "j_neck",
-			aim_at_node_charged = "j_spine",
-			base_multiplier = 0.15,
-			can_charge_shot = true,
-			effective_max_range = 10,
-			max_range = 22,
-			no_aim_input_multiplier = 0,
-			breed_scalars = {
-				skaven_clan_rat = 1,
-				skaven_slave = 1,
-				skaven_storm_vermin = 1,
-			},
-		},
 		update_anim_ammo = true,
 		fire_at_gaze_setting = "tobii_fire_at_gaze_repeating_pistol",
 	},
@@ -413,8 +379,9 @@ local function apply_gun(template)
 	template.buff_type = "RANGED"
 	template.weapon_type = variant.weapon_type
 
-	-- Dodging, and the game's crosshair and its spread (each round has UT's own spread, see ut_spread)
-	template.dodge_count = variant.dodge_count
+	-- Dodging, and the game's crosshair and its spread (each round has UT's own spread, see ut_spread): the repeater's for both copies. A
+	-- dodge goes the full distance once, as with a heavy gun.
+	template.dodge_count = 1
 	template.buffs = {
 		change_dodge_distance = {
 			external_optional_multiplier = 1,
@@ -424,12 +391,23 @@ local function apply_gun(template)
 		},
 	}
 	template.crosshair_style = "default"
-	template.default_spread_template = variant.spread_template
-	template.spread_lerp_speed = variant.spread_lerp_speed
+	template.default_spread_template = "repeating_handgun"
+	template.spread_lerp_speed = 12
 	template.fire_at_gaze_setting = variant.fire_at_gaze_setting or nil
 
-	-- The aim assist for a controller
-	template.aim_assist_settings = table.clone(variant.aim_assist)
+	-- The aim assist for a controller: the repeater's for both copies
+	template.aim_assist_settings = {
+		always_auto_aim = true,
+		base_multiplier = 0.15,
+		effective_max_range = 10,
+		max_range = 22,
+		no_aim_input_multiplier = 0,
+		breed_scalars = {
+			skaven_clan_rat = 1,
+			skaven_slave = 1,
+			skaven_storm_vermin = 0.25,
+		},
+	}
 
 	template.tooltip_compare = {
 		light = {
