@@ -28,9 +28,10 @@ local CONFIG = {
 	bolt_jitter = 5, -- UT units
 	bolt_intensity = 1,
 	-- ChildLightningBolt: 10 particles of size 15, out of place by up to 15 units (mPosDev). In pictures of UT2004 an arc is a different
-	-- sight from the bolt: the texture drawn out once along the whole arc, one long zigzag with no line through it. So it is one part.
+	-- sight from the bolt: long drawn out zigzags with no line through them, bending in places. So a full arc (arc_range) is two parts,
+	-- with a bend between them.
 	arc_width = 15,
-	arc_stretch = math.huge, -- a part's length, in widths
+	arc_stretch = 10, -- a part's length, in widths
 	arc_jitter = 15, -- UT units
 	arc_life = 0.5,
 	arc_intensity = 1,
