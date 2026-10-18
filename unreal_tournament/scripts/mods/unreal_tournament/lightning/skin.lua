@@ -78,6 +78,24 @@ local CONFIG = {
 	charge_spread = 10, -- units of the view
 	-- How bright the sparks are (fitted to a picture of UT2004)
 	charge_intensity = 0.45,
+	-- The sparks at the tip of the gun in a character's hands (LightningCharge3rd, which SniperAttachment spawns with the character's
+	-- first shot and attaches to the mesh's tip). They don't stop when the gun can't fire: 40 a second, each 0.2 s long, 5 units in size
+	-- (a half width), up to 5 units from the emitter along the barrel, turned at random. The emitter is 30 units behind the tip and 3 to
+	-- its right (RelativeLocation, taken in the mesh's units, as for the first person charge). Its own numbers are UT's world units, as
+	-- the emitter is drawn at its own DrawScale of 1. They are as bright as the first person sparks, with the same texture.
+	third_person_charge_rate = 40,
+	third_person_charge_life = 0.2,
+	third_person_charge_size = 5, -- half width, UT units
+	third_person_charge_spread = 5, -- UT units
+	third_person_charge_back = 30, -- the mesh's units
+	third_person_charge_right = 3, -- the mesh's units
+	-- The weapon's light (xWeaponAttachment.WeaponLight): every shot turns it on for 0.15 s, at the gun in a character's hand (the held
+	-- mesh's origin). There is none in the player's own first person view, where it would light the gun the player holds (as for the
+	-- Minigun). LightHue 165 of 255 and LightSaturation 170 (0 is all colour, 255 is white) are a pale blue, and LightRadius 5 is in
+	-- steps of 25 units: 2.5 m. It is steady (LT_Steady).
+	light_color = { 0.67, 0.71, 1 },
+	light_falloff = 2.5, -- meters
+	light_life = 0.15,
 	-- Where the bolt starts when the view is zoomed: SniperFire puts it at the player's middle (EffectOffset.Z, 26 units, below), so it
 	-- comes from the bottom of the screen
 	zoomed_start_down = 1, -- m below the camera
@@ -277,6 +295,113 @@ local function third_person_muzzle(character)
 	return mod.weapon_skin.held_muzzle(skin_apis, character)
 end
 
+-- The mesh in a character's hands and the skin it belongs to, or nil if the character holds the game's weapon
+local function held_mesh(character)
+	for _, api in ipairs(skin_apis) do
+		local unit = api.third_person.held_mesh(character)
+
+		if unit then
+			return unit, api
+		end
+	end
+end
+
+-- The light of a shot at the gun in the character's hands, while the character is seen holding it
+local function weapon_light(owner_unit)
+	local unit, api = held_mesh(owner_unit)
+
+	if not unit or not api.third_person.shows_weapon(owner_unit) then
+		return
+	end
+
+	particles.light({
+		brightness = function ()
+			return 1
+		end,
+		color = CONFIG.light_color,
+		falloff = CONFIG.light_falloff,
+		follow = function ()
+			return api.third_person.point_position(owner_unit, 0, 0, 0)
+		end,
+		intensity = utils.WEAPON_LIGHT_INTENSITY,
+		life = CONFIG.light_life,
+	})
+end
+
+-- The sparks at the tip of the gun in each character's hands, from the character's first shot on, for as long as the same mesh is held
+-- (UT's go with the attachment, which a weapon switch takes away): [character] = { unit = the mesh, time = the part of a spark owed }
+local third_person_charges = setmetatable({}, {
+	__mode = "k",
+})
+
+local function start_third_person_charge(owner_unit)
+	local unit = held_mesh(owner_unit)
+
+	if unit and not (third_person_charges[owner_unit] and third_person_charges[owner_unit].unit == unit) then
+		third_person_charges[owner_unit] = {
+			time = 0,
+			unit = unit,
+		}
+	end
+end
+
+local function third_person_charge_spark(character, api)
+	local along = (math.random() * 2 - 1) * CONFIG.third_person_charge_spread * UNIT
+
+	-- (the sparks move with the gun, mPosRelative, and start at a random angle)
+	particles.sprite({
+		attenuation = 0,
+		color = {
+			1,
+			1,
+			1,
+		},
+		follow = function ()
+			local _, mesh_config = api.third_person.held_mesh(character)
+
+			if not mesh_config or not api.third_person.shows_weapon(character) then
+				return nil
+			end
+
+			local emitter = api.third_person.point_position(character, mesh_config.muzzle_right + CONFIG.third_person_charge_right, mesh_config.muzzle_forward - CONFIG.third_person_charge_back, mesh_config.muzzle_up)
+
+			return emitter and emitter + Quaternion.forward(api.third_person.muzzle_rotation(character)) * along or nil
+		end,
+		intensity = CONFIG.charge_intensity,
+		life = CONFIG.third_person_charge_life,
+		size = 2 * CONFIG.third_person_charge_size * UNIT,
+		texture = "lightning_charge_" .. math.random(0, 3),
+	})
+end
+
+local function update_third_person_charges(dt)
+	local interval = 1 / CONFIG.third_person_charge_rate
+
+	for character, charge in pairs(third_person_charges) do
+		local unit, api = nil, nil
+
+		if Unit.alive(character) then
+			unit, api = held_mesh(character)
+		end
+
+		if unit ~= charge.unit then
+			third_person_charges[character] = nil
+		elseif not api.third_person.shows_weapon(character) then
+			charge.time = 0
+		else
+			charge.time = charge.time + dt
+
+			while charge.time >= interval do
+				charge.time = charge.time - interval
+
+				third_person_charge_spark(character, api)
+			end
+		end
+	end
+end
+
+mod.update_callbacks[#mod.update_callbacks + 1] = update_third_person_charges
+
 -- Where the bolt of a character starts: the weapon in the player's own view, or the end of the weapon in the character's hand
 local function bolt_start(owner_unit)
 	if utils.is_local_player_unit(owner_unit) then
@@ -373,6 +498,10 @@ mod.lightning_bolt_callbacks.lightning_skin = function (owner_unit, end_position
 	end
 
 	show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start, arc_normals or {})
+
+	-- SniperAttachment.ThirdPersonEffects: the gun in the character's hands lights up, and its sparks start with the first shot
+	weapon_light(owner_unit)
+	start_third_person_charge(owner_unit)
 
 	-- The shot's own sounds are played for the player in the shot's action (see below). For the others they come from the weapon.
 	if not utils.is_local_player_unit(owner_unit) then
@@ -612,6 +741,8 @@ local function new_skin(variant)
 		end,
 		on_level_exit = function ()
 			charge_time = 0
+
+			table.clear(third_person_charges)
 		end,
 	})
 
