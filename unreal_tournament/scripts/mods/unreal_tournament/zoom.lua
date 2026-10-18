@@ -84,8 +84,9 @@ local function apply_zoom_fov()
 	end
 
 	if zoom.zoomed then
-		-- The field of view the camera has without the multiplier: the first person camera's, times the player's setting
-		local base = math.rad(65) * camera_manager._fov_multiplier
+		-- The field of view the camera has without the multiplier: the first person camera's, times the player's setting (which the game
+		-- turns into its multiplier against the same camera's, OptionsView)
+		local base = math.rad(CameraSettings.first_person._node.vertical_fov) * camera_manager._fov_multiplier
 		local zoomed = 2 * math.atan(math.tan(base / 2) / zoom.magnification())
 
 		camera_manager:set_additional_fov_multiplier(zoomed / base)
