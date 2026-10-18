@@ -501,8 +501,8 @@ mod:hook(WeaponUnitExtension, "_play_1p_anim", function (func, self, event_1p, e
 	return func(self, event_1p, event, ...)
 end)
 
--- The same for the character's third person unit. Its animation events come over the network from the player who holds the weapon, and
--- sounds inside an animation (like reloading) are heard from every player's unit.
+-- The same for the characters' third person units, the player's own included. The others' animation events come over the network from
+-- the player who holds the weapon, and sounds inside an animation (like reloading) are heard from every player's unit.
 --   mod.third_person_animation_filters[template] = function (event_name, unit)
 -- A filter sees the events of every character that wields the weapon, so it can also play sounds for them.
 mod.third_person_animation_filters = {}
@@ -516,6 +516,19 @@ mod:hook(AnimationSystem, "anim_event", function (func, self, unit, event_name, 
 	end
 
 	return func(self, unit, event_name, ...)
+end)
+
+-- The player's own weapon action plays its third person event on their own character here, and sends it to the others (who play it in
+-- the functions around this). A dropped event is neither played nor sent.
+mod:hook(WeaponUnitExtension, "_play_3p_anim", function (func, self, event_3p, event, owner_unit, ...)
+	local template_name = utils.wielded_template_name(owner_unit)
+	local filter = template_name and mod.third_person_animation_filters[template_name]
+
+	if filter and filter(event_3p, owner_unit) then
+		return
+	end
+
+	return func(self, event_3p, event, owner_unit, ...)
 end)
 
 -- The animation of another player's weapon action comes over the network with the speed of the attack, and is played by this function
