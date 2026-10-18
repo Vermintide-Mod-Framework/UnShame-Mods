@@ -58,16 +58,17 @@ local CONFIG = {
 	spark_length = 0.05, -- seconds of travel
 	spark_attenuation = 0.1,
 	spark_intensity = 2,
-	-- LightningCharge: 10 sparks a second at the tip, each 0.2 s long and 5 units across, one of the four pictures of the texture,
-	-- turned at random. They stop while the weapon cannot fire (its next shot is not yet due, or it has no ammo: here, it is locked out).
-	-- The emitter is 30 units behind the muzzle (LightningCharge.RelativeLocation), inside the glass at the front, and each spark is up
-	-- to 10 units from there along the barrel (mPosDev). It is attached to the model's tip and its sparks move with it (mPosRelative),
-	-- so these are the model's units, along its barrel (its forward). The size is in the units of the view.
+	-- LightningCharge: 10 sparks a second at the tip, each 0.2 s long, one of the four pictures of the texture, turned at random. They
+	-- stop while the weapon cannot fire (its next shot is not yet due, or it has no ammo: here, it is locked out). The emitter is attached
+	-- to the model's tip, 30 of the model's units behind it along the barrel (RelativeLocation, in the bone's frame), and its sparks move
+	-- with it (mPosRelative). Its own numbers are in the units of the view, as the emitter isn't drawn at the model's DrawScale: each spark
+	-- is up to 10 units from it along the barrel (mPosDev), so some are out in front of the tip, and 5 units in size (mSizeRange), a half
+	-- width, so 10 across, the height of the cage. So the sparks fill the cage and reach out past the tip, as in pictures of UT2004.
 	charge_rate = 10,
 	charge_life = 0.2,
-	charge_size = 5,
-	charge_back = 30,
-	charge_spread = 10,
+	charge_size = 5, -- half width, units of the view
+	charge_back = 30, -- the model's units
+	charge_spread = 10, -- units of the view
 	-- How bright the sparks are (fitted to a picture of UT2004)
 	charge_intensity = 0.45,
 	-- Where the bolt starts when the view is zoomed: SniperFire puts it at the player's middle (EffectOffset.Z, 26 units, below), so it
@@ -374,7 +375,8 @@ local function update_charge(skin, dt, api)
 	while charge_time >= interval do
 		charge_time = charge_time - interval
 
-		local along = CONFIG.charge_back + (math.random() * 2 - 1) * CONFIG.charge_spread
+		-- (the spread is in the units of the view, so it is in the model's units divided by its DrawScale)
+		local along = CONFIG.charge_back + (math.random() * 2 - 1) * CONFIG.charge_spread / api.draw_scale()
 		local offset = Vector3Box(Vector3(0, -along, 0))
 
 		-- A spark is linked to the first person unit at its place on the model, and drawn with the model's field of view (an fx_weapon_
@@ -395,7 +397,7 @@ local function update_charge(skin, dt, api)
 			intensity = CONFIG.charge_intensity,
 			life = CONFIG.charge_life,
 			material = "units/ut/fx/fx_weapon_lightning_charge_" .. math.random(0, 3),
-			size = CONFIG.charge_size * skin.view_across_scale,
+			size = 2 * CONFIG.charge_size * skin.view_across_scale,
 		})
 	end
 end
