@@ -38,6 +38,9 @@ end
 -- UT's console commands, and /skin for the weapon skins
 mod:dofile("scripts/mods/unreal_tournament_extras/cheats")
 
+-- /ut_inherited, what the finished weapons still take from their base weapons
+mod:dofile("scripts/mods/unreal_tournament_extras/inherited")
+
 -- The in-game tests, run with /ut_test. The runner is loaded once, and each weapon's file adds its suite to it. The runner also has the
 -- development commands (/ut_equip, /ut_3p, /ut_spawn and the others).
 mod.test_runner = mod:dofile("scripts/mods/unreal_tournament_extras/tests/runner")
