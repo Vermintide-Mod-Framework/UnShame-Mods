@@ -544,12 +544,12 @@ local function new_skin(variant)
 		inspect_pivot_right = 0,
 		inspect_pivot_forward = 30,
 		inspect_pivot_up = 0,
-		-- The lockout pose (see lockout_pose_speed): turned on its side, raised and further right (set in the game)
+		-- The lockout pose (see lockout_pose_speed): tipped up, raised and further right (set in the game)
 		alt_pose_right = 2,
 		alt_pose_forward = 0,
 		alt_pose_up = 3,
-		alt_pose_roll = -40,
-		alt_pose_pitch = 0,
+		alt_pose_roll = 0,
+		alt_pose_pitch = 40,
 		alt_pose_yaw = 0,
 		-- UT's third person mesh of the weapon (SniperAttachment's Weapons.Sniper_3rd) at UT's size in a player's hand (DrawScale 0.4). Its
 		-- origin is by its grip, and its barrel runs along its forward, to the muzzle (the mesh's tip, convert_static.py). The game links
