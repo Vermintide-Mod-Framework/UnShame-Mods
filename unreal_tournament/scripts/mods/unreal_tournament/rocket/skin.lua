@@ -358,8 +358,6 @@ end
 -- attached to the mesh but not scaled by its DrawScale, so the mesh is in UT units of the world. Its scale is worked out as the
 -- Minigun's first person flash's is (minigun/muzzle_flash.lua's fit). The flash mesh points along its y, and the barrels run along the
 -- launcher's left (-x), so it is turned a quarter about z.
-local BARREL_TURN = Quaternion.axis_angle(Vector3(0, 0, 1), math.pi / 2)
-
 local function third_person_flash(owner_unit)
 	local third_person = skin_api.third_person
 	local settings = CONFIG.muzzle_flash_3rd
@@ -383,7 +381,7 @@ local function third_person_flash(owner_unit)
 		rotation = function ()
 			local rotation = third_person.muzzle_rotation(owner_unit)
 
-			return rotation and Quaternion.multiply(rotation, BARREL_TURN) or Quaternion.identity()
+			return rotation and Quaternion.multiply(rotation, Quaternion.axis_angle(Vector3(0, 0, 1), math.pi / 2)) or Quaternion.identity()
 		end,
 		scale = function (fraction)
 			return (settings.size + settings.growth * fraction * life) * settings.fit
