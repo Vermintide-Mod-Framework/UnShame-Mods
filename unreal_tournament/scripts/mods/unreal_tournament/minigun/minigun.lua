@@ -133,10 +133,12 @@ local function fire_chain_actions(own_action, loop_name, interval)
 	local other_action = own_action == "action_one" and "action_two" or "action_one"
 
 	return {
+		-- (a weapon switch can end a round at any time: a round is shorter than the base weapon's 0.3 s, and a held button starts the
+		-- next one at once)
 		{
 			action = "action_wield",
 			input = "action_wield",
-			start_time = 0.3,
+			start_time = 0,
 			sub_action = "default",
 		},
 		{
