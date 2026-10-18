@@ -24,14 +24,14 @@ local CONFIG = {
 	light_color = { 1, 0.6, 0.2 },
 	light_intensity = 2,
 	light_falloff = 6,
-	-- NewRedeemerTrail, at 40 units behind the missile. Its flames: 7 at a time that each last 0.1 s, 10 to 30 units across and growing
+	-- NewRedeemerTrail, at 40 units behind the missile. Its flames: 7 at a time that each last 0.1 s, of size 10 to 30 and growing
 	-- from a quarter of it, thrown back at 500 units a second, one of the 16 pictures of Part_explode2.
 	trail_back = 40,
 	flame_rate = 70, -- a second (MaxParticles 7 over a life of 0.1 s)
 	flame_life = 0.1,
 	flame_size = { 10, 30 },
 	flame_speed = 500,
-	-- Its smoke: 200 a second from 16 units behind it, 1 to 1.5 s each, 25 units across (from a tenth of it, full at half its life),
+	-- Its smoke: 200 a second from 16 units behind it, 1 to 1.5 s each, of size 25 (from a tenth of it, full at half its life),
 	-- white fading to grey, blended, one of the 16 pictures of MuchSmoke1
 	smoke_rate = 200,
 	smoke_back = 16,
@@ -43,6 +43,9 @@ local CONFIG = {
 }
 
 local UNIT = utils.UT_UNIT
+-- A sprite of UE2's Emitter (StartSizeRange, SizeScale) has its size as its radius: it is drawn twice as wide as the number. The sizes
+-- here are UT's numbers.
+local SPRITE = 2
 
 local skin_api
 
@@ -82,7 +85,7 @@ local function trail(missile, position, direction, dt)
 	while missile.flame_time >= 1 / CONFIG.flame_rate do
 		missile.flame_time = missile.flame_time - 1 / CONFIG.flame_rate
 
-		local size = random_between(CONFIG.flame_size) * UNIT
+		local size = random_between(CONFIG.flame_size) * SPRITE * UNIT
 
 		particles.sprite({
 			attenuation = 0.5,
@@ -101,7 +104,7 @@ local function trail(missile, position, direction, dt)
 		missile.smoke_time = missile.smoke_time - 1 / CONFIG.smoke_rate
 
 		local life = random_between(CONFIG.smoke_life)
-		local size = CONFIG.smoke_size * UNIT
+		local size = CONFIG.smoke_size * SPRITE * UNIT
 
 		particles.sprite({
 			additive = 0,
@@ -305,6 +308,21 @@ mod.redeemer.skin_shot = function (action)
 	end
 end
 
+-- The pistol's shot animation plays the game's flash, smoke and sound of the ability's shot through the pistol's flow. With the Redeemer
+-- the skin plays UT's instead, so that animation is dropped: on the player's own first person unit, and on the characters' third person
+-- units. The pistol's other animations (drawing and holding it, the cancel) are kept.
+local SHOT_ANIMATION = "bounty_hunter_ability_shoot"
+
+mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
+	local player = Managers.player:local_player()
+
+	return event == SHOT_ANIMATION and player and mod.redeemer.has_redeemer(player.player_unit)
+end
+
+mod.third_person_animation_filters[TEMPLATE_NAME] = function (event, unit)
+	return event == SHOT_ANIMATION and mod.redeemer.has_redeemer(unit)
+end
+
 -- The ability's cancel puts the Redeemer down at once (called by redeemer.lua)
 mod.redeemer.skin_put_down = function (action)
 	local skin = skin_api.state()
@@ -453,7 +471,7 @@ local function puffs(center)
 				end,
 				life = PUFF_LIFE,
 				size_by = function (fraction)
-					return keyed(emitter.sizes, fraction) * UNIT
+					return keyed(emitter.sizes, fraction) * SPRITE * UNIT
 				end,
 				spin = 0,
 				texture = emitter.texture,
@@ -475,7 +493,7 @@ local function flares(center)
 			life = 1,
 			position = center,
 			size_by = function (fraction)
-				return 100 * keyed({ { 0, 1 }, { 0.7, 15 }, { 1, 1 } }, fraction) * UNIT
+				return 100 * keyed({ { 0, 1 }, { 0.7, 15 }, { 1, 1 } }, fraction) * SPRITE * UNIT
 			end,
 			texture = "burn_flare",
 		})
@@ -490,7 +508,7 @@ local function flares(center)
 			life = 1.25,
 			position = center,
 			size_by = function (fraction)
-				return 200 * keyed({ { 0, 0.2 }, { 0.8, 10 }, { 1, 1 } }, fraction) * UNIT
+				return 200 * keyed({ { 0, 0.2 }, { 0.8, 10 }, { 1, 1 } }, fraction) * SPRITE * UNIT
 			end,
 			texture = "soft_flare",
 		})
@@ -503,13 +521,14 @@ local function flares(center)
 		color = { 1, 1, 1 },
 		life = 1,
 		position = center,
+		-- (IonCore is an xEmitter, whose size is taken as its width, as in hit_effects.lua)
 		size = 300 * UNIT,
 		texture = "shock_core",
 	})
 end
 
--- The streaks (SpriteEmitter6): 10 over the first 0.1 s, on a sphere of 256 units, flying out at 200 units a second, 80 long and 40
--- wide along the way they fly, yellow to red
+-- The streaks (SpriteEmitter6): 10 over the first 0.1 s, on a sphere of 256 units, flying out at 200 units a second, of size 80 along
+-- the way they fly and 40 across, yellow to red
 local function streaks(center)
 	for index = 1, 10 do
 		local start = on_sphere(256)
@@ -526,13 +545,13 @@ local function streaks(center)
 			end,
 			delay = (index - 1) / 100,
 			life = 0.8,
-			size = 40 * UNIT,
+			size = 40 * SPRITE * UNIT,
 			texture = "white_streak",
 			track = function ()
 				local age = math.max(0, Managers.time:time("game") - born)
 				local middle = center_box:unbox() + direction:unbox() * ((256 + 200 * age) * UNIT)
 
-				return middle - direction:unbox() * (40 * UNIT), middle + direction:unbox() * (40 * UNIT)
+				return middle - direction:unbox() * (80 * UNIT), middle + direction:unbox() * (80 * UNIT)
 			end,
 		})
 	end
