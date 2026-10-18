@@ -764,8 +764,9 @@ local function new_skin(variant)
 		offset_up = 0,
 		pivot_yaw = 500 / 65536 * 360,
 		bob_damping = 2.25,
-		-- The inspect pose turns the gun to show its side, like the other weapons. These numbers are a guess.
-		inspect_pose_right = -2,
+		-- The inspect pose turns the gun to show its side, like the other weapons. These numbers are a guess, but the move to the left,
+		-- towards the middle of the screen (set in the game).
+		inspect_pose_right = -8,
 		inspect_pose_forward = 4,
 		inspect_pose_up = 0,
 		inspect_pose_roll = 10,

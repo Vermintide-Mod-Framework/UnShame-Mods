@@ -102,13 +102,31 @@ local DROPPED_FLOW_EVENTS = {
 
 -- Weapon template
 
--- The actions that can follow a shot. Holding the button repeats the shot, as in UT. The zoom is not an action.
+-- When each character last fired, on the machine that runs their actions. A shot waits for UT's fire time after the last one whatever
+-- action it starts from (the zoom's, which a shot can turn into at once, say).
+local last_shots = setmetatable({}, {
+	__mode = "k",
+})
+
+local function ready_to_fire(unit)
+	local last = last_shots[unit]
+
+	return not last or Managers.time:time("game") - last >= CONFIG.fire_rate - 0.01
+end
+
+-- The actions that can follow a shot. Holding the button repeats the shot, as in UT, and the zoom can start at any time.
 local function fire_chain_actions()
 	local entries = {
 		{
 			action = "action_wield",
 			input = "action_wield",
 			start_time = 0.4,
+			sub_action = "default",
+		},
+		{
+			action = "action_two",
+			input = "action_two",
+			start_time = 0,
 			sub_action = "default",
 		},
 	}
@@ -132,6 +150,8 @@ local function build_shot(original)
 
 	action.active_reload_time = nil
 	action.allowed_chain_actions = fire_chain_actions()
+	action.condition_func = ready_to_fire
+	action.chain_condition_func = ready_to_fire
 	action.anim_event_secondary = nil
 	action.apply_recoil = false
 	action.damage_profile = "ut_sniper_bullet"
@@ -171,15 +191,40 @@ local function apply_handgun(template)
 	local actions = template.actions
 	local attack_meta_data = template.attack_meta_data
 
-	-- Only the shot is replaced, and the aim action is taken away: the zoom is done by zoom.lua. Everything else stays untouched,
-	-- including wield, inspect and the career actions.
+	-- Only the shot is replaced, and the aim action is replaced by UT's zoom (zoom.lua). Everything else stays untouched, including
+	-- wield, inspect and the career actions.
+	local hand = actions.action_one.default.weapon_action_hand
+
 	actions.action_one = {
 		default = build_shot(actions.action_one.default),
 	}
-	actions.action_two = nil
+	-- While the zoom is held, a shot can follow at once (it waits for its fire time), and so can wielding
+	actions.action_two = {
+		default = mod.zoom.action(hand, {
+			{
+				action = "action_wield",
+				input = "action_wield",
+				start_time = 0,
+				sub_action = "default",
+			},
+			{
+				action = "action_one",
+				input = "action_one",
+				start_time = 0,
+				sub_action = "default",
+			},
+			{
+				action = "action_one",
+				input = "action_one_hold",
+				start_time = 0,
+				sub_action = "default",
+			},
+		}),
+	}
 
 	utils.set_actions_lookup_data({
 		action_one = actions.action_one,
+		action_two = actions.action_two,
 	}, template.name)
 
 	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
@@ -230,6 +275,8 @@ mod.sniper = {
 -- got as far
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	mod.sniper.last_fire_time = nil
+
+	table.clear(last_shots)
 end
 
 local function raycast(physics_world, origin, direction)
@@ -244,6 +291,10 @@ end
 
 mod.handgun_start_callbacks.sniper = function (self, new_action)
 	self._ut_sniper_checked = not new_action.ut_sniper_bullet
+
+	if new_action.ut_sniper_bullet then
+		last_shots[self.owner_unit] = Managers.time:time("game")
+	end
 
 	-- ClassicSniperFire's view shake, for the player who fires
 	if new_action.ut_sniper_bullet and utils.is_local_player_unit(self.owner_unit) then

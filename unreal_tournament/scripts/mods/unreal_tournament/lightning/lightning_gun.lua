@@ -171,8 +171,20 @@ local ARC_ACTION = {
 
 -- Weapon template
 
--- The actions that can follow a shot. Holding the button repeats the shot, as in UT, and the heat can be vented. The zoom is not an
--- action.
+-- When each character last fired, on the machine that runs their actions. A shot waits for UT's fire time after the last one whatever
+-- action it starts from (the zoom's, which a shot can turn into at once, say).
+local last_shots = setmetatable({}, {
+	__mode = "k",
+})
+
+local function ready_to_fire(unit)
+	local last = last_shots[unit]
+
+	return not last or Managers.time:time("game") - last >= CONFIG.fire_rate - 0.01
+end
+
+-- The actions that can follow a shot. Holding the button repeats the shot, as in UT, the heat can be vented, and the zoom can start at
+-- any time.
 local function fire_chain_actions()
 	local entries = {
 		{
@@ -185,6 +197,12 @@ local function fire_chain_actions()
 			action = "weapon_reload",
 			input = "weapon_reload",
 			start_time = 0.4,
+			sub_action = "default",
+		},
+		{
+			action = "action_two",
+			input = "action_two",
+			start_time = 0,
 			sub_action = "default",
 		},
 	}
@@ -219,7 +237,7 @@ local function build_shot(original)
 	action.condition_func = function (action_user)
 		local overcharge_extension = ScriptUnit.extension(action_user, "overcharge_system")
 
-		return overcharge_extension:are_you_locked_out() == false
+		return overcharge_extension:are_you_locked_out() == false and ready_to_fire(action_user)
 	end
 	action.chain_condition_func = action.condition_func
 	action.damage_profile = "ut_lightning_bolt"
@@ -267,15 +285,44 @@ local function apply_staff(template)
 	local actions = template.actions
 	local attack_meta_data = template.attack_meta_data
 
-	-- The shot is replaced, and the staff's charged attack is taken away: the zoom is done by this file (see below). Everything else
-	-- stays untouched, including the venting, wield, inspect and the career actions.
+	-- The shot is replaced, and the staff's charged attack is replaced by UT's zoom. Everything else stays untouched, including the
+	-- venting, wield, inspect and the career actions.
 	actions.action_one = {
 		default = build_shot(Weapons.handgun_template_1.actions.action_one.default),
 	}
-	actions.action_two = nil
+	-- The zoom (zoom.lua): while it is held, a shot can follow at once (it waits for its fire time), and so can venting and wielding
+	actions.action_two = {
+		default = mod.zoom.action("left", {
+			{
+				action = "action_wield",
+				input = "action_wield",
+				start_time = 0,
+				sub_action = "default",
+			},
+			{
+				action = "weapon_reload",
+				input = "weapon_reload",
+				start_time = 0,
+				sub_action = "default",
+			},
+			{
+				action = "action_one",
+				input = "action_one",
+				start_time = 0,
+				sub_action = "default",
+			},
+			{
+				action = "action_one",
+				input = "action_one_hold",
+				start_time = 0,
+				sub_action = "default",
+			},
+		}),
+	}
 
 	utils.set_actions_lookup_data({
 		action_one = actions.action_one,
+		action_two = actions.action_two,
 	}, template.name)
 
 	-- The staff's wield lights trails on the fingers of the first person arms, and its charged attack more. The skin hides the arms,
@@ -378,6 +425,10 @@ end
 
 mod.handgun_start_callbacks.lightning = function (self, new_action)
 	self._ut_lightning_checked = not new_action.ut_lightning_bolt
+
+	if new_action.ut_lightning_bolt then
+		last_shots[self.owner_unit] = Managers.time:time("game")
+	end
 end
 
 mod.handgun_update_callbacks.lightning = function (self)
@@ -423,6 +474,8 @@ mod.lightning = {
 -- got as far
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	mod.lightning.last_fire_time = nil
+
+	table.clear(last_shots)
 end
 
 -- A vector's three numbers. Vectors are userdata, and a missing one is the zero vector.

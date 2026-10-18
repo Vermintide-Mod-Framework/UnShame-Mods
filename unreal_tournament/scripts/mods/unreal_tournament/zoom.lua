@@ -3,9 +3,13 @@ local mod = get_mod("unreal_tournament")
 -- UT's zoom of the sniper weapons (SniperZoom, which the Lightning Gun and the Sniper Rifle both have as their second fire, and
 -- PlayerController.AdjustView and ToggleZoom): pressing the button starts zooming in, holding it zooms further, letting go keeps the zoom,
 -- and pressing it again zooms out. The game's own aim action zooms to fixed fields of view and slows the player down. UT's zoom is
--- continuous, and the player moves at the same speed, so this is done here. It works on the camera's field of view, after the game has
--- set it for the frame. The state is of the player on this machine.
+-- continuous, and the player moves at the same speed, so the zoom is an action of the weapon's own that does nothing but be held
+-- (zoom.action), which this follows: the game starts it, ends it and keeps it from starting as it does the weapon's other actions (while
+-- inspecting, say). It works on the camera's field of view, after the game has set it for the frame. The state is of the player on this
+-- machine.
 --   zoom.register(template_name): the weapon zooms this way while it is in the player's hands.
+--   zoom.action(hand, allowed_chain_actions): the zoom's action, for the weapon's right button (action_two.default), on the hand of
+--       its other actions. A shot should be able to chain into it (action_two at any time).
 --   zoom.zoomed, zoom.magnification(): whether the view is zoomed, and how many times larger it is.
 -- While the view is zoomed, each weapon draws its scope, and the game's crosshair stays on top of it.
 
@@ -40,16 +44,45 @@ local function end_zoom()
 	zoom.zoomed = false
 end
 
--- Whether the player is inspecting the weapon. There is no zoom then: inspecting ends it, and the button does nothing.
-local inspecting = false
+-- The zoom's action: a dummy action held with the button, which doesn't slow the player. Pressing the button starts it, and letting go
+-- ends it (hold_input).
+function zoom.action(hand, allowed_chain_actions)
+	return {
+		kind = "dummy",
+		weapon_action_hand = hand,
+		hold_input = "action_two_hold",
+		total_time = math.huge,
+		allowed_chain_actions = allowed_chain_actions,
+		ut_zoom = true,
+	}
+end
 
+-- Pressing the button while not zoomed starts zooming in (UT's ToggleZoom calls StartZoom), and while zoomed zooms out
+mod.dummy_start_callbacks.zoom = function (action, new_action)
+	if not new_action.ut_zoom or not utils.is_local_player_unit(action.owner_unit) then
+		return
+	end
+
+	if zoom.zoomed then
+		end_zoom()
+	else
+		zoom.level = 0
+		zoom.zooming = true
+		zoom.zoomed = true
+	end
+end
+
+-- Letting go of the button keeps the zoom where it is (UT's StopZoom), as does anything else that ends the action
+mod.dummy_finish_callbacks.zoom = function (action)
+	if action.current_action and action.current_action.ut_zoom and utils.is_local_player_unit(action.owner_unit) then
+		zoom.zooming = false
+	end
+end
+
+-- Inspecting the weapon ends the zoom
 mod.inspect_callbacks.zoom = function (action, started)
-	if utils.is_local_player_unit(action.owner_unit) then
-		inspecting = started
-
-		if started then
-			end_zoom()
-		end
+	if started and utils.is_local_player_unit(action.owner_unit) then
+		end_zoom()
 	end
 end
 
@@ -138,27 +171,9 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 		return
 	end
 
-	local input_extension = ScriptUnit.extension(unit, "input_system")
-
-	if input_extension:get("action_two") and not inspecting then
-		if zoom.zoomed then
-			-- Pressing the button while zoomed zooms out
-			end_zoom()
-		else
-			-- Pressing the button while not zoomed starts zooming in (UT's ToggleZoom calls StartZoom)
-			zoom.level = 0
-			zoom.zooming = true
-			zoom.zoomed = true
-		end
-	end
-
+	-- (while the zoom's action is held)
 	if zoom.zooming then
-		if input_extension:get("action_two_hold") then
-			zoom.level = math.min(zoom.level + dt, CONFIG.max_level)
-		else
-			-- Letting go of the button keeps the zoom where it is (UT's StopZoom)
-			zoom.zooming = false
-		end
+		zoom.level = math.min(zoom.level + dt, CONFIG.max_level)
 	end
 
 	apply_zoom_fov()
@@ -167,8 +182,6 @@ end
 local function reset_zoom()
 	end_zoom()
 	apply_zoom_fov()
-
-	inspecting = false
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = reset_zoom
