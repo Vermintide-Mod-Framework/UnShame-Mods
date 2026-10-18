@@ -419,6 +419,12 @@ mod.lightning = {
 	last_fire_time = nil,
 }
 
+-- The game's time starts again in each level, so a shot of the last level would keep the gun from being ready until the new level's time
+-- got as far
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	mod.lightning.last_fire_time = nil
+end
+
 -- A vector's three numbers. Vectors are userdata, and a missing one is the zero vector.
 local function components(vector)
 	if not vector then

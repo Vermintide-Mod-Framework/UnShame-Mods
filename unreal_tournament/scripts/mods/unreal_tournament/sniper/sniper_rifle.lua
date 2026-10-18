@@ -226,6 +226,12 @@ mod.sniper = {
 	last_fire_time = nil,
 }
 
+-- The game's time starts again in each level, so a shot of the last level would keep the gun from being ready until the new level's time
+-- got as far
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	mod.sniper.last_fire_time = nil
+end
+
 local function raycast(physics_world, origin, direction)
 	return PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, CONFIG.range, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
 end
