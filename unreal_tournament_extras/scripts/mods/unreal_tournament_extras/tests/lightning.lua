@@ -506,6 +506,17 @@ local function from_lightning_gun(record)
 	return total
 end
 
+-- Keeps a bot from using its career skill: the Waystalker's volley would shoot the special instead of the gun. The skill is put on its
+-- cooldown, which is paused. The bot is taken away after the scenario.
+local function no_career_skill(t, bot)
+	t.on_main_thread(function ()
+		local career_extension = ScriptUnit.extension(bot, "career_system")
+
+		career_extension:start_activated_ability_cooldown(1, nil, nil, true)
+		career_extension:set_activated_ability_cooldown_paused(1)
+	end)
+end
+
 local function bot_scenarios()
 	return {
 		{
@@ -526,6 +537,14 @@ local function bot_scenarios()
 					return
 				end
 
+				local bot = t.add_bot(BOTS.profile, BOTS.career, definition.key, BOTS.behind, nil, true)
+
+				if not t.expect(bot, "the bot could not be added") then
+					return
+				end
+
+				no_career_skill(t, bot)
+
 				-- (a bot shoots a special only once it has been seen, which a calm one never is: shooting at the player makes it seen)
 				t.on_main_thread(function ()
 					runner.provoke(special)
@@ -533,11 +552,6 @@ local function bot_scenarios()
 
 				local damage = t.track_damage(special)
 				local player_damage = t.track_damage(t.unit())
-				local bot = t.add_bot(BOTS.profile, BOTS.career, definition.key, BOTS.behind, nil, true)
-
-				if not t.expect(bot, "the bot could not be added") then
-					return
-				end
 
 				local locked = false
 
