@@ -566,8 +566,9 @@ local function new_skin(variant)
 			grip_right = -4,
 			grip_forward = -4,
 			grip_up = 0,
-			yaw = -90,
-			pitch = 0,
+			-- (turned right and up from the hand's own direction so that it points ahead: set in the game)
+			yaw = -110,
+			pitch = 15,
 			roll = 0,
 			follow_game_unit = 3,
 			follow_calibrate_seconds = 1,
