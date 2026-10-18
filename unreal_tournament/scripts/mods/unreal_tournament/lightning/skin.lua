@@ -390,8 +390,9 @@ local function update_charge(skin, dt, api)
 				1,
 				1,
 			},
+			-- (a spark ends as soon as the model isn't drawn: zoomed, or not in the first person view)
 			locked = function ()
-				if api.state() == skin then
+				if api.state() == skin and not lightning.zoom.zoomed and api.shown_in_first_person() then
 					return api.model_point_in_view(nil, offset:unbox())
 				end
 			end,
