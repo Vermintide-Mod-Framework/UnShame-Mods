@@ -51,7 +51,7 @@ for _, variant in ipairs(VARIANTS) do
 		name = "UT2004 Minigun",
 		type_name = "Minigun",
 		description = DESCRIPTION,
-		keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_headshotting" },
+		keywords = { "weapon_keyword_rapid_fire", "weapon_keyword_high_damage", "weapon_keyword_crowd_control" },
 		icon = "ut_minigun_icon",
 		icon_package = "resource_packages/unreal_tournament/icons",
 		icon_materials = "ui/ut/minigun_icon",
@@ -302,19 +302,21 @@ local function apply_gun(template)
 	local variant = VARIANT_OF[template.name]
 
 	-- The chart of the item's stats, from 0 to 7. The rounds are the normal attack.
+	-- A round stops at the first enemy and barely staggers (0.05 and 0.1 of impact, where the repeater's 0.3 shows 3). The primary is poor
+	-- against armor (0.5) and the alt goes through it as the repeater does (0.8, which shows 5).
 	template.weapon_diagram = {
 		light_attack = {
 			[DamageTypes.ARMOR_PIERCING] = 2,
 			[DamageTypes.CLEAVE] = 1,
 			[DamageTypes.SPEED] = 7,
-			[DamageTypes.STAGGER] = 3,
+			[DamageTypes.STAGGER] = 1,
 			[DamageTypes.DAMAGE] = 5,
 		},
 		heavy_attack = {
-			[DamageTypes.ARMOR_PIERCING] = 3,
+			[DamageTypes.ARMOR_PIERCING] = 5,
 			[DamageTypes.CLEAVE] = 1,
 			[DamageTypes.SPEED] = 4,
-			[DamageTypes.STAGGER] = 3,
+			[DamageTypes.STAGGER] = 1,
 			[DamageTypes.DAMAGE] = 5,
 		},
 	}
