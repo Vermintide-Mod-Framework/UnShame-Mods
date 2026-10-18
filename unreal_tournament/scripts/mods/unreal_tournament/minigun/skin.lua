@@ -870,9 +870,11 @@ for template_name in pairs(TEMPLATE_NAMES) do
 		return string.find(event, "reload", 1, true) ~= nil
 	end
 
-	-- The characters' shot animations would have the base weapon's unit play its shot sound and muzzle flash. The skin plays UT's.
+	-- The characters' shot animations would have the base weapon's unit play its shot sound and muzzle flash. The skin plays UT's. The
+	-- characters of the others' machines send sfx_shoot, and the player's own character and the bots send sfx_shoot_fake.
 	mod.third_person_weapon_flow_events[template_name] = {
 		sfx_shoot = true,
+		sfx_shoot_fake = true,
 		sfx_shoot_special = true,
 		sfx_reload = true,
 	}
