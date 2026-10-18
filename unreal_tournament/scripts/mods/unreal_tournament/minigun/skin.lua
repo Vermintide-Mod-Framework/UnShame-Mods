@@ -413,6 +413,7 @@ local sound = {
 	fire_id = nil,
 	fire_mode = nil,
 	fire_started = -math.huge,
+	wind_id = nil,
 	wind_started = -math.huge,
 	last_round = -math.huge,
 }
@@ -422,6 +423,19 @@ local function stop_fire_sound(api)
 
 	sound.fire_id = nil
 	sound.fire_mode = nil
+end
+
+-- Stops the fire and the winding at once, when the gun is put away (when the level ends its world can be gone, and its sounds with it)
+local function stop_sounds(api)
+	if Managers.world:has_world("level_world") then
+		stop_fire_sound(api)
+		api.stop_sound(sound.wind_id)
+	end
+
+	sound.fire_id = nil
+	sound.fire_mode = nil
+	sound.wind_id = nil
+	sound.wind_started = -math.huge
 end
 
 local function update_sounds(api, dt)
@@ -435,8 +449,7 @@ local function update_sounds(api, dt)
 	-- The winding plays while the barrels turn and no round has left yet (the wind up), and when they slow down
 	if minigun.spin > 0 and not firing and now - sound.wind_started >= CONFIG.wind_loop_seconds then
 		sound.wind_started = now
-
-		api.play_sound("ut_minigun_wind")
+		sound.wind_id = api.play_sound("ut_minigun_wind")
 	end
 end
 
@@ -676,6 +689,10 @@ local function new_skin(variant)
 		},
 		on_create = function ()
 			api.play_sound("ut_minigun_select")
+		end,
+		-- (the gun is put away, or the level ends: its update no longer runs to stop the loops)
+		on_destroy = function ()
+			stop_sounds(api)
 		end,
 		on_update = function (skin, dt)
 			skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
