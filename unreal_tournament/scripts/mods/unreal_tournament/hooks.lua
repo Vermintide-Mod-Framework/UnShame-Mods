@@ -606,6 +606,46 @@ mod:hook(_G, "flow_callback_wwise_trigger_event_with_environment", function (fun
 	return func(params, ...)
 end)
 
+-- The characters' animations tell the weapon in their hands to play its shot: the character's flow finds the weapon's third person unit
+-- (flow_query_wielded_weapon) and sends it a flow event, such as sfx_shoot, which plays the base weapon's sound and muzzle flash. A weapon
+-- can drop these events:
+--   mod.third_person_weapon_flow_events[template] = { [event_name] = true }
+mod.third_person_weapon_flow_events = {}
+
+local function third_person_weapon_event_dropped(unit, event_name)
+	local dropped = false
+
+	for _, events in pairs(mod.third_person_weapon_flow_events) do
+		if events[event_name] then
+			dropped = true
+
+			break
+		end
+	end
+
+	if not dropped then
+		return false
+	end
+
+	local character = sound_owner(unit)
+
+	if not character or character == unit then
+		return false
+	end
+
+	local events = mod.third_person_weapon_flow_events[utils.wielded_template_name(character)]
+
+	return events ~= nil and events[event_name] == true
+end
+
+mod:hook(Unit, "flow_event", function (func, unit, event_name, ...)
+	if third_person_weapon_event_dropped(unit, event_name) then
+		return
+	end
+
+	return func(unit, event_name, ...)
+end)
+
 -- Events that the game plays itself, not as part of a weapon action. Venting the heat is one: the overcharge plays it.
 mod:hook(PlayerUnitFirstPerson, "animation_event", function (func, self, event, ...)
 	local template_name = utils.wielded_template_name(self.unit)

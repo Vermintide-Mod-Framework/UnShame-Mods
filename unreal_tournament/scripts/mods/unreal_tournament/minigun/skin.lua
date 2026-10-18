@@ -869,4 +869,11 @@ for template_name in pairs(TEMPLATE_NAMES) do
 	mod.third_person_animation_filters[template_name] = function (event)
 		return string.find(event, "reload", 1, true) ~= nil
 	end
+
+	-- The characters' shot animations would have the base weapon's unit play its shot sound and muzzle flash. The skin plays UT's.
+	mod.third_person_weapon_flow_events[template_name] = {
+		sfx_shoot = true,
+		sfx_shoot_special = true,
+		sfx_reload = true,
+	}
 end
