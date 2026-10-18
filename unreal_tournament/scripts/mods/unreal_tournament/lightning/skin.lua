@@ -135,8 +135,8 @@ local random_between = utils.random_between
 -- The most parts a bolt is drawn with. A long bolt has longer parts instead, far away where they are small on the screen.
 local MAX_BOLT_PARTS = 100
 
--- The bolt: a line of parts, each a streak of the texture bolt_stretch times as long as it is wide, out of line by a little. A part runs from the
--- end of the one before it.
+-- The bolt: a line of parts, each a streak of the texture bolt_stretch times as long as it is wide, out of line by a little. A part runs
+-- from the end of the one before it.
 local function draw_bolt(from, to, width, jitter, life, intensity)
 	local offset = to - from
 	local length = Vector3.length(offset)
