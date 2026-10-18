@@ -61,6 +61,9 @@ local ut = get_mod("unreal_tournament")
 --   t.projectiles(filter)                the units of the player's projectiles whose action the filter accepts
 --   t.explosions()                       a list that is filled with the names of the explosions that happen from now on
 --   t.sounds(prefix)                     a list that is filled with the names of the sound events that start with the prefix
+--   t.critical_hits(on)                  makes every attack of the player a critical hit (true) or none (false) until the scenario ends
+--   t.procs(item_key)                    a list that is filled with the buffs on attack that run for the player's hits with the item
+--   t.raise_shield(unit), t.shield_broken(unit)   puts an enemy's shield up, and whether it is broken
 --
 -- A suite is { name, item (the key of the weapon item), template, slot, careers (the careers it is run for), level (the level it is
 -- run in, if not the default one), fresh_level (the level is loaded again for it), loadout (optional: { [slot] = { [career] = item
@@ -1286,6 +1289,42 @@ local function make_context(suite)
 		return names
 	end
 
+	-- Makes every attack of the player a critical hit (true) or none (false) from now on, until the scenario ends. The game rolls it as
+	-- an action starts (ActionUtils.is_critical_strike).
+	function t.critical_hits(on)
+		runner.critical_hits = on
+	end
+
+	-- A list that is filled with the buffs on attack that run for the player's hits with an item from now on (DamageUtils.buff_on_attack,
+	-- where the game's talents and traits proc): each as "attack type, hit zone"
+	function t.procs(item_key)
+		local list = {}
+
+		runner.proc_watch = {
+			item_key = item_key,
+			list = list,
+		}
+
+		return list
+	end
+
+	-- Puts an enemy's shield up, as a horde's enemies hold it from their spawn (AIShieldUserExtension). The runner's enemies are calm,
+	-- and a calm one doesn't.
+	function t.raise_shield(unit)
+		on_main_thread(function ()
+			ScriptUnit.extension(unit, "ai_shield_system"):set_is_blocking(true)
+		end)
+	end
+
+	-- Whether an enemy's shield is broken
+	function t.shield_broken(unit)
+		return on_main_thread(function ()
+			local shield_extension = Unit.alive(unit) and ScriptUnit.has_extension(unit, "ai_shield_system")
+
+			return shield_extension and shield_extension.shield_broken or false
+		end)
+	end
+
 	t.scenario = function (value)
 		if value then
 			scenario = value
@@ -1296,6 +1335,27 @@ local function make_context(suite)
 
 	return t
 end
+
+-- The player's critical hits while a scenario sets them (t.critical_hits)
+mod:hook(ActionUtils, "is_critical_strike", function (func, unit, ...)
+	if runner.critical_hits ~= nil and unit == player_unit() then
+		return runner.critical_hits
+	end
+
+	return func(unit, ...)
+end)
+
+-- The buffs on attack a scenario counts (t.procs)
+mod:hook(DamageUtils, "buff_on_attack", function (func, unit, hit_unit, attack_type, is_critical_strike, hit_zone_name, target_number, send_to_server, buff_type, unmodified, damage_source, ...)
+	local ran = func(unit, hit_unit, attack_type, is_critical_strike, hit_zone_name, target_number, send_to_server, buff_type, unmodified, damage_source, ...)
+	local watch = runner.proc_watch
+
+	if watch and unit == player_unit() and damage_source == watch.item_key and ran ~= false then
+		watch.list[#watch.list + 1] = string.format("%s %s", tostring(attack_type), tostring(hit_zone_name))
+	end
+
+	return ran
+end)
 
 ut.any_explosion_callbacks.ut_test = function (explosion_template, position)
 	local watch = runner.explosion_watch
@@ -1525,6 +1585,46 @@ local function load_level(t, level_key)
 	return loaded
 end
 
+-- Takes away what a scenario made, on the main thread: its after functions are called, its enemies and then every enemy left are taken
+-- away, and its bots leave the party. It runs once for a scenario: at its end, or when the run is stopped or the level ends in the
+-- middle of it. A bot of the test left in the party crashed the game when the level ended (its stats were still registered).
+local function clean_up_scenario(scenario)
+	if not scenario or scenario.cleaned_up then
+		return
+	end
+
+	scenario.cleaned_up = true
+
+	for _, fn in ipairs(scenario.after) do
+		local ok, error_value = pcall(fn)
+
+		if not ok then
+			log("error after %s: %s", scenario.name, tostring(error_value))
+		end
+	end
+
+	local conflict = Managers.state.conflict
+
+	if conflict then
+		for _, spawned in ipairs(scenario.spawned) do
+			if Unit.alive(spawned) then
+				conflict:destroy_unit(spawned, BLACKBOARDS[spawned], "ut_test")
+			end
+		end
+
+		conflict:destroy_all_units()
+	end
+
+	-- (the bots of t.add_bot, as the game mode takes away its own: GameModeBase._remove_bot_update_safe)
+	local game_mode = Managers.state.game_mode and Managers.state.game_mode:game_mode()
+
+	for _, bot_player in ipairs(scenario.bots) do
+		if bot_player and game_mode then
+			game_mode:_remove_bot_update_safe(bot_player)
+		end
+	end
+end
+
 local function run_suite(suite, only_career)
 	local t = make_context(suite)
 
@@ -1637,9 +1737,12 @@ local function run_suite(suite, only_career)
 				}
 
 				t.scenario(scenario)
+				run.scenario = scenario
 				log("RUNNING %s", scenario.name)
 				runner.explosion_watch = nil
 				runner.sound_watch = nil
+				runner.critical_hits = nil
+				runner.proc_watch = nil
 				table.clear(runner.frame_watchers)
 				t.refill()
 
@@ -1669,32 +1772,13 @@ local function run_suite(suite, only_career)
 				end, 5, "the queued enemies to spawn")
 
 				t.on_main_thread(function ()
-					for _, fn in ipairs(scenario.after) do
-						local ok, error_value = pcall(fn)
-
-						if not ok then
-							log("error after %s: %s", scenario.name, tostring(error_value))
-						end
-					end
-
-					for _, spawned in ipairs(scenario.spawned) do
-						if Unit.alive(spawned) then
-							Managers.state.conflict:destroy_unit(spawned, BLACKBOARDS[spawned], "ut_test")
-						end
-					end
-
-					Managers.state.conflict:destroy_all_units()
-
-					-- (the bots of t.add_bot, as the game mode takes away its own: GameModeBase._remove_bot_update_safe)
-					for _, bot_player in ipairs(scenario.bots) do
-						if bot_player then
-							Managers.state.game_mode:game_mode():_remove_bot_update_safe(bot_player)
-						end
-					end
+					clean_up_scenario(scenario)
 				end)
 
 				runner.restore_input()
 				runner.sound_watch = nil
+				runner.critical_hits = nil
+				runner.proc_watch = nil
 				table.clear(runner.frame_watchers)
 				install_input(player_unit())
 
@@ -1838,6 +1922,8 @@ end
 
 function runner.stop()
 	if run then
+		clean_up_scenario(run.scenario)
+
 		if run.restore_flags then
 			run.restore_flags()
 		end
@@ -2177,12 +2263,18 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 end
 
 mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+	if run then
+		clean_up_scenario(run.scenario)
+	end
+
 	runner.restore_input()
 	ut.any_explosion_callbacks.ut_test = nil
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	if run and not run.loading then
+		clean_up_scenario(run.scenario)
+
 		if run.restore_flags then
 			run.restore_flags()
 		end

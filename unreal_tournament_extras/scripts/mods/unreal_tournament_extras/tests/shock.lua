@@ -40,6 +40,18 @@ local CONFIG = {
 	-- The ball's explosion: the enemies beside the one it hits, this far from it (inside the radius of 90 UT units, 1.8 m, and outside)
 	inside_radius = 1.2, -- m
 	outside_radius = 2.6, -- m
+	-- The combo's explosion: its radius (ShockCombo's 190 UT units), and how far from it an enemy has to be to be counted inside or
+	-- outside it. Where the enemies stand from the player: as far ahead as the ball is when the beam can follow it, and to the side.
+	combo_radius = 3.8, -- m
+	combo_radius_margin = 0.6, -- m
+	combo_ahead = 11, -- m
+	combo_sides = { -1.5, 2.5, 6 }, -- m
+	-- A critical hit does at least this much more than a plain one, and the breed it is also checked against, with the share of the
+	-- damage the armour takes
+	crit_least_ratio = 1.2,
+	crit_armour_breed = { "chaos_warrior", 0.5 },
+	-- An enemy with a shield that can't be broken (a shielded Stormvermin's)
+	shield_breed = "skaven_storm_vermin_with_shield",
 }
 
 local function is_ball(action)
@@ -144,6 +156,28 @@ local function beam_damage(t, breed_name)
 	t.remove(enemy)
 
 	return least
+end
+
+-- The damage of one beam at an enemy of the breed 5 m ahead, aimed at its middle
+local function one_beam(t, breed_name)
+	t.go_to_start()
+
+	local enemy = t.spawn(breed_name, 5)
+
+	if not t.expect(enemy, "the %s could not be spawned", breed_name) then
+		return nil
+	end
+
+	t.wait(1)
+	t.aim_at(enemy)
+
+	local damage = t.track_damage(enemy)
+
+	t.press("action_one", 0.05)
+	t.wait(CONFIG.beam_fire_rate + 0.2)
+	t.remove(enemy)
+
+	return damage.hits[1] and damage.hits[1].amount
 end
 
 local function scenarios()
@@ -626,6 +660,149 @@ local function scenarios()
 				t.expect(near > 0, "the explosion did not hurt the enemy %.1f m from it, inside its radius", CONFIG.inside_radius)
 				t.expect(near < on_hit, "the enemy %.1f m from the explosion took as much as the one it hit (%.1f, %.1f)", CONFIG.inside_radius, near, on_hit)
 				t.expect(far == 0, "the explosion hurt the enemy %.1f m from it, past its radius (%.1f)", CONFIG.outside_radius, far)
+			end,
+		},
+		{
+			-- A combo hurts the enemies within its radius and none past it, and the game's buffs on attack (talents, traits) run once for
+			-- it, as for the Flak Cannon's shell, or twice when the second hit is on the head. Each enemy is judged by how far it was from
+			-- where the combo went off.
+			name = "a combo hurts the enemies within its radius, and procs once",
+			run = function (t)
+				local enemies = {}
+
+				for i, side in ipairs(CONFIG.combo_sides) do
+					local ground = t.ground_at(CONFIG.combo_ahead, side)
+
+					enemies[i] = ground and t.spawn_at(runner.target_breed, ground[1], ground[2], ground[3])
+				end
+
+				if not t.expect(#enemies == #CONFIG.combo_sides, "the enemies could not be spawned") then
+					return
+				end
+
+				t.wait(1)
+				t.look(0)
+
+				local damages = {}
+
+				for i, enemy in ipairs(enemies) do
+					damages[i] = t.track_damage(enemy)
+				end
+
+				local explosions = t.explosions()
+
+				t.press("action_two", 0.05)
+				t.wait(CONFIG.ball_fire_rate + 0.05)
+
+				local procs = t.procs(definition.key)
+
+				t.press("action_one", 0.05)
+				t.wait(0.8)
+
+				local combo = nil
+
+				for i, name in ipairs(explosions) do
+					if name == "ut_shock_combo_explosion" then
+						combo = explosions.positions[i]
+					end
+				end
+
+				if not t.expect(combo, "no combo went off (%s)", table.concat(explosions, ", ")) then
+					return
+				end
+
+				local distances = t.on_main_thread(function ()
+					local list = {}
+
+					for i, enemy in ipairs(enemies) do
+						list[i] = Unit.alive(enemy) and Vector3.distance(Unit.local_position(enemy, 0), Vector3(combo[1], combo[2], combo[3])) or math.huge
+					end
+
+					return list
+				end)
+
+				for i, distance in ipairs(distances) do
+					local hurt = damages[i].total > 0
+
+					t.log("an enemy %.1f m from the combo took %.1f", distance, damages[i].total)
+
+					if distance < CONFIG.combo_radius - CONFIG.combo_radius_margin then
+						t.expect(hurt, "the combo did not hurt an enemy %.1f m from it, inside its radius of %.1f m", distance, CONFIG.combo_radius)
+					elseif distance > CONFIG.combo_radius + CONFIG.combo_radius_margin then
+						t.expect(not hurt, "the combo hurt an enemy %.1f m from it, past its radius of %.1f m (%.1f)", distance, CONFIG.combo_radius, damages[i].total)
+					end
+				end
+
+				local second_is_head = procs[2] and string.find(procs[2], "head", 1, true)
+
+				t.log("the buffs ran %d times (%s)", #procs, table.concat(procs, ", "))
+				t.expect(#procs >= 1, "the buffs did not run for the combo")
+				t.expect(#procs <= 1 or #procs == 2 and second_is_head, "the buffs ran %d times for one combo (%s)", #procs, table.concat(procs, ", "))
+			end,
+		},
+		{
+			-- An enemy's raised shield stops the beam, as it stops the game's shots (the beam has no ignore_shield_hit)
+			name = "a raised shield stops the beam",
+			run = function (t)
+				local enemy = t.spawn(CONFIG.shield_breed, 5)
+
+				if not t.expect(enemy, "the %s could not be spawned", CONFIG.shield_breed) then
+					return
+				end
+
+				t.raise_shield(enemy)
+				t.wait(1)
+				t.aim_at(enemy)
+
+				local damage = t.track_damage(enemy)
+
+				t.press("action_one", 0.05)
+				t.wait(0.5)
+
+				t.expect(damage.total == 0, "the beam hurt the %s through its shield (%.1f)", CONFIG.shield_breed, damage.total)
+			end,
+		},
+		{
+			-- A critical beam does more damage, and armour takes the same share of it as of a plain one
+			name = "a critical beam does more damage, and armour takes the same share of it",
+			run = function (t)
+				t.critical_hits(false)
+
+				local plain = one_beam(t, "chaos_marauder")
+
+				t.critical_hits(true)
+
+				local critical = one_beam(t, "chaos_marauder")
+				local armoured = one_beam(t, CONFIG.crit_armour_breed[1])
+
+				if not t.expect(plain and critical and armoured, "a beam did not hurt its enemy") then
+					return
+				end
+
+				t.log("plain %.1f, critical %.1f, critical against the %s %.1f", plain, critical, CONFIG.crit_armour_breed[1], armoured)
+				t.expect(critical > plain * CONFIG.crit_least_ratio, "a critical beam did %.1f, not more than the plain %.1f", critical, plain)
+				t.expect(math.abs(armoured / critical - CONFIG.crit_armour_breed[2]) <= CONFIG.armour_margin, "a critical beam did %.2f of its damage to the %s, not %.2f", armoured / critical, CONFIG.crit_armour_breed[1], CONFIG.crit_armour_breed[2])
+			end,
+		},
+		{
+			-- The rifle can be put away right after a beam, and no beam comes after it
+			name = "the rifle can be put away right after a beam",
+			run = function (t)
+				local template = t.wielded()
+
+				record_beams()
+				t.press("action_one", 0.05)
+				t.tap("wield_1")
+				t.hold("action_one")
+				t.wait(CONFIG.beam_fire_rate * 2)
+				t.release("action_one")
+				recording = false
+
+				t.expect(t.wielded() ~= template, "the rifle is still in the hands (%s)", tostring(t.wielded()))
+				t.expect(#beams == 1, "%d beams were fired, not 1", #beams)
+
+				t.tap("wield_2")
+				t.wait(1.5)
 			end,
 		},
 	}

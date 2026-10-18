@@ -412,7 +412,8 @@ end
 
 -- Jumps the arcs from the place the bolt hit. Returns where each one ends, and the normal of what it hit: the surface's, or the way
 -- back along the arc if it hit nothing (SniperFire.DoTrace). An arc that hits an enemy that is not the one the bolt hit damages it. The
--- arcs go for the enemies near (arc_targets) before they go in random directions.
+-- arcs go for the enemies near (arc_targets) before they go in random directions. An arc's hit doesn't run the buffs on attack (talents
+-- and traits): the bolt's own hit runs them, once for the shot, as the Flak Cannon's shell and the Shock Rifle's combo do.
 local function jump_arcs(shot, origin, main_unit, world)
 	local arcs = {}
 	local normals = {}
@@ -433,7 +434,7 @@ local function jump_arcs(shot, origin, main_unit, world)
 			local unit = hit_unit_of(hit)
 
 			if unit ~= main_unit and Unit.get_data(unit, "breed") then
-				DamageUtils.process_projectile_hit(world, shot.item_name, shot.owner_unit, shot.is_server, { hit }, ARC_ACTION, direction, true, nil, nil, shot._is_critical_strike, shot.power_level)
+				DamageUtils.process_projectile_hit(world, shot.item_name, shot.owner_unit, shot.is_server, { hit }, ARC_ACTION, direction, false, nil, nil, shot._is_critical_strike, shot.power_level)
 			end
 		end
 	end

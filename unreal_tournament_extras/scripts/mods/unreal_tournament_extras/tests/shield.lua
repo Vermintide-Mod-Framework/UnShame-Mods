@@ -62,6 +62,25 @@ local BOT_REACH_MARGIN = 0.6 -- m
 local SHIELD_ENEMY_DISTANCE = 1.5 -- m
 local SHIELD_BREAK_HOLD = 1.5 -- s
 
+-- "a punch's damage grows with the charge": how long the charge is held for each punch, and the damage expected of it, as a share of the
+-- least charged punch's. ShieldFire's damage goes from MinDamage (40) at MinHoldTime (0.4 s) to MaxDamage (150) at FullyChargedTime
+-- (2.5 s), in a line, and shield_gun.lua does 1/2 of it in the first two thirds of the charge and 2/3 in the last: 20 at the least, 50
+-- for a hold of 1.45 s (the middle step, 100 of UT's) and 100 for a full one. With this much either way.
+local CHARGE_PUNCHES = {
+	{ 0.1, 1 },
+	{ 1.45, 2.5 },
+	{ 2.8, 5 },
+}
+local CHARGE_MARGIN = 0.15
+
+-- "a punch goes through an ally to the enemy behind": how far ahead of the player the ally stands, and how far short of the punch's
+-- reach the enemy behind it stands
+local ALLY_DISTANCE = 0.8 -- m
+local ALLY_ENEMY_SHORT = 0.3 -- m
+-- The enemy, which has no armour, and how far ahead it stands
+local CHARGE_BREED = "chaos_marauder"
+local CHARGE_DISTANCE = 1.5 -- m
+
 -- Has the gun punch an enemy with a shield ahead, charged past a third or not, and returns the damage it took and whether its shield
 -- is broken. A charged punch is charged facing away, as the charge punches by itself once an enemy is in reach, and then the player
 -- turns to the enemy, so the punch comes at once.
@@ -123,14 +142,45 @@ local SHOCK_SHOT_GAP = 2 -- s
 -- The second shield of the reflections from shield to shield: Bardin as an Ironbreaker (his second career) with his Shield Gun
 local SHIELD_BOT_PROFILE = "dwarf_ranger"
 local SHIELD_BOT_CAREER = 2
--- The rat that the shot goes on to from Bardin's shield: on the open square ahead, 45 degrees to the other side of Sienna (the player,
--- who faces Bardin, turns this far the other way to put it there), and this far from the player. From Bardin it is 46 degrees off the
--- way to the player, inside his shield's arc, and the way to it passes 4 m from the player and 1.5 m from Sienna. (Behind the player
--- is the alley of the start, whose walls were in the way.)
+-- The enemy that the shot goes on to from Bardin's shield: on the open square ahead, 45 degrees to the other side of Sienna (the
+-- player, who faces Bardin, turns this far the other way to put it there), about 5 m from the player (CHAIN_ENEMY_DISTANCES). From
+-- Bardin it is about 46 degrees off the way to the player, inside his shield's arc, and the way to it passes 4 m from the player and
+-- 1.5 m from Sienna. (Behind the player is the alley of the start, whose walls were in the way.)
 local CHAIN_ENEMY_TURN = SHOCK_TURN + 45 -- degrees
-local CHAIN_ENEMY_DISTANCE = 5 -- m
--- How high above its feet the rat's middle is, which the shot from Bardin's shield is sent at
-local CHAIN_ENEMY_MIDDLE = 0.7 -- m
+-- The enemy at the end of the chain, and how high above its feet its middle is, which the shot from Bardin's shield is sent at. It is a
+-- tall one: the shot gets to Bardin's shield as high as Sienna's shot got to the player's, which her aim moves by half a meter or so
+-- (bots' aim wavers), and the shot off his shield is that much higher or lower. A rat's body was missed that way.
+local CHAIN_ENEMY_BREED = "chaos_marauder"
+local CHAIN_ENEMY_MIDDLE = 1 -- m
+-- A marauder 5 m ahead stood in the stairs there, and the game killed it. So it stands at the first of these distances where the ground
+-- is flat: as high within CHAIN_FLAT_MARGIN for CHAIN_FLAT_REACH either way along the line.
+local CHAIN_ENEMY_DISTANCES = { 5, 4.5, 5.5, 4, 6, 3.5 } -- m
+local CHAIN_FLAT_MARGIN = 0.1 -- m
+local CHAIN_FLAT_REACH = 0.6 -- m
+
+-- The distance ahead, along the way the player looks, that the enemy at the end of the chain stands at (see CHAIN_ENEMY_DISTANCES)
+local function chain_enemy_distance(t)
+	for _, distance in ipairs(CHAIN_ENEMY_DISTANCES) do
+		local middle = t.ground_at(distance, 0)
+		local flat = middle ~= nil
+
+		for _, along in ipairs({ -CHAIN_FLAT_REACH, CHAIN_FLAT_REACH }) do
+			local ground = flat and t.ground_at(distance + along, 0)
+
+			flat = flat and ground ~= nil and math.abs(ground[3] - middle[3]) <= CHAIN_FLAT_MARGIN
+		end
+
+		if flat then
+			t.log("the enemy at the end of the chain stands %.1f m ahead", distance)
+
+			return distance
+		end
+	end
+
+	t.log("no level ground for the enemy at the end of the chain: it stands %.1f m ahead", CHAIN_ENEMY_DISTANCES[1])
+
+	return CHAIN_ENEMY_DISTANCES[1]
+end
 -- How high above Bardin's feet the player looks at him
 local CHAIN_AIM_HEIGHT = 1 -- m
 
@@ -299,12 +349,15 @@ local function shield_to_shield(t, button, to_rat)
 	if to_rat then
 		t.look(0, CHAIN_ENEMY_TURN)
 
-		rat = t.spawn("skaven_clan_rat", CHAIN_ENEMY_DISTANCE)
+		rat = t.spawn(CHAIN_ENEMY_BREED, chain_enemy_distance(t))
 
 		if not t.expect(rat, "the rat could not be spawned") then
 			return nil
 		end
 	end
+
+	-- (what hurts the enemy before the shot)
+	local before_shot = rat and t.track_damage(rat)
 
 	local at = t.on_main_thread(function ()
 		local position = Unit.local_position(bardin, 0)
@@ -353,15 +406,52 @@ local function shield_to_shield(t, button, to_rat)
 		shield.reflect = reflect
 	end)
 
+	if before_shot then
+		for _, hit in ipairs(before_shot.hits) do
+			t.log("before the shot the enemy took %.1f, %s from %s (%s)", hit.amount, tostring(hit.type), tostring(hit.attacker), tostring(hit.source))
+		end
+
+		t.log("before the shot the enemy is %s", t.health_of(rat) > 0 and "alive" or "dead")
+	end
+
 	local damage = rat and t.track_damage(rat)
+	-- (the beams that come off a shield, each as its start and end, to tell how far the last one passed from the rat when it missed)
+	local reflected_beams = {}
+
+	ut.shock_beam_callbacks.ut_test_chain = function (owner_unit, start_position, end_position, hit_normal, reflected)
+		if reflected then
+			reflected_beams[#reflected_beams + 1] = { Vector3Box(start_position), Vector3Box(end_position) }
+		end
+	end
+
+	t.after(function ()
+		ut.shock_beam_callbacks.ut_test_chain = nil
+	end)
 
 	t.bot_press(shooter, button)
 	t.wait(SHOCK_SHOT_TIME * 2)
 	t.release("action_two")
 
 	shield.reflect = reflect
+	ut.shock_beam_callbacks.ut_test_chain = nil
 
-	return table.concat(reflected_by, ", "), #reflected_by, damage and damage.total or 0
+	local hurt = damage and damage.total or 0
+
+	if rat and hurt == 0 and reflected_beams[1] then
+		local miss = t.on_main_thread(function ()
+			local last = reflected_beams[#reflected_beams]
+			local from, to = last[1]:unbox(), last[2]:unbox()
+			local middle = Unit.alive(rat) and Unit.local_position(rat, 0) + Vector3(0, 0, CHAIN_ENEMY_MIDDLE) or to
+			local along = math.clamp(Vector3.dot(middle - from, Vector3.normalize(to - from)), 0, Vector3.distance(from, to))
+			local nearest = from + Vector3.normalize(to - from) * along
+
+			return string.format("the last reflected beam (%d) passed %.2f m from the rat's middle, %.2f m above it", #reflected_beams, Vector3.distance(nearest, middle), Vector3.z(nearest) - Vector3.z(middle))
+		end)
+
+		t.log("%s", miss)
+	end
+
+	return table.concat(reflected_by, ", "), #reflected_by, hurt
 end
 
 local function scenarios()
@@ -996,6 +1086,64 @@ local function scenarios()
 			end,
 		},
 		{
+			-- The longer the charge is held, the more the punch does, up to the full charge at 2.5 s (CHARGE_PUNCHES). The charge is held
+			-- facing away, as it punches by itself once an enemy is in reach, and then the player turns to the enemy and lets go. There
+			-- are no critical hits, which would add their own. The enemies stand to the left of the start, so that what they leave when
+			-- they die is not on the floor ahead, which the next scenarios punch.
+			name = "a punch's damage grows with the charge",
+			run = function (t)
+				t.critical_hits(false)
+
+				local damages = {}
+
+				for i, entry in ipairs(CHARGE_PUNCHES) do
+					local hold = entry[1]
+
+					t.go_to_start()
+					t.look(0, 90)
+
+					local enemy = t.spawn(CHARGE_BREED, CHARGE_DISTANCE)
+
+					if not t.expect(enemy, "the %s could not be spawned", CHARGE_BREED) then
+						return
+					end
+
+					t.wait(1)
+
+					local damage = t.track_damage(enemy)
+
+					if hold < 0.4 then
+						t.aim_at(enemy)
+						t.press("action_one", hold)
+					else
+						t.look(0, 180)
+						t.hold("action_one")
+						t.wait(hold - 0.1)
+						t.aim_at(enemy)
+						t.release("action_one")
+					end
+
+					t.wait(0.5)
+
+					damages[i] = damage.hits[1] and damage.hits[1].amount
+
+					t.remove(enemy)
+					t.wait(0.5)
+				end
+
+				if not t.expect(damages[1] and damages[2] and damages[3], "a punch did not hurt the %s", CHARGE_BREED) then
+					return
+				end
+
+				for i, entry in ipairs(CHARGE_PUNCHES) do
+					local share = damages[i] / damages[1]
+
+					t.log("held %.2f s: %.1f, %.2f of the least charged punch", entry[1], damages[i], share)
+					t.expect(math.abs(share - entry[2]) <= entry[2] * CHARGE_MARGIN, "a punch held %.2f s did %.2f of the least charged one's damage, not %.2f", entry[1], share, entry[2])
+				end
+			end,
+		},
+		{
 			-- A punch that hits a wall or the floor, and no enemy or thing, hurts the player as UT's punch of a wall does (ShieldFire:
 			-- MinSelfDamage + SelfDamageScale * the damage, halved)
 			name = "a full punch at the floor hurts the player as UT's",
@@ -1045,6 +1193,37 @@ local function scenarios()
 				t.wait(0.2)
 
 				t.expect(shield.last_punch ~= before, "the gun did not punch after it was taken out again")
+			end,
+		},
+		{
+			-- A punch goes through an ally in front of the player to the enemy behind it, and doesn't hurt the ally, as the game's melee
+			-- blows don't, whatever the difficulty's friendly fire for ranged attacks (Legend has it). A bot's punch past the player is the
+			-- same punch.
+			name = "a punch goes through an ally to the enemy behind",
+			run = function (t)
+				local ally = t.add_bot(SHIELD_BOT_PROFILE, SHIELD_BOT_CAREER, ut.items.weapons.shield_gun_dr.key, ALLY_DISTANCE, "slot_melee")
+
+				if not t.expect(ally, "the ally could not be added") then
+					return
+				end
+
+				local enemy = t.spawn(runner.target_breed, shield.reach - ALLY_ENEMY_SHORT)
+
+				if not t.expect(enemy, "the enemy could not be spawned") then
+					return
+				end
+
+				t.wait(1)
+				t.aim_at(enemy)
+
+				local ally_damage = t.track_damage(ally)
+				local enemy_damage = t.track_damage(enemy)
+
+				t.press("action_one", 0.1)
+				t.wait(0.5)
+
+				t.expect(ally_damage.total == 0, "the punch hurt the ally in front of the player (%.1f)", ally_damage.total)
+				t.expect(enemy_damage.total > 0, "the punch did not hurt the enemy behind the ally")
 			end,
 		},
 		{
@@ -1131,6 +1310,12 @@ local function scenarios()
 				t.log("the bot punched %d times, at most %.1f m from the nearest rat", #punches, farthest)
 				t.expect(from_gun(damages) > 0, "the bot did not hurt a rat with the Shield Gun in %d s", BOT_FIGHT_TIME)
 				t.expect(farthest <= shield.reach + BOT_REACH_MARGIN, "the bot punched with the nearest rat %.1f m away, out of its reach (%.1f m)", farthest, shield.reach)
+				for _, hit in ipairs(player_damage.hits) do
+					if hit.source == gun then
+						t.log("a hit of the gun on the player: %.1f, %s, from %s", hit.amount, tostring(hit.type), tostring(hit.attacker))
+					end
+				end
+
 				t.expect(from_gun({ player_damage }) == 0, "the bot's punches hurt the player %.1f", from_gun({ player_damage }))
 			end,
 		},

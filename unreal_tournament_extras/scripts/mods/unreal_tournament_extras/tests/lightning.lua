@@ -6,6 +6,8 @@ local ut = get_mod("unreal_tournament")
 
 local runner = mod.test_runner
 
+local definition = ut.items.weapons.lightning_gun
+
 local CONFIG = {
 	-- SniperFire.FireRate, and how much sooner than that a second bolt may be recorded
 	fire_rate = 1.6, -- s
@@ -21,6 +23,12 @@ local CONFIG = {
 		{ "skaven_rat_ogre", 1.2 * 0.45 },
 	},
 	armour_margin = 0.1,
+	-- A critical hit does at least this much more than a plain one (the profile's crit_boost of 0.5 on its curve), and the breed it is
+	-- also checked against, with the share of the damage the armour takes
+	crit_least_ratio = 1.2,
+	crit_armour_breed = { "chaos_warrior", 0.6 },
+	-- An enemy with a shield that can't be broken (a shielded Stormvermin's)
+	shield_breed = "skaven_storm_vermin_with_shield",
 	-- An arc does half of the bolt's damage (SniperFire.SecDamageMult)
 	arc_damage_ratio = 0.5,
 	arc_damage_margin = 0.1,
@@ -419,6 +427,122 @@ local function scenarios()
 			end,
 		},
 		{
+			-- The bolt goes through an enemy's raised shield (ignore_shield_hit), as UT has no shields to stop it
+			name = "a bolt goes through a raised shield",
+			run = function (t)
+				cool(t)
+
+				local enemy = t.spawn(CONFIG.shield_breed, CONFIG.enemy_distance)
+
+				if not t.expect(enemy, "the %s could not be spawned", CONFIG.shield_breed) then
+					return
+				end
+
+				t.raise_shield(enemy)
+				t.wait(1)
+				t.aim_at(enemy)
+
+				local damage = t.track_damage(enemy)
+
+				t.press("action_one", 0.1)
+				t.wait(0.5)
+
+				t.expect(damage.total > 0, "the bolt did no damage through the %s's shield", CONFIG.shield_breed)
+			end,
+		},
+		{
+			-- A critical hit does more damage, and armour takes the same share of it as of a plain hit (the profile's critical armour
+			-- values are its plain ones)
+			name = "a critical bolt does more damage, and armour takes the same share of it",
+			run = function (t)
+				t.critical_hits(false)
+
+				local plain = one_first_hit(t, CONFIG.plain_breed)
+
+				t.critical_hits(true)
+
+				local critical = one_first_hit(t, CONFIG.plain_breed)
+				local armoured = one_first_hit(t, CONFIG.crit_armour_breed[1])
+
+				if not t.expect(plain and critical and armoured, "a bolt did not hurt its enemy") then
+					return
+				end
+
+				t.log("plain %.2f, critical %.2f, critical against the %s %.2f", plain, critical, CONFIG.crit_armour_breed[1], armoured)
+				t.expect(critical > plain * CONFIG.crit_least_ratio, "a critical bolt did %.2f, not more than the plain %.2f", critical, plain)
+				t.expect(math.abs(armoured / critical - CONFIG.crit_armour_breed[2]) <= CONFIG.armour_margin, "a critical bolt did %.2f of its damage to the %s, not %.2f", armoured / critical, CONFIG.crit_armour_breed[1], CONFIG.crit_armour_breed[2])
+			end,
+		},
+		{
+			-- The bolt and its arcs are one shot, so the game's buffs on attack (talents, traits) run once for it, as for the Flak Cannon's
+			-- shell, or twice when the second hit is on the head
+			name = "a bolt and its arcs proc once",
+			run = function (t)
+				cool(t)
+
+				local enemies = {}
+
+				for i, side in ipairs({ 0, -CONFIG.arc_enemy_aside, CONFIG.arc_enemy_aside }) do
+					local ground = t.ground_at(CONFIG.enemy_distance, side)
+
+					enemies[i] = ground and t.spawn_at(CONFIG.plain_breed, ground[1], ground[2], ground[3])
+				end
+
+				if not t.expect(enemies[1] and enemies[2] and enemies[3], "the enemies could not be spawned") then
+					return
+				end
+
+				t.wait(1)
+				t.aim_at(enemies[1])
+
+				local procs = t.procs(definition.key)
+				local damages = {}
+
+				for i, enemy in ipairs(enemies) do
+					damages[i] = t.track_damage(enemy)
+				end
+
+				t.press("action_one", 0.1)
+				t.wait(0.5)
+
+				local hurt = 0
+
+				for _, damage in ipairs(damages) do
+					if damage.total > 0 then
+						hurt = hurt + 1
+					end
+				end
+
+				local second_is_head = procs[2] and string.find(procs[2], "head", 1, true)
+
+				t.log("%d enemies hurt, the buffs ran %d times (%s)", hurt, #procs, table.concat(procs, ", "))
+				t.expect(hurt > 1, "the arcs hurt no enemy beside the one hit")
+				t.expect(#procs >= 1, "the buffs did not run for the bolt")
+				t.expect(#procs <= 1 or #procs == 2 and second_is_head, "the buffs ran %d times for one bolt (%s)", #procs, table.concat(procs, ", "))
+			end,
+		},
+		{
+			-- The gun can be put away right after a shot, and no bolt comes after it
+			name = "the gun can be put away right after a shot",
+			run = function (t)
+				local template = t.wielded()
+
+				start_recording()
+				t.press("action_one", 0.1)
+				t.tap("wield_1")
+				t.hold("action_one")
+				t.wait(CONFIG.fire_rate + 0.5)
+				t.release("action_one")
+				stop_recording()
+
+				t.expect(t.wielded() ~= template, "the gun is still in the hands (%s)", tostring(t.wielded()))
+				t.expect(#bolts == 1, "%d bolts were made, not 1", #bolts)
+
+				t.tap("wield_2")
+				t.wait(1.5)
+			end,
+		},
+		{
 			name = "damages an enemy",
 			run = function (t)
 				local target = t.spawn_target(5)
@@ -462,8 +586,6 @@ local function scenarios()
 		},
 	}
 end
-
-local definition = ut.items.weapons.lightning_gun
 
 runner.add_suite({
 	name = "lightning",

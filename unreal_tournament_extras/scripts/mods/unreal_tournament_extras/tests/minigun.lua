@@ -26,6 +26,8 @@ local CONFIG = {
 	-- boost of 0.5)
 	headshot_ratio = 1.4,
 	headshot_margin = 0.1,
+	-- How many rounds are aimed at the head
+	head_tries = 3,
 	-- The damage of a round against armour and monsters, of the damage against an enemy with none (a Chaos marauder), with this much
 	-- either way (minigun.lua's armor_attack and alt_armor_attack). Only a first hit is compared, before the enemy is staggered (the
 	-- game adds damage against a staggered enemy). A Stormvermin is armoured, a Chaos warrior's body is super armour, and a rat ogre is a
@@ -44,6 +46,16 @@ local CONFIG = {
 	armour_margin = 0.1,
 	-- How far ahead the enemies that are shot stand
 	enemy_distance = 5, -- m
+	-- UT's spread of each mode (MinigunFire and MinigunAltFire's Spread, as utils.ut_spread puts it on the aim): a round's way is off the
+	-- aim by at most this much, as the sine of the angle. The rounds of a burst at the sky must reach at least spread_least of it.
+	primary_spread = 0.08,
+	alt_spread = 0.03,
+	spread_margin = 0.005,
+	spread_least = 0.5,
+	-- A critical round does at least this much more than a plain one
+	crit_least_ratio = 1.2,
+	-- An enemy whose shield a round can break (a shielded clan rat's)
+	shield_breed = "skaven_clan_rat_with_shield",
 }
 
 -- The rounds that are made while a test runs
@@ -52,7 +64,14 @@ local recording = false
 
 ut.minigun_shot_callbacks.ut_test = function (owner_unit, mode, end_position)
 	if recording then
+		-- Where the round ended, and where the owner's eye was and the way it aimed as it was fired. The callback runs in the frame of
+		-- the round, so the aim has its kick of the rounds before it.
+		local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
+
 		shots[#shots + 1] = {
+			aim = first_person_extension and Vector3Box(Quaternion.forward(first_person_extension:current_rotation())),
+			end_position = Vector3Box(end_position),
+			eye = first_person_extension and Vector3Box(first_person_extension:current_position()),
 			mode = mode,
 			owner_unit = owner_unit,
 			time = Managers.time:time("game"),
@@ -371,10 +390,22 @@ local function scenarios()
 			end,
 		},
 		{
+			-- There are no critical hits, so a hit on the body is the same each time. A round aimed at the head can miss it by the
+			-- spread and hit the neck, so the most of a few is the hit on the head.
 			name = "a round on the head does the game's head bonus",
 			run = function (t)
-				local body = first_hit(t, CONFIG.plain_breed, "alt")
-				local head = first_hit(t, CONFIG.plain_breed, "alt", true)
+				t.critical_hits(false)
+
+				local body = one_first_hit(t, CONFIG.plain_breed, "alt")
+				local head
+
+				for _ = 1, CONFIG.head_tries do
+					local damage = one_first_hit(t, CONFIG.plain_breed, "alt", true)
+
+					if damage then
+						head = math.max(head or 0, damage)
+					end
+				end
 
 				if t.expect(body and head, "a round did not hurt the %s (body %s, head %s)", CONFIG.plain_breed, tostring(body), tostring(head)) then
 					t.log("body %.2f, head %.2f", body, head)
@@ -392,6 +423,84 @@ local function scenarios()
 			name = "alt fire rounds hurt armoured enemies and monsters by their armour",
 			run = function (t)
 				check_armour(t, "alt", CONFIG.alt_armour_breeds)
+			end,
+		},
+		{
+			-- Each round of a burst at the sky goes off the aim by UT's spread at most, and the rounds do spread
+			name = "rounds spread as UT's",
+			run = function (t)
+				t.look(60)
+
+				for _, entry in ipairs({ { "primary", CONFIG.primary_spread }, { "alt", CONFIG.alt_spread } }) do
+					local mode, spread = entry[1], entry[2]
+
+					record()
+					t.press(button_of(mode), CONFIG.burst_time * 2)
+					t.wait(0.5)
+					stop_recording()
+
+					local result = t.on_main_thread(function ()
+						local most, count = 0, 0
+
+						for _, shot in ipairs(shots) do
+							if shot.owner_unit == t.unit() and shot.mode == mode and shot.aim then
+								local way = Vector3.normalize(shot.end_position:unbox() - shot.eye:unbox())
+
+								most = math.max(most, Vector3.length(Vector3.cross(way, shot.aim:unbox())))
+								count = count + 1
+							end
+						end
+
+						return { most, count }
+					end)
+					local widest, rounds = result[1], result[2]
+
+					t.log("%s: %d rounds, the widest %.3f off the aim", mode, rounds, widest)
+
+					if t.expect(rounds > 3, "only %d %s rounds were fired", rounds, mode) then
+						t.expect(widest <= spread + CONFIG.spread_margin, "a %s round went %.3f off the aim, more than the spread of %.3f", mode, widest, spread)
+						t.expect(widest >= spread * CONFIG.spread_least, "the %s rounds went at most %.3f off the aim, much less than the spread of %.3f", mode, widest, spread)
+					end
+
+					t.wait(1)
+				end
+			end,
+		},
+		{
+			-- The rounds break an enemy's raised shield, as the repeater's do (shield_break)
+			name = "rounds break a raised shield",
+			run = function (t)
+				local enemy = t.spawn(CONFIG.shield_breed, CONFIG.enemy_distance)
+
+				if not t.expect(enemy, "the %s could not be spawned", CONFIG.shield_breed) then
+					return
+				end
+
+				t.raise_shield(enemy)
+				t.wait(1)
+				t.aim_at(enemy)
+				t.press("action_one", CONFIG.burst_time)
+				t.wait(0.5)
+
+				t.expect(t.shield_broken(enemy) or not HEALTH_ALIVE[enemy], "the rounds did not break the %s's shield", CONFIG.shield_breed)
+			end,
+		},
+		{
+			-- A critical round does more damage than a plain one
+			name = "a critical round does more damage",
+			run = function (t)
+				t.critical_hits(false)
+
+				local plain = one_first_hit(t, CONFIG.plain_breed, "alt")
+
+				t.critical_hits(true)
+
+				local critical = one_first_hit(t, CONFIG.plain_breed, "alt")
+
+				if t.expect(plain and critical, "a round did not hurt the %s", CONFIG.plain_breed) then
+					t.log("plain %.2f, critical %.2f", plain, critical)
+					t.expect(critical > plain * CONFIG.crit_least_ratio, "a critical round did %.2f, not more than the plain %.2f", critical, plain)
+				end
 			end,
 		},
 	}

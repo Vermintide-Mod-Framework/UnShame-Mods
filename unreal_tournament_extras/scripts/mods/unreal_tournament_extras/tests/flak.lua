@@ -52,6 +52,23 @@ local CONFIG = {
 	chunk_self_damage = 8,
 	-- The shell's explosion throws the player up at least this fast when it goes off at their feet
 	min_jump_speed = 2, -- m/s
+	-- The chunks (flak_cannon.lua's chunk_speed, chunk_lifetime and chunk_spread_degrees): their speed and how long they last, with this
+	-- much either way, and the cone they go in, which the chunks of a shot at the sky must fill to at least spread_least of it
+	chunk_speed = 35, -- m/s
+	speed_margin = 3, -- m/s
+	chunk_lifetime = 2.7, -- s
+	lifetime_margin = 0.25, -- s
+	chunk_spread = 4, -- degrees
+	spread_margin = 0.5, -- degrees
+	spread_least = 0.4,
+	-- The shell: its speed and the pull of its gravity (shell_speed and shell_gravity), with this much either way
+	shell_speed = 24, -- m/s
+	shell_gravity = 17, -- m/s/s
+	gravity_margin = 2, -- m/s/s
+	-- A critical chunk does at least this much more than a plain one
+	crit_least_ratio = 1.2,
+	-- An enemy with a shield that can't be broken (a shielded Stormvermin's)
+	shield_breed = "skaven_storm_vermin_with_shield",
 }
 
 local function is_chunk(action)
@@ -202,6 +219,15 @@ local function watch_shots(t, filter)
 			end
 		end
 	end
+end
+
+-- The way the player aims, as { x, y, z }
+local function aim_forward(t)
+	return t.on_main_thread(function ()
+		local forward = Quaternion.forward(ScriptUnit.extension(t.unit(), "first_person_system"):current_rotation())
+
+		return { Vector3.x(forward), Vector3.y(forward), Vector3.z(forward) }
+	end)
 end
 
 -- When the first of the watched shots was seen
@@ -698,6 +724,145 @@ local function scenarios()
 				t.expect(near > 0, "the explosion did not hurt the enemy %.1f m from it, inside its radius", CONFIG.inside_radius)
 				t.expect(near < on_hit, "the enemy %.1f m from the explosion took as much as the one it hit (%.1f, %.1f)", CONFIG.inside_radius, near, on_hit)
 				t.expect(far == 0, "the explosion hurt the enemy %.1f m from it, past its radius (%.1f)", CONFIG.outside_radius, far)
+			end,
+		},
+		{
+			-- Chunks fired at the sky fly at their speed, straight, for their lifetime, each within the cone of the spread
+			name = "chunks fly at their speed for their lifetime, within their spread",
+			run = function (t)
+				t.look(60)
+
+				local forward = aim_forward(t)
+				local shots, observe = watch_shots(t, is_chunk)
+
+				t.press("action_one", 0.05, observe)
+				t.watch(CONFIG.chunk_lifetime + 1, observe)
+
+				local speeds, lifetimes, widest = {}, {}, 0
+
+				for _, unit in ipairs(shots) do
+					local positions = shots[unit]
+					local first, second, last = positions[1], positions[2], positions[#positions]
+
+					if second and second.t > first.t then
+						local dx, dy, dz = second.x - first.x, second.y - first.y, second.z - first.z
+						local length = math.sqrt(dx * dx + dy * dy + dz * dz)
+
+						speeds[#speeds + 1] = length / (second.t - first.t)
+						lifetimes[#lifetimes + 1] = last.t - first.t
+
+						local cosine = (dx * forward[1] + dy * forward[2] + dz * forward[3]) / length
+
+						widest = math.max(widest, math.deg(math.acos(math.min(1, cosine))))
+					end
+				end
+
+				if not t.expect(#speeds == CONFIG.chunk_count, "%d of the %d chunks were seen flying", #speeds, CONFIG.chunk_count) then
+					return
+				end
+
+				for i, speed in ipairs(speeds) do
+					t.log("chunk %d: %.1f m/s, %.2f s, ", i, speed, lifetimes[i])
+					t.expect(math.abs(speed - CONFIG.chunk_speed) <= CONFIG.speed_margin, "a chunk flew at %.1f m/s, not %.1f", speed, CONFIG.chunk_speed)
+					t.expect(math.abs(lifetimes[i] - CONFIG.chunk_lifetime) <= CONFIG.lifetime_margin, "a chunk lasted %.2f s, not %.2f", lifetimes[i], CONFIG.chunk_lifetime)
+				end
+
+				t.log("the widest chunk went %.1f degrees off the aim", widest)
+				t.expect(widest <= CONFIG.chunk_spread + CONFIG.spread_margin, "a chunk went %.1f degrees off the aim, past the spread of %.1f", widest, CONFIG.chunk_spread)
+				t.expect(widest >= CONFIG.chunk_spread * CONFIG.spread_least, "the chunks went at most %.1f degrees off the aim, much less than the spread of %.1f", widest, CONFIG.chunk_spread)
+			end,
+		},
+		{
+			-- The shell leaves at its speed and falls by its gravity
+			name = "the shell flies at its speed and falls by its gravity",
+			run = function (t)
+				t.look(20)
+
+				local shots, observe = watch_shots(t, is_shell)
+
+				t.press("action_two", 0.05, observe)
+				t.watch(0.8, observe)
+
+				local positions = shots[1] and shots[shots[1]]
+
+				if not t.expect(positions and #positions >= 6, "the shell was not seen flying") then
+					return
+				end
+
+				local function velocity(a, b)
+					local dt = b.t - a.t
+
+					return (b.x - a.x) / dt, (b.y - a.y) / dt, (b.z - a.z) / dt, (a.t + b.t) / 2
+				end
+
+				local vx, vy, vz, early = velocity(positions[1], positions[2])
+				local _, _, late_vz, late = velocity(positions[#positions - 1], positions[#positions])
+				local speed = math.sqrt(vx * vx + vy * vy + vz * vz)
+				local gravity = (vz - late_vz) / (late - early)
+
+				t.log("the shell left at %.1f m/s and fell by %.1f m/s/s", speed, gravity)
+				t.expect(math.abs(speed - CONFIG.shell_speed) <= CONFIG.speed_margin, "the shell left at %.1f m/s, not %.1f", speed, CONFIG.shell_speed)
+				t.expect(math.abs(gravity - CONFIG.shell_gravity) <= CONFIG.gravity_margin, "the shell fell by %.1f m/s/s, not %.1f", gravity, CONFIG.shell_gravity)
+			end,
+		},
+		{
+			-- An enemy's raised shield stops the chunks, as it stops the game's shots
+			name = "a raised shield stops the chunks",
+			run = function (t)
+				local enemy = t.spawn(CONFIG.shield_breed, 5)
+
+				if not t.expect(enemy, "the %s could not be spawned", CONFIG.shield_breed) then
+					return
+				end
+
+				t.raise_shield(enemy)
+				t.wait(1)
+				t.aim_at(enemy)
+
+				local damage = t.track_damage(enemy)
+
+				t.press("action_one", 0.05)
+				t.wait(1)
+
+				t.expect(damage.total == 0, "the chunks hurt the %s through its shield (%.1f)", CONFIG.shield_breed, damage.total)
+			end,
+		},
+		{
+			-- A critical chunk does more damage than a plain one
+			name = "a critical chunk does more damage",
+			run = function (t)
+				t.critical_hits(false)
+
+				local plain = armour_damage(t, CONFIG.plain_breed, false)
+
+				t.critical_hits(true)
+
+				local critical = armour_damage(t, CONFIG.plain_breed, false)
+
+				if t.expect(plain and critical, "a chunk did not hurt the %s", CONFIG.plain_breed) then
+					t.log("plain %.1f, critical %.1f", plain, critical)
+					t.expect(critical > plain * CONFIG.crit_least_ratio, "a critical chunk did %.1f, not more than the plain %.1f", critical, plain)
+				end
+			end,
+		},
+		{
+			-- The cannon can be put away right after a shot, and nothing is fired after it
+			name = "the cannon can be put away right after a shot",
+			run = function (t)
+				local template = t.wielded()
+				local before = t.ammo()
+
+				t.press("action_one", 0.05)
+				t.tap("wield_1")
+				t.hold("action_one")
+				t.wait(CONFIG.primary_fire_rate * 2)
+				t.release("action_one")
+
+				t.expect(t.wielded() ~= template, "the cannon is still in the hands (%s)", tostring(t.wielded()))
+				t.expect(before - (t.ammo() or before) <= 1, "%d shots were fired, not 1", before - (t.ammo() or before))
+
+				t.tap("wield_2")
+				t.wait(1.5)
 			end,
 		},
 	}

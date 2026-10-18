@@ -17,7 +17,6 @@ local mod = get_mod("unreal_tournament")
 local utils = mod.utils
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
-local first_beam_hit = utils.first_beam_hit
 
 local DESCRIPTION = "The Kemphler DD280 Riot Control Device has the ability to resist and reflect incoming projectiles and energy beams. The plasma wave inflicts massive damage, rupturing tissue, pulverizing organs, and flooding the bloodstream with dangerous gas bubbles."
 
@@ -420,6 +419,29 @@ local function without_bodies(hits)
 	return kept
 end
 
+-- The first hit of a ray that is an enemy or the level, as a melee swing finds it: the game's melee blows go through allies, whatever the
+-- difficulty's friendly fire for ranged attacks (which utils.first_beam_hit follows for the beam weapons). A near miss (the "afro" zone)
+-- goes on too.
+local function first_punch_hit(hits, owner_unit)
+	for i = 1, #(hits or {}) do
+		local hit_unit, hit_actor = ActionUtils.redirect_shield_hit(Actor.unit(hits[i][4]), hits[i][4])
+
+		if hit_unit ~= owner_unit then
+			local breed = Unit.get_data(hit_unit, "breed")
+
+			if not breed then
+				return hits[i]
+			end
+
+			local zone = breed.hit_zones_lookup and breed.hit_zones_lookup[Actor.node(hit_actor)]
+
+			if DamageUtils.is_enemy(owner_unit, hit_unit) and not (zone and zone.name == "afro") then
+				return hits[i]
+			end
+		end
+	end
+end
+
 local function in_reach(owner_unit, physics_world, range)
 	local first_person_extension = ScriptUnit.has_extension(owner_unit, "first_person_system")
 
@@ -434,14 +456,14 @@ local function in_reach(owner_unit, physics_world, range)
 	local eye = first_person_extension:current_position()
 
 	-- The enemy the crosshair is on. The crosshair is at the eye: close up, a ray from the middle along the view passes under it.
-	local ahead = first_beam_hit(without_bodies(raycast(physics_world, eye, direction, range)), owner_unit)
+	local ahead = first_punch_hit(without_bodies(raycast(physics_world, eye, direction, range)), owner_unit)
 	local ahead_unit = ahead and ActionUtils.redirect_shield_hit(Actor.unit(ahead[4]), ahead[4])
 
 	if ahead_unit and Unit.get_data(ahead_unit, "breed") and HEALTH_ALIVE[ahead_unit] then
 		return ahead, true, direction, origin, eye
 	end
 
-	local hit = first_beam_hit(without_bodies(raycast(physics_world, origin, direction, range)), owner_unit)
+	local hit = first_punch_hit(without_bodies(raycast(physics_world, origin, direction, range)), owner_unit)
 	local object = first_object_hit(physics_world, origin, direction, range, owner_unit)
 
 	if object and (not hit or object[2] < hit[2]) then
