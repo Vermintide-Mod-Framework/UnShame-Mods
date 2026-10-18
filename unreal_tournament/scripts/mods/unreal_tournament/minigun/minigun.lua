@@ -92,7 +92,8 @@ local CONFIG = {
 }
 
 -- Damage profiles
--- A round stops at the first enemy it hits, as UT's trace does. UT's rounds have no bonus on the head.
+-- A round stops at the first enemy it hits, as UT's trace does. A round on the head has the game's usual bonus (shot_repeating's), as
+-- this game's guns all do, where UT gives one only to its sniper weapons.
 
 local function set_armor_modifiers(profile)
 	utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact)
@@ -106,8 +107,6 @@ local function bullet_profile(profile, damage)
 		impact = 0.01,
 	}
 	set_armor_modifiers(profile)
-	-- (the game's head bonus is the profile's, not the action's headshot_multiplier, and shot_repeating leaves it at its default)
-	utils.set_headshot_multiplier(profile, 1)
 end
 
 register_damage_profile("ut_minigun_bullet", "shot_repeating", function (profile)
@@ -203,7 +202,6 @@ local function build_shot(source, mode, first, hand, spray, volley)
 	action.anim_event_secondary = nil
 	action.damage_profile = alt and "ut_minigun_alt_bullet" or "ut_minigun_bullet"
 	action.fire_time = fire_time
-	action.headshot_multiplier = 1
 	action.reload_when_out_of_ammo = false
 	-- A hit on the player doesn't stop the rounds, as it doesn't in UT. Otherwise the game's hit reaction ends the round's action
 	-- (CharacterStateHelper).
