@@ -63,10 +63,11 @@ local CONFIG = {
 	-- to the model's tip, 30 of the model's units behind it along the barrel (RelativeLocation, in the bone's frame), and its sparks move
 	-- with it (mPosRelative). Its own numbers are in the units of the view, as the emitter isn't drawn at the model's DrawScale: each spark
 	-- is up to 10 units from it along the barrel (mPosDev), so some are out in front of the tip, and 5 units in size (mSizeRange), a half
-	-- width, so 10 across, the height of the cage. So the sparks fill the cage and reach out past the tip, as in pictures of UT2004.
+	-- width. So the sparks fill the cage and reach out past the tip, as in pictures of UT2004. They are a little smaller here (set in the
+	-- game): at 10 across they came through the front of the gun.
 	charge_rate = 10,
 	charge_life = 0.2,
-	charge_size = 5, -- half width, units of the view
+	charge_size = 4, -- half width, units of the view
 	charge_back = 30, -- the model's units
 	charge_spread = 10, -- units of the view
 	-- How bright the sparks are (fitted to a picture of UT2004)
