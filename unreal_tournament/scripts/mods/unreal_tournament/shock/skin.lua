@@ -28,7 +28,7 @@ local CONFIG = {
 	-- The chamber is a shader graph that makes the flowing gel itself (tools/asset_conversion/make_chamber_material.py). This is how
 	-- bright it is when its glow is all there. It lights itself, as UT's shader uses its diffuse as its self illumination.
 	chamber_intensity = 1,
-	-- The color of the overcharge bar between its thresholds and above them. It is ShockControl's color (R192 G0 B255), the liquid's. The game's is orange.
+	-- The color of the overcharge bar between its thresholds and above them. It is ShockControl's color (R192 G0 B255), the liquid's. The game's are orange and red.
 	overcharge_bar_color = { 192, 0, 255 },
 	-- While the heat is vented, the chamber drains to its glass and fills again, over and over, as it does after a shot
 	vent_pulse_speed = 14, -- radians per second
