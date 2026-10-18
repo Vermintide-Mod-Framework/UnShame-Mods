@@ -25,14 +25,14 @@ local CONFIG = {
 	-- (flare_life). In pictures of UT2004 its streaks look like the texture added once (white middles, thin blue edges), while the flare
 	-- is 9 times the texture: the particles all add their flare at the start, but their streaks lie along the bolt.
 	bolt_width = 30, -- UT units
-	bolt_stretch = 4, -- a part's length, in widths
-	bolt_jitter = 30, -- UT units
+	bolt_stretch = 8, -- a part's length, in widths
+	bolt_jitter = 60, -- UT units
 	bolt_intensity = 1,
 	-- ChildLightningBolt: 10 particles of size 15, out of place by up to 15 units. In pictures of UT2004 an arc is the texture drawn out
 	-- along a few long parts with gentle bends, so its parts are longer than the bolt's (set against those pictures).
 	arc_width = 15,
-	arc_stretch = 8, -- a part's length, in widths
-	arc_jitter = 15,
+	arc_stretch = 16, -- a part's length, in widths
+	arc_jitter = 30,
 	arc_life = 0.5,
 	arc_intensity = 1,
 	-- The flare where the bolt starts and ends (the lower half of LightningBoltT). It is 30 units wide, the size of NewLightningBolt's
