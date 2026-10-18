@@ -66,10 +66,9 @@ local CONFIG = {
 	charge_rate = 10,
 	charge_life = 0.2,
 	charge_size = 9,
-	charge_back = 24,
-	charge_spread = 20,
-	-- The glass's middle is this many units above the muzzle, and the sparks are this bright (fitted to a picture of UT2004)
-	charge_up = 5,
+	charge_back = 30,
+	charge_spread = 10,
+	-- How bright the sparks are (fitted to a picture of UT2004)
 	charge_intensity = 0.45,
 	-- Where the bolt starts when the view is zoomed: SniperFire puts it at the player's middle (EffectOffset.Z, 26 units, below), so it
 	-- comes from the bottom of the screen
@@ -376,7 +375,7 @@ local function update_charge(skin, dt, api)
 		charge_time = charge_time - interval
 
 		local along = CONFIG.charge_back + (math.random() * 2 - 1) * CONFIG.charge_spread
-		local offset = Vector3Box(Vector3(0, -along, CONFIG.charge_up))
+		local offset = Vector3Box(Vector3(0, -along, 0))
 
 		-- A spark is linked to the first person unit at its place on the model, and drawn with the model's field of view (an fx_weapon_
 		-- material), so it moves with the model and the parts of the model in front of it hide it. A random one of the four pictures of
