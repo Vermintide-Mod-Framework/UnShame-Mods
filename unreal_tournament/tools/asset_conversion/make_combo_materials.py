@@ -456,5 +456,7 @@ ion.connect('second', 'mix', IN_LERP_A, 'rgb')
 ion.connect('first', 'mix', IN_LERP_B, 'rgb')
 ion.connect('first', 'mix', IN_LERP_W, 'a')
 multiply(ion, 'color', 'mix', 'tint')
-brightened(ion)
+# (by its weakest channel: the fire is a saturated orange, which by its luminance kept too little of the blue behind it and turned the
+# world brown, where FB_Brighten only ever brightens)
+brightened(ion, 'min')
 write('ion_sphere', ion, {'burn_map': 'ion_burn'})
