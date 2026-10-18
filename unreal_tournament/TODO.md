@@ -2,11 +2,11 @@
 
 `WEAPON_STATUS.md` is what to look at for a weapon. Which careers get which weapon, and from which base, is in `WEAPON_PLAN.md`.
 
-## Third person
+## Bio Rifle and Rocket Launcher
 
-1. **Bio Rifle and Rocket Launcher.** They now hold UT's third person meshes (BioRifle_3rd, RocketLauncher_3rd) in place of the pickups.
+1. **Third person and tests.** They now hold UT's third person meshes (BioRifle_3rd, RocketLauncher_3rd) in place of the pickups.
    The grip and the turn were worked out from the pickups' and need setting in the game against UT, and the effects at the muzzle
-   checking against them.
+   checking against them. Add the tests they are missing, for the lines of their `WEAPON_STATUS.md` columns that have none.
 
 ## Weapons to finish
 
