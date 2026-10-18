@@ -80,15 +80,18 @@ local CONFIG = {
 	charge_intensity = 0.45,
 	-- The sparks at the tip of the gun in a character's hands (LightningCharge3rd, which SniperAttachment spawns with the character's
 	-- first shot and attaches to the mesh's tip). They don't stop when the gun can't fire: 40 a second, each 0.2 s long, 5 units in size
-	-- (a half width), up to 5 units from the emitter along the barrel, turned at random. The emitter is 30 units behind the tip and 3 to
-	-- its right (RelativeLocation, taken in the mesh's units, as for the first person charge). Its own numbers are UT's world units, as
-	-- the emitter is drawn at its own DrawScale of 1. They are as bright as the first person sparks, with the same texture.
+	-- (a half width), up to 5 units from the emitter along the barrel, turned at random. The emitter is at RelativeLocation (-30, 3, 0)
+	-- in the frame of the tip, taken in the mesh's units, as for the first person charge. The mesh has no bone named tip: it is taken to
+	-- be Bone_Flash, where the muzzle is. That bone's frame is turned a quarter about the barrel from the mesh's (its parent Bone_weapon
+	-- is), so its Y is the mesh's down: the emitter is 30 units behind the tip and 3 below it. Its own numbers are UT's world units, as
+	-- the emitter is drawn at its own DrawScale of 1. They are as bright as the first person sparks, with the same texture, and fade near
+	-- the camera with the character.
 	third_person_charge_rate = 40,
 	third_person_charge_life = 0.2,
 	third_person_charge_size = 5, -- half width, UT units
 	third_person_charge_spread = 5, -- UT units
 	third_person_charge_back = 30, -- the mesh's units
-	third_person_charge_right = 3, -- the mesh's units
+	third_person_charge_down = 3, -- the mesh's units
 	-- The weapon's light (xWeaponAttachment.WeaponLight): every shot turns it on for 0.15 s, at the gun in a character's hand (the held
 	-- mesh's origin). There is none in the player's own first person view, where it would light the gun the player holds (as for the
 	-- Minigun). LightHue 165 of 255 and LightSaturation 170 (0 is all colour, 255 is white) are a pale blue, and LightRadius 5 is in
@@ -348,9 +351,11 @@ end
 local function third_person_charge_spark(character, api)
 	local along = (math.random() * 2 - 1) * CONFIG.third_person_charge_spread * UNIT
 
-	-- (the sparks move with the gun, mPosRelative, and start at a random angle)
+	-- (the sparks move with the gun, mPosRelative, and start at a random angle. They dim over their life, mAttenKa 0.)
 	particles.sprite({
-		attenuation = 0,
+		brightness = function (fraction)
+			return (1 - fraction) * api.third_person.fade(character)
+		end,
 		color = {
 			1,
 			1,
@@ -363,7 +368,7 @@ local function third_person_charge_spark(character, api)
 				return nil
 			end
 
-			local emitter = api.third_person.point_position(character, mesh_config.muzzle_right + CONFIG.third_person_charge_right, mesh_config.muzzle_forward - CONFIG.third_person_charge_back, mesh_config.muzzle_up)
+			local emitter = api.third_person.point_position(character, mesh_config.muzzle_right, mesh_config.muzzle_forward - CONFIG.third_person_charge_back, mesh_config.muzzle_up - CONFIG.third_person_charge_down)
 
 			return emitter and emitter + Quaternion.forward(api.third_person.muzzle_rotation(character)) * along or nil
 		end,

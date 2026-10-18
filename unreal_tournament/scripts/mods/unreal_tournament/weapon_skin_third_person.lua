@@ -114,25 +114,9 @@ local function new(def, looks)
 		Unit.set_local_scale(entry.unit, 0, Vector3(config.scale, config.scale, config.scale))
 
 		-- The engine's fade near the camera does not reach some materials, because their shader has no option for it. Such a material
-		-- has a "fade" variable, and this sets it the way the engine fades a character (read from the engine's fade update). The
-		-- material is invisible up to 0.5 m from the camera, measured sideways. It is fully visible from 0.7 m, and also whenever the
-		-- camera is a meter or more above or below the character.
+		-- has a "fade" variable, which is set the way the engine fades a character (third_person.fade).
 		if config.fade_material and Unit.has_mesh(entry.unit, config.fade_mesh) then
-			local camera_manager = Managers.state.camera
-			local fade = 1
-
-			if camera_manager then
-				local character = entry.character
-				local anchor = Unit.has_node(character, "j_hips") and Unit.world_position(character, Unit.node(character, "j_hips")) or Unit.world_position(character, 0)
-				local offset = camera_manager:camera_position("player_1") - anchor
-				local sideways = math.sqrt(Vector3.x(offset) ^ 2 + Vector3.y(offset) ^ 2)
-
-				if math.abs(Vector3.z(offset)) < 1 and sideways < 0.7 then
-					fade = math.clamp((sideways - 0.5) * 5, 0, 1)
-				end
-			end
-
-			Material.set_scalar(Mesh.material(Unit.mesh(entry.unit, config.fade_mesh), config.fade_material), "fade", fade)
+			Material.set_scalar(Mesh.material(Unit.mesh(entry.unit, config.fade_mesh), config.fade_material), "fade", third_person.fade(entry.character))
 		end
 	end
 
@@ -337,6 +321,27 @@ local function new(def, looks)
 		end
 
 		return entry.unit, entry.config
+	end
+
+	-- Returns how much of a character the engine shows near the camera, from 0 to 1 (read from the engine's fade update). It is invisible
+	-- up to 0.5 m from the camera, measured sideways. It is fully visible from 0.7 m, and also whenever the camera is a meter or more above
+	-- or below the character. Effects on the mesh in its hand fade with it.
+	function third_person.fade(character)
+		local camera_manager = Managers.state.camera
+
+		if not camera_manager or not Unit.alive(character) then
+			return 1
+		end
+
+		local anchor = Unit.has_node(character, "j_hips") and Unit.world_position(character, Unit.node(character, "j_hips")) or Unit.world_position(character, 0)
+		local offset = camera_manager:camera_position("player_1") - anchor
+		local sideways = math.sqrt(Vector3.x(offset) ^ 2 + Vector3.y(offset) ^ 2)
+
+		if math.abs(Vector3.z(offset)) < 1 and sideways < 0.7 then
+			return math.clamp((sideways - 0.5) * 5, 0, 1)
+		end
+
+		return 1
 	end
 
 	-- Returns where a point of the mesh in the character's hand is (right, forward and up, in the mesh's UT units), or nil if the
