@@ -3,15 +3,14 @@ local mod = get_mod("unreal_tournament")
 -- UT's view shake of a weapon's shot (WeaponFire.ShakeOffsetMag, ShakeOffsetRate and ShakeOffsetTime; PlayerController.ShakeView,
 -- ViewShake and CheckShake), for the player on this machine. It moves the camera, and the first person weapon with it: UT adds the
 -- shake to where it draws the weapon too (Pawn.CalcDrawOffset adds CameraShake), so the weapon stays where it is on the screen while
--- the world shakes. weapon_skin.lua moves the model by view_shake.offset(), and turns it by view_shake.turn().
+-- the world shakes. weapon_skin.lua moves the model by view_shake.offset().
 --   view_shake.start(magnitude, rate, time): magnitude and rate are { forward, right, up } in UT units and UT units a second, and time is
 --       UT's ShakeOffsetTime. A new shake replaces the current one only if its magnitude is longer.
 --   view_shake.offset(): how far the shake moves the camera now, in meters along the view's axes: right, forward, up.
 --   view_shake.start_rotation(magnitude, rate, time): the turn of the shake (WeaponFire.ShakeRotMag, ShakeRotRate and ShakeRotTime):
 --       magnitude and rate are { pitch, yaw, roll } in UT's units of a turn (65536 to a whole turn) and those a second. It is added to
---       the camera's turn (PlayerController.ShakeRot). It replaces the current turn of the shake only if its magnitude is bigger. UT
---       draws the weapon without it, so there the weapon shakes on the screen too. Here the weapon is turned with the camera, so that only
---       the world shakes and the weapon shakes only by its own animation.
+--       the camera's turn (PlayerController.ShakeRot), not to the weapon's, as UT draws the weapon at the view's own turn: so the weapon
+--       shakes on the screen too. It replaces the current turn of the shake only if its magnitude is bigger.
 --   view_shake.turn(): the turn of the shake now, in the view's axes, or nil.
 -- On each axis the offset moves at the rate until it reaches its limit, then turns back. Each time it turns, the limit is multiplied
 -- by (1 / time - 1), about -0.5 at first, and time goes down by a frame. Once time is down to 1, that axis stops. The turn does the same.

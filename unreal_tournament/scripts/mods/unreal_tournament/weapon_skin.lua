@@ -343,13 +343,6 @@ local function new(def)
 	local function view_shake_offset()
 		return mod.view_shake and mod.view_shake.offset() or Vector3.zero()
 	end
-
-	-- The turn of a weapon's view shake now (view_shake.lua), in the first person unit's axes, or nil. The model and its effects are
-	-- turned with the camera by it, unlike UT's, so that the weapon doesn't shake on the screen.
-	local function view_shake_turn()
-		return mod.view_shake and mod.view_shake.turn()
-	end
-
 	-- A point of the view in UT units from the eye (forward, right, up), where the weapon's projection draws it, moved by the weapon's
 	-- bob as the model is (UT's GetEffectStart adds CalcDrawOffset, which has the bob in it). Returns the first person unit, which the
 	-- model is linked to, and the point in its frame (x right, y ahead, z up), for particles that are linked to the unit so that they
@@ -370,10 +363,7 @@ local function new(def)
 			x = -x
 		end
 
-		local point = Vector3(x, along * forward, across * (up + bob_up)) * (distance_scale or 1) + view_shake_offset()
-		local shake_turn = view_shake_turn()
-
-		return fp.first_person_unit, shake_turn and Quaternion.rotate(shake_turn, point) or point
+		return fp.first_person_unit, Vector3(x, along * forward, across * (up + bob_up)) * (distance_scale or 1) + view_shake_offset()
 	end
 
 	-- Returns how long the game takes to wield the weapon. The weapon can't be used for that long.
@@ -811,14 +801,6 @@ local function new(def)
 			forward = Vector3(-forward.x, forward.y, forward.z)
 			up = Vector3(-up.x, up.y, up.z)
 			position = Vector3(-position.x, position.y, position.z)
-		end
-
-		-- The view shake's turn turns the camera, so the model is turned with it about the camera, to stay where it is on the screen
-		local shake_turn = view_shake_turn()
-
-		if shake_turn then
-			right, forward, up = Quaternion.rotate(shake_turn, right), Quaternion.rotate(shake_turn, forward), Quaternion.rotate(shake_turn, up)
-			position = Quaternion.rotate(shake_turn, position)
 		end
 
 		Unit.set_local_pose(skin.unit, 0, Matrix4x4(right.x, right.y, right.z, forward.x, forward.y, forward.z, up.x, up.y, up.z, position.x, position.y, position.z))
