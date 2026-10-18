@@ -1,10 +1,10 @@
 events = {
-	ut_minigun_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.975 duration_max = 0.975 positioning = "2D" }
-	ut_minigun_alt_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.100 duration_max = 1.100 positioning = "2D" }
-	ut_minigun_wind = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.716 duration_max = 0.716 positioning = "2D" }
+	ut_minigun_fire = { attenuation_max = 0 duration_type = "Infinite" duration_min = 0.975 duration_max = 0.975 positioning = "2D" }
+	ut_minigun_alt_fire = { attenuation_max = 0 duration_type = "Infinite" duration_min = 1.100 duration_max = 1.100 positioning = "2D" }
+	ut_minigun_wind = { attenuation_max = 0 duration_type = "Infinite" duration_min = 0.716 duration_max = 0.716 positioning = "2D" }
 	ut_minigun_wind_down = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.574 duration_max = 1.574 positioning = "2D" }
 	ut_minigun_select = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.768 duration_max = 0.768 positioning = "2D" }
-	ut_minigun_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 0.975 duration_max = 0.975 positioning = "3D" }
-	ut_minigun_alt_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 1.100 duration_max = 1.100 positioning = "3D" }
+	ut_minigun_fire_3d = { attenuation_max = 40 duration_type = "Infinite" duration_min = 0.975 duration_max = 0.975 positioning = "3D" }
+	ut_minigun_alt_fire_3d = { attenuation_max = 40 duration_type = "Infinite" duration_min = 1.100 duration_max = 1.100 positioning = "3D" }
 	ut_minigun_shell_3d = { attenuation_max = 12 duration_type = "OneShot" duration_min = 1.164 duration_max = 1.164 positioning = "3D" }
 }

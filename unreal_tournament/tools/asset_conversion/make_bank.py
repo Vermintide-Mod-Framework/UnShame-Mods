@@ -186,6 +186,28 @@ SOUND_2D = bytes.fromhex('fc326800010001000096eb4b17401a04000000000037bcb7e20000
 SOUND_3D = bytes.fromhex('15a63e0001000100005626e50be44707000000000037bcb7e200000000000200460000e0c0a07e632b0003010000010000000000000000')
 ATTENUATION = bytes.fromhex('a07e632b00000000ffffffff010207000000000000000000090000000000004000000000040000000000c0406364ffbe0400000000006041de7952bf040000000000b8419d9074bf040000000000e041a4707dbf040000000000f041000080bf040000000000')
 
+# The sounds that loop until they are stopped (their event's playing id, WwiseWorld.stop_event): what UT plays as an AmbientSound
+LOOPS = {
+    # (MinigunFire.PlayAmbientSound: FiringSound while it fires, WindingSound while the barrels wind up and down)
+    'ut_minigun_fire', 'ut_minigun_alt_fire', 'ut_minigun_wind', 'ut_minigun_fire_3d', 'ut_minigun_alt_fire_3d',
+}
+
+# A sound object's properties start at this offset: their count, their ids, then a value of 4 bytes for each, in the order of the ids.
+# The 2D sound has the volume (0x00); the 3D one the volume and its attenuation (0x46). In this version of Wwise (2018.1) 0x3A is Loop,
+# the number of times the sound plays, where 0 is for ever.
+PROPS_OFFSET = 30
+PROP_LOOP = 0x3A
+
+def with_loop(body):
+    count = body[PROPS_OFFSET]
+    ids = list(body[PROPS_OFFSET + 1:PROPS_OFFSET + 1 + count])
+    values_at = PROPS_OFFSET + 1 + count
+    values = [body[values_at + 4 * i:values_at + 4 * i + 4] for i in range(count)]
+    rest = body[values_at + 4 * count:]
+    props = sorted(list(zip(ids, values)) + [(PROP_LOOP, struct.pack('<I', 0))])
+    return (body[:PROPS_OFFSET] + bytes([len(props)]) + bytes(prop_id for prop_id, _ in props) + b''.join(value for _, value in props)
+            + rest)
+
 def attenuation_object(attenuation_id, distance):
     # The curve of the attenuation is made for 30 meters (the distances of its points, at these offsets of the object): a sound of another
     # reach has the curve made longer or shorter, so that it can be heard as far as the reach of its definition says (the combo, 60, was heard
@@ -269,6 +291,8 @@ def main():
             body[37:41] = struct.pack('<I', attenuation_id)
         else:
             body[32:36] = struct.pack('<f', volume)
+        if event in LOOPS:
+            body = with_loop(bytes(body))
         objects.append((2, bytes(body)))
         # the action that plays the sound (Play = 0x0403), and the event
         objects.append((3, struct.pack('<I', action_id) + b'\x03\x04' + struct.pack('<I', sound_id) + b'\x00\x00\x00\x04' + struct.pack('<I', bank_id)))
@@ -295,8 +319,10 @@ def main():
     open('%s/%s.wwise_bank' % (OUT, weapon), 'wb').write(struct.pack('<I', 1) + b'win32'.ljust(32, b'\0') + struct.pack('<Q', len(bank)) + bank)
     lines = ['events = {']
     for event, is_3d, distance, seconds in metadata:
-        lines.append('\t%s = { attenuation_max = %d duration_type = "OneShot" duration_min = %.3f duration_max = %.3f positioning = "%s" }'
-                     % (event, distance, seconds, seconds, '3D' if is_3d else '2D'))
+        # (a loop plays until it is stopped)
+        kind = 'Infinite' if event in LOOPS else 'OneShot'
+        lines.append('\t%s = { attenuation_max = %d duration_type = "%s" duration_min = %.3f duration_max = %.3f positioning = "%s" }'
+                     % (event, distance, kind, seconds, seconds, '3D' if is_3d else '2D'))
     lines.append('}')
     open('%s/%s.wwise_metadata' % (OUT, weapon), 'w', newline='\n').write('\n'.join(lines) + '\n')
     # The dependency: the resources of the weapon's bank, for each platform

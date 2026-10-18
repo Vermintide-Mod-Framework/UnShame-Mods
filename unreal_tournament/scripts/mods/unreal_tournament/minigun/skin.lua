@@ -29,13 +29,15 @@ local CONFIG = {
 	-- The smoke at the muzzle in the player's own view (MinigunMuzzleSmoke): a round sets it to 30 puffs a second, and the rate falls
 	-- towards none by its own amount a second (Lerp(dt) in MuzzleSmoke.Tick) and stops below 1. A puff lasts 0.6 to 1.2 s, starts 15 to 20
 	-- units across and grows by 4 a second, is a grey of 70 to 113 out of 255, blended by the texture's alpha (STY_Alpha), and fades out
-	-- from a fifth of its life. It stays where it was made: its speed is 0, and how xEmitter turns its mass (-0.15 to -0.25) into a rise is
-	-- not in UT's scripts. Rising by that much of the zone's gravity sent it up in a column, where UT's stays by the muzzle.
+	-- from a fifth of its life, so it thins out as it goes. It rises: its mass is -0.15 to -0.25 of the zone's gravity, and here it rises at
+	-- the speed it has on average, at half its life.
 	smoke_rate = 30, -- puffs a second
 	smoke_life = { 0.6, 1.2 },
 	smoke_size = { 15, 20 }, -- UT units across
 	smoke_growth = 4, -- UT units across, a second
 	smoke_grey = { 70 / 255, 113 / 255 },
+	smoke_mass = { 0.15, 0.25 },
+	smoke_gravity = 950, -- UT units a second squared
 	smoke_attenuation = 0.2,
 	-- SmokeTex is a sheet of puffs (pclSmoke's mNumTileColumns and mNumTileRows, 4 by 4), and each puff is one of them (mRandTextures)
 	smoke_tiles = 16,
@@ -75,12 +77,10 @@ local CONFIG = {
 	shell_scale = 0.35,
 	shell_gravity = 950, -- UT units a second squared (PhysicsVolume's)
 	shell_spin = 12, -- radians a second, at most, each way
-	-- The winding sound plays while the barrels turn at less than full speed. The fire sound loops, so it is started again when its
-	-- length is over, and stopped when the shots stop.
-	fire_loop_seconds = 0.98,
-	alt_loop_seconds = 1.1,
-	wind_loop_seconds = 0.72,
-	stop_after = 0.18, -- seconds without a round after which the fire sound is stopped
+	-- The fire and the winding are UT's AmbientSounds (MinigunFire.PlayAmbientSound), which loop: the bank's sounds loop, and each is
+	-- started once and stopped. The winding plays while the barrels turn and no round leaves (they wind up and down), and the fire while
+	-- rounds leave: it is stopped once there has been none for this long.
+	stop_after = 0.18, -- seconds
 	-- Minigun.GearRatio and GearOffset: the gear turns this many times as far as the barrels, and the other way
 	gear_ratio = -2.37,
 	-- The barrels and the gear turn about axes along the mesh's own right (the mesh lies sideways, and the pivot's yaw turns it to the
@@ -281,6 +281,7 @@ local function update_smoke(api, world_unit, dt)
 	while smoke.owed >= 1 and muzzle do
 		local life = random_between(CONFIG.smoke_life)
 		local grey = random_between(CONFIG.smoke_grey)
+		local rise = random_between(CONFIG.smoke_mass) * CONFIG.smoke_gravity * life / 2
 
 		smoke.owed = smoke.owed - 1
 
@@ -293,6 +294,7 @@ local function update_smoke(api, world_unit, dt)
 			material = "units/ut/fx/fx_weapon_muzzle_smoke_" .. math.random(0, CONFIG.smoke_tiles - 1),
 			position = muzzle,
 			size = random_between(CONFIG.smoke_size) * world_unit,
+			velocity = Vector3(0, 0, rise * world_unit),
 		})
 	end
 
@@ -306,7 +308,6 @@ end
 
 -- A tracer: a streak that flies from the muzzle to where the round hit
 local last_tracer_time = {}
-local last_remote_sound = {}
 -- How the barrels of the mesh in each character's hand turn: { angle in degrees, turns a second, time of the last round }
 local rolls = {}
 
@@ -407,13 +408,11 @@ local function shell(ejector, right, forward, up, world_unit, rotation)
 	})
 end
 
--- The sound of the fire, the winding and the end of it, which loop or are started again
+-- The player's own fire and winding, which loop until they are stopped
 local sound = {
 	fire_id = nil,
 	fire_mode = nil,
-	fire_started = -math.huge,
 	wind_id = nil,
-	wind_started = -math.huge,
 	last_round = -math.huge,
 }
 
@@ -434,7 +433,6 @@ local function stop_sounds(api)
 	sound.fire_id = nil
 	sound.fire_mode = nil
 	sound.wind_id = nil
-	sound.wind_started = -math.huge
 end
 
 local function update_sounds(api, dt)
@@ -445,28 +443,58 @@ local function update_sounds(api, dt)
 		stop_fire_sound(api)
 	end
 
-	-- The winding plays while the barrels turn and no round has left yet (the wind up), and when they slow down
-	if minigun.spin > 0 and not firing and now - sound.wind_started >= CONFIG.wind_loop_seconds then
-		sound.wind_started = now
+	-- The winding plays while the barrels turn and no round leaves: as they wind up, and as they slow down
+	local winding = minigun.spin > 0 and not firing
+
+	if winding and not sound.wind_id then
 		sound.wind_id = api.play_sound("ut_minigun_wind")
+	elseif not winding and sound.wind_id then
+		api.stop_sound(sound.wind_id)
+
+		sound.wind_id = nil
 	end
 end
 
 local function round_sound(api, mode)
-	local now = Managers.time:time("game")
+	sound.last_round = Managers.time:time("game")
 
-	sound.last_round = now
+	if sound.fire_mode ~= mode then
+		stop_fire_sound(api)
 
-	local seconds = mode == "alt" and CONFIG.alt_loop_seconds or CONFIG.fire_loop_seconds
-
-	if sound.fire_mode ~= mode or now - sound.fire_started >= seconds then
-		if sound.fire_mode ~= mode then
-			stop_fire_sound(api)
-		end
-
-		sound.fire_started = now
 		sound.fire_mode = mode
 		sound.fire_id = api.play_sound(mode == "alt" and "ut_minigun_alt_fire" or "ut_minigun_fire")
+	end
+end
+
+-- The others' fire, on their characters: { handle (utils.play_on_unit), mode, time of the last round } for each
+local remote_fire = {}
+
+local function remote_round_sound(owner_unit, mode)
+	local fire = remote_fire[owner_unit]
+
+	if not fire or fire.mode ~= mode then
+		utils.stop_sound(fire and fire.handle)
+
+		fire = {
+			handle = utils.play_on_unit(mode == "alt" and "ut_minigun_alt_fire_3d" or "ut_minigun_fire_3d", owner_unit),
+			mode = mode,
+		}
+		remote_fire[owner_unit] = fire
+	end
+
+	fire.last = Managers.time:time("game")
+end
+
+-- Stops the others' fire once their rounds stop, or they are gone
+local function update_remote_sounds(now)
+	for owner_unit, fire in pairs(remote_fire) do
+		if not Unit.alive(owner_unit) or now - fire.last >= CONFIG.stop_after then
+			if Managers.world:has_world("level_world") then
+				utils.stop_sound(fire.handle)
+			end
+
+			remote_fire[owner_unit] = nil
+		end
 	end
 end
 
@@ -576,16 +604,15 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 		return api.third_person.point_position(owner_unit, ejector[1], ejector[2], ejector[3])
 	end, Quaternion.right(rotation), Quaternion.forward(rotation), Quaternion.up(rotation), UNIT, rotation)
 
+	-- The others hear the gun from where its holder is
 	if not utils.is_local_player_unit(owner_unit) then
-		-- The others hear the gun from where it is, once for each time its sound would start again
-		local now = Managers.time:time("game")
-		local last = last_remote_sound[owner_unit] or -math.huge
+		remote_round_sound(owner_unit, mode)
+	end
+end
 
-		if now - last >= CONFIG.fire_loop_seconds then
-			last_remote_sound[owner_unit] = now
-
-			api.play_sound_at(mode == "alt" and "ut_minigun_alt_fire_3d" or "ut_minigun_fire_3d", muzzle)
-		end
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	if next(remote_fire) and Managers.time:has_timer("game") then
+		update_remote_sounds(Managers.time:time("game"))
 	end
 end
 
@@ -712,12 +739,14 @@ local function new_skin(variant)
 		end,
 		on_level_exit = function ()
 			table.clear(last_tracer_time)
-			table.clear(last_remote_sound)
+			table.clear(remote_fire)
 			table.clear(rolls)
 			table.clear(light_rounds)
 			smoke.rate = 0
 			smoke.owed = 0
 			sound.fire_id = nil
+			sound.fire_mode = nil
+			sound.wind_id = nil
 		end,
 	})
 
