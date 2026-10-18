@@ -148,8 +148,9 @@ local function sprite_flash(follow, scale)
 end
 
 -- Shows a flash at the muzzle, either of the mesh in the character's hand or of the model in the player's own view. It is UT's mesh,
--- pointing the way the camera looks and turned by a random angle about that direction.
-local function muzzle_flash(follow, scale)
+-- turned by a random angle about the way it points. In the player's view it points the way the camera looks. In a character's hand
+-- rotation returns the mesh's rotation, whose forward is along the barrel: UT attaches the flash to the barrel's bone (tip).
+local function muzzle_flash(follow, scale, rotation)
 	local _, camera_rotation = utils.camera_pose()
 
 	if not camera_rotation then
@@ -170,7 +171,7 @@ local function muzzle_flash(follow, scale)
 		},
 		follow = follow,
 		life = CONFIG.muzzle_life,
-		rotation = camera_rotation,
+		rotation = rotation or camera_rotation,
 		scale = function (fraction)
 			return (CONFIG.flash_mesh_start + (CONFIG.flash_mesh_end - CONFIG.flash_mesh_start) * fraction) * factor
 		end,
@@ -194,7 +195,9 @@ local function remote_shot(owner_unit)
 
 	muzzle_flash(function ()
 		return skin_api.third_person.muzzle_position(owner_unit)
-	end, skin_api.third_person.meters_per_unit)
+	end, skin_api.third_person.meters_per_unit, function ()
+		return skin_api.third_person.muzzle_rotation(owner_unit) or Quaternion.identity()
+	end)
 
 	if muzzle then
 		skin_api.play_sound_at("ut_bio_fire_3d", muzzle)
@@ -434,7 +437,9 @@ mod.crossbow_start_callbacks.bio_skin = function (action, new_action)
 		end
 
 		return skin_api.state() == skin and skin_api.muzzle_position() or nil
-	end, in_third_person and third_person.meters_per_unit or skin.unit_scale)
+	end, in_third_person and third_person.meters_per_unit or skin.unit_scale, in_third_person and function ()
+		return third_person.muzzle_rotation(owner_unit) or Quaternion.identity()
+	end or nil)
 end
 
 -- Charging the big glob draws the plunger back, over the time a full load takes (BioChargedFire.PlayStartHold plays AltFire at that
