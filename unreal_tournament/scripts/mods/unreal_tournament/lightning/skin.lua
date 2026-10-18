@@ -536,7 +536,7 @@ local function new_skin(variant)
 		-- (to the right, so that the back of the gun, which the first person mesh doesn't have, stays off the screen as it turns)
 		inspect_pose_right = 10,
 		inspect_pose_forward = 4,
-		inspect_pose_up = -5,
+		inspect_pose_up = -3,
 		inspect_pose_roll = 10,
 		inspect_pose_pitch = 4,
 		inspect_pose_yaw = 55,
