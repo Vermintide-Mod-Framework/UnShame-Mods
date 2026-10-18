@@ -132,18 +132,11 @@ function utils.register_network_lookup(lookup_name, key)
 	lookup[key] = index
 end
 
--- A copy of an existing damage profile, changed by modify(profile)
-function utils.register_damage_profile(name, source_name, modify)
-	local profile = table.clone(DamageProfileTemplates[source_name])
-
+-- Adds a damage profile, and its _no_damage variant. The game makes _no_damage variants of its profiles in damage_profile_templates.lua.
+-- This makes the same, because explosions fall back to them when the target is immune.
+local function add_profile(name, profile)
 	profile.name = name
 
-	if modify then
-		modify(profile)
-	end
-
-	-- The game makes _no_damage variants of its profiles in damage_profile_templates.lua. This makes the same, because explosions fall
-	-- back to them when the target is immune.
 	local no_damage_name = name .. "_no_damage"
 	local no_damage_profile = table.clone(profile)
 
@@ -166,6 +159,159 @@ function utils.register_damage_profile(name, source_name, modify)
 
 	utils.register_network_lookup("damage_profiles", name)
 	utils.register_network_lookup("damage_profiles", no_damage_name)
+end
+
+-- A copy of an existing damage profile, changed by modify(profile). What modify leaves alone is the game's profile's. The weapons that
+-- are finished use utils.add_damage_profile instead, which leaves nothing to a profile of the game.
+function utils.register_damage_profile(name, source_name, modify)
+	local profile = table.clone(DamageProfileTemplates[source_name])
+
+	if modify then
+		modify(profile)
+	end
+
+	add_profile(name, profile)
+end
+
+-- Everything a damage profile from utils.add_damage_profile is made of. Each must be given: false where a flag is off or a boost curve
+-- is none. The game's defaults, where it has one, are in brackets.
+--   charge_value: what the game takes the hit for, for talents, traits and buffs ("instant_projectile", "projectile", "aoe",
+--       "heavy_attack", ...).
+--   shield_break: whether it breaks an enemy's shield. no_stagger_damage_reduction_ranged: whether a staggered enemy takes the game's
+--       ranged damage bonus in full. is_explosion: whether its stagger is taken as an explosion's.
+--   attack_template: the game's attack template, which picks the enemies' hit reactions and the sounds. damage_type: the type of the
+--       damage, which picks the hit effects and how bodies die.
+--   attack_power, impact_power: the power factors of the damage and the stagger (utils.attack_power_for and impact_power_for).
+--   armor_attack, armor_impact: the multipliers of the damage and the stagger for each armor type (unarmored, armored, monsters, players,
+--       berserkers, super armor), and critical_armor_attack and critical_armor_impact the same for a critical hit.
+--   cleave_attack, cleave_impact: how many enemies it goes through (0.01 is the first one only).
+--   boost_curve_type: the curve of the bonus of head shots and critical hits ("linesman_curve", "smiter_curve", ...; false: none, as the
+--       game's explosions have). boost_curve_coefficient, boost_curve_coefficient_headshot: the curve's multipliers for critical hits and
+--       head shots [1].
+--   headshot_boost, headshot_boost_boss, headshot_boost_armor, headshot_boost_heavy_armor: the head bonus on the curve against others,
+--       bosses, armour that the hit doesn't get through, and super armour that it doesn't get through [0.5, 0.25, 0.5, 0.25].
+--       no_headshot_boost: no head bonus at all.
+--   crit_boost: the bonus of a critical hit on the curve [0.5]. no_crit_boost: none.
+--   stagger_duration_modifier, stagger_distance_modifier: how long and how far it staggers [1, 1].
+-- And optionally, for a stagger that falls off with distance as the game's shotguns' does: impact_power_near, impact_power_far, and
+-- impact_dropoff = { start, end } in meters.
+local DAMAGE_PROFILE_FIELDS = {
+	"charge_value",
+	"shield_break",
+	"no_stagger_damage_reduction_ranged",
+	"is_explosion",
+	"attack_template",
+	"damage_type",
+	"attack_power",
+	"impact_power",
+	"armor_attack",
+	"armor_impact",
+	"critical_armor_attack",
+	"critical_armor_impact",
+	"cleave_attack",
+	"cleave_impact",
+	"boost_curve_type",
+	"boost_curve_coefficient",
+	"boost_curve_coefficient_headshot",
+	"headshot_boost",
+	"headshot_boost_boss",
+	"headshot_boost_armor",
+	"headshot_boost_heavy_armor",
+	"no_headshot_boost",
+	"crit_boost",
+	"no_crit_boost",
+	"stagger_duration_modifier",
+	"stagger_distance_modifier",
+}
+
+local OPTIONAL_DAMAGE_PROFILE_FIELDS = {
+	impact_power_near = true,
+	impact_power_far = true,
+	impact_dropoff = true,
+}
+
+-- Adds a damage profile made only of what spec gives (see DAMAGE_PROFILE_FIELDS), and nothing of the game's profiles. A field that is
+-- missing or unknown is an error when the mod loads.
+function utils.add_damage_profile(name, spec)
+	local known = {}
+
+	for _, field in ipairs(DAMAGE_PROFILE_FIELDS) do
+		fassert(spec[field] ~= nil, "[unreal_tournament] damage profile %s has no %s", name, field)
+
+		known[field] = true
+	end
+
+	for field in pairs(spec) do
+		fassert(known[field] or OPTIONAL_DAMAGE_PROFILE_FIELDS[field], "[unreal_tournament] damage profile %s has an unknown field %s", name, field)
+	end
+
+	local target = {
+		attack_template = spec.attack_template,
+		damage_type = spec.damage_type,
+		boost_curve_type = spec.boost_curve_type or nil,
+		boost_curve_coefficient = spec.boost_curve_coefficient,
+		boost_curve_coefficient_headshot = spec.boost_curve_coefficient_headshot,
+		headshot_boost = spec.headshot_boost,
+		headshot_boost_boss = spec.headshot_boost_boss,
+		headshot_boost_armor = spec.headshot_boost_armor,
+		headshot_boost_heavy_armor = spec.headshot_boost_heavy_armor,
+		power_distribution = {
+			attack = spec.attack_power,
+			impact = spec.impact_power,
+		},
+	}
+
+	if spec.impact_dropoff then
+		target.power_distribution_near = {
+			attack = spec.attack_power,
+			impact = spec.impact_power_near,
+		}
+		target.power_distribution_far = {
+			attack = spec.attack_power,
+			impact = spec.impact_power_far,
+		}
+		target.range_modifier_settings = {
+			dropoff_start = spec.impact_dropoff[1],
+			dropoff_end = spec.impact_dropoff[2],
+		}
+	end
+
+	add_profile(name, {
+		charge_value = spec.charge_value,
+		shield_break = spec.shield_break,
+		no_stagger_damage_reduction_ranged = spec.no_stagger_damage_reduction_ranged,
+		is_explosion = spec.is_explosion,
+		no_headshot_boost = spec.no_headshot_boost,
+		crit_boost = spec.crit_boost,
+		no_crit_boost = spec.no_crit_boost,
+		stagger_duration_modifier = spec.stagger_duration_modifier,
+		stagger_distance_modifier = spec.stagger_distance_modifier,
+		armor_modifier = {
+			attack = table.clone(spec.armor_attack),
+			impact = table.clone(spec.armor_impact),
+		},
+		critical_strike = {
+			attack_armor_power_modifer = table.clone(spec.critical_armor_attack),
+			impact_armor_power_modifer = table.clone(spec.critical_armor_impact),
+		},
+		cleave_distribution = {
+			attack = spec.cleave_attack,
+			impact = spec.cleave_impact,
+		},
+		default_target = target,
+		targets = {},
+	})
+end
+
+-- Returns a copy of a damage profile's spec with some of its fields changed, for profiles that differ only in those
+function utils.damage_profile_spec(base, changes)
+	local spec = table.clone(base)
+
+	for field, value in pairs(changes) do
+		spec[field] = value
+	end
+
+	return spec
 end
 
 function utils.register_explosion_template(name, template)

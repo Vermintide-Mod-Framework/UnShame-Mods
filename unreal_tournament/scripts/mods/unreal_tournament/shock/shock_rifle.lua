@@ -146,7 +146,6 @@ local BALL_GRAVITY_SETTINGS = "drake_pistols"
 
 local utils = mod.utils
 local effects = mod.effects
-local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template
 
 -- Spread: the beam is hitscan and should hit exactly where the crosshair is.
@@ -165,59 +164,81 @@ SpreadTemplates.ut_shock_beam = table.clone(SpreadTemplates.handgun)
 
 zero_numbers(SpreadTemplates.ut_shock_beam)
 
--- Damage profiles
--- The beam and the explosions share the armor modifiers. They only differ in their power factor (see utils.lua).
+-- Damage profiles (see utils.add_damage_profile)
+-- The beam, the ball and the explosions share the armor modifiers, for critical hits too. They differ in their power factor (see
+-- utils.lua).
 
-local make_flat = utils.make_flat
+-- The beam stops at the first enemy it hits, as UT's trace does. The cleave is how many enemies a shot can hurt.
+local BEAM = {
+	charge_value = "projectile",
+	shield_break = false,
+	no_stagger_damage_reduction_ranged = true,
+	is_explosion = false,
+	-- (the beam staff's hit reactions, and the sniper shot's hit effects)
+	attack_template = "wizard_staff_beam_sniper",
+	damage_type = "shot_sniper",
+	attack_power = CONFIG.beam_attack_power,
+	impact_power = CONFIG.beam_impact_power,
+	armor_attack = CONFIG.armor_attack,
+	armor_impact = CONFIG.armor_impact,
+	critical_armor_attack = CONFIG.armor_attack,
+	critical_armor_impact = CONFIG.armor_impact,
+	cleave_attack = 0.01,
+	cleave_impact = 0.01,
+	boost_curve_type = "ninja_curve",
+	boost_curve_coefficient = 0.75,
+	boost_curve_coefficient_headshot = 1,
+	headshot_boost = 0.5,
+	headshot_boost_boss = 0.25,
+	headshot_boost_armor = 0.5,
+	headshot_boost_heavy_armor = 0.25,
+	no_headshot_boost = false,
+	crit_boost = 0.5,
+	no_crit_boost = false,
+	stagger_duration_modifier = 1,
+	stagger_distance_modifier = 1,
+}
 
-local function set_armor_modifiers(profile)
-	utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact)
-end
+utils.add_damage_profile("ut_shock_beam", BEAM)
+utils.add_damage_profile("ut_shock_beam_instagib", utils.damage_profile_spec(BEAM, {
+	attack_power = CONFIG.beam_attack_power * CONFIG.instagib_damage / utils.UT_REFERENCE_DAMAGE,
+	impact_power = CONFIG.beam_impact_power * CONFIG.instagib_impact_multiplier,
+}))
 
-local function register_explosion_damage_profiles(name, damage_multiplier)
-	local function modify(profile)
-		make_flat(profile, CONFIG.beam_attack_power * damage_multiplier, CONFIG.beam_impact_power * damage_multiplier)
-		set_armor_modifiers(profile)
-	end
-
-	register_damage_profile(name, "fireball_charged_explosion", modify)
-	register_damage_profile(name .. "_glance", "fireball_charged_explosion_glance", modify)
-end
-
-register_damage_profile("ut_shock_beam", "beam_shot", function (profile)
-	make_flat(profile, CONFIG.beam_attack_power, CONFIG.beam_impact_power, "shot_sniper")
-
-	-- The beam stops at the first enemy it hits, as UT's trace does. The cleave is how many enemies a shot can hurt.
-	profile.cleave_distribution = {
-		attack = 0.01,
-		impact = 0.01,
-	}
-	set_armor_modifiers(profile)
-end)
-register_damage_profile("ut_shock_beam_instagib", "beam_shot", function (profile)
-	local damage_multiplier = CONFIG.instagib_damage / utils.UT_REFERENCE_DAMAGE
-
-	make_flat(profile, CONFIG.beam_attack_power * damage_multiplier, CONFIG.beam_impact_power * CONFIG.instagib_impact_multiplier, "shot_sniper")
-
-	profile.cleave_distribution = {
-		attack = 0.01,
-		impact = 0.01,
-	}
-	set_armor_modifiers(profile)
-end)
 -- The ball's direct hit does no damage of its own. As in UT, the damage is the explosion, which is at full strength for whatever
--- the ball hits. The direct hit only staggers, and does 1 damage so that it is not shown as blocked by armor.
-register_damage_profile("ut_shock_ball", "staff_fireball", function (profile)
-	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, CONFIG.beam_impact_power, "grenade")
+-- the ball hits. The direct hit only staggers, and does 1 damage so that it is not shown as blocked by armor. The cleave is kept tiny
+-- so the ball detonates on the first enemy it hits.
+utils.add_damage_profile("ut_shock_ball", utils.damage_profile_spec(BEAM, {
+	-- (the fireball's hit reactions, and the frag grenade's hit effects)
+	attack_template = "fireball",
+	damage_type = "grenade",
+	attack_power = utils.STAGGER_HIT_ATTACK_POWER,
+	boost_curve_type = "linesman_curve",
+}))
 
-	-- The cleave is kept tiny so the ball detonates on the first enemy it hits.
-	profile.cleave_distribution = {
-		attack = 0.01,
-		impact = 0.01,
-	}
-end)
-register_explosion_damage_profiles("ut_shock_ball_explosion", 1)
-register_explosion_damage_profiles("ut_shock_combo_explosion", CONFIG.combo_damage_multiplier)
+-- The explosions have no head shots or critical boost: the game's explosions have no boost curve. The cleave doesn't apply to them.
+-- A glance is the explosion's edge, with the game's glancing hit reactions and effects.
+local function add_explosion_profiles(name, damage_multiplier)
+	local explosion = utils.damage_profile_spec(BEAM, {
+		charge_value = "aoe",
+		attack_template = "drakegun",
+		damage_type = "grenade",
+		attack_power = CONFIG.beam_attack_power * damage_multiplier,
+		impact_power = CONFIG.beam_impact_power * damage_multiplier,
+		cleave_attack = 1,
+		cleave_impact = 1,
+		boost_curve_type = false,
+	})
+
+	utils.add_damage_profile(name, explosion)
+	utils.add_damage_profile(name .. "_glance", utils.damage_profile_spec(explosion, {
+		attack_template = "drakegun_glance",
+		damage_type = "grenade_glance",
+	}))
+end
+
+add_explosion_profiles("ut_shock_ball_explosion", 1)
+add_explosion_profiles("ut_shock_combo_explosion", CONFIG.combo_damage_multiplier)
 
 -- Explosion templates
 -- A plain `radius` is used instead of radius_min and radius_max, because those would make the explosion depend on the

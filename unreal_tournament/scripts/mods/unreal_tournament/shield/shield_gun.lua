@@ -15,8 +15,6 @@ local mod = get_mod("unreal_tournament")
 -- The skin (skin.lua) draws all of it, and this file only sets what it does to the game.
 
 local utils = mod.utils
-local register_damage_profile = utils.register_damage_profile
-local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 local first_beam_hit = utils.first_beam_hit
@@ -285,24 +283,40 @@ end
 -- Makes the damage profile of a punch of a step of the charge, of a damage type, a share of UT's damage and the game's cleave, and
 -- returns the punch as a melee action, for its hits (see melee_hit)
 local function make_punch_action(name, damage, damage_type, damage_share, cleave, charge_value)
-	register_damage_profile(name, "shot_sniper", function (profile)
-		make_flat(profile, attack_power_for(damage * damage_share), impact_power_for(damage) * CONFIG.stagger_multiplier, damage_type)
-
-		-- It is a melee blow to the game (what talents, traits and buffs take it for), not the sniper shot the profile is made from
-		profile.charge_value = charge_value
-
-		-- How many enemies it gets through (see punch)
-		profile.cleave_distribution = table.clone(PowerLevelTemplates[cleave])
-
-		-- (a critical hit too, which would have the sniper shot's own armor multipliers)
-		utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact, true)
-
+	-- (see utils.add_damage_profile)
+	utils.add_damage_profile(name, {
+		-- It is a melee blow to the game (what talents, traits and buffs take it for)
+		charge_value = charge_value,
+		-- Whether it breaks a shield is the charge's (see shield_break_share)
+		shield_break = false,
+		no_stagger_damage_reduction_ranged = true,
+		is_explosion = false,
+		-- (the handgun's sniper shot's hit reactions, and the hit effects of the blow's damage type)
+		attack_template = "shot_sniper",
+		damage_type = damage_type,
+		attack_power = attack_power_for(damage * damage_share),
+		impact_power = impact_power_for(damage) * CONFIG.stagger_multiplier,
+		armor_attack = CONFIG.armor_attack,
+		armor_impact = CONFIG.armor_impact,
+		critical_armor_attack = CONFIG.armor_attack,
+		critical_armor_impact = CONFIG.armor_impact,
+		-- How many enemies it gets through (see punch): the game's cleave of that name
+		cleave_attack = PowerLevelTemplates[cleave].attack,
+		cleave_impact = PowerLevelTemplates[cleave].impact,
+		boost_curve_type = "smiter_curve",
+		boost_curve_coefficient = 1,
+		boost_curve_coefficient_headshot = 1,
 		-- A punch has no headshots, as in UT (and a hit on the head is moved to the body, see body_hit)
-		profile.no_headshot_boost = true
-
-		-- Whether it breaks a shield is the charge's (see shield_break_share), not the sniper shot's, which breaks every shield
-		profile.shield_break = nil
-	end)
+		headshot_boost = 0,
+		headshot_boost_boss = 0,
+		headshot_boost_armor = 0,
+		headshot_boost_heavy_armor = 0,
+		no_headshot_boost = true,
+		crit_boost = 0.5,
+		no_crit_boost = false,
+		stagger_duration_modifier = 1,
+		stagger_distance_modifier = 1,
+	})
 
 	-- A melee swing for its critical hits, with the sounds of a two-handed hammer's hits
 	return {

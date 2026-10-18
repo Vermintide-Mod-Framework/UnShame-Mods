@@ -16,9 +16,7 @@ local mod = get_mod("unreal_tournament")
 
 local utils = mod.utils
 local with_valid_positions = utils.with_valid_positions
-local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template
-local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
@@ -210,33 +208,59 @@ local SPREAD_TEMPLATE = "ut_bio"
 
 utils.zero_spread_template(SPREAD_TEMPLATE, "brace_of_pistols")
 
-local function set_armor_modifiers(profile)
-	utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact, true)
-end
+-- Damage profiles (see utils.add_damage_profile). The direct hit of a glob only staggers (UT has no damage from the hit itself, all of
+-- the damage is the explosion), and does 1 damage so that it is not shown as blocked by armor. It stops at the first enemy. The glob
+-- and the blast share the armor modifiers, for critical hits too.
+local GLOB = {
+	charge_value = "projectile",
+	shield_break = false,
+	no_stagger_damage_reduction_ranged = true,
+	is_explosion = false,
+	-- (the fireball's hit reactions, and the frag grenade's hit effects)
+	attack_template = "fireball",
+	damage_type = "grenade",
+	attack_power = utils.STAGGER_HIT_ATTACK_POWER,
+	impact_power = impact_power_for(CONFIG.level_damage * CONFIG.damage_scale),
+	armor_attack = CONFIG.armor_attack,
+	armor_impact = CONFIG.armor_impact,
+	critical_armor_attack = CONFIG.armor_attack,
+	critical_armor_impact = CONFIG.armor_impact,
+	cleave_attack = 0.01,
+	cleave_impact = 0.01,
+	boost_curve_type = "linesman_curve",
+	boost_curve_coefficient = 0.75,
+	boost_curve_coefficient_headshot = 1,
+	headshot_boost = 0.5,
+	headshot_boost_boss = 0.25,
+	headshot_boost_armor = 0.5,
+	headshot_boost_heavy_armor = 0.25,
+	no_headshot_boost = false,
+	crit_boost = 0.5,
+	no_crit_boost = false,
+	stagger_duration_modifier = 1,
+	stagger_distance_modifier = 1,
+}
 
--- Damage profiles. The direct hit of a glob only staggers (UT has no damage from the hit itself, all of the damage is the explosion), and
--- does 1 damage so that it is not shown as blocked by armor.
-register_damage_profile("ut_bio_glob", "staff_fireball", function (profile)
-	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, impact_power_for(CONFIG.level_damage * CONFIG.damage_scale), "grenade")
-	set_armor_modifiers(profile)
+utils.add_damage_profile("ut_bio_glob", GLOB)
 
-	profile.cleave_distribution = {
-		attack = 0.01,
-		impact = 0.01,
-	}
-end)
+-- The blast has no head shots or critical boost: the game's explosions have no boost curve. The cleave doesn't apply to it. A glance is
+-- the blast's edge, with the game's glancing hit reactions and effects.
+local BLAST = utils.damage_profile_spec(GLOB, {
+	charge_value = "aoe",
+	attack_template = "drakegun",
+	damage_type = "grenade",
+	attack_power = attack_power_for(REFERENCE_DAMAGE),
+	impact_power = impact_power_for(REFERENCE_DAMAGE),
+	cleave_attack = 1,
+	cleave_impact = 1,
+	boost_curve_type = false,
+})
 
-local function blast_profiles(name, damage)
-	local function modify(profile)
-		make_flat(profile, attack_power_for(damage), impact_power_for(damage))
-		set_armor_modifiers(profile)
-	end
-
-	register_damage_profile(name, "fireball_charged_explosion", modify)
-	register_damage_profile(name .. "_glance", "fireball_charged_explosion_glance", modify)
-end
-
-blast_profiles("ut_bio_blast", REFERENCE_DAMAGE)
+utils.add_damage_profile("ut_bio_blast", BLAST)
+utils.add_damage_profile("ut_bio_blast_glance", utils.damage_profile_spec(BLAST, {
+	attack_template = "drakegun_glance",
+	damage_type = "grenade_glance",
+}))
 
 -- Explosion templates. The scale of the explosion goes from 0 for a level 1 glob to 1 for a level 10 glob. The damage comes from the
 -- power level that the explosion is made with (see power_ratio). The one in the air is a template of its own for the skin, which draws

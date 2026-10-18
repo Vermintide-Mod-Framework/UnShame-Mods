@@ -7,10 +7,8 @@ local mod = get_mod("unreal_tournament")
 -- The recoil is the Blunderbuss's own. There is no reload.
 
 local utils = mod.utils
-local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template
 local register_network_lookup = utils.register_network_lookup
-local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
@@ -185,62 +183,99 @@ end
 
 register_network_lookup("sub_actions", SHELL_ACTION)
 
--- Damage profiles
+-- Damage profiles (see utils.add_damage_profile)
 -- A chunk stops at the first enemy it hits. The direct hit of the shell only staggers. Its damage is the explosion, which is at
--- full strength for whatever the shell hits, like in UT.
+-- full strength for whatever the shell hits, like in UT. A critical hit has the same armor multipliers as any other.
 
-register_damage_profile("ut_flak_chunk", "staff_fireball", function (profile)
-	make_flat(profile, attack_power_for(CONFIG.chunk_damage), impact_power_for(CONFIG.chunk_damage), "shot_shotgun")
+-- The chunk's knockback falls off with distance. The damage is the same at any distance, but the impact is not. This is how the game
+-- does the falloff of shotguns, with the shotgun's way of staggering.
+local CHUNK = {
+	charge_value = "projectile",
+	shield_break = false,
+	no_stagger_damage_reduction_ranged = true,
+	is_explosion = false,
+	-- (the shotgun's hit reactions and hit effects)
+	attack_template = "shot_shotgun",
+	damage_type = "shot_shotgun",
+	attack_power = attack_power_for(CONFIG.chunk_damage),
+	impact_power = impact_power_for(CONFIG.chunk_damage),
+	impact_power_near = CONFIG.chunk_knockback_near,
+	impact_power_far = CONFIG.chunk_knockback_far,
+	impact_dropoff = { CONFIG.chunk_knockback_falloff_start, CONFIG.chunk_knockback_falloff_end },
+	armor_attack = CONFIG.chunk_armor_attack,
+	armor_impact = CONFIG.chunk_armor_impact,
+	critical_armor_attack = CONFIG.chunk_armor_attack,
+	critical_armor_impact = CONFIG.chunk_armor_impact,
+	cleave_attack = 0.01,
+	cleave_impact = 0.01,
+	boost_curve_type = "linesman_curve",
+	boost_curve_coefficient = 0.75,
+	boost_curve_coefficient_headshot = 1,
+	headshot_boost = 0.5,
+	headshot_boost_boss = 0.25,
+	headshot_boost_armor = 0.5,
+	headshot_boost_heavy_armor = 0.25,
+	no_headshot_boost = false,
+	crit_boost = 0.5,
+	no_crit_boost = false,
+	stagger_duration_modifier = 1,
+	stagger_distance_modifier = CONFIG.chunk_stagger_distance_modifier,
+}
 
-	-- The damage against each armor type, including critical hits
-	utils.set_armor_modifiers(profile, CONFIG.chunk_armor_attack, CONFIG.chunk_armor_impact, true)
+utils.add_damage_profile("ut_flak_chunk", CHUNK)
 
-	-- The knockback falls off with distance. The damage is the same at any distance, but the impact is not. This is how the game
-	-- does the falloff of shotguns, with the shotgun's way of staggering.
-	local target = profile.default_target
-	local attack_power = attack_power_for(CONFIG.chunk_damage)
+-- The game's own multipliers for explosions are 0 against super armor (chaos warriors), so the explosion would do nothing to them. The
+-- shell's direct hit has the explosion's multipliers. It only staggers, and does 1 damage so that it is not shown as blocked by armor.
+local SHELL = {
+	charge_value = "projectile",
+	shield_break = false,
+	no_stagger_damage_reduction_ranged = true,
+	is_explosion = false,
+	-- (the fireball's hit reactions, and the frag grenade's hit effects)
+	attack_template = "fireball",
+	damage_type = "grenade",
+	attack_power = utils.STAGGER_HIT_ATTACK_POWER,
+	impact_power = impact_power_for(CONFIG.chunk_damage),
+	armor_attack = CONFIG.shell_armor_attack,
+	armor_impact = CONFIG.shell_armor_impact,
+	critical_armor_attack = CONFIG.shell_armor_attack,
+	critical_armor_impact = CONFIG.shell_armor_impact,
+	cleave_attack = 0.01,
+	cleave_impact = 0.01,
+	boost_curve_type = "linesman_curve",
+	boost_curve_coefficient = 0.75,
+	boost_curve_coefficient_headshot = 1,
+	headshot_boost = 0.5,
+	headshot_boost_boss = 0.25,
+	headshot_boost_armor = 0.5,
+	headshot_boost_heavy_armor = 0.25,
+	no_headshot_boost = false,
+	crit_boost = 0.5,
+	no_crit_boost = false,
+	stagger_duration_modifier = 1,
+	stagger_distance_modifier = 1,
+}
 
-	target.attack_template = "shot_shotgun"
-	target.stagger_distance_modifier = CONFIG.chunk_stagger_distance_modifier
-	target.power_distribution_near = {
-		attack = attack_power,
-		impact = CONFIG.chunk_knockback_near,
-	}
-	target.power_distribution_far = {
-		attack = attack_power,
-		impact = CONFIG.chunk_knockback_far,
-	}
-	target.range_modifier_settings = {
-		dropoff_end = CONFIG.chunk_knockback_falloff_end,
-		dropoff_start = CONFIG.chunk_knockback_falloff_start,
-	}
+utils.add_damage_profile("ut_flak_shell", SHELL)
 
-	profile.cleave_distribution = {
-		attack = 0.01,
-		impact = 0.01,
-	}
-end)
+-- The explosion has no head shots or critical boost: the game's explosions have no boost curve. The cleave doesn't apply to it. A glance
+-- is the explosion's edge, with the game's glancing hit reactions and effects.
+local SHELL_EXPLOSION = utils.damage_profile_spec(SHELL, {
+	charge_value = "aoe",
+	attack_template = "drakegun",
+	damage_type = "grenade",
+	attack_power = attack_power_for(CONFIG.shell_damage),
+	impact_power = impact_power_for(CONFIG.shell_damage),
+	cleave_attack = 1,
+	cleave_impact = 1,
+	boost_curve_type = false,
+})
 
-register_damage_profile("ut_flak_shell", "staff_fireball", function (profile)
-	-- (the direct hit only staggers, and does 1 damage so that it is not shown as blocked by armor)
-	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, impact_power_for(CONFIG.chunk_damage), "grenade")
-
-	profile.cleave_distribution = {
-		attack = 0.01,
-		impact = 0.01,
-	}
-end)
-
-local function modify_explosion_profile(profile)
-	make_flat(profile, attack_power_for(CONFIG.shell_damage), impact_power_for(CONFIG.shell_damage))
-
-	-- The game's own multipliers for this are 0 against super armor (chaos warriors), so the explosion would do nothing to them.
-	profile.armor_modifier.attack = table.clone(CONFIG.shell_armor_attack)
-	profile.armor_modifier.impact = table.clone(CONFIG.shell_armor_impact)
-end
-
-register_damage_profile("ut_flak_shell_explosion", "fireball_charged_explosion", modify_explosion_profile)
-register_damage_profile("ut_flak_shell_explosion_glance", "fireball_charged_explosion_glance", modify_explosion_profile)
+utils.add_damage_profile("ut_flak_shell_explosion", SHELL_EXPLOSION)
+utils.add_damage_profile("ut_flak_shell_explosion_glance", utils.damage_profile_spec(SHELL_EXPLOSION, {
+	attack_template = "drakegun_glance",
+	damage_type = "grenade_glance",
+}))
 
 -- The code below plays the effect of the explosion, and only if the game has the effect loaded.
 register_explosion_template("ut_flak_shell_explosion", {

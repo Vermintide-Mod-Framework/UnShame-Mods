@@ -7,8 +7,6 @@ local mod = get_mod("unreal_tournament")
 -- The two buttons do not fire at once. The skin (skin.lua) draws all of it. This file only sets what it does to the game.
 
 local utils = mod.utils
-local register_damage_profile = utils.register_damage_profile
-local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
@@ -95,26 +93,48 @@ local CONFIG = {
 	chain_margin = 0.05,
 }
 
--- Damage profiles
--- A round stops at the first enemy it hits, as UT's trace does. A round on the head has the game's usual bonus (shot_repeating's), as
--- this game's guns all do, where UT gives one only to its sniper weapons.
+-- Damage profiles (see utils.add_damage_profile)
+-- A round stops at the first enemy it hits, as UT's trace does. A round on the head has the game's usual bonus, the repeater's, as this
+-- game's guns all do, where UT gives one only to its sniper weapons. A critical hit has the same armor multipliers as any other.
+local BULLET = {
+	charge_value = "instant_projectile",
+	shield_break = true,
+	no_stagger_damage_reduction_ranged = true,
+	is_explosion = false,
+	-- (the repeater's hit reactions, and the shotgun's hit effects)
+	attack_template = "shot_repeating_handgun",
+	damage_type = "shot_shotgun",
+	attack_power = attack_power_for(CONFIG.primary_damage),
+	impact_power = impact_power_for(CONFIG.primary_damage),
+	armor_attack = CONFIG.armor_attack,
+	armor_impact = CONFIG.armor_impact,
+	critical_armor_attack = CONFIG.armor_attack,
+	critical_armor_impact = CONFIG.armor_impact,
+	cleave_attack = 0.01,
+	cleave_impact = 0.01,
+	boost_curve_type = "linesman_curve",
+	boost_curve_coefficient = 0.6,
+	boost_curve_coefficient_headshot = 1,
+	headshot_boost = 0.5,
+	headshot_boost_boss = 0.25,
+	headshot_boost_armor = 0.5,
+	headshot_boost_heavy_armor = 0.25,
+	no_headshot_boost = false,
+	crit_boost = 0.5,
+	no_crit_boost = false,
+	stagger_duration_modifier = 1,
+	stagger_distance_modifier = 1,
+}
 
-local function bullet_profile(profile, damage, armor_attack, armor_impact)
-	make_flat(profile, attack_power_for(damage), impact_power_for(damage), "shot_shotgun")
-
-	profile.cleave_distribution = {
-		attack = 0.01,
-		impact = 0.01,
-	}
-	utils.set_armor_modifiers(profile, armor_attack, armor_impact, true)
-end
-
-register_damage_profile("ut_minigun_bullet", "shot_repeating", function (profile)
-	bullet_profile(profile, CONFIG.primary_damage, CONFIG.armor_attack, CONFIG.armor_impact)
-end)
-register_damage_profile("ut_minigun_alt_bullet", "shot_repeating", function (profile)
-	bullet_profile(profile, CONFIG.alt_damage, CONFIG.alt_armor_attack, CONFIG.alt_armor_impact)
-end)
+utils.add_damage_profile("ut_minigun_bullet", BULLET)
+utils.add_damage_profile("ut_minigun_alt_bullet", utils.damage_profile_spec(BULLET, {
+	attack_power = attack_power_for(CONFIG.alt_damage),
+	impact_power = impact_power_for(CONFIG.alt_damage),
+	armor_attack = CONFIG.alt_armor_attack,
+	armor_impact = CONFIG.alt_armor_impact,
+	critical_armor_attack = CONFIG.alt_armor_attack,
+	critical_armor_impact = CONFIG.alt_armor_impact,
+}))
 
 -- The state of the local player's barrels and buttons, which the skin draws and plays
 mod.minigun = {

@@ -13,8 +13,6 @@ local mod = get_mod("unreal_tournament")
 -- the game.
 
 local utils = mod.utils
-local register_damage_profile = utils.register_damage_profile
-local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 local first_beam_hit = utils.first_beam_hit
@@ -108,34 +106,49 @@ end
 -- Spread: the bolt hits exactly where the crosshair is.
 utils.zero_spread_template("ut_lightning_bolt", "handgun")
 
--- Damage profiles
--- The bolt stops at the first enemy it hits, as UT's trace does. A profile with a cleave that is tiny hurts one enemy.
+-- Damage profiles (see utils.add_damage_profile)
+-- The bolt stops at the first enemy it hits, as UT's trace does: a cleave that is tiny hurts one enemy. A hit on the head does
+-- HeadShotDamageMult times the damage to every enemy, bosses too: a boost of 1 on a curve that ends at 1. A critical hit has the same
+-- armor multipliers as any other.
+local headshot_boost = math.clamp(CONFIG.headshot_multiplier - 1, 0, 1)
+local BOLT = {
+	charge_value = "instant_projectile",
+	shield_break = true,
+	no_stagger_damage_reduction_ranged = true,
+	is_explosion = false,
+	-- (the handgun's sniper shot's hit reactions and hit effects)
+	attack_template = "shot_sniper",
+	damage_type = "shot_sniper",
+	attack_power = attack_power_for(CONFIG.damage),
+	impact_power = impact_power_for(CONFIG.damage),
+	armor_attack = CONFIG.armor_attack,
+	armor_impact = CONFIG.armor_impact,
+	critical_armor_attack = CONFIG.armor_attack,
+	critical_armor_impact = CONFIG.armor_impact,
+	cleave_attack = 0.01,
+	cleave_impact = 0.01,
+	boost_curve_type = "smiter_curve",
+	boost_curve_coefficient = 1,
+	boost_curve_coefficient_headshot = 1,
+	headshot_boost = headshot_boost,
+	headshot_boost_boss = headshot_boost,
+	headshot_boost_armor = headshot_boost,
+	headshot_boost_heavy_armor = headshot_boost,
+	no_headshot_boost = false,
+	crit_boost = 0.5,
+	no_crit_boost = false,
+	stagger_duration_modifier = 1,
+	stagger_distance_modifier = 1,
+}
 
-local function set_armor_modifiers(profile)
-	utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact)
-end
-
-register_damage_profile("ut_lightning_bolt", "shot_sniper", function (profile)
-	make_flat(profile, attack_power_for(CONFIG.damage), impact_power_for(CONFIG.damage), "shot_sniper")
-
-	profile.cleave_distribution = {
-		attack = 0.01,
-		impact = 0.01,
-	}
-	set_armor_modifiers(profile)
-	utils.set_headshot_multiplier(profile, CONFIG.headshot_multiplier)
-end)
+utils.add_damage_profile("ut_lightning_bolt", BOLT)
 
 -- An arc does half of the bolt's damage. It never hits the head, as in UT, where only the first trace looks for a head shot.
-register_damage_profile("ut_lightning_arc", "shot_sniper", function (profile)
-	make_flat(profile, attack_power_for(CONFIG.damage * CONFIG.arc_damage_multiplier), impact_power_for(CONFIG.damage * CONFIG.arc_damage_multiplier), "shot_sniper")
-
-	profile.cleave_distribution = {
-		attack = 0.01,
-		impact = 0.01,
-	}
-	set_armor_modifiers(profile)
-end)
+utils.add_damage_profile("ut_lightning_arc", utils.damage_profile_spec(BOLT, {
+	attack_power = attack_power_for(CONFIG.damage * CONFIG.arc_damage_multiplier),
+	impact_power = impact_power_for(CONFIG.damage * CONFIG.arc_damage_multiplier),
+	no_headshot_boost = true,
+}))
 
 -- The bolt and the arcs have no hit effect of their own. Without this, the game would play the sound, particles and decals of the
 -- surface that is hit. The skin draws the impact instead (see mod.silent_hit_effects in hooks.lua).

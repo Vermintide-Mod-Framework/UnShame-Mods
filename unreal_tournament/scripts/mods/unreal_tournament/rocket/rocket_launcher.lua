@@ -8,10 +8,8 @@ local mod = get_mod("unreal_tournament")
 -- All the ammo is the clip, so there is no reload.
 
 local utils = mod.utils
-local register_damage_profile = utils.register_damage_profile
 local register_explosion_template = utils.register_explosion_template
 local register_network_lookup = utils.register_network_lookup
-local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
@@ -161,27 +159,59 @@ local CONFIG = {
 	ragdoll_window = 1.5, -- seconds a body has to start ragdolling after the explosion
 }
 
--- Damage profiles. The direct hit of the rocket only staggers (and does 1 damage, so that it is not shown as blocked by armor). Its
--- damage is the explosion, which is at full strength for whatever the rocket hits, like in UT.
-register_damage_profile("ut_rocket", "staff_fireball", function (profile)
-	make_flat(profile, utils.STAGGER_HIT_ATTACK_POWER, impact_power_for(CONFIG.rocket_damage), "grenade")
+-- Damage profiles (see utils.add_damage_profile). The direct hit of the rocket only staggers (and does 1 damage, so that it is not shown
+-- as blocked by armor). Its damage is the explosion, which is at full strength for whatever the rocket hits, like in UT. The direct hit
+-- has the explosion's armor multipliers, and a critical hit the same as any other.
+local ROCKET = {
+	charge_value = "projectile",
+	shield_break = false,
+	no_stagger_damage_reduction_ranged = true,
+	is_explosion = false,
+	-- (the fireball's hit reactions, and the frag grenade's hit effects)
+	attack_template = "fireball",
+	damage_type = "grenade",
+	attack_power = utils.STAGGER_HIT_ATTACK_POWER,
+	impact_power = impact_power_for(CONFIG.rocket_damage),
+	armor_attack = CONFIG.rocket_armor_attack,
+	armor_impact = CONFIG.rocket_armor_impact,
+	critical_armor_attack = CONFIG.rocket_armor_attack,
+	critical_armor_impact = CONFIG.rocket_armor_impact,
+	cleave_attack = 0.01,
+	cleave_impact = 0.01,
+	boost_curve_type = "linesman_curve",
+	boost_curve_coefficient = 0.75,
+	boost_curve_coefficient_headshot = 1,
+	headshot_boost = 0.5,
+	headshot_boost_boss = 0.25,
+	headshot_boost_armor = 0.5,
+	headshot_boost_heavy_armor = 0.25,
+	no_headshot_boost = false,
+	crit_boost = 0.5,
+	no_crit_boost = false,
+	stagger_duration_modifier = 1,
+	stagger_distance_modifier = 1,
+}
 
-	profile.cleave_distribution = {
-		attack = 0.01,
-		impact = 0.01,
-	}
-end)
+utils.add_damage_profile("ut_rocket", ROCKET)
 
-local function modify_explosion_profile(profile)
-	make_flat(profile, attack_power_for(CONFIG.rocket_damage), impact_power_for(CONFIG.rocket_damage))
+-- The explosion has no head shots or critical boost: the game's explosions have no boost curve. The cleave doesn't apply to it. A glance
+-- is the explosion's edge, with the game's glancing hit reactions and effects.
+local EXPLOSION = utils.damage_profile_spec(ROCKET, {
+	charge_value = "aoe",
+	attack_template = "drakegun",
+	damage_type = "grenade",
+	attack_power = attack_power_for(CONFIG.rocket_damage),
+	impact_power = impact_power_for(CONFIG.rocket_damage),
+	cleave_attack = 1,
+	cleave_impact = 1,
+	boost_curve_type = false,
+})
 
-	-- The explosion does more damage against monsters and armor.
-	profile.armor_modifier.attack = table.clone(CONFIG.rocket_armor_attack)
-	profile.armor_modifier.impact = table.clone(CONFIG.rocket_armor_impact)
-end
-
-register_damage_profile("ut_rocket_explosion", "fireball_charged_explosion", modify_explosion_profile)
-register_damage_profile("ut_rocket_explosion_glance", "fireball_charged_explosion_glance", modify_explosion_profile)
+utils.add_damage_profile("ut_rocket_explosion", EXPLOSION)
+utils.add_damage_profile("ut_rocket_explosion_glance", utils.damage_profile_spec(EXPLOSION, {
+	attack_template = "drakegun_glance",
+	damage_type = "grenade_glance",
+}))
 
 -- The look and the sound of the explosion come from the skin.
 register_explosion_template("ut_rocket_explosion", {
