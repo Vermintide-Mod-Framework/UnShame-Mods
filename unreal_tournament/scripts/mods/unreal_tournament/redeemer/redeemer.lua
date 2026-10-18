@@ -48,6 +48,16 @@ local CONFIG = {
 	wave_times = { 0, 0.5, 0.7, 0.9, 1.1, 1.3 }, -- seconds after the hit
 	-- HurtRadius falls off with the distance over the whole radius, from full damage at the center
 	full_damage_radius = 0, -- share of each wave's radius
+	-- Where the missile starts, from the eye: RedeemerFire.ProjSpawnOffset, 100 units straight ahead
+	start_forward = 2, -- m
+	-- Each wave throws the player away from the center at this speed in m/s, less further out, as the damage. UT's MomentumTransfer is
+	-- 200000, four times the Rocket Launcher's 50000, which throws at 5.7 m/s (rocket_launcher.lua's rocket_jump_speed).
+	push_speed = 5.7 * 200000 / 50000,
+	-- A body killed by a wave is thrown away from the center and up at these speeds, in m/s: DamTypeRedeemer has its own (KDeathVel and
+	-- KDeathUpKick, 600 units a second each), where the rocket's is UT's usual throw (utils.ut_ragdoll_throw).
+	ragdoll_speed = 600 * 0.02,
+	ragdoll_up = 600 * 0.02,
+	ragdoll_window = 1.5, -- seconds a body has to start ragdolling after the wave
 	-- The blast hurts the player who fired it (HurtRadius hurts everyone). This is the damage at the center, reduced from UT's as the
 	-- Rocket Launcher's self damage is (45 for its 60).
 	self_damage = 250 * 60 / 90 * 45 / 60,
@@ -187,8 +197,59 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	end
 end
 
+-- Each wave throws the players near it (the player on each machine is thrown by that machine), and the bodies of what it kills. This
+-- runs on every machine, as the physics of ragdolls is local. The living units in a wave's reach are collected when it goes off, and the
+-- ones that die are thrown once their ragdoll has started, because before that their bodies are moved by animation.
+local bodies = {}
+
+for _, name in ipairs(WAVE_NAMES) do
+	mod.explosion_push_speeds[name] = function ()
+		return CONFIG.push_speed
+	end
+
+	mod.explosion_callbacks[name] = function (world, position)
+		local living = {}
+
+		for unit in pairs(utils.units_in_radius(world, position, ExplosionTemplates[name].explosion.radius)) do
+			if HEALTH_ALIVE[unit] then
+				living[unit] = true
+			end
+		end
+
+		bodies[#bodies + 1] = {
+			position = Vector3Box(position),
+			t = Managers.time:time("game"),
+			units = living,
+		}
+	end
+end
+
+local function update_bodies()
+	local t = Managers.time:time("game")
+
+	for index = #bodies, 1, -1 do
+		local wave = bodies[index]
+		local center = wave.position:unbox()
+
+		for unit in pairs(wave.units) do
+			if not Unit.alive(unit) then
+				wave.units[unit] = nil
+			elseif not HEALTH_ALIVE[unit] and utils.blast_ragdoll(unit, center, CONFIG.ragdoll_speed, CONFIG.ragdoll_up) then
+				wave.units[unit] = nil
+			end
+		end
+
+		if t - wave.t > CONFIG.ragdoll_window or next(wave.units) == nil then
+			table.remove(bodies, index)
+		end
+	end
+end
+
+mod.update_callbacks[#mod.update_callbacks + 1] = update_bodies
+
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(waves)
+	table.clear(bodies)
 end
 
 -- The ability's shot. The game's has two barrels: the upper one fires a projectile, the lower one a shotgun blast, and a push goes out
@@ -223,6 +284,19 @@ local function build_shot(source)
 	}
 
 	return action
+end
+
+-- The missile starts where UT's does (RedeemerFire.ProjSpawnOffset, see utils.projectile_start)
+mod.spawn_projectile_callbacks[TEMPLATE_NAME] = function (func, owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
+	local template = rawget(Weapons, item_template_name)
+	local sub_actions = template and template.actions[action_name]
+	local action = sub_actions and sub_actions[sub_action_name]
+
+	if action and action.ut_redeemer then
+		position = utils.projectile_start(position, rotation, CONFIG.start_forward, 0, 0)
+	end
+
+	return func(owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
 end
 
 -- The ability's hold chains to the shot. It chains to a selector instead (the game's action_selector, as the Engineer's weapon has),

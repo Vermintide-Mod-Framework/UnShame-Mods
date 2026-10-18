@@ -18,6 +18,11 @@ local CONFIG = {
 	pitch = -35,
 	-- How long the missile and its blast take: the flight, and the six waves over 1.3 s
 	blast_wait = 6,
+	-- Where the missile starts, from the eye (redeemer.lua's start_forward), and by how much it can have moved when it is first seen
+	missile_start = 2, -- m
+	missile_start_margin = 0.5, -- m
+	-- Faster than the player walks: the blast throws them
+	thrown_speed = 6, -- m/s
 }
 
 -- The blasts that are made while a test runs: each wave's explosion, by its template
@@ -127,6 +132,49 @@ local function scenarios()
 				t.expect(missiles == 1, "%d missiles were in the air, not 1", missiles)
 				t.expect(#blasts == 6, "%d waves of the blast were made, not 6 (%s)", #blasts, table.concat(blasts, ", "))
 				t.expect(t.wielded() == ut.items.weapons.rocket_launcher.template, "the player holds %s after the ability, not the Rocket Launcher", tostring(t.wielded()))
+			end,
+		},
+		{
+			-- RedeemerFire.ProjSpawnOffset: 100 units (2 m) straight ahead of the eye. The missile has moved a little by the first frame it is
+			-- seen.
+			name = "the missile starts 2 m ahead of the eye",
+			run = function (t)
+				local start
+
+				make_ready(t)
+				use_ability(t)
+				t.watch(0.5, function ()
+					local missile = not start and t.projectiles(is_missile)[1]
+
+					if missile then
+						local eye = ScriptUnit.extension(t.unit(), "first_person_system"):current_position()
+
+						start = Vector3.distance(Unit.world_position(missile, 0), eye)
+					end
+				end)
+				t.wait(CONFIG.blast_wait)
+
+				t.expect(start, "no missile was seen")
+				t.expect(start and math.abs(start - CONFIG.missile_start) < CONFIG.missile_start_margin, "the missile was seen %.2f m from the eye, not %.1f", start or -1, CONFIG.missile_start)
+			end,
+		},
+		{
+			-- Each wave of the blast throws the player away from its center (UT's MomentumTransfer). The missile hits the ground a few meters
+			-- ahead.
+			name = "the blast throws the player",
+			run = function (t)
+				local fastest = 0
+
+				make_ready(t)
+				use_ability(t)
+				t.watch(CONFIG.blast_wait, function ()
+					local velocity = ScriptUnit.extension(t.unit(), "locomotion_system"):current_velocity()
+
+					fastest = math.max(fastest, Vector3.length(velocity))
+				end)
+
+				t.log("the player went at most %.1f m/s", fastest)
+				t.expect(fastest > CONFIG.thrown_speed, "the player went at most %.1f m/s, not over %.1f", fastest, CONFIG.thrown_speed)
 			end,
 		},
 		{

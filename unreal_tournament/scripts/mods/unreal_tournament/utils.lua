@@ -861,11 +861,12 @@ utils.UT_RAGDOLL_SPEED = 4
 utils.UT_RAGDOLL_UP = 5
 utils.UT_RAGDOLL_SPIN = 18000 / 65536 * 2 * math.pi
 
--- The velocity and spin that UT's throw gives a body that lies in `direction` from the explosion (any length)
-function utils.ut_ragdoll_throw(direction)
+-- The velocity and spin that UT's throw gives a body that lies in `direction` from the explosion (any length). A damage type can have
+-- its own speeds instead (bKUseOwnDeathVel: speed away from the explosion and up, in m/s).
+function utils.ut_ragdoll_throw(direction, speed, up)
 	local length = Vector3.length(direction)
 	local unit_direction = length > 0.01 and direction * (1 / length) or Vector3.up()
-	local velocity = unit_direction * utils.UT_RAGDOLL_SPEED + Vector3(0, 0, utils.UT_RAGDOLL_UP)
+	local velocity = unit_direction * (speed or utils.UT_RAGDOLL_SPEED) + Vector3(0, 0, up or utils.UT_RAGDOLL_UP)
 	local across = Vector3.cross(Vector3.up(), Vector3.flat(unit_direction))
 	local spin = Vector3.length(across) > 0.01 and Vector3.normalize(across) * utils.UT_RAGDOLL_SPIN or Vector3.zero()
 
@@ -880,8 +881,9 @@ function utils.moved_by_physics(actor)
 	return Actor.is_dynamic(actor) and Actor.is_physical(actor)
 end
 
--- Throws a ragdoll as above, away from a point. Returns whether it had any bodies that move.
-function utils.blast_ragdoll(unit, center)
+-- Throws a ragdoll as above, away from a point, with the damage type's own speeds if they are given. Returns whether it had any bodies
+-- that move.
+function utils.blast_ragdoll(unit, center, speed, up)
 	local body_position
 
 	for i = 0, Unit.num_actors(unit) - 1 do
@@ -896,7 +898,7 @@ function utils.blast_ragdoll(unit, center)
 		return false
 	end
 
-	local velocity, spin = utils.ut_ragdoll_throw(body_position - center)
+	local velocity, spin = utils.ut_ragdoll_throw(body_position - center, speed, up)
 
 	utils.set_ragdoll_motion(unit, velocity, spin)
 
