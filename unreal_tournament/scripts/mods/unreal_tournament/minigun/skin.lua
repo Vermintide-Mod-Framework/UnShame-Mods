@@ -625,7 +625,7 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 			-- The meters of a UT unit of the world where the model is: its own unit, without its DrawScale
 			local world_unit = (api.state() and api.state().unit_scale or UNIT) / api.draw_scale()
 
-			mod.minigun_muzzle_flash("minigun", function ()
+			mod.muzzle_flash("minigun", function ()
 				return api.state() and api.muzzle_model_position() or nil
 			end, world_unit, CONFIG.flash_draw_scale, function ()
 				if api.state() then

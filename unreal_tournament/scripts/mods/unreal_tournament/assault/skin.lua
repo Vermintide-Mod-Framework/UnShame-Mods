@@ -19,7 +19,7 @@ local TEMPLATE_NAME = mod.items.weapons[SETTING_ID].template
 local assault = mod.assault
 
 local CONFIG = {
-	-- AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2 (see minigun/muzzle_flash.lua)
+	-- AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2 (see muzzle_flash.lua)
 	flash_draw_scale = 1.2,
 	-- Grenade: RandSpin(25000). It spins about a random axis at 25000 of UT's rotation units a second, where 65536 is a full turn.
 	grenade_spin = 25000 / 65536,
@@ -42,7 +42,7 @@ local function flash(api)
 		return
 	end
 
-	mod.minigun_muzzle_flash(api, function ()
+	mod.muzzle_flash(api, function ()
 		return api.state() == skin and api.muzzle_model_position() or nil
 	end, (skin.unit_scale or UNIT) / api.draw_scale(), CONFIG.flash_draw_scale)
 end

@@ -19,7 +19,7 @@ local CONFIG = {
 	fire_animations = { "Fire1", "Fire2", "Fire3" },
 	fire_animation_rate = 1.5,
 	-- AssaultMuzFlash1st at the end of the barrel (ClassicSniperFire.FlashEmitterClass): the Minigun's flash at DrawScale 1.2 (see
-	-- minigun/muzzle_flash.lua)
+	-- muzzle_flash.lua)
 	flash_draw_scale = 1.2,
 	-- AssaultMuzFlash3rd at the end of the rifle in a character's hand (ClassicSniperAttachment): drawn as the Minigun's third person
 	-- flash, flames in a row along the shot, at its DrawScale of 0.6
@@ -81,7 +81,7 @@ local function first_person_flash(api)
 		return
 	end
 
-	mod.minigun_muzzle_flash(api, function ()
+	mod.muzzle_flash(api, function ()
 		return api.state() == skin and api.muzzle_model_position() or nil
 	end, (skin.unit_scale or UNIT) / api.draw_scale(), CONFIG.flash_draw_scale)
 end
