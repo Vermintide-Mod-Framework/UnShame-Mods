@@ -184,5 +184,10 @@ mod:command("ut_inherited", "- prints to the console log what the finished weapo
 		end
 	end
 
+	-- (the game writes its log in blocks of 32 KB, so a block of filler pushes the last lines into the file)
+	for _ = 1, 32 do
+		print(string.rep("-", 1023))
+	end
+
 	mod:echo("[ut_inherited] %d weapons printed to the console log", count)
 end)
