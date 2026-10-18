@@ -40,6 +40,19 @@ local function end_zoom()
 	zoom.zoomed = false
 end
 
+-- Whether the player is inspecting the weapon. There is no zoom then: inspecting ends it, and the button does nothing.
+local inspecting = false
+
+mod.inspect_callbacks.zoom = function (action, started)
+	if utils.is_local_player_unit(action.owner_unit) then
+		inspecting = started
+
+		if started then
+			end_zoom()
+		end
+	end
+end
+
 -- The horizontal field of view that UT's zoom has now, in degrees
 local function zoom_fov()
 	return math.clamp(CONFIG.normal_fov - zoom.level * CONFIG.degrees_per_second, CONFIG.min_fov, 170)
@@ -127,7 +140,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 
 	local input_extension = ScriptUnit.extension(unit, "input_system")
 
-	if input_extension:get("action_two") then
+	if input_extension:get("action_two") and not inspecting then
 		if zoom.zoomed then
 			-- Pressing the button while zoomed zooms out
 			end_zoom()
@@ -154,6 +167,8 @@ end
 local function reset_zoom()
 	end_zoom()
 	apply_zoom_fov()
+
+	inspecting = false
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = reset_zoom
