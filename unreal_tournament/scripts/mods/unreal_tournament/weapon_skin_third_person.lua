@@ -228,9 +228,15 @@ local function new(def, looks)
 		return staff, units
 	end
 
-	-- Returns whether the character is shown holding its weapon. The player's own character is not, while the view is first person,
-	-- because the game hides the weapon's unit then.
+	-- Returns whether the character is shown holding its weapon. The game hides the weapon in the character's hand at times
+	-- (show_third_person_inventory): the player's own, while the view is first person, and anyone's while hanging off a ledge or grabbed.
 	function third_person.shows_weapon(character)
+		local inventory_extension = ScriptUnit.has_extension(character, "inventory_system")
+
+		if inventory_extension and not inventory_extension:is_showing_third_person_inventory() then
+			return false
+		end
+
 		if utils.is_local_player_unit(character) then
 			local first_person_extension = ScriptUnit.has_extension(character, "first_person_system")
 
