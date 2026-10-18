@@ -78,8 +78,9 @@ local CONFIG = {
 	charge_spread = 10, -- units of the view
 	-- How bright the sparks are (fitted to a picture of UT2004)
 	charge_intensity = 0.45,
-	-- The sparks at the tip of the gun in a character's hands (LightningCharge3rd, which SniperAttachment spawns with the character's
-	-- first shot and attaches to the mesh's tip). They don't stop when the gun can't fire: 40 a second, each 0.2 s long, 5 units in size
+	-- The sparks at the tip of the gun in a character's hands (LightningCharge3rd, attached to the mesh's tip). UT spawns them with the
+	-- character's first shot. Here they show as soon as the gun is held, as the first person sparks do (the mod's choice). They don't
+	-- stop when the gun can't fire: 40 a second, each 0.2 s long, 5 units in size
 	-- (a half width), up to 5 units from the emitter along the barrel, turned at random. The emitter is at RelativeLocation (-30, 3, 0)
 	-- in the frame of the tip, taken in the mesh's units, as for the first person charge. The mesh has no bone named tip: it is taken to
 	-- be Bone_Flash, where the muzzle is. That bone's frame is turned a quarter about the barrel from the mesh's (its parent Bone_weapon
@@ -331,22 +332,11 @@ local function weapon_light(owner_unit)
 	})
 end
 
--- The sparks at the tip of the gun in each character's hands, from the character's first shot on, for as long as the same mesh is held
--- (UT's go with the attachment, which a weapon switch takes away): [character] = { unit = the mesh, time = the part of a spark owed }
+-- The sparks at the tip of the gun in each character's hands, for as long as it is held and seen: [character] = the part of a spark
+-- owed
 local third_person_charges = setmetatable({}, {
 	__mode = "k",
 })
-
-local function start_third_person_charge(owner_unit)
-	local unit = held_mesh(owner_unit)
-
-	if unit and not (third_person_charges[owner_unit] and third_person_charges[owner_unit].unit == unit) then
-		third_person_charges[owner_unit] = {
-			time = 0,
-			unit = unit,
-		}
-	end
-end
 
 local function third_person_charge_spark(character, api)
 	local along = (math.random() * 2 - 1) * CONFIG.third_person_charge_spread * UNIT
@@ -380,27 +370,34 @@ local function third_person_charge_spark(character, api)
 end
 
 local function update_third_person_charges(dt)
+	local players = Managers.player and Managers.player:human_and_bot_players()
+
+	if not players then
+		return
+	end
+
 	local interval = 1 / CONFIG.third_person_charge_rate
 
-	for character, charge in pairs(third_person_charges) do
+	for _, player in pairs(players) do
+		local character = player.player_unit
 		local unit, api = nil, nil
 
-		if Unit.alive(character) then
+		if character and Unit.alive(character) then
 			unit, api = held_mesh(character)
 		end
 
-		if unit ~= charge.unit then
-			third_person_charges[character] = nil
-		elseif not api.third_person.shows_weapon(character) then
-			charge.time = 0
-		else
-			charge.time = charge.time + dt
+		if unit and api.third_person.shows_weapon(character) then
+			local owed = (third_person_charges[character] or 0) + dt
 
-			while charge.time >= interval do
-				charge.time = charge.time - interval
+			while owed >= interval do
+				owed = owed - interval
 
 				third_person_charge_spark(character, api)
 			end
+
+			third_person_charges[character] = owed
+		elseif character then
+			third_person_charges[character] = nil
 		end
 	end
 end
@@ -504,9 +501,8 @@ mod.lightning_bolt_callbacks.lightning_skin = function (owner_unit, end_position
 
 	show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start, arc_normals or {})
 
-	-- SniperAttachment.ThirdPersonEffects: the gun in the character's hands lights up, and its sparks start with the first shot
+	-- SniperAttachment.ThirdPersonEffects: the gun in the character's hands lights up
 	weapon_light(owner_unit)
-	start_third_person_charge(owner_unit)
 
 	-- The shot's own sounds are played for the player in the shot's action (see below). For the others they come from the weapon.
 	if not utils.is_local_player_unit(owner_unit) then
