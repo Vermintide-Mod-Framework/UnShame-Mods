@@ -290,7 +290,8 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start,
 
 	local camera_position = utils.camera_pose()
 	local api = utils.is_local_player_unit(owner_unit) and first_person_api()
-	local muzzle = api and not api.third_person.shows_weapon(owner_unit) and api.muzzle_model_position()
+	-- (while zoomed the weapon isn't drawn, and the flare is where the bolt starts, below the view, as UT's)
+	local muzzle = api and not api.third_person.shows_weapon(owner_unit) and not lightning.zoom.zoomed and api.muzzle_model_position()
 
 	if muzzle and camera_position then
 		-- In the player's own view UT spawns the bolt at EffectOffset from the eye (100 ahead, 28 to the right, 26 down, in a view of
