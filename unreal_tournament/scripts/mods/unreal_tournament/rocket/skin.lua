@@ -398,8 +398,8 @@ skin_api = mod.weapon_skin.new({
 	inspect_pivot_up = 12,
 	-- UT's third person mesh of the weapon (RocketAttachment's Weapons.RocketLauncher_3rd) at UT's size in a player's hand (DrawScale 0.4).
 	-- Its origin is in its middle, and its barrels run along its left to the muzzle (its Bone_Flash). The pickup's ran along its right, so
-	-- this is turned half a turn from the pickup, and its tilt about the barrels is the other way. The grip is a start, to be set in the
-	-- game.
+	-- this is turned half a turn from the pickup. The yaw puts the barrels along the crossbow's forward, and the pitch tips the muzzle
+	-- down, so that it slopes down from the right hand to the left one (set in the game). The grip is a start, to be set in the game.
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
@@ -408,12 +408,12 @@ skin_api = mod.weapon_skin.new({
 		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.02 * 0.4,
 		-- (a little smaller than UT's: it looked too big on Saltzpyre)
-		scale = 0.9,
+		scale = 0.85,
 		grip_right = 0,
 		grip_forward = 0,
 		grip_up = 0,
 		yaw = -90,
-		pitch = 15,
+		pitch = -5,
 		roll = 0,
 		-- In the world the launcher moves with the game's crossbow, which the game animates with the arms. It is turned from the
 		-- crossbow's own axes and is not calibrated the way the Flak Cannon is, because the crossbow is still moving into place at the
