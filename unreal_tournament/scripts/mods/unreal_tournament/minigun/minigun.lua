@@ -10,7 +10,7 @@ local utils = mod.utils
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
-local DESCRIPTION = "The Schultz-Metzger T23-A 23mm rotary cannon is capable of firing both high-velocity caseless ammunition and cased rounds. At only 8 kilograms unloaded, the T23 is portable and maneuverable, easily worn across the back."
+local DESCRIPTION = "The Schultz-Metzger T23-A 23mm rotary cannon is capable of firing both high-velocity caseless ammunition and cased rounds. With an unloaded weight of only 8 kilograms, the T23 is portable and maneuverable, easily worn across the back."
 
 -- The items. Kruber's careers have a repeating gun, and Saltzpyre's a repeater pistol, and they are separate templates. What the two
 -- copies set differently is here, the base weapons' own values: the rest is the same for both (see apply_gun).
