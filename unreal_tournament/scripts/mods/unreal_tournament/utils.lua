@@ -1,6 +1,8 @@
 local mod = get_mod("unreal_tournament")
 
--- Helpers that more than one file uses, as mod.utils. unreal_tournament.lua loads this file once, before the others.
+-- Helpers that the weapons and the other shared files use (mod.utils), and the extras mod's tests too: calling the game's functions,
+-- registering network names and damage profiles, emptying a weapon template down to its base's, UT's units, spread and random numbers,
+-- the damage, self damage and jumps of explosions, sounds, and finding units, projectiles and enemies in the world.
 local stagger_types = require("scripts/utils/stagger_types")
 
 local utils = {}
