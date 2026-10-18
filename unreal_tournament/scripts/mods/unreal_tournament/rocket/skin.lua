@@ -20,14 +20,15 @@ local SETTING_ID = "rocket_launcher"
 
 local CONFIG = {
 	-- RocketMuzFlash1st: the Minigun's first person flash mesh (see minigun/muzzle_flash.lua), 5 of them for a shot, at a size of 0.4 that
-	-- does not grow, for 0.15 s, and dim (mColorRange 48, 40, 40 of 255). The emitter's DrawScale is 2.
+	-- does not grow, for 0.15 s. The emitter's DrawScale is 2. Its mColorRange is 48, 40, 40 of 255, but UT draws the flash white and
+	-- bright, so the colour does not apply to the meshes.
 	muzzle_flash = {
 		count = 5,
 		scale = {0.4, 0.4},
 		growth = 0,
 		life = {0.15, 0.15},
 		attenuation = 0.2,
-		color = { 48 / 255, 40 / 255, 40 / 255 },
+		color = { 1, 1, 1 },
 	},
 	muzzle_flash_draw_scale = 2,
 	-- RocketMuzFlash3rd: one mesh (MinigunFlashMesh) for a shot, at a size of 0.12 that grows by 2.2 a second, for 0.15 to 0.2 s. fit is
