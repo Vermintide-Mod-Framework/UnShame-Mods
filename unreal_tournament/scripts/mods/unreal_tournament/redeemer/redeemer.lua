@@ -50,8 +50,9 @@ local CONFIG = {
 	-- armor. UT has no armor, and a nuclear blast is not stopped by it.
 	armor_attack = { 1, 1, 1, 1, 1, 1 },
 	armor_impact = { 1, 1, 1, 1, 1, 1 },
-	-- How far a bot shoots from, in meters. It should be out of the blast (radius_uu, 27 m).
-	bot_min_range = 30,
+	-- How far a bot shoots from, in meters. A bot moves towards its target, so it is rarely out of the blast (radius_uu, 27 m). From 15 m,
+	-- where the game's own rule for the ability stops, the blast takes about half of the self damage from it.
+	bot_min_range = 15,
 	bot_max_range = 80,
 }
 
@@ -303,7 +304,8 @@ end)
 
 -- Bots. A Bounty Hunter bot uses the ability on its target within 15 m (BTConditions.can_activate.wh_bountyhunter), which is well inside
 -- the Redeemer's blast. With the Redeemer a bot uses it only on a target from bot_min_range to bot_max_range away, with no player or
--- other bot within the blast's radius of it. The game's check that nothing is in the way is kept.
+-- other bot within the blast's radius of it. The game's check that nothing is in the way is kept. A bot takes a special for its target
+-- only within 40 m of it (AIBotGroupSystem's FALLBACK_OPPORTUNITY_DISTANCE), so it fires at a special from 15 to 40 m.
 mod:hook(BTConditions.can_activate, "wh_bountyhunter", function (func, blackboard)
 	local bot_unit = blackboard.unit
 
