@@ -34,7 +34,6 @@ What each script makes, and the tables in it that say what it converts, are in i
 | `convert_static.py <name> <export dir>` | a static mesh as a unit: the pickups, the third person meshes and the projectiles. The meshes are in `STATICS` |
 | `convert_shock.py <export dir>` | the UT2004 Shock Rifle, which came before `convert_weapon.py`: its model, pickup, body texture and materials, and animations |
 | `make_chamber_material.py <export dir>` | the Shock Rifle's chamber, as a shader graph |
-| `make_sniper_screen.py <export dir>` | the Lightning Gun's screen texture, written into the export folder for `convert_weapon.py` |
 | `make_bank.py <weapon> <export dir>` | a sound bank in `wwise/unreal_tournament`. The banks are in `WEAPONS` |
 | `make_icons.py [name ...]` | the inventory icons in `ui/ut`, with their textures and gui materials, from the pickups (see Icons). The icons are in `ICONS` |
 | `render_icon.py in.bsi out.png size yaw pitch roll textures [fill [mirror]]` | one icon from a converted pickup; `make_icons.py` runs it |
@@ -52,7 +51,7 @@ What each script makes, and the tables in it that say what it converts, are in i
 | `make_fx_meshes.py <export dir>` | the meshes of the effects, and the light |
 | `make_goop_mesh.py <export dir>` | the Bio Rifle's glob: a unit for each frame of its animations |
 | `make_decal_unit.py` | the box that the Bio Rifle's splat is projected from |
-| `make_combo_materials.py` | the effects' shader graphs, for what UT pans or combines: the combo, the dark sphere, the goop, the shield |
+| `make_combo_materials.py` | the effects' shader graphs, for what UT pans or combines: the combo, the dark sphere, the goop, the shield, the Lightning Gun's screen |
 
 **Checks and pieces**
 
@@ -66,8 +65,8 @@ What each script makes, and the tables in it that say what it converts, are in i
 ### Order
 
 - `make_fx_assets.py` writes UT's textures as they are, and the `split_*.py` scripts replace some of them. Run the splits again after it.
-- `make_sniper_screen.py` before `convert_weapon.py sniper`, which reads the screen it writes.
-- `make_combo_materials.py` after `convert_weapon.py bio`: it replaces the material of the goop in the Bio Rifle's tank with a shader graph.
+- `make_combo_materials.py` after `convert_weapon.py bio` and `sniper`: it replaces the material of the goop in the Bio Rifle's tank, and
+  of the Lightning Gun's screen, with shader graphs.
 - `make_icons.py` after the pickups, which it renders.
 
 ### Weapons

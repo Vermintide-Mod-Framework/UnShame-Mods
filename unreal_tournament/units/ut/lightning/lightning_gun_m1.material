@@ -1,17 +1,10 @@
 material_contexts = {
 	surface_material = ""
 }
-parent_material = "units/ut/weapon_standard"
+parent_material = "units/ut/fx/fx_sniper_screen_graph"
 textures = {
-	color_map = "units/ut/lightning/lightning_gun_sniperscreen1c"
+	screen_map = "units/ut/lightning/lightning_gun_sniperscreen1"
+	lines_map = "units/ut/lightning/lightning_gun_sniperscreen1pan"
 }
 variables = {
-	use_color_map = {
-		type = "scalar"
-		value = 1
-	}
-	roughness = {
-		type = "scalar"
-		value = 0.9
-	}
 }

@@ -250,6 +250,38 @@ open('%s/units/ut/bio/bio_rifle_m2.material' % REPO, 'w', newline='\n').write(
     '\tgoo_map = "units/ut/bio/bio_rifle_brinnergoo"\n\tbubbles_map = "units/ut/bio/bio_rifle_brinnerbubbles"\n}\nvariables = {\n}\n')
 print('wrote fx_bio_goo_graph.material and bio_rifle_m2.material, %d nodes' % len(goo.nodes))
 
+# ---------------------------------------------------------------- the Lightning Gun's screen
+# The first person mesh's second material, SniperScreen1C (WeaponSkins): a Combiner (CO_AlphaBlend_With_Mask) of the scope's readout,
+# SniperScreen1, over the TexPanner SniperScreen1P (the scan lines of SniperScreen1Pan, PanDirection yaw 16384: along V, PanRate 0.2), with
+# the panned lines' alpha as the mask. The mesh's V is turned over (convert_weapon.py), so the lines pan along -V here. It is lit as the rest of
+# the weapon is: the SDK's standard output node, with the options of units/ut/weapon_standard.material (its three, the weapons' custom field of
+# view, and the decal group 3), roughness 0.9 as the weapon's, and not metallic. The material that binds the textures is
+# units/ut/lightning/lightning_gun_m1.material.
+IN_STANDARD_ROUGHNESS, IN_STANDARD_METALLIC = '36ba46d2-f6ea-4e60-a428-fdc17c75bc62', 'ad5e052f-d316-4a0f-8b79-53c38204d61b'
+STANDARD_OPTIONS = ('2b136447-676e-4943-997b-04a28ae68497', 'b2c7c0d2-beff-4b1a-a9d4-068a507625a2', 'b5bb2062-c8fa-43c5-8657-493a0be6860c',
+                    '901b44ce-d128-498a-9912-32cd9635c556', 'fe20cc01-4cec-4217-98a0-07220ad3add9')
+screen = Graph()
+screen.no_variables = True
+screen.add('out', 'core/stingray_renderer/output_nodes/standard_base', STANDARD_OPTIONS)
+screen.add('uv', 'core/shader_nodes/texture_coordinate0')
+screen.add('time', 'core/shader_nodes/current_time')
+panned(screen, 'pan_lines', 0, -0.2)
+texture(screen, 'readout', 'screen_map', 'uv')
+texture(screen, 'lines', 'lines_map', 'pan_lines')
+screen.add('mix', 'core/shader_nodes/lerp')
+screen.connect('lines', 'mix', IN_LERP_A, 'rgb')
+screen.connect('readout', 'mix', IN_LERP_B, 'rgb')
+screen.connect('lines', 'mix', IN_LERP_W, 'a')
+screen.connect('mix', 'out', IN_OUT_BASE_COLOR)
+screen.constant('out', IN_STANDARD_ROUGHNESS, 0.9)
+screen.constant('out', IN_STANDARD_METALLIC, 0)
+open('%s/fx_sniper_screen_graph.material' % FX, 'w', newline='\n').write(screen.text())
+open('%s/units/ut/lightning/lightning_gun_m1.material' % REPO, 'w', newline='\n').write(
+    'material_contexts = {\n\tsurface_material = ""\n}\nparent_material = "units/ut/fx/fx_sniper_screen_graph"\ntextures = {\n'
+    '\tscreen_map = "units/ut/lightning/lightning_gun_sniperscreen1"\n\tlines_map = "units/ut/lightning/lightning_gun_sniperscreen1pan"\n}\n'
+    'variables = {\n}\n')
+print('wrote fx_sniper_screen_graph.material and lightning_gun_m1.material, %d nodes' % len(screen.nodes))
+
 # ---------------------------------------------------------------- the Shield Gun's shield
 # ShieldEffect's FinalBlend Shield3rdFB (XEffectMat): FB_Brighten of the Shader Shader3, whose diffuse is the TexPanner TexPanner2 (PanDirection
 # yaw 16384: along V, PanRate 0.2) of the TexOscillator TexOscillator2 (OT_Pan along U, amplitude 0.1, rate 0.2 a second) of the texture

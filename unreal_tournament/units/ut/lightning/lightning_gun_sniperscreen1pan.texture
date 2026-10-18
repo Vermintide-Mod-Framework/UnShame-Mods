@@ -1,6 +1,6 @@
 common = {
 	input = {
-		filename = "units/ut/lightning/lightning_gun_sniperscreen1c"
+		filename = "units/ut/lightning/lightning_gun_sniperscreen1pan"
 	}
 	output = {
 		apply_processing = true

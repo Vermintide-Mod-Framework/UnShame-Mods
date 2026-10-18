@@ -65,7 +65,7 @@ local CONFIG = {
 	-- so these are the model's units, along its barrel (its forward). The size is in the units of the view.
 	charge_rate = 10,
 	charge_life = 0.2,
-	charge_size = 9,
+	charge_size = 5,
 	charge_back = 30,
 	charge_spread = 10,
 	-- How bright the sparks are (fitted to a picture of UT2004)
