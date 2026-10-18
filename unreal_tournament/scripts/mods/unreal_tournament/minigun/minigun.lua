@@ -12,7 +12,13 @@ local impact_power_for = utils.impact_power_for
 
 local DESCRIPTION = "The Schultz-Metzger T23-A 23mm rotary cannon is capable of firing both high-velocity caseless ammunition and cased rounds. With an unloaded weight of only 8 kilograms, the T23 is portable and maneuverable, easily worn across the back when employing the optional carrying strap."
 
--- The items. Kruber's careers have a repeating gun, and Saltzpyre's a repeater pistol, and they are separate templates.
+-- The items. Kruber's careers have a repeating gun, and Saltzpyre's a repeater pistol, and they are separate templates. What the two
+-- copies set differently is here: so far the base weapons' own values, written out (see apply_gun).
+--   weapon_type: what the game's talents, traits and properties take the weapon for.
+--   dodge_count: how many dodges in a row go the full distance. spread_template, spread_lerp_speed: the game's spread of the crosshair
+--       (each round has UT's own spread, see ut_spread). aim_assist: the aim assist for a controller.
+--   update_anim_ammo: whether the gun's animations are told how much ammo is left. fire_at_gaze_setting: the setting of Tobii's eye
+--       tracking that fires where the player looks.
 local VARIANTS = {
 	{
 		base_item = "es_repeating_handgun",
@@ -20,6 +26,24 @@ local VARIANTS = {
 		id = "minigun",
 		key = "ut_minigun",
 		template = "ut_minigun_template",
+		weapon_type = "REPEATING_HANDGUN",
+		dodge_count = 1,
+		spread_template = "repeating_handgun",
+		spread_lerp_speed = 12,
+		aim_assist = {
+			always_auto_aim = true,
+			base_multiplier = 0.15,
+			effective_max_range = 10,
+			max_range = 22,
+			no_aim_input_multiplier = 0,
+			breed_scalars = {
+				skaven_clan_rat = 1,
+				skaven_slave = 1,
+				skaven_storm_vermin = 0.25,
+			},
+		},
+		update_anim_ammo = false,
+		fire_at_gaze_setting = false,
 	},
 	{
 		base_item = "wh_repeating_pistols",
@@ -29,6 +53,26 @@ local VARIANTS = {
 		template = "ut_minigun_wh_template",
 		-- The characters fire from the aim of the base weapon's alt fire (see apply_gun)
 		volley = true,
+		weapon_type = "REPEATING_PISTOL",
+		dodge_count = 3,
+		spread_template = "repeating_pistol",
+		spread_lerp_speed = 5,
+		aim_assist = {
+			aim_at_node = "j_neck",
+			aim_at_node_charged = "j_spine",
+			base_multiplier = 0.15,
+			can_charge_shot = true,
+			effective_max_range = 10,
+			max_range = 22,
+			no_aim_input_multiplier = 0,
+			breed_scalars = {
+				skaven_clan_rat = 1,
+				skaven_slave = 1,
+				skaven_storm_vermin = 1,
+			},
+		},
+		update_anim_ammo = true,
+		fire_at_gaze_setting = "tobii_fire_at_gaze_repeating_pistol",
 	},
 }
 
@@ -50,12 +94,12 @@ end
 
 local TEMPLATE_NAMES = {}
 
--- The templates whose characters fire from the aim of the base weapon's alt fire
-local VOLLEY_TEMPLATES = {}
+-- Each template's variant
+local VARIANT_OF = {}
 
 for _, variant in ipairs(VARIANTS) do
 	TEMPLATE_NAMES[mod.items.weapons[variant.id].template] = true
-	VOLLEY_TEMPLATES[variant.template] = variant.volley
+	VARIANT_OF[variant.template] = variant
 end
 
 local CONFIG = {
@@ -192,20 +236,80 @@ local DROPPED_FLOW_EVENTS = {
 	lua_bullet_trail_set = true,
 }
 
--- Builds a round of the gun's. The first round has the wind up before it, and the rounds after it follow at the fire rate. The hand
--- is the base weapon's, as the game crashes on an action for a hand with no weapon.
--- spray is the base weapon's own rapid fire, if it has one: its animation is made to be played a round after another. volley is the
--- aim of the base weapon's alt fire that the rapid fire is shot from, if the characters take it: { start, finish } animations.
-local function build_shot(source, mode, first, hand, spray, volley)
-	local action = table.clone(source)
+-- Builds a round of the gun's, the game's handgun shot (kind "handgun") with every field given. The first round has the wind up before
+-- it, and the rounds after it follow at the fire rate. The hand is the base weapon's, as the game crashes on an action for a hand with no
+-- weapon. anims is the base weapon's action whose animations a round plays: its rapid fire, made to be played a round after another.
+-- volley is the aim of the base weapon's alt fire that the rapid fire is shot from, if the characters take it: { start, finish }
+-- animations.
+local function build_shot(mode, first, hand, anims, volley)
 	local alt = mode == "alt"
-
-	action.weapon_action_hand = hand
-
-	if spray then
-		action.anim_event = spray.anim_event
-		action.anim_event_last_ammo = spray.anim_event_last_ammo
-	end
+	local interval = alt and CONFIG.alt_rate or CONFIG.primary_rate
+	local wind_up = alt and CONFIG.alt_wind_up or CONFIG.primary_wind_up
+	local own_action = alt and "action_two" or "action_one"
+	local fire_time = first and wind_up or 0
+	local action = {
+		kind = "handgun",
+		weapon_action_hand = hand,
+		anim_event = anims.anim_event,
+		anim_event_last_ammo = anims.anim_event_last_ammo,
+		damage_profile = alt and "ut_minigun_alt_bullet" or "ut_minigun_bullet",
+		fire_time = fire_time,
+		-- The other button's shot can only follow once this round's time is over, so the two never fire at once (UT's fire modes are
+		-- exclusive)
+		total_time = fire_time + interval + CONFIG.chain_margin,
+		allowed_chain_actions = fire_chain_actions(own_action, "loop", fire_time + interval),
+		-- The gun fires while its button is held, as UT's does: the game starts an action with a hold_input when that button is held, not
+		-- only when it is pressed (validate_action), so the rounds start again by themselves whenever something ends them, and a round ends
+		-- when the button is let go
+		hold_input = own_action .. "_hold",
+		condition_func = first and can_start(mode) or nil,
+		-- A hit on the player doesn't stop the rounds, as it doesn't in UT. Otherwise the game's hit reaction ends the round's action
+		-- (CharacterStateHelper).
+		uninterruptible = true,
+		enter_function = function (attacker_unit, input_extension)
+			input_extension:clear_input_buffer()
+		end,
+		ammo_usage = 1,
+		-- (all the ammo is the clip: there is no reload)
+		reload_when_out_of_ammo = false,
+		reload_time = 0.5,
+		-- The view's kick (see recoil_climb)
+		apply_recoil = true,
+		recoil_settings = {
+			climb_duration = 0.05,
+			climb_function = math.easeInCubic,
+			horizontal_climb = 0,
+			restore_duration = 0.2,
+			restore_function = math.ease_out_quad,
+			vertical_climb = CONFIG.recoil_climb,
+		},
+		-- What talents, traits and properties take a round for (the game's guns' value), and the critical hits: the career's chance, with
+		-- nothing added
+		charge_value = "bullet_hit",
+		additional_critical_strike_chance = 0,
+		critical_strike = {},
+		-- (not used for damage, see the damage profiles; the game's repeater has it)
+		headshot_multiplier = 2,
+		-- The game's own impact, which the skin draws UT's on top of
+		hit_effect = "bullet_impact",
+		critical_hit_effect = "bullet_critical_impact",
+		-- (for the stat chart's speed: a round's hit is this long after it starts)
+		damage_window_start = 0.1,
+		damage_window_end = 0,
+		-- How far away enemies hear a round, and its hit, in meters
+		alert_sound_range_fire = 10,
+		alert_sound_range_hit = 1.5,
+		-- The aim assist for a controller
+		aim_assist_auto_hit_chance = 0.5,
+		aim_assist_max_ramp_multiplier = 0.3,
+		aim_assist_ramp_decay_delay = 0.2,
+		aim_assist_ramp_multiplier = 0.1,
+		ut_minigun = mode,
+		ut_minigun_first = first,
+		ut_spread = alt and CONFIG.alt_spread or CONFIG.primary_spread,
+		-- The repeating handgun's own tracer is not drawn (hooks.lua): the skin draws UT's
+		ut_dropped_flow_events = DROPPED_FLOW_EVENTS,
+	}
 
 	-- The characters take the aim with the first round, hold it while the rounds come, with no animation of a shot, and leave it when
 	-- the rounds stop (not when the next round follows). The rounds keep their first person event, which the skin drops, because the game
@@ -222,49 +326,15 @@ local function build_shot(source, mode, first, hand, spray, volley)
 		end
 	end
 
-	local interval = alt and CONFIG.alt_rate or CONFIG.primary_rate
-	local wind_up = alt and CONFIG.alt_wind_up or CONFIG.primary_wind_up
-	local own_action = alt and "action_two" or "action_one"
-	local fire_time = first and wind_up or 0
-
-	action.active_reload_time = nil
-	action.anim_event_secondary = nil
-	action.damage_profile = alt and "ut_minigun_alt_bullet" or "ut_minigun_bullet"
-	action.fire_time = fire_time
-	action.reload_when_out_of_ammo = false
-	-- A hit on the player doesn't stop the rounds, as it doesn't in UT. Otherwise the game's hit reaction ends the round's action
-	-- (CharacterStateHelper).
-	action.uninterruptible = true
-	-- The gun fires while its button is held, as UT's does: the game starts an action with a hold_input when that button is held, not only
-	-- when it is pressed (validate_action), so the rounds start again by themselves whenever something ends them, and a round ends when
-	-- the button is let go
-	action.hold_input = own_action .. "_hold"
-	action.condition_func = first and can_start(mode) or nil
-	action.total_time = fire_time + interval + CONFIG.chain_margin
-	action.total_time_secondary = nil
-	action.ut_minigun = mode
-	action.ut_minigun_first = first
-	action.ut_spread = alt and CONFIG.alt_spread or CONFIG.primary_spread
-	-- The repeating handgun's own tracer is not drawn (hooks.lua): the skin draws UT's
-	action.ut_dropped_flow_events = DROPPED_FLOW_EVENTS
-	-- The other button's shot can only follow once this round's time is over, so the two never fire at once (UT's fire modes are
-	-- exclusive)
-	action.allowed_chain_actions = fire_chain_actions(own_action, "loop", fire_time + interval)
-
-	if action.recoil_settings then
-		action.recoil_settings.climb_duration = 0.05
-		action.recoil_settings.restore_duration = 0.2
-		action.recoil_settings.vertical_climb = CONFIG.recoil_climb
-	end
-
-	action.enter_function = function (attacker_unit, input_extension)
-		input_extension:clear_input_buffer()
-	end
-
 	return action
 end
 
+-- Makes the gun on the shell of its base weapon (utils.template_shell): everything that is not the base's animations, models and sounds
+-- is set here, and what the two copies set differently is in VARIANTS
 local function apply_gun(template)
+	local base = utils.template_shell(template)
+	local variant = VARIANT_OF[template.name]
+
 	-- The chart of the item's stats, from 0 to 7. The rounds are the normal attack.
 	template.weapon_diagram = {
 		light_attack = {
@@ -284,44 +354,82 @@ local function apply_gun(template)
 	}
 
 	local actions = template.actions
-	local attack_meta_data = template.attack_meta_data
+	local base_actions = base.actions
 
-	-- The shot comes from the game's repeating gun, whichever the template is a copy of
-	local source = rawget(Weapons, "repeating_handgun_template_1").actions.action_one.default
-	local hand = actions.action_one.default.weapon_action_hand
-	-- Kruber plays the repeating handgun's rapid fire (its bullet spray, attack_shoot_fast) for every round, instead of its single shot.
-	-- Saltzpyre holds the aim of the repeater pistol's alt fire (lock_target) while he fires.
-	local spray = actions.action_one.bullet_spray
-	local aim = actions.action_two.default
-	local volley = VOLLEY_TEMPLATES[template.name] and {
+	-- The base weapon's animations. Kruber plays the repeating handgun's rapid fire (its bullet spray, attack_shoot_fast) for every round,
+	-- instead of its single shot. Saltzpyre holds the aim of the repeater pistol's alt fire (lock_target) while he fires.
+	local hand = base_actions.action_one.default.weapon_action_hand
+	local anims = base_actions.action_one.bullet_spray
+	local aim = base_actions.action_two.default
+	local volley = variant.volley and {
 		start = aim.anim_event,
 		finish = aim.anim_end_event,
 	}
 
 	actions.action_one = {
-		default = build_shot(source, "primary", true, hand, spray, volley),
-		loop = build_shot(source, "primary", false, hand, spray, volley),
+		default = build_shot("primary", true, hand, anims, volley),
+		loop = build_shot("primary", false, hand, anims, volley),
 	}
 	actions.action_two = {
-		default = build_shot(source, "alt", true, hand, spray, volley),
-		loop = build_shot(source, "alt", false, hand, spray, volley),
+		default = build_shot("alt", true, hand, anims, volley),
+		loop = build_shot("alt", false, hand, anims, volley),
 	}
+	-- The game's own wielding and reload, which every gun of the game has (the reload only comes with picked up ammo, see ammo_data).
+	-- Inspecting is the base's, kept by the shell.
+	actions.action_wield = table.clone(ActionTemplates.wield)
+	actions.weapon_reload = table.clone(ActionTemplates.reload)
 
 	utils.set_actions_lookup_data(actions, template.name)
 
-	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
-	template.ammo_data.max_ammo = CONFIG.max_ammo
-	template.ammo_data.ammo_per_clip = CONFIG.max_ammo
-	template.ammo_data.ammo_per_reload = CONFIG.max_ammo
-	template.ammo_data.ammo_immediately_available = true
-	template.ammo_data.reload_time = 0.2
+	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots
+	template.ammo_data = {
+		ammo_hand = "right",
+		max_ammo = CONFIG.max_ammo,
+		ammo_per_clip = CONFIG.max_ammo,
+		ammo_per_reload = CONFIG.max_ammo,
+		ammo_immediately_available = true,
+		reload_time = 0.2,
+		reload_on_ammo_pickup = true,
+		play_reload_anim_on_wield_reload = true,
+		should_update_anim_ammo = variant.update_anim_ammo or nil,
+	}
 
-	attack_meta_data.can_charge_shot = false
-	attack_meta_data.charged_attack_action_name = nil
-	-- Bots hold the button, as they do for the game's staves that fire for as long as they are held
-	attack_meta_data.fire_input = "fire_hold"
-	attack_meta_data.max_range = CONFIG.bot_max_range
-	attack_meta_data.ut_minigun = true
+	-- How bots use it. They hold the button, as they do for the game's staves that fire for as long as they are held, and use it against
+	-- berserkers, specials and armored enemies (the repeater's). They don't shoot past an ally in the way.
+	local effective_against = bit.bor(BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored)
+
+	template.attack_meta_data = {
+		aim_at_node = "j_neck",
+		can_charge_shot = false,
+		effective_against = effective_against,
+		effective_against_charged = 0,
+		effective_against_combined = effective_against,
+		fire_input = "fire_hold",
+		max_range = CONFIG.bot_max_range,
+		ut_minigun = true,
+	}
+
+	-- What the game's talents, traits and properties take it for: a ranged weapon of the base's kind
+	template.buff_type = "RANGED"
+	template.weapon_type = variant.weapon_type
+
+	-- Dodging, and the game's crosshair and its spread (each round has UT's own spread, see ut_spread)
+	template.dodge_count = variant.dodge_count
+	template.buffs = {
+		change_dodge_distance = {
+			external_optional_multiplier = 1,
+		},
+		change_dodge_speed = {
+			external_optional_multiplier = 1,
+		},
+	}
+	template.crosshair_style = "default"
+	template.default_spread_template = variant.spread_template
+	template.spread_lerp_speed = variant.spread_lerp_speed
+	template.fire_at_gaze_setting = variant.fire_at_gaze_setting or nil
+
+	-- The aim assist for a controller
+	template.aim_assist_settings = table.clone(variant.aim_assist)
 
 	template.tooltip_compare = {
 		light = {

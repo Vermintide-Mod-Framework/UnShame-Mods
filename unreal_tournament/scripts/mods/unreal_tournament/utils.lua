@@ -314,6 +314,55 @@ function utils.damage_profile_spec(base, changes)
 	return spec
 end
 
+-- The parts of a weapon template that belong to its base weapon's animations, models and sounds, which a copy has to keep: the first
+-- person state machine and the wield animations, the models in the hands and how they are linked, the model on display, the sound banks,
+-- the reload's animation event, and the projectile units. And the mod's own name and tooltip keywords, which items.register sets.
+local SHELL_FIELDS = {
+	"state_machine",
+	"wield_anim",
+	"wield_anim_no_ammo",
+	"wield_anim_not_loaded",
+	"wield_anim_career",
+	"wield_anim_no_ammo_career",
+	"jump_anim_enabled_1p",
+	"right_hand_unit",
+	"left_hand_unit",
+	"right_hand_attachment_node_linking",
+	"left_hand_attachment_node_linking",
+	"display_unit",
+	"gui_texture",
+	"wwise_dep_right_hand",
+	"wwise_dep_left_hand",
+	"reload_event",
+	"no_ammo_reload_event",
+	"required_projectile_unit_templates",
+	"name",
+	"tooltip_keywords",
+}
+
+-- Empties a copy of a weapon template down to what it has to keep of its base (SHELL_FIELDS, and the actions of the careers' skills and
+-- of inspecting, which are animations), for a weapon that sets everything else itself. Returns what the template had, for the weapon to
+-- take the base's animation events from by name.
+function utils.template_shell(template)
+	local base = table.clone(template)
+
+	table.clear(template)
+
+	for _, field in ipairs(SHELL_FIELDS) do
+		template[field] = base[field]
+	end
+
+	template.actions = {}
+
+	for action_name, action in pairs(base.actions) do
+		if action_name == "action_inspect" or string.find(action_name, "^action_career") then
+			template.actions[action_name] = action
+		end
+	end
+
+	return base
+end
+
 function utils.register_explosion_template(name, template)
 	template.name = name
 	ExplosionTemplates[name] = template
