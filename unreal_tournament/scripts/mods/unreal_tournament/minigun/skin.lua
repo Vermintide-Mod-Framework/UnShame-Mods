@@ -20,12 +20,14 @@ local CONFIG = {
 	-- The weapon's light (xWeaponAttachment.WeaponLight): every round turns it on for 0.15 s, at the gun in a character's hand (the held
 	-- mesh's origin). In the player's own view UT lights the first person gun's light instead, which doesn't light that gun, as UT draws it
 	-- apart. A light here would light the gun the player holds, so there is none in that view (as for the Shock Rifle). LightHue 30 of
-	-- 255 and LightSaturation 150 (0 is all colour, 255 is white) are a pale orange, and LightRadius 5 is in steps of 25 units: 2.5 m. UT
-	-- pulses it (LT_Pulse), which here it doesn't.
+	-- 255 and LightSaturation 150 (0 is all colour, 255 is white) are a pale orange, and LightRadius 5 is in steps of 25 units: 2.5 m.
+	-- It pulses (LT_Pulse): Unreal's engine multiplies its brightness by 0.6 + 0.39 * sin(a turn every LightPeriod / 35 seconds), so it
+	-- flickers between a fifth and all of it, 35 / 3 times a second.
 	light_color = { 1, 0.85, 0.6 },
 	light_intensity = 1.5,
 	light_falloff = 2.5, -- meters
 	light_life = 0.15,
+	light_period = 3, -- LightPeriod
 	-- The smoke at the muzzle in the player's own view (MinigunMuzzleSmoke): a round sets it to 30 puffs a second, and the rate falls
 	-- towards none by its own amount a second (Lerp(dt) in MuzzleSmoke.Tick) and stops below 1. A puff lasts 0.6 to 1.2 s, starts 15 to 20
 	-- units across and grows by 4 a second, is a grey of 70 to 113 out of 255, and is blended by the texture's alpha (STY_Alpha). It
@@ -268,7 +270,7 @@ local function weapon_light(owner_unit, follow)
 
 	particles.light({
 		brightness = function ()
-			return 1
+			return 0.6 + 0.39 * math.sin(2 * math.pi * Managers.time:time("game") * 35 / CONFIG.light_period)
 		end,
 		color = CONFIG.light_color,
 		falloff = CONFIG.light_falloff,
