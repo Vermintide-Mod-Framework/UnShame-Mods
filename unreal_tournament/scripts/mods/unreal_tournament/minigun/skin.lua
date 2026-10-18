@@ -37,6 +37,8 @@ local CONFIG = {
 	smoke_mass = { 0.15, 0.25 },
 	smoke_gravity = 950, -- UT units a second squared
 	smoke_attenuation = 0.2,
+	-- SmokeTex is a sheet of puffs (pclSmoke's mNumTileColumns and mNumTileRows, 4 by 4), and each puff is one of them (mRandTextures)
+	smoke_tiles = 16,
 	-- The third person flash (NewMinigunMFlash): four flames in a row along the barrel, each smaller and further out, the last two up to 8
 	-- units further at random (StartLocationOffset and StartLocationRange). The emitter is attached to the gun but not scaled by its
 	-- DrawScale, so these are UT units of the world. A UE2 sprite's size (StartSizeRange) is its radius: it is drawn twice as wide.
@@ -288,7 +290,7 @@ local function update_smoke(api, world_unit, dt)
 			color = { grey, grey, grey },
 			growth = CONFIG.smoke_growth * world_unit,
 			life = life,
-			material = "units/ut/fx/fx_weapon_muzzle_smoke",
+			material = "units/ut/fx/fx_weapon_muzzle_smoke_" .. math.random(0, CONFIG.smoke_tiles - 1),
 			position = muzzle,
 			size = random_between(CONFIG.smoke_size) * world_unit,
 			velocity = Vector3(0, 0, rise * world_unit),

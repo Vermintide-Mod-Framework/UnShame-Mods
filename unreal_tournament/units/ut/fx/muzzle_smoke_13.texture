@@ -1,6 +1,6 @@
 common = {
 	input = {
-		filename = "units/ut/fx/muzzle_smoke"
+		filename = "units/ut/fx/muzzle_smoke_13"
 	}
 	output = {
 		apply_processing = true

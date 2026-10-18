@@ -3,7 +3,7 @@ material_contexts = {
 }
 parent_material = "units/ut/fx/particle"
 textures = {
-	texture_map = "units/ut/fx/muzzle_smoke"
+	texture_map = "units/ut/fx/muzzle_smoke_4"
 }
 variables = {
 }

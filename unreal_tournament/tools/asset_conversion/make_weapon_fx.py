@@ -23,8 +23,9 @@ TEXTURES = {
     'minigun_flame': ('AW-2004Explosions/Texture/Part_explode2s.tga', 4, 4),
     'tracer_shot': ('AW-2004Particles/Texture/TracerShot.tga', 1, 1),
     'shell_casing': ('XEffects/Texture/ShellCasingTex.tga', 1, 1),
-    # (the smoke at the muzzle in the player's view: MinigunMuzzleSmoke's SmokeTex, blended by its alpha: STY_Alpha)
-    'muzzle_smoke': ('XEffects/Texture/SmokeTex.tga', 1, 1),
+    # (the smoke at the muzzle in the player's view: MinigunMuzzleSmoke's SmokeTex, a sheet of 16 puffs (pclSmoke's tiles), blended by
+    # its alpha: STY_Alpha)
+    'muzzle_smoke': ('XEffects/Texture/SmokeTex.tga', 4, 4),
     # (where its rounds hit a wall: pclImpactSmoke's puffs and SmallExplosion's fire, a RocketExplosion)
     'impact_smoke': ('XEffects/Texture/EmitSmoke_t.tga', 4, 4),
     'small_explosion': ('XEffects/Texture/Rexpt.tga', 1, 1),
