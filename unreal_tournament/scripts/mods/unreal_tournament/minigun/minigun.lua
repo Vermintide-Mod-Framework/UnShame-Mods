@@ -84,7 +84,8 @@ local CONFIG = {
 	alt_spread = 0.03,
 	-- How far a bot shoots from, in meters
 	bot_max_range = 25,
-	-- The view's kick of a round. UT shakes the view a little (ShakeRotMag 50 in every axis) instead of climbing.
+	-- The view's kick of a round. UT shakes the view a little instead of climbing (MinigunFire's ShakeRotMag 50 on every axis: skin.lua
+	-- starts that shake).
 	recoil_climb = 0.12,
 	-- A held button repeats the shot. The shot lasts this much longer than the time to the next round, because a held button is only
 	-- read while a shot is still running.

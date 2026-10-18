@@ -85,6 +85,14 @@ local CONFIG = {
 		primary = 0.18,
 		alt = 0.3,
 	}, -- seconds
+	-- MinigunFire's view shake, which each round starts for the player who fires (WeaponFire.ShakeView, see view_shake.lua): a turn of
+	-- 50 of 65536 each way on every axis, at 10000 a second, and an offset of 1 unit on every axis, at 1000 a second, both for 2
+	shake_turn = { 50, 50, 50 }, -- pitch, yaw, roll
+	shake_turn_rate = { 10000, 10000, 10000 },
+	shake_turn_time = 2,
+	shake_offset = { 1, 1, 1 }, -- UT units: forward, right, up
+	shake_offset_rate = { 1000, 1000, 1000 },
+	shake_offset_time = 2,
 	-- Minigun.GearRatio and GearOffset: the gear turns this many times as far as the barrels, and the other way
 	gear_ratio = -2.37,
 	-- The barrels and the gear turn about axes along the mesh's own right (the mesh lies sideways, and the pivot's yaw turns it to the
@@ -530,6 +538,9 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 	end
 
 	if utils.is_local_player_unit(owner_unit) then
+		mod.view_shake.start(CONFIG.shake_offset, CONFIG.shake_offset_rate, CONFIG.shake_offset_time)
+		mod.view_shake.start_rotation(CONFIG.shake_turn, CONFIG.shake_turn_rate, CONFIG.shake_turn_time)
+
 		local api = first_person_api()
 
 		if api and not api.third_person.shows_weapon(owner_unit) then
