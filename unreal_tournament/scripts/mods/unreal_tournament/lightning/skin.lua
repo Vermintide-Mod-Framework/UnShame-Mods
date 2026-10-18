@@ -134,7 +134,8 @@ local random_between = utils.random_between
 local MAX_BOLT_PARTS = 100
 
 -- The bolt: a line of parts, each a streak of the texture stretch times as long as it is wide, out of line by a little. A part runs from
--- the end of the one before it.
+-- the end of the one before it. Under them the texture is also drawn once along the whole bolt, drawn out into a nearly straight line
+-- that runs through the zigzags, as in pictures of UT2004.
 local function draw_bolt(from, to, width, stretch, jitter, life, intensity)
 	local offset = to - from
 	local length = Vector3.length(offset)
@@ -142,6 +143,21 @@ local function draw_bolt(from, to, width, stretch, jitter, life, intensity)
 	if length < 0.01 then
 		return
 	end
+
+	particles.beam({
+		attenuation = 0,
+		color = {
+			1,
+			1,
+			1,
+		},
+		from = from,
+		intensity = intensity,
+		life = life,
+		size = width,
+		texture = "lightning_bolt",
+		to = to,
+	})
 
 	local count = math.clamp(math.ceil(length / (stretch * width)), 1, MAX_BOLT_PARTS)
 	local direction = offset * (1 / length)
