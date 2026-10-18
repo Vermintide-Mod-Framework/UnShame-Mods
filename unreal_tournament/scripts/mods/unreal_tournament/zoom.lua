@@ -45,7 +45,8 @@ local function end_zoom()
 end
 
 -- The zoom's action: a dummy action held with the button, which doesn't slow the player. Pressing the button starts it, and letting go
--- ends it (hold_input).
+-- ends it (hold_input). It takes the press out of the input buffer as it starts, as the game's actions do: left there, the press started
+-- the action again after a shot turned into it, and the zoom that had just ended began again.
 function zoom.action(hand, allowed_chain_actions)
 	return {
 		kind = "dummy",
@@ -53,6 +54,11 @@ function zoom.action(hand, allowed_chain_actions)
 		hold_input = "action_two_hold",
 		total_time = math.huge,
 		allowed_chain_actions = allowed_chain_actions,
+		enter_function = function (attacker_unit, input_extension)
+			input_extension:clear_input_buffer()
+
+			return input_extension:reset_release_input()
+		end,
 		ut_zoom = true,
 	}
 end
