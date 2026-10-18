@@ -189,15 +189,17 @@ local function new_skin(id, mirror)
 		inspect_pivot_right = 0,
 		inspect_pivot_forward = 20,
 		inspect_pivot_up = 0,
-		-- The third person model is UT's pickup mesh (NewWeaponPickups.AssaultPickupSM). There is one in each hand, where the game puts the
-		-- brace of pistols (AttachmentNodeLinking).
+		-- UT's third person mesh of the weapon (AssaultAttachment's NewWeapons2004.NewAssaultRifle_3rd) at UT's size in a player's hand
+		-- (DrawScale 0.4). There is one in each hand, where the game puts the brace of pistols (AttachmentNodeLinking). Its origin is by its
+		-- grip, and its barrel runs along its forward, as the pickup's did, so it is turned as the pickup was. The muzzle is the rifle's
+		-- Bone_Flash (Bone_Flash02, below it, is the grenade launcher's). The grip is a start, to be set in the game.
 		third_person = {
 			id = id,
 			template = TEMPLATE_NAME,
-			unit_name = "units/ut/assault/pickup",
+			unit_name = "units/ut/assault/third_person",
 			hand_node = mirror and "j_leftweaponattach" or "j_rightweaponattach",
-			meters_per_unit = 0.01,
-			scale = 0.3,
+			meters_per_unit = 0.02 * 0.4,
+			scale = 1,
 			grip_right = 0,
 			grip_forward = 0,
 			grip_up = 0,
@@ -207,8 +209,8 @@ local function new_skin(id, mirror)
 			follow_game_unit = 1,
 			follow_calibrate_seconds = 1,
 			muzzle_right = 0,
-			muzzle_forward = 40,
-			muzzle_up = 0,
+			muzzle_forward = 49.3,
+			muzzle_up = 17.9,
 			menu_yaw = 180,
 		},
 		on_create = function ()

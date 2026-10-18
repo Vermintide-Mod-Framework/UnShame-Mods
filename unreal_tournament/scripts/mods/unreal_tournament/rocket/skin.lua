@@ -396,30 +396,33 @@ skin_api = mod.weapon_skin.new({
 	inspect_pivot_right = 7,
 	inspect_pivot_forward = 22,
 	inspect_pivot_up = 12,
-	-- WeaponStaticMesh.RocketLauncherPickup (DrawScale 0.45). Its barrels run along the mesh's own -Y, and the grip is under its back.
+	-- UT's third person mesh of the weapon (RocketAttachment's Weapons.RocketLauncher_3rd) at UT's size in a player's hand (DrawScale 0.4).
+	-- Its origin is in its middle, and its barrels run along its left to the muzzle (its Bone_Flash). The pickup's ran along its right, so
+	-- this is turned half a turn from the pickup, and its tilt about the barrels is the other way. The grip is a start, to be set in the
+	-- game.
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
-		unit_name = "units/ut/rocket/pickup",
+		unit_name = "units/ut/rocket/third_person",
 		-- The game links the crossbow, the blunderbuss and the Drakegun to the left hand's node (AttachmentNodeLinking.repeating_crossbow).
 		hand_node = "j_leftweaponattach",
-		meters_per_unit = 0.009,
-		scale = 0.6,
-		grip_right = -14,
+		meters_per_unit = 0.02 * 0.4,
+		scale = 1,
+		grip_right = 0,
 		grip_forward = 0,
-		grip_up = 4,
-		yaw = 90,
-		pitch = -15,
+		grip_up = 0,
+		yaw = -90,
+		pitch = 15,
 		roll = 0,
 		-- In the world the launcher moves with the game's crossbow, which the game animates with the arms. It is turned from the
 		-- crossbow's own axes and is not calibrated the way the Flak Cannon is, because the crossbow is still moving into place at the
 		-- time of calibration.
 		follow_game_unit = 2,
 		follow_calibrate_seconds = 1,
-		muzzle_right = 68,
+		muzzle_right = -66,
 		muzzle_forward = 0,
-		muzzle_up = 8,
-		menu_yaw = 0,
+		muzzle_up = 5.7,
+		menu_yaw = 180,
 	},
 	on_create = function ()
 		skin_api.play_sound("ut_rocket_select")

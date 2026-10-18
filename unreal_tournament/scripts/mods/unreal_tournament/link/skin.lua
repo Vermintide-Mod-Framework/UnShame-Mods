@@ -114,28 +114,30 @@ skin_api = mod.weapon_skin.new({
 	offset_up = 0,
 	pivot_yaw = 500 / 65536 * 360,
 	bob_damping = 1.575,
-	-- WeaponStaticMesh.LinkGunPickup. Its barrel runs along the mesh's own -Y, and the grip is under its middle.
+	-- UT's third person mesh of the weapon (LinkAttachment's NewWeapons2004.NewLinkGun_3rd) at UT's size in a player's hand (DrawScale
+	-- 0.4). Its origin is by its grip, and its barrel runs along its forward to the muzzle (its upper flash bone, flashA). The pickup's
+	-- barrel ran along its right, so this is turned a quarter less than the pickup was. The grip is a start, to be set in the game.
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
-		unit_name = "units/ut/link/pickup",
+		unit_name = "units/ut/link/third_person",
 		-- The game links the Deepwood Staff to the left hand's node (AttachmentNodeLinking.one_handed_melee_weapon.left).
 		hand_node = "j_leftweaponattach",
-		meters_per_unit = 0.012,
-		scale = 0.6,
-		grip_right = -21,
+		meters_per_unit = 0.02 * 0.4,
+		scale = 1,
+		grip_right = 0,
 		grip_forward = 0,
-		grip_up = -30,
-		yaw = 90,
+		grip_up = 0,
+		yaw = 0,
 		pitch = 0,
 		roll = 0,
 		-- In the world the gun follows the staff's unit, which the arms animate.
 		follow_game_unit = 1,
 		follow_calibrate_seconds = 1,
-		muzzle_right = 54,
-		muzzle_forward = 0,
-		muzzle_up = 3,
-		menu_yaw = 0,
+		muzzle_right = 0,
+		muzzle_forward = 75.5,
+		muzzle_up = 8.9,
+		menu_yaw = -90,
 	},
 	on_create = function ()
 		skin_api.play_sound("ut_link_select")

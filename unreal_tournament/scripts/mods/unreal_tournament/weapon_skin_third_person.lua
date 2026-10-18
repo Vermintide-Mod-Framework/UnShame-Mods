@@ -16,6 +16,8 @@ local mod = get_mod("unreal_tournament")
 --   menu_scale: how much of the usual size the mesh is in the item inspection (1 if it is not given).
 --   menu_yaw: how far to turn the mesh about the vertical in the item inspection, so that the barrel points sideways (-90 if the
 --       barrel runs along the mesh's forward).
+--   menu_pitch: how far to turn the mesh about its own right axis in the item inspection, before menu_yaw, for a mesh that is upside
+--       down in its file (0 if it is not given).
 --   follow_game_unit: the mesh moves with the game's unit of the weapon, which the game animates with the arms. The mesh is turned
 --       from the game's unit by the way the unit is turned after follow_calibrate_seconds of being held. With follow_game_unit = 2
 --       there is no calibration: pitch, roll and yaw are relative to the unit's own axes. That is for a weapon whose unit is still

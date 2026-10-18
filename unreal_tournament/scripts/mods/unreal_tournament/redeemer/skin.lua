@@ -233,26 +233,31 @@ skin_api = mod.weapon_skin.new({
 	inspect_pivot_right = 0,
 	inspect_pivot_forward = 20,
 	inspect_pivot_up = 0,
-	-- WeaponStaticMesh.RedeemerPickup. The game links the Trollhammer Torpedo to the right hand's node.
+	-- UT's third person mesh of the weapon (RedeemerAttachment's Weapons.Redeemer_3rd) at UT's size in a player's hand (DrawScale 0.4).
+	-- The game links the Trollhammer Torpedo to the right hand's node. The mesh's tube runs along its left, to its open end (it has no
+	-- flash bone), and the mesh is upside down: UT holds it rolled half a turn (RelativeRotation Roll 32768) and 35 units back along the
+	-- hand (RelativeLocation X -35, which is 87.5 of the mesh's units at its DrawScale). It is turned from the pickup's turn, whose barrel
+	-- ran along its forward, and flipped by the pitch. The grip and the turn are a start, to be set in the game.
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
-		unit_name = "units/ut/redeemer/pickup",
+		unit_name = "units/ut/redeemer/third_person",
 		hand_node = "j_rightweaponattach",
-		meters_per_unit = 0.018,
-		scale = 0.5,
-		grip_right = 0,
+		meters_per_unit = 0.02 * 0.4,
+		scale = 1,
+		grip_right = -87.5,
 		grip_forward = 0,
 		grip_up = 0,
-		yaw = -60,
-		pitch = 0,
+		yaw = -150,
+		pitch = 180,
 		roll = 0,
 		follow_game_unit = 1,
 		follow_calibrate_seconds = 1,
-		muzzle_right = 0,
-		muzzle_forward = 40,
-		muzzle_up = 0,
-		menu_yaw = 180,
+		muzzle_right = -53.8,
+		muzzle_forward = 0,
+		muzzle_up = 8.8,
+		menu_yaw = 90,
+		menu_pitch = 180,
 	},
 	on_create = function ()
 		skin_api.play_sound("ut_redeemer_select")

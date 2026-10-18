@@ -151,7 +151,7 @@ mod:hook_safe(LootItemUnitPreviewer, "_enable_item_units_visibility", function (
 		local length = math.max(Vector3.x(half_extents), Vector3.y(half_extents), Vector3.z(half_extents)) * 2
 		local config = skin.third_person.config_of(look)
 		local scale = CONFIG.item_length / length * (config.menu_scale or 1)
-		local rotation = Quaternion.axis_angle(Vector3.up(), math.rad(config.menu_yaw or -90))
+		local rotation = Quaternion.multiply(Quaternion.axis_angle(Vector3.up(), math.rad(config.menu_yaw or -90)), Quaternion.axis_angle(Vector3.right(), math.rad(config.menu_pitch or 0)))
 
 		World.link_unit(world, unit, 0, self._link_unit, 0)
 		Unit.set_local_scale(unit, 0, Vector3(scale, scale, scale))

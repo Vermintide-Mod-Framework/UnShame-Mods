@@ -340,32 +340,29 @@ skin_api = mod.weapon_skin.new({
 	inspect_pivot_right = 15,
 	inspect_pivot_forward = 30,
 	inspect_pivot_up = -5,
-	-- WeaponStaticMesh.BioRiflePickup (DrawScale 0.6). Its barrel is the open end of the body, along the mesh's +x, and the tank hangs under it.
-	-- The handle points back and down from the body.
+	-- UT's third person mesh of the weapon (BioAttachment's Weapons.BioRifle_3rd) at UT's size in a player's hand (DrawScale 0.4). Its
+	-- origin is by its grip, its barrel runs along its forward to the muzzle (its Bone_Flash), and the tank hangs under it. The pickup's
+	-- barrel ran along its right, so this is turned a quarter less than the pickup was. The grip is a start, to be set in the game.
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,
-		unit_name = "units/ut/bio/pickup",
+		unit_name = "units/ut/bio/third_person",
 		-- The game links the Masterwork Pistol to the right hand's node (AttachmentNodeLinking.steam_pistol).
 		hand_node = "j_rightweaponattach",
-		meters_per_unit = 0.012,
-		-- The mesh is 0.67 m long, so 0.4 m as it is held.
-		scale = 0.6,
-		-- Where the mesh is in the hand, in the mesh's own axes. The hand's node is not in the fist, so this is a point away from the thin handle
-		-- (which points back and down from the body) that puts the handle in the fist. It is placed by eye.
-		grip_right = -15,
+		meters_per_unit = 0.02 * 0.4,
+		scale = 1,
+		grip_right = 0,
 		grip_forward = 0,
-		grip_up = -8,
-		yaw = 90,
+		grip_up = 0,
+		yaw = 0,
 		pitch = 0,
 		roll = 0,
 		-- In the world the rifle is held as the pistol is: it is turned as the pistol's unit is, with the barrel along the unit's y.
 		follow_game_unit = 2,
-		muzzle_right = 26,
-		muzzle_forward = 0,
-		muzzle_up = 12,
-		menu_yaw = 0,
-		menu_scale = 0.65,
+		muzzle_right = 0,
+		muzzle_forward = 49.7,
+		muzzle_up = 8.5,
+		menu_yaw = -90,
 	},
 	on_create = function ()
 		skin_api.play_sound("ut_bio_select")
