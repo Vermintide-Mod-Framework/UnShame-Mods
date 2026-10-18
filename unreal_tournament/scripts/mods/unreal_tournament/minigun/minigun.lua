@@ -202,8 +202,12 @@ local function build_shot(source, mode, first, hand, spray, volley)
 	action.headshot_multiplier = 1
 	action.reload_when_out_of_ammo = false
 	-- A hit on the player doesn't stop the rounds, as it doesn't in UT. Otherwise the game's hit reaction ends the round's action
-	-- (CharacterStateHelper), and a held button doesn't start the next one.
+	-- (CharacterStateHelper).
 	action.uninterruptible = true
+	-- The gun fires while its button is held, as UT's does: the game starts an action with a hold_input when that button is held, not only
+	-- when it is pressed (validate_action), so the rounds start again by themselves whenever something ends them, and a round ends when
+	-- the button is let go
+	action.hold_input = own_action .. "_hold"
 	action.total_time = fire_time + interval + CONFIG.chain_margin
 	action.total_time_secondary = nil
 	action.ut_minigun = mode
