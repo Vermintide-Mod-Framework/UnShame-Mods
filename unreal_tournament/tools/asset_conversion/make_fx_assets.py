@@ -31,7 +31,6 @@ TEXTURES = {
     'flak_explosion': 'XEffects/Texture/fexpt.tga',
     'explosion_flash': 'XEffects/Texture/ExplosionFlashTex.tga',
     'muzzle_white': 'XEffects/Texture/MuzFlashWhite_t.tga',
-    'rocket_muzzle': 'XEffects/Texture/MuzFlashRocket_t.tga',
     'rocket_flare': 'XEffects/Texture/RocketFlare.tga',
     # the Bio Rifle (the goo, the splat decal)
     'bio_goop': 'XEffectMat/Texture/goop_green_a.tga',
