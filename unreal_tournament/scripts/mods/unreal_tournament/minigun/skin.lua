@@ -66,16 +66,19 @@ local CONFIG = {
 	effect_offset = {18, 100, -16},
 	tracer_intensity = 1,
 	-- ShellSpewer: the shells (the ShellCasing mesh, 8.6 units long) fly out of the gun's ejector and fall, for 0.5 to 1 s, turning as
-	-- they go. They go out to the right and up, and each is off that by a random share of shell_deviation: up to half its speed more or
-	-- less outwards, and some of it along the gun and up or down, so some fly far and some high. ShellSpewer's mSpeedRange (200 to 250)
-	-- and mDirDev (0.5, 0.2 and 0.6) looked too even next to UT, so the speeds and the last two are wider (set in the game).
+	-- they go. They go the way the ejector bone points, out to the right and up, and each is off that by a random share of
+	-- shell_deviation: up to half its speed more or less outwards, up to 0.6 of it forward or back along the gun (mDirDev's 0.5 and 0.6),
+	-- and some of it up or down. The ones that go back soon pass the eye, so most of those that are seen go forward. ShellSpewer's
+	-- mSpeedRange (200 to 250) and the 0.2 of mDirDev up and down looked too even next to UT, so those are wider (set in the game).
 	shell_speed = {100, 300}, -- UT units a second
 	shell_up = 0.8, -- of the speed
-	shell_deviation = {0.5, 0.4, 1}, -- out, along the gun, up
+	shell_deviation = {0.5, 0.6, 1}, -- out, along the gun, up
 	shell_life = {0.5, 1},
-	-- The shell's size. mSizeRange 10 times DrawScale 0.05 would be 0.5, which looked too big next to UT's (set in the game).
-	shell_scale = 0.35,
+	-- The shell's size: mSizeRange 10 times DrawScale 0.05
+	shell_scale = 0.5,
 	shell_gravity = 950, -- UT units a second squared (PhysicsVolume's)
+	-- How much of its speed a shell loses in a second (xEmitter's mAirResistance, which ShellSpewer leaves at 0.4)
+	shell_air_resistance = 0.4,
 	shell_spin = 12, -- radians a second, at most, each way
 	-- The fire and the winding are UT's AmbientSounds (MinigunFire.PlayAmbientSound), which loop: the bank's sounds loop, and each is
 	-- started once and stopped. The winding plays while the barrels turn and the fire doesn't (they wind up and down). The fire starts
@@ -406,7 +409,7 @@ local function shell(ejector, right, forward, up, world_unit, rotation)
 
 			local now = Managers.time:time("game")
 			local dt = now - last
-			local v = velocity:unbox() - up_box:unbox() * (CONFIG.shell_gravity * dt)
+			local v = velocity:unbox() * math.max(0, 1 - CONFIG.shell_air_resistance * dt) - up_box:unbox() * (CONFIG.shell_gravity * dt)
 
 			last = now
 			velocity:store(v)
