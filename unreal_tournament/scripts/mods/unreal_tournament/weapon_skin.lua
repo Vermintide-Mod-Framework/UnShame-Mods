@@ -289,8 +289,9 @@ local function new(def)
 	-- Returns the first person unit and where a node of the model is in its camera node's frame (x right, y ahead, z up), as the model is
 	-- drawn: for particles that are linked to the unit and drawn with the model's field of view (the fx_weapon_ materials), which stay on
 	-- the model as it moves. The node's place in the model comes from their world poses, and the model's place from its local pose, which
-	-- is the one that is drawn. Without a name it is the muzzle.
-	function self.model_point_in_view(node_name)
+	-- is the one that is drawn. Without a name it is the muzzle. offset, if it is given, moves the point from the node in the model's own
+	-- axes (right, forward, up), in the model's UT units: what UT's RelativeLocation of an effect attached to a bone is.
+	function self.model_point_in_view(node_name, offset)
 		local fp = local_first_person()
 
 		if not skin or not Unit.alive(skin.unit) or not fp then
@@ -299,6 +300,10 @@ local function new(def)
 
 		local node = node_name and Unit.has_node(skin.unit, node_name) and Unit.node(skin.unit, node_name) or skin.muzzle_node
 		local in_model = Matrix4x4.transform(Matrix4x4.inverse(Unit.world_pose(skin.unit, 0)), Unit.world_position(skin.unit, node))
+
+		if offset then
+			in_model = in_model + offset * CONFIG.model_meters_per_unit
+		end
 
 		return fp.first_person_unit, Matrix4x4.transform(Unit.local_pose(skin.unit, 0), in_model)
 	end

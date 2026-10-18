@@ -61,13 +61,13 @@ local CONFIG = {
 	-- LightningCharge: 10 sparks a second at the tip, each 0.2 s long and 5 units across, one of the four pictures of the texture,
 	-- turned at random. They stop while the weapon cannot fire (its next shot is not yet due, or it has no ammo: here, it is locked out).
 	-- The emitter is 30 units behind the muzzle (LightningCharge.RelativeLocation), inside the glass at the front, and each spark is up
-	-- to 10 units from there along the barrel (mPosDev). It is attached to the model, so these are the model's units, with its DrawScale.
+	-- to 10 units from there along the barrel (mPosDev). It is attached to the model's tip and its sparks move with it (mPosRelative),
+	-- so these are the model's units, along its barrel (its forward). The size is in the units of the view.
 	charge_rate = 10,
 	charge_life = 0.2,
 	charge_size = 9,
 	charge_back = 24,
 	charge_spread = 20,
-	charge_nearer = 0.8, -- share of the distance to the camera the sparks are drawn at (see update_charge)
 	-- The glass's middle is this many units above the muzzle, and the sparks are this bright (fitted to a picture of UT2004)
 	charge_up = 5,
 	charge_intensity = 0.45,
@@ -371,14 +371,16 @@ local function update_charge(skin, dt, api)
 	charge_time = charge_time + dt
 
 	local interval = 1 / CONFIG.charge_rate
-	local world_unit = skin.unit_scale
 
 	while charge_time >= interval do
 		charge_time = charge_time - interval
 
 		local along = CONFIG.charge_back + (math.random() * 2 - 1) * CONFIG.charge_spread
+		local offset = Vector3Box(Vector3(0, -along, CONFIG.charge_up))
 
-		-- (a random one of the four pictures of the texture)
+		-- A spark is linked to the first person unit at its place on the model, and drawn with the model's field of view (an fx_weapon_
+		-- material), so it moves with the model and the parts of the model in front of it hide it. A random one of the four pictures of
+		-- the texture.
 		particles.sprite({
 			attenuation = 0,
 			color = {
@@ -386,25 +388,15 @@ local function update_charge(skin, dt, api)
 				1,
 				1,
 			},
-			follow = function ()
-				local muzzle = api.state() == skin and api.muzzle_position()
-				local camera_position, camera_rotation = utils.camera_pose()
-
-				if not muzzle or not camera_rotation then
-					return nil
+			locked = function ()
+				if api.state() == skin then
+					return api.model_point_in_view(nil, offset:unbox())
 				end
-
-				-- UT draws the sparks over the glass at the front of the weapon. The point is moved towards the camera, and the sprite
-				-- is made smaller by as much, so it is seen at the same place and size but in front of the model.
-				local point = muzzle - Quaternion.forward(camera_rotation) * (along * world_unit) + Quaternion.up(camera_rotation) * (CONFIG.charge_up * world_unit)
-
-				return camera_position + (point - camera_position) * CONFIG.charge_nearer
 			end,
 			intensity = CONFIG.charge_intensity,
 			life = CONFIG.charge_life,
-			-- The sprite's size is in world units, not the model's
-			size = CONFIG.charge_size * world_unit / api.draw_scale() * CONFIG.charge_nearer,
-			texture = "lightning_charge_" .. math.random(0, 3),
+			material = "units/ut/fx/fx_weapon_lightning_charge_" .. math.random(0, 3),
+			size = CONFIG.charge_size * skin.view_across_scale,
 		})
 	end
 end
