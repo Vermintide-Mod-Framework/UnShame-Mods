@@ -4,9 +4,14 @@ material_contexts = {
 parent_material = "units/ut/weapon_standard"
 textures = {
 	color_map = "units/ut/flak/flak_cannon_flaktex1"
+	roughness_map = "units/ut/flak/flak_cannon_flaktex1_roughness"
 }
 variables = {
 	use_color_map = {
+		type = "scalar"
+		value = 1
+	}
+	use_roughness_map = {
 		type = "scalar"
 		value = 1
 	}

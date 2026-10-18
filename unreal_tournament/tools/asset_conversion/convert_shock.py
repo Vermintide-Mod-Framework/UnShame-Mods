@@ -10,7 +10,7 @@ import struct, os, sys, subprocess
 from formats import read_chunks as chunks, read_tga, write_png
 from quat import qmul, qconj, rotate
 from resources import texture_text
-from convert_weapon import material_text
+from convert_weapon import material_text, gloss_rows
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 EXPORT = sys.argv[1]
@@ -42,8 +42,12 @@ texture = UNITS + '/shock_body_df'
 w, h, rows = read_tga(EXPORT + '/UT2004Weapons/Texture/ShockRifleTex0.tga')
 write_png('%s/%s.png' % (REPO, texture), w, h, rows)
 open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(texture_text(texture))
+# (in the player's view the body shines where UT's weapon overlay does: convert_weapon.py's GLOSS_MATTE)
+roughness_map = texture + '_roughness'
+write_png('%s/%s.png' % (REPO, roughness_map), w, h, gloss_rows(rows))
+open('%s/%s.texture' % (REPO, roughness_map), 'w', newline='\n').write(texture_text(roughness_map, False))
 open('%s/%s/shock_rifle_fp_body.material' % (REPO, UNITS), 'w', newline='\n').write(
-    material_text('opaque', texture, first_person=True, roughness=0.9))
+    material_text('opaque', texture, first_person=True, roughness=0.9, roughness_map=roughness_map))
 open('%s/%s/shock_rifle_body.material' % (REPO, UNITS), 'w', newline='\n').write(material_text('opaque', texture, roughness=0.9, world=True))
 
 # ---------------------------------------------------------------- animation keys

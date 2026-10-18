@@ -16,6 +16,8 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 # unit of the mesh is. animations: (name in the psa, name here). locators: bones with no mesh whose place is wanted (muzzle).
 # skip_materials: materials (by index) whose faces are left out. A texture 'solid:rrggbb' is a plain color.
 # textures: more tgas to convert next to the unit's own textures, for a material that another script makes.
+# gloss: the materials (by index) whose texture's alpha is where UT's weapon overlay shines (see GLOSS_MATTE): they get a roughness map
+# made from it. roughness is then only for the other materials.
 WEAPONS = {
     'flak': {
         'psk': 'Weapons/SkeletalMesh/Flak_1st.psk',
@@ -25,8 +27,8 @@ WEAPONS = {
         'scale': 0.0125,
         'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
         'locators': ['Bone_Flash'],
-        # (UT's flak has no specular: its materials are plain textures)
         'roughness': 0.9,
+        'gloss': (0, 1, 2),
         'unit': 'units/ut/flak/flak_cannon',
         'lua': 'scripts/mods/unreal_tournament/flak/skin_animations.lua',
     },
@@ -59,6 +61,7 @@ WEAPONS['rocket'] = {
     'locators': ['Bone_Flash'],
     'stretch': ('Bone_rod', 'Bone_weapon', 'bone_feed'),
     'roughness': 0.9,
+    'gloss': (0,),
     'unit': 'units/ut/rocket/rocket_launcher',
     'lua': 'scripts/mods/unreal_tournament/rocket/skin_animations.lua',
 }
@@ -111,6 +114,8 @@ WEAPONS['sniper'] = {
     'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire')],
     'locators': ['Bone_Flash'],
     'roughness': 0.9,
+    # (the body only: the screens are UT's Combiners, with no overlay of their own)
+    'gloss': (0,),
     'unit': 'units/ut/lightning/lightning_gun',
     'lua': 'scripts/mods/unreal_tournament/lightning/skin_animations.lua',
 }
@@ -125,6 +130,7 @@ WEAPONS['classic_sniper'] = {
     'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire1', 'Fire1'), ('Fire2', 'Fire2'), ('fire3', 'Fire3'), ('PutDown', 'PutDown')],
     'locators': ['Dummy01'],
     'roughness': 0.9,
+    'gloss': (0, 1),
     'unit': 'units/ut/sniper/sniper_rifle',
     'lua': 'scripts/mods/unreal_tournament/sniper/skin_animations.lua',
 }
@@ -138,6 +144,7 @@ WEAPONS['minigun'] = {
     'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('FireLoop', 'FireLoop'), ('FireEnd', 'FireEnd')],
     'locators': ['Bone Flash', 'Bone_CaseEjector'],
     'roughness': 0.9,
+    'gloss': (0,),
     'unit': 'units/ut/minigun/minigun',
     'lua': 'scripts/mods/unreal_tournament/minigun/skin_animations.lua',
 }
@@ -151,6 +158,7 @@ WEAPONS['shield'] = {
     'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Charge', 'Charge'), ('Charged', 'Charged'), ('Fire', 'Fire'), ('Shield', 'Shield')],
     'locators': ['Bone_Flash'],
     'roughness': 0.9,
+    'gloss': (0,),
     'unit': 'units/ut/shield/shield_gun',
     'lua': 'scripts/mods/unreal_tournament/shield/skin_animations.lua',
 }
@@ -164,6 +172,7 @@ WEAPONS['assault'] = {
     'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
     'locators': ['Bone_Flash a', 'Bone_Flash b'],
     'roughness': 0.9,
+    'gloss': (0,),
     'unit': 'units/ut/assault/assault_rifle',
     'mirror_unit': 'units/ut/assault/assault_rifle_left',
     'lua': 'scripts/mods/unreal_tournament/assault/skin_animations.lua',
@@ -239,8 +248,27 @@ variables = {
 ''',
 }
 
-def material_text(kind, texture, opacity=None, first_person=False, roughness=None, world=False):
+# UT2004's weapons draw a second layer over their texture in the player's view (Weapon.HighDetailOverlay, UT2004Weapons.WeaponSpecMap2):
+# a reflection of the world (the cubemap BrCube1) added where the texture's alpha says, which is how their metal parts shine and the rest
+# does not. Here the alpha is made a roughness map instead, for the game's own reflections: GLOSS_MATTE where the alpha is 0, down to
+# GLOSS_SHINY where it is full.
+GLOSS_MATTE = 0.9
+GLOSS_SHINY = 0.2
+
+def gloss_rows(rows):
+    """The rows of a roughness map (in its red channel, read linearly) from the alpha of a texture's rows."""
+    out = []
+    for row in rows:
+        values = bytes(round(255 * (GLOSS_MATTE - (GLOSS_MATTE - GLOSS_SHINY) * a / 255)) for a in row[3::4])
+        out.append(b''.join(bytes((v, v, v, 255)) for v in values))
+    return out
+
+def material_text(kind, texture, opacity=None, first_person=False, roughness=None, world=False, roughness_map=None):
     text = MATERIAL_TEMPLATES[kind] % texture
+
+    if roughness_map is not None:
+        text = text.replace('\tcolor_map = "%s"\n' % texture, '\tcolor_map = "%s"\n\troughness_map = "%s"\n' % (texture, roughness_map))
+        text = text.rstrip('\n').rstrip('}') + '\tuse_roughness_map = {\n\t\ttype = "scalar"\n\t\tvalue = 1\n\t}\n}\n'
 
     if world:
         # (the material of a third person weapon fades out when the camera is close, as the game's characters do: units/ut/world_standard.material
@@ -505,8 +533,14 @@ def main():
                 w, h, rows = read_tga(export + '/' + tga)
             write_png('%s/%s.png' % (REPO, texture), w, h, rows)
             open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(texture_text(texture))
-            done_textures[texture] = True
-        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture, opacity, first_person=True, roughness=cfg['roughness'].get(m) if isinstance(cfg.get('roughness'), dict) else cfg.get('roughness')))
+            done_textures[texture] = (w, h, rows)
+        roughness_map = None
+        if m in cfg.get('gloss', ()):
+            roughness_map = texture + '_roughness'
+            w, h, rows = done_textures[texture]
+            write_png('%s/%s.png' % (REPO, roughness_map), w, h, gloss_rows(rows))
+            open('%s/%s.texture' % (REPO, roughness_map), 'w', newline='\n').write(texture_text(roughness_map, False))
+        open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture, opacity, first_person=True, roughness=cfg['roughness'].get(m) if isinstance(cfg.get('roughness'), dict) else cfg.get('roughness'), roughness_map=roughness_map))
 
     for tga in cfg.get('textures', ()):
         texture = '%s/%s_%s' % (unit_dir, unit_base, os.path.splitext(os.path.basename(tga))[0].lower())
