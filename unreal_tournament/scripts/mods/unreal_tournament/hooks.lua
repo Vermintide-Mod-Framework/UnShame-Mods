@@ -193,9 +193,10 @@ mod.shock_beam_callbacks = {}
 mod.lightning_bolt_callbacks = {}
 
 -- The Minigun tells its skin about each round. It runs on the shooter's machine, and on the others' after they get the message.
---   mod.minigun_shot_callbacks[name] = function (owner_unit, mode, end_position, hit_normal, hit_level)
+--   mod.minigun_shot_callbacks[name] = function (owner_unit, mode, end_position, hit_normal, hit_level, heavy_wall)
 -- mode is "primary" or "alt". The round goes from the weapon to end_position. hit_normal is the zero vector if it hit nothing. hit_level
--- is true if it hit the level or a prop, not a character.
+-- is true if it hit the level or a prop, not a character. heavy_wall is true if that is a surface where UT's primary round makes its
+-- heavy wall hit (minigun.lua).
 mod.minigun_shot_callbacks = {}
 
 -- A shock combo has gone off. It runs on every machine, when the explosion is made.

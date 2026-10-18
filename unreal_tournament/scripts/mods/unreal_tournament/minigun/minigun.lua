@@ -343,6 +343,24 @@ mod.handgun_start_callbacks.minigun = function (self, new_action)
 	utils.set_handgun_spread(self, new_action.ut_spread)
 end
 
+-- The surfaces (the game's surface materials) where UT's primary round doesn't make its heavy wall hit (HitEffect.GetHitEffect): dirt
+-- makes DirtImpact, wood and plants pclImpactSmoke, flesh pclredsmoke. Those are left to the game's own impact. Every other surface,
+-- and one UT has no type for, makes xHeavyWallHitEffect.
+local NOT_HEAVY_WALL = {
+	dirt = true,
+	mud = true,
+	sand = true,
+	wood_bridge = true,
+	wood_solid = true,
+	wood_hollow = true,
+	grass = true,
+	forest_grass = true,
+	hay = true,
+	fruit = true,
+	flesh = true,
+	puke = true,
+}
+
 mod.handgun_update_callbacks.minigun = function (self)
 	if self._ut_minigun_checked or self.state == "waiting_to_shoot" then
 		return
@@ -352,27 +370,27 @@ mod.handgun_update_callbacks.minigun = function (self)
 
 	local owner_unit = self.owner_unit
 	local action = self.current_action
-	local end_position, hit_normal, hit_level = utils.handgun_round_hit(self)
+	local end_position, hit_normal, hit_level, surface = utils.handgun_round_hit(self)
 
 	mod.minigun.last_shot_time = Managers.time:time("game")
 	mod.minigun.last_mode = action.ut_minigun
 
-	mod.minigun_shot(owner_unit, action.ut_minigun, end_position, hit_normal, hit_level)
+	mod.minigun_shot(owner_unit, action.ut_minigun, end_position, hit_normal, hit_level, hit_level and not NOT_HEAVY_WALL[surface])
 end
 
 -- What the skin is told (mod.minigun_shot_callbacks in hooks.lua), and what is sent to the other players, who see the same tracers and
--- hits from the weapon of the player's character.
-function mod.minigun_shot(owner_unit, mode, end_position, hit_normal, hit_level)
+-- hits from the weapon of the player's character. The hit is sent as 0 (not the level), 1 (the level) or 2 (a heavy wall of the level).
+function mod.minigun_shot(owner_unit, mode, end_position, hit_normal, hit_level, heavy_wall)
 	for _, callback in pairs(mod.minigun_shot_callbacks) do
-		callback(owner_unit, mode, end_position, hit_normal, hit_level)
+		callback(owner_unit, mode, end_position, hit_normal, hit_level, heavy_wall)
 	end
 
 	mod:network_send("ut_minigun_shot", "others", Managers.state.unit_storage:go_id(owner_unit), mode == "alt" and 1 or 0,
 		Vector3.x(end_position), Vector3.y(end_position), Vector3.z(end_position), Vector3.x(hit_normal), Vector3.y(hit_normal), Vector3.z(hit_normal),
-		hit_level and 1 or 0)
+		heavy_wall and 2 or hit_level and 1 or 0)
 end
 
-mod:network_register("ut_minigun_shot", function (_, owner_go_id, alt, x, y, z, normal_x, normal_y, normal_z, hit_level)
+mod:network_register("ut_minigun_shot", function (_, owner_go_id, alt, x, y, z, normal_x, normal_y, normal_z, hit)
 	local unit = Managers.state.unit_storage:unit(owner_go_id)
 
 	if not unit or not Unit.alive(unit) then
@@ -380,7 +398,7 @@ mod:network_register("ut_minigun_shot", function (_, owner_go_id, alt, x, y, z, 
 	end
 
 	for _, callback in pairs(mod.minigun_shot_callbacks) do
-		callback(unit, alt == 1 and "alt" or "primary", Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), hit_level == 1)
+		callback(unit, alt == 1 and "alt" or "primary", Vector3(x, y, z), Vector3(normal_x, normal_y, normal_z), hit >= 1, hit == 2)
 	end
 end)
 

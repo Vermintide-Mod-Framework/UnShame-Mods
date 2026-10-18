@@ -304,9 +304,24 @@ function utils.set_handgun_spread(handgun_action, spread)
 	end
 end
 
+-- Returns the surface material of a unit where it was hit (stone, wood_solid, dirt, ...), found as the game finds it for its impacts
+-- (EffectHelper.play_surface_material_effects): the level's default where the unit has none.
+function utils.surface_material(hit_unit, position, normal)
+	local material_ids = EffectHelper.query_material_surface(hit_unit, position, normal)
+	local material = material_ids and material_ids[1] and material_ids[1] ~= 0 and MaterialIDToName.surface_material[material_ids[1]]
+
+	if not material then
+		local level_settings = LevelHelper:current_level_settings()
+
+		material = level_settings and level_settings.default_surface_material or DefaultSurfaceMaterial
+	end
+
+	return material
+end
+
 -- Returns where the round of a game handgun action hit, the normal of what it hit (the zero vector if nothing, and then the end is
--- 100 m along), and whether what it hit is the level or a prop, not a character. The ray goes the way set_handgun_spread sent the round,
--- or along the aim.
+-- 100 m along), whether what it hit is the level or a prop, not a character, and then the surface material it hit
+-- (utils.surface_material). The ray goes the way set_handgun_spread sent the round, or along the aim.
 function utils.handgun_round_hit(handgun_action)
 	local owner_unit = handgun_action.owner_unit
 	local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
@@ -316,9 +331,11 @@ function utils.handgun_round_hit(handgun_action)
 	local direction = Quaternion.forward(rotation)
 	local hits = PhysicsWorld.immediate_raycast_actors(handgun_action.physics_world, origin, direction, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
 	local hit = utils.first_beam_hit(hits, owner_unit)
-	local hit_level = hit and not Unit.get_data(Actor.unit(hit[4]), "breed") or false
+	local hit_unit = hit and Actor.unit(hit[4])
+	local hit_level = hit and not Unit.get_data(hit_unit, "breed") or false
+	local surface = hit_level and utils.surface_material(hit_unit, hit[1], hit[3]) or nil
 
-	return hit and hit[1] or origin + direction * 100, hit and hit[3] or Vector3.zero(), hit_level
+	return hit and hit[1] or origin + direction * 100, hit and hit[3] or Vector3.zero(), hit_level, surface
 end
 
 -- Returns a function that gives a screen gui in the level's world, made with the materials of material_file, for drawing over the

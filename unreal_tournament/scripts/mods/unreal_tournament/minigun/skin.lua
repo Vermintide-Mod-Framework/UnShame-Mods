@@ -35,6 +35,11 @@ local CONFIG = {
 	-- so the puffs stay together by the muzzle and thin out as they rise (both set in the game: rising by that much of the zone's gravity
 	-- sent them up in a long column, and fading only from a fifth of their life kept the column thick).
 	smoke_rate = 30, -- puffs a second
+	-- How many puffs each mode's smoke holds at a time (mMaxParticles: MinigunAltMuzzleSmoke holds half as many)
+	smoke_max = {
+		primary = 30,
+		alt = 15,
+	},
 	smoke_life = { 0.6, 1.2 },
 	smoke_size = { 15, 20 }, -- UT units across
 	smoke_growth = 4, -- UT units across, a second
@@ -284,11 +289,28 @@ local function weapon_light(owner_unit, follow)
 	})
 end
 
--- The smoke at the muzzle in the player's own view: how many puffs a second it makes now, and the part of a puff it owes
+-- The smoke at the muzzle in the player's own view. Each mode has its own emitter (WeaponFire.SmokeEmitterClass): how many puffs a
+-- second it makes now, the part of a puff it owes, and when each of its puffs ends.
 local smoke = {
-	rate = 0,
-	owed = 0,
+	primary = {
+		rate = 0,
+		owed = 0,
+		ends = {},
+	},
+	alt = {
+		rate = 0,
+		owed = 0,
+		ends = {},
+	},
 }
+
+local function clear_smoke()
+	for _, emitter in pairs(smoke) do
+		emitter.rate = 0
+		emitter.owed = 0
+		table.clear(emitter.ends)
+	end
+end
 
 -- Where the smoke starts: Weapon.GetEffectStart, EffectOffset from the eye in the weapon's view (WeaponFire.DrawMuzzleFlash moves the
 -- smoke emitter there). It moves with the bob and the view shake, but not with the gun's animation, as the barrels' muzzle does.
@@ -305,43 +327,64 @@ local function smoke_start(api)
 	return Unit.world_position(first_person_unit, camera_node) + Quaternion.rotate(Unit.world_rotation(first_person_unit, camera_node), point)
 end
 
--- Makes the puffs of smoke that are due, in the space of the model in the player's view (where a UT unit is world_unit meters), drawn
--- with its field of view. The rate falls as MuzzleSmoke's does.
-local function update_smoke(api, world_unit, dt)
-	if smoke.rate <= 0 then
+-- Makes the puffs of smoke of one mode's emitter that are due, in the space of the model in the player's view (where a UT unit is
+-- world_unit meters), drawn with its field of view. A puff that is due while the emitter has as many as it can hold isn't made. The rate
+-- falls as MuzzleSmoke's does.
+local function update_smoke_emitter(api, mode, world_unit, dt)
+	local emitter = smoke[mode]
+
+	if emitter.rate <= 0 then
 		return
 	end
 
-	smoke.owed = smoke.owed + smoke.rate * dt
+	local now = Managers.time:time("game")
+	local ends = emitter.ends
+
+	for i = #ends, 1, -1 do
+		if ends[i] <= now then
+			table.remove(ends, i)
+		end
+	end
+
+	emitter.owed = emitter.owed + emitter.rate * dt
 
 	local muzzle = smoke_start(api)
 
-	while smoke.owed >= 1 and muzzle do
+	while emitter.owed >= 1 and muzzle do
 		local life = random_between(CONFIG.smoke_life)
 		local grey = random_between(CONFIG.smoke_grey)
 		local rise = random_between(CONFIG.smoke_rise)
 
-		smoke.owed = smoke.owed - 1
+		emitter.owed = emitter.owed - 1
 
-		particles.sprite({
-			additive = 0,
-			attenuation = CONFIG.smoke_attenuation,
-			color = { grey, grey, grey },
-			growth = CONFIG.smoke_growth * world_unit,
-			life = life,
-			material = "units/ut/fx/fx_weapon_muzzle_smoke_" .. math.random(0, CONFIG.smoke_tiles - 1),
-			position = muzzle,
-			size = random_between(CONFIG.smoke_size) * world_unit,
-			velocity = Vector3(0, 0, rise * world_unit),
-		})
+		if #ends < CONFIG.smoke_max[mode] then
+			ends[#ends + 1] = now + life
+
+			particles.sprite({
+				additive = 0,
+				attenuation = CONFIG.smoke_attenuation,
+				color = { grey, grey, grey },
+				growth = CONFIG.smoke_growth * world_unit,
+				life = life,
+				material = "units/ut/fx/fx_weapon_muzzle_smoke_" .. math.random(0, CONFIG.smoke_tiles - 1),
+				position = muzzle,
+				size = random_between(CONFIG.smoke_size) * world_unit,
+				velocity = Vector3(0, 0, rise * world_unit),
+			})
+		end
 	end
 
-	smoke.rate = smoke.rate - smoke.rate * math.min(1, dt)
+	emitter.rate = emitter.rate - emitter.rate * math.min(1, dt)
 
-	if smoke.rate < 1 then
-		smoke.rate = 0
-		smoke.owed = 0
+	if emitter.rate < 1 then
+		emitter.rate = 0
+		emitter.owed = 0
 	end
+end
+
+local function update_smoke(api, world_unit, dt)
+	update_smoke_emitter(api, "primary", world_unit, dt)
+	update_smoke_emitter(api, "alt", world_unit, dt)
 end
 
 -- A tracer: a streak that flies from the muzzle to where the round hit
@@ -540,7 +583,7 @@ local function update_remote_sounds(now)
 end
 
 -- A round by any player, on every machine
-mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_position, hit_normal, hit_level)
+mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_position, hit_normal, hit_level, heavy_wall)
 	if not skin_apis[1] then
 		return
 	end
@@ -548,9 +591,10 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 	local interval = mode == "alt" and CONFIG.tracer_alt_interval or CONFIG.tracer_interval
 
 	-- Where a round hits a wall, as MinigunAttachment.ThirdPersonEffects: the primary fire's sparks and, half the time, a puff of dust
-	-- (xHeavyWallHitEffect), and the alt fire's small explosion in dust (ExploWallHit), with one of the impact sounds. UT draws the
-	-- others' hits only near the viewer. The game's own impact of the round is there too.
-	if hit_level then
+	-- (xHeavyWallHitEffect, only on the surfaces where UT makes it: see heavy_wall), and the alt fire's small explosion in dust
+	-- (ExploWallHit), with one of the impact sounds. UT draws the others' hits only near the viewer. The game's own impact of the round
+	-- is there too, and is all there is on the other surfaces.
+	if hit_level and (mode == "alt" or heavy_wall) then
 		local camera_position = utils.camera_pose()
 		local near = utils.is_local_player_unit(owner_unit) or camera_position and Vector3.distance(camera_position, end_position) < CONFIG.hit_effect_distance * UNIT
 
@@ -590,8 +634,8 @@ mod.minigun_shot_callbacks.minigun_skin = function (owner_unit, mode, end_positi
 				end
 			end)
 
-			-- The smoke, which the round keeps going
-			smoke.rate = CONFIG.smoke_rate
+			-- The mode's smoke, which the round keeps going
+			smoke[mode].rate = CONFIG.smoke_rate
 
 			-- MinigunAttachment.GetTracerStart: in the player's own view the tracer starts at Weapon.GetEffectStart, EffectOffset from
 			-- the eye (in a view of 90 degrees across)
@@ -788,8 +832,7 @@ local function new_skin(variant)
 			table.clear(remote_fire)
 			table.clear(rolls)
 			table.clear(light_rounds)
-			smoke.rate = 0
-			smoke.owed = 0
+			clear_smoke()
 			sound.fire_id = nil
 			sound.fire_mode = nil
 			sound.wind_id = nil
