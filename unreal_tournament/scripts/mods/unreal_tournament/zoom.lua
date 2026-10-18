@@ -99,6 +99,19 @@ local function apply_zoom_fov()
 	end
 end
 
+-- The game blends the multiplier over a time for the Handmaiden's dash (set_additional_fov_multiplier_with_lerp_time), but never lets go
+-- of a blend that is done: _update_additional_fov_multiplier sets its own copy of the blend to nil, not the camera's. So after a dash the
+-- camera sets the multiplier back to the blend's end every frame, and the zoom no longer works. A blend that is done is ended here, at
+-- its end value.
+mod:hook_safe(CameraManager, "_update_additional_fov_multiplier", function (self)
+	local data = self._additional_fov_multiplier_data
+
+	if data and data.current_lerp_time >= data.total_lerp_time then
+		self._additional_fov_multiplier = data.fov_multiplier
+		self._additional_fov_multiplier_data = nil
+	end
+end)
+
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	local unit = local_wielding_zoom_weapon()
 
