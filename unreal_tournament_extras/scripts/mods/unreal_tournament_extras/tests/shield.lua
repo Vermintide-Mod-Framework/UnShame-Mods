@@ -304,6 +304,8 @@ end
 -- how many there were, and the damage the rat took.
 local function shield_to_shield(t, button, to_rat)
 	local player = t.unit()
+	-- (the way Bardin is told to look, as { x, y, z })
+	local told = { 0, 0, 0 }
 	local shooter = t.add_bot(SHOCK_BOT_PROFILE, SHOCK_BOT_CAREER, ut.items.weapons.shock_rifle.key, SHOCK_DISTANCE)
 
 	if not t.expect(shooter, "Sienna could not be added") then
@@ -362,6 +364,8 @@ local function shield_to_shield(t, button, to_rat)
 
 			return { Vector3.x(way), Vector3.y(way), Vector3.z(way) }
 		end)
+
+		told = direction
 
 		t.bot_look(bardin, direction)
 	else
@@ -429,7 +433,17 @@ local function shield_to_shield(t, button, to_rat)
 			local along = math.clamp(Vector3.dot(middle - from, Vector3.normalize(to - from)), 0, Vector3.distance(from, to))
 			local nearest = from + Vector3.normalize(to - from) * along
 
-			return string.format("the last reflected beam (%d) passed %.2f m from the rat's middle, %.2f m above it", #reflected_beams, Vector3.distance(nearest, middle), Vector3.z(nearest) - Vector3.z(middle))
+			-- Where the beam went from and to (heights above Bardin's feet and the enemy's, and how far each is from the enemy on the
+			-- ground), and the way Bardin looks against the way he was told to look
+			local bardin_feet = Unit.local_position(bardin, 0)
+			local enemy_feet = Unit.alive(rat) and Unit.local_position(rat, 0) or to
+			local bardin_look = Quaternion.forward(ScriptUnit.extension(bardin, "first_person_system"):current_rotation())
+			local beam_way = Vector3.normalize(to - from)
+			local function flat_distance(a, b)
+				return Vector3.length(Vector3.flat(a - b))
+			end
+
+			return string.format("the last reflected beam (%d) passed %.2f m from the rat's middle, %.2f m above it. It went from %.2f m above Bardin's feet, %.2f m from the enemy, to %.2f m above the enemy's feet, %.2f m from it. Its way %.2f %.2f %.2f, Bardin looks %.2f %.2f %.2f, he was told %.2f %.2f %.2f", #reflected_beams, Vector3.distance(nearest, middle), Vector3.z(nearest) - Vector3.z(middle), Vector3.z(from) - Vector3.z(bardin_feet), flat_distance(from, enemy_feet), Vector3.z(to) - Vector3.z(enemy_feet), flat_distance(to, enemy_feet), Vector3.x(beam_way), Vector3.y(beam_way), Vector3.z(beam_way), Vector3.x(bardin_look), Vector3.y(bardin_look), Vector3.z(bardin_look), told[1], told[2], told[3])
 		end)
 
 		t.log("%s", miss)
