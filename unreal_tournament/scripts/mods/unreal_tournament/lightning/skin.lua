@@ -17,22 +17,21 @@ local CONFIG = {
 	fire_animation_rate = 1.25, -- SniperFire.FireAnimRate: the Fire animation plays this much faster than its own rate
 	-- NewLightningBolt (PT_Branch) is 30 particles of size 30, each out of place by up to 5 units (mPosDev). It is drawn as a line of
 	-- parts of the streak texture (the upper half of LightningBoltT), each bolt_width units wide and bolt_stretch times that long, so the
-	-- texture's zigzag is drawn out along the bolt. The corners between the parts are out of line by up to bolt_jitter units, about a
-	-- quarter of a part, which makes the bolt ragged as in pictures of UT2004 (at mPosDev's 5, and parts twice as long as wide, the
-	-- zigzag repeated evenly and tightly; set against those pictures). How PT_Branch lays the
+	-- texture's zigzag is drawn out along the bolt (set against pictures of UT2004: parts twice as long as wide repeated the zigzag
+	-- evenly and tightly). The corners between the parts are out of line by up to bolt_jitter units, UT's mPosDev. How PT_Branch lays the
 	-- texture along the bolt is in UT's engine, not its scripts: one part for each of the 30 particles, squeezed along a short bolt,
 	-- looked like a hatched band in pictures, not UT's thin ragged line. It is the same emitter as the flare, so it fades the same way
 	-- (flare_life). In pictures of UT2004 its streaks look like the texture added once (white middles, thin blue edges), while the flare
 	-- is 9 times the texture: the particles all add their flare at the start, but their streaks lie along the bolt.
 	bolt_width = 30, -- UT units
 	bolt_stretch = 8, -- a part's length, in widths
-	bolt_jitter = 60, -- UT units
+	bolt_jitter = 5, -- UT units
 	bolt_intensity = 1,
-	-- ChildLightningBolt: 10 particles of size 15, out of place by up to 15 units. In pictures of UT2004 an arc is the texture drawn out
-	-- along a few long parts with gentle bends, so its parts are longer than the bolt's (set against those pictures).
+	-- ChildLightningBolt: 10 particles of size 15, out of place by up to 15 units (mPosDev). In pictures of UT2004 an arc is the texture
+	-- drawn out along a few long parts with gentle bends, so its parts are longer than the bolt's (set against those pictures).
 	arc_width = 15,
 	arc_stretch = 16, -- a part's length, in widths
-	arc_jitter = 30,
+	arc_jitter = 15, -- UT units
 	arc_life = 0.5,
 	arc_intensity = 1,
 	-- The flare where the bolt starts and ends (the lower half of LightningBoltT). It is 30 units wide, the size of NewLightningBolt's
