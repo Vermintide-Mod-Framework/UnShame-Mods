@@ -564,7 +564,7 @@ local function new_skin(variant)
 			scale = 0.85,
 			-- (set in the game)
 			grip_right = -4,
-			grip_forward = 4,
+			grip_forward = -4,
 			grip_up = 0,
 			yaw = -90,
 			pitch = 0,
