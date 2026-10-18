@@ -80,7 +80,8 @@ local function scenarios()
 			end,
 		},
 		{
-			-- The other button is pressed while a round runs and the first is let go: the other mode fires once the round is over
+			-- The other button is pressed while a round runs and the first is let go: the barrels slow down to a stop and wind up again,
+			-- as in UT, and the other mode fires (about 0.42 s later either way)
 			name = "switching modes while firing fires the other mode",
 			run = function (t)
 				for _, order in ipairs({ { "action_one", "action_two", "alt" }, { "action_two", "action_one", "primary" } }) do

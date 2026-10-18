@@ -116,23 +116,26 @@ register_damage_profile("ut_minigun_alt_bullet", "shot_repeating", function (pro
 	bullet_profile(profile, CONFIG.alt_damage)
 end)
 
--- The state of the barrels and of the buttons, which the skin draws. spin is how fast the barrels turn, from 0 to 1 of the speed of the
--- mode that is running.
+-- The state of the local player's barrels and buttons, which the skin draws and plays
 mod.minigun = {
+	-- The mode the barrels turn for, how fast they turn (0 to 1 of its speed), and whether they slow down to a stop
 	mode = nil,
 	spin = 0,
+	winding_down = false,
+	-- Whether the button of each mode is held, with ammo to fire
+	held = {
+		primary = false,
+		alt = false,
+	},
 	-- The mode of the shot that was made last, and when
 	last_shot_time = nil,
 }
 
 -- Weapon template
 
--- After a round, a held button fires the next round of its mode. The game starts an action only on a press, and a press of the other
--- button while a round runs is lost, so the other mode follows a round when its button is held too, with its wind up. The round's own
--- button comes first, so while both are held the mode that was firing goes on.
+-- After a round, a held button fires the next round of its mode. The other mode doesn't follow: it can only start once the barrels have
+-- stopped (barrels_stopped).
 local function fire_chain_actions(own_action, loop_name, interval)
-	local other_action = own_action == "action_one" and "action_two" or "action_one"
-
 	return {
 		-- (a weapon switch can end a round at any time: a round is shorter than the base weapon's 0.3 s, and a held button starts the
 		-- next one at once)
@@ -148,13 +151,19 @@ local function fire_chain_actions(own_action, loop_name, interval)
 			start_time = interval,
 			sub_action = loop_name,
 		},
-		{
-			action = other_action,
-			input = other_action .. "_hold",
-			start_time = interval,
-			sub_action = "default",
-		},
 	}
+end
+
+-- Returns whether a mode's first round can start: as in UT, only once the barrels have stopped (Minigun.StartFire waits for both modes to
+-- be Idle), so a switch of modes, or a press while they still slow down, waits for them to stop and then winds up from the start. While
+-- the mode's button is still held and its barrels turn, its rounds go on (something else ended the last one). The barrels' state is the
+-- local player's; the others' guns (bots on the host) fire as their own machines let them.
+local function can_start(mode)
+	return function (unit)
+		local state = mod.minigun
+
+		return not utils.is_local_player_unit(unit) or state.spin <= 0 or state.mode == mode and not state.winding_down
+	end
 end
 
 -- The flow events of the game's handgun shot that start its tracer (ActionHandgun.client_owner_post_update)
@@ -210,6 +219,7 @@ local function build_shot(source, mode, first, hand, spray, volley)
 	-- when it is pressed (validate_action), so the rounds start again by themselves whenever something ends them, and a round ends when
 	-- the button is let go
 	action.hold_input = own_action .. "_hold"
+	action.condition_func = first and can_start(mode) or nil
 	action.total_time = fire_time + interval + CONFIG.chain_margin
 	action.total_time_secondary = nil
 	action.ut_minigun = mode
@@ -320,16 +330,12 @@ mod.handgun_start_callbacks.minigun = function (self, new_action)
 		return
 	end
 
-	-- The first round of a press has the wind up before it. The barrels that were still turning from the last press need less of it.
-	if new_action.ut_minigun_first then
-		local state = mod.minigun
-		local owner_unit = self.owner_unit
+	-- The first round of a press starts the still barrels for its mode (can_start)
+	local state = mod.minigun
 
-		if utils.is_local_player_unit(owner_unit) and state.spin > 0 then
-			local wind_up = new_action.ut_minigun == "alt" and CONFIG.alt_wind_up or CONFIG.primary_wind_up
-
-			self.time_to_shoot = Managers.time:time("game") + wind_up * (1 - state.spin)
-		end
+	if new_action.ut_minigun_first and utils.is_local_player_unit(self.owner_unit) and state.spin <= 0 then
+		state.mode = new_action.ut_minigun
+		state.winding_down = false
 	end
 
 	-- UT's spread instead of the game's. The direction of the round is kept, for the tracer.
@@ -377,42 +383,56 @@ mod:network_register("ut_minigun_shot", function (_, owner_go_id, alt, x, y, z, 
 	end
 end)
 
--- The barrels. They speed up while a button is held and slow down after, at the rate of the mode that is running, like
--- MinigunFire's WindUp and WindDown states. mod.minigun.spin is for the skin and the first round.
+-- The barrels, like MinigunFire's Idle, WindUp, FireLoop and WindDown states. When they are still, a held button picks the mode, and they
+-- speed up at its rate while its button stays held. Once it is let go they slow down at the same rate until they stop, whatever is held
+-- then: only stopped barrels can wind up again, for either mode. mod.minigun.spin (0 to 1 of the mode's speed), mode and winding_down
+-- are for the skin and for when a round can start (can_start).
+local function stop_barrels(state)
+	state.spin = 0
+	state.mode = nil
+	state.winding_down = false
+end
+
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	local state = mod.minigun
 	local player = Managers.player and Managers.player:local_player_safe()
 	local unit = player and player.player_unit
 
 	if not unit or not Unit.alive(unit) or not TEMPLATE_NAMES[utils.wielded_template_name(unit)] then
-		state.spin = 0
-		state.mode = nil
+		stop_barrels(state)
+		state.held.primary = false
+		state.held.alt = false
 
 		return
 	end
 
 	local input_extension = ScriptUnit.extension(unit, "input_system")
-	local holding_primary = input_extension:get("action_one_hold")
-	local holding_alt = input_extension:get("action_two_hold")
 	local has_ammo = (utils.local_ranged_ammo() or 0) > 0
 
-	if has_ammo and (holding_primary or holding_alt) then
-		state.mode = holding_primary and "primary" or "alt"
+	state.held.primary = has_ammo and input_extension:get("action_one_hold") or false
+	state.held.alt = has_ammo and input_extension:get("action_two_hold") or false
+
+	if state.spin <= 0 then
+		stop_barrels(state)
+
+		-- (the mode of a round that has started is set by it, see handgun_start_callbacks)
+		state.mode = state.held.primary and "primary" or state.held.alt and "alt" or nil
 	end
 
-	local wind_up = state.mode == "alt" and CONFIG.alt_wind_up or CONFIG.primary_wind_up
+	if state.mode then
+		local wind_up = state.mode == "alt" and CONFIG.alt_wind_up or CONFIG.primary_wind_up
 
-	if has_ammo and (holding_primary or holding_alt) then
-		state.spin = math.min(1, state.spin + dt / wind_up)
-	else
-		state.spin = math.max(0, state.spin - dt / wind_up)
+		if state.held[state.mode] and not state.winding_down then
+			state.spin = math.min(1, state.spin + dt / wind_up)
+		else
+			state.winding_down = true
+			state.spin = math.max(0, state.spin - dt / wind_up)
+		end
 	end
 
 	state.turns_per_second = (state.mode == "alt" and CONFIG.alt_barrel_turns or CONFIG.primary_barrel_turns) * state.spin
-	state.holding = has_ammo and (holding_primary or holding_alt)
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
-	mod.minigun.spin = 0
-	mod.minigun.mode = nil
+	stop_barrels(mod.minigun)
 end

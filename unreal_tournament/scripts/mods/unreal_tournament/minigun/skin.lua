@@ -78,9 +78,9 @@ local CONFIG = {
 	shell_gravity = 950, -- UT units a second squared (PhysicsVolume's)
 	shell_spin = 12, -- radians a second, at most, each way
 	-- The fire and the winding are UT's AmbientSounds (MinigunFire.PlayAmbientSound), which loop: the bank's sounds loop, and each is
-	-- started once and stopped. The winding plays while the barrels turn and no round leaves (they wind up and down), and the fire while
-	-- rounds leave: the player's own while a fire button is held, and anyone's until there has been no round for this long, which is
-	-- longer than the time between the mode's rounds (1/15 s and 1/5 s).
+	-- started once and stopped. The winding plays while the barrels turn and the fire doesn't (they wind up and down). The fire starts
+	-- with a mode's first round: the player's own stops when that mode's button is let go, and the others' (whose buttons aren't known
+	-- here) once there has been no round for this long, which is longer than the time between the mode's rounds (1/15 s and 1/5 s).
 	stop_after = {
 		primary = 0.18,
 		alt = 0.3,
@@ -417,7 +417,6 @@ local sound = {
 	fire_id = nil,
 	fire_mode = nil,
 	wind_id = nil,
-	last_round = -math.huge,
 }
 
 local function stop_fire_sound(api)
@@ -440,17 +439,13 @@ local function stop_sounds(api)
 end
 
 local function update_sounds(api, dt)
-	local now = Managers.time:time("game")
-	-- (the mode of the last round says how long its rounds can be apart; a switch to the other mode keeps the fire going until its
-	-- first round changes the sound)
-	local firing = minigun.holding and now - sound.last_round < CONFIG.stop_after[sound.fire_mode or "primary"]
-
-	if sound.fire_id and not firing then
+	-- The fire stops as soon as its mode's button is let go (to stop, or to switch: the other mode's fire starts with its own first round)
+	if sound.fire_id and not minigun.held[sound.fire_mode] then
 		stop_fire_sound(api)
 	end
 
-	-- The winding plays while the barrels turn and no round leaves: as they wind up, and as they slow down
-	local winding = minigun.spin > 0 and not firing
+	-- The winding plays while the barrels turn and the fire doesn't: as they wind up, and as they slow down
+	local winding = minigun.spin > 0 and not sound.fire_id
 
 	if winding and not sound.wind_id then
 		sound.wind_id = api.play_sound("ut_minigun_wind")
@@ -462,8 +457,6 @@ local function update_sounds(api, dt)
 end
 
 local function round_sound(api, mode)
-	sound.last_round = Managers.time:time("game")
-
 	if sound.fire_mode ~= mode then
 		stop_fire_sound(api)
 
