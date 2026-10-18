@@ -4,7 +4,6 @@ material_contexts = {
 parent_material = "units/ut/world_standard"
 textures = {
 	color_map = "units/ut/sniper/third_person_sniper1"
-	emissive_map = "units/ut/sniper/third_person_sniper1"
 }
 variables = {
 	use_color_map = {
@@ -14,13 +13,5 @@ variables = {
 	roughness = {
 		type = "scalar"
 		value = 0.9
-	}
-	use_emissive_map = {
-		type = "scalar"
-		value = 1
-	}
-	emissive_intensity = {
-		type = "scalar"
-		value = 0
 	}
 }

@@ -36,11 +36,6 @@ local mod = get_mod("unreal_tournament")
 
 local utils = mod.utils
 
--- A weapon in a player's hand glows a little in UT: it takes its lighting from the player (InventoryAttachment.bUseLightingFromBase),
--- who has an AmbientGlow of 40 of 255 (UnrealPawn), so the side of it that faces away from the lights is not black. The meshes'
--- materials glow with their own colour texture (tools/asset_conversion/convert_static.py), and this is how much.
-local GLOW = 40 / 255
-
 -- The third person of every weapon
 local instances = {}
 
@@ -172,8 +167,6 @@ local function new(def, looks)
 		for slot, material in pairs(config.materials or {}) do
 			Unit.set_material(unit, slot, material)
 		end
-
-		Unit.set_scalar_for_materials(unit, "emissive_intensity", GLOW)
 
 		return unit
 	end

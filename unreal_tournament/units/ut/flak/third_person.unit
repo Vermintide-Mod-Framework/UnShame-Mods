@@ -1,5 +1,5 @@
 materials = {
-	m_0 = "units/ut/flak/third_person_m0"
+	m_0 = "units/ut/flak/pickup_m0"
 }
 renderables = {
 	g_third_person_0 = {

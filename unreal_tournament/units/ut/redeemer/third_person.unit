@@ -1,6 +1,6 @@
 materials = {
-	m_0 = "units/ut/redeemer/third_person_m0"
-	m_1 = "units/ut/redeemer/third_person_m1"
+	m_0 = "units/ut/redeemer/pickup_m1"
+	m_1 = "units/ut/redeemer/pickup_m0"
 }
 renderables = {
 	g_third_person_0 = {
