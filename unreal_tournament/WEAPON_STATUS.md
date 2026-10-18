@@ -1,5 +1,69 @@
 # Weapon status
 
+## Bases and careers
+
+Which careers get which weapon, and which game weapon each one is copied from (`items.register` with `base_item`).
+
+Each weapon is made for one hero, from the base that reaches the most of that hero's careers. The game does the same: its weapons are
+items per hero (`es_`, `dr_`, `wh_`, `we_`, `bw_`), and an item's `can_wield` lists careers of that hero. A career of another hero
+needs its own copy from a base of that hero, because the animations, units and attachments are made for the base's careers.
+
+- Shock Rifle: the Beam Staff (`bw_skullstaff_beam`), for the Pyromancer, Battle Wizard, Unchained and Necromancer.
+- Bio Rifle: the Masterwork Pistol (`dr_steam_pistol`, from the cog DLC), for the Engineer, Ranger and Ironbreaker.
+- Flak Cannon: the Blunderbuss (`es_blunderbuss`), for the Mercenary, Huntsman and Foot Knight.
+- Rocket Launcher: the Repeating Crossbow (`wh_crossbow_repeater`), for the Zealot, Bounty Hunter and Captain.
+- Link Gun: the Deepwood Staff (`we_life_staff`, from the woods DLC), for the Sister of the Thorn. A Link Gun for everyone is on the
+  TODO list.
+- Shield Gun: a melee base for each hero, for everyone but the Warrior Priest (see below).
+- Lightning Gun: the Deepwood Staff (`we_life_staff`, from the woods DLC), for all four of Kerillian's careers.
+- Sniper Rifle (UT2004's classic one): the Handguns (`es_handgun`, `dr_handgun`), for the Mercenary, Huntsman, Foot Knight, Ironbreaker
+  and Ranger.
+- Assault Rifle (akimbo): the Brace of Pistols (`wh_brace_of_pistols`) or the Repeating Pistols (`wh_repeating_pistols`), and the
+  Drakefire Pistols (`dr_drake_pistol`), for the Zealot, Bounty Hunter, Captain and Ironbreaker.
+- Minigun: the repeaters (`es_repeating_handgun`, `wh_repeating_pistols`), for the Mercenary, Huntsman, Foot Knight, Zealot, Bounty
+  Hunter and Captain.
+- Redeemer: the Trollhammer Torpedo (`dr_deus_01`, from the grass DLC), for the Ironbreaker.
+
+The careers with few weapons:
+
+- Slayer: the Shield Gun only. He has the game's Throwing Axes.
+- Grail Knight: the Shield Gun only. No ranged item of the game lists him.
+- Warrior Priest: none yet. No ranged item lists him, and his third person body has only his own weapons' animations. His Shield Gun
+  is on the TODO list.
+- Engineer: the Bio Rifle and the Shield Gun. His only ranged weapon in the game is the steam pistol.
+- Ranger: the Bio Rifle, the Sniper Rifle and the Shield Gun.
+
+Why the bases are what they are:
+
+- Shield Gun. A melee base for each hero, so five registrations: Kruber's Bastard Sword (lake), Bardin's Cog Hammer (cog), Sienna's
+  Ghost Scythe (shovel), Victor's Billhook (scorpion) and Kerillian's Spear (none). The Billhook doesn't reach the Warrior Priest,
+  who has none. The Thornsister had no melee item in the item list.
+- Assault Rifle. UT2004's rifle has a dual mode (`bDualMode`), and this one is always akimbo. The skins place one model in the first
+  person view and one on the character, so a pair needs a second model for the other hand, in both. Bardin's only dual-wield
+  weapon is the Drakefire Pistols, which only the Ironbreaker has. The Ranger and the Engineer need `can_wield` widened on it.
+- Lightning Gun. The Deepwood Staff's item lists only the Sister of the Thorn, but all four of Kerillian's careers share one third
+  person body (`way_watcher`), which has the staff's animations, so the copy lists all four. Heat belongs to the career, not the weapon
+  (`OverchargeData[career]`): the other three careers have none, which would overheat them as Sienna does, so they get the Sister's.
+- Sniper Rifle. Kruber's handgun and Bardin's handgun are separate templates (`handgun_template_1` and `handgun_template_2`), so it
+  is two registrations. The Engineer has no handgun.
+- Redeemer. The Trollhammer Torpedo is Ironbreaker only. The Engineer has it only in Versus.
+- The Necromancer can carry any staff in the game, but the local item list shows only her own staff. So the staff weapons name her
+  in `can_wield` themselves (the Shock Rifle does).
+- `items.register` copies the whole base item and clears its `required_dlc`, so a weapon of the mod does not need the DLC of its base
+  (the DLCs above are only where the bases come from). The game loads every DLC's scripts and packages for everyone, so cloning a
+  base does not need the DLC either. A career that is itself a DLC career is still locked by its own DLC.
+- A career that equips an item it is not listed for crashes the game (see `CLAUDE.md`), so widening `can_wield` needs the first
+  person and third person animations of that career to exist for the base.
+
+Not planned:
+
+- Impact Hammer: out of scope.
+- Versus: out of scope. The weapons are for the heroes' careers; the Versus careers (the Skaven players, and the heroes' Versus-only
+  weapons such as the Engineer's Trollhammer Torpedo) are not given any.
+- Not in the plan so far: Translocator, Ion Painter, Mine Layer, AVRiL, Grenade Launcher and the Bombing Run ball launcher.
+
+## Checklist
+
 What to look at for each weapon of the mod, one thing a line, and what was found for each weapon that was ported. `ok`: checked in the game,
 against UT2004 where there is something to compare with. `no`: wrong or missing, with what. `-`: not checked yet. `n/a`: does not apply.
 
