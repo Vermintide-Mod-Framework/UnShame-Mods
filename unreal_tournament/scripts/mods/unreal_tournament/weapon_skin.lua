@@ -418,9 +418,10 @@ local function new(def)
 		return fp:first_person_mode_active() and fp:first_person_units_visible() and utils.character_animation_is_free(fp.unit)
 	end
 
-	-- Returns whether the player sees their own first person model, and not the mesh in the hand.
+	-- Returns whether the player sees their own first person model, and not the mesh in the hand: it is drawn (the game hides its weapons
+	-- at times, as on a ladder, and the skin can hide it, as the Lightning Gun's while zoomed).
 	function self.shown_in_first_person()
-		return skin ~= nil and Unit.alive(skin.unit) and not third_person.shows_weapon(Managers.player:local_player().player_unit)
+		return skin ~= nil and Unit.alive(skin.unit) and skin.drawn == true and not third_person.shows_weapon(Managers.player:local_player().player_unit)
 	end
 
 	-- Animations
@@ -936,7 +937,9 @@ local function new(def)
 			CONFIG.on_update(skin, dt)
 		end
 
-		Unit.set_unit_visibility(skin.unit, game_shows_weapon(fp) and not (CONFIG.hidden and CONFIG.hidden(skin)))
+		skin.drawn = game_shows_weapon(fp) and not (CONFIG.hidden and CONFIG.hidden(skin))
+
+		Unit.set_unit_visibility(skin.unit, skin.drawn)
 		place(fp)
 	end
 
