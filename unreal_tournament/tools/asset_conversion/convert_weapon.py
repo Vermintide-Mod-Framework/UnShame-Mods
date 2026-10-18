@@ -184,7 +184,7 @@ WEAPONS['redeemer'] = {
     'psa': 'Weapons/MeshAnimation/Redeemer_1st.psa',
     'materials': [('WeaponSkins/Texture/RedeemerTex0.tga', 'opaque')],
     'scale': 0.0125,
-    'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire')],
+    'animations': [('Pickup', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('PutDown', 'PutDown')],
     'locators': ['Bone_Flash'],
     'roughness': 0.9,
     'unit': 'units/ut/redeemer/redeemer',

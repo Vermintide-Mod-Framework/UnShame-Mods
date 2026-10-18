@@ -203,6 +203,13 @@ mod.skin_init_callbacks.redeemer = function (projectile)
 	end
 end
 
+-- Puts the Redeemer down (PutDown, over Redeemer.PutDownTime), and it stays down until the game puts the pistol away
+local function put_down(skin)
+	skin.put_down_in = nil
+	skin_api.play("PutDown", mod.redeemer.put_down_time)
+	skin.hold = true
+end
+
 skin_api = mod.weapon_skin.new({
 	id = SETTING_ID,
 	name = "redeemer",
@@ -267,6 +274,14 @@ skin_api = mod.weapon_skin.new({
 		skin_api.play_sound("ut_redeemer_select")
 	end,
 	on_update = function (skin, dt)
+		if skin.put_down_in then
+			skin.put_down_in = skin.put_down_in - dt
+
+			if skin.put_down_in <= 0 then
+				put_down(skin)
+			end
+		end
+
 		skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
 		skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
 		skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
@@ -278,11 +293,24 @@ skin_api = mod.weapon_skin.new({
 
 mod.unload_callbacks[#mod.unload_callbacks + 1] = clear_missiles
 
--- The shot of the player: the animation and the sound (called by redeemer.lua when the ability's shot starts)
+-- The shot of the player: the animation and the sound, and the put-down once Fire has played (called by redeemer.lua when the
+-- ability's shot starts)
 mod.redeemer.skin_shot = function (action)
-	if utils.is_local_player_unit(action.owner_unit) and skin_api.state() then
+	local skin = skin_api.state()
+
+	if utils.is_local_player_unit(action.owner_unit) and skin then
 		skin_api.play("Fire")
 		skin_api.play_sound("ut_redeemer_fire")
+		skin.put_down_in = mod.redeemer.fire_animation_time
+	end
+end
+
+-- The ability's cancel puts the Redeemer down at once (called by redeemer.lua)
+mod.redeemer.skin_put_down = function (action)
+	local skin = skin_api.state()
+
+	if utils.is_local_player_unit(action.owner_unit) and skin then
+		put_down(skin)
 	end
 end
 

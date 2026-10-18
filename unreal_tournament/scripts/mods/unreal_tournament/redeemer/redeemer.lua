@@ -34,6 +34,11 @@ local CONFIG = {
 	missile_gravity_settings = "spark",
 	-- The ability's cooldown with the Redeemer, in seconds. The game's Locked and Loaded is 70 s, and its longest abilities 120 to 140 s.
 	cooldown = 140,
+	-- The shot lasts as long as the Fire animation (16 frames at 30 a second) and then the put-down (Redeemer.PutDownTime): the Redeemer
+	-- holds one missile, so it is put down at once, as UT puts a weapon down when its ammo runs out. The game puts the pistol away when
+	-- the shot ends. The ability's cancel puts it down the same way.
+	fire_animation_time = 16 / 30,
+	put_down_time = 0.45,
 	-- RedeemerProjectile's blast (state Dying): HurtRadius six times, each with the whole Damage (250) and a radius that grows from 0.125
 	-- of DamageRadius (2000 units) to all of it, the first at once and the others 0.5, 0.7, 0.9, 1.1 and 1.3 s after. The Rocket
 	-- Launcher's damage and radius are reduced from UT's (90 to 60, and 220 units to 150), and these are reduced in the same way.
@@ -128,6 +133,8 @@ mod.redeemer = {
 	template = TEMPLATE_NAME,
 	has_redeemer = has_redeemer,
 	cooldown = CONFIG.cooldown,
+	fire_animation_time = CONFIG.fire_animation_time,
+	put_down_time = CONFIG.put_down_time,
 }
 
 -- The waves after the first, made by the machine of the player who fired: each is an explosion that the game sends to the others
@@ -202,6 +209,7 @@ local function build_shot(source)
 	action.speed = CONFIG.missile_speed
 	action.railgun_spread_template = SPREAD_TEMPLATE
 	action.fire_time_upper = 0
+	action.total_time = CONFIG.fire_animation_time + CONFIG.put_down_time
 	action.ut_aoe_callback = "redeemer"
 	action.ut_init_flow_event_filter = "redeemer"
 	action.ut_skin_init_callback = "redeemer"
@@ -299,6 +307,15 @@ mod:hook(ActionCareerWHBountyhunter, "client_owner_start_action", function (func
 		if mod.redeemer.skin_shot then
 			mod.redeemer.skin_shot(self)
 		end
+	end
+end)
+
+-- The ability's cancel (the career pistol's action_two) puts the Redeemer down (mod.redeemer.skin_put_down, from skin.lua)
+mod:hook_safe(ActionCareerDummy, "client_owner_start_action", function (self, new_action)
+	local lookup_data = new_action.lookup_data
+
+	if lookup_data and lookup_data.item_template_name == TEMPLATE_NAME and lookup_data.action_name == "action_two" and has_redeemer(self.owner_unit) and mod.redeemer.skin_put_down then
+		mod.redeemer.skin_put_down(self)
 	end
 end)
 
