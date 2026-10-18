@@ -176,6 +176,12 @@ mod:command("ut_inherited", "- prints to the console log what the finished weapo
 
 			print(string.format("[ut_inherited] == %s (%s), a copy of %s (%s): %d parts", setting_id, definition.template, definition.base_item, base_name, #lines))
 
+			-- (a weapon made on the shell of its base keeps only the shell's parts; its other parts that are the same as the base's are
+			-- ones it sets to the base's values)
+			if ut.utils.shell_templates[definition.template] then
+				print(string.format("[ut_inherited] %s is made on the shell of its base (utils.template_shell): the parts below that are not the shell's are its own, set to the base's values", setting_id))
+			end
+
 			for _, line in ipairs(lines) do
 				print("[ut_inherited] " .. setting_id .. line)
 			end

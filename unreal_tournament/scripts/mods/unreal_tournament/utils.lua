@@ -343,8 +343,13 @@ local SHELL_FIELDS = {
 -- Empties a copy of a weapon template down to what it has to keep of its base (SHELL_FIELDS, and the actions of the careers' skills and
 -- of inspecting, which are animations), for a weapon that sets everything else itself. Returns what the template had, for the weapon to
 -- take the base's animation events from by name.
+-- The names of the templates that are made on a shell, for the extras mod's /ut_inherited
+utils.shell_templates = {}
+
 function utils.template_shell(template)
 	local base = table.clone(template)
+
+	utils.shell_templates[template.name] = true
 
 	table.clear(template)
 
