@@ -566,10 +566,11 @@ local function new_skin(variant)
 			grip_right = -4,
 			grip_forward = -4,
 			grip_up = 0,
-			-- (turned right and up from the hand's own direction so that it points ahead: set in the game)
+			-- (turned right and up from the hand's own direction so that it points ahead: set in the game. The turns are about the hand's
+			-- axes, so with the barrel along the hand's forward after the yaw, tipping it up is the roll.)
 			yaw = -110,
-			pitch = 15,
-			roll = 0,
+			pitch = 0,
+			roll = -15,
 			follow_game_unit = 3,
 			follow_calibrate_seconds = 1,
 			muzzle_right = -2.8,
