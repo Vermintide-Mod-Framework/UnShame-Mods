@@ -25,11 +25,13 @@ local CONFIG = {
 	-- (flare_life). In pictures of UT2004 its streaks look like the texture added once (white middles, thin blue edges), while the flare
 	-- is 9 times the texture: the particles all add their flare at the start, but their streaks lie along the bolt.
 	bolt_width = 30, -- UT units
-	bolt_stretch = 4, -- a part's length, in widths (the arcs' too)
+	bolt_stretch = 4, -- a part's length, in widths
 	bolt_jitter = 30, -- UT units
 	bolt_intensity = 1,
-	-- ChildLightningBolt: 10 particles of size 15, out of place by up to 15 units
+	-- ChildLightningBolt: 10 particles of size 15, out of place by up to 15 units. In pictures of UT2004 an arc is the texture drawn out
+	-- along a few long parts with gentle bends, so its parts are longer than the bolt's (set against those pictures).
 	arc_width = 15,
+	arc_stretch = 8, -- a part's length, in widths
 	arc_jitter = 15,
 	arc_life = 0.5,
 	arc_intensity = 1,
@@ -135,9 +137,9 @@ local random_between = utils.random_between
 -- The most parts a bolt is drawn with. A long bolt has longer parts instead, far away where they are small on the screen.
 local MAX_BOLT_PARTS = 100
 
--- The bolt: a line of parts, each a streak of the texture bolt_stretch times as long as it is wide, out of line by a little. A part runs
--- from the end of the one before it.
-local function draw_bolt(from, to, width, jitter, life, intensity)
+-- The bolt: a line of parts, each a streak of the texture stretch times as long as it is wide, out of line by a little. A part runs from
+-- the end of the one before it.
+local function draw_bolt(from, to, width, stretch, jitter, life, intensity)
 	local offset = to - from
 	local length = Vector3.length(offset)
 
@@ -145,7 +147,7 @@ local function draw_bolt(from, to, width, jitter, life, intensity)
 		return
 	end
 
-	local count = math.clamp(math.ceil(length / (CONFIG.bolt_stretch * width)), 1, MAX_BOLT_PARTS)
+	local count = math.clamp(math.ceil(length / (stretch * width)), 1, MAX_BOLT_PARTS)
 	local direction = offset * (1 / length)
 	local across = Vector3.cross(direction, Vector3.up())
 
@@ -299,7 +301,7 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start,
 		return
 	end
 
-	draw_bolt(start, end_position, CONFIG.bolt_width * UNIT, CONFIG.bolt_jitter * UNIT, CONFIG.flare_life, CONFIG.bolt_intensity)
+	draw_bolt(start, end_position, CONFIG.bolt_width * UNIT, CONFIG.bolt_stretch, CONFIG.bolt_jitter * UNIT, CONFIG.flare_life, CONFIG.bolt_intensity)
 
 	local camera_position = utils.camera_pose()
 	local api = utils.is_local_player_unit(owner_unit) and first_person_api()
@@ -334,7 +336,7 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start,
 	-- Each arc throws its sparks from where it starts, along the normal of what the arc hit, or back along the arc if it hit nothing
 	-- (SniperFire.DoTrace, which lightning_gun.lua works out)
 	for i, arc_end in ipairs(arcs) do
-		draw_bolt(arcs_start, arc_end, CONFIG.arc_width * UNIT, CONFIG.arc_jitter * UNIT, CONFIG.arc_life, CONFIG.arc_intensity)
+		draw_bolt(arcs_start, arc_end, CONFIG.arc_width * UNIT, CONFIG.arc_stretch, CONFIG.arc_jitter * UNIT, CONFIG.arc_life, CONFIG.arc_intensity)
 
 		local normal = arc_normals[i]
 
