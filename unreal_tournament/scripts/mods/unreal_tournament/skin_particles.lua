@@ -255,15 +255,15 @@ local function facing(front, top)
 	return Quaternion.look(top, front)
 end
 
--- Returns whether the player sees their first person view. A locked particle is linked to the first person unit, which the game doesn't
--- hide in a third person view (it hides the arms and the weapons), so the particle is hidden then. It is also hidden while the arms and
--- the weapons are (/hud).
+-- Returns whether the player sees their first person weapon. A locked particle is linked to the first person unit, which the game doesn't
+-- hide when it hides the weapons (in a third person view, on a ladder, with /hud), so the particle is hidden whenever the skins' models
+-- are (utils.first_person_weapon_shown).
 local function first_person_shown()
 	local player = Managers.player:local_player()
 	local unit = player and player.player_unit
 	local first_person_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "first_person_system")
 
-	return first_person_extension and first_person_extension:first_person_mode_active() and first_person_extension:first_person_units_visible() or false
+	return first_person_extension and utils.first_person_weapon_shown(first_person_extension) or false
 end
 
 local function place(particle, dt, camera_position, camera_rotation)

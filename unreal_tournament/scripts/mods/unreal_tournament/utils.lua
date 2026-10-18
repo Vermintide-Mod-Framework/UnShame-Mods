@@ -72,6 +72,21 @@ function utils.character_animation_is_free(unit)
 	return status_extension == nil or not (status_extension:get_is_ledge_hanging() or status_extension:is_knocked_down() or status_extension:is_dead())
 end
 
+-- Whether the game would show its own first person weapon now, from the player's first person extension: in the first person view,
+-- with the arms and weapons shown (/hud), and with no reason of the game's own to hide the weapon (on a ladder, say), and with the
+-- character's animations free (utils.character_animation_is_free). The skins' models, and the effects linked to them, show only then.
+function utils.first_person_weapon_shown(first_person_extension)
+	-- (the reasons of the skins are not the game's: a weapon drawn as two models has two skins, each with its own reason)
+	for reason in pairs(first_person_extension.hide_weapon_reasons) do
+		if string.sub(reason, 1, 8) ~= "ut_skin_" then
+			return false
+		end
+	end
+
+	return first_person_extension:first_person_mode_active() and first_person_extension:first_person_units_visible() and
+		utils.character_animation_is_free(first_person_extension.unit)
+end
+
 -- The unit that holds a player right now, if there is one. The game's own get_disabler_unit doesn't work for this: the unit that grabbed
 -- a player (a Chaos Spawn, say) stays in their status after they are let go and comes first in its order, so it would be found again
 -- for a later grab by another disabler. This only looks at what the status says is going on.

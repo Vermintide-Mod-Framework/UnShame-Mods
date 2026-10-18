@@ -406,16 +406,9 @@ local function new(def)
 		Unit.set_unit_visibility(fp.first_person_attachment_unit, fp:first_person_mode_active())
 	end
 
-	-- Returns whether the game would show its own weapon now. The game also hides the weapon for reasons of its own.
+	-- Returns whether the game would show its own weapon now (utils.first_person_weapon_shown)
 	local function game_shows_weapon(fp)
-		-- (the reasons of the skins are not the game's: a weapon drawn as two models has two skins, each with its own reason)
-		for reason in pairs(fp.hide_weapon_reasons) do
-			if string.sub(reason, 1, 8) ~= "ut_skin_" then
-				return false
-			end
-		end
-
-		return fp:first_person_mode_active() and fp:first_person_units_visible() and utils.character_animation_is_free(fp.unit)
+		return utils.first_person_weapon_shown(fp)
 	end
 
 	-- Returns whether the player sees their own first person model, and not the mesh in the hand: it is drawn (the game hides its weapons
