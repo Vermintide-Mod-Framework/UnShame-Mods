@@ -29,6 +29,7 @@ unit = [
 	"units/ut/link/pickup"
 	"units/ut/lightning/lightning_gun"
 	"units/ut/lightning/pickup"
+	"units/ut/lightning/third_person"
 	"units/ut/sniper/sniper_rifle"
 	"units/ut/sniper/third_person"
 	"units/ut/minigun/minigun"

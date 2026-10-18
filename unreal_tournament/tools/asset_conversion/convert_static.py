@@ -69,6 +69,14 @@ STATICS = {
         'scale': 0.009,
         'unit': 'units/ut/lightning/pickup',
     },
+    # The Lightning Gun's third person mesh (SniperAttachment's Weapons.Sniper_3rd, at xWeaponAttachment's DrawScale 0.4), with the
+    # pickup's material, which has the same texture (SniperTex0)
+    'sniper_3rd': {
+        'pskx': 'Weapons/SkeletalMesh/Sniper_3rd.psk',
+        'materials': [('units/ut/lightning/pickup_m0', 'existing')],
+        'scale': 0.02 * 0.4,
+        'unit': 'units/ut/lightning/third_person',
+    },
     'minigun_pickup': {
         'pskx': 'WeaponStaticMesh/StaticMesh/MinigunPickup.pskx',
         'materials': [('WeaponSkins/Texture/MinigunTex0.tga', 'opaque')],

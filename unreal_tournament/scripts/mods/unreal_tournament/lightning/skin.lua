@@ -550,27 +550,28 @@ local function new_skin(variant)
 		alt_pose_roll = -40,
 		alt_pose_pitch = 0,
 		alt_pose_yaw = 0,
-		-- WeaponStaticMesh.SniperRiflePickup (DrawScale 0.45). The game links the staff to the left hand's node
-		-- (AttachmentNodeLinking.one_handed_melee_weapon.left), whose forward points out to the hero's left. The mesh is turned a quarter
-		-- from it, so it points ahead from the hand at her side.
+		-- UT's third person mesh of the weapon (SniperAttachment's Weapons.Sniper_3rd) at UT's size in a player's hand (DrawScale 0.4). Its
+		-- origin is by its grip, and its barrel runs along its forward, to the muzzle (the mesh's tip, convert_static.py). The game links
+		-- the staff to the left hand's node (AttachmentNodeLinking.one_handed_melee_weapon.left), whose forward points out to the hero's
+		-- left. The mesh is turned a quarter from it, so it points ahead from the hand at her side.
 		third_person = {
 			id = variant.id,
 			template = definition.template,
-			unit_name = "units/ut/lightning/pickup",
+			unit_name = "units/ut/lightning/third_person",
 			hand_node = "j_leftweaponattach",
-			meters_per_unit = 0.009,
-			scale = 0.5,
+			meters_per_unit = 0.02 * 0.4,
+			scale = 1,
 			grip_right = 0,
 			grip_forward = 0,
-			grip_up = -8,
+			grip_up = 0,
 			yaw = -90,
 			pitch = 0,
 			roll = 0,
 			follow_game_unit = 3,
 			follow_calibrate_seconds = 1,
-			muzzle_right = 0,
-			muzzle_forward = 76,
-			muzzle_up = 0,
+			muzzle_right = -2.8,
+			muzzle_forward = 116.4,
+			muzzle_up = 9.6,
 			menu_yaw = 180,
 		},
 		-- UT draws the scope in place of the weapon while zoomed (SniperRifle.RenderOverlays)
