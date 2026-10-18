@@ -79,8 +79,12 @@ local CONFIG = {
 	shell_spin = 12, -- radians a second, at most, each way
 	-- The fire and the winding are UT's AmbientSounds (MinigunFire.PlayAmbientSound), which loop: the bank's sounds loop, and each is
 	-- started once and stopped. The winding plays while the barrels turn and no round leaves (they wind up and down), and the fire while
-	-- rounds leave: it is stopped once there has been none for this long.
-	stop_after = 0.18, -- seconds
+	-- rounds leave: the player's own while a fire button is held, and anyone's until there has been no round for this long, which is
+	-- longer than the time between the mode's rounds (1/15 s and 1/5 s).
+	stop_after = {
+		primary = 0.18,
+		alt = 0.3,
+	}, -- seconds
 	-- Minigun.GearRatio and GearOffset: the gear turns this many times as far as the barrels, and the other way
 	gear_ratio = -2.37,
 	-- The barrels and the gear turn about axes along the mesh's own right (the mesh lies sideways, and the pivot's yaw turns it to the
@@ -437,7 +441,9 @@ end
 
 local function update_sounds(api, dt)
 	local now = Managers.time:time("game")
-	local firing = now - sound.last_round < CONFIG.stop_after
+	-- (the mode of the last round says how long its rounds can be apart; a switch to the other mode keeps the fire going until its
+	-- first round changes the sound)
+	local firing = minigun.holding and now - sound.last_round < CONFIG.stop_after[sound.fire_mode or "primary"]
 
 	if sound.fire_id and not firing then
 		stop_fire_sound(api)
@@ -489,7 +495,7 @@ end
 -- Stops the characters' fire once their rounds stop, or they are gone
 local function update_remote_sounds(now)
 	for owner_unit, fire in pairs(remote_fire) do
-		if not Unit.alive(owner_unit) or now - fire.last >= CONFIG.stop_after then
+		if not Unit.alive(owner_unit) or now - fire.last >= CONFIG.stop_after[fire.mode] then
 			if Managers.world:has_world("level_world") then
 				utils.stop_sound(fire.handle)
 			end
