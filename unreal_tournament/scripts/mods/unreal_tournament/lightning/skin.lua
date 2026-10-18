@@ -27,10 +27,10 @@ local CONFIG = {
 	bolt_stretch = 16, -- a part's length, in widths
 	bolt_jitter = 5, -- UT units
 	bolt_intensity = 1,
-	-- ChildLightningBolt: 10 particles of size 15, out of place by up to 15 units (mPosDev). In pictures of UT2004 an arc is the texture
-	-- drawn out along a few long parts with gentle bends, so its parts are longer than the bolt's (set against those pictures).
+	-- ChildLightningBolt: 10 particles of size 15, out of place by up to 15 units (mPosDev). In pictures of UT2004 an arc is a different
+	-- sight from the bolt: the texture drawn out once along the whole arc, one long zigzag with no line through it. So it is one part.
 	arc_width = 15,
-	arc_stretch = 32, -- a part's length, in widths
+	arc_stretch = math.huge, -- a part's length, in widths
 	arc_jitter = 15, -- UT units
 	arc_life = 0.5,
 	arc_intensity = 1,
@@ -134,9 +134,9 @@ local random_between = utils.random_between
 local MAX_BOLT_PARTS = 100
 
 -- The bolt: a line of parts, each a streak of the texture stretch times as long as it is wide, out of line by a little. A part runs from
--- the end of the one before it. Under them the texture is also drawn once along the whole bolt, drawn out into a nearly straight line
--- that runs through the zigzags, as in pictures of UT2004.
-local function draw_bolt(from, to, width, stretch, jitter, life, intensity)
+-- the end of the one before it. With core, the texture is also drawn once along the whole bolt under them, drawn out into a nearly
+-- straight line that runs through the zigzags, as in pictures of UT2004.
+local function draw_bolt(from, to, width, stretch, jitter, life, intensity, core)
 	local offset = to - from
 	local length = Vector3.length(offset)
 
@@ -144,20 +144,22 @@ local function draw_bolt(from, to, width, stretch, jitter, life, intensity)
 		return
 	end
 
-	particles.beam({
-		attenuation = 0,
-		color = {
-			1,
-			1,
-			1,
-		},
-		from = from,
-		intensity = intensity,
-		life = life,
-		size = width,
-		texture = "lightning_bolt",
-		to = to,
-	})
+	if core then
+		particles.beam({
+			attenuation = 0,
+			color = {
+				1,
+				1,
+				1,
+			},
+			from = from,
+			intensity = intensity,
+			life = life,
+			size = width,
+			texture = "lightning_bolt",
+			to = to,
+		})
+	end
 
 	local count = math.clamp(math.ceil(length / (stretch * width)), 1, MAX_BOLT_PARTS)
 	local direction = offset * (1 / length)
@@ -313,7 +315,7 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start,
 		return
 	end
 
-	draw_bolt(start, end_position, CONFIG.bolt_width * UNIT, CONFIG.bolt_stretch, CONFIG.bolt_jitter * UNIT, CONFIG.flare_life, CONFIG.bolt_intensity)
+	draw_bolt(start, end_position, CONFIG.bolt_width * UNIT, CONFIG.bolt_stretch, CONFIG.bolt_jitter * UNIT, CONFIG.flare_life, CONFIG.bolt_intensity, true)
 
 	local camera_position = utils.camera_pose()
 	local api = utils.is_local_player_unit(owner_unit) and first_person_api()
