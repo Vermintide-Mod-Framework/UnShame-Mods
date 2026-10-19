@@ -60,6 +60,8 @@ local CONFIG = {
 	-- across and grows by 10 a second, drifts at 2 to 15 units a second, and rises (its mass is -0.01 to -0.08: by the Minigun smoke's
 	-- turning of mass into a rise, about 100 units a second for each 1 of it). It is a dark blue grey (mColorRange) at twice the light
 	-- (ScaleGlow 2), blended by its alpha (STY_Alpha), and fades as xEmitter's do (mAttenKa 0.2). Each is a tile of SmokeTex at random.
+	-- ScaleGlow brightens the colour, so it is in the colour here: a particle's intensity is how opaque a blended one is, and 2 made the
+	-- smoke twice as thick.
 	trail_view_range = 5500, -- UT units
 	trail_rate = 30, -- puffs a second
 	trail_life = { 1.3, 1.5 },
@@ -68,10 +70,10 @@ local CONFIG = {
 	trail_speed = { 2, 15 }, -- UT units a second
 	trail_rise = { 1, 8 }, -- UT units a second
 	trail_color = {
-		{ 35 / 255, 45 / 255, 45 / 255 },
-		{ 50 / 255, 65 / 255, 65 / 255 },
+		{ 2 * 35 / 255, 2 * 45 / 255, 2 * 45 / 255 },
+		{ 2 * 50 / 255, 2 * 65 / 255, 2 * 65 / 255 },
 	},
-	trail_intensity = 2,
+	trail_intensity = 1,
 	trail_attenuation = 0.2,
 	trail_tiles = 16,
 	-- The characters fire both modes in the pistols' alt attack's stance (lock_target): the rounds keep it, the grenade's throw plays
