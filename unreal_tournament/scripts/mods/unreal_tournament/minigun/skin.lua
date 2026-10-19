@@ -793,7 +793,6 @@ local function new_skin(variant)
 			pitch = grip.pitch,
 			roll = grip.roll,
 			follow_game_unit = 2,
-			follow_calibrate_seconds = 1,
 			muzzle_right = -2.8,
 			muzzle_forward = 147,
 			muzzle_up = 14.7,

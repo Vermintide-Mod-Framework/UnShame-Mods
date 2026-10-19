@@ -132,8 +132,7 @@ skin_api = mod.weapon_skin.new({
 		pitch = 0,
 		roll = 0,
 		-- In the world the gun follows the staff's unit, which the arms animate.
-		follow_game_unit = 1,
-		follow_calibrate_seconds = 1,
+		follow_game_unit = 2,
 		muzzle_right = 0,
 		muzzle_forward = 75.5,
 		muzzle_up = 8.9,

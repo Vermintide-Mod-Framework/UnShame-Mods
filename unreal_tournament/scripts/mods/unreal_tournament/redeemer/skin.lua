@@ -251,8 +251,8 @@ skin_api = mod.weapon_skin.new({
 	-- 0.6, where the other attachments keep xWeaponAttachment's 0.4). The game links the career pistol to the left hand's node. The
 	-- mesh's tube runs along its left, to its open end (it has no flash bone), and the mesh is upside down: UT holds it rolled half a
 	-- turn (RelativeRotation Roll 32768) and 35 units back along the hand (RelativeLocation X -35, which is 35 / 0.6 of the mesh's units
-	-- at its DrawScale). The ability is too short for a calibration, so the mesh is turned from the pistol's own axes (follow_game_unit
-	-- 2): the yaw puts the tube along the pistol's barrel.
+	-- at its DrawScale). The mesh is turned from the pistol's own axes (follow_game_unit 2): the yaw puts the tube along the pistol's
+	-- barrel.
 	third_person = {
 		id = SETTING_ID,
 		template = TEMPLATE_NAME,

@@ -708,7 +708,6 @@ local function new_skin(variant)
 			pitch = 0,
 			roll = -25,
 			follow_game_unit = 3,
-			follow_calibrate_seconds = 1,
 			muzzle_right = -2.8,
 			muzzle_forward = 116.4,
 			muzzle_up = 9.6,

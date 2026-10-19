@@ -385,7 +385,6 @@ skin_api = mod.weapon_skin.new({
 		roll = 0,
 		-- In the world the cannon is turned as the game's Blunderbuss in the hand is, which the game animates with the arms
 		follow_game_unit = 2,
-		follow_calibrate_seconds = 1,
 		muzzle_right = 0,
 		muzzle_forward = 98,
 		muzzle_up = 8,

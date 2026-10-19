@@ -519,15 +519,6 @@ end
 -- How the third person mesh sits in the hand (weapon_skin_third_person.lua), by the copy of the weapon: each hero holds it in the pose
 -- of a weapon of their own (shield_gun.lua's pose_3p), which puts the hand differently. The mesh's origin is its grip, where UT holds it.
 local GRIPS = {
-	default = {
-		grip_right = 0,
-		grip_forward = 0,
-		grip_up = 0,
-		yaw = 0,
-		pitch = 0,
-		roll = 0,
-		follow_game_unit = 1,
-	},
 	-- The grudge-raker's pose: the mesh is turned as the game's unit in the hand is, with no turn of its own, which holds it as the
 	-- grudge-raker is held (and on the hero screen too, where it then moves with the hand)
 	shield_gun_dr = {
@@ -590,7 +581,7 @@ local GRIPS = {
 
 local function new_skin(setting_id)
 	local definition = mod.items.weapons[setting_id]
-	local grip = GRIPS[setting_id] or GRIPS.default
+	local grip = GRIPS[setting_id]
 	local api
 
 	api = mod.weapon_skin.new({
@@ -646,7 +637,6 @@ local function new_skin(setting_id)
 			pitch = grip.pitch,
 			roll = grip.roll,
 			follow_game_unit = grip.follow_game_unit,
-			follow_calibrate_seconds = 1,
 			muzzle_right = 0,
 			muzzle_forward = 68,
 			muzzle_up = 8,

@@ -19,12 +19,10 @@ local mod = get_mod("unreal_tournament")
 --       barrel runs along the mesh's forward).
 --   menu_pitch: how far to turn the mesh about its own right axis in the item inspection, before menu_yaw, for a mesh that is upside
 --       down in its file (0 if it is not given).
---   follow_game_unit: the mesh moves with the game's unit of the weapon, which the game animates with the arms. The mesh is turned
---       from the game's unit by the way the unit is turned after follow_calibrate_seconds of being held. With follow_game_unit = 2
---       there is no calibration: pitch, roll and yaw are relative to the unit's own axes. That is for a weapon whose unit is still
---       moving into place when it would be calibrated, such as the Repeating Crossbow. With follow_game_unit = 3 the mesh is turned
---       as the hand's node is, as a unit the game links to that node is. Pitch, roll and yaw are relative to the node's axes. That is
---       for a hero who holds the weapon in the pose of another weapon, whose unit is not in that hand.
+--   follow_game_unit: with 2 the mesh moves with the game's unit of the weapon, which the game animates with the arms, and pitch,
+--       roll and yaw are relative to the unit's own axes. With 3 the mesh is turned as the hand's node is, as a unit the game links to
+--       that node is, and pitch, roll and yaw are relative to the node's axes: that is for a hero who holds the weapon in the pose of
+--       another weapon, whose unit is not in that hand. Without it (or 0) the mesh points the way the character faces, level.
 --   fade_mesh, fade_material: a material with a "fade" variable, for a material that the engine's near-camera fade doesn't reach.
 --
 -- The game's unit (the staff, the blunderbuss and so on) stays, hidden. The mesh is linked to the same node of the character, and it
@@ -83,28 +81,11 @@ local function new(def, looks)
 		local facing = Vector3.flat(Quaternion.forward(Unit.world_rotation(entry.character, 0)))
 		local wanted = Quaternion.look(Vector3.normalize(facing), Vector3.up())
 
-		-- With follow_game_unit the mesh moves with the game's own unit of the weapon, which the game animates with the arms. At first
-		-- the mesh points the way the character faces, with the pitch, roll and yaw. Once the character has held the weapon for
-		-- follow_calibrate_seconds, the way the game's unit is turned relative to that is stored, and from then on the mesh is turned
-		-- from the unit by that amount. Without follow_game_unit, or in a menu where there is no unit, the mesh keeps pointing the way
-		-- the character faces.
-		if config.follow_game_unit and config.follow_game_unit ~= 0 and entry.staff and Unit.alive(entry.staff) then
-			local staff_rotation = Unit.world_rotation(entry.staff, 0)
-			local t = Managers.time:time("main")
-
-			entry.attached_at = entry.attached_at or t
-
-			if config.follow_game_unit == 2 then
-				-- The mesh is turned from the game's unit by the pitch, roll and yaw alone, which are in the unit's own axes. There is
-				-- no calibration.
-				wanted = staff_rotation
-			elseif not entry.follow_offset and t - entry.attached_at >= (config.follow_calibrate_seconds or 1) then
-				entry.follow_offset = QuaternionBox(Quaternion.multiply(Quaternion.inverse(staff_rotation), wanted))
-			end
-
-			if entry.follow_offset then
-				wanted = Quaternion.multiply(staff_rotation, entry.follow_offset:unbox())
-			end
+		-- With follow_game_unit = 2 the mesh moves with the game's own unit of the weapon, which the game animates with the arms: it is
+		-- turned from the unit's own axes by the pitch, roll and yaw. Otherwise, or in a menu where there is no unit, the mesh points the
+		-- way the character faces.
+		if config.follow_game_unit == 2 and entry.staff and Unit.alive(entry.staff) then
+			wanted = Unit.world_rotation(entry.staff, 0)
 		end
 
 		local rotation = Quaternion.identity()
@@ -524,17 +505,6 @@ local function new(def, looks)
 
 				mod:echo("%s (%s): wields %s, character scale %.2f, left hand %.2f, right hand %.2f%s", tostring(player:name()), player.bot_player and "bot" or "player", tostring(utils.wielded_template_name(character)), scale_of(character), left_hand and scale_of(character, left_hand) or -1, right_hand and scale_of(character, right_hand) or -1, attached[character] and ", holds the skin's mesh" or "")
 
-				-- The pitch, roll and yaw that give the mesh the same turn with follow_game_unit = 2, from the turn calibrated now
-				local entry = attached[character]
-
-				if entry and entry.follow_offset then
-					local config = entry.config
-					local turn = Quaternion.multiply(entry.follow_offset:unbox(), Quaternion.from_euler_angles_xyz(config.pitch, config.roll, config.yaw))
-					local pitch, roll, yaw = Quaternion.to_euler_angles_xyz(turn)
-
-					mod:echo("  with follow_game_unit = 2: pitch = %.1f, roll = %.1f, yaw = %.1f", pitch, roll, yaw)
-				end
-
 				for _, field in ipairs({"right_hand_wielded_unit_3p", "left_hand_wielded_unit_3p", "right_hand_wielded_unit", "left_hand_wielded_unit"}) do
 					local unit = equipment[field]
 
@@ -577,17 +547,6 @@ local function new(def, looks)
 
 	-- Development command. Sets a number of the definition, which is how the mesh sits in the hand, while playing.
 	function third_person.set(key, value)
-		-- follow_recalibrate is not a number: it makes the mesh's turn from the game's unit be measured again. Use it with the
-		-- characters standing as they should.
-		if key == "follow_recalibrate" then
-			for _, entry in pairs(attached) do
-				entry.follow_offset = nil
-				entry.attached_at = nil
-			end
-
-			return
-		end
-
 		CONFIG[key] = value
 		third_person.meters_per_unit = CONFIG.meters_per_unit * CONFIG.scale
 	end

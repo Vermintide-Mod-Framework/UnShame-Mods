@@ -297,7 +297,6 @@ local function new_skin(setting_id)
 			pitch = 0,
 			roll = 0,
 			follow_game_unit = 2,
-			follow_calibrate_seconds = 1,
 			muzzle_right = 0,
 			muzzle_forward = 209,
 			muzzle_up = -35,
