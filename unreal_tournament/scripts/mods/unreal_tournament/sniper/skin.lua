@@ -156,6 +156,34 @@ sniper.shot_callbacks.sniper_skin = function (owner_unit, hit_position, hit_norm
 	end
 end
 
+-- A shot while the zoom is in: the character aims again in third person once the shot is far enough along, as the base's zoomed shot
+-- does (sniper_rifle.lua's rezoom_time). This is in either view.
+local rezoom_at
+
+mod.handgun_start_callbacks.sniper_rezoom = function (action, new_action)
+	local animations = mod.sniper_zoom_animations[utils.wielded_template_name(action.owner_unit)]
+
+	if new_action.ut_sniper_bullet and animations and animations.rezoom_time and mod.zoom.zoomed and utils.is_local_player_unit(action.owner_unit) then
+		rezoom_at = Managers.time:time("game") + animations.rezoom_time
+	end
+end
+
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	if not rezoom_at or Managers.time:time("game") < rezoom_at then
+		return
+	end
+
+	rezoom_at = nil
+
+	local player = Managers.player:local_player()
+	local unit = player and player.player_unit
+	local animations = unit and Unit.alive(unit) and mod.sniper_zoom_animations[utils.wielded_template_name(unit)]
+
+	if animations and mod.zoom.zoomed then
+		Managers.state.network:anim_event(unit, animations.zoom_in)
+	end
+end
+
 -- The shot of the player: the animation, the flash, the smoke and the sound start when the shot's action starts, because the handgun
 -- shoots at once
 mod.handgun_start_callbacks.sniper_skin = function (action, new_action)

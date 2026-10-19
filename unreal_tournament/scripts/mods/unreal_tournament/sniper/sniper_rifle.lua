@@ -169,7 +169,7 @@ local function build_shot(original)
 	return action
 end
 
--- The aim animation of each template's base: { zoom_in = event, zoom_out = event }
+-- The aim animation of each template's base: { zoom_in = event, zoom_out = event, rezoom_time = seconds after a shot }
 mod.sniper_zoom_animations = {}
 
 local function apply_handgun(template)
@@ -198,24 +198,26 @@ local function apply_handgun(template)
 	-- wield, inspect and the career actions.
 	local hand = actions.action_one.default.weapon_action_hand
 	local aim = actions.action_two.default
+	local zoomed_shot = actions.action_one.zoomed_shot
 
-	-- The base's aim animation, which skin.lua plays on the character while the zoom is in (the zoom is a toggle, not a held action)
+	-- The base's aim animation, which skin.lua plays on the character while the zoom is in (the zoom is a toggle, not a held action).
+	-- A shot's animation takes the character out of the aim. The base's zoomed shot goes back to the aim action, which aims again, a
+	-- while after the shot (its chain to action_two): skin.lua aims again then.
 	if aim.anim_event then
-		mod.sniper_zoom_animations[template.name] = { zoom_in = aim.anim_event, zoom_out = aim.anim_end_event }
+		local rezoom_time
+
+		for _, chain in ipairs(zoomed_shot and zoomed_shot.allowed_chain_actions or {}) do
+			if chain.action == "action_two" then
+				rezoom_time = chain.start_time
+			end
+		end
+
+		mod.sniper_zoom_animations[template.name] = { zoom_in = aim.anim_event, zoom_out = aim.anim_end_event, rezoom_time = rezoom_time }
 	end
 
 	actions.action_one = {
 		default = build_shot(actions.action_one.default),
 	}
-
-	-- The shot's animation takes the character out of the aim. The game's zoomed shot goes back to the aim action, which aims again;
-	-- this one doesn't, so the character aims again in third person when a shot ends while the zoom is in.
-	if aim.anim_event then
-		actions.action_one.default.anim_end_event_3p = aim.anim_event
-		actions.action_one.default.anim_end_event_condition_func = function (unit)
-			return utils.is_local_player_unit(unit) and mod.zoom.zoomed
-		end
-	end
 
 	-- While the zoom is held, a shot can follow at once (it waits for its fire time), and so can wielding
 	actions.action_two = {
