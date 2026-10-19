@@ -15,6 +15,8 @@ local mod = get_mod("unreal_tournament")
 --   yaw, pitch, roll: how the mesh is turned from pointing the way the character faces, in degrees.
 --   muzzle_*: the end of the barrel.
 --   menu_scale: how much of the usual size the mesh is in the item inspection (1 if it is not given).
+--   angles_of(character, pitch, roll, yaw), if it is given: the angles of the mesh in that character's hand now, from the ones above
+--       (the Assault Rifle levels them while the character takes the pistols' stance).
 --   menu_yaw: how far to turn the mesh about the vertical in the item inspection, so that the barrel points sideways (-90 if the
 --       barrel runs along the mesh's forward).
 --   menu_pitch: how far to turn the mesh about its own right axis in the item inspection, before menu_yaw, for a mesh that is upside
@@ -94,7 +96,13 @@ local function new(def, looks)
 			rotation = Quaternion.multiply(Quaternion.inverse(Unit.world_rotation(entry.character, entry.hand_node)), wanted)
 		end
 
-		rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(config.pitch, config.roll, config.yaw))
+		local pitch, roll, yaw = config.pitch, config.roll, config.yaw
+
+		if config.angles_of then
+			pitch, roll, yaw = config.angles_of(entry.character, pitch, roll, yaw)
+		end
+
+		rotation = Quaternion.multiply(rotation, Quaternion.from_euler_angles_xyz(pitch, roll, yaw))
 
 		local grip = Vector3(config.grip_right, config.grip_forward, config.grip_up) * config.meters_per_unit * config.scale
 

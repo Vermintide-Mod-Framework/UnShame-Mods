@@ -50,6 +50,10 @@ local CONFIG = {
 	-- for each round and grenade, and leave the stance (attack_finished) this long after the last of them, once the rifle does nothing
 	-- (a choice)
 	stance_linger = 0.5, -- s
+	-- In the stance the arms reach out and the pistols point along them, so both rifles are level with the pistols then (pitch and yaw 0
+	-- from the hand's forward, where they are tipped down to lie along the forearm otherwise), turning there and back over this long
+	-- (set in the game)
+	stance_blend = 0.2, -- s
 	-- The colour of the grenade's charge on the charge bar (R, G, B): white, as the Lightning Gun's bar (set in the game: the grenade's
 	-- grey was hard to see)
 	charge_bar_color = { 255, 255, 255 },
@@ -90,10 +94,15 @@ local function play_both(name, duration)
 	end
 end
 
--- Called for each round. If the player on this machine fired it, both rifles play the fire animation, flash and sound. Otherwise the
--- sound plays at the shooter's muzzle.
+-- (the characters' shot and their stance, below)
+local shot_animation, saw_stance
+
+-- Called for each round, on every machine: the shooter is in the stance. If the player on this machine fired it, both rifles play the
+-- fire animation, flash and sound. Otherwise the sound plays at the shooter's muzzle.
 mod.assault_round_callbacks.assault_skin = function (owner_unit)
 	local right = skin_apis[1]
+
+	saw_stance(owner_unit)
 
 	if not right then
 		return
@@ -119,9 +128,6 @@ end
 
 -- The grenade models, by grenade id. Every machine spawns one for each grenade in flight and spins it as it flies.
 local grenade_units = {}
-
--- (the characters' shot, below)
-local shot_animation
 
 local function destroy_grenade_unit(id)
 	local entry = grenade_units[id]
@@ -149,6 +155,8 @@ mod.assault_grenade_callbacks.assault_skin = function (grenade)
 		world = world,
 	}
 
+	saw_stance(grenade.owner_unit)
+
 	if grenade.local_owner then
 		shot_animation(grenade.owner_unit)
 	end
@@ -165,6 +173,18 @@ end
 -- The characters' stance and shots (see stance_linger), sent from the machine that runs the character's actions, the player's or the
 -- host's for a bot, as the game sends its own: [character] = when the rifle last did something
 local in_stance = {}
+
+-- Every machine sees the rounds and the grenades, and so when each character is in the stance, for the rifles' angles: [character] =
+-- { last = when the rifle last did something, weight = how far the rifles are turned to level, 0 to 1 }. The charge is seen only by the
+-- machine that runs the character, so the others turn the rifles at the throw.
+local stances = {}
+
+saw_stance = function (unit)
+	local stance = stances[unit] or { weight = 0 }
+
+	stance.last = Managers.time:time("game")
+	stances[unit] = stance
+end
 
 shot_animation = function (unit)
 	local network_manager = Managers.state.network
@@ -196,6 +216,10 @@ mod.dummy_start_callbacks.assault_stance = function (action, new_action)
 
 		in_stance[unit] = Managers.time:time("game")
 	end
+
+	if new_action.ut_assault_charge then
+		saw_stance(unit)
+	end
 end
 
 -- Whether the rifle in the character's hands is doing something (a round or the charge)
@@ -217,6 +241,8 @@ local function update_stances()
 			in_stance[unit] = nil
 		elseif rifle_busy(unit) then
 			in_stance[unit] = now
+
+			saw_stance(unit)
 		elseif now - last > CONFIG.stance_linger then
 			in_stance[unit] = nil
 
@@ -227,9 +253,37 @@ local function update_stances()
 	end
 end
 
-mod.update_callbacks[#mod.update_callbacks + 1] = update_stances
+-- Turns each character's rifles towards level while it is in the stance, and back once it has left it
+local function update_angles(dt)
+	local now = Managers.time:time("game")
+	local step = dt / CONFIG.stance_blend
+
+	for unit, stance in pairs(stances) do
+		local wanted = Unit.alive(unit) and now - stance.last <= CONFIG.stance_linger and 1 or 0
+
+		stance.weight = math.clamp(stance.weight + (wanted > stance.weight and step or -step), 0, 1)
+
+		if stance.weight == 0 and wanted == 0 then
+			stances[unit] = nil
+		end
+	end
+end
+
+-- The angles of a rifle in a character's hand (weapon_skin_third_person.lua's angles_of)
+local function angles_in_hand(character, pitch, roll, yaw)
+	local stance = stances[character]
+	local level = stance and stance.weight or 0
+
+	return pitch * (1 - level), roll, yaw * (1 - level)
+end
+
+mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
+	update_stances()
+	update_angles(dt)
+end
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(in_stance)
+	table.clear(stances)
 end
 
 mod.assault_bounce_callbacks.assault_skin = function (grenade, position, speed)
@@ -385,6 +439,10 @@ local function new_skin(id, mirror)
 			pitch = mirror and -25 or -45,
 			roll = 0,
 			follow_game_unit = 2,
+			-- (level in the stance, see stance_blend)
+			angles_of = function (character, pitch, roll, yaw)
+				return angles_in_hand(character, pitch, roll, yaw)
+			end,
 			muzzle_right = 0,
 			muzzle_forward = 49.3,
 			muzzle_up = 17.9,
