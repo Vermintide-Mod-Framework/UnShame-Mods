@@ -472,7 +472,7 @@ write('ion_sphere', ion, {'burn_map': 'ion_burn'})
 # and grad_falloff, make_weapon_fx.py):
 #   the first, TexPanner2 (up V, a quarter of the texture a second) of TexScaler5 (U times 0.5)
 #   the second, TexPanner3 (up V, 0.4 of the texture a second) of TexScaler6 (U times 0.5, moved by 128 texels)
-# The shader's opacity is Grad_Falloff too, which FB_Brighten leaves out.
+# The shader's opacity is Grad_Falloff too, which fades the colour to nothing at the mesh's inner edge (v 1), which is jagged.
 ring = Graph()
 common(ring, BRIGHTEN)
 
@@ -491,7 +491,8 @@ ring.add('mix', 'core/shader_nodes/lerp')
 ring.connect('second', 'mix', IN_LERP_A, 'rgb')
 ring.connect('first', 'mix', IN_LERP_B, 'rgb')
 ring.connect('falloff', 'mix', IN_LERP_W, 'a')
-multiply(ring, 'color', 'mix', 'tint')
+multiply(ring, 'faded', 'mix', 'falloff', None, 'a')
+multiply(ring, 'color', 'faded', 'tint')
 ring.connect('color', 'out', IN_OUT_BASE_COLOR)
 ring.connect('intensity', 'out', IN_OUT_OPACITY)
 write('flame_ring', ring, {'flame_map': 'flame_gradient', 'falloff_map': 'grad_falloff'})
