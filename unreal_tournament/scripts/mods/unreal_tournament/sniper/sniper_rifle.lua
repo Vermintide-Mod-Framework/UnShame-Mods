@@ -1,15 +1,13 @@
 local mod = get_mod("unreal_tournament")
 
--- Sniper Rifle: UT2004's classic one (UTClassic.ClassicSniperRifle, ClassicSniperFire and XWeapons.SniperZoom), a copy of a handgun with
--- its fire modes replaced.
+-- Sniper Rifle: UT2004's classic one (UTClassic.ClassicSniperRifle, ClassicSniperFire and XWeapons.SniperZoom), made on the shell of a
+-- handgun: only the handgun's animations, models and sounds are kept, and everything else is set here.
 --   Left button: a bullet that hits at once (the game's own handgun shot). A hit on the head does double damage.
 --   Right button: zooms, as the Lightning Gun does (zoom.lua).
 -- All of the ammo is in the gun, so there is no reload. Kruber's handgun and Bardin's are separate templates, so the weapon is two items
 -- of the mod that share everything but the base. The skin (skin.lua) draws all of it, and this file only sets what it does to the game.
 
 local utils = mod.utils
-local register_damage_profile = utils.register_damage_profile
-local make_flat = utils.make_flat
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 local first_beam_hit = utils.first_beam_hit
@@ -84,17 +82,39 @@ local TOTAL_TIME = CONFIG.fire_rate + CONFIG.chain_margin
 -- Spread: the bullet hits exactly where the crosshair is.
 utils.zero_spread_template("ut_sniper_bullet", "handgun")
 
--- The bullet stops at the first enemy it hits, as UT's trace does: a profile with a cleave that is tiny hurts one enemy. Its armor
--- modifiers are the handgun's bullet's.
-register_damage_profile("ut_sniper_bullet", "shot_sniper", function (profile)
-	make_flat(profile, attack_power_for(CONFIG.damage), impact_power_for(CONFIG.damage), "shot_sniper")
-
-	profile.cleave_distribution = {
-		attack = 0.01,
-		impact = 0.01,
-	}
-	utils.set_headshot_multiplier(profile, CONFIG.headshot_multiplier)
-end)
+-- The bullet. It stops at the first enemy it hits, as UT's trace does: a cleave that is tiny hurts one enemy. These are the values it had
+-- as a copy of the handgun's bullet (shot_sniper) made flat: the armor multipliers of the mod's flat damage (utils.make_flat, which do
+-- nothing to super armor), and the handgun's own multipliers for a critical hit, its hit reactions and its curve of head shot and
+-- critical bonus (smiter_curve).
+utils.add_damage_profile("ut_sniper_bullet", {
+	charge_value = "instant_projectile",
+	shield_break = true,
+	no_stagger_damage_reduction_ranged = true,
+	is_explosion = false,
+	attack_template = "shot_sniper",
+	damage_type = "shot_sniper",
+	attack_power = attack_power_for(CONFIG.damage),
+	impact_power = impact_power_for(CONFIG.damage),
+	armor_attack = { 1, 0.8, 1.5, 1, 1, 0 },
+	armor_impact = { 1, 0.8, 1, 1, 1, 0 },
+	critical_armor_attack = { 1, 1.4, 1.5, 1, 0.75, 0.6 },
+	critical_armor_impact = { 1, 1, 1, 1, 1, 1 },
+	cleave_attack = 0.01,
+	cleave_impact = 0.01,
+	boost_curve_type = "smiter_curve",
+	boost_curve_coefficient = 1,
+	boost_curve_coefficient_headshot = 1,
+	-- (a hit on the head does HeadShotDamageMult times the damage: see utils.set_headshot_multiplier)
+	headshot_boost = math.clamp(CONFIG.headshot_multiplier - 1, 0, 1),
+	headshot_boost_boss = 0.5,
+	headshot_boost_armor = 0.5,
+	headshot_boost_heavy_armor = 0.25,
+	no_headshot_boost = false,
+	crit_boost = 0.5,
+	no_crit_boost = false,
+	stagger_duration_modifier = 1,
+	stagger_distance_modifier = 1,
+})
 
 -- The flow events of the game's handgun shot that start its tracer (ActionHandgun.client_owner_post_update). UT draws no tracer for the
 -- player who fires.
@@ -146,36 +166,59 @@ local function fire_chain_actions()
 	return entries
 end
 
--- Builds the handgun's shot, with its ammo and animation. It can be repeated after UT's fire time, and it has no reload. Its hits on
--- the world and on enemies are the game's handgun's (the holes, the dust and the blood).
-local function build_shot(original)
-	local action = table.clone(original)
-
-	action.active_reload_time = nil
-	action.allowed_chain_actions = fire_chain_actions()
-	action.condition_func = ready_to_fire
-	action.chain_condition_func = ready_to_fire
-	action.anim_event_secondary = nil
-	action.apply_recoil = false
-	action.damage_profile = "ut_sniper_bullet"
-	action.headshot_multiplier = CONFIG.headshot_multiplier
-	action.recoil_settings = nil
-	action.reload_when_out_of_ammo = false
-	action.spread_template_override = "ut_sniper_bullet"
-	-- The shot lasts slightly longer than the time to the next shot. A held button is only read while a shot is still running, so a shot
-	-- that ends exactly when the next one may start would miss it.
-	action.total_time = TOTAL_TIME
-	action.total_time_secondary = nil
-	action.ut_sniper_bullet = true
-	action.ut_dropped_flow_events = DROPPED_FLOW_EVENTS
-
-	return action
+-- The shot: the game's handgun shot (kind "handgun"), with its ammo and animation. It can be repeated after UT's fire time, and it has no
+-- reload. Its hits on the world and on enemies are the game's handgun's (the holes, the dust and the blood). The values that are not
+-- UT's are the ones it had as a copy of the handgun's shot: how loud it is to enemies, the aim assist, the talents' kind of hit
+-- (charge_value) and when its damage is dealt.
+local function build_shot(hand, anims)
+	return {
+		kind = "handgun",
+		weapon_action_hand = hand,
+		anim_event = anims.anim_event,
+		anim_event_last_ammo = anims.anim_event_last_ammo,
+		anim_event_no_ammo_left = anims.anim_event_no_ammo_left,
+		ammo_usage = 1,
+		fire_time = 0,
+		-- The shot lasts slightly longer than the time to the next shot. A held button is only read while a shot is still running, so a
+		-- shot that ends exactly when the next one may start would miss it.
+		total_time = TOTAL_TIME,
+		damage_window_start = 0.1,
+		damage_window_end = 0,
+		damage_profile = "ut_sniper_bullet",
+		headshot_multiplier = CONFIG.headshot_multiplier,
+		hit_effect = "bullet_impact",
+		ignore_shield_hit = true,
+		ranged_attack = true,
+		charge_value = "light_attack",
+		alert_sound_range_fire = 10,
+		alert_sound_range_hit = 2,
+		aim_assist_max_ramp_multiplier = 1,
+		aim_assist_ramp_decay_delay = 0.1,
+		aim_assist_ramp_multiplier = 0.3,
+		-- (UT's kick of the view is the skin's shake, so the game's recoil is off)
+		apply_recoil = false,
+		reload_when_out_of_ammo = false,
+		spread_template_override = "ut_sniper_bullet",
+		allowed_chain_actions = fire_chain_actions(),
+		condition_func = ready_to_fire,
+		chain_condition_func = ready_to_fire,
+		enter_function = function (attacker_unit, input_extension)
+			input_extension:clear_input_buffer()
+		end,
+		ut_sniper_bullet = true,
+		ut_dropped_flow_events = DROPPED_FLOW_EVENTS,
+	}
 end
 
 -- The aim animation of each template's base: { zoom_in = event, zoom_out = event, rezoom_time = seconds after a shot }
 mod.sniper_zoom_animations = {}
 
+-- Makes the rifle on the shell of its base handgun (utils.template_shell): everything that is not the handgun's animations, models and
+-- sounds is set here. Kruber's and Bardin's handguns differ only in those.
 local function apply_handgun(template)
+	local base = utils.template_shell(template)
+	local base_actions = base.actions
+
 	-- The chart of the item's stats, from 0 to 7. The bullet is the normal attack.
 	template.weapon_diagram = {
 		light_attack = {
@@ -195,12 +238,11 @@ local function apply_handgun(template)
 	}
 
 	local actions = template.actions
-	local attack_meta_data = template.attack_meta_data
 
-	-- Only the shot is replaced, and the aim action is replaced by UT's zoom (zoom.lua). Everything else stays untouched, including
-	-- wield, inspect and the career actions.
-	local hand = actions.action_one.default.weapon_action_hand
-	local aim = actions.action_two.default
+	-- The shot, with the handgun's shot animation, and UT's zoom (zoom.lua) in place of the handgun's aim. Inspecting is the handgun's,
+	-- kept by the shell.
+	local hand = base_actions.action_one.default.weapon_action_hand
+	local aim = base_actions.action_two.default
 
 	-- The base's aim animation, which skin.lua plays on the character while the zoom is in (the zoom is a toggle, not a held action).
 	-- A shot's animation takes the character out of the aim, so skin.lua aims again rezoom_time after a shot.
@@ -209,7 +251,7 @@ local function apply_handgun(template)
 	end
 
 	actions.action_one = {
-		default = build_shot(actions.action_one.default),
+		default = build_shot(hand, base_actions.action_one.default),
 	}
 
 	-- While the zoom is held, a shot can follow at once (it waits for its fire time), and so can wielding
@@ -236,23 +278,74 @@ local function apply_handgun(template)
 		}),
 	}
 
-	utils.set_actions_lookup_data({
-		action_one = actions.action_one,
-		action_two = actions.action_two,
-	}, template.name)
+	-- The game's own wielding and reload, which every gun of the game has (the reload only comes with picked up ammo, see ammo_data)
+	actions.action_wield = table.clone(ActionTemplates.wield)
+	actions.weapon_reload = table.clone(ActionTemplates.reload)
 
-	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
-	template.ammo_data.max_ammo = CONFIG.max_ammo
-	template.ammo_data.ammo_per_clip = CONFIG.max_ammo
-	template.ammo_data.ammo_per_reload = CONFIG.max_ammo
-	template.ammo_data.ammo_immediately_available = true
-	-- Nothing should need a reload, but the game may still start one when the weapon is wielded, so the reload is made short.
-	template.ammo_data.reload_time = 0.2
+	utils.set_actions_lookup_data(actions, template.name)
 
-	-- The bot AI and the tooltips refer to the zoomed shot, which was removed.
-	attack_meta_data.can_charge_shot = false
-	attack_meta_data.charged_attack_action_name = nil
-	attack_meta_data.max_range = CONFIG.bot_max_range
+	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots. Nothing should need a reload, but
+	-- the game may still start one when the weapon is wielded, so the reload is short.
+	template.ammo_data = {
+		ammo_hand = "right",
+		max_ammo = CONFIG.max_ammo,
+		ammo_per_clip = CONFIG.max_ammo,
+		ammo_per_reload = CONFIG.max_ammo,
+		ammo_immediately_available = true,
+		reload_time = 0.2,
+		reload_on_ammo_pickup = true,
+		play_reload_anim_on_wield_reload = true,
+		should_update_anim_ammo = true,
+	}
+
+	-- How bots use it: the handgun's, at the body (the head for a charged shot, which this has none of), against berserkers, specials,
+	-- armored and shielded enemies, shooting past enemies in the way
+	template.attack_meta_data = {
+		aim_at_node = "j_spine1",
+		aim_at_node_charged = "j_head",
+		can_charge_shot = false,
+		charge_above_range = 30,
+		charge_when_obstructed = false,
+		ignore_enemies_for_obstruction = true,
+		minimum_charge_time = 0.45,
+		effective_against = bit.bor(BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored, BreedCategory.Shielded),
+		max_range = CONFIG.bot_max_range,
+	}
+
+	-- What the game's talents, traits and properties take it for: a handgun
+	template.buff_type = "RANGED"
+	template.weapon_type = "HANDGUN"
+
+	-- Dodging: the handgun's (no_dodge: the player's dodges are not the weapon's), and the game's crosshair and spread, the handgun's
+	-- (the bullet has no spread of its own, see ut_sniper_bullet)
+	template.no_dodge = true
+	template.buffs = {
+		change_dodge_distance = {
+			external_optional_multiplier = 1,
+		},
+		change_dodge_speed = {
+			external_optional_multiplier = 1,
+		},
+	}
+	template.crosshair_style = "default"
+	template.default_spread_template = "handgun"
+	template.spread_lerp_speed = 5
+	template.spread_lerp_speed_zoom = 3.75
+
+	-- The aim assist for a controller: the handgun's
+	template.aim_assist_settings = {
+		always_auto_aim = true,
+		base_multiplier = 0.15,
+		effective_max_range = 10,
+		max_range = 22,
+		no_aim_input_multiplier = 0,
+		target_node = "j_spine1",
+		breed_scalars = {
+			skaven_clan_rat = 1,
+			skaven_slave = 1,
+			skaven_storm_vermin = 0.25,
+		},
+	}
 
 	template.tooltip_compare = {
 		light = {
