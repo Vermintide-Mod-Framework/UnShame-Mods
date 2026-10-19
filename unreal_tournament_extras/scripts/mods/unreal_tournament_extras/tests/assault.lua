@@ -105,13 +105,13 @@ local function scenarios()
 			run = function (t)
 				start_recording()
 
-				-- Held for a second, the two rifles fire about 1 / 0.088 rounds
+				-- Held for a second, the rifles fire about 1 / 0.16 rounds
 				t.press("action_one", 1)
 				t.wait(0.2)
 
 				recording = false
 
-				t.expect(rounds >= 10 and rounds <= 13, "%d rounds in a second, not 11 or so", rounds)
+				t.expect(rounds >= 6 and rounds <= 8, "%d rounds in a second, not 7 or so", rounds)
 			end,
 		},
 		{
