@@ -170,6 +170,9 @@ WEAPONS = {
         ('ut_sniper_impact_4_3d', IMPACTS + 'Impact3', True, -18, 4),
         ('ut_sniper_impact_5_3d', IMPACTS + 'Impact1', True, -18, 4),
         ('ut_sniper_impact_6_3d', IMPACTS + 'Impact2', True, -18, 4),
+        # (SniperWallHitEffect.SpawnEffects: one of the two where the bullet passed a player, at the usual volume, heard within 80 units)
+        ('ut_sniper_whiz_1_3d', IMPACTS + 'Impact3Snd', True, -26, 2),
+        ('ut_sniper_whiz_2_3d', IMPACTS + 'Impact7Snd', True, -26, 2),
     ],
 }
 

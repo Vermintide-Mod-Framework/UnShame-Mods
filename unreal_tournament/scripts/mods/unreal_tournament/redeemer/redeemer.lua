@@ -52,6 +52,11 @@ local CONFIG = {
 	full_damage_radius = 0, -- share of each wave's radius
 	-- Where the missile starts, from the eye: RedeemerFire.ProjSpawnOffset, 100 units straight ahead
 	start_forward = 2, -- m
+	-- RedeemerFire's view shake, for the player who fires: the view jumps back 20 units (ShakeOffsetMag, rate and time as forward,
+	-- right, up). It has no turn (ShakeRotMag is 0).
+	shake_magnitude = { -20, 0, 0 },
+	shake_rate = { -1000, 0, 0 },
+	shake_time = 2,
 	-- Each wave throws the player away from the center at this speed in m/s, less further out, as the damage. UT's MomentumTransfer is
 	-- 200000, four times the Rocket Launcher's 50000, which throws at 5.7 m/s (rocket_launcher.lua's rocket_jump_speed).
 	push_speed = 5.7 * 200000 / 50000,
@@ -400,7 +405,7 @@ mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_template
 
 -- With the Redeemer only the upper barrel fires: the lower one and the push around the shooter are marked done before they come.
 -- The upper barrel fires the projectile whatever the ability's talents make it (they choose a railgun or a shotgun for each barrel).
--- The skin plays the shot (mod.redeemer.skin_shot, from skin.lua).
+-- The skin plays the shot (mod.redeemer.skin_shot, from skin.lua), and the view of the player who fires shakes.
 mod:hook(ActionCareerWHBountyhunter, "client_owner_start_action", function (func, self, new_action, ...)
 	func(self, new_action, ...)
 
@@ -408,6 +413,10 @@ mod:hook(ActionCareerWHBountyhunter, "client_owner_start_action", function (func
 		self.upper_shoot_function = self._railgun_shoot
 		self.lower_shot_done = true
 		self.aoe_done = true
+
+		if utils.is_local_player_unit(self.owner_unit) then
+			mod.view_shake.start(CONFIG.shake_magnitude, CONFIG.shake_rate, CONFIG.shake_time)
+		end
 
 		if mod.redeemer.skin_shot then
 			mod.redeemer.skin_shot(self)

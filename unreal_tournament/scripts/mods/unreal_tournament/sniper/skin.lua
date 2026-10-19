@@ -57,6 +57,31 @@ local CONFIG = {
 	smoke_ahead = 25,
 	smoke_up = 0,
 	smoke_color = { 0.85, 0.85, 0.85 },
+	-- The weapon's light (xWeaponAttachment.WeaponLight): every shot turns it on for 0.15 s, at the rifle in a character's hand. There
+	-- is none in the player's own first person view, where it would light the gun the player holds (as for the Lightning Gun).
+	-- ClassicSniperAttachment's LightHue 30 of 255 and LightSaturation 170 (0 is all colour, 255 is white) are a pale orange, and
+	-- LightRadius 5 is in steps of 25 units: 2.5 m.
+	light_color = { 1, 0.9, 0.67 },
+	light_falloff = 2.5, -- meters
+	light_life = 0.15, -- s
+	-- SniperWallHitEffect: the puffs where the bullet hits (pclImpactSmoke) are made when the local player's view is within 3000 units
+	impact_smoke_range = 3000, -- UT units
+	-- SniperWallHitEffect: a bullet that passes within 150 units of the middle of the local player's character (Pawn.Location, its
+	-- collision's middle, CollisionHeight 44 above its feet) plays one of two sounds at the nearest point of its line. The line goes on
+	-- past both ends, so the player who fires hears it too.
+	whiz_distance = 150, -- UT units
+	whiz_body_height = 44, -- UT units
+	-- TracerProjectile, which UT spawns for another player's shot and a bot's: a flak chunk's mesh at DrawScale 5 (a flak chunk is 14,
+	-- flak/skin.lua's chunk_scale 0.75) with a flak chunk's streak (FlakTrail), flying at 20000 units a second from where the bullet
+	-- started, through what it hits but walls, for up to 2 s. The streak is drawn as the Flak Cannon's (flak/skin.lua).
+	tracer_scale = 0.75 * 5 / 14,
+	tracer_speed = 20000, -- UT units a second
+	tracer_life = 2, -- s
+	tracer_trail_seconds = 0.1,
+	tracer_trail_step = 1 / 60,
+	tracer_trail_width = 0.1, -- m
+	tracer_trail_intensity = 2,
+	tracer_trail_hold = 0.4,
 	-- The scope (ClassicSniperRifle.RenderOverlays): pieces of its texture drawn black around the view, sized for a screen 1024 wide.
 	-- It draws a charge bar too, but its place and size are never set, so it is not seen.
 	scope_texture_size = 512,
@@ -167,9 +192,126 @@ local function smoke(position)
 	end
 end
 
--- A shot: the sparks and one of the six sounds where it hit, on every machine. The others also see the flash and the smoke at the rifle
--- in the character's hand, and hear the shot.
-sniper.shot_callbacks.sniper_skin = function (owner_unit, hit_position, hit_normal)
+-- The light of a shot at the rifle in a character's hand
+local function weapon_light(owner_unit, holder)
+	particles.light({
+		brightness = function ()
+			return 1
+		end,
+		color = CONFIG.light_color,
+		falloff = CONFIG.light_falloff,
+		follow = function ()
+			return holder.third_person.point_position(owner_unit, 0, 0, 0)
+		end,
+		intensity = utils.WEAPON_LIGHT_INTENSITY,
+		life = CONFIG.light_life,
+	})
+end
+
+-- The sound of a bullet passing the local player's character, at the nearest point of its line
+local function whiz(api, start, direction)
+	local player = Managers.player:local_player()
+	local unit = player and player.player_unit
+
+	if not unit or not Unit.alive(unit) then
+		return
+	end
+
+	local middle = Unit.world_position(unit, 0) + Vector3(0, 0, CONFIG.whiz_body_height * UNIT)
+	local nearest = start + direction * Vector3.dot(direction, middle - start)
+
+	if Vector3.distance(middle, nearest) < CONFIG.whiz_distance * UNIT then
+		api.play_sound_at("ut_sniper_whiz_" .. math.random(1, 2) .. "_3d", nearest)
+	end
+end
+
+-- The tracers in flight, each { unit, world, from, to, travelled, length, trail_from, trail_time }
+local tracers = {}
+
+local function destroy_tracers()
+	for _, tracer in ipairs(tracers) do
+		if Unit.alive(tracer.unit) then
+			World.destroy_unit(tracer.world, tracer.unit)
+		end
+	end
+
+	table.clear(tracers)
+end
+
+local function add_tracer(start, direction)
+	local world = Managers.world:has_world("level_world") and Managers.world:world("level_world")
+
+	if not world then
+		return
+	end
+
+	-- (it goes until it hits a wall: the level, not the characters)
+	local reach = CONFIG.tracer_speed * CONFIG.tracer_life * UNIT
+	local hit, _, distance = PhysicsWorld.immediate_raycast(World.physics_world(world), start, direction, reach, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
+	local unit = World.spawn_unit(world, "units/ut/flak/chunk", start, Quaternion.look(direction, Vector3.up()))
+
+	Unit.set_local_scale(unit, 0, Vector3(CONFIG.tracer_scale, CONFIG.tracer_scale, CONFIG.tracer_scale))
+
+	-- (how many there have been, for the tests: one can be gone in a frame)
+	sniper.tracers_made = (sniper.tracers_made or 0) + 1
+
+	tracers[#tracers + 1] = {
+		direction = Vector3Box(direction),
+		from = Vector3Box(start),
+		length = hit and distance or reach,
+		trail_from = Vector3Box(start),
+		trail_time = 0,
+		travelled = 0,
+		unit = unit,
+		world = world,
+	}
+end
+
+local function update_tracers(dt)
+	for i = #tracers, 1, -1 do
+		local tracer = tracers[i]
+
+		tracer.travelled = math.min(tracer.travelled + CONFIG.tracer_speed * UNIT * dt, tracer.length)
+
+		local position = tracer.from:unbox() + tracer.direction:unbox() * tracer.travelled
+
+		Unit.set_local_position(tracer.unit, 0, position)
+
+		tracer.trail_time = tracer.trail_time + dt
+
+		if tracer.trail_time >= CONFIG.tracer_trail_step or tracer.travelled >= tracer.length then
+			tracer.trail_time = math.min(tracer.trail_time - CONFIG.tracer_trail_step, CONFIG.tracer_trail_step)
+
+			particles.beam({
+				color = { 1, 1, 1 },
+				fade_in = 0,
+				fade_out = CONFIG.tracer_trail_seconds * CONFIG.tracer_trail_hold,
+				from = tracer.trail_from:unbox(),
+				intensity = CONFIG.tracer_trail_intensity,
+				life = CONFIG.tracer_trail_seconds,
+				size = CONFIG.tracer_trail_width,
+				texture = "flak_trail",
+				to = position,
+			})
+
+			tracer.trail_from:store(position)
+		end
+
+		if tracer.travelled >= tracer.length then
+			World.destroy_unit(tracer.world, tracer.unit)
+			table.remove(tracers, i)
+		end
+	end
+end
+
+mod.update_callbacks[#mod.update_callbacks + 1] = update_tracers
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = destroy_tracers
+mod.unload_callbacks[#mod.unload_callbacks + 1] = destroy_tracers
+
+-- A shot, on every machine: the sparks and one of the six sounds where it hit, with the puffs if the view is near, and the sound of the
+-- bullet passing the local player. Another player's shot or a bot's has a tracer. The others also see the flash, the light and the smoke
+-- at the rifle in the character's hand, and hear the shot.
+sniper.shot_callbacks.sniper_skin = function (owner_unit, hit_position, hit_normal, start, direction)
 	local api = skin_apis[1]
 
 	if not api then
@@ -179,6 +321,20 @@ sniper.shot_callbacks.sniper_skin = function (owner_unit, hit_position, hit_norm
 	if hit_position then
 		mod.hit_effects.wall_sparks(hit_position, hit_normal)
 		api.play_sound_at("ut_sniper_impact_" .. math.random(1, 6) .. "_3d", hit_position)
+
+		local camera_position = utils.camera_pose()
+
+		if camera_position and Vector3.distance(camera_position, hit_position) < CONFIG.impact_smoke_range * UNIT then
+			mod.hit_effects.impact_smoke(hit_position, hit_normal)
+		end
+	end
+
+	if start then
+		whiz(api, start, direction)
+
+		if not utils.is_local_player_unit(owner_unit) then
+			add_tracer(start, direction)
+		end
 	end
 
 	if utils.is_local_player_unit(owner_unit) and first_person_api() and not api.third_person.shows_weapon(owner_unit) then
@@ -190,6 +346,7 @@ sniper.shot_callbacks.sniper_skin = function (owner_unit, hit_position, hit_norm
 
 	if muzzle then
 		third_person_flash(owner_unit, holder)
+		weapon_light(owner_unit, holder)
 		smoke(muzzle)
 		holder.play_sound_at("ut_sniper_fire_3d", muzzle)
 	end

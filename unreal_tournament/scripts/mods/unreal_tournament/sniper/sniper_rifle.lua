@@ -371,8 +371,8 @@ end
 -- (SniperWallHitEffect), and tells the skin and the other players. It runs on the machine that owns the shot, which is the player's,
 -- or the host's for its bots.
 
--- What the skin is told: mod.sniper.shot_callbacks[name] = function (owner_unit, hit_position, hit_normal), with no position or normal
--- if the bullet hit nothing
+-- What the skin is told: mod.sniper.shot_callbacks[name] = function (owner_unit, hit_position, hit_normal, start, direction), with no
+-- position or normal if the bullet hit nothing. The bullet starts at start (the eye) and goes along direction.
 mod.sniper = {
 	shot_callbacks = {},
 	-- The seconds between shots, and when the player last fired
@@ -392,9 +392,9 @@ local function raycast(physics_world, origin, direction)
 	return PhysicsWorld.immediate_raycast_actors(physics_world, origin, direction, CONFIG.range, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
 end
 
-local function tell(owner_unit, hit_position, hit_normal)
+local function tell(owner_unit, hit_position, hit_normal, start, direction)
 	for _, callback in pairs(mod.sniper.shot_callbacks) do
-		callback(owner_unit, hit_position, hit_normal)
+		callback(owner_unit, hit_position, hit_normal, start, direction)
 	end
 end
 
@@ -422,11 +422,12 @@ mod.handgun_update_callbacks.sniper = function (self)
 	local owner_unit = self.owner_unit
 	local first_person_extension = ScriptUnit.extension(owner_unit, "first_person_system")
 	local origin, rotation = first_person_extension:get_projectile_start_position_rotation()
-	local hit = first_beam_hit(raycast(self.physics_world, origin, Quaternion.forward(rotation)), owner_unit)
+	local direction = Quaternion.forward(rotation)
+	local hit = first_beam_hit(raycast(self.physics_world, origin, direction), owner_unit)
 	local hit_position = hit and hit[1]
 	local hit_normal = hit and hit[3]
 
-	tell(owner_unit, hit_position, hit_normal)
+	tell(owner_unit, hit_position, hit_normal, origin, direction)
 
 	-- (a shot that hit nothing is sent with the zero vector as its normal)
 	local x, y, z = 0, 0, 0
@@ -437,10 +438,11 @@ mod.handgun_update_callbacks.sniper = function (self)
 		normal_x, normal_y, normal_z = Vector3.x(hit_normal), Vector3.y(hit_normal), Vector3.z(hit_normal)
 	end
 
-	mod:network_send("ut_sniper_shot", "others", Managers.state.unit_storage:go_id(owner_unit), x, y, z, normal_x, normal_y, normal_z)
+	mod:network_send("ut_sniper_shot", "others", Managers.state.unit_storage:go_id(owner_unit), x, y, z, normal_x, normal_y, normal_z,
+		Vector3.x(origin), Vector3.y(origin), Vector3.z(origin), Vector3.x(direction), Vector3.y(direction), Vector3.z(direction))
 end
 
-mod:network_register("ut_sniper_shot", function (_, owner_go_id, x, y, z, normal_x, normal_y, normal_z)
+mod:network_register("ut_sniper_shot", function (_, owner_go_id, x, y, z, normal_x, normal_y, normal_z, start_x, start_y, start_z, direction_x, direction_y, direction_z)
 	local unit = Managers.state.unit_storage:unit(owner_go_id)
 
 	if not unit or not Unit.alive(unit) then
@@ -448,10 +450,12 @@ mod:network_register("ut_sniper_shot", function (_, owner_go_id, x, y, z, normal
 	end
 
 	local normal = Vector3(normal_x, normal_y, normal_z)
+	local start = Vector3(start_x, start_y, start_z)
+	local direction = Vector3(direction_x, direction_y, direction_z)
 
 	if Vector3.length(normal) > 0.01 then
-		tell(unit, Vector3(x, y, z), normal)
+		tell(unit, Vector3(x, y, z), normal, start, direction)
 	else
-		tell(unit, nil, nil)
+		tell(unit, nil, nil, start, direction)
 	end
 end)

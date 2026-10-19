@@ -8,4 +8,6 @@ events = {
 	ut_sniper_impact_4_3d = { attenuation_max = 4 duration_type = "OneShot" duration_min = 0.129 duration_max = 0.129 positioning = "3D" }
 	ut_sniper_impact_5_3d = { attenuation_max = 4 duration_type = "OneShot" duration_min = 0.144 duration_max = 0.144 positioning = "3D" }
 	ut_sniper_impact_6_3d = { attenuation_max = 4 duration_type = "OneShot" duration_min = 0.132 duration_max = 0.132 positioning = "3D" }
+	ut_sniper_whiz_1_3d = { attenuation_max = 2 duration_type = "OneShot" duration_min = 0.618 duration_max = 0.618 positioning = "3D" }
+	ut_sniper_whiz_2_3d = { attenuation_max = 2 duration_type = "OneShot" duration_min = 0.354 duration_max = 0.354 positioning = "3D" }
 }

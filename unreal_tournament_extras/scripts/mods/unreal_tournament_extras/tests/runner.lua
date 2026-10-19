@@ -891,7 +891,8 @@ local function make_context(suite)
 	end
 
 	-- Adds up the damage a unit takes from now on, all of it, past what kills it: { total, hits }, with each hit as { amount, source,
-	-- type, attacker, zone, critical }. The game keeps the damage of the last frame (GenericHealthExtension.recent_damages), which is read every frame
+	-- type, attacker, zone, critical, time }. The game splits a hit of over 256 into hits of 256 and the rest, all at one time
+	-- (DamageUtils.add_damage_network). The game keeps the damage of the last frame (GenericHealthExtension.recent_damages), which is read every frame
 	-- until the scenario ends.
 	function t.track_damage(unit)
 		local record = {
@@ -919,6 +920,7 @@ local function make_context(suite)
 					type = damages[i + DamageDataIndex.DAMAGE_TYPE - 1],
 					zone = damages[i + DamageDataIndex.HIT_ZONE - 1],
 					critical = damages[i + DamageDataIndex.CRITICAL_HIT - 1],
+					time = Managers.time:time("game"),
 				}
 			end
 		end
@@ -1155,6 +1157,22 @@ local function make_context(suite)
 			ScriptUnit.extension(bot, "ai_navigation_system"):teleport(position)
 
 			local inventory_extension = ScriptUnit.extension(bot, "inventory_system")
+
+			-- The item's packages are loaded first, as the game loads a loadout's (ProfileSynchronizer), for the first person too, which a
+			-- bot has: spawning a unit that is not loaded crashes the game. They stay loaded, so no unit of them can be alive when they are
+			-- let go.
+			local item_data = ItemMasterList[item_key]
+			local career_name = bot_player:career_name()
+			local item_units = BackendUtils.get_item_units(item_data, nil, nil, career_name)
+			local item_template = BackendUtils.get_item_template(item_data)
+
+			for _, first_person in ipairs({ true, false }) do
+				for _, package_name in ipairs(WeaponUtils.get_weapon_packages(item_template, item_units, first_person, career_name)) do
+					if not Managers.package:has_loaded(package_name, "ut_test") then
+						Managers.package:load(package_name, "ut_test", nil, false)
+					end
+				end
+			end
 
 			inventory_extension:destroy_slot(slot, true)
 			inventory_extension:add_equipment(slot, ItemMasterList[item_key])

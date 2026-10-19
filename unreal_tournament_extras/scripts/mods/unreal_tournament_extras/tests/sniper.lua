@@ -23,6 +23,10 @@ local CONFIG = {
 	behind_distance = 9, -- m
 	-- More than the time between shots, so each shot is made at once
 	between_shots = 1.5, -- s
+	-- The bot that fires at the player, for the tracer: Bardin as a Ranger, this far ahead
+	bot_profile = "dwarf_ranger",
+	bot_career = 1,
+	bot_distance = 8, -- m
 }
 
 -- Records the shots that happen while a test runs: when, and whether they hit something
@@ -303,6 +307,44 @@ local function scenarios()
 
 				t.expect(zoomed_in and zoomed_in >= before, "the zoom going in was not marked")
 				t.expect(zoomed_out and zoomed_in and zoomed_out > zoomed_in, "the zoom going out was not marked")
+			end,
+		},
+		{
+			-- SniperWallHitEffect: the line of a bullet passes the middle of the player who fires it, so they hear it pass
+			name = "the player who fires hears the bullet pass",
+			run = function (t)
+				local sounds = t.sounds("ut_sniper_whiz_")
+
+				t.press("action_one", 0.1)
+				t.wait(0.5)
+
+				t.expect(#sounds == 1, "the bullet's pass played %d times, not once", #sounds)
+			end,
+		},
+		{
+			-- TracerProjectile: another player's shot or a bot's flies as a tracer, and passing the player, it is heard
+			name = "a bot's shot has a tracer, and passing the player it is heard",
+			run = function (t)
+				local bot = t.add_bot(CONFIG.bot_profile, CONFIG.bot_career, ut.items.weapons.sniper_rifle_dr.key, CONFIG.bot_distance)
+
+				if not t.expect(bot, "the bot could not be added") then
+					return
+				end
+
+				t.wait(1)
+				t.bot_aim(bot, t.unit())
+				t.wait(0.5)
+
+				local sounds = t.sounds("ut_sniper_whiz_")
+				local before = ut.sniper.tracers_made or 0
+
+				t.bot_press(bot, "fire")
+				t.wait(0.5)
+
+				local tracers = (ut.sniper.tracers_made or 0) - before
+
+				t.expect(tracers == 1, "%d tracers flew, not 1", tracers)
+				t.expect(#sounds == 1, "the bullet's pass played %d times, not once", #sounds)
 			end,
 		},
 		{

@@ -5,7 +5,12 @@
 ## Weapons to finish
 
 1. **Assault Rifle.** Go through its column of `WEAPON_STATUS.md`. It now holds UT's third person mesh (NewAssaultRifle_3rd), whose
-   grip and turn need setting in the game.
+   grip and turn need setting in the game. Found in the game:
+   - The pistols' tracers still show.
+   - The grenades have no smoke trail (GrenadeSmokeTrail).
+   - With full ammo, an ammo pickup does not give back the grenades.
+   - The grenade count is not drawn with the ammo (UT's grenade ammo graphics).
+   - The grenade's charge has no bar.
 2. **Link Gun for everyone.** Two weapons that share their code (the primary, linking allies, link stacking), each with its own alt
    and resource:
    - The regular Link Gun, UT2004's (`LinkFire`, `LinkAltFire`, `LinkProjectile`), for every career with a ranged slot. It uses

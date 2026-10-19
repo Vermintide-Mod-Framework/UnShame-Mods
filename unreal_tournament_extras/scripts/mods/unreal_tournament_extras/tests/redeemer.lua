@@ -23,6 +23,8 @@ local CONFIG = {
 	missile_start_margin = 0.5, -- m
 	-- Faster than the player walks: the blast throws them
 	thrown_speed = 6, -- m/s
+	-- The firing shake moves the view back more than this (it jumps 20 UT units, 0.4 m)
+	shake_back = 0.2, -- m
 	-- The monster that the blast's damage is measured on (the suite runs on Legend), how far ahead it stands, and how far a wave's damage
 	-- can be from the one expected. A blast hit is more than 10: the missile's own hit only staggers.
 	monster = "skaven_rat_ogre",
@@ -141,6 +143,26 @@ local function scenarios()
 			end,
 		},
 		{
+			-- RedeemerFire's view shake: the view of the player who fires jumps back 20 UT units (0.4 m)
+			name = "firing shakes the view back",
+			run = function (t)
+				make_ready(t)
+
+				local back = 0
+
+				t.look(CONFIG.pitch)
+				t.hold("action_career")
+				t.wait(CONFIG.hold)
+				t.release("action_career")
+				t.watch(0.5, function ()
+					back = math.max(back, -Vector3.y(ut.view_shake.offset()))
+				end)
+				t.wait(CONFIG.blast_wait)
+
+				t.expect(back > CONFIG.shake_back, "the view moved back %.2f m, not over %.2f", back, CONFIG.shake_back)
+			end,
+		},
+		{
 			-- RedeemerFire.ProjSpawnOffset: 100 units (2 m) straight ahead of the eye. The missile has moved a little by the first frame it is
 			-- seen.
 			name = "the missile starts 2 m ahead of the eye",
@@ -210,12 +232,26 @@ local function scenarios()
 				local amounts = {}
 				local total = 0
 
+				-- (the game splits a wave's hit into hits of 256 and the rest, at one time: they are added up)
 				for _, hit in ipairs(record.hits) do
-					if hit.attacker == "self" and hit.amount > CONFIG.blast_hit then
-						waves[#waves + 1] = hit
-						amounts[#amounts + 1] = string.format("%.0f", hit.amount)
-						total = total + hit.amount
+					local last = waves[#waves]
+
+					if hit.attacker == "self" and last and last.time == hit.time then
+						last.amount = last.amount + hit.amount
+					elseif hit.attacker == "self" then
+						waves[#waves + 1] = { amount = hit.amount, source = hit.source, time = hit.time }
 					end
+				end
+
+				for i = #waves, 1, -1 do
+					if waves[i].amount <= CONFIG.blast_hit then
+						table.remove(waves, i)
+					end
+				end
+
+				for _, wave in ipairs(waves) do
+					amounts[#amounts + 1] = string.format("%.0f", wave.amount)
+					total = total + wave.amount
 				end
 
 				local expected = t.on_main_thread(function ()
