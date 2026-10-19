@@ -169,6 +169,9 @@ local function build_shot(original)
 	return action
 end
 
+-- The aim animation of each template's base: { zoom_in = event, zoom_out = event }
+mod.sniper_zoom_animations = {}
+
 local function apply_handgun(template)
 	-- The chart of the item's stats, from 0 to 7. The bullet is the normal attack.
 	template.weapon_diagram = {
@@ -194,6 +197,12 @@ local function apply_handgun(template)
 	-- Only the shot is replaced, and the aim action is replaced by UT's zoom (zoom.lua). Everything else stays untouched, including
 	-- wield, inspect and the career actions.
 	local hand = actions.action_one.default.weapon_action_hand
+	local aim = actions.action_two.default
+
+	-- The base's aim animation, which skin.lua plays on the character while the zoom is in (the zoom is a toggle, not a held action)
+	if aim.anim_event then
+		mod.sniper_zoom_animations[template.name] = { zoom_in = aim.anim_event, zoom_out = aim.anim_end_event }
+	end
 
 	actions.action_one = {
 		default = build_shot(actions.action_one.default),

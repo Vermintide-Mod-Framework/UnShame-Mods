@@ -42,9 +42,10 @@ local CONFIG = {
 	-- The scope (ClassicSniperRifle.RenderOverlays): pieces of its texture drawn black around the view, sized for a screen 1024 wide.
 	-- It draws a charge bar too, but its place and size are never set, so it is not seen.
 	scope_texture_size = 512,
-	-- The inspect pose turns the rifle to show its left side, like the other weapons. These numbers are a guess.
+	-- The inspect pose turns the rifle to show its left side, like the other weapons. It sways less than the others (2 degrees, not
+	-- 5): the rifle is long, so the same turn moves its ends far more.
 	inspect_pose_speed = 5,
-	inspect_sway = 5,
+	inspect_sway = 2,
 	inspect_sway_speed = 1.8,
 }
 
@@ -322,6 +323,15 @@ local function new_skin(setting_id)
 			if zoomed ~= skin.was_zoomed then
 				if skin.was_zoomed ~= nil then
 					api.play_sound(zoomed and "ut_lightning_zoom_in" or "ut_lightning_zoom_out")
+
+					-- The character aims as with the base weapon's zoom, in third person, which the other players see too
+					local player = Managers.player:local_player()
+					local unit = player and player.player_unit
+					local animations = unit and mod.sniper_zoom_animations[utils.wielded_template_name(unit)]
+
+					if animations then
+						Managers.state.network:anim_event(unit, zoomed and animations.zoom_in or animations.zoom_out)
+					end
 				end
 
 				skin.was_zoomed = zoomed
