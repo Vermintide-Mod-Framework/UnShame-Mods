@@ -161,10 +161,11 @@ STATICS = {
     # (its glass material has no faces), LinkAttachment's NewWeapons2004.NewLinkGun_3rd (LinkGunShader is LinkTex0's),
     # RocketAttachment's Weapons.RocketLauncher_3rd and RedeemerAttachment's Weapons.Redeemer_3rd (the missile, then the body; its
     # DrawScale is 0.6)
+    # (AssaultAttachment's DrawScale is 0.3)
     'assault_3rd': {
         'pskx': 'NewWeapons2004/SkeletalMesh/NewAssaultRifle_3rd.psk',
         'materials': [('units/ut/assault/pickup_m0', 'existing')],
-        'scale': 0.02 * 0.4,
+        'scale': 0.02 * 0.3,
         'unit': 'units/ut/assault/third_person',
     },
     'bio_3rd': {
