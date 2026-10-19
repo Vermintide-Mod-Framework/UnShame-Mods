@@ -319,7 +319,8 @@ local function draw_zoom_fade()
 	local toggled_at = mod.zoom.toggled_at
 	local passed = toggled_at and Managers.time:time("game") - toggled_at
 
-	if not passed or passed >= CONFIG.zoom_fade_time then
+	-- (a time ahead of now is not a fade, as ZoomFadeOut takes it: the game's time starts again in each level)
+	if not passed or passed < 0 or passed >= CONFIG.zoom_fade_time then
 		return
 	end
 

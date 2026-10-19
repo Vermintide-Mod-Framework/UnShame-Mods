@@ -231,6 +231,9 @@ end
 local function reset_zoom()
 	end_zoom()
 	apply_zoom_fov()
+
+	-- (the game's time starts again in each level, so a time of the last level would be ahead of the new level's)
+	zoom.toggled_at = nil
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = reset_zoom
