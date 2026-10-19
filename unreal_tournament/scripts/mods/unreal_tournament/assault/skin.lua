@@ -76,15 +76,7 @@ local CONFIG = {
 	trail_intensity = 1,
 	trail_attenuation = 0.2,
 	trail_tiles = 16,
-	-- The characters fire both modes in the pistols' alt attack's stance (lock_target): the rounds keep it, the grenade's throw plays
-	-- its shot (attack_shoot_fast), and they leave it (attack_finished) this long after the last of them, once the rifle does nothing
-	-- (set in the game)
-	stance_linger = 0.5, -- s
-	-- (after the grenade's charge or throw: the time until the next grenade can be thrown, and half a second more, set in the game)
-	stance_linger_alt = assault.grenade_fire_rate + 0.5, -- s
-	-- The grenade's shot leaves the stance once it has played, so the stance is taken again this long after the shot (set in the game)
-	stance_retake = 0.4, -- s
-	-- In the stance the arms reach out and the pistols point along them, so both rifles are level with the pistols then (pitch and yaw 0
+	-- In the pistols' stance (the rifle's actions take it: see assault_rifle.lua's stance_linger) the arms reach out and the pistols point along them, so both rifles are level with the pistols then (pitch and yaw 0
 	-- from the hand's forward, where they are tipped down to lie along the forearm otherwise), turning there and back over this long
 	-- (set in the game)
 	stance_blend = 0.2, -- s
@@ -133,8 +125,8 @@ local function play_both(name, duration)
 	end
 end
 
--- (the characters' shot and their stance, below)
-local shot_animation, saw_stance
+-- (the characters' stance, below)
+local saw_stance
 
 -- The flash at a point of a rifle in a character's hand (UT units of the mesh): the mesh is in UT units of the world, and points along
 -- the barrel, which runs along the rifle mesh's forward, as the flash mesh's does
@@ -195,7 +187,7 @@ end
 mod.assault_round_callbacks.assault_skin = function (owner_unit)
 	local right = skin_apis[1]
 
-	saw_stance(owner_unit, CONFIG.stance_linger)
+	saw_stance(owner_unit, assault.stance_linger)
 
 	if not right then
 		return
@@ -260,7 +252,7 @@ mod.assault_grenade_callbacks.assault_skin = function (grenade)
 		world = world,
 	}
 
-	saw_stance(grenade.owner_unit, CONFIG.stance_linger_alt)
+	saw_stance(grenade.owner_unit, assault.stance_linger_after_throw)
 
 	-- (the flash at the grenade launcher of the rifle that threw it, and the light)
 	local thrower = skin_apis[grenade.left and 2 or 1]
@@ -273,10 +265,6 @@ mod.assault_grenade_callbacks.assault_skin = function (grenade)
 		weapon_light(grenade.owner_unit, api)
 	end
 
-	if grenade.local_owner then
-		shot_animation(grenade.owner_unit, true)
-	end
-
 	if utils.is_local_player_unit(grenade.owner_unit) and api.state() then
 		play_both("AltFire", api.animation_duration("AltFire") / 0.5)
 		api.play_sound("ut_assault_alt_fire")
@@ -286,14 +274,9 @@ mod.assault_grenade_callbacks.assault_skin = function (grenade)
 	end
 end
 
--- The characters' stance and shots (see stance_linger), sent from the machine that runs the character's actions, the player's or the
--- host's for a bot, as the game sends its own: [character] = { last = when the rifle last did something, linger = how long the stance
--- is kept after it }
-local in_stance = {}
-
 -- Every machine sees the rounds and the grenades, and so when each character is in the stance, for the rifles' angles: [character] =
--- { last, linger, weight = how far the rifles are turned to level, 0 to 1 }. The charge is seen only by the machine that runs the
--- character, so the others turn the rifles at the throw.
+-- { last = when the rifle last fired, linger = how long the stance lasts after it, weight = how far the rifles are turned to level,
+-- 0 to 1 }. The charge is seen only by the machine that runs the character, so the others turn the rifles at the throw.
 local stances = {}
 
 -- (without a linger, the stance keeps the one it has)
@@ -301,103 +284,22 @@ saw_stance = function (unit, linger)
 	local stance = stances[unit] or { weight = 0 }
 
 	stance.last = Managers.time:time("game")
-	stance.linger = linger or stance.linger or CONFIG.stance_linger
+	stance.linger = linger or stance.linger or assault.stance_linger
 	stances[unit] = stance
 end
 
-local function keep_stance(unit, linger)
-	local entry = in_stance[unit] or {}
-
-	entry.last = Managers.time:time("game")
-	entry.linger = linger or entry.linger or CONFIG.stance_linger
-	in_stance[unit] = entry
-end
-
--- Takes the stance if the character is not in it, and with shoot (the grenade's) plays its shot. The shot leaves the stance as the
--- pistols' does (their fast shot is followed by their aim again, which takes it again), so the next round takes it again.
-shot_animation = function (unit, shoot)
-	local network_manager = Managers.state.network
-
-	if not network_manager or not Unit.alive(unit) then
-		return
-	end
-
-	local entry = in_stance[unit]
-
-	if not entry or entry.shot then
-		network_manager:anim_event(unit, "lock_target")
-	end
-
-	keep_stance(unit, shoot and CONFIG.stance_linger_alt or CONFIG.stance_linger)
-
-	in_stance[unit].shot = shoot or nil
-	in_stance[unit].retake_at = shoot and in_stance[unit].last + CONFIG.stance_retake or nil
-
-	if shoot then
-		network_manager:anim_event(unit, "attack_shoot_fast")
-	end
-end
-
--- The rounds keep the stance, with no shot
-mod.handgun_start_callbacks.assault_stance = function (action, new_action)
-	if new_action.ut_assault then
-		shot_animation(action.owner_unit, false)
-	end
-end
-
--- The charge takes the stance, and the grenade's throw is its shot
+-- The charge holds the stance on the machine that runs the character (the rounds and the throw are seen on every machine)
 mod.dummy_start_callbacks.assault_stance = function (action, new_action)
-	local unit = action.owner_unit
-
-	if not new_action.ut_assault_charge then
-		return
+	if new_action.ut_assault_charge then
+		saw_stance(action.owner_unit, math.huge)
 	end
-
-	if (not in_stance[unit] or in_stance[unit].shot) and Managers.state.network then
-		Managers.state.network:anim_event(unit, "lock_target")
-	end
-
-	keep_stance(unit, CONFIG.stance_linger_alt)
-	in_stance[unit].shot = nil
-	saw_stance(unit, CONFIG.stance_linger_alt)
 end
 
--- Whether the rifle in the character's hands is doing something (a round or the charge)
-local function rifle_busy(unit)
-	local inventory_extension = ScriptUnit.has_extension(unit, "inventory_system")
-	local equipment = inventory_extension and inventory_extension:equipment()
-	local weapon_unit = equipment and (equipment.right_hand_wielded_unit or equipment.left_hand_wielded_unit)
-	local weapon_extension = weapon_unit and ScriptUnit.has_extension(weapon_unit, "weapon_system")
+mod.dummy_finish_callbacks.assault_stance = function (action)
+	local current = action.current_action
 
-	return weapon_extension ~= nil and weapon_extension:has_current_action()
-end
-
-local function update_stances()
-	local now = Managers.time:time("game")
-
-	for unit, entry in pairs(in_stance) do
-		-- (back into the stance once the grenade's shot has played)
-		if entry.retake_at and now >= entry.retake_at and Unit.alive(unit) and Managers.state.network then
-			Managers.state.network:anim_event(unit, "lock_target")
-
-			entry.retake_at = nil
-			entry.shot = nil
-		end
-
-		if not Unit.alive(unit) or utils.wielded_template_name(unit) ~= TEMPLATE_NAME then
-			-- (the wield of another weapon plays its own stance)
-			in_stance[unit] = nil
-		elseif rifle_busy(unit) then
-			entry.last = now
-
-			saw_stance(unit)
-		elseif now - entry.last > entry.linger then
-			in_stance[unit] = nil
-
-			if Managers.state.network then
-				Managers.state.network:anim_event(unit, "attack_finished")
-			end
-		end
+	if current and current.ut_assault_charge and stances[action.owner_unit] then
+		saw_stance(action.owner_unit, assault.stance_linger)
 	end
 end
 
@@ -425,12 +327,8 @@ local function angles_in_hand(character, pitch, roll, yaw)
 	return pitch * (1 - level), roll, yaw * (1 - level)
 end
 
-mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
-	update_stances()
-	update_angles(dt)
-end
+mod.update_callbacks[#mod.update_callbacks + 1] = update_angles
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
-	table.clear(in_stance)
 	table.clear(stances)
 end
 

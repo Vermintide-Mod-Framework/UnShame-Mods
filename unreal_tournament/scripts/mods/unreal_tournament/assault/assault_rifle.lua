@@ -86,6 +86,15 @@ local CONFIG = {
 	bot_max_range = 25,
 	chain_margin = 0.05,
 	recoil_climb = 0.08,
+	-- The characters fire both modes in the pistols' alt attack's stance, as actions that chain into each other, as the pistols' do
+	-- (their aim, lock_target, and their fast shot, attack_shoot_fast): the first round or the grenade's charge takes the stance, the
+	-- rounds after it keep it, and the throw plays the shot. Once the rounds stop, or the grenade's shot has played (throw_time), an
+	-- action that holds the stance follows, and leaves it (attack_finished) this long after, unless the rifle fires again (set in the
+	-- game).
+	stance_linger = 0.5, -- s
+	-- (after a grenade, from its throw: the time until the next grenade can be thrown, and half a second more)
+	stance_linger_alt = 0.5 + 1 / (0.4 * 8) + 0.5, -- s
+	throw_time = 0.4, -- s
 }
 
 local UNIT = utils.UT_UNIT
@@ -415,12 +424,34 @@ end)
 -- The charge starts with the grenade button, and the grenade goes when it is let go
 local charge_started = {}
 
+-- The throw is the action that letting go of the charge chains into: it throws the grenade as it starts, as hard as the charge was held
 mod.dummy_start_callbacks.assault = function (action, new_action, t)
-	if new_action.ut_assault_charge then
-		charge_started[action.owner_unit] = t
+	local owner_unit = action.owner_unit
 
-		if utils.is_local_player_unit(action.owner_unit) then
+	if new_action.ut_assault_charge then
+		charge_started[owner_unit] = t
+
+		if utils.is_local_player_unit(owner_unit) then
 			assault.charge_started = t
+		end
+	elseif new_action.ut_assault_throw then
+		local started = charge_started[owner_unit]
+
+		charge_started[owner_unit] = nil
+
+		if utils.is_local_player_unit(owner_unit) then
+			assault.charge_started = nil
+
+			if not started or assault.grenade_count <= 0 then
+				return
+			end
+
+			assault.grenade_count = assault.grenade_count - 1
+			assault.last_grenade = t
+		end
+
+		if started then
+			throw(action, t - started)
 		end
 	end
 end
@@ -428,34 +459,17 @@ end
 mod.dummy_finish_callbacks.assault = function (action, reason)
 	local current = action.current_action
 
-	if not current or not current.ut_assault_charge then
+	-- A weapon switch or another interruption drops the grenade, as UT's does when the weapon is put away. Letting go chains into the
+	-- throw, which takes the charge's start.
+	if not current or not current.ut_assault_charge or reason == "new_interupting_action" then
 		return
 	end
 
-	local owner_unit = action.owner_unit
-	local started = charge_started[owner_unit]
+	charge_started[action.owner_unit] = nil
 
-	charge_started[owner_unit] = nil
-
-	if utils.is_local_player_unit(owner_unit) then
+	if utils.is_local_player_unit(action.owner_unit) then
 		assault.charge_started = nil
 	end
-
-	-- A weapon switch or another interruption drops the grenade, as UT's does when the weapon is put away
-	if not started or reason ~= "hold_input_released" then
-		return
-	end
-
-	if utils.is_local_player_unit(owner_unit) then
-		if assault.grenade_count <= 0 then
-			return
-		end
-
-		assault.grenade_count = assault.grenade_count - 1
-		assault.last_grenade = Managers.time:time("game")
-	end
-
-	throw(action, Managers.time:time("game") - started)
 end
 
 -- A pickup of ammo fills the grenades, whether the rifle is held or not
@@ -490,17 +504,57 @@ local function chain(action, sub_action, input, start_time)
 	}
 end
 
+-- The sub-actions of the stance (see stance_linger): a round after a round or in the stance, the stance after the rounds, a charge in the
+-- stance, the throw, and the stance after it
+local ROUND_IN_STANCE = "ut_assault_round"
+local STANCE = "ut_assault_stance"
+local CHARGE_IN_STANCE = "ut_assault_charge"
+local THROW = "ut_assault_throw"
+local STANCE_AFTER_THROW = "ut_assault_stance_after_throw"
+
+for _, name in ipairs({ ROUND_IN_STANCE, STANCE, CHARGE_IN_STANCE, THROW, STANCE_AFTER_THROW }) do
+	utils.register_network_lookup("sub_actions", name)
+end
+
+-- (a stance ends with the pistols' end of their aim, unless the rifle fires again from it)
+local function leaves_stance(unit, end_reason)
+	return end_reason ~= "new_interupting_action"
+end
+
+-- What the stance's actions can chain into at once: rounds, a charge, and the wield
+local function stance_chains()
+	return {
+		chain("action_wield", "default", "action_wield", 0),
+		chain("action_one", ROUND_IN_STANCE, "action_one", 0),
+		chain("action_one", ROUND_IN_STANCE, "action_one_hold", 0),
+		chain("action_two", CHARGE_IN_STANCE, "action_two_hold", 0),
+	}
+end
+
+-- An action that holds the stance for linger seconds and then leaves it, taking it first with take
+local function build_stance(linger, take)
+	return {
+		kind = "dummy",
+		anim_event_3p = take and "lock_target" or nil,
+		anim_end_event_3p = "attack_finished",
+		anim_end_event_condition_func = leaves_stance,
+		total_time = linger,
+		allowed_chain_actions = stance_chains(),
+	}
+end
+
 -- A round. Holding the button repeats it at the fire rate. It hits at once, as UT's does: the game's handgun shot traces a ray when its
 -- action has no projectile (ActionHandgun), and the pistols' shot fired one, which drew the pistol's tracer and hurt with the pistol's
--- damage.
-local function build_round(source)
+-- damage. The first round takes the stance, and the rounds after it keep it; once they stop, the stance follows.
+local function build_round(source, first)
 	local action = table.clone(source)
 
 	action.kind = "handgun"
-	-- (its animation is the first person's only: the characters take the pistols' alt attack, see skin.lua)
+	-- (its own animation is the first person's only)
 	action.anim_event_1p = action.anim_event
 	action.anim_event = nil
 	action.anim_event_last_ammo = nil
+	action.anim_event_3p = first and "lock_target" or nil
 	action.projectile_info = nil
 	action.impact_data = nil
 	action.speed = nil
@@ -520,8 +574,15 @@ local function build_round(source)
 	}
 	action.allowed_chain_actions = {
 		chain("action_wield", "default", "action_wield", 0.1),
-		chain("action_one", "default", "action_one_hold", CONFIG.fire_rate),
-		chain("action_two", "default", "action_two_hold", CONFIG.fire_rate),
+		chain("action_one", ROUND_IN_STANCE, "action_one_hold", CONFIG.fire_rate),
+		chain("action_two", CHARGE_IN_STANCE, "action_two_hold", CONFIG.fire_rate),
+		-- (once the round's time is over with neither button held)
+		{
+			action = "action_one",
+			auto_chain = true,
+			start_time = CONFIG.fire_rate + CONFIG.chain_margin / 2,
+			sub_action = STANCE,
+		},
 	}
 
 	if action.recoil_settings then
@@ -534,15 +595,16 @@ local function build_round(source)
 	return action
 end
 
--- The grenade's charge. It lasts while the button is held, and the grenade is thrown when it is let go. The next shot of either kind
--- can come once the grenade's fire rate has passed.
-local function build_charge(source)
+-- The grenade's charge. It lasts while the button is held, and letting go chains into the throw. The next shot of either kind can come
+-- once the grenade's fire rate has passed. The charge from nothing takes the stance, and one in the stance keeps it.
+local function build_charge(source, first)
 	local action = table.clone(source)
 
 	action.kind = "dummy"
 	action.anim_event = nil
 	action.anim_end_event = nil
 	action.anim_end_event_condition_func = nil
+	action.anim_event_3p = first and "lock_target" or nil
 	action.ammo_requirement = nil
 	action.allow_hold_toggle = nil
 	action.buff_data = nil
@@ -553,6 +615,13 @@ local function build_charge(source)
 	action.ut_assault_charge = true
 	action.allowed_chain_actions = {
 		chain("action_wield", "default", "action_wield"),
+		{
+			action = "action_two",
+			auto_chain = true,
+			release_required = "action_two_hold",
+			start_time = 0,
+			sub_action = THROW,
+		},
 	}
 	-- The charge can start only with a grenade left, and once the grenade's fire rate has passed since the last one
 	action.condition_func = function (unit)
@@ -567,6 +636,30 @@ local function build_charge(source)
 	action.chain_condition_func = action.condition_func
 
 	return action
+end
+
+-- The throw: the grenade goes as it starts (dummy_start_callbacks), and the characters play the pistols' fast shot. Rounds can follow
+-- at once, and once the shot has played the stance follows, taken again.
+local function build_throw()
+	local entries = {
+		chain("action_wield", "default", "action_wield", 0),
+		chain("action_one", ROUND_IN_STANCE, "action_one", 0),
+		chain("action_one", ROUND_IN_STANCE, "action_one_hold", 0),
+		{
+			action = "action_two",
+			auto_chain = true,
+			start_time = CONFIG.throw_time,
+			sub_action = STANCE_AFTER_THROW,
+		},
+	}
+
+	return {
+		kind = "dummy",
+		anim_event_3p = "attack_shoot_fast",
+		total_time = CONFIG.throw_time + CONFIG.chain_margin,
+		allowed_chain_actions = entries,
+		ut_assault_throw = true,
+	}
 end
 
 local function apply_template(template)
@@ -589,11 +682,19 @@ local function apply_template(template)
 		},
 	}
 
+	local round_source = actions.action_one.default
+	local charge_source = actions.action_two.default
+
 	actions.action_one = {
-		default = build_round(actions.action_one.default),
+		default = build_round(round_source, true),
+		[ROUND_IN_STANCE] = build_round(round_source, false),
+		[STANCE] = build_stance(CONFIG.stance_linger, false),
 	}
 	actions.action_two = {
-		default = build_charge(actions.action_two.default),
+		default = build_charge(charge_source, true),
+		[CHARGE_IN_STANCE] = build_charge(charge_source, false),
+		[THROW] = build_throw(),
+		[STANCE_AFTER_THROW] = build_stance(CONFIG.stance_linger_alt - CONFIG.throw_time, true),
 	}
 	actions.action_three = nil
 
@@ -632,3 +733,6 @@ assault.template_name = TEMPLATE_NAME
 assault.fire_rate = CONFIG.fire_rate
 assault.grenade_fire_rate = CONFIG.grenade_fire_rate
 assault.grenade_speed = { CONFIG.grenade_speed_min, CONFIG.grenade_speed_max, CONFIG.grenade_speed_gain }
+-- (for the rifles' angles in the stance, skin.lua)
+assault.stance_linger = CONFIG.stance_linger
+assault.stance_linger_after_throw = CONFIG.stance_linger_alt
