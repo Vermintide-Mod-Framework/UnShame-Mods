@@ -270,15 +270,15 @@ local function new_skin(setting_id)
 		offset_up = -10.6,
 		pivot_yaw = 90, -- PlayerViewPivot (Yaw=16384)
 		bob_damping = 2.3,
-		-- (the rifle is long: it is held further away and to the left, so that the receiver and the scope show, checked with
-		-- preview_weapon.py)
+		-- (the rifle is long: it is held further away and to the left, so that the receiver and the scope show, and turned less than
+		-- the others, as its far side has no faces; it turns as it moves, about its middle; checked with preview_weapon.py)
 		inspect_pose_right = -25,
 		inspect_pose_forward = 25,
 		inspect_pose_up = 2,
 		inspect_pose_roll = 10,
 		inspect_pose_pitch = 4,
-		inspect_pose_yaw = 55,
-		inspect_turn_start = 0.35,
+		inspect_pose_yaw = 45,
+		inspect_turn_start = 0,
 		inspect_pivot_right = 0,
 		inspect_pivot_forward = 30,
 		inspect_pivot_up = 0,
