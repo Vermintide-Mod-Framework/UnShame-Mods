@@ -911,6 +911,39 @@ function utils.moved_by_physics(actor)
 	return Actor.is_dynamic(actor) and Actor.is_physical(actor)
 end
 
+-- The mass of the parts of a ragdoll that physics moves
+function utils.ragdoll_mass(unit)
+	local mass = 0
+
+	for i = 0, Unit.num_actors(unit) - 1 do
+		local actor = Unit.actor(unit, i)
+
+		if actor and utils.moved_by_physics(actor) then
+			mass = mass + Actor.mass(actor)
+		end
+	end
+
+	return mass
+end
+
+-- UT throws every body at the same speed: KSetSkelVel sets its velocity, whatever its mass. Here, not as in UT, a body heavier than a
+-- Chaos marauder's (a UT player's size) gets the push that gives the marauder UT's speed, so it goes as much slower as it is heavier. A
+-- lighter body is thrown at UT's speed. The marauder's mass is measured in the game (the rocket suite's test of ragdoll masses), and
+-- until it is, every body is thrown at UT's speed.
+utils.RAGDOLL_REFERENCE_MASS = nil
+
+-- The share of UT's throw speed that a body gets
+function utils.throw_share(unit)
+	local reference = utils.RAGDOLL_REFERENCE_MASS
+	local mass = utils.ragdoll_mass(unit)
+
+	if not reference or mass <= reference then
+		return 1
+	end
+
+	return reference / mass
+end
+
 -- Throws a ragdoll as above, away from a point, with the damage type's own speeds if they are given. Returns whether it had any bodies
 -- that move.
 function utils.blast_ragdoll(unit, center, speed, up)
@@ -935,8 +968,13 @@ function utils.blast_ragdoll(unit, center, speed, up)
 	return true
 end
 
--- Gives every moving body of a ragdoll this velocity and spin
+-- Gives every moving body of a ragdoll this velocity and spin, less for a heavy body (throw_share)
 function utils.set_ragdoll_motion(unit, velocity, spin)
+	local share = utils.throw_share(unit)
+
+	velocity = velocity * share
+	spin = spin * share
+
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 

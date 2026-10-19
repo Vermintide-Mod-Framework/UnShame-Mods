@@ -34,6 +34,9 @@ local CONFIG = {
 		{ "skaven_rat_ogre", 1.5 * 0.45 },
 	},
 	armour_margin = 0.1,
+	-- The bodies weighed: the reference (a UT player's size), a lighter one and a heavier one, and how long a body has to fall
+	ragdoll_breeds = { "chaos_marauder", "skaven_clan_rat", "chaos_warrior" },
+	ragdoll_wait = 3, -- s
 	-- How far ahead the enemies that are shot stand
 	enemy_distance = 6, -- m
 	-- Where a rocket starts from the eye: to the right and below (rocket_launcher.lua's start_right and start_down)
@@ -669,6 +672,50 @@ local function scenarios()
 
 				t.tap("wield_2")
 				t.wait(1.5)
+			end,
+		},
+		{
+			-- A body heavier than a Chaos marauder's is thrown slower (utils.throw_share), and the marauder's mass is the reference
+			-- (utils.RAGDOLL_REFERENCE_MASS). Each enemy is killed where it stands and its ragdoll weighed once physics moves it.
+			name = "a body heavier than a marauder's is thrown slower",
+			run = function (t)
+				local masses = {}
+
+				for _, breed_name in ipairs(CONFIG.ragdoll_breeds) do
+					local unit = t.spawn(breed_name, CONFIG.enemy_distance)
+
+					if unit then
+						t.on_main_thread(function ()
+							AiUtils.kill_unit(unit, t.unit())
+						end)
+						t.wait_until(function ()
+							return t.on_main_thread(function ()
+								return Unit.alive(unit) and utils.ragdoll_mass(unit) > 0
+							end)
+						end, CONFIG.ragdoll_wait, "the body to fall")
+
+						masses[breed_name] = t.on_main_thread(function ()
+							return Unit.alive(unit) and { utils.ragdoll_mass(unit), utils.throw_share(unit) } or nil
+						end)
+						t.remove(unit)
+					end
+
+					local mass = masses[breed_name]
+
+					t.log("%s: a ragdoll of %s, thrown at %s of UT's speed", breed_name, mass and string.format("%.1f", mass[1]) or "nothing", mass and string.format("%.2f", mass[2]) or "-")
+				end
+
+				local reference = masses[CONFIG.ragdoll_breeds[1]]
+				local light = masses[CONFIG.ragdoll_breeds[2]]
+				local heavy = masses[CONFIG.ragdoll_breeds[3]]
+
+				t.expect(reference and light and heavy, "not every enemy fell as a ragdoll")
+				t.expect(utils.RAGDOLL_REFERENCE_MASS, "utils.RAGDOLL_REFERENCE_MASS is not set: the %s's ragdoll is %.1f", CONFIG.ragdoll_breeds[1], reference and reference[1] or -1)
+
+				if reference and light and heavy and utils.RAGDOLL_REFERENCE_MASS then
+					t.expect(math.abs(reference[2] - 1) < 0.01 and math.abs(light[2] - 1) < 0.01, "the %s and the %s are not thrown at UT's speed", CONFIG.ragdoll_breeds[1], CONFIG.ragdoll_breeds[2])
+					t.expect(heavy[2] < 1, "the %s is thrown at UT's speed", CONFIG.ragdoll_breeds[3])
+				end
 			end,
 		},
 	}

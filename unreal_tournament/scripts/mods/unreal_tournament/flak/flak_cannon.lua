@@ -669,9 +669,13 @@ local function add_ragdoll_throw(hit_unit, owner_unit, hit_position, hit_directi
 	throw.velocity:store(throw.velocity:unbox() + flat_direction * ragdoll_speed_at(Vector3.length(hit_position - owner_position)))
 end
 
--- Returns true once the body has been thrown.
+-- Returns true once the body has been thrown. A heavy body goes slower (utils.throw_share).
 local function throw_ragdoll(unit, velocity, spin)
 	local thrown = false
+	local share = utils.throw_share(unit)
+
+	velocity = velocity * share
+	spin = spin and spin * share
 
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
