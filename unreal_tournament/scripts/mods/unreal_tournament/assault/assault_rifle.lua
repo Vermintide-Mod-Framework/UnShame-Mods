@@ -127,6 +127,11 @@ local CONFIG = {
 	grenade_armor_attack = { 1, 1, 1.5, 1, 1, 0.5 },
 	grenade_armor_impact = { 1, 1, 1, 1, 1, 0.5 },
 	bot_max_range = 25,
+	-- How far a bot throws a grenade from, in meters: within it the grenade, at its most speed (32 m/s), falls up to about 1.3 m on the
+	-- way, from the head to the body (a choice)
+	bot_grenade_range = 12,
+	-- How long a bot holds the charge before it can throw (its speed is the most whatever it held)
+	bot_charge_time = 0.2, -- s
 	chain_margin = 0.05,
 	recoil_climb = 0.08,
 	-- The characters fire both modes in the stance of the base's alt attack, as actions that chain into each other, as the base's do (its
@@ -438,6 +443,20 @@ end
 -- Which rifle throws the next grenade: they take turns (AssaultGrenade.DoFireEffect, bFireLeft)
 local fire_left = {}
 
+-- A bot's grenades, on the host, which runs its actions (the player's own are assault.grenade_count): [bot] = { count, last = when it
+-- threw the last one }. A bot that has none here has all of them.
+local bot_grenades = {}
+
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	table.clear(bot_grenades)
+end
+
+local function is_bot(unit)
+	local player = Managers.player:owner(unit)
+
+	return player ~= nil and player.bot_player == true
+end
+
 -- Throws a grenade (AssaultGrenade.DoFireEffect and SpawnProjectile)
 local function throw(action, hold_time)
 	local owner_unit = action.owner_unit
@@ -461,7 +480,9 @@ local function throw(action, hold_time)
 
 	local locomotion_extension = ScriptUnit.has_extension(owner_unit, "locomotion_system")
 	local own_speed = locomotion_extension and Vector3.dot(forward, locomotion_extension:current_velocity()) / UNIT or 0
-	local speed = math.clamp(CONFIG.grenade_speed_min + hold_time * CONFIG.grenade_speed_gain, CONFIG.grenade_speed_min, CONFIG.grenade_speed_max) + own_speed
+	-- (a bot's goes at the most speed, however long it held: AssaultGrenade.SpawnProjectile)
+	local held_speed = is_bot(owner_unit) and CONFIG.grenade_speed_max or CONFIG.grenade_speed_min + hold_time * CONFIG.grenade_speed_gain
+	local speed = math.clamp(held_speed, CONFIG.grenade_speed_min, CONFIG.grenade_speed_max) + own_speed
 	local velocity = forward * (speed * UNIT)
 
 	local id = Application.guid()
@@ -511,6 +532,16 @@ mod.dummy_start_callbacks.assault = function (action, new_action, t)
 
 			assault.grenade_count = assault.grenade_count - 1
 			assault.last_grenade = t
+		elseif is_bot(owner_unit) then
+			local grenades = bot_grenades[owner_unit] or { count = CONFIG.max_grenades }
+
+			if not started or grenades.count <= 0 then
+				return
+			end
+
+			grenades.count = grenades.count - 1
+			grenades.last = t
+			bot_grenades[owner_unit] = grenades
 		end
 
 		if started then
@@ -537,8 +568,14 @@ end
 
 -- A pickup of ammo fills the grenades, whether the rifle is held or not
 mod:hook_safe(GenericAmmoUserExtension, "add_ammo", function (self)
-	if ITEM_KEYS[self.item_name] and self.owner_unit and utils.is_local_player_unit(self.owner_unit) then
+	if not ITEM_KEYS[self.item_name] or not self.owner_unit then
+		return
+	end
+
+	if utils.is_local_player_unit(self.owner_unit) then
 		assault.grenade_count = CONFIG.max_grenades
+	else
+		bot_grenades[self.owner_unit] = nil
 	end
 end)
 
@@ -574,8 +611,10 @@ local STANCE = "ut_assault_stance"
 local CHARGE_IN_STANCE = "ut_assault_charge"
 local THROW = "ut_assault_throw"
 local STANCE_AFTER_THROW = "ut_assault_stance_after_throw"
+-- (the throw of a bot, which fires a charged shot by pressing fire while it holds the charge: BTBotShootAction)
+local BOT_THROW = "ut_assault_bot_throw"
 
-for _, name in ipairs({ ROUND_IN_STANCE, STANCE, CHARGE_IN_STANCE, THROW, STANCE_AFTER_THROW }) do
+for _, name in ipairs({ ROUND_IN_STANCE, STANCE, CHARGE_IN_STANCE, THROW, STANCE_AFTER_THROW, BOT_THROW }) do
 	utils.register_network_lookup("sub_actions", name)
 end
 
@@ -675,13 +714,21 @@ end
 
 -- The charge can start only with a grenade left, and once the grenade's fire rate has passed since the last one
 local function can_charge(unit)
-	if not utils.is_local_player_unit(unit) then
+	local count, last
+
+	if utils.is_local_player_unit(unit) then
+		count, last = assault.grenade_count, assault.last_grenade
+	elseif is_bot(unit) then
+		local grenades = bot_grenades[unit]
+
+		count, last = grenades and grenades.count or CONFIG.max_grenades, grenades and grenades.last
+	else
 		return true
 	end
 
-	local since = assault.last_grenade and Managers.time:time("game") - assault.last_grenade or math.huge
+	local since = last and Managers.time:time("game") - last or math.huge
 
-	return assault.grenade_count > 0 and since >= CONFIG.grenade_fire_rate
+	return count > 0 and since >= CONFIG.grenade_fire_rate
 end
 
 -- The grenade's charge. It lasts while the button is held, and letting go chains into the throw. The next shot of either kind can come
@@ -711,6 +758,7 @@ local function build_charge(anims, first)
 				start_time = 0,
 				sub_action = THROW,
 			},
+			chain("action_two", BOT_THROW, "action_one", CONFIG.bot_charge_time),
 		},
 		-- (from no action the game first tries the sub-actions other than default that have a condition_func, so the charge in the stance
 		-- has only the chain's)
@@ -744,6 +792,15 @@ local function build_throw(anims)
 		allowed_chain_actions = entries,
 		ut_assault_throw = true,
 	}
+end
+
+-- The throw of a bot: the throw, which only a bot's fire while it charges chains into (a player's fire does nothing then, as in UT)
+local function build_bot_throw(anims)
+	local action = build_throw(anims)
+
+	action.chain_condition_func = is_bot
+
+	return action
 end
 
 -- Makes the rifle on the shell of its base pistols (utils.template_shell): everything that is not the pistols' animations, models and
@@ -794,6 +851,7 @@ local function apply_template(template)
 		default = build_charge(anims, true),
 		[CHARGE_IN_STANCE] = build_charge(anims, false),
 		[THROW] = build_throw(anims),
+		[BOT_THROW] = build_bot_throw(anims),
 		[STANCE_AFTER_THROW] = build_stance(anims, CONFIG.stance_linger_alt - CONFIG.throw_time, true),
 	}
 
@@ -817,13 +875,23 @@ local function apply_template(template)
 	}
 
 	-- How bots use it: the Brace of Pistols', holding the button for the rounds, at the head, against berserkers, specials and armored
-	-- enemies
+	-- enemies. UT's bots throw a grenade when they can't see the enemy (AssaultRifle.BestMode; its other 10% of choices come once in
+	-- many seconds of fire, with the rounds' BotRefireRate 0.99): a bot charges while its shot is in the way (charge_when_obstructed),
+	-- and throws once it is not, within bot_grenade_range, at the head, as the grenade drops on the way (its fall is not aimed for).
 	template.attack_meta_data = {
 		aim_at_node = "j_head",
-		can_charge_shot = false,
+		aim_at_node_charged = "j_head",
+		can_charge_shot = true,
+		-- (the next charge waits this long after any shot: the bot charges again once it has stopped firing, its shot in the way again)
+		charge_shot_delay = CONFIG.grenade_fire_rate,
+		charge_when_obstructed = true,
+		charge_when_outside_max_range_charged = false,
+		effective_against_charged = 0,
+		minimum_charge_time = CONFIG.bot_charge_time,
 		fire_input = "fire_hold",
 		effective_against = bit.bor(BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored),
 		max_range = CONFIG.bot_max_range,
+		max_range_charged = CONFIG.bot_grenade_range,
 	}
 
 	-- What the game's talents, traits and properties take it for: its base

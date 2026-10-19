@@ -4,9 +4,7 @@
 
 ## Weapons to finish
 
-1. **Assault Rifle.** Go through its column of `WEAPON_STATUS.md`. Bardin's copy, on the Drakefire Pistols, has Victor's grip of the
-   third person rifles until it is set in the game. The grenade's explosion is the rocket's (NewExplosionA), not NewExplosionB.
-2. **Link Gun for everyone.** Two weapons that share their code (the primary, linking allies, link stacking), each with its own alt
+1. **Link Gun for everyone.** Two weapons that share their code (the primary, linking allies, link stacking), each with its own alt
    and resource:
    - The regular Link Gun, UT2004's (`LinkFire`, `LinkAltFire`, `LinkProjectile`), for every career with a ranged slot. It uses
      ammo: 220 at most, 2 for a bolt, 1 for a beam hit, none while linked to a teammate. The alt is the damage beam. A copy for each
@@ -18,21 +16,21 @@
      show the ammo and the heat both.
    - Link stacking, UT's `LinkGun.Links`: a teammate who is linked while linking gets a stronger beam. Both weapons count as Link Guns
      for it. Now a link gives an ally the same boost whatever they hold.
-3. **Shield Gun for the Warrior Priest.** He can't use the Billhook, so his copy needs a base of his own (his one-handed hammer was
+2. **Shield Gun for the Warrior Priest.** He can't use the Billhook, so his copy needs a base of his own (his one-handed hammer was
    used before). His third person body is his own (`witch_hunter_warrior_priest`), with only his weapons' animations. Check with
    `Unit.has_animation_event` which poses it has (the Volley Crossbow's `to_repeating_crossbow`, `to_zoom`, `to_unzoom` and
    `attack_shoot`, or one of his own weapons') before choosing his third person pose and grip.
 
 ## Adrenaline and sprees
 
-4. **Adrenaline.**
-5. **Chat messages for sprees,** like "X is on a Y spree" and "Z ended X's spree". Check the original for what is printed for everyone.
+3. **Adrenaline.**
+4. **Chat messages for sprees,** like "X is on a Y spree" and "Z ended X's spree". Check the original for what is printed for everyone.
 
 ## Weapons made on the shell of their base
 
 A weapon keeps only what belongs to its base's animations, models and sounds (`utils.template_shell`), and sets everything else itself,
 as the Minigun does. What each finished weapon took from its base at build 1282 is in `INHERITED_FIELDS.md`.
 
-6. **`weapon_type`.** What the game's talents and traits take each weapon for (the Bio Rifle is a BRACE_OF_PISTOLS, the Shock Rifle a
+5. **`weapon_type`.** What the game's talents and traits take each weapon for (the Bio Rifle is a BRACE_OF_PISTOLS, the Shock Rifle a
    FIRE_STAFF, the Lightning Gun a LIFE_STAFF). Keep or choose. The Minigun keeps its base's, so that each hero's talents see his
    own repeater. Each weapon sets it in its own file.

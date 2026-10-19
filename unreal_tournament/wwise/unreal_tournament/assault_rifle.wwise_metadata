@@ -16,5 +16,5 @@ events = {
 	ut_assault_select = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.795 duration_max = 0.795 positioning = "2D" }
 	ut_assault_alt_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 0.588 duration_max = 0.588 positioning = "3D" }
 	ut_assault_grenade_bounce_3d = { attenuation_max = 25 duration_type = "OneShot" duration_min = 0.350 duration_max = 0.350 positioning = "3D" }
-	ut_assault_grenade_explosion_3d = { attenuation_max = 80 duration_type = "OneShot" duration_min = 2.363 duration_max = 2.363 positioning = "3D" }
+	ut_assault_grenade_explosion_3d = { attenuation_max = 50 duration_type = "OneShot" duration_min = 2.363 duration_max = 2.363 positioning = "3D" }
 }

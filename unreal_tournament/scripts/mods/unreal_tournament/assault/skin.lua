@@ -23,6 +23,20 @@ local assault = mod.assault
 local CONFIG = {
 	-- The copies of the shot's sound in the bank, each at its own pitch (make_bank.py's ASSAULT_FIRE_PITCHES)
 	fire_sound_pitches = 6,
+	-- The grenade's explosion: the game's own (its smoke and its mark), as the rocket's, and NewExplosionB's fireballs: three, 10 a
+	-- second, of exp1_frames (2 columns by 4 rows), size 60 to 80, life 0.4 to 0.6 s, starting up to 24 units from the middle. The
+	-- sizes and the spread are made larger as the rocket's are (NewExplosionA's 50 to 70 and 24 are 90 to 125 and 36 there).
+	explosion_effect = mod.effects.game_effect("fx/wpnfx_frag_grenade_impact"),
+	explosion_fireballs = {
+		sheet = "explosion_c_",
+		columns = 2,
+		rows = 4,
+		count = 3,
+		gap = 0.1, -- s
+		size = { 60 * 125 / 70, 80 * 125 / 70 },
+		life = { 0.4, 0.6 }, -- s
+		spread = { 0, 24 * 1.5 },
+	},
 	-- AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2 (see muzzle_flash.lua), with MinigunMuzFlash1st's numbers at UT's size,
 	-- as the Sniper Rifle's: the Minigun's own is drawn at half of it (its fit), which was fitted to pictures of UT with a blend that
 	-- showed the flash bigger than it is; on this rifle that looked too small beside UT's (set in the game)
@@ -445,14 +459,17 @@ local function charge_bar()
 	}
 end
 
--- The grenade's explosion plays the Rocket Launcher's explosion and sound. UT's grenade explosion (NewExplosionB) looks much like the
--- rocket's (NewExplosionA).
-mod.skin_explosion_callbacks[assault.explosion] = function (world, position, rotation, scale)
-	local rocket = mod.skin_explosion_callbacks.ut_rocket_explosion
+-- The grenade's explosion (Grenade.Explode): NewExplosionB where the grenade is, with no lift off the surface, and BExplosion3. It is
+-- the rocket's NewExplosionA (rocket/skin.lua) with no flash and one sheet, exp1_frames, its fireballs larger and starting anywhere within
+-- the sphere. Its smoke and the mark it leaves are the game's own explosion, as the rocket's are.
+mod.skin_explosion_callbacks[assault.explosion] = function (world, position, rotation)
+	skin_apis[1].play_sound_at("ut_assault_grenade_explosion_3d", position)
 
-	if rocket then
-		rocket(world, position, rotation, scale)
+	if CONFIG.explosion_effect then
+		mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
 	end
+
+	mod.explosion_fireballs(position, CONFIG.explosion_fireballs)
 end
 
 -- The rifles in the characters' hands, for each item (tipped down from the hand's forward, so that they lie along the forearm, the left a

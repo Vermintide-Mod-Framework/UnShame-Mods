@@ -72,7 +72,6 @@ local CONFIG = {
 	explosion_flash_life = 0.25,
 	explosion_flash_intensity = 0.5,
 	explosion_fire_count = 3,
-	explosion_fire_frames = 16, -- frames in a sheet. They run down its columns, not along its rows.
 	explosion_fire_gap = 0.1, -- seconds between the fireballs starting (UT: 10 a second)
 	-- A UE2 sprite is about twice as wide as its size number says. UT's explosion is as wide as its blast, 3 m of radius, and its
 	-- three fireballs of size 50 to 70 only reach that width because of this.
@@ -845,16 +844,31 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 		texture = "explosion_flash",
 	})
 
-	-- The fireballs. Each plays the 16 frames of its sheet (one of two, the same for all three) as a sprite for each frame, one over
-	-- the other. They start one after another.
-	local sheet = math.random(2) == 1 and "explosion_a_" or "explosion_b_"
-	local frames = CONFIG.explosion_fire_frames
+	-- The fireballs: the 16 frames of one of two sheets, the same for all three
+	mod.explosion_fireballs(center, {
+		sheet = math.random(2) == 1 and "explosion_a_" or "explosion_b_",
+		columns = 4,
+		rows = 4,
+		count = CONFIG.explosion_fire_count,
+		gap = CONFIG.explosion_fire_gap,
+		size = CONFIG.explosion_fire_size,
+		life = CONFIG.explosion_fire_life,
+		spread = { CONFIG.explosion_fire_spread, CONFIG.explosion_fire_spread },
+	})
+end
 
-	for index = 0, CONFIG.explosion_fire_count - 1 do
-		local life = random_between(CONFIG.explosion_fire_life)
-		local start = index * CONFIG.explosion_fire_gap
-		local size = random_between(CONFIG.explosion_fire_size) * UNIT
-		local fire_center = center + random_direction() * (CONFIG.explosion_fire_spread * UNIT)
+-- The fireballs of UT's explosion emitters (NewExplosionA's, and NewExplosionB's of the Assault Rifle's grenade), around center. Each
+-- plays the frames of its sheet as a sprite for each frame, one over the other, and they start one after another.
+--   settings: sheet (the prefix of its frames' textures, split_explosion.py), columns and rows (of the sheet: the frames run down each
+--       column), count, gap (seconds between their starts), size and life ({ least, most }), spread ({ least, most } units from center)
+function mod.explosion_fireballs(center, settings)
+	local frames = settings.columns * settings.rows
+
+	for index = 0, settings.count - 1 do
+		local life = random_between(settings.life)
+		local start = index * settings.gap
+		local size = random_between(settings.size) * UNIT
+		local fire_center = center + random_direction() * (random_between(settings.spread) * UNIT)
 		local angle = math.random() * 360
 
 		for frame = 0, frames - 1 do
@@ -876,7 +890,7 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 				life = 2 * frame_time,
 				position = fire_center,
 				size = size,
-				texture = sheet .. (frame % 4 * 4 + math.floor(frame / 4)),
+				texture = settings.sheet .. (frame % settings.rows * settings.columns + math.floor(frame / settings.rows)),
 			})
 		end
 	end

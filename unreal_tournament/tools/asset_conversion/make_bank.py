@@ -147,7 +147,8 @@ WEAPONS = {
         ('ut_assault_alt_fire_3d', NEW_SOUNDS + 'NewGrenadeShoot', True, -22, 40),
         # (Grenade.ImpactSound P1GrenFloor1 and its explosion, BExplosion3)
         ('ut_assault_grenade_bounce_3d', SOUNDS + 'BGrenfloor1', True, -24, 25),
-        ('ut_assault_grenade_explosion_3d', SOUNDS + 'BExplosion3', True, -14, 80),
+        # (UT plays it as the rocket's, the same sound at the same volume: Grenade.Explode and RocketProj.Explode)
+        ('ut_assault_grenade_explosion_3d', SOUNDS + 'BExplosion3', True, -20, 50),
     ],
     'lightning_gun': [
         ('ut_lightning_fire', SOUNDS + 'BLightningGunFire', False, -22, 0),
