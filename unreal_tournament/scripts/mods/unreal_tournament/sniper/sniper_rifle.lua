@@ -74,6 +74,9 @@ local CONFIG = {
 	shake_magnitude = { -15, 0, 10 },
 	shake_rate = { -4000, 0, 4000 },
 	shake_time = 1.6,
+	-- How long after a shot while zoomed the character aims again in third person, before the shot's animation lowers the gun (the
+	-- base's zoomed shot goes back to its aim at 0.7 s, which looked late; set in the game)
+	rezoom_time = 0.5, -- s
 }
 
 local TOTAL_TIME = CONFIG.fire_rate + CONFIG.chain_margin
@@ -198,21 +201,11 @@ local function apply_handgun(template)
 	-- wield, inspect and the career actions.
 	local hand = actions.action_one.default.weapon_action_hand
 	local aim = actions.action_two.default
-	local zoomed_shot = actions.action_one.zoomed_shot
 
 	-- The base's aim animation, which skin.lua plays on the character while the zoom is in (the zoom is a toggle, not a held action).
-	-- A shot's animation takes the character out of the aim. The base's zoomed shot goes back to the aim action, which aims again, a
-	-- while after the shot (its chain to action_two): skin.lua aims again then.
+	-- A shot's animation takes the character out of the aim, so skin.lua aims again rezoom_time after a shot.
 	if aim.anim_event then
-		local rezoom_time
-
-		for _, chain in ipairs(zoomed_shot and zoomed_shot.allowed_chain_actions or {}) do
-			if chain.action == "action_two" then
-				rezoom_time = chain.start_time
-			end
-		end
-
-		mod.sniper_zoom_animations[template.name] = { zoom_in = aim.anim_event, zoom_out = aim.anim_end_event, rezoom_time = rezoom_time }
+		mod.sniper_zoom_animations[template.name] = { zoom_in = aim.anim_event, zoom_out = aim.anim_end_event, rezoom_time = CONFIG.rezoom_time }
 	end
 
 	actions.action_one = {
