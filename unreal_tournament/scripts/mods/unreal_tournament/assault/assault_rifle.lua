@@ -559,7 +559,8 @@ for _, name in ipairs({ ROUND_IN_STANCE, STANCE, CHARGE_IN_STANCE, THROW, STANCE
 	utils.register_network_lookup("sub_actions", name)
 end
 
--- (a stance ends with the pistols' end of their aim, unless the rifle fires again from it)
+-- Every action of the rifle leaves the stance (the base's end of its aim) when it ends without chaining into another: a round that
+-- can't chain into the next one or the stance, because it is out of ammo while the button is held, times out
 local function leaves_stance(unit, end_reason)
 	return end_reason ~= "new_interupting_action"
 end
@@ -598,6 +599,8 @@ local function build_round(anims, shot_1p, first)
 		-- (its own animation is the first person's only)
 		anim_event_1p = shot_1p,
 		anim_event_3p = first and anims.stance or nil,
+		anim_end_event_3p = anims.leave,
+		anim_end_event_condition_func = leaves_stance,
 		ammo_usage = 1,
 		fire_time = 0,
 		total_time = CONFIG.fire_rate + CONFIG.chain_margin,
@@ -663,6 +666,8 @@ local function build_charge(anims, first)
 	return {
 		kind = "dummy",
 		anim_event_3p = first and anims.stance or nil,
+		anim_end_event_3p = anims.leave,
+		anim_end_event_condition_func = leaves_stance,
 		hold_input = "action_two_hold",
 		total_time = math.huge,
 		can_abort_reload = true,
@@ -707,6 +712,8 @@ local function build_throw(anims)
 	return {
 		kind = "dummy",
 		anim_event_3p = anims.shot,
+		anim_end_event_3p = anims.leave,
+		anim_end_event_condition_func = leaves_stance,
 		total_time = CONFIG.throw_time + CONFIG.chain_margin,
 		allowed_chain_actions = entries,
 		ut_assault_throw = true,
