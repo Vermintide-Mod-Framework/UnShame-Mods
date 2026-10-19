@@ -370,8 +370,9 @@ write('shield_rip_world', shield_graph(0.35 * math.cos(RIP_PAN), 0.35 * math.sin
 # which is the same: c + d * (1 - c) for each channel) are drawn by these, with the node that blends each channel as FB_Brighten does
 # (BRIGHTEN). The texture is read as it is (not srgb), and the colour is its own, tinted. fx_particle_brighten_graph draws with the
 # camera's field of view and fx_particle_weapon_brighten_graph with the weapons'. make_weapon_fx.py derives a material of each of those
-# textures from them.
-def brighten_graph(weapon):
+# textures from them. The _srgb ones read the texture as srgb: UT2004 draws in gamma space and puts a texture's values on the screen as
+# they are, and read linearly the game turns them into the screen's values brighter and paler (the first person flash's orange).
+def brighten_graph(weapon, srgb=False):
     graph = Graph()
     graph.add('out', BRIGHTEN, OUT_OPTIONS + ((CUSTOM_FOV,) if weapon else ()))
     graph.add('uv', 'core/shader_nodes/texture_coordinate0')
@@ -380,7 +381,7 @@ def brighten_graph(weapon):
     graph.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
     graph.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
     graph.add('additive', 'core/shader_nodes/material_variable', export=float_variable('additive', 'Additive', 0), title='Additive')
-    graph.add('texture', 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('texture_map'), title='texture_map')
+    graph.add('texture', 'core/shader_nodes/sample_texture', SAMPLE_OPTIONS if srgb else LINEAR_SAMPLE_OPTIONS, samplers=sampler('texture_map'), title='texture_map')
     graph.connect('uv', 'texture', IN_SAMPLE_UV)
     multiply(graph, 'color', 'texture', 'tint', 'rgb')
     graph.connect('color', 'out', IN_OUT_BASE_COLOR)
@@ -389,8 +390,9 @@ def brighten_graph(weapon):
     graph.connect('additive', 'out', IN_OUT_ADDITIVE)
     return graph
 
-for name, weapon in (('particle_brighten', False), ('particle_weapon_brighten', True)):
-    open('%s/fx_%s_graph.material' % (FX, name), 'w', newline='\n').write(brighten_graph(weapon).text())
+for name, weapon, srgb in (('particle_brighten', False, False), ('particle_weapon_brighten', True, False),
+                           ('particle_brighten_srgb', False, True), ('particle_weapon_brighten_srgb', True, True)):
+    open('%s/fx_%s_graph.material' % (FX, name), 'w', newline='\n').write(brighten_graph(weapon, srgb).text())
     print('wrote fx_%s_graph.material' % name)
 
 # ---------------------------------------------------------------- the Redeemer blast's spheres

@@ -17,6 +17,7 @@ local random_between = utils.random_between
 local attenuation = particles.attenuation
 
 local UNIT = utils.UT_UNIT
+local GAMMA = 2.2
 
 local CONFIG = {
 	-- 5 meshes (MinigunMuzFlash1stMesh) at the muzzle for every round (mNumPerFlash), turned at random about the barrel, each lasting
@@ -84,8 +85,10 @@ function mod.muzzle_flash(emitter, follow, world_unit, draw_scale, locked, emitt
 			-- (FB_Brighten: its material brightens what is behind it as FB_Brighten does, see make_combo_materials.py, with no added part
 			-- of its own)
 			additive = 0,
+			-- (UT fades it in gamma space, as it draws: its texture is read as srgb here (make_weapon_fx.py's SRGB_BRIGHTEN), and the light
+			-- that shows as UT's fade is that to the power of 2.2)
 			brightness = function (fraction)
-				return attenuation(fraction, settings.attenuation)
+				return attenuation(fraction, settings.attenuation) ^ GAMMA
 			end,
 			color = settings.color,
 			follow = not locked and follow or nil,

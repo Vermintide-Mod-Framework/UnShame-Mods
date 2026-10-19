@@ -1,7 +1,7 @@
 material_contexts = {
 	surface_material = ""
 }
-parent_material = "units/ut/fx/fx_particle_brighten_graph"
+parent_material = "units/ut/fx/fx_particle_brighten_srgb_graph"
 textures = {
 	texture_map = "units/ut/fx/minigun_burst_2"
 }

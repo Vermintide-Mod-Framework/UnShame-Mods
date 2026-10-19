@@ -65,6 +65,11 @@ LIGHTENED = {'sniper_smoke': 0.5}
 # their materials are derived from fx_particle_brighten_graph and fx_particle_weapon_brighten_graph (make_combo_materials.py).
 BRIGHTEN = ('minigun_burst', 'impact_smoke', 'minigun_flash_3rd')
 
+# Of those, the ones read as srgb, with fx_particle_brighten_srgb_graph and fx_particle_weapon_brighten_srgb_graph: UT2004 draws in gamma
+# space and puts a texture's values on the screen as they are, which the game does for an srgb texture. Read as they are, the first
+# person flash (MinigunMuzFlash1st's Minigun_burst) was paler and yellower than UT's orange.
+SRGB_BRIGHTEN = ('minigun_burst',)
+
 # The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield and the
 # Redeemer blast's fx_ion_sphere and fx_flame_ring, made by make_combo_materials.py, which do FB_Brighten themselves and use the alpha)
 KEEP_ALPHA = ('shield_elec', 'shield_rip_elec', 'shield_edge', 'ion_burn', 'grad_falloff')
@@ -96,7 +101,9 @@ def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_
     open('%s/units/ut/fx/%s.texture' % (REPO, name), 'w', newline='\n').write(texture_text('units/ut/fx/' + name, not linear))
     if name in COMBO_ONLY:
         return
-    if brighten:
+    if brighten and not linear:
+        parent, weapon_parent = 'fx_particle_brighten_srgb_graph', 'fx_particle_weapon_brighten_srgb_graph'
+    elif brighten:
         parent, weapon_parent = 'fx_particle_brighten_graph', 'fx_particle_weapon_brighten_graph'
     else:
         parent, weapon_parent = ('particle_linear', 'particle_weapon_linear') if linear else ('particle', 'particle_weapon')
@@ -120,7 +127,7 @@ for name, (tga, columns, rows_count) in TEXTURES.items():
         width, height = height, width
 
     if columns == 1 and rows_count == 1:
-        write(name, width, height, rows, name not in SRGB, name in WEAPON, name in BRIGHTEN, name in KEEP_ALPHA)
+        write(name, width, height, rows, name not in SRGB + SRGB_BRIGHTEN, name in WEAPON, name in BRIGHTEN, name in KEEP_ALPHA)
         print('texture', name, width, height)
 
         continue
@@ -132,7 +139,7 @@ for name, (tga, columns, rows_count) in TEXTURES.items():
         # (a row from read_tga is four bytes for each pixel)
         tile = [line[4 * column * tile_width:4 * (column + 1) * tile_width] for line in rows[row * tile_height:(row + 1) * tile_height]]
 
-        write('%s_%d' % (name, index), tile_width, tile_height, tile, name not in SRGB, name in WEAPON, name in BRIGHTEN, name in KEEP_ALPHA)
+        write('%s_%d' % (name, index), tile_width, tile_height, tile, name not in SRGB + SRGB_BRIGHTEN, name in WEAPON, name in BRIGHTEN, name in KEEP_ALPHA)
 
     print('sheet', name, columns * rows_count, 'tiles of', tile_width, tile_height)
 
