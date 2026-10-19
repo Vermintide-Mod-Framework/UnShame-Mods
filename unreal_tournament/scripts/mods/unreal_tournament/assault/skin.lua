@@ -439,15 +439,16 @@ mod.skin_explosion_callbacks[assault.explosion] = function (world, position, rot
 end
 
 -- The rifles in the characters' hands, for each item (tipped down from the hand's forward, so that they lie along the forearm, the left a
--- little in: set in the game for Victor; Bardin's are Victor's until they are set for him)
+-- little in; Bardin's sit 10 further along the barrel and 5 higher: set in the game). The grip is the point of the mesh in the hand, so the
+-- rifle moves the other way.
 local GRIPS = {
 	assault_rifle = {
-		right = { up = 7, yaw = 0, pitch = -45 },
-		left = { up = 2, yaw = -10, pitch = -25 },
+		right = { forward = 0, up = 7, yaw = 0, pitch = -45 },
+		left = { forward = 0, up = 2, yaw = -10, pitch = -25 },
 	},
 	assault_rifle_dr = {
-		right = { up = 7, yaw = 0, pitch = -45 },
-		left = { up = 2, yaw = -10, pitch = -25 },
+		right = { forward = -10, up = 2, yaw = 0, pitch = -45 },
+		left = { forward = -10, up = -3, yaw = -10, pitch = -25 },
 	},
 }
 
@@ -504,7 +505,7 @@ local function new_skin(setting_id, mirror, owns_grenades)
 			meters_per_unit = 0.02 * 0.3,
 			scale = 1,
 			grip_right = 0,
-			grip_forward = 0,
+			grip_forward = grip.forward,
 			grip_up = grip.up,
 			yaw = grip.yaw,
 			pitch = grip.pitch,
