@@ -6,6 +6,26 @@ local ut = get_mod("unreal_tournament")
 
 local runner = mod.test_runner
 
+local CONFIG = {
+	-- The shot's damage against armour and monsters, of its damage against an enemy with none (a Chaos marauder), with this much either
+	-- way (sniper_rifle.lua's ut_sniper_bullet). A Stormvermin is armoured, a rat ogre is a monster and a boss, whose damage the game
+	-- takes down to 0.45 (DamageUtils.calculate_damage's boss_damage_reduction), and a Chaos warrior's body is super armour, which a
+	-- normal shot does nothing to.
+	plain_breed = "chaos_marauder",
+	armour_breeds = {
+		{ "skaven_storm_vermin", 0.8 },
+		{ "skaven_rat_ogre", 1.5 * 0.45 },
+		{ "chaos_warrior", 0 },
+	},
+	armour_margin = 0.1,
+	super_armour_breed = "chaos_warrior",
+	-- How far ahead the enemies that are shot stand, and the second of two in a line
+	enemy_distance = 6, -- m
+	behind_distance = 9, -- m
+	-- More than the time between shots, so each shot is made at once
+	between_shots = 1.5, -- s
+}
+
 -- Records the shots that happen while a test runs: when, and whether they hit something
 local shots = {}
 
@@ -28,6 +48,29 @@ end
 
 local function stop_recording()
 	mod.test_recording = nil
+end
+
+-- The damage of a shot at an enemy's middle, standing ahead of the player
+local function shot_damage_to(t, breed_name)
+	t.go_to_start()
+
+	local enemy = t.spawn(breed_name, CONFIG.enemy_distance)
+
+	if not t.expect(enemy, "the %s could not be spawned", breed_name) then
+		return nil
+	end
+
+	t.wait(1)
+	t.aim_at(enemy)
+
+	local damage = t.track_damage(enemy)
+
+	t.press("action_one", 0.1)
+	t.wait(0.5)
+	t.remove(enemy)
+	t.wait(CONFIG.between_shots)
+
+	return damage.total
 end
 
 local function scenarios()
@@ -169,6 +212,112 @@ local function scenarios()
 				t.log("a shot to the body did %.1f, to the head %.1f", body, head)
 				t.expect(body > 0, "the shot to the body did no damage")
 				t.expect(head >= body * 1.8, "the shot to the head did %.1f, not twice the %.1f of the body", head, body)
+			end,
+		},
+		{
+			name = "a shot hurts armoured enemies and monsters by their armour, and super armour not at all",
+			run = function (t)
+				t.critical_hits(false)
+
+				local plain = shot_damage_to(t, CONFIG.plain_breed)
+
+				if not t.expect(plain and plain > 0, "the shot did not hurt the %s", CONFIG.plain_breed) then
+					return
+				end
+
+				local definition = ut.items.weapons.sniper_rifle
+
+				plain = plain / t.power_against(CONFIG.plain_breed, definition.key)
+
+				for _, entry in ipairs(CONFIG.armour_breeds) do
+					local breed_name, share = entry[1], entry[2]
+					local damage = shot_damage_to(t, breed_name)
+
+					if t.expect(damage, "the %s could not be shot", breed_name) then
+						local power = t.power_against(breed_name, definition.key)
+
+						damage = damage / power
+						t.log("%s: %.1f at %.2f power, %.2f of the marauder's %.1f", breed_name, damage, power, damage / plain, plain)
+						t.expect(math.abs(damage / plain - share) <= CONFIG.armour_margin, "the shot did %.2f of its damage to the %s, not %.2f", damage / plain, breed_name, share)
+					end
+				end
+			end,
+		},
+		{
+			-- A critical hit has armour multipliers of its own, the handgun's, which get through super armour (0.6)
+			name = "a critical shot hurts super armour",
+			run = function (t)
+				t.critical_hits(true)
+
+				local damage = shot_damage_to(t, CONFIG.super_armour_breed)
+
+				t.log("a critical shot did %.1f to the %s", damage or -1, CONFIG.super_armour_breed)
+				t.expect(damage and damage > 0, "a critical shot did no damage to the %s", CONFIG.super_armour_breed)
+			end,
+		},
+		{
+			-- The bullet stops at the first enemy it hits, as UT's trace does: of two in a line, the one behind is not hurt
+			name = "the bullet stops at the first enemy",
+			run = function (t)
+				t.critical_hits(false)
+
+				local front = t.spawn(CONFIG.plain_breed, CONFIG.enemy_distance)
+				local behind = t.spawn(CONFIG.plain_breed, CONFIG.behind_distance)
+
+				if not t.expect(front and behind, "the enemies could not be spawned") then
+					return
+				end
+
+				t.wait(1)
+				t.aim_at(front)
+
+				local front_damage = t.track_damage(front)
+				local behind_damage = t.track_damage(behind)
+
+				t.press("action_one", 0.1)
+				t.wait(0.5)
+
+				t.log("the front enemy took %.1f, the one behind %.1f", front_damage.total, behind_damage.total)
+				t.expect(front_damage.total > 0, "the front enemy was not hurt")
+				t.expect(behind_damage.total == 0, "the enemy behind took %.1f", behind_damage.total)
+			end,
+		},
+		{
+			-- The view fades in from black as the zoom goes in and as it goes out (ClassicSniperRifle.WantsZoomFade): the zoom says when it
+			-- last went in or out
+			name = "the zoom fades the view when it goes in and out",
+			run = function (t)
+				local zoom = ut.zoom
+				local before = t.on_main_thread(function ()
+					return Managers.time:time("game")
+				end)
+
+				t.press("action_two", 0.3)
+
+				local zoomed_in = zoom.toggled_at
+
+				t.wait(0.5)
+				t.press("action_two", 0.1)
+				t.wait(0.2)
+
+				local zoomed_out = zoom.toggled_at
+
+				t.expect(zoomed_in and zoomed_in >= before, "the zoom going in was not marked")
+				t.expect(zoomed_out and zoomed_in and zoomed_out > zoomed_in, "the zoom going out was not marked")
+			end,
+		},
+		{
+			-- The characters' shot animation finds no weapon unit to play the handgun's own muzzle flash and sound on (the skin draws UT's)
+			name = "the handgun's own third person shot is not played",
+			run = function (t)
+				local hidden = t.on_main_thread(function ()
+					local result = flow_query_wielded_weapon({ player_unit = t.unit() })
+					local null_reference = Unit.null_reference()
+
+					return result ~= nil and result.righthandweapon3p == null_reference and result.lefthandweapon3p == null_reference
+				end)
+
+				t.expect(hidden, "the characters' flow still gets the handgun's units")
 			end,
 		},
 	}
