@@ -343,6 +343,12 @@ end
 mod.ingame_ui_post_update_callbacks.sniper_zoom_fade = draw_zoom_fade
 
 -- The skin of each of the two items
+-- How the third person mesh sits in each copy's hand: Kruber's and Bardin's hold the handgun differently (set in the game)
+local GRIPS = {
+	sniper_rifle = { right = -5, forward = -65, up = -15, pitch = -7 },
+	sniper_rifle_dr = { right = 3, forward = -40, up = -10, pitch = -7 },
+}
+
 local function new_skin(setting_id)
 	local definition = mod.items.weapons[setting_id]
 	local api
@@ -389,12 +395,11 @@ local function new_skin(setting_id)
 			hand_node = "j_leftweaponattach",
 			meters_per_unit = 0.02 * 0.16,
 			scale = 1,
-			-- (set in the game, on Kruber)
-			grip_right = -5,
-			grip_forward = -65,
-			grip_up = -15,
+			grip_right = GRIPS[setting_id].right,
+			grip_forward = GRIPS[setting_id].forward,
+			grip_up = GRIPS[setting_id].up,
 			yaw = 0,
-			pitch = -7,
+			pitch = GRIPS[setting_id].pitch,
 			roll = 0,
 			follow_game_unit = 2,
 			-- (the middle of the end of the barrel, the front of the mesh)
