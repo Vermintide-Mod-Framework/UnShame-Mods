@@ -176,6 +176,11 @@ local function scenarios()
 			name = "grenade",
 			every_hero = true,
 			run = function (t)
+				-- (the grenade of the scenario before, the charge bar's, may still be about to go off)
+				t.wait_until(function ()
+					return #assault.grenades == 0
+				end, 10, "the grenades in flight to go off")
+
 				local before = assault.grenade_count
 
 				start_recording()
