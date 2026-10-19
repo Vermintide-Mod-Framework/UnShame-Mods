@@ -19,8 +19,18 @@ local CONFIG = {
 	fire_animations = { "Fire1", "Fire2", "Fire3" },
 	fire_animation_rate = 1.5,
 	-- AssaultMuzFlash1st at the end of the barrel (ClassicSniperFire.FlashEmitterClass): the Minigun's flash at DrawScale 1.2 (see
-	-- muzzle_flash.lua)
+	-- muzzle_flash.lua), with MinigunMuzFlash1st's numbers at UT's size. The Minigun's own is drawn at half of it (its fit), which was
+	-- fitted to pictures of UT with a blend that showed the flash bigger than it is; on this rifle that looked too small.
 	flash_draw_scale = 1.2,
+	muzzle_flash = {
+		count = 5,
+		scale = { 0.05, 0.08 },
+		growth = 3,
+		life = { 0.1, 0.15 },
+		attenuation = 0.2,
+		color = { 1, 1, 1 },
+		fit = 1,
+	},
 	-- AssaultMuzFlash3rd at the end of the rifle in a character's hand (ClassicSniperAttachment, which sets its DrawScale to 1): one mesh
 	-- (MinigunMuzFlash3rd's MinigunFlashMesh, as the Rocket Launcher's third person flash) for a shot, of a size of 0.05 to 0.08 that
 	-- grows by 2.2 a second, for 0.15 to 0.2 s, turned at random about the barrel (mRandOrient). fit is the Minigun's (muzzle_flash.lua).
@@ -32,8 +42,8 @@ local CONFIG = {
 		fit = 0.5,
 	},
 	-- ClassicSniperSmoke: 5 puffs within 12 units of where the shot was fired, which grow from 20 to 50 units across over their life
-	-- (SizeScale 0.2 to 0.5 of 100), rise (Acceleration Z 20 units a second squared), and fade from 2 s until they are gone at 2.5 to
-	-- 3 s. They are blended by their alpha. Here they rise at a speed instead, the one they have on average.
+	-- (SizeScale 0.2 to 0.5 of 100), rise from still (Acceleration Z 20 units a second squared), and fade from 2 s until they are gone at
+	-- 2.5 to 3 s. They are blended by their alpha.
 	-- In the player's own view they start in front of the eye (CollisionRadius 25 ahead, SmokeOffsetZ 10 up).
 	smoke_count = 5,
 	smoke_spread = 12, -- UT units
@@ -41,7 +51,7 @@ local CONFIG = {
 	smoke_size = { 20, 50 }, -- UT units, radius
 	smoke_life = { 2.5, 3 },
 	smoke_fade_out = 2,
-	smoke_rise = 27, -- UT units a second
+	smoke_rise = 20, -- UT units a second squared
 	smoke_ahead = 25,
 	smoke_up = 10,
 	-- The scope (ClassicSniperRifle.RenderOverlays): pieces of its texture drawn black around the view, sized for a screen 1024 wide.
@@ -90,7 +100,7 @@ local function first_person_flash(api)
 
 	mod.muzzle_flash(api, function ()
 		return api.state() == skin and api.muzzle_model_position() or nil
-	end, (skin.unit_scale or UNIT) / api.draw_scale(), CONFIG.flash_draw_scale)
+	end, (skin.unit_scale or UNIT) / api.draw_scale(), CONFIG.flash_draw_scale, nil, CONFIG.muzzle_flash)
 end
 
 -- The flash at the end of the rifle in a character's hand: the mesh is in UT units of the world, and points along the barrel, which runs
@@ -133,18 +143,23 @@ local function smoke(position)
 		-- (on a sphere of the spread, as PTLS_Sphere puts them)
 		local offset = Vector3(across * math.cos(angle), across * math.sin(angle), z) * CONFIG.smoke_spread
 		local life = random_between(CONFIG.smoke_life)
+		local start = Vector3Box(position + offset * UNIT)
+		local born = Managers.time:time("game")
 
 		particles.sprite({
 			additive = 0,
 			color = { 1, 1, 1 },
 			fade_out = CONFIG.smoke_fade_out,
+			follow = function ()
+				local age = Managers.time:time("game") - born
+
+				return start:unbox() + Vector3(0, 0, 0.5 * CONFIG.smoke_rise * age * age * UNIT)
+			end,
 			growth = 2 * (CONFIG.smoke_size[2] - CONFIG.smoke_size[1]) / life * UNIT,
 			life = life,
-			position = position + offset * UNIT,
 			size = 2 * CONFIG.smoke_size[1] * UNIT,
 			spin = math.random() * 0.1,
 			texture = "sniper_smoke_" .. math.random(0, 15),
-			velocity = Vector3(0, 0, CONFIG.smoke_rise * UNIT),
 		})
 	end
 end

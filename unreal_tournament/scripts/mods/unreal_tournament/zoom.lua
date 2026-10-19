@@ -141,7 +141,8 @@ end
 -- UT plays the zoom-in sound again every frame that the view narrows (the RenderOverlays of SniperRifle and ClassicSniperRifle play it
 -- on SLOT_Misc while the field of view goes down), and the zoom-out sound when the view widens again. A sound played again on its slot
 -- starts over, so while the zoom moves in its start repeats every frame, and once it stops (the button let go, or the zoom at its
--- most) the last one plays to its end. Here the last one is stopped as the next one starts.
+-- most) the last one plays to its end. Here the last one is stopped as the next one starts. UT also plays the zoom-out sound when the
+-- button is let go while the zoom is in, which keeps the zoom (this is in its engine, not its scripts: it is from playing it).
 function zoom.sound(skin, api)
 	if zoom.zoomed ~= skin.was_zoomed then
 		if skin.was_zoomed and not zoom.zoomed then
@@ -149,6 +150,14 @@ function zoom.sound(skin, api)
 		end
 
 		skin.was_zoomed = zoom.zoomed
+	end
+
+	if zoom.zooming ~= skin.was_zooming then
+		if skin.was_zooming and zoom.zoomed and zoom.in_view() then
+			api.play_sound("ut_lightning_zoom_out")
+		end
+
+		skin.was_zooming = zoom.zooming
 	end
 
 	if zoom.zooming and zoom.level < CONFIG.max_level and zoom.in_view() then
