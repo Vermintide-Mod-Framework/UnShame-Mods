@@ -4,8 +4,7 @@ local mod = get_mod("unreal_tournament")
 -- pistols' animations, models and sounds are kept, and everything else is set here. Victor's is on the Brace of Pistols, and Bardin's on
 -- the Drakefire Pistols, his only pair. The numbers come from UT2004 (XWeapons/AssaultRifle, AssaultFire, AssaultGrenade, Grenade and their
 -- ammo).
---   Left button: rounds that hit at once, at one rifle's fire rate (FireRate 0.16), with the damage a second of two (7 a round at 0.55
---       of the fire rate, bDualMode). The spread starts at
+--   Left button: rounds that hit at once, 7 damage each, at the fire rate of two rifles (FireRate 0.16 times 0.55). The spread starts at
 --       0.02 and grows by 0.02 a round, up to 0.12, and goes back once the button is let go for half a second.
 --   Right button: held, it charges the grenade launcher; let go, it lobs a grenade that bounces off walls, and goes off two seconds
 --       after it first touches something, or at once on an enemy. The longer it is held (up to a second), the further it goes.
@@ -86,10 +85,9 @@ end
 local CONFIG = {
 	-- Three times AssaultAmmo.MaxAmmo (200), set in the game. All the ammo is the clip, so there is no reload.
 	max_ammo = 600,
-	-- AssaultFire: FireRate 0.16, one rifle's: a pair fires at 0.55 of it (bDualMode), which sounded too fast here (set in the game). The
-	-- damage of a round is DamageMin and DamageMax 7 made larger by as much, so the pair's damage a second is kept.
-	damage = 7 / 0.55,
-	fire_rate = 0.16,
+	-- AssaultFire: DamageMin and DamageMax 7, FireRate 0.16, which bDualMode makes 0.55 of it
+	damage = 7,
+	fire_rate = 0.16 * 0.55,
 	-- AssaultFire.ModeDoFire: the spread
 	spread = 0.02,
 	spread_step = 0.02,
@@ -755,14 +753,13 @@ local function apply_template(template)
 	local variant = VARIANT_OF[template.name]
 
 	-- The chart of the item's stats, from 0 to 7. The rounds are the normal attack, and the grenade is the heavy one.
-	-- The rounds have the Minigun primary's armour and stagger (2 and 1 on its chart), and about 70% of its damage a second (5). They are
-	-- 6 a second, between the Minigun's alt (5 a second, 4 on its chart) and primary (15, 7). The grenade has the rocket's armour and
-	-- radius (4 and 6), and a little more than its damage and stagger (70 to 60, 6 on its chart).
+	-- The rounds have the Minigun primary's armour and stagger (2 and 1 on its chart), and about 70% of its damage a second (5). The
+	-- grenade has the rocket's armour and radius (4 and 6), and a little more than its damage and stagger (70 to 60, 6 on its chart).
 	template.weapon_diagram = {
 		light_attack = {
 			[DamageTypes.ARMOR_PIERCING] = 2,
 			[DamageTypes.CLEAVE] = 1,
-			[DamageTypes.SPEED] = 5,
+			[DamageTypes.SPEED] = 7,
 			[DamageTypes.STAGGER] = 1,
 			[DamageTypes.DAMAGE] = 4,
 		},
