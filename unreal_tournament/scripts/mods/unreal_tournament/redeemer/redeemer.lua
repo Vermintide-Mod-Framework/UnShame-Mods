@@ -67,9 +67,9 @@ local CONFIG = {
 	-- armor. UT has no armor, and a nuclear blast is not stopped by it.
 	armor_attack = { 1, 1, 1, 1, 1, 1 },
 	armor_impact = { 1, 1, 1, 1, 1, 1 },
-	-- The blast's damage, not UT's: a target at the center of every wave loses this much in all, from a hero of blast_power_level. It is a
-	-- little over a Rat Ogre's health on Legend (2400). UT's damage (damage above, which is still the stagger's) would take under a
-	-- fifth of that, as the game's monsters have far more health than UT's players.
+	-- The blast's damage, not UT's: a monster at the center of every wave loses this much in all on Legend, from a hero of
+	-- blast_power_level with no power buffs. It is a little over a Rat Ogre's health on Legend (2400). Other enemies take more, as the
+	-- game cuts the monsters' damage. UT's damage (damage above, which is still the stagger's) would take far less.
 	blast_damage = 2500,
 	blast_power_level = 650,
 	-- How far a bot shoots from, in meters. A bot moves towards its target, so it is rarely out of the blast (radius_uu, 27 m). From 15 m,
@@ -92,11 +92,17 @@ end)
 
 -- The attack power of a wave that gives blast_damage over the waves. The game's damage of a hit is DamageOutput's most times the power
 -- over MAX_POWER_LEVEL. The power is the attack power times the power level as ActionUtils.scale_power_levels scales it, which from 300
--- up is MIN_POWER_LEVEL_CAP and then a share of the rest.
+-- up is MIN_POWER_LEVEL_CAP and then a share of the rest. DamageUtils.calculate_damage then adds Legend's stagger bonus, as the profile's
+-- no_stagger_damage_reduction_ranged counts every target as staggered at least once, and a monster takes 0.45 of it
+-- (boss_damage_reduction).
+local MONSTER_DAMAGE_SHARE = 0.45
+
 local function blast_attack_power()
 	local power_level = CONFIG.blast_power_level
 	local scaled_power_level = MIN_POWER_LEVEL_CAP + (power_level - MIN_POWER_LEVEL_CAP) * (POWER_LEVEL_DIFF_RATIO.attack - 1) / (10 - 1)
-	local wave_damage = CONFIG.blast_damage / #CONFIG.wave_radii
+	local legend = DifficultySettings.hardest
+	local stagger_bonus = legend.min_stagger_damage_coefficient + legend.stagger_damage_multiplier
+	local wave_damage = CONFIG.blast_damage / #CONFIG.wave_radii / (stagger_bonus * MONSTER_DAMAGE_SHARE)
 
 	return wave_damage * MAX_POWER_LEVEL / (DamageOutput[1].max * scaled_power_level)
 end
@@ -167,6 +173,9 @@ mod.redeemer = {
 	cooldown = CONFIG.cooldown,
 	fire_animation_time = CONFIG.fire_animation_time,
 	put_down_time = CONFIG.put_down_time,
+	-- (for the tests)
+	blast_damage = CONFIG.blast_damage,
+	blast_power_level = CONFIG.blast_power_level,
 }
 
 -- The waves after the first, made by the machine of the player who fired: each is an explosion that the game sends to the others, and

@@ -23,6 +23,12 @@ local CONFIG = {
 	missile_start_margin = 0.5, -- m
 	-- Faster than the player walks: the blast throws them
 	thrown_speed = 6, -- m/s
+	-- The monster that the blast's damage is measured on (the suite runs on Legend), how far ahead it stands, and how far a wave's damage
+	-- can be from the one expected. A blast hit is more than 10: the missile's own hit only staggers.
+	monster = "skaven_rat_ogre",
+	monster_distance = 10, -- m
+	damage_margin = 0.1,
+	blast_hit = 10,
 }
 
 -- The blasts that are made while a test runs: each wave's explosion, by its template
@@ -175,6 +181,57 @@ local function scenarios()
 
 				t.log("the player went at most %.1f m/s", fastest)
 				t.expect(fastest > CONFIG.thrown_speed, "the player went at most %.1f m/s, not over %.1f", fastest, CONFIG.thrown_speed)
+			end,
+		},
+		{
+			-- redeemer.lua's blast_damage is what a monster at the center loses from all the waves on Legend, from a hero of
+			-- blast_power_level. The hero here has their own power, so the damage expected is scaled by the game's own scaling of power
+			-- (ActionUtils.scale_power_levels) and their power against the monster. The monster is hit directly, so the first wave is at
+			-- its center; the later waves can find it staggered, which adds to their damage, so only the first is checked.
+			name = "a monster hit directly loses a sixth of the blast's damage to each wave",
+			run = function (t)
+				local monster = t.spawn(CONFIG.monster, CONFIG.monster_distance)
+
+				t.expect(monster, "the %s did not spawn", CONFIG.monster)
+
+				if not monster then
+					return
+				end
+
+				local record = t.track_damage(monster)
+
+				t.critical_hits(false)
+				make_ready(t)
+				t.aim_at(monster)
+				t.press("action_career", CONFIG.hold)
+				t.wait(CONFIG.blast_wait)
+
+				local waves = {}
+				local amounts = {}
+				local total = 0
+
+				for _, hit in ipairs(record.hits) do
+					if hit.attacker == "self" and hit.amount > CONFIG.blast_hit then
+						waves[#waves + 1] = hit
+						amounts[#amounts + 1] = string.format("%.0f", hit.amount)
+						total = total + hit.amount
+					end
+				end
+
+				local expected = t.on_main_thread(function ()
+					local power_level = career_extension(t):get_career_power_level()
+					local scaled = ActionUtils.scale_power_levels(power_level, "attack", t.unit(), "hardest")
+					local reference = ActionUtils.scale_power_levels(ut.redeemer.blast_power_level, "attack", nil, "hardest")
+
+					return ut.redeemer.blast_damage / #ut.redeemer.wave_names * scaled / reference
+				end)
+				local first = waves[1] and waves[1].amount or 0
+
+				expected = expected * (waves[1] and t.power_against(CONFIG.monster, waves[1].source) or 1)
+
+				t.log("the waves took %s from the %s (%.0f in all); the first, at its center, %.0f of %.0f expected", table.concat(amounts, ", "), CONFIG.monster, total, first, expected)
+				t.expect(#waves > 0, "no wave hurt the %s", CONFIG.monster)
+				t.expect(math.abs(first - expected) <= expected * CONFIG.damage_margin, "the first wave took %.0f from the %s, not about %.0f", first, CONFIG.monster, expected)
 			end,
 		},
 		{
