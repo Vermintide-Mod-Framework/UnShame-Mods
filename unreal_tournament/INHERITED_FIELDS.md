@@ -1,8 +1,9 @@
 # What the finished weapons still inherit from their base weapons
 
 Made in the game at build 1282, with a command that has since been removed: each finished weapon's template compared with the
-template of the game weapon it is a copy of. Every weapon here but the Shield Gun has been made on the shell of its base since
-(`utils.template_shell`), with what it took from the base set in its own file, so for them this is what was written out. A part that the mod sets to the same value as the base's is listed too, because the
+template of the game weapon it is a copy of. Every weapon here has been made on the shell of its base since (`utils.template_shell`),
+with what it took from the base set in its own file, so this is what was written out. The Shield Gun's five copies were made one:
+what they don't take from their base by name is the bastard sword's, and their dodging the billhook's. A part that the mod sets to the same value as the base's is listed too, because the
 comparison can't tell the two apart. A sub-action the base has none of by its name (made from a copy of one of the base's) is
 compared with the base's sub-action it shares the most with. The actions' lookup_data is left out. The damage profiles are
 not here: they are made with `utils.add_damage_profile`, with nothing from the game's.

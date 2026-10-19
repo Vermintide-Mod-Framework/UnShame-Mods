@@ -1,17 +1,17 @@
 local mod = get_mod("unreal_tournament")
 
--- Shield Gun: a copy of a melee weapon with its attacks replaced. The numbers come from UT2004 (XWeapons/ShieldGun, ShieldFire and
--- ShieldAltFire).
+-- Shield Gun: made on the shell of a melee weapon (utils.template_shell). The numbers come from UT2004 (XWeapons/ShieldGun, ShieldFire
+-- and ShieldAltFire).
 --   Left button: held, it charges the gun, for up to 2.5 seconds. Let go, it punches what is right in front with a wave of force, for
 --       40 to 150 damage by how long it charged. While it charges, it punches by itself as soon as an enemy is in reach. Punching a wall
 --       throws the player away from it (the shield jump).
---   Right button: the base weapon's block, made a shield block as the game's sword and shield has (SHIELD_FIELDS): it stops shots too.
+--   Right button: a block, made a shield block as the game's sword and shield has (see apply_template): it stops shots too.
 --       UT's shield blocks what comes from the front and is drained by what it stops, which is what the game's block and stamina do. The
 --       skin draws UT's shield while it is up.
---   Left button while blocking: the base weapon's push, which the skin draws as a shove of the shield. Both buttons held after it: a bash,
+--   Left button while blocking: a push, which the skin draws as a shove of the shield. Both buttons held after it: a bash,
 --       a punch as strong as a charge held since the push, with the shield down for a moment. UT has no push; this is the mod's own.
--- Each hero has a melee weapon to be a copy of, so the weapon is five items of the mod that share everything but the base. (The Warrior
--- Priest's is on the TODO list.)
+-- Each hero has a melee weapon to be made on, so the weapon is five items of the mod that share everything but the base's animations,
+-- models and sounds, and the kind of weapon the game's talents take it for. (The Warrior Priest's is on the TODO list.)
 -- The skin (skin.lua) draws all of it, and this file only sets what it does to the game.
 
 local utils = mod.utils
@@ -20,7 +20,8 @@ local impact_power_for = utils.impact_power_for
 
 local DESCRIPTION = "The Kemphler DD280 Riot Control Device has the ability to resist and reflect incoming projectiles and energy beams. The plasma wave inflicts massive damage, rupturing tissue, pulverizing organs, and flooding the bloodstream with dangerous gas bubbles."
 
--- The items, one for each hero. The careers of each are those of its base.
+-- The items, one for each hero. The careers of each are those of its base. What the game's talents, traits and properties take each for
+-- is its base's kind of weapon (weapon_type), so that each hero's talents see his own.
 local VARIANTS = {
 	{
 		base_item = "es_bastard_sword",
@@ -28,6 +29,7 @@ local VARIANTS = {
 		id = "shield_gun",
 		key = "ut_shield_gun",
 		template = "ut_shield_gun_template",
+		weapon_type = "SWORD_2H",
 		-- The blunderbuss's pose. The punches are its shot there, and so is the push: its shove swings the butt of the gun forward.
 		pose_3p = "to_blunderbuss",
 		punch_3p = "attack_shoot",
@@ -39,6 +41,7 @@ local VARIANTS = {
 		id = "shield_gun_dr",
 		key = "ut_shield_gun_dr",
 		template = "ut_shield_gun_dr_template",
+		weapon_type = "AXE_2H",
 		-- How the hero holds it in third person and on the hero screen (the hero's wield animation of another weapon): the grudge-raker's.
 		-- The punches are its shot there, and the push its shove.
 		pose_3p = "to_grudge_raker",
@@ -51,6 +54,7 @@ local VARIANTS = {
 		id = "shield_gun_bw",
 		key = "ut_shield_gun_bw",
 		template = "ut_shield_gun_bw_template",
+		weapon_type = "MACE_2H",
 		-- The staffs' pose, as the Shock Rifle has (it is a copy of the beam staff). The push is the staffs' fireball shot, the Shock
 		-- Rifle's second shot. The punches and the bash have no animation.
 		pose_3p = "to_staff",
@@ -62,6 +66,7 @@ local VARIANTS = {
 		id = "shield_gun_wh",
 		key = "ut_shield_gun_wh",
 		template = "ut_shield_gun_wh_template",
+		weapon_type = "POLEARM",
 		-- The Volley Crossbow's pose. The shield is its aim, and so is a charge once it is held a while. The punch is its shot. It has
 		-- no shove, so the push is its shot too.
 		pose_3p = "to_repeating_crossbow",
@@ -76,6 +81,7 @@ local VARIANTS = {
 		id = "shield_gun_we",
 		key = "ut_shield_gun_we",
 		template = "ut_shield_gun_we_template",
+		weapon_type = "POLEARM",
 		-- The Life Staff's pose (the Sister of the Thorn's: every career of hers has the same third person body, and so its animations).
 		-- It has no shove, so the push is its shot. The punches and the bash have no animation. Its held second attack is not the shield:
 		-- it turns the hand so far that the gun would point up.
@@ -102,12 +108,14 @@ end
 
 local TEMPLATE_NAMES = {}
 local POSES_3P = {}
+local VARIANT_OF = {}
 
 for _, variant in ipairs(VARIANTS) do
 	local template_name = mod.items.weapons[variant.id].template
 
 	TEMPLATE_NAMES[template_name] = true
 	POSES_3P[template_name] = variant.pose_3p and variant
+	VARIANT_OF[template_name] = variant
 end
 
 local CONFIG = {
@@ -166,8 +174,8 @@ local CONFIG = {
 	fire_rate = 0.6,
 	-- The bash out of a push (not UT's: see build_bash): the shield is down this long after it, the length of UT's Fire animation
 	bash_shield_down = 0.5,
-	-- A base weapon without a push-stab gets one at these times into the push, the bastard sword's
-	bash_window = {0.4, 0.8},
+	-- When the bash can follow the push, the times of the bastard sword's push-stab
+	bash_window = {0.4, 0.8}, -- s into the push
 	-- ShieldFire.AutoFireTestFreq: how often the charge looks for an enemy in reach
 	auto_fire_test_freq = 0.15,
 	-- ShieldFire.MinForce and MaxForce: the push of a punch, UT's momentum. A wall pushes the player back with SelfForceScale (1) of
@@ -1731,44 +1739,82 @@ local function chain(action, sub_action, input, start_time)
 	}
 end
 
--- The charge: held for as long as the button is, until it is let go or an enemy comes into reach
-local function build_charge(original)
-	local action = table.clone(original)
+-- The five copies play their base weapon's animations, taken by name (anims: the base's action), and are the same otherwise: what is not
+-- UT's is the bastard sword's, Kruber's copy's base.
 
-	action.kind = "dummy"
-	action.total_time = math.huge
-	action.buff_data = nil
-	action.blocking_charge = nil
-	action.ut_shield_charge = true
-	action.allowed_chain_actions = {
-		chain("action_one", "punch", "action_one_release"),
-		{
-			action = "action_one",
-			auto_chain = true,
-			start_time = 0,
-			sub_action = "punch_auto",
-		},
-		chain("action_two", "default", "action_two_hold"),
-		chain("action_wield", "default", "action_wield"),
-	}
-
-	return action
+local function not_chained_or_complete(unit, end_reason)
+	return end_reason ~= "new_interupting_action" and end_reason ~= "action_complete"
 end
 
--- The punch: the hit is made when it starts (see punch above), and the next charge can start after the fire rate
-local function build_punch(original, auto)
-	local action = table.clone(original)
+-- The charge: held for as long as the button is, until it is let go or an enemy comes into reach. It plays the base's charge. Its aim
+-- assist and the sway of the weapon in view are the bastard sword's charge's.
+local function build_charge(anims)
+	return {
+		kind = "dummy",
+		anim_event = anims.anim_event,
+		anim_event_3p = anims.anim_event_3p,
+		anim_end_event = anims.anim_end_event,
+		anim_end_event_condition_func = not_chained_or_complete,
+		anim_time_scale = anims.anim_time_scale,
+		attack_hold_input = "action_one_hold",
+		stop_action_on_leave_for_bot = true,
+		total_time = math.huge,
+		aim_assist_max_ramp_multiplier = 0.3,
+		aim_assist_ramp_multiplier = 0.1,
+		weapon_sway_settings = {
+			camera_look_sensitivity = 1,
+			look_sensitivity = 0.5,
+			recentering_lerp_speed = 2,
+			sway_range = 1,
+			lerp_speed = math.huge,
+		},
+		allowed_chain_actions = {
+			chain("action_one", "punch", "action_one_release"),
+			{
+				action = "action_one",
+				auto_chain = true,
+				start_time = 0,
+				sub_action = "punch_auto",
+			},
+			chain("action_two", "default", "action_two_hold"),
+			chain("action_wield", "default", "action_wield"),
+		},
+		ut_shield_charge = true,
+	}
+end
 
-	action.kind = "dummy"
-	action.total_time = CONFIG.fire_rate
-	action.damage_window_start = nil
-	action.damage_window_end = nil
-	action.ut_shield_punch = true
-	action.allowed_chain_actions = {
-		chain("action_one", "default", "action_one", CONFIG.fire_rate),
-		chain("action_one", "default", "action_one_hold", CONFIG.fire_rate),
-		chain("action_two", "default", "action_two_hold", 0),
-		chain("action_wield", "default", "action_wield", 0),
+-- The punch: the hit is made when it starts (see punch above), and the next charge can start after the fire rate. It plays the base's
+-- heavy attack, and moves the player as the bastard sword's heavy attack does, which can't be interrupted. The damage profile is the
+-- full charge's, for the tooltip.
+local function build_punch(anims, auto)
+	local action = {
+		kind = "dummy",
+		anim_event = anims.anim_event,
+		anim_event_3p = anims.anim_event_3p,
+		anim_end_event = anims.anim_end_event,
+		anim_end_event_condition_func = not_chained_or_complete,
+		anim_time_scale = anims.anim_time_scale,
+		total_time = CONFIG.fire_rate,
+		uninterruptible = true,
+		damage_profile = "ut_shield_punch_" .. CONFIG.damage_steps - 1,
+		buff_data = {
+			{
+				buff_name = "planted_fast_decrease_movement",
+				end_time = 0.45,
+				external_multiplier = 1.5,
+				start_time = 0,
+			},
+		},
+		enter_function = function (attacker_unit, input_extension)
+			return input_extension:reset_release_input()
+		end,
+		allowed_chain_actions = {
+			chain("action_one", "default", "action_one", CONFIG.fire_rate),
+			chain("action_one", "default", "action_one_hold", CONFIG.fire_rate),
+			chain("action_two", "default", "action_two_hold", 0),
+			chain("action_wield", "default", "action_wield", 0),
+		},
+		ut_shield_punch = true,
 	}
 
 	if auto then
@@ -1780,47 +1826,91 @@ local function build_punch(original, auto)
 	return action
 end
 
--- The push out of the block is the base weapon's own (its stagger and stamina), which the skin draws as a shove of the shield. Its
--- push-stab, both buttons held after the push, is the bash instead.
-local function build_push(original)
-	local action = table.clone(original)
-	local has_bash = false
-
-	action.ut_shield_push = true
-
-	-- (its other chains to the left button's attacks go to the charge: the base's attacks are not in the weapon)
-	for _, entry in ipairs(action.allowed_chain_actions or {}) do
-		if entry.action == "action_one" and entry.hold_required then
-			entry.sub_action = "bash"
-			has_bash = true
-		elseif entry.action == "action_one" then
-			entry.sub_action = "default"
-		end
-	end
-
-	if not has_bash then
-		action.allowed_chain_actions = action.allowed_chain_actions or {}
-		action.allowed_chain_actions[#action.allowed_chain_actions + 1] = {
-			action = "action_one",
-			doubleclick_window = 0,
-			end_time = CONFIG.bash_window[2],
-			input = "action_one_hold",
-			start_time = CONFIG.bash_window[1],
-			sub_action = "bash",
-			hold_required = {
-				"action_two_hold",
-				"action_one_hold",
+-- The push out of the block: the bastard sword's (its stagger, reach and stamina), which the skin draws as a shove of the shield, with
+-- the base's sounds of its hits. Its push-stab, both buttons held after the push, is the bash instead, and its other chains to the left
+-- button go to the charge.
+local function build_push(anims)
+	return {
+		kind = "push_stagger",
+		weapon_action_hand = "right",
+		anim_event = anims.anim_event,
+		anim_end_event = anims.anim_end_event,
+		anim_end_event_condition_func = not_chained_or_complete,
+		charge_value = "action_push",
+		damage_profile_inner = "medium_push",
+		damage_profile_outer = "light_push",
+		damage_window_start = 0.05,
+		damage_window_end = 0.2,
+		dedicated_target_range = 2,
+		push_angle = 100,
+		outer_push_angle = 180,
+		push_radius = 2.25,
+		total_time = 1.2,
+		hit_effect = anims.hit_effect,
+		impact_sound_event = anims.impact_sound_event,
+		no_damage_impact_sound_event = anims.no_damage_impact_sound_event,
+		buff_data = {
+			{
+				buff_name = "planted_fast_decrease_movement",
+				end_time = 0.2,
+				external_multiplier = 1.25,
+				start_time = 0,
 			},
-		}
-	end
+		},
+		allowed_chain_actions = {
+			{
+				action = "action_one",
+				input = "action_one",
+				release_required = "action_two_hold",
+				start_time = 0.4,
+				sub_action = "default",
+			},
+			{
+				action = "action_one",
+				doubleclick_window = 0,
+				input = "action_one_hold",
+				release_required = "action_two_hold",
+				start_time = 0.4,
+				sub_action = "default",
+			},
+			{
+				action = "action_one",
+				doubleclick_window = 0,
+				end_time = CONFIG.bash_window[2],
+				input = "action_one_hold",
+				start_time = CONFIG.bash_window[1],
+				sub_action = "bash",
+				hold_required = {
+					"action_two_hold",
+					"action_one_hold",
+				},
+			},
+			{
+				action = "action_two",
+				input = "action_two_hold",
+				send_buffer = true,
+				start_time = 0.4,
+				sub_action = "default",
+			},
+			chain("action_wield", "default", "action_wield", 0.4),
+		},
+		enter_function = function (attacker_unit, input_extension)
+			return input_extension:reset_release_input()
+		end,
+		-- (not while out of stamina)
+		chain_condition_func = function (attacker_unit, input_extension)
+			local status_extension = ScriptUnit.extension(attacker_unit, "status_system")
 
-	return action
+			return not status_extension:fatigued()
+		end,
+		ut_shield_push = true,
+	}
 end
 
 -- The bash: the shield goes down, the gun punches as hard as a charge held since the push started (the push starts it, see
 -- push_start_callbacks), and the shield can go up again after bash_shield_down. This is not in UT, which has no push.
-local function build_bash(original)
-	local action = build_punch(original, false)
+local function build_bash(anims)
+	local action = build_punch(anims, false)
 
 	action.ut_shield_bash = true
 	action.allowed_chain_actions = {
@@ -1833,29 +1923,64 @@ local function build_bash(original)
 	return action
 end
 
--- What makes the game's shields different from a weapon's block, which the block of the gun takes from the game's sword and shield:
--- it blocks shots too (a ratling gun's, a warpfire thrower's), it blocks a wider arc for less stamina and the rest of the way round for
--- more, and it sounds like a shield.
-local SHIELD_FIELDS = {
-	"shield_block",
-	"can_block_ranged_attacks",
-	"block_angle",
-	"outer_block_angle",
-	"block_fatigue_point_multiplier",
-	"outer_block_fatigue_point_multiplier",
-	"sound_event_block_within_arc",
-}
+-- The block: the bastard sword's, which slows the player to half, playing the base's block. Out of it come the push and the charge.
+local function build_block(anims)
+	return {
+		kind = "block",
+		anim_event = anims.anim_event,
+		anim_end_event = anims.anim_end_event,
+		anim_end_event_condition_func = function (unit, end_reason)
+			return end_reason ~= "new_interupting_action"
+		end,
+		cooldown = 0.15,
+		hold_input = "action_two_hold",
+		minimum_hold_time = 0.2,
+		total_time = math.huge,
+		enter_function = function (attacker_unit, input_extension, remaining_time)
+			return input_extension:reset_release_input_with_delay(remaining_time)
+		end,
+		buff_data = {
+			{
+				buff_name = "planted_decrease_movement",
+				external_multiplier = 0.5,
+				start_time = 0,
+			},
+		},
+		allowed_chain_actions = {
+			chain("action_wield", "default", "action_wield", 0.2),
+			{
+				action = "action_one",
+				doubleclick_window = 0,
+				input = "action_one",
+				start_time = 0.2,
+				sub_action = "push",
+				hold_required = {
+					"action_two_hold",
+				},
+			},
+			{
+				action = "action_one",
+				doubleclick_window = 0,
+				input = "action_one",
+				release_required = "action_two_hold",
+				start_time = 0.2,
+				sub_action = "default",
+			},
+		},
+	}
+end
 
+-- Makes the gun on the shell of its base melee weapon (utils.template_shell): everything that is not the base's animations, models and
+-- sounds is set here
 local function apply_template(template)
 	local template_name = template.name
+	local base = utils.template_shell(template)
+	local base_one = base.actions.action_one
 	local actions = template.actions
-	local original = actions.action_one
-	local heavy = original.heavy_attack or original.heavy_attack_left or original.default
-	local game_shield = rawget(Weapons, "one_handed_sword_shield_template_1")
-
-	for _, field in ipairs(game_shield and SHIELD_FIELDS or {}) do
-		template[field] = game_shield[field]
-	end
+	-- (the ghost scythe's model is closed when it is first wielded and opens a while later: its update plays the arms' animation for that)
+	template.update = base.update
+	template.on_wield = base.on_wield
+	template.custom_data = base.custom_data
 
 	-- The chart of the item's stats, from 0 to 7: the bash out of a push (light) and the charged punch (heavy). Both get through enemies
 	-- as the game's tank blows do (damage_types).
@@ -1876,32 +2001,69 @@ local function apply_template(template)
 		},
 	}
 
+	-- The charge, the punch (when the button is let go, or by itself with an enemy in reach), the push and the bash out of it, and the
+	-- block. The punch plays the base's heavy attack, or its charge if it has no heavy attack of that name. Inspecting is the base's,
+	-- kept by the shell.
+	local heavy = base_one.heavy_attack or base_one.heavy_attack_left or base_one.default
+	local block = build_block(base.actions.action_two.default)
+
 	actions.action_one = {
-		default = build_charge(original.default),
+		default = build_charge(base_one.default),
 		punch = build_punch(heavy, false),
 		punch_auto = build_punch(heavy, true),
-		push = original.push and build_push(original.push),
-		bash = original.push and build_bash(heavy),
+		push = build_push(base_one.push),
+		bash = build_bash(heavy),
 	}
+	actions.action_two = {
+		default = block,
+	}
+	-- The game's own wielding
+	actions.action_wield = table.clone(ActionTemplates.wield)
 
-	-- The block keeps its push. Its other attacks out of the block (some weapons have a block attack) start a charge instead.
-	local block = actions.action_two and actions.action_two.default
+	utils.set_actions_lookup_data(actions, template_name)
 
-	if block and block.allowed_chain_actions then
-		local kept = {}
+	-- What makes the game's shields different from a weapon's block, the game's sword and shield's: it blocks shots too (a ratling gun's,
+	-- a warpfire thrower's), it blocks a wider arc for less stamina and the rest of the way round for more, and it sounds like a shield.
+	-- The stamina is a two-handed weapon's.
+	template.shield_block = true
+	template.can_block_ranged_attacks = true
+	template.block_angle = 120
+	template.outer_block_angle = 360
+	template.block_fatigue_point_multiplier = 0.2
+	template.outer_block_fatigue_point_multiplier = 2
+	template.sound_event_block_within_arc = "shield_block"
+	template.max_fatigue_points = 6
 
-		for _, entry in ipairs(block.allowed_chain_actions) do
-			if not (entry.action == "action_one" and entry.sub_action ~= "default" and not (entry.sub_action == "push" and original.push)) then
-				kept[#kept + 1] = entry
-			end
-		end
+	-- What the game's talents, traits and properties take it for: a two-handed melee weapon of its base's kind
+	template.buff_type = "MELEE_2H"
+	template.weapon_type = VARIANT_OF[template_name].weapon_type
 
-		block.allowed_chain_actions = kept
-	end
+	-- Dodging, the billhook's and the spear's: three dodges in a row go the full distance, which is 1.15 times the usual, as is their
+	-- speed. A melee weapon's crosshair.
+	template.dodge_count = 3
+	template.buffs = {
+		change_dodge_distance = {
+			external_optional_multiplier = 1.15,
+		},
+		change_dodge_speed = {
+			external_optional_multiplier = 1.15,
+		},
+	}
+	template.crosshair_style = "dot"
 
-	utils.set_actions_lookup_data({
-		action_one = actions.action_one,
-	}, template_name)
+	-- The aim assist for a controller: the bastard sword's
+	template.aim_assist_settings = {
+		base_multiplier = 0.025,
+		effective_max_range = 3,
+		max_range = 5,
+		no_aim_input_multiplier = 0,
+		vertical_only = true,
+		breed_scalars = {
+			skaven_clan_rat = 1,
+			skaven_slave = 1,
+			skaven_storm_vermin = 0.25,
+		},
+	}
 
 	-- Bots (BTBotMeleeAction): a light attack lets go of the charge at once, which is a quick punch. A heavy attack holds the charge until
 	-- it punches by itself, when an enemy is in reach, as UT's bots hold the Shield Gun's fire and let it go off by itself (ShieldFire's
