@@ -18,12 +18,11 @@ local SETTING_ID = "redeemer"
 local TEMPLATE_NAME = mod.redeemer.template
 
 -- UT's flying missile (RedeemerMissile, 176.3 units long at RedeemerProjectile's DrawScale 0.5) is 2.4 times as long as the one loaded
--- in the third person Redeemer (60.1 units at RedeemerAttachment's DrawScale 0.6). Here, not as in UT, the two are the same length:
--- the flying missile and its trail are made smaller and the Redeemer in the hand bigger, the missile taking two thirds of the
--- difference. Only the look changes: the missile's collision, speed and blast are UT's.
+-- in the third person Redeemer (60.1 units at RedeemerAttachment's DrawScale 0.6). Here, not as in UT, the flying missile and its trail
+-- are made smaller, two thirds of the way to that length (by the ratio). Only the look changes: the missile's collision, speed and blast
+-- are UT's.
 local MISSILE_RATIO = (176.3 * 0.5) / (60.1 * 0.6)
 local MISSILE_SCALE = MISSILE_RATIO ^ (-2 / 3)
-local HELD_SCALE = MISSILE_RATIO ^ (1 / 3)
 
 local CONFIG = {
 	-- RedeemerProjectile.RotationRate: the missile turns about its length by 50000 of 65536 a second
@@ -273,8 +272,7 @@ skin_api = mod.weapon_skin.new({
 		unit_name = "units/ut/redeemer/third_person",
 		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.02 * 0.6,
-		-- (bigger than UT's, for the missile's sake: see MISSILE_RATIO)
-		scale = HELD_SCALE,
+		scale = 1,
 		grip_right = -35 / 0.6,
 		grip_forward = 0,
 		grip_up = 0,
