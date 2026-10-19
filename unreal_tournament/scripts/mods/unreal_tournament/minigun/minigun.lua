@@ -158,8 +158,6 @@ mod.minigun = {
 		primary = false,
 		alt = false,
 	},
-	-- The mode of the shot that was made last, and when
-	last_shot_time = nil,
 }
 
 -- Weapon template
@@ -487,9 +485,6 @@ mod.handgun_update_callbacks.minigun = function (self)
 	local owner_unit = self.owner_unit
 	local action = self.current_action
 	local end_position, hit_normal, hit_level, surface = utils.handgun_round_hit(self)
-
-	mod.minigun.last_shot_time = Managers.time:time("game")
-	mod.minigun.last_mode = action.ut_minigun
 
 	mod.minigun_shot(owner_unit, action.ut_minigun, end_position, hit_normal, hit_level, hit_level and not NOT_HEAVY_WALL[surface])
 end

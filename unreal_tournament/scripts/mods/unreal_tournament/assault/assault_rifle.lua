@@ -145,8 +145,6 @@ mod.assault = {
 	grenades = {}, -- the grenades in flight, on every machine: { id, owner_unit, position, velocity, ... }
 	grenade_count = CONFIG.max_grenades, -- the player's own
 	max_grenades = CONFIG.max_grenades,
-	charge_started = nil, -- when the player started holding the grenade button
-	last_round = nil, -- when the player's last round was
 	last_grenade = nil, -- when the player's last grenade was thrown
 }
 
@@ -174,10 +172,6 @@ mod.handgun_start_callbacks.assault = function (self, new_action)
 
 	state.last = t
 	spreads[owner_unit] = state
-
-	if utils.is_local_player_unit(owner_unit) then
-		assault.last_round = t
-	end
 
 	utils.set_handgun_spread(self, state.spread)
 end
@@ -364,6 +358,8 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(assault.grenades)
 
 	assault.grenade_count = CONFIG.max_grenades
+	-- (the game's time starts again in each level, so a throw of the last level would look like one that just happened)
+	assault.last_grenade = nil
 end
 
 -- Which rifle throws the next grenade: they take turns (AssaultGrenade.DoFireEffect, bFireLeft)

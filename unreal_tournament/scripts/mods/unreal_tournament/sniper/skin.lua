@@ -223,6 +223,11 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	end
 end
 
+-- (the game's time starts again in each level)
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	rezoom_at = nil
+end
+
 -- The shot of the player: the animation, the flash, the smoke and the sound start when the shot's action starts, because the handgun
 -- shoots at once
 mod.handgun_start_callbacks.sniper_skin = function (action, new_action)
