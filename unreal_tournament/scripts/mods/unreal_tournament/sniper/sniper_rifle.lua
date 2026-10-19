@@ -57,8 +57,8 @@ for _, variant in ipairs(VARIANTS) do
 end
 
 local CONFIG = {
-	-- ClassicSniperAmmo.MaxAmmo. It is all the clip, so there is no reload.
-	max_ammo = 35,
+	-- All of the ammo, a little under ClassicSniperAmmo.MaxAmmo's 35 (set in the game). It is all the clip, so there is no reload.
+	max_ammo = 30,
 	-- ClassicSniperFire.FireRate. After a shot, the next one can be made once this much time has passed.
 	fire_rate = 1.33,
 	chain_margin = 0.15, -- seconds

@@ -39,7 +39,7 @@ local function scenarios()
 
 				-- (some careers' talents give more ammo, as they do for every ranged weapon)
 				t.expect(ammo ~= nil, "the weapon has no ammo extension")
-				t.expect(ammo and ammo >= 35, "the weapon has %s ammo, not 35 or more", tostring(ammo))
+				t.expect(ammo and ammo >= 30, "the weapon has %s ammo, not 30 or more", tostring(ammo))
 			end,
 		},
 		{
