@@ -247,10 +247,11 @@ skin_api = mod.weapon_skin.new({
 	inspect_pivot_right = 0,
 	inspect_pivot_forward = 20,
 	inspect_pivot_up = 0,
-	-- UT's third person mesh of the weapon (RedeemerAttachment's Weapons.Redeemer_3rd) at UT's size in a player's hand (DrawScale 0.4).
-	-- The game links the career pistol to the left hand's node. The mesh's tube runs along its left, to its open end (it has no flash
-	-- bone), and the mesh is upside down: UT holds it rolled half a turn (RelativeRotation Roll 32768) and 35 units back along the hand
-	-- (RelativeLocation X -35, which is 87.5 of the mesh's units at its DrawScale). The ability is too short for a calibration, so the
+	-- UT's third person mesh of the weapon (RedeemerAttachment's Weapons.Redeemer_3rd) at UT's size in a player's hand (its DrawScale is
+	-- 0.6, where the other attachments keep xWeaponAttachment's 0.4). The game links the career pistol to the left hand's node. The
+	-- mesh's tube runs along its left, to its open end (it has no flash bone), and the mesh is upside down: UT holds it rolled half a
+	-- turn (RelativeRotation Roll 32768) and 35 units back along the hand (RelativeLocation X -35, which is 35 / 0.6 of the mesh's units
+	-- at its DrawScale). The ability is too short for a calibration, so the
 	-- mesh is turned from the pistol's own axes (follow_game_unit 2): the yaw puts the tube along the pistol's barrel and the roll turns
 	-- it the right way up.
 	third_person = {
@@ -259,9 +260,9 @@ skin_api = mod.weapon_skin.new({
 		applies = mod.redeemer.has_redeemer,
 		unit_name = "units/ut/redeemer/third_person",
 		hand_node = "j_leftweaponattach",
-		meters_per_unit = 0.02 * 0.4,
+		meters_per_unit = 0.02 * 0.6,
 		scale = 1,
-		grip_right = -87.5,
+		grip_right = -35 / 0.6,
 		grip_forward = 0,
 		grip_up = 0,
 		yaw = -90,

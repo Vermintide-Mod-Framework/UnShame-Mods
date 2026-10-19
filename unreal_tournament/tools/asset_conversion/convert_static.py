@@ -159,7 +159,8 @@ STATICS = {
     # The third person meshes of the other weapons' attachment classes, at xWeaponAttachment's DrawScale 0.4, each with its pickup's
     # material, which has the same texture: AssaultAttachment's NewWeapons2004.NewAssaultRifle_3rd, BioAttachment's Weapons.BioRifle_3rd
     # (its glass material has no faces), LinkAttachment's NewWeapons2004.NewLinkGun_3rd (LinkGunShader is LinkTex0's),
-    # RocketAttachment's Weapons.RocketLauncher_3rd and RedeemerAttachment's Weapons.Redeemer_3rd (the missile, then the body)
+    # RocketAttachment's Weapons.RocketLauncher_3rd and RedeemerAttachment's Weapons.Redeemer_3rd (the missile, then the body; its
+    # DrawScale is 0.6)
     'assault_3rd': {
         'pskx': 'NewWeapons2004/SkeletalMesh/NewAssaultRifle_3rd.psk',
         'materials': [('units/ut/assault/pickup_m0', 'existing')],
@@ -187,7 +188,7 @@ STATICS = {
     'redeemer_3rd': {
         'pskx': 'Weapons/SkeletalMesh/Redeemer_3rd.psk',
         'materials': [('units/ut/redeemer/pickup_m1', 'existing'), ('units/ut/redeemer/pickup_m0', 'existing')],
-        'scale': 0.02 * 0.4,
+        'scale': 0.02 * 0.6,
         'unit': 'units/ut/redeemer/third_person',
     },
     'assault_grenade': {
