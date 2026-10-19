@@ -270,12 +270,13 @@ local function new_skin(setting_id)
 		offset_up = -10.6,
 		pivot_yaw = 90, -- PlayerViewPivot (Yaw=16384)
 		bob_damping = 2.3,
-		inspect_pose_right = -10,
-		inspect_pose_forward = 2,
-		inspect_pose_up = 2,
+		-- (the rifle is long: it is held further away and to the left, so that all of it shows, checked with preview_weapon.py)
+		inspect_pose_right = -45,
+		inspect_pose_forward = 55,
+		inspect_pose_up = 6,
 		inspect_pose_roll = 10,
 		inspect_pose_pitch = 4,
-		inspect_pose_yaw = 55,
+		inspect_pose_yaw = 60,
 		inspect_turn_start = 0.35,
 		inspect_pivot_right = 0,
 		inspect_pivot_forward = 30,
