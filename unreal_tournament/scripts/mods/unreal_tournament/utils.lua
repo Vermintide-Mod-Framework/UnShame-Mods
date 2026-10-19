@@ -926,27 +926,21 @@ function utils.ragdoll_mass(unit)
 	return mass
 end
 
--- UT throws every body at the same speed: KSetSkelVel sets its velocity, whatever its mass. Here, not as in UT, a body heavier than a
--- clan rat's gets the push that gives the clan rat UT's speed, so it goes as much slower as it is heavier. A lighter body is thrown at
--- UT's speed. The masses are only in the units' physics, so the clan rat's is taken from the first clan rat body that is thrown, and
--- until then every body is thrown at UT's speed.
-local RAGDOLL_REFERENCE_BREED = "skaven_clan_rat"
-local ragdoll_reference_mass
+-- UT throws every body at the same speed: KSetSkelVel sets its velocity, whatever its mass. Here, not as in UT, a body heavier than
+-- RAGDOLL_REFERENCE_MASS gets the push that gives that mass UT's speed, so it goes as much slower as it is heavier. A lighter body is
+-- thrown at UT's speed. Until the mass is set, every body is thrown at UT's speed.
+utils.RAGDOLL_REFERENCE_MASS = nil
 
 -- The share of UT's throw speed that a body gets
 function utils.throw_share(unit)
+	local reference = utils.RAGDOLL_REFERENCE_MASS
 	local mass = utils.ragdoll_mass(unit)
-	local breed = Unit.get_data(unit, "breed")
 
-	if not ragdoll_reference_mass and breed and breed.name == RAGDOLL_REFERENCE_BREED and mass > 0 then
-		ragdoll_reference_mass = mass
-	end
-
-	if not ragdoll_reference_mass or mass <= ragdoll_reference_mass then
+	if not reference or mass <= reference then
 		return 1
 	end
 
-	return ragdoll_reference_mass / mass
+	return reference / mass
 end
 
 -- Throws a ragdoll as above, away from a point, with the damage type's own speeds if they are given. Returns whether it had any bodies
