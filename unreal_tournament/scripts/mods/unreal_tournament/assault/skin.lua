@@ -456,9 +456,9 @@ local function new_skin(id, mirror)
 		bob_damping = 1.7,
 		-- The inspect pose stands the rifle up, with its inner side to the camera, and keeps the half of the mesh that is not modelled
 		-- below the screen (checked with preview_weapon.py). It turns about the rifle's middle.
-		inspect_pose_right = -4,
-		inspect_pose_forward = 35,
-		inspect_pose_up = -8,
+		inspect_pose_right = 14,
+		inspect_pose_forward = 15,
+		inspect_pose_up = 2.6,
 		inspect_pose_roll = 32,
 		inspect_pose_pitch = 66,
 		inspect_pose_yaw = 66,
