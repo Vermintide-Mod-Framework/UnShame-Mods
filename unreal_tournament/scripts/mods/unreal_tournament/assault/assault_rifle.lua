@@ -391,7 +391,8 @@ local function throw(action, hold_time)
 	local speed = math.clamp(CONFIG.grenade_speed_min + hold_time * CONFIG.grenade_speed_gain, CONFIG.grenade_speed_min, CONFIG.grenade_speed_max) + own_speed
 	local velocity = forward * (speed * UNIT)
 
-	local grenade = add_grenade(Application.guid(), owner_unit, start, velocity, true)
+	local id = Application.guid()
+	local grenade = add_grenade(id, owner_unit, start, velocity, true)
 
 	grenade.left = fire_left[owner_unit]
 	grenade.power_level = action.power_level
@@ -455,11 +456,25 @@ mod.dummy_finish_callbacks.assault = function (action, reason)
 	throw(action, Managers.time:time("game") - started)
 end
 
--- A pickup of ammo fills the grenades
+-- A pickup of ammo fills the grenades, whether the rifle is held or not
 mod:hook_safe(GenericAmmoUserExtension, "add_ammo", function (self)
-	if self.owner_unit and utils.is_local_player_unit(self.owner_unit) and utils.wielded_template_name(self.owner_unit) == TEMPLATE_NAME then
+	if self.item_name == ITEM_KEY and self.owner_unit and utils.is_local_player_unit(self.owner_unit) then
 		assault.grenade_count = CONFIG.max_grenades
 	end
+end)
+
+-- With all the rounds, the game refuses a pickup of ammo (the pickup's client.can_interact, on the player's own machine; the host
+-- doesn't check it). While grenades are missing, the ammo is not full, so the pickup gives them back.
+mod:hook(SimpleInventoryExtension, "has_full_ammo", function (func, self, ...)
+	local full = func(self, ...)
+
+	if not full or assault.grenade_count >= CONFIG.max_grenades or not utils.is_local_player_unit(self._unit) then
+		return full
+	end
+
+	local slot_data = self:get_slot_data("slot_ranged")
+
+	return not (slot_data and slot_data.item_data and slot_data.item_data.name == ITEM_KEY)
 end)
 
 -- Weapon template
@@ -473,11 +488,17 @@ local function chain(action, sub_action, input, start_time)
 	}
 end
 
--- A round. Holding the button repeats it at the fire rate.
+-- A round. Holding the button repeats it at the fire rate. It hits at once, as UT's does: the game's handgun shot traces a ray when its
+-- action has no projectile (ActionHandgun), and the pistols' shot fired one, which drew the pistol's tracer and hurt with the pistol's
+-- damage.
 local function build_round(source)
 	local action = table.clone(source)
 
 	action.kind = "handgun"
+	action.projectile_info = nil
+	action.impact_data = nil
+	action.speed = nil
+	action.range = nil
 	action.active_reload_time = nil
 	action.anim_event_secondary = nil
 	action.damage_profile = "ut_assault_bullet"

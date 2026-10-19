@@ -5,7 +5,8 @@ local mod = get_mod("unreal_tournament")
 -- weapon_skin.lua does the models, their placement and animations, the bob and the third person. There are two skins of the weapon: the
 -- rifle in the right hand, and the one in the left, which is the same model mirrored (AssaultRifle.RenderDualOverlay draws the weapon a
 -- second time with its mesh, offset, yaw and roll turned to the other side). Both play the same animations, as UT's are one weapon drawn
--- twice. This file does what is the rifle's own: the flash of the rounds, the grenades in flight, and the sounds. The gameplay is in
+-- twice. This file does what is the rifle's own: the flash of the rounds, the grenades in flight and their smoke, and the sounds. The
+-- gameplay is in
 -- assault_rifle.lua.
 --
 -- The assets were made with tools/asset_conversion (convert_weapon.py assault, convert_static.py assault_pickup and assault_grenade,
@@ -13,6 +14,7 @@ local mod = get_mod("unreal_tournament")
 
 local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/assault/skin_animations")
+local particles = mod.skin_particles
 
 local SETTING_ID = "assault_rifle"
 local TEMPLATE_NAME = mod.items.weapons[SETTING_ID].template
@@ -25,6 +27,25 @@ local CONFIG = {
 	grenade_spin = 25000 / 65536,
 	-- A bounce faster than this plays the impact sound (Grenade.HitWall)
 	bounce_sound_speed = 250, -- UT units a second
+	-- GrenadeSmokeTrail, which a grenade leaves while it moves, if the view is within 5500 units when it is thrown (Grenade.PostBeginPlay),
+	-- and stops leaving when it comes to rest. It makes 30 puffs a second (mRegenRange). A puff lasts 1.3 to 1.5 s, starts 15 to 25 units
+	-- across and grows by 10 a second, drifts at 2 to 15 units a second, and rises (its mass is -0.01 to -0.08: by the Minigun smoke's
+	-- turning of mass into a rise, about 100 units a second for each 1 of it). It is a dark blue grey (mColorRange) at twice the light
+	-- (ScaleGlow 2), blended by its alpha (STY_Alpha), and fades as xEmitter's do (mAttenKa 0.2). Each is a tile of SmokeTex at random.
+	trail_view_range = 5500, -- UT units
+	trail_rate = 30, -- puffs a second
+	trail_life = { 1.3, 1.5 },
+	trail_size = { 15, 25 }, -- UT units across
+	trail_growth = 10, -- UT units across, a second
+	trail_speed = { 2, 15 }, -- UT units a second
+	trail_rise = { 1, 8 }, -- UT units a second
+	trail_color = {
+		{ 35 / 255, 45 / 255, 45 / 255 },
+		{ 50 / 255, 65 / 255, 65 / 255 },
+	},
+	trail_intensity = 2,
+	trail_attenuation = 0.2,
+	trail_tiles = 16,
 	inspect_pose_speed = 5,
 	inspect_sway = 5,
 	inspect_sway_speed = 1.8,
@@ -100,9 +121,14 @@ mod.assault_grenade_callbacks.assault_skin = function (grenade)
 	local api = skin_apis[1]
 	local world = Managers.world:world("level_world")
 
+	local camera_position = utils.camera_pose()
+	local trail = camera_position ~= nil and Vector3.distance(camera_position, grenade.position:unbox()) < CONFIG.trail_view_range * UNIT
+
 	grenade_units[grenade.id] = {
 		axis = Vector3Box(Vector3.normalize(Vector3(math.random() - 0.5, math.random() - 0.5, math.random() - 0.5))),
 		grenade = grenade,
+		trail = trail,
+		trail_owed = 0,
 		unit = World.spawn_unit(world, "units/ut/assault/grenade", grenade.position:unbox()),
 		world = world,
 	}
@@ -122,13 +148,48 @@ mod.assault_bounce_callbacks.assault_skin = function (grenade, position, speed)
 	end
 end
 
-local function update_grenades()
+local random_between = utils.random_between
+
+-- The puffs of a grenade's trail that are due, where the grenade is now
+local function trail_puffs(entry, dt)
+	entry.trail_owed = entry.trail_owed + CONFIG.trail_rate * dt
+
+	local position = entry.grenade.position:unbox()
+
+	while entry.trail_owed >= 1 do
+		entry.trail_owed = entry.trail_owed - 1
+
+		local life = random_between(CONFIG.trail_life)
+		local share = math.random()
+		local low, high = CONFIG.trail_color[1], CONFIG.trail_color[2]
+		local drift = utils.random_direction() * random_between(CONFIG.trail_speed)
+
+		particles.sprite({
+			additive = 0,
+			attenuation = CONFIG.trail_attenuation,
+			color = { low[1] + (high[1] - low[1]) * share, low[2] + (high[2] - low[2]) * share, low[3] + (high[3] - low[3]) * share },
+			growth = CONFIG.trail_growth * UNIT,
+			intensity = CONFIG.trail_intensity,
+			life = life,
+			position = position,
+			size = random_between(CONFIG.trail_size) * UNIT,
+			texture = "muzzle_smoke_" .. math.random(0, CONFIG.trail_tiles - 1),
+			velocity = (drift + Vector3(0, 0, random_between(CONFIG.trail_rise))) * UNIT,
+		})
+	end
+end
+
+local function update_grenades(dt)
 	for id, entry in pairs(grenade_units) do
 		local grenade = entry.grenade
 
 		if grenade.exploded or not Unit.alive(entry.unit) then
 			destroy_grenade_unit(id)
 		else
+			if entry.trail and not grenade.stopped then
+				trail_puffs(entry, dt)
+			end
+
 			local spin = grenade.stopped and 0 or grenade.age * CONFIG.grenade_spin * 2 * math.pi
 
 			Unit.set_local_position(entry.unit, 0, grenade.position:unbox())
