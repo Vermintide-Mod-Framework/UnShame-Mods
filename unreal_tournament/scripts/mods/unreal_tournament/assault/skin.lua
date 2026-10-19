@@ -458,7 +458,7 @@ local function new_skin(id, mirror)
 		-- below the screen (checked with preview_weapon.py). It turns about the rifle's middle.
 		inspect_pose_right = 14,
 		inspect_pose_forward = 15,
-		inspect_pose_up = -0.4,
+		inspect_pose_up = -3.4,
 		inspect_pose_roll = 32,
 		inspect_pose_pitch = 66,
 		inspect_pose_yaw = 66,
