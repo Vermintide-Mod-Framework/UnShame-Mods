@@ -46,9 +46,9 @@ local CONFIG = {
 	trail_intensity = 2,
 	trail_attenuation = 0.2,
 	trail_tiles = 16,
-	-- The characters fire both modes as the pistols' alt attack: they take its stance (lock_target), play its shot (attack_shoot_fast)
-	-- for each round and grenade, and leave the stance (attack_finished) this long after the last of them, once the rifle does nothing
-	-- (a choice)
+	-- The characters fire both modes in the pistols' alt attack's stance (lock_target): the rounds keep it, the grenade's throw plays
+	-- its shot (attack_shoot_fast), and they leave it (attack_finished) this long after the last of them, once the rifle does nothing
+	-- (set in the game)
 	stance_linger = 0.5, -- s
 	-- In the stance the arms reach out and the pistols point along them, so both rifles are level with the pistols then (pitch and yaw 0
 	-- from the hand's forward, where they are tipped down to lie along the forearm otherwise), turning there and back over this long
@@ -158,7 +158,7 @@ mod.assault_grenade_callbacks.assault_skin = function (grenade)
 	saw_stance(grenade.owner_unit)
 
 	if grenade.local_owner then
-		shot_animation(grenade.owner_unit)
+		shot_animation(grenade.owner_unit, true)
 	end
 
 	if utils.is_local_player_unit(grenade.owner_unit) and api.state() then
@@ -186,7 +186,8 @@ saw_stance = function (unit)
 	stances[unit] = stance
 end
 
-shot_animation = function (unit)
+-- Takes the stance if the character is not in it, and with shoot plays its shot
+shot_animation = function (unit, shoot)
 	local network_manager = Managers.state.network
 
 	if not network_manager or not Unit.alive(unit) then
@@ -198,12 +199,16 @@ shot_animation = function (unit)
 	end
 
 	in_stance[unit] = Managers.time:time("game")
-	network_manager:anim_event(unit, "attack_shoot_fast")
+
+	if shoot then
+		network_manager:anim_event(unit, "attack_shoot_fast")
+	end
 end
 
+-- The rounds keep the stance, with no shot
 mod.handgun_start_callbacks.assault_stance = function (action, new_action)
 	if new_action.ut_assault then
-		shot_animation(action.owner_unit)
+		shot_animation(action.owner_unit, false)
 	end
 end
 
