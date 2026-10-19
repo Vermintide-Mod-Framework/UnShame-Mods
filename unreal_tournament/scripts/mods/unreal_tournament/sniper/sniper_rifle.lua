@@ -207,6 +207,16 @@ local function apply_handgun(template)
 	actions.action_one = {
 		default = build_shot(actions.action_one.default),
 	}
+
+	-- The shot's animation takes the character out of the aim. The game's zoomed shot goes back to the aim action, which aims again;
+	-- this one doesn't, so the character aims again in third person when a shot ends while the zoom is in.
+	if aim.anim_event then
+		actions.action_one.default.anim_end_event_3p = aim.anim_event
+		actions.action_one.default.anim_end_event_condition_func = function (unit)
+			return utils.is_local_player_unit(unit) and mod.zoom.zoomed
+		end
+	end
+
 	-- While the zoom is held, a shot can follow at once (it waits for its fire time), and so can wielding
 	actions.action_two = {
 		default = mod.zoom.action(hand, {
