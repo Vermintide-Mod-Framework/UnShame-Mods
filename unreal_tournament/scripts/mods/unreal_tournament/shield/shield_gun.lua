@@ -123,8 +123,8 @@ local CONFIG = {
 	range = 112,
 	-- How far the punch reaches what it hits, and the bash out of a push, in UT units, and how far the charge looks for an enemy to punch
 	-- by itself. A little farther than UT's ShieldRange (a choice): at 112 units, dodging into an enemy slid the player off it before
-	-- the charge found it in reach, and 131 reached too far.
-	hit_range = 122,
+	-- the charge found it in reach, and 131 reached too far; 122 was a little short (set in the game).
+	hit_range = 126,
 	bash_range = 162,
 	-- The punch hits every enemy within its range in a cone this wide (degrees) about the way the player looks, that it can see. UT's
 	-- punch hits the one thing in front: this is the mod's own, and a guess.
