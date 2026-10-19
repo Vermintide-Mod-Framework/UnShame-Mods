@@ -17,7 +17,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 # skip_materials: materials (by index) whose faces are left out. A texture 'solid:rrggbb' is a plain color.
 # textures: more tgas to convert next to the unit's own textures, for a material that another script makes.
 # gloss: the materials (by index) whose texture's alpha is where UT's weapon overlay shines (see GLOSS_MATTE): they get a roughness map
-# made from it. roughness is then only for the other materials.
+# made from it. roughness is then only for the other materials. gloss_shiny: { material index = roughness } in place of GLOSS_SHINY.
 WEAPONS = {
     'flak': {
         'psk': 'Weapons/SkeletalMesh/Flak_1st.psk',
@@ -131,6 +131,8 @@ WEAPONS['classic_sniper'] = {
     'locators': ['Dummy01'],
     'roughness': 0.9,
     'gloss': (0, 1),
+    # (the back of the scope is its lens, which looked matte at GLOSS_SHINY: it is near a mirror where its alpha is full)
+    'gloss_shiny': {1: 0.02},
     'unit': 'units/ut/sniper/sniper_rifle',
     'lua': 'scripts/mods/unreal_tournament/sniper/skin_animations.lua',
 }
@@ -255,11 +257,11 @@ variables = {
 GLOSS_MATTE = 0.9
 GLOSS_SHINY = 0.2
 
-def gloss_rows(rows):
+def gloss_rows(rows, shiny=GLOSS_SHINY):
     """The rows of a roughness map (in its red channel, read linearly) from the alpha of a texture's rows."""
     out = []
     for row in rows:
-        values = bytes(round(255 * (GLOSS_MATTE - (GLOSS_MATTE - GLOSS_SHINY) * a / 255)) for a in row[3::4])
+        values = bytes(round(255 * (GLOSS_MATTE - (GLOSS_MATTE - shiny) * a / 255)) for a in row[3::4])
         out.append(b''.join(bytes((v, v, v, 255)) for v in values))
     return out
 
@@ -538,7 +540,7 @@ def main():
         if m in cfg.get('gloss', ()):
             roughness_map = texture + '_roughness'
             w, h, rows = done_textures[texture]
-            write_png('%s/%s.png' % (REPO, roughness_map), w, h, gloss_rows(rows))
+            write_png('%s/%s.png' % (REPO, roughness_map), w, h, gloss_rows(rows, cfg.get('gloss_shiny', {}).get(m, GLOSS_SHINY)))
             open('%s/%s.texture' % (REPO, roughness_map), 'w', newline='\n').write(texture_text(roughness_map, False))
         open('%s/%s/%s_m%d.material' % (REPO, unit_dir, unit_base, m), 'w', newline='\n').write(material_text(kind, texture, opacity, first_person=True, roughness=cfg['roughness'].get(m) if isinstance(cfg.get('roughness'), dict) else cfg.get('roughness'), roughness_map=roughness_map))
 
