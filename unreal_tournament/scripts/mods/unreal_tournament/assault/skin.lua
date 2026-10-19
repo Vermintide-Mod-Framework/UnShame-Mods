@@ -298,7 +298,8 @@ local function new_skin(id, mirror)
 			scale = 1,
 			grip_right = 0,
 			grip_forward = 0,
-			grip_up = 0,
+			-- (the right one, set in the game)
+			grip_up = mirror and 0 or 7,
 			yaw = 0,
 			-- (tipped down from the hand's forward, so that it lies along the forearm: set in the game)
 			pitch = -45,
