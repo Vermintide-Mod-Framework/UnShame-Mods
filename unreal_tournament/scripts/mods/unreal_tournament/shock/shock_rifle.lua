@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- The Shock Rifle's gameplay. It is an item of its own, a copy of Sienna's Beam Staff with the copy's actions replaced.
+-- The Shock Rifle's gameplay. It is an item of its own, made on the shell of Sienna's Beam Staff (utils.template_shell).
 --   Left button: fires an instant hitscan beam.
 --   Right button: fires a slow ball that flies straight and explodes on impact.
 --   A beam that hits a ball detonates it in a large "shock combo" explosion.
@@ -475,7 +475,64 @@ end
 -- The two sets of fire modes, normal and Instagib, and which one the template has now (see sync_instagib_actions)
 local fire_modes = {}
 
+-- Venting the heat: the Beam Staff's. Holding the reload button vents it over 3 seconds while the player is slowed, when there is heat.
+local function has_heat(action_user)
+	local overcharge_extension = ScriptUnit.extension(action_user, "overcharge_system")
+
+	return overcharge_extension:get_overcharge_value() ~= 0
+end
+
+local function build_vent()
+	return {
+		kind = "charge",
+		anim_event = "cooldown_start",
+		anim_end_event = "attack_finished",
+		anim_end_event_condition_func = function (unit, end_reason)
+			return end_reason ~= "new_interupting_action"
+		end,
+		charge_effect_material_name = "Fire",
+		charge_effect_material_variable_name = "intensity",
+		charge_sound_name = "player_combat_weapon_staff_cooldown",
+		charge_sound_parameter_name = "drakegun_charge_fire",
+		charge_sound_stop_event = "stop_player_combat_weapon_staff_cooldown",
+		charge_sound_switch = "projectile_charge_sound",
+		charge_time = 3,
+		do_not_validate_with_hold = true,
+		hold_input = "weapon_reload_hold",
+		minimum_hold_time = 0.5,
+		uninterruptible = true,
+		vent_overcharge = true,
+		total_time = math.huge,
+		buff_data = {
+			{
+				buff_name = "planted_fast_decrease_movement",
+				external_multiplier = 0.2,
+				start_time = 0,
+				end_time = math.huge,
+			},
+		},
+		enter_function = function (attacker_unit, input_extension)
+			input_extension:reset_release_input()
+			input_extension:clear_input_buffer()
+		end,
+		allowed_chain_actions = {
+			{
+				action = "action_wield",
+				input = "action_wield",
+				start_time = 0.2,
+				sub_action = "default",
+			},
+		},
+		condition_func = has_heat,
+		chain_condition_func = has_heat,
+	}
+end
+
+-- Makes the rifle on the shell of the Beam Staff (utils.template_shell): everything that is not the staff's animations, models and
+-- sounds is set here
 local function apply_shock_rifle(template)
+	utils.template_shell(template)
+
 	-- The chart of the item's stats, from 0 to 7. The beam is the normal attack, and the ball is the heavy one.
 	template.weapon_diagram = {
 		light_attack = {
@@ -495,16 +552,21 @@ local function apply_shock_rifle(template)
 	}
 
 	local actions = template.actions
-	local attack_meta_data = template.attack_meta_data
 
-	-- Only the two fire modes are replaced. Everything else stays untouched, including wield, inspect, reload, the career actions
-	-- and any changes other mods made to the template.
+	-- The beam and the ball. Inspecting is the staff's, kept by the shell.
 	actions.action_one = {
 		default = build_beam_action(),
 	}
 	actions.action_two = {
 		default = build_ball_action(),
 	}
+	actions.weapon_reload = {
+		default = build_vent(),
+	}
+	-- The game's own wielding
+	actions.action_wield = table.clone(ActionTemplates.wield)
+
+	utils.set_actions_lookup_data(actions, TEMPLATE_NAME)
 
 	-- The Instagib skin's actions put the beam on both buttons (see sync_instagib_actions).
 	fire_modes.normal = {
@@ -521,20 +583,86 @@ local function apply_shock_rifle(template)
 	}
 	fire_modes.instagib_active = false
 
-	utils.set_actions_lookup_data(fire_modes.normal, TEMPLATE_NAME)
 	utils.set_actions_lookup_data(fire_modes.instagib, TEMPLATE_NAME)
 
-	-- The bot AI and the tooltips refer to the charged and blast sub actions, which were removed.
-	attack_meta_data.can_charge_shot = false
-	attack_meta_data.charged_attack_action_name = nil
-	attack_meta_data.fire_input = "fire"
-	attack_meta_data.max_range = 50
-	-- This tells the bot shooting that this is the Shock Rifle (see bots.lua).
-	attack_meta_data.ut_shock = true
-	-- A bot shoots only the enemies its ranged weapon is good against (BTConditions.has_target_and_ammo_greater_than). The Beam Staff's are
-	-- infantry, berserkers, specials and armour. The Shock Rifle's are bosses and super armour too, which bots.lua sets off combos at.
-	attack_meta_data.effective_against = bit.bor(attack_meta_data.effective_against or 0, BreedCategory.Boss, BreedCategory.SuperArmor)
-	attack_meta_data.effective_against_combined = bit.bor(attack_meta_data.effective_against, attack_meta_data.effective_against_charged or 0)
+	-- The staff's heat: its warning sound and how soon it cools and how fast. Overheating sets off a combo (overheat_callbacks).
+	template.overcharge_data = {
+		explosion_template = "overcharge_explosion_brw",
+		hit_overcharge_threshold_sound = "ui_special_attack_ready",
+		overcharge_threshold = 10,
+		overcharge_value_decrease_rate = 1,
+		time_until_overcharge_decreases = 0.5,
+	}
+
+	-- How bots use it: the staff's aim, at the head. A bot presses the button (it has no charged shot) and doesn't shoot through an
+	-- enemy in the way. A bot shoots only the enemies its ranged weapon is good against (BTConditions.has_target_and_ammo_greater_than):
+	-- the Beam Staff's infantry, berserkers, specials and armour, and bosses and super armour, which bots.lua sets off combos at. The
+	-- charged shot's values are the staff's, which nothing uses.
+	local effective_against = bit.bor(BreedCategory.Infantry, BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored, BreedCategory.Boss, BreedCategory.SuperArmor)
+
+	template.attack_meta_data = {
+		aim_at_node = "j_head",
+		aim_at_node_charged = "j_spine1",
+		can_charge_shot = false,
+		charge_when_obstructed = true,
+		charge_when_outside_max_range_charged = false,
+		fire_input = "fire",
+		ignore_enemies_for_obstruction = false,
+		ignore_enemies_for_obstruction_charged = false,
+		max_range = 50,
+		max_range_charged = 6,
+		minimum_charge_time = 0.21,
+		obstruction_fuzzyness_range = 1,
+		obstruction_fuzzyness_range_charged = 6,
+		aim_data = {
+			max_radius_pseudo_random_c = 0.0557,
+			min_radius_pseudo_random_c = 0.94737,
+			min_radius = math.pi / 72,
+			max_radius = math.pi / 16,
+		},
+		aim_data_charged = {
+			max_radius_pseudo_random_c = 0.01475,
+			min_radius_pseudo_random_c = 0.0557,
+			min_radius = math.pi / 72,
+			max_radius = math.pi / 16,
+		},
+		effective_against = effective_against,
+		effective_against_charged = 0,
+		effective_against_combined = effective_against,
+		-- This tells the bot shooting that this is the Shock Rifle (see bots.lua).
+		ut_shock = true,
+	}
+
+	-- What the game's talents, traits and properties take it for: the staff it is a copy of
+	template.buff_type = "RANGED"
+	template.weapon_type = "FIRE_STAFF"
+
+	-- Dodging, the crosshair (its arrows) and the spread: the staff's (the beam has none of its own, see ut_shock_beam)
+	template.buffs = {
+		change_dodge_distance = {
+			external_optional_multiplier = 1,
+		},
+		change_dodge_speed = {
+			external_optional_multiplier = 1,
+		},
+	}
+	template.crosshair_style = "arrows"
+	template.default_spread_template = "spear"
+
+	-- The aim assist for a controller: the staff's
+	template.aim_assist_settings = {
+		always_auto_aim = true,
+		base_multiplier = 0,
+		effective_max_range = 30,
+		max_range = 50,
+		no_aim_input_multiplier = 0,
+		target_node = "j_spine1",
+		breed_scalars = {
+			skaven_clan_rat = 1,
+			skaven_slave = 1,
+			skaven_storm_vermin = 1,
+		},
+	}
 
 	template.tooltip_compare = {
 		light = {
