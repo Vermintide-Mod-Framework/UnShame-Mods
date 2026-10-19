@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
--- Lightning Gun: Kerillian's, a copy of the Deepwood Staff with its fire modes replaced, the same way the Shock Rifle is a copy of the
--- Beam Staff. The numbers come from UT2004 (XWeapons/SniperRifle, SniperFire and SniperZoom).
+-- Lightning Gun: Kerillian's, made on the shell of the Deepwood Staff (utils.template_shell), as the Shock Rifle is of the Beam Staff.
+-- The numbers come from UT2004 (XWeapons/SniperRifle, SniperFire and SniperZoom).
 --   Left button: fires a lightning bolt that hits at once. After it hits, three short arcs of lightning jump from the place it hit
 --       to enemies near it. A hit on the head does double damage.
 --   Right button: zooms. Holding it zooms in, until it is let go, and the zoom stays. Pressing it again zooms out.
@@ -219,49 +219,128 @@ local function fire_chain_actions()
 	return entries
 end
 
--- Builds the shot from Kruber's handgun's, which hits at once, with its recoil. It adds heat instead of using ammo, can't be fired while
--- the gun is locked out, and can be repeated after UT's fire time. The animation of the characters is the staff's shot.
-local function build_shot(original)
-	local action = table.clone(original)
+-- The bolt can be fired when the gun is not locked out by its heat and UT's fire time has passed
+local function can_fire(action_user)
+	local overcharge_extension = ScriptUnit.extension(action_user, "overcharge_system")
 
-	action.active_reload_time = nil
-	action.allowed_chain_actions = fire_chain_actions()
-	action.ammo_usage = nil
-	action.anim_event = "attack_shoot"
-	action.anim_event_last_ammo = nil
-	action.anim_event_no_ammo_left = nil
-	action.anim_event_secondary = nil
-	action.overcharge_type = "ut_lightning_bolt"
-	-- (the staff is the left hand's, as its own actions say)
-	action.weapon_action_hand = "left"
-	action.condition_func = function (action_user)
-		local overcharge_extension = ScriptUnit.extension(action_user, "overcharge_system")
-
-		return overcharge_extension:are_you_locked_out() == false and ready_to_fire(action_user)
-	end
-	action.chain_condition_func = action.condition_func
-	action.damage_profile = "ut_lightning_bolt"
-	action.headshot_multiplier = CONFIG.headshot_multiplier
-	action.hit_effect = NO_HIT_EFFECT
-	action.ignore_shield_hit = true
-	action.reload_when_out_of_ammo = false
-	action.spread_template_override = "ut_lightning_bolt"
-	-- The shot lasts slightly longer than the time to the next shot. A held button is only read while a shot is still running, so a shot
-	-- that ends exactly when the next one may start would miss it.
-	action.total_time = TOTAL_TIME
-	action.total_time_secondary = nil
-	action.ut_lightning_bolt = true
-	-- The game's tracer is not drawn: the bolt is the skin's (hooks.lua)
-	action.ut_dropped_flow_events = DROPPED_FLOW_EVENTS
-
-	if action.recoil_settings then
-		action.recoil_settings.vertical_climb = action.recoil_settings.vertical_climb * CONFIG.recoil_scale
-	end
-
-	return action
+	return overcharge_extension:are_you_locked_out() == false and ready_to_fire(action_user)
 end
 
+-- The shot: the game's handgun shot (kind "handgun"), which hits at once. It adds heat instead of using ammo and can be repeated after
+-- UT's fire time. The animation of the characters is the staff's shot. The values that are not UT's are the ones it had as a copy of
+-- Kruber's handgun's shot: how loud it is to enemies, the aim assist, the talents' kind of hit (charge_value), when its damage is dealt,
+-- and its recoil, which is the camera's shake, at half of the handgun's.
+local function build_shot()
+	return {
+		kind = "handgun",
+		-- (the staff is the left hand's, as its own actions say)
+		weapon_action_hand = "left",
+		anim_event = "attack_shoot",
+		overcharge_type = "ut_lightning_bolt",
+		fire_time = 0,
+		-- The shot lasts slightly longer than the time to the next shot. A held button is only read while a shot is still running, so a
+		-- shot that ends exactly when the next one may start would miss it.
+		total_time = TOTAL_TIME,
+		damage_window_start = 0.1,
+		damage_window_end = 0,
+		damage_profile = "ut_lightning_bolt",
+		headshot_multiplier = CONFIG.headshot_multiplier,
+		hit_effect = NO_HIT_EFFECT,
+		ignore_shield_hit = true,
+		ranged_attack = true,
+		charge_value = "light_attack",
+		alert_sound_range_fire = 10,
+		alert_sound_range_hit = 2,
+		aim_assist_max_ramp_multiplier = 1,
+		aim_assist_ramp_decay_delay = 0.1,
+		aim_assist_ramp_multiplier = 0.3,
+		apply_recoil = true,
+		recoil_settings = {
+			climb_duration = 0.2,
+			horizontal_climb = 0,
+			restore_duration = 0.3,
+			vertical_climb = 3 * CONFIG.recoil_scale,
+			climb_function = math.easeInCubic,
+			restore_function = math.ease_out_quad,
+		},
+		reload_when_out_of_ammo = false,
+		spread_template_override = "ut_lightning_bolt",
+		allowed_chain_actions = fire_chain_actions(),
+		condition_func = can_fire,
+		chain_condition_func = can_fire,
+		enter_function = function (attacker_unit, input_extension)
+			input_extension:clear_input_buffer()
+		end,
+		ut_lightning_bolt = true,
+		-- The game's tracer is not drawn: the bolt is the skin's (hooks.lua)
+		ut_dropped_flow_events = DROPPED_FLOW_EVENTS,
+	}
+end
+
+-- Venting the heat: the staff's. Holding the reload button vents it over 3 seconds while the player is slowed, when there is heat, the
+-- gun is not locked out and the player's talents let them vent.
+local function can_vent(action_user)
+	local overcharge_extension = ScriptUnit.extension(action_user, "overcharge_system")
+
+	if overcharge_extension:get_overcharge_value() == 0 or overcharge_extension:are_you_locked_out() ~= false then
+		return false
+	end
+
+	local buff_extension = ScriptUnit.extension(action_user, "buff_system")
+
+	return buff_extension:apply_buffs_to_value(1, "vent_speed") > 0
+end
+
+local function build_vent()
+	return {
+		kind = "charge",
+		weapon_action_hand = "left",
+		anim_event = "cooldown_start",
+		anim_end_event = "cooldown_end",
+		anim_end_event_condition_func = function (unit, end_reason)
+			return end_reason ~= "new_interupting_action"
+		end,
+		charge_effect_material_name = "Fire",
+		charge_effect_material_variable_name = "intensity",
+		charge_sound_name = "Play_weapon_life_staff_cooldown_loop",
+		charge_sound_stop_event = "Stop_weapon_life_staff_cooldown_loop",
+		charge_time = 3,
+		do_not_validate_with_hold = true,
+		hold_input = "weapon_reload_hold",
+		minimum_hold_time = 0.5,
+		uninterruptible = true,
+		vent_overcharge = true,
+		total_time = math.huge,
+		buff_data = {
+			{
+				buff_name = "planted_fast_decrease_movement",
+				external_multiplier = 0.2,
+				start_time = 0,
+				end_time = math.huge,
+			},
+		},
+		enter_function = function (attacker_unit, input_extension)
+			input_extension:reset_release_input()
+			input_extension:clear_input_buffer()
+		end,
+		allowed_chain_actions = {
+			{
+				action = "action_wield",
+				input = "action_wield",
+				start_time = 0.2,
+				sub_action = "default",
+			},
+		},
+		condition_func = can_vent,
+		chain_condition_func = can_vent,
+	}
+end
+
+-- Makes the gun on the shell of the staff (utils.template_shell): everything that is not the staff's animations, models and sounds is
+-- set here
 local function apply_staff(template)
+	utils.template_shell(template)
+
 	-- The chart of the item's stats, from 0 to 7. The bolt is the normal attack.
 	template.weapon_diagram = {
 		-- (full damage to armor and 1.2 to monsters; the arcs reach 3 more enemies for half damage; 0.47 of impact, where the repeater's
@@ -284,10 +363,9 @@ local function apply_staff(template)
 
 	local actions = template.actions
 
-	-- The shot is replaced, and the staff's charged attack is replaced by UT's zoom. Everything else stays untouched, including the
-	-- venting, wield, inspect and the career actions.
+	-- The shot, and UT's zoom in place of the staff's charged attack. Inspecting is the staff's, kept by the shell.
 	actions.action_one = {
-		default = build_shot(Weapons.handgun_template_1.actions.action_one.default),
+		default = build_shot(),
 	}
 	-- The zoom (zoom.lua): while it is held, a shot can follow at once (it waits for its fire time), and so can venting and wielding
 	actions.action_two = {
@@ -319,17 +397,58 @@ local function apply_staff(template)
 		}),
 	}
 
-	utils.set_actions_lookup_data({
-		action_one = actions.action_one,
-		action_two = actions.action_two,
-	}, template.name)
+	actions.weapon_reload = {
+		default = build_vent(),
+	}
+	-- The game's own wielding
+	actions.action_wield = table.clone(ActionTemplates.wield)
 
-	-- The staff's wield lights trails on the fingers of the first person arms, and its charged attack more. The skin hides the arms,
-	-- but not their effects.
-	template.on_wield = nil
-	template.synced_states = nil
-	-- A rifle's crosshair, not the staff's arrows
+	utils.set_actions_lookup_data(actions, template.name)
+
+	-- The staff's heat: its warning sounds, how soon it cools and how fast. Overheating is the career's (see overheat_like).
+	template.overcharge_data = {
+		explosion_template = "overcharge_explosion_brw",
+		hit_overcharge_threshold_sound = "ui_special_attack_ready",
+		overcharge_threshold = 10,
+		overcharge_value_decrease_rate = 1,
+		overcharge_warning_critical_sound_event = "weapon_life_staff_overcharge_warning_critical",
+		overcharge_warning_high_sound_event = "weapon_life_staff_overcharge_warning_high",
+		overcharge_warning_med_sound_event = "weapon_life_staff_overcharge_warning_medium",
+		time_until_overcharge_decreases = 0.5,
+	}
+
+	-- What the game's talents, traits and properties take it for: the staff it is a copy of
+	template.buff_type = "RANGED"
+	template.weapon_type = "LIFE_STAFF"
+
+	-- Dodging, the staff's, and a rifle's crosshair, not the staff's arrows, with the staff's spread (the bolt has none of its own, see
+	-- ut_lightning_bolt). The staff's wield lit trails on the fingers of the first person arms, and its charged attack more: the skin
+	-- hides the arms, but not their effects, so the gun has neither (the staff's on_wield and synced_states).
+	template.buffs = {
+		change_dodge_distance = {
+			external_optional_multiplier = 1,
+		},
+		change_dodge_speed = {
+			external_optional_multiplier = 1,
+		},
+	}
 	template.crosshair_style = "default"
+	template.default_spread_template = "spear"
+
+	-- The aim assist for a controller: the staff's
+	template.aim_assist_settings = {
+		always_auto_aim = true,
+		base_multiplier = 0,
+		effective_max_range = 30,
+		max_range = 50,
+		no_aim_input_multiplier = 0,
+		target_node = "j_spine1",
+		breed_scalars = {
+			skaven_clan_rat = 1,
+			skaven_slave = 1,
+			skaven_storm_vermin = 1,
+		},
+	}
 
 	-- How bots use it. The game's bot shooting presses the left button when its aim is on an enemy, and the shot waits for its fire
 	-- time. A bot aims at the head, which takes double damage, with the staff's aim for its charged shot, the long range one. It is used
