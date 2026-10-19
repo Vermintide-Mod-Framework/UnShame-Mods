@@ -613,6 +613,10 @@ local function build_charge(source, first)
 	action.hold_input = "action_two_hold"
 	action.total_time = math.huge
 	action.ut_assault_charge = true
+	-- (the game keeps a release until it is reset, as its charges do when they start: else the last grenade's release throws this one at once)
+	action.enter_function = function (attacker_unit, input_extension)
+		return input_extension:reset_release_input()
+	end
 	action.allowed_chain_actions = {
 		chain("action_wield", "default", "action_wield"),
 		{
