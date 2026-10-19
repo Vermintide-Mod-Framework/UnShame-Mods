@@ -28,6 +28,16 @@ local CONFIG = {
 	ignored_breed = "skaven_slave",
 }
 
+-- The chat's system lines while a scenario records them
+local chat_lines = {}
+local recording_chat = false
+
+mod:hook_safe(ChatManager, "add_local_system_message", function (self, channel_id, message)
+	if recording_chat then
+		chat_lines[#chat_lines + 1] = message
+	end
+end)
+
 local function count(list, name)
 	local total = 0
 
@@ -389,6 +399,44 @@ local function scenarios()
 			run(t)
 		end
 	end
+
+	-- KillingSpreeMessage: everyone is told of a player's spree and of its end (spree.lua), whatever the announcer setting is
+	list[#list + 1] = {
+		name = "a spree and its end are written in the chat, with the announcer off too",
+		run = function (t)
+			local was = ut:get("announcer")
+
+			hurt_by_enemy(t)
+			ut:set("announcer", false)
+			table.clear(chat_lines)
+
+			recording_chat = true
+
+			local ok, error_message = pcall(function ()
+				kill_many(t, CONFIG.killing_spree, nil, 0.1)
+				hurt_by_enemy(t)
+			end)
+
+			recording_chat = false
+			ut:set("announcer", was)
+
+			if not ok then
+				error(error_message, 0)
+			end
+
+			local name = Managers.player:local_player():name()
+			local spree_line, end_line
+
+			for _, line in ipairs(chat_lines) do
+				spree_line = spree_line or line == name .. " is on a killing spree!"
+				end_line = end_line or string.find(line, name .. "'s killing spree ended by ", 1, true) == 1
+			end
+
+			t.log("chat: %s", table.concat(chat_lines, " / "))
+			t.expect(spree_line, "no \"%s is on a killing spree!\" in the chat", name)
+			t.expect(end_line, "no \"%s's killing spree ended by\" in the chat", name)
+		end,
+	}
 
 	return list
 end

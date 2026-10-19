@@ -445,6 +445,26 @@ end)
 --   mod.inspect_callbacks[name] = function (action_dummy, started)
 mod.inspect_callbacks = {}
 
+-- A death the game counts in its statistics, on every machine (the host's death reactions and the clients' alike).
+--   mod.kill_callbacks[name] = function (victim_unit, damage_data)
+mod.kill_callbacks = {}
+
+mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_data)
+	for _, callback in pairs(mod.kill_callbacks) do
+		callback(victim_unit, damage_data)
+	end
+end)
+
+-- Damage to a player's character. The host runs it for every player, and each player's machine for its own.
+--   mod.player_damage_callbacks[name] = function (health_extension, attacker_unit, damage_amount, source_attacker_unit)
+mod.player_damage_callbacks = {}
+
+mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_unit, damage_amount, _, _, _, _, _, _, source_attacker_unit)
+	for _, callback in pairs(mod.player_damage_callbacks) do
+		callback(self, attacker_unit, damage_amount, source_attacker_unit)
+	end
+end)
+
 -- Dummy actions (and the melee start, which is one) that a weapon of the mod made. They run on the machine that owns the action.
 --   mod.dummy_start_callbacks[name] = function (action_dummy, new_action, t, power_level)
 mod.dummy_start_callbacks = {}

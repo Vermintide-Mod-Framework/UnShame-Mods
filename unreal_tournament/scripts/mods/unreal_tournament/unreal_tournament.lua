@@ -129,6 +129,7 @@ mod:dofile("scripts/mods/unreal_tournament/crafting")
 
 -- Weapon skins in the menus
 mod:dofile("scripts/mods/unreal_tournament/menu_preview")
+mod:dofile("scripts/mods/unreal_tournament/spree")
 mod:dofile("scripts/mods/unreal_tournament/announcer")
 mod:dofile("scripts/mods/unreal_tournament/movement")
 mod:dofile("scripts/mods/unreal_tournament/gameplay")
@@ -140,5 +141,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 1537)")
+	mod:echo("Unreal Tournament loaded (build 1539)")
 end

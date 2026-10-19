@@ -19,5 +19,4 @@
 
 ## Adrenaline and sprees
 
-2. **Adrenaline.**
-3. **Chat messages for sprees,** like "X is on a Y spree" and "Z ended X's spree". Check the original for what is printed for everyone.
+2. **Adrenaline.** Sprees are counted for it whatever the announcer setting is (`spree.lua`, `mod.spree.callbacks`).

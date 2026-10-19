@@ -4,34 +4,20 @@ local mod = get_mod("unreal_tournament")
 -- and shows the words on the screen. The sounds are in a bank of their own (tools/asset_conversion/make_bank.py announcer).
 --   Multi kills (UnrealPlayer.LogMultiKills, MultiKillMessage): a kill soon after your last one is the next kill of a multi kill. Each
 --     kill in a row raises the level: Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill, Holy Shit.
---   Killing sprees (DeathMatch.NotifySpree, KillingSpreeMessage): kills in a row without being hurt by an enemy. The announcements are
---     Killing Spree, Rampage, Dominating, Unstoppable, Godlike and Wicked Sick. Only an enemy's damage ends a spree. Your own weapons,
---     overcharge and your allies' damage do not.
+--   Killing sprees (KillingSpreeMessage): Killing Spree, Rampage, Dominating, Unstoppable, Godlike and Wicked Sick, for the player's own
+--     sprees, which spree.lua counts.
 --   First blood (DeathMatch.ScoreKill, FirstBloodMessage): announced when you kill the first enemy to die in a level.
 --   Head shots (DamTypeSniperHeadShot, SpecialKillMessage): announced for a kill with a ranged shot to the head.
 --   Call outs of a number of kills with a weapon (DamageType.IncrementKills): Head Hunter for head shots with the Lightning Gun and the
 --     Sniper Rifle, Flak Monkey for kills with the Flak Cannon's chunks, and Combo Whore for kills with a shock combo. The call out comes a
 --     moment after the kill that reaches the number.
 
-local utils = mod.utils
+local spree = mod.spree
 
 local CONFIG = {
 	-- UnrealPlayer.LogMultiKills: a kill counts as the next kill of a multi kill if it comes within this long after the last one. UT
 	-- uses 4 seconds, but a horde in this game dies faster than players do.
 	window = 1.5, -- seconds
-	-- These are not enemies as far as the announcer is concerned. In UT a player is a kill, and the target dummies and critters of this
-	-- game are not.
-	ignored_races = {
-		critter = true,
-		dummy = true,
-	},
-	-- The most basic enemy of each race. Its kills are not counted at all: not for a first blood, a multi kill, a spree, a head shot or
-	-- a call out.
-	ignored_breeds = {
-		beastmen_ungor = true,
-		chaos_fanatic = true,
-		skaven_slave = true,
-	},
 	-- MultiKillMessage, by the level of the multi kill (level 1 is the second kill). Each entry has a sound and a text. The last entry
 	-- is used for every level after it.
 	multi_kills = {
@@ -43,16 +29,14 @@ local CONFIG = {
 		{ event = "ut_announcer_ludicrous_kill", text = "L U D I C R O U S !!!" },
 		{ event = "ut_announcer_holy_shit", text = "H O L Y  S H I T !" },
 	},
-	-- KillingSpreeMessage, by the number of kills in the spree that UT announces it at, times this multiplier. A horde dies faster than
-	-- players do.
-	spree_multiplier = 3,
+	-- KillingSpreeMessage, by the level of the spree (spree.lua), with its SelfSpreeNote, the player's own text
 	sprees = {
-		{ kills = 5, event = "ut_announcer_killing_spree", text = "Killing Spree!" },
-		{ kills = 10, event = "ut_announcer_rampage", text = "Rampage!" },
-		{ kills = 15, event = "ut_announcer_dominating", text = "Dominating!" },
-		{ kills = 20, event = "ut_announcer_unstoppable", text = "Unstoppable!" },
-		{ kills = 25, event = "ut_announcer_godlike", text = "GODLIKE!" },
-		{ kills = 30, event = "ut_announcer_wicked_sick", text = "WICKED SICK!" },
+		{ event = "ut_announcer_killing_spree", text = "Killing Spree!" },
+		{ event = "ut_announcer_rampage", text = "Rampage!" },
+		{ event = "ut_announcer_dominating", text = "Dominating!" },
+		{ event = "ut_announcer_unstoppable", text = "Unstoppable!" },
+		{ event = "ut_announcer_godlike", text = "GODLIKE!" },
+		{ event = "ut_announcer_wicked_sick", text = "WICKED SICK!" },
 	},
 	-- FirstBloodMessage shows "<name> drew first blood!"
 	first_blood = { event = "ut_announcer_first_blood", text = "drew first blood!" },
@@ -64,7 +48,7 @@ local CONFIG = {
 		projectile = true,
 	},
 	-- The call outs for a number of kills. UT's DamageTypes call ClientDelayedAnnouncementNamed at 15 kills, a moment after the kill.
-	-- The number is multiplied by this. The count starts again when an enemy hurts the player, as a spree does.
+	-- The number is multiplied by this. The count starts again when an enemy hurts the player, as a spree does (spree.lua).
 	call_out_multiplier = 3,
 	call_out_delay = 1.5, -- seconds
 	call_outs = {
@@ -105,7 +89,6 @@ local CONFIG = {
 
 local multi_kill_level = 0 -- UnrealPlayer.MultiKillLevel
 local last_kill_time = -math.huge
-local spree = 0 -- Pawn.Spree
 local call_out_kills = {} -- how many kills each call out has counted, by name
 local first_blood_taken = false
 local last_sound_time = -math.huge
@@ -113,32 +96,8 @@ local playing_id -- the id of the announcement that is playing
 local delayed = {} -- announcements waiting to play, each { time = when, event = ... }
 local messages = {} -- the words on the screen, by place name, each { text, size, color, time }
 
--- Returns whether the death of a unit counts as a kill. It does if the unit is an enemy of a kind that is not ignored.
-local function is_counted(unit)
-	local breed = Unit.get_data(unit, "breed")
-
-	return breed ~= nil and not breed.is_player and not CONFIG.ignored_races[breed.race] and not CONFIG.ignored_breeds[breed.name]
-end
-
--- Returns the player whose kill an enemy's death was, which is the one who hurt it last. The game's own statistics decide kills the
--- same way.
-local function killer_of(victim_unit)
-	local health_extension = ScriptUnit.has_extension(victim_unit, "health_system")
-	local damage_data = health_extension and health_extension.last_damage_data
-	local killer = damage_data and damage_data.attacker_unique_id and Managers.player:player_from_unique_id(damage_data.attacker_unique_id)
-
-	if not killer or not is_counted(victim_unit) then
-		return nil
-	end
-
-	local side_manager = Managers.state.side
-
-	if not side_manager:is_enemy_by_side(damage_data.attacker_side, side_manager.side_by_unit[victim_unit]) then
-		return nil
-	end
-
-	return killer
-end
+local is_counted = spree.is_counted
+local killer_of = spree.killer_of
 
 local function play(event, forced)
 	local now = Managers.time:time("game")
@@ -190,14 +149,18 @@ local function announce_multi_kill(level)
 	play(announcement.event, true)
 end
 
-local function announce_spree(kills)
-	for _, level in ipairs(CONFIG.sprees) do
-		if kills == level.kills * CONFIG.spree_multiplier then
-			-- In KillingSpreeMessage the player's own message is size 2.
-			show("critical", level.text, 3)
-			play(level.event, true)
-		end
+-- The player's own spree reaching a level (spree.lua)
+spree.callbacks.announcer = function (player_unit, level)
+	local local_player = Managers.player:local_player()
+	local announcement = CONFIG.sprees[level]
+
+	if not announcement or not mod:get("announcer") or not local_player or player_unit ~= local_player.player_unit then
+		return
 	end
+
+	-- In KillingSpreeMessage the player's own message is size 2.
+	show("critical", announcement.text, 3)
+	play(announcement.event, true)
 end
 
 -- Counts a kill for a call out (DamageType.IncrementKills). The call out comes a moment after the kill that reaches the number.
@@ -248,7 +211,7 @@ local function is_killed_by(templates, damage_data)
 end
 
 
-mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_data)
+mod.kill_callbacks.announcer = function (victim_unit, damage_data)
 	if not mod:get("announcer") then
 		return
 	end
@@ -294,10 +257,6 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 		announce_head_shot()
 	end
 
-	spree = spree + 1
-
-	announce_spree(spree)
-
 	if is_head_shot and is_killed_by(CONFIG.head_hunter_weapons, damage_data) then
 		count_call_out("head_hunter", 1)
 	end
@@ -305,7 +264,7 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 	if is_killed_by(CONFIG.flak_monkey_weapons, damage_data) and damage_data[DamageDataIndex.DAMAGE_TYPE] == CONFIG.flak_chunk_damage_type then
 		count_call_out("flak_monkey", 1)
 	end
-end)
+end
 
 -- Counts the kills of a shock combo. The Shock Rifle reports which enemies the combo killed, and the host, which applies the damage,
 -- knows. The host tells the player whose combo it was, if that is not the host itself.
@@ -340,16 +299,17 @@ mod:network_register("ut_combo_kills", function (_, kills)
 	end
 end)
 
--- An enemy hurting the player ends a spree and starts the count of the call outs again. The player's own weapons (and overcharge) and
--- their allies don't. The one who hurts is the unit that did the damage, and an enemy is a unit with a breed that is not a player's.
-mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_unit, damage_amount, _, _, _, _, _, _, source_attacker_unit)
-	if (spree == 0 and next(call_out_kills) == nil) or damage_amount <= 0 or not attacker_unit then
+-- An enemy hurting the player starts the count of the call outs again, as it ends a spree (spree.lua). The player's own weapons (and
+-- overcharge) and their allies don't. The one who hurts is the unit that did the damage, and an enemy is a unit with a breed that is not
+-- a player's.
+mod.player_damage_callbacks.announcer = function (health_extension, attacker_unit, damage_amount, source_attacker_unit)
+	if next(call_out_kills) == nil or damage_amount <= 0 or not attacker_unit then
 		return
 	end
 
 	local local_player = Managers.player:local_player()
 
-	if not local_player or self.unit ~= local_player.player_unit then
+	if not local_player or health_extension.unit ~= local_player.player_unit then
 		return
 	end
 
@@ -357,11 +317,9 @@ mod:hook_safe(PlayerUnitHealthExtension, "add_damage", function (self, attacker_
 	local breed = Unit.alive(source_unit) and Unit.get_data(source_unit, "breed")
 
 	if breed and not breed.is_player then
-		spree = 0
-
 		table.clear(call_out_kills)
 	end
-end)
+end
 
 -- Plays the announcements that were delayed, when their time comes.
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
@@ -411,7 +369,6 @@ end
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	multi_kill_level = 0
 	last_kill_time = -math.huge
-	spree = 0
 	first_blood_taken = false
 	last_sound_time = -math.huge
 	playing_id = nil
