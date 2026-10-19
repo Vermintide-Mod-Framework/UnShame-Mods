@@ -603,6 +603,7 @@ local function build_stance(anims, linger, take)
 		anim_event_3p = take and anims.stance or nil,
 		anim_end_event_3p = anims.leave,
 		anim_end_event_condition_func = leaves_stance,
+		uninterruptible = true,
 		total_time = linger,
 		allowed_chain_actions = stance_chains(),
 	}
@@ -621,6 +622,9 @@ local function build_round(anims, shot_1p, first)
 		anim_event_3p = first and anims.stance or nil,
 		anim_end_event_3p = anims.leave,
 		anim_end_event_condition_func = leaves_stance,
+		-- A hit on the player doesn't stop the rifle, as it doesn't in UT. Otherwise the game's hit reaction ends its action
+		-- (CharacterStateHelper), and a held button doesn't start the rounds again. The same goes for every action of the rifle.
+		uninterruptible = true,
 		ammo_usage = 1,
 		fire_time = 0,
 		total_time = CONFIG.fire_rate + CONFIG.chain_margin,
@@ -688,6 +692,7 @@ local function build_charge(anims, first)
 		anim_event_3p = first and anims.stance or nil,
 		anim_end_event_3p = anims.leave,
 		anim_end_event_condition_func = leaves_stance,
+		uninterruptible = true,
 		hold_input = "action_two_hold",
 		total_time = math.huge,
 		can_abort_reload = true,
@@ -734,6 +739,7 @@ local function build_throw(anims)
 		anim_event_3p = anims.shot,
 		anim_end_event_3p = anims.leave,
 		anim_end_event_condition_func = leaves_stance,
+		uninterruptible = true,
 		total_time = CONFIG.throw_time + CONFIG.chain_margin,
 		allowed_chain_actions = entries,
 		ut_assault_throw = true,
