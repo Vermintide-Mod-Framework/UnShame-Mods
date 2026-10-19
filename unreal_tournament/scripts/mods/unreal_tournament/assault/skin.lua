@@ -188,6 +188,9 @@ local function seen_in_hand(owner_unit, api)
 	return api.third_person.held_mesh(owner_unit) ~= nil and api.third_person.shows_weapon(owner_unit)
 end
 
+-- The fire sound of each shooter's last round, by character
+local fire_sounds = {}
+
 -- Called for each round, on every machine: the shooter is in the stance, and both rifles in the character's hands flash, with the
 -- light, where they are seen. If the player on this machine fired it, both rifles in the player's view play the fire animation, flash
 -- and sound. Otherwise the sound plays at the shooter's muzzle.
@@ -212,9 +215,14 @@ mod.assault_round_callbacks.assault_skin = function (owner_unit)
 		weapon_light(owner_unit, right)
 	end
 
+	-- (a round's sound stops the shooter's last one, as UT plays it in the weapon's sound slot: WeaponFire.ServerPlayFiring)
+	right.stop_sound(fire_sounds[owner_unit])
+	fire_sounds[owner_unit] = nil
+
 	if utils.is_local_player_unit(owner_unit) and right.state() then
 		play_both("Fire")
-		right.play_sound("ut_assault_fire")
+
+		fire_sounds[owner_unit] = right.play_sound("ut_assault_fire")
 
 		for _, api in ipairs(skin_apis) do
 			flash(api)
@@ -226,8 +234,12 @@ mod.assault_round_callbacks.assault_skin = function (owner_unit)
 	local hand = right.third_person.muzzle_position(owner_unit)
 
 	if hand then
-		right.play_sound_at("ut_assault_fire_3d", hand)
+		fire_sounds[owner_unit] = right.play_sound_at("ut_assault_fire_3d", hand)
 	end
+end
+
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	table.clear(fire_sounds)
 end
 
 -- The grenade models, by grenade id. Every machine spawns one for each grenade in flight and spins it as it flies.

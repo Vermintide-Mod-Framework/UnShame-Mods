@@ -195,7 +195,7 @@ local function new(def)
 	end
 
 	-- Sounds. The events are in the weapon's bank (see tools/asset_conversion/make_bank.py). play_sound plays from the player's head,
-	-- and play_sound_at plays from a place in the world.
+	-- and play_sound_at plays from a place in the world. Both return the id for stop_sound.
 	function self.play_sound(event)
 		return WwiseWorld.trigger_event(Managers.world:wwise_world(Managers.world:world("level_world")), event)
 	end
@@ -212,6 +212,8 @@ local function new(def)
 
 		-- If there is no id, the engine did not play the sound, because the event is not in a loaded bank.
 		self.debug("sound %s at %s: id %s", event, tostring(position), tostring(id))
+
+		return id
 	end
 
 	-- (local_player_safe, as this runs every frame, in the menus too, where there is no network yet to ask for the player)
