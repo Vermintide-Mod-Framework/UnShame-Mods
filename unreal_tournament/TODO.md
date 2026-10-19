@@ -6,12 +6,7 @@
 
 1. **Assault Rifle and Sniper Rifle.** Go through their columns of `WEAPON_STATUS.md`. The Assault Rifle now holds UT's third person
    mesh (NewAssaultRifle_3rd), whose grip and turn need setting in the game.
-2. **Redeemer as the Bounty Hunter's ability: the look.** It is made (redeemer.lua) and tested (redeemer, redeemer_vanilla). What is left
-   is looking at it in the game: the Redeemer in the player's view on the career pistol, and in the Bounty Hunter's left hand, whose
-   grip and turn are a start (Redeemer_3rd is upside down in its file; UT holds it rolled and 35 units back along the hand). His
-   ability's talents that choose the barrels (railgun, shotgun) do nothing with the Redeemer, which is one missile; the reload talent
-   still reloads the Rocket Launcher.
-3. **Link Gun for everyone.** Two weapons that share their code (the primary, linking allies, link stacking), each with its own alt
+2. **Link Gun for everyone.** Two weapons that share their code (the primary, linking allies, link stacking), each with its own alt
    and resource:
    - The regular Link Gun, UT2004's (`LinkFire`, `LinkAltFire`, `LinkProjectile`), for every career with a ranged slot. It uses
      ammo: 220 at most, 2 for a bolt, 1 for a beam hit, none while linked to a teammate. The alt is the damage beam. A copy for each
@@ -23,31 +18,31 @@
      show the ammo and the heat both.
    - Link stacking, UT's `LinkGun.Links`: a teammate who is linked while linking gets a stronger beam. Both weapons count as Link Guns
      for it. Now a link gives an ally the same boost whatever they hold.
-4. **Shield Gun for the Warrior Priest.** He can't use the Billhook, so his copy needs a base of his own (his one-handed hammer was
+3. **Shield Gun for the Warrior Priest.** He can't use the Billhook, so his copy needs a base of his own (his one-handed hammer was
    used before). His third person body is his own (`witch_hunter_warrior_priest`), with only his weapons' animations. Check with
    `Unit.has_animation_event` which poses it has (the Volley Crossbow's `to_repeating_crossbow`, `to_zoom`, `to_unzoom` and
    `attack_shoot`, or one of his own weapons') before choosing his third person pose and grip.
 
 ## Adrenaline and sprees
 
-5. **Adrenaline.**
-6. **Chat messages for sprees,** like "X is on a Y spree" and "Z ended X's spree". Check the original for what is printed for everyone.
+4. **Adrenaline.**
+5. **Chat messages for sprees,** like "X is on a Y spree" and "Z ended X's spree". Check the original for what is printed for everyone.
 
 ## Weapons made on the shell of their base
 
 A weapon keeps only what belongs to its base's animations, models and sounds (`utils.template_shell`), and sets everything else itself,
 as the Minigun does. What each finished weapon took from its base at build 1282 is in `INHERITED_FIELDS.md`.
 
-7. **The other finished weapons.** Shock Rifle, Bio Rifle, Flak Cannon, Rocket Launcher, Lightning Gun, Shield Gun: write out what
+6. **The other finished weapons.** Shock Rifle, Bio Rifle, Flak Cannon, Rocket Launcher, Lightning Gun, Shield Gun: write out what
    they take from their base today, on the shell, as the Minigun's are. That changes nothing in the game.
-8. **The Shield Gun's copies differ by hero.** Each keeps its base's `dodge_count` (2 or 3), `weapon_type`, `buffs`, push
+7. **The Shield Gun's copies differ by hero.** Each keeps its base's `dodge_count` (2 or 3), `weapon_type`, `buffs`, push
    (`action_one.push`) and block (`action_two.default`, with `max_fatigue_points` and `outer_block_*`). One set for all five, to
    be decided.
-9. **`weapon_type`.** What the game's talents and traits take each weapon for (the Bio Rifle is a BRACE_OF_PISTOLS, the Shock Rifle a
+8. **`weapon_type`.** What the game's talents and traits take each weapon for (the Bio Rifle is a BRACE_OF_PISTOLS, the Shock Rifle a
    FIRE_STAFF, the Lightning Gun a LIFE_STAFF). Keep or choose. The Minigun keeps its base's, so that each hero's talents see his
    own repeater.
-10. **Bots.** Each weapon's `attack_meta_data`: where bots aim, what they use it against, and whether they shoot past allies and
+9. **Bots.** Each weapon's `attack_meta_data`: where bots aim, what they use it against, and whether they shoot past allies and
    enemies in the way. The Minigun's and the Lightning Gun's are written out in full. The Shock Rifle's and the Flak Cannon's change
    a few of their base's values and keep the rest.
-11. **Wielding, reloading and inspecting.** These stay the game's: the Minigun takes `ActionTemplates.wield` and `reload` by name, and
+10. **Wielding, reloading and inspecting.** These stay the game's: the Minigun takes `ActionTemplates.wield` and `reload` by name, and
    inspecting from its base. The other weapons the same.

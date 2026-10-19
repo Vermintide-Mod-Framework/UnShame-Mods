@@ -76,17 +76,17 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | **Item and menus** | | | | | | | | | | |
 | Name in the inventory | ok | ok | ok | n/a (not an item: the Bounty Hunter's ability) | ok | - | ok | ok | ok | ok |
 | Icon in the inventory | ok (points up-right) | ok (points up-right) | ok (points up-right) | n/a | ok (points up-right) | - | ok (points up-right; the UT2003 and Instagib illusions have their own) | ok (points up-right) | ok | ok |
-| Description | ok (UT's, shortened) | ok (UT's, without its last words) | ok (UT's, shortened) | - | ok (UT's, shortened) | - | ok (UT's, shortened) | ok (UT's, shortened) | ok | ok |
-| Keywords | ok | ok (rapid fire, high damage, crowd control) | ok (high damage, charged attack, armour piercing) | - | - | - | ok (sniper, crowd control, and the mod's own: Combo) | ok (high damage, crowd control, versatile) | ok | ok |
-| Stat chart | ok (a guess) | ok (the rounds barely stagger and stop at the first enemy; the alt goes through most armour) | ok (the punch's cleave as tank blows: 3 for the bash, 4 for a charged punch; heavy damage 6) | - | - | - | ok (the beam as the light attack, the ball as the heavy one) | ok | ok | ok |
+| Description | ok (UT's, shortened) | ok (UT's, without its last words) | ok (UT's, shortened) | n/a (not an item) | ok (UT's, shortened) | - | ok (UT's, shortened) | ok (UT's, shortened) | ok | ok |
+| Keywords | ok | ok (rapid fire, high damage, crowd control) | ok (high damage, charged attack, armour piercing) | n/a | - | - | ok (sniper, crowd control, and the mod's own: Combo) | ok (high damage, crowd control, versatile) | ok | ok |
+| Stat chart | ok (a guess) | ok (the rounds barely stagger and stop at the first enemy; the alt goes through most armour) | ok (the punch's cleave as tank blows: 3 for the bash, 4 for a charged punch; heavy damage 6) | n/a | - | - | ok (the beam as the light attack, the ball as the heavy one) | ok | ok | ok |
 | Which careers can equip it | ok (the Deepwood Staff's copy for all four of Kerillian's careers; tests for each) | ok (repeating handgun and repeater pistol items; tests for each) | ok (five items: a melee weapon of each hero; the Warrior Priest's was taken out and is on the TODO list; tests for each) | ok (the Bounty Hunter's ability while he holds the Rocket Launcher, and the game's ability without it; tests) | ok (the Brace of Pistols: Zealot, Bounty Hunter, Captain; tests for each) | ok (Kruber's and Bardin's handguns; tests for each) | ok (the Beam Staff's careers and the Necromancer; tests: the Battle Wizard) | ok (the Blunderbuss's careers; tests: the Mercenary) | ok | ok |
-| Chaos Wastes copy | ok | ok | ok (each copy has its base's Chaos Wastes weapon) | - | - | - | ok (the Beam Staff's Chaos Wastes weapon) | ok (the Blunderbuss's Chaos Wastes weapon) | ok | ok |
-| Crafting | ok | ok | ok | - | - | - | ok | ok | ok | ok |
-| Hero screen: model and its place | ok (in the left hand, pointing ahead, on the Waystalker) | ok (UT's third person mesh, Minigun_3rd, at a player's DrawScale 0.4, in each hero's grip) | ok (UT's third person mesh at a player's DrawScale 0.4, in each hero's pose and grip, set in the game) | - | - | - | ok | ok (UT's third person mesh, Flak_3rd, at a player's DrawScale 0.4, held as the Blunderbuss; set in the game) | ok | ok |
-| Item screen: model and its turn | ok | ok | ok | - | - | - | ok | ok | ok | ok |
-| Tab screen after a mod reload | ok (the icon shows from the next level: a game limit) | ok | ok | - | - | - | ok | ok | ok | ok |
-| Equipping and switching weapons | ok | ok (tests: it can be put away while it fires) | ok | - | ok | - | ok | ok | ok | ok |
-| Base weapon when the mod is disabled | ok | ok (the template goes back to the base weapon's) | ok (the template goes back to the base weapon's) | - | - | - | ok (the template goes back to the Beam Staff's) | ok (the template goes back to the Blunderbuss's) | ok | ok |
+| Chaos Wastes copy | ok | ok | ok (each copy has its base's Chaos Wastes weapon) | n/a | - | - | ok (the Beam Staff's Chaos Wastes weapon) | ok (the Blunderbuss's Chaos Wastes weapon) | ok | ok |
+| Crafting | ok | ok | ok | n/a | - | - | ok | ok | ok | ok |
+| Hero screen: model and its place | ok (in the left hand, pointing ahead, on the Waystalker) | ok (UT's third person mesh, Minigun_3rd, at a player's DrawScale 0.4, in each hero's grip) | ok (UT's third person mesh at a player's DrawScale 0.4, in each hero's pose and grip, set in the game) | n/a | - | - | ok | ok (UT's third person mesh, Flak_3rd, at a player's DrawScale 0.4, held as the Blunderbuss; set in the game) | ok | ok |
+| Item screen: model and its turn | ok | ok | ok | n/a | - | - | ok | ok | ok | ok |
+| Tab screen after a mod reload | ok (the icon shows from the next level: a game limit) | ok | ok | n/a | - | - | ok | ok | ok | ok |
+| Equipping and switching weapons | ok | ok (tests: it can be put away while it fires) | ok | n/a | ok | - | ok | ok | ok | ok |
+| Base weapon when the mod is disabled | ok | ok (the template goes back to the base weapon's) | ok (the template goes back to the base weapon's) | n/a | - | - | ok (the template goes back to the Beam Staff's) | ok (the template goes back to the Blunderbuss's) | ok | ok |
 | **First person** | | | | | | | | | | |
 | Position and size against UT | ok (blend with UT) | ok (side by side) | ok (the same size; UT's is about 15 px higher and a little more tilted, and the offline render agrees with the game) | - (side by side on the Trollhammer; not looked at on the career pistol) | ok (side by side with UT's two rifles; the left one is UT's mesh mirrored, as RenderDualOverlay draws it) | - | ok (UT's view offset and pivot; the field of view was fitted against a picture of UT's Shock Rifle) | ok | ok | ok |
 | Pickup animation | ok (UT's SelectAnimRate 1.25, side by side with UT) | ok (SelectAnimRate 1.3636) | ok (SelectAnimRate 1.3636) | - | ok (SelectAnimRate 1.3636, both rifles) | - | ok | ok | ok | ok |
@@ -103,8 +103,8 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Bob and sway | ok | ok (BobDamping 2.25) | ok | - | - | - | ok | ok | ok | ok |
 | **Firing** | | | | | | | | | | |
 | Fire rate of each mode | ok (tests: 1.6 s) | ok (tests: 15 and 5 rounds a second, after 0.27 and 0.15 s of wind up) | ok (FireRate 0.6 after a punch) | - | ok (tests: rounds at 0.088 s; grenades at 0.5 s + the charge) | ok (tests: 1.33 s) | ok (tests: the beam's 0.7 s; the ball's 0.6 s) | ok (tests: the chunks' 0.89 s; the shell's 1.11 s) | ok | ok |
-| Second mode right after the first | ok (tests: the zoom button right after a shot zooms in, and the next press zooms out) | ok (tests: the barrels stop and wind up again for the other mode, as Minigun.StartFire) | ok (tests: the shield goes up within 0.3 s of a punch) | - | - | - | ok (tests: the ball waits for the beam's fire rate) | ok (tests: the shell waits for the chunks' 0.89 s) | ok | ok |
-| First mode right after the second | ok (tests: a shot right after the zoom waits for its fire time) | ok (tests: the same) | ok (tests: a punch right after the shield is let down) | - | - | - | ok (tests: the beam waits for the ball's 0.6 s) | ok (tests: the chunks wait for the shell's 1.11 s) | ok | ok |
+| Second mode right after the first | ok (tests: the zoom button right after a shot zooms in, and the next press zooms out) | ok (tests: the barrels stop and wind up again for the other mode, as Minigun.StartFire) | ok (tests: the shield goes up within 0.3 s of a punch) | n/a (one shot) | - | - | ok (tests: the ball waits for the beam's fire rate) | ok (tests: the shell waits for the chunks' 0.89 s) | ok | ok |
+| First mode right after the second | ok (tests: a shot right after the zoom waits for its fire time) | ok (tests: the same) | ok (tests: a punch right after the shield is let down) | n/a | - | - | ok (tests: the beam waits for the ball's 0.6 s) | ok (tests: the chunks wait for the shell's 1.11 s) | ok | ok |
 | Hold, release and auto-fire | ok (tests: holding the button repeats the shot every 1.6 s) | ok (tests: holding fires, letting go stops the rounds; a hit on the player doesn't stop them) | ok (tests: punch on release, auto punch with an enemy in reach) | - | ok (grenade charges while held, thrown on release, from each rifle in turn) | ok (tests: holding the button repeats the shot) | ok (tests: holding fire repeats the beam at its fire rate) | ok (tests: holding primary fire repeats it at its fire rate) | ok | ok |
 | Where shots start | ok (the bolt from the flare at EffectOffset; zoomed, from below the view) | ok (the rounds from the eye; the tracers from EffectOffset) | ok (the punch's cone and ray start at the eye, where the crosshair is) | - | - | ok (tests: the hit is on the target aimed at) | ok (tests: the ball starts 8 UT units to the right of the eye, level with it: ProjSpawnOffset) | ok (tests: chunks 25 UT units ahead of the eye, 5 right and 6 down; the shell 25, 9 and 12 down: ProjSpawnOffset) | ok | ok |
 | Shots start in the same place each time | ok | ok | n/a | - | - | - | ok (tests) | ok (tests) | ok | ok |
@@ -133,18 +133,18 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Hit size | n/a | n/a | n/a | - | - | - | ok (0.2 m) | ok (chunks 0.08 m, the shell 0.2 m) | ok | ok |
 | Draw distance | n/a | n/a | n/a | - | - | - | ok | ok | ok | ok |
 | Hitting other projectiles | n/a | n/a | ok (the right button is the base weapon's block, made a shield block, with stamina in place of UT's shield ammo. From its front it stops shots and explosions, reflects sorcerers' magic missiles, throws back gutter runners' pounces and stops lifeleeches' grabs; tests: an exploding barrel, a pounce, a grab) | - | - | - | ok (tests: a beam into a ball makes a combo) | ok | ok | ok |
-| Lock-on, homing, bounce, link, goo, combo | n/a | n/a | n/a | - | ok (bounce: 0.5 into the wall, 0.8 along it, stops below 20) | - | ok (combo: UT's, costs 3 beams of overcharge more; tests) | ok (bounce: tests: chunks bounce off the ground; a shell throws chunks) | ok | ok |
+| Lock-on, homing, bounce, link, goo, combo | n/a | n/a | n/a | n/a | ok (bounce: 0.5 into the wall, 0.8 along it, stops below 20) | - | ok (combo: UT's, costs 3 beams of overcharge more; tests) | ok (bounce: tests: chunks bounce off the ground; a shell throws chunks) | ok | ok |
 | **Ammo** | | | | | | | | | | |
 | Max ammo | ok (40) | ok (300, all in the clip; tests) | n/a (no ammo: the shield takes stamina) | n/a (one missile each time the ability is used; the cooldown is 140 s, tests) | ok (200 rounds, 8 grenades; tests) | ok (35; tests) | n/a (no ammo: a beam or a ball costs half a Beam Staff shot of overcharge; tests: overheating sets off a combo at the player) | ok (tests: 20, all in the clip) | ok | ok |
-| Pickup amount | n/a (heat, no ammo) | ok | n/a | - | - | - | n/a | ok | ok | ok |
-| Reload between shots | n/a | ok (none; tests) | n/a | - | - | ok (none; tests) | n/a | ok (none: tests) | ok | ok |
-| Chamber at 0 ammo | n/a | ok (tests: with no ammo nothing is fired) | n/a | - | - | - | n/a | ok (tests: with no ammo left nothing is fired) | ok | ok |
-| Chamber at the last round | n/a | ok | n/a | - | - | - | n/a | ok | ok | ok |
-| Load animation when ammo comes back | n/a | n/a | n/a | - | - | - | n/a | ok | ok | ok |
-| Load sound when ammo comes back | n/a | n/a | n/a | - | - | - | n/a | ok | ok | ok |
-| Shot during a load animation | n/a | n/a | n/a | - | - | - | n/a | ok | ok | ok |
-| Multi-load at 1, 2 and 3 rounds | n/a | n/a | n/a | - | - | - | n/a | n/a | n/a | ok |
-| `/allammo` | n/a | ok | n/a | - | - | - | n/a | ok | ok | ok |
+| Pickup amount | n/a (heat, no ammo) | ok | n/a | n/a (a cooldown, no ammo) | - | - | n/a | ok | ok | ok |
+| Reload between shots | n/a | ok (none; tests) | n/a | n/a | - | ok (none; tests) | n/a | ok (none: tests) | ok | ok |
+| Chamber at 0 ammo | n/a | ok (tests: with no ammo nothing is fired) | n/a | n/a | - | - | n/a | ok (tests: with no ammo left nothing is fired) | ok | ok |
+| Chamber at the last round | n/a | ok | n/a | n/a | - | - | n/a | ok | ok | ok |
+| Load animation when ammo comes back | n/a | n/a | n/a | n/a | - | - | n/a | ok | ok | ok |
+| Load sound when ammo comes back | n/a | n/a | n/a | n/a | - | - | n/a | ok | ok | ok |
+| Shot during a load animation | n/a | n/a | n/a | n/a | - | - | n/a | ok | ok | ok |
+| Multi-load at 1, 2 and 3 rounds | n/a | n/a | n/a | n/a | - | - | n/a | n/a | n/a | ok |
+| `/allammo` | n/a | ok | n/a | n/a (`/recharge` fills the ability) | - | - | n/a | ok | ok | ok |
 | **Effects** | | | | | | | | | | |
 | Muzzle flash | ok (white disk with a blue rim, size, place and fade side by side with UT; it reads its texture linearly, as UT adds it) | ok (MinigunMuzFlash1st: UT's mesh with the tile of Minigun_burst its UVs use, blended as FB_Brighten; a round adds 5 as there is room for, and each fades as it grows; NewMinigunMFlash in third person, at world size) | ok: ShieldCharge's green lines while charging, dim as UT's, turning about the gun; ForceRingA's rings on a punch, made smaller, dimmer and faster to be closer to UT's faint arc. The shield while it is up, and ShieldSparks when it stops something | - | close: AssaultMuzFlash1st is the Minigun's flash at DrawScale 1.2, so it has the Minigun's colour difference | - | ok (ShockMuzFlash) | ok | ok | ok |
 | Projectile model | n/a | ok (the shells: UT's ShellCasing mesh, lit, thrown into the world from the ejector in both views) | n/a | ok (RedeemerMissile, turning, with its light and flight sound) | ok (UT's grenade mesh, spinning) | - | ok (ShockBall) | ok | ok | ok |
@@ -160,20 +160,20 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Fire | ok (sound plays) | ok (NewMinigunFire, a loop from the first round until the button is let go; the winding while the barrels turn without it) | ok (BShieldGunFire) | - | ok | - | ok | ok | ok | ok |
 | Alt fire | ok (the zoom: BZoomIn1 and BZoomOut1, which LightningZoomIn and LightningZoomOut play as they are) | ok (minialtfireb, a loop) | ok (BShield1 while the shield is up) | n/a (the guided missile, RedeemerGuidedFire, is not made: the ability has one shot) | ok (NewGrenadeShoot and the load sound) | - | ok | ok | ok | ok |
 | Select | ok (sound plays) | ok | ok | - | ok | - | ok | ok | ok | ok |
-| Load | ok (the charge-up after a shot, at the pitch of 1.1 that SniperFire.PlayFiring gives it) | n/a | ok (the charge sound) | - | - | - | n/a | ok | ok | ok |
+| Load | ok (the charge-up after a shot, at the pitch of 1.1 that SniperFire.PlayFiring gives it) | n/a | ok (the charge sound) | n/a | - | - | n/a | ok | ok | ok |
 | Explosion | n/a | n/a | n/a | - | ok (BExplosion3) | - | ok | ok | ok | ok |
-| Lock beep | n/a | n/a | n/a | - | - | - | n/a | n/a | n/a | ok |
+| Lock beep | n/a | n/a | n/a | n/a | - | - | n/a | n/a | n/a | ok |
 | Volumes | ok | ok | ok | - | - | - | ok | ok | ok | ok |
 | Vanilla sounds playing on top | ok | ok | ok | - | - | - | ok | ok | ok | ok |
 | What others hear of a shot | ok (the shot and the bolt's impact in 3D) | ok (the fire loops in 3D, on the character) | ok (the punch in 3D; another player raising the shield is heard with UT's regeneration sound, which UT plays for the others) | - | - | - | ok | ok | ok | ok |
-| What others hear of a load | n/a | n/a | ok (the charge loop in 3D) | - | - | - | n/a | ok | ok | ok |
+| What others hear of a load | n/a | n/a | ok (the charge loop in 3D) | n/a | - | - | n/a | ok | ok | ok |
 | Loops after unwielding | ok | ok | ok | - | - | - | ok | ok | ok | ok |
 | Loops after death | ok | ok | ok | - | - | - | ok | ok | ok | ok |
 | Loops after the level ends | ok | ok | ok | - | - | - | ok | ok | ok | ok |
 | **Third person** | | | | | | | | | | |
-| Size | ok (UT's Sniper_3rd at a player's DrawScale 0.4, made 0.85 of it for Kerillian) | ok (UT's Minigun_3rd at a player's DrawScale 0.4) | ok (UT's ShieldGun_3rd at a player's DrawScale 0.4) | - | - | - | ok | ok | ok | ok |
-| Position in the hand | ok (set in the game) | ok (each hero's grip, set in the game) | ok (each hero's grip, set in the game) | - | - | - | ok | ok | ok | ok |
-| Angle | ok (set in the game) | ok (the same) | ok (the same) | - | - | - | ok | ok | ok | ok |
+| Size | ok (UT's Sniper_3rd at a player's DrawScale 0.4, made 0.85 of it for Kerillian) | ok (UT's Minigun_3rd at a player's DrawScale 0.4) | ok (UT's ShieldGun_3rd at a player's DrawScale 0.4) | ok (UT's Redeemer_3rd, from RedeemerAttachment's DrawScale 0.6 made bigger so its missile is near the flying one's length, set in the game) | - | - | ok | ok | ok | ok |
+| Position in the hand | ok (set in the game) | ok (each hero's grip, set in the game) | ok (each hero's grip, set in the game) | ok (alongside the left arm, set in the game) | - | - | ok | ok | ok | ok |
+| Angle | ok (set in the game) | ok (the same) | ok (the same) | ok | - | - | ok | ok | ok | ok |
 | Vanilla model showing | ok | ok | ok | - | - | - | ok | ok | ok | ok |
 | Muzzle flash position | ok (the bolt and its flare from the muzzle; the charge's sparks behind the tip, LightningCharge3rd; the shot's light, WeaponLight) | ok (locked to the gun's muzzle) | ok (the charge's sparks, the punch's rings and the shield at the end of the gun) | - | - | - | ok | ok | ok | ok |
 | Shot animation for others | ok (none, as UT's characters only hold the gun; the vent's is kept) | ok (Kruber the repeater's rapid fire; Saltzpyre holds the repeater pistol's aim while he fires) | ok (each hero's pose and push; the punches have no animation for Sienna and Kerillian, whose push is their staff's shot) | - | - | - | ok | ok | ok | ok |
@@ -182,12 +182,12 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Bots holding it | ok | ok | ok | - | - | - | ok | ok | ok | ok |
 | Your character in the third person view | ok (/freecamera) | ok (the third person flash, barrels, shells and sounds) | ok (the first person effects are hidden in it, and the third person ones show) | - | - | - | ok | ok | ok | ok |
 | **Multiplayer** | | | | | | | | | | |
-| As host | ok | ok | ok | - | - | - | ok | ok | ok | ok |
-| As client | ok | ok | ok | - | - | - | ok | ok | ok | ok |
-| Others seeing projectiles | ok (the bolts and the arcs) | ok (the tracers, hits and shells) | n/a | - | - | - | ok | ok | ok | ok |
-| Others seeing explosions | n/a | n/a | n/a | - | - | - | ok | ok | ok | ok |
-| Damage on the client | ok | ok | ok | - | - | - | ok | ok | ok | ok |
-| Ammo on the client | ok (the heat) | ok | n/a | - | - | - | n/a | ok | ok | ok |
+| As host | ok | ok | ok | ok | - | - | ok | ok | ok | ok |
+| As client | ok | ok | ok | ok | - | - | ok | ok | ok | ok |
+| Others seeing projectiles | ok (the bolts and the arcs) | ok (the tracers, hits and shells) | n/a | ok | - | - | ok | ok | ok | ok |
+| Others seeing explosions | n/a | n/a | n/a | ok | - | - | ok | ok | ok | ok |
+| Damage on the client | ok | ok | ok | ok | - | - | ok | ok | ok | ok |
+| Ammo on the client | ok (the heat) | ok | n/a | n/a | - | - | n/a | ok | ok | ok |
 | **Bots** | | | | | | | | | | |
 | Bots using it | ok (they aim at the head and vent above the threshold too; tests: lightning_bots) | ok (a bot holds the button once it has fired, as with Bardin's rotary gun; tests: minigun_bots) | ok (tests: a bot fights rats with it; a heavy attack charges until an enemy is in reach, as UT's bots do, and a light one is a quick punch) | - | - | - | ok (tests: a bot shoots a special past the player, and a boss it can't reach; bosses within its reach a bot fights in melee, as the game's bots do; it fires the ball at elites, bosses and crowds: bots.lua) | ok (tests: a bot shoots a special past the player, and fires shells at a boss it can't reach; they fire the shell at elites, bosses and crowds: bots.lua) | ok | ok |
 | Range they shoot from | ok (up to 60 m) | ok (up to 25 m) | ok (tests: a bot punches only with an enemy within the punch's reach) | - | - | - | ok (tests: a special 17 m away) | ok (tests: a special 17 m away) | ok | ok |
