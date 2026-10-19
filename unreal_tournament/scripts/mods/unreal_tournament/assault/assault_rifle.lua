@@ -145,6 +145,7 @@ mod.assault = {
 	grenades = {}, -- the grenades in flight, on every machine: { id, owner_unit, position, velocity, ... }
 	grenade_count = CONFIG.max_grenades, -- the player's own
 	max_grenades = CONFIG.max_grenades,
+	charge_started = nil, -- when the player started holding the grenade button, for the charge bar
 	last_grenade = nil, -- when the player's last grenade was thrown
 }
 
@@ -360,6 +361,7 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	assault.grenade_count = CONFIG.max_grenades
 	-- (the game's time starts again in each level, so a throw of the last level would look like one that just happened)
 	assault.last_grenade = nil
+	assault.charge_started = nil
 end
 
 -- Which rifle throws the next grenade: they take turns (AssaultGrenade.DoFireEffect, bFireLeft)

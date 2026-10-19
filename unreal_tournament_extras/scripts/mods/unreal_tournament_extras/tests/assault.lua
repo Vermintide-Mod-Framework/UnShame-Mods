@@ -86,6 +86,25 @@ local function scenarios()
 			end,
 		},
 		{
+			-- AssaultRifle.ChargeBar: the grenade's charge fills the bar over the time its speed takes to reach its most (1 s)
+			name = "the grenade's charge fills the charge bar",
+			run = function (t)
+				local charge_of = ut.charge_bars[assault.template_name]
+				local fraction
+
+				t.hold("action_two")
+				t.wait(0.5)
+
+				fraction = charge_of(t.unit()).fraction
+
+				t.release("action_two")
+				t.wait(1)
+
+				t.expect(math.abs(fraction - 0.5) < 0.15, "the bar was %.2f full after 0.5 s, not 0.5", fraction)
+				t.expect(charge_of(t.unit()).fraction == 0, "the bar is not empty once the grenade is thrown")
+			end,
+		},
+		{
 			name = "grenade",
 			run = function (t)
 				local before = assault.grenade_count

@@ -93,6 +93,9 @@ mod:dofile("scripts/mods/unreal_tournament/weapon_skin")
 mod:dofile("scripts/mods/unreal_tournament/view_shake")
 mod:dofile("scripts/mods/unreal_tournament/zoom")
 
+-- A weapon's charge on a copy of the game's overcharge bar (mod.charge_bars)
+mod:dofile("scripts/mods/unreal_tournament/charge_bar")
+
 -- The weapons. Each has a folder with its gameplay (<weapon>.lua) and its skin (skin.lua, with its animations and effects). Each
 -- also has a folder of the same name in units/ut with its models.
 mod:dofile("scripts/mods/unreal_tournament/shock/shock_rifle")
@@ -137,5 +140,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 1488)")
+	mod:echo("Unreal Tournament loaded (build 1489)")
 end

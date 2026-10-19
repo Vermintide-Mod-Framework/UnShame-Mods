@@ -15,6 +15,8 @@ PACKAGES = [
     'Editor',
     # the sounds
     'WeaponSounds', 'NewWeaponSounds', 'AnnouncerMale2K4',
+    # the HUD's pictures (the Assault Rifle's grenades)
+    'HudContent',
 ]
 
 def main():
