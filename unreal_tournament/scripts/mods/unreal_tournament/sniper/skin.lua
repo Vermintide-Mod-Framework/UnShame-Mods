@@ -473,4 +473,8 @@ for template_name in pairs(TEMPLATE_NAMES) do
 	mod.third_person_animation_filters[template_name] = function (event)
 		return string.find(event, "reload", 1, true) ~= nil
 	end
+
+	-- The characters' shot animation would have the handgun's unit play its shot sound and muzzle flash, at the handgun's muzzle. The
+	-- skin plays UT's.
+	mod.third_person_weapons_hidden_from_flow[template_name] = true
 end
