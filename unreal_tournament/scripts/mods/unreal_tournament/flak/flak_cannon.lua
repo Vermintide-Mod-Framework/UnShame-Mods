@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- Flak Cannon: a copy of the Blunderbuss with its fire modes replaced, the same way the Shock Rifle is a copy of the Beam Staff.
+-- Flak Cannon: made on the shell of the Blunderbuss (utils.template_shell), as the Shock Rifle is of the Beam Staff.
 -- The numbers come from UT2004 (XWeapons/FlakFire, FlakAltFire, FlakChunk and FlakShell).
 --   LMB: fires a tight spread of flak chunks. They bounce off walls.
 --   RMB: lobs a shell that explodes when it hits something and throws flak chunks in all directions.
@@ -382,28 +382,64 @@ local function fire_chain_actions(rate)
 	return entries
 end
 
--- Builds the Blunderbuss's shot, with its ammo, recoil and animation. It can be repeated after UT's fire time, and it has no
--- reload.
-local function build_shot(original, rate)
-	local action = table.clone(original)
+-- The shot: the Blunderbuss's (kind "shotgun"), with its ammo, recoil and animation, whose pellets are replaced by the chunks or the
+-- shell (see the shotgun callbacks below). It can be repeated after UT's fire time, and it has no reload. The values that are not
+-- UT's are the ones it had as a copy of the Blunderbuss's shot: how loud it is to enemies, the talents' kind of hit (charge_value), the
+-- spread's layers, when its damage is dealt and its range.
+local function build_shot(rate, shot_count, damage_profile)
+	return {
+		kind = "shotgun",
+		anim_event = "attack_shoot",
+		anim_event_last_ammo = "attack_shoot_last",
+		anim_event_secondary = "reload",
+		play_reload_animation = false,
+		active_reload_time = 0.35,
+		ammo_usage = 1,
+		fire_time = 0,
+		-- The shot lasts slightly longer than the time to the next shot. A held button is only read while a shot is still running, so
+		-- a shot that ends exactly when the next one may start would miss it.
+		total_time = rate + CONFIG.chain_margin,
+		total_time_secondary = rate + CONFIG.chain_margin,
+		shot_count = shot_count,
+		damage_profile = damage_profile,
+		damage_window_start = 0.1,
+		damage_window_end = 0,
+		hit_effect = "shotgun_bullet_impact",
+		hit_mass_count = LINESMAN_HIT_MASS_COUNT,
+		bullseye = false,
+		num_layers_spread = 2,
+		range = 100,
+		charge_value = "light_attack",
+		alert_sound_range_fire = 12,
+		alert_sound_range_hit = 5,
+		fire_at_gaze_setting = "tobii_fire_at_gaze_blunderbuss",
+		apply_recoil = true,
+		recoil_settings = {
+			climb_duration = 0.15,
+			horizontal_climb = -3,
+			restore_duration = 0.45,
+			vertical_climb = 15,
+			climb_function = math.easeInCubic,
+			restore_function = math.ease_out_quad,
+		},
+		reload_when_out_of_ammo = true,
+		allowed_chain_actions = fire_chain_actions(rate),
+	}
+end
 
-	-- The shot lasts slightly longer than the time to the next shot. A held button is only read while a shot is still running, so
-	-- a shot that ends exactly when the next one may start would miss it.
-	action.total_time = rate + CONFIG.chain_margin
-	action.total_time_secondary = rate + CONFIG.chain_margin
-	action.play_reload_animation = false
-	action.allowed_chain_actions = fire_chain_actions(rate)
+-- The primary fire's shot fires the chunks
+local function build_chunk_launcher()
+	local action = build_shot(CONFIG.primary_fire_rate, CONFIG.chunk_count, "shot_shotgun")
+
+	action.ut_flak_chunks = true
 
 	return action
 end
 
 -- The secondary fire is the same shot, but it fires the shell instead of pellets.
-local function build_shell_launcher(original)
-	local action = build_shot(original, CONFIG.alt_fire_rate)
+local function build_shell_launcher()
+	local action = build_shot(CONFIG.alt_fire_rate, 1, "ut_flak_shell")
 
-	action.damage_profile = "ut_flak_shell"
-	action.shot_count = 1
-	action.ut_flak_chunks = nil
 	action.ut_flak_shell = true
 
 	return action
@@ -414,7 +450,11 @@ local PROJECTILE_UNIT_TEMPLATES = {
 	"grenade",
 }
 
+-- Makes the gun on the shell of the Blunderbuss (utils.template_shell): everything that is not the Blunderbuss's animations, models and
+-- sounds is set here
 local function apply_flak_cannon(template)
+	utils.template_shell(template)
+
 	-- The chart of the item's stats, from 0 to 7. The primary fire is the normal attack, and the shell is the heavy one.
 	template.weapon_diagram = {
 		light_attack = {
@@ -434,33 +474,14 @@ local function apply_flak_cannon(template)
 	}
 
 	local actions = template.actions
-	local blunderbuss_shot = actions.action_one.default
 
-	-- This tells the bot shooting that this is the Flak Cannon (see bots.lua).
-	template.attack_meta_data.ut_flak = true
-
-	-- A bot shoots only the enemies its ranged weapon is good against (BTConditions.has_target_and_ammo_greater_than). The Blunderbuss's
-	-- are infantry, berserkers, specials and armour. The Flak Cannon's are bosses too, which bots.lua fires the shell at.
-	local attack_meta_data = template.attack_meta_data
-
-	attack_meta_data.effective_against = bit.bor(attack_meta_data.effective_against or 0, BreedCategory.Boss)
-	attack_meta_data.effective_against_combined = bit.bor(attack_meta_data.effective_against, attack_meta_data.effective_against_charged or 0)
-
-	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
-	template.ammo_data.max_ammo = CONFIG.max_ammo
-	template.ammo_data.ammo_per_clip = template.ammo_data.max_ammo
-	template.ammo_data.ammo_per_reload = template.ammo_data.max_ammo
-	template.ammo_data.ammo_immediately_available = true
-	-- Nothing should need a reload, but the game may still start one when the weapon is wielded, so the reload is made short.
-	template.ammo_data.reload_time = 0.2
-
-	local primary = build_shot(blunderbuss_shot, CONFIG.primary_fire_rate)
-
-	primary.shot_count = CONFIG.chunk_count
-	primary.ut_flak_chunks = true
-
-	actions.action_one.default = primary
-	actions.action_two.default = build_shell_launcher(blunderbuss_shot)
+	-- The two shots, and the chunks and the shell they fire. Inspecting is the Blunderbuss's, kept by the shell.
+	actions.action_one = {
+		default = build_chunk_launcher(),
+	}
+	actions.action_two = {
+		default = build_shell_launcher(),
+	}
 
 	for bounces = 0, #CHUNK_ACTIONS - 1 do
 		actions[CHUNK_ACTION_NAME][CHUNK_ACTIONS[bounces + 1]] = build_chunk_action(bounces)
@@ -469,10 +490,73 @@ local function apply_flak_cannon(template)
 
 	actions[SHELL_ACTION_NAME][SHELL_ACTION] = build_shell_action()
 
-	utils.set_actions_lookup_data({
-		action_one = actions.action_one,
-		action_two = actions.action_two,
-	}, TEMPLATE_NAME)
+	-- The game's own wielding and reload, which every gun of the game has (the reload only comes with picked up ammo, see ammo_data)
+	actions.action_wield = table.clone(ActionTemplates.wield)
+	actions.weapon_reload = table.clone(ActionTemplates.reload)
+
+	utils.set_actions_lookup_data(actions, TEMPLATE_NAME)
+
+	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots. Nothing should need a reload,
+	-- but the game may still start one when the weapon is wielded, so the reload is made short.
+	template.ammo_data = {
+		ammo_hand = "right",
+		max_ammo = CONFIG.max_ammo,
+		ammo_per_clip = CONFIG.max_ammo,
+		ammo_per_reload = CONFIG.max_ammo,
+		ammo_immediately_available = true,
+		reload_time = 0.2,
+		reload_on_ammo_pickup = true,
+		play_reload_anim_on_wield_reload = true,
+		should_update_anim_ammo = true,
+	}
+
+	-- How bots use it: the Blunderbuss's, at the body from up to 15 m, shooting past enemies in the way. A bot shoots only the enemies its
+	-- ranged weapon is good against (BTConditions.has_target_and_ammo_greater_than): the Blunderbuss's infantry, berserkers, specials and
+	-- armour, and bosses, which bots.lua fires the shell at.
+	local effective_against = bit.bor(BreedCategory.Infantry, BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored, BreedCategory.Boss)
+
+	template.attack_meta_data = {
+		aim_at_node = "j_spine",
+		ignore_enemies_for_obstruction = true,
+		max_range = 15,
+		effective_against = effective_against,
+		effective_against_charged = 0,
+		effective_against_combined = effective_against,
+		-- This tells the bot shooting that this is the Flak Cannon (see bots.lua).
+		ut_flak = true,
+	}
+
+	-- What the game's talents, traits and properties take it for: a shotgun, as the Blunderbuss
+	template.buff_type = "RANGED"
+	template.weapon_type = "SHOTGUN"
+
+	-- Dodging, the crosshair and its spread: the Blunderbuss's (the chunks have UT's own spread). A dodge goes the full distance three
+	-- times in a row.
+	template.dodge_count = 3
+	template.buffs = {
+		change_dodge_distance = {
+			external_optional_multiplier = 1,
+		},
+		change_dodge_speed = {
+			external_optional_multiplier = 1,
+		},
+	}
+	template.crosshair_style = "shotgun"
+	template.default_spread_template = "blunderbuss"
+	template.fire_at_gaze_setting = "tobii_fire_at_gaze_blunderbuss"
+
+	-- The tooltip's light attack is the chunks, and its heavy attack the shell
+	template.tooltip_compare = {
+		light = {
+			action_name = "action_one",
+			sub_action_name = "default",
+		},
+		heavy = {
+			action_name = "action_two",
+			sub_action_name = "default",
+		},
+	}
+	template.tooltip_detail = template.tooltip_compare
 
 	-- The projectile units have to be loaded when the weapon is wielded.
 	for _, name in ipairs(PROJECTILE_UNIT_TEMPLATES) do
