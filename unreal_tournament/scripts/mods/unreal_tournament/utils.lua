@@ -928,8 +928,7 @@ end
 
 -- UT throws every body at the same speed: KSetSkelVel sets its velocity, whatever its mass. Here, not as in UT, a body heavier than a
 -- Chaos marauder's (a UT player's size) gets the push that gives the marauder UT's speed, so it goes as much slower as it is heavier. A
--- lighter body is thrown at UT's speed. The marauder's mass is measured in the game (the rocket suite's test of ragdoll masses), and
--- until it is, every body is thrown at UT's speed.
+-- lighter body is thrown at UT's speed. Until the marauder's mass is set here, every body is thrown at UT's speed.
 utils.RAGDOLL_REFERENCE_MASS = nil
 
 -- The share of UT's throw speed that a body gets
