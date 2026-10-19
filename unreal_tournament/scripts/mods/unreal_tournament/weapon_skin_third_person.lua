@@ -215,7 +215,10 @@ local function new(def, looks)
 		end
 
 		local equipment = ScriptUnit.extension(character, "inventory_system"):equipment()
-		local staff = equipment.right_hand_wielded_unit_3p or equipment.left_hand_wielded_unit_3p
+		-- (the unit in the mesh's own hand first: of a weapon held two at a time, the left one's mesh follows the left hand's unit)
+		local left_first = CONFIG.hand_node == "j_leftweaponattach"
+		local staff = left_first and (equipment.left_hand_wielded_unit_3p or equipment.right_hand_wielded_unit_3p)
+			or equipment.right_hand_wielded_unit_3p or equipment.left_hand_wielded_unit_3p
 
 		if not staff or not Unit.alive(staff) then
 			return nil
