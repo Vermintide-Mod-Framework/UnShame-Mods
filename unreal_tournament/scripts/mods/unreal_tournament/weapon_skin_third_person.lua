@@ -524,6 +524,17 @@ local function new(def, looks)
 
 				mod:echo("%s (%s): wields %s, character scale %.2f, left hand %.2f, right hand %.2f%s", tostring(player:name()), player.bot_player and "bot" or "player", tostring(utils.wielded_template_name(character)), scale_of(character), left_hand and scale_of(character, left_hand) or -1, right_hand and scale_of(character, right_hand) or -1, attached[character] and ", holds the skin's mesh" or "")
 
+				-- The pitch, roll and yaw that give the mesh the same turn with follow_game_unit = 2, from the turn calibrated now
+				local entry = attached[character]
+
+				if entry and entry.follow_offset then
+					local config = entry.config
+					local turn = Quaternion.multiply(entry.follow_offset:unbox(), Quaternion.from_euler_angles_xyz(config.pitch, config.roll, config.yaw))
+					local pitch, roll, yaw = Quaternion.to_euler_angles_xyz(turn)
+
+					mod:echo("  with follow_game_unit = 2: pitch = %.1f, roll = %.1f, yaw = %.1f", pitch, roll, yaw)
+				end
+
 				for _, field in ipairs({"right_hand_wielded_unit_3p", "left_hand_wielded_unit_3p", "right_hand_wielded_unit", "left_hand_wielded_unit"}) do
 					local unit = equipment[field]
 
