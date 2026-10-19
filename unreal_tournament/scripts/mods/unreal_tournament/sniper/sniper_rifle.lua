@@ -219,13 +219,15 @@ local function apply_handgun(template)
 	local base = utils.template_shell(template)
 	local base_actions = base.actions
 
-	-- The chart of the item's stats, from 0 to 7. The bullet is the normal attack.
+	-- The chart of the item's stats, from 0 to 7. The bullet is the normal attack. It is set against the Lightning Gun's: a little less
+	-- damage, stagger and armour piercing (0.8 against armour, where the bolt does 1), and a faster shot. It hurts one enemy, as the
+	-- Minigun's rounds do.
 	template.weapon_diagram = {
 		light_attack = {
-			[DamageTypes.ARMOR_PIERCING] = 5,
+			[DamageTypes.ARMOR_PIERCING] = 6,
 			[DamageTypes.CLEAVE] = 1,
 			[DamageTypes.SPEED] = 3,
-			[DamageTypes.STAGGER] = 3,
+			[DamageTypes.STAGGER] = 4,
 			[DamageTypes.DAMAGE] = 6,
 		},
 		heavy_attack = {
