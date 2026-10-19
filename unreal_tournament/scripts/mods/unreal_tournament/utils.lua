@@ -928,17 +928,13 @@ end
 
 -- UT throws every body at the same speed: KSetSkelVel sets its velocity, whatever its mass. Here, not as in UT, a body heavier than
 -- RAGDOLL_REFERENCE_MASS gets the push that gives that mass UT's speed, so it goes as much slower as it is heavier. A lighter body is
--- thrown at UT's speed. Until the mass is set, every body is thrown at UT's speed.
-utils.RAGDOLL_REFERENCE_MASS = nil
+-- thrown at UT's speed. The mass was set in the game.
+utils.RAGDOLL_REFERENCE_MASS = 160
 
 -- The share of UT's throw speed that a body gets
 function utils.throw_share(unit)
 	local reference = utils.RAGDOLL_REFERENCE_MASS
 	local mass = utils.ragdoll_mass(unit)
-	local breed = Unit.get_data(unit, "breed")
-
-	-- (for finding the baseline: to be taken out)
-	mod:echo("ragdoll mass: %s %.2f", breed and breed.name or "?", mass)
 
 	if not reference or mass <= reference then
 		return 1
