@@ -327,6 +327,26 @@ local function raycast(physics_world, from, to, filter)
 	return PhysicsWorld.immediate_raycast(physics_world, from, along / length, length, "closest", "collision_filter", filter)
 end
 
+-- Where a grenade moving from from to to touches an enemy's body, if it does before the level. The bigger zone around an enemy for near
+-- misses ("afro") is not its body, so the grenade goes through it (utils.first_beam_hit, as the beam weapons' hits).
+local function enemy_touch(physics_world, from, to, owner_unit)
+	local along = to - from
+	local length = Vector3.length(along)
+
+	if length < 0.0001 then
+		return nil
+	end
+
+	local hits = PhysicsWorld.immediate_raycast_actors(physics_world, from, along / length, length, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
+	local hit = utils.first_beam_hit(hits, owner_unit)
+	-- (a hit on an enemy's shield is a hit on the enemy)
+	local hit_unit = hit and ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
+
+	if hit_unit and Unit.get_data(hit_unit, "breed") then
+		return hit[1]
+	end
+end
+
 -- Moves a grenade by a frame (Grenade.HitWall and ProcessTouch)
 local function fly(grenade, dt, physics_world)
 	grenade.age = grenade.age + dt
@@ -351,10 +371,10 @@ local function fly(grenade, dt, physics_world)
 
 	-- An enemy in the way sets it off at once. Only the shooter's machine checks, because it makes the explosion.
 	if grenade.local_owner then
-		local enemy_hit, enemy_position = raycast(physics_world, position, target, "filter_player_ray_projectile_ai_only")
+		local touch = enemy_touch(physics_world, position, target, grenade.owner_unit)
 
-		if enemy_hit then
-			return explode(grenade, enemy_position)
+		if touch then
+			return explode(grenade, touch)
 		end
 	end
 
