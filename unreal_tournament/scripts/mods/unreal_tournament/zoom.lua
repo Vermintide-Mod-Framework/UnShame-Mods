@@ -10,7 +10,9 @@ local mod = get_mod("unreal_tournament")
 --   zoom.register(template_name): the weapon zooms this way while it is in the player's hands.
 --   zoom.action(hand, allowed_chain_actions): the zoom's action, for the weapon's right button (action_two.default), on the hand of
 --       its other actions. A shot should be able to chain into it (action_two at any time).
---   zoom.zoomed, zoom.magnification(): whether the view is zoomed, and how many times larger it is.
+--   zoom.zoomed: whether the zoom is in. It stays in in a third person view (an inspection, the extras' /freecamera), where the view
+--       itself is not zoomed: zoom.in_view() is whether the first person view is zoomed, and zoom.magnification() how many times
+--       larger it is.
 -- While the view is zoomed, each weapon draws its scope, and the game's crosshair stays on top of it.
 
 local utils = mod.utils
@@ -97,16 +99,7 @@ local function zoom_fov()
 	return math.clamp(CONFIG.normal_fov - zoom.level * CONFIG.degrees_per_second, CONFIG.min_fov, 170)
 end
 
-function zoom.magnification()
-	if not zoom.zoomed then
-		return 1
-	end
-
-	return math.tan(math.rad(CONFIG.normal_fov / 2)) / math.tan(math.rad(zoom_fov() / 2))
-end
-
--- The player's unit while they wield a weapon that zooms and see the first person view. The zoom is of that view: in a third person view
--- (an inspection, the extras' /freecamera) there is none.
+-- The player's unit while they wield a weapon that zooms
 local function local_wielding_zoom_weapon()
 	local player = Managers.player and Managers.player:local_player_safe()
 	local unit = player and player.player_unit
@@ -115,13 +108,22 @@ local function local_wielding_zoom_weapon()
 		return nil
 	end
 
-	local first_person_extension = ScriptUnit.has_extension(unit, "first_person_system")
+	return templates[utils.wielded_template_name(unit)] and unit or nil
+end
 
-	if not first_person_extension or not first_person_extension:first_person_mode_active() then
-		return nil
+function zoom.in_view()
+	local unit = zoom.zoomed and local_wielding_zoom_weapon()
+	local first_person_extension = unit and ScriptUnit.has_extension(unit, "first_person_system")
+
+	return first_person_extension ~= nil and first_person_extension:first_person_mode_active()
+end
+
+function zoom.magnification()
+	if not zoom.in_view() then
+		return 1
 	end
 
-	return templates[utils.wielded_template_name(unit)] and unit or nil
+	return math.tan(math.rad(CONFIG.normal_fov / 2)) / math.tan(math.rad(zoom_fov() / 2))
 end
 
 -- The game's camera takes a multiplier of its field of view for effects (CameraManager.set_additional_fov_multiplier). The zoom is made
@@ -135,7 +137,7 @@ local function apply_zoom_fov()
 		return
 	end
 
-	if zoom.zoomed then
+	if zoom.in_view() then
 		-- The field of view the camera has without the multiplier: the first person camera's, times the player's setting (which the game
 		-- turns into its multiplier against the same camera's, OptionsView)
 		local base = math.rad(CameraSettings.first_person._node.vertical_fov) * camera_manager._fov_multiplier

@@ -580,7 +580,7 @@ end
 local scope_gui_now = utils.level_screen_gui("ui/ut/lightning_scope")
 
 local function draw_scope(ingame_ui)
-	if not lightning.zoom.zoomed then
+	if not lightning.zoom.in_view() then
 		return
 	end
 

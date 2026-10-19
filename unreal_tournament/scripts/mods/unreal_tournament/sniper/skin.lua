@@ -200,7 +200,7 @@ local function tile(gui, screen_height, x, y, width, height, u, v, u_size, v_siz
 end
 
 local function draw_scope()
-	if not mod.zoom.zoomed then
+	if not mod.zoom.in_view() then
 		return
 	end
 
