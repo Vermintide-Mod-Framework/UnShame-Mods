@@ -305,7 +305,7 @@ local function new_skin(id, mirror)
 			muzzle_right = 0,
 			muzzle_forward = 49.3,
 			muzzle_up = 17.9,
-			menu_yaw = 180,
+			menu_yaw = -90,
 		},
 		on_create = function ()
 			if not mirror then

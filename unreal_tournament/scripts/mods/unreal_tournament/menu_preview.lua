@@ -9,19 +9,27 @@ local CONFIG = {
 	item_length = 0.62,
 }
 
--- Returns the weapon skin for an item, or nil if it has none.
-local function skin_of(item_name)
+-- Returns the weapon skin for an item, or nil if it has none. A weapon held two at a time (the Assault Rifle) has a skin for each hand:
+-- this is one of them, and skins_of gives all of them.
+local function skins_of(item_name)
 	local item = item_name and rawget(ItemMasterList, item_name)
+	local found = {}
 
 	if not item then
-		return nil
+		return found
 	end
 
 	for _, skin in pairs(mod.weapon_skin.skins) do
 		if skin.config.template == item.template then
-			return skin
+			found[#found + 1] = skin
 		end
 	end
+
+	return found
+end
+
+local function skin_of(item_name)
+	return skins_of(item_name)[1]
 end
 
 -- The hero of the equipment screen (HeroPreviewer)
@@ -32,7 +40,7 @@ local SLOTS = {
 	ranged = "slot_ranged",
 }
 
--- The previewers whose hero holds a mesh, as [previewer] = { [slot type] = { character, skin } }
+-- The previewers whose hero holds a mesh, as [previewer] = { [slot type] = { character, skins, item_name } }
 local holding = {}
 
 local function release_slot(previewer, slot_type)
@@ -42,7 +50,9 @@ local function release_slot(previewer, slot_type)
 	if entry then
 		entries[slot_type] = nil
 
-		entry.skin.third_person.release_from_menu(entry.character)
+		for _, skin in ipairs(entry.skins) do
+			skin.third_person.release_from_menu(entry.character)
+		end
 	end
 end
 
@@ -54,14 +64,17 @@ local function release_hero(previewer)
 	holding[previewer] = nil
 end
 
--- The previewer's units for the weapon in a slot (right and left hand)
-local function slot_units(previewer, slot_name)
+-- The previewer's units for the weapon in a slot, the one in the skin's hand first (right, then left, or left first for a skin held in
+-- the left hand)
+local function slot_units(previewer, slot_name, skin)
 	local slot = InventorySettings.slots_by_name[slot_name]
 	local equipment_units = previewer._equipment_units[slot.slot_index]
+	local third_person = skin.config.third_person
+	local left_first = third_person and third_person.hand_node == "j_leftweaponattach"
 	local units = {}
 
 	if type(equipment_units) == "table" then
-		for _, key in ipairs({ "right", "left" }) do
+		for _, key in ipairs(left_first and { "left", "right" } or { "right", "left" }) do
 			if equipment_units[key] then
 				units[#units + 1] = equipment_units[key]
 			end
@@ -77,26 +90,30 @@ for _, previewer_class in ipairs({ HeroPreviewer, MenuWorldPreviewer }) do
 		local character = self.character_unit
 
 		for slot_type, slot_name in pairs(SLOTS) do
-			local skin = character and Unit.alive(character) and skin_of(self:item_name_by_slot_type(slot_type)) or nil
+			local item_name = character and Unit.alive(character) and self:item_name_by_slot_type(slot_type) or nil
+			local skins = item_name and skins_of(item_name) or {}
 			local item_info = self._item_info_by_slot[slot_type]
 			-- Most screens give the previewer the item's backend id, not its skin.
 			local skin_key = item_info and (item_info.skin_name or item_info.backend_id and Managers.backend:get_interface("items"):get_skin(item_info.backend_id))
 			local entry = holding[self] and holding[self][slot_type]
 
-			if entry and (entry.skin ~= skin or entry.character ~= character) then
+			if entry and (entry.item_name ~= item_name or entry.character ~= character) then
 				release_slot(self, slot_type)
 			end
 
-			if skin then
+			if #skins > 0 then
 				-- The mesh is shown while its weapon is in hand. The game's units of the slot stay hidden, in hand or not.
 				local visible = self._wielded_slot_type == slot_type and self.character_unit_visible ~= false
 
-				skin.third_person.hold_in_menu(character, self.world, slot_units(self, slot_name), visible, skin_key)
+				for _, skin in ipairs(skins) do
+					skin.third_person.hold_in_menu(character, self.world, slot_units(self, slot_name, skin), visible, skin_key)
+				end
 
 				holding[self] = holding[self] or {}
 				holding[self][slot_type] = {
 					character = character,
-					skin = skin,
+					item_name = item_name,
+					skins = skins,
 				}
 			end
 		end
