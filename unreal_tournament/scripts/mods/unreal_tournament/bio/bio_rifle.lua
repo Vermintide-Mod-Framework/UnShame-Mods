@@ -1,6 +1,6 @@
 local mod = get_mod("unreal_tournament")
 
--- Bio Rifle: a copy of Bardin's Masterwork Pistol with fire modes of its own. It follows UT2004's XWeapons/BioRifle, BioFire,
+-- Bio Rifle: made on the shell of Bardin's Masterwork Pistol (utils.template_shell), with fire modes of its own. It follows UT2004's XWeapons/BioRifle, BioFire,
 -- BioChargedFire and BioGlob.
 --   LMB: lobs one glob of goop. It costs 1 ammo, and a glob can be fired every 0.33 seconds.
 --   RMB (held): loads goop, 1 ammo at once and then 1 more every 0.25 seconds, up to 10. Releasing RMB fires one big glob, which has
@@ -448,7 +448,11 @@ local function build_charge_action()
 	}
 end
 
+-- Makes the rifle on the shell of the Masterwork Pistol (utils.template_shell): everything that is not the pistol's animations, models
+-- and sounds is set here
 local function apply_bio_rifle(template)
+	utils.template_shell(template)
+
 	-- The stat chart, from 0 to 7, set by hand against the Rocket Launcher's (its rocket is 60 damage and 6 on the chart) and the Flak Cannon's
 	-- (its chunk and its shell). The small glob is the light attack (26 damage), and the big glob is the heavy one (140). The goop does a
 	-- fifth less against armor, which puts its armor piercing between the chunk's and the shell's.
@@ -477,39 +481,126 @@ local function apply_bio_rifle(template)
 		template.required_projectile_unit_templates[name] = true
 	end
 
-	-- This tells the bot shooting that this is the Bio Rifle (see bots.lua).
-	template.attack_meta_data.ut_bio = true
-	template.attack_meta_data.max_range = CONFIG.bot_max_range
+	-- How bots use it: the pistol's. A bot aims at the body and holds the button while it fires the small glob, shooting past enemies in
+	-- the way, against berserkers, specials and armored enemies.
+	local effective_against = bit.bor(BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored)
+
+	template.attack_meta_data = {
+		aim_at_node = "j_spine1",
+		fire_input = "fire_hold",
+		ignore_enemies_for_obstruction = true,
+		max_range = CONFIG.bot_max_range,
+		aim_data = {
+			max_radius_pseudo_random_c = 0.0557,
+			min_radius_pseudo_random_c = 0.3021,
+			min_radius = math.pi / 72,
+			max_radius = math.pi / 16,
+		},
+		aim_data_charged = {
+			max_radius_pseudo_random_c = 0.01475,
+			min_radius_pseudo_random_c = 0.0557,
+			min_radius = math.pi / 72,
+			max_radius = math.pi / 16,
+		},
+		-- (while its action is the small glob's)
+		hold_fire_condition = function (t, blackboard)
+			if blackboard then
+				local inventory_extension = blackboard.inventory_extension
+				local _, right_hand_weapon_extension, left_hand_weapon_extension = CharacterStateHelper.get_item_data_and_weapon_extensions(inventory_extension)
+				local current_action_settings = CharacterStateHelper.get_current_action_data(left_hand_weapon_extension, right_hand_weapon_extension)
+
+				if current_action_settings then
+					local action_lookup = current_action_settings.lookup_data
+
+					return action_lookup and action_lookup.action_name == "action_one" and action_lookup.sub_action_name == "default"
+				end
+			end
+
+			return false
+		end,
+		effective_against = effective_against,
+		effective_against_charged = 0,
+		effective_against_combined = effective_against,
+		-- This tells the bot shooting that this is the Bio Rifle (see bots.lua).
+		ut_bio = true,
+	}
 
 	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots. The pistol's ammo counter is
-	-- for six rounds, so it is not updated.
-	template.ammo_data.max_ammo = CONFIG.max_ammo
-	template.ammo_data.ammo_per_clip = CONFIG.max_ammo
-	template.ammo_data.ammo_per_reload = CONFIG.max_ammo
-	template.ammo_data.ammo_immediately_available = true
-	template.ammo_data.play_reload_anim_on_wield_reload = false
-	template.ammo_data.should_update_anim_ammo = false
-	-- Nothing should need a reload, but the game may still start one when the weapon is wielded, so the reload is made short.
-	template.ammo_data.reload_time = 0.2
+	-- for six rounds, so it is not updated. Nothing should need a reload, but the game may still start one when the weapon is wielded,
+	-- so the reload is made short.
+	template.ammo_data = {
+		ammo_hand = "right",
+		max_ammo = CONFIG.max_ammo,
+		ammo_per_clip = CONFIG.max_ammo,
+		ammo_per_reload = CONFIG.max_ammo,
+		ammo_immediately_available = true,
+		reload_time = 0.2,
+		reload_on_ammo_pickup = false,
+		play_reload_anim_on_wield_reload = false,
+		should_update_anim_ammo = false,
+	}
+
+	-- What the game's talents, traits and properties take it for: the pistol's kind, a brace of pistols
+	template.buff_type = "RANGED"
+	template.weapon_type = "BRACE_OF_PISTOLS"
+
+	-- Dodging, the crosshair and its spread: the pistol's (each glob has UT's own spread, see SPREAD_TEMPLATE). A pistol's dodges go a
+	-- quarter further and faster, and any number of them in a row go the full distance (dodge_count).
+	template.dodge_count = 100
+	template.buffs = {
+		change_dodge_distance = {
+			external_optional_multiplier = 1.25,
+		},
+		change_dodge_speed = {
+			external_optional_multiplier = 1.25,
+		},
+	}
+	template.crosshair_style = "default"
 	template.default_spread_template = SPREAD_TEMPLATE
+	template.spread_lerp_speed = 5
 
-	local primary = build_shot_action(false)
-	local charged = build_shot_action(true)
-	local child = build_child_action()
+	-- The aim assist for a controller: the pistol's
+	template.aim_assist_settings = {
+		aim_at_node = "j_spine",
+		always_auto_aim = true,
+		base_multiplier = 0.15,
+		effective_max_range = 10,
+		max_range = 22,
+		no_aim_input_multiplier = 0,
+		breed_scalars = {
+			skaven_clan_rat = 1,
+			skaven_slave = 1,
+			skaven_storm_vermin = 0.25,
+		},
+	}
 
-	utils.set_lookup_data(primary, TEMPLATE_NAME, "action_one", "default")
-	utils.set_lookup_data(charged, TEMPLATE_NAME, "action_one", "shoot_charged")
-	utils.set_lookup_data(child, TEMPLATE_NAME, CHILD_ACTION_NAME, CHILD_SUB_ACTION)
+	-- The tooltip's light attack is the small glob, and its heavy attack the big one
+	template.tooltip_compare = {
+		light = {
+			action_name = "action_one",
+			sub_action_name = "default",
+		},
+		heavy = {
+			action_name = "action_one",
+			sub_action_name = "shoot_charged",
+		},
+	}
+	template.tooltip_detail = template.tooltip_compare
 
-	actions.action_one.default = primary
-	actions.action_one.shoot_charged = charged
-	actions[CHILD_ACTION_NAME][CHILD_SUB_ACTION] = child
+	-- The small glob, the big one, the globs that come off a landed glob, and the charge. Inspecting is the pistol's, kept by the shell.
+	actions.action_one = {
+		default = build_shot_action(false),
+		shoot_charged = build_shot_action(true),
+	}
+	actions[CHILD_ACTION_NAME][CHILD_SUB_ACTION] = build_child_action()
+	actions.action_two = {
+		default = build_charge_action(),
+	}
+	-- The game's own wielding and reload, which every gun of the game has (the reload only comes with picked up ammo, see ammo_data)
+	actions.action_wield = table.clone(ActionTemplates.wield)
+	actions.weapon_reload = table.clone(ActionTemplates.reload)
 
-	local charge = build_charge_action()
-
-	utils.set_lookup_data(charge, TEMPLATE_NAME, "action_two", "default")
-
-	actions.action_two.default = charge
+	utils.set_actions_lookup_data(actions, TEMPLATE_NAME)
 end
 
 -- The mod holds its own references to the units of the globs while the weapon is enabled.
