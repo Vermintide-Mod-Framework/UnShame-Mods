@@ -4,8 +4,8 @@
 
 ## Weapons to finish
 
-1. **Assault Rifle and Sniper Rifle.** Go through their columns of `WEAPON_STATUS.md`. The Assault Rifle now holds UT's third person
-   mesh (NewAssaultRifle_3rd), whose grip and turn need setting in the game.
+1. **Assault Rifle.** Go through its column of `WEAPON_STATUS.md`. It now holds UT's third person mesh (NewAssaultRifle_3rd), whose
+   grip and turn need setting in the game.
 2. **Link Gun for everyone.** Two weapons that share their code (the primary, linking allies, link stacking), each with its own alt
    and resource:
    - The regular Link Gun, UT2004's (`LinkFire`, `LinkAltFire`, `LinkProjectile`), for every career with a ranged slot. It uses
