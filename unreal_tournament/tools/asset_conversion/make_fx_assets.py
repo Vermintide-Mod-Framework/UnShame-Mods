@@ -69,6 +69,8 @@ DERIVED = {
 SQUARE = ('rocket_flare',)
 # Textures that are masks, not colors: not sRGB, and with no particle material
 MASKS = ('bio_splat_mask',)
+# Textures that only make_combo_materials.py's materials draw, so they have no particle material of their own
+COMBO_ONLY = ('shock_elec_a', 'shock_gradient_b', 'shock_electricity', 'shock_dark')
 
 def derived_rows(rows, make):
     out = []
@@ -98,7 +100,7 @@ for name, tga in list(TEXTURES.items()) + [(name, derived[0]) for name, derived 
     write_png('%s/%s.png' % (FX, name), w, h, rows)
     open('%s/%s.texture' % (FX, name), 'w', newline='\n').write(texture_text('units/ut/fx/' + name, srgb=name not in MASKS))
 
-    if name not in MASKS:
+    if name not in MASKS and name not in COMBO_ONLY:
         open('%s/fx_%s.material' % (FX, name), 'w', newline='\n').write(particle_material_text(name))
 
     print('texture', name, w, h)

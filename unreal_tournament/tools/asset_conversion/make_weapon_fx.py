@@ -63,6 +63,9 @@ BRIGHTEN = ('minigun_burst', 'impact_smoke', 'minigun_flash_3rd')
 # Redeemer blast's fx_ion_sphere and fx_flame_ring, made by make_combo_materials.py, which do FB_Brighten themselves and use the alpha)
 KEEP_ALPHA = ('shield_elec', 'shield_rip_elec', 'shield_edge', 'ion_burn', 'grad_falloff')
 
+# The textures that only those materials draw, so they have no particle material of their own (FlameGradient is the Redeemer ring's)
+COMBO_ONLY = KEEP_ALPHA + ('flame_gradient',)
+
 # The textures that are turned a quarter, because they are drawn on a beam, which lays v along its length (TracerShot is a streak along
 # u, the way NewTracer's sprite moves: PTDU_Right)
 TURNED = ('tracer_shot', 'shield_charge_spark', 'white_streak')
@@ -85,6 +88,8 @@ def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_
         rows = [bytes(255 if i % 4 == 3 else v for i, v in enumerate(row)) for row in rows]
     write_png('%s/units/ut/fx/%s.png' % (REPO, name), width, height, rows)
     open('%s/units/ut/fx/%s.texture' % (REPO, name), 'w', newline='\n').write(texture_text('units/ut/fx/' + name, not linear))
+    if name in COMBO_ONLY:
+        return
     if brighten:
         parent, weapon_parent = 'fx_particle_brighten_graph', 'fx_particle_weapon_brighten_graph'
     else:

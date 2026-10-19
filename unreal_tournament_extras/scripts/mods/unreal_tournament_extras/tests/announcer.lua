@@ -19,8 +19,6 @@ local CONFIG = {
 	killing_spree = 15,
 	call_out = 45,
 	call_out_delay = 1.5, -- s
-	-- An announcement that is not forced is not played this soon after another
-	unforced_gap = 1, -- s
 	-- The enemy that counts as a kill, and one that counts for nothing
 	counted_breed = "skaven_clan_rat",
 	ignored_breed = "skaven_slave",

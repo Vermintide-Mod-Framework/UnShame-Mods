@@ -71,9 +71,8 @@ local CONFIG = {
 		flak_monkey = { event = "ut_announcer_flak_monkey", kills = 15 },
 		combo_whore = { event = "ut_announcer_combo_whore", kills = 15 },
 	},
-	-- The weapons with call outs, matched by the template of the item that killed
+	-- The weapon whose call out is matched by the template of the item that killed (the combo's is counted from the combo's kills)
 	flak_cannon = { template = mod.items.weapons.flak_cannon.template },
-	shock_rifle = { template = mod.items.weapons.shock_rifle.template },
 	-- PlayerController.PlayRewardAnnouncement: an announcement that is not forced is not played if one was played in the last second
 	unforced_gap = 1, -- seconds
 	-- The words on the screen (LocalMessage). Each message has where it is on the screen (PosY, from the top), how long it lasts

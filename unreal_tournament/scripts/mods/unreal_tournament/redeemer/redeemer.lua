@@ -167,10 +167,8 @@ end
 
 mod.redeemer = {
 	wave_names = WAVE_NAMES,
-	radius = CONFIG.radius_uu * UNIT,
 	template = TEMPLATE_NAME,
 	has_redeemer = has_redeemer,
-	cooldown = CONFIG.cooldown,
 	fire_animation_time = CONFIG.fire_animation_time,
 	put_down_time = CONFIG.put_down_time,
 	-- (for the tests)

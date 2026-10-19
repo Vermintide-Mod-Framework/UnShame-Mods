@@ -44,11 +44,10 @@ local CONFIG = {
 	},
 	-- RocketProj: the mesh spins. Its RotationRate roll is 50000 out of 65536 for a full turn, per second.
 	rocket_turns_per_second = 50000 / 65536,
-	-- RocketCorona (RocketFlare): 1.2 times the 128 units of its texture, pulsing between 0.9 and 1.5. It sits at the back of the mesh,
-	-- and a little towards the camera so the mesh does not hide it.
+	-- RocketCorona (RocketFlare): 1.2 times the 128 units of its texture (UT's also pulses between 0.9 and 1.5 of it, which this does
+	-- not do). It sits at the back of the mesh, and a little towards the camera so the mesh does not hide it.
 	corona_size = 90,
 	corona_intensity = 2.2, -- brightness, where 1 is the texture as it is
-	corona_pulse_seconds = 0.2,
 	corona_back = 0.2, -- m
 	corona_toward_camera = 0.4, -- m
 	-- RocketTrailSmoke: wisps, 90 a second, each lasting 1.25 s. They are 15 to 20 units wide, grow 13 units a second, and rise a little.
