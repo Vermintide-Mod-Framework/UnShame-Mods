@@ -10,7 +10,7 @@ local runner = mod.test_runner
 local CONFIG = {
 	career = "wh_bountyhunter",
 	-- The ability's cooldown with the Redeemer (redeemer.lua) and the game's own (Locked and Loaded)
-	redeemer_cooldown = 140,
+	redeemer_cooldown = 160,
 	game_cooldown = 70,
 	-- How long the ability is held before it is let go: its hold chains to the shot after 0.35 s
 	hold = 0.6,

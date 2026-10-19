@@ -48,7 +48,7 @@ Why the bases are what they are:
 - Sniper Rifle. Kruber's handgun and Bardin's handgun are separate templates (`handgun_template_1` and `handgun_template_2`), so it
   is two registrations. The Engineer has no handgun.
 - Redeemer. In VT2 the ranged slot fills again from every ammo box, which would give a one-shot nuke back far too often. A career
-  ability comes back on a cooldown (140 s for the Redeemer, the game's longest is 140), and the Bounty Hunter's is a single shot from a
+  ability comes back on a cooldown (160 s for the Redeemer, the game's longest is 140), and the Bounty Hunter's is a single shot from a
   pistol he draws for it, which the game already fires as a projectile. Holding the Rocket Launcher turns it into the Redeemer, so the
   game's ability is left as it is otherwise. UT's guided missile (its alt fire) is not made.
 - The Necromancer can carry any staff in the game, but the local item list shows only her own staff. So the staff weapons name her
@@ -135,7 +135,7 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Hitting other projectiles | n/a | n/a | ok (the right button is the base weapon's block, made a shield block, with stamina in place of UT's shield ammo. From its front it stops shots and explosions, reflects sorcerers' magic missiles, throws back gutter runners' pounces and stops lifeleeches' grabs; tests: an exploding barrel, a pounce, a grab) | - | - | - | ok (tests: a beam into a ball makes a combo) | ok | ok | ok |
 | Lock-on, homing, bounce, link, goo, combo | n/a | n/a | n/a | n/a | ok (bounce: 0.5 into the wall, 0.8 along it, stops below 20) | - | ok (combo: UT's, costs 3 beams of overcharge more; tests) | ok (bounce: tests: chunks bounce off the ground; a shell throws chunks) | ok | ok |
 | **Ammo** | | | | | | | | | | |
-| Max ammo | ok (40) | ok (300, all in the clip; tests) | n/a (no ammo: the shield takes stamina) | n/a (one missile each time the ability is used; the cooldown is 140 s, tests) | ok (200 rounds, 8 grenades; tests) | ok (35; tests) | n/a (no ammo: a beam or a ball costs half a Beam Staff shot of overcharge; tests: overheating sets off a combo at the player) | ok (tests: 20, all in the clip) | ok | ok |
+| Max ammo | ok (40) | ok (300, all in the clip; tests) | n/a (no ammo: the shield takes stamina) | n/a (one missile each time the ability is used; the cooldown is 160 s, tests) | ok (200 rounds, 8 grenades; tests) | ok (35; tests) | n/a (no ammo: a beam or a ball costs half a Beam Staff shot of overcharge; tests: overheating sets off a combo at the player) | ok (tests: 20, all in the clip) | ok | ok |
 | Pickup amount | n/a (heat, no ammo) | ok | n/a | n/a (a cooldown, no ammo) | - | - | n/a | ok | ok | ok |
 | Reload between shots | n/a | ok (none; tests) | n/a | n/a | - | ok (none; tests) | n/a | ok (none: tests) | ok | ok |
 | Chamber at 0 ammo | n/a | ok (tests: with no ammo nothing is fired) | n/a | n/a | - | - | n/a | ok (tests: with no ammo left nothing is fired) | ok | ok |

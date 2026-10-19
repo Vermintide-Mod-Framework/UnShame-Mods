@@ -32,8 +32,9 @@ local CONFIG = {
 	missile_radius = 24, -- UT units, CollisionRadius
 	-- The game's gravity setting with the least gravity. UT's missile flies straight (PHYS_Projectile).
 	missile_gravity_settings = "spark",
-	-- The ability's cooldown with the Redeemer, in seconds. The game's Locked and Loaded is 70 s, and its longest abilities 120 to 140 s.
-	cooldown = 140,
+	-- The ability's cooldown with the Redeemer, in seconds. The game's Locked and Loaded is 70 s, and its longest abilities 120 to 140 s;
+	-- the Redeemer's blast is stronger than any of them.
+	cooldown = 160,
 	-- The shot lasts as long as the Fire animation (16 frames at 30 a second) and then the put-down (Redeemer.PutDownTime): the Redeemer
 	-- holds one missile, so it is put down at once, as UT puts a weapon down when its ammo runs out. The game puts the pistol away when
 	-- the shot ends. The ability's cancel puts it down the same way.
