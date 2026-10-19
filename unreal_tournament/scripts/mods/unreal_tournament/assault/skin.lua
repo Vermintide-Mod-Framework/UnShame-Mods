@@ -46,15 +46,15 @@ local CONFIG = {
 	trail_intensity = 2,
 	trail_attenuation = 0.2,
 	trail_tiles = 16,
-	-- The colour of the grenade's charge on the charge bar (R, G, B): AssaultRifle.HudColor (0, 128, 192) made as bright as it goes, its
-	-- strongest part at 255, as the Shield Gun's is
-	charge_bar_color = { 0, 170, 255 },
+	-- The colour of the grenade's charge on the charge bar (R, G, B): the grey of the grenade's casing in its icon, the lighter part of
+	-- the icon's greys (set in the game)
+	charge_bar_color = { 107, 105, 99 },
 	-- AssaultRifle.NewDrawWeaponInfo: a white icon for each grenade (make_assault_hud.py), 99 / 3200 of the screen's width across, in a
-	-- row from the right edge, each half an icon left of the last, 0.705 of the screen's height down. A second row above is for more
-	-- than 8, which only two rifles' ammo has in UT (MaxAmmo doubles in bDualMode); these hold 8.
-	icon_size = 99 / 3200, -- of the screen's width
+	-- row from the right, each half an icon left of the last. UT draws them at the screen's right edge, 0.705 of its height down; here
+	-- they are below the charge bar, which is below the ammo counter's numbers (set in the game). A second row is for more than 8, which
+	-- only two rifles' ammo has in UT (MaxAmmo doubles in bDualMode); these hold 8.
+	icon_size = 99 / 3200 * 1920, -- the HUD's units, which are those of a screen 1920 wide
 	icon_step = 0.5, -- of an icon
-	icon_y = 0.705, -- of the screen's height, from the top
 	icons_per_row = 8,
 	inspect_pose_speed = 5,
 	inspect_sway = 5,
@@ -215,49 +215,30 @@ local function clear_grenades()
 	end
 end
 
--- The grenade's charge on the charge bar (charge_bar.lua): AssaultRifle.ChargeBar, the time held over the time the speed takes to reach
--- its most (AssaultGrenade.mHoldClampMax), which HudCDeathmatch draws as its RechargeBar
+-- The grenade's charge on the charge bar (charge_bar.lua), below the ammo counter's numbers: AssaultRifle.ChargeBar, the time held over
+-- the time the speed takes to reach its most (AssaultGrenade.mHoldClampMax), which HudCDeathmatch draws as its RechargeBar. The grenades
+-- left are the icons below it. The icon's material is added to the UI renderers, which draw it as a texture of its own.
 local speed_min, speed_max, speed_gain = unpack(assault.grenade_speed)
+local GRENADE_ICON = "ut_assault_grenade"
+
+mod.items.add_material_set("ui/ut/assault_grenade")
+UIAtlasHelper.add_standalone_texture_by_name(GRENADE_ICON)
 
 mod.charge_bars[TEMPLATE_NAME] = function ()
 	local held = assault.charge_started and Managers.time:time("game") - assault.charge_started or 0
 
 	return {
+		below_ammo = true,
 		color = CONFIG.charge_bar_color,
 		fraction = math.clamp(held / ((speed_max - speed_min) / speed_gain), 0, 1),
+		icons = {
+			count = math.min(assault.grenade_count, CONFIG.icons_per_row),
+			size = CONFIG.icon_size,
+			step = CONFIG.icon_step,
+			texture = GRENADE_ICON,
+		},
 	}
 end
-
--- The grenades left, drawn over the HUD while the player holds the rifle. They have a screen gui of their own in the level's world
--- (utils.level_screen_gui).
-local grenade_gui_now = utils.level_screen_gui("ui/ut/assault_grenade")
-
-local function draw_grenades()
-	local player = Managers.player and Managers.player:local_player_safe()
-	local unit = player and player.player_unit
-
-	if not unit or not Unit.alive(unit) or utils.wielded_template_name(unit) ~= TEMPLATE_NAME then
-		return
-	end
-
-	local gui = grenade_gui_now()
-
-	if not gui then
-		return
-	end
-
-	local width, height = Application.resolution()
-	local size = CONFIG.icon_size * width
-
-	-- (the gui's y goes up from the bottom of the screen)
-	for i = 0, math.min(assault.grenade_count, CONFIG.icons_per_row) - 1 do
-		local x = width - (CONFIG.icon_step * i + 1) * size
-
-		Gui.bitmap(gui, "ut_assault_grenade", Vector3(x, height - CONFIG.icon_y * height - size, 1), Vector2(size, size), Color(255, 255, 255, 255))
-	end
-end
-
-mod.ingame_ui_post_update_callbacks.assault_grenades = draw_grenades
 
 -- The grenade's explosion plays the Rocket Launcher's explosion and sound. UT's grenade explosion (NewExplosionB) looks much like the
 -- rocket's (NewExplosionA).

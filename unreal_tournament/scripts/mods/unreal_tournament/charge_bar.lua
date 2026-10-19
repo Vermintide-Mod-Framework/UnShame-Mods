@@ -4,26 +4,42 @@ local mod = get_mod("unreal_tournament")
 -- game's own bar still shows the overcharge, which a wizard has from her staff while she holds another weapon.
 --   mod.charge_bars[template_name] = function (player_unit): while the player holds a weapon of that template, the copy is drawn with
 --       what this returns: { fraction = how full it is (0 to 1), marks = { first, second } (shares of the bar) or nil for none, color =
---       { red, green, blue } }.
+--       { red, green, blue }, below_ammo = true to draw it below the ammo counter's numbers rather than over the counter, icons = a row
+--       of icons below the bar, or nil }. The icons are { texture = a standalone texture's name, count, size (in the HUD's units), step =
+--       how far each is left of the last, as a share of its size }, from the counter's right edge.
 
 local utils = mod.utils
 
 local CONFIG = {
 	-- The alpha of the bar's marks, as UIWidgets.create_overcharge_bar_widget makes them
 	mark_alpha = 204,
+	-- The gap between the ammo counter, the bar and the icons, in the HUD's units
+	gap = 6,
 }
 
 mod.charge_bars = {}
 
--- Sets the copy's charge. Without marks, they are put at the end of the bar (the game sets the bar's alpha by them) and hidden.
+local bar_definitions = local_require("scripts/ui/hud_ui/overcharge_bar_ui_definitions")
+local keyboard_layout = local_require("scripts/ui/hud_ui/equipment_ui_definitions").scenegraph_definition
+local gamepad_layout = local_require("scripts/ui/hud_ui/gamepad_equipment_ui_definitions").scenegraph_definition
+
+local BAR_HEIGHT = bar_definitions.DEFAULT_BAR_SIZE[2]
+
+-- Sets the copy's charge and where it is. Without marks, they are put at the end of the bar (the game sets the bar's alpha by them) and
+-- hidden. Returns the charge, or nil when the player holds no weapon with one.
 local function show_charge(bar_ui, player)
 	local unit = player and player.player_unit
 	local charge_of = unit and utils.is_local_player_unit(unit) and mod.charge_bars[utils.wielded_template_name(unit)]
 	local charge = charge_of and charge_of(unit)
 
 	if not charge then
-		return false
+		return nil
 	end
+
+	-- (the bar is in the middle of the counter's panel, so below the panel is half the panel and half the bar further down)
+	local panel_height = bar_ui.ui_scenegraph.panel.size[2]
+
+	bar_ui.ui_scenegraph.charge_bar.local_position[2] = charge.below_ammo and -(panel_height / 2 + CONFIG.gap + BAR_HEIGHT / 2) or 0
 
 	local style = bar_ui.charge_bar.style
 	local marks = charge.marks
@@ -51,15 +67,29 @@ local function show_charge(bar_ui, player)
 		end
 	end
 
-	return true
+	return charge
 end
 
-local bar_definitions = local_require("scripts/ui/hud_ui/overcharge_bar_ui_definitions")
-local keyboard_layout = local_require("scripts/ui/hud_ui/equipment_ui_definitions").scenegraph_definition
-local gamepad_layout = local_require("scripts/ui/hud_ui/gamepad_equipment_ui_definitions").scenegraph_definition
+-- Draws the row of icons below the bar, from the counter's right edge, the first at the right. One widget is drawn at each place.
+local function draw_icons(bar_ui, ui_renderer, icons)
+	local widget = bar_ui.icon_widget
+	local style = widget.style
+
+	-- (below the bar, which is below the counter: the node is at the counter's bottom right)
+	bar_ui.ui_scenegraph.icons.local_position[2] = -(CONFIG.gap + BAR_HEIGHT + CONFIG.gap + icons.size)
+	widget.content.texture_id = icons.texture
+	style.texture_size[1] = icons.size
+	style.texture_size[2] = icons.size
+
+	for i = 0, icons.count - 1 do
+		style.offset[1] = -icons.size - i * icons.step * icons.size
+
+		UIRenderer.draw_widget(ui_renderer, widget)
+	end
+end
 
 -- The copy's nodes: its panel is placed as the equipment HUD places the ammo counter's panel (the same node, under the same root that the
--- HUD scale scales), and the bar is in the middle of it. Each equipment HUD places the counter its own way.
+-- HUD scale scales), the bar is in the middle of it, and the icons at its bottom right. Each equipment HUD places the counter its own way.
 local function charge_bar_scenegraph(layout, root_name, panel_name)
 	local panel = table.clone(layout[panel_name])
 
@@ -78,6 +108,20 @@ local function charge_bar_scenegraph(layout, root_name, panel_name)
 				1,
 			},
 			size = table.clone(bar_definitions.DEFAULT_BAR_SIZE),
+		},
+		icons = {
+			horizontal_alignment = "right",
+			parent = "panel",
+			vertical_alignment = "bottom",
+			position = {
+				0,
+				0,
+				1,
+			},
+			size = {
+				0,
+				0,
+			},
 		},
 	}
 end
@@ -137,6 +181,18 @@ local function new_charge_bar(game_bar)
 	bar.keyboard_scenegraph = UISceneGraph.init_scenegraph(charge_bar_scenegraph(keyboard_layout, "root_parent", "ammo_background_parent"))
 	bar.gamepad_scenegraph = UISceneGraph.init_scenegraph(charge_bar_scenegraph(gamepad_layout, "root", "ammo_background"))
 	bar.charge_bar = UIWidget.init(definition)
+	bar.icon_widget = UIWidget.init({
+		element = UIElements.SimpleTexture,
+		scenegraph_id = "icons",
+		content = {
+			texture_id = "",
+		},
+		style = {
+			color = { 255, 255, 255, 255 },
+			offset = { 0, 0, 0 },
+			texture_size = { 0, 0 },
+		},
+	})
 
 	return bar
 end
@@ -145,7 +201,9 @@ end
 local function draw_charge_bar(bar, game_bar, dt, player)
 	bar.ui_scenegraph = uses_gamepad_layout() and bar.gamepad_scenegraph or bar.keyboard_scenegraph
 
-	if not show_charge(bar, player) then
+	local charge = show_charge(bar, player)
+
+	if not charge then
 		return
 	end
 
@@ -160,6 +218,11 @@ local function draw_charge_bar(bar, game_bar, dt, player)
 
 	UIRenderer.begin_pass(ui_renderer, bar.ui_scenegraph, bar.input_manager:get_service("ingame_menu"), dt, nil, bar.render_settings)
 	UIRenderer.draw_widget(ui_renderer, bar.charge_bar)
+
+	if charge.icons and charge.icons.count > 0 then
+		draw_icons(bar, ui_renderer, charge.icons)
+	end
+
 	UIRenderer.end_pass(ui_renderer)
 end
 
