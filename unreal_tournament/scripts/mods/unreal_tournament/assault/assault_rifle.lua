@@ -83,8 +83,8 @@ for _, variant in ipairs(VARIANTS) do
 end
 
 local CONFIG = {
-	-- AssaultAmmo.MaxAmmo. All the ammo is the clip, so there is no reload.
-	max_ammo = 200,
+	-- Three times AssaultAmmo.MaxAmmo (200), set in the game. All the ammo is the clip, so there is no reload.
+	max_ammo = 600,
 	-- AssaultFire: DamageMin and DamageMax 7, FireRate 0.16, which bDualMode makes 0.55 of it
 	damage = 7,
 	fire_rate = 0.16 * 0.55,
