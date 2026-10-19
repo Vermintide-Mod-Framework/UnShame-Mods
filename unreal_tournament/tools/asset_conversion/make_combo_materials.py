@@ -394,16 +394,16 @@ for name, weapon in (('particle_brighten', False), ('particle_weapon_brighten', 
     open('%s/fx_%s_graph.material' % (FX, name), 'w', newline='\n').write(brighten_graph(weapon).text())
     print('wrote fx_%s_graph.material' % name)
 
-# ---------------------------------------------------------------- the Redeemer blast's bright sphere
-# RedeemerExplosion's MeshEmitter2 has no texture of its own, so UT draws it with its mesh's material: ExplosionSphere's IonSphereFinal
-# (EpicParticles), FB_Brighten of the Shader IonSphere, whose diffuse, opacity and self illumination are the Combiner Combiner4
+# ---------------------------------------------------------------- the Redeemer blast's spheres
+# RedeemerExplosion's mesh emitters keep UseMeshBlendMode, so UT draws them with their meshes' own materials, not their Texture. Both
+# spheres are ExplosionSphere, whose material is IonSphereFinal (EpicParticles), FB_Brighten of the Shader IonSphere, whose diffuse, opacity and self illumination are the Combiner Combiner4
 # (CO_AlphaBlend_With_Mask with no mask: the second layer over the first by the first's alpha) of two layers of the texture IonBurn,
 # which is 256 texels square (units/ut/fx/ion_burn, make_weapon_fx.py):
 #   the first, TexPanner5 (along U, half the texture a second) of TexScaler1 (U times 0.5, V times 1.5, V moved by 48 texels)
 #   the second, TexScaler2 (V times 2, moved by 64 texels) of TexPanner6 (along U, a texture a second the other way) of TexOscillator0
 #   (along V, a tenth of the texture each way, once a second)
-# A modifier changes the coordinates before the material inside it reads them. The particle sets the tint (the emitter's
-# ColorMultiplierRange, 0.7) and the intensity (its fade).
+# A modifier changes the coordinates before the material inside it reads them. The particle sets the tint (its colour) and the
+# intensity (its fade).
 IN_SIN = '0505200e-439a-476b-b6a6-d643cf80e20b'
 ion = Graph()
 common(ion)
@@ -460,3 +460,34 @@ multiply(ion, 'color', 'mix', 'tint')
 # world brown, where FB_Brighten only ever brightens)
 brightened(ion, 'min')
 write('ion_sphere', ion, {'burn_map': 'ion_burn'})
+
+# ---------------------------------------------------------------- the Redeemer blast's ring
+# The ring is ExplosionRing, whose material is FireFinal (EpicParticles): FB_Brighten of the Shader FlameRingShader, whose self
+# illumination is the Combiner Combiner3 (CO_AlphaBlend_With_Mask: the first layer over the second by the alpha of Grad_Falloff, which
+# fades from the top of the texture to its bottom) of two layers of FlameGradient, which is 512 texels square (units/ut/fx/flame_gradient
+# and grad_falloff, make_weapon_fx.py):
+#   the first, TexPanner2 (up V, a quarter of the texture a second) of TexScaler5 (U times 0.5)
+#   the second, TexPanner3 (up V, 0.4 of the texture a second) of TexScaler6 (U times 0.5, moved by 128 texels)
+# The shader's opacity is Grad_Falloff too, which FB_Brighten leaves out.
+ring = Graph()
+common(ring)
+
+def sample(graph, name, slot, uv):
+    graph.add(name, 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler(slot), title=slot)
+    graph.connect(uv, name, IN_SAMPLE_UV)
+
+panned_from(ring, 'pan_first', 'uv', 0, -0.25)
+scaled(ring, 'first_uv', 'pan_first', [0.5, 1], [0, 0])
+sample(ring, 'first', 'flame_map', 'first_uv')
+panned_from(ring, 'pan_second', 'uv', 0, -0.4)
+scaled(ring, 'second_uv', 'pan_second', [0.5, 1], [128 / 512, 0])
+sample(ring, 'second', 'flame_map', 'second_uv')
+sample(ring, 'falloff', 'falloff_map', 'uv')
+ring.add('mix', 'core/shader_nodes/lerp')
+ring.connect('second', 'mix', IN_LERP_A, 'rgb')
+ring.connect('first', 'mix', IN_LERP_B, 'rgb')
+ring.connect('falloff', 'mix', IN_LERP_W, 'a')
+multiply(ring, 'color', 'mix', 'tint')
+# (by its weakest channel, as the sphere)
+brightened(ring, 'min')
+write('flame_ring', ring, {'flame_map': 'flame_gradient', 'falloff_map': 'grad_falloff'})

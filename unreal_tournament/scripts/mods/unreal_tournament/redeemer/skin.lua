@@ -378,6 +378,7 @@ local function color255(r, g, b)
 end
 
 local BLACK = { 0, 0, 0 }
+local WHITE = { 1, 1, 1 }
 
 -- The fade of an emitter's particle: in over fade_in seconds (FadeInEndTime), out from fade_out (FadeOutStartTime)
 local function fade(age, life, fade_in, fade_out)
@@ -559,10 +560,13 @@ end
 
 -- The ring and the spheres (MeshEmitter0 to 2). The meshes are made at the size of UT's (0.02 m a unit), so their scale is UT's. They
 -- are not turned: the emitters' StartSpinRange and SpinsPerSecondRange only apply with SpinParticles, which they don't have, so the
--- ring lies flat.
+-- ring lies flat. The emitters keep UseMeshBlendMode, so UT draws each with its mesh's own material, not the emitter's Texture or
+-- DrawStyle, tinted by the particle's colour (UseParticleColor): the ring with FireFinal and the spheres with IonSphereFinal, which both
+-- brighten what is behind them (fx_flame_ring and fx_ion_sphere, see make_combo_materials.py).
 local function shells(center)
-	-- The ring: after 1 s, for 1 s, from 0.1 to 12.5 times its size, with FlameGradient, orange to yellow to nothing
+	-- The ring: after 1 s, for 1 s, from 0.1 to 12.5 times its size, orange to yellow to nothing
 	particles.mesh({
+		additive = 0,
 		brightness = function (fraction)
 			return fade(fraction, 1, 0.1)
 		end,
@@ -572,7 +576,7 @@ local function shells(center)
 		end,
 		delay = 1,
 		life = 1,
-		material = "units/ut/fx/fx_flame_gradient",
+		material = "units/ut/fx/fx_flame_ring",
 		position = center,
 		rotation = Quaternion.identity(),
 		scale = function (fraction)
@@ -581,9 +585,8 @@ local function shells(center)
 		unit = "units/ut/fx/explosion_ring",
 	})
 
-	-- The bright sphere: after 1.2 s, for 1 s, from 0.2 to 25 times its size (0.8 of it up and down), fading from 0.75 s. It has no texture
-	-- of its own, so UT draws it with the mesh's material, IonSphereFinal: the fire of IonBurn, brightening what is behind it
-	-- (fx_ion_sphere, see make_combo_materials.py), at 0.7 of its colour (ColorMultiplierRange).
+	-- The bright sphere: after 1.2 s, for 1 s, from 0.2 to 25 times its size (0.8 of it up and down), fading from 0.75 s, at 0.7 of its
+	-- colour (ColorMultiplierRange)
 	particles.mesh({
 		additive = 0,
 		brightness = function (fraction)
@@ -603,17 +606,20 @@ local function shells(center)
 		unit = "units/ut/fx/explosion_sphere",
 	})
 
-	-- The blended sphere: after 1.5 s, for 0.75 s, from 0.16 to 14.4 times its size, with FlameGradient, white that fades out
-	-- (PTDS_AlphaBlend)
+	-- The second sphere: after 1.5 s, for 0.75 s, from 0.16 to 14.4 times its size, from nothing to white and back. Its colour's alpha
+	-- and its DrawStyle (PTDS_AlphaBlend) are not used: its material is FB_Brighten, which leaves alpha out.
 	particles.mesh({
 		additive = 0,
 		brightness = function (fraction)
-			return fade(fraction * 0.75, 0.75, 0.1) * keyed({ { 0, 0 }, { 0.3, 1 }, { 0.6, 0.5 }, { 1, 0 } }, fraction)
+			return fade(fraction * 0.75, 0.75, 0.1)
 		end,
 		color = { 1, 1, 1 },
+		color_by = function (fraction)
+			return keyed({ { 0, BLACK }, { 0.3, WHITE }, { 0.6, WHITE }, { 1, BLACK } }, fraction)
+		end,
 		delay = 1.5,
 		life = 0.75,
-		material = "units/ut/fx/fx_flame_gradient",
+		material = "units/ut/fx/fx_ion_sphere",
 		position = center,
 		rotation = Quaternion.identity(),
 		scale = function (fraction)
