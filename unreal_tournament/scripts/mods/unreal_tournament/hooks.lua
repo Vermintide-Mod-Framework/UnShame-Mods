@@ -118,12 +118,27 @@ end)
 --       machine is thrown, whoever set the explosion off.
 -- A template with ut_penetrates_shields goes through shields. The game asks AiUtils.attack_is_shield_blocked for every enemy in an
 -- explosion, and while such an explosion is made the answer is always "not blocked".
+-- An explosion table with ut_walls_block_players doesn't hurt a player whom a wall hides from it (utils.walls_block_explosion), as UT's
+-- HurtRadius only hurts what it can see. Enemies are still hurt through walls, as by the game's explosions.
 mod.explosion_before_callbacks = {}
 mod.explosion_callbacks = {}
 mod.any_explosion_callbacks = {}
 mod.explosion_push_speeds = {}
 
 local penetrating_explosion = false
+
+mod:hook(AreaDamageSystem, "add_aoe_damage_target", function (func, self, hit_unit, attacker_unit, impact_position, ...)
+	-- (the template's name is the 14th argument after the position)
+	local template = ExplosionTemplates[select(14, ...)]
+	local explosion = template and template.explosion
+
+	if explosion and explosion.ut_walls_block_players and DamageUtils.is_player_unit(hit_unit)
+		and utils.walls_block_explosion(explosion, impact_position, utils.body_position(hit_unit)) then
+		return
+	end
+
+	return func(self, hit_unit, attacker_unit, impact_position, ...)
+end)
 
 mod:hook(AiUtils, "attack_is_shield_blocked", function (func, ...)
 	if penetrating_explosion then

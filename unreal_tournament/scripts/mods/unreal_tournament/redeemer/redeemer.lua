@@ -58,8 +58,8 @@ local CONFIG = {
 	ragdoll_speed = 600 * 0.02,
 	ragdoll_up = 600 * 0.02,
 	ragdoll_window = 1.5, -- seconds a body has to start ragdolling after the wave
-	-- The blast hurts the player who fired it (HurtRadius hurts everyone). This is the damage at the center, reduced from UT's as the
-	-- Rocket Launcher's self damage is (45 for its 60).
+	-- The blast hurts the player who fired it (HurtRadius hurts everyone): each wave that reaches them, when it goes off. This is a
+	-- wave's damage at the center, reduced from UT's as the Rocket Launcher's self damage is (45 for its 60).
 	self_damage = 250 * 60 / 90 * 45 / 60,
 	-- The multipliers of the damage and the stagger for each armor type: unarmored, armored, monsters, players, berserkers and super
 	-- armor. UT has no armor, and a nuclear blast is not stopped by it.
@@ -111,6 +111,10 @@ for index, share in ipairs(CONFIG.wave_radii) do
 			max_damage_radius = CONFIG.full_damage_radius * CONFIG.radius_uu * share * UNIT,
 			radius = CONFIG.radius_uu * share * UNIT,
 			use_attacker_power_level = true,
+			-- Walls shield the players, including the shooter, from the waves, as UT's HurtRadius only hurts what it can see from the
+			-- missile's center (hooks.lua). Enemies are hurt through them.
+			ut_walls_block_players = true,
+			ut_origin_offset = CONFIG.missile_radius * UNIT,
 			camera_effect = index == 1 and {
 				far_distance = 60,
 				far_scale = 0.3,
@@ -147,7 +151,8 @@ mod.redeemer = {
 	put_down_time = CONFIG.put_down_time,
 }
 
--- The waves after the first, made by the machine of the player who fired: each is an explosion that the game sends to the others
+-- The waves after the first, made by the machine of the player who fired: each is an explosion that the game sends to the others, and
+-- each hurts the shooter if it reaches them
 local waves = {}
 
 mod.aoe_callbacks.redeemer = function (self, aoe_data, position)
@@ -171,7 +176,7 @@ mod.aoe_callbacks.redeemer = function (self, aoe_data, position)
 		}
 	end
 
-	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates[WAVE_NAMES[#WAVE_NAMES]].explosion, CONFIG.self_damage)
+	utils.apply_explosion_self_damage(self._owner_unit, position, self.item_name, ExplosionTemplates[WAVE_NAMES[1]].explosion, CONFIG.self_damage)
 end
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
@@ -192,6 +197,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 
 				-- (the mod's update runs before the game's, so the units' positions are made current for the explosion)
 				utils.with_valid_positions(area_damage_system.create_explosion, area_damage_system, wave.owner_unit, wave.position:unbox(), Quaternion.identity(), wave.name, 1, wave.item_name, wave.power_level, wave.critical, wave.owner_unit)
+				utils.apply_explosion_self_damage(wave.owner_unit, wave.position:unbox(), wave.item_name, ExplosionTemplates[wave.name].explosion, CONFIG.self_damage)
 			end
 		end
 	end
