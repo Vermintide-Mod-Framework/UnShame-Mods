@@ -13,7 +13,7 @@ local mod = get_mod("unreal_tournament")
 --   zoom.zoomed: whether the zoom is in. It stays in in a third person view (an inspection, the extras' /freecamera), where the view
 --       itself is not zoomed: zoom.in_view() is whether the first person view is zoomed, and zoom.magnification() how many times
 --       larger it is. zoom.toggled_at is the game time the zoom last went in or out, for a weapon that fades the view then.
---   zoom.sound(skin, play_sound): the zoom's sounds, for the weapon's skin to call every frame with its play_sound.
+--   zoom.sound(skin, api): the zoom's sounds, for the weapon's skin to call every frame with its skin api (weapon_skin.lua).
 -- While the view is zoomed, each weapon draws its scope, and the game's crosshair stays on top of it.
 
 local utils = mod.utils
@@ -139,23 +139,22 @@ function zoom.magnification()
 end
 
 -- UT plays the zoom-in sound again every frame that the view narrows (the RenderOverlays of SniperRifle and ClassicSniperRifle play it
--- on SLOT_Misc while the field of view goes down), so it sounds for as long as the zoom moves in, and the zoom-out sound when the view
--- widens again. Here the zoom-in sound is started again whenever it has ended while the view still narrows.
-function zoom.sound(skin, play_sound)
+-- on SLOT_Misc while the field of view goes down), and the zoom-out sound when the view widens again. A sound played again on its slot
+-- starts over, so while the zoom moves in its start repeats every frame, and once it stops (the button let go, or the zoom at its
+-- most) the last one plays to its end. Here the last one is stopped as the next one starts.
+function zoom.sound(skin, api)
 	if zoom.zoomed ~= skin.was_zoomed then
 		if skin.was_zoomed and not zoom.zoomed then
-			play_sound("ut_lightning_zoom_out")
+			api.play_sound("ut_lightning_zoom_out")
 		end
 
 		skin.was_zoomed = zoom.zoomed
 	end
 
 	if zoom.zooming and zoom.level < CONFIG.max_level and zoom.in_view() then
-		local wwise_world = Managers.world:wwise_world(Managers.world:world("level_world"))
+		api.stop_sound(skin.zoom_sound)
 
-		if not skin.zoom_sound or not WwiseWorld.is_playing(wwise_world, skin.zoom_sound) then
-			skin.zoom_sound = play_sound("ut_lightning_zoom_in")
-		end
+		skin.zoom_sound = api.play_sound("ut_lightning_zoom_in")
 	end
 end
 

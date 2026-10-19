@@ -726,7 +726,7 @@ local function new_skin(variant)
 			skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
 			skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
 
-			lightning.zoom.sound(skin, api.play_sound)
+			lightning.zoom.sound(skin, api)
 
 			update_charge(skin, dt, api)
 		end,

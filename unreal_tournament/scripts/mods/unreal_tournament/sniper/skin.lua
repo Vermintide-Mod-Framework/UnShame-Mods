@@ -379,9 +379,10 @@ local function new_skin(setting_id)
 			pitch = -7,
 			roll = 0,
 			follow_game_unit = 2,
-			muzzle_right = 0,
+			-- (the middle of the end of the barrel, the front of the mesh)
+			muzzle_right = -2,
 			muzzle_forward = 209,
-			muzzle_up = -35,
+			muzzle_up = 15,
 			menu_yaw = -90,
 		},
 		-- UT draws the scope in place of the weapon while zoomed (ClassicSniperRifle.RenderOverlays)
@@ -414,7 +415,7 @@ local function new_skin(setting_id)
 				skin.was_aiming = zoomed
 			end
 
-			mod.zoom.sound(skin, api.play_sound)
+			mod.zoom.sound(skin, api)
 		end,
 	})
 
