@@ -23,6 +23,23 @@ local assault = mod.assault
 local CONFIG = {
 	-- AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2 (see muzzle_flash.lua)
 	flash_draw_scale = 1.2,
+	-- AssaultMuzFlash3rd, on each rifle in a character's hands for a round (AssaultAttachment.MakeMuzzleFlash, which flashes the twin
+	-- too), and on the throwing rifle's grenade launcher for a grenade (its tip2, Bone_Flash02): MinigunMuzFlash3rd at DrawScale 0.6,
+	-- as the Sniper Rifle's, which has it at 1 (see the Sniper Rifle's skin)
+	muzzle_flash_3rd = {
+		size = { 0.05 * 0.6, 0.08 * 0.6 },
+		growth = 2.2 * 0.6,
+		life = { 0.15, 0.2 },
+		attenuation = 0.2,
+		fit = 0.5,
+	},
+	launcher_muzzle = { 0, 44.0, 10.3 }, -- right, forward, up in the mesh's UT units (Bone_Flash02)
+	-- The weapon's light (xWeaponAttachment.WeaponLight): every shot turns it on for 0.15 s, at the rifle in the character's right hand.
+	-- There is none in the player's own first person view, where it would light the gun the player holds. AssaultAttachment's LightHue
+	-- 30 of 255 and LightSaturation 150 (0 is all colour, 255 is white) are a pale orange, and LightRadius 4 is in steps of 25 units: 2 m.
+	light_color = { 1, 0.88, 0.59 },
+	light_falloff = 2, -- meters
+	light_life = 0.15, -- s
 	-- Grenade: RandSpin(25000). It spins about a random axis at 25000 of UT's rotation units a second, where 65536 is a full turn.
 	grenade_spin = 25000 / 65536,
 	-- A bounce faster than this plays the impact sound (Grenade.HitWall)
@@ -80,9 +97,14 @@ local function flash(api)
 		return
 	end
 
+	-- (linked to the first person unit, so it stays on the muzzle as the view turns, as UT's is attached to the weapon)
 	mod.muzzle_flash(api, function ()
 		return api.state() == skin and api.muzzle_model_position() or nil
-	end, (skin.unit_scale or UNIT) / api.draw_scale(), CONFIG.flash_draw_scale)
+	end, (skin.unit_scale or UNIT) / api.draw_scale(), CONFIG.flash_draw_scale, function ()
+		if api.state() == skin then
+			return api.model_point_in_view()
+		end
+	end)
 end
 
 -- Plays an animation on both rifles
@@ -97,8 +119,62 @@ end
 -- (the characters' shot and their stance, below)
 local shot_animation, saw_stance
 
--- Called for each round, on every machine: the shooter is in the stance. If the player on this machine fired it, both rifles play the
--- fire animation, flash and sound. Otherwise the sound plays at the shooter's muzzle.
+-- The flash at a point of a rifle in a character's hand (UT units of the mesh): the mesh is in UT units of the world, and points along
+-- the barrel, which runs along the rifle mesh's forward, as the flash mesh's does
+local function third_person_flash(owner_unit, api, point)
+	local third_person = api.third_person
+	local settings = CONFIG.muzzle_flash_3rd
+	local life = utils.random_between(settings.life)
+	local size = utils.random_between(settings.size)
+
+	particles.mesh({
+		additive = 0,
+		brightness = function (fraction)
+			return particles.attenuation(fraction, settings.attenuation)
+		end,
+		color = { 1, 1, 1 },
+		follow = function ()
+			return third_person.point_position(owner_unit, point[1], point[2], point[3])
+		end,
+		life = life,
+		material = "units/ut/fx/fx_minigun_flash_3rd",
+		rotation = function ()
+			return third_person.muzzle_rotation(owner_unit) or Quaternion.identity()
+		end,
+		scale = function (fraction)
+			return (size + settings.growth * fraction * life) * settings.fit
+		end,
+		spin = 0,
+		angle = math.random() * 360,
+		spin_axis = Vector3(0, 1, 0),
+		unit = "units/ut/fx/minigun_flash_3rd_mesh",
+	})
+end
+
+-- The light of a shot at the rifle in a character's right hand
+local function weapon_light(owner_unit, api)
+	particles.light({
+		brightness = function ()
+			return 1
+		end,
+		color = CONFIG.light_color,
+		falloff = CONFIG.light_falloff,
+		follow = function ()
+			return api.third_person.point_position(owner_unit, 0, 0, 0)
+		end,
+		intensity = utils.WEAPON_LIGHT_INTENSITY,
+		life = CONFIG.light_life,
+	})
+end
+
+-- Whether a rifle's mesh is seen in a character's hand: the player's own only in a third person view
+local function seen_in_hand(owner_unit, api)
+	return api.third_person.held_mesh(owner_unit) ~= nil and api.third_person.shows_weapon(owner_unit)
+end
+
+-- Called for each round, on every machine: the shooter is in the stance, and both rifles in the character's hands flash, with the
+-- light, where they are seen. If the player on this machine fired it, both rifles in the player's view play the fire animation, flash
+-- and sound. Otherwise the sound plays at the shooter's muzzle.
 mod.assault_round_callbacks.assault_skin = function (owner_unit)
 	local right = skin_apis[1]
 
@@ -106,6 +182,18 @@ mod.assault_round_callbacks.assault_skin = function (owner_unit)
 
 	if not right then
 		return
+	end
+
+	for _, api in ipairs(skin_apis) do
+		if seen_in_hand(owner_unit, api) then
+			local muzzle = api.config.third_person
+
+			third_person_flash(owner_unit, api, { muzzle.muzzle_right, muzzle.muzzle_forward, muzzle.muzzle_up })
+		end
+	end
+
+	if seen_in_hand(owner_unit, right) then
+		weapon_light(owner_unit, right)
 	end
 
 	if utils.is_local_player_unit(owner_unit) and right.state() then
@@ -156,6 +244,17 @@ mod.assault_grenade_callbacks.assault_skin = function (grenade)
 	}
 
 	saw_stance(grenade.owner_unit)
+
+	-- (the flash at the grenade launcher of the rifle that threw it, and the light)
+	local thrower = skin_apis[grenade.left and 2 or 1]
+
+	if thrower and seen_in_hand(grenade.owner_unit, thrower) then
+		third_person_flash(grenade.owner_unit, thrower, CONFIG.launcher_muzzle)
+	end
+
+	if api and seen_in_hand(grenade.owner_unit, api) then
+		weapon_light(grenade.owner_unit, api)
+	end
 
 	if grenade.local_owner then
 		shot_animation(grenade.owner_unit, true)
@@ -497,3 +596,7 @@ end
 mod.third_person_animation_filters[TEMPLATE_NAME] = function (event)
 	return string.find(event, "reload", 1, true) ~= nil
 end
+
+-- The characters' flow gets no weapon units, so the pistols' own third person shots (their muzzle flash and sound at the pistols'
+-- muzzles) are not played: the skin draws UT's (third_person_flash)
+mod.third_person_weapons_hidden_from_flow[TEMPLATE_NAME] = true

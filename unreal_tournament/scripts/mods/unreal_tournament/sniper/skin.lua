@@ -126,9 +126,14 @@ local function first_person_flash(api)
 		return
 	end
 
+	-- (linked to the first person unit, so it stays on the muzzle as the view turns, as UT's is attached to the weapon)
 	mod.muzzle_flash(api, function ()
 		return api.state() == skin and api.muzzle_model_position() or nil
-	end, (skin.unit_scale or UNIT) / api.draw_scale(), CONFIG.flash_draw_scale, nil, CONFIG.muzzle_flash)
+	end, (skin.unit_scale or UNIT) / api.draw_scale(), CONFIG.flash_draw_scale, function ()
+		if api.state() == skin then
+			return api.model_point_in_view()
+		end
+	end, CONFIG.muzzle_flash)
 end
 
 -- The flash at the end of the rifle in a character's hand: the mesh is in UT units of the world, and points along the barrel, which runs
