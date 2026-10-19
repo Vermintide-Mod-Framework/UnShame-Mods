@@ -454,17 +454,18 @@ local function new_skin(id, mirror)
 		offset_up = -6,
 		pivot_pitch = 400 / 65536 * 360,
 		bob_damping = 1.7,
-		-- The inspect pose turns the rifle to show its side, like the other weapons. These numbers are a guess.
-		inspect_pose_right = -2,
-		inspect_pose_forward = 4,
-		inspect_pose_up = 0,
-		inspect_pose_roll = 10,
-		inspect_pose_pitch = 4,
-		inspect_pose_yaw = 55,
+		-- The inspect pose stands the rifle up, with its inner side to the camera, and keeps the half of the mesh that is not modelled
+		-- below the screen (checked with preview_weapon.py). It turns about the rifle's middle.
+		inspect_pose_right = -4,
+		inspect_pose_forward = 35,
+		inspect_pose_up = -8,
+		inspect_pose_roll = 32,
+		inspect_pose_pitch = 66,
+		inspect_pose_yaw = 66,
 		inspect_turn_start = 0.35,
-		inspect_pivot_right = 0,
-		inspect_pivot_forward = 20,
-		inspect_pivot_up = 0,
+		inspect_pivot_right = 10.5,
+		inspect_pivot_forward = 44,
+		inspect_pivot_up = -17.7,
 		-- UT's third person mesh of the weapon (AssaultAttachment's NewWeapons2004.NewAssaultRifle_3rd) at UT's size in a player's hand
 		-- (AssaultAttachment's DrawScale 0.3, which AssaultRifle.AttachToPawn keeps for two). There is one in each hand, where the game puts
 		-- the brace of pistols (AttachmentNodeLinking). Its origin is by its grip, and its barrel runs along its forward, as the Minigun's
