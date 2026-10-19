@@ -83,9 +83,9 @@ local TOTAL_TIME = CONFIG.fire_rate + CONFIG.chain_margin
 utils.zero_spread_template("ut_sniper_bullet", "handgun")
 
 -- The bullet. It stops at the first enemy it hits, as UT's trace does: a cleave that is tiny hurts one enemy. These are the values it had
--- as a copy of the handgun's bullet (shot_sniper) made flat: the armor multipliers of the mod's flat damage (utils.make_flat, which do
--- nothing to super armor), and the handgun's own multipliers for a critical hit, its hit reactions and its curve of head shot and
--- critical bonus (smiter_curve).
+-- as a copy of the handgun's bullet (shot_sniper) made flat: the armor multipliers of the mod's flat damage (utils.make_flat), and the
+-- handgun's own multipliers for a critical hit, its hit reactions and its curve of head shot and critical bonus (smiter_curve). Super
+-- armor takes 0.6, as from the Lightning Gun.
 utils.add_damage_profile("ut_sniper_bullet", {
 	charge_value = "instant_projectile",
 	shield_break = true,
@@ -95,8 +95,8 @@ utils.add_damage_profile("ut_sniper_bullet", {
 	damage_type = "shot_sniper",
 	attack_power = attack_power_for(CONFIG.damage),
 	impact_power = impact_power_for(CONFIG.damage),
-	armor_attack = { 1, 0.8, 1.5, 1, 1, 0 },
-	armor_impact = { 1, 0.8, 1, 1, 1, 0 },
+	armor_attack = { 1, 0.8, 1.5, 1, 1, 0.6 },
+	armor_impact = { 1, 0.8, 1, 1, 1, 0.6 },
 	critical_armor_attack = { 1, 1.4, 1.5, 1, 0.75, 0.6 },
 	critical_armor_impact = { 1, 1, 1, 1, 1, 1 },
 	cleave_attack = 0.01,

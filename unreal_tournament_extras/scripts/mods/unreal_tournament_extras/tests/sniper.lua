@@ -9,13 +9,12 @@ local runner = mod.test_runner
 local CONFIG = {
 	-- The shot's damage against armour and monsters, of its damage against an enemy with none (a Chaos marauder), with this much either
 	-- way (sniper_rifle.lua's ut_sniper_bullet). A Stormvermin is armoured, a rat ogre is a monster and a boss, whose damage the game
-	-- takes down to 0.45 (DamageUtils.calculate_damage's boss_damage_reduction), and a Chaos warrior's body is super armour, which a
-	-- normal shot does nothing to.
+	-- takes down to 0.45 (DamageUtils.calculate_damage's boss_damage_reduction), and a Chaos warrior's body is super armour.
 	plain_breed = "chaos_marauder",
 	armour_breeds = {
 		{ "skaven_storm_vermin", 0.8 },
 		{ "skaven_rat_ogre", 1.5 * 0.45 },
-		{ "chaos_warrior", 0 },
+		{ "chaos_warrior", 0.6 },
 	},
 	armour_margin = 0.1,
 	super_armour_breed = "chaos_warrior",
@@ -215,7 +214,7 @@ local function scenarios()
 			end,
 		},
 		{
-			name = "a shot hurts armoured enemies and monsters by their armour, and super armour not at all",
+			name = "a shot hurts armoured enemies, monsters and super armour by their armour",
 			run = function (t)
 				t.critical_hits(false)
 
@@ -244,7 +243,7 @@ local function scenarios()
 			end,
 		},
 		{
-			-- A critical hit has armour multipliers of its own, the handgun's, which get through super armour (0.6)
+			-- A critical hit has armour multipliers of its own, the handgun's, which also hurt super armour (0.6)
 			name = "a critical shot hurts super armour",
 			run = function (t)
 				t.critical_hits(true)
