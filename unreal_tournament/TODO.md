@@ -33,16 +33,11 @@
 A weapon keeps only what belongs to its base's animations, models and sounds (`utils.template_shell`), and sets everything else itself,
 as the Minigun does. What each finished weapon took from its base at build 1282 is in `INHERITED_FIELDS.md`.
 
-6. **The other finished weapons.** Shock Rifle, Bio Rifle, Flak Cannon, Rocket Launcher, Lightning Gun, Shield Gun: write out what
-   they take from their base today, on the shell, as the Minigun's are. That changes nothing in the game.
+6. **The Shield Gun on the shell.** The other finished weapons are made on the shell of their base. The Shield Gun's charge, punch,
+   push and block are still copies of its base's actions, and its wield is the base's. It waits for the next item.
 7. **The Shield Gun's copies differ by hero.** Each keeps its base's `dodge_count` (2 or 3), `weapon_type`, `buffs`, push
    (`action_one.push`) and block (`action_two.default`, with `max_fatigue_points` and `outer_block_*`). One set for all five, to
    be decided.
 8. **`weapon_type`.** What the game's talents and traits take each weapon for (the Bio Rifle is a BRACE_OF_PISTOLS, the Shock Rifle a
    FIRE_STAFF, the Lightning Gun a LIFE_STAFF). Keep or choose. The Minigun keeps its base's, so that each hero's talents see his
-   own repeater.
-9. **Bots.** Each weapon's `attack_meta_data`: where bots aim, what they use it against, and whether they shoot past allies and
-   enemies in the way. The Minigun's and the Lightning Gun's are written out in full. The Shock Rifle's and the Flak Cannon's change
-   a few of their base's values and keep the rest.
-10. **Wielding, reloading and inspecting.** These stay the game's: the Minigun takes `ActionTemplates.wield` and `reload` by name, and
-   inspecting from its base. The other weapons the same.
+   own repeater. Each weapon sets it in its own file.
