@@ -12,7 +12,8 @@ local mod = get_mod("unreal_tournament")
 --       its other actions. A shot should be able to chain into it (action_two at any time).
 --   zoom.zoomed: whether the zoom is in. It stays in in a third person view (an inspection, the extras' /freecamera), where the view
 --       itself is not zoomed: zoom.in_view() is whether the first person view is zoomed, and zoom.magnification() how many times
---       larger it is.
+--       larger it is. zoom.toggled_at is the game time the zoom last went in or out, for a weapon that fades the view then.
+--   zoom.sound(skin, play_sound): the zoom's sounds, for the weapon's skin to call every frame with its play_sound.
 -- While the view is zoomed, each weapon draws its scope, and the game's crosshair stays on top of it.
 
 local utils = mod.utils
@@ -40,7 +41,17 @@ function zoom.register(template_name)
 	templates[template_name] = true
 end
 
+-- The game time, if there is a game
+local function game_time()
+	return Managers.time and Managers.time:has_timer("game") and Managers.time:time("game") or nil
+end
+
 local function end_zoom()
+	-- (UT's EndZoom fades the view if it was zoomed: HUD.FadeZoom)
+	if zoom.zoomed then
+		zoom.toggled_at = game_time()
+	end
+
 	zoom.level = 0
 	zoom.zooming = false
 	zoom.zoomed = false
@@ -77,6 +88,7 @@ mod.dummy_start_callbacks.zoom = function (action, new_action)
 		zoom.level = 0
 		zoom.zooming = true
 		zoom.zoomed = true
+		zoom.toggled_at = game_time()
 	end
 end
 
@@ -124,6 +136,27 @@ function zoom.magnification()
 	end
 
 	return math.tan(math.rad(CONFIG.normal_fov / 2)) / math.tan(math.rad(zoom_fov() / 2))
+end
+
+-- UT plays the zoom-in sound again every frame that the view narrows (the RenderOverlays of SniperRifle and ClassicSniperRifle play it
+-- on SLOT_Misc while the field of view goes down), so it sounds for as long as the zoom moves in, and the zoom-out sound when the view
+-- widens again. Here the zoom-in sound is started again whenever it has ended while the view still narrows.
+function zoom.sound(skin, play_sound)
+	if zoom.zoomed ~= skin.was_zoomed then
+		if skin.was_zoomed and not zoom.zoomed then
+			play_sound("ut_lightning_zoom_out")
+		end
+
+		skin.was_zoomed = zoom.zoomed
+	end
+
+	if zoom.zooming and zoom.level < CONFIG.max_level and zoom.in_view() then
+		local wwise_world = Managers.world:wwise_world(Managers.world:world("level_world"))
+
+		if not skin.zoom_sound or not WwiseWorld.is_playing(wwise_world, skin.zoom_sound) then
+			skin.zoom_sound = play_sound("ut_lightning_zoom_in")
+		end
+	end
 end
 
 -- The game's camera takes a multiplier of its field of view for effects (CameraManager.set_additional_fov_multiplier). The zoom is made

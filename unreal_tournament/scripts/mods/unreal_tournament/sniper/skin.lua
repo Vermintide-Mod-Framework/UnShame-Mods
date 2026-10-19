@@ -37,7 +37,8 @@ local CONFIG = {
 	-- In the player's own view they start in front of the eye (CollisionRadius 25 ahead, SmokeOffsetZ 10 up).
 	smoke_count = 5,
 	smoke_spread = 12, -- UT units
-	smoke_size = { 20, 50 }, -- UT units across
+	-- (a UE2 sprite's size is its radius, so they are drawn twice as wide; each is a frame of SmokeReOrdered at random)
+	smoke_size = { 20, 50 }, -- UT units, radius
 	smoke_life = { 2.5, 3 },
 	smoke_fade_out = 2,
 	smoke_rise = 27, -- UT units a second
@@ -46,6 +47,7 @@ local CONFIG = {
 	-- The scope (ClassicSniperRifle.RenderOverlays): pieces of its texture drawn black around the view, sized for a screen 1024 wide.
 	-- It draws a charge bar too, but its place and size are never set, so it is not seen.
 	scope_texture_size = 512,
+	zoom_fade_time = 0.3, -- seconds, HudCDeathmatch.FadeTime
 	-- The inspect pose turns the rifle to show its left side, like the other weapons. It sways less than the others (2 degrees, not
 	-- 5): the rifle is long, so the same turn moves its ends far more.
 	inspect_pose_speed = 5,
@@ -136,12 +138,12 @@ local function smoke(position)
 			additive = 0,
 			color = { 1, 1, 1 },
 			fade_out = CONFIG.smoke_fade_out,
-			growth = (CONFIG.smoke_size[2] - CONFIG.smoke_size[1]) / life * UNIT,
+			growth = 2 * (CONFIG.smoke_size[2] - CONFIG.smoke_size[1]) / life * UNIT,
 			life = life,
 			position = position + offset * UNIT,
-			size = CONFIG.smoke_size[1] * UNIT,
+			size = 2 * CONFIG.smoke_size[1] * UNIT,
 			spin = math.random() * 0.1,
-			texture = "smoke",
+			texture = "sniper_smoke_" .. math.random(0, 15),
 			velocity = Vector3(0, 0, CONFIG.smoke_rise * UNIT),
 		})
 	end
@@ -293,6 +295,35 @@ end
 
 mod.ingame_ui_post_update_callbacks.sniper_scope = draw_scope
 
+-- When the zoom goes in or out, the view fades in from black (ClassicSniperRifle.WantsZoomFade: HudCDeathmatch.ZoomFadeOut draws black
+-- over the screen, from opaque to clear over its FadeTime), over the scope
+local function draw_zoom_fade()
+	local toggled_at = mod.zoom.toggled_at
+	local passed = toggled_at and Managers.time:time("game") - toggled_at
+
+	if not passed or passed >= CONFIG.zoom_fade_time then
+		return
+	end
+
+	local player = Managers.player and Managers.player:local_player_safe()
+	local unit = player and player.player_unit
+	local first_person_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "first_person_system")
+
+	if not first_person_extension or not first_person_extension:first_person_mode_active() or not TEMPLATE_NAMES[utils.wielded_template_name(unit)] then
+		return
+	end
+
+	local gui = scope_gui_now()
+
+	if gui then
+		local width, height = Application.resolution()
+
+		Gui.rect(gui, Vector3(0, 0, 2), Vector2(width, height), Color(255 * (1 - passed / CONFIG.zoom_fade_time), 0, 0, 0))
+	end
+end
+
+mod.ingame_ui_post_update_callbacks.sniper_zoom_fade = draw_zoom_fade
+
 -- The skin of each of the two items
 local function new_skin(setting_id)
 	local definition = mod.items.weapons[setting_id]
@@ -365,14 +396,12 @@ local function new_skin(setting_id)
 			skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
 			skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
 
-			-- The zoom has its sound when it starts and when it ends: the Lightning Gun's (RenderOverlays plays LightningZoomIn and Out)
+			-- The zoom's sounds are the Lightning Gun's (RenderOverlays plays LightningZoomIn and Out)
 			local zoomed = mod.zoom.zoomed
 
-			if zoomed ~= skin.was_zoomed then
-				if skin.was_zoomed ~= nil then
-					api.play_sound(zoomed and "ut_lightning_zoom_in" or "ut_lightning_zoom_out")
-
-					-- The character aims as with the base weapon's zoom, in third person, which the other players see too
+			if zoomed ~= skin.was_aiming then
+				-- The character aims as with the base weapon's zoom, in third person, which the other players see too
+				if skin.was_aiming ~= nil then
 					local player = Managers.player:local_player()
 					local unit = player and player.player_unit
 					local animations = unit and mod.sniper_zoom_animations[utils.wielded_template_name(unit)]
@@ -382,8 +411,10 @@ local function new_skin(setting_id)
 					end
 				end
 
-				skin.was_zoomed = zoomed
+				skin.was_aiming = zoomed
 			end
+
+			mod.zoom.sound(skin, api.play_sound)
 		end,
 	})
 

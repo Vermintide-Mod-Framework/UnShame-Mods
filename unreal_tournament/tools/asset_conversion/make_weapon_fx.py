@@ -47,13 +47,15 @@ TEXTURES = {
     'burn_flare': ('EpicParticles/Texture/BurnFlare1.tga', 1, 1),
     'soft_flare': ('EpicParticles/Texture/SoftFlare.tga', 1, 1),
     'white_streak': ('EpicParticles/Texture/WhiteStreak01aw.tga', 1, 1),
+    # The Sniper Rifle's smoke (ClassicSniperSmoke: a frame of SmokeReOrdered at random, blended by its alpha)
+    'sniper_smoke': ('ExplosionTex/Texture/SmokeReOrdered.tga', 4, 4),
     # (the textures of the Redeemer blast's spheres and ring, whose materials make_combo_materials.py makes: fx_ion_sphere and fx_flame_ring)
     'ion_burn': ('EpicParticles/Texture/IonBurn.tga', 1, 1),
     'grad_falloff': ('EpicParticles/Texture/Grad_Falloff.tga', 1, 1),
 }
 
 # (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
-SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff', 'muzzle_smoke')
+SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff', 'muzzle_smoke', 'sniper_smoke')
 
 # The textures that UT draws with FB_Brighten, or as STY_Translucent, which is the same: c + d * (1 - c). They are read as they are, and
 # their materials are derived from fx_particle_brighten_graph and fx_particle_weapon_brighten_graph (make_combo_materials.py).
