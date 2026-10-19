@@ -309,7 +309,8 @@ local function keep_stance(unit, linger)
 	in_stance[unit] = entry
 end
 
--- Takes the stance if the character is not in it, and with shoot (the grenade's) plays its shot
+-- Takes the stance if the character is not in it, and with shoot (the grenade's) plays its shot. The shot leaves the stance as the
+-- pistols' does (their fast shot is followed by their aim again, which takes it again), so the next round takes it again.
 shot_animation = function (unit, shoot)
 	local network_manager = Managers.state.network
 
@@ -317,11 +318,15 @@ shot_animation = function (unit, shoot)
 		return
 	end
 
-	if not in_stance[unit] then
+	local entry = in_stance[unit]
+
+	if not entry or entry.shot then
 		network_manager:anim_event(unit, "lock_target")
 	end
 
 	keep_stance(unit, shoot and CONFIG.stance_linger_alt or CONFIG.stance_linger)
+
+	in_stance[unit].shot = shoot or nil
 
 	if shoot then
 		network_manager:anim_event(unit, "attack_shoot_fast")
@@ -343,11 +348,12 @@ mod.dummy_start_callbacks.assault_stance = function (action, new_action)
 		return
 	end
 
-	if not in_stance[unit] and Managers.state.network then
+	if (not in_stance[unit] or in_stance[unit].shot) and Managers.state.network then
 		Managers.state.network:anim_event(unit, "lock_target")
 	end
 
 	keep_stance(unit, CONFIG.stance_linger_alt)
+	in_stance[unit].shot = nil
 	saw_stance(unit, CONFIG.stance_linger_alt)
 end
 
