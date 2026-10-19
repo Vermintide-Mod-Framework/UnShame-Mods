@@ -83,6 +83,8 @@ local CONFIG = {
 	-- (after the grenade's charge or throw: the time until the next grenade can be thrown, a full charge (1 s) and half a second more,
 	-- set in the game)
 	stance_linger_alt = assault.grenade_fire_rate + 1 + 0.5, -- s
+	-- The grenade's shot leaves the stance once it has played, so the stance is taken again this long after the shot (set in the game)
+	stance_retake = 0.4, -- s
 	-- In the stance the arms reach out and the pistols point along them, so both rifles are level with the pistols then (pitch and yaw 0
 	-- from the hand's forward, where they are tipped down to lie along the forearm otherwise), turning there and back over this long
 	-- (set in the game)
@@ -330,6 +332,7 @@ shot_animation = function (unit, shoot)
 	keep_stance(unit, shoot and CONFIG.stance_linger_alt or CONFIG.stance_linger)
 
 	in_stance[unit].shot = shoot or nil
+	in_stance[unit].retake_at = shoot and in_stance[unit].last + CONFIG.stance_retake or nil
 
 	if shoot then
 		network_manager:anim_event(unit, "attack_shoot_fast")
@@ -374,6 +377,14 @@ local function update_stances()
 	local now = Managers.time:time("game")
 
 	for unit, entry in pairs(in_stance) do
+		-- (back into the stance once the grenade's shot has played)
+		if entry.retake_at and now >= entry.retake_at and Unit.alive(unit) and Managers.state.network then
+			Managers.state.network:anim_event(unit, "lock_target")
+
+			entry.retake_at = nil
+			entry.shot = nil
+		end
+
 		if not Unit.alive(unit) or utils.wielded_template_name(unit) ~= TEMPLATE_NAME then
 			-- (the wield of another weapon plays its own stance)
 			in_stance[unit] = nil
