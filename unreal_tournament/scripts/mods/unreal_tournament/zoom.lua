@@ -115,7 +115,7 @@ function zoom.in_view()
 	local unit = zoom.zoomed and local_wielding_zoom_weapon()
 	local first_person_extension = unit and ScriptUnit.has_extension(unit, "first_person_system")
 
-	return first_person_extension ~= nil and first_person_extension:first_person_mode_active()
+	return first_person_extension and first_person_extension:first_person_mode_active() or false
 end
 
 function zoom.magnification()
