@@ -171,7 +171,7 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Loops after death | ok | ok | ok | - | - | - | ok | ok | ok | ok |
 | Loops after the level ends | ok | ok | ok | - | - | - | ok | ok | ok | ok |
 | **Third person** | | | | | | | | | | |
-| Size | ok (UT's Sniper_3rd at a player's DrawScale 0.4, made 0.85 of it for Kerillian) | ok (UT's Minigun_3rd at a player's DrawScale 0.4) | ok (UT's ShieldGun_3rd at a player's DrawScale 0.4) | ok (UT's Redeemer_3rd, from RedeemerAttachment's DrawScale 0.6 made bigger so its missile is near the flying one's length, set in the game) | - | - | ok | ok | ok | ok |
+| Size | ok (UT's Sniper_3rd at a player's DrawScale 0.4, made 0.85 of it for Kerillian) | ok (UT's Minigun_3rd at a player's DrawScale 0.4) | ok (UT's ShieldGun_3rd at a player's DrawScale 0.4) | ok (UT's Redeemer_3rd at RedeemerAttachment's DrawScale 0.6, made 0.96 of it in the game) | - | - | ok | ok | ok | ok |
 | Position in the hand | ok (set in the game) | ok (each hero's grip, set in the game) | ok (each hero's grip, set in the game) | ok (alongside the left arm, set in the game) | - | - | ok | ok | ok | ok |
 | Angle | ok (set in the game) | ok (the same) | ok (the same) | ok | - | - | ok | ok | ok | ok |
 | Vanilla model showing | ok | ok | ok | - | - | - | ok | ok | ok | ok |
