@@ -273,8 +273,8 @@ skin_api = mod.weapon_skin.new({
 		unit_name = "units/ut/redeemer/third_person",
 		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.02 * 0.6,
-		-- (bigger than UT's, for the missile's sake: see MISSILE_RATIO)
-		scale = HELD_SCALE,
+		-- (bigger than UT's, for the missile's sake, see MISSILE_RATIO, and then a fifth smaller, which looks right)
+		scale = HELD_SCALE * 0.8,
 		-- (78 of the mesh's units further back than UT's, which puts the mesh forward)
 		grip_right = -35 / 0.6 + 78,
 		-- (the mesh lies alongside the arm, not around it; less of this moves it to the character's right)
