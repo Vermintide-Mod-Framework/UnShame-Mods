@@ -52,8 +52,11 @@ local CONFIG = {
 	smoke_life = { 2.5, 3 },
 	smoke_fade_out = 2,
 	smoke_rise = 20, -- UT units a second squared
+	-- (set from pictures of UT, where the smoke starts at the eye's height, not the 10 above it of SmokeOffsetZ, and is an even light
+	-- grey: its texture's colour is made white, make_weapon_fx.py's WHITE)
 	smoke_ahead = 25,
-	smoke_up = 10,
+	smoke_up = 0,
+	smoke_color = { 0.85, 0.85, 0.85 },
 	-- The scope (ClassicSniperRifle.RenderOverlays): pieces of its texture drawn black around the view, sized for a screen 1024 wide.
 	-- It draws a charge bar too, but its place and size are never set, so it is not seen.
 	scope_texture_size = 512,
@@ -148,7 +151,7 @@ local function smoke(position)
 
 		particles.sprite({
 			additive = 0,
-			color = { 1, 1, 1 },
+			color = CONFIG.smoke_color,
 			fade_out = CONFIG.smoke_fade_out,
 			follow = function ()
 				local age = Managers.time:time("game") - born

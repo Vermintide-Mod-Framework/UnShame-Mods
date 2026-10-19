@@ -57,6 +57,10 @@ TEXTURES = {
 # (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
 SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff', 'muzzle_smoke', 'sniper_smoke')
 
+# The textures whose colour is made white, with their alpha kept: the Sniper Rifle's smoke showed the dark grey around the puffs as dark
+# spots, where pictures of UT show an even light haze
+WHITE = ('sniper_smoke',)
+
 # The textures that UT draws with FB_Brighten, or as STY_Translucent, which is the same: c + d * (1 - c). They are read as they are, and
 # their materials are derived from fx_particle_brighten_graph and fx_particle_weapon_brighten_graph (make_combo_materials.py).
 BRIGHTEN = ('minigun_burst', 'impact_smoke', 'minigun_flash_3rd')
@@ -102,6 +106,9 @@ def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_
 
 for name, (tga, columns, rows_count) in TEXTURES.items():
     width, height, rows = read_tga('%s/%s' % (EXPORT, tga))
+
+    if name in WHITE:
+        rows = [bytes(v if i % 4 == 3 else 255 for i, v in enumerate(row)) for row in rows]
 
     if name in TOP_HALF:
         rows = rows[:height // 2]

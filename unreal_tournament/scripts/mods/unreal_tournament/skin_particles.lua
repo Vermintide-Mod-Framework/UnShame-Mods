@@ -55,6 +55,9 @@ local UNIT_NAME = "units/ut/fx/quad"
 local LIGHT_UNIT_NAME = "units/ut/fx/light"
 local MATERIAL_FORMAT = "units/ut/fx/fx_%s"
 local MAX_PARTICLES = 800
+-- (the sort orders that blended particles take in turn, see add)
+local MAX_SORT_ORDER = 255
+local blended_count = 0
 
 local active = {}
 -- The units that are not in use, grouped by the name of the unit. Each is { unit, world, material, unit_name }.
@@ -129,6 +132,16 @@ local function add(kind, spec)
 		end
 
 		Unit.set_unit_visibility(entry.unit, false)
+
+		-- Blended particles are drawn in the order they were made, as UT draws an emitter's: sorted by their distance, those close
+		-- together traded places from frame to frame, which flickered where they overlap. Added ones look the same in any order.
+		if spec.additive == 0 then
+			blended_count = blended_count % MAX_SORT_ORDER + 1
+
+			Unit.set_sort_order(entry.unit, blended_count)
+		else
+			Unit.set_sort_order(entry.unit, 0)
+		end
 	end
 
 	local particle = {
