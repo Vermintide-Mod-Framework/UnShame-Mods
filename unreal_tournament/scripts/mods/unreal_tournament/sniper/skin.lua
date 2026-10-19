@@ -72,8 +72,8 @@ local CONFIG = {
 	whiz_distance = 150, -- UT units
 	whiz_body_height = 44, -- UT units
 	-- TracerProjectile, which UT spawns for another player's shot and a bot's: a flak chunk's mesh at DrawScale 5 (a flak chunk is 14,
-	-- flak/skin.lua's chunk_scale 0.75) with a flak chunk's streak (FlakTrail), flying at 20000 units a second from where the bullet
-	-- started, through what it hits but walls, for up to 2 s. The streak is drawn as the Flak Cannon's (flak/skin.lua).
+	-- flak/skin.lua's chunk_scale 0.75) with a flak chunk's streak (FlakTrail), flying at 20000 units a second through what it hits but
+	-- walls, for up to 2 s (see add_tracer for where it starts). The streak is drawn as the Flak Cannon's (flak/skin.lua).
 	tracer_scale = 0.75 * 5 / 14,
 	tracer_speed = 20000, -- UT units a second
 	tracer_life = 2, -- s
@@ -238,7 +238,9 @@ local function destroy_tracers()
 	table.clear(tracers)
 end
 
-local function add_tracer(start, direction)
+-- A tracer of a bullet that started at start along direction. UT's starts where the bullet does, at the eye; here it starts at the
+-- muzzle of the rifle in the shooter's hand when there is one, which shows where the shot came from, and flies to where UT's would end.
+local function add_tracer(start, direction, muzzle)
 	local world = Managers.world:has_world("level_world") and Managers.world:world("level_world")
 
 	if not world then
@@ -248,6 +250,14 @@ local function add_tracer(start, direction)
 	-- (it goes until it hits a wall: the level, not the characters)
 	local reach = CONFIG.tracer_speed * CONFIG.tracer_life * UNIT
 	local hit, _, distance = PhysicsWorld.immediate_raycast(World.physics_world(world), start, direction, reach, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
+	local finish = start + direction * (hit and distance or reach)
+
+	if muzzle and Vector3.distance(muzzle, finish) > 0.01 then
+		start = muzzle
+		direction = Vector3.normalize(finish - muzzle)
+	end
+
+	local length = Vector3.distance(start, finish)
 	local unit = World.spawn_unit(world, "units/ut/flak/chunk", start, Quaternion.look(direction, Vector3.up()))
 
 	Unit.set_local_scale(unit, 0, Vector3(CONFIG.tracer_scale, CONFIG.tracer_scale, CONFIG.tracer_scale))
@@ -258,7 +268,7 @@ local function add_tracer(start, direction)
 	tracers[#tracers + 1] = {
 		direction = Vector3Box(direction),
 		from = Vector3Box(start),
-		length = hit and distance or reach,
+		length = length,
 		trail_from = Vector3Box(start),
 		trail_time = 0,
 		travelled = 0,
@@ -329,20 +339,20 @@ sniper.shot_callbacks.sniper_skin = function (owner_unit, hit_position, hit_norm
 		end
 	end
 
+	local holder = third_person_api(owner_unit)
+	local muzzle = holder and holder.third_person.muzzle_position(owner_unit)
+
 	if start then
 		whiz(api, start, direction)
 
 		if not utils.is_local_player_unit(owner_unit) then
-			add_tracer(start, direction)
+			add_tracer(start, direction, muzzle)
 		end
 	end
 
 	if utils.is_local_player_unit(owner_unit) and first_person_api() and not api.third_person.shows_weapon(owner_unit) then
 		return
 	end
-
-	local holder = third_person_api(owner_unit)
-	local muzzle = holder and holder.third_person.muzzle_position(owner_unit)
 
 	if muzzle then
 		third_person_flash(owner_unit, holder)
