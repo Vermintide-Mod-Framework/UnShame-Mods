@@ -23,10 +23,9 @@ local assault = mod.assault
 local CONFIG = {
 	-- The copies of the shot's sound in the bank, each at its own pitch (make_bank.py's ASSAULT_FIRE_PITCHES)
 	fire_sound_pitches = 6,
-	-- The grenade's explosion: the game's own (its smoke and its mark), as the rocket's, and NewExplosionB's fireballs: three, 10 a
-	-- second, of exp1_frames (2 columns by 4 rows), size 60 to 80, life 0.4 to 0.6 s, starting up to 24 units from the middle. The
-	-- sizes and the spread are made larger as the rocket's are (NewExplosionA's 50 to 70 and 24 are 90 to 125 and 36 there).
-	explosion_effect = mod.effects.game_effect("fx/wpnfx_frag_grenade_impact"),
+	-- The grenade's explosion: NewExplosionB's fireballs, three, 10 a second, of exp1_frames (2 columns by 4 rows), size 60 to 80, life
+	-- 0.4 to 0.6 s, starting up to 24 units from the middle. The sizes and the spread are made larger as the rocket's are (NewExplosionA's
+	-- 50 to 70 and 24 are 90 to 125 and 36 there). Unlike the rocket's, it has none of the game's own explosion (set in the game).
 	explosion_fireballs = {
 		sheet = "explosion_c_",
 		columns = 2,
@@ -461,14 +460,9 @@ end
 
 -- The grenade's explosion (Grenade.Explode): NewExplosionB where the grenade is, with no lift off the surface, and BExplosion3. It is
 -- the rocket's NewExplosionA (rocket/skin.lua) with no flash and one sheet, exp1_frames, its fireballs larger and starting anywhere within
--- the sphere. Its smoke and the mark it leaves are the game's own explosion, as the rocket's are.
+-- the sphere.
 mod.skin_explosion_callbacks[assault.explosion] = function (world, position, rotation)
 	skin_apis[1].play_sound_at("ut_assault_grenade_explosion_3d", position)
-
-	if CONFIG.explosion_effect then
-		mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
-	end
-
 	mod.explosion_fireballs(position, CONFIG.explosion_fireballs)
 end
 
