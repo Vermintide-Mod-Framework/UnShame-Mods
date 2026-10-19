@@ -275,10 +275,10 @@ skin_api = mod.weapon_skin.new({
 		meters_per_unit = 0.02 * 0.6,
 		-- (bigger than UT's, for the missile's sake: see MISSILE_RATIO)
 		scale = HELD_SCALE,
-		-- (50 of the mesh's units further back than UT's, which puts the mesh forward)
-		grip_right = -35 / 0.6 + 50,
+		-- (65 of the mesh's units further back than UT's, which puts the mesh forward)
+		grip_right = -35 / 0.6 + 65,
 		-- (the mesh lies alongside the arm, not around it; less of this moves it to the character's right)
-		grip_forward = 17.8 - 30,
+		grip_forward = 17.8 - 15,
 		-- (more of this moves the mesh down)
 		grip_up = 0,
 		yaw = -90,
