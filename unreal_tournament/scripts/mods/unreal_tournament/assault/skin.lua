@@ -285,20 +285,21 @@ local function new_skin(id, mirror)
 		inspect_pivot_forward = 20,
 		inspect_pivot_up = 0,
 		-- UT's third person mesh of the weapon (AssaultAttachment's NewWeapons2004.NewAssaultRifle_3rd) at UT's size in a player's hand
-		-- (DrawScale 0.4). There is one in each hand, where the game puts the brace of pistols (AttachmentNodeLinking). Its origin is by its
-		-- grip, and its barrel runs along its forward, as the pickup's did, so it is turned as the pickup was. The muzzle is the rifle's
-		-- Bone_Flash (Bone_Flash02, below it, is the grenade launcher's). The grip is a start, to be set in the game.
+		-- (AssaultAttachment's DrawScale 0.3, which AssaultRifle.AttachToPawn keeps for two). There is one in each hand, where the game puts
+		-- the brace of pistols (AttachmentNodeLinking). Its origin is by its grip, and its barrel runs along its forward, as the Minigun's
+		-- does, so it is not turned, as the Minigun's copy of the repeater pistol is not in the same hand. The muzzle is the rifle's
+		-- Bone_Flash (Bone_Flash02, below it, is the grenade launcher's).
 		third_person = {
 			id = id,
 			template = TEMPLATE_NAME,
 			unit_name = "units/ut/assault/third_person",
 			hand_node = mirror and "j_leftweaponattach" or "j_rightweaponattach",
-			meters_per_unit = 0.02 * 0.4,
+			meters_per_unit = 0.02 * 0.3,
 			scale = 1,
 			grip_right = 0,
 			grip_forward = 0,
 			grip_up = 0,
-			yaw = -90,
+			yaw = 0,
 			pitch = 0,
 			roll = 0,
 			follow_game_unit = 2,
