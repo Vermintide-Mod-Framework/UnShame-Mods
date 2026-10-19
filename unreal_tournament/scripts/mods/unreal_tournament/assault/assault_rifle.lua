@@ -628,7 +628,7 @@ local function build_charge(source, first)
 		},
 	}
 	-- The charge can start only with a grenade left, and once the grenade's fire rate has passed since the last one
-	action.condition_func = function (unit)
+	local function can_charge(unit)
 		if not utils.is_local_player_unit(unit) then
 			return true
 		end
@@ -637,7 +637,11 @@ local function build_charge(source, first)
 
 		return assault.grenade_count > 0 and since >= CONFIG.grenade_fire_rate
 	end
-	action.chain_condition_func = action.condition_func
+
+	-- (from no action the game first tries the sub-actions other than default that have a condition_func, so the charge in the stance
+	-- has only the chain's)
+	action.condition_func = first and can_charge or nil
+	action.chain_condition_func = can_charge
 
 	return action
 end
