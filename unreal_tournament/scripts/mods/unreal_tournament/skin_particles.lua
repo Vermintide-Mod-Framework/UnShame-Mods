@@ -42,6 +42,7 @@ local mod = get_mod("unreal_tournament")
 --       is (0 to 1) that returns its scale, either a number or a vector in the mesh's axes. spec.brightness is the same for how bright
 --       it is, and replaces fade_in, fade_out and attenuation. spec.unit is the unit. For a mesh with frames, each a unit, spec.unit is the
 --       unit of the first frame and spec.frame is a function of how far into its life the mesh is that returns the name of the unit to show.
+--       spec.material_by is the same for its material, for a texture whose frames it steps through.
 --
 -- Vectors can't be kept from one frame to the next, so they are kept in boxes.
 
@@ -147,6 +148,7 @@ local function add(kind, spec)
 		locked = spec.locked,
 		face_camera = spec.face_camera,
 		frame = spec.frame,
+		material_by = spec.material_by,
 		material_name = material,
 		scale = spec.scale,
 		brightness_by = spec.brightness,
@@ -369,6 +371,17 @@ local function place(particle, dt, camera_position, camera_rotation)
 				particle.entry = entry
 				unit = entry.unit
 				particle.shown = shown
+			end
+		end
+
+		if particle.material_by then
+			local material = particle.material_by(fraction)
+
+			if material ~= particle.entry.material then
+				particle.entry.material = material
+				particle.material_name = material
+
+				Unit.set_material(unit, "m_fx", material)
 			end
 		end
 	elseif particle.kind == "beam" then

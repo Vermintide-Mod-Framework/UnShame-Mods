@@ -45,8 +45,9 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 end
 
 -- The flash is drawn with the model, in the material that uses the model's field of view (fx_weapon_*), so it is in front of the
--- barrels and not hidden by them. The texture is a sheet of 4 that UT picks from at random (mRandTextures). A mesh here keeps one of
--- them for its whole life, where UT also steps through them (mTileAnimation).
+-- barrels and not hidden by them. The texture is a sheet of 4 (mNumTileColumns and mNumTileRows 2): a mesh starts at one of them at
+-- random (mRandTextures) and steps through them over its life (mTileAnimation).
+local TILES = 4
 function mod.muzzle_flash(emitter, follow, world_unit, draw_scale, locked, emitter_settings)
 	local settings = emitter_settings or CONFIG
 	local _, camera_rotation = utils.camera_pose()
@@ -80,8 +81,8 @@ function mod.muzzle_flash(emitter, follow, world_unit, draw_scale, locked, emitt
 		ends[#ends + 1] = now + life
 
 		particles.mesh({
-			-- (FB_Brighten: its material brightens what is behind it by its luminance, see make_combo_materials.py, with no added part of
-			-- its own)
+			-- (FB_Brighten: its material brightens what is behind it as FB_Brighten does, see make_combo_materials.py, with no added part
+			-- of its own)
 			additive = 0,
 			brightness = function (fraction)
 				return attenuation(fraction, settings.attenuation)
@@ -91,6 +92,9 @@ function mod.muzzle_flash(emitter, follow, world_unit, draw_scale, locked, emitt
 			locked = locked or nil,
 			life = life,
 			material = "units/ut/fx/fx_weapon_minigun_burst_" .. tile,
+			material_by = function (fraction)
+				return "units/ut/fx/fx_weapon_minigun_burst_" .. (tile + math.min(math.floor(fraction * TILES), TILES - 1)) % TILES
+			end,
 			rotation = rotation,
 			scale = function (fraction)
 				return (start + settings.growth * fraction * life) * factor

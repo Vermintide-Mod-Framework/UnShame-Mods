@@ -302,7 +302,6 @@ print('wrote fx_sniper_screen_graph.material and lightning_gun_m1.material, %d n
 IN_DOT_A, IN_DOT_B = '1227923c-0ef1-4823-b673-301cc9a5fc69', '0e627d0f-2503-4925-9811-d44aca00e49c'
 IN_SUBTRACT_A, IN_SUBTRACT_B = 'd5e375bc-daa4-4464-8448-14bf08d97f0e', 'cff85d3c-d5da-4ffc-ad20-f3872809ac4f'
 IN_ADD_A, IN_ADD_B = 'f72597c4-7487-419a-affb-df690e6582e1', '0806db0d-2c4a-43ca-99cc-f5a2f036a8e8'
-IN_MIN_A, IN_MIN_B = 'f72597c4-7487-419a-affb-af690e6582e1', '0806db0d-2c4a-43ca-99cc-a5a2f036a8e8'
 IN_CONSTANT_VECTOR3 = '6ff26be7-68a1-4b89-b9dd-551d216086c2'
 IN_CONSTANT_SCALAR = 'c4d6bc08-c489-430f-a836-ed490e59c3f9'
 LINEAR_SAMPLE_OPTIONS = ('5dd59b3d-1762-4a14-9930-7500230ef3db', 'f669a3a6-0376-4187-840e-80000e2939d5', 'e94e53e6-49b6-4194-a747-8f064a5932e0')
@@ -332,28 +331,19 @@ def shield_graph(pan_u, pan_v, lines_alpha, world=False):
     brightened(shield)
     return shield
 
-# Draws a graph's 'color' node as FB_Brighten does, as near as one number for the three channels can: c + d * (1 - a). FB_Brighten is
-# exact in each channel; one number can only be exact in one. With a the luminance of c (the shield above) it is right for a grey and
-# near for a pale colour. With a the weakest channel of c ('min') it is right in that channel, and in no channel does it keep less of
-# what is behind than FB_Brighten does: a saturated flash, which keeps much of what is behind in its weak channels, looked too solid with
-# the luminance. The opacity is the intensity, and additive is 1 - a plus the particles' own additive, which they set to 0 for these.
-# The Redeemer blast's materials don't need this: they are drawn by BRIGHTEN, which blends each channel as FB_Brighten does.
-def brightened(graph, coverage='luminance'):
+# Draws a graph's 'color' node as FB_Brighten does, as near as one number for the three channels can: c + d * (1 - a), with a the
+# luminance of c. FB_Brighten is exact in each channel; one number can only be exact in one, and the luminance is right for a grey and
+# near for a pale colour. The opacity is the intensity, and additive is 1 - a plus the particles' own additive, which they set to 0 for
+# these. The shield is drawn this way; the other FB_Brighten materials are drawn by BRIGHTEN, which blends each channel as FB_Brighten
+# does.
+def brightened(graph):
     graph.connect('color', 'out', IN_OUT_BASE_COLOR)
     graph.connect('intensity', 'out', IN_OUT_OPACITY)
-    if coverage == 'min':
-        graph.add('green_blue', 'core/shader_nodes/min')
-        graph.connect('color', 'green_blue', IN_MIN_A, 'g')
-        graph.connect('color', 'green_blue', IN_MIN_B, 'b')
-        graph.add('luminance', 'core/shader_nodes/min')
-        graph.connect('color', 'luminance', IN_MIN_A, 'r')
-        graph.connect('green_blue', 'luminance', IN_MIN_B)
-    else:
-        graph.add('weights', 'core/shader_nodes/constant_vector3')
-        graph.constant('weights', IN_CONSTANT_VECTOR3, [0.2126, 0.7152, 0.0722])
-        graph.add('luminance', 'core/shader_nodes/dot')
-        graph.connect('color', 'luminance', IN_DOT_A)
-        graph.connect('weights', 'luminance', IN_DOT_B)
+    graph.add('weights', 'core/shader_nodes/constant_vector3')
+    graph.constant('weights', IN_CONSTANT_VECTOR3, [0.2126, 0.7152, 0.0722])
+    graph.add('luminance', 'core/shader_nodes/dot')
+    graph.connect('color', 'luminance', IN_DOT_A)
+    graph.connect('weights', 'luminance', IN_DOT_B)
     graph.add('one', 'core/shader_nodes/constant_scalar')
     graph.constant('one', IN_CONSTANT_SCALAR, 1)
     graph.add('see_through', 'core/shader_nodes/subtract')
@@ -377,12 +367,13 @@ write('shield_rip_world', shield_graph(0.35 * math.cos(RIP_PAN), 0.35 * math.sin
 
 # ---------------------------------------------------------------- the particles that UT draws with FB_Brighten
 # The Minigun's first person flash (MinigunMuzFlash1stFinal, FB_Brighten) and the dust where its rounds hit (pclImpactSmoke, STY_Translucent,
-# which is the same: c + d * (1 - c) for each channel) are drawn by these, by their weakest channel (see brightened). The texture is read
-# as it is (not srgb), and the colour is its own, tinted. fx_particle_brighten_graph draws with the camera's field of view and
-# fx_particle_weapon_brighten_graph with the weapons'. make_weapon_fx.py derives a material of each of those textures from them.
+# which is the same: c + d * (1 - c) for each channel) are drawn by these, with the node that blends each channel as FB_Brighten does
+# (BRIGHTEN). The texture is read as it is (not srgb), and the colour is its own, tinted. fx_particle_brighten_graph draws with the
+# camera's field of view and fx_particle_weapon_brighten_graph with the weapons'. make_weapon_fx.py derives a material of each of those
+# textures from them.
 def brighten_graph(weapon):
     graph = Graph()
-    graph.add('out', 'core/stingray_renderer/output_nodes/unlit_base', OUT_OPTIONS + ((CUSTOM_FOV,) if weapon else ()))
+    graph.add('out', BRIGHTEN, OUT_OPTIONS + ((CUSTOM_FOV,) if weapon else ()))
     graph.add('uv', 'core/shader_nodes/texture_coordinate0')
     # (the particles set the age of every material, which these don't use)
     graph.add('time', 'core/shader_nodes/material_variable', export=float_variable('age', 'Age', 0), title='Age')
@@ -392,7 +383,10 @@ def brighten_graph(weapon):
     graph.add('texture', 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('texture_map'), title='texture_map')
     graph.connect('uv', 'texture', IN_SAMPLE_UV)
     multiply(graph, 'color', 'texture', 'tint', 'rgb')
-    brightened(graph, 'min')
+    graph.connect('color', 'out', IN_OUT_BASE_COLOR)
+    graph.connect('intensity', 'out', IN_OUT_OPACITY)
+    # (the particles set "additive" on every material: with this node it only changes the alpha, which the blend doesn't use)
+    graph.connect('additive', 'out', IN_OUT_ADDITIVE)
     return graph
 
 for name, weapon in (('particle_brighten', False), ('particle_weapon_brighten', True)):
