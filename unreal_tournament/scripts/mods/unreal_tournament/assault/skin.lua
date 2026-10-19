@@ -21,6 +21,8 @@ local VARIANTS = { "assault_rifle", "assault_rifle_dr" }
 local assault = mod.assault
 
 local CONFIG = {
+	-- The copies of the shot's sound in the bank, each at its own pitch (make_bank.py's ASSAULT_FIRE_PITCHES)
+	fire_sound_pitches = 6,
 	-- AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2 (see muzzle_flash.lua), with MinigunMuzFlash1st's numbers at UT's size,
 	-- as the Sniper Rifle's: the Minigun's own is drawn at half of it (its fit), which was fitted to pictures of UT with a blend that
 	-- showed the flash bigger than it is; on this rifle that looked too small beside UT's (set in the game)
@@ -215,14 +217,17 @@ mod.assault_round_callbacks.assault_skin = function (owner_unit)
 		weapon_light(owner_unit, right)
 	end
 
-	-- (a round's sound stops the shooter's last one, as UT plays it in the weapon's sound slot: WeaponFire.ServerPlayFiring)
+	-- (a round's sound stops the shooter's last one, as UT plays it in the weapon's sound slot: WeaponFire.ServerPlayFiring. Its pitch
+	-- is one of the bank's copies at random, as UT's P1AssaultRifleFire varies it each time: make_bank.py's ASSAULT_FIRE_PITCHES)
 	right.stop_sound(fire_sounds[owner_unit])
 	fire_sounds[owner_unit] = nil
+
+	local pitch = math.random(1, CONFIG.fire_sound_pitches)
 
 	if utils.is_local_player_unit(owner_unit) and right.state() then
 		play_both("Fire")
 
-		fire_sounds[owner_unit] = right.play_sound("ut_assault_fire")
+		fire_sounds[owner_unit] = right.play_sound("ut_assault_fire_" .. pitch)
 
 		for _, api in ipairs(skin_apis) do
 			flash(api)
@@ -234,7 +239,7 @@ mod.assault_round_callbacks.assault_skin = function (owner_unit)
 	local hand = right.third_person.muzzle_position(owner_unit)
 
 	if hand then
-		fire_sounds[owner_unit] = right.play_sound_at("ut_assault_fire_3d", hand)
+		fire_sounds[owner_unit] = right.play_sound_at("ut_assault_fire_3d_" .. pitch, hand)
 	end
 end
 

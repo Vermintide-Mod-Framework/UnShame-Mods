@@ -14,6 +14,8 @@ OUT = REPO + '/wwise/unreal_tournament'
 # head, volume in dB, and for those from where they are the distance in meters they are heard from
 SOUNDS = 'WeaponSounds/Sound/'
 NEW_SOUNDS = 'NewWeaponSounds/Sound/'
+# The pitches of the Assault Rifle's shot, from the lowest that P1AssaultRifleFire's PitchVariance (-10 percent) gives to its own
+ASSAULT_FIRE_PITCHES = (0.9, 0.92, 0.94, 0.96, 0.98, 1.0)
 # (the male announcer pack of UT2004, the one its reward announcements are by default. The names of the kills are the ones
 # MultiKillMessage.KillSoundName has)
 ANNOUNCER = 'announcermale2k4/Sound/'
@@ -134,12 +136,14 @@ WEAPONS = {
         ('ut_redeemer_explosion_3d', SOUNDS + 'redeemer_explosionsound', True, -10, 200),
     ],
     'assault_rifle': [
-        ('ut_assault_fire', SOUNDS + 'BAssaultRifleFire', False, -22, 0),
+        # (AssaultFire.FireSound is a ProceduralSound, P1AssaultRifleFire: BAssaultRifleFire at a pitch that varies by PitchVariance -10,
+        # up to 10 percent lower each time. A copy for each of ASSAULT_FIRE_PITCHES, of which skin.lua plays one at random.)
+        *[('ut_assault_fire_%d' % (i + 1), SOUNDS + 'BAssaultRifleFire', False, -22, 0) for i in range(len(ASSAULT_FIRE_PITCHES))],
+        *[('ut_assault_fire_3d_%d' % (i + 1), SOUNDS + 'BAssaultRifleFire', True, -22, 40) for i in range(len(ASSAULT_FIRE_PITCHES))],
         # (AssaultGrenade.FireSound and ReloadSound: the grenade's shot, and the drum turning to the next one)
         ('ut_assault_alt_fire', NEW_SOUNDS + 'NewGrenadeShoot', False, -22, 0),
         ('ut_assault_grenade_load', SOUNDS + 'BReload9', False, -26, 0),
         ('ut_assault_select', SOUNDS + 'SwitchToAssaultRifle', False, -24, 0),
-        ('ut_assault_fire_3d', SOUNDS + 'BAssaultRifleFire', True, -22, 40),
         ('ut_assault_alt_fire_3d', NEW_SOUNDS + 'NewGrenadeShoot', True, -22, 40),
         # (Grenade.ImpactSound P1GrenFloor1 and its explosion, BExplosion3)
         ('ut_assault_grenade_bounce_3d', SOUNDS + 'BGrenfloor1', True, -24, 25),
@@ -232,6 +236,10 @@ PITCH = {
     # (SniperFire.PlayFiring plays it with a pitch of 1.1)
     'ut_lightning_charge': 1.1,
 }
+
+for index, pitch in enumerate(ASSAULT_FIRE_PITCHES):
+    PITCH['ut_assault_fire_%d' % (index + 1)] = pitch
+    PITCH['ut_assault_fire_3d_%d' % (index + 1)] = pitch
 
 # Plays 16 bit samples faster by a factor, by reading them at that step, between two samples in a line
 def faster(pcm, channels, factor):
