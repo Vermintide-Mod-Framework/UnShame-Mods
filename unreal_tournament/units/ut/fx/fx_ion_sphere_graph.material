@@ -261,96 +261,6 @@ shader = {
 				instance_id = "c0de0001-0000-4000-8000-000000000004"
 			}
 		}
-		{
-			destination = {
-				connector_id = "f72597c4-7487-419a-affb-af690e6582e1"
-				instance_id = "c0de0001-0000-4000-8000-000000000026"
-			}
-			select = [
-				"g"
-			]
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000025"
-			}
-		}
-		{
-			destination = {
-				connector_id = "0806db0d-2c4a-43ca-99cc-a5a2f036a8e8"
-				instance_id = "c0de0001-0000-4000-8000-000000000026"
-			}
-			select = [
-				"b"
-			]
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000025"
-			}
-		}
-		{
-			destination = {
-				connector_id = "f72597c4-7487-419a-affb-af690e6582e1"
-				instance_id = "c0de0001-0000-4000-8000-000000000027"
-			}
-			select = [
-				"r"
-			]
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000025"
-			}
-		}
-		{
-			destination = {
-				connector_id = "0806db0d-2c4a-43ca-99cc-a5a2f036a8e8"
-				instance_id = "c0de0001-0000-4000-8000-000000000027"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000026"
-			}
-		}
-		{
-			destination = {
-				connector_id = "d5e375bc-daa4-4464-8448-14bf08d97f0e"
-				instance_id = "c0de0001-0000-4000-8000-000000000029"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000028"
-			}
-		}
-		{
-			destination = {
-				connector_id = "cff85d3c-d5da-4ffc-ad20-f3872809ac4f"
-				instance_id = "c0de0001-0000-4000-8000-000000000029"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000027"
-			}
-		}
-		{
-			destination = {
-				connector_id = "f72597c4-7487-419a-affb-df690e6582e1"
-				instance_id = "c0de0001-0000-4000-8000-000000000030"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000029"
-			}
-		}
-		{
-			destination = {
-				connector_id = "0806db0d-2c4a-43ca-99cc-f5a2f036a8e8"
-				instance_id = "c0de0001-0000-4000-8000-000000000030"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000006"
-			}
-		}
-		{
-			destination = {
-				connector_id = "c9a30d71-a8ad-4b9e-aedf-d785ae7e301f"
-				instance_id = "c0de0001-0000-4000-8000-000000000001"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000030"
-			}
-		}
 	]
 	constants = [
 		{
@@ -438,14 +348,6 @@ shader = {
 				0.1
 			]
 		}
-		{
-			connector_id = "c4d6bc08-c489-430f-a836-ed490e59c3f9"
-			id = "c0de0001-0000-4000-8000-000000001010"
-			instance_id = "c0de0001-0000-4000-8000-000000000028"
-			value = [
-				1
-			]
-		}
 	]
 	groups = [
 	]
@@ -470,7 +372,7 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/stingray_renderer/output_nodes/unlit_base"
+			type = "units/ut/fx/brighten_base"
 		}
 		{
 			content_size = [
@@ -983,96 +885,6 @@ shader = {
 			samplers = {
 			}
 			type = "core/shader_nodes/mul"
-		}
-		{
-			content_size = [
-				160
-				0
-			]
-			export = {
-			}
-			id = "c0de0001-0000-4000-8000-000000000026"
-			options = [
-			]
-			position = [
-				300
-				800
-			]
-			samplers = {
-			}
-			type = "core/shader_nodes/min"
-		}
-		{
-			content_size = [
-				160
-				0
-			]
-			export = {
-			}
-			id = "c0de0001-0000-4000-8000-000000000027"
-			options = [
-			]
-			position = [
-				600
-				800
-			]
-			samplers = {
-			}
-			type = "core/shader_nodes/min"
-		}
-		{
-			content_size = [
-				160
-				0
-			]
-			export = {
-			}
-			id = "c0de0001-0000-4000-8000-000000000028"
-			options = [
-			]
-			position = [
-				900
-				800
-			]
-			samplers = {
-			}
-			type = "core/shader_nodes/constant_scalar"
-		}
-		{
-			content_size = [
-				160
-				0
-			]
-			export = {
-			}
-			id = "c0de0001-0000-4000-8000-000000000029"
-			options = [
-			]
-			position = [
-				1200
-				800
-			]
-			samplers = {
-			}
-			type = "core/shader_nodes/subtract"
-		}
-		{
-			content_size = [
-				160
-				0
-			]
-			export = {
-			}
-			id = "c0de0001-0000-4000-8000-000000000030"
-			options = [
-			]
-			position = [
-				1500
-				800
-			]
-			samplers = {
-			}
-			type = "core/shader_nodes/add"
 		}
 	]
 	version = 3

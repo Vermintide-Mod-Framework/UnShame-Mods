@@ -105,8 +105,12 @@ class Graph:
 
         return text
 
-def common(graph):
-    graph.add('out', 'core/stingray_renderer/output_nodes/unlit_base', OUT_OPTIONS)
+UNLIT = 'core/stingray_renderer/output_nodes/unlit_base'
+# (the unlit node that blends as FB_Brighten does: make_brighten_node.py)
+BRIGHTEN = 'units/ut/fx/brighten_base'
+
+def common(graph, output=UNLIT):
+    graph.add('out', output, OUT_OPTIONS)
     graph.add('uv', 'core/shader_nodes/texture_coordinate0')
     # (the time of the panning is how long the effect has been going, set by the particle: UT's panners start with the effect, not with the game)
     graph.add('time', 'core/shader_nodes/material_variable', export=float_variable('age', 'Age', 0), title='Age')
@@ -333,6 +337,7 @@ def shield_graph(pan_u, pan_v, lines_alpha, world=False):
 # near for a pale colour. With a the weakest channel of c ('min') it is right in that channel, and in no channel does it keep less of
 # what is behind than FB_Brighten does: a saturated flash, which keeps much of what is behind in its weak channels, looked too solid with
 # the luminance. The opacity is the intensity, and additive is 1 - a plus the particles' own additive, which they set to 0 for these.
+# The Redeemer blast's materials don't need this: they are drawn by BRIGHTEN, which blends each channel as FB_Brighten does.
 def brightened(graph, coverage='luminance'):
     graph.connect('color', 'out', IN_OUT_BASE_COLOR)
     graph.connect('intensity', 'out', IN_OUT_OPACITY)
@@ -406,7 +411,7 @@ for name, weapon in (('particle_brighten', False), ('particle_weapon_brighten', 
 # intensity (its fade).
 IN_SIN = '0505200e-439a-476b-b6a6-d643cf80e20b'
 ion = Graph()
-common(ion)
+common(ion, BRIGHTEN)
 
 def vector2(graph, name, value):
     graph.add(name, 'core/shader_nodes/constant_vector2')
@@ -456,9 +461,8 @@ ion.connect('second', 'mix', IN_LERP_A, 'rgb')
 ion.connect('first', 'mix', IN_LERP_B, 'rgb')
 ion.connect('first', 'mix', IN_LERP_W, 'a')
 multiply(ion, 'color', 'mix', 'tint')
-# (by its weakest channel: the fire is a saturated orange, which by its luminance kept too little of the blue behind it and turned the
-# world brown, where FB_Brighten only ever brightens)
-brightened(ion, 'min')
+ion.connect('color', 'out', IN_OUT_BASE_COLOR)
+ion.connect('intensity', 'out', IN_OUT_OPACITY)
 write('ion_sphere', ion, {'burn_map': 'ion_burn'})
 
 # ---------------------------------------------------------------- the Redeemer blast's ring
@@ -470,7 +474,7 @@ write('ion_sphere', ion, {'burn_map': 'ion_burn'})
 #   the second, TexPanner3 (up V, 0.4 of the texture a second) of TexScaler6 (U times 0.5, moved by 128 texels)
 # The shader's opacity is Grad_Falloff too, which FB_Brighten leaves out.
 ring = Graph()
-common(ring)
+common(ring, BRIGHTEN)
 
 def sample(graph, name, slot, uv):
     graph.add(name, 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler(slot), title=slot)
@@ -488,6 +492,6 @@ ring.connect('second', 'mix', IN_LERP_A, 'rgb')
 ring.connect('first', 'mix', IN_LERP_B, 'rgb')
 ring.connect('falloff', 'mix', IN_LERP_W, 'a')
 multiply(ring, 'color', 'mix', 'tint')
-# (by its weakest channel, as the sphere)
-brightened(ring, 'min')
+ring.connect('color', 'out', IN_OUT_BASE_COLOR)
+ring.connect('intensity', 'out', IN_OUT_OPACITY)
 write('flame_ring', ring, {'flame_map': 'flame_gradient', 'falloff_map': 'grad_falloff'})
