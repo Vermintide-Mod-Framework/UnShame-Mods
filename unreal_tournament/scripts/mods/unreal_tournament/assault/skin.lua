@@ -21,8 +21,19 @@ local TEMPLATE_NAME = mod.items.weapons[SETTING_ID].template
 local assault = mod.assault
 
 local CONFIG = {
-	-- AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2 (see muzzle_flash.lua)
+	-- AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2 (see muzzle_flash.lua), with MinigunMuzFlash1st's numbers at UT's size,
+	-- as the Sniper Rifle's: the Minigun's own is drawn at half of it (its fit), which was fitted to pictures of UT with a blend that
+	-- showed the flash bigger than it is; on this rifle that looked too small beside UT's (set in the game)
 	flash_draw_scale = 1.2,
+	muzzle_flash = {
+		count = 5,
+		scale = { 0.05, 0.08 },
+		growth = 3,
+		life = { 0.1, 0.15 },
+		attenuation = 0.2,
+		color = { 1, 1, 1 },
+		fit = 1,
+	},
 	-- AssaultMuzFlash3rd, on each rifle in a character's hands for a round (AssaultAttachment.MakeMuzzleFlash, which flashes the twin
 	-- too), and on the throwing rifle's grenade launcher for a grenade (its tip2, Bone_Flash02): MinigunMuzFlash3rd at DrawScale 0.6,
 	-- as the Sniper Rifle's, which has it at 1 (see the Sniper Rifle's skin)
@@ -104,7 +115,7 @@ local function flash(api)
 		if api.state() == skin then
 			return api.model_point_in_view()
 		end
-	end)
+	end, CONFIG.muzzle_flash)
 end
 
 -- Plays an animation on both rifles
