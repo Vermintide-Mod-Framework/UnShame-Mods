@@ -439,7 +439,7 @@ mod.skin_explosion_callbacks[assault.explosion] = function (world, position, rot
 end
 
 -- The rifles in the characters' hands, for each item (tipped down from the hand's forward, so that they lie along the forearm, the left a
--- little in; Bardin's sit 10 further along the barrel and 5 higher: set in the game). The grip is the point of the mesh in the hand, so the
+-- little in; Bardin's sit 10 further along the barrel and higher: set in the game). The grip is the point of the mesh in the hand, so the
 -- rifle moves the other way.
 local GRIPS = {
 	assault_rifle = {
@@ -447,7 +447,7 @@ local GRIPS = {
 		left = { forward = 0, up = 2, yaw = -10, pitch = -25 },
 	},
 	assault_rifle_dr = {
-		right = { forward = -10, up = 2, yaw = 0, pitch = -45 },
+		right = { forward = -10, up = -3, yaw = 0, pitch = -45 },
 		left = { forward = -10, up = -3, yaw = -10, pitch = -25 },
 	},
 }
