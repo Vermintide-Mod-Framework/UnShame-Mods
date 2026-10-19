@@ -53,7 +53,7 @@ local CONFIG = {
 	smoke_fade_out = 2,
 	smoke_rise = 20, -- UT units a second squared
 	-- (set from pictures of UT, where the smoke starts at the eye's height, not the 10 above it of SmokeOffsetZ, and is an even light
-	-- grey: its texture's colour is made white, make_weapon_fx.py's WHITE)
+	-- grey with faint darker spots: its texture's colour is moved half way to white, make_weapon_fx.py's LIGHTENED)
 	smoke_ahead = 25,
 	smoke_up = 0,
 	smoke_color = { 0.85, 0.85, 0.85 },
