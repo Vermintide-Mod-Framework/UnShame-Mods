@@ -78,6 +78,7 @@ local CONFIG = {
 	-- its shot (attack_shoot_fast), and they leave it (attack_finished) this long after the last of them, once the rifle does nothing
 	-- (set in the game)
 	stance_linger = 0.5, -- s
+	stance_linger_alt = 1, -- s, after the grenade's charge or throw
 	-- In the stance the arms reach out and the pistols point along them, so both rifles are level with the pistols then (pitch and yaw 0
 	-- from the hand's forward, where they are tipped down to lie along the forearm otherwise), turning there and back over this long
 	-- (set in the game)
@@ -189,7 +190,7 @@ end
 mod.assault_round_callbacks.assault_skin = function (owner_unit)
 	local right = skin_apis[1]
 
-	saw_stance(owner_unit)
+	saw_stance(owner_unit, CONFIG.stance_linger)
 
 	if not right then
 		return
@@ -254,7 +255,7 @@ mod.assault_grenade_callbacks.assault_skin = function (grenade)
 		world = world,
 	}
 
-	saw_stance(grenade.owner_unit)
+	saw_stance(grenade.owner_unit, CONFIG.stance_linger_alt)
 
 	-- (the flash at the grenade launcher of the rifle that threw it, and the light)
 	local thrower = skin_apis[grenade.left and 2 or 1]
@@ -281,22 +282,33 @@ mod.assault_grenade_callbacks.assault_skin = function (grenade)
 end
 
 -- The characters' stance and shots (see stance_linger), sent from the machine that runs the character's actions, the player's or the
--- host's for a bot, as the game sends its own: [character] = when the rifle last did something
+-- host's for a bot, as the game sends its own: [character] = { last = when the rifle last did something, linger = how long the stance
+-- is kept after it }
 local in_stance = {}
 
 -- Every machine sees the rounds and the grenades, and so when each character is in the stance, for the rifles' angles: [character] =
--- { last = when the rifle last did something, weight = how far the rifles are turned to level, 0 to 1 }. The charge is seen only by the
--- machine that runs the character, so the others turn the rifles at the throw.
+-- { last, linger, weight = how far the rifles are turned to level, 0 to 1 }. The charge is seen only by the machine that runs the
+-- character, so the others turn the rifles at the throw.
 local stances = {}
 
-saw_stance = function (unit)
+-- (without a linger, the stance keeps the one it has)
+saw_stance = function (unit, linger)
 	local stance = stances[unit] or { weight = 0 }
 
 	stance.last = Managers.time:time("game")
+	stance.linger = linger or stance.linger or CONFIG.stance_linger
 	stances[unit] = stance
 end
 
--- Takes the stance if the character is not in it, and with shoot plays its shot
+local function keep_stance(unit, linger)
+	local entry = in_stance[unit] or {}
+
+	entry.last = Managers.time:time("game")
+	entry.linger = linger or entry.linger or CONFIG.stance_linger
+	in_stance[unit] = entry
+end
+
+-- Takes the stance if the character is not in it, and with shoot (the grenade's) plays its shot
 shot_animation = function (unit, shoot)
 	local network_manager = Managers.state.network
 
@@ -308,7 +320,7 @@ shot_animation = function (unit, shoot)
 		network_manager:anim_event(unit, "lock_target")
 	end
 
-	in_stance[unit] = Managers.time:time("game")
+	keep_stance(unit, shoot and CONFIG.stance_linger_alt or CONFIG.stance_linger)
 
 	if shoot then
 		network_manager:anim_event(unit, "attack_shoot_fast")
@@ -326,15 +338,16 @@ end
 mod.dummy_start_callbacks.assault_stance = function (action, new_action)
 	local unit = action.owner_unit
 
-	if new_action.ut_assault_charge and not in_stance[unit] and Managers.state.network then
+	if not new_action.ut_assault_charge then
+		return
+	end
+
+	if not in_stance[unit] and Managers.state.network then
 		Managers.state.network:anim_event(unit, "lock_target")
-
-		in_stance[unit] = Managers.time:time("game")
 	end
 
-	if new_action.ut_assault_charge then
-		saw_stance(unit)
-	end
+	keep_stance(unit, CONFIG.stance_linger_alt)
+	saw_stance(unit, CONFIG.stance_linger_alt)
 end
 
 -- Whether the rifle in the character's hands is doing something (a round or the charge)
@@ -350,15 +363,15 @@ end
 local function update_stances()
 	local now = Managers.time:time("game")
 
-	for unit, last in pairs(in_stance) do
+	for unit, entry in pairs(in_stance) do
 		if not Unit.alive(unit) or utils.wielded_template_name(unit) ~= TEMPLATE_NAME then
 			-- (the wield of another weapon plays its own stance)
 			in_stance[unit] = nil
 		elseif rifle_busy(unit) then
-			in_stance[unit] = now
+			entry.last = now
 
 			saw_stance(unit)
-		elseif now - last > CONFIG.stance_linger then
+		elseif now - entry.last > entry.linger then
 			in_stance[unit] = nil
 
 			if Managers.state.network then
@@ -374,7 +387,7 @@ local function update_angles(dt)
 	local step = dt / CONFIG.stance_blend
 
 	for unit, stance in pairs(stances) do
-		local wanted = Unit.alive(unit) and now - stance.last <= CONFIG.stance_linger and 1 or 0
+		local wanted = Unit.alive(unit) and now - stance.last <= stance.linger and 1 or 0
 
 		stance.weight = math.clamp(stance.weight + (wanted > stance.weight and step or -step), 0, 1)
 
