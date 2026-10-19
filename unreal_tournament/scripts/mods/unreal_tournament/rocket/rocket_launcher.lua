@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
--- Rocket Launcher: a copy of the witch hunter's Repeating Crossbow with its fire modes replaced, the same way the Flak Cannon is
--- a copy of the Blunderbuss. The numbers are from UT2004 (XWeapons/RocketFire, RocketMultiFire and RocketProj).
+-- Rocket Launcher: made on the shell of the witch hunter's Repeating Crossbow (utils.template_shell), as the Flak Cannon is of the
+-- Blunderbuss. The numbers are from UT2004 (XWeapons/RocketFire, RocketMultiFire and RocketProj).
 --   LMB: fires a rocket that explodes where it hits.
 --   RMB (held): loads rockets, one at first and then another every load_interval seconds, up to three.
 --               Releasing RMB fires them all in a line.
@@ -240,11 +240,17 @@ register_explosion_template("ut_rocket_explosion", {
 })
 
 -- Weapon template
--- The sub actions keep their names: default is the single rocket, and zoomed_shot is the loaded rockets. Only what they are made
--- of changes.
+-- The sub actions keep the crossbow's names: default is the single rocket, and zoomed_shot is the loaded rockets.
 
-local function build_rocket_action(source, is_salvo)
-	local action = table.clone(source)
+local function enter_function(attacker_unit, input_extension)
+	input_extension:clear_input_buffer()
+
+	return input_extension:reset_release_input()
+end
+
+-- A shot of the crossbow (kind "crossbow") that fires rockets. The values that are not UT's are the ones it had as a copy of the
+-- crossbow's shots: how loud it is to enemies, the talents' kind of hit (charge_value), its cleave and its recoil.
+local function build_rocket_action(is_salvo)
 	local projectile_info = table.clone(Projectiles.repeating_crossbow_bolt)
 
 	projectile_info.gravity_settings = CONFIG.rocket_gravity_settings
@@ -252,53 +258,109 @@ local function build_rocket_action(source, is_salvo)
 	projectile_info.unit_life_time = CONFIG.rocket_lifetime
 	projectile_info.life_time = CONFIG.rocket_lifetime
 
-	action.projectile_info = projectile_info
-	action.speed = CONFIG.rocket_speed
-	action.ut_aoe_callback = "rocket"
-	action.ut_init_flow_event_filter = "rocket"
-	action.ut_skin_init_callback = "rocket"
-	action.ut_rocket = true
-	action.spread_template_override = SPREAD_TEMPLATE
-
-	-- The rocket is a grenade, so the first enemy it hits sets off the explosion.
-	action.impact_data = {
-		aoe = ExplosionTemplates.ut_rocket_explosion,
-		damage_profile = "ut_rocket",
-		grenade = true,
+	local action = {
+		kind = "crossbow",
+		weapon_action_hand = "left",
+		anim_event = "attack_shoot",
+		ammo_usage = 1,
+		speed = CONFIG.rocket_speed,
+		projectile_info = projectile_info,
+		-- The rocket is a grenade, so the first enemy it hits sets off the explosion.
+		impact_data = {
+			aoe = ExplosionTemplates.ut_rocket_explosion,
+			damage_profile = "ut_rocket",
+			grenade = true,
+		},
+		cleave_distribution = {
+			attack = 0.2,
+			impact = 0.2,
+		},
+		hit_effect = "arrow_impact",
+		alert_sound_range_fire = 4,
+		alert_sound_range_hit = 2,
+		apply_recoil = true,
+		reload_when_out_of_ammo = true,
+		spread_template_override = SPREAD_TEMPLATE,
+		enter_function = enter_function,
+		ut_aoe_callback = "rocket",
+		ut_init_flow_event_filter = "rocket",
+		ut_skin_init_callback = "rocket",
+		ut_rocket = true,
 	}
 
-	local interval = is_salvo and CONFIG.salvo_fire_interval or CONFIG.fire_interval
-
-	-- The next shot, or the aiming, can start only once the launcher can fire again. UT does not start either mode while the other
-	-- one is waiting for its fire rate.
-	for _, chain in ipairs(action.allowed_chain_actions) do
-		if chain.action == "action_one" or chain.action == "action_two" then
-			chain.start_time = interval
-		end
-	end
-
 	if is_salvo then
+		-- The loaded rockets fly out in a line. Firing the salvo ends the aiming: the weapon goes back to neutral, and the player has to
+		-- release the aiming button before aiming again (see needs_release). There is no reloading during the salvo, as during the
+		-- aiming.
+		action.anim_event_last_ammo = "attack_shoot"
+		action.anim_event_no_ammo_left = "attack_shoot"
+		action.anim_end_event = "to_unzoom"
+		action.anim_end_event_condition_func = function (unit, end_reason)
+			return end_reason ~= "new_interupting_action"
+		end
+		action.total_time = CONFIG.salvo_fire_interval
 		action.num_projectiles = CONFIG.max_rockets
 		action.multi_projectile_spread = CONFIG.rocket_line_spread
+		action.charge_value = "zoomed_arrow_hit"
+		action.recoil_settings = {
+			climb_duration = 0.15,
+			horizontal_climb = 0,
+			restore_duration = 0.2,
+			vertical_climb = 2,
+			climb_function = math.easeInCubic,
+			restore_function = math.ease_out_quad,
+		}
+		action.allowed_chain_actions = {
+			{
+				action = "action_wield",
+				input = "action_wield",
+				start_time = 0.4,
+				sub_action = "default",
+			},
+		}
 		action.ut_rocket_salvo = true
-
-		-- Firing the salvo ends the aiming. The weapon goes back to neutral, and the player has to release the aiming button
-		-- before aiming again (see needs_release).
-		action.hold_input = nil
-		action.minimum_hold_time = nil
-		action.total_time = interval
 		action.ut_init_callback = "rocket"
-
-		-- There is no reloading during the salvo either, like during the aiming.
-		for i = #action.allowed_chain_actions, 1, -1 do
-			local chain = action.allowed_chain_actions[i]
-
-			if chain.sub_action == "zoomed_shot" or chain.action == "weapon_reload" then
-				table.remove(action.allowed_chain_actions, i)
-			end
-		end
 	else
-		action.total_time = interval
+		-- The next shot, or the aiming, can start only once the launcher can fire again. UT does not start either mode while the other
+		-- one is waiting for its fire rate.
+		action.anim_event_last_ammo = "attack_shoot_last"
+		action.anim_event_no_ammo_left = "attack_shoot_last"
+		action.total_time = CONFIG.fire_interval
+		action.charge_value = "arrow_hit"
+		action.recoil_settings = {
+			climb_duration = 0.15,
+			horizontal_climb = 0,
+			restore_duration = 0.2,
+			vertical_climb = 1,
+			climb_function = math.easeInCubic,
+			restore_function = math.ease_out_quad,
+		}
+		action.allowed_chain_actions = {
+			{
+				action = "action_wield",
+				input = "action_wield",
+				start_time = 0.4,
+				sub_action = "default",
+			},
+			{
+				action = "action_one",
+				input = "action_one_hold",
+				start_time = CONFIG.fire_interval,
+				sub_action = "default",
+			},
+			{
+				action = "action_two",
+				input = "action_two_hold",
+				start_time = CONFIG.fire_interval,
+				sub_action = "default",
+			},
+			{
+				action = "weapon_reload",
+				input = "weapon_reload",
+				start_time = 0.4,
+				sub_action = "default",
+			},
+		}
 	end
 
 	return action
@@ -309,8 +371,76 @@ local needs_release = setmetatable({}, {
 	__mode = "k",
 })
 
+-- The aiming loads the rockets: the crossbow's aim (kind "aim"). It has no zoom, because UT has none, and it does not slow the player
+-- down while loading. It can't start while the crossbow is reloading or has no ammo, or after a salvo before the button is let go. The
+-- primary button does not fire while loading: it makes the salvo a spiral. Reloading is not possible while loading either. The game
+-- does not allow it while zooming, and there is no zoom here to stop it.
+local function build_aim_action()
+	return {
+		kind = "aim",
+		weapon_action_hand = "left",
+		anim_event = "to_zoom",
+		anim_end_event = "to_unzoom",
+		anim_end_event_condition_func = function (unit, end_reason)
+			return end_reason ~= "new_interupting_action"
+		end,
+		aim_at_gaze_setting = "tobii_aim_at_gaze_repeating_crossbow",
+		aim_sound_delay = 0.2,
+		ammo_requirement = 1,
+		can_abort_reload = false,
+		cooldown = 0.3,
+		default_zoom = "first_person_node",
+		hold_input = "action_two_hold",
+		minimum_hold_time = 0.15,
+		total_time = math.huge,
+		spread_template_override = SPREAD_TEMPLATE,
+		enter_function = enter_function,
+		zoom_condition_function = function ()
+			return false
+		end,
+		unzoom_condition_function = function (end_reason)
+			return end_reason ~= "new_interupting_action"
+		end,
+		condition_func = function (unit, input_extension, ammo_extension)
+			if needs_release[unit] then
+				return false
+			end
+
+			return not ammo_extension or ammo_extension:total_remaining_ammo() > 0 and not ammo_extension:is_reloading()
+		end,
+		allowed_chain_actions = {
+			{
+				action = "action_wield",
+				input = "action_wield",
+				start_time = 0,
+				sub_action = "default",
+			},
+			-- The salvo is fired by itself after max_hold_time
+			{
+				action = "action_one",
+				auto_chain = true,
+				start_time = CONFIG.max_hold_time,
+				sub_action = "zoomed_shot",
+				ut_salvo_chain = true,
+			},
+			-- Releasing the aiming button fires the loaded rockets, like UT's bFireOnRelease
+			{
+				action = "action_one",
+				auto_chain = true,
+				release_required = "action_two_hold",
+				start_time = 0.12,
+				sub_action = "zoomed_shot",
+				ut_salvo_chain = true,
+			},
+		},
+		ut_rocket_aim = true,
+	}
+end
+
+-- Makes the launcher on the shell of the crossbow (utils.template_shell): everything that is not the crossbow's animations, models and
+-- sounds is set here
 local function apply_rocket_launcher(template)
-	template.default_spread_template = SPREAD_TEMPLATE
+	utils.template_shell(template)
 
 	-- The chart of the item's stats, from 0 to 7. The single rocket is the normal attack, and the loaded salvo is the heavy one.
 	template.weapon_diagram = {
@@ -331,84 +461,106 @@ local function apply_rocket_launcher(template)
 	}
 
 	local actions = template.actions
-	local crossbow = {
-		shot = actions.action_one.default,
-		zoomed_shot = actions.action_one.zoomed_shot,
-		aim = actions.action_two.default,
-	}
 
-	-- This tells the bot shooting that this is the Rocket Launcher (see bots.lua). Bots fire single rockets. The crossbow's
-	-- charged shot is the aiming, which loads rockets here, so bots must not use it.
-	template.attack_meta_data.ut_rocket = true
-	template.attack_meta_data.can_charge_shot = false
-	template.attack_meta_data.max_range = CONFIG.bot_max_range
-
-	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots.
-	template.ammo_data.max_ammo = CONFIG.max_ammo
-	template.ammo_data.ammo_per_clip = CONFIG.max_ammo
-	template.ammo_data.ammo_per_reload = CONFIG.max_ammo
-	template.ammo_data.ammo_immediately_available = true
-	-- Nothing should need a reload, but the game may still start one when the weapon is wielded, so the reload is made short.
-	template.ammo_data.reload_time = 0.2
-
-	actions.action_one.default = build_rocket_action(crossbow.shot, false)
-	actions.action_one.zoomed_shot = build_rocket_action(crossbow.zoomed_shot, true)
-
-	local spiral = build_rocket_action(crossbow.zoomed_shot, true)
+	-- The single rocket, the salvo of the loaded rockets (in a line, or a spiral), and the aiming that loads them. Inspecting is the
+	-- crossbow's, kept by the shell.
+	local spiral = build_rocket_action(true)
 
 	spiral.ut_rocket_spiral = true
-	spiral.lookup_data.sub_action_name = SPIRAL_ACTION
-	actions.action_one[SPIRAL_ACTION] = spiral
 
-	-- The aiming loads the rockets. It has no zoom, because UT has none, and it does not slow the player down while loading.
-	local aim = table.clone(crossbow.aim)
-	local original_condition = aim.condition_func
+	actions.action_one = {
+		default = build_rocket_action(false),
+		zoomed_shot = build_rocket_action(true),
+		[SPIRAL_ACTION] = spiral,
+	}
+	actions.action_two = {
+		default = build_aim_action(),
+	}
+	-- The game's own wielding of a left hand weapon, and its reload, which every gun of the game has (the reload only comes with picked
+	-- up ammo, see ammo_data)
+	actions.action_wield = table.clone(ActionTemplates.wield_left)
+	actions.weapon_reload = table.clone(ActionTemplates.reload)
 
-	aim.ut_rocket_aim = true
-	aim.condition_func = function (unit, input_extension, ammo_extension)
-		if needs_release[unit] then
-			return false
-		end
+	utils.set_actions_lookup_data(actions, TEMPLATE_NAME)
 
-		return not original_condition or original_condition(unit, input_extension, ammo_extension)
-	end
-	aim.zoom_condition_function = function ()
-		return false
-	end
-	aim.buff_data = nil
-	aim.spread_template_override = SPREAD_TEMPLATE
-
-	aim.allowed_chain_actions = table.clone(aim.allowed_chain_actions)
-
-	-- The primary button does not fire while loading. It makes the salvo a spiral. Reloading is not possible while loading
-	-- either. The game does not allow it while zooming, and there is no zoom here to stop it.
-	for i = #aim.allowed_chain_actions, 1, -1 do
-		local chain = aim.allowed_chain_actions[i]
-
-		if chain.input == "action_one" or chain.action == "weapon_reload" then
-			table.remove(aim.allowed_chain_actions, i)
-		end
-	end
-
-	-- The salvo is fired by itself after max_hold_time.
-	aim.allowed_chain_actions[#aim.allowed_chain_actions + 1] = {
-		action = "action_one",
-		auto_chain = true,
-		start_time = CONFIG.max_hold_time,
-		sub_action = "zoomed_shot",
-		ut_salvo_chain = true,
+	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots. Nothing should need a reload,
+	-- but the game may still start one when the weapon is wielded, so the reload is made short. The bolts in the crossbow's model are
+	-- its ammo's units (ammo_unit_attachment_node_linking).
+	template.ammo_data = {
+		ammo_hand = "left",
+		max_ammo = CONFIG.max_ammo,
+		ammo_per_clip = CONFIG.max_ammo,
+		ammo_per_reload = CONFIG.max_ammo,
+		ammo_immediately_available = true,
+		destroy_when_out_of_ammo = false,
+		reload_time = 0.2,
+		reload_on_ammo_pickup = false,
+		play_reload_anim_on_wield_reload = true,
+		ammo_unit_attachment_node_linking = AttachmentNodeLinking.repeating_bolt,
 	}
 
-	-- Releasing the aiming button fires the loaded rockets, like UT's bFireOnRelease.
-	aim.allowed_chain_actions[#aim.allowed_chain_actions + 1] = {
-		action = "action_one",
-		auto_chain = true,
-		release_required = "action_two_hold",
-		start_time = 0.12,
-		sub_action = "zoomed_shot",
-		ut_salvo_chain = true,
+	-- How bots use it: the crossbow's, at the body, not shooting through enemies in the way, against berserkers, specials and armored
+	-- enemies. Bots fire single rockets: the crossbow's charged shot is the aiming, which loads rockets here, so bots must not use it.
+	-- The charged shot's other values are the crossbow's, which nothing uses.
+	local effective_against = bit.bor(BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored)
+
+	template.attack_meta_data = {
+		aim_at_node = "j_spine1",
+		aim_at_node_charged = "j_head",
+		can_charge_shot = false,
+		charge_above_range = 10,
+		charge_when_obstructed = false,
+		charged_attack_action_name = "zoomed_shot",
+		ignore_enemies_for_obstruction = false,
+		ignore_enemies_for_obstruction_charged = true,
+		minimum_charge_time = 0.45,
+		max_range = CONFIG.bot_max_range,
+		effective_against = effective_against,
+		effective_against_charged = 0,
+		effective_against_combined = effective_against,
+		-- This tells the bot shooting that this is the Rocket Launcher (see bots.lua).
+		ut_rocket = true,
 	}
-	actions.action_two.default = aim
+
+	-- What the game's talents, traits and properties take it for: the crossbow it is a copy of
+	template.buff_type = "RANGED"
+	template.weapon_type = "REPEATING_CROSSBOW"
+
+	-- Dodging and the crosshair: the crossbow's. A dodge goes the full distance three times in a row. The rockets have UT's own spread.
+	template.dodge_count = 3
+	template.buffs = {
+		change_dodge_distance = {
+			external_optional_multiplier = 1,
+		},
+		change_dodge_speed = {
+			external_optional_multiplier = 1,
+		},
+	}
+	template.crosshair_style = "projectile"
+	template.default_spread_template = SPREAD_TEMPLATE
+	template.spread_lerp_speed = 2
+
+	-- The tooltip: the crossbow's, the single rocket as the light attack, and the salvo, or the aiming, as the heavy one
+	template.tooltip_compare = {
+		light = {
+			action_name = "action_one",
+			sub_action_name = "default",
+		},
+		heavy = {
+			action_name = "action_one",
+			sub_action_name = "zoomed_shot",
+		},
+	}
+	template.tooltip_detail = {
+		light = {
+			action_name = "action_one",
+			sub_action_name = "default",
+		},
+		heavy = {
+			action_name = "action_two",
+			sub_action_name = "default",
+		},
+	}
 end
 
 -- Loading: the time the aiming started, for each unit. The number of rockets in a salvo depends on how long the player has been
