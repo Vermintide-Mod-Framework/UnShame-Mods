@@ -935,6 +935,10 @@ utils.RAGDOLL_REFERENCE_MASS = nil
 function utils.throw_share(unit)
 	local reference = utils.RAGDOLL_REFERENCE_MASS
 	local mass = utils.ragdoll_mass(unit)
+	local breed = Unit.get_data(unit, "breed")
+
+	-- (for finding the baseline: to be taken out)
+	mod:echo("ragdoll mass: %s %.2f", breed and breed.name or "?", mass)
 
 	if not reference or mass <= reference then
 		return 1
