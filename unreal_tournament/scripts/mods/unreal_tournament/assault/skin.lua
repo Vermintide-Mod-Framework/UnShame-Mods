@@ -46,6 +46,10 @@ local CONFIG = {
 	trail_intensity = 2,
 	trail_attenuation = 0.2,
 	trail_tiles = 16,
+	-- The characters fire both modes as the pistols' alt attack: they take its stance (lock_target), play its shot (attack_shoot_fast)
+	-- for each round and grenade, and leave the stance (attack_finished) this long after the last of them, once the rifle does nothing
+	-- (a choice)
+	stance_linger = 0.5, -- s
 	-- The colour of the grenade's charge on the charge bar (R, G, B): white, as the Lightning Gun's bar (set in the game: the grenade's
 	-- grey was hard to see)
 	charge_bar_color = { 255, 255, 255 },
@@ -116,6 +120,9 @@ end
 -- The grenade models, by grenade id. Every machine spawns one for each grenade in flight and spins it as it flies.
 local grenade_units = {}
 
+-- (the characters' shot, below)
+local shot_animation
+
 local function destroy_grenade_unit(id)
 	local entry = grenade_units[id]
 
@@ -142,6 +149,10 @@ mod.assault_grenade_callbacks.assault_skin = function (grenade)
 		world = world,
 	}
 
+	if grenade.local_owner then
+		shot_animation(grenade.owner_unit)
+	end
+
 	if utils.is_local_player_unit(grenade.owner_unit) and api.state() then
 		play_both("AltFire", api.animation_duration("AltFire") / 0.5)
 		api.play_sound("ut_assault_alt_fire")
@@ -149,6 +160,76 @@ mod.assault_grenade_callbacks.assault_skin = function (grenade)
 	else
 		api.play_sound_at("ut_assault_alt_fire_3d", grenade.position:unbox())
 	end
+end
+
+-- The characters' stance and shots (see stance_linger), sent from the machine that runs the character's actions, the player's or the
+-- host's for a bot, as the game sends its own: [character] = when the rifle last did something
+local in_stance = {}
+
+shot_animation = function (unit)
+	local network_manager = Managers.state.network
+
+	if not network_manager or not Unit.alive(unit) then
+		return
+	end
+
+	if not in_stance[unit] then
+		network_manager:anim_event(unit, "lock_target")
+	end
+
+	in_stance[unit] = Managers.time:time("game")
+	network_manager:anim_event(unit, "attack_shoot_fast")
+end
+
+mod.handgun_start_callbacks.assault_stance = function (action, new_action)
+	if new_action.ut_assault then
+		shot_animation(action.owner_unit)
+	end
+end
+
+-- The charge takes the stance, and the grenade's throw is its shot
+mod.dummy_start_callbacks.assault_stance = function (action, new_action)
+	local unit = action.owner_unit
+
+	if new_action.ut_assault_charge and not in_stance[unit] and Managers.state.network then
+		Managers.state.network:anim_event(unit, "lock_target")
+
+		in_stance[unit] = Managers.time:time("game")
+	end
+end
+
+-- Whether the rifle in the character's hands is doing something (a round or the charge)
+local function rifle_busy(unit)
+	local inventory_extension = ScriptUnit.has_extension(unit, "inventory_system")
+	local equipment = inventory_extension and inventory_extension:equipment()
+	local weapon_unit = equipment and (equipment.right_hand_wielded_unit or equipment.left_hand_wielded_unit)
+	local weapon_extension = weapon_unit and ScriptUnit.has_extension(weapon_unit, "weapon_system")
+
+	return weapon_extension ~= nil and weapon_extension:has_current_action()
+end
+
+local function update_stances()
+	local now = Managers.time:time("game")
+
+	for unit, last in pairs(in_stance) do
+		if not Unit.alive(unit) or utils.wielded_template_name(unit) ~= TEMPLATE_NAME then
+			-- (the wield of another weapon plays its own stance)
+			in_stance[unit] = nil
+		elseif rifle_busy(unit) then
+			in_stance[unit] = now
+		elseif now - last > CONFIG.stance_linger then
+			in_stance[unit] = nil
+
+			if Managers.state.network then
+				Managers.state.network:anim_event(unit, "attack_finished")
+			end
+		end
+	end
+end
+
+mod.update_callbacks[#mod.update_callbacks + 1] = update_stances
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	table.clear(in_stance)
 end
 
 mod.assault_bounce_callbacks.assault_skin = function (grenade, position, speed)

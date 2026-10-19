@@ -497,6 +497,10 @@ local function build_round(source)
 	local action = table.clone(source)
 
 	action.kind = "handgun"
+	-- (its animation is the first person's only: the characters take the pistols' alt attack, see skin.lua)
+	action.anim_event_1p = action.anim_event
+	action.anim_event = nil
+	action.anim_event_last_ammo = nil
 	action.projectile_info = nil
 	action.impact_data = nil
 	action.speed = nil
