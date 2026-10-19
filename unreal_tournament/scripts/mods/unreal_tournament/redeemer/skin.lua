@@ -17,15 +17,6 @@ local SETTING_ID = "redeemer"
 -- The Bounty Hunter's career pistol, which is the Redeemer while he holds the Rocket Launcher (see redeemer.lua)
 local TEMPLATE_NAME = mod.redeemer.template
 
--- UT's flying missile (RedeemerMissile, 176.3 units long at RedeemerProjectile's DrawScale 0.5) is 2.4 times as long as the one loaded
--- in the third person Redeemer (60.1 units at RedeemerAttachment's DrawScale 0.6). Here, not as in UT, the two are the same length:
--- the flying missile and its trail are made smaller and the Redeemer in the hand bigger, the missile taking MISSILE_SHARE of the
--- difference (by the ratio). Only the look changes: the missile's collision, speed and blast are UT's.
-local MISSILE_RATIO = (176.3 * 0.5) / (60.1 * 0.6)
-local MISSILE_SHARE = 0.8
-local MISSILE_SCALE = MISSILE_RATIO ^ -MISSILE_SHARE
-local HELD_SCALE = MISSILE_RATIO ^ (1 - MISSILE_SHARE)
-
 local CONFIG = {
 	-- RedeemerProjectile.RotationRate: the missile turns about its length by 50000 of 65536 a second
 	missile_turns_per_second = 50000 / 65536,
@@ -89,14 +80,12 @@ local function trail(missile, position, direction, dt)
 	missile.flame_time = missile.flame_time + dt
 	missile.smoke_time = missile.smoke_time + dt
 
-	-- (the trail is as much smaller as the missile)
-	local unit = UNIT * MISSILE_SCALE
-	local back = position - direction * (CONFIG.trail_back * unit)
+	local back = position - direction * (CONFIG.trail_back * UNIT)
 
 	while missile.flame_time >= 1 / CONFIG.flame_rate do
 		missile.flame_time = missile.flame_time - 1 / CONFIG.flame_rate
 
-		local size = random_between(CONFIG.flame_size) * SPRITE * unit
+		local size = random_between(CONFIG.flame_size) * SPRITE * UNIT
 
 		particles.sprite({
 			attenuation = 0.5,
@@ -107,7 +96,7 @@ local function trail(missile, position, direction, dt)
 			size = size * 0.25,
 			spin = (math.random() * 2 - 1) * 0.5,
 			texture = "redeemer_flame_" .. math.random(0, 15),
-			velocity = -direction * (CONFIG.flame_speed * unit),
+			velocity = -direction * (CONFIG.flame_speed * UNIT),
 		})
 	end
 
@@ -115,7 +104,7 @@ local function trail(missile, position, direction, dt)
 		missile.smoke_time = missile.smoke_time - 1 / CONFIG.smoke_rate
 
 		local life = random_between(CONFIG.smoke_life)
-		local size = CONFIG.smoke_size * SPRITE * unit
+		local size = CONFIG.smoke_size * SPRITE * UNIT
 
 		particles.sprite({
 			additive = 0,
@@ -123,7 +112,7 @@ local function trail(missile, position, direction, dt)
 			color = { 1, 1, 1 },
 			growth = size * 0.9 / (life * 0.5),
 			life = life,
-			position = position - direction * ((CONFIG.trail_back + CONFIG.smoke_back) * unit),
+			position = position - direction * ((CONFIG.trail_back + CONFIG.smoke_back) * UNIT),
 			size = size * 0.1,
 			spin = (math.random() * 2 - 1) * 0.1,
 			texture = "redeemer_smoke_" .. math.random(0, 15),
@@ -193,8 +182,6 @@ mod.skin_init_callbacks.redeemer = function (projectile)
 		unit = World.spawn_unit(world, "units/ut/redeemer/missile", position),
 		world = world,
 	}
-
-	Unit.set_local_scale(missile.unit, 0, Vector3(MISSILE_SCALE, MISSILE_SCALE, MISSILE_SCALE))
 
 	missiles[#missiles + 1] = missile
 
@@ -273,8 +260,8 @@ skin_api = mod.weapon_skin.new({
 		unit_name = "units/ut/redeemer/third_person",
 		hand_node = "j_leftweaponattach",
 		meters_per_unit = 0.02 * 0.6,
-		-- (bigger than UT's, for the missile's sake, see MISSILE_RATIO, and then a fifth smaller, which looks right)
-		scale = HELD_SCALE * 0.8,
+		-- (a little smaller than UT's, set in the game)
+		scale = 0.96,
 		-- (78 of the mesh's units further back than UT's, which puts the mesh forward)
 		grip_right = -35 / 0.6 + 78,
 		-- (the mesh lies alongside the arm, not around it; less of this moves it to the character's right)
