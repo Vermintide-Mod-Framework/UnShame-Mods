@@ -62,9 +62,14 @@ local CONFIG = {
 	-- wave's damage at the center, reduced from UT's as the Rocket Launcher's self damage is (45 for its 60).
 	self_damage = 250 * 60 / 90 * 45 / 60,
 	-- The multipliers of the damage and the stagger for each armor type: unarmored, armored, monsters, players, berserkers and super
-	-- armor. UT has no armor, and a nuclear blast is not stopped by it.
+	-- armor. UT has no armor, and a nuclear blast is not stopped by it. The monsters' damage is set from monster_damage below.
 	armor_attack = { 1, 1, 1, 1, 1, 1 },
 	armor_impact = { 1, 1, 1, 1, 1, 1 },
+	-- A monster that takes the whole blast at its center loses this much, from a hero of monster_power_level: a little over a Rat Ogre's
+	-- health on Legend (2400). UT's damage would take under a third of that, as the game's monsters have far more health than UT's
+	-- players.
+	monster_damage = 2500,
+	monster_power_level = 650,
 	-- How far a bot shoots from, in meters. A bot moves towards its target, so it is rarely out of the blast (radius_uu, 27 m). From 15 m,
 	-- where the game's own rule for the ability stops, the blast takes about half of the self damage from it.
 	bot_min_range = 15,
@@ -83,9 +88,24 @@ register_damage_profile("ut_redeemer", "staff_fireball", function (profile)
 	}
 end)
 
+-- The multiplier for monsters that gives monster_damage over the waves. The game's damage of a hit is DamageOutput's most (for monsters,
+-- its third) times the power over MAX_POWER_LEVEL. The power is the attack power times the power level as
+-- ActionUtils.scale_power_levels scales it, which from 300 up is MIN_POWER_LEVEL_CAP and then a share of the rest.
+local function monster_multiplier()
+	local power_level = CONFIG.monster_power_level
+	local scaled_power_level = MIN_POWER_LEVEL_CAP + (power_level - MIN_POWER_LEVEL_CAP) * (POWER_LEVEL_DIFF_RATIO.attack - 1) / (10 - 1)
+	local wave_damage = DamageOutput[3].max * scaled_power_level * attack_power_for(CONFIG.damage) / MAX_POWER_LEVEL
+
+	return CONFIG.monster_damage / #CONFIG.wave_radii / wave_damage
+end
+
 local function modify_blast_profile(profile)
+	local armor_attack = table.clone(CONFIG.armor_attack)
+
+	armor_attack[3] = armor_attack[3] * monster_multiplier()
+
 	make_flat(profile, attack_power_for(CONFIG.damage), impact_power_for(CONFIG.damage))
-	utils.set_armor_modifiers(profile, CONFIG.armor_attack, CONFIG.armor_impact)
+	utils.set_armor_modifiers(profile, armor_attack, CONFIG.armor_impact, true)
 end
 
 register_damage_profile("ut_redeemer_blast", "fireball_charged_explosion", modify_blast_profile)
