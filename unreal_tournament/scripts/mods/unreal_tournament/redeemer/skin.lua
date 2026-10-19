@@ -275,12 +275,12 @@ skin_api = mod.weapon_skin.new({
 		meters_per_unit = 0.02 * 0.6,
 		-- (bigger than UT's, for the missile's sake: see MISSILE_RATIO)
 		scale = HELD_SCALE,
-		-- (75 of the mesh's units further back than UT's, which puts the mesh forward)
-		grip_right = -35 / 0.6 + 75,
+		-- (78 of the mesh's units further back than UT's, which puts the mesh forward)
+		grip_right = -35 / 0.6 + 78,
 		-- (the mesh lies alongside the arm, not around it; less of this moves it to the character's right)
 		grip_forward = 17.8 - 15,
 		-- (more of this moves the mesh down)
-		grip_up = -5,
+		grip_up = -3,
 		yaw = -90,
 		pitch = 0,
 		-- (not UT's half turn: in the game's left hand that held it upside down)
