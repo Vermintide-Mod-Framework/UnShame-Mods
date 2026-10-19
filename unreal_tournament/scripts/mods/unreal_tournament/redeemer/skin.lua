@@ -280,7 +280,7 @@ skin_api = mod.weapon_skin.new({
 		-- (the mesh lies alongside the arm, not around it; less of this moves it to the character's right)
 		grip_forward = 17.8 - 15,
 		-- (more of this moves the mesh down)
-		grip_up = -2,
+		grip_up = -1,
 		yaw = -90,
 		pitch = 0,
 		-- (not UT's half turn: in the game's left hand that held it upside down)
