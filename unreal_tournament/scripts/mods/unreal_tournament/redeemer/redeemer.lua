@@ -71,7 +71,7 @@ local CONFIG = {
 	-- little over a Rat Ogre's health on Legend (2400). UT's damage (damage above, which is still the stagger's) would take under a
 	-- fifth of that, as the game's monsters have far more health than UT's players.
 	blast_damage = 2500,
-	blast_power_level = 350,
+	blast_power_level = 650,
 	-- How far a bot shoots from, in meters. A bot moves towards its target, so it is rarely out of the blast (radius_uu, 27 m). From 15 m,
 	-- where the game's own rule for the ability stops, the blast takes about half of the self damage from it.
 	bot_min_range = 15,
