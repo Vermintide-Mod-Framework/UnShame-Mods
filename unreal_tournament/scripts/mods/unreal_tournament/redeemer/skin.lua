@@ -171,7 +171,8 @@ mod.skin_init_callbacks.redeemer = function (projectile)
 	Unit.set_unit_visibility(game_unit, false)
 
 	local missile = {
-		direction = Vector3Box(Vector3.forward()),
+		-- (until the missile has moved, the way it flies is the way the game's unit was spawned facing: the shot's)
+		direction = Vector3Box(Quaternion.forward(Unit.world_rotation(game_unit, 0))),
 		flame_time = 0,
 		game_unit = game_unit,
 		previous = Vector3Box(position),
