@@ -9,8 +9,9 @@ local mod = get_mod("unreal_tournament")
 --     overcharge and your allies' damage do not.
 --   First blood (DeathMatch.ScoreKill, FirstBloodMessage): announced when you kill the first enemy to die in a level.
 --   Head shots (DamTypeSniperHeadShot, SpecialKillMessage): announced for a kill with a ranged shot to the head.
---   Call outs of a number of kills with a weapon (DamageType.IncrementKills): Head Hunter for head shots, Flak Monkey for kills with the
---     Flak Cannon, and Combo Whore for kills with a shock combo. The call out comes a moment after the kill that reaches the number.
+--   Call outs of a number of kills with a weapon (DamageType.IncrementKills): Head Hunter for head shots with the Lightning Gun and the
+--     Sniper Rifle, Flak Monkey for kills with the Flak Cannon's chunks, and Combo Whore for kills with a shock combo. The call out comes a
+--     moment after the kill that reaches the number.
 
 local utils = mod.utils
 
@@ -71,8 +72,19 @@ local CONFIG = {
 		flak_monkey = { event = "ut_announcer_flak_monkey", kills = 15 },
 		combo_whore = { event = "ut_announcer_combo_whore", kills = 15 },
 	},
-	-- The weapon whose call out is matched by the template of the item that killed (the combo's is counted from the combo's kills)
-	flak_cannon = { template = mod.items.weapons.flak_cannon.template },
+	-- The kills that the call outs count, as UT's damage types do (the combo's are counted from the combo's kills). Head Hunter counts
+	-- the head shots of UT's sniper weapons (DamTypeSniperHeadShot and DamTypeClassicHeadshot), and Flak Monkey the kills of the flak
+	-- chunks, a shell's too, but not of the shell's explosion (DamTypeFlakChunk). The weapons are matched by the template of the item
+	-- that killed, and the chunks by the damage type of their hit (flak_cannon.lua's ut_flak_chunk).
+	head_hunter_weapons = {
+		mod.items.weapons.lightning_gun.template,
+		mod.items.weapons.sniper_rifle.template,
+		mod.items.weapons.sniper_rifle_dr.template,
+	},
+	flak_monkey_weapons = {
+		mod.items.weapons.flak_cannon.template,
+	},
+	flak_chunk_damage_type = "shot_shotgun",
 	-- PlayerController.PlayRewardAnnouncement: an announcement that is not forced is not played if one was played in the last second
 	unforced_gap = 1, -- seconds
 	-- The words on the screen (LocalMessage). Each message has where it is on the screen (PosY, from the top), how long it lasts
@@ -222,11 +234,17 @@ local function is_ranged_hit(damage_data)
 	return item ~= nil and item.slot_type == "ranged"
 end
 
--- Returns whether the item that killed is this weapon.
-local function is_killed_by(weapon, damage_data)
+-- Returns whether the item that killed is one of these weapons, given by their templates.
+local function is_killed_by(templates, damage_data)
 	local item = rawget(ItemMasterList, damage_data[DamageDataIndex.DAMAGE_SOURCE_NAME])
 
-	return item ~= nil and item.template == weapon.template
+	for _, template in ipairs(item and templates or {}) do
+		if item.template == template then
+			return true
+		end
+	end
+
+	return false
 end
 
 
@@ -280,11 +298,11 @@ mod:hook_safe(StatisticsUtil, "register_kill", function (victim_unit, damage_dat
 
 	announce_spree(spree)
 
-	if is_head_shot then
+	if is_head_shot and is_killed_by(CONFIG.head_hunter_weapons, damage_data) then
 		count_call_out("head_hunter", 1)
 	end
 
-	if is_killed_by(CONFIG.flak_cannon, damage_data) then
+	if is_killed_by(CONFIG.flak_monkey_weapons, damage_data) and damage_data[DamageDataIndex.DAMAGE_TYPE] == CONFIG.flak_chunk_damage_type then
 		count_call_out("flak_monkey", 1)
 	end
 end)

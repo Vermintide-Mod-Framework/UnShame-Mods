@@ -891,7 +891,7 @@ local function make_context(suite)
 	end
 
 	-- Adds up the damage a unit takes from now on, all of it, past what kills it: { total, hits }, with each hit as { amount, source,
-	-- type, attacker }. The game keeps the damage of the last frame (GenericHealthExtension.recent_damages), which is read every frame
+	-- type, attacker, zone, critical }. The game keeps the damage of the last frame (GenericHealthExtension.recent_damages), which is read every frame
 	-- until the scenario ends.
 	function t.track_damage(unit)
 		local record = {
@@ -917,6 +917,8 @@ local function make_context(suite)
 					attacker = attacker and attacker == player_unit() and "self" or attacker and Unit.alive(attacker) and Unit.get_data(attacker, "breed") and Unit.get_data(attacker, "breed").name or "other",
 					source = damages[i + DamageDataIndex.DAMAGE_SOURCE_NAME - 1],
 					type = damages[i + DamageDataIndex.DAMAGE_TYPE - 1],
+					zone = damages[i + DamageDataIndex.HIT_ZONE - 1],
+					critical = damages[i + DamageDataIndex.CRITICAL_HIT - 1],
 				}
 			end
 		end

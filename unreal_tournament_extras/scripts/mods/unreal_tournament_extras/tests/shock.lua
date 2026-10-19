@@ -149,6 +149,10 @@ local function beam_damage(t, breed_name)
 			t.press("action_one", 0.05)
 			t.wait(CONFIG.beam_fire_rate + 0.2)
 
+			for _, hit in ipairs(damage.hits) do
+				t.log("%s: %.1f on the %s%s", breed_name, hit.amount, tostring(hit.zone), hit.critical and ", critical" or "")
+			end
+
 			least = math.min(least or math.huge, damage.total)
 		end
 	end

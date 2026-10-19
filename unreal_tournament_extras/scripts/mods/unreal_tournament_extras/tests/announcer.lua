@@ -11,8 +11,12 @@ local runner = mod.test_runner
 
 local flak = ut.items.weapons.flak_cannon
 local shock = ut.items.weapons.shock_rifle
+local sniper = ut.items.weapons.sniper_rifle
 
 local CONFIG = {
+	-- The damage types of a flak chunk's hit and of a flak shell's explosion (flak_cannon.lua)
+	chunk_damage_type = "shot_shotgun",
+	shell_damage_type = "grenade",
 	-- A kill this soon after the last is the next of a multi kill
 	multi_kill_window = 1.5, -- s
 	-- UT's spree and call out numbers, times 3
@@ -36,7 +40,8 @@ local function count(list, name)
 	return total
 end
 
--- Kills an enemy as the player: { source = the item, zone = the hit zone, ranged = whether the hit is a ranged shot }
+-- Kills an enemy as the player: { source = the item, zone = the hit zone, ranged = whether the hit is a ranged shot, damage_type = the
+-- hit's damage type }
 local function kill(t, unit, how)
 	how = how or {}
 
@@ -44,7 +49,7 @@ local function kill(t, unit, how)
 		if HEALTH_ALIVE[unit] then
 			local player = t.unit()
 
-			DamageUtils.add_damage_network(unit, player, 400, how.zone or "torso", "cutting", nil, Vector3(0, 0, -1), how.source or shock.key, nil, player, how.ranged and "instant_projectile" or nil)
+			DamageUtils.add_damage_network(unit, player, 400, how.zone or "torso", how.damage_type or "cutting", nil, Vector3(0, 0, -1), how.source or shock.key, nil, player, how.ranged and "instant_projectile" or nil)
 
 			return true
 		end
@@ -248,7 +253,23 @@ local function scenarios()
 			end,
 		},
 		{
-			name = "forty five flak kills are a flak monkey, called out a moment after",
+			-- Only the chunks count, as UT's DamTypeFlakChunk does
+			name = "the kills of flak shells' explosions are no flak monkey",
+			run = function (t)
+				hurt_by_enemy(t)
+
+				local sounds = t.sounds("ut_announcer_flak_monkey")
+
+				kill_many(t, CONFIG.call_out, {
+					source = flak.key,
+					damage_type = CONFIG.shell_damage_type,
+				}, 0.05)
+				t.wait(CONFIG.call_out_delay + 0.5)
+				t.expect(#sounds == 0, "a flak monkey after %d kills of shells' explosions", CONFIG.call_out)
+			end,
+		},
+		{
+			name = "forty five flak chunk kills are a flak monkey, called out a moment after",
 			run = function (t)
 				hurt_by_enemy(t)
 
@@ -256,12 +277,14 @@ local function scenarios()
 
 				kill_many(t, CONFIG.call_out - 1, {
 					source = flak.key,
+					damage_type = CONFIG.chunk_damage_type,
 				}, 0.05)
 				t.wait(CONFIG.call_out_delay + 0.5)
 				t.expect(#sounds == 0, "a flak monkey after %d kills", CONFIG.call_out - 1)
 
 				kill_many(t, 1, {
 					source = flak.key,
+					damage_type = CONFIG.chunk_damage_type,
 				})
 
 				local called = t.wait_until(function ()
@@ -295,13 +318,31 @@ local function scenarios()
 			end,
 		},
 		{
-			name = "forty five head shots are a head hunter",
+			-- Only the sniper weapons' head shots count, as UT's DamTypeSniperHeadShot and DamTypeClassicHeadshot do
+			name = "the head shots of other weapons are no head hunter",
 			run = function (t)
 				hurt_by_enemy(t)
 
 				local sounds = t.sounds("ut_announcer_headhunter")
 
 				kill_many(t, CONFIG.call_out, {
+					source = shock.key,
+					ranged = true,
+					zone = "head",
+				}, 0.05)
+				t.wait(CONFIG.call_out_delay + 0.5)
+				t.expect(#sounds == 0, "a head hunter after %d head shots with the Shock Rifle", CONFIG.call_out)
+			end,
+		},
+		{
+			name = "forty five head shots with the Sniper Rifle are a head hunter",
+			run = function (t)
+				hurt_by_enemy(t)
+
+				local sounds = t.sounds("ut_announcer_headhunter")
+
+				kill_many(t, CONFIG.call_out, {
+					source = sniper.key,
 					ranged = true,
 					zone = "head",
 				}, 0.05)
