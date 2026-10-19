@@ -21,12 +21,16 @@ local CONFIG = {
 	-- AssaultMuzFlash1st at the end of the barrel (ClassicSniperFire.FlashEmitterClass): the Minigun's flash at DrawScale 1.2 (see
 	-- muzzle_flash.lua)
 	flash_draw_scale = 1.2,
-	-- AssaultMuzFlash3rd at the end of the rifle in a character's hand (ClassicSniperAttachment): drawn as the Minigun's third person
-	-- flash, flames in a row along the shot, at its DrawScale of 0.6
-	flame_offsets = { 8, 16, 24, 32 }, -- UT units from the muzzle
-	flame_sizes = { 17, 12, 7, 4 }, -- UT units
-	flame_life = 0.1,
-	flame_scale = 0.6,
+	-- AssaultMuzFlash3rd at the end of the rifle in a character's hand (ClassicSniperAttachment, which sets its DrawScale to 1): one mesh
+	-- (MinigunMuzFlash3rd's MinigunFlashMesh, as the Rocket Launcher's third person flash) for a shot, of a size of 0.05 to 0.08 that
+	-- grows by 2.2 a second, for 0.15 to 0.2 s, turned at random about the barrel (mRandOrient). fit is the Minigun's (muzzle_flash.lua).
+	muzzle_flash_3rd = {
+		size = {0.05, 0.08},
+		growth = 2.2,
+		life = {0.15, 0.2},
+		attenuation = 0.2,
+		fit = 0.5,
+	},
 	-- ClassicSniperSmoke: 5 puffs within 12 units of where the shot was fired, which grow from 20 to 50 units across over their life
 	-- (SizeScale 0.2 to 0.5 of 100), rise (Acceleration Z 20 units a second squared), and fade from 2 s until they are gone at 2.5 to
 	-- 3 s. They are blended by their alpha. Here they rise at a speed instead, the one they have on average.
@@ -87,21 +91,36 @@ local function first_person_flash(api)
 	end, (skin.unit_scale or UNIT) / api.draw_scale(), CONFIG.flash_draw_scale)
 end
 
--- The flash at the end of the rifle in a character's hand
-local function third_person_flash(muzzle, direction)
-	local scale = UNIT * CONFIG.flame_scale
+-- The flash at the end of the rifle in a character's hand: the mesh is in UT units of the world, and points along the barrel, which runs
+-- along the rifle mesh's forward, as the flash mesh's does
+local function third_person_flash(owner_unit, holder)
+	local third_person = holder.third_person
+	local settings = CONFIG.muzzle_flash_3rd
+	local life = random_between(settings.life)
+	local size = random_between(settings.size)
 
-	for i, offset in ipairs(CONFIG.flame_offsets) do
-		particles.sprite({
-			attenuation = 0,
-			color = { 1, 1, 1 },
-			life = CONFIG.flame_life,
-			position = muzzle + direction * (offset * scale),
-			size = CONFIG.flame_sizes[i] * scale,
-			spin = (math.random() * 2 - 1) * 0.3,
-			texture = "minigun_flame_" .. math.random(0, 15),
-		})
-	end
+	particles.mesh({
+		additive = 0,
+		brightness = function (fraction)
+			return particles.attenuation(fraction, settings.attenuation)
+		end,
+		color = { 1, 1, 1 },
+		follow = function ()
+			return third_person.muzzle_position(owner_unit)
+		end,
+		life = life,
+		material = "units/ut/fx/fx_minigun_flash_3rd",
+		rotation = function ()
+			return third_person.muzzle_rotation(owner_unit) or Quaternion.identity()
+		end,
+		scale = function (fraction)
+			return (size + settings.growth * fraction * life) * settings.fit
+		end,
+		spin = 0,
+		angle = math.random() * 360,
+		spin_axis = Vector3(0, 1, 0),
+		unit = "units/ut/fx/minigun_flash_3rd_mesh",
+	})
 end
 
 -- The smoke of a shot, around a place in the world
@@ -150,7 +169,7 @@ sniper.shot_callbacks.sniper_skin = function (owner_unit, hit_position, hit_norm
 	local muzzle = holder and holder.third_person.muzzle_position(owner_unit)
 
 	if muzzle then
-		third_person_flash(muzzle, Quaternion.forward(holder.third_person.muzzle_rotation(owner_unit)))
+		third_person_flash(owner_unit, holder)
 		smoke(muzzle)
 		holder.play_sound_at("ut_sniper_fire_3d", muzzle)
 	end
