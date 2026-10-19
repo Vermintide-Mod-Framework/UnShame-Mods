@@ -46,14 +46,13 @@ local CONFIG = {
 	trail_intensity = 2,
 	trail_attenuation = 0.2,
 	trail_tiles = 16,
-	-- The colour of the grenade's charge on the charge bar (R, G, B): the grey of the grenade's casing in its icon, the lighter part of
-	-- the icon's greys (set in the game)
-	charge_bar_color = { 107, 105, 99 },
-	-- AssaultRifle.NewDrawWeaponInfo: a white icon for each grenade (make_assault_hud.py), 99 / 3200 of the screen's width across, in a
-	-- row from the right, each half an icon left of the last. UT draws them at the screen's right edge, 0.705 of its height down; here
-	-- they are below the charge bar, which is below the ammo counter's numbers (set in the game). A second row is for more than 8, which
-	-- only two rifles' ammo has in UT (MaxAmmo doubles in bDualMode); these hold 8.
-	icon_size = 99 / 3200 * 1920, -- the HUD's units, which are those of a screen 1920 wide
+	-- The colour of the grenade's charge on the charge bar (R, G, B): white, as the Lightning Gun's bar (set in the game: the grenade's
+	-- grey was hard to see)
+	charge_bar_color = { 255, 255, 255 },
+	-- AssaultRifle.NewDrawWeaponInfo: a white icon for each grenade (make_assault_hud.py), in a row from the right, each half an icon left
+	-- of the last. UT draws them at the screen's right edge, 0.705 of its height down, 99 / 3200 of its width across. Here they are below
+	-- the charge bar, which is below the ammo counter's numbers, from its right end, and 8 of them are as long as it (set in the game). A
+	-- second row is for more than 8, which only two rifles' ammo has in UT (MaxAmmo doubles in bDualMode); these hold 8.
 	icon_step = 0.5, -- of an icon
 	icons_per_row = 8,
 	inspect_pose_speed = 5,
@@ -233,7 +232,7 @@ mod.charge_bars[TEMPLATE_NAME] = function ()
 		fraction = math.clamp(held / ((speed_max - speed_min) / speed_gain), 0, 1),
 		icons = {
 			count = math.min(assault.grenade_count, CONFIG.icons_per_row),
-			size = CONFIG.icon_size,
+			fill = CONFIG.icons_per_row,
 			step = CONFIG.icon_step,
 			texture = GRENADE_ICON,
 		},
