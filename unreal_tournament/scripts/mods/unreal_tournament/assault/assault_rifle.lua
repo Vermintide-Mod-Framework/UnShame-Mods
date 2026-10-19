@@ -878,6 +878,10 @@ local function apply_template(template)
 	-- enemies. UT's bots throw a grenade when they can't see the enemy (AssaultRifle.BestMode; its other 10% of choices come once in
 	-- many seconds of fire, with the rounds' BotRefireRate 0.99): a bot charges while its shot is in the way (charge_when_obstructed),
 	-- and throws once it is not, within bot_grenade_range, at the head, as the grenade drops on the way (its fall is not aimed for).
+	-- effective_against_combined is what the game works out for every weapon as it loads (weapons.lua), before this table is made: its
+	-- bots' check of a target (BTConditions) fails without it.
+	local effective_against = bit.bor(BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored)
+
 	template.attack_meta_data = {
 		aim_at_node = "j_head",
 		aim_at_node_charged = "j_head",
@@ -889,7 +893,8 @@ local function apply_template(template)
 		effective_against_charged = 0,
 		minimum_charge_time = CONFIG.bot_charge_time,
 		fire_input = "fire_hold",
-		effective_against = bit.bor(BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored),
+		effective_against = effective_against,
+		effective_against_combined = effective_against,
 		max_range = CONFIG.bot_max_range,
 		max_range_charged = CONFIG.bot_grenade_range,
 	}

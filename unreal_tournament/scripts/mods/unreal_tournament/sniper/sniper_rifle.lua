@@ -301,7 +301,10 @@ local function apply_handgun(template)
 	}
 
 	-- How bots use it: the handgun's, at the body (the head for a charged shot, which this has none of), against berserkers, specials,
-	-- armored and shielded enemies, shooting past enemies in the way
+	-- armored and shielded enemies, shooting past enemies in the way. effective_against_combined is what the game works out for every
+	-- weapon as it loads (weapons.lua), before this table is made: its bots' check of a target (BTConditions) fails without it.
+	local effective_against = bit.bor(BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored, BreedCategory.Shielded)
+
 	template.attack_meta_data = {
 		aim_at_node = "j_spine1",
 		aim_at_node_charged = "j_head",
@@ -310,7 +313,9 @@ local function apply_handgun(template)
 		charge_when_obstructed = false,
 		ignore_enemies_for_obstruction = true,
 		minimum_charge_time = 0.45,
-		effective_against = bit.bor(BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored, BreedCategory.Shielded),
+		effective_against = effective_against,
+		effective_against_charged = 0,
+		effective_against_combined = effective_against,
 		max_range = CONFIG.bot_max_range,
 	}
 
