@@ -18,8 +18,8 @@ needs its own copy from a base of that hero, because the animations, units and a
 - Lightning Gun: the Deepwood Staff (`we_life_staff`, from the woods DLC), for all four of Kerillian's careers.
 - Sniper Rifle (UT2004's classic one): the Handguns (`es_handgun`, `dr_handgun`), for the Mercenary, Huntsman, Foot Knight, Ironbreaker
   and Ranger.
-- Assault Rifle (akimbo): the Brace of Pistols (`wh_brace_of_pistols`) or the Repeating Pistols (`wh_repeating_pistols`), and the
-  Drakefire Pistols (`dr_drake_pistol`), for the Zealot, Bounty Hunter, Captain and Ironbreaker.
+- Assault Rifle (akimbo): the Brace of Pistols (`wh_brace_of_pistols`), for the Zealot, Bounty Hunter and Captain, and the Drakefire
+  Pistols (`dr_drake_pistol`), for the Ironbreaker, Ranger and Engineer.
 - Minigun: the repeaters (`es_repeating_handgun`, `wh_repeating_pistols`), for the Mercenary, Huntsman, Foot Knight, Zealot, Bounty
   Hunter and Captain.
 - Redeemer: not an item. It is the Bounty Hunter's career ability (Locked and Loaded) while he holds the Rocket Launcher, on his career
@@ -41,7 +41,9 @@ Why the bases are what they are:
   who has none. The Thornsister had no melee item in the item list.
 - Assault Rifle. UT2004's rifle has a dual mode (`bDualMode`), and this one is always akimbo. The skins place one model in the first
   person view and one on the character, so a pair needs a second model for the other hand, in both. Bardin's only dual-wield
-  weapon is the Drakefire Pistols, which only the Ironbreaker has. The Ranger and the Engineer need `can_wield` widened on it.
+  weapon is the Drakefire Pistols, which only the Ironbreaker has, so his copy widens `can_wield` to the Ranger and the Engineer (the
+  Engineer has the pistols in Versus, and Bardin's careers share one third person body). The characters play each base's alt attack
+  stance and the shot from it: the Brace of Pistols' aim and fast shot, the Drakefire Pistols' charge and charged shot.
 - Lightning Gun. The Deepwood Staff's item lists only the Sister of the Thorn, but all four of Kerillian's careers share one third
   person body (`way_watcher`), which has the staff's animations, so the copy lists all four. Heat belongs to the career, not the weapon
   (`OverchargeData[career]`): the other three careers have none, which would overheat them as Sienna does, so they get the Sister's.
@@ -99,7 +101,7 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Vanilla model or arms showing | ok | ok | ok (the base weapon's units are hidden every frame, in the inspect too) | ok | ok (the pistols and their ammo units are hidden) | ok | ok | ok | ok | ok |
 | Vanilla flash or particles showing | ok (the handgun's orange tracer is dropped) | ok (the repeater's tracer is dropped) | ok | ok | - | ok | ok (the staff's fireball, explosion and beam trail are not made) | ok | ok | ok |
 | Crosshair | ok (the game's crosshair stays on while zoomed, over the scope; the scope side by side with UT: lens, ring, arrows, bar, under the HUD, shows right after a mod reload) | ok (the game's, with the repeater's spread for both copies) | ok | ok | - | ok (the scope side by side with UT: brackets, ring, darkened edges) | ok | ok | ok | ok |
-| Ammo number | ok (the overcharge bar, white between its thresholds and above them) | ok | ok (the charge is a bar on the ammo counter in UT's green; the game's own bar still shows a wizard's overcharge) | ok | no: the rounds are the clip; the grenade count (8) is not drawn | ok | ok (the overcharge bar in ShockControl's purple) | ok | ok | ok |
+| Ammo number | ok (the overcharge bar, white between its thresholds and above them) | ok | ok (the charge is a bar on the ammo counter in UT's green; the game's own bar still shows a wizard's overcharge) | ok | ok (the rounds are the clip; below them the grenade's charge bar, white, and the grenades left as icons, as long as the bar at 8) | ok | ok (the overcharge bar in ShockControl's purple) | ok | ok | ok |
 | Bob and sway | ok | ok (BobDamping 2.25) | ok | ok | - | ok | ok | ok | ok | ok |
 | **Firing** | | | | | | | | | | |
 | Fire rate of each mode | ok (tests: 1.6 s) | ok (tests: 15 and 5 rounds a second, after 0.27 and 0.15 s of wind up) | ok (FireRate 0.6 after a punch) | ok | ok (tests: rounds at 0.088 s; grenades at 0.5 s + the charge) | ok (tests: 1.33 s) | ok (tests: the beam's 0.7 s; the ball's 0.6 s) | ok (tests: the chunks' 0.89 s; the shell's 1.11 s) | ok | ok |
@@ -146,11 +148,11 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Multi-load at 1, 2 and 3 rounds | n/a | n/a | n/a | n/a | - | n/a | n/a | n/a | n/a | ok |
 | `/allammo` | n/a | ok | n/a | n/a (`/recharge` fills the ability) | - | ok | n/a | ok | ok | ok |
 | **Effects** | | | | | | | | | | |
-| Muzzle flash | ok (white disk with a blue rim, size, place and fade side by side with UT; it reads its texture linearly, as UT adds it) | ok (MinigunMuzFlash1st: UT's mesh with the tile of Minigun_burst its UVs use, blended as FB_Brighten; a round adds 5 as there is room for, and each fades as it grows; NewMinigunMFlash in third person, at world size) | ok: ShieldCharge's green lines while charging, dim as UT's, turning about the gun; ForceRingA's rings on a punch, made smaller, dimmer and faster to be closer to UT's faint arc. The shield while it is up, and ShieldSparks when it stops something | ok | close: AssaultMuzFlash1st is the Minigun's flash at DrawScale 1.2, so it has the Minigun's colour difference | ok (in first person a flash that grows and fades in steps; in third person MinigunFlashMesh's growing meshes) | ok (ShockMuzFlash) | ok | ok | ok |
+| Muzzle flash | ok (white disk with a blue rim, size, place and fade side by side with UT; it reads its texture linearly, as UT adds it) | ok (MinigunMuzFlash1st: UT's mesh with the tile of Minigun_burst its UVs use, blended as FB_Brighten; a round adds 5 as there is room for, and each fades as it grows; NewMinigunMFlash in third person, at world size) | ok: ShieldCharge's green lines while charging, dim as UT's, turning about the gun; ForceRingA's rings on a punch, made smaller, dimmer and faster to be closer to UT's faint arc. The shield while it is up, and ShieldSparks when it stops something | ok | ok (AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2, read as srgb and faded in gamma space as UT draws it) | ok (in first person a flash that grows and fades in steps; in third person MinigunFlashMesh's growing meshes) | ok (ShockMuzFlash) | ok | ok | ok |
 | Projectile model | n/a | ok (the shells: UT's ShellCasing mesh, lit, thrown into the world from the ejector in both views) | n/a | ok (RedeemerMissile, turning, with its light and flight sound) | ok (UT's grenade mesh, spinning) | n/a | ok (ShockBall) | ok | ok | ok |
 | Trail | ok (the bolt starts in the flare and has UT's width, brightness and fade; its zigzags are drawn out along it, with a line through them, and the arcs are single long zigzags, set against pictures of UT) | ok (NewTracer: short yellow streaks, 400 by 10 units from EffectOffset, colour 1, 0.8, 0.5. A tracer lasts as long as it takes to reach the hit at 10000 units a second, so near a wall it is gone in a frame, as in UT) | n/a | ok (NewRedeemerTrail: flames and smoke) | - | ok | ok (ShockBeamEffect and its coil) | ok | ok | ok |
 | Flare | ok (where the bolt hits, whole, not cut by the wall; the arcs' sparks burst out along what each arc hit, as many as UT's, bright at the head; UT's are thinner) | n/a | n/a | ok | - | ok | ok | ok | ok | ok |
-| Smoke | n/a | ok (MinigunMuzzleSmoke at EffectOffset, an emitter for each mode; the alt's holds 15 puffs) | n/a | ok | no: GrenadeSmokeTrail is not made | ok (ClassicSniperSmoke, against pictures of UT) | n/a | ok | ok | ok |
+| Smoke | n/a | ok (MinigunMuzzleSmoke at EffectOffset, an emitter for each mode; the alt's holds 15 puffs) | n/a | ok | ok (GrenadeSmokeTrail's puffs, blended, with ScaleGlow in their colour) | ok (ClassicSniperSmoke, against pictures of UT) | n/a | ok | ok | ok |
 | Explosion shape | n/a | n/a | n/a | close: RedeemerExplosion's ten emitters with UT's numbers (puffs, flares, streaks, ring and spheres) and IonCore; the same sequence as UT's over 2 s | no: the Rocket Launcher's NewExplosionA in place of NewExplosionB | n/a | ok (ShockExplosion and ShockCombo, with the combo's sphere and vortex) | ok | ok | ok |
 | Explosion brightness | n/a | n/a | n/a | ok | - | n/a | ok | ok | ok | ok |
 | Explosion size | n/a | n/a | n/a | ok | - | n/a | ok | ok | ok | ok |

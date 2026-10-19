@@ -16,8 +16,8 @@ local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/assault/skin_animations")
 local particles = mod.skin_particles
 
-local SETTING_ID = "assault_rifle"
-local TEMPLATE_NAME = mod.items.weapons[SETTING_ID].template
+-- The items (assault_rifle.lua's VARIANTS): each has a skin for each hand
+local VARIANTS = { "assault_rifle", "assault_rifle_dr" }
 local assault = mod.assault
 
 local CONFIG = {
@@ -96,7 +96,14 @@ local CONFIG = {
 
 local UNIT = utils.UT_UNIT
 
+-- Every skin, and each template's pair: [template] = { right, left }
 local skin_apis = {}
+local pairs_of = {}
+
+-- The pair of skins of the rifles a character holds (the first item's for one that holds neither, whose sounds are the same)
+local function pair_of(unit)
+	return pairs_of[utils.wielded_template_name(unit)] or pairs_of[mod.items.weapons[VARIANTS[1]].template] or {}
+end
 
 -- The flash of a round at the muzzle of a rifle in the player's view (see the Minigun's skin)
 local function flash(api)
@@ -185,7 +192,7 @@ end
 -- light, where they are seen. If the player on this machine fired it, both rifles in the player's view play the fire animation, flash
 -- and sound. Otherwise the sound plays at the shooter's muzzle.
 mod.assault_round_callbacks.assault_skin = function (owner_unit)
-	local right = skin_apis[1]
+	local right = pair_of(owner_unit)[1]
 
 	saw_stance(owner_unit, assault.stance_linger)
 
@@ -237,7 +244,8 @@ local function destroy_grenade_unit(id)
 end
 
 mod.assault_grenade_callbacks.assault_skin = function (grenade)
-	local api = skin_apis[1]
+	local pair = pair_of(grenade.owner_unit)
+	local api = pair[1]
 	local world = Managers.world:world("level_world")
 
 	local camera_position = utils.camera_pose()
@@ -255,7 +263,7 @@ mod.assault_grenade_callbacks.assault_skin = function (grenade)
 	saw_stance(grenade.owner_unit, assault.stance_linger_after_throw)
 
 	-- (the flash at the grenade launcher of the rifle that threw it, and the light)
-	local thrower = skin_apis[grenade.left and 2 or 1]
+	local thrower = pair[grenade.left and 2 or 1]
 
 	if thrower and seen_in_hand(grenade.owner_unit, thrower) then
 		third_person_flash(grenade.owner_unit, thrower, CONFIG.launcher_muzzle)
@@ -404,7 +412,7 @@ local GRENADE_ICON = "ut_assault_grenade"
 mod.items.add_material_set("ui/ut/assault_grenade")
 UIAtlasHelper.add_standalone_texture_by_name(GRENADE_ICON)
 
-mod.charge_bars[TEMPLATE_NAME] = function ()
+local function charge_bar()
 	local held = assault.charge_started and Managers.time:time("game") - assault.charge_started or 0
 
 	return {
@@ -430,13 +438,30 @@ mod.skin_explosion_callbacks[assault.explosion] = function (world, position, rot
 	end
 end
 
-local function new_skin(id, mirror)
+-- The rifles in the characters' hands, for each item (tipped down from the hand's forward, so that they lie along the forearm, the left a
+-- little in: set in the game for Victor; Bardin's are Victor's until they are set for him)
+local GRIPS = {
+	assault_rifle = {
+		right = { up = 7, yaw = 0, pitch = -45 },
+		left = { up = 2, yaw = -10, pitch = -25 },
+	},
+	assault_rifle_dr = {
+		right = { up = 7, yaw = 0, pitch = -45 },
+		left = { up = 2, yaw = -10, pitch = -25 },
+	},
+}
+
+-- One rifle of an item. The first item's right rifle also flies the grenades' models, which are every item's.
+local function new_skin(setting_id, mirror, owns_grenades)
+	local template = mod.items.weapons[setting_id].template
+	local id = mirror and setting_id .. "_left" or setting_id
+	local grip = GRIPS[setting_id][mirror and "left" or "right"]
 	local api
 
 	api = mod.weapon_skin.new({
 		id = id,
 		name = mirror and "assault rifle (left)" or "assault rifle",
-		template = TEMPLATE_NAME,
+		template = template,
 		unit_name = mirror and "units/ut/assault/assault_rifle_left" or "units/ut/assault/assault_rifle",
 		animations = animations,
 		muzzle_node = "b_bone_flash_a",
@@ -473,17 +498,16 @@ local function new_skin(id, mirror)
 		-- Bone_Flash (Bone_Flash02, below it, is the grenade launcher's).
 		third_person = {
 			id = id,
-			template = TEMPLATE_NAME,
+			template = template,
 			unit_name = "units/ut/assault/third_person",
 			hand_node = mirror and "j_leftweaponattach" or "j_rightweaponattach",
 			meters_per_unit = 0.02 * 0.3,
 			scale = 1,
 			grip_right = 0,
 			grip_forward = 0,
-			-- (tipped down from the hand's forward, so that it lies along the forearm, a little in for the left: set in the game for each)
-			grip_up = mirror and 2 or 7,
-			yaw = mirror and -10 or 0,
-			pitch = mirror and -25 or -45,
+			grip_up = grip.up,
+			yaw = grip.yaw,
+			pitch = grip.pitch,
 			roll = 0,
 			follow_game_unit = 2,
 			-- (level in the stance, see stance_blend)
@@ -505,9 +529,9 @@ local function new_skin(id, mirror)
 			skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
 			skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
 		end,
-		on_update_always = not mirror and update_grenades or nil,
-		on_level_exit = not mirror and clear_grenades or nil,
-		on_give_back = not mirror and clear_grenades or nil,
+		on_update_always = owns_grenades and update_grenades or nil,
+		on_level_exit = owns_grenades and clear_grenades or nil,
+		on_give_back = owns_grenades and clear_grenades or nil,
 	})
 
 	skin_apis[#skin_apis + 1] = api
@@ -515,8 +539,11 @@ local function new_skin(id, mirror)
 	return api
 end
 
-new_skin(SETTING_ID, false)
-new_skin(SETTING_ID .. "_left", true)
+for index, setting_id in ipairs(VARIANTS) do
+	local template = mod.items.weapons[setting_id].template
+
+	pairs_of[template] = { new_skin(setting_id, false, index == 1), new_skin(setting_id, true, false) }
+end
 
 mod.unload_callbacks[#mod.unload_callbacks + 1] = clear_grenades
 
@@ -531,15 +558,21 @@ mod.inspect_callbacks.assault_skin = function (action, started)
 	end
 end
 
--- The first person unit does not play the pistols' shot and reload animations. The skin's models play UT's animations instead.
-mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
-	return string.find(event, "attack", 1, true) ~= nil or string.find(event, "reload", 1, true) ~= nil or event == "lock_target"
-end
+for _, setting_id in ipairs(VARIANTS) do
+	local template = mod.items.weapons[setting_id].template
 
-mod.third_person_animation_filters[TEMPLATE_NAME] = function (event)
-	return string.find(event, "reload", 1, true) ~= nil
-end
+	-- The first person unit does not play the pistols' shot, aim and reload animations. The skin's models play UT's animations instead.
+	mod.first_person_animation_filters[template] = function (event)
+		return string.find(event, "attack", 1, true) ~= nil or string.find(event, "reload", 1, true) ~= nil or event == "lock_target"
+	end
 
--- The characters' flow gets no weapon units, so the pistols' own third person shots (their muzzle flash and sound at the pistols'
--- muzzles) are not played: the skin draws UT's (third_person_flash)
-mod.third_person_weapons_hidden_from_flow[TEMPLATE_NAME] = true
+	mod.third_person_animation_filters[template] = function (event)
+		return string.find(event, "reload", 1, true) ~= nil
+	end
+
+	-- The characters' flow gets no weapon units, so the pistols' own third person shots (their muzzle flash and sound at the pistols'
+	-- muzzles) are not played: the skin draws UT's (third_person_flash)
+	mod.third_person_weapons_hidden_from_flow[template] = true
+
+	mod.charge_bars[template] = charge_bar
+end

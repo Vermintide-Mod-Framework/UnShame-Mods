@@ -1,7 +1,9 @@
 local mod = get_mod("unreal_tournament")
 
--- Assault Rifle: a copy of the Brace of Pistols with its attacks replaced, held two at a time as UT's is once a second one is picked up
--- (bDualMode). The numbers come from UT2004 (XWeapons/AssaultRifle, AssaultFire, AssaultGrenade, Grenade and their ammo).
+-- Assault Rifle: made on the shell of a pair of pistols, held two at a time as UT's is once a second one is picked up (bDualMode): only the
+-- pistols' animations, models and sounds are kept, and everything else is set here. Victor's is on the Brace of Pistols, and Bardin's on
+-- the Drakefire Pistols, his only pair. The numbers come from UT2004 (XWeapons/AssaultRifle, AssaultFire, AssaultGrenade, Grenade and their
+-- ammo).
 --   Left button: rounds that hit at once, 7 damage each, at the fire rate of two rifles (FireRate 0.16 times 0.55). The spread starts at
 --       0.02 and grows by 0.02 a round, up to 0.12, and goes back once the button is let go for half a second.
 --   Right button: held, it charges the grenade launcher; let go, it lobs a grenade that bounces off walls, and goes off two seconds
@@ -21,23 +23,64 @@ local impact_power_for = utils.impact_power_for
 
 local DESCRIPTION = "Inexpensive and easily produced, the AR770 provides a lightweight 5.56mm combat solution that is most effective against unarmored foes. The optional M355 Grenade Launcher provides the punch that makes this weapon effective against heavily armored enemies."
 
-local SETTING_ID = "assault_rifle"
-local ITEM_KEY = "ut_assault_rifle"
-local TEMPLATE_NAME = "ut_assault_rifle_template"
+-- The two items. Each has its base's careers, but Bardin's is for all three of his careers with a ranged slot: the Engineer has the
+-- Drakefire Pistols in Versus, and the three share one third person body.
+--   stance, shot: the base's sub-actions whose third person animations the rifle plays (see stance_linger): its aim, and the shot from
+--       its aim
+--   weapon_type, dodge_count, dodge: the base's, for the game's talents and the dodges
+local VARIANTS = {
+	{
+		base_item = "wh_brace_of_pistols",
+		deus_copy = "deus_wh_brace_of_pistols",
+		id = "assault_rifle",
+		key = "ut_assault_rifle",
+		template = "ut_assault_rifle_template",
+		stance = { "action_two", "default" },
+		shot = { "action_one", "fast_shot" },
+		weapon_type = "BRACE_OF_PISTOLS",
+		dodge_count = 100,
+		dodge = 1.25,
+		spread_template = "brace_of_pistols",
+	},
+	{
+		base_item = "dr_drake_pistol",
+		deus_copy = "deus_dr_drake_pistol",
+		id = "assault_rifle_dr",
+		key = "ut_assault_rifle_dr",
+		template = "ut_assault_rifle_dr_template",
+		can_wield = { "dr_ironbreaker", "dr_ranger", "dr_engineer" },
+		stance = { "action_two", "default" },
+		shot = { "action_one", "shoot_charged" },
+		weapon_type = "DRAKEFIRE",
+		dodge_count = 2,
+		dodge = 1,
+		spread_template = "brace_of_drake_pistols",
+	},
+}
 
-mod.items.register(SETTING_ID, {
-	key = ITEM_KEY,
-	template = TEMPLATE_NAME,
-	base_item = "wh_brace_of_pistols",
-	deus_copy = "deus_wh_brace_of_pistols",
-	name = "UT2004 Assault Rifle",
-	type_name = "Assault Rifle",
-	description = DESCRIPTION,
-	keywords = { "weapon_keyword_rapid_fire", "weapon_keyword_crowd_control", "weapon_keyword_versatile" },
-	icon = "ut_assault_rifle_icon",
-	icon_package = "resource_packages/unreal_tournament/icons",
-	icon_materials = "ui/ut/assault_rifle_icon",
-})
+-- Each template's variant, and the items' keys
+local VARIANT_OF = {}
+local ITEM_KEYS = {}
+
+for _, variant in ipairs(VARIANTS) do
+	mod.items.register(variant.id, {
+		key = variant.key,
+		template = variant.template,
+		base_item = variant.base_item,
+		deus_copy = variant.deus_copy,
+		can_wield = variant.can_wield,
+		name = "UT2004 Assault Rifle",
+		type_name = "Assault Rifle",
+		description = DESCRIPTION,
+		keywords = { "weapon_keyword_rapid_fire", "weapon_keyword_crowd_control", "weapon_keyword_versatile" },
+		icon = "ut_assault_rifle_icon",
+		icon_package = "resource_packages/unreal_tournament/icons",
+		icon_materials = "ui/ut/assault_rifle_icon",
+	})
+
+	VARIANT_OF[variant.template] = variant
+	ITEM_KEYS[variant.key] = true
+end
 
 local CONFIG = {
 	-- AssaultAmmo.MaxAmmo. All the ammo is the clip, so there is no reload.
@@ -86,11 +129,10 @@ local CONFIG = {
 	bot_max_range = 25,
 	chain_margin = 0.05,
 	recoil_climb = 0.08,
-	-- The characters fire both modes in the pistols' alt attack's stance, as actions that chain into each other, as the pistols' do
-	-- (their aim, lock_target, and their fast shot, attack_shoot_fast): the first round or the grenade's charge takes the stance, the
-	-- rounds after it keep it, and the throw plays the shot. Once the rounds stop, or the grenade's shot has played (throw_time), an
-	-- action that holds the stance follows, and leaves it (attack_finished) this long after, unless the rifle fires again (set in the
-	-- game).
+	-- The characters fire both modes in the stance of the base's alt attack, as actions that chain into each other, as the base's do (its
+	-- aim and the shot from it: VARIANTS' stance and shot): the first round or the grenade's charge takes the stance, the rounds after it
+	-- keep it, and the throw plays the shot. Once the rounds stop, or the grenade's shot has played (throw_time), an action that holds the
+	-- stance follows, and leaves it (the aim's end) this long after, unless the rifle fires again (set in the game).
 	stance_linger = 0.5, -- s
 	-- (after a grenade, from its throw: the time until the next grenade can be thrown, and half a second more)
 	stance_linger_alt = 0.5 + 1 / (0.4 * 8) + 0.5, -- s
@@ -261,8 +303,8 @@ local function explode(grenade, position)
 	local area_damage_system = Managers.state.entity:system("area_damage_system")
 
 	-- (the grenades fly in the mod's update, which runs before the game's, so the units' positions are made current for the explosion)
-	utils.with_valid_positions(area_damage_system.create_explosion, area_damage_system, grenade.owner_unit, position, Quaternion.identity(), EXPLOSION, 1, ITEM_KEY, grenade.power_level or 500, false, grenade.owner_unit)
-	utils.apply_explosion_self_damage(grenade.owner_unit, position, ITEM_KEY, ExplosionTemplates[EXPLOSION].explosion, CONFIG.grenade_self_damage)
+	utils.with_valid_positions(area_damage_system.create_explosion, area_damage_system, grenade.owner_unit, position, Quaternion.identity(), EXPLOSION, 1, grenade.item_key, grenade.power_level or 500, false, grenade.owner_unit)
+	utils.apply_explosion_self_damage(grenade.owner_unit, position, grenade.item_key, ExplosionTemplates[EXPLOSION].explosion, CONFIG.grenade_self_damage)
 	mod:network_send("ut_assault_grenade_end", "others", grenade.id)
 end
 
@@ -407,6 +449,7 @@ local function throw(action, hold_time)
 
 	grenade.left = fire_left[owner_unit]
 	grenade.power_level = action.power_level
+	grenade.item_key = action.item_name
 
 	mod:network_send("ut_assault_grenade", "others", id, Managers.state.unit_storage:go_id(owner_unit), Vector3.x(start), Vector3.y(start), Vector3.z(start), Vector3.x(velocity), Vector3.y(velocity), Vector3.z(velocity), grenade.left and 1 or 0)
 end
@@ -474,7 +517,7 @@ end
 
 -- A pickup of ammo fills the grenades, whether the rifle is held or not
 mod:hook_safe(GenericAmmoUserExtension, "add_ammo", function (self)
-	if self.item_name == ITEM_KEY and self.owner_unit and utils.is_local_player_unit(self.owner_unit) then
+	if ITEM_KEYS[self.item_name] and self.owner_unit and utils.is_local_player_unit(self.owner_unit) then
 		assault.grenade_count = CONFIG.max_grenades
 	end
 end)
@@ -490,7 +533,7 @@ mod:hook(SimpleInventoryExtension, "has_full_ammo", function (func, self, ...)
 
 	local slot_data = self:get_slot_data("slot_ranged")
 
-	return not (slot_data and slot_data.item_data and slot_data.item_data.name == ITEM_KEY)
+	return not (slot_data and slot_data.item_data and ITEM_KEYS[slot_data.item_data.name])
 end)
 
 -- Weapon template
@@ -531,12 +574,13 @@ local function stance_chains()
 	}
 end
 
--- An action that holds the stance for linger seconds and then leaves it, taking it first with take
-local function build_stance(linger, take)
+-- An action that holds the stance for linger seconds and then leaves it, taking it first with take. anims are the base's: { stance =
+-- the aim's event, leave = its end event, shot = the shot from it }.
+local function build_stance(anims, linger, take)
 	return {
 		kind = "dummy",
-		anim_event_3p = take and "lock_target" or nil,
-		anim_end_event_3p = "attack_finished",
+		anim_event_3p = take and anims.stance or nil,
+		anim_end_event_3p = anims.leave,
 		anim_end_event_condition_func = leaves_stance,
 		total_time = linger,
 		allowed_chain_actions = stance_chains(),
@@ -545,110 +589,109 @@ end
 
 -- A round. Holding the button repeats it at the fire rate. It hits at once, as UT's does: the game's handgun shot traces a ray when its
 -- action has no projectile (ActionHandgun), and the pistols' shot fired one, which drew the pistol's tracer and hurt with the pistol's
--- damage. The first round takes the stance, and the rounds after it keep it; once they stop, the stance follows.
-local function build_round(source, first)
-	local action = table.clone(source)
+-- damage. The first round takes the stance, and the rounds after it keep it; once they stop, the stance follows. The values that are not
+-- UT's are the ones it had as a copy of the Brace of Pistols' shot: how loud it is to enemies, the aim assist, the talents' kind of hit
+-- (charge_value) and the recoil's curves. shot_1p is the base's shot animation, which the first person plays.
+local function build_round(anims, shot_1p, first)
+	return {
+		kind = "handgun",
+		-- (its own animation is the first person's only)
+		anim_event_1p = shot_1p,
+		anim_event_3p = first and anims.stance or nil,
+		ammo_usage = 1,
+		fire_time = 0,
+		total_time = CONFIG.fire_rate + CONFIG.chain_margin,
+		damage_profile = "ut_assault_bullet",
+		headshot_multiplier = 1,
+		hit_effect = "bullet_impact",
+		charge_value = "bullet_hit",
+		alert_sound_range_fire = 12,
+		alert_sound_range_hit = 2,
+		aim_assist_auto_hit_chance = 0.5,
+		aim_assist_max_ramp_multiplier = 0.3,
+		aim_assist_ramp_decay_delay = 0.2,
+		aim_assist_ramp_multiplier = 0.1,
+		apply_recoil = true,
+		recoil_settings = {
+			climb_duration = 0.05,
+			horizontal_climb = 0,
+			restore_duration = 0.15,
+			vertical_climb = CONFIG.recoil_climb,
+			climb_function = math.easeInCubic,
+			restore_function = math.ease_out_quad,
+		},
+		reload_when_out_of_ammo = false,
+		enter_function = function (attacker_unit, input_extension)
+			input_extension:clear_input_buffer()
 
-	action.kind = "handgun"
-	-- (its own animation is the first person's only)
-	action.anim_event_1p = action.anim_event
-	action.anim_event = nil
-	action.anim_event_last_ammo = nil
-	action.anim_event_3p = first and "lock_target" or nil
-	action.projectile_info = nil
-	action.impact_data = nil
-	action.speed = nil
-	action.range = nil
-	action.active_reload_time = nil
-	action.anim_event_secondary = nil
-	action.damage_profile = "ut_assault_bullet"
-	action.fire_time = 0
-	action.headshot_multiplier = 1
-	action.reload_when_out_of_ammo = false
-	action.total_time = CONFIG.fire_rate + CONFIG.chain_margin
-	action.total_time_secondary = nil
-	action.ut_assault = true
-	action.ut_dropped_flow_events = {
-		lua_bullet_trail = true,
-		lua_bullet_trail_set = true,
-	}
-	action.allowed_chain_actions = {
-		chain("action_wield", "default", "action_wield", 0.1),
-		chain("action_one", ROUND_IN_STANCE, "action_one_hold", CONFIG.fire_rate),
-		chain("action_two", CHARGE_IN_STANCE, "action_two_hold", CONFIG.fire_rate),
-		-- (once the round's time is over with neither button held)
-		{
-			action = "action_one",
-			auto_chain = true,
-			start_time = CONFIG.fire_rate + CONFIG.chain_margin / 2,
-			sub_action = STANCE,
+			return input_extension:reset_release_input()
+		end,
+		ut_assault = true,
+		ut_dropped_flow_events = {
+			lua_bullet_trail = true,
+			lua_bullet_trail_set = true,
+		},
+		allowed_chain_actions = {
+			chain("action_wield", "default", "action_wield", 0.1),
+			chain("action_one", ROUND_IN_STANCE, "action_one_hold", CONFIG.fire_rate),
+			chain("action_two", CHARGE_IN_STANCE, "action_two_hold", CONFIG.fire_rate),
+			-- (once the round's time is over with neither button held)
+			{
+				action = "action_one",
+				auto_chain = true,
+				start_time = CONFIG.fire_rate + CONFIG.chain_margin / 2,
+				sub_action = STANCE,
+			},
 		},
 	}
+end
 
-	if action.recoil_settings then
-		action.recoil_settings = table.clone(action.recoil_settings)
-		action.recoil_settings.climb_duration = 0.05
-		action.recoil_settings.restore_duration = 0.15
-		action.recoil_settings.vertical_climb = CONFIG.recoil_climb
+-- The charge can start only with a grenade left, and once the grenade's fire rate has passed since the last one
+local function can_charge(unit)
+	if not utils.is_local_player_unit(unit) then
+		return true
 	end
 
-	return action
+	local since = assault.last_grenade and Managers.time:time("game") - assault.last_grenade or math.huge
+
+	return assault.grenade_count > 0 and since >= CONFIG.grenade_fire_rate
 end
 
 -- The grenade's charge. It lasts while the button is held, and letting go chains into the throw. The next shot of either kind can come
 -- once the grenade's fire rate has passed. The charge from nothing takes the stance, and one in the stance keeps it.
-local function build_charge(source, first)
-	local action = table.clone(source)
-
-	action.kind = "dummy"
-	action.anim_event = nil
-	action.anim_end_event = nil
-	action.anim_end_event_condition_func = nil
-	action.anim_event_3p = first and "lock_target" or nil
-	action.ammo_requirement = nil
-	action.allow_hold_toggle = nil
-	action.buff_data = nil
-	action.minimum_hold_time = nil
-	action.spread_template_override = nil
-	action.hold_input = "action_two_hold"
-	action.total_time = math.huge
-	action.ut_assault_charge = true
-	-- (the game keeps a release until it is reset, as its charges do when they start: else the last grenade's release throws this one at once)
-	action.enter_function = function (attacker_unit, input_extension)
-		return input_extension:reset_release_input()
-	end
-	action.allowed_chain_actions = {
-		chain("action_wield", "default", "action_wield"),
-		{
-			action = "action_two",
-			auto_chain = true,
-			release_required = "action_two_hold",
-			start_time = 0,
-			sub_action = THROW,
+local function build_charge(anims, first)
+	return {
+		kind = "dummy",
+		anim_event_3p = first and anims.stance or nil,
+		hold_input = "action_two_hold",
+		total_time = math.huge,
+		can_abort_reload = true,
+		ut_assault_charge = true,
+		-- (the game keeps a release until it is reset, as its charges do when they start: else the last grenade's release throws this one
+		-- at once)
+		enter_function = function (attacker_unit, input_extension)
+			return input_extension:reset_release_input()
+		end,
+		allowed_chain_actions = {
+			chain("action_wield", "default", "action_wield"),
+			{
+				action = "action_two",
+				auto_chain = true,
+				release_required = "action_two_hold",
+				start_time = 0,
+				sub_action = THROW,
+			},
 		},
+		-- (from no action the game first tries the sub-actions other than default that have a condition_func, so the charge in the stance
+		-- has only the chain's)
+		condition_func = first and can_charge or nil,
+		chain_condition_func = can_charge,
 	}
-	-- The charge can start only with a grenade left, and once the grenade's fire rate has passed since the last one
-	local function can_charge(unit)
-		if not utils.is_local_player_unit(unit) then
-			return true
-		end
-
-		local since = assault.last_grenade and Managers.time:time("game") - assault.last_grenade or math.huge
-
-		return assault.grenade_count > 0 and since >= CONFIG.grenade_fire_rate
-	end
-
-	-- (from no action the game first tries the sub-actions other than default that have a condition_func, so the charge in the stance
-	-- has only the chain's)
-	action.condition_func = first and can_charge or nil
-	action.chain_condition_func = can_charge
-
-	return action
 end
 
--- The throw: the grenade goes as it starts (dummy_start_callbacks), and the characters play the pistols' fast shot. Rounds can follow
--- at once, and once the shot has played the stance follows, taken again.
-local function build_throw()
+-- The throw: the grenade goes as it starts (dummy_start_callbacks), and the characters play the base's shot from its aim. Rounds can
+-- follow at once, and once the shot has played the stance follows, taken again.
+local function build_throw(anims)
 	local entries = {
 		chain("action_wield", "default", "action_wield", 0),
 		chain("action_one", ROUND_IN_STANCE, "action_one", 0),
@@ -663,15 +706,18 @@ local function build_throw()
 
 	return {
 		kind = "dummy",
-		anim_event_3p = "attack_shoot_fast",
+		anim_event_3p = anims.shot,
 		total_time = CONFIG.throw_time + CONFIG.chain_margin,
 		allowed_chain_actions = entries,
 		ut_assault_throw = true,
 	}
 end
 
+-- Makes the rifle on the shell of its base pistols (utils.template_shell): everything that is not the pistols' animations, models and
+-- sounds is set here, and what the two bases differ in is in VARIANTS
 local function apply_template(template)
-	local actions = template.actions
+	local base = utils.template_shell(template)
+	local variant = VARIANT_OF[template.name]
 
 	-- The chart of the item's stats, from 0 to 7. The rounds are the normal attack, and the grenade is the heavy one.
 	-- The rounds have the Minigun primary's armour and stagger (2 and 1 on its chart), and about 70% of its damage a second (5). The
@@ -693,37 +739,92 @@ local function apply_template(template)
 		},
 	}
 
-	local round_source = actions.action_one.default
-	local charge_source = actions.action_two.default
+	local actions = template.actions
+	local base_actions = base.actions
+
+	-- The base's animations: its aim (the stance) and its end, the shot from the aim, and its shot, which the first person plays. Inspecting
+	-- is the base's, kept by the shell.
+	local stance = base_actions[variant.stance[1]][variant.stance[2]]
+	local anims = {
+		stance = stance.anim_event,
+		leave = stance.anim_end_event,
+		shot = base_actions[variant.shot[1]][variant.shot[2]].anim_event,
+	}
+	local shot_1p = base_actions.action_one.default.anim_event
 
 	actions.action_one = {
-		default = build_round(round_source, true),
-		[ROUND_IN_STANCE] = build_round(round_source, false),
-		[STANCE] = build_stance(CONFIG.stance_linger, false),
+		default = build_round(anims, shot_1p, true),
+		[ROUND_IN_STANCE] = build_round(anims, shot_1p, false),
+		[STANCE] = build_stance(anims, CONFIG.stance_linger, false),
 	}
 	actions.action_two = {
-		default = build_charge(charge_source, true),
-		[CHARGE_IN_STANCE] = build_charge(charge_source, false),
-		[THROW] = build_throw(),
-		[STANCE_AFTER_THROW] = build_stance(CONFIG.stance_linger_alt - CONFIG.throw_time, true),
+		default = build_charge(anims, true),
+		[CHARGE_IN_STANCE] = build_charge(anims, false),
+		[THROW] = build_throw(anims),
+		[STANCE_AFTER_THROW] = build_stance(anims, CONFIG.stance_linger_alt - CONFIG.throw_time, true),
 	}
-	actions.action_three = nil
 
-	utils.set_actions_lookup_data({
-		action_one = actions.action_one,
-		action_two = actions.action_two,
-	}, TEMPLATE_NAME)
+	-- The game's own wielding and reload, which every gun of the game has (the reload only comes with picked up ammo, see ammo_data)
+	actions.action_wield = table.clone(ActionTemplates.wield)
+	actions.weapon_reload = table.clone(ActionTemplates.reload)
 
-	template.ammo_data.max_ammo = CONFIG.max_ammo
-	template.ammo_data.ammo_per_clip = CONFIG.max_ammo
-	template.ammo_data.ammo_per_reload = CONFIG.max_ammo
-	template.ammo_data.ammo_immediately_available = true
-	template.ammo_data.reload_time = 0.2
+	utils.set_actions_lookup_data(actions, template.name)
 
-	template.attack_meta_data.can_charge_shot = false
-	template.attack_meta_data.charged_attack_action_name = nil
-	template.attack_meta_data.fire_input = "fire_hold"
-	template.attack_meta_data.max_range = CONFIG.bot_max_range
+	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots. Nothing should need a reload, but
+	-- the game may still start one when the weapon is wielded, so the reload is short.
+	template.ammo_data = {
+		ammo_hand = "right",
+		max_ammo = CONFIG.max_ammo,
+		ammo_per_clip = CONFIG.max_ammo,
+		ammo_per_reload = CONFIG.max_ammo,
+		ammo_immediately_available = true,
+		reload_time = 0.2,
+		reload_on_ammo_pickup = true,
+		play_reload_anim_on_wield_reload = true,
+	}
+
+	-- How bots use it: the Brace of Pistols', holding the button for the rounds, at the head, against berserkers, specials and armored
+	-- enemies
+	template.attack_meta_data = {
+		aim_at_node = "j_head",
+		can_charge_shot = false,
+		fire_input = "fire_hold",
+		effective_against = bit.bor(BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored),
+		max_range = CONFIG.bot_max_range,
+	}
+
+	-- What the game's talents, traits and properties take it for: its base
+	template.buff_type = "RANGED"
+	template.weapon_type = variant.weapon_type
+
+	-- Dodging: the base's. The game's crosshair, and the spread of the base, which each round sets (see handgun_start_callbacks).
+	template.dodge_count = variant.dodge_count
+	template.buffs = {
+		change_dodge_distance = {
+			external_optional_multiplier = variant.dodge,
+		},
+		change_dodge_speed = {
+			external_optional_multiplier = variant.dodge,
+		},
+	}
+	template.crosshair_style = "default"
+	template.default_spread_template = variant.spread_template
+	template.spread_lerp_speed = 5
+
+	-- The aim assist for a controller: the Brace of Pistols'
+	template.aim_assist_settings = {
+		aim_at_node = "j_spine",
+		always_auto_aim = true,
+		base_multiplier = 0.15,
+		effective_max_range = 10,
+		max_range = 22,
+		no_aim_input_multiplier = 0,
+		breed_scalars = {
+			skaven_clan_rat = 1,
+			skaven_slave = 1,
+			skaven_storm_vermin = 0.25,
+		},
+	}
 
 	template.tooltip_compare = {
 		light = {
@@ -738,9 +839,18 @@ local function apply_template(template)
 	template.tooltip_detail = template.tooltip_compare
 end
 
-mod.items.set_template_changes(TEMPLATE_NAME, apply_template)
+for template_name in pairs(VARIANT_OF) do
+	mod.items.set_template_changes(template_name, apply_template)
+end
 
-assault.template_name = TEMPLATE_NAME
+-- (the templates, for the skin; and Victor's, for the tests)
+assault.template_names = {}
+
+for template_name in pairs(VARIANT_OF) do
+	assault.template_names[template_name] = true
+end
+
+assault.template_name = VARIANTS[1].template
 assault.fire_rate = CONFIG.fire_rate
 assault.grenade_fire_rate = CONFIG.grenade_fire_rate
 assault.grenade_speed = { CONFIG.grenade_speed_min, CONFIG.grenade_speed_max, CONFIG.grenade_speed_gain }
