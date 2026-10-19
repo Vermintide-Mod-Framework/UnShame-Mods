@@ -673,16 +673,19 @@ end
 local function apply_template(template)
 	local actions = template.actions
 
+	-- The chart of the item's stats, from 0 to 7. The rounds are the normal attack, and the grenade is the heavy one.
+	-- The rounds have the Minigun primary's armour and stagger (2 and 1 on its chart), and about 70% of its damage a second (5). The
+	-- grenade has the rocket's armour and radius (4 and 6), and about 80% of its damage and stagger (6).
 	template.weapon_diagram = {
 		light_attack = {
-			[DamageTypes.ARMOR_PIERCING] = 1,
+			[DamageTypes.ARMOR_PIERCING] = 2,
 			[DamageTypes.CLEAVE] = 1,
 			[DamageTypes.SPEED] = 7,
-			[DamageTypes.STAGGER] = 2,
-			[DamageTypes.DAMAGE] = 3,
+			[DamageTypes.STAGGER] = 1,
+			[DamageTypes.DAMAGE] = 4,
 		},
 		heavy_attack = {
-			[DamageTypes.ARMOR_PIERCING] = 5,
+			[DamageTypes.ARMOR_PIERCING] = 4,
 			[DamageTypes.CLEAVE] = 6,
 			[DamageTypes.SPEED] = 2,
 			[DamageTypes.STAGGER] = 5,
