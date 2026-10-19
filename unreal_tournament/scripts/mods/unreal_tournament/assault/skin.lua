@@ -80,9 +80,8 @@ local CONFIG = {
 	-- its shot (attack_shoot_fast), and they leave it (attack_finished) this long after the last of them, once the rifle does nothing
 	-- (set in the game)
 	stance_linger = 0.5, -- s
-	-- (after the grenade's charge or throw: the time until the next grenade can be thrown, a full charge (1 s) and half a second more,
-	-- set in the game)
-	stance_linger_alt = assault.grenade_fire_rate + 1 + 0.5, -- s
+	-- (after the grenade's charge or throw: the time until the next grenade can be thrown, and half a second more, set in the game)
+	stance_linger_alt = assault.grenade_fire_rate + 0.5, -- s
 	-- The grenade's shot leaves the stance once it has played, so the stance is taken again this long after the shot (set in the game)
 	stance_retake = 0.4, -- s
 	-- In the stance the arms reach out and the pistols point along them, so both rifles are level with the pistols then (pitch and yaw 0
