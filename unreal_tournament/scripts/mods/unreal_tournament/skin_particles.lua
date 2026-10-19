@@ -31,7 +31,8 @@ local mod = get_mod("unreal_tournament")
 --   falloff: how far a light reaches, in meters (only for particles.light).
 -- The kinds:
 --   particles.sprite(spec): faces the camera.
---   particles.disc(spec): lies on a surface. spec.normal is the way it faces, or a function that returns it each frame.
+--   particles.disc(spec): lies on a surface. spec.normal is the way it faces, or a function that returns it each frame, or nothing
+--       when the disc shouldn't be drawn.
 --   particles.light(spec): a point light (units/ut/fx/light) at spec.position or spec.follow. spec.color is its color, spec.intensity
 --       how bright it is, and spec.falloff how far it reaches. It fades like the other particles.
 --   particles.beam(spec): goes from spec.from to spec.to. spec.size is how wide it is, and it faces the camera around its length.
@@ -395,7 +396,20 @@ local function place(particle, dt, camera_position, camera_rotation)
 		rotation = facing(camera_position - position, along)
 		scale = Vector3(size, math.max(length, 0.001), 1)
 	elseif particle.kind == "disc" then
-		local normal = particle.normal_by and particle.normal_by() or particle.normal:unbox()
+		local normal
+
+		if particle.normal_by then
+			normal = particle.normal_by()
+		else
+			normal = particle.normal:unbox()
+		end
+
+		-- (a disc with no way to face isn't drawn)
+		if not normal then
+			normal = Vector3.up()
+			light = 0
+		end
+
 		local side = Vector3.cross(normal, Vector3.up())
 
 		if Vector3.length(side) < 0.1 then

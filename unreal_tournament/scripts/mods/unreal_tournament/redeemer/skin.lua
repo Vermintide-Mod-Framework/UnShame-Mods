@@ -407,6 +407,10 @@ end
 -- The puffs of fire and smoke (SpriteEmitter0 to 3). Each starts on a sphere about the center, with a velocity of up to 1 unit a second
 -- up or down and radial (towards the center or away from it), which VelocityScale multiplies: nothing for half their life, then thousands
 -- of units a second, so they rush in or out while they grow from 10 units to hundreds.
+-- They don't face the camera: UseDirectionAs is PTDU_Forward, so each faces the way it moved since the last frame, and one that didn't
+-- move has no area (USpriteEmitter::FillVertexBuffer in Engine.dll). Revolving moves them too (UParticleEmitter::UpdateParticles turns
+-- the location after keeping the old one), so while their velocity is nothing they face along the circle about the center's up axis,
+-- and from above each is seen edge on.
 local PUFFS = {
 	{ count = 40, delay = 0, radius = 64, scale_z = 2, offset_z = -64, radial = { -1, -1 }, texture = "smoke_puff2", velocity = { 3000, 3000, 1000 }, revolution = 0.2,
 		colors = { { 0, BLACK }, { 0.33, BLACK }, { 0.66, color255(255, 51, 15) }, { 1, BLACK } }, sizes = { { 0, 10 }, { 0.5, 10 }, { 0.8, 160 }, { 1, 250 } } },
@@ -437,8 +441,10 @@ local function puffs(center)
 			local last = born
 			local center_box = Vector3Box(center)
 			local velocity_keys = { { 0, { 0, 0, 0 } }, { 0.5, { 0, 0, 0 } }, { 0.7, emitter.velocity }, { 1, emitter.velocity_end or { 0, 0, 0 } } }
+			-- (how far it moved in the last frame, in UT units)
+			local moved = { 0, 0, 0 }
 
-			particles.sprite({
+			particles.disc({
 				additive = emitter.blended and 0 or 1,
 				brightness = function (fraction)
 					local value = fade(fraction * PUFF_LIFE, PUFF_LIFE, PUFF_FADE_IN)
@@ -457,6 +463,8 @@ local function puffs(center)
 
 					last = now
 
+					local before = { place[1], place[2], place[3] }
+
 					for axis = 1, 3 do
 						place[axis] = place[axis] + base[axis] * scale[axis] * dt
 					end
@@ -468,9 +476,21 @@ local function puffs(center)
 					place[1] = x * math.cos(turn) - y * math.sin(turn)
 					place[2] = x * math.sin(turn) + y * math.cos(turn)
 
+					for axis = 1, 3 do
+						moved[axis] = place[axis] - before[axis]
+					end
+
 					return center_box:unbox() + Vector3(place[1], place[2], place[3]) * UNIT
 				end,
 				life = PUFF_LIFE,
+				normal = function ()
+					-- (FVector.SafeNormal's limit: under it the direction is nothing)
+					if moved[1] ^ 2 + moved[2] ^ 2 + moved[3] ^ 2 < 1e-8 then
+						return nil
+					end
+
+					return Vector3.normalize(Vector3(moved[1], moved[2], moved[3]))
+				end,
 				size_by = function (fraction)
 					return keyed(emitter.sizes, fraction) * SPRITE * UNIT
 				end,
