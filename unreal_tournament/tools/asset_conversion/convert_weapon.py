@@ -209,6 +209,33 @@ WEAPONS['shock2003'] = {
     'lua': 'scripts/mods/unreal_tournament/shock/skin_animations_2003.lua',
 }
 
+# UT2003's Link Gun (Weapons.LinkGun_1st, the model UT2004 keeps as LinkGun.OldMesh)
+WEAPONS['link2003'] = {
+    'psk': 'Weapons/SkeletalMesh/LinkGun_1st.psk',
+    'psa': 'Weapons/MeshAnimation/LinkGun_1st.psa',
+    'materials': [('WeaponSkins/Texture/LinkTex0.tga', 'opaque')],
+    'scale': 0.0125,
+    'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
+    'locators': ['bone flashA'],
+    'unit': 'units/ut/link2003/link_gun',
+    'lua': 'scripts/mods/unreal_tournament/link_new/skin_animations_2003.lua',
+}
+
+# UT2003's Assault Rifle (Weapons.AssaultRifle_1st, AssaultRifle.OldMesh), with its grenade ends, and a mirrored copy for the left hand
+WEAPONS['assault2003'] = {
+    'psk': 'Weapons/SkeletalMesh/AssaultRifle_1st.psk',
+    'psa': 'Weapons/MeshAnimation/AssaultRifle_1st.psa',
+    'materials': [('WeaponSkins/Texture/AssaultTex0.tga', 'opaque'), ('WeaponSkins/Texture/GrenadeEndTex.tga', 'opaque')],
+    'scale': 0.0125,
+    'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
+    'locators': ['Bone_Flash', 'Bone_Flash02'],
+    'roughness': 0.9,
+    'gloss': (0,),
+    'unit': 'units/ut/assault2003/assault_rifle',
+    'mirror_unit': 'units/ut/assault2003/assault_rifle_left',
+    'lua': 'scripts/mods/unreal_tournament/assault/skin_animations_2003.lua',
+}
+
 MATERIAL_TEMPLATES = {
     'additive': '''material_contexts = {
 	surface_material = ""
@@ -562,7 +589,9 @@ def main():
     ks, _, keys = psa['ANIMKEYS']
     abs_, abc, abb = psa['BONENAMES']
     anim_bones = [abb[i * abs_:i * abs_ + 64].split(b'\0')[0].decode('latin1') for i in range(abc)]
-    bone_index_in_anim = {bone_names.index(n): i for i, n in enumerate(anim_bones)}
+    # (UT plays a track on the mesh's bone of the same name. An animation can have bones the mesh doesn't, such as the UT2003 Assault
+    # Rifle's Dummy helpers, whose tracks move nothing.)
+    bone_index_in_anim = {bone_names.index(n): i for i, n in enumerate(anim_bones) if n in bone_names}
     animated = [0] + [b for b in used_bones + locator_bones if b != 0]
     animated = list(dict.fromkeys(animated))
     lines = ['-- The animations of a UT2004 weapon: the pose of each bone in each frame, made by convert_weapon.py from its psa, never to',

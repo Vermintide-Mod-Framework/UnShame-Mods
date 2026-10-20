@@ -43,11 +43,27 @@ STATICS = {
         'unit': 'units/ut/flak/chunk',
         'culling': 'disabled',
     },
+    # UT2003's Link Gun pickup (LinkTex0), which the old Link Gun's icon and the new one's UT2003 illusion are made from
     'link_pickup': {
         'pskx': 'WeaponStaticMesh/StaticMesh/LinkGunPickup.pskx',
         'materials': [('WeaponSkins/Texture/LinkTex0.tga', 'opaque')],
         'scale': 0.012,
         'unit': 'units/ut/link/pickup',
+    },
+    # UT2004's Link Gun pickup (LinkGunPickup's NewWeaponPickups.LinkPickupSM, DrawScale 0.65). Its LinkGunShader is FatLinkGunTex0.
+    'link2004_pickup': {
+        'pskx': 'NewWeaponPickups/StaticMesh/LinkPickupSM.pskx',
+        'materials': [('UT2004Weapons/Texture/FatLinkGunTex0.tga', 'opaque')],
+        'scale': 0.013,
+        'unit': 'units/ut/link/pickup_2004',
+    },
+    # UT2003's Assault Rifle pickup (WeaponStaticMesh.AssaultRiflePickup, AssaultRifle.OldPickup), for the UT2003 illusion's icon and third
+    # person
+    'assault2003_pickup': {
+        'pskx': 'WeaponStaticMesh/StaticMesh/AssaultRiflePickup.pskx',
+        'materials': [('WeaponSkins/Texture/AssaultTex0.tga', 'opaque')],
+        'scale': 0.01,
+        'unit': 'units/ut/assault2003/pickup',
     },
     'bio_pickup': {
         'pskx': 'WeaponStaticMesh/StaticMesh/BioRiflePickup.pskx',
@@ -158,7 +174,7 @@ STATICS = {
     },
     # The third person meshes of the other weapons' attachment classes, at xWeaponAttachment's DrawScale 0.4, each with its pickup's
     # material, which has the same texture: AssaultAttachment's NewWeapons2004.NewAssaultRifle_3rd, BioAttachment's Weapons.BioRifle_3rd
-    # (its glass material has no faces), LinkAttachment's NewWeapons2004.NewLinkGun_3rd (LinkGunShader is LinkTex0's),
+    # (its glass material has no faces), LinkAttachment's NewWeapons2004.NewLinkGun_3rd (its LinkGunShader is FatLinkGunTex0, UT2004's pickup's),
     # RocketAttachment's Weapons.RocketLauncher_3rd and RedeemerAttachment's Weapons.Redeemer_3rd (the missile, then the body; its
     # DrawScale is 0.6)
     # (AssaultAttachment's DrawScale is 0.3)
@@ -176,9 +192,23 @@ STATICS = {
     },
     'link_3rd': {
         'pskx': 'NewWeapons2004/SkeletalMesh/NewLinkGun_3rd.psk',
-        'materials': [('units/ut/link/pickup_m0', 'existing')],
+        'materials': [('units/ut/link/pickup_2004_m0', 'existing')],
         'scale': 0.02 * 0.4,
         'unit': 'units/ut/link/third_person',
+    },
+    # UT2003's third person meshes (Weapons.LinkGun_3rd and Weapons.AssaultRifle_3rd, the attachments' meshes before UT2004's), for the
+    # UT2003 illusions, with their UT2003 pickups' materials, at xWeaponAttachment's DrawScale 0.4, as the UT2003 Shock Rifle's
+    'link2003_3rd': {
+        'pskx': 'Weapons/SkeletalMesh/LinkGun_3rd.psk',
+        'materials': [('units/ut/link/pickup_m0', 'existing')],
+        'scale': 0.02 * 0.4,
+        'unit': 'units/ut/link2003/third_person',
+    },
+    'assault2003_3rd': {
+        'pskx': 'Weapons/SkeletalMesh/AssaultRifle_3rd.psk',
+        'materials': [('units/ut/assault2003/pickup_m0', 'existing')],
+        'scale': 0.02 * 0.4,
+        'unit': 'units/ut/assault2003/third_person',
     },
     'rocket_3rd': {
         'pskx': 'Weapons/SkeletalMesh/RocketLauncher_3rd.psk',

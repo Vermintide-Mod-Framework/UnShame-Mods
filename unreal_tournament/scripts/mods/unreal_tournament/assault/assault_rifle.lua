@@ -84,6 +84,20 @@ for _, variant in ipairs(VARIANTS) do
 		icon = "ut_assault_rifle_icon",
 		icon_package = "resource_packages/unreal_tournament/icons",
 		icon_materials = "ui/ut/assault_rifle_icon",
+		-- The illusions are UT2004's model and UT2003's old model, which UT2004 still has as an option (AssaultRifle.OldMesh)
+		skins = {
+			{
+				key = variant.key .. "_skin_2004",
+				name = "UT2004 Assault Rifles",
+				default = true,
+			},
+			{
+				key = variant.key .. "_skin_2003",
+				name = "UT2003 Assault Rifles",
+				icon = "ut_assault_rifle_2003_icon",
+				icon_materials = "ui/ut/assault_rifle_2003_icon",
+			},
+		},
 	})
 
 	VARIANT_OF[variant.template] = variant

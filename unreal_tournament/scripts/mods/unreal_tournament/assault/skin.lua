@@ -14,6 +14,7 @@ local mod = get_mod("unreal_tournament")
 
 local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/assault/skin_animations")
+local animations_2003 = mod:dofile("scripts/mods/unreal_tournament/assault/skin_animations_2003")
 local particles = mod.skin_particles
 
 -- The items (assault_rifle.lua's VARIANTS): each has a skin for each hand
@@ -489,9 +490,38 @@ local GRIPS = {
 -- One rifle of an item. The first item's right rifle also flies the grenades' models, which are every item's.
 local function new_skin(setting_id, mirror, owns_grenades)
 	local template = mod.items.weapons[setting_id].template
+	local item_key = mod.items.weapons[setting_id].key
 	local id = mirror and setting_id .. "_left" or setting_id
 	local grip = GRIPS[setting_id][mirror and "left" or "right"]
 	local api
+
+	-- The rifle in a character's hand: UT2004's mesh, or UT2003's (Weapons.AssaultRifle_3rd, convert_static.py assault2003_3rd, at
+	-- xWeaponAttachment's DrawScale 0.4), whose origin is by its grip too and whose muzzle is its Bone_Flash
+	local function third_person_of(unit_name, meters_per_unit, muzzle_forward, muzzle_up)
+		return {
+			id = id,
+			template = template,
+			unit_name = unit_name,
+			hand_node = mirror and "j_leftweaponattach" or "j_rightweaponattach",
+			meters_per_unit = meters_per_unit,
+			scale = 1,
+			grip_right = 0,
+			grip_forward = grip.forward,
+			grip_up = grip.up,
+			yaw = grip.yaw,
+			pitch = grip.pitch,
+			roll = 0,
+			follow_game_unit = 2,
+			-- (level in the stance, see stance_blend)
+			angles_of = function (character, pitch, roll, yaw)
+				return angles_in_hand(character, pitch, roll, yaw)
+			end,
+			muzzle_right = 0,
+			muzzle_forward = muzzle_forward,
+			muzzle_up = muzzle_up,
+			menu_yaw = -90,
+		}
+	end
 
 	api = mod.weapon_skin.new({
 		id = id,
@@ -531,28 +561,21 @@ local function new_skin(setting_id, mirror, owns_grenades)
 		-- the brace of pistols (AttachmentNodeLinking). Its origin is by its grip, and its barrel runs along its forward, as the Minigun's
 		-- does, so it is not turned, as the Minigun's copy of the repeater pistol is not in the same hand. The muzzle is the rifle's
 		-- Bone_Flash (Bone_Flash02, below it, is the grenade launcher's).
-		third_person = {
-			id = id,
-			template = template,
-			unit_name = "units/ut/assault/third_person",
-			hand_node = mirror and "j_leftweaponattach" or "j_rightweaponattach",
-			meters_per_unit = 0.02 * 0.3,
-			scale = 1,
-			grip_right = 0,
-			grip_forward = grip.forward,
-			grip_up = grip.up,
-			yaw = grip.yaw,
-			pitch = grip.pitch,
-			roll = 0,
-			follow_game_unit = 2,
-			-- (level in the stance, see stance_blend)
-			angles_of = function (character, pitch, roll, yaw)
-				return angles_in_hand(character, pitch, roll, yaw)
-			end,
-			muzzle_right = 0,
-			muzzle_forward = 49.3,
-			muzzle_up = 17.9,
-			menu_yaw = -90,
+		third_person = third_person_of("units/ut/assault/third_person", 0.02 * 0.3, 49.3, 17.9),
+		looks = {
+			-- These come from AssaultRifle.uc with bUseOldWeaponMesh: OldMesh, OldPlayerViewOffset and OldPlayerViewPivot. Weapon.RenderOverlays
+			-- draws it at OldDrawScale, which is 1. The rifle's muzzle is Bone_Flash (Bone_Flash02 is the grenade launcher's).
+			[item_key .. "_skin_2003"] = {
+				unit_name = mirror and "units/ut/assault2003/assault_rifle_left" or "units/ut/assault2003/assault_rifle",
+				animations = animations_2003,
+				muzzle_node = "b_bone_flash",
+				draw_scale = 1,
+				offset_forward = -8,
+				offset_right = 5,
+				offset_up = -6,
+				pivot_pitch = 400 / 65536 * 360,
+				third_person = third_person_of("units/ut/assault2003/third_person", 0.02 * 0.4, 56.3, 1.9),
+			},
 		},
 		on_create = function ()
 			if not mirror then

@@ -10,6 +10,7 @@ local mod = get_mod("unreal_tournament")
 
 local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/link/skin_animations")
+local animations_2003 = mod:dofile("scripts/mods/unreal_tournament/link_new/skin_animations_2003")
 local particles = mod.skin_particles
 local link = mod.link_new
 
@@ -112,9 +113,35 @@ local function muzzle_flash(character)
 	})
 end
 
-local function new_skin(setting_id)
+-- The third person of a look: UT2004's mesh, or UT2003's (Weapons.LinkGun_3rd, convert_static.py link2003_3rd), which runs along its
+-- forward from its grip too
+local function third_person_of(setting_id, unit_name, muzzle_forward, muzzle_up)
 	local definition = mod.items.weapons[setting_id]
 	local grip = GRIPS[setting_id]
+
+	return {
+		id = setting_id,
+		template = definition.template,
+		unit_name = unit_name,
+		hand_node = grip.hand_node,
+		meters_per_unit = 0.02 * 0.4,
+		scale = 1,
+		grip_right = grip.right,
+		grip_forward = grip.forward,
+		grip_up = grip.up,
+		yaw = grip.yaw,
+		pitch = grip.pitch,
+		roll = grip.roll,
+		follow_game_unit = grip.follow,
+		muzzle_right = 0,
+		muzzle_forward = muzzle_forward,
+		muzzle_up = muzzle_up,
+		menu_yaw = -90,
+	}
+end
+
+local function new_skin(setting_id)
+	local definition = mod.items.weapons[setting_id]
 	local api
 
 	api = mod.weapon_skin.new({
@@ -138,24 +165,21 @@ local function new_skin(setting_id)
 		bob_damping = 1.575,
 		-- UT's third person mesh (LinkAttachment's NewLinkGun_3rd) at UT's size in a player's hand (DrawScale 0.4). Its origin is by its
 		-- grip, and its barrel runs along its forward to the muzzle (its upper flash bone).
-		third_person = {
-			id = setting_id,
-			template = definition.template,
-			unit_name = "units/ut/link/third_person",
-			hand_node = grip.hand_node,
-			meters_per_unit = 0.02 * 0.4,
-			scale = 1,
-			grip_right = grip.right,
-			grip_forward = grip.forward,
-			grip_up = grip.up,
-			yaw = grip.yaw,
-			pitch = grip.pitch,
-			roll = grip.roll,
-			follow_game_unit = grip.follow,
-			muzzle_right = 0,
-			muzzle_forward = 75.5,
-			muzzle_up = 8.9,
-			menu_yaw = -90,
+		third_person = third_person_of(setting_id, "units/ut/link/third_person", 75.5, 8.9),
+		looks = {
+			-- These come from LinkGun.uc with bUseOldWeaponMesh: OldMesh, OldPlayerViewOffset and OldPlayerViewPivot. Weapon.RenderOverlays
+			-- draws it at OldDrawScale, which is 1.
+			[definition.key .. "_skin_2003"] = {
+				unit_name = "units/ut/link2003/link_gun",
+				animations = animations_2003,
+				muzzle_node = "b_bone_flasha",
+				draw_scale = 1,
+				offset_forward = -2,
+				offset_right = -2,
+				offset_up = -3,
+				pivot_yaw = 500 / 65536 * 360,
+				third_person = third_person_of(setting_id, "units/ut/link2003/third_person", 99.2, 2.5),
+			},
 		},
 		on_create = function ()
 			api.play_sound("ut_link_select")
