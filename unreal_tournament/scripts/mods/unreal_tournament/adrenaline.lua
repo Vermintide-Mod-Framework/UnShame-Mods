@@ -225,26 +225,51 @@ local function draw_count(gui, value, scale, width, height)
 	end
 end
 
-mod.ingame_ui_post_update_callbacks.adrenaline = function ()
+-- What is known of the player's adrenaline while the counter is shown, or nil
+local function shown_entry()
 	-- (not in the Keep, which is a hub level: StateIngame sets this)
 	if DamageUtils.is_in_inn then
-		return
+		return nil
 	end
 
 	local unit = local_unit()
 	local entry = unit and known[unit]
+
+	-- (on a machine that isn't the host, the host's word stops coming when its setting is off)
+	if not entry or not (is_host() and mod:get("adrenaline")) and Managers.time:time("game") - entry.time > CONFIG.shown_for then
+		return nil
+	end
+
+	return entry
+end
+
+-- The kill feed (PositiveReinforcementUI) is at the top right too: while the counter is shown it starts below it, as far below as it is
+-- below the top of the screen otherwise. Its scenegraph is 1080 high, and the counter's lowest widget (the glow) ends this far down.
+local function counter_bottom()
+	local alert = CONFIG.alert
+
+	return (alert.y + alert[4] - alert[2]) * alert.scale * 1080 / 480
+end
+
+mod:hook(PositiveReinforcementUI, "update", function (func, self, ...)
+	local node = self.ui_scenegraph and self.ui_scenegraph.message_animated
+
+	if node then
+		self._ut_feed_y = self._ut_feed_y or node.local_position[2]
+		node.local_position[2] = self._ut_feed_y - (shown_entry() and counter_bottom() or 0)
+	end
+
+	return func(self, ...)
+end)
+
+mod.ingame_ui_post_update_callbacks.adrenaline = function ()
+	local entry = shown_entry()
 
 	if not entry then
 		return
 	end
 
 	local now = Managers.time:time("game")
-
-	-- (on a machine that isn't the host, the host's word stops coming when its setting is off)
-	if not (is_host() and mod:get("adrenaline")) and now - entry.time > CONFIG.shown_for then
-		return
-	end
-
 	local gui = gui_now()
 
 	if not gui then
