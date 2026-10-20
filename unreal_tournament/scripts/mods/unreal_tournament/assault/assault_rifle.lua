@@ -122,9 +122,9 @@ local CONFIG = {
 	grenade_damage = 70 * 60 / 90,
 	grenade_radius_uu = 150,
 	grenade_full_damage_radius = 0.5,
-	-- The explosion hurts the player who threw it, as much less than its damage as the Rocket Launcher's self damage is (45 for its 60),
-	-- and throws them (MomentumTransfer 75000, as the Flak Cannon's shell)
-	grenade_self_damage = 70 * 60 / 90 * 45 / 60,
+	-- The explosion hurts the player who threw it, at most this much (set in the game: far less than the rocket's, since the grenades are
+	-- thrown close), and throws them (MomentumTransfer 75000, as the Flak Cannon's shell)
+	grenade_self_damage = 7,
 	grenade_jump_speed = 8.5,
 	-- The multipliers of the damage and the stagger for each armor type: unarmored, armored, monsters, players, berserkers and super armor.
 	-- The rounds are poor against armor, as UT's description says, and the grenades are not.
@@ -153,6 +153,9 @@ local UNIT = utils.UT_UNIT
 
 register_damage_profile("ut_assault_bullet", "shot_repeating", function (profile)
 	make_flat(profile, attack_power_for(CONFIG.damage), impact_power_for(CONFIG.damage), "shot_shotgun")
+
+	-- A shield blocks the rounds. The repeater's shot breaks a shield it hits, and its damage goes through.
+	profile.shield_break = nil
 
 	profile.cleave_distribution = {
 		attack = 0.01,
