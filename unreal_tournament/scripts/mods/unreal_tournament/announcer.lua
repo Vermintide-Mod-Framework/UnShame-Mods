@@ -45,10 +45,12 @@ local CONFIG = {
 	-- The words on the screen (LocalMessage). Each message has where it is on the screen (PosY, from the top), how long it lasts
 	-- (Lifetime), how it fades out, and its color. MultiKillMessage, SpecialKillMessage and FirstBloodMessage are red. CriticalEventPlus,
 	-- which the sprees use, is white. The size is one of the FontSize values, in pixels at a height of 1080.
+	-- ComboMessage, a combo's name when it starts, is red at the top.
 	messages = {
 		multi_kill = { y = 0.242, color = { 255, 0, 0 } },
 		head_shot = { y = 0.14, color = { 255, 0, 0 } },
 		critical = { y = 0.83, color = { 255, 255, 255 } },
+		combo = { y = 0.1, color = { 255, 0, 0 } },
 	},
 	text_life = 3, -- seconds
 	text_fade = 1, -- seconds, at the end of its life
@@ -93,11 +95,6 @@ local function play_later(event, delay)
 	}
 end
 
-mod.announcer = {
-	play = play,
-	play_later = play_later,
-}
-
 local function show(place, text, font_size_index, color)
 	local settings = CONFIG.messages[place]
 
@@ -108,6 +105,15 @@ local function show(place, text, font_size_index, color)
 		time = Managers.time:time("game"),
 	}
 end
+
+mod.announcer = {
+	play = play,
+	play_later = play_later,
+	-- (a combo's name on the screen, ComboMessage at LocalMessage's FontSize 0: words, not the voice, so with the setting off too)
+	combo_message = function (text)
+		show("combo", text, 1)
+	end,
+}
 
 -- Returns the font size index for a multi kill level, as MultiKillMessage.GetFontSize does.
 local function multi_kill_font_size(level)

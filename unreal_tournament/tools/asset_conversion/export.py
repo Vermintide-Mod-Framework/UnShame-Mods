@@ -13,8 +13,8 @@ PACKAGES = [
     'AW-2004Explosions', 'AW-2004Particles', 'EpicParticles', 'WarEffectsTextures', 'DeployableTex',
     # the sphere of the Shock Rifle's combo (TexPropSphere)
     'Editor',
-    # the sounds
-    'WeaponSounds', 'NewWeaponSounds', 'AnnouncerMale2K4',
+    # the sounds (GameSounds: the adrenaline combos')
+    'WeaponSounds', 'NewWeaponSounds', 'AnnouncerMale2K4', 'GameSounds',
     # the HUD's pictures (the Assault Rifle's grenades)
     'HudContent',
 ]

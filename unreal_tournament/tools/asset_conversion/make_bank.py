@@ -50,6 +50,10 @@ WEAPONS = {
         ('ut_announcer_booster', ANNOUNCER + 'Booster', False, -18, 0),
         ('ut_announcer_invisible', ANNOUNCER + 'Invisible', False, -18, 0),
     ],
+    # The adrenaline combos (Combo.ActivateSound, played at the pawn at twice its TransientSoundVolume, heard by everyone near)
+    'combos': [
+        ('ut_combo_activated_3d', 'GameSounds/Sound/ComboActivated', True, -20, 40),
+    ],
     'shock_rifle': [
         ('ut_shock_fire', SOUNDS + 'BShockRifleFire', False, -22, 0),
         ('ut_shock_alt_fire', SOUNDS + 'BShockRifleAltFire', False, -22, 0),

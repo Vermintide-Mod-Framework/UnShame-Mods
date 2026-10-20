@@ -7,7 +7,8 @@ local mod = get_mod("unreal_tournament")
 -- bots' too, which lasts through a death until the level ends (UT empties it only in a combo), and sends it to every machine. The
 -- announcer says "Adrenalin" a moment after the player's fills, and the HUD shows UT's counter (HudCDeathmatch.DrawAdrenaline).
 --   mod.adrenaline.of(player_unit): a player's adrenaline as this machine knows it, or nil
---   mod.adrenaline.give(player_unit, amount): on the host, adds to it (or takes from it)
+--   mod.adrenaline.give(player_unit, amount, quiet): on the host, adds to it (or takes from it); mod.adrenaline.sync(player_unit) sends
+--       it after quiet changes
 --   mod.adrenaline.fill(player_unit): fills it, from any machine
 --   mod.adrenaline.max: the most there is
 
@@ -108,8 +109,8 @@ local function go_id(unit)
 	return unit and Unit.alive(unit) and Managers.state.unit_storage:go_id(unit) or 0
 end
 
--- Tells this machine and the others a player's adrenaline
-local function send(player)
+-- Tells this machine a player's adrenaline, and the others unless quiet
+local function send(player, quiet)
 	local unit = player.player_unit
 
 	if not unit or not Unit.alive(unit) then
@@ -119,7 +120,10 @@ local function send(player)
 	local amount = by_player[player:unique_id()] or 0
 
 	know(unit, amount)
-	mod:network_send("ut_adrenaline", "others", go_id(unit), amount)
+
+	if not quiet then
+		mod:network_send("ut_adrenaline", "others", go_id(unit), amount)
+	end
 end
 
 mod:network_register("ut_adrenaline", function (_, player_go_id, amount)
@@ -132,7 +136,8 @@ mod:network_register("ut_adrenaline", function (_, player_go_id, amount)
 end)
 
 -- On the host: adds to a player's adrenaline (less for a negative amount), between none and the most, and tells everyone
-function adrenaline.give(player_unit, amount)
+-- (quiet tells only this machine: a combo's drain, every frame, which adrenaline.sync then sends now and then)
+function adrenaline.give(player_unit, amount, quiet)
 	local player = is_host() and mod:get("adrenaline") and Managers.player:owner(player_unit)
 
 	if not player then
@@ -143,7 +148,16 @@ function adrenaline.give(player_unit, amount)
 
 	by_player[id] = math.clamp((by_player[id] or 0) + amount, 0, CONFIG.max)
 
-	send(player)
+	send(player, quiet)
+end
+
+-- On the host: tells everyone a player's adrenaline now
+function adrenaline.sync(player_unit)
+	local player = is_host() and Managers.player:owner(player_unit)
+
+	if player then
+		send(player)
+	end
 end
 
 -- Fills a player's adrenaline: on the host, or by asking the host (the extras mod's recharge)

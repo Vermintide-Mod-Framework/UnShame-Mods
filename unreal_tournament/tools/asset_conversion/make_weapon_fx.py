@@ -52,6 +52,14 @@ TEXTURES = {
     # (the textures of the Redeemer blast's spheres and ring, whose materials make_combo_materials.py makes: fx_ion_sphere and fx_flame_ring)
     'ion_burn': ('EpicParticles/Texture/IonBurn.tga', 1, 1),
     'grad_falloff': ('EpicParticles/Texture/Grad_Falloff.tga', 1, 1),
+    # The adrenaline combos: ComboActivation's balls, SpeedTrail's streak, RegenCrosses' cross (Booster), and the textures of the
+    # panned materials of OffensiveEffect's rings (Berserk: RedBoltFB) and of the invisible (InvisOverlayFB), which make_combo_materials.py
+    # makes: fx_berserk_ring and fx_invisible
+    'combo_ball': ('XEffects/Texture/pcl_ball.tga', 1, 1),
+    'speed_trail': ('XEffects/Texture/SpeedTrailTex.tga', 1, 1),
+    'green_cross': ('XEffectMat/Texture/greencross.tga', 1, 1),
+    'red_bolt': ('XEffectMat/Texture/redbolt.tga', 1, 1),
+    'invis_overlay': ('XEffectMat/Texture/invis_overlay.tga', 1, 1),
 }
 
 # (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
@@ -75,14 +83,15 @@ SRGB_BRIGHTEN = ('minigun_burst',)
 KEEP_ALPHA = ('shield_elec', 'shield_rip_elec', 'shield_edge', 'ion_burn', 'grad_falloff')
 
 # The textures that only those materials draw, so they have no particle material of their own (FlameGradient is the Redeemer ring's)
-COMBO_ONLY = KEEP_ALPHA + ('flame_gradient',)
+COMBO_ONLY = KEEP_ALPHA + ('flame_gradient', 'red_bolt', 'invis_overlay')
 
 # The textures that are turned a quarter, because they are drawn on a beam, which lays v along its length (TracerShot is a streak along
 # u, the way NewTracer's sprite moves: PTDU_Right)
-TURNED = ('tracer_shot', 'shield_charge_spark', 'white_streak')
+TURNED = ('tracer_shot', 'shield_charge_spark', 'white_streak', 'speed_trail')
 
-# The textures of which only the top half is used: FlakTrailTex is a streak above a dot, and a line particle (PT_Line) is the streak
-TOP_HALF = ('shield_charge_spark',)
+# The textures of which only the top half is used: FlakTrailTex is a streak above a dot, and a line particle (PT_Line) is the streak, as
+# SpeedTrailTex is for a stream (PT_Stream)
+TOP_HALF = ('shield_charge_spark', 'speed_trail')
 
 # The effects that UT draws with the weapon in the player's view (attached to it) also get fx_weapon_<name>, which draws with the
 # weapon model's field of view (units/ut/fx/particle_weapon_linear, or particle_weapon for an srgb one), so they are among the model's

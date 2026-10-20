@@ -98,4 +98,5 @@ wwise_dep = [
 	"wwise/unreal_tournament/redeemer"
 	"wwise/unreal_tournament/assault_rifle"
 	"wwise/unreal_tournament/announcer"
+	"wwise/unreal_tournament/combos"
 ]
