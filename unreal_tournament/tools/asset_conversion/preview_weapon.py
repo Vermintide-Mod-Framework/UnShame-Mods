@@ -85,6 +85,16 @@ WEAPONS = {
         'offset': (5.5, 4, -6),
         'pivot': (0, 400 / 65536 * 360, 0),
     },
+    # UT2003's (AssaultRifle.OldMesh at OldDrawScale 1, OldPlayerViewOffset and OldPlayerViewPivot)
+    'assault2003': {
+        'psk': 'Weapons/SkeletalMesh/AssaultRifle_1st.psk',
+        'textures': ['units/ut/assault2003/assault_rifle_assaulttex0.png', 'units/ut/assault2003/assault_rifle_grenadeendtex.png'],
+        'lua': 'scripts/mods/unreal_tournament/assault/skin_animations_2003.lua',
+        'display_fov': 70,
+        'draw_scale': 1,
+        'offset': (5, -8, -6),
+        'pivot': (0, 400 / 65536 * 360, 0),
+    },
     'shield': {
         'psk': 'Weapons/SkeletalMesh/ShieldGun_1st.psk',
         'textures': ['units/ut/shield/shield_gun_shieldtex0.png'],

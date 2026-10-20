@@ -574,6 +574,15 @@ local function new_skin(setting_id, mirror, owns_grenades)
 				offset_right = 5,
 				offset_up = -6,
 				pivot_pitch = 400 / 65536 * 360,
+				-- The same pose as UT2004's: the rifle stood up with its inner side to the camera, the grip below the screen. This model is
+				-- made about another point, so it turns about its own middle (in its axes: the middle of its length, a little above its
+				-- origin) and sits where UT2004's does (checked with preview_weapon.py assault2003).
+				inspect_pose_right = 5,
+				inspect_pose_forward = 30,
+				inspect_pose_up = 8,
+				inspect_pivot_right = 0,
+				inspect_pivot_forward = 26.5,
+				inspect_pivot_up = 7,
 				third_person = third_person_of("units/ut/assault2003/third_person", 0.02 * 0.4, 56.3, 1.9),
 			},
 		},
