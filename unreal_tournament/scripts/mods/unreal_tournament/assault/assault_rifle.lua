@@ -339,8 +339,11 @@ local function raycast(physics_world, from, to, filter)
 	return PhysicsWorld.immediate_raycast(physics_world, from, along / length, length, "closest", "collision_filter", filter)
 end
 
--- Where a grenade moving from from to to touches an enemy's body, if it does before the level. The bigger zone around an enemy for near
--- misses ("afro") is not its body, so the grenade goes through it (utils.first_beam_hit, as the beam weapons' hits).
+-- Where a grenade moving from from to to touches an enemy, if it does before the level: as a rocket does, it is a sphere that hits an
+-- enemy's body (utils.UT_PROJECTILE_RADIUS, UT's collision cylinder of a player), and walls are hit by a ray. The grenade flies itself, as
+-- the game's projectiles can't bounce as it does, so the sphere is swept here the way the game sweeps one for its own aim at enemies
+-- (WeaponHelper.look_at_enemy_or_static_position). The bigger zone around an enemy for near misses ("afro") is not its body, so the
+-- grenade goes through it.
 local function enemy_touch(physics_world, from, to, owner_unit)
 	local along = to - from
 	local length = Vector3.length(along)
@@ -349,13 +352,25 @@ local function enemy_touch(physics_world, from, to, owner_unit)
 		return nil
 	end
 
-	local hits = PhysicsWorld.immediate_raycast_actors(physics_world, from, along / length, length, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
-	local hit = utils.first_beam_hit(hits, owner_unit)
-	-- (a hit on an enemy's shield is a hit on the enemy)
-	local hit_unit = hit and ActionUtils.redirect_shield_hit(Actor.unit(hit[4]), hit[4])
+	local direction = along / length
+	local _, wall, wall_distance = PhysicsWorld.immediate_raycast(physics_world, from, direction, length, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
+	local radius = utils.UT_PROJECTILE_RADIUS
+	-- (a sweep needs some length, even with a wall right at the start)
+	local reach = math.max(wall and wall_distance or length, 0.001)
 
-	if hit_unit and Unit.get_data(hit_unit, "breed") then
-		return hit[1]
+	PhysicsWorld.prepare_actors_for_overlap(physics_world, from + direction * reach / 2, (reach / 2 + radius) ^ 2)
+
+	local hits = PhysicsWorld.linear_sphere_sweep(physics_world, from, from + direction * reach, radius, 100, "types", "both", "collision_filter", "filter_player_ray_projectile", "report_initial_overlap")
+
+	for _, hit in ipairs(hits or {}) do
+		-- (a hit on an enemy's shield is a hit on the enemy)
+		local hit_unit, hit_actor = ActionUtils.redirect_shield_hit(Actor.unit(hit.actor), hit.actor)
+		local breed = hit_unit ~= owner_unit and Unit.get_data(hit_unit, "breed")
+		local hit_zone = breed and breed.hit_zones_lookup[Actor.node(hit_actor)]
+
+		if hit_zone and hit_zone.name ~= "afro" and HEALTH_ALIVE[hit_unit] and DamageUtils.is_enemy(owner_unit, hit_unit) then
+			return hit.position
+		end
 	end
 end
 

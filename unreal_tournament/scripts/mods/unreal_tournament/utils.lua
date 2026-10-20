@@ -430,6 +430,11 @@ end
 -- Meters in one Unreal unit of the world. A UT2004 player is 88 units high, about 1.8 m.
 utils.UT_UNIT = 0.02
 
+-- How easily a projectile hits an enemy. UT's projectile is a point that hits a player's collision cylinder, 25 uu (0.5 m) in radius.
+-- Here the projectile is a sphere that hits the enemy's body, which is about 0.2 m from its middle to its side, so the sphere reaches
+-- the rest of the way. Walls are still hit by a ray. The rockets and the Assault Rifle's grenades use it.
+utils.UT_PROJECTILE_RADIUS = 0.3 -- m
+
 -- The intensity of a weapon's light in a character's hand (xWeaponAttachment.WeaponLight, LightBrightness 255) for this game's lights.
 -- UT's brightness has no measure here, so it was set in the game.
 utils.WEAPON_LIGHT_INTENSITY = 0.5
