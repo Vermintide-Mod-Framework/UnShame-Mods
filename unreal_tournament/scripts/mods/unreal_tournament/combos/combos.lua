@@ -7,7 +7,7 @@ local mod = get_mod("unreal_tournament")
 -- the combo's own (combos/*.lua). The player who started one sees its name (ComboMessage) and hears the announcer say it. A knockdown or
 -- a death in a combo ends it and empties the meter (xPawn.Died). A knocked down character can start the Booster, which gets it up (not
 -- UT's: its pawns are never down). Bots start one at random once their meter is full and they have an enemy (SquadAI.AssignCombo), and
--- the Booster when they are knocked down.
+-- the Booster when they are knocked down, held by a special or hanging from a ledge (the Booster gets them out).
 --   mod.combos.kinds[name] = { start = function (unit, owner), stop = function (unit, owner), update = function (unit, dt, owner) }: a
 --       combo's own effects, on every machine. owner is whether this machine runs the character (the player's own, or a bot on the host).
 --   mod.combos.kind_of(unit): the name of the combo a character is in, or nil
@@ -442,8 +442,11 @@ local function update_host(dt, t)
 
 		local ready = ai_extension and not active[unit] and (adrenaline.of(unit) or 0) >= adrenaline.max
 
-		-- (a knocked down bot gets itself up with the Booster)
-		if ready and is_knocked_down(unit) then
+		-- (a bot that is knocked down, held by a special or hanging from a ledge gets itself out with the Booster)
+		local status_extension = ready and ScriptUnit.has_extension(unit, "status_system")
+		local stuck = status_extension and (status_extension:is_knocked_down() or utils.get_disabler(status_extension) or status_extension:get_is_ledge_hanging())
+
+		if ready and stuck then
 			start(unit, index_of("booster"))
 		elseif ready and target and HEALTH_ALIVE[target] then
 			start(unit, math.random(#CONFIG.combos))

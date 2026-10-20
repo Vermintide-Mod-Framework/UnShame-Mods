@@ -2,8 +2,8 @@ local mod = get_mod("unreal_tournament")
 
 -- The Booster combo (ComboDefensive): the character gets 5 health every 0.9 s (its Timer, from the start; the game's health can't go
 -- past full, where UT's goes on to 199 and then to the shield), and the game's wounds are healed as it starts. As well as UT's: stamina
--- back five times as fast, and started while knocked down it gets the character up. Everyone sees green crosses rising around the
--- character (RegenCrosses).
+-- back five times as fast, and as it starts it gets the character up if knocked down, frees them from a special that holds them, and
+-- pulls them up from a ledge. Everyone sees green crosses rising around the character (RegenCrosses).
 
 local utils = mod.utils
 local combos = mod.combos
@@ -21,6 +21,8 @@ local CONFIG = {
 	-- game plays no heal sound for, no_sfx_heal_reasons: "buff" played it at every tick.)
 	temporary_heal_type = "heal_from_proc",
 	stamina_regen = 4, -- added to the regeneration's multiplier of 1
+	-- How long a special that holds the character is staggered, which makes it let go (as Forgiving Disablers does, gameplay.lua)
+	release_stagger = 2, -- s
 	-- RegenCrosses: 10 crosses a second, each 6 units, from up to 35 units around the pawn's middle (45 up and down), for 2 s, brightest
 	-- at the middle of its life (mAttenKa 0.5); each keeps the pawn's speed (mOwnerVelocityFactor 1), slowed by mAirResistance 2, and
 	-- rises as gravity times its mMass -0.1 pulls it
@@ -88,6 +90,18 @@ combos.kinds.booster = {
 				entry.heal_wounds = true
 			else
 				StatusUtils.set_wounded_network(unit, false, "healed")
+			end
+
+			-- (a special that holds the character is staggered, which makes it let go, and a character hanging from a ledge is pulled
+			-- up as a teammate would pull them, the way a boon of the game pulls its player up: StatusUtils.set_pulled_up_network)
+			local disabler_unit = status_extension and utils.get_disabler(status_extension)
+
+			if disabler_unit then
+				utils.release_from_disabler(disabler_unit, unit, Managers.time:time("game"), CONFIG.release_stagger)
+			end
+
+			if status_extension and status_extension:get_is_ledge_hanging() then
+				StatusUtils.set_pulled_up_network(unit, true, unit)
 			end
 
 			entry.buffs = combos.add_buffs(unit, { STAMINA_BUFF })
