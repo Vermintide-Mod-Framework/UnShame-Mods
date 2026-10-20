@@ -4,7 +4,7 @@ local mod = get_mod("unreal_tournament")
 -- The numbers come from UT2004 (XWeapons/FlakFire, FlakAltFire, FlakChunk and FlakShell).
 --   LMB: fires a tight spread of flak chunks. They bounce off walls.
 --   RMB: lobs a shell that explodes when it hits something and throws flak chunks in all directions.
--- The recoil is the Blunderbuss's own. There is no reload.
+-- The kick is UT's view shake, not the Blunderbuss's recoil. There is no reload.
 -- Bardin has a copy on the Grudge-raker. The two items share everything but the base, its spread and its eye tracking setting.
 
 local utils = mod.utils
@@ -117,6 +117,11 @@ local CONFIG = {
 	primary_fire_rate = 0.8947,
 	alt_fire_rate = 1.11,
 	chain_margin = 0.15, -- seconds
+	-- FlakFire's and FlakAltFire's view shake (ShakeOffsetMag, ShakeOffsetRate and ShakeOffsetTime): the view jumps back 20 units
+	-- (forward, right, up). It has no turn (ShakeRotMag is 0), so the base's recoil is taken away.
+	shake_magnitude = { -20, 0, 0 },
+	shake_rate = { -1000, 0, 0 },
+	shake_time = 2,
 	-- The knockback of a chunk is how hard it staggers what it hits. The beam's impact power is 0.3, and a shotgun pellet's is 0.3
 	-- up close and 0.15 far away. It falls off with the distance between the player and the target. The near value applies up to
 	-- the falloff start, and the far value applies from the falloff end.
@@ -410,7 +415,7 @@ local function fire_chain_actions(rate)
 	return entries
 end
 
--- The shot: the Blunderbuss's (kind "shotgun"), with its ammo, recoil and animation, whose pellets are replaced by the chunks or the
+-- The shot: the base's (kind "shotgun"), with its ammo and animation, whose pellets are replaced by the chunks or the
 -- shell (see the shotgun callbacks below). It can be repeated after UT's fire time, and it has no reload. The values that are not
 -- UT's are the ones it had as a copy of the Blunderbuss's shot: how loud it is to enemies, the talents' kind of hit (charge_value), the
 -- spread's layers, when its damage is dealt and its range.
@@ -441,15 +446,8 @@ local function build_shot(variant, rate, shot_count, damage_profile)
 		alert_sound_range_fire = 12,
 		alert_sound_range_hit = 5,
 		fire_at_gaze_setting = variant.fire_at_gaze_setting,
-		apply_recoil = true,
-		recoil_settings = {
-			climb_duration = 0.15,
-			horizontal_climb = -3,
-			restore_duration = 0.45,
-			vertical_climb = 15,
-			climb_function = math.easeInCubic,
-			restore_function = math.ease_out_quad,
-		},
+		-- (UT's kick of the view is the shake below, so the game's recoil is off)
+		apply_recoil = false,
 		reload_when_out_of_ammo = true,
 		allowed_chain_actions = fire_chain_actions(rate),
 	}
@@ -632,8 +630,15 @@ local function burst_rotation(rotation, cone)
 end
 
 -- The shots
+-- UT's view shake, for the player who fires
+mod.shotgun_start_callbacks.flak = function (action, new_action)
+	if (new_action.ut_flak_chunks or new_action.ut_flak_shell) and utils.is_local_player_unit(action.owner_unit) then
+		mod.view_shake.start(CONFIG.shake_magnitude, CONFIG.shake_rate, CONFIG.shake_time)
+	end
+end
+
 -- ActionShotgun fires pellets as hitscan. These actions fire projectiles instead, and they keep the rest of the shot: the ammo,
--- the reload, the recoil and the sound.
+-- the reload and the sound.
 mod:hook(ActionShotgun, "_shoot", function (func, self, num_shots_total, num_shots_this_frame)
 	local action = self.current_action
 
