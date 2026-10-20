@@ -278,7 +278,8 @@ local function hud_shown()
 	local ingame_ui = ui_manager and ui_manager._ui_enabled and ui_manager._ingame_ui
 	local ingame_hud = ingame_ui and ingame_ui.ingame_hud
 
-	return ingame_hud ~= nil and ingame_hud._current_group_name == "alive"
+	-- (ingame_hud is false, not nil, while the UI is off)
+	return ingame_hud and ingame_hud._current_group_name == "alive" or false
 end
 
 -- What is known of the player's adrenaline while the counter is shown, or nil
