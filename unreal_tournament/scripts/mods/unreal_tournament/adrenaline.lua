@@ -138,7 +138,8 @@ end)
 -- On the host: adds to a player's adrenaline (less for a negative amount), between none and the most, and tells everyone
 -- (quiet tells only this machine: a combo's drain, every frame, which adrenaline.sync then sends now and then)
 function adrenaline.give(player_unit, amount, quiet)
-	local player = is_host() and mod:get("adrenaline") and Managers.player:owner(player_unit)
+	-- (there is none in the Keep, which shows no counter and starts no combo)
+	local player = is_host() and mod:get("adrenaline") and not DamageUtils.is_in_inn and Managers.player:owner(player_unit)
 
 	if not player then
 		return
