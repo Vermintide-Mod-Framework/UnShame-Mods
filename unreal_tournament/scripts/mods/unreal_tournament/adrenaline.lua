@@ -2,8 +2,8 @@ local mod = get_mod("unreal_tournament")
 
 -- Adrenaline (the Adrenaline setting, the host's for everyone): UT2004's (Controller.Adrenaline, UnrealPlayer.AwardAdrenaline), up to
 -- 100, given only for the rewards of kills (rewards.lua): a multi kill gives as many as its kills (two for a double kill, three for the
--- next), a spree's level as many as UT's kills for it (5, 10, 15 and on), first blood, a call out and the kill of a special or a sack
--- rat five, and the kill of a monster or a lord fifty. Other kills, head shots too, give none. The host keeps each player's,
+-- next), a spree's level as many as UT's kills for it (5, 10, 15 and on), first blood ten, a weapon's call out fifteen, the kill of a
+-- special or a sack rat five, and the kill of a monster or a lord fifty. Other kills, head shots too, give none. The host keeps each player's,
 -- bots' too, which lasts through a death until the level ends (UT empties it only in a combo), and sends it to every machine. The
 -- announcer says "Adrenalin" a moment after the player's fills, and the HUD shows UT's counter (HudCDeathmatch.DrawAdrenaline).
 --   mod.adrenaline.of(player_unit): a player's adrenaline as this machine knows it, or nil
@@ -22,8 +22,8 @@ local CONFIG = {
 		spree = function (level)
 			return 5 * level
 		end,
-		first_blood = 5,
-		call_out = 5,
+		first_blood = 10,
+		call_out = 15,
 		special_kill = 5,
 		boss_kill = 50,
 	},
