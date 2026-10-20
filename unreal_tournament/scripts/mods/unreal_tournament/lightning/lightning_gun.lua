@@ -180,7 +180,7 @@ local last_shots = setmetatable({}, {
 local function ready_to_fire(unit)
 	local last = last_shots[unit]
 
-	return not last or Managers.time:time("game") - last >= CONFIG.fire_rate - 0.01
+	return not last or Managers.time:time("game") - last >= CONFIG.fire_rate / mod.utils.attack_speed(unit) - 0.01
 end
 
 -- The actions that can follow a shot. Holding the button repeats the shot, as in UT, the heat can be vented, and the zoom can start at

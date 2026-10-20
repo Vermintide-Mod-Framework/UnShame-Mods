@@ -146,6 +146,14 @@ local function locked_out()
 	return overcharge_extension and overcharge_extension:are_you_locked_out() or false
 end
 
+-- The time between the local player's shots, shorter with the game's attack speed buffs (as lightning_gun.lua's ready_to_fire has it)
+local function fire_rate()
+	local player = Managers.player and Managers.player:local_player()
+	local unit = player and player.player_unit
+
+	return lightning.fire_rate / utils.attack_speed(unit and Unit.alive(unit) and unit or nil)
+end
+
 local TEMPLATE_NAMES = {}
 local skin_apis = {}
 
@@ -521,7 +529,7 @@ local function ready_to_fire()
 	local now = Managers.time:time("game")
 	local last_fire = lightning.last_fire_time
 
-	return (not last_fire or now - last_fire >= lightning.fire_rate) and not locked_out()
+	return (not last_fire or now - last_fire >= fire_rate()) and not locked_out()
 end
 
 local function update_charge(skin, dt, api)
@@ -622,7 +630,8 @@ local function draw_scope(ingame_ui)
 	-- The charge bar fills from the bottom up as the next shot comes near
 	local now = Managers.time:time("game")
 	local last_fire = lightning.last_fire_time
-	local charge = (not last_fire or now - last_fire >= lightning.fire_rate) and 1 or math.clamp((now - last_fire) / lightning.fire_rate, 0, 1)
+	local rate = fire_rate()
+	local charge = (not last_fire or now - last_fire >= rate) and 1 or math.clamp((now - last_fire) / rate, 0, 1)
 	local bar_red, bar_green, bar_blue = 0, 0, 255
 
 	if charge < 1 then

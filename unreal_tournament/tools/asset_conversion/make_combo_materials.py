@@ -492,3 +492,16 @@ multiply(ring, 'color', 'faded', 'tint')
 ring.connect('color', 'out', IN_OUT_BASE_COLOR)
 ring.connect('intensity', 'out', IN_OUT_OPACITY)
 write('flame_ring', ring, {'flame_map': 'flame_gradient', 'falloff_map': 'grad_falloff'})
+
+# ---------------------------------------------------------------- the Berserk combo's rings
+# OffensiveEffect's skin RedBoltFB (XEffectMat): FB_Brighten of the TexPanner RedBoltPanner (PanDirection yaw 0, PanRate 1: along U, a texture a
+# second) of the texture redbolt (units/ut/fx/red_bolt, make_weapon_fx.py), on the mesh TeleRing (units/ut/fx/tele_ring, make_fx_meshes.py).
+# The particle sets the tint (its colour) and the intensity (its fade).
+berserk = Graph()
+common(berserk, BRIGHTEN)
+panned(berserk, 'pan', 1, 0)
+sample(berserk, 'bolts', 'bolts_map', 'pan')
+multiply(berserk, 'color', 'bolts', 'tint', 'rgb')
+berserk.connect('color', 'out', IN_OUT_BASE_COLOR)
+berserk.connect('intensity', 'out', IN_OUT_OPACITY)
+write('berserk_ring', berserk, {'bolts_map': 'red_bolt'})

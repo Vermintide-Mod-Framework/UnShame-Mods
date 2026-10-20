@@ -131,6 +131,20 @@ local function local_player_blocking()
 	return status_extension and status_extension:is_blocking() or false
 end
 
+-- The local player's character, or nil
+local function local_player_unit()
+	local player = Managers.player and Managers.player:local_player()
+	local unit = player and player.player_unit
+
+	return unit and Unit.alive(unit) and unit or nil
+end
+
+-- How long a charge has gone, up to full, in the charge's own time: the game's attack speed buffs make it charge faster, as the punch
+-- has it (shield_gun.lua)
+local function charged_time(unit, started)
+	return math.min((Managers.time:time("game") - started) * utils.attack_speed(unit), shield.fully_charged_time)
+end
+
 -- A point of the player's view in UT units from the eye (forward, right, up), where the weapon's projection draws it, moved by the gun's
 -- bob (weapon_skin.lua) and pushed back behind the gun (behind_gun). Effects that UT draws with the weapon (Canvas.DrawActor with
 -- DisplayFOV) are placed with it and have the materials that draw with the weapon's field of view. It returns the first person unit, which
@@ -206,7 +220,7 @@ end
 
 -- The sparks of the charge (ShieldCharge), made each frame while the gun charges
 local function charge_sparks(api, skin, dt)
-	local charged = math.min(Managers.time:time("game") - shield.charge_started, shield.fully_charged_time)
+	local charged = charged_time(local_player_unit(), shield.charge_started)
 
 	skin.spark_time = (skin.spark_time or 0) + dt
 
@@ -425,7 +439,7 @@ local function update_state(api, skin, dt)
 		skin.seen_charge = shield.charge_started
 		skin.charged = false
 
-		api.play("Charge", shield.fully_charged_time)
+		api.play("Charge", shield.fully_charged_time / utils.attack_speed(local_player_unit()))
 
 		-- (held on its last frame at the end, so that it doesn't go back to Idle before Charged is played below)
 		skin.hold = true
@@ -809,7 +823,7 @@ end
 -- The sparks of the charge, made each frame while the gun charges: as the first person's, around the end of the gun, charge_scale times
 -- the world's scale (UT shows no charge on another player; this is the mod's own)
 local function third_person_sparks(api, unit, state, dt)
-	local charged = math.min(now() - state.charge_started, shield.fully_charged_time)
+	local charged = charged_time(unit, state.charge_started)
 	local interval = 1 / (CONFIG.charge_rate[1] + CONFIG.charge_rate[2] * charged)
 	local meters = UNIT * THIRD_PERSON.charge_scale
 
@@ -1018,7 +1032,7 @@ end
 local function shield_charge()
 	return {
 		color = CONFIG.charge_bar_color,
-		fraction = shield.charge_started and (Managers.time:time("game") - shield.charge_started) / shield.fully_charged_time or 0,
+		fraction = shield.charge_started and charged_time(local_player_unit(), shield.charge_started) / shield.fully_charged_time or 0,
 		marks = shield.charge_marks,
 	}
 end

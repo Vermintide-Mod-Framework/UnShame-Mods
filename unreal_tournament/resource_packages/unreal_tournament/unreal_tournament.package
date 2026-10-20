@@ -62,6 +62,7 @@ unit = [
 	"units/ut/fx/shield_mesh"
 	"units/ut/fx/explosion_ring"
 	"units/ut/fx/explosion_sphere"
+	"units/ut/fx/tele_ring"
 	"units/ut/fx/goop/*"
 	"units/ut/fx/decal_bio"
 ]

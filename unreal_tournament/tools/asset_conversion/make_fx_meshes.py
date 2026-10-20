@@ -13,6 +13,7 @@ from formats import read_chunks as chunks
 #   units/ut/fx/shield_mesh  WeaponStaticMesh.Shield, the Shield Gun's shield (ShieldEffect): a dish 3 units deep and 20 across, facing along x
 #   units/ut/fx/explosion_ring, explosion_sphere  ParticleMeshes.ExplosionRing (a flat ring 512 units across) and ExplosionSphere (256
 #                       across), the meshes of the Redeemer's blast
+#   units/ut/fx/tele_ring  XEffects.TeleRing, the ring of the Berserk combo's OffensiveEffect
 # They are made in meters, a UT unit being 0.02 m (as everything of the effects is), turned from UT's axes (x forward, y right, z up) to
 # this game's (x right, y forward, z up), which makes the mesh the other way round: the long axis of the coil is y.
 # One material slot, m_fx, as the quad of the particles has (units/ut/fx/quad): the effects set the material of the texture they want.
@@ -180,3 +181,4 @@ if __name__ == '__main__':
     make_static('shield_mesh', 'Shield', EXPORT + '/WeaponStaticMesh')
     make_static('explosion_ring', 'ExplosionRing', EXPORT + '/ParticleMeshes')
     make_static('explosion_sphere', 'ExplosionSphere', EXPORT + '/ParticleMeshes')
+    make_static('tele_ring', 'TeleRing')

@@ -1003,6 +1003,14 @@ function utils.wielded_skin(unit)
 	return slot_data and slot_data.skin
 end
 
+-- How many times as fast a unit attacks, from the game's attack_speed buffs (the Berserk combo's among them). The game speeds up its
+-- actions by it, so the weapons' own timers are divided by it too.
+function utils.attack_speed(unit)
+	local buff_extension = unit and ScriptUnit.has_extension(unit, "buff_system")
+
+	return buff_extension and buff_extension:apply_buffs_to_value(1, "attack_speed") or 1
+end
+
 -- Actions of a weapon
 
 -- Sets an action's lookup data. The game uses it to tell the other machines which action a projectile came from.

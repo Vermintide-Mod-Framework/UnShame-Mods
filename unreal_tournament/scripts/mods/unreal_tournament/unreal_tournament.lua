@@ -135,6 +135,7 @@ mod:dofile("scripts/mods/unreal_tournament/adrenaline")
 mod:dofile("scripts/mods/unreal_tournament/combos/combos")
 mod:dofile("scripts/mods/unreal_tournament/combos/speed")
 mod:dofile("scripts/mods/unreal_tournament/combos/booster")
+mod:dofile("scripts/mods/unreal_tournament/combos/berserk")
 mod:dofile("scripts/mods/unreal_tournament/movement")
 mod:dofile("scripts/mods/unreal_tournament/gameplay")
 
@@ -145,5 +146,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 1557)")
+	mod:echo("Unreal Tournament loaded (build 1558)")
 end

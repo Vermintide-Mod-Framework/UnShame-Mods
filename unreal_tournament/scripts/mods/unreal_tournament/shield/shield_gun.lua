@@ -184,6 +184,8 @@ local CONFIG = {
 	min_force = 65000,
 	max_force = 100000,
 	self_force_scale = 1,
+	-- (in the Berserk combo the push from a wall is this many times as strong: ShieldFire.DoFireEffect, bBerserk)
+	berserk_self_force = 2,
 	ut_mass = 100,
 	ground_lift = 0.4,
 	-- Pawn.TakeDamage takes the momentum a player gives themselves down to this share (instigatedBy == self), after the lift
@@ -650,6 +652,10 @@ local function push_player(owner_unit, direction, force)
 		return
 	end
 
+	if mod.combos and mod.combos.kind_of(owner_unit) == "berserk" then
+		force = force * CONFIG.berserk_self_force
+	end
+
 	local momentum = -direction * (CONFIG.self_force_scale * force / CONFIG.ut_mass)
 
 	if locomotion_extension:is_on_ground() then
@@ -1054,7 +1060,8 @@ local charge_started = {}
 
 local function punch(action, t, power_level, bash)
 	local owner_unit = action.owner_unit
-	local hold_time = charge_started[owner_unit] and t - charge_started[owner_unit] or 0
+	-- (UT's Berserk charges it in 0.75 of the time, ShieldFire.StartBerserk: here the game's attack speed buffs do)
+	local hold_time = charge_started[owner_unit] and (t - charge_started[owner_unit]) * utils.attack_speed(owner_unit) or 0
 	local step, scale = charge_step(hold_time)
 	local range = bash and CONFIG.bash_range or CONFIG.hit_range
 	local hit, is_enemy, direction, origin, eye = in_reach(owner_unit, action.physics_world, range)

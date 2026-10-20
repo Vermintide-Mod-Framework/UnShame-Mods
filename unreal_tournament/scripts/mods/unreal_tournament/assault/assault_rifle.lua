@@ -728,7 +728,7 @@ local function can_charge(unit)
 
 	local since = last and Managers.time:time("game") - last or math.huge
 
-	return count > 0 and since >= CONFIG.grenade_fire_rate
+	return count > 0 and since >= CONFIG.grenade_fire_rate / mod.utils.attack_speed(unit)
 end
 
 -- The grenade's charge. It lasts while the button is held, and letting go chains into the throw. The next shot of either kind can come
