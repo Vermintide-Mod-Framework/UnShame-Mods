@@ -7,8 +7,8 @@ local mod = get_mod("unreal_tournament")
 -- voices the player's own, and adrenaline (adrenaline.lua) is given for them.
 --   First blood is the first kill of the level. A multi kill is a kill soon after the last one. A spree is a player's kills in a row
 --   without being hurt by an enemy. Only an enemy's damage ends a spree: a player's own weapons, overcharge and allies' damage do not,
---   unless they knock the player down or kill them, which ends it as UT's suicide does. Past its top level, Wicked Sick, Dominating
---   comes again every as many kills as the top level took. A call out comes at a number of kills of its kind, and at every as many more,
+--   unless they knock the player down or kill them, which ends it as UT's suicide does. Its top level, Wicked Sick, comes again every as many
+--   kills as it took. A call out comes at a number of kills of its kind, and at every as many more,
 --   counted again after an enemy's hurt, as a spree.
 -- What UT tells everyone is written in everyone's chat: a first blood, a spree and the end of one.
 --   mod.rewards.callbacks[name] = function (event, player_unit, value, other_unit): on every machine, for a reward of player_unit:
@@ -38,9 +38,7 @@ local CONFIG = {
 	spree_kills_per_level = 5,
 	spree_levels = 6,
 	spree_multiplier = 3,
-	-- Past the top level, which UT has no more of, Dominating comes again every time the spree goes on by as many kills as the top level
-	-- took (a choice)
-	spree_repeat_level = 3,
+	-- Past the top level, which UT has no more of, it comes again every time the spree goes on by as many kills as it took (a choice)
 	-- The call outs: UT's DamageTypes announce them at 15 kills, times this, and here again at every as many more
 	call_out_kills = 15,
 	call_out_multiplier = 3,
@@ -316,7 +314,7 @@ mod.kill_callbacks.rewards = function (victim_unit, damage_data)
 	if state.spree % step == 0 and state.spree <= top then
 		reward("spree", player_unit, state.spree / step)
 	elseif state.spree > top and (state.spree - top) % top == 0 then
-		reward("spree", player_unit, CONFIG.spree_repeat_level)
+		reward("spree", player_unit, CONFIG.spree_levels)
 	end
 
 	if is_head_shot and is_killed_by(CONFIG.head_hunter_weapons, damage_data) then
