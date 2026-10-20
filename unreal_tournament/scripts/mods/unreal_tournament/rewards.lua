@@ -3,8 +3,8 @@ local mod = get_mod("unreal_tournament")
 -- The rewards of kills, as UT2004 gives them: first blood (DeathMatch.ScoreKill, FirstBloodMessage), multi kills (UnrealPlayer.LogMultiKills,
 -- MultiKillMessage), killing sprees (DeathMatch.NotifySpree and EndSpree, KillingSpreeMessage), head shots (SpecialKillMessage) and the
 -- call outs of a number of kills with a weapon (DamageType.IncrementKills). The host decides them for every player, bots too, as it sees
--- every kill and every hit, and tells every machine. They are decided whatever the announcer setting is: the announcer (announcer.lua)
--- voices the player's own, and adrenaline (adrenaline.lua) is given for them.
+-- every kill and every hit, and tells every machine, while its Killing Sprees option is on. They are decided whatever the announcer
+-- setting is: the announcer (announcer.lua) voices the player's own, and adrenaline (adrenaline.lua) is given for them.
 --   First blood is the first kill of the level. A multi kill is a kill soon after the last one. A spree is a player's kills in a row
 --   without being hurt by an enemy. Only an enemy's damage ends a spree: a player's own weapons, overcharge and allies' damage do not,
 --   unless they knock the player down or kill them, which ends it as UT's suicide does. Its top level, Wicked Sick, comes again every as many
@@ -129,6 +129,11 @@ local first_blood_taken = false
 
 local function is_host()
 	return Managers.state.network ~= nil and Managers.state.network.is_server
+end
+
+-- Whether this machine keeps the rewards: the host, with the Killing Sprees option on
+local function is_tracking()
+	return is_host() and mod.option("killing_sprees")
 end
 
 local function state_of(player_unit)
@@ -260,7 +265,7 @@ local function count_call_out(player_unit, name, kills)
 end
 
 mod.kill_callbacks.rewards = function (victim_unit, damage_data)
-	if not is_host() then
+	if not is_tracking() then
 		return
 	end
 
@@ -328,7 +333,7 @@ end
 
 -- The kills of a shock combo, which the host knows, as it applies the damage
 mod.shock_combo_callbacks.rewards = function (attacker_unit, killed_units)
-	if not is_host() or not Managers.player:owner(attacker_unit) then
+	if not is_tracking() or not Managers.player:owner(attacker_unit) then
 		return
 	end
 
@@ -351,7 +356,7 @@ mod.player_damage_callbacks.rewards = function (health_extension, attacker_unit,
 	local player_unit = health_extension.unit
 	local state = players[player_unit]
 
-	if not state or damage_amount <= 0 or not attacker_unit or not is_host() then
+	if not state or damage_amount <= 0 or not attacker_unit or not is_tracking() then
 		return
 	end
 
@@ -376,7 +381,7 @@ end
 -- A player who is knocked down or dies with a spree going ends it, whatever did it (an enemy's hit ends it first, above): UT's death
 -- by the player's own hand (DeathMatch.EndSpree with no killer). A shorter count just starts again, as UT's does at a death.
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
-	if not next(players) or not is_host() then
+	if not next(players) or not is_tracking() then
 		return
 	end
 

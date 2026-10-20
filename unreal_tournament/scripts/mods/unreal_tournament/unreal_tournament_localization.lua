@@ -6,7 +6,7 @@ return {
 		en = "Movement",
 	},
 	ut_movement_description = {
-		en = "Dodge jumps, wall dodges, a double jump, heavier gravity and no fall damage. Recommended: turn Double Tap Dodge on in the game's settings, and rebind Jump/Dodge to Jump Only.",
+		en = "Dodge jumps, wall dodges, a double jump, heavier gravity and no fall damage. Recommended: turn Double Tap Dodge on in the game's settings, and rebind Jump/Dodge to Jump Only. In a game, the host's settings decide these for everyone.",
 	},
 	multidodge = {
 		en = "Multidodge",
@@ -20,23 +20,29 @@ return {
 	momentum_damage_description = {
 		en = "Melee hits do more damage the faster you move.",
 	},
+	killing_sprees = {
+		en = "Killing Sprees",
+	},
+	killing_sprees_description = {
+		en = "Unreal Tournament 2004's rewards for kills: first blood, multi kills, killing sprees, head shots and the weapon call outs, with their lines in the chat. In a game, the host's setting decides it for everyone.",
+	},
 	announcer = {
 		en = "Announcer",
 	},
 	announcer_description = {
-		en = "Unreal Tournament 2004's announcer. Announces multi kills, killing sprees, head shots and more as you kill.",
+		en = "Unreal Tournament 2004's announcer. Announces your multi kills, killing sprees, head shots and more as you kill. Your own setting, whoever hosts.",
 	},
 	adrenaline = {
 		en = "Adrenaline",
 	},
 	adrenaline_description = {
-		en = "Unreal Tournament 2004's adrenaline, shown on the HUD. Multi kills, killing sprees, first blood, the weapon call outs and killing specials, sack rats, monsters and lords fill it, up to 100. The host's setting decides it for everyone.",
+		en = "Unreal Tournament 2004's adrenaline and its combos, shown on the HUD. Multi kills, killing sprees, first blood, the weapon call outs and killing specials, sack rats, monsters and lords fill it, up to 100. In a game, the host's setting decides it for everyone.",
 	},
 	no_barriers = {
 		en = "Remove Barriers",
 	},
 	no_barriers_description = {
-		en = "Takes away most of what keeps you in bounds, to let you explore more of the levels with the extra movement. Choose which below.",
+		en = "Takes away most of what keeps you in bounds, to let you explore more of the levels with the extra movement. Choose which below. In a game, the host's settings decide these for everyone.",
 	},
 	no_invisible_walls = {
 		en = "Invisible Walls",
@@ -66,7 +72,7 @@ return {
 		en = "Gameplay",
 	},
 	gameplay_description = {
-		en = "Miscellaneous options to make the game easier or more convenient.",
+		en = "Miscellaneous options to make the game easier or more convenient. In a game, the host's settings decide these for everyone.",
 	},
 	auto_revive = {
 		en = "Auto Revive",
@@ -102,6 +108,6 @@ return {
 		en = "More Ammo Pickups",
 	},
 	more_ammo_pickups_description = {
-		en = "Levels have more ammo pickups. Applies to levels you host, from the next one you start.",
+		en = "Levels have more ammo pickups, from the next level that starts.",
 	},
 }

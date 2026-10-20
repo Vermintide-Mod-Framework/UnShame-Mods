@@ -99,7 +99,7 @@ local function highest(samples, field)
 end
 
 local function skip_without_movement(t)
-	if ut:get("ut_movement") == false then
+	if not ut.option("ut_movement") then
 		t.skip("the UT movement is turned off")
 	end
 end
@@ -490,7 +490,7 @@ local function scenarios()
 			run = function (t)
 				skip_without_movement(t)
 
-				if not ut:get("momentum_damage") then
+				if not ut.option("momentum_damage") then
 					t.skip("the momentum damage is turned off")
 				end
 

@@ -64,16 +64,16 @@ local CONFIG = {
 
 -- The Movement option switches off all the movement in this file. The hooks then do what the game does.
 local function is_movement_enabled()
-	return mod:get("ut_movement") ~= false
+	return mod.option("ut_movement")
 end
 
--- The Multidodge option removes the limits on dodging, and so does the Booster combo for its player (mod.unlimited_dodge, a set of units)
+-- The Multidodge option removes the limits on dodging, and so does the Speed combo for its player (mod.unlimited_dodge, a set of units)
 mod.unlimited_dodge = setmetatable({}, {
 	__mode = "k",
 })
 
 local function is_multidodge(unit)
-	return is_movement_enabled() and mod:get("multidodge") or unit ~= nil and mod.unlimited_dodge[unit] == true
+	return mod.option("multidodge") or unit ~= nil and mod.unlimited_dodge[unit] == true
 end
 
 -- What has happened in the air since the player was last on the ground, for each unit:
@@ -861,7 +861,7 @@ end)
 
 -- The barriers option removes each barrier that is turned on in its settings: invisible walls, kill zones and ledges.
 local function is_barrier_removed(setting_id)
-	return mod:get("no_barriers") and mod:get(setting_id) ~= false
+	return mod.option(setting_id)
 end
 
 -- Invisible walls
@@ -935,10 +935,9 @@ mod.disabled_callbacks[#mod.disabled_callbacks + 1] = function ()
 	update_mover_filter()
 end
 
-mod.setting_changed_callbacks[#mod.setting_changed_callbacks + 1] = function (setting_id)
-	if setting_id == "no_barriers" or setting_id == "no_invisible_walls" then
-		applied_unit = nil
-	end
+-- (the options may change: the player's own, or the host's)
+mod.option_changed_callbacks[#mod.option_changed_callbacks + 1] = function ()
+	applied_unit = nil
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
@@ -1034,7 +1033,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 end
 
 local function momentum_damage_multiplier(owner_unit)
-	if not is_movement_enabled() or not mod:get("momentum_damage") then
+	if not mod.option("momentum_damage") then
 		return 1
 	end
 

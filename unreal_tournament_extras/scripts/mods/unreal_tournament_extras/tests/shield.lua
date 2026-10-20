@@ -460,7 +460,7 @@ local function scenarios()
 		{
 			name = "a punch while moving fast does more damage",
 			run = function (t)
-				if ut:get("ut_movement") == false or not ut:get("momentum_damage") then
+				if not ut.option("momentum_damage") then
 					t.skip("the movement or its momentum damage is turned off")
 				end
 

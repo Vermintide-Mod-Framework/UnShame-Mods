@@ -32,9 +32,8 @@ local CONFIG = {
 	-- UnrealPlayer.AwardAdrenaline: ClientDelayedAnnouncementNamed('Adrenalin', 15), in tenths of a second
 	announcement = "ut_announcer_adrenalin",
 	announcement_delay = 1.5, -- seconds
-	-- The host sends everyone's adrenaline this often too, and a machine shows the counter while it has heard of it this lately
+	-- The host sends everyone's adrenaline this often too, for a player who joins or comes back
 	sync_interval = 1, -- seconds
-	shown_for = 3, -- seconds
 	-- HudCDeathmatch's widgets of the counter, on HudContent's HUD texture (512 by 512) and its GlowCircle (64 by 64): the texture
 	-- coordinates, TextureScale, OffsetX and OffsetY, at the top right of the screen (PosX 1). A widget's size is its texture coordinates
 	-- times its TextureScale, and its offset is times its TextureScale too, in the units of a screen 480 high.
@@ -142,7 +141,7 @@ end)
 -- (quiet tells only this machine: a combo's drain, every frame, which adrenaline.sync then sends now and then)
 function adrenaline.give(player_unit, amount, quiet)
 	-- (there is none in the Keep, which shows no counter and starts no combo)
-	local player = is_host() and mod:get("adrenaline") and not DamageUtils.is_in_inn and Managers.player:owner(player_unit)
+	local player = is_host() and mod.option("adrenaline") and not DamageUtils.is_in_inn and Managers.player:owner(player_unit)
 
 	if not player then
 		return
@@ -198,7 +197,7 @@ end
 local next_sync = 0
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
-	if not is_host() or not mod:get("adrenaline") or not Managers.state.unit_storage then
+	if not is_host() or not mod.option("adrenaline") or not Managers.state.unit_storage then
 		return
 	end
 
@@ -295,8 +294,8 @@ local function shown_entry()
 	local unit = local_unit()
 	local entry = unit and known[unit]
 
-	-- (on a machine that isn't the host, the host's word stops coming when its setting is off)
-	if not entry or not (is_host() and mod:get("adrenaline")) and Managers.time:time("game") - entry.time > CONFIG.shown_for then
+	-- (the host's setting, in a game: mod.option)
+	if not entry or not mod.option("adrenaline") then
 		return nil
 	end
 

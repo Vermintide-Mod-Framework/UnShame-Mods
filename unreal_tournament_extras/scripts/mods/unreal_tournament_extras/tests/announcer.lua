@@ -412,7 +412,7 @@ local function scenarios()
 		local run = list[i].run
 
 		list[i].run = function (t)
-			if not ut:get("announcer") then
+			if not ut.option("announcer") then
 				t.skip("the announcer is turned off")
 			end
 

@@ -1,6 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
--- The announcer (the Announcer setting). It voices the player's own rewards (rewards.lua) in UT2004's male announcer (MaleAnnouncer),
+-- The announcer (the Announcer setting, each player's own, under Killing Sprees). It voices the player's own rewards (rewards.lua) in
+-- UT2004's male announcer (MaleAnnouncer),
 -- and shows their words on the screen. The sounds are in a bank of their own (tools/asset_conversion/make_bank.py announcer).
 --   Multi kills (MultiKillMessage): Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill, Holy Shit.
 --   Killing sprees (KillingSpreeMessage): Killing Spree, Rampage, Dominating, Unstoppable, Godlike and Wicked Sick.
@@ -66,7 +67,7 @@ local delayed = {} -- announcements waiting to play, each { time = when, event =
 local messages = {} -- the words on the screen, by place name, each { text, size, color, time }
 
 local function play(event, forced)
-	if not mod:get("announcer") then
+	if not mod.option("announcer") then
 		return
 	end
 
@@ -132,7 +133,7 @@ end
 mod.rewards.callbacks.announcer = function (event, player_unit, value)
 	local local_player = Managers.player:local_player()
 
-	if not mod:get("announcer") or not local_player or player_unit ~= local_player.player_unit then
+	if not mod.option("announcer") or not local_player or player_unit ~= local_player.player_unit then
 		return
 	end
 

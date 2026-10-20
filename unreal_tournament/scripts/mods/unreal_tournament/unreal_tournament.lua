@@ -15,6 +15,8 @@ mod.unload_callbacks = {}
 mod.level_exit_callbacks = {}
 -- The all_mods_loaded_callbacks list runs once all mods are loaded. It is for hooks that must run before other mods' hooks.
 mod.all_mods_loaded_callbacks = {}
+-- The user_joined_callbacks list runs when a player who has the mod joins the game (the framework's on_user_joined, with the player).
+mod.user_joined_callbacks = {}
 
 -- Calls every function in the list. An error in one of them is reported, and the others are still called. A weapon must always take
 -- back what it set up when the mod is unloaded or a level is left, even if another weapon's cleanup failed. A unit of the mod's
@@ -53,6 +55,10 @@ mod.on_all_mods_loaded = function (...)
 	call_all(mod.all_mods_loaded_callbacks, ...)
 end
 
+mod.on_user_joined = function (...)
+	call_all(mod.user_joined_callbacks, ...)
+end
+
 mod.on_game_state_changed = function (status, state_name)
 	if status == "exit" and state_name == "StateIngame" then
 		call_all(mod.level_exit_callbacks)
@@ -64,6 +70,9 @@ end
 
 -- Helpers (mod.utils)
 mod:dofile("scripts/mods/unreal_tournament/utils")
+
+-- The options as they apply here: the host's in a game, but for the Announcer (mod.option)
+mod:dofile("scripts/mods/unreal_tournament/settings")
 
 -- The hooks on the game's functions that the weapons share, and the callback tables those hooks run
 mod:dofile("scripts/mods/unreal_tournament/hooks")
@@ -147,5 +156,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 1580)")
+	mod:echo("Unreal Tournament loaded (build 1581)")
 end

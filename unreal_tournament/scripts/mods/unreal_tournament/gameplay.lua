@@ -16,9 +16,9 @@ local CONFIG = {
 	self_revive_invulnerable_time = 2, -- seconds
 }
 
--- Returns whether an option is on. That needs its own checkbox and the Gameplay checkbox above all of them.
+-- Returns whether an option is on: its own checkbox and the Gameplay checkbox above all of them, the host's in a game (mod.option)
 local function is_option_on(setting_id)
-	return mod:get("gameplay") and mod:get(setting_id)
+	return mod.option(setting_id)
 end
 
 -- No Bots: the game modes have a flag that says there are no bots, and they remove any existing bots when it is set. The flag is set

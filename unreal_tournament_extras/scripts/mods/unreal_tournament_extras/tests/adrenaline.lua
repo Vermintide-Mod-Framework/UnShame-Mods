@@ -182,7 +182,7 @@ local function scenarios()
 
 				t.expect(amount(t) == adrenaline.max, "the adrenaline is %d, not %d", amount(t), adrenaline.max)
 
-				if ut:get("announcer") then
+				if ut.option("announcer") then
 					t.expect(#sounds == 1, "Adrenalin was announced %d times, not once", #sounds)
 				else
 					t.log("the announcer is off: Adrenalin is not checked")
@@ -199,7 +199,7 @@ local function scenarios()
 		local run = scenario.run
 
 		scenario.run = function (t)
-			if not ut:get("adrenaline") then
+			if not ut.option("adrenaline") then
 				t.skip("adrenaline is turned off")
 			end
 

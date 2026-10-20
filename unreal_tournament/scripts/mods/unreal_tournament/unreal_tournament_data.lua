@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament")
 
 -- The titles and the tooltips of the settings are the localizations with the id of the setting, and the id
--- with _description added.
+-- with _description added. In a game, all but the Announcer are the host's (settings.lua).
 return {
 	name = "Unreal Tournament",
 	description = mod:localize("mod_description"),
@@ -26,14 +26,21 @@ return {
 				},
 			},
 			{
-				setting_id = "announcer",
-				type = "checkbox",
-				default_value = false,
-			},
-			{
-				setting_id = "adrenaline",
+				setting_id = "killing_sprees",
 				type = "checkbox",
 				default_value = true,
+				sub_widgets = {
+					{
+						setting_id = "announcer",
+						type = "checkbox",
+						default_value = true,
+					},
+					{
+						setting_id = "adrenaline",
+						type = "checkbox",
+						default_value = true,
+					},
+				},
 			},
 			{
 				setting_id = "no_barriers",
