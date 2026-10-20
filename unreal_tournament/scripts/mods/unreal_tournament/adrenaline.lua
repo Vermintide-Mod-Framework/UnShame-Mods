@@ -1,8 +1,9 @@
 local mod = get_mod("unreal_tournament")
 
 -- Adrenaline (the Adrenaline setting, the host's for everyone): UT2004's (Controller.Adrenaline, UnrealPlayer.AwardAdrenaline), up to
--- 100, given only for the rewards of kills (rewards.lua): one for each level of a multi kill, five for each level of a spree (the five
--- kills between UT's levels), and five for first blood, a head shot and a call out. Kills alone give none. The host keeps each player's,
+-- 100, given only for the rewards of kills (rewards.lua): a multi kill gives as many as its kills (two for a double kill, three for the
+-- next), a spree's level as many as UT's kills for it (5, 10, 15 and on), first blood, a head shot, a call out and the kill of a special
+-- or a sack rat five, and the kill of a monster or a lord fifty. Other kills give none. The host keeps each player's,
 -- bots' too, which lasts through a death until the level ends (UT empties it only in a combo), and sends it to every machine. The
 -- announcer says "Adrenalin" a moment after the player's fills, and the HUD shows UT's counter (HudCDeathmatch.DrawAdrenaline).
 --   mod.adrenaline.of(player_unit): a player's adrenaline as this machine knows it, or nil
@@ -13,12 +14,19 @@ local utils = mod.utils
 
 local CONFIG = {
 	max = 100, -- Controller.AdrenalineMax
+	-- (a number, or a function of the reward's value: a multi kill's level, 1 for a double kill, or a spree's, 1 for Killing Spree)
 	gains = {
-		multi_kill = 1,
-		spree = 5,
+		multi_kill = function (level)
+			return level + 1
+		end,
+		spree = function (level)
+			return 5 * level
+		end,
 		first_blood = 5,
 		head_shot = 5,
 		call_out = 5,
+		special_kill = 5,
+		boss_kill = 50,
 	},
 	-- UnrealPlayer.AwardAdrenaline: ClientDelayedAnnouncementNamed('Adrenalin', 15), in tenths of a second
 	announcement = "ut_announcer_adrenalin",
@@ -137,8 +145,12 @@ function adrenaline.give(player_unit, amount)
 	send(player)
 end
 
-mod.rewards.callbacks.adrenaline = function (event, player_unit)
+mod.rewards.callbacks.adrenaline = function (event, player_unit, value)
 	local gain = CONFIG.gains[event]
+
+	if type(gain) == "function" then
+		gain = gain(value)
+	end
 
 	if gain then
 		adrenaline.give(player_unit, gain)

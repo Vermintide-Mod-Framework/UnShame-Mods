@@ -16,28 +16,39 @@ local CONFIG = {
 	apart = 2, -- s
 	-- The announcement of a full meter comes this long after it (and a little more)
 	announcement_wait = 2.5, -- s
+	-- A special and a monster to kill, and damage that kills anything at once
+	special_breed = "skaven_ratling_gunner",
+	boss_breed = "skaven_rat_ogre",
+	lethal = 100000,
 }
 
 local function amount(t)
 	return adrenaline.of(t.unit()) or 0
 end
 
--- Kills a counted enemy as the player: { zone = the hit zone, ranged = whether the hit is a ranged shot }
+-- Kills an enemy as the player: { breed = its breed (a counted one if not given), zone = the hit zone, ranged = whether the hit is a
+-- ranged shot }. Returns whether it was there to be killed.
 local function kill_one(t, how)
 	how = how or {}
 
-	local rat = t.spawn(CONFIG.counted_breed, 5)
+	local rat = t.spawn(how.breed or CONFIG.counted_breed, 5)
 
 	t.wait(1)
-	t.on_main_thread(function ()
+
+	local killed = t.on_main_thread(function ()
 		if HEALTH_ALIVE[rat] then
 			local player = t.unit()
 
-			DamageUtils.add_damage_network(rat, player, 400, how.zone or "torso", "cutting", nil, Vector3(0, 0, -1), shock.key, nil, player, how.ranged and "instant_projectile" or nil)
+			DamageUtils.add_damage_network(rat, player, CONFIG.lethal, how.zone or "torso", "cutting", nil, Vector3(0, 0, -1), shock.key, nil, player, how.ranged and "instant_projectile" or nil)
+
+			return true
 		end
 	end)
+
 	t.wait(0.5)
 	t.remove(rat)
+
+	return killed
 end
 
 -- An enemy hurts the player, which ends a spree, so that the kills of a scenario don't reach a spree's level
@@ -79,8 +90,8 @@ local function scenarios()
 			end,
 		},
 		{
-			-- One for each level of the multi kill: three kills in a row are a double kill and a multi kill
-			name = "a multi kill gives one for each level",
+			-- A multi kill gives as many as its kills: three kills in a row are a double kill (2) and a multi kill (3)
+			name = "a multi kill gives as many as its kills",
 			run = function (t)
 				settle(t)
 
@@ -108,7 +119,7 @@ local function scenarios()
 
 				local gained = amount(t) - before
 
-				t.expect(gained == 2, "three kills in a row gave %d, not 2", gained)
+				t.expect(gained == 5, "three kills in a row gave %d, not 5", gained)
 			end,
 		},
 		{
@@ -123,6 +134,35 @@ local function scenarios()
 				local gained = amount(t) - before
 
 				t.expect(gained == 5, "a head shot gave %d, not 5", gained)
+			end,
+		},
+		{
+			name = "the kill of a special gives five",
+			run = function (t)
+				settle(t)
+
+				local before = amount(t)
+
+				if t.expect(kill_one(t, { breed = CONFIG.special_breed }), "the %s could not be killed", CONFIG.special_breed) then
+					local gained = amount(t) - before
+
+					t.expect(gained == 5, "the kill of a %s gave %d, not 5", CONFIG.special_breed, gained)
+				end
+			end,
+		},
+		{
+			name = "the kill of a monster gives fifty",
+			run = function (t)
+				settle(t)
+				t.on_main_thread(function ()
+					adrenaline.give(t.unit(), -adrenaline.max)
+				end)
+
+				if t.expect(kill_one(t, { breed = CONFIG.boss_breed }), "the %s could not be killed", CONFIG.boss_breed) then
+					local gained = amount(t)
+
+					t.expect(gained == 50, "the kill of a %s gave %d, not 50", CONFIG.boss_breed, gained)
+				end
 			end,
 		},
 		{

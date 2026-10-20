@@ -13,7 +13,8 @@ local mod = get_mod("unreal_tournament")
 --   mod.rewards.callbacks[name] = function (event, player_unit, value, other_unit): on every machine, for a reward of player_unit:
 --       "first_blood"; "multi_kill" with its level (1 is a double kill); "spree" with its level (1 is Killing Spree, up to 6, Wicked Sick);
 --       "spree_end", hurt by other_unit, or by no one (nil) when the player was knocked down or died otherwise; "head_shot"; "call_out"
---       with its name (head_hunter, flak_monkey or combo_whore).
+--       with its name (head_hunter, flak_monkey or combo_whore); and this game's own, which UT has none of: "special_kill" (a special or
+--       a sack rat) and "boss_kill" (a monster or a lord).
 --   mod.rewards.is_counted(unit), mod.rewards.killer_of(victim_unit): which deaths are kills, and whose.
 
 local CONFIG = {
@@ -58,6 +59,10 @@ local CONFIG = {
 		heavy_instant_projectile = true,
 		projectile = true,
 	},
+	-- The kills of these are rewards of their own: specials (breed.special) and the sack rat, and monsters and lords (breed.boss)
+	special_breeds = {
+		skaven_loot_rat = true,
+	},
 	-- KillingSpreeMessage's SpreeNote, EndSpreeNote, EndSelfSpree and EndFemaleSpree, and the heroes who are women
 	spree_notes = {
 		"is on a killing spree!",
@@ -79,7 +84,7 @@ local CONFIG = {
 	chat_channel = 1,
 }
 
-local EVENTS = { "first_blood", "multi_kill", "spree", "spree_end", "head_shot", "call_out" }
+local EVENTS = { "first_blood", "multi_kill", "spree", "spree_end", "head_shot", "call_out", "special_kill", "boss_kill" }
 local CALL_OUTS = { "head_hunter", "flak_monkey", "combo_whore" }
 
 local rewards = {
@@ -289,6 +294,14 @@ mod.kill_callbacks.rewards = function (victim_unit, damage_data)
 
 	if is_head_shot then
 		reward("head_shot", player_unit)
+	end
+
+	local breed = Unit.get_data(victim_unit, "breed")
+
+	if breed.boss then
+		reward("boss_kill", player_unit)
+	elseif breed.special or CONFIG.special_breeds[breed.name] then
+		reward("special_kill", player_unit)
 	end
 
 	state.spree = state.spree + 1
