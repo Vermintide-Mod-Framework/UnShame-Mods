@@ -469,3 +469,8 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 end
 
 combos.index_of = index_of
+
+-- On the host: starts a combo by its name, as its keys would (for the tests)
+function combos.start(unit, name)
+	start(unit, index_of(name))
+end

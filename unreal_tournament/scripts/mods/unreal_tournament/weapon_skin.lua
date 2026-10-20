@@ -1012,10 +1012,34 @@ local function held_muzzle(apis, character)
 	end
 end
 
+-- The models of the skins that a character shows, as a list of { unit, unit_name, first_person }: the mesh in its hand, and for the
+-- player's own character the first person model
+local function units_of(character)
+	local units = {}
+	local own = utils.is_local_player_unit(character)
+
+	for _, api in pairs(skins) do
+		local unit, unit_name = api.third_person.mesh_of(character)
+
+		if unit then
+			units[#units + 1] = { unit = unit, unit_name = unit_name }
+		end
+
+		local skin = own and api.state()
+
+		if skin and Unit.alive(skin.unit) then
+			units[#units + 1] = { unit = skin.unit, unit_name = api.config.unit_name, first_person = true }
+		end
+	end
+
+	return units
+end
+
 mod.weapon_skin = {
 	new = new,
 	shown_skin = shown_skin,
 	held_muzzle = held_muzzle,
+	units_of = units_of,
 	-- The skins, by id
 	skins = skins,
 }

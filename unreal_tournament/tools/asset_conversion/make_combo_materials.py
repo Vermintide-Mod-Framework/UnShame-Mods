@@ -505,3 +505,33 @@ multiply(berserk, 'color', 'bolts', 'tint', 'rgb')
 berserk.connect('color', 'out', IN_OUT_BASE_COLOR)
 berserk.connect('intensity', 'out', IN_OUT_OPACITY)
 write('berserk_ring', berserk, {'bolts_map': 'red_bolt'})
+
+# ---------------------------------------------------------------- the Invisible combo
+# What UT draws a pawn and its weapons with while it is invisible (xPawn.SetInvisibility, Weapon's OverlayMaterial): InvisMaterial, the
+# FinalBlend InvisOverlayFB (XEffectMat): FB_Brighten of the TexPanner InvisPanner (PanDirection yaw 8000, PanRate 0.25) of the
+# TexScaler TexScaler0 (no change) of invis_overlay (units/ut/fx/invis_overlay, make_weapon_fx.py). It writes depth and is one sided.
+# It goes on every mesh of the character, so it pans with the game's time, not with a particle's age. fx_invisible draws with the
+# camera's field of view, and fx_weapon_invisible with the first person weapons'.
+INVIS_PAN = 8000 / 65536 * 2 * math.pi
+
+def invisible_graph(weapon):
+    graph = Graph()
+    # (OUT_OPTIONS without DOUBLE_SIDED and DISABLE_DEPTH_WRITE)
+    graph.add('out', BRIGHTEN, (OUT_OPTIONS[0], OUT_OPTIONS[2]) + ((CUSTOM_FOV,) if weapon else ()))
+    graph.add('uv', 'core/shader_nodes/texture_coordinate0')
+    graph.add('time', 'core/shader_nodes/current_time')
+    # (unused: every graph here has the variables of the particles)
+    graph.add('age', 'core/shader_nodes/material_variable', export=float_variable('age', 'Age', 0), title='Age')
+    graph.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
+    graph.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
+    graph.add('additive', 'core/shader_nodes/material_variable', export=float_variable('additive', 'Additive', 0), title='Additive')
+    graph.connect('additive', 'out', IN_OUT_ADDITIVE)
+    panned(graph, 'pan', 0.25 * math.cos(INVIS_PAN), 0.25 * math.sin(INVIS_PAN))
+    sample(graph, 'overlay', 'overlay_map', 'pan')
+    multiply(graph, 'color', 'overlay', 'tint', 'rgb')
+    graph.connect('color', 'out', IN_OUT_BASE_COLOR)
+    graph.connect('intensity', 'out', IN_OUT_OPACITY)
+    return graph
+
+write('invisible', invisible_graph(False), {'overlay_map': 'invis_overlay'})
+write('weapon_invisible', invisible_graph(True), {'overlay_map': 'invis_overlay'})

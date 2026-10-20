@@ -16,11 +16,3 @@
      show the ammo and the heat both.
    - Link stacking, UT's `LinkGun.Links`: a teammate who is linked while linking gets a stronger beam. Both weapons count as Link Guns
      for it. Now a link gives an ally the same boost whatever they hold.
-
-## Adrenaline and sprees
-
-2. **Adrenaline's combos.** The meter, its counter and the Adrenalin line are done (`adrenaline.lua`). The combos, at 100, started by UT's
-   taps of the movement keys (xPlayer.CheckCombo), draining it over their time, with UT's effects in first and third person and the
-   announcer's names: Speed; Booster, with a very fast dodge and stamina back too (temporary health doesn't go past full health);
-   Berserk, with more stagger, push and cleave and a bigger push of the player's own hits, as UT's; and Invisible, in first person
-   too if it can be. At least on the UT weapons, on all if it can be. A death in a combo empties the meter (xPawn.Died).

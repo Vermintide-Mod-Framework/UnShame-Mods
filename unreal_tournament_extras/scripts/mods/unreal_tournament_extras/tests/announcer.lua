@@ -31,12 +31,26 @@ local CONFIG = {
 -- The chat's system lines while a scenario records them
 local chat_lines = {}
 local recording_chat = false
+local chat_hooked = false
 
-mod:hook_safe(ChatManager, "add_local_system_message", function (self, channel_id, message)
-	if recording_chat then
-		chat_lines[#chat_lines + 1] = message
+-- Starts or stops recording the chat. The game defines ChatManager after the mods first load, so it is hooked the first time.
+local function record_chat(on)
+	if on and not chat_hooked then
+		chat_hooked = true
+
+		mod:hook_safe(ChatManager, "add_local_system_message", function (self, channel_id, message)
+			if recording_chat then
+				chat_lines[#chat_lines + 1] = message
+			end
+		end)
 	end
-end)
+
+	if on then
+		table.clear(chat_lines)
+	end
+
+	recording_chat = on
+end
 
 local function count(list, name)
 	local total = 0
@@ -126,14 +140,10 @@ local function scenarios()
 				local rat = t.spawn(CONFIG.counted_breed, 6)
 
 				t.wait(1)
-				table.clear(chat_lines)
-
-				recording_chat = true
-
+				record_chat(true)
 				kill(t, rat)
 				t.wait(0.5)
-
-				recording_chat = false
+				record_chat(false)
 
 				-- (everyone is told in the chat: FirstBloodMessage is broadcast)
 				local line = Managers.player:local_player():name() .. " drew first blood!"
@@ -418,16 +428,14 @@ local function scenarios()
 
 			hurt_by_enemy(t)
 			ut:set("announcer", false)
-			table.clear(chat_lines)
-
-			recording_chat = true
+			record_chat(true)
 
 			local ok, error_message = pcall(function ()
 				kill_many(t, CONFIG.killing_spree, nil, 0.1)
 				hurt_by_enemy(t)
 			end)
 
-			recording_chat = false
+			record_chat(false)
 			ut:set("announcer", was)
 
 			if not ok then
@@ -458,9 +466,7 @@ local function scenarios()
 
 			hurt_by_enemy(t)
 			kill_many(t, CONFIG.killing_spree, nil, 0.1)
-			table.clear(chat_lines)
-
-			recording_chat = true
+			record_chat(true)
 
 			-- (a hit of the player's own, which leaves them up)
 			t.hurtable(true)
@@ -475,9 +481,7 @@ local function scenarios()
 			local down = t.knock_down(rocket)
 
 			t.wait(0.5)
-
-			recording_chat = false
-
+			record_chat(false)
 			t.revive()
 			t.hurtable(false)
 

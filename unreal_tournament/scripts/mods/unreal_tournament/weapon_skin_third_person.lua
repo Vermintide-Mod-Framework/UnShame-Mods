@@ -556,6 +556,15 @@ local function new(def, looks)
 		end
 	end
 
+	-- The mesh a character holds and the name of its unit, or nil
+	function third_person.mesh_of(character)
+		local entry = attached[character]
+
+		if entry and Unit.alive(entry.unit) then
+			return entry.unit, entry.config.unit_name
+		end
+	end
+
 	-- Development command. Sets a number of the definition, which is how the mesh sits in the hand, while playing.
 	function third_person.set(key, value)
 		CONFIG[key] = value
