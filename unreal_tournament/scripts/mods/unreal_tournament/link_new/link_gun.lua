@@ -256,7 +256,8 @@ end
 -- The state of the links and the beams, which the skin reads. Every machine keeps it for every character, from what the machine that owns
 -- each beam says.
 --   locked[unit] = the ally that unit's beam links
---   beams[unit] = { end_position (a box), linked, received } while that unit's beam is held
+--   beams[unit] = { end_position, aim (boxes: where it ends, and the way the character aims), hit (0: nothing, 1: the level or a thing,
+--   2: an enemy it hurts), received } while that unit's beam is held
 local link = {
 	locked = {},
 	beams = {},
@@ -537,7 +538,16 @@ local function build_beam(hand)
 		hold_input = "action_two_hold",
 		minimum_hold_time = 0,
 		total_time = math.huge,
-		allowed_chain_actions = chain_actions(0),
+		-- Only a weapon switch follows it. Letting go of the button ends it. (A chain into itself would start it again every frame while
+		-- the button is held, each time with a hit and an ammo.)
+		allowed_chain_actions = {
+			{
+				action = "action_wield",
+				input = "action_wield",
+				start_time = 0,
+				sub_action = "default",
+			},
+		},
 		condition_func = function (unit, input_extension, ammo_extension)
 			return not ammo_extension or ammo_extension:total_remaining_ammo() >= CONFIG.beam_ammo
 		end,
@@ -824,18 +834,29 @@ local function beam_hits(physics_world, origin, direction, range)
 	return near
 end
 
--- Tells the other machines where the beam ends and what it links, or that it has stopped (end_position nil)
-local function send_beam(unit, end_position)
+-- Tells the other machines where the beam ends, the aim and what it hits, or that it has stopped (beam nil)
+local function send_beam(unit, beam)
 	local id = go_id(unit)
 
-	if end_position then
-		mod:network_send("ut_link_new_beam", "others", id, 1, Vector3.x(end_position), Vector3.y(end_position), Vector3.z(end_position))
+	if beam then
+		local finish, aim = beam.end_position:unbox(), beam.aim:unbox()
+
+		mod:network_send("ut_link_new_beam", "others", id, 1, Vector3.x(finish), Vector3.y(finish), Vector3.z(finish), Vector3.x(aim), Vector3.y(aim), Vector3.z(aim), beam.hit)
 	else
-		mod:network_send("ut_link_new_beam", "others", id, 0, 0, 0, 0)
+		mod:network_send("ut_link_new_beam", "others", id, 0, 0, 0, 0, 0, 0, 0, 0)
 	end
 end
 
-mod:network_register("ut_link_new_beam", function (_, unit_id, on, x, y, z)
+local function new_beam(received)
+	return {
+		end_position = Vector3Box(),
+		aim = Vector3Box(Vector3.forward()),
+		hit = 0,
+		received = received,
+	}
+end
+
+mod:network_register("ut_link_new_beam", function (_, unit_id, on, x, y, z, aim_x, aim_y, aim_z, hit)
 	local unit = unit_of(unit_id)
 
 	if not unit then
@@ -843,12 +864,11 @@ mod:network_register("ut_link_new_beam", function (_, unit_id, on, x, y, z)
 	end
 
 	if on == 1 then
-		local beam = beams[unit] or {
-			end_position = Vector3Box(),
-			received = true,
-		}
+		local beam = beams[unit] or new_beam(true)
 
 		beam.end_position:store(Vector3(x, y, z))
+		beam.aim:store(Vector3(aim_x, aim_y, aim_z))
+		beam.hit = hit
 		beams[unit] = beam
 	else
 		beams[unit] = nil
@@ -977,17 +997,27 @@ mod.charge_update_callbacks.link_new_beam = function (action, dt, t, world)
 		end
 	end
 
-	local beam = beams[unit] or {
-		end_position = Vector3Box(),
-	}
+	-- What the beam hits, for how it is drawn: an enemy it hurts (LinkBeamEffect.bLockedOn), the level or a thing (bHitSomething), or
+	-- nothing
+	local hit = 0
+
+	if first and not target then
+		local hit_unit = Actor.unit(first[4])
+
+		hit = Unit.get_data(hit_unit, "breed") and HEALTH_ALIVE[hit_unit] and 2 or 1
+	end
+
+	local beam = beams[unit] or new_beam(false)
 
 	beam.end_position:store(end_position)
+	beam.aim:store(direction)
+	beam.hit = hit
 	beams[unit] = beam
 
 	if t - run.sent >= CONFIG.beam_send_interval then
 		run.sent = t
 
-		send_beam(unit, end_position)
+		send_beam(unit, beam)
 	end
 end
 

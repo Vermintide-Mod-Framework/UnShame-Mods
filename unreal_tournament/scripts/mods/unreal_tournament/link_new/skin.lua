@@ -41,15 +41,54 @@ local CONFIG = {
 	spark_size = 60,
 	spark_growth = 150,
 	spark_life = 0.2,
-	-- LinkBeamEffect: the beam texture from the muzzle to where the beam ends, green, gold with links, and blue while it links an ally
-	-- (the team colors are red and blue; the heroes are one team, as UT's blue). It is made again every frame.
-	beam_width = 0.18, -- m
-	beam_life = 0.06, -- s
-	end_flare_size = 60,
-	link_color = { 0.4, 0.6, 1 },
 	-- Bolts of another player that start less than this far apart (in seconds) belong to the same shot
 	shot_gap = 0.1,
 }
+
+-- LinkBeamEffect (an xEmitter of PT_Beam) and its LinkBeamChild: a beam of points every regen_dist UT units from the muzzle to where it
+-- ends, which leaves the muzzle along the aim and bends to the end (mBendStrength), and waves across itself (mWaveFrequency,
+-- mWaveAmplitude, mWaveShift), in a plane that spins about it (mSpinRange). The wave dies down while the beam is on an enemy or links an
+-- ally, and grows while the gun moves. It is green, gold with links, and blue while it links an ally (LinkColor: the team colors are red
+-- and blue, and the heroes are one team, as UT's blue). Each link makes it wider and its wave faster, and there is one child more, up
+-- to four. The numbers are UT units, and the turns are UT's (65536 to a whole turn).
+local BEAM = {
+	regen_dist = 65,
+	child_regen_dist = 75,
+	size = 11,
+	color = 240 / 255,
+	child_color = 180 / 255,
+	wave_frequency = 0.06, -- radians a unit along the beam
+	wave_amplitude = 8,
+	max_amplitude = 16,
+	wave_shift = 100000, -- the wave's travel, turns a second
+	spin = 45000, -- turns a second
+	-- How far along the beam its bend reaches, as a share of its length. mBendStrength is 3, and how the engine uses it isn't in the
+	-- scripts: the bend reaches a third of the way (a choice, to be checked against UT).
+	bend_share = 1 / 3,
+	max_children = 4,
+	-- A linked beam ends this far short of the ally (LinkBeamEffect.Tick: EndEffect - BeamDir * 30)
+	linked_end_back = 30,
+	-- LinkFire.LinkScale: the size of everything by the links, up to 5
+	link_scale = { 0, 0.5, 0.9, 1.2, 1.4, 1.5 },
+}
+
+-- LinkSparks, where the beam ends: line particles that fly back along the aim from what it hits, or on along the beam from its end in the
+-- air, 40 a second. LinkMuzFlashBeam3rd, at the muzzle of the mesh in a character's hand while it beams: 12 a second, 50 to 60 units,
+-- 0.25 s. LinkMuzFlashBeam1st, at the muzzle of the player's own model: one of 24 units for every hit. LinkProtSphere, on an ally who is
+-- linked: discs, 12 a second, 35 units (20 for the player's own view of themself), 0.25 s.
+local SPARKS = {
+	rate = 40,
+	life = 0.5,
+	speed = { 175, 225 },
+	position_deviation = 8,
+	size = { 8, 12 },
+	color = 150 / 255,
+	attenuation = 0.1,
+}
+
+local FLASH_3RD = { rate = 12, life = 0.25, size = { 50, 60 }, color = 180 / 255 }
+local FLASH_1ST = { life = 0.25, size = 24, color = 200 / 255, interval = 0.12 }
+local SPHERE = { rate = 12, life = 0.25, size = 35, own_size = 20, color = 180 / 255 }
 
 -- How the third person mesh sits in each hero's hand: the hand the game links the base weapon to, and the point of the mesh in the hand
 -- (UT units) and its turn. They are a start, to be set in the game.
@@ -329,33 +368,292 @@ local function stop_beam_sound(character)
 	end
 end
 
--- Draws each beam: UT's beam texture from the muzzle to where it ends, and a flare there. Its sound (LinkFire's BeamSounds) loops while it
--- is drawn.
-local function draw_beams()
-	for character, beam in pairs(link.beams) do
-		local start = Unit.alive(character) and muzzle_of(character)
+-- The look of each beam that is drawn, by its character: the wave's amplitude (UT units), phase and spin (radians), where the beam started
+-- and the way it aimed a frame ago, the beam's lines (the beam and its children: their points and segments), and the time carried over
+-- to the next spark, flash and disc
+local visuals = {}
 
-		if start then
-			local finish = beam.end_position:unbox()
-			local linking = link.locked[character] ~= nil
-			local gold = link.links_of(character) > 0
-			local texture = (linking or gold) and "link_beam_yellow" or "link_beam_green"
+local function turns_to_radians(turns)
+	return turns / 65536 * 2 * math.pi
+end
 
-			particles.beam({
-				color = linking and CONFIG.link_color or nil,
-				from = start,
-				life = CONFIG.beam_life,
-				size = CONFIG.beam_width,
-				texture = texture,
-				to = finish,
-			})
+local function random_between(range)
+	return range[1] + (range[2] - range[1]) * math.random()
+end
+
+-- A random direction within a cone about a direction, as xEmitter's mDirDev: a share of each axis across it
+local function deviate(direction, across)
+	local side = Vector3.normalize(Vector3.cross(direction, Vector3.up()))
+
+	if Vector3.length(side) < 0.1 then
+		side = Vector3.right()
+	end
+
+	local up = Vector3.cross(side, direction)
+
+	return Vector3.normalize(direction + side * (math.random() * 2 - 1) * across + up * (math.random() * 2 - 1) * across)
+end
+
+-- The beam's color: the texture and the textures of its flashes and sparks
+local function colors_of(linking, links)
+	if linking then
+		return "link_beam_blue", "link_muz_blue", nil
+	elseif links > 0 then
+		return "link_beam_yellow", "link_muz_yellow", "link_spark_yellow"
+	end
+
+	return "link_beam_green", "link_muz_green", "link_spark_green"
+end
+
+-- Keeps a line's segments: one particle for each stretch between two of its points, which follows those points every frame and ends
+-- when the line has fewer points, or when its look changes (version)
+local function draw_line(visual, line, texture, size, color)
+	if line.texture ~= texture or line.size ~= size then
+		line.texture = texture
+		line.size = size
+		line.version = (line.version or 0) + 1
+		line.made = 0
+	end
+
+	line.made = math.min(line.made, line.count - 1)
+
+	for i = line.made + 1, line.count - 1 do
+		local version = line.version
+
+		particles.beam({
+			color = { color, color, color },
+			fade_in = 0,
+			life = math.huge,
+			size = size,
+			texture = texture,
+			track = function ()
+				if visual.alive and line.version == version and i < line.count then
+					return line.points[i]:unbox(), line.points[i + 1]:unbox()
+				end
+			end,
+		})
+	end
+
+	line.made = math.max(line.made, line.count - 1)
+end
+
+-- Puts a line's points along the beam: from the start along the bend to the end, every regen_dist, moved across by the wave. lock_end
+-- holds the end still (mWaveLockEnd), and the start always is.
+local function place_line(line, start, control, finish, length, regen_dist, amplitude, phase, wave_axis, lock_end)
+	local count = math.max(2, math.ceil(length / (regen_dist * UNIT)) + 1)
+
+	line.points = line.points or {}
+	line.count = count
+
+	for i = 1, count do
+		local share = (i - 1) / (count - 1)
+		local along = (1 - share) * (1 - share) * start + 2 * share * (1 - share) * control + share * share * finish
+		local envelope = lock_end and math.sin(math.pi * share) or math.sin(math.pi * share * 0.5)
+		local wave = amplitude * UNIT * envelope * math.sin(BEAM.wave_frequency * share * length / UNIT + phase)
+		local point = along + wave_axis * wave
+
+		if line.points[i] then
+			line.points[i]:store(point)
+		else
+			line.points[i] = Vector3Box(point)
+		end
+	end
+end
+
+-- Draws one character's beam for a frame (LinkBeamEffect.Tick)
+local function draw_beam(character, beam, dt)
+	local start, scale = muzzle_of(character)
+
+	if not start then
+		return
+	end
+
+	scale = scale or UNIT
+
+	local visual = visuals[character]
+
+	if not visual then
+		visual = {
+			alive = true,
+			amplitude = BEAM.wave_amplitude,
+			phase = 0,
+			spin = 0,
+			previous_start = Vector3Box(start),
+			previous_aim = Vector3Box(beam.aim:unbox()),
+			lines = {},
+			spark_time = 0,
+			flash_time = 0,
+			sphere_time = 0,
+		}
+		visuals[character] = visual
+	end
+
+	local links = link.links_of(character)
+	local link_scale = BEAM.link_scale[math.min(links, 5) + 1]
+	local linking = link.locked[character] ~= nil
+	local locked_on = beam.hit == 2
+	local aim = beam.aim:unbox()
+	local finish = beam.end_position:unbox()
+	local beam_direction = Vector3.normalize(finish - start)
+
+	if linking then
+		finish = finish - beam_direction * (BEAM.linked_end_back * UNIT)
+	end
+
+	-- The wave dies down on an enemy or a link, and otherwise grows with how much the gun moves and turns, and dies down slowly
+	if locked_on or linking then
+		visual.amplitude = math.max(0, visual.amplitude - (visual.amplitude + 5) * 4 * dt)
+	else
+		local moved = (start - visual.previous_start:unbox()) / UNIT
+		local location_change = Vector3.length(Vector3(Vector3.x(moved), Vector3.y(moved), Vector3.z(moved) * 5))
+		local rotation_change = Vector3.length(aim - visual.previous_aim:unbox())
+		local wiggle = math.max(location_change * 0.02, rotation_change * 4)
+
+		visual.amplitude = math.max(1, visual.amplitude - visual.amplitude * dt)
+		visual.amplitude = math.min(BEAM.max_amplitude, visual.amplitude + wiggle)
+	end
+
+	visual.previous_start:store(start)
+	visual.previous_aim:store(aim)
+	visual.phase = visual.phase + turns_to_radians(BEAM.wave_shift * (link_scale * 0.6 + 1)) * dt
+	visual.spin = visual.spin + turns_to_radians(BEAM.spin) * dt
+
+	-- The plane of the wave, about the beam
+	local chord = finish - start
+	local length = Vector3.length(chord)
+	local side = Vector3.cross(beam_direction, Vector3.up())
+
+	if Vector3.length(side) < 0.1 then
+		side = Vector3.right()
+	end
+
+	side = Vector3.normalize(side)
+
+	local up = Vector3.cross(side, beam_direction)
+	local wave_axis = side * math.cos(visual.spin) + up * math.sin(visual.spin)
+	local control = start + aim * (length * BEAM.bend_share)
+	local beam_texture, flash_texture, spark_texture = colors_of(linking, links)
+
+	-- The beam, and its children, each thinner, with a wider wave of their own
+	local children = math.min(links + 1, BEAM.max_children)
+	local main = visual.lines[1] or {}
+
+	visual.lines[1] = main
+
+	place_line(main, start, control, finish, length, BEAM.regen_dist, visual.amplitude, visual.phase, wave_axis, locked_on or linking)
+	draw_line(visual, main, beam_texture, BEAM.size * (link_scale * 0.6 + 1) * UNIT, BEAM.color)
+
+	for c = 1, BEAM.max_children do
+		local line = visual.lines[c + 1] or {}
+
+		visual.lines[c + 1] = line
+
+		if c <= children then
+			local amplitude = c * 4 + visual.amplitude * ((BEAM.max_amplitude - c * 4) / BEAM.max_amplitude)
+
+			place_line(line, start, control, finish, length, BEAM.child_regen_dist, amplitude, visual.phase * 0.6, wave_axis, linking)
+			draw_line(visual, line, beam_texture, (2 + 4 * (children - c + 1)) * UNIT, BEAM.child_color)
+		else
+			line.count = 0
+			line.made = 0
+		end
+	end
+
+	-- The sparks where it ends, but not on a link: back toward the shooter from what it hits, or on from its end in the air
+	if spark_texture then
+		visual.spark_time = visual.spark_time + dt * SPARKS.rate * (link_scale + 1)
+
+		local spark_place = finish - beam_direction * (10 * UNIT)
+		local spark_way = beam.hit > 0 and -aim or beam_direction
+
+		while visual.spark_time >= 1 do
+			visual.spark_time = visual.spark_time - 1
+
+			local offset = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1) * (SPARKS.position_deviation * UNIT)
+			local speed = random_between(SPARKS.speed) * (link_scale * 0.7 + 1) * UNIT
+
 			particles.sprite({
-				color = linking and CONFIG.link_color or gold and CONFIG.linked_color or CONFIG.bolt_color,
-				life = CONFIG.beam_life,
-				position = finish,
-				size = CONFIG.end_flare_size * UNIT,
-				texture = (linking or gold) and "link_ring_yellow" or "link_ring_green",
+				attenuation = SPARKS.attenuation,
+				color = { SPARKS.color, SPARKS.color, SPARKS.color },
+				life = SPARKS.life * (link_scale + 1),
+				position = spark_place + offset,
+				size = random_between(SPARKS.size) * (link_scale + 1) * UNIT,
+				texture = spark_texture,
+				velocity = deviate(spark_way, 0.75) * speed,
 			})
+		end
+	end
+
+	-- The flash at the muzzle: the mesh's in a character's hand, or the player's own model's for every hit
+	local first_person = utils.is_local_player_unit(character) and first_person_api() and not first_person_api().third_person.shows_weapon(character)
+	local flash_scale = link_scale * 0.5 + 1
+	local function follow_muzzle()
+		return visual.alive and (muzzle_of(character)) or nil
+	end
+
+	if first_person then
+		visual.flash_time = visual.flash_time - dt
+
+		if visual.flash_time <= 0 then
+			visual.flash_time = visual.flash_time + FLASH_1ST.interval
+
+			particles.sprite({
+				attenuation = 0,
+				color = { FLASH_1ST.color, FLASH_1ST.color, FLASH_1ST.color },
+				follow = follow_muzzle,
+				life = FLASH_1ST.life,
+				size = FLASH_1ST.size * flash_scale * scale,
+				spin = (math.random() * 2 - 1) * 0.3,
+				texture = flash_texture,
+			})
+		end
+	else
+		visual.flash_time = visual.flash_time + dt * FLASH_3RD.rate
+
+		while visual.flash_time >= 1 do
+			visual.flash_time = visual.flash_time - 1
+
+			particles.sprite({
+				color = { FLASH_3RD.color, FLASH_3RD.color, FLASH_3RD.color },
+				follow = follow_muzzle,
+				life = FLASH_3RD.life,
+				size = random_between(FLASH_3RD.size) * flash_scale * scale,
+				spin = (math.random() * 2 - 1) * 0.3,
+				texture = flash_texture,
+			})
+		end
+	end
+
+	-- The sphere on an ally who is linked
+	local target = link.locked[character]
+
+	if target then
+		visual.sphere_time = visual.sphere_time + dt * SPHERE.rate
+
+		local size = utils.is_local_player_unit(target) and SPHERE.own_size or SPHERE.size
+
+		while visual.sphere_time >= 1 do
+			visual.sphere_time = visual.sphere_time - 1
+
+			particles.sprite({
+				color = { SPHERE.color, SPHERE.color, SPHERE.color },
+				follow = function ()
+					return visual.alive and beam.end_position:unbox() or nil
+				end,
+				life = SPHERE.life,
+				size = size * UNIT,
+				spin = (math.random() * 2 - 1) * 0.3,
+				texture = "link_muz_blue",
+			})
+		end
+	end
+end
+
+-- Draws each beam, and loops its sound (LinkFire's BeamSounds) while it is drawn
+local function draw_beams(dt)
+	for character, beam in pairs(link.beams) do
+		if Unit.alive(character) then
+			draw_beam(character, beam, dt)
 
 			if not beam_sounds[character] then
 				local api = first_person_api()
@@ -369,6 +667,13 @@ local function draw_beams()
 		end
 	end
 
+	for character, visual in pairs(visuals) do
+		if not link.beams[character] then
+			visual.alive = false
+			visuals[character] = nil
+		end
+	end
+
 	for character in pairs(beam_sounds) do
 		if not link.beams[character] then
 			stop_beam_sound(character)
@@ -376,19 +681,25 @@ local function draw_beams()
 	end
 end
 
-mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	if not Managers.world:has_world("level_world") then
 		return
 	end
 
 	update_bolts()
-	draw_beams()
+	draw_beams(dt)
 end
 
 local function clear()
 	for character in pairs(beam_sounds) do
 		stop_beam_sound(character)
 	end
+
+	for _, visual in pairs(visuals) do
+		visual.alive = false
+	end
+
+	table.clear(visuals)
 
 	for _, bolt in ipairs(bolts) do
 		if bolt.sound and Managers.world:has_world("level_world") then

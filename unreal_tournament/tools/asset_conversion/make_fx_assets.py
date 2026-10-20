@@ -41,6 +41,9 @@ TEXTURES = {
     'link_muz_yellow': 'XEffectMat/Texture/link_muz_yellow.tga',
     'link_beam_green': 'XEffectMat/Texture/link_beam_green.tga',
     'link_beam_yellow': 'XEffectMat/Texture/link_beam_yellow.tga',
+    # (the beam, the flash and the sphere of a link on an ally: the team colors, blue for the heroes)
+    'link_beam_blue': 'XEffectMat/Texture/link_beam_blue.tga',
+    'link_muz_blue': 'XEffectMat/Texture/link_muz_blue.tga',
     'link_ring_green': 'XEffectMat/Texture/link_ring_green.tga',
     'link_ring_yellow': 'XEffectMat/Texture/link_ring_yellow.tga',
     'link_projectile_splash': 'XEffectMat/Texture/Link_projectile_splash.tga',
