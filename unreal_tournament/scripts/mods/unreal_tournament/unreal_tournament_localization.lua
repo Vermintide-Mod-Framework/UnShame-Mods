@@ -24,13 +24,13 @@ return {
 		en = "Killing Sprees",
 	},
 	killing_sprees_description = {
-		en = "Unreal Tournament 2004's rewards for kills: first blood, multi kills, killing sprees, head shots and the weapon call outs, with their lines in the chat. In a game, the host's setting decides it for everyone.",
+		en = "Unreal Tournament 2004's rewards for kills: first blood, multi kills, killing sprees, head shots and the weapon call outs, with their words on the screen and their lines in the chat. In a game, the host's setting decides it for everyone.",
 	},
 	announcer = {
 		en = "Announcer",
 	},
 	announcer_description = {
-		en = "Unreal Tournament 2004's announcer. Announces your multi kills, killing sprees, head shots and more as you kill. Your own setting, whoever hosts.",
+		en = "Unreal Tournament 2004's announcer voice. Calls out your multi kills, killing sprees, head shots and more as you kill. Your own setting, whoever hosts.",
 	},
 	adrenaline = {
 		en = "Adrenaline",

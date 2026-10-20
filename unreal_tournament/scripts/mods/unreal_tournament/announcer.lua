@@ -1,14 +1,14 @@
 local mod = get_mod("unreal_tournament")
 
--- The announcer (the Announcer setting, each player's own, under Killing Sprees). It voices the player's own rewards (rewards.lua) in
--- UT2004's male announcer (MaleAnnouncer),
--- and shows their words on the screen. The sounds are in a bank of their own (tools/asset_conversion/make_bank.py announcer).
+-- The announcer. It shows the words of the player's own rewards (rewards.lua) on the screen, which come with the Killing Sprees option,
+-- and voices them in UT2004's male announcer (MaleAnnouncer) with the Announcer option too, each player's own. The sounds are in a bank
+-- of their own (tools/asset_conversion/make_bank.py announcer).
 --   Multi kills (MultiKillMessage): Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill, Holy Shit.
 --   Killing sprees (KillingSpreeMessage): Killing Spree, Rampage, Dominating, Unstoppable, Godlike and Wicked Sick.
 --   First blood (FirstBloodMessage), head shots (SpecialKillMessage), and the call outs (Head Hunter, Flak Monkey and Combo Whore), which
 --     come a moment after the kill that reaches their number (ClientDelayedAnnouncementNamed).
--- Others voice through it too (adrenaline): mod.announcer.play(event, forced), mod.announcer.play_later(event, delay). The setting
--- covers every line.
+-- Others voice through it too (adrenaline): mod.announcer.play(event, forced), mod.announcer.play_later(event, delay). The Announcer
+-- option covers every line of the voice.
 
 local CONFIG = {
 	-- MultiKillMessage, by the level of the multi kill (level 1 is the second kill). Each entry has a sound and a text. The last entry
@@ -133,7 +133,8 @@ end
 mod.rewards.callbacks.announcer = function (event, player_unit, value)
 	local local_player = Managers.player:local_player()
 
-	if not mod.option("announcer") or not local_player or player_unit ~= local_player.player_unit then
+	-- (the words come with the rewards; play only voices them with the Announcer option on)
+	if not mod.option("killing_sprees") or not local_player or player_unit ~= local_player.player_unit then
 		return
 	end
 
