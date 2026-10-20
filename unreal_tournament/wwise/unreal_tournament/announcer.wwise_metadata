@@ -17,4 +17,9 @@ events = {
 	ut_announcer_headhunter = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.968 duration_max = 1.968 positioning = "2D" }
 	ut_announcer_flak_monkey = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.487 duration_max = 2.487 positioning = "2D" }
 	ut_announcer_combo_whore = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.990 duration_max = 1.990 positioning = "2D" }
+	ut_announcer_adrenalin = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.833 duration_max = 1.833 positioning = "2D" }
+	ut_announcer_speed = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.811 duration_max = 1.811 positioning = "2D" }
+	ut_announcer_berzerk = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.850 duration_max = 1.850 positioning = "2D" }
+	ut_announcer_booster = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.650 duration_max = 1.650 positioning = "2D" }
+	ut_announcer_invisible = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.711 duration_max = 1.711 positioning = "2D" }
 }

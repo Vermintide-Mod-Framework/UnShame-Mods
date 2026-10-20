@@ -410,7 +410,7 @@ local function scenarios()
 		end
 	end
 
-	-- KillingSpreeMessage: everyone is told of a player's spree and of its end (spree.lua), whatever the announcer setting is
+	-- KillingSpreeMessage: everyone is told of a player's spree and of its end (rewards.lua), whatever the announcer setting is
 	list[#list + 1] = {
 		name = "a spree and its end are written in the chat, with the announcer off too",
 		run = function (t)

@@ -19,4 +19,4 @@
 
 ## Adrenaline and sprees
 
-2. **Adrenaline.** Sprees are counted for it whatever the announcer setting is (`spree.lua`, `mod.spree.callbacks`).
+2. **Adrenaline.** The rewards that fill it are decided whatever the announcer setting is (`rewards.lua`, `mod.rewards.callbacks`).

@@ -43,6 +43,12 @@ WEAPONS = {
         # (DamTypeFlakChunk and DamTypeShockCombo)
         ('ut_announcer_flak_monkey', ANNOUNCER + 'FlackMonkey', False, -18, 0),
         ('ut_announcer_combo_whore', ANNOUNCER + 'Combowhore', False, -18, 0),
+        # (UnrealPlayer.AwardAdrenaline: Adrenalin when the adrenaline is full, and each combo's ComboAnnouncementName)
+        ('ut_announcer_adrenalin', ANNOUNCER + 'adrenalin', False, -18, 0),
+        ('ut_announcer_speed', ANNOUNCER + 'Speed', False, -18, 0),
+        ('ut_announcer_berzerk', ANNOUNCER + 'Berzerk', False, -18, 0),
+        ('ut_announcer_booster', ANNOUNCER + 'Booster', False, -18, 0),
+        ('ut_announcer_invisible', ANNOUNCER + 'Invisible', False, -18, 0),
     ],
     'shock_rifle': [
         ('ut_shock_fire', SOUNDS + 'BShockRifleFire', False, -22, 0),
