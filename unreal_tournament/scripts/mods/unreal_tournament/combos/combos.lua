@@ -5,8 +5,9 @@ local mod = get_mod("unreal_tournament")
 -- its duration (Combo.Tick), ending when the meter is empty. The host starts and ends them, for players and bots, and tells every
 -- machine, which plays what everyone sees and hears of it: the activation's sound and burst (Combo.ActivateSound, ComboActivation) and
 -- the combo's own (combos/*.lua). The player who started one sees its name (ComboMessage) and hears the announcer say it. A knockdown or
--- a death in a combo ends it and empties the meter (xPawn.Died). Bots start one at random once their meter is full and they have an
--- enemy (SquadAI.AssignCombo).
+-- a death in a combo ends it and empties the meter (xPawn.Died). A knocked down character can start the Booster, which gets it up (not
+-- UT's: its pawns are never down). Bots start one at random once their meter is full and they have an enemy (SquadAI.AssignCombo), and
+-- the Booster when they are knocked down.
 --   mod.combos.kinds[name] = { start = function (unit, owner), stop = function (unit, owner), update = function (unit, dt, owner) }: a
 --       combo's own effects, on every machine. owner is whether this machine runs the character (the player's own, or a bot on the host).
 --   mod.combos.kind_of(unit): the name of the combo a character is in, or nil
@@ -31,7 +32,7 @@ local CONFIG = {
 	combos = {
 		{ name = "speed", keys = { FORWARD, FORWARD, FORWARD, FORWARD }, duration = 16, message = "Speed!", announcement = "ut_announcer_speed" },
 		{ name = "berserk", keys = { FORWARD, FORWARD, BACK, BACK }, duration = 30, message = "Berserk!", announcement = "ut_announcer_berzerk" },
-		{ name = "booster", keys = { BACK, BACK, BACK, BACK }, duration = 30, message = "Booster!", announcement = "ut_announcer_booster" },
+		{ name = "booster", keys = { BACK, BACK, BACK, BACK }, duration = 30, message = "Booster!", announcement = "ut_announcer_booster", gets_up = true },
 		{ name = "invisible", keys = { RIGHT, RIGHT, LEFT, LEFT }, duration = 30, message = "Invisible!", announcement = "ut_announcer_invisible" },
 	},
 	-- The host sends a player's draining adrenaline this often, and looks at the bots' this often
@@ -232,13 +233,29 @@ mod:network_register("ut_combo", function (_, player_go_id, index)
 	end
 end)
 
--- On the host: starts a combo (xPawn.DoCombo, when the meter is full and the pawn is in none) and tells everyone
+local function is_knocked_down(unit)
+	local status_extension = ScriptUnit.has_extension(unit, "status_system")
+
+	return status_extension ~= nil and status_extension:is_knocked_down()
+end
+
+-- On the host: starts a combo (xPawn.DoCombo, when the meter is full and the pawn is in none) and tells everyone. A knocked down
+-- character can only start one that gets it up (the Booster's, not UT's).
 local function start(unit, index)
 	if not is_host() or active[unit] or (adrenaline.of(unit) or 0) < adrenaline.max then
 		return
 	end
 
+	local down = is_knocked_down(unit)
+
+	if down and not CONFIG.combos[index].gets_up then
+		return
+	end
+
 	begin(unit, index)
+
+	-- (a knockdown only ends a combo once the character has been up in it: the game's revive takes a moment)
+	active[unit].up = not down
 	mod:network_send("ut_combo", "others", go_id(unit), index)
 end
 
@@ -393,9 +410,11 @@ local function update_host(dt, t)
 		if not status_extension then
 			mod:network_send("ut_combo", "others", go_id(unit), 0)
 			finish(unit)
-		elseif status_extension:is_knocked_down() or status_extension:is_dead() then
+		elseif status_extension:is_dead() or status_extension:is_knocked_down() and entry.up then
 			stop(unit, true)
 		else
+			entry.up = entry.up or not status_extension:is_knocked_down()
+
 			local combo = CONFIG.combos[entry.index]
 
 			adrenaline.give(unit, -adrenaline.max * dt / combo.duration, true)
@@ -421,7 +440,12 @@ local function update_host(dt, t)
 		local blackboard = ai_extension and ai_extension.blackboard and ai_extension:blackboard()
 		local target = blackboard and blackboard.target_unit
 
-		if target and HEALTH_ALIVE[target] and not active[unit] and (adrenaline.of(unit) or 0) >= adrenaline.max then
+		local ready = ai_extension and not active[unit] and (adrenaline.of(unit) or 0) >= adrenaline.max
+
+		-- (a knocked down bot gets itself up with the Booster)
+		if ready and is_knocked_down(unit) then
+			start(unit, index_of("booster"))
+		elseif ready and target and HEALTH_ALIVE[target] then
 			start(unit, math.random(#CONFIG.combos))
 		end
 	end

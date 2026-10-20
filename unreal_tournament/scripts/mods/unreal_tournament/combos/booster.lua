@@ -2,7 +2,8 @@ local mod = get_mod("unreal_tournament")
 
 -- The Booster combo (ComboDefensive): the character gets 5 health every 0.9 s (its Timer, from the start; the game's health can't go
 -- past full, where UT's goes on to 199 and then to the shield), and the game's wounds are healed as it starts. As well as UT's: stamina
--- back five times as fast. Everyone sees green crosses rising around the character (RegenCrosses).
+-- back five times as fast, and started while knocked down it gets the character up. Everyone sees green crosses rising around the
+-- character (RegenCrosses).
 
 local utils = mod.utils
 local combos = mod.combos
@@ -37,7 +38,7 @@ combos.buff({
 	stat_buff = "fatigue_regen",
 })
 
--- Each character's: { buffs (on the host), next_heal (on the host), next_cross }
+-- Each character's: { buffs (on the host), next_heal (on the host), heal_wounds (on the host: once it is up), next_cross }
 local boosted = {}
 
 -- A cross, from where it starts, with the pawn's speed slowed by the drag, and the rise as a constant pull against it
@@ -73,7 +74,17 @@ combos.kinds.booster = {
 		}
 
 		if combos.is_host() then
-			StatusUtils.set_wounded_network(unit, false, "healed")
+			-- (started while knocked down, it gets the character up: combos.lua lets only this combo start then. The game's revive takes
+			-- a wound as it ends, so the wounds are healed once the character is up.)
+			local status_extension = ScriptUnit.has_extension(unit, "status_system")
+
+			if status_extension and status_extension:is_knocked_down() then
+				mod.get_up(unit)
+
+				entry.heal_wounds = true
+			else
+				StatusUtils.set_wounded_network(unit, false, "healed")
+			end
 
 			entry.buffs = combos.add_buffs(unit, { STAMINA_BUFF })
 		end
@@ -95,6 +106,16 @@ combos.kinds.booster = {
 
 		if not entry then
 			return
+		end
+
+		if entry.heal_wounds then
+			local status_extension = ScriptUnit.has_extension(unit, "status_system")
+
+			if status_extension and not status_extension:is_knocked_down() then
+				entry.heal_wounds = nil
+
+				StatusUtils.set_wounded_network(unit, false, "healed")
+			end
 		end
 
 		if combos.is_host() and t >= entry.next_heal then

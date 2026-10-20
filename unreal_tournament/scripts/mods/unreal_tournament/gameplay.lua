@@ -192,6 +192,12 @@ BuffTemplates[SELF_REVIVE_BUFF] = {
 
 utils.register_network_lookup("buff_templates", SELF_REVIVE_BUFF)
 
+-- On the host: gets a knocked down player up, as a revive by a teammate does. Auto Revive and the Booster combo use it.
+function mod.get_up(player_unit)
+	StatusUtils.set_revived_network(player_unit, true, player_unit)
+	CharacterStateHelper.play_animation_event(player_unit, "revive_complete")
+end
+
 local function update_self_revive(t)
 	if not t or not is_option_on("auto_revive") then
 		table.clear(knocked_down_since)
@@ -219,8 +225,7 @@ local function update_self_revive(t)
 		elseif t - knocked_down_since[player_unit] >= CONFIG.self_revive_time then
 			knocked_down_since[player_unit] = nil
 
-			StatusUtils.set_revived_network(player_unit, true, player_unit)
-			CharacterStateHelper.play_animation_event(player_unit, "revive_complete")
+			mod.get_up(player_unit)
 			Managers.state.entity:system("buff_system"):add_buff(player_unit, SELF_REVIVE_BUFF, player_unit, false)
 		end
 	end

@@ -17,6 +17,8 @@ local CONFIG = {
 	-- The Booster's heal: 5 every 0.9 s
 	booster_wait = 2, -- s
 	booster_hurt = 30,
+	-- How long the game's revive is given (Auto Revive's own takes 3 s)
+	get_up_wait = 2, -- s
 	-- An enemy for the bot to see, and how long it has to start a combo (it looks once a second, and picks one at random)
 	enemy_breed = "skaven_clan_rat",
 	bot_wait = 5, -- s
@@ -187,6 +189,50 @@ local function scenarios()
 				t.expect(invisible(), "the player is not invisible")
 				finish(t)
 				t.expect(not invisible(), "the player is still invisible")
+			end,
+		},
+		{
+			name = "a knocked down player can start only the Booster, which gets them up and clears the wounds",
+			run = function (t)
+				local unit = t.unit()
+
+				local function status()
+					return t.on_main_thread(function ()
+						local status_extension = ScriptUnit.extension(unit, "status_system")
+
+						return { down = status_extension:is_knocked_down(), wounded = status_extension:is_wounded() }
+					end)
+				end
+
+				local down = t.knock_down(flak.key)
+
+				fill(t)
+				t.on_main_thread(function ()
+					combos.start(unit, "speed")
+				end)
+
+				local other = combos.kind_of(unit)
+
+				t.on_main_thread(function ()
+					combos.start(unit, "booster")
+				end)
+
+				local up = t.wait_until(function ()
+					return not status().down
+				end, CONFIG.get_up_wait, "the player to get up")
+
+				t.wait(CONFIG.settle)
+
+				local after = status()
+				local kind = combos.kind_of(unit)
+
+				finish(t)
+				t.revive()
+				t.expect(down, "the player was not knocked down")
+				t.expect(other == nil, "the %s combo started while knocked down", tostring(other))
+				t.expect(up, "the Booster did not get the player up")
+				t.expect(kind == "booster", "the combo is %s", tostring(kind))
+				t.expect(not after.wounded, "the player is wounded")
 			end,
 		},
 		{
