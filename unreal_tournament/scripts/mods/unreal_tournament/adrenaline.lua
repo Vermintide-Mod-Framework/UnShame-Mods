@@ -226,6 +226,11 @@ local function draw_count(gui, value, scale, width, height)
 end
 
 mod.ingame_ui_post_update_callbacks.adrenaline = function ()
+	-- (not in the Keep, which is a hub level: StateIngame sets this)
+	if DamageUtils.is_in_inn then
+		return
+	end
+
 	local unit = local_unit()
 	local entry = unit and known[unit]
 
