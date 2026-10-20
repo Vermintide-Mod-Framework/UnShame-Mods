@@ -579,7 +579,7 @@ local function new_skin(setting_id, mirror, owns_grenades)
 				-- origin) and sits where UT2004's does (checked with preview_weapon.py assault2003).
 				inspect_pose_right = 5,
 				inspect_pose_forward = 30,
-				inspect_pose_up = 8,
+				inspect_pose_up = 0,
 				inspect_pivot_right = 0,
 				inspect_pivot_forward = 26.5,
 				inspect_pivot_up = 7,
