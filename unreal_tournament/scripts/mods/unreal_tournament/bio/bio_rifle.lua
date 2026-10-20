@@ -1355,7 +1355,7 @@ for _, template_name in ipairs({ "ut_bio_blast", "ut_bio_blast_air" }) do
 			utils.apply_explosion_self_damage(owner_unit, position, ITEM_KEY, explosion, blast_damage(level) * CONFIG.self_damage_share)
 		end
 
-		utils.apply_explosion_push(position, explosion, CONFIG.jump_speed * math.sqrt(level))
+		utils.apply_explosion_push(position, explosion, CONFIG.jump_speed * math.sqrt(level) * utils.push_scale(owner_unit))
 	end
 end
 

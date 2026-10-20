@@ -742,6 +742,7 @@ local function add_ragdoll_throw(hit_unit, owner_unit, hit_position, hit_directi
 
 	if not throw then
 		throw = {
+			push_scale = utils.push_scale(owner_unit),
 			t = Managers.time:time("game"),
 			velocity = Vector3Box(0, 0, 0),
 		}
@@ -789,9 +790,10 @@ local function update_ragdoll_throws()
 			local speed = Vector3.length(velocity)
 
 			-- The throw of a shell is UT's as it is. The throw of the chunks is scaled up and has a share of upwards speed added.
+			-- (a Berserk player's chunks throw twice as hard, past the cap: utils.push_scale)
 			if speed > 0 and not throw.spin then
 				velocity = velocity * (math.min(speed, CONFIG.chunk_ragdoll_max_speed) / speed)
-				velocity = velocity + Vector3(0, 0, Vector3.length(velocity) * CONFIG.chunk_ragdoll_up)
+				velocity = (velocity + Vector3(0, 0, Vector3.length(velocity) * CONFIG.chunk_ragdoll_up)) * (throw.push_scale or 1)
 			end
 
 			if throw_ragdoll(unit, velocity, throw.spin and throw.spin:unbox()) then
@@ -1048,8 +1050,9 @@ mod.explosion_before_callbacks.ut_flak_shell_explosion = function (world, positi
 	return utils.units_in_radius(world, position, ExplosionTemplates.ut_flak_shell_explosion.explosion.radius)
 end
 
-mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position, _, alive_before)
+mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position, _, alive_before, _, attacker_unit)
 	local t = Managers.time:time("game")
+	local push_scale = utils.push_scale(attacker_unit)
 
 	for unit in pairs(alive_before or {}) do
 		if Unit.alive(unit) and not HEALTH_ALIVE[unit] and not ragdoll_throws[unit] then
@@ -1059,7 +1062,7 @@ mod.explosion_callbacks.ut_flak_shell_explosion = function (world, position, _, 
 			ragdoll_throws[unit] = {
 				t = t,
 				spin = Vector3Box(spin),
-				velocity = Vector3Box(velocity),
+				velocity = Vector3Box(velocity * push_scale),
 			}
 		end
 	end

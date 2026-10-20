@@ -1287,7 +1287,7 @@ local function update_blasts()
 		for unit in pairs(blast.units) do
 			if not Unit.alive(unit) then
 				blast.units[unit] = nil
-			elseif not HEALTH_ALIVE[unit] and utils.blast_ragdoll(unit, center) then
+			elseif not HEALTH_ALIVE[unit] and utils.blast_ragdoll(unit, center, nil, nil, blast.push_scale) then
 				blast.units[unit] = nil
 			end
 		end
@@ -1299,12 +1299,13 @@ local function update_blasts()
 end
 
 -- The look of the explosion on every peer. The explosion's callback runs for everyone who sees it.
-mod.explosion_callbacks.ut_rocket_explosion = function (world, position)
+mod.explosion_callbacks.ut_rocket_explosion = function (world, position, _, _, _, attacker_unit)
 	-- The look itself comes from the skin (see skin_explosion_callbacks). This only collects the bodies to throw.
 	local radius = ExplosionTemplates.ut_rocket_explosion.explosion.radius
 
 	blasts[#blasts + 1] = {
 		position = Vector3Box(position),
+		push_scale = utils.push_scale(attacker_unit),
 		radius = radius,
 		t = Managers.time:time("game"),
 		units = utils.units_in_radius(world, position, radius),

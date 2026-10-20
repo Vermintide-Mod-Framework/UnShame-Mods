@@ -109,13 +109,13 @@ end)
 -- Explosions. The name is the name of the explosion template.
 --   mod.explosion_before_callbacks[template name] = function (world, position, attacker_unit)
 --       Runs before an explosion is made, on every machine. What it returns is passed to the callback below.
---   mod.explosion_callbacks[template name] = function (world, position, rotation, before, scale)
+--   mod.explosion_callbacks[template name] = function (world, position, rotation, before, scale, attacker_unit)
 --       Runs after an explosion is made, on every machine. The scale is the one the explosion was made with.
 --   mod.any_explosion_callbacks[name] = function (explosion_template, position, scale)
 --       Runs after every explosion of any template, on every machine.
 --   mod.explosion_push_speeds[template name] = function (scale)
 --       Returns how fast an explosion throws a player (see utils.apply_explosion_push). Runs on every machine, and the player on each
---       machine is thrown, whoever set the explosion off.
+--       machine is thrown, whoever set the explosion off: twice as hard if they are in the Berserk combo (utils.push_scale).
 -- A template with ut_penetrates_shields goes through shields. The game asks AiUtils.attack_is_shield_blocked for every enemy in an
 -- explosion, and while such an explosion is made the answer is always "not blocked".
 -- An explosion table with ut_walls_block_players doesn't hurt a player whom a wall hides from it (utils.walls_block_explosion), as UT's
@@ -168,13 +168,13 @@ mod:hook(DamageUtils, "create_explosion", function (func, world, attacker_unit, 
 	local callback = mod.explosion_callbacks[explosion_template.name]
 
 	if callback then
-		callback(world, impact_position, rotation, before, scale)
+		callback(world, impact_position, rotation, before, scale, attacker_unit)
 	end
 
 	local push_speed = mod.explosion_push_speeds[explosion_template.name]
 
 	if push_speed then
-		utils.apply_explosion_push(impact_position, explosion_template.explosion, push_speed(scale))
+		utils.apply_explosion_push(impact_position, explosion_template.explosion, push_speed(scale) * utils.push_scale(attacker_unit))
 	end
 
 	for _, any_callback in pairs(mod.any_explosion_callbacks) do

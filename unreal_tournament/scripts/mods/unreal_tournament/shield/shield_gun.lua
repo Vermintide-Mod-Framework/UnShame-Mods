@@ -184,8 +184,6 @@ local CONFIG = {
 	min_force = 65000,
 	max_force = 100000,
 	self_force_scale = 1,
-	-- (in the Berserk combo the push from a wall is this many times as strong: ShieldFire.DoFireEffect, bBerserk)
-	berserk_self_force = 2,
 	ut_mass = 100,
 	ground_lift = 0.4,
 	-- Pawn.TakeDamage takes the momentum a player gives themselves down to this share (instigatedBy == self), after the lift
@@ -652,11 +650,8 @@ local function push_player(owner_unit, direction, force)
 		return
 	end
 
-	if mod.combos and mod.combos.kind_of(owner_unit) == "berserk" then
-		force = force * CONFIG.berserk_self_force
-	end
-
-	local momentum = -direction * (CONFIG.self_force_scale * force / CONFIG.ut_mass)
+	-- (twice as hard in the Berserk combo: ShieldFire.DoFireEffect, bBerserk)
+	local momentum = -direction * (CONFIG.self_force_scale * force * utils.push_scale(owner_unit) / CONFIG.ut_mass)
 
 	if locomotion_extension:is_on_ground() then
 		local size = Vector3.length(momentum)
@@ -788,11 +783,12 @@ local function death_spin(unit, at, shot)
 end
 
 -- Throws what the punch hit, here and on the other machines. alive says that it is an enemy that was alive before the punch (which may
--- have killed it), not a loose thing. at is where the punch hit it, and force the punch's.
-local function throw_hit(unit, direction, alive, at, force)
+-- have killed it), not a loose thing. at is where the punch hit it, and force the punch's. push_scale is how many times as hard the
+-- puncher throws (utils.push_scale).
+local function throw_hit(unit, direction, alive, at, force, push_scale)
 	local kind = alive and KILL or LOOSE
 	local shot = Vector3.normalize(direction + Vector3(0, 0, 0.5)) * CONFIG.ragdoll_speed
-	local velocity = (shot + Vector3(0, 0, CONFIG.ragdoll_up)) * (UNIT * (alive and force / CONFIG.max_force or 1))
+	local velocity = (shot + Vector3(0, 0, CONFIG.ragdoll_up)) * (UNIT * (alive and force / CONFIG.max_force or 1) * push_scale)
 	local spin = alive and at and death_spin(unit, at, shot) or Vector3.zero()
 	local id, is_level_unit = Managers.state.network:game_object_or_level_id(unit)
 
@@ -1171,7 +1167,7 @@ local function punch(action, t, power_level, bash)
 			end
 
 			if alive then
-				throw_hit(target.unit, direction, true, hit_on_target and hit_on_target[1], force)
+				throw_hit(target.unit, direction, true, hit_on_target and hit_on_target[1], force, utils.push_scale(owner_unit))
 			elseif hit_on_target then
 				local body_zone = hit_zone_name(hit_on_target)
 				local id = Managers.state.unit_storage:go_id(target.unit)
@@ -1212,7 +1208,7 @@ local function punch(action, t, power_level, bash)
 		hit_object(action, object.unit, object.hit, direction, punch_action.damage_profile, power_level, blow)
 
 		if loose then
-			throw_hit(object.unit, direction, false, object.hit[1])
+			throw_hit(object.unit, direction, false, object.hit[1], nil, utils.push_scale(owner_unit))
 		end
 	end
 

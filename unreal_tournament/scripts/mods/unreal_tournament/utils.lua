@@ -943,9 +943,17 @@ function utils.throw_share(unit)
 	return reference / mass
 end
 
--- Throws a ragdoll as above, away from a point, with the damage type's own speeds if they are given. Returns whether it had any bodies
--- that move.
-function utils.blast_ragdoll(unit, center, speed, up)
+-- How many times as hard a unit's attacks push players and throw bodies: twice in the Berserk combo. UT doubles only the Shield Gun's
+-- push off a wall (ShieldFire, bBerserk); here it is every push and throw of the weapons.
+utils.BERSERK_PUSH = 2
+
+function utils.push_scale(unit)
+	return unit and mod.combos and mod.combos.kind_of(unit) == "berserk" and utils.BERSERK_PUSH or 1
+end
+
+-- Throws a ragdoll as above, away from a point, with the damage type's own speeds if they are given, and its velocity times scale (1 if
+-- not given). Returns whether it had any bodies that move.
+function utils.blast_ragdoll(unit, center, speed, up, scale)
 	local body_position
 
 	for i = 0, Unit.num_actors(unit) - 1 do
@@ -962,7 +970,7 @@ function utils.blast_ragdoll(unit, center, speed, up)
 
 	local velocity, spin = utils.ut_ragdoll_throw(body_position - center, speed, up)
 
-	utils.set_ragdoll_motion(unit, velocity, spin)
+	utils.set_ragdoll_motion(unit, velocity * (scale or 1), spin)
 
 	return true
 end

@@ -809,7 +809,7 @@ end
 
 local implosions = {}
 
-local function start_implosion(world, position)
+local function start_implosion(world, position, attacker_unit)
 	local radius = ExplosionTemplates.ut_shock_combo_explosion.explosion.radius
 
 	-- This ring bends the light as the combo goes off. It is turned to face the player as it starts, so it is seen from the front.
@@ -818,6 +818,7 @@ local function start_implosion(world, position)
 	-- The skin draws the explosion itself (see skin_explosion_callbacks).
 	implosions[#implosions + 1] = {
 		position = Vector3Box(position),
+		push_scale = utils.push_scale(attacker_unit),
 		blasted = {},
 		-- This holds the direction each body was from the center when it was first pulled, and whether it has gone past the
 		-- center.
@@ -882,7 +883,7 @@ local function update_implosions(dt)
 			for unit in pairs(implosion.units) do
 				if not Unit.alive(unit) then
 					implosion.units[unit] = nil
-				elseif not HEALTH_ALIVE[unit] and not implosion.blasted[unit] and utils.blast_ragdoll(unit, center) then
+				elseif not HEALTH_ALIVE[unit] and not implosion.blasted[unit] and utils.blast_ragdoll(unit, center, nil, nil, implosion.push_scale) then
 					implosion.blasted[unit] = true
 				end
 			end
@@ -946,7 +947,7 @@ local function blow_up_standards(impact_position, attacker_unit)
 end
 
 mod.explosion_callbacks.ut_shock_combo_explosion = function (world, impact_position, _, before)
-	start_implosion(world, impact_position)
+	start_implosion(world, impact_position, before.attacker_unit)
 
 	local killed = {}
 

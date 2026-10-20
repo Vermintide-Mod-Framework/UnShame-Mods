@@ -243,7 +243,7 @@ for _, name in ipairs(WAVE_NAMES) do
 		return CONFIG.push_speed
 	end
 
-	mod.explosion_callbacks[name] = function (world, position)
+	mod.explosion_callbacks[name] = function (world, position, _, _, _, attacker_unit)
 		local living = {}
 
 		for unit in pairs(utils.units_in_radius(world, position, ExplosionTemplates[name].explosion.radius)) do
@@ -254,6 +254,7 @@ for _, name in ipairs(WAVE_NAMES) do
 
 		bodies[#bodies + 1] = {
 			position = Vector3Box(position),
+			push_scale = utils.push_scale(attacker_unit),
 			t = Managers.time:time("game"),
 			units = living,
 		}
@@ -270,7 +271,7 @@ local function update_bodies()
 		for unit in pairs(wave.units) do
 			if not Unit.alive(unit) then
 				wave.units[unit] = nil
-			elseif not HEALTH_ALIVE[unit] and utils.blast_ragdoll(unit, center, CONFIG.ragdoll_speed, CONFIG.ragdoll_up) then
+			elseif not HEALTH_ALIVE[unit] and utils.blast_ragdoll(unit, center, CONFIG.ragdoll_speed, CONFIG.ragdoll_up, wave.push_scale) then
 				wave.units[unit] = nil
 			end
 		end
