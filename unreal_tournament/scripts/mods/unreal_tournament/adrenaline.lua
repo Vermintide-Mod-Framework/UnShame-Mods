@@ -99,8 +99,11 @@ local function know(player_unit, amount)
 		gained = before and amount > before and now or entry and entry.gained or -math.huge,
 	}
 
-	-- (only once it was heard of below the most: a full one heard of for the first time, after a reload, is not new)
-	if before and before < CONFIG.max and amount >= CONFIG.max and player_unit == local_unit() and mod.announcer then
+	-- (only once it was heard of below the most: a full one heard of for the first time, after a reload, is not new. Not in a combo,
+	-- whose meter fills again as it drains: UnrealPlayer.AwardAdrenaline, InCurrentCombo)
+	local in_combo = mod.combos and mod.combos.kind_of(player_unit) ~= nil
+
+	if before and before < CONFIG.max and amount >= CONFIG.max and player_unit == local_unit() and not in_combo and mod.announcer then
 		mod.announcer.play_later(CONFIG.announcement, CONFIG.announcement_delay)
 	end
 end
