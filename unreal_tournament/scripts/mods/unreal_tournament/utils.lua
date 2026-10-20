@@ -734,9 +734,11 @@ function utils.apply_explosion_self_damage(owner_unit, position, item_name, expl
 	utils.apply_self_damage(owner_unit, position, direction, item_name, max_damage * factor)
 end
 
--- Damages the player who fired a weapon, applied directly as above.
+-- Damages the player who fired a weapon, applied directly as above. The damage can set off the player's own buffs, such as the
+-- Ironbreaker's talent that makes an explosion at the player when Gromril Armour is lost, and they read the units' positions, so these
+-- are made current (with_valid_positions).
 function utils.apply_self_damage(owner_unit, position, direction, item_name, damage)
-	DamageUtils.add_damage_network(owner_unit, owner_unit, damage, "torso", "drakegun", position, direction, item_name, nil, owner_unit, nil, nil, false, nil, nil, nil, nil, nil, 1)
+	utils.with_valid_positions(DamageUtils.add_damage_network, owner_unit, owner_unit, damage, "torso", "drakegun", position, direction, item_name, nil, owner_unit, nil, nil, false, nil, nil, nil, nil, nil, 1)
 end
 
 -- Throws the player on this machine away from an explosion, for a rocket or shock jump. Whoever set the explosion off, each machine

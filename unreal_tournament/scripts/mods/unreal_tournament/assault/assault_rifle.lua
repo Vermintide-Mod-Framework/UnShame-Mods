@@ -372,9 +372,7 @@ local function enemy_touch(physics_world, from, to, owner_unit)
 		local hit_zone = breed and breed.hit_zones_lookup[Actor.node(hit_actor)]
 
 		if hit_zone and hit_zone.name ~= "afro" and HEALTH_ALIVE[hit_unit] and DamageUtils.is_enemy(owner_unit, hit_unit) then
-			-- An enemy that is already in the sphere where the move starts is a hit at distance 0, which has no position (the explosion
-			-- stops on it): the grenade is touching it where it is.
-			return hit.distance > 0 and hit.position or from
+			return hit.position
 		end
 	end
 end
