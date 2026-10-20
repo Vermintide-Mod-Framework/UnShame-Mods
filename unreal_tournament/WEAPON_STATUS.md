@@ -44,7 +44,7 @@ Why the bases are what they are:
   weapon is the Drakefire Pistols, which only the Ironbreaker has, so his copy widens `can_wield` to the Ranger and the Engineer (the
   Engineer has the pistols in Versus, and Bardin's careers share one third person body). The characters play each base's alt attack
   stance and the shot from it: the Brace of Pistols' aim and fast shot, the Drakefire Pistols' charge and charged shot. It is in the
-  melee slot, a gun beside the ranged weapon: for the game a melee weapon (its buff type, properties, traits and bots), with endless
+  melee slot, a gun beside the ranged weapon: for the game a melee weapon (its buff type, traits and bots) with a ranged weapon's properties, with endless
   rounds, counted grenades and no block.
 - Lightning Gun. The Deepwood Staff's item lists only the Sister of the Thorn, but all four of Kerillian's careers share one third
   person body (`way_watcher`), which has the staff's animations, so the copy lists all four. Heat belongs to the career, not the weapon

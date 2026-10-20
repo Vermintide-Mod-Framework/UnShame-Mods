@@ -4,8 +4,8 @@ local mod = get_mod("unreal_tournament")
 -- pistols' animations, models and sounds are kept, and everything else is set here. Victor's is on the Brace of Pistols, and Bardin's on
 -- the Drakefire Pistols, his only pair. The numbers come from UT2004 (XWeapons/AssaultRifle, AssaultFire, AssaultGrenade, Grenade and their
 -- ammo).
--- It is a weapon of the melee slot, not as in UT: a gun beside the ranged weapon. For the game it is a melee weapon (its buffs,
--- properties, traits and bots), with no block. The rounds are endless, and the grenades are counted.
+-- It is a weapon of the melee slot, not as in UT: a gun beside the ranged weapon. For the game it is a melee weapon (its buffs, traits
+-- and bots), with no block, and the properties of the ranged weapon it was. The rounds are endless, and the grenades are counted.
 --   Left button: rounds that hit at once, 7 damage each, at the fire rate of two rifles (FireRate 0.16 times 0.55). The spread starts at
 --       0.02 and grows by 0.02 a round, up to 0.12, and goes back once the button is let go for half a second.
 --   Right button: held, it charges the grenade launcher; let go, it lobs a grenade that bounces off walls, and goes off two seconds
@@ -31,7 +31,7 @@ local DESCRIPTION = "Inexpensive and easily produced, the AR770 provides a light
 --   stance, shot: the base's sub-actions whose third person animations the rifle plays (see stance_linger): its aim, and the shot from
 --       its aim
 --   weapon_type, dodge_count, dodge: the base's, for the game's talents and the dodges
---   deus_melee_tables: the hero's Chaos Wastes melee weapon whose properties and traits it takes there (items.lua's melee_slot)
+--   deus_melee_tables: the hero's Chaos Wastes melee weapon whose traits it takes there (items.lua's melee_slot)
 local VARIANTS = {
 	{
 		base_item = "wh_brace_of_pistols",
