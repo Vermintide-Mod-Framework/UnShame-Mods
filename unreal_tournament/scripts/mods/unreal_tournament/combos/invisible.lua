@@ -181,6 +181,13 @@ local function originals(character)
 	local skin = cosmetic_extension and cosmetic_extension:get_equipped_skin()
 	local profile = cosmetic_extension and cosmetic_extension._profile
 
+	-- The player's own character has only the units of the view the player is in: what the game hides of the other view is not
+	-- known after a reload of the mods (shown above), and its copies would show.
+	local own = utils.is_local_player_unit(character)
+	local first_person_extension = own and ScriptUnit.has_extension(character, "first_person_system")
+	local in_first_person = first_person_extension ~= nil and first_person_extension:first_person_mode_active()
+	local third_person_seen = not in_first_person
+
 	local function add(unit, name, material, hide)
 		if unit and name and Unit.alive(unit) then
 			list[unit] = { name = name, material = material, hide = hide }
@@ -188,13 +195,13 @@ local function originals(character)
 	end
 
 	-- The body and the hats
-	if skin and profile then
+	if third_person_seen and skin and profile then
 		local attachment = skin.third_person_attachment or profile.third_person_attachment
 
 		add(cosmetic_extension:get_third_person_mesh_unit(), attachment and attachment.unit, CONFIG.material)
 	end
 
-	local attachment_extension = ScriptUnit.has_extension(character, "attachment_system")
+	local attachment_extension = third_person_seen and ScriptUnit.has_extension(character, "attachment_system")
 	local attachments = attachment_extension and attachment_extension:attachments()
 
 	for _, slot_data in pairs(attachments and attachments.slots or {}) do
@@ -207,9 +214,8 @@ local function originals(character)
 	local inventory_extension = ScriptUnit.has_extension(character, "inventory_system")
 	local equipment = inventory_extension and inventory_extension:equipment()
 	local slot_data = equipment and equipment.wielded_slot and equipment.slots[equipment.wielded_slot]
-	local own = utils.is_local_player_unit(character)
 
-	if slot_data then
+	if slot_data and third_person_seen then
 		add(equipment.right_hand_wielded_unit_3p, weapon_unit_name(character, slot_data, "right"), CONFIG.material)
 		add(equipment.left_hand_wielded_unit_3p, weapon_unit_name(character, slot_data, "left"), CONFIG.material)
 
@@ -220,17 +226,15 @@ local function originals(character)
 				list[unit].put_out = true
 			end
 		end
+	end
 
-		if own then
-			add(equipment.right_hand_wielded_unit, weapon_unit_name(character, slot_data, "right", true), CONFIG.first_person_material, true)
-			add(equipment.left_hand_wielded_unit, weapon_unit_name(character, slot_data, "left", true), CONFIG.first_person_material, true)
-		end
+	if slot_data and in_first_person then
+		add(equipment.right_hand_wielded_unit, weapon_unit_name(character, slot_data, "right", true), CONFIG.first_person_material, true)
+		add(equipment.left_hand_wielded_unit, weapon_unit_name(character, slot_data, "left", true), CONFIG.first_person_material, true)
 	end
 
 	-- The player's own first person arms
-	local first_person_extension = own and ScriptUnit.has_extension(character, "first_person_system")
-
-	if first_person_extension and skin and profile then
+	if in_first_person and skin and profile then
 		local attachment = skin.first_person_attachment or profile.first_person_attachment
 
 		add(first_person_extension:get_first_person_mesh_unit(), attachment and attachment.unit, CONFIG.first_person_material, true)
@@ -238,7 +242,9 @@ local function originals(character)
 
 	-- The UT skins' models
 	for _, entry in ipairs(mod.weapon_skin.units_of(character)) do
-		add(entry.unit, entry.unit_name, entry.first_person and CONFIG.first_person_material or CONFIG.material, true)
+		if entry.first_person and in_first_person or not entry.first_person and third_person_seen then
+			add(entry.unit, entry.unit_name, entry.first_person and CONFIG.first_person_material or CONFIG.material, true)
+		end
 	end
 
 	return list
