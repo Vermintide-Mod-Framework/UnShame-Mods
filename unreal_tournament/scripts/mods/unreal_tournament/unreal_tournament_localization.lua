@@ -1,6 +1,6 @@
 return {
 	mod_description = {
-		en = "Weapons, movement and mechanics from Unreal Tournament 2004. Note: in multiplayer most option are controlled by the Host.",
+		en = "Weapons, movement and mechanics from Unreal Tournament 2004. Note: in multiplayer most options are controlled by the Host.",
 	},
 	ut_movement = {
 		en = "Movement",
@@ -36,7 +36,7 @@ return {
 		en = "Adrenaline",
 	},
 	adrenaline_description = {
-		en = "The call outs earn you adrenaline, tracked at the top right of the screen. Get 100 and then tap the direction keys to activate combos: W+W+W+W for Speed, S+S+S+S for Boost, W+W+S+S for Berkerk and D+D+A+A for Invisibility.",
+		en = "The call outs earn you adrenaline, tracked at the top right of the screen. Get 100 and then tap the direction keys to activate combos: W+W+W+W for Speed, S+S+S+S for Booster, W+W+S+S for Berserk and D+D+A+A for Invisibility.",
 	},
 	no_barriers = {
 		en = "Remove Barriers",
