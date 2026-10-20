@@ -103,7 +103,12 @@ local function know(player_unit, amount)
 	local in_combo = mod.combos and mod.combos.kind_of(player_unit) ~= nil
 
 	if before and before < CONFIG.max and amount >= CONFIG.max and player_unit == local_unit() and not in_combo and mod.announcer then
-		mod.announcer.play_later(CONFIG.announcement, CONFIG.announcement_delay)
+		-- (it may wait for other announcements: not once the meter is no longer full, or a combo has started)
+		mod.announcer.play_later(CONFIG.announcement, CONFIG.announcement_delay, function ()
+			local entry = known[player_unit]
+
+			return entry ~= nil and entry.amount >= CONFIG.max and not (mod.combos and mod.combos.kind_of(player_unit))
+		end)
 	end
 end
 

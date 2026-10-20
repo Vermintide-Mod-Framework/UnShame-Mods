@@ -89,10 +89,12 @@ local function play(event, forced)
 	playing_id = WwiseWorld.trigger_event(wwise_world, event)
 end
 
-local function play_later(event, delay)
+-- Plays an announcement after a delay. wanted(), if it is given, says whether it is still to be played when its turn comes.
+local function play_later(event, delay, wanted)
 	delayed[#delayed + 1] = {
 		event = event,
 		time = Managers.time:time("game") + delay,
+		wanted = wanted,
 	}
 end
 
@@ -160,19 +162,23 @@ mod.rewards.callbacks.announcer = function (event, player_unit, value)
 	end
 end
 
--- Plays the announcements that were delayed, when their time comes.
+-- Plays the announcements that were delayed, when their time comes, the oldest first. In UT a delayed announcement is dropped if
+-- another one was played in the last second (unforced_gap). Here it waits for that second to pass instead: the game's kills come so
+-- fast that a multi kill is nearly always announced in that second, and the delayed ones would hardly ever be heard.
 mod.update_callbacks[#mod.update_callbacks + 1] = function ()
-	if not delayed[1] then
+	local item = delayed[1]
+
+	if not item then
 		return
 	end
 
 	local now = Managers.time:time("game")
 
-	for i = #delayed, 1, -1 do
-		if now >= delayed[i].time then
-			play(delayed[i].event, false)
-			table.remove(delayed, i)
-		end
+	if item.wanted and not item.wanted() then
+		table.remove(delayed, 1)
+	elseif now >= item.time and now - last_sound_time >= CONFIG.unforced_gap then
+		table.remove(delayed, 1)
+		play(item.event, false)
 	end
 end
 
