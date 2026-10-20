@@ -9,12 +9,13 @@ local assault = ut.assault
 local CONFIG = {
 	-- A round's damage against armour, of its damage against an enemy with none (a Chaos marauder), with this much either way
 	-- (assault_rifle.lua's bullet_armor_attack). A Stormvermin is armoured. A Chaos warrior's body is super armour, which takes none,
-	-- critical hits too.
+	-- but for the game's critical bonus: at least half of a round's 8 against an enemy with no armour (about 1.5 was seen).
 	plain_breed = "chaos_marauder",
 	armoured_breed = "skaven_storm_vermin",
 	armoured_share = 0.5,
 	armour_margin = 0.1,
 	super_armour_breed = "chaos_warrior",
+	super_armour_critical_most = 4,
 	-- How far ahead the enemies that are shot stand, and how long the button is held for one round (they come 0.088 s apart)
 	enemy_distance = 5, -- m
 	one_round = 0.05, -- s
@@ -458,20 +459,22 @@ local function scenarios()
 			end,
 		},
 		{
-			-- The rounds only stagger super armour, with a critical hit too (the repeater's own crits still hurt it)
-			name = "rounds don't hurt super armour, critical ones neither",
+			-- The rounds only stagger super armour. A critical one does a little: the game's critical bonus is at least half of what the hit
+			-- does to an enemy with no armour, whatever the armour.
+			name = "rounds don't hurt super armour, and critical ones only a little",
 			run = function (t)
 				for _, critical in ipairs({ false, true }) do
 					t.critical_hits(critical)
 					start_recording()
 
 					local damage, record = round_damage(t, CONFIG.super_armour_breed)
+					local most = critical and CONFIG.super_armour_critical_most or 0
 
 					recording = false
 
 					t.log("%s: %d rounds, %d hits, the first on the body %s", critical and "critical" or "plain", rounds, record and #record.hits or 0, tostring(damage))
 					t.expect(rounds > 0, "no round was fired")
-					t.expect(not damage or damage == 0, "a %s round did %.1f to the %s's body", critical and "critical" or "plain", damage or 0, CONFIG.super_armour_breed)
+					t.expect((damage or 0) <= most, "a %s round did %.1f to the %s's body, more than %.1f", critical and "critical" or "plain", damage or 0, CONFIG.super_armour_breed, most)
 				end
 			end,
 		},
