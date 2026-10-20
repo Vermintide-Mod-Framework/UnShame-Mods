@@ -17,8 +17,9 @@ local CONFIG = {
 	-- (a heal of the game that is permanent health and leaves the wounds as they are: the start heals them)
 	heal_type = "health_regen",
 	-- (and one that is temporary health, for a character whose healing becomes temporary health: the no_permanent_health perk of
-	-- Natural Bond and the like, which the game's own heals look at too, as a bandage becomes bandage_temp_health)
-	temporary_heal_type = "buff",
+	-- Natural Bond and the like, which the game's own heals look at too, as a bandage becomes bandage_temp_health. Both are heals the
+	-- game plays no heal sound for, no_sfx_heal_reasons: "buff" played it at every tick.)
+	temporary_heal_type = "heal_from_proc",
 	stamina_regen = 4, -- added to the regeneration's multiplier of 1
 	-- RegenCrosses: 10 crosses a second, each 6 units, from up to 35 units around the pawn's middle (45 up and down), for 2 s, brightest
 	-- at the middle of its life (mAttenKa 0.5); each keeps the pawn's speed (mOwnerVelocityFactor 1), slowed by mAirResistance 2, and
