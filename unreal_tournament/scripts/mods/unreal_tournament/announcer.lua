@@ -6,7 +6,7 @@ local mod = get_mod("unreal_tournament")
 --     kill in a row raises the level: Double Kill, Multi Kill, Mega Kill, Ultra Kill, Monster Kill, Ludicrous Kill, Holy Shit.
 --   Killing sprees (KillingSpreeMessage): Killing Spree, Rampage, Dominating, Unstoppable, Godlike and Wicked Sick, for the player's own
 --     sprees, which spree.lua counts.
---   First blood (DeathMatch.ScoreKill, FirstBloodMessage): announced when you kill the first enemy to die in a level.
+--   First blood (DeathMatch.ScoreKill, FirstBloodMessage): announced when you kill the first enemy to die in a level (spree.lua).
 --   Head shots (DamTypeSniperHeadShot, SpecialKillMessage): announced for a kill with a ranged shot to the head.
 --   Call outs of a number of kills with a weapon (DamageType.IncrementKills): Head Hunter for head shots with the Lightning Gun and the
 --     Sniper Rifle, Flak Monkey for kills with the Flak Cannon's chunks, and Combo Whore for kills with a shock combo. The call out comes a
@@ -90,7 +90,6 @@ local CONFIG = {
 local multi_kill_level = 0 -- UnrealPlayer.MultiKillLevel
 local last_kill_time = -math.huge
 local call_out_kills = {} -- how many kills each call out has counted, by name
-local first_blood_taken = false
 local last_sound_time = -math.huge
 local playing_id -- the id of the announcement that is playing
 local delayed = {} -- announcements waiting to play, each { time = when, event = ... }
@@ -147,6 +146,18 @@ local function announce_multi_kill(level)
 
 	show("multi_kill", announcement.text, multi_kill_font_size(level))
 	play(announcement.event, true)
+end
+
+-- First blood (spree.lua), when it is the player's
+spree.first_blood_callbacks.announcer = function (player_unit)
+	local local_player = Managers.player:local_player()
+
+	if not mod:get("announcer") or not local_player or player_unit ~= local_player.player_unit then
+		return
+	end
+
+	show("critical", local_player:name() .. " " .. CONFIG.first_blood.text, 2, { 255, 0, 0 })
+	play(CONFIG.first_blood.event, true)
 end
 
 -- The player's own spree reaching a level (spree.lua)
@@ -223,16 +234,6 @@ mod.kill_callbacks.announcer = function (victim_unit, damage_data)
 	end
 
 	local is_local = killer == Managers.player:local_player()
-
-	-- The first enemy that dies in the level counts as first blood, whoever kills it.
-	if not first_blood_taken then
-		first_blood_taken = true
-
-		if is_local then
-			show("critical", killer:name() .. " " .. CONFIG.first_blood.text, 2, { 255, 0, 0 })
-			play(CONFIG.first_blood.event, true)
-		end
-	end
 
 	if not is_local then
 		return
@@ -369,7 +370,6 @@ end
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	multi_kill_level = 0
 	last_kill_time = -math.huge
-	first_blood_taken = false
 	last_sound_time = -math.huge
 	playing_id = nil
 

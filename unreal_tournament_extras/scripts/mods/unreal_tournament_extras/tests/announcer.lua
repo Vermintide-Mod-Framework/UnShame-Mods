@@ -126,9 +126,19 @@ local function scenarios()
 				local rat = t.spawn(CONFIG.counted_breed, 6)
 
 				t.wait(1)
+				table.clear(chat_lines)
+
+				recording_chat = true
+
 				kill(t, rat)
 				t.wait(0.5)
 
+				recording_chat = false
+
+				-- (everyone is told in the chat: FirstBloodMessage is broadcast)
+				local line = Managers.player:local_player():name() .. " drew first blood!"
+
+				t.expect(table.contains(chat_lines, line), "no \"%s\" in the chat (%s)", line, table.concat(chat_lines, " / "))
 				t.expect(count(sounds, "first_blood") == 1, "first blood was announced %d times (%s)", count(sounds, "first_blood"), table.concat(sounds, ", "))
 
 				-- (and only the first)
