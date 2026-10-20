@@ -8,6 +8,7 @@ local mod = get_mod("unreal_tournament")
 -- announcer says "Adrenalin" a moment after the player's fills, and the HUD shows UT's counter (HudCDeathmatch.DrawAdrenaline).
 --   mod.adrenaline.of(player_unit): a player's adrenaline as this machine knows it, or nil
 --   mod.adrenaline.give(player_unit, amount): on the host, adds to it (or takes from it)
+--   mod.adrenaline.fill(player_unit): fills it, from any machine
 --   mod.adrenaline.max: the most there is
 
 local utils = mod.utils
@@ -144,6 +145,24 @@ function adrenaline.give(player_unit, amount)
 
 	send(player)
 end
+
+-- Fills a player's adrenaline: on the host, or by asking the host (the extras mod's recharge)
+function adrenaline.fill(player_unit)
+	if is_host() then
+		adrenaline.give(player_unit, CONFIG.max)
+	else
+		mod:network_send("ut_adrenaline_fill", "others", go_id(player_unit))
+	end
+end
+
+mod:network_register("ut_adrenaline_fill", function (_, player_go_id)
+	local unit_storage = Managers.state.unit_storage
+	local player_unit = is_host() and unit_storage and unit_storage:unit(player_go_id)
+
+	if player_unit then
+		adrenaline.give(player_unit, CONFIG.max)
+	end
+end)
 
 mod.rewards.callbacks.adrenaline = function (event, player_unit, value)
 	local gain = CONFIG.gains[event]

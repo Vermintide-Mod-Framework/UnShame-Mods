@@ -145,13 +145,18 @@ mod:command("suicide", "- you die at once (UT's suicide)", function ()
 	end
 end)
 
--- Fills the career ability's bar at once (the cooldown runs on the machine of the player whose it is)
-mod:command("recharge", "- fills your career ability's bar at once", function ()
+-- Fills the career ability's bar at once (the cooldown runs on the machine of the player whose it is), and the adrenaline when it is on
+-- (the host keeps it: adrenaline.lua)
+mod:command("recharge", "- fills your career ability's bar and your adrenaline at once", function ()
 	local _, unit = local_player_and_unit()
 	local career_extension = unit and ScriptUnit.has_extension(unit, "career_system")
 
 	if career_extension then
 		career_extension:reduce_activated_ability_cooldown_percent(1, 1, true)
+	end
+
+	if unit and ut.adrenaline then
+		ut.adrenaline.fill(unit)
 	end
 end)
 
