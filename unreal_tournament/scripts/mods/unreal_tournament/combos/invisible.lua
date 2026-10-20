@@ -86,7 +86,7 @@ mod:hook_safe(Unit, "set_visibility", function (unit, group, visible)
 	end
 end)
 
--- Each invisible character's: { copies = { [original] = copy }, next_refresh, owner, put_out = { [weapon unit] = true } }
+-- Each invisible character's: { copies = { [original] = copy }, next_refresh, owner }
 local cloaked = {}
 
 -- Makes the copy of an original. hide: the original is hidden while the copy shows (one the game's fade doesn't reach).
@@ -218,14 +218,6 @@ local function originals(character)
 	if slot_data and third_person_seen then
 		add(equipment.right_hand_wielded_unit_3p, weapon_unit_name(character, slot_data, "right"), CONFIG.material)
 		add(equipment.left_hand_wielded_unit_3p, weapon_unit_name(character, slot_data, "left"), CONFIG.material)
-
-		-- (no giveaway flames, as UT's xPawn puts out its own: the effects of the weapon in the hand, such as a staff's fire, go out
-		-- with the event the game sends as it puts the weapon away)
-		for _, unit in ipairs({ equipment.right_hand_wielded_unit_3p, equipment.left_hand_wielded_unit_3p }) do
-			if list[unit] then
-				list[unit].put_out = true
-			end
-		end
 	end
 
 	if slot_data and in_first_person then
@@ -258,35 +250,10 @@ local function set_body_fade(character, fade)
 	end
 end
 
--- Lights a weapon's effects again once it is no longer invisible, if the character still holds it and no UT skin replaces it (whose
--- third person keeps them out, weapon_skin_third_person.lua)
-local function light_again(character, unit)
-	local inventory_extension = Unit.alive(character) and Unit.alive(unit) and ScriptUnit.has_extension(character, "inventory_system")
-	local equipment = inventory_extension and inventory_extension:equipment()
-
-	if not equipment or (unit ~= equipment.right_hand_wielded_unit_3p and unit ~= equipment.left_hand_wielded_unit_3p) then
-		return
-	end
-
-	for _, skin_unit in ipairs(mod.weapon_skin.units_of(character)) do
-		if not skin_unit.first_person then
-			return
-		end
-	end
-
-	Unit.flow_event(unit, "lua_wield")
-end
-
-local function take_away(world, character, entry, original)
+local function take_away(world, entry, original)
 	remove_copy(world, original, entry.copies[original])
 
 	entry.copies[original] = nil
-
-	if entry.put_out[original] then
-		entry.put_out[original] = nil
-
-		light_again(character, original)
-	end
 end
 
 -- Makes copies of the units that have none, and takes away those of units that are gone or no longer the character's
@@ -296,19 +263,13 @@ local function refresh(character, entry)
 
 	for original, copy in pairs(entry.copies) do
 		if not wanted[original] or not Unit.alive(original) or not Unit.alive(copy) then
-			take_away(world, character, entry, original)
+			take_away(world, entry, original)
 		end
 	end
 
 	for original, data in pairs(wanted) do
 		if not entry.copies[original] then
 			entry.copies[original] = make_copy(world, original, data.name, data.material, data.hide)
-
-			if entry.copies[original] and data.put_out then
-				entry.put_out[original] = true
-
-				Unit.flow_event(original, "lua_unwield")
-			end
 		end
 	end
 
@@ -329,7 +290,7 @@ local function uncloak(character)
 
 	if world then
 		for original in pairs(entry.copies) do
-			take_away(world, character, entry, original)
+			take_away(world, entry, original)
 		end
 	end
 
@@ -355,7 +316,6 @@ combos.kinds.invisible = {
 			copies = {},
 			next_refresh = 0,
 			owner = owner,
-			put_out = {},
 		}
 	end,
 	stop = function (unit, owner)

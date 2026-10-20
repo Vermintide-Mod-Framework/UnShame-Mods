@@ -20,14 +20,10 @@ local CONFIG = {
 	-- An enemy for the bot to see, and how long it has to start a combo (it looks once a second, and picks one at random)
 	enemy_breed = "skaven_clan_rat",
 	bot_wait = 5, -- s
-	-- A Bright Wizard with a fire staff, whose fire shows on the staff
 	bot_profile = "bright_wizard",
 	bot_career = 1,
 	bot_item = "bw_skullstaff_fireball",
 	bot_distance = -3, -- m
-	-- Where the invisible bot stands to be looked at, and how long
-	shown_distance = 3, -- m
-	shown_time = 8, -- s
 }
 
 local function fill(t, unit)
@@ -240,25 +236,6 @@ local function scenarios()
 				t.expect(started, "the bot started no combo")
 				finish(t, bot)
 				t.remove(rat)
-			end,
-		},
-		{
-			-- What is checked is that it runs; the look is seen in pictures taken while the bot stands there
-			name = "an invisible bot stands in front of the player",
-			run = function (t)
-				local bot = t.add_bot(CONFIG.bot_profile, CONFIG.bot_career, CONFIG.bot_item, CONFIG.shown_distance)
-
-				if not t.expect(bot, "the bot could not be added") then
-					return
-				end
-
-				fill(t, bot)
-				t.on_main_thread(function ()
-					combos.start(bot, "invisible")
-				end)
-				t.wait(CONFIG.shown_time)
-				t.expect(combos.kind_of(bot) == "invisible", "the bot is not invisible")
-				finish(t, bot)
 			end,
 		},
 	}
