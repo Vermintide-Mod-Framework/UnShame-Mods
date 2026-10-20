@@ -79,8 +79,9 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	end
 end
 
--- UT's cheat "allammo" (CheatManager.AllAmmo): fills the ranged weapon's ammo, or sets it to the amount given
-mod:command("allammo", "[amount] - fills the ammo of the ranged weapon, or sets it to that (a whole number)", function (amount)
+-- UT's cheat "allammo" (CheatManager.AllAmmo): fills the ranged weapon's ammo, or sets it to the amount given, and fills the Assault
+-- Rifle's grenades (its rounds are endless)
+mod:command("allammo", "[amount] - fills the ammo of the ranged weapon, or sets it to that (a whole number), and the grenades", function (amount)
 	local number = tonumber(amount)
 
 	if amount and (not number or number ~= math.floor(number) or number < 0) then
@@ -88,6 +89,8 @@ mod:command("allammo", "[amount] - fills the ammo of the ranged weapon, or sets 
 
 		return
 	end
+
+	ut.assault.grenade_count = ut.assault.max_grenades
 
 	local _, unit = local_player_and_unit()
 	local inventory_extension = unit and ScriptUnit.has_extension(unit, "inventory_system")

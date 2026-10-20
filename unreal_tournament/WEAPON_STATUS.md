@@ -18,8 +18,8 @@ needs its own copy from a base of that hero, because the animations, units and a
 - Lightning Gun: the Deepwood Staff (`we_life_staff`, from the woods DLC), for all four of Kerillian's careers.
 - Sniper Rifle (UT2004's classic one): the Handguns (`es_handgun`, `dr_handgun`), for the Mercenary, Huntsman, Foot Knight, Ironbreaker
   and Ranger.
-- Assault Rifle (akimbo): the Brace of Pistols (`wh_brace_of_pistols`), for the Zealot, Bounty Hunter and Captain, and the Drakefire
-  Pistols (`dr_drake_pistol`), for the Ironbreaker, Ranger and Engineer.
+- Assault Rifle (akimbo), in the melee slot: the Brace of Pistols (`wh_brace_of_pistols`), for the Zealot, Bounty Hunter and Captain,
+  and the Drakefire Pistols (`dr_drake_pistol`), for the Ironbreaker, Ranger and Engineer.
 - Minigun: the repeaters (`es_repeating_handgun`, `wh_repeating_pistols`), for the Mercenary, Huntsman, Foot Knight, Zealot, Bounty
   Hunter and Captain.
 - Redeemer: not an item. It is the Bounty Hunter's career ability (Locked and Loaded) while he holds the Rocket Launcher, on his career
@@ -43,7 +43,9 @@ Why the bases are what they are:
   person view and one on the character, so a pair needs a second model for the other hand, in both. Bardin's only dual-wield
   weapon is the Drakefire Pistols, which only the Ironbreaker has, so his copy widens `can_wield` to the Ranger and the Engineer (the
   Engineer has the pistols in Versus, and Bardin's careers share one third person body). The characters play each base's alt attack
-  stance and the shot from it: the Brace of Pistols' aim and fast shot, the Drakefire Pistols' charge and charged shot.
+  stance and the shot from it: the Brace of Pistols' aim and fast shot, the Drakefire Pistols' charge and charged shot. It is in the
+  melee slot, a gun beside the ranged weapon: for the game a melee weapon (its buff type, properties, traits and bots), with endless
+  rounds, counted grenades and no block.
 - Lightning Gun. The Deepwood Staff's item lists only the Sister of the Thorn, but all four of Kerillian's careers share one third
   person body (`way_watcher`), which has the staff's animations, so the copy lists all four. Heat belongs to the career, not the weapon
   (`OverchargeData[career]`): the other three careers have none, which would overheat them as Sienna does, so they get the Sister's.
@@ -101,7 +103,7 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Vanilla model or arms showing | ok | ok | ok (the base weapon's units are hidden every frame, in the inspect too) | ok | ok (the pistols and their ammo units are hidden) | ok | ok | ok | ok | ok |
 | Vanilla flash or particles showing | ok (the handgun's orange tracer is dropped) | ok (the repeater's tracer is dropped) | ok | ok | ok | ok | ok (the staff's fireball, explosion and beam trail are not made) | ok | ok | ok |
 | Crosshair | ok (the game's crosshair stays on while zoomed, over the scope; the scope side by side with UT: lens, ring, arrows, bar, under the HUD, shows right after a mod reload) | ok (the game's, with the repeater's spread for both copies) | ok | ok | ok | ok (the scope side by side with UT: brackets, ring, darkened edges) | ok | ok | ok | ok |
-| Ammo number | ok (the overcharge bar, white between its thresholds and above them) | ok | ok (the charge is a bar on the ammo counter in UT's green; the game's own bar still shows a wizard's overcharge) | ok | ok (the rounds are the clip; below them the grenade's charge bar, white, and the grenades left as icons, as long as the bar at 8) | ok | ok (the overcharge bar in ShockControl's purple) | ok | ok | ok |
+| Ammo number | ok (the overcharge bar, white between its thresholds and above them) | ok | ok (the charge is a bar on the ammo counter in UT's green; the game's own bar still shows a wizard's overcharge) | ok | ok (no rounds to count, they are endless; the grenade's charge bar, white, below the ranged weapon's counter, and the grenades left as icons, as long as the bar at 8) | ok | ok (the overcharge bar in ShockControl's purple) | ok | ok | ok |
 | Bob and sway | ok | ok (BobDamping 2.25) | ok | ok | ok | ok | ok | ok | ok | ok |
 | **Firing** | | | | | | | | | | |
 | Fire rate of each mode | ok (tests: 1.6 s) | ok (tests: 15 and 5 rounds a second, after 0.27 and 0.15 s of wind up) | ok (FireRate 0.6 after a punch) | ok | ok (tests: rounds at 0.088 s; grenades at 0.5 s + the charge) | ok (tests: 1.33 s) | ok (tests: the beam's 0.7 s; the ball's 0.6 s) | ok (tests: the chunks' 0.89 s; the shell's 1.11 s) | ok | ok |
@@ -137,16 +139,16 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Hitting other projectiles | n/a | n/a | ok (the right button is the base weapon's block, made a shield block, with stamina in place of UT's shield ammo. From its front it stops shots and explosions, reflects sorcerers' magic missiles, throws back gutter runners' pounces and stops lifeleeches' grabs; tests: an exploding barrel, a pounce, a grab) | ok | ok | n/a | ok (tests: a beam into a ball makes a combo) | ok | ok | ok |
 | Lock-on, homing, bounce, link, goo, combo | n/a | n/a | n/a | n/a | ok (bounce: 0.5 into the wall, 0.8 along it, stops below 20) | n/a | ok (combo: UT's, costs 3 beams of overcharge more; tests) | ok (bounce: tests: chunks bounce off the ground; a shell throws chunks) | ok | ok |
 | **Ammo** | | | | | | | | | | |
-| Max ammo | ok (40) | ok (300, all in the clip; tests) | n/a (no ammo: the shield takes stamina) | n/a (one missile each time the ability is used; the cooldown is 160 s, tests) | ok (200 rounds, 8 grenades; tests) | ok (30; tests) | n/a (no ammo: a beam or a ball costs half a Beam Staff shot of overcharge; tests: overheating sets off a combo at the player) | ok (tests: 20, all in the clip) | ok | ok |
-| Pickup amount | n/a (heat, no ammo) | ok | n/a | n/a (a cooldown, no ammo) | ok | ok | n/a | ok | ok | ok |
+| Max ammo | ok (40) | ok (300, all in the clip; tests) | n/a (no ammo: the shield takes stamina) | n/a (one missile each time the ability is used; the cooldown is 160 s, tests) | ok (endless rounds, as a melee weapon has no ammo; 8 grenades; tests) | ok (30; tests) | n/a (no ammo: a beam or a ball costs half a Beam Staff shot of overcharge; tests: overheating sets off a combo at the player) | ok (tests: 20, all in the clip) | ok | ok |
+| Pickup amount | n/a (heat, no ammo) | ok | n/a | n/a (a cooldown, no ammo) | ok (an ammo box fills the grenades; tests) | ok | n/a | ok | ok | ok |
 | Reload between shots | n/a | ok (none; tests) | n/a | n/a | ok | ok (none; tests) | n/a | ok (none: tests) | ok | ok |
-| Chamber at 0 ammo | n/a | ok (tests: with no ammo nothing is fired) | n/a | n/a | ok | ok | n/a | ok (tests: with no ammo left nothing is fired) | ok | ok |
+| Chamber at 0 ammo | n/a | ok (tests: with no ammo nothing is fired) | n/a | n/a | n/a (endless rounds) | ok | n/a | ok (tests: with no ammo left nothing is fired) | ok | ok |
 | Chamber at the last round | n/a | ok | n/a | n/a | ok | ok | n/a | ok | ok | ok |
-| Load animation when ammo comes back | n/a | n/a | n/a | n/a | ok | n/a (no reload) | n/a | ok | ok | ok |
-| Load sound when ammo comes back | n/a | n/a | n/a | n/a | ok | n/a | n/a | ok | ok | ok |
+| Load animation when ammo comes back | n/a | n/a | n/a | n/a | n/a (no reload) | n/a (no reload) | n/a | ok | ok | ok |
+| Load sound when ammo comes back | n/a | n/a | n/a | n/a | n/a | n/a | n/a | ok | ok | ok |
 | Shot during a load animation | n/a | n/a | n/a | n/a | ok | n/a | n/a | ok | ok | ok |
 | Multi-load at 1, 2 and 3 rounds | n/a | n/a | n/a | n/a | ok | n/a | n/a | n/a | n/a | ok |
-| `/allammo` | n/a | ok | n/a | n/a (`/recharge` fills the ability) | ok | ok | n/a | ok | ok | ok |
+| `/allammo` | n/a | ok | n/a | n/a (`/recharge` fills the ability) | ok (fills the grenades) | ok | n/a | ok | ok | ok |
 | **Effects** | | | | | | | | | | |
 | Muzzle flash | ok (white disk with a blue rim, size, place and fade side by side with UT; it reads its texture linearly, as UT adds it) | ok (MinigunMuzFlash1st: UT's mesh with the tile of Minigun_burst its UVs use, blended as FB_Brighten; a round adds 5 as there is room for, and each fades as it grows; NewMinigunMFlash in third person, at world size) | ok: ShieldCharge's green lines while charging, dim as UT's, turning about the gun; ForceRingA's rings on a punch, made smaller, dimmer and faster to be closer to UT's faint arc. The shield while it is up, and ShieldSparks when it stops something | ok | ok (AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2, read as srgb and faded in gamma space as UT draws it) | ok (in first person a flash that grows and fades in steps; in third person MinigunFlashMesh's growing meshes) | ok (ShockMuzFlash) | ok | ok | ok |
 | Projectile model | n/a | ok (the shells: UT's ShellCasing mesh, lit, thrown into the world from the ejector in both views) | n/a | ok (RedeemerMissile, turning, with its light and flight sound) | ok (UT's grenade mesh, spinning) | n/a | ok (ShockBall) | ok | ok | ok |
@@ -189,9 +191,9 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Others seeing projectiles | ok (the bolts and the arcs) | ok (the tracers, hits and shells) | n/a | ok | ok | ok | ok | ok | ok | ok |
 | Others seeing explosions | n/a | n/a | n/a | ok | ok | ok | ok | ok | ok | ok |
 | Damage on the client | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok |
-| Ammo on the client | ok (the heat) | ok | n/a | n/a | ok | ok | n/a | ok | ok | ok |
+| Ammo on the client | ok (the heat) | ok | n/a | n/a | ok (the grenades) | ok | n/a | ok | ok | ok |
 | **Bots** | | | | | | | | | | |
-| Bots using it | ok (they aim at the head and vent above the threshold too; tests: lightning_bots) | ok (a bot holds the button once it has fired, as with Bardin's rotary gun; tests: minigun_bots) | ok (tests: a bot fights rats with it; a heavy attack charges until an enemy is in reach, as UT's bots do, and a light one is a quick punch) | ok | ok | ok | ok (tests: a bot shoots a special past the player, and a boss it can't reach; bosses within its reach a bot fights in melee, as the game's bots do; it fires the ball at elites, bosses and crowds: bots.lua) | ok (tests: a bot shoots a special past the player, and fires shells at a boss it can't reach; they fire the shell at elites, bosses and crowds: bots.lua) | ok | ok |
+| Bots using it | ok (they aim at the head and vent above the threshold too; tests: lightning_bots) | ok (a bot holds the button once it has fired, as with Bardin's rotary gun; tests: minigun_bots) | ok (tests: a bot fights rats with it; a heavy attack charges until an enemy is in reach, as UT's bots do, and a light one is a quick punch) | ok | ? (its melee weapon: a bot holds fire at an enemy within 5 m and doesn't defend or throw grenades; tests: assault_bots) | ok | ok (tests: a bot shoots a special past the player, and a boss it can't reach; bosses within its reach a bot fights in melee, as the game's bots do; it fires the ball at elites, bosses and crowds: bots.lua) | ok (tests: a bot shoots a special past the player, and fires shells at a boss it can't reach; they fire the shell at elites, bosses and crowds: bots.lua) | ok | ok |
 | Range they shoot from | ok (up to 60 m) | ok (up to 25 m) | ok (tests: a bot punches only with an enemy within the punch's reach) | ok | ok | ok | ok (tests: a special 17 m away) | ok (tests: a special 17 m away) | ok | ok |
 | Allies in the way | ok (tests: a bot never hurts the player) | ok (a bot doesn't shoot past an ally) | ok (tests: a bot fighting rats around the player never hurts them) | ok | ok | ok | ok (tests: a bot shooting past the player never hurts them) | ok (tests: a bot shooting past the player never hurts them) | ok | ok |
 | Look and sound of their shots | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok |

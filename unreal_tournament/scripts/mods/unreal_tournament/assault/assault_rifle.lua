@@ -4,10 +4,13 @@ local mod = get_mod("unreal_tournament")
 -- pistols' animations, models and sounds are kept, and everything else is set here. Victor's is on the Brace of Pistols, and Bardin's on
 -- the Drakefire Pistols, his only pair. The numbers come from UT2004 (XWeapons/AssaultRifle, AssaultFire, AssaultGrenade, Grenade and their
 -- ammo).
+-- It is a weapon of the melee slot, not as in UT: a gun beside the ranged weapon. For the game it is a melee weapon (its buffs,
+-- properties, traits and bots), with no block. The rounds are endless, and the grenades are counted.
 --   Left button: rounds that hit at once, 7 damage each, at the fire rate of two rifles (FireRate 0.16 times 0.55). The spread starts at
 --       0.02 and grows by 0.02 a round, up to 0.12, and goes back once the button is let go for half a second.
 --   Right button: held, it charges the grenade launcher; let go, it lobs a grenade that bounces off walls, and goes off two seconds
---       after it first touches something, or at once on an enemy. The longer it is held (up to a second), the further it goes.
+--       after it first touches something, or at once on an enemy. The longer it is held (up to a second), the further it goes. A pickup of
+--       ammo fills the grenades.
 -- The grenades are not the game's projectiles, because those don't bounce as UT's grenade does. A game projectile bounces at the speed
 -- it was fired at, a set number of times, and its fuse starts when it is fired. UT's grenade loses speed at each bounce, comes to rest,
 -- and goes off 2 seconds after it first touches something. So the shooter's machine sends the throw, each machine flies the grenade
@@ -28,6 +31,7 @@ local DESCRIPTION = "Inexpensive and easily produced, the AR770 provides a light
 --   stance, shot: the base's sub-actions whose third person animations the rifle plays (see stance_linger): its aim, and the shot from
 --       its aim
 --   weapon_type, dodge_count, dodge: the base's, for the game's talents and the dodges
+--   deus_melee_tables: the hero's Chaos Wastes melee weapon whose properties and traits it takes there (items.lua's melee_slot)
 local VARIANTS = {
 	{
 		base_item = "wh_brace_of_pistols",
@@ -41,6 +45,7 @@ local VARIANTS = {
 		dodge_count = 100,
 		dodge = 1.25,
 		spread_template = "brace_of_pistols",
+		deus_melee_tables = "deus_wh_1h_axe",
 	},
 	{
 		base_item = "dr_drake_pistol",
@@ -55,6 +60,7 @@ local VARIANTS = {
 		dodge_count = 2,
 		dodge = 1,
 		spread_template = "brace_of_drake_pistols",
+		deus_melee_tables = "deus_dr_1h_axe",
 	},
 }
 
@@ -69,6 +75,8 @@ for _, variant in ipairs(VARIANTS) do
 		base_item = variant.base_item,
 		deus_copy = variant.deus_copy,
 		can_wield = variant.can_wield,
+		melee_slot = true,
+		deus_melee_tables = variant.deus_melee_tables,
 		name = "UT2004 Assault Rifle",
 		type_name = "Assault Rifle",
 		description = DESCRIPTION,
@@ -83,8 +91,6 @@ for _, variant in ipairs(VARIANTS) do
 end
 
 local CONFIG = {
-	-- Three times AssaultAmmo.MaxAmmo (200), set in the game. All the ammo is the clip, so there is no reload.
-	max_ammo = 600,
 	-- AssaultFire: DamageMin and DamageMax 7, FireRate 0.16, which bDualMode makes 0.55 of it
 	damage = 7,
 	fire_rate = 0.16 * 0.55,
@@ -126,12 +132,8 @@ local CONFIG = {
 	bullet_armor_impact = { 1, 1, 1, 1, 1, 0.5 },
 	grenade_armor_attack = { 1, 1, 1.5, 1, 1, 0.5 },
 	grenade_armor_impact = { 1, 1, 1, 1, 1, 0.5 },
-	bot_max_range = 25,
-	-- How far a bot throws a grenade from, in meters: within it the grenade, at its most speed (32 m/s), falls up to about 1.3 m on the
-	-- way, from the head to the body (a choice)
-	bot_grenade_range = 12,
-	-- How long a bot holds the charge before it can throw (its speed is the most whatever it held)
-	bot_charge_time = 0.2, -- s
+	-- How close a bot fires its rounds from, as its melee weapon (a choice: the game's bots fight with the melee slot up close)
+	bot_range = 5, -- m
 	chain_margin = 0.05,
 	recoil_climb = 0.08,
 	-- The characters fire both modes in the stance of the base's alt attack, as actions that chain into each other, as the base's do (its
@@ -566,21 +568,29 @@ mod.dummy_finish_callbacks.assault = function (action, reason)
 	end
 end
 
--- A pickup of ammo fills the grenades, whether the rifle is held or not
-mod:hook_safe(GenericAmmoUserExtension, "add_ammo", function (self)
-	if not ITEM_KEYS[self.item_name] or not self.owner_unit then
+-- Whether a character has the rifle in its melee slot
+local function carries_rifle(inventory_extension)
+	local slot_data = inventory_extension:get_slot_data("slot_melee")
+
+	return slot_data ~= nil and slot_data.item_data ~= nil and ITEM_KEYS[slot_data.item_data.name] == true
+end
+
+-- A pickup of ammo fills the grenades, whether the rifle is held or not. The pickup gives the ammo where the character's actions run:
+-- the player's own machine, or the host for a bot.
+mod:hook_safe(SimpleInventoryExtension, "add_ammo_from_pickup", function (self)
+	if not carries_rifle(self) then
 		return
 	end
 
-	if utils.is_local_player_unit(self.owner_unit) then
+	if utils.is_local_player_unit(self._unit) then
 		assault.grenade_count = CONFIG.max_grenades
 	else
-		bot_grenades[self.owner_unit] = nil
+		bot_grenades[self._unit] = nil
 	end
 end)
 
--- With all the rounds, the game refuses a pickup of ammo (the pickup's client.can_interact, on the player's own machine; the host
--- doesn't check it). While grenades are missing, the ammo is not full, so the pickup gives them back.
+-- With all the ammo of the other weapons (or none to have), the game refuses a pickup of ammo (the pickup's client.can_interact, on the
+-- player's own machine; the host doesn't check it). While grenades are missing, the ammo is not full, so the pickup gives them back.
 mod:hook(SimpleInventoryExtension, "has_full_ammo", function (func, self, ...)
 	local full = func(self, ...)
 
@@ -588,9 +598,7 @@ mod:hook(SimpleInventoryExtension, "has_full_ammo", function (func, self, ...)
 		return full
 	end
 
-	local slot_data = self:get_slot_data("slot_ranged")
-
-	return not (slot_data and slot_data.item_data and ITEM_KEYS[slot_data.item_data.name])
+	return not carries_rifle(self)
 end)
 
 -- Weapon template
@@ -611,15 +619,12 @@ local STANCE = "ut_assault_stance"
 local CHARGE_IN_STANCE = "ut_assault_charge"
 local THROW = "ut_assault_throw"
 local STANCE_AFTER_THROW = "ut_assault_stance_after_throw"
--- (the throw of a bot, which fires a charged shot by pressing fire while it holds the charge: BTBotShootAction)
-local BOT_THROW = "ut_assault_bot_throw"
 
-for _, name in ipairs({ ROUND_IN_STANCE, STANCE, CHARGE_IN_STANCE, THROW, STANCE_AFTER_THROW, BOT_THROW }) do
+for _, name in ipairs({ ROUND_IN_STANCE, STANCE, CHARGE_IN_STANCE, THROW, STANCE_AFTER_THROW }) do
 	utils.register_network_lookup("sub_actions", name)
 end
 
--- Every action of the rifle leaves the stance (the base's end of its aim) when it ends without chaining into another: a round that
--- can't chain into the next one or the stance, because it is out of ammo while the button is held, times out
+-- Every action of the rifle leaves the stance (the base's end of its aim) when it ends without chaining into another (it times out)
 local function leaves_stance(unit, end_reason)
 	return end_reason ~= "new_interupting_action"
 end
@@ -664,7 +669,6 @@ local function build_round(anims, shot_1p, first)
 		-- A hit on the player doesn't stop the rifle, as it doesn't in UT. Otherwise the game's hit reaction ends its action
 		-- (CharacterStateHelper), and a held button doesn't start the rounds again. The same goes for every action of the rifle.
 		uninterruptible = true,
-		ammo_usage = 1,
 		fire_time = 0,
 		total_time = CONFIG.fire_rate + CONFIG.chain_margin,
 		damage_profile = "ut_assault_bullet",
@@ -686,7 +690,6 @@ local function build_round(anims, shot_1p, first)
 			climb_function = math.easeInCubic,
 			restore_function = math.ease_out_quad,
 		},
-		reload_when_out_of_ammo = false,
 		enter_function = function (attacker_unit, input_extension)
 			input_extension:clear_input_buffer()
 
@@ -758,7 +761,6 @@ local function build_charge(anims, first)
 				start_time = 0,
 				sub_action = THROW,
 			},
-			chain("action_two", BOT_THROW, "action_one", CONFIG.bot_charge_time),
 		},
 		-- (from no action the game first tries the sub-actions other than default that have a condition_func, so the charge in the stance
 		-- has only the chain's)
@@ -792,15 +794,6 @@ local function build_throw(anims)
 		allowed_chain_actions = entries,
 		ut_assault_throw = true,
 	}
-end
-
--- The throw of a bot: the throw, which only a bot's fire while it charges chains into (a player's fire does nothing then, as in UT)
-local function build_bot_throw(anims)
-	local action = build_throw(anims)
-
-	action.chain_condition_func = is_bot
-
-	return action
 end
 
 -- Makes the rifle on the shell of its base pistols (utils.template_shell): everything that is not the pistols' animations, models and
@@ -851,56 +844,54 @@ local function apply_template(template)
 		default = build_charge(anims, true),
 		[CHARGE_IN_STANCE] = build_charge(anims, false),
 		[THROW] = build_throw(anims),
-		[BOT_THROW] = build_bot_throw(anims),
 		[STANCE_AFTER_THROW] = build_stance(anims, CONFIG.stance_linger_alt - CONFIG.throw_time, true),
 	}
 
-	-- The game's own wielding and reload, which every gun of the game has (the reload only comes with picked up ammo, see ammo_data)
+	-- The game's own wielding. A melee weapon has no ammo, so the rounds are endless and there is no reload.
 	actions.action_wield = table.clone(ActionTemplates.wield)
-	actions.weapon_reload = table.clone(ActionTemplates.reload)
 
 	utils.set_actions_lookup_data(actions, template.name)
 
-	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots. Nothing should need a reload, but
-	-- the game may still start one when the weapon is wielded, so the reload is short.
-	template.ammo_data = {
-		ammo_hand = "right",
-		max_ammo = CONFIG.max_ammo,
-		ammo_per_clip = CONFIG.max_ammo,
-		ammo_per_reload = CONFIG.max_ammo,
-		ammo_immediately_available = true,
-		reload_time = 0.2,
-		reload_on_ammo_pickup = true,
-		play_reload_anim_on_wield_reload = true,
+	template.ammo_data = nil
+
+	-- How bots use it: as the melee weapon it is to the game, firing its rounds at an enemy within bot_range. Both the light and the
+	-- heavy attack hold the button, and are told the game's way (attack_chain, WeaponUtils.add_bot_meta_data_chain_actions, as the
+	-- Shield Gun's), from each round and stance to the next round. They don't throw grenades: the rifle has no block, and a bot that
+	-- defends would charge one (see BTBotMeleeAction._defend below).
+	local hold_fire = {
+		start_action_name = "action_one",
+		start_sub_action_name = "default",
+		transitions = {
+			action_one = {},
+		},
 	}
 
-	-- How bots use it: the Brace of Pistols', holding the button for the rounds, at the head, against berserkers, specials and armored
-	-- enemies. UT's bots throw a grenade when they can't see the enemy (AssaultRifle.BestMode; its other 10% of choices come once in
-	-- many seconds of fire, with the rounds' BotRefireRate 0.99): a bot charges while its shot is in the way (charge_when_obstructed),
-	-- and throws once it is not, within bot_grenade_range, at the head, as the grenade drops on the way (its fall is not aimed for).
-	-- effective_against_combined is what the game works out for every weapon as it loads (weapons.lua), before this table is made: its
-	-- bots' check of a target (BTConditions) fails without it.
-	local effective_against = bit.bor(BreedCategory.Berserker, BreedCategory.Special, BreedCategory.Armored)
+	for _, sub_action_name in ipairs({ "default", ROUND_IN_STANCE, STANCE }) do
+		hold_fire.transitions.action_one[sub_action_name] = {
+			bot_wait_input = "hold_attack",
+			bot_wanted_input = "hold_attack",
+			wanted_action_name = "action_one",
+			wanted_sub_action_name = ROUND_IN_STANCE,
+		}
+	end
 
 	template.attack_meta_data = {
-		aim_at_node = "j_head",
-		aim_at_node_charged = "j_head",
-		can_charge_shot = true,
-		-- (the next charge waits this long after any shot: the bot charges again once it has stopped firing, its shot in the way again)
-		charge_shot_delay = CONFIG.grenade_fire_rate,
-		charge_when_obstructed = true,
-		charge_when_outside_max_range_charged = false,
-		effective_against_charged = 0,
-		minimum_charge_time = CONFIG.bot_charge_time,
-		fire_input = "fire_hold",
-		effective_against = effective_against,
-		effective_against_combined = effective_against,
-		max_range = CONFIG.bot_max_range,
-		max_range_charged = CONFIG.bot_grenade_range,
+		tap_attack = {
+			arc = 0,
+			max_range = CONFIG.bot_range,
+			attack_chain = hold_fire,
+		},
+		hold_attack = {
+			arc = 0,
+			max_range = CONFIG.bot_range,
+			attack_chain = hold_fire,
+		},
 	}
 
-	-- What the game's talents, traits and properties take it for: its base
-	template.buff_type = "RANGED"
+	WeaponUtils.add_bot_meta_data_chain_actions(actions, hold_fire.transitions)
+
+	-- What the game's talents, traits and properties take it for: a melee weapon, as the slot is; the weapon type is its base's
+	template.buff_type = "MELEE"
 	template.weapon_type = variant.weapon_type
 
 	-- Dodging: the base's. The game's crosshair, and the spread of the base, which each round sets (see handgun_start_callbacks).
@@ -948,6 +939,18 @@ end
 for template_name in pairs(VARIANT_OF) do
 	mod.items.set_template_changes(template_name, apply_template)
 end
+
+-- A bot that holds the rifle doesn't defend, and keeps firing instead: the rifle has no block, and its defence (the right button)
+-- would charge a grenade
+mod:hook(BTBotMeleeAction, "_defend", function (func, self, unit, blackboard, ...)
+	local template = blackboard.wielded_item_template
+
+	if template and VARIANT_OF[template.name] then
+		return false
+	end
+
+	return func(self, unit, blackboard, ...)
+end)
 
 -- (the templates, for the skin; and Victor's, for the tests)
 assault.template_names = {}

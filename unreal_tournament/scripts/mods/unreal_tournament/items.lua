@@ -10,6 +10,8 @@ local mod = get_mod("unreal_tournament")
 --     base_item: the game item that is copied. Its models are used.
 --     deus_copy: the Chaos Wastes weapon (a DeusWeapons key) of base_item. The item's Chaos Wastes weapon is a copy of it.
 --     can_wield: the careers that can use the item, if they differ from base_item's.
+--     melee_slot: the item goes in the melee slot, though base_item is a ranged weapon. It takes the properties and traits of a melee
+--         weapon, and in Chaos Wastes those of deus_melee_tables (a DeusWeapons key of a melee weapon).
 --     name, type_name (the line under the name), description: the texts of the item.
 --     keywords: localization ids for the line under the power. texts: { id = text } for the ids that are the mod's own.
 --     icon: a material in the file icon_materials, which is in the package icon_package.
@@ -437,6 +439,12 @@ function items.register(setting_id, definition)
 	item.required_dlc = nil
 	-- The base weapon's skins don't apply to the item. register_skins gives it skins of its own.
 	item.skin_combination_table = nil
+	if definition.melee_slot then
+		item.slot_type = "melee"
+		item.property_table_name = "melee"
+		item.trait_table_name = "melee"
+	end
+
 	-- These are set the way parse_item_master_list sets them for every item.
 	item.key = definition.key
 	item.name = definition.key
@@ -479,6 +487,15 @@ function items.register(setting_id, definition)
 		local deus_weapon = table.clone(DeusWeapons[definition.deus_copy])
 
 		deus_weapon.base_item = definition.key
+
+		-- (DeusWeapons filled these in from the base item as it loaded)
+		if definition.melee_slot then
+			local melee = DeusWeapons[definition.deus_melee_tables]
+
+			deus_weapon.property_table_name = melee.property_table_name
+			deus_weapon.trait_table_name = melee.trait_table_name
+			deus_weapon.baked_trait_combinations = melee.baked_trait_combinations
+		end
 
 		rawset(DeusWeapons, deus_key, deus_weapon)
 		rawset(DeusStartingWeaponTypeMapping, definition.key, deus_key)

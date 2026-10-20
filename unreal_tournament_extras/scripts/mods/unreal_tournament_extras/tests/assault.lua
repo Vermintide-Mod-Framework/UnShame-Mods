@@ -75,28 +75,34 @@ local function times_of(event)
 	return times
 end
 
-local function set_ammo(t, count)
-	t.on_main_thread(function ()
-		local inventory_extension = ScriptUnit.extension(t.unit(), "inventory_system")
-		local slot_data = inventory_extension:get_slot_data("slot_ranged")
-		local ammo_extension = GearUtils.get_ammo_extension(slot_data.right_unit_1p, slot_data.left_unit_1p)
-
-		ammo_extension:use_ammo(ammo_extension:ammo_count() - count)
-	end)
-	t.wait(0.2)
-end
-
 -- How far a stance's leave may be from when it is due
 local STANCE_TOLERANCE = 0.15 -- s
 
 local function scenarios()
 	return {
 		{
-			name = "holds 600 rounds",
+			-- A weapon of the melee slot: the rounds are endless, so it has no ammo
+			name = "is in the melee slot, with no ammo",
 			every_hero = true,
 			run = function (t)
-				-- (a career's own bonus adds to it: the Bounty Hunter carries half as much again)
-				t.expect(t.ammo() and t.ammo() >= 600, "the rifle holds %s rounds, not 600", tostring(t.ammo()))
+				local result = t.on_main_thread(function ()
+					local inventory_extension = ScriptUnit.extension(t.unit(), "inventory_system")
+					local slot_data = inventory_extension:get_slot_data("slot_melee")
+					local unit = slot_data and (slot_data.right_unit_1p or slot_data.left_unit_1p)
+
+					return {
+						item = slot_data and slot_data.item_data and slot_data.item_data.name,
+						ammo = unit and ScriptUnit.has_extension(unit, "ammo_system") ~= nil,
+					}
+				end)
+
+				local rifles = {
+					[ut.items.weapons.assault_rifle.key] = true,
+					[ut.items.weapons.assault_rifle_dr.key] = true,
+				}
+
+				t.expect(rifles[result.item], "the melee slot holds %s", tostring(result.item))
+				t.expect(not result.ammo, "the rifle has ammo")
 			end,
 		},
 		{
@@ -266,33 +272,6 @@ local function scenarios()
 			end,
 		},
 		{
-			-- Out of ammo with the button held, a round can't chain into the next one, and times out: it leaves the stance itself
-			name = "running out of ammo leaves the stance",
-			every_hero = true,
-			run = function (t)
-				local events = stance_events(t)
-
-				t.wait(1.5)
-				set_ammo(t, 3)
-				start_recording()
-				t.press("action_one", 1.5)
-				t.wait(0.3)
-
-				recording = false
-
-				local leaves = times_of(events.leave)
-
-				t.expect(rounds == 3, "%d rounds were fired, not 3", rounds)
-
-				if t.expect(#leaves == 1 and last_round, "the stance was left (%s) %d times, not once", events.leave, #leaves) then
-					t.log("left %.2f s after the last round", leaves[1] - last_round)
-					t.expect(leaves[1] - last_round < 0.5, "the stance was left %.2f s after the last round", leaves[1] - last_round)
-				end
-
-				t.refill()
-			end,
-		},
-		{
 			-- The characters' shot animation finds no weapon unit to play the pistols' own muzzle flash and sound on (the skin draws UT's)
 			name = "the pistols' own third person shot is not played",
 			every_hero = true,
@@ -308,12 +287,12 @@ local function scenarios()
 			end,
 		},
 		{
-			-- The game refuses a pickup of ammo while the ammo is full. With all the rounds but a grenade missing, it is not full, and the
-			-- pickup gives the grenades back.
-			name = "with all the rounds, a pickup of ammo gives back the grenades",
+			-- The game refuses a pickup of ammo while the ammo is full. With all the other weapons' ammo but a grenade missing, it is not
+			-- full, and the pickup gives the grenades back.
+			name = "with all the other ammo, a pickup of ammo gives back the grenades",
 			every_hero = true,
 			run = function (t)
-				-- (all the rounds first: the scenarios before fire them)
+				-- (all the other weapons' ammo first)
 				t.on_main_thread(function ()
 					ScriptUnit.extension(t.unit(), "inventory_system"):add_ammo_from_pickup(Pickups.ammo.all_ammo)
 				end)
@@ -338,7 +317,7 @@ local function scenarios()
 				end)
 
 				t.expect(assault.grenade_count < assault.max_grenades, "no grenade was thrown")
-				t.expect(missing[1], "the rounds are not full")
+				t.expect(missing[1], "the other weapons' ammo is not full")
 				t.expect(not missing[2], "the ammo is full with %d of %d grenades", assault.grenade_count, assault.max_grenades)
 
 				t.on_main_thread(function ()
@@ -361,7 +340,7 @@ end
 -- run for both.
 runner.add_suite({
 	name = "assault",
-	slot = "slot_ranged",
+	slot = "slot_melee",
 	heroes = {
 		hero("assault_rifle", { "wh_captain", "wh_zealot", "wh_bountyhunter" }),
 		hero("assault_rifle_dr", { "dr_ironbreaker", "dr_ranger", "dr_engineer" }),
@@ -369,15 +348,16 @@ runner.add_suite({
 	scenarios = scenarios(),
 })
 
--- Bots with the Assault Rifle (its attack_meta_data in assault_rifle.lua). A hero can't be a bot and the player at once, so these run in
--- a suite of their own with the player as Sienna, and the bots are Victor as a Captain and Bardin as an Ironbreaker, with their own minds.
--- The special stands ahead and shoots at the player, who stands aside, out of the bot's way.
+-- Bots with the Assault Rifle (its attack_meta_data in assault_rifle.lua), which is their melee weapon: they fire it at an enemy up close.
+-- A hero can't be a bot and the player at once, so these run in a suite of their own with the player as Sienna, and the bots are Victor as
+-- a Captain and Bardin as an Ironbreaker, with their own minds. The enemy stands ahead and comes at them, and the player stands aside,
+-- out of the bot's way.
 local BOTS = {
 	behind = -3, -- m
 	player_aside = 3, -- m to the right
-	special = "skaven_ratling_gunner",
-	special_distance = 14, -- m
-	-- How long the bot has to hurt the special
+	enemy = "chaos_marauder",
+	enemy_distance = 3, -- m
+	-- How long the bot has to hurt the enemy
 	fight_time = 30, -- s
 }
 
@@ -404,18 +384,18 @@ ut.assault_round_callbacks.ut_test_bots = function (owner_unit)
 	end
 end
 
--- The bot shoots the special with the rifle, and never hurts the player
+-- The bot shoots the enemy with the rifle up close, and never hurts the player
 local function bot_scenario(profile, career, setting_id)
 	local item_key = ut.items.weapons[setting_id].key
 
 	return {
-		name = string.format("a bot (%s) shoots enemies with it", profile),
+		name = string.format("a bot (%s) shoots enemies up close with it", profile),
 		run = function (t)
 			t.hurtable(true)
 
-			local special = t.spawn(BOTS.special, BOTS.special_distance)
+			local enemy = t.spawn(BOTS.enemy, BOTS.enemy_distance)
 
-			if not t.expect(special, "the %s could not be spawned", BOTS.special) then
+			if not t.expect(enemy, "the %s could not be spawned", BOTS.enemy) then
 				return
 			end
 
@@ -425,14 +405,14 @@ local function bot_scenario(profile, career, setting_id)
 				return
 			end
 
-			-- (a bot shoots a special only once it has been seen, which a calm one never is: shooting at the player makes it seen)
+			-- (a bot fights an enemy only once it has been seen, which a calm one never is)
 			t.on_main_thread(function ()
-				runner.provoke(special)
+				runner.provoke(enemy)
 			end)
 
-			local damage = t.track_damage(special)
+			local damage = t.track_damage(enemy)
 			local player_damage = t.track_damage(t.unit())
-			local bot = t.add_bot(profile, career, item_key, BOTS.behind, nil, true)
+			local bot = t.add_bot(profile, career, item_key, BOTS.behind, "slot_melee", true)
 
 			if not t.expect(bot, "the bot could not be added") then
 				return
@@ -448,14 +428,14 @@ local function bot_scenario(profile, career, setting_id)
 
 			t.wait_until(function ()
 				return from_item(damage, item_key) > 0
-			end, BOTS.fight_time, "the bot to hurt the special")
+			end, BOTS.fight_time, "the bot to hurt the enemy")
 			t.wait(5)
 
 			recording_bots = false
 
 			t.log("the bot fired %d rounds", rounds_by[bot] or 0)
 			t.expect((rounds_by[bot] or 0) > 0, "the bot fired no rounds the skin was told of")
-			t.expect(from_item(damage, item_key) > 0, "the bot did not hurt the %s with the rifle in %d s", BOTS.special, BOTS.fight_time)
+			t.expect(from_item(damage, item_key) > 0, "the bot did not hurt the %s with the rifle in %d s", BOTS.enemy, BOTS.fight_time)
 			t.expect(from_item(player_damage, item_key) == 0, "the bot's rounds hurt the player %.1f", from_item(player_damage, item_key))
 		end,
 	}
