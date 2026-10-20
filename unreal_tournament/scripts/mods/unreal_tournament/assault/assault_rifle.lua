@@ -128,7 +128,8 @@ local CONFIG = {
 	grenade_jump_speed = 8.5,
 	-- The multipliers of the damage and the stagger for each armor type: unarmored, armored, monsters, players, berserkers and super armor.
 	-- The rounds are poor against armor, as UT's description says, and the grenades are not.
-	bullet_armor_attack = { 1, 0.5, 1, 1, 1, 0.3 },
+	-- (no damage to super armor, even with a critical hit: the rounds only stagger it, set in the game)
+	bullet_armor_attack = { 1, 0.5, 1, 1, 1, 0 },
 	bullet_armor_impact = { 1, 1, 1, 1, 1, 0.5 },
 	grenade_armor_attack = { 1, 1, 1.5, 1, 1, 0.5 },
 	grenade_armor_impact = { 1, 1, 1, 1, 1, 0.5 },
@@ -157,7 +158,8 @@ register_damage_profile("ut_assault_bullet", "shot_repeating", function (profile
 		attack = 0.01,
 		impact = 0.01,
 	}
-	utils.set_armor_modifiers(profile, CONFIG.bullet_armor_attack, CONFIG.bullet_armor_impact)
+	-- (a critical hit too: the repeater's own still hurt super armor, and armor more than a round does)
+	utils.set_armor_modifiers(profile, CONFIG.bullet_armor_attack, CONFIG.bullet_armor_impact, true)
 end)
 
 local function grenade_profile(profile)
