@@ -1,9 +1,8 @@
 local mod = get_mod("unreal_tournament")
 
 -- The Booster combo (ComboDefensive): the character gets 5 health every 0.9 s (its Timer, from the start; the game's health can't go
--- past full, where UT's goes on to 199 and then to the shield), and the game's wounds are healed as it starts. As well as UT's: no limit
--- on dodging (the mod's Multidodge, for this player) and stamina back five times as fast. Everyone sees green crosses rising around the
--- character (RegenCrosses).
+-- past full, where UT's goes on to 199 and then to the shield), and the game's wounds are healed as it starts. As well as UT's: stamina
+-- back five times as fast. Everyone sees green crosses rising around the character (RegenCrosses).
 
 local utils = mod.utils
 local combos = mod.combos
@@ -67,7 +66,7 @@ local function cross(unit, velocity)
 end
 
 combos.kinds.booster = {
-	start = function (unit, owner)
+	start = function (unit)
 		local entry = {
 			next_heal = 0,
 			next_cross = 0,
@@ -79,20 +78,12 @@ combos.kinds.booster = {
 			entry.buffs = combos.add_buffs(unit, { STAMINA_BUFF })
 		end
 
-		if owner then
-			mod.unlimited_dodge[unit] = true
-		end
-
 		boosted[unit] = entry
 	end,
-	stop = function (unit, owner)
+	stop = function (unit)
 		local entry = boosted[unit]
 
 		boosted[unit] = nil
-
-		if owner then
-			mod.unlimited_dodge[unit] = nil
-		end
 
 		if entry and entry.buffs and Unit.alive(unit) then
 			combos.remove_buffs(unit, entry.buffs)

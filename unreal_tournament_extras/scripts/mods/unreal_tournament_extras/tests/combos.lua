@@ -91,11 +91,13 @@ local function scenarios()
 			end,
 		},
 		{
-			name = "Speed runs 1.4 times as fast and jumps 1.5 times as high",
+			name = "Speed runs 1.4 times as fast, jumps 1.5 times as high, and dodges without a limit",
 			run = function (t)
+				local unit = t.unit()
+
 				local function settings()
 					return t.on_main_thread(function ()
-						local movement = PlayerUnitMovementSettings.get_movement_settings_table(t.unit())
+						local movement = PlayerUnitMovementSettings.get_movement_settings_table(unit)
 
 						return { run = movement.move_speed, jump = movement.jump.initial_vertical_speed }
 					end)
@@ -106,6 +108,7 @@ local function scenarios()
 				start(t, "speed")
 
 				local during = settings()
+				local unlimited = ut.unlimited_dodge[unit] == true
 
 				finish(t)
 
@@ -115,6 +118,8 @@ local function scenarios()
 				t.expect(near(during.run / before.run, 1.4), "the run is %.2f times as fast", during.run / before.run)
 				t.expect(near(during.jump / before.jump, 1.5), "the jump is %.2f times as high", during.jump / before.jump)
 				t.expect(near(after.run, before.run) and near(after.jump, before.jump), "the movement is not back to what it was")
+				t.expect(unlimited, "the dodge is limited")
+				t.expect(not ut.unlimited_dodge[unit], "the dodge is still unlimited")
 			end,
 		},
 		{
@@ -133,7 +138,7 @@ local function scenarios()
 			end,
 		},
 		{
-			name = "Booster heals, clears the wounds, and lets the player dodge without a limit",
+			name = "Booster heals and clears the wounds",
 			run = function (t)
 				local unit = t.unit()
 				local rat = t.spawn(CONFIG.enemy_breed, 3)
@@ -158,7 +163,6 @@ local function scenarios()
 				end)
 
 				t.expect(not wounded, "the player is still wounded")
-				t.expect(ut.unlimited_dodge[unit] == true, "the dodge is limited")
 				t.wait(CONFIG.booster_wait)
 
 				local healed = t.health()
@@ -166,7 +170,6 @@ local function scenarios()
 				t.log("health %.1f, then %.1f", hurt, healed)
 				t.expect(healed > hurt, "no health came back")
 				finish(t)
-				t.expect(not ut.unlimited_dodge[unit], "the dodge is still unlimited")
 				t.hurtable(false)
 				t.heal()
 			end,

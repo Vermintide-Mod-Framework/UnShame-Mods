@@ -1,8 +1,8 @@
 local mod = get_mod("unreal_tournament")
 
 -- The Speed combo (ComboSpeed): the character runs 1.4 times as fast and jumps 1.5 times as high (GroundSpeed and JumpZ), as buffs of the
--- game on their movement settings, which the mod's UT movement reads too. Everyone sees a trail at each foot (SpeedTrail, attached to the
--- feet's bones).
+-- game on their movement settings, which the mod's UT movement reads too. As well as UT's: no limit on dodging (the mod's Multidodge, for
+-- this player). Everyone sees a trail at each foot (SpeedTrail, attached to the feet's bones).
 
 local utils = mod.utils
 local combos = mod.combos
@@ -55,17 +55,25 @@ local function foot_position(unit, node_name)
 end
 
 combos.kinds.speed = {
-	start = function (unit)
+	start = function (unit, owner)
 		speeding[unit] = {
 			buffs = combos.is_host() and combos.add_buffs(unit, { RUN_BUFF, JUMP_BUFF }) or nil,
 			points = {},
 			next = 0,
 		}
+
+		if owner then
+			mod.unlimited_dodge[unit] = true
+		end
 	end,
-	stop = function (unit)
+	stop = function (unit, owner)
 		local entry = speeding[unit]
 
 		speeding[unit] = nil
+
+		if owner then
+			mod.unlimited_dodge[unit] = nil
+		end
 
 		if entry and entry.buffs and Unit.alive(unit) then
 			combos.remove_buffs(unit, entry.buffs)
