@@ -117,14 +117,14 @@ local CONFIG = {
 	explode_timer = 2,
 	max_life = 10, -- seconds, in case it never touches anything
 	grenade_radius = 3, -- UT units (the mesh at DrawScale 3)
-	-- Grenade.Damage 70 and Projectile.DamageRadius 220. The radius is reduced as the Rocket Launcher's is (220 units to 150). The damage
-	-- is UT's: reduced as the rocket's is (90 to 60), it was too low (set in the game).
-	grenade_damage = 70,
+	-- Grenade.Damage 70 and Projectile.DamageRadius 220. The radius and the damage are reduced as the Rocket Launcher's are (220 units to
+	-- 150, and 90 damage to 60), as every explosion's damage is, so the weapons keep UT's proportions.
+	grenade_damage = 70 * 60 / 90,
 	grenade_radius_uu = 150,
 	grenade_full_damage_radius = 0.5,
 	-- The explosion hurts the player who threw it, as much less than its damage as the Rocket Launcher's self damage is (45 for its 60),
 	-- and throws them (MomentumTransfer 75000, as the Flak Cannon's shell)
-	grenade_self_damage = 70 * 45 / 60,
+	grenade_self_damage = 70 * 60 / 90 * 45 / 60,
 	grenade_jump_speed = 8.5,
 	-- The multipliers of the damage and the stagger for each armor type: unarmored, armored, monsters, players, berserkers and super armor.
 	-- The rounds are poor against armor, as UT's description says, and the grenades are not.
@@ -804,7 +804,7 @@ local function apply_template(template)
 
 	-- The chart of the item's stats, from 0 to 7. The rounds are the normal attack, and the grenade is the heavy one.
 	-- The rounds have the Minigun primary's armour and stagger (2 and 1 on its chart), and about 70% of its damage a second (5). The
-	-- grenade has the rocket's armour and radius (4 and 6), and a little more than its damage and stagger (70 to 60, 6 on its chart).
+	-- grenade has the rocket's armour and radius (4 and 6), and about 80% of its damage and stagger (47 to 60: 5 where the rocket has 6).
 	template.weapon_diagram = {
 		light_attack = {
 			[DamageTypes.ARMOR_PIERCING] = 2,
@@ -817,8 +817,8 @@ local function apply_template(template)
 			[DamageTypes.ARMOR_PIERCING] = 4,
 			[DamageTypes.CLEAVE] = 6,
 			[DamageTypes.SPEED] = 2,
-			[DamageTypes.STAGGER] = 6,
-			[DamageTypes.DAMAGE] = 6,
+			[DamageTypes.STAGGER] = 5,
+			[DamageTypes.DAMAGE] = 5,
 		},
 	}
 
