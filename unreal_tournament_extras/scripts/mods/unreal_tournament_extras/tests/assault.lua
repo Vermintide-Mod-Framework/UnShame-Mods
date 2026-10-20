@@ -23,10 +23,11 @@ local CONFIG = {
 	-- A grenade thrown at an enemy this far ahead goes off on it before it touches anything else, so well before the 2 s timer
 	grenade_enemy_distance = 4, -- m
 	grenade_touch_time = 1, -- s
-	-- The most the grenade's explosion hurts the player who threw it (grenade_self_damage), and how long one thrown at the feet takes to
-	-- go off (2 s after it first touches the floor)
+	-- The most the grenade's explosion hurts the player who threw it (grenade_self_damage), how long one thrown at the floor takes to go
+	-- off at most (2 s after it first touches the floor), and how long before it goes off the player is put where it lies
 	grenade_self_damage = 7,
 	grenade_feet_wait = 3.5, -- s
+	grenade_move_before = 0.3, -- s
 }
 
 -- The key of the rifle in the melee slot
@@ -537,7 +538,7 @@ local function scenarios()
 		},
 		{
 			-- The grenade's explosion hurts the player who threw it, far less than the Rocket Launcher's
-			name = "a grenade at the feet hurts the player, at most 7",
+			name = "a grenade that goes off at the feet hurts the player, at most 7",
 			run = function (t)
 				t.wait_until(function ()
 					return #assault.grenades == 0
@@ -549,22 +550,53 @@ local function scenarios()
 				t.look(-89)
 
 				local taken = t.track_damage(t.unit())
+				local where = t.explosions()
 
 				start_recording()
 				t.press("action_two", CONFIG.one_round)
-				t.wait(CONFIG.grenade_feet_wait)
+
+				-- The view can't look straight down, so the grenade bounces off ahead. The player is put where it lies just before it goes off.
+				t.wait_until(function ()
+					return #assault.grenades > 0
+				end, 1, "the grenade to be thrown")
+
+				local grenade = assault.grenades[#assault.grenades]
+
+				if t.expect(grenade, "no grenade was thrown") then
+					t.wait_until(function ()
+						return grenade.exploded or grenade.timer and grenade.timer <= CONFIG.grenade_move_before
+					end, CONFIG.grenade_feet_wait, "the grenade to be about to go off")
+					t.on_main_thread(function ()
+						if not grenade.exploded then
+							runner.move_player(t.unit(), grenade.position:unbox())
+						end
+					end)
+				end
+
+				t.wait(1)
 
 				recording = false
 
 				local own = 0
+				local hits = {}
 
 				for _, hit in ipairs(taken.hits) do
+					hits[#hits + 1] = string.format("%.1f %s %s", hit.amount, tostring(hit.source), tostring(hit.type))
+
 					if hit.source == key then
 						own = own + hit.amount
 					end
 				end
 
-				t.log("the grenade hurt the player %.1f", own)
+				local x, y, z = t.position()
+
+				for i, name in ipairs(where) do
+					local position = where.positions[i]
+
+					t.log("%s %.2f m from the feet", name, math.sqrt((position[1] - x) ^ 2 + (position[2] - y) ^ 2 + (position[3] - z) ^ 2))
+				end
+
+				t.log("the grenade hurt the player %.1f (%s; all hits: %s)", own, tostring(key), table.concat(hits, ", "))
 				t.expect(explosions == 1, "%d grenades went off, not 1", explosions)
 				t.expect(own > 0, "the grenade's explosion did not hurt the player")
 				t.expect(own <= CONFIG.grenade_self_damage + 0.5, "the grenade's explosion hurt the player %.1f, more than %d", own, CONFIG.grenade_self_damage)
