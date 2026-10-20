@@ -1,15 +1,13 @@
 local mod = get_mod("unreal_tournament")
 
 -- The Invisible combo (ComboInvis). The character is invisible as the game makes the Shade invisible (set_invisible): enemies lose
--- track of it. It looks as UT draws an invisible pawn (xPawn.SetInvisibility):
---   the body is replaced by UT's invisible material (InvisMaterial): the game's fade hides the body and hats, and a copy of each,
---   in the invisible material, takes their place;
---   the weapons keep their look, with the invisible material drawn over them (Weapon.OverlayMaterial): a copy of each, in the
---   invisible material, is drawn over it. That covers the weapon in the hand, the game's or a UT skin's, and the player's own first
---   person arms and weapon.
+-- track of it. It is drawn in UT's invisible material (xPawn's InvisMaterial): the body, the hats, the weapon in the hand (the game's
+-- or a UT skin's), and the player's own first person arms and weapon. Each is replaced by a copy in that material. UT draws it over
+-- the weapons (Weapon.OverlayMaterial); here it replaces them as it does the body.
 -- A copy is the same unit, with each of its nodes linked to the same node of the original, so it moves and bends with it. The engine
--- can replace a unit's materials but not give them back, so the originals are never changed. A copy is shown or hidden whenever its
--- original is.
+-- can replace a unit's materials but not give them back, so the originals are never changed, only hidden: the body, the hats and the
+-- game's weapon in the hand by the game's fade, and the rest (the first person units and the UT skins' models) by hiding them. A copy
+-- is shown or hidden whenever the game shows or hides its original.
 
 local utils = mod.utils
 local combos = mod.combos
@@ -35,34 +33,64 @@ local groups = setmetatable({}, {
 	__mode = "k",
 })
 
--- The copy of each original
+-- The copy of each original, and the originals that are hidden while their copy shows
 local copy_of = {}
+local hidden = {}
+
+-- (true while this file sets a visibility itself, which the hooks below don't record)
+local setting = false
+
+local function set_unit_visibility(unit, visible)
+	setting = true
+	Unit.set_unit_visibility(unit, visible)
+	setting = false
+end
 
 mod:hook_safe(Unit, "set_unit_visibility", function (unit, visible)
+	if setting then
+		return
+	end
+
 	shown[unit] = visible
 
 	local copy = copy_of[unit]
 
 	if copy and Unit.alive(copy) then
-		Unit.set_unit_visibility(copy, visible)
+		set_unit_visibility(copy, visible)
+	end
+
+	if hidden[unit] and visible then
+		set_unit_visibility(unit, false)
 	end
 end)
 
 mod:hook_safe(Unit, "set_visibility", function (unit, group, visible)
+	if setting then
+		return
+	end
+
 	groups[unit] = groups[unit] or {}
 	groups[unit][group] = visible
 
 	local copy = copy_of[unit]
 
 	if copy and Unit.alive(copy) and Unit.has_visibility_group(copy, group) then
+		setting = true
 		Unit.set_visibility(copy, group, visible)
+		setting = false
+	end
+
+	-- (showing a group shows its meshes)
+	if hidden[unit] and visible then
+		set_unit_visibility(unit, false)
 	end
 end)
 
--- Each invisible character's: { copies = { [original] = copy }, next_refresh, owner }
+-- Each invisible character's: { copies = { [original] = copy }, next_refresh, owner, put_out = { [weapon unit] = true } }
 local cloaked = {}
 
-local function make_copy(world, original, unit_name, material)
+-- Makes the copy of an original. hide: the original is hidden while the copy shows (one the game's fade doesn't reach).
+local function make_copy(world, original, unit_name, material, hide)
 	if not unit_name or not Unit.alive(original) or not Unit.is_a(original, unit_name) then
 		return nil
 	end
@@ -83,13 +111,23 @@ local function make_copy(world, original, unit_name, material)
 		LODObject.set_bounding_volume(Unit.lod_object(copy, 0), LODObject.bounding_volume(Unit.lod_object(original, 0)))
 	end
 
+	set_unit_visibility(copy, shown[original] ~= false)
+
+	setting = true
+
 	for group, visible in pairs(groups[original] or {}) do
 		if Unit.has_visibility_group(copy, group) then
 			Unit.set_visibility(copy, group, visible)
 		end
 	end
 
-	Unit.set_unit_visibility(copy, shown[original] ~= false)
+	setting = false
+
+	if hide then
+		hidden[original] = true
+
+		set_unit_visibility(original, false)
+	end
 
 	return copy
 end
@@ -97,6 +135,23 @@ end
 local function remove_copy(world, original, copy)
 	if copy_of[original] == copy then
 		copy_of[original] = nil
+	end
+
+	-- (the original is shown as the game last set it)
+	if hidden[original] then
+		hidden[original] = nil
+
+		if Unit.alive(original) then
+			set_unit_visibility(original, shown[original] ~= false)
+
+			setting = true
+
+			for group, visible in pairs(groups[original] or {}) do
+				Unit.set_visibility(original, group, visible)
+			end
+
+			setting = false
+		end
 	end
 
 	if Unit.alive(copy) then
@@ -119,16 +174,16 @@ local function weapon_unit_name(character, slot_data, hand, first_person)
 	return name and (first_person and name or name .. "_3p")
 end
 
--- The units of a character to copy now, as [original] = { name, material }
+-- The units of a character to copy now, as [original] = { name, material, hide (see make_copy) }
 local function originals(character)
 	local list = {}
 	local cosmetic_extension = ScriptUnit.has_extension(character, "cosmetic_system")
 	local skin = cosmetic_extension and cosmetic_extension:get_equipped_skin()
 	local profile = cosmetic_extension and cosmetic_extension._profile
 
-	local function add(unit, name, material)
+	local function add(unit, name, material, hide)
 		if unit and name and Unit.alive(unit) then
-			list[unit] = { name = name, material = material }
+			list[unit] = { name = name, material = material, hide = hide }
 		end
 	end
 
@@ -158,9 +213,17 @@ local function originals(character)
 		add(equipment.right_hand_wielded_unit_3p, weapon_unit_name(character, slot_data, "right"), CONFIG.material)
 		add(equipment.left_hand_wielded_unit_3p, weapon_unit_name(character, slot_data, "left"), CONFIG.material)
 
+		-- (no giveaway flames, as UT's xPawn puts out its own: the effects of the weapon in the hand, such as a staff's fire, go out
+		-- with the event the game sends as it puts the weapon away)
+		for _, unit in ipairs({ equipment.right_hand_wielded_unit_3p, equipment.left_hand_wielded_unit_3p }) do
+			if list[unit] then
+				list[unit].put_out = true
+			end
+		end
+
 		if own then
-			add(equipment.right_hand_wielded_unit, weapon_unit_name(character, slot_data, "right", true), CONFIG.first_person_material)
-			add(equipment.left_hand_wielded_unit, weapon_unit_name(character, slot_data, "left", true), CONFIG.first_person_material)
+			add(equipment.right_hand_wielded_unit, weapon_unit_name(character, slot_data, "right", true), CONFIG.first_person_material, true)
+			add(equipment.left_hand_wielded_unit, weapon_unit_name(character, slot_data, "left", true), CONFIG.first_person_material, true)
 		end
 	end
 
@@ -170,12 +233,12 @@ local function originals(character)
 	if first_person_extension and skin and profile then
 		local attachment = skin.first_person_attachment or profile.first_person_attachment
 
-		add(first_person_extension:get_first_person_mesh_unit(), attachment and attachment.unit, CONFIG.first_person_material)
+		add(first_person_extension:get_first_person_mesh_unit(), attachment and attachment.unit, CONFIG.first_person_material, true)
 	end
 
 	-- The UT skins' models
 	for _, entry in ipairs(mod.weapon_skin.units_of(character)) do
-		add(entry.unit, entry.unit_name, entry.first_person and CONFIG.first_person_material or CONFIG.material)
+		add(entry.unit, entry.unit_name, entry.first_person and CONFIG.first_person_material or CONFIG.material, true)
 	end
 
 	return list
@@ -189,6 +252,37 @@ local function set_body_fade(character, fade)
 	end
 end
 
+-- Lights a weapon's effects again once it is no longer invisible, if the character still holds it and no UT skin replaces it (whose
+-- third person keeps them out, weapon_skin_third_person.lua)
+local function light_again(character, unit)
+	local inventory_extension = Unit.alive(character) and Unit.alive(unit) and ScriptUnit.has_extension(character, "inventory_system")
+	local equipment = inventory_extension and inventory_extension:equipment()
+
+	if not equipment or (unit ~= equipment.right_hand_wielded_unit_3p and unit ~= equipment.left_hand_wielded_unit_3p) then
+		return
+	end
+
+	for _, skin_unit in ipairs(mod.weapon_skin.units_of(character)) do
+		if not skin_unit.first_person then
+			return
+		end
+	end
+
+	Unit.flow_event(unit, "lua_wield")
+end
+
+local function take_away(world, character, entry, original)
+	remove_copy(world, original, entry.copies[original])
+
+	entry.copies[original] = nil
+
+	if entry.put_out[original] then
+		entry.put_out[original] = nil
+
+		light_again(character, original)
+	end
+end
+
 -- Makes copies of the units that have none, and takes away those of units that are gone or no longer the character's
 local function refresh(character, entry)
 	local world = Managers.world:world("level_world")
@@ -196,15 +290,19 @@ local function refresh(character, entry)
 
 	for original, copy in pairs(entry.copies) do
 		if not wanted[original] or not Unit.alive(original) or not Unit.alive(copy) then
-			remove_copy(world, original, copy)
-
-			entry.copies[original] = nil
+			take_away(world, character, entry, original)
 		end
 	end
 
 	for original, data in pairs(wanted) do
 		if not entry.copies[original] then
-			entry.copies[original] = make_copy(world, original, data.name, data.material)
+			entry.copies[original] = make_copy(world, original, data.name, data.material, data.hide)
+
+			if entry.copies[original] and data.put_out then
+				entry.put_out[original] = true
+
+				Unit.flow_event(original, "lua_unwield")
+			end
 		end
 	end
 
@@ -223,9 +321,9 @@ local function uncloak(character)
 
 	local world = Managers.world:has_world("level_world") and Managers.world:world("level_world")
 
-	for original, copy in pairs(entry.copies) do
-		if world then
-			remove_copy(world, original, copy)
+	if world then
+		for original in pairs(entry.copies) do
+			take_away(world, character, entry, original)
 		end
 	end
 
@@ -251,6 +349,7 @@ combos.kinds.invisible = {
 			copies = {},
 			next_refresh = 0,
 			owner = owner,
+			put_out = {},
 		}
 	end,
 	stop = function (unit, owner)
@@ -278,6 +377,7 @@ local function uncloak_all()
 	end
 
 	table.clear(copy_of)
+	table.clear(hidden)
 end
 
 -- The copies are taken away before the level's world goes
