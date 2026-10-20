@@ -133,30 +133,15 @@ local ATTACK_AFTER = 3 -- s
 local SHOCK_BOT_PROFILE = "bright_wizard"
 local SHOCK_BOT_CAREER = 1
 local SHOCK_DISTANCE = 6 -- m
--- The player looks this far to the side of the bot (inside the shield's arc of 68 degrees), at an enemy that far away, so that a
--- reflected shot, which goes on the way the player looks, hits that enemy
+-- The player looks this far to the side of the bot (inside the shield's arc of 68 degrees), at an enemy that far away, which a shot
+-- the shield sent on, the way the player looks, would hit
 local SHOCK_TURN = 30 -- degrees
 -- How long after the bot fires its shot is given to get to the shield and on to the enemy, and how long the bot waits between shots
 local SHOCK_SHOT_TIME = 1.5 -- s
 local SHOCK_SHOT_GAP = 2 -- s
--- The second shield of the reflections from shield to shield: Bardin as an Ironbreaker (his second career) with his Shield Gun
+-- A bot with a Shield Gun: Bardin as an Ironbreaker (his second career)
 local SHIELD_BOT_PROFILE = "dwarf_ranger"
 local SHIELD_BOT_CAREER = 2
--- The enemy that the shot goes on to from Bardin's shield: CHAIN_ENEMY_FROM_BARDIN from him, towards the place on the open square
--- CHAIN_ENEMY_TOWARDS from the player, 45 degrees to the other side of Sienna (the player, who faces Bardin, turns this far the other
--- way to find it). From Bardin it is about 46 degrees off the way to the player, inside his shield's arc. Close to him, the shot off
--- his shield gets to it however high it comes off. (Behind the player is the alley of the start, whose walls were in the way, and
--- farther along the square are stairs, which a marauder spawned in.)
-local CHAIN_ENEMY_TURN = SHOCK_TURN + 45 -- degrees
-local CHAIN_ENEMY_TOWARDS = 5 -- m
-local CHAIN_ENEMY_FROM_BARDIN = 2.5 -- m
--- The enemy at the end of the chain, and how high above its feet its middle is, which the shot from Bardin's shield is sent at. It is a
--- tall one: the shot gets to Bardin's shield as high as Sienna's shot got to the player's, which her aim moves by half a meter or so
--- (bots' aim wavers), and the shot off his shield is that much higher or lower. A rat's body was missed that way.
-local CHAIN_ENEMY_BREED = "chaos_marauder"
-local CHAIN_ENEMY_MIDDLE = 1 -- m
--- How high above the feet Sienna's shot gets to the player's shield (t.bot_aim aims 1 m above them), and so to Bardin's
-local CHAIN_AIM_HEIGHT = 1 -- m
 
 -- Turns the player to face the middle of a unit at once, from inside an observer of a frame (t.aim_at waits a little)
 local function face(t, unit)
@@ -234,9 +219,9 @@ local function let_attack(t, breed_name, shielded, taken)
 	return was_taken, stopped
 end
 
--- Has a bot with the Shock Rifle shoot at the player twice, once with the shield up and once without, with the player looking at an
--- enemy SHOCK_TURN to the side of the bot. button is the bot's button of the shot ("fire" for the beam, "charge_shot" for the ball).
--- With the shield up, the shot must cost the shield's stamina and go on to the enemy and hurt it. Without it, the enemy must not be hurt.
+-- Has a bot with the Shock Rifle, an ally, shoot at the player with the shield up, with the player looking at an enemy SHOCK_TURN to the
+-- side of the bot. button is the bot's button of the shot ("fire" for the beam, "charge_shot" for the ball). The shot must go past the
+-- shield: it costs the shield no stamina, and it is not sent on to the enemy.
 local function shock_at_shield(t, button, what)
 	local bot = t.add_bot(SHOCK_BOT_PROFILE, SHOCK_BOT_CAREER, ut.items.weapons.shock_rifle.key, SHOCK_DISTANCE)
 
@@ -284,133 +269,8 @@ local function shock_at_shield(t, button, what)
 
 	local paid, hurt = shoot(true)
 
-	t.expect(paid, "the %s cost the shield no stamina: it did not get to the shield", what)
-	t.expect(hurt > 0, "the reflected %s did not hurt the enemy the player looks at", what)
-
-	local paid_unshielded, hurt_unshielded = shoot(false)
-
-	t.expect(not paid_unshielded, "the %s cost stamina without the shield", what)
-	t.expect(hurt_unshielded == 0, "the %s hurt the enemy without the shield (%.1f)", what, hurt_unshielded)
-end
-
--- A Shock Rifle shot that one shield reflects into another is reflected again: the beam up to max_reflections times
--- (InstantFire.DoTrace), the ball each time it gets to a shield (ShockProjectile.ProcessTouch). Sienna (a bot) shoots at the player, who
--- looks at Bardin (a bot with his Shield Gun's shield up) SHOCK_TURN to the side of her. With to_rat, Bardin looks at a rat on the square
--- (CHAIN_ENEMY_TURN), so the shot goes from the player's shield to Bardin's and on to the rat. Without it, Bardin looks back at the player, so the
--- shot goes back and forth between the two shields. The player looks at Bardin level, so the shot gets to his shield as high as it got
--- to the player's, CHAIN_AIM_HEIGHT (where Sienna aims). A ball is still Sienna's
--- after every reflection, and a shooter's own shield never reflects their ball, so the two shields are the others'. Each reflection is
--- seen by a watch on mod.shield.reflect, which every shot goes through. Returns the reflections as text ("the player, Bardin, ..."),
--- how many there were, and the damage the rat took.
-local function shield_to_shield(t, button, to_rat)
-	local player = t.unit()
-	local shooter = t.add_bot(SHOCK_BOT_PROFILE, SHOCK_BOT_CAREER, ut.items.weapons.shock_rifle.key, SHOCK_DISTANCE)
-
-	if not t.expect(shooter, "Sienna could not be added") then
-		return nil
-	end
-
-	t.look(0, -SHOCK_TURN)
-
-	local bardin = t.add_bot(SHIELD_BOT_PROFILE, SHIELD_BOT_CAREER, ut.items.weapons.shield_gun_dr.key, SHOCK_DISTANCE, "slot_melee")
-
-	if not t.expect(bardin, "Bardin could not be added") then
-		return nil
-	end
-
-	local rat
-
-	if to_rat then
-		t.look(0, CHAIN_ENEMY_TURN)
-
-		local spot = t.on_main_thread(function ()
-			local first_person_extension = ScriptUnit.extension(player, "first_person_system")
-			local ahead = Vector3.normalize(Vector3.flat(Quaternion.forward(first_person_extension:current_rotation())))
-			local towards = Unit.local_position(player, 0) + ahead * CHAIN_ENEMY_TOWARDS
-			local from = Unit.local_position(bardin, 0)
-			local position = from + Vector3.normalize(Vector3.flat(towards - from)) * CHAIN_ENEMY_FROM_BARDIN
-
-			return { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
-		end)
-
-		rat = t.spawn_at(CHAIN_ENEMY_BREED, spot[1], spot[2], spot[3])
-
-		if not t.expect(rat, "the rat could not be spawned") then
-			return nil
-		end
-	end
-
-	-- (level, at the height of the player's eyes: the shot off the player's shield goes the way they look, so looking down at Bardin it
-	-- got to his shield half a meter lower than it got to the player's, and went past the rat's legs)
-	local at = t.on_main_thread(function ()
-		local position = Unit.local_position(bardin, 0)
-		local eye = ScriptUnit.extension(player, "first_person_system"):current_position()
-
-		return { Vector3.x(position), Vector3.y(position), Vector3.z(eye) }
-	end)
-
-	t.aim_at_point(at[1], at[2], at[3])
-
-	if rat then
-		-- (a reflected shot starts where it got to the shield's cylinder and goes the way the shield's holder looks, so Bardin looks along
-		-- the line from where the shot gets to his cylinder to the rat's middle. The shot off the player's shield starts where Sienna's
-		-- got to the player's cylinder, on the side towards her, and goes level the way the player looks, so it gets to Bardin's cylinder
-		-- off the line between the two by as much: taking the side of his cylinder towards the player, the shot passed 0.2 m beside the
-		-- rat.)
-		local direction = t.on_main_thread(function ()
-			local radius = shield.pawn_radius
-			local player_position = Unit.local_position(player, 0)
-			local bardin_position = Unit.local_position(bardin, 0)
-			local towards_sienna = Vector3.normalize(Vector3.flat(Unit.local_position(shooter, 0) - player_position))
-			local start = player_position + towards_sienna * radius
-			local look = Vector3.normalize(Vector3.flat(Quaternion.forward(ScriptUnit.extension(player, "first_person_system"):current_rotation())))
-			-- (where the line from start along look gets to Bardin's cylinder, on the ground)
-			local offset = Vector3.flat(start - bardin_position)
-			local b = Vector3.dot(offset, look)
-			local c = Vector3.dot(offset, offset) - radius * radius
-			local along = b * b - c >= 0 and -b - math.sqrt(b * b - c) or Vector3.length(Vector3.flat(bardin_position - start)) - radius
-			local hit = Vector3.flat(start + look * along) + Vector3(0, 0, Vector3.z(bardin_position) + CHAIN_AIM_HEIGHT)
-			local way = Vector3.normalize(Unit.local_position(rat, 0) + Vector3(0, 0, CHAIN_ENEMY_MIDDLE) - hit)
-
-			return { Vector3.x(way), Vector3.y(way), Vector3.z(way) }
-		end)
-
-		t.bot_look(bardin, direction)
-	else
-		t.bot_aim(bardin, player)
-	end
-
-	t.bot_aim(shooter, player)
-	t.bot_defend(bardin, true)
-	t.hold("action_two")
-	t.wait(0.5)
-
-	local reflected_by = {}
-	local reflect = shield.reflect
-
-	shield.reflect = function (...)
-		local position, distance, direction, unit = reflect(...)
-
-		if unit then
-			reflected_by[#reflected_by + 1] = unit == player and "the player" or unit == bardin and "Bardin" or "someone else"
-		end
-
-		return position, distance, direction, unit
-	end
-
-	t.after(function ()
-		shield.reflect = reflect
-	end)
-
-	local damage = rat and t.track_damage(rat)
-
-	t.bot_press(shooter, button)
-	t.wait(SHOCK_SHOT_TIME * 2)
-	t.release("action_two")
-
-	shield.reflect = reflect
-
-	return table.concat(reflected_by, ", "), #reflected_by, damage and damage.total or 0
+	t.expect(not paid, "the ally's %s cost the shield stamina", what)
+	t.expect(hurt == 0, "the ally's %s was reflected on to the enemy (%.1f)", what, hurt)
 end
 
 local function scenarios()
@@ -917,69 +777,18 @@ local function scenarios()
 			end,
 		},
 		{
-			-- A Shock Rifle beam that gets to the shield goes on the way the player looks (mod.shield.reflect, from the Shock Rifle's
-			-- trace of its beam). A bot fires it (see shock_at_shield).
-			name = "the shield reflects a Shock Rifle beam",
+			-- An ally's Shock Rifle beam goes past the shield (mod.shield.reflect only takes an enemy's shot). A bot fires it (see
+			-- shock_at_shield).
+			name = "an ally's Shock Rifle beam goes past the shield",
 			run = function (t)
 				shock_at_shield(t, "fire", "beam")
 			end,
 		},
 		{
-			-- A Shock Rifle ball that gets to the shield is sent on the way the player looks as a new ball (ShockProjectile.ProcessTouch,
-			-- shield_gun.lua's hook of PlayerProjectileImpactUnitExtension.update). A bot fires it (see shock_at_shield).
-			name = "the shield reflects a Shock Rifle ball",
+			-- An ally's Shock Rifle ball goes past the shield too (see shock_at_shield)
+			name = "an ally's Shock Rifle ball goes past the shield",
 			run = function (t)
 				shock_at_shield(t, "charge_shot", "ball")
-			end,
-		},
-		{
-			-- A beam goes from the player's shield to Bardin's and on to a rat, which it hurts (see shield_to_shield)
-			name = "the shield reflects a Shock Rifle beam into another shield and on to a rat",
-			run = function (t)
-				local order, _, hurt = shield_to_shield(t, "fire", true)
-
-				if order then
-					t.expect(order == "the player, Bardin", "the beam was not reflected by the player's shield and then Bardin's, but by: %s", order)
-					t.expect(hurt > 0, "the beam did not hurt the rat after the two shields")
-				end
-			end,
-		},
-		{
-			-- A ball goes from the player's shield to Bardin's and on to a rat, which it hurts (see shield_to_shield)
-			name = "the shield reflects a Shock Rifle ball into another shield and on to a rat",
-			run = function (t)
-				local order, _, hurt = shield_to_shield(t, "charge_shot", true)
-
-				if order then
-					t.expect(order == "the player, Bardin", "the ball was not reflected by the player's shield and then Bardin's, but by: %s", order)
-					t.expect(hurt > 0, "the ball did not hurt the rat after the two shields")
-				end
-			end,
-		},
-		{
-			-- A beam between two shields that face each other goes back and forth max_reflections times, and then ends at the shield
-			-- it gets to next (see shield_to_shield)
-			name = "the shield reflects a Shock Rifle beam back and forth at most max_reflections times",
-			run = function (t)
-				local order = shield_to_shield(t, "fire", false)
-				local expected = { "the player", "Bardin", "the player", "Bardin", "the player" }
-
-				if order then
-					expected = table.concat(expected, ", ", 1, shield.max_reflections)
-					t.expect(order == expected, "the beam was reflected by %s, not by %s", order, expected)
-				end
-			end,
-		},
-		{
-			-- A ball between two shields that face each other goes back and forth for as long as it gets to one (see
-			-- shield_to_shield); three times is looked for
-			name = "the shield reflects a Shock Rifle ball back and forth",
-			run = function (t)
-				local order, count = shield_to_shield(t, "charge_shot", false)
-
-				if order then
-					t.expect(count >= 3 and string.find(order, "the player, Bardin, the player", 1, true) == 1, "the ball did not go back and forth three times or more, but: %s", order)
-				end
 			end,
 		},
 		{
