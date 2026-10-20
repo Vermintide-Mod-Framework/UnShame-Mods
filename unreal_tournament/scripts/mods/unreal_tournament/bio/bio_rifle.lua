@@ -307,6 +307,9 @@ local function build_projectile_info()
 	projectile_info.gravity_settings = GRAVITY_SETTINGS
 	projectile_info.life_time = CONFIG.max_flight + 1
 	projectile_info.unit_life_time = CONFIG.max_flight + 1
+	-- A glob in the air hits an enemy as a rocket does (utils.UT_PROJECTILE_RADIUS), with its own 2 uu added, and a wall by a ray
+	projectile_info.radius = CONFIG.flying_collision_uu * UNIT + utils.UT_PROJECTILE_RADIUS
+	projectile_info.static_impact_type = "raycast"
 
 	return projectile_info
 end

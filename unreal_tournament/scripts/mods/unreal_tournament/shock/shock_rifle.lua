@@ -66,7 +66,10 @@ local CONFIG = {
 	-- throw_trajectory divides the speed by 100, so this is 15 m/s. Walking is about 4 to 5 m/s, so the ball is faster than a
 	-- running dodge jump, as in UT.
 	ball_speed = 1500,
-	ball_radius = 0.2, -- the impact sphere, which is how easily the ball hits things (the beam hitting the ball is unrelated)
+	-- The impact sphere, which is how easily the ball hits things (the beam hitting the ball is unrelated). An enemy is hit as a rocket
+	-- hits one (utils.UT_PROJECTILE_RADIUS), with the ball's own 10 uu (ShockProjectile.CollisionRadius) added. A wall is hit by a quarter
+	-- of it (the game's fireball does that), 0.125 m, where UT's is the ball's 10 uu.
+	ball_radius = 10 * mod.utils.UT_UNIT + mod.utils.UT_PROJECTILE_RADIUS, -- m
 	ball_visual_scale = 3, -- the size multiplier of the projectile unit
 	ball_charge_level = 0.99, -- drives the projectile scale, and is kept under 1 to avoid "full charge" procs
 	ball_lifetime = 10, -- UT2004 ShockProjectile.LifeSpan

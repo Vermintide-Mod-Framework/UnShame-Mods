@@ -346,6 +346,9 @@ local function bolt_projectile_info()
 	projectile_info.anim_blend_settings.link_node = CONFIG.bolt_link_node
 	projectile_info.anim_blend_settings.forward_offset = CONFIG.bolt_forward_offset
 	projectile_info.ut_staff_end = true
+	-- A bolt hits an enemy as a rocket does (utils.UT_PROJECTILE_RADIUS), and a wall by a ray (the staff's thorn already does), as UT's
+	-- LinkProjectile is a point
+	projectile_info.radius = utils.UT_PROJECTILE_RADIUS
 
 	return projectile_info
 end
