@@ -67,9 +67,13 @@ local function is_movement_enabled()
 	return mod:get("ut_movement") ~= false
 end
 
--- The Multidodge option removes the limits on dodging.
-local function is_multidodge()
-	return is_movement_enabled() and mod:get("multidodge")
+-- The Multidodge option removes the limits on dodging, and so does the Booster combo for its player (mod.unlimited_dodge, a set of units)
+mod.unlimited_dodge = setmetatable({}, {
+	__mode = "k",
+})
+
+local function is_multidodge(unit)
+	return is_movement_enabled() and mod:get("multidodge") or unit ~= nil and mod.unlimited_dodge[unit] == true
 end
 
 -- What has happened in the air since the player was last on the ground, for each unit:
@@ -201,7 +205,7 @@ mod:hook(CharacterStateHelper, "check_to_start_dodge", function (func, unit, inp
 
 	-- There is no dodging while crouching, because the jump key then uncrouches and jumps. There is also none right after
 	-- landing from a dodge.
-	if status_extension:is_crouching() or dodge_unlocked_t[unit] and t < dodge_unlocked_t[unit] and not is_multidodge() then
+	if status_extension:is_crouching() or dodge_unlocked_t[unit] and t < dodge_unlocked_t[unit] and not is_multidodge(unit) then
 		return false, Vector3(0, 0, 0)
 	end
 
@@ -434,7 +438,7 @@ local function try_wall_dodge(self, unit, t)
 	end
 
 	-- UT2004 does not dodge while crouching or about to crouch, and allows one dodge in the air, unless multidodge is on.
-	if state.dodged and not is_multidodge() or self.status_extension:is_crouching() then
+	if state.dodged and not is_multidodge(unit) or self.status_extension:is_crouching() then
 		return false
 	end
 
@@ -473,7 +477,7 @@ local function try_wall_dodge(self, unit, t)
 	state.keep_speed = true
 
 	-- With multidodge, every wall dodge gives the double jump back.
-	if is_multidodge() then
+	if is_multidodge(unit) then
 		state.double_jumped = nil
 	end
 
@@ -729,7 +733,7 @@ end)
 -- Multidodge also removes the game's own limit. Normally the more dodges in a row, the shorter they get, and after the first few
 -- they no longer avoid attacks. The game removes the same limit for its infinite dodge perk.
 mod:hook(GenericStatusExtension, "add_dodge_cooldown", function (func, self, ...)
-	if is_multidodge() then
+	if is_multidodge(self.unit) then
 		self.dodge_cooldown = 0
 
 		return
