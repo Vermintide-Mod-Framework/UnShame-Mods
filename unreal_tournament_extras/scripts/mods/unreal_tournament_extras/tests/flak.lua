@@ -381,6 +381,7 @@ local function scenarios()
 	return {
 		{
 			name = "all the ammo is in the clip",
+			every_hero = true,
 			run = function (t)
 				local ammo = t.on_main_thread(function ()
 					local inventory_extension = ScriptUnit.extension(t.unit(), "inventory_system")
@@ -397,6 +398,8 @@ local function scenarios()
 		},
 		{
 			name = "primary fire throws nine chunks for one ammo",
+			every_hero = true,
+			basic = true,
 			run = function (t)
 				local before = t.ammo()
 				local chunks = {}
@@ -463,6 +466,7 @@ local function scenarios()
 		},
 		{
 			name = "a shell is lobbed, explodes, and throws chunks",
+			every_hero = true,
 			run = function (t)
 				t.look(0)
 
@@ -870,17 +874,25 @@ local function scenarios()
 	}
 end
 
+local function hero(setting_id, careers)
+	local hero_definition = ut.items.weapons[setting_id]
+
+	return { item = hero_definition.key, template = hero_definition.template, careers = careers }
+end
+
+-- Bardin's copy is on the Grudge-raker and shares the rest, so his careers run what the copy takes from its base: the ammo and the shots.
 runner.add_suite({
 	name = "flak",
-	item = definition.key,
-	template = definition.template,
 	slot = "slot_ranged",
-	careers = { "es_mercenary" },
+	heroes = {
+		hero("flak_cannon", { "es_mercenary", "es_huntsman", "es_knight" }),
+		hero("flak_cannon_dr", { "dr_ironbreaker", "dr_ranger", "dr_engineer" }),
+	},
 	scenarios = scenarios(),
 })
 
--- Bots with the Flak Cannon (flak/bots.lua). Only Kruber's careers have it, and a hero can't be a bot and the player at once, so these run
--- in a suite of their own with the player as Sienna, and the bot is Kruber as a Mercenary, with his own mind. The places are the Shock
+-- Bots with the Flak Cannon (flak/bots.lua). Only Kruber's and Bardin's careers have it, and a hero can't be a bot and the player at
+-- once, so these run in a suite of their own with the player as Sienna, and the bot is Kruber as a Mercenary, with his own mind. The places are the Shock
 -- Rifle's bot tests' (shock.lua): a special ahead that shoots at the player, past the player in the bot's way, and a boss where bots can't
 -- walk to.
 local BOTS = {

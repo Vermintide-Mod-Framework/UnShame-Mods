@@ -8,8 +8,8 @@ local mod = get_mod("unreal_tournament")
 --
 -- The game's units of the chunks and the shell still fly, since they are the gameplay. Their own effects are dropped, and UT's are drawn at
 -- them: the chunk mesh with its streak (FlakTrail), and the shell mesh with its gold glow and smoke (FlakShellTrail, FlakGlow). The
--- explosion is FlashExplosion, with the game's explosion played along with it. The blunderbuss's shot sound is in its animation, which is
--- not played on the player's own first person unit.
+-- explosion is FlashExplosion, with the game's explosion played along with it. The base's shot sound is in its animation, which is not
+-- played on the player's own first person unit.
 --
 -- The assets were made with tools/asset_conversion.
 
@@ -17,8 +17,20 @@ local utils = mod.utils
 local animations = mod:dofile("scripts/mods/unreal_tournament/flak/skin_animations")
 local particles = mod.skin_particles
 
-local TEMPLATE_NAME = mod.items.weapons.flak_cannon.template
-local SETTING_ID = "flak_cannon"
+-- Kruber's item on the Blunderbuss and Bardin's on the Grudge-raker. Each has a skin of its own, which differ only in the third person.
+local VARIANTS = { "flak_cannon", "flak_cannon_dr" }
+
+local TEMPLATE_NAMES = {}
+local skin_apis = {}
+
+for _, setting_id in ipairs(VARIANTS) do
+	TEMPLATE_NAMES[mod.items.weapons[setting_id].template] = true
+end
+
+-- The skin whose model the player sees now
+local function first_person_api()
+	return mod.weapon_skin.shown_skin(skin_apis)
+end
 
 -- The indexes, in the animations' list of bones, of the bone of the flak shell loaded in the chamber and of the hammer that pushes it
 local SHELL_BONE
@@ -98,8 +110,6 @@ local CONFIG = {
 }
 
 local UNIT = utils.UT_UNIT
-
-local skin_api
 
 -- The projectiles in flight, each as { unit = the mesh, game_unit = the projectile's unit, projectile = its extension, kind, previous =
 -- where it was }
@@ -321,156 +331,177 @@ local function remote_shot(owner_unit, sound_event)
 		return
 	end
 
-	local muzzle = skin_api.third_person.muzzle_position(owner_unit)
+	local muzzle, api = mod.weapon_skin.held_muzzle(skin_apis, owner_unit)
+
+	if not muzzle then
+		return
+	end
 
 	muzzle_flash(function ()
-		return skin_api.third_person.muzzle_position(owner_unit)
-	end, skin_api.third_person.meters_per_unit)
+		return api.third_person.muzzle_position(owner_unit)
+	end, api.third_person.meters_per_unit)
 
-	if muzzle then
-		skin_api.play_sound_at(sound_event, muzzle)
-	end
+	api.play_sound_at(sound_event, muzzle)
 end
 
-skin_api = mod.weapon_skin.new({
-	id = SETTING_ID,
-	name = "flak",
-	template = TEMPLATE_NAME,
-	unit_name = "units/ut/flak/flak_cannon",
-	animations = animations,
-	muzzle_node = "b_bone_flash",
-	-- model_meters_per_unit is the meters per UT unit at which the model was converted (tools/asset_conversion/convert_weapon.py).
-	-- meters_per_unit is the distance scale: the meters of forward in the view that one UT unit of the model takes up.
-	model_meters_per_unit = 0.0125,
-	meters_per_unit = 0.01,
-	-- FlakCannon.uc. The mesh lies sideways, and the pivot's yaw turns it to the front.
-	display_fov = 60,
-	draw_scale = 1,
-	offset_forward = -7,
-	offset_right = 8,
-	offset_up = 0,
-	pivot_yaw = 16884 / 65536 * 360,
-	pivot_roll = 200 / 65536 * 360,
-	bob_damping = 1.4,
-	-- The inspect pose brings the cannon forward and up, and then turns it to the left about the grip. It ends up across the view like
-	-- the Shock Rifle: its left side towards the player, the muzzle pointing left and a little up, and the back lower and nearer. The grip
-	-- is the point of the model that is in the hand (in UT units from the model's origin, in the view's axes). The turn starts when the
-	-- cannon is 35% of the way there.
-	inspect_pose_right = -6.2,
-	inspect_pose_forward = 4,
-	inspect_pose_up = 0.2,
-	inspect_pose_roll = 16,
-	inspect_pose_pitch = 4,
-	inspect_pose_yaw = 55,
-	inspect_turn_start = 0.35,
-	inspect_pivot_right = 24.7,
-	inspect_pivot_forward = 55,
-	inspect_pivot_up = -38.7,
-	-- UT's third person mesh of the weapon (FlakAttachment's Weapons.Flak_3rd) at UT's size in a player's hand (DrawScale 0.4). Its origin
-	-- is the grip, and its barrel runs along its forward, to the muzzle (the mesh's tip bone).
-	third_person = {
-		id = SETTING_ID,
-		template = TEMPLATE_NAME,
-		unit_name = "units/ut/flak/third_person",
-		-- The game links the blunderbuss, the crossbow and the Drakegun to the left hand's node (AttachmentNodeLinking.rifles).
-		hand_node = "j_leftweaponattach",
-		meters_per_unit = 0.02 * 0.4,
-		scale = 1,
-		-- (moved back and up from the mesh's origin, set in the game)
-		grip_right = 0,
-		grip_forward = 10,
-		grip_up = -7,
-		yaw = 0,
-		pitch = 0,
-		roll = 0,
-		-- In the world the cannon is turned as the game's Blunderbuss in the hand is, which the game animates with the arms
-		follow_game_unit = 2,
-		muzzle_right = 0,
-		muzzle_forward = 98,
-		muzzle_up = 8,
-		menu_yaw = -90,
-	},
-	on_create = function ()
-		skin_api.play_sound("ut_flak_select")
-	end,
-	on_update = function (skin, dt)
-		-- UT puts the weapon away when it has no ammo, but here it stays in hand, with no shell in the chamber. When there is ammo
-		-- again a shell is loaded: it slides in and the hammer follows, as the next shell does after a shot.
-		local was_out_of_ammo = skin.out_of_ammo
+-- How the third person mesh sits in each item's hand. The game links the Blunderbuss to the left hand's node (AttachmentNodeLinking.rifles)
+-- and the Grudge-raker to the right hand's (AttachmentNodeLinking.grudge_raker). Bardin's grip is Kruber's until it is set in the game.
+local GRIPS = {
+	flak_cannon = { hand_node = "j_leftweaponattach", right = 0, forward = 10, up = -7 },
+	flak_cannon_dr = { hand_node = "j_rightweaponattach", right = 0, forward = 10, up = -7 },
+}
 
-		skin.out_of_ammo = utils.local_ranged_out_of_ammo()
+local function new_skin(setting_id)
+	local definition = mod.items.weapons[setting_id]
+	local grip = GRIPS[setting_id]
+	local skin_api
 
-		if was_out_of_ammo and not skin.out_of_ammo then
-			skin.chamber_load = CHAMBER_LOAD_FIRST / animations.animations.Fire.rate
+	skin_api = mod.weapon_skin.new({
+		id = setting_id,
+		name = "flak",
+		template = definition.template,
+		unit_name = "units/ut/flak/flak_cannon",
+		animations = animations,
+		muzzle_node = "b_bone_flash",
+		-- model_meters_per_unit is the meters per UT unit at which the model was converted (tools/asset_conversion/convert_weapon.py).
+		-- meters_per_unit is the distance scale: the meters of forward in the view that one UT unit of the model takes up.
+		model_meters_per_unit = 0.0125,
+		meters_per_unit = 0.01,
+		-- FlakCannon.uc. The mesh lies sideways, and the pivot's yaw turns it to the front.
+		display_fov = 60,
+		draw_scale = 1,
+		offset_forward = -7,
+		offset_right = 8,
+		offset_up = 0,
+		pivot_yaw = 16884 / 65536 * 360,
+		pivot_roll = 200 / 65536 * 360,
+		bob_damping = 1.4,
+		-- The inspect pose brings the cannon forward and up, and then turns it to the left about the grip. It ends up across the view like
+		-- the Shock Rifle: its left side towards the player, the muzzle pointing left and a little up, and the back lower and nearer. The
+		-- grip is the point of the model that is in the hand (in UT units from the model's origin, in the view's axes). The turn starts when
+		-- the cannon is 35% of the way there.
+		inspect_pose_right = -6.2,
+		inspect_pose_forward = 4,
+		inspect_pose_up = 0.2,
+		inspect_pose_roll = 16,
+		inspect_pose_pitch = 4,
+		inspect_pose_yaw = 55,
+		inspect_turn_start = 0.35,
+		inspect_pivot_right = 24.7,
+		inspect_pivot_forward = 55,
+		inspect_pivot_up = -38.7,
+		-- UT's third person mesh of the weapon (FlakAttachment's Weapons.Flak_3rd) at UT's size in a player's hand (DrawScale 0.4). Its
+		-- origin is the grip, and its barrel runs along its forward, to the muzzle (the mesh's tip bone).
+		third_person = {
+			id = setting_id,
+			template = definition.template,
+			unit_name = "units/ut/flak/third_person",
+			hand_node = grip.hand_node,
+			meters_per_unit = 0.02 * 0.4,
+			scale = 1,
+			grip_right = grip.right,
+			grip_forward = grip.forward,
+			grip_up = grip.up,
+			yaw = 0,
+			pitch = 0,
+			roll = 0,
+			-- In the world the cannon is turned as the game's weapon in the hand is, which the game animates with the arms
+			follow_game_unit = 2,
+			muzzle_right = 0,
+			muzzle_forward = 98,
+			muzzle_up = 8,
+			menu_yaw = -90,
+		},
+		on_create = function ()
+			skin_api.play_sound("ut_flak_select")
+		end,
+		on_update = function (skin, dt)
+			-- UT puts the weapon away when it has no ammo, but here it stays in hand, with no shell in the chamber. When there is ammo
+			-- again a shell is loaded: it slides in and the hammer follows, as the next shell does after a shot.
+			local was_out_of_ammo = skin.out_of_ammo
 
-			skin_api.play_sound("ut_flak_load")
-		elseif skin.chamber_load then
-			skin.chamber_load = skin.chamber_load + dt
+			skin.out_of_ammo = utils.local_ranged_out_of_ammo()
 
-			if skin.chamber_load * animations.animations.Fire.rate >= CHAMBER_LOAD_LAST then
-				skin.chamber_load = nil
-			end
-		end
+			if was_out_of_ammo and not skin.out_of_ammo then
+				skin.chamber_load = CHAMBER_LOAD_FIRST / animations.animations.Fire.rate
 
-		skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
-		skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
-		skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
-	end,
-	on_pose = function (skin, pose)
-		if skin.chamber_load then
-			local fire = animations.animations.Fire
-			local position = math.min(skin.chamber_load * fire.rate, #fire.frames - 1)
-			local index = math.floor(position)
-			local fraction = position - index
-			local first, second = fire.frames[index + 1], fire.frames[math.min(index + 2, #fire.frames)]
+				skin_api.play_sound("ut_flak_load")
+			elseif skin.chamber_load then
+				skin.chamber_load = skin.chamber_load + dt
 
-			for _, bone in ipairs({ SHELL_BONE, HAMMER_BONE }) do
-				local o = (bone - 1) * 7
-
-				for i = 1, 7 do
-					pose[o + i] = first[o + i] + (second[o + i] - first[o + i]) * fraction
+				if skin.chamber_load * animations.animations.Fire.rate >= CHAMBER_LOAD_LAST then
+					skin.chamber_load = nil
 				end
 			end
-		end
 
-		-- With no ammo left the shot loads no next shell: from the frame where it would slide in, the shell and the hammer stay at rest
-		local animation = animations.animations[skin.animation]
+			skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
+			skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
+			skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
+		end,
+		on_pose = function (skin, pose)
+			if skin.chamber_load then
+				local fire = animations.animations.Fire
+				local position = math.min(skin.chamber_load * fire.rate, #fire.frames - 1)
+				local index = math.floor(position)
+				local fraction = position - index
+				local first, second = fire.frames[index + 1], fire.frames[math.min(index + 2, #fire.frames)]
 
-		if skin.out_of_ammo and animation and (skin.animation == "Fire" or skin.animation == "AltFire") and skin.time * animation.rate >= CHAMBER_LOAD_FIRST then
-			local rest = animation.frames[#animation.frames]
+				for _, bone in ipairs({ SHELL_BONE, HAMMER_BONE }) do
+					local o = (bone - 1) * 7
 
-			for _, bone in ipairs({ SHELL_BONE, HAMMER_BONE }) do
-				local o = (bone - 1) * 7
-
-				for i = 1, 7 do
-					pose[o + i] = rest[o + i]
+					for i = 1, 7 do
+						pose[o + i] = first[o + i] + (second[o + i] - first[o + i]) * fraction
+					end
 				end
 			end
-		end
 
-		skin.node_scales = skin.node_scales or {}
-		skin.node_scales[SHELL_BONE] = skin.out_of_ammo and Vector3(0.001, 0.001, 0.001) or nil
-	end,
-	on_give_back = clear_visuals,
-	on_update_always = update_visuals,
-	on_level_exit = function ()
-		clear_visuals()
-		remote_shots.clear()
-	end,
-})
+			-- With no ammo left the shot loads no next shell: from the frame where it would slide in, the shell and the hammer stay at
+			-- rest
+			local animation = animations.animations[skin.animation]
 
-local third_person = skin_api.third_person
+			if skin.out_of_ammo and animation and (skin.animation == "Fire" or skin.animation == "AltFire") and skin.time * animation.rate >= CHAMBER_LOAD_FIRST then
+				local rest = animation.frames[#animation.frames]
 
--- Handles the player's shots. The animation, the flash and the sound all start when the shot's action starts, because the blunderbuss
+				for _, bone in ipairs({ SHELL_BONE, HAMMER_BONE }) do
+					local o = (bone - 1) * 7
+
+					for i = 1, 7 do
+						pose[o + i] = rest[o + i]
+					end
+				end
+			end
+
+			skin.node_scales = skin.node_scales or {}
+			skin.node_scales[SHELL_BONE] = skin.out_of_ammo and Vector3(0.001, 0.001, 0.001) or nil
+		end,
+		on_give_back = clear_visuals,
+		-- The projectiles in flight are the weapon's, not an item's, so only the first skin moves them
+		on_update_always = setting_id == VARIANTS[1] and update_visuals or nil,
+		on_level_exit = function ()
+			clear_visuals()
+			remote_shots.clear()
+		end,
+	})
+
+	skin_apis[#skin_apis + 1] = skin_api
+end
+
+for _, setting_id in ipairs(VARIANTS) do
+	new_skin(setting_id)
+end
+
+-- Handles the player's shots. The animation, the flash and the sound all start when the shot's action starts, because the base
 -- shoots at once.
 mod.shotgun_start_callbacks.flak_skin = function (action, new_action)
-	local skin = skin_api.state()
+	local skin_api = first_person_api()
+	local skin = skin_api and skin_api.state()
 
 	if not skin or not utils.is_local_player_unit(action.owner_unit) or not (new_action.ut_flak_chunks or new_action.ut_flak_shell) then
 		return
 	end
 
 	local owner_unit = action.owner_unit
+	local third_person = skin_api.third_person
 	local in_third_person = third_person.shows_weapon(owner_unit)
 
 	skin_api.play(new_action.ut_flak_chunks and "Fire" or "AltFire")
@@ -486,29 +517,35 @@ mod.shotgun_start_callbacks.flak_skin = function (action, new_action)
 	end, in_third_person and third_person.meters_per_unit or skin.unit_scale)
 end
 
--- The Blunderbuss's shot and reload sounds are part of its animations, so those animations are not played on the player's own first
--- person unit. The skin's model plays UT's animations instead. UT's weapon has no reload, but the game still reloads when ammo is
--- picked up or the weapon is wielded.
-mod.first_person_animation_filters[TEMPLATE_NAME] = function (event)
-	return event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil
-end
-
 -- Inspecting is the game's own action, held with the key. The cannon is turned to show its side for as long as it lasts.
 mod.inspect_callbacks.flak_skin = function (action, started)
-	local skin = skin_api.state()
+	local skin_api = first_person_api()
+	local skin = skin_api and skin_api.state()
 
 	if skin and utils.is_local_player_unit(action.owner_unit) then
 		skin.inspecting = started
 	end
 end
 
--- The reload animation is not played on the characters, because the cannon has no reload.
-mod.third_person_animation_filters[TEMPLATE_NAME] = function (event)
-	return string.find(event, "reload", 1, true) ~= nil
+for template_name in pairs(TEMPLATE_NAMES) do
+	-- The base's shot and reload sounds are part of its animations, so those animations are not played on the player's own first
+	-- person unit. The skin's model plays UT's animations instead. UT's weapon has no reload, but the game still reloads when ammo is
+	-- picked up or the weapon is wielded.
+	mod.first_person_animation_filters[template_name] = function (event)
+		return event == "attack_shoot" or event == "attack_shoot_last" or string.find(event, "reload", 1, true) ~= nil
+	end
+
+	-- The reload animation is not played on the characters, because the cannon has no reload.
+	mod.third_person_animation_filters[template_name] = function (event)
+		return string.find(event, "reload", 1, true) ~= nil
+	end
+
+	-- The characters' shot animation would have the base's unit play its shot sound and muzzle flash. The skin plays UT's.
+	mod.third_person_weapons_hidden_from_flow[template_name] = true
 end
 
 -- The Blunderbuss's unit plays its shot sound in third person. It is muted, so the others hear the Flak Cannon's own sounds.
-mod.sound_event_filters[TEMPLATE_NAME] = function (event_name)
+mod.sound_event_filters[mod.items.weapons.flak_cannon.template] = function (event_name)
 	return event_name == "player_combat_weapon_blunderbuss_fire"
 end
 
@@ -586,7 +623,7 @@ end
 
 -- The explosion of the shell, on every machine. The game's own effects of it are not made (see flak_cannon.lua).
 mod.skin_explosion_callbacks.ut_flak_shell_explosion = function (world, position, rotation)
-	skin_api.play_sound_at("ut_flak_explosion_3d", position)
+	skin_apis[1].play_sound_at("ut_flak_explosion_3d", position)
 	mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
 
 	particles.sprite({

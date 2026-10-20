@@ -10,7 +10,8 @@ needs its own copy from a base of that hero, because the animations, units and a
 
 - Shock Rifle: the Beam Staff (`bw_skullstaff_beam`), for the Pyromancer, Battle Wizard, Unchained and Necromancer.
 - Bio Rifle: the Masterwork Pistol (`dr_steam_pistol`, from the cog DLC), for the Engineer, Ranger and Ironbreaker.
-- Flak Cannon: the Blunderbuss (`es_blunderbuss`), for the Mercenary, Huntsman and Foot Knight.
+- Flak Cannon: the Blunderbuss (`es_blunderbuss`), for the Mercenary, Huntsman and Foot Knight, and the Grudge-raker (`dr_rakegun`), for
+  the Ironbreaker, Ranger and Engineer.
 - Rocket Launcher: the Repeating Crossbow (`wh_crossbow_repeater`), for the Zealot, Bounty Hunter and Captain.
 - Link Gun: the Deepwood Staff (`we_life_staff`, from the woods DLC), for the Sister of the Thorn. A Link Gun for everyone is on the
   TODO list.
@@ -31,8 +32,7 @@ The careers with few weapons:
 - Grail Knight: the Shield Gun only. No ranged item of the game lists him.
 - Warrior Priest: none yet. No ranged item lists him, and his third person body has only his own weapons' animations. His Shield Gun
   is on the TODO list.
-- Engineer: the Bio Rifle and the Shield Gun. His only ranged weapon in the game is the steam pistol.
-- Ranger: the Bio Rifle, the Sniper Rifle and the Shield Gun.
+- Engineer: the Bio Rifle, the Flak Cannon, the Shield Gun and the Assault Rifle.
 
 Why the bases are what they are:
 
@@ -51,6 +51,8 @@ Why the bases are what they are:
   (`OverchargeData[career]`): the other three careers have none, which would overheat them as Sienna does, so they get the Sister's.
 - Sniper Rifle. Kruber's handgun and Bardin's handgun are separate templates (`handgun_template_1` and `handgun_template_2`), so it
   is two registrations. The Engineer has no handgun.
+- Flak Cannon. The Grudge-raker is Bardin's shotgun, with the Blunderbuss's weapon type, dodge and crosshair, so his copy only takes
+  its own spread and animations. The game links it to the right hand, and the Blunderbuss to the left.
 - Redeemer. In VT2 the ranged slot fills again from every ammo box, which would give a one-shot nuke back far too often. A career
   ability comes back on a cooldown (160 s for the Redeemer, the game's longest is 140), and the Bounty Hunter's is a single shot from a
   pistol he draws for it, which the game already fires as a projectile. Holding the Rocket Launcher turns it into the Redeemer, so the
@@ -83,14 +85,14 @@ against UT2004 where there is something to compare with. `no`: wrong or missing,
 | Description | ok (UT's, shortened) | ok (UT's, without its last words) | ok (UT's, shortened) | n/a (not an item) | ok (UT's, shortened) | ok | ok (UT's, shortened) | ok (UT's, shortened) | ok | ok |
 | Keywords | ok | ok (rapid fire, high damage, crowd control) | ok (high damage, charged attack, armour piercing) | n/a | ok | ok (high damage, sniper, headshotting) | ok (sniper, crowd control, and the mod's own: Combo) | ok (high damage, crowd control, versatile) | ok | ok |
 | Stat chart | ok (a guess) | ok (the rounds barely stagger and stop at the first enemy; the alt goes through most armour) | ok (the punch's cleave as tank blows: 3 for the bash, 4 for a charged punch; heavy damage 6) | n/a | ok | ok (against the Lightning Gun's: armour piercing 6, cleave 1, speed 3, stagger 4, damage 6) | ok (the beam as the light attack, the ball as the heavy one) | ok | ok | ok |
-| Which careers can equip it | ok (the Deepwood Staff's copy for all four of Kerillian's careers; tests for each) | ok (repeating handgun and repeater pistol items; tests for each) | ok (five items: a melee weapon of each hero; the Warrior Priest's was taken out and is on the TODO list; tests for each) | ok (the Bounty Hunter's ability while he holds the Rocket Launcher, and the game's ability without it; tests) | ok (the Brace of Pistols: Zealot, Bounty Hunter, Captain; tests for each) | ok (Kruber's and Bardin's handguns; tests for each) | ok (the Beam Staff's careers and the Necromancer; tests: the Battle Wizard) | ok (the Blunderbuss's careers; tests: the Mercenary) | ok | ok |
-| Chaos Wastes copy | ok | ok | ok (each copy has its base's Chaos Wastes weapon) | n/a | ok | ok | ok (the Beam Staff's Chaos Wastes weapon) | ok (the Blunderbuss's Chaos Wastes weapon) | ok | ok |
+| Which careers can equip it | ok (the Deepwood Staff's copy for all four of Kerillian's careers; tests for each) | ok (repeating handgun and repeater pistol items; tests for each) | ok (five items: a melee weapon of each hero; the Warrior Priest's was taken out and is on the TODO list; tests for each) | ok (the Bounty Hunter's ability while he holds the Rocket Launcher, and the game's ability without it; tests) | ok (the Brace of Pistols: Zealot, Bounty Hunter, Captain; tests for each) | ok (Kruber's and Bardin's handguns; tests for each) | ok (the Beam Staff's careers and the Necromancer; tests: the Battle Wizard) | ok (the Blunderbuss's and the Grudge-raker's careers; tests for each) | ok | ok |
+| Chaos Wastes copy | ok | ok | ok (each copy has its base's Chaos Wastes weapon) | n/a | ok | ok | ok (the Beam Staff's Chaos Wastes weapon) | ok (each copy has its base's Chaos Wastes weapon) | ok | ok |
 | Crafting | ok | ok | ok | n/a | ok | ok | ok | ok | ok | ok |
-| Hero screen: model and its place | ok (in the left hand, pointing ahead, on the Waystalker) | ok (UT's third person mesh, Minigun_3rd, at a player's DrawScale 0.4, in each hero's grip) | ok (UT's third person mesh at a player's DrawScale 0.4, in each hero's pose and grip, set in the game) | n/a | ok | ok | ok | ok (UT's third person mesh, Flak_3rd, at a player's DrawScale 0.4, held as the Blunderbuss; set in the game) | ok | ok |
+| Hero screen: model and its place | ok (in the left hand, pointing ahead, on the Waystalker) | ok (UT's third person mesh, Minigun_3rd, at a player's DrawScale 0.4, in each hero's grip) | ok (UT's third person mesh at a player's DrawScale 0.4, in each hero's pose and grip, set in the game) | n/a | ok | ok | ok | ? (UT's third person mesh, Flak_3rd, at a player's DrawScale 0.4, held as the base; Kruber's set in the game, Bardin's not yet) | ok | ok |
 | Item screen: model and its turn | ok | ok | ok | n/a | ok | ok | ok | ok | ok | ok |
 | Tab screen after a mod reload | ok (the icon shows from the next level: a game limit) | ok | ok | n/a | ok | ok | ok | ok | ok | ok |
 | Equipping and switching weapons | ok | ok (tests: it can be put away while it fires) | ok | n/a | ok | ok | ok | ok | ok | ok |
-| Base weapon when the mod is disabled | ok | ok (the template goes back to the base weapon's) | ok (the template goes back to the base weapon's) | n/a | ok | ok | ok (the template goes back to the Beam Staff's) | ok (the template goes back to the Blunderbuss's) | ok | ok |
+| Base weapon when the mod is disabled | ok | ok (the template goes back to the base weapon's) | ok (the template goes back to the base weapon's) | n/a | ok | ok | ok (the template goes back to the Beam Staff's) | ok (each template goes back to its base's) | ok | ok |
 | **First person** | | | | | | | | | | |
 | Position and size against UT | ok (blend with UT) | ok (side by side) | ok (the same size; UT's is about 15 px higher and a little more tilted, and the offline render agrees with the game) | ok | ok (side by side with UT's two rifles; the left one is UT's mesh mirrored, as RenderDualOverlay draws it) | ok | ok (UT's view offset and pivot; the field of view was fitted against a picture of UT's Shock Rifle) | ok | ok | ok |
 | Pickup animation | ok (UT's SelectAnimRate 1.25, side by side with UT) | ok (SelectAnimRate 1.3636) | ok (SelectAnimRate 1.3636) | ok | ok (SelectAnimRate 1.3636, both rifles) | ok | ok | ok | ok | ok |

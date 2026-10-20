@@ -53,6 +53,7 @@ local CONFIG = {
 	},
 	flak_monkey_weapons = {
 		mod.items.weapons.flak_cannon.template,
+		mod.items.weapons.flak_cannon_dr.template,
 	},
 	flak_chunk_damage_type = "shot_shotgun",
 	-- The attack types that the game gives the shots of a ranged weapon. A hit with one of them is a ranged hit.

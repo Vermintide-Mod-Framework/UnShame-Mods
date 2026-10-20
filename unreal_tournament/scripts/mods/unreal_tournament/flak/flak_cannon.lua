@@ -5,6 +5,7 @@ local mod = get_mod("unreal_tournament")
 --   LMB: fires a tight spread of flak chunks. They bounce off walls.
 --   RMB: lobs a shell that explodes when it hits something and throws flak chunks in all directions.
 -- The recoil is the Blunderbuss's own. There is no reload.
+-- Bardin has a copy on the Grudge-raker. The two items share everything but the base, its spread and its eye tracking setting.
 
 local utils = mod.utils
 local register_explosion_template = utils.register_explosion_template
@@ -12,23 +13,50 @@ local register_network_lookup = utils.register_network_lookup
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
-local SETTING_ID = "flak_cannon"
-local ITEM_KEY = "ut_flak_cannon"
-local TEMPLATE_NAME = "ut_flak_cannon_template"
+-- The two items. The careers of each are those of its base.
+local VARIANTS = {
+	{
+		base_item = "es_blunderbuss",
+		deus_copy = "deus_es_blunderbuss",
+		id = "flak_cannon",
+		key = "ut_flak_cannon",
+		template = "ut_flak_cannon_template",
+		spread_template = "blunderbuss",
+		fire_at_gaze_setting = "tobii_fire_at_gaze_blunderbuss",
+	},
+	{
+		base_item = "dr_rakegun",
+		deus_copy = "deus_dr_rakegun",
+		id = "flak_cannon_dr",
+		key = "ut_flak_cannon_dr",
+		template = "ut_flak_cannon_dr_template",
+		spread_template = "rake_shot",
+		fire_at_gaze_setting = "tobii_fire_at_gaze_grudgeraker",
+	},
+}
 
-mod.items.register(SETTING_ID, {
-	key = ITEM_KEY,
-	template = TEMPLATE_NAME,
-	base_item = "es_blunderbuss",
-	deus_copy = "deus_es_blunderbuss",
-	name = "UT2004 Flak Cannon",
-	type_name = "Flak Cannon",
-	description = "The Trident Series 7 Flechette Cannon has evolved into the \"Mk3 Negotiator\". Its ionized flechettes burn and cauterize flesh, fired in a spread from the barrel or by grenades that explode on impact and radiate flechettes.",
-	keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_versatile" },
-	icon = "ut_flak_cannon_icon",
-	icon_package = "resource_packages/unreal_tournament/icons",
-	icon_materials = "ui/ut/flak_cannon_icon",
-})
+-- Each template's variant, and the items' keys
+local VARIANT_OF = {}
+local ITEM_KEYS = {}
+
+for _, variant in ipairs(VARIANTS) do
+	mod.items.register(variant.id, {
+		key = variant.key,
+		template = variant.template,
+		base_item = variant.base_item,
+		deus_copy = variant.deus_copy,
+		name = "UT2004 Flak Cannon",
+		type_name = "Flak Cannon",
+		description = "The Trident Series 7 Flechette Cannon has evolved into the \"Mk3 Negotiator\". Its ionized flechettes burn and cauterize flesh, fired in a spread from the barrel or by grenades that explode on impact and radiate flechettes.",
+		keywords = { "weapon_keyword_high_damage", "weapon_keyword_crowd_control", "weapon_keyword_versatile" },
+		icon = "ut_flak_cannon_icon",
+		icon_package = "resource_packages/unreal_tournament/icons",
+		icon_materials = "ui/ut/flak_cannon_icon",
+	})
+
+	VARIANT_OF[variant.template] = variant
+	ITEM_KEYS[variant.key] = true
+end
 
 local CONFIG = {
 	-- All of the ammo. The Blunderbuss has 16. It is all the clip, so there is no reload.
@@ -386,7 +414,7 @@ end
 -- shell (see the shotgun callbacks below). It can be repeated after UT's fire time, and it has no reload. The values that are not
 -- UT's are the ones it had as a copy of the Blunderbuss's shot: how loud it is to enemies, the talents' kind of hit (charge_value), the
 -- spread's layers, when its damage is dealt and its range.
-local function build_shot(rate, shot_count, damage_profile)
+local function build_shot(variant, rate, shot_count, damage_profile)
 	return {
 		kind = "shotgun",
 		anim_event = "attack_shoot",
@@ -412,7 +440,7 @@ local function build_shot(rate, shot_count, damage_profile)
 		charge_value = "light_attack",
 		alert_sound_range_fire = 12,
 		alert_sound_range_hit = 5,
-		fire_at_gaze_setting = "tobii_fire_at_gaze_blunderbuss",
+		fire_at_gaze_setting = variant.fire_at_gaze_setting,
 		apply_recoil = true,
 		recoil_settings = {
 			climb_duration = 0.15,
@@ -428,8 +456,8 @@ local function build_shot(rate, shot_count, damage_profile)
 end
 
 -- The primary fire's shot fires the chunks
-local function build_chunk_launcher()
-	local action = build_shot(CONFIG.primary_fire_rate, CONFIG.chunk_count, "shot_shotgun")
+local function build_chunk_launcher(variant)
+	local action = build_shot(variant, CONFIG.primary_fire_rate, CONFIG.chunk_count, "shot_shotgun")
 
 	action.ut_flak_chunks = true
 
@@ -437,8 +465,8 @@ local function build_chunk_launcher()
 end
 
 -- The secondary fire is the same shot, but it fires the shell instead of pellets.
-local function build_shell_launcher()
-	local action = build_shot(CONFIG.alt_fire_rate, 1, "ut_flak_shell")
+local function build_shell_launcher(variant)
+	local action = build_shot(variant, CONFIG.alt_fire_rate, 1, "ut_flak_shell")
 
 	action.ut_flak_shell = true
 
@@ -450,9 +478,11 @@ local PROJECTILE_UNIT_TEMPLATES = {
 	"grenade",
 }
 
--- Makes the gun on the shell of the Blunderbuss (utils.template_shell): everything that is not the Blunderbuss's animations, models and
--- sounds is set here
+-- Makes the gun on the shell of its base (utils.template_shell): everything that is not the base's animations, models and sounds is set
+-- here
 local function apply_flak_cannon(template)
+	local variant = VARIANT_OF[template.name]
+
 	utils.template_shell(template)
 
 	-- The chart of the item's stats, from 0 to 7. The primary fire is the normal attack, and the shell is the heavy one.
@@ -477,10 +507,10 @@ local function apply_flak_cannon(template)
 
 	-- The two shots, and the chunks and the shell they fire. Inspecting is the Blunderbuss's, kept by the shell.
 	actions.action_one = {
-		default = build_chunk_launcher(),
+		default = build_chunk_launcher(variant),
 	}
 	actions.action_two = {
-		default = build_shell_launcher(),
+		default = build_shell_launcher(variant),
 	}
 
 	for bounces = 0, #CHUNK_ACTIONS - 1 do
@@ -494,7 +524,7 @@ local function apply_flak_cannon(template)
 	actions.action_wield = table.clone(ActionTemplates.wield)
 	actions.weapon_reload = table.clone(ActionTemplates.reload)
 
-	utils.set_actions_lookup_data(actions, TEMPLATE_NAME)
+	utils.set_actions_lookup_data(actions, variant.template)
 
 	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots. Nothing should need a reload,
 	-- but the game may still start one when the weapon is wielded, so the reload is made short.
@@ -530,8 +560,8 @@ local function apply_flak_cannon(template)
 	template.buff_type = "RANGED"
 	template.weapon_type = "SHOTGUN"
 
-	-- Dodging, the crosshair and its spread: the Blunderbuss's (the chunks have UT's own spread). A dodge goes the full distance three
-	-- times in a row.
+	-- Dodging, the crosshair and its spread: the base's (the chunks have UT's own spread). The Blunderbuss and the Grudge-raker dodge
+	-- alike: the full distance three times in a row.
 	template.dodge_count = 3
 	template.buffs = {
 		change_dodge_distance = {
@@ -542,8 +572,8 @@ local function apply_flak_cannon(template)
 		},
 	}
 	template.crosshair_style = "shotgun"
-	template.default_spread_template = "blunderbuss"
-	template.fire_at_gaze_setting = "tobii_fire_at_gaze_blunderbuss"
+	template.default_spread_template = variant.spread_template
+	template.fire_at_gaze_setting = variant.fire_at_gaze_setting
 
 	-- The tooltip's light attack is the chunks, and its heavy attack the shell
 	template.tooltip_compare = {
@@ -858,7 +888,7 @@ mod:hook(DamageUtils, "buff_on_attack", function (func, unit, hit_unit, attack_t
 	local chunk = chunk_in_hit
 	local spawn_t = chunk and chunk._ut_flak_spawn_t
 
-	if not spawn_t and attack_type == "projectile" and damage_source == ITEM_KEY then
+	if not spawn_t and attack_type == "projectile" and ITEM_KEYS[damage_source] then
 		spawn_t = Managers.time:time("game")
 	end
 
@@ -1071,7 +1101,9 @@ end
 -- The mod holds its own references to the units of the projectiles while the weapon is enabled.
 local packages = utils.package_holder("unreal_tournament_flak")
 
-mod.items.set_template_changes(TEMPLATE_NAME, apply_flak_cannon)
+for template_name in pairs(VARIANT_OF) do
+	mod.items.set_template_changes(template_name, apply_flak_cannon)
+end
 
 mod.enabled_callbacks[#mod.enabled_callbacks + 1] = function ()
 	packages.load_projectile_units(PROJECTILE_UNIT_TEMPLATES)
