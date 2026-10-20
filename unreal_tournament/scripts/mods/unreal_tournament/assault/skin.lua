@@ -578,7 +578,7 @@ local function new_skin(setting_id, mirror, owns_grenades)
 				-- made about another point, so it turns about its own middle (in its axes: the middle of its length, a little above its
 				-- origin) and sits where UT2004's does (checked with preview_weapon.py assault2003).
 				inspect_pose_right = 5,
-				inspect_pose_forward = 30,
+				inspect_pose_forward = 15,
 				inspect_pose_up = 0,
 				inspect_pivot_right = 0,
 				inspect_pivot_forward = 26.5,
