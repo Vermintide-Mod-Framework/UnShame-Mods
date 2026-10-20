@@ -912,6 +912,7 @@ local function apply_template(template)
 	}
 
 	WeaponUtils.add_bot_meta_data_chain_actions(actions, hold_fire.transitions)
+	utils.cover_attack_chain_actions(actions, hold_fire.transitions)
 
 	-- What the game's talents, traits and properties take it for: a melee weapon, as the slot is; the weapon type is its base's
 	template.buff_type = "MELEE"

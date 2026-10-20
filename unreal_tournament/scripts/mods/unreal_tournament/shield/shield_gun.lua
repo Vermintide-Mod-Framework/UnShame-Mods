@@ -2113,6 +2113,7 @@ local function apply_template(template)
 	}
 
 	WeaponUtils.add_bot_meta_data_chain_actions(actions, template.attack_meta_data.hold_attack.attack_chain.transitions)
+	utils.cover_attack_chain_actions(actions, template.attack_meta_data.hold_attack.attack_chain.transitions)
 
 	template.tooltip_compare = {
 		light = {

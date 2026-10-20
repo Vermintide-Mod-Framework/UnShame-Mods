@@ -1026,6 +1026,15 @@ end
 
 -- Actions of a weapon
 
+-- Gives a bot attack chain (attack_meta_data's attack_chain) an entry for every action of the weapon, empty for those it has no
+-- attack from. The game looks up the transitions of the action the bot is in, whatever it is (WeaponUnitExtension._get_attack_chain_data),
+-- and stops on an action that has none, such as the wield a bot is in after a reload of the mods.
+function utils.cover_attack_chain_actions(actions, transitions)
+	for action_name in pairs(actions) do
+		transitions[action_name] = transitions[action_name] or {}
+	end
+end
+
 -- Sets an action's lookup data. The game uses it to tell the other machines which action a projectile came from.
 function utils.set_lookup_data(action, template_name, action_name, sub_action_name)
 	action.lookup_data = {

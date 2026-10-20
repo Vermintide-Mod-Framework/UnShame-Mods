@@ -103,9 +103,9 @@ local CONFIG = {
 	-- The ragdoll of what a chunk killed is thrown, because the game's own push of a dying body is small. Every chunk that hit
 	-- adds its speed, so at point blank all of them together send the body flying. The speed falls off with the distance between
 	-- the player and the target, like the knockback.
-	chunk_ragdoll_speed_near = 25, -- m/s per chunk
-	chunk_ragdoll_speed_far = 3, -- m/s per chunk
-	chunk_ragdoll_max_speed = 180, -- m/s
+	chunk_ragdoll_speed_near = 6.25, -- m/s per chunk
+	chunk_ragdoll_speed_far = 0.75, -- m/s per chunk
+	chunk_ragdoll_max_speed = 45, -- m/s
 	chunk_ragdoll_up = 0.35, -- the upwards speed, as a share of the horizontal speed
 	chunk_ragdoll_window = 1.5, -- seconds a body has to start ragdolling after it was hit
 	-- Shell
