@@ -16,6 +16,9 @@ local CONFIG = {
 	heal_interval = 0.9, -- s
 	-- (a heal of the game that is permanent health and leaves the wounds as they are: the start heals them)
 	heal_type = "health_regen",
+	-- (and one that is temporary health, for a character whose healing becomes temporary health: the no_permanent_health perk of
+	-- Natural Bond and the like, which the game's own heals look at too, as a bandage becomes bandage_temp_health)
+	temporary_heal_type = "buff",
 	stamina_regen = 4, -- added to the regeneration's multiplier of 1
 	-- RegenCrosses: 10 crosses a second, each 6 units, from up to 35 units around the pawn's middle (45 up and down), for 2 s, brightest
 	-- at the middle of its life (mAttenKa 0.5); each keeps the pawn's speed (mOwnerVelocityFactor 1), slowed by mAirResistance 2, and
@@ -121,7 +124,10 @@ combos.kinds.booster = {
 		if combos.is_host() and t >= entry.next_heal then
 			entry.next_heal = t + CONFIG.heal_interval
 
-			DamageUtils.heal_network(unit, unit, CONFIG.heal, CONFIG.heal_type)
+			local buff_extension = ScriptUnit.has_extension(unit, "buff_system")
+			local temporary = buff_extension and buff_extension:has_buff_perk("no_permanent_health")
+
+			DamageUtils.heal_network(unit, unit, CONFIG.heal, temporary and CONFIG.temporary_heal_type or CONFIG.heal_type)
 		end
 
 		if t >= entry.next_cross then
