@@ -40,10 +40,11 @@ local CONFIG = {
 	glow_texture_size = 64,
 	background = { 168, 211, 334, 255, scale = 0.53, x = 0, y = 10, color = { 150, 0, 0, 0 } },
 	disc = { 119, 258, 173, 313, scale = 0.53, x = 0, y = 5, color = { 255, 255, 255, 255 } },
-	-- (fb_Pulse001: the glow circle, magnified twice by ScaledGlowCircle, stretched about its middle by GlowCirclePulse 3 times a second,
-	-- by half, in HudColorHighLight)
+	-- (fb_Pulse001: the glow circle at half its widget's size (ScaledGlowCircle's scale of 0.5 about its middle), its texture
+	-- coordinates stretched about its middle by GlowCirclePulse 3 times a second, by half each way, which makes it a third of the widget
+	-- to all of it; in HudColorHighLight)
 	alert = { 0, 0, 64, 64, scale = 0.53, x = 6, y = 1, color = { 255, 255, 160, 0 } },
-	alert_magnify = 0.5,
+	alert_shrink = 0.5,
 	alert_rate = 3, -- a second
 	alert_amplitude = 0.5,
 	alert_phase = 0.01,
@@ -202,18 +203,18 @@ local function draw(gui, material, texture_size, widget, scale, width, height, l
 		Vector3(right - w, height - top - h, CONFIG.layer + layer), Vector2(w, h), Color(color[1], color[2], color[3], color[4]))
 end
 
--- The glow circle of a full meter, stretched about its middle as time goes
+-- The glow circle of a full meter: the whole circle, in the middle of its widget, at the size its material gives it as time goes
 local function draw_alert(gui, scale, width, height, now)
 	local widget = CONFIG.alert
 	local stretch = 1 + CONFIG.alert_amplitude * math.sin(2 * math.pi * (CONFIG.alert_rate * now + CONFIG.alert_phase))
-	local half = 0.5 * CONFIG.alert_magnify * stretch
 	local size = widget.scale * scale
 	local w, h = (widget[3] - widget[1]) * size, (widget[4] - widget[2]) * size
-	local right, top = width + widget.x * size, widget.y * size
+	local center_x, center_y = width + widget.x * size - w / 2, widget.y * size + h / 2
+	local share = CONFIG.alert_shrink / stretch
 	local color = widget.color
 
-	Gui.bitmap_uv(gui, "ut_glow_circle", Vector2(0.5 - half, 0.5 - half), Vector2(0.5 + half, 0.5 + half),
-		Vector3(right - w, height - top - h, CONFIG.layer + 2), Vector2(w, h), Color(color[1], color[2], color[3], color[4]))
+	Gui.bitmap(gui, "ut_glow_circle", Vector3(center_x - w * share / 2, height - center_y - h * share / 2, CONFIG.layer + 2),
+		Vector2(w * share, h * share), Color(color[1], color[2], color[3], color[4]))
 end
 
 -- The number, right to left from its right end
