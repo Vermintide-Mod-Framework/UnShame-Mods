@@ -106,6 +106,23 @@ mod:hook(ActionUtils, "spawn_player_projectile", function (func, owner_unit, pos
 	return func(owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
 end)
 
+-- How big a projectile is against walls, if not the same as against enemies. With static_impact_type "sphere_sweep" the game sweeps
+-- enemies with the radius and walls with a quarter of it. A projectile whose projectile_info has ut_wall_radius is swept against walls
+-- with that instead.
+mod:hook(PlayerProjectileImpactUnitExtension, "update_sphere_sweep", function (func, self, unit, input, dt, context, t, radius, collision_filter, ...)
+	if collision_filter == self.static_collision_filter and collision_filter ~= self.enemy_collision_filter then
+		local projectile = ScriptUnit.has_extension(unit, "projectile_system")
+		local projectile_info = projectile and projectile._current_action and projectile._current_action.projectile_info
+		local wall_radius = projectile_info and projectile_info.ut_wall_radius
+
+		if wall_radius then
+			radius = wall_radius
+		end
+	end
+
+	return func(self, unit, input, dt, context, t, radius, collision_filter, ...)
+end)
+
 -- Explosions. The name is the name of the explosion template.
 --   mod.explosion_before_callbacks[template name] = function (world, position, attacker_unit)
 --       Runs before an explosion is made, on every machine. What it returns is passed to the callback below.

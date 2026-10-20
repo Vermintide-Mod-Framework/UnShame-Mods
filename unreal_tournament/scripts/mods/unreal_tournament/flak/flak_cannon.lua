@@ -148,8 +148,9 @@ local CONFIG = {
 	-- UT's gravity is 950 units/s^2, which is 19 m/s^2 at 0.02 m per unit. This is a little less. The game's own gravity is -9.82,
 	-- which keeps a shell fired straight up in the air twice as long as UT's.
 	shell_gravity = -17,
-	-- The shell hits an enemy as a rocket does (utils.UT_PROJECTILE_RADIUS), and a wall by a ray, as UT's shell is a point
+	-- The shell hits an enemy as a rocket does (utils.UT_PROJECTILE_RADIUS), and a wall with a sphere of its own
 	shell_radius = mod.utils.UT_PROJECTILE_RADIUS, -- m
+	shell_wall_radius = 0.2, -- m
 	shell_damage = 60, -- the damage of the explosion
 	-- The multipliers of the explosion's damage and stagger for each armor type: unarmored, armored, monsters, players,
 	-- berserkers and super armor
@@ -368,7 +369,8 @@ local function build_shell_action()
 	projectile_info.gravity_settings = SHELL_GRAVITY_SETTINGS
 	projectile_info.life_time = CONFIG.shell_lifetime
 	projectile_info.radius = CONFIG.shell_radius
-	projectile_info.static_impact_type = "raycast"
+	projectile_info.static_impact_type = "sphere_sweep"
+	projectile_info.ut_wall_radius = CONFIG.shell_wall_radius
 	projectile_info.show_warning_icon = nil
 	projectile_info.unit_life_time = CONFIG.shell_lifetime
 

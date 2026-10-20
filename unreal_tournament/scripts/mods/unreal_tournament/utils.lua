@@ -432,8 +432,8 @@ utils.UT_UNIT = 0.02
 
 -- How easily a projectile hits an enemy. UT's projectile is a point that hits a player's collision cylinder, 25 uu (0.5 m) in radius.
 -- Here the projectile is a sphere that hits the enemy's body, which is about 0.2 m from its middle to its side, so the sphere reaches
--- the rest of the way. A projectile that is bigger than a point in UT adds its own size. Walls are hit by a ray, or by the projectile's
--- own size.
+-- the rest of the way. A projectile that is bigger than a point in UT adds its own size. Walls are hit by a ray, or by a sphere of the
+-- projectile's own (ut_wall_radius, hooks.lua).
 utils.UT_PROJECTILE_RADIUS = 0.3 -- m
 
 -- The intensity of a weapon's light in a character's hand (xWeaponAttachment.WeaponLight, LightBrightness 255) for this game's lights.
