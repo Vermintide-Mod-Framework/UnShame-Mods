@@ -6,6 +6,68 @@ local ut = get_mod("unreal_tournament")
 local runner = mod.test_runner
 local assault = ut.assault
 
+local CONFIG = {
+	-- A round's damage against armour, of its damage against an enemy with none (a Chaos marauder), with this much either way
+	-- (assault_rifle.lua's bullet_armor_attack). A Stormvermin is armoured. A Chaos warrior's body is super armour, which takes none,
+	-- critical hits too.
+	plain_breed = "chaos_marauder",
+	armoured_breed = "skaven_storm_vermin",
+	armoured_share = 0.5,
+	armour_margin = 0.1,
+	super_armour_breed = "chaos_warrior",
+	-- How far ahead the enemies that are shot stand, and how long the button is held for one round (they come 0.088 s apart)
+	enemy_distance = 5, -- m
+	one_round = 0.05, -- s
+	-- An enemy whose shield the repeater's shot breaks (a shielded clan rat's), which stops the rounds
+	shield_breed = "skaven_clan_rat_with_shield",
+	-- A grenade thrown at an enemy this far ahead goes off on it before it touches anything else, so well before the 2 s timer
+	grenade_enemy_distance = 4, -- m
+	grenade_touch_time = 1, -- s
+	-- The most the grenade's explosion hurts the player who threw it (grenade_self_damage), and how long one thrown at the feet takes to
+	-- go off (2 s after it first touches the floor)
+	grenade_self_damage = 7,
+	grenade_feet_wait = 3.5, -- s
+}
+
+-- The key of the rifle in the melee slot
+local function rifle_key(t)
+	return t.on_main_thread(function ()
+		local slot_data = ScriptUnit.extension(t.unit(), "inventory_system"):get_slot_data("slot_melee")
+
+		return slot_data and slot_data.item_data and slot_data.item_data.name
+	end)
+end
+
+-- The first hit of one round on an enemy of a breed, enemy_distance ahead, aimed at its middle. A hit on the head is passed over.
+-- Returns the damage, and the record of all the hits.
+local function round_damage(t, breed_name)
+	t.go_to_start()
+
+	local enemy = t.spawn(breed_name, CONFIG.enemy_distance)
+
+	if not t.expect(enemy, "the %s could not be spawned", breed_name) then
+		return nil
+	end
+
+	t.wait(1)
+	t.aim_at(enemy)
+
+	local damage = t.track_damage(enemy)
+
+	t.press("action_one", CONFIG.one_round)
+	t.wait(0.5)
+	t.remove(enemy)
+	t.wait(0.5)
+
+	for _, hit in ipairs(damage.hits) do
+		if hit.zone ~= "head" then
+			return hit.amount, damage
+		end
+	end
+
+	return nil, damage
+end
+
 -- The rounds and the grenade explosions that are made while a test runs, and the time of the player's last round
 local rounds = 0
 local explosions = 0
@@ -325,6 +387,187 @@ local function scenarios()
 				end)
 
 				t.expect(assault.grenade_count == assault.max_grenades, "the pickup left %d of %d grenades", assault.grenade_count, assault.max_grenades)
+			end,
+		},
+		{
+			-- The game's own refill of the other slots is kept while the rifles are in the hands
+			name = "a pickup of ammo fills the ranged weapon while the rifles are held",
+			run = function (t)
+				local before = t.on_main_thread(function ()
+					local slot_data = ScriptUnit.extension(t.unit(), "inventory_system"):get_slot_data("slot_ranged")
+					local ammo_extension = slot_data and GearUtils.get_ammo_extension(slot_data.right_unit_1p, slot_data.left_unit_1p)
+
+					if not ammo_extension or ammo_extension:infinite_ammo() then
+						return nil
+					end
+
+					ammo_extension:use_ammo(math.ceil(ammo_extension:ammo_count() / 2))
+
+					return true
+				end)
+
+				if not before then
+					t.skip("the ranged weapon has no ammo")
+				end
+
+				t.wait(0.5)
+
+				local result = t.on_main_thread(function ()
+					local inventory_extension = ScriptUnit.extension(t.unit(), "inventory_system")
+					local slot_data = inventory_extension:get_slot_data("slot_ranged")
+					local ammo_extension = GearUtils.get_ammo_extension(slot_data.right_unit_1p, slot_data.left_unit_1p)
+					local used = ammo_extension:total_remaining_ammo()
+
+					inventory_extension:add_ammo_from_pickup(Pickups.ammo.all_ammo)
+
+					return {
+						used = used,
+						after = ammo_extension:total_remaining_ammo(),
+						max = ammo_extension:max_ammo(),
+						wielded = inventory_extension:get_wielded_slot_name(),
+					}
+				end)
+
+				t.log("the ranged weapon had %d of %d, and %d after the pickup", result.used, result.max, result.after)
+				t.expect(result.wielded == "slot_melee", "the rifles are not in the hands (%s)", tostring(result.wielded))
+				t.expect(result.used < result.max, "no ammo was used")
+				t.expect(result.after == result.max, "the pickup left the ranged weapon at %d of %d", result.after, result.max)
+			end,
+		},
+		{
+			name = "rounds hurt armoured enemies by their armour",
+			run = function (t)
+				t.critical_hits(false)
+
+				local key = rifle_key(t)
+				local plain = round_damage(t, CONFIG.plain_breed)
+
+				if not t.expect(plain and plain > 0, "a round did not hurt the %s", CONFIG.plain_breed) then
+					return
+				end
+
+				local armoured = round_damage(t, CONFIG.armoured_breed)
+
+				if t.expect(armoured, "a round did not hurt the %s", CONFIG.armoured_breed) then
+					local share = (armoured / t.power_against(CONFIG.armoured_breed, key)) / (plain / t.power_against(CONFIG.plain_breed, key))
+
+					t.log("%s %.2f, %s %.2f: %.2f", CONFIG.plain_breed, plain, CONFIG.armoured_breed, armoured, share)
+					t.expect(math.abs(share - CONFIG.armoured_share) <= CONFIG.armour_margin, "a round did %.2f of its damage to the %s, not %.2f", share, CONFIG.armoured_breed, CONFIG.armoured_share)
+				end
+			end,
+		},
+		{
+			-- The rounds only stagger super armour, with a critical hit too (the repeater's own crits still hurt it)
+			name = "rounds don't hurt super armour, critical ones neither",
+			run = function (t)
+				for _, critical in ipairs({ false, true }) do
+					t.critical_hits(critical)
+					start_recording()
+
+					local damage, record = round_damage(t, CONFIG.super_armour_breed)
+
+					recording = false
+
+					t.log("%s: %d rounds, %d hits, the first on the body %s", critical and "critical" or "plain", rounds, record and #record.hits or 0, tostring(damage))
+					t.expect(rounds > 0, "no round was fired")
+					t.expect(not damage or damage == 0, "a %s round did %.1f to the %s's body", critical and "critical" or "plain", damage or 0, CONFIG.super_armour_breed)
+				end
+			end,
+		},
+		{
+			-- A shield blocks the rounds, and they don't break it (the repeater's shot does)
+			name = "a raised shield stops the rounds",
+			run = function (t)
+				local enemy = t.spawn(CONFIG.shield_breed, CONFIG.enemy_distance)
+
+				if not t.expect(enemy, "the %s could not be spawned", CONFIG.shield_breed) then
+					return
+				end
+
+				t.raise_shield(enemy)
+				t.wait(1)
+				t.aim_at(enemy)
+
+				local damage = t.track_damage(enemy)
+
+				t.press("action_one", CONFIG.one_round)
+				t.wait(0.5)
+
+				t.expect(not t.shield_broken(enemy), "the round broke the %s's shield", CONFIG.shield_breed)
+				t.expect(damage.total == 0, "the round hurt the %s through its shield (%.1f)", CONFIG.shield_breed, damage.total)
+			end,
+		},
+		{
+			-- A grenade goes off as it touches an enemy (Grenade.ProcessTouch): a sphere of utils.UT_PROJECTILE_RADIUS on the enemy's body
+			name = "a grenade thrown at an enemy goes off on it",
+			run = function (t)
+				t.wait_until(function ()
+					return #assault.grenades == 0
+				end, 10, "the grenades in flight to go off")
+
+				local key = rifle_key(t)
+				local enemy = t.spawn(CONFIG.plain_breed, CONFIG.grenade_enemy_distance)
+
+				if not t.expect(enemy, "the %s could not be spawned", CONFIG.plain_breed) then
+					return
+				end
+
+				t.wait(1)
+				t.aim_at(enemy)
+
+				local damage = t.track_damage(enemy)
+
+				start_recording()
+				t.press("action_two", CONFIG.one_round)
+				t.wait(CONFIG.grenade_touch_time)
+
+				recording = false
+
+				local from_grenade = 0
+
+				for _, hit in ipairs(damage.hits) do
+					if hit.source == key then
+						from_grenade = from_grenade + hit.amount
+					end
+				end
+
+				t.expect(explosions == 1, "%d grenades went off within %.1f s, not 1", explosions, CONFIG.grenade_touch_time)
+				t.expect(from_grenade > 0, "the grenade did not hurt the %s", CONFIG.plain_breed)
+			end,
+		},
+		{
+			-- The grenade's explosion hurts the player who threw it, far less than the Rocket Launcher's
+			name = "a grenade at the feet hurts the player, at most 7",
+			run = function (t)
+				t.wait_until(function ()
+					return #assault.grenades == 0
+				end, 10, "the grenades in flight to go off")
+
+				local key = rifle_key(t)
+
+				t.hurtable(true)
+				t.look(-89)
+
+				local taken = t.track_damage(t.unit())
+
+				start_recording()
+				t.press("action_two", CONFIG.one_round)
+				t.wait(CONFIG.grenade_feet_wait)
+
+				recording = false
+
+				local own = 0
+
+				for _, hit in ipairs(taken.hits) do
+					if hit.source == key then
+						own = own + hit.amount
+					end
+				end
+
+				t.log("the grenade hurt the player %.1f", own)
+				t.expect(explosions == 1, "%d grenades went off, not 1", explosions)
+				t.expect(own > 0, "the grenade's explosion did not hurt the player")
+				t.expect(own <= CONFIG.grenade_self_damage + 0.5, "the grenade's explosion hurt the player %.1f, more than %d", own, CONFIG.grenade_self_damage)
 			end,
 		},
 	}

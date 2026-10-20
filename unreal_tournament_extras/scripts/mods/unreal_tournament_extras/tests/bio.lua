@@ -47,6 +47,10 @@ local CONFIG = {
 	outside_radius = 2.2, -- m
 	-- A critical glob does the same damage as a plain one, within this share
 	crit_margin = 0.05,
+	-- A flying glob's spheres: against enemies UT's (utils.UT_PROJECTILE_RADIUS) with the glob's 2 UT units, against walls the pistol
+	-- shot's it is made on
+	glob_enemy_radius = 2 * 0.02 + 0.3, -- m
+	glob_wall_radius = 0.15, -- m
 }
 
 local function is_shot(action)
@@ -684,6 +688,45 @@ local function scenarios()
 
 				t.tap("wield_2")
 				t.wait(1.5)
+			end,
+		},
+		{
+			-- A glob in the air hits an enemy as a rocket does (utils.UT_PROJECTILE_RADIUS) with its own 2 UT units added, and a wall
+			-- with the pistol shot's sphere it is made on (ut_wall_radius, hooks.lua), which the game sweeps with these numbers
+			name = "a flying glob's sphere is UT's against enemies and the base's against walls",
+			run = function (t)
+				t.look(20)
+
+				local found
+
+				t.press("action_one", 0.05, function ()
+					found = found or t.projectiles(is_shot)[1]
+				end)
+				t.watch(0.2, function ()
+					found = found or t.projectiles(is_shot)[1]
+				end)
+
+				if not t.expect(found, "no glob flew") then
+					return
+				end
+
+				local sizes = t.on_main_thread(function ()
+					local impact_extension = Unit.alive(found) and ScriptUnit.has_extension(found, "projectile_impact_system")
+					local projectile = Unit.alive(found) and ScriptUnit.has_extension(found, "projectile_system")
+					local projectile_info = projectile and projectile._current_action.projectile_info
+
+					return impact_extension and projectile_info and {
+						radius = impact_extension.radius,
+						static_impact_type = impact_extension.static_impact_type,
+						wall = projectile_info.ut_wall_radius,
+					}
+				end)
+
+				if t.expect(sizes, "the glob was gone before it was looked at") then
+					t.log("enemies %.2f m, walls %s %.2f m", sizes.radius, tostring(sizes.static_impact_type), sizes.wall or -1)
+					t.expect(math.abs(sizes.radius - CONFIG.glob_enemy_radius) < 0.001, "the glob's sphere against enemies is %.2f m, not %.2f", sizes.radius, CONFIG.glob_enemy_radius)
+					t.expect(sizes.static_impact_type == "sphere_sweep" and sizes.wall == CONFIG.glob_wall_radius, "the glob is swept against walls by %s %s, not a sphere of %.2f m", tostring(sizes.static_impact_type), tostring(sizes.wall), CONFIG.glob_wall_radius)
+				end
 			end,
 		},
 	}

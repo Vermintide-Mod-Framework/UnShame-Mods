@@ -15,7 +15,11 @@ local CONFIG = {
 	-- Longer than a multi kill's window between kills (rewards.lua)
 	apart = 2, -- s
 	-- The announcement of a full meter comes this long after it (and a little more)
+	announcement_delay = 1.5, -- s
 	announcement_wait = 2.5, -- s
+	-- Another line, played this long before the announcement is due
+	other_line = "ut_announcer_double_kill",
+	line_before = 0.5, -- s
 	-- A special and a monster to kill, and damage that kills anything at once
 	special_breed = "skaven_ratling_gunner",
 	boss_breed = "skaven_rat_ogre",
@@ -191,6 +195,79 @@ local function scenarios()
 				t.on_main_thread(function ()
 					adrenaline.give(t.unit(), -adrenaline.max)
 				end)
+			end,
+		},
+		{
+			-- In UT the line is dropped if another one played in the second before it is due. Here it waits for that second to pass
+			-- (announcer.lua), as the kills keep the multi kill lines coming.
+			name = "Adrenalin waits for a line that played just before it was due",
+			run = function (t)
+				if not ut.option("announcer") then
+					t.skip("the announcer is turned off")
+				end
+
+				local sounds = t.sounds("ut_announcer_")
+
+				t.on_main_thread(function ()
+					adrenaline.give(t.unit(), -adrenaline.max)
+				end)
+				t.wait(0.5)
+				t.on_main_thread(function ()
+					adrenaline.give(t.unit(), adrenaline.max)
+				end)
+
+				-- (another line, half a second before the Adrenalin line is due)
+				t.wait(CONFIG.announcement_delay - CONFIG.line_before)
+				t.on_main_thread(function ()
+					ut.announcer.play(CONFIG.other_line, true)
+				end)
+
+				-- (when UT would have dropped it, it hasn't played yet)
+				t.wait(CONFIG.line_before + 0.2)
+
+				local early = #sounds
+
+				t.wait(CONFIG.announcement_wait)
+
+				t.log("lines: %s", table.concat(sounds, ", "))
+				t.expect(early == 1 and sounds[1] == CONFIG.other_line, "Adrenalin played within a second of the other line (%s)", table.concat(sounds, ", "))
+				t.expect(#sounds == 2 and sounds[2] == "ut_announcer_adrenalin", "Adrenalin did not play after the other line (%s)", table.concat(sounds, ", "))
+
+				t.on_main_thread(function ()
+					adrenaline.give(t.unit(), -adrenaline.max)
+				end)
+			end,
+		},
+		{
+			-- A line that waits is dropped once it is no longer true: here a combo has started before it played
+			name = "Adrenalin is not announced once a combo has started",
+			run = function (t)
+				if not ut.option("announcer") then
+					t.skip("the announcer is turned off")
+				end
+
+				local sounds = t.sounds("ut_announcer_adrenalin")
+
+				t.on_main_thread(function ()
+					adrenaline.give(t.unit(), -adrenaline.max)
+				end)
+				t.wait(0.5)
+				t.on_main_thread(function ()
+					adrenaline.give(t.unit(), adrenaline.max)
+				end)
+				t.wait(0.5)
+				t.on_main_thread(function ()
+					ut.combos.start(t.unit(), "speed")
+				end)
+				t.wait(CONFIG.announcement_wait)
+
+				t.expect(#sounds == 0, "Adrenalin was announced %d times during the combo", #sounds)
+
+				-- (an empty meter ends the combo)
+				t.on_main_thread(function ()
+					adrenaline.give(t.unit(), -adrenaline.max)
+				end)
+				t.wait(0.5)
 			end,
 		},
 	}

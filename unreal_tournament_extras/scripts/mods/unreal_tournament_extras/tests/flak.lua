@@ -69,6 +69,16 @@ local CONFIG = {
 	crit_least_ratio = 1.2,
 	-- An enemy with a shield that can't be broken (a shielded Stormvermin's)
 	shield_breed = "skaven_storm_vermin_with_shield",
+	-- A shot's view shake (FlakFire.ShakeOffsetMag, 20 UT units, 0.4 m back) reaches at least this far back, and the aim turns by at
+	-- most this much, as the sine of its pitch (the Blunderbuss's recoil turned it up 15 degrees, 0.26)
+	least_kick = 0.2, -- m
+	most_turn = 0.01,
+	-- The shell's sphere against walls (flak_cannon.lua's shell_wall_radius)
+	shell_wall_radius = 0.2, -- m
+	-- The Ironbreaker's talent that staggers the enemies around him when his Gromril Armour is lost (its buff and its explosion have its
+	-- name), and the self damage that takes the armour
+	gromril_talent = "bardin_ironbreaker_gromril_stagger",
+	gromril_self_damage = 5,
 }
 
 local function is_chunk(action)
@@ -871,6 +881,130 @@ local function scenarios()
 				t.wait(1.5)
 			end,
 		},
+		{
+			-- FlakFire's view shake: the view jumps back (ShakeOffsetMag 20 units along it) and does not turn (ShakeRotMag is 0), so the
+			-- base's recoil, which turns the aim up, is off
+			name = "a shot kicks the view back, as UT's, and does not turn the aim",
+			run = function (t)
+				local start_up = t.on_main_thread(function ()
+					return Vector3.z(Quaternion.forward(ScriptUnit.extension(t.unit(), "first_person_system"):current_rotation()))
+				end)
+				local back, turned = 0, 0
+
+				t.press("action_one", 0.05, function ()
+					local up = Vector3.z(Quaternion.forward(ScriptUnit.extension(t.unit(), "first_person_system"):current_rotation()))
+
+					back = math.min(back, Vector3.y(ut.view_shake.offset()))
+					turned = math.max(turned, math.abs(up - start_up))
+				end)
+				t.watch(0.5, function ()
+					local up = Vector3.z(Quaternion.forward(ScriptUnit.extension(t.unit(), "first_person_system"):current_rotation()))
+
+					back = math.min(back, Vector3.y(ut.view_shake.offset()))
+					turned = math.max(turned, math.abs(up - start_up))
+				end)
+
+				t.log("the view went %.2f m back, and the aim turned %.3f", -back, turned)
+				t.expect(back <= -CONFIG.least_kick, "the view went %.2f m back, not at least %.2f", -back, CONFIG.least_kick)
+				t.expect(turned <= CONFIG.most_turn, "the aim turned %.3f (the sine of its pitch)", turned)
+			end,
+		},
+		{
+			-- The shell hits an enemy as a rocket does (utils.UT_PROJECTILE_RADIUS) and a wall with its own sphere (ut_wall_radius,
+			-- hooks.lua), which the game sweeps with these numbers
+			name = "the shell's sphere is UT's against enemies and its own against walls",
+			run = function (t)
+				t.look(20)
+
+				local found
+
+				t.press("action_two", 0.05, function ()
+					found = found or t.projectiles(is_shell)[1]
+				end)
+				t.watch(0.2, function ()
+					found = found or t.projectiles(is_shell)[1]
+				end)
+
+				if not t.expect(found, "no shell flew") then
+					return
+				end
+
+				local sizes = t.on_main_thread(function ()
+					local impact_extension = Unit.alive(found) and ScriptUnit.has_extension(found, "projectile_impact_system")
+					local projectile = Unit.alive(found) and ScriptUnit.has_extension(found, "projectile_system")
+					local projectile_info = projectile and projectile._current_action.projectile_info
+
+					return impact_extension and projectile_info and {
+						radius = impact_extension.radius,
+						static_impact_type = impact_extension.static_impact_type,
+						wall = projectile_info.ut_wall_radius,
+					}
+				end)
+
+				if t.expect(sizes, "the shell was gone before it was looked at") then
+					t.log("enemies %.2f m, walls %s %.2f m", sizes.radius, tostring(sizes.static_impact_type), sizes.wall or -1)
+					t.expect(math.abs(sizes.radius - ut.utils.UT_PROJECTILE_RADIUS) < 0.001, "the shell's sphere against enemies is %.2f m, not %.2f", sizes.radius, ut.utils.UT_PROJECTILE_RADIUS)
+					t.expect(sizes.static_impact_type == "sphere_sweep" and sizes.wall == CONFIG.shell_wall_radius, "the shell is swept against walls by %s %s, not a sphere of %.2f m", tostring(sizes.static_impact_type), tostring(sizes.wall), CONFIG.shell_wall_radius)
+				end
+			end,
+		},
+		{
+			-- The player's own damage can set off their buffs. The Ironbreaker's talent that staggers the enemies around him when his
+			-- Gromril Armour is lost makes an explosion at his position, which the game has not yet made current in the mod's update, where
+			-- the weapons' self damage is done (utils.apply_self_damage, with_valid_positions).
+			name = "self damage that takes the Gromril Armour sets off its talent's explosion",
+			every_hero = true,
+			run = function (t)
+				if Managers.player:local_player():career_name() ~= "dr_ironbreaker" then
+					t.skip("only the Ironbreaker has Gromril Armour")
+				end
+
+				local explosions = t.explosions()
+
+				t.hurtable(true)
+
+				local result = t.on_main_thread(function ()
+					local unit = t.unit()
+					local buff_extension = ScriptUnit.extension(unit, "buff_system")
+					local talent_id
+
+					if not buff_extension:has_buff_type("bardin_ironbreaker_gromril_armour") then
+						buff_extension:add_buff("bardin_ironbreaker_gromril_armour")
+					end
+
+					if not buff_extension:has_buff_type(CONFIG.gromril_talent) then
+						talent_id = buff_extension:add_buff(CONFIG.gromril_talent)
+					end
+
+					local had_armour = buff_extension:has_buff_type("bardin_ironbreaker_gromril_armour")
+
+					-- (the mod's update, as the weapons' self damage)
+					ut.utils.apply_self_damage(unit, Unit.world_position(unit, 0), Vector3.up(), ut.items.weapons.flak_cannon_dr.key, CONFIG.gromril_self_damage)
+
+					return {
+						had_armour = had_armour,
+						has_armour = buff_extension:has_buff_type("bardin_ironbreaker_gromril_armour"),
+						talent_id = talent_id,
+					}
+				end)
+
+				if result.talent_id then
+					t.after(function ()
+						local buff_extension = ScriptUnit.has_extension(t.unit(), "buff_system")
+
+						if buff_extension then
+							buff_extension:remove_buff(result.talent_id)
+						end
+					end)
+				end
+
+				t.wait(0.5)
+
+				t.expect(result.had_armour, "the Gromril Armour could not be given")
+				t.expect(not result.has_armour, "the self damage did not take the Gromril Armour")
+				t.expect(count_names(explosions, CONFIG.gromril_talent) >= 1, "the talent made no explosion (%s)", table.concat(explosions, ", "))
+			end,
+		},
 	}
 end
 
@@ -881,6 +1015,7 @@ local function hero(setting_id, careers)
 end
 
 -- Bardin's copy is on the Grudge-raker and shares the rest, so his careers run what the copy takes from its base: the ammo and the shots.
+-- The Ironbreaker also runs the self damage that takes his Gromril Armour.
 runner.add_suite({
 	name = "flak",
 	slot = "slot_ranged",
