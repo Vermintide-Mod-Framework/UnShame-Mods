@@ -6,7 +6,8 @@ local mod = get_mod("unreal_tournament")
 --   Killing sprees (KillingSpreeMessage): Killing Spree, Rampage, Dominating, Unstoppable, Godlike and Wicked Sick.
 --   First blood (FirstBloodMessage), head shots (SpecialKillMessage), and the call outs (Head Hunter, Flak Monkey and Combo Whore), which
 --     come a moment after the kill that reaches their number (ClientDelayedAnnouncementNamed).
--- Others voice through it too: mod.announcer.play(event, forced), mod.announcer.play_later(event, delay).
+-- Others voice through it too (adrenaline): mod.announcer.play(event, forced), mod.announcer.play_later(event, delay). The setting
+-- covers every line.
 
 local CONFIG = {
 	-- MultiKillMessage, by the level of the multi kill (level 1 is the second kill). Each entry has a sound and a text. The last entry

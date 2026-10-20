@@ -26,6 +26,12 @@ return {
 	announcer_description = {
 		en = "Unreal Tournament 2004's announcer. Announces multi kills, killing sprees, head shots and more as you kill.",
 	},
+	adrenaline = {
+		en = "Adrenaline",
+	},
+	adrenaline_description = {
+		en = "Unreal Tournament 2004's adrenaline, shown on the HUD. Multi kills, killing sprees, head shots, first blood and the weapon call outs fill it, up to 100. The host's setting decides it for everyone.",
+	},
 	no_barriers = {
 		en = "Remove Barriers",
 	},

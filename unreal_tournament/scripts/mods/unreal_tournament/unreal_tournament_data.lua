@@ -31,6 +31,11 @@ return {
 				default_value = false,
 			},
 			{
+				setting_id = "adrenaline",
+				type = "checkbox",
+				default_value = true,
+			},
+			{
 				setting_id = "no_barriers",
 				type = "checkbox",
 				default_value = false,
