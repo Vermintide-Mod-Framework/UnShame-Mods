@@ -78,7 +78,7 @@ for _, variant in ipairs(VARIANTS) do
 		melee_slot = true,
 		deus_melee_tables = variant.deus_melee_tables,
 		name = "UT2004 Assault Rifle",
-		type_name = "Assault Rifle",
+		type_name = "Assault Rifles",
 		description = DESCRIPTION,
 		keywords = { "weapon_keyword_rapid_fire", "weapon_keyword_crowd_control", "weapon_keyword_versatile" },
 		icon = "ut_assault_rifle_icon",
