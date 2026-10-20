@@ -4,8 +4,9 @@
 
 ## Weapons to finish
 
-1. **Link Gun for everyone.** Two weapons that share their code (the primary, linking allies, link stacking), each with its own alt
-   and resource:
+1. **Link Gun for everyone.** The regular one is being made from scratch in `link_new/`. Once it is finished, the old one's lasso (the
+   beam that holds, throws and pulls) is added to it and becomes a Lasso Gun item of its own. Both need a UT2003 illusion (the old model,
+   as the Shock Rifle's), and so do the Assault Rifles. The plan before that:
    - The regular Link Gun, UT2004's (`LinkFire`, `LinkAltFire`, `LinkProjectile`), for every career with a ranged slot. It uses
      ammo: 220 at most, 2 for a bolt, 1 for a beam hit, none while linked to a teammate. The alt is the damage beam. A copy for each
      hero, as the Shield Gun has. Sienna has no ammo weapon, so hers is a staff copy given ammo. The Warrior Priest has no ranged slot.

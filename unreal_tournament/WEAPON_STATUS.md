@@ -13,8 +13,11 @@ needs its own copy from a base of that hero, because the animations, units and a
 - Flak Cannon: the Blunderbuss (`es_blunderbuss`), for the Mercenary, Huntsman and Foot Knight, and the Grudge-raker (`dr_rakegun`), for
   the Ironbreaker, Ranger and Engineer.
 - Rocket Launcher: the Repeating Crossbow (`wh_crossbow_repeater`), for the Zealot, Bounty Hunter and Captain.
-- Link Gun: the Deepwood Staff (`we_life_staff`, from the woods DLC), for the Sister of the Thorn. A Link Gun for everyone is on the
-  TODO list.
+- Link Gun: the Deepwood Staff (`we_life_staff`, from the woods DLC), for the Sister of the Thorn. It is to become the Lasso Gun.
+- Link Gun, UT2004's own (`link_new/`, being made): a copy for each hero. The Repeater Handgun (`es_repeating_handgun`) for the
+  Mercenary, Huntsman and Foot Knight; the Handgun (`dr_handgun`) for the Ironbreaker, Ranger and Engineer; the Crossbow (`wh_crossbow`)
+  for the Zealot, Bounty Hunter and Captain; the Beam Staff (`bw_skullstaff_beam`), given ammo, for all four of Sienna's careers; and the
+  Deepwood Staff, given ammo, for all four of Kerillian's.
 - Shield Gun: a melee base for each hero, for everyone but the Warrior Priest (see below).
 - Lightning Gun: the Deepwood Staff (`we_life_staff`, from the woods DLC), for all four of Kerillian's careers.
 - Sniper Rifle (UT2004's classic one): the Handguns (`es_handgun`, `dr_handgun`), for the Mercenary, Huntsman, Foot Knight, Ironbreaker
