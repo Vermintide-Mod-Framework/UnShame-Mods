@@ -163,6 +163,12 @@ local CONFIG = {
 	beam_send_interval = 0.05, -- s
 }
 
+-- The bolts and the beam have no hit effect of their own. Without one the game would play the sound, particles and decals of the surface
+-- that is hit, and with none at all it stops on a hit on the level. The skin draws UT's (see mod.silent_hit_effects in hooks.lua).
+local NO_HIT_EFFECT = "ut_link_new_impact"
+
+mod.silent_hit_effects[NO_HIT_EFFECT] = true
+
 -- The projectile unit of the bolts: the Drakefire Pistols' shot, which has no gravity of its own. The skin draws UT's bolt at it.
 local PROJECTILE_UNIT_TEMPLATES = { "drake_pistol_shot" }
 local BOLT_GRAVITY_SETTINGS = "drake_pistols"
@@ -507,6 +513,7 @@ local function build_bolt_projectile(links)
 
 	return {
 		kind = "charged_projectile",
+		hit_effect = NO_HIT_EFFECT,
 		projectile_info = projectile_info,
 		impact_data = {
 			damage_profile = bolt_profile(links),
@@ -544,6 +551,7 @@ local function build_beam(hand)
 		end,
 		-- (what DamageUtils.process_projectile_hit reads of the action: the damage profile is given with each hit, for the links)
 		damage_profile = beam_profile(0),
+		hit_effect = NO_HIT_EFFECT,
 		additional_critical_strike_chance = 0,
 		critical_strike = {},
 		ut_charge_callback = "link_new_beam",
