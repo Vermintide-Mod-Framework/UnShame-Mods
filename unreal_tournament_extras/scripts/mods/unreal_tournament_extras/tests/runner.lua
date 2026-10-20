@@ -567,6 +567,50 @@ local function make_context(suite)
 		end)
 	end
 
+	-- Knocks the player down with a hit of their own, of all their health, from item_key (a weapon's self damage: utils'
+	-- apply_explosion_self_damage). The guards that keep a hurtable player alive are off for the hit. Returns whether they are down.
+	function t.knock_down(item_key)
+		local was_invincible, was_unkillable = script_data.player_invincible, script_data.player_unkillable
+
+		script_data.player_invincible = false
+		script_data.player_unkillable = nil
+
+		on_main_thread(function ()
+			local unit = player_unit()
+
+			DamageUtils.add_damage_network(unit, unit, 1000, "torso", "drakegun", nil, Vector3(0, 0, -1), item_key, nil, unit, nil, nil, false, nil, nil, nil, nil, nil, 1)
+		end)
+
+		local down = t.wait_until(function ()
+			local status_extension = extension("status_system")
+
+			return status_extension ~= nil and status_extension:is_knocked_down()
+		end, 3, "the player to be knocked down")
+
+		script_data.player_invincible, script_data.player_unkillable = was_invincible, was_unkillable
+
+		return down
+	end
+
+	-- Revives a knocked down player, as an ally's revive does (the server decides it), and heals them
+	function t.revive()
+		local revived = on_main_thread(function ()
+			local status_extension = extension("status_system")
+
+			if status_extension and status_extension:is_knocked_down() then
+				StatusUtils.set_revived_network(player_unit(), true)
+
+				return true
+			end
+		end)
+
+		if revived then
+			t.wait(0.5)
+		end
+
+		t.heal()
+	end
+
 	-- The player's velocity (m/s) as x, y and z
 	function t.velocity()
 		return unpack(engine(function ()
@@ -1822,7 +1866,8 @@ local function run_suite(suite, only_career)
 					t.hurtable(false)
 				end
 
-				t.heal()
+				-- (a scenario that failed with the player down leaves them up again)
+				t.revive()
 				t.wait(0.5)
 
 				if scenario.skipped then

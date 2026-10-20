@@ -448,6 +448,50 @@ local function scenarios()
 		end,
 	}
 
+	-- DeathMatch.EndSpree with no killer: a hit of the player's own doesn't end a spree, but being knocked down by it does, with the line of
+	-- a death by one's own hand
+	list[#list + 1] = {
+		name = "a knockdown by one's own weapon ends a spree with the suicide line",
+		run = function (t)
+			local rocket = ut.items.weapons.rocket_launcher.key
+			local name = Managers.player:local_player():name()
+
+			hurt_by_enemy(t)
+			kill_many(t, CONFIG.killing_spree, nil, 0.1)
+			table.clear(chat_lines)
+
+			recording_chat = true
+
+			-- (a hit of the player's own, which leaves them up)
+			t.hurtable(true)
+			t.on_main_thread(function ()
+				local unit = t.unit()
+
+				DamageUtils.add_damage_network(unit, unit, 10, "torso", "drakegun", nil, Vector3(0, 0, -1), rocket, nil, unit, nil, nil, false, nil, nil, nil, nil, nil, 1)
+			end)
+			t.wait(0.5)
+
+			local after_hit = #chat_lines
+			local down = t.knock_down(rocket)
+
+			t.wait(0.5)
+
+			recording_chat = false
+
+			t.revive()
+			t.hurtable(false)
+
+			local line = name .. " was looking good till he killed himself!"
+
+			t.log("chat: %s", table.concat(chat_lines, " / "))
+			t.expect(after_hit == 0, "the player's own hit ended the spree (%s)", table.concat(chat_lines, " / "))
+
+			if t.expect(down, "the player was not knocked down") then
+				t.expect(table.contains(chat_lines, line), "no \"%s\" in the chat", line)
+			end
+		end,
+	}
+
 	return list
 end
 
