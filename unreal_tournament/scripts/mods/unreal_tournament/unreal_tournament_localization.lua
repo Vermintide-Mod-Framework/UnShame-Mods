@@ -30,7 +30,7 @@ return {
 		en = "Adrenaline",
 	},
 	adrenaline_description = {
-		en = "Unreal Tournament 2004's adrenaline, shown on the HUD. Multi kills, killing sprees, head shots, first blood, the weapon call outs and killing specials, sack rats, monsters and lords fill it, up to 100. The host's setting decides it for everyone.",
+		en = "Unreal Tournament 2004's adrenaline, shown on the HUD. Multi kills, killing sprees, first blood, the weapon call outs and killing specials, sack rats, monsters and lords fill it, up to 100. The host's setting decides it for everyone.",
 	},
 	no_barriers = {
 		en = "Remove Barriers",

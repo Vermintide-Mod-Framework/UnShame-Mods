@@ -123,7 +123,7 @@ local function scenarios()
 			end,
 		},
 		{
-			name = "a head shot gives five",
+			name = "a head shot gives none",
 			run = function (t)
 				settle(t)
 
@@ -133,7 +133,7 @@ local function scenarios()
 
 				local gained = amount(t) - before
 
-				t.expect(gained == 5, "a head shot gave %d, not 5", gained)
+				t.expect(gained == 0, "a head shot gave %d", gained)
 			end,
 		},
 		{
