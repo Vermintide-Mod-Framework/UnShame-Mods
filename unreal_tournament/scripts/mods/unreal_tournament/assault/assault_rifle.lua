@@ -914,11 +914,11 @@ local function apply_template(template)
 	template.buff_type = "MELEE"
 	template.weapon_type = variant.weapon_type
 
-	-- A melee weapon's stamina and block angles, which the tooltip of a melee item shows (and stops the game without). It has no block, so
-	-- its angles are 0 and its stamina is the least the tooltip shows, one shield (a choice: stamina does nothing else for it).
-	template.max_fatigue_points = 2
-	template.block_angle = 0
-	template.outer_block_angle = 0
+	-- A melee weapon's stamina and block angles, which the tooltip of a melee item shows (and stops the game without): those items.lua
+	-- gave its base copy (melee_slot)
+	template.max_fatigue_points = base.max_fatigue_points
+	template.block_angle = base.block_angle
+	template.outer_block_angle = base.outer_block_angle
 
 	-- Dodging: the base's. The game's crosshair, and the spread of the base, which each round sets (see handgun_start_callbacks).
 	template.dodge_count = variant.dodge_count

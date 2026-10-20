@@ -440,9 +440,22 @@ function items.register(setting_id, definition)
 	item.required_dlc = nil
 	-- The base weapon's skins don't apply to the item. register_skins gives it skins of its own.
 	item.skin_combination_table = nil
+
 	if definition.melee_slot then
 		item.slot_type = "melee"
 		item.trait_table_name = "melee"
+
+		-- An item of the melee slot has no ammo: the game carries each slot's ammo over to the next level, and stops on a template with
+		-- ammo whose units have none. Its tooltip shows a melee weapon's stamina and block angles, and stops without them. The base
+		-- weapon has no block, so its angles are 0 and its stamina is the least the tooltip shows, one shield. Its bots take it for a
+		-- melee weapon, with the game's default data for one (a ranged weapon's in the melee slot stopped them). This holds for the copy
+		-- below too, which is the template whenever the mod is off (and while it reloads).
+		template.ammo_data = nil
+		template.max_fatigue_points = template.max_fatigue_points or 2
+		template.block_angle = template.block_angle or 0
+		template.outer_block_angle = template.outer_block_angle or 0
+		template.buff_type = "MELEE"
+		template.attack_meta_data = nil
 	end
 
 	-- These are set the way parse_item_master_list sets them for every item.
