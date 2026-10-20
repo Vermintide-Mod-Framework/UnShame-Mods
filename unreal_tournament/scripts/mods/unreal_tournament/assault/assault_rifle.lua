@@ -131,6 +131,9 @@ local CONFIG = {
 	-- (no damage to super armor, even with a critical hit: the rounds only stagger it, set in the game)
 	bullet_armor_attack = { 1, 0.5, 1, 1, 1, 0 },
 	bullet_armor_impact = { 1, 1, 1, 1, 1, 0.5 },
+	-- The rounds stagger this share of what their damage gives (a UT weapon's stagger comes from its damage, utils.impact_power_for): an
+	-- off-hand gun in the melee slot, it is not to hold enemies off as a melee weapon does (set in the game; UT's rounds push nothing)
+	bullet_impact_share = 0.5,
 	grenade_armor_attack = { 1, 1, 1.5, 1, 1, 0.5 },
 	grenade_armor_impact = { 1, 1, 1, 1, 1, 0.5 },
 	-- How close a bot fires its rounds from, as its melee weapon (a choice: the game's bots fight with the melee slot up close)
@@ -152,7 +155,7 @@ local UNIT = utils.UT_UNIT
 -- Damage
 
 register_damage_profile("ut_assault_bullet", "shot_repeating", function (profile)
-	make_flat(profile, attack_power_for(CONFIG.damage), impact_power_for(CONFIG.damage), "shot_shotgun")
+	make_flat(profile, attack_power_for(CONFIG.damage), impact_power_for(CONFIG.damage) * CONFIG.bullet_impact_share, "shot_shotgun")
 
 	-- A shield blocks the rounds. The repeater's shot breaks a shield it hits, and its damage goes through.
 	profile.shield_break = nil
