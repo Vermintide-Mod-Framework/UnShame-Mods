@@ -25,15 +25,12 @@ for _, setting_id in ipairs(VARIANTS) do
 	TEMPLATE_NAMES[mod.items.weapons[setting_id].template] = true
 end
 
--- UT draws in gamma space, and these flashes' textures are read as srgb (make_weapon_fx.py), so a color or a fade that UT multiplies them
--- by is that to the power of 2.2 here
-local GAMMA = 2.2
-
 -- The flash of a bolt, green, or gold with links (LinkAltFire.FlashMuzzleFlash). In the player's view it is LinkMuzFlashProj1st: 2
 -- meshes (LinkMuzFlashMesh) for a bolt, with room for 5, each one of the 4 tiles of its texture at random (mRandTextures, which it
 -- keeps: no mTileAnimation), turned at random about the barrel (mRandOrient), at a size of 0.6 to 0.8 that does not grow, for 0.1 to
 -- 0.14 s, mColorRange 75 of 255, and xEmitter's default mAttenKa of 0.2. It doesn't grow, so it isn't halved (see the Rocket
--- Launcher's flash and muzzle_flash.lua's fit).
+-- Launcher's flash and muzzle_flash.lua's fit). Its texture is read as it is (make_weapon_fx.py), as UT puts it on the screen, so UT's
+-- color and fade are kept.
 local function first_person_flash_settings(color)
 	return {
 		count = 2,
@@ -42,8 +39,9 @@ local function first_person_flash_settings(color)
 		growth = 0,
 		life = { 0.1, 0.14 },
 		attenuation = 0.2,
-		color = { (75 / 255) ^ GAMMA, (75 / 255) ^ GAMMA, (75 / 255) ^ GAMMA },
+		color = { 75 / 255, 75 / 255, 75 / 255 },
 		fit = 1,
+		linear = true,
 		unit = "units/ut/fx/link_flash_mesh",
 		material = "units/ut/fx/fx_weapon_link_muzmesh_" .. color .. "_",
 		still_tiles = true,
@@ -298,12 +296,12 @@ local function third_person_flash(character, links)
 	local third_person = holder.third_person
 	local settings = CONFIG.muzzle_flash_3rd
 	local size = settings.size * (BEAM.link_scale[math.min(links, 5) + 1] + 1)
-	local color = settings.color ^ GAMMA
+	local color = settings.color
 
 	particles.mesh({
 		additive = 0,
 		brightness = function (fraction)
-			return particles.attenuation(fraction, 0) ^ GAMMA
+			return particles.attenuation(fraction, 0)
 		end,
 		color = { color, color, color },
 		follow = function ()
@@ -525,7 +523,7 @@ mod.skin_init_callbacks.link_new_bolt = function (projectile)
 		end,
 		spin = CONFIG.bolt_spin,
 		spin_axis = Vector3(0, 1, 0),
-		texture = links > 0 and "link_muz_yellow" or "link_muz_green",
+		texture = links > 0 and "link_bolt_yellow" or "link_bolt_green",
 		unit = "units/ut/fx/link_bolt_mesh",
 	})
 

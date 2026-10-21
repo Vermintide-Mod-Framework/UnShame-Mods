@@ -10,8 +10,8 @@ local mod = get_mod("unreal_tournament")
 --       (weapon_skin's model_point_in_view), so the flash is linked to the unit and stays on the muzzle as the view turns, as UT's is
 --       attached to the weapon. emitter_settings, if it is given, are the numbers of another emitter that draws the same mesh, in the
 --       form of CONFIG's (the Rocket Launcher's RocketMuzFlash1st). They can also name another mesh (unit), its materials (material:
---       the name of the first tile's material without its number), whether a mesh keeps the tile it starts at (still_tiles) and how many
---       meshes the emitter has room for (max) (the Link Gun's LinkMuzFlashProj1st).
+--       the name of the first tile's material without its number), whether a mesh keeps the tile it starts at (still_tiles), how many
+--       meshes the emitter has room for (max) and whether the texture is read as it is (linear) (the Link Gun's LinkMuzFlashProj1st).
 
 local utils = mod.utils
 local particles = mod.skin_particles
@@ -90,9 +90,9 @@ function mod.muzzle_flash(emitter, follow, world_unit, draw_scale, locked, emitt
 			-- of its own)
 			additive = 0,
 			-- (UT fades it in gamma space, as it draws: its texture is read as srgb here (make_weapon_fx.py's SRGB_BRIGHTEN), and the light
-			-- that shows as UT's fade is that to the power of 2.2)
+			-- that shows as UT's fade is that to the power of 2.2. A texture that is read as it is (settings.linear) fades as UT's does.)
 			brightness = function (fraction)
-				return attenuation(fraction, settings.attenuation) ^ GAMMA
+				return attenuation(fraction, settings.attenuation) ^ (settings.linear and 1 or GAMMA)
 			end,
 			color = settings.color,
 			follow = not locked and follow or nil,

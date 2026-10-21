@@ -62,6 +62,10 @@ TEXTURES = {
     'invis_overlay': ('XEffectMat/Texture/invis_overlay.tga', 1, 1),
     # The Link Gun's bolt: the flashes on its mesh (LinkMuzFlashProj1st and 3rd: LinkMuzProjGreenFB and LinkMuzProjYellowFB, FB_Brighten),
     # and its trail (NewLinkTrail: a shaft along its way, PlasmaShaft, and puffs, SmokePanels1's 16 tiles)
+    # (and the bolt's mesh: LinkProjGreenFB and LinkProjYellowFB, link_muz_green and link_muz_yellow added to the screen, read as they
+    # are, where make_fx_assets.py's link_muz_green is read as srgb)
+    'link_bolt_green': ('XEffectMat/Texture/link_muz_green.tga', 1, 1),
+    'link_bolt_yellow': ('XEffectMat/Texture/link_muz_yellow.tga', 1, 1),
     'link_muzmesh_green': ('XEffectMat/Texture/link_muzmesh_green.tga', 2, 2),
     'link_muzmesh_yellow': ('XEffectMat/Texture/link_muzmesh_yellow.tga', 2, 2),
     'plasma_shaft': ('AW-2004Particles/Texture/PlasmaShaft.tga', 1, 1),
@@ -82,7 +86,7 @@ BRIGHTEN = ('minigun_burst', 'impact_smoke', 'minigun_flash_3rd', 'link_muzmesh_
 # Of those, the ones read as srgb, with fx_particle_brighten_srgb_graph and fx_particle_weapon_brighten_srgb_graph: UT2004 draws in gamma
 # space and puts a texture's values on the screen as they are, which the game does for an srgb texture. Read as they are, the first
 # person flash (MinigunMuzFlash1st's Minigun_burst) was paler and yellower than UT's orange.
-SRGB_BRIGHTEN = ('minigun_burst', 'link_muzmesh_green', 'link_muzmesh_yellow')
+SRGB_BRIGHTEN = ('minigun_burst',)
 
 # The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield and the
 # Redeemer blast's fx_ion_sphere and fx_flame_ring, made by make_combo_materials.py, which do FB_Brighten themselves and use the alpha)
