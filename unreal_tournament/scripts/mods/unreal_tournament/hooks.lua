@@ -847,6 +847,91 @@ for _, function_name in ipairs({
 	end)
 end
 
+-- Projected decals of the weapons' own (the Bio Rifle's splat, the Link Gun's scorches): the game's decal manager draws them onto the
+-- surfaces under their box, as the game's blood, so they follow walls, corners and floors. Each kind has a pool of its own in
+-- DecalSettings, which says how long its decals last and how many there can be.
+--   mod.add_decal_pool(name, unit_name, life, pool_size)
+--   mod.add_decal(name, position, normal, size, depth, hit_unit, hit_actor)
+--       Puts one on the surface at a position, turned at random about the way the surface faces, size wide and depth deep (meters).
+--       Given the unit and the part it is on, the decal goes with them, as the game's blood does (a lift, a cart).
+local decal_pools = {}
+
+function mod.add_decal_pool(name, unit_name, life, pool_size)
+	decal_pools[name] = {
+		unit_name = unit_name,
+		life = life,
+		pool_size = pool_size,
+	}
+	DecalSettings[name] = {
+		life_time = life,
+		pool_size = pool_size,
+		units = {
+			unit_name,
+		},
+	}
+end
+
+-- A manager made after the pools were added has them (from DecalSettings). One made before the mod was loaded, or reloaded, doesn't, so
+-- they are added to it when a decal is first put.
+mod:hook_safe(DecalManager, "init", function (self)
+	self._ut_decal_pools = {}
+
+	for name in pairs(decal_pools) do
+		self._ut_decal_pools[name] = true
+	end
+end)
+
+function mod.add_decal(name, position, normal, size, depth, hit_unit, hit_actor)
+	local manager = Managers.state and Managers.state.decal
+	local pool = decal_pools[name]
+
+	if not manager or not pool then
+		return
+	end
+
+	manager._ut_decal_pools = manager._ut_decal_pools or {}
+
+	if not manager._ut_decal_pools[name] then
+		EngineOptimizedManagers.decal_manager_add_setting(manager._decal_system, name, pool.life, pool.pool_size, pool.unit_name)
+
+		manager._ut_decal_pools[name] = true
+	end
+
+	local side = Vector3.cross(normal, Vector3.up())
+
+	if Vector3.length(side) < 0.1 then
+		side = Vector3.cross(normal, Vector3.right())
+	end
+
+	side = Vector3.normalize(side)
+
+	local tangent = Quaternion.rotate(Quaternion.axis_angle(normal, math.random() * math.pi * 2), side)
+
+	-- As the game's blood decals are placed: the rotation looks along the tangent with the normal up, and the extents are the width, the
+	-- length and the depth. (The units are made for it, see tools/asset_conversion/make_decal_unit.py.)
+	manager:add_projection_decal(pool.unit_name, hit_actor and hit_unit or nil, hit_actor, position, Quaternion.look(tangent, normal), Vector3(size, size, depth), normal)
+end
+
+-- The decal manager keeps the units of its pools alive, and the mod's package can't be unloaded while they are (the game crashes when
+-- the mods are reloaded). So when the mod is unloaded the manager is made again, without the mod's pools.
+mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+	for name in pairs(decal_pools) do
+		DecalSettings[name] = nil
+	end
+
+	local manager = Managers.state and Managers.state.decal
+
+	if not manager or not Managers.world:has_world("level_world") then
+		return
+	end
+
+	manager:destroy()
+	manager._decal_system = nil
+	manager._ut_decal_pools = nil
+	manager:init(Managers.world:world("level_world"))
+	manager._ut_decal_pools = nil
+end
+
 -- How bots shoot a weapon of the mod. The game's bot shooting (BTBotShootAction) is hooked once, here, because a function can be hooked
 -- only once. The hook runs the callback of the weapon whose key is true in the weapon's attack_meta_data:
 --   mod.bot_shot_callbacks[key] = function (func, action, shoot_blackboard, action_data, input_extension, t)

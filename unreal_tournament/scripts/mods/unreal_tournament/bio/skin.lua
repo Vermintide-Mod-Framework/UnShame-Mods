@@ -764,22 +764,10 @@ local function show_landed(id)
 	end)
 end
 
--- The splat is a projected decal of the game's own decal manager, like the game's blood: the manager draws it onto the surfaces under
--- its box, so it follows walls, corners and floors. The decal's unit has a pool of its own in DecalSettings.
+-- The splat is a projected decal of the game's own decal manager, with a pool of its own (see mod.add_decal_pool in hooks.lua)
 local DECAL_POOL = "ut_bio"
 
-DecalSettings[DECAL_POOL] = {
-	life_time = CONFIG.splat_life,
-	pool_size = CONFIG.splat_pool_size,
-	units = {
-		CONFIG.splat_unit,
-	},
-}
-
--- A manager that was made before the mod was loaded, or reloaded, does not have the pool, so it is added to it.
-mod:hook_safe(DecalManager, "init", function (self)
-	self._ut_bio_pool = true
-end)
+mod.add_decal_pool(DECAL_POOL, CONFIG.splat_unit, CONFIG.splat_life, CONFIG.splat_pool_size)
 
 -- The part of a unit at a node, if it has one
 local function actor_at_node(unit, node)
@@ -796,54 +784,8 @@ local function actor_at_node(unit, node)
 	end
 end
 
--- Puts a splat on the surface at a position, turned at random about the way the surface faces. Given the unit and the part it is on, the
--- decal goes with them, as the game's blood does (a lift, a cart).
-local function add_splat(position, normal, hit_unit, hit_actor)
-	local manager = Managers.state and Managers.state.decal
-
-	if not manager then
-		return
-	end
-
-	if not manager._ut_bio_pool then
-		EngineOptimizedManagers.decal_manager_add_setting(manager._decal_system, DECAL_POOL, CONFIG.splat_life, CONFIG.splat_pool_size, CONFIG.splat_unit)
-
-		manager._ut_bio_pool = true
-	end
-
-	local side = Vector3.cross(normal, Vector3.up())
-
-	if Vector3.length(side) < 0.1 then
-		side = Vector3.cross(normal, Vector3.right())
-	end
-
-	side = Vector3.normalize(side)
-
-	local tangent = Quaternion.rotate(Quaternion.axis_angle(normal, math.random() * math.pi * 2), side)
-
-	-- As the game's blood decals are placed: the rotation looks along the tangent with the normal up, and the extents are the width, the
-	-- length and the depth. (The unit is made for it, see tools/asset_conversion/make_decal_unit.py.)
-	manager:add_projection_decal(CONFIG.splat_unit, hit_actor and hit_unit or nil, hit_actor, position, Quaternion.look(tangent, normal), Vector3(CONFIG.splat_size, CONFIG.splat_size, CONFIG.splat_depth), normal)
-end
-
--- The decal manager keeps the units of its pools alive, and the mod's package can't be unloaded while they are (the game crashes when
--- the mods are reloaded). So when the mod is unloaded the manager is made again, without the mod's pool.
 mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
 	stop_all_remote_charges()
-
-	DecalSettings[DECAL_POOL] = nil
-
-	local manager = Managers.state and Managers.state.decal
-
-	if not manager or not Managers.world:has_world("level_world") then
-		return
-	end
-
-	manager:destroy()
-	manager._decal_system = nil
-	manager._ut_bio_pool = nil
-	manager:init(Managers.world:world("level_world"))
-	manager._ut_bio_pool = nil
 end
 
 -- A glob lands, on the part of a unit at a node if it is known. The splat stays on that part for its own time, and the blob stays until the
@@ -857,7 +799,7 @@ mod.goop_visual_callbacks.land = function (id, position, normal, level, on_unit,
 
 	show_landed(id)
 	skin_api.play_sound_at("ut_bio_splat2_3d", position)
-	add_splat(position, normal, on_unit, actor_at_node(on_unit, on_node))
+	mod.add_decal(DECAL_POOL, position, normal, CONFIG.splat_size, CONFIG.splat_depth, on_unit, actor_at_node(on_unit, on_node))
 end
 
 -- Another glob lands in a glob that is there. It is drawn again at the size it has now.
