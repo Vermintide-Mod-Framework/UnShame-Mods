@@ -396,12 +396,12 @@ local function new_skin(setting_id)
 		-- UT's third person mesh (LinkAttachment's NewLinkGun_3rd) at UT's size in a player's hand (DrawScale 0.4). Its origin is by its
 		-- grip, and its barrel runs along its forward to the muzzle (its upper flash bone).
 		third_person = third_person_of(setting_id, "units/ut/link/third_person", 75.5, 8.9),
-		-- UT2004 has no inspect animation. The inspect pose brings the gun to the middle of the view and turns it about its middle to show
-		-- its left side, with the eye, the barrel to the left, a little from above. Set with tools/asset_conversion/preview_weapon.py, and
-		-- held a little low, as the game shows a pose bigger and higher than the preview.
-		inspect_pose_right = 0,
-		inspect_pose_forward = 0,
-		inspect_pose_up = -4,
+		-- UT2004 has no inspect animation. The inspect pose brings the gun in and turns it about its middle to show its left side, with the
+		-- eye, the barrel to the left, a little from above. Its back and bottom run off the right and bottom edges of the screen, as the
+		-- other weapons' do. Set with tools/asset_conversion/preview_weapon.py.
+		inspect_pose_right = 30,
+		inspect_pose_forward = -25,
+		inspect_pose_up = -8,
 		inspect_pose_roll = -20,
 		inspect_pose_pitch = 5,
 		inspect_pose_yaw = 65,
@@ -422,7 +422,10 @@ local function new_skin(setting_id)
 				pivot_yaw = 500 / 65536 * 360,
 				effect_offset = { 100, 25, -3 },
 				third_person = third_person_of(setting_id, "units/ut/link2003/third_person", 99.2, 2.5),
-				-- (the same pose, about the middle of the old model)
+				-- (the same turn, about the middle of the old model, which is bigger in the view: moved less to run off the same edges)
+				inspect_pose_right = 15,
+				inspect_pose_forward = -5,
+				inspect_pose_up = -8,
 				inspect_pivot_right = 0,
 				inspect_pivot_forward = 30,
 				inspect_pivot_up = -10,
