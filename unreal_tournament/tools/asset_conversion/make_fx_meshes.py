@@ -163,21 +163,18 @@ def make_vortex(unit_name, mesh_name):
     write_unit(unit_name, [geometry('g_mesh', positions, position_index, uvs, uv_index)], {'g_mesh': 'g_mesh'})
     print(unit_name, 'frame 0 of', frames, len(triangles), 'triangles')
 
-def make_strip(unit_name, segments, repeat):
+def make_strip(unit_name, segments):
     # A strip for a beam that is one piece, as UT's PT_Beam is: two triangles for each stretch between two of its points, each on a node of
     # its own, t_<i>_a and t_<i>_b. A triangle's corners are at (0, 0, 0), (1, 0, 0) and (0, 1, 0), so the pose of its node (sheared,
     # which the engine draws) puts them anywhere: skin_particles.lua's strip puts them on the corners of the stretch, which the next one
-    # shares. Across the beam is u, and v goes along it, from 0 to 1 over `repeat` stretches, so the texture repeats once every `repeat`
-    # stretches (more points than repeats make a curve smooth).
-    #   a: the stretch's first left corner (u 0, v first), its first right corner (1, first) and its next left corner (0, next)
-    #   b: its next right corner (1, next), its next left corner (0, next) and its first right corner (1, first)
+    # shares. Across the beam is u, and v goes from 0 to 1 along a stretch, so the texture repeats once a stretch.
+    #   a: the stretch's first left corner (u 0, v 0), its first right corner (1, 0) and its next left corner (0, 1)
+    #   b: its next right corner (1, 1), its next left corner (0, 1) and its first right corner (1, 0)
     triangle = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    uvs = {'a': [(0, 0), (1, 0), (0, 1)], 'b': [(1, 1), (0, 1), (1, 0)]}
     geometries, nodes = [], {}
 
     for i in range(segments):
-        first, after = (i % repeat) / repeat, (i % repeat + 1) / repeat
-        uvs = {'a': [(0, first), (1, first), (0, after)], 'b': [(1, after), (0, after), (1, first)]}
-
         for half in ('a', 'b'):
             name = 't_%d_%s' % (i, half)
             geometries.append(geometry(name, triangle, [0, 1, 2], uvs[half], [0, 1, 2]))
@@ -212,7 +209,5 @@ if __name__ == '__main__':
     make_static('link_bolt_mesh', 'LinkProjectile', EXPORT + '/WeaponStaticMesh')
     # (its UVs are in the tile of column 0 and row 1 of link_muzmesh_green's 2 by 2)
     make_static('link_flash_mesh', 'LinkMuzFlashMesh', tile=(2, 2, 0, 1))
-    # (the Link Gun's beam: its texture repeats every 65 units (mRegenDist), here every 4 stretches, a point every 16.25 units, which makes
-    # its wave smooth, for 2080 units. Further, up to 3525 with links and a link (LinkFire.TraceRange and its link scale), the points are
-    # further apart.)
-    make_strip('beam_strip', 128, 4)
+    # (the Link Gun's beam, up to 3525 units long with links and a link (LinkFire.TraceRange and its link scale), a point every 65)
+    make_strip('beam_strip', 64)

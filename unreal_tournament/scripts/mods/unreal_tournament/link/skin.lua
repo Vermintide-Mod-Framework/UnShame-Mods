@@ -111,24 +111,15 @@ local CONFIG = {
 -- ends, which leaves the muzzle along the aim and bends to the end (mBendStrength), and waves across itself (mWaveFrequency,
 -- mWaveAmplitude, mWaveShift), in a plane that spins about it (mSpinRange). The wave dies down while the beam is on an enemy or links an
 -- ally, and grows while the gun moves. It is green, gold with links, and blue while it links an ally (LinkColor: the team colors are red
--- and blue, and the heroes are one team, as UT's blue). Each link makes it wider and its wave faster, and there is one child more, up
--- to four. The numbers are UT units, and the turns are UT's (65536 to a whole turn).
+-- and blue, and the heroes are one team, as UT's blue). Each link makes it wider and its wave faster. The numbers are UT units, and the
+-- turns are UT's (65536 to a whole turn).
 local BEAM = {
 	regen_dist = 65,
-	child_regen_dist = 75,
 	-- (mSizeRange is half of the beam's width: its texture is a strip with a bright middle that fades out to both sides, and UT's beam
 	-- is about 22 units across)
 	size = 11,
 	color = 240 / 255,
-	child_color = 180 / 255,
-	-- The wave across the beam, which travels along it and turns about it, and grows toward the end. The child follows the beam's wave: at
-	-- its own speed (UT's mWaveShift * 0.6) the two drifted apart into two lines, where UT's beam is one. How UE2 draws mWaveFrequency and
-	-- mWaveAmplitude isn't in the scripts. As fitted to pictures of UT, where the beam is a long smooth wave that swings wider the further
-	-- it reaches: the wave goes wave_frequency turns along each regen_dist of the beam (about one wave over a thousand units), and at an
-	-- amplitude of 8 it reaches wave_reach of the beam's length to the side. Taken as radians a unit (a wave every 2 m), the far waves were
-	-- tight zigzags in which the strip folded over itself.
-	wave_frequency = 0.06, -- turns a regen_dist along the beam
-	wave_reach = 0.07,
+	wave_frequency = 0.06, -- radians a unit along the beam
 	wave_amplitude = 8,
 	max_amplitude = 16,
 	wave_shift = 100000, -- the wave's travel, turns a second
@@ -136,7 +127,6 @@ local BEAM = {
 	-- How far along the beam its bend reaches, as a share of its length. mBendStrength is 3, and how the engine uses it isn't in the
 	-- scripts: the bend reaches a third of the way (a choice, to be checked against UT).
 	bend_share = 1 / 3,
-	max_children = 4,
 	-- A linked beam ends this far short of the ally (LinkBeamEffect.Tick: EndEffect - BeamDir * 30)
 	linked_end_back = 30,
 	-- LinkFire.LinkScale: the size of everything by the links, up to 5
@@ -825,11 +815,10 @@ local function draw_line(visual, line, material, size, color, locked)
 	})
 end
 
--- Puts a line's points along the beam: from the start along the bend to the end, moved across by the wave. lock_end holds the end still
--- (mWaveLockEnd), and the start always is. UT's texture repeats every regen_dist, and the strip's every 4 stretches (skin_particles.lua),
--- so the points are a quarter of regen_dist apart: one every regen_dist made the wave a line of straight pieces.
+-- Puts a line's points along the beam: from the start along the bend to the end, every regen_dist, moved across by the wave. lock_end
+-- holds the end still (mWaveLockEnd), and the start always is.
 local function place_line(line, start, control, finish, length, regen_dist, amplitude, phase, wave_axis, lock_end)
-	local count = math.min(particles.STRIP_POINTS, math.max(2, math.ceil(length / (regen_dist * UNIT / particles.STRIP_REPEAT)) + 1))
+	local count = math.max(2, math.ceil(length / (regen_dist * UNIT)) + 1)
 
 	line.points = line.points or {}
 	line.count = count
@@ -838,8 +827,7 @@ local function place_line(line, start, control, finish, length, regen_dist, ampl
 		local share = (i - 1) / (count - 1)
 		local along = (1 - share) * (1 - share) * start + 2 * share * (1 - share) * control + share * share * finish
 		local envelope = lock_end and math.sin(math.pi * share) or math.sin(math.pi * share * 0.5)
-		local turns = BEAM.wave_frequency * share * length / (regen_dist * UNIT)
-		local wave = amplitude / BEAM.wave_amplitude * BEAM.wave_reach * length * envelope * math.sin(2 * math.pi * turns + phase)
+		local wave = amplitude * UNIT * envelope * math.sin(BEAM.wave_frequency * share * length / UNIT + phase)
 		local point = along + wave_axis * wave
 
 		if line.points[i] then
@@ -871,10 +859,6 @@ local function draw_beam(character, beam, dt)
 			previous_start = Vector3Box(start),
 			previous_aim = Vector3Box(beam.aim:unbox()),
 			lines = {},
-			children = 0,
-			old_links = 0,
-			old_color = 0,
-			old_flash = false,
 			spark_time = 0,
 			flash_time = 0,
 			sphere_time = 0,
@@ -945,40 +929,14 @@ local function draw_beam(character, beam, dt)
 
 	local locked = visual.locked
 
-	-- The beam, and its children, each thinner, with a wider wave of their own. UT makes the children (links + 1 of them) only when the
-	-- links, the color or the third person flash change from what they were (LinkBeamEffect.Tick), and they start as none, no color and
-	-- no flash: so the player's own beam has no child until it links or is linked, and then keeps them.
-	local color = linking and 2 or 0
-	local has_flash = not first_person
-
-	if links ~= visual.old_links or color ~= visual.old_color or has_flash ~= visual.old_flash then
-		visual.old_links, visual.old_color, visual.old_flash = links, color, has_flash
-		visual.children = math.min(links + 1, BEAM.max_children)
-	end
-
-	local children = visual.children
+	-- The beam: one line. UT also draws children (LinkBeamChild), thinner beams with a wider wave of their own, which here showed as a
+	-- second beam beside it.
 	local main = visual.lines[1] or {}
 
 	visual.lines[1] = main
 
 	place_line(main, start, control, finish, length, BEAM.regen_dist, visual.amplitude, visual.phase, wave_axis, locked_on or linking)
 	draw_line(visual, main, beam_material, 2 * BEAM.size * (link_scale * 0.6 + 1) * UNIT, BEAM.color, locked)
-
-	for c = 1, BEAM.max_children do
-		local line = visual.lines[c + 1] or {}
-
-		visual.lines[c + 1] = line
-
-		if c <= children then
-			local amplitude = c * 4 + visual.amplitude * ((BEAM.max_amplitude - c * 4) / BEAM.max_amplitude)
-
-			place_line(line, start, control, finish, length, BEAM.child_regen_dist, amplitude, visual.phase, wave_axis, linking)
-			draw_line(visual, line, beam_material, 2 * (2 + 4 * (children - c + 1)) * UNIT, BEAM.child_color, locked)
-		else
-			line.count = 0
-			line.drawn = false
-		end
-	end
 
 	-- The sparks where it ends, but not on a link: back toward the shooter from what it hits, or on from its end in the air
 	if spark_texture then

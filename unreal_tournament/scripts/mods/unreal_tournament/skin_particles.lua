@@ -40,9 +40,8 @@ local mod = get_mod("unreal_tournament")
 --   particles.beam(spec): goes from spec.from to spec.to. spec.size is how wide it is, and it faces the camera around its length.
 --       Instead of the two points, spec.track can be a function that returns from and to, or nothing when the beam should end.
 --   particles.strip(spec): a beam along a line of points, as one piece (UT's PT_Beam), spec.size wide, facing the camera about the line
---       at each point. spec.points is a function that returns the points (a list of boxes) and how many there are (up to
---       particles.STRIP_POINTS), or nothing when it should end. The texture repeats once every particles.STRIP_REPEAT stretches between
---       points. With spec.locked (which returns the first person unit
+--       at each point. spec.points is a function that returns the points (a list of boxes) and how many there are (up to 65), or
+--       nothing when it should end. The texture repeats once between two points. With spec.locked (which returns the first person unit
 --       and a point in its camera node's frame) it is linked to the camera node and starts at that point, so it stays on the model.
 --   particles.mesh(spec): a mesh (units/ut/fx/coil, sphere, vortex, made by tools/asset_conversion/make_fx_meshes.py) at spec.position.
 --       It is turned by spec.rotation (or a function that returns it each frame), or it faces the camera with spec.face_camera (its z axis is the way it faces). It also turns by
@@ -88,13 +87,9 @@ local function acquire(world, unit_name)
 end
 
 -- The strip (units/ut/fx/beam_strip, tools/asset_conversion/make_fx_meshes.py's make_strip): this many points, with two triangles for
--- each stretch between two of them, on the nodes t_<i>_a and t_<i>_b (from 0), and its texture repeats once every STRIP_REPEAT stretches
+-- each stretch between two of them, on the nodes t_<i>_a and t_<i>_b (from 0)
 local STRIP_UNIT_NAME = "units/ut/fx/beam_strip"
-local STRIP_POINTS = 129
-local STRIP_REPEAT = 4
-
-particles.STRIP_POINTS = STRIP_POINTS
-particles.STRIP_REPEAT = STRIP_REPEAT
+local STRIP_POINTS = 65
 
 -- The nodes of a strip's triangles, { a, b } for each stretch
 local function strip_nodes(entry)
