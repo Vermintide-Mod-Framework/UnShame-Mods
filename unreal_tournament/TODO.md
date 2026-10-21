@@ -1,18 +1,3 @@
 # To do
 
 `WEAPON_STATUS.md` is what to look at for a weapon, and which careers get which weapon, from which base.
-
-## Weapons to finish
-
-1. **Link Gun for everyone.** The regular one is being made from scratch in `link_new/`. Once it is finished, the old one's lasso (the
-   beam that holds, throws and pulls) is added to it and becomes a Lasso Gun item of its own. The plan before that:
-   - The regular Link Gun, UT2004's (`LinkFire`, `LinkAltFire`, `LinkProjectile`), for every career with a ranged slot. It uses
-     ammo: 220 at most, 2 for a bolt, 1 for a beam hit, none while linked to a teammate. The alt is the damage beam. A copy for each
-     hero, as the Shield Gun has. Sienna has no ammo weapon, so hers is a staff copy given ammo. The Warrior Priest has no ranged slot.
-   - The physics Link Gun, the one in `link/link_gun.lua` now: heat, and the beam that holds, throws and pulls. For Sienna and
-     Kerillian, as well as the regular one. A copy for Sienna on one of her staffs. Kerillian's could list all four of her careers, as
-     the Lightning Gun's copy of the Deepwood Staff does. It needs its own name, so that the two are not both "Link Gun".
-   - It can't be an illusion of the regular one, as Instagib is of the Shock Rifle. The ammo comes from the template, so the HUD would
-     show the ammo and the heat both.
-   - Link stacking, UT's `LinkGun.Links`: a teammate who is linked while linking gets a stronger beam. Both weapons count as Link Guns
-     for it. Now a link gives an ally the same boost whatever they hold.

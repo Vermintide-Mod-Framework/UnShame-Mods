@@ -258,13 +258,6 @@ mod:hook(PlayerUnitFirstPerson, "play_hud_sound_event", function (func, self, ev
 	return func(self, event, wwise_source_id, play_on_husk)
 end)
 
--- How the Link Gun's skin draws the beam.
---   mod.link_beam_callbacks.start_position = function (owner_unit)
---       Where the beam starts: the muzzle of the model, or of the mesh in the character's hand.
---   mod.link_beam_callbacks.draw = function (state, points, count, is_linked)
---       Draws the beam. points is the curve, and the first `count` points are used.
-mod.link_beam_callbacks = {}
-
 -- How the Bio Rifle's skin draws the globs that have landed. They run on every machine.
 --   mod.goop_visual_callbacks.land = function (id, position, normal, level)
 --       A glob with this id lands on a surface. normal is the way the surface faces, and level is how much goop the glob has.
@@ -741,25 +734,6 @@ mod:hook_safe(PlayerCharacterStateLedgeHanging, "on_enter", function (self)
 	for _, callback in pairs(mod.ledge_hang_callbacks) do
 		callback(self.unit)
 	end
-end)
-
--- The heat a weapon gets, by the overcharge type the game is adding (the id of the weapon's own value):
---   mod.overcharge_callbacks[type] = function (overcharge_extension, amount, charge_level)
---       Return the amount to add instead, or nil to add nothing.
-mod.overcharge_callbacks = {}
-
-mod:hook(PlayerUnitOverchargeExtension, "add_charge", function (func, self, overcharge_amount, charge_level, overcharge_type, ...)
-	local callback = mod.overcharge_callbacks[overcharge_type]
-
-	if callback then
-		overcharge_amount = callback(self, overcharge_amount, charge_level)
-
-		if not overcharge_amount then
-			return
-		end
-	end
-
-	return func(self, overcharge_amount, charge_level, overcharge_type, ...)
 end)
 
 -- The color of the overcharge bar, by the template of the weapon in the ranged slot. The game makes the bar orange between its thresholds

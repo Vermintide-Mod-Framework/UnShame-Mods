@@ -220,7 +220,7 @@ WEAPONS['link2003'] = {
     'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
     'locators': ['bone flashA'],
     'unit': 'units/ut/link2003/link_gun',
-    'lua': 'scripts/mods/unreal_tournament/link_new/skin_animations_2003.lua',
+    'lua': 'scripts/mods/unreal_tournament/link/skin_animations_2003.lua',
 }
 
 # UT2003's Assault Rifle (Weapons.AssaultRifle_1st, AssaultRifle.OldMesh), with its grenade ends, and a mirrored copy for the left hand

@@ -43,7 +43,7 @@ STATICS = {
         'unit': 'units/ut/flak/chunk',
         'culling': 'disabled',
     },
-    # UT2003's Link Gun pickup (LinkTex0), which the old Link Gun's icon and the new one's UT2003 illusion are made from
+    # UT2003's Link Gun pickup (LinkTex0), which the icon of the Link Gun's UT2003 illusion is made from
     'link_pickup': {
         'pskx': 'WeaponStaticMesh/StaticMesh/LinkGunPickup.pskx',
         'materials': [('WeaponSkins/Texture/LinkTex0.tga', 'opaque')],

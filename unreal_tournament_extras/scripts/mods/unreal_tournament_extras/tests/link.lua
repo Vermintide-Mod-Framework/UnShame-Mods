@@ -1,12 +1,12 @@
 local mod = get_mod("unreal_tournament_extras")
 local ut = get_mod("unreal_tournament")
 
--- The new Link Gun's in-game tests (see runner.lua), for every hero's copy. Run them with /ut_test link_new. They run in the runner's
+-- The Link Gun's in-game tests (see runner.lua), for every hero's copy. Run them with /ut_test link. They run in the runner's
 -- level, Righteous Stand. The numbers expected are UT's (XWeapons/LinkGun, LinkAltFire, LinkProjectile and LinkFire) as the mod turns them
--- into this game's (link_new/link_gun.lua).
+-- into this game's (link/link_gun.lua).
 
 local runner = mod.test_runner
-local link = ut.link_new
+local link = ut.link
 
 local CONFIG = {
 	-- LinkAmmo.MaxAmmo, all of it in the clip
@@ -61,9 +61,9 @@ local CONFIG = {
 	monster = "skaven_rat_ogre",
 	monster_distance = 12, -- m
 	team = {
-		{ profile = "dwarf_ranger", career = 1, setting_id = "link_new_dr", distance = -3 },
-		{ profile = "wood_elf", career = 1, setting_id = "link_new_we", distance = -4.5 },
-		{ profile = "witch_hunter", career = 1, setting_id = "link_new_wh", distance = -6 },
+		{ profile = "dwarf_ranger", career = 1, setting_id = "link_gun_dr", distance = -3 },
+		{ profile = "wood_elf", career = 1, setting_id = "link_gun_we", distance = -4.5 },
+		{ profile = "witch_hunter", career = 1, setting_id = "link_gun_wh", distance = -6 },
 	},
 	team_link_time = 10, -- s
 	kill_time = 60, -- s
@@ -71,7 +71,7 @@ local CONFIG = {
 }
 
 local function is_bolt(action)
-	return action.ut_link_new_bolt
+	return action.ut_link_bolt
 end
 
 -- The key of the Link Gun in the player's hands
@@ -329,7 +329,7 @@ local function scenarios()
 			-- The beam on an ally who holds a Link Gun links them: it does no damage, takes no ammo, and gives them a link
 			name = "the beam links an ally who holds a Link Gun",
 			run = function (t)
-				local ally = t.add_bot(CONFIG.ally_profile, CONFIG.ally_career, ut.items.weapons.link_new_dr.key, CONFIG.ally_distance)
+				local ally = t.add_bot(CONFIG.ally_profile, CONFIG.ally_career, ut.items.weapons.link_gun_dr.key, CONFIG.ally_distance)
 
 				if not t.expect(ally, "the ally could not be added") then
 					return
@@ -363,7 +363,7 @@ local function scenarios()
 
 				local plain_bolt = first_hit(t, "bolt")
 				local plain_beam = first_hit(t, "beam")
-				local ally = t.add_bot(CONFIG.ally_profile, CONFIG.ally_career, ut.items.weapons.link_new_dr.key, -CONFIG.ally_distance)
+				local ally = t.add_bot(CONFIG.ally_profile, CONFIG.ally_career, ut.items.weapons.link_gun_dr.key, -CONFIG.ally_distance)
 
 				if not t.expect(plain_bolt and plain_beam and ally, "the plain hits or the ally could not be had") then
 					return
@@ -392,12 +392,12 @@ local function scenarios()
 		},
 		{
 			-- A bot links the player while they fire, as UT's bots link their leader (LinkGun.FocusOnLeader), and lets go when they stop
-			-- (link_new/bots.lua)
+			-- (link/bots.lua)
 			name = "a bot links the player who fires",
 			run = function (t)
 				t.look(10)
 
-				local bot = t.add_bot(CONFIG.linker_profile, CONFIG.linker_career, ut.items.weapons.link_new_we.key, CONFIG.linker_behind, nil, true)
+				local bot = t.add_bot(CONFIG.linker_profile, CONFIG.linker_career, ut.items.weapons.link_gun_we.key, CONFIG.linker_behind, nil, true)
 
 				if not t.expect(bot, "the bot could not be added") then
 					return
@@ -427,7 +427,7 @@ local function scenarios()
 			-- over its head.
 			name = "a bot does not link a player who aims at it",
 			run = function (t)
-				local bot = t.add_bot(CONFIG.linker_profile, CONFIG.linker_career, ut.items.weapons.link_new_we.key, CONFIG.linker_behind, nil, true)
+				local bot = t.add_bot(CONFIG.linker_profile, CONFIG.linker_career, ut.items.weapons.link_gun_we.key, CONFIG.linker_behind, nil, true)
 
 				if not t.expect(bot, "the bot could not be added") then
 					return
@@ -461,8 +461,8 @@ local function scenarios()
 					return
 				end
 
-				local firer = t.add_bot(CONFIG.ally_profile, CONFIG.ally_career, ut.items.weapons.link_new_dr.key, CONFIG.firer_ahead)
-				local linker = t.add_bot(CONFIG.linker_profile, CONFIG.linker_career, ut.items.weapons.link_new_we.key, CONFIG.linker_behind, nil, true)
+				local firer = t.add_bot(CONFIG.ally_profile, CONFIG.ally_career, ut.items.weapons.link_gun_dr.key, CONFIG.firer_ahead)
+				local linker = t.add_bot(CONFIG.linker_profile, CONFIG.linker_career, ut.items.weapons.link_gun_we.key, CONFIG.linker_behind, nil, true)
 
 				if not t.expect(firer and linker, "the bots could not be added") then
 					return
@@ -591,14 +591,14 @@ end
 -- Every hero's copy has the same shots, on the base's animations, so every hero's first career runs what comes from the base: the ammo, the
 -- shots and their damage
 runner.add_suite({
-	name = "link_new",
+	name = "link",
 	slot = "slot_ranged",
 	heroes = {
-		hero("link_new", { "es_mercenary", "es_huntsman", "es_knight" }),
-		hero("link_new_dr", { "dr_ironbreaker", "dr_ranger", "dr_engineer" }),
-		hero("link_new_wh", { "wh_captain", "wh_zealot", "wh_bountyhunter" }),
-		hero("link_new_bw", { "bw_adept", "bw_scholar", "bw_unchained" }),
-		hero("link_new_we", { "we_waywatcher", "we_maidenguard", "we_shade" }),
+		hero("link_gun", { "es_mercenary", "es_huntsman", "es_knight" }),
+		hero("link_gun_dr", { "dr_ironbreaker", "dr_ranger", "dr_engineer" }),
+		hero("link_gun_wh", { "wh_captain", "wh_zealot", "wh_bountyhunter" }),
+		hero("link_gun_bw", { "bw_adept", "bw_scholar", "bw_unchained" }),
+		hero("link_gun_we", { "we_waywatcher", "we_maidenguard", "we_shade" }),
 	},
 	scenarios = scenarios(),
 })

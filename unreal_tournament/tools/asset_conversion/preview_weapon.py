@@ -107,7 +107,7 @@ WEAPONS = {
     'link2003': {
         'psk': 'Weapons/SkeletalMesh/LinkGun_1st.psk',
         'textures': ['units/ut/link2003/link_gun_linktex0.png'],
-        'lua': 'scripts/mods/unreal_tournament/link_new/skin_animations_2003.lua',
+        'lua': 'scripts/mods/unreal_tournament/link/skin_animations_2003.lua',
         'display_fov': 60,
         'draw_scale': 1,
         'offset': (-2, -2, -3),

@@ -34,7 +34,7 @@ TEXTURES = {
     'rocket_flare': 'XEffects/Texture/RocketFlare.tga',
     # the Bio Rifle (the goo, the splat decal)
     'bio_goop': 'XEffectMat/Texture/goop_green_a.tga',
-    # the Link Gun (sparks, the flash, the beams, the rings, the splash of a plasma bolt)
+    # the Link Gun (sparks, the flash, the beams, the splash of a plasma bolt)
     'link_spark_green': 'XEffectMat/Texture/link_spark_green.tga',
     'link_spark_yellow': 'XEffectMat/Texture/link_spark_yellow.tga',
     'link_muz_green': 'XEffectMat/Texture/link_muz_green.tga',
@@ -44,8 +44,6 @@ TEXTURES = {
     # (the beam, the flash and the sphere of a link on an ally: the team colors, blue for the heroes)
     'link_beam_blue': 'XEffectMat/Texture/link_beam_blue.tga',
     'link_muz_blue': 'XEffectMat/Texture/link_muz_blue.tga',
-    'link_ring_green': 'XEffectMat/Texture/link_ring_green.tga',
-    'link_ring_yellow': 'XEffectMat/Texture/link_ring_yellow.tga',
     'link_projectile_splash': 'XEffectMat/Texture/Link_projectile_splash.tga',
     'smoke': 'XEffects/Texture/SmokeAlphab_t.tga',
     # the Shield Gun's sparks when the shield stops something (ShieldSparks)

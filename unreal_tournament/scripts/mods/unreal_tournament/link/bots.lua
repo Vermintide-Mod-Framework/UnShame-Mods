@@ -7,7 +7,7 @@ local mod = get_mod("unreal_tournament")
 -- targets and before the ordinary fighting and following: switch to the ranged weapon, then link. A bot with an enemy in melee range
 -- fights instead.
 
-local link = mod.link_new
+local link = mod.link
 
 local CONFIG = {
 	-- How long after a bolt an ally still counts as firing. A held button fires a bolt every 0.2 s.
@@ -18,8 +18,8 @@ local CONFIG = {
 	fire_angle = math.pi / 16, -- radians
 }
 
-local NODE_NAME = "ut_link_new_ally"
-local ACTION_CLASS_NAME = "BTBotUtLinkNewAction"
+local NODE_NAME = "ut_link_ally"
+local ACTION_CLASS_NAME = "BTBotUtLinkAction"
 
 -- Whether a character is firing a Link Gun: the beam, or a bolt a moment ago (UT's Weapon.IsFiring)
 local function firing(unit, t)
@@ -57,10 +57,10 @@ local function can_beam(blackboard)
 	return ammo ~= nil and ammo >= link.config.beam_ammo
 end
 
--- Whether a bot should link an ally. It picks the ally (blackboard.ut_link_new_target): the one it links already, then a player, then
+-- Whether a bot should link an ally. It picks the ally (blackboard.ut_link_target): the one it links already, then a player, then
 -- the nearest.
 BTConditions[NODE_NAME] = function (blackboard)
-	blackboard.ut_link_new_target = nil
+	blackboard.ut_link_target = nil
 
 	if not can_beam(blackboard) or BTConditions.bot_in_melee_range(blackboard) then
 		return false
@@ -96,41 +96,41 @@ BTConditions[NODE_NAME] = function (blackboard)
 		end
 	end
 
-	blackboard.ut_link_new_target = best
+	blackboard.ut_link_target = best
 
 	return best ~= nil
 end
 
 -- The action: turn to the ally as the game's bots turn to an enemy, and hold the beam (the right button) once the aim is close
-local BTBotUtLinkNewAction = class(rawget(_G, ACTION_CLASS_NAME), BTNode)
+local BTBotUtLinkAction = class(rawget(_G, ACTION_CLASS_NAME), BTNode)
 
-BTBotUtLinkNewAction.name = ACTION_CLASS_NAME
+BTBotUtLinkAction.name = ACTION_CLASS_NAME
 
-rawset(_G, ACTION_CLASS_NAME, BTBotUtLinkNewAction)
+rawset(_G, ACTION_CLASS_NAME, BTBotUtLinkAction)
 
-BTBotUtLinkNewAction.init = function (self, ...)
-	BTBotUtLinkNewAction.super.init(self, ...)
+BTBotUtLinkAction.init = function (self, ...)
+	BTBotUtLinkAction.super.init(self, ...)
 end
 
-BTBotUtLinkNewAction.enter = function (self, unit, blackboard, t)
+BTBotUtLinkAction.enter = function (self, unit, blackboard, t)
 	blackboard.input_extension:set_aiming(true, false, true)
 
-	blackboard.ut_link_new = {
+	blackboard.ut_link = {
 		yaw_speed = 0,
 		pitch_speed = 0,
 		holding = false,
 	}
 end
 
-BTBotUtLinkNewAction.leave = function (self, unit, blackboard, t, reason, destroy)
+BTBotUtLinkAction.leave = function (self, unit, blackboard, t, reason, destroy)
 	blackboard.input_extension:set_aiming(false)
 
-	blackboard.ut_link_new = nil
+	blackboard.ut_link = nil
 end
 
-BTBotUtLinkNewAction.run = function (self, unit, blackboard, t, dt)
-	local target = blackboard.ut_link_new_target
-	local state = blackboard.ut_link_new
+BTBotUtLinkAction.run = function (self, unit, blackboard, t, dt)
+	local target = blackboard.ut_link_target
+	local state = blackboard.ut_link
 
 	if not target or not state then
 		return "failed"
@@ -180,7 +180,7 @@ for i = 2, #root do
 			{
 				"BTBotInventorySwitchAction",
 				condition = "is_slot_not_wielded",
-				name = "switch_ranged_ut_link_new",
+				name = "switch_ranged_ut_link",
 				condition_args = {
 					"slot_ranged",
 				},
@@ -188,7 +188,7 @@ for i = 2, #root do
 			},
 			{
 				ACTION_CLASS_NAME,
-				name = "ut_link_new_link",
+				name = "ut_link_ally_beam",
 			},
 			condition = NODE_NAME,
 			name = NODE_NAME,
