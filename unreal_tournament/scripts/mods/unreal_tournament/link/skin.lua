@@ -49,6 +49,8 @@ local function first_person_flash_settings(color)
 end
 
 local CONFIG = {
+	-- The copies of the bolt's sound in the bank, each at its own pitch (make_bank.py's LINK_FIRE_PITCHES)
+	fire_sound_pitches = 6,
 	muzzle_flash = first_person_flash_settings("green"),
 	linked_muzzle_flash = first_person_flash_settings("yellow"),
 	-- The flash of a bolt at the muzzle of the mesh in a character's hand: LinkMuzFlashProj3rd, attached to the mesh's tip but not scaled
@@ -639,15 +641,17 @@ mod.skin_init_callbacks.link_bolt = function (projectile)
 			third_person_flash(owner_unit, links)
 		end
 
+		-- (a linked bolt's is BLinkedFire, LinkAltFire.LinkedFireSound. An unlinked one's is one of the bank's copies at random, as UT's
+		-- P1PulseRifleFire varies its pitch each time.)
 		if api then
-			api.play_sound(links > 0 and "ut_link_linked" or "ut_link_fire")
+			api.play_sound(links > 0 and "ut_link_linked" or "ut_link_fire_" .. math.random(1, CONFIG.fire_sound_pitches))
 		end
 	elseif remote_shots.is_new_shot(owner_unit) then
 		local muzzle, holder = held_muzzle(owner_unit)
 
 		if muzzle then
 			third_person_flash(owner_unit, links)
-			holder.play_sound_at("ut_link_fire_3d", muzzle)
+			holder.play_sound_at("ut_link_fire_3d_" .. math.random(1, CONFIG.fire_sound_pitches), muzzle)
 		end
 	end
 end
@@ -702,7 +706,7 @@ end
 -- The beams
 
 -- The sound of each beam that is drawn, by its character: { the player's own (an id of the skin's play_sound) or another's on their
--- character (a handle of utils.play_on_unit), api }
+-- character (a handle of utils.play_on_unit), api, sound (which of the beam's sounds, 1 to 4) }
 local beam_sounds = {}
 
 local function stop_beam_sound(character)
@@ -1028,19 +1032,26 @@ local function draw_beam(character, beam, dt)
 	end
 end
 
--- Draws each beam, and loops its sound (LinkFire's BeamSounds) while it is drawn
+-- Draws each beam, and loops its sound while it is drawn: LinkFire's BeamSounds, one for no link, one, two, and three or more, which
+-- changes when the links do
 local function draw_beams(dt)
 	for character, beam in pairs(link.beams) do
 		if Unit.alive(character) then
 			draw_beam(character, beam, dt)
 
+			local sound = math.min(link.links_of(character), 3) + 1
+
+			if beam_sounds[character] and beam_sounds[character].sound ~= sound then
+				stop_beam_sound(character)
+			end
+
 			if not beam_sounds[character] then
 				local api = first_person_api()
 
 				if utils.is_local_player_unit(character) and api then
-					beam_sounds[character] = { id = api.play_sound("ut_link_beam"), api = api }
+					beam_sounds[character] = { id = api.play_sound("ut_link_beam_" .. sound), api = api, sound = sound }
 				else
-					beam_sounds[character] = { handle = utils.play_on_unit("ut_link_beam_3d", character) }
+					beam_sounds[character] = { handle = utils.play_on_unit("ut_link_beam_3d_" .. sound, character), sound = sound }
 				end
 			end
 		end

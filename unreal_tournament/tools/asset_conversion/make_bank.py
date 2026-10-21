@@ -16,6 +16,8 @@ SOUNDS = 'WeaponSounds/Sound/'
 NEW_SOUNDS = 'NewWeaponSounds/Sound/'
 # The pitches of the Assault Rifle's shot, from the lowest that P1AssaultRifleFire's PitchVariance (-10 percent) gives to its own
 ASSAULT_FIRE_PITCHES = (0.9, 0.92, 0.94, 0.96, 0.98, 1.0)
+# The pitches of the Link Gun's bolt, the same way: P1PulseRifleFire's PitchVariance is -5 percent (read from WeaponSounds.uax)
+LINK_FIRE_PITCHES = (0.95, 0.96, 0.97, 0.98, 0.99, 1.0)
 # (the male announcer pack of UT2004, the one its reward announcements are by default. The names of the kills are the ones
 # MultiKillMessage.KillSoundName has)
 ANNOUNCER = 'announcermale2k4/Sound/'
@@ -104,12 +106,16 @@ WEAPONS = {
         ('ut_bio_splat2_3d', SOUNDS + 'BBioRifleGoo2', True, -22, 30),
     ],
     'link_gun': [
-        ('ut_link_fire', SOUNDS + 'BLinkGunFire', False, -22, 0),
-        ('ut_link_beam', SOUNDS + 'BLinkGunBeam', False, -26, 0),
+        # (LinkAltFire.FireSound is the SoundGroup PulseRifleFire, of one ProceduralSound, P1PulseRifleFire: BPulseRifleFire at a pitch
+        # up to 5 percent lower each time. A copy for each of LINK_FIRE_PITCHES, of which skin.lua plays one at random. A linked player's
+        # bolt is LinkedFireSound, BLinkedFire as it is.)
+        *[('ut_link_fire_%d' % (i + 1), SOUNDS + 'BPulseRifleFire', False, -22, 0) for i in range(len(LINK_FIRE_PITCHES))],
+        *[('ut_link_fire_3d_%d' % (i + 1), SOUNDS + 'BPulseRifleFire', True, -22, 40) for i in range(len(LINK_FIRE_PITCHES))],
         ('ut_link_linked', SOUNDS + 'BLinkedFire', False, -24, 0),
+        # (LinkFire.BeamSounds: the beam's loop for no link, one, two, and three or more, BLinkGunBeam1 to 4)
+        *[('ut_link_beam_%d' % (i + 1), SOUNDS + 'BLinkGunBeam%d' % (i + 1), False, -26, 0) for i in range(4)],
+        *[('ut_link_beam_3d_%d' % (i + 1), SOUNDS + 'BLinkGunBeam%d' % (i + 1), True, -28, 30) for i in range(4)],
         ('ut_link_select', NEW_SOUNDS + 'NewLinkSelect', False, -24, 0),
-        ('ut_link_fire_3d', SOUNDS + 'BLinkGunFire', True, -22, 40),
-        ('ut_link_beam_3d', SOUNDS + 'BLinkGunBeam', True, -28, 30),
         ('ut_link_projectile_3d', SOUNDS + 'LinkGunProjectile', True, -30, 25),
     ],
     'minigun': [
@@ -251,6 +257,10 @@ PITCH = {
 for index, pitch in enumerate(ASSAULT_FIRE_PITCHES):
     PITCH['ut_assault_fire_%d' % (index + 1)] = pitch
     PITCH['ut_assault_fire_3d_%d' % (index + 1)] = pitch
+
+for index, pitch in enumerate(LINK_FIRE_PITCHES):
+    PITCH['ut_link_fire_%d' % (index + 1)] = pitch
+    PITCH['ut_link_fire_3d_%d' % (index + 1)] = pitch
 
 # Plays 16 bit samples faster by a factor, by reading them at that step, between two samples in a line
 def faster(pcm, channels, factor):
