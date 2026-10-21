@@ -37,10 +37,6 @@ local CONFIG = {
 	bolt_glow_size = 70,
 	bolt_color = { 0.5, 1, 0.4 },
 	linked_color = { 1, 0.85, 0.3 },
-	-- LinkProjSparks where a bolt ends
-	spark_size = 60,
-	spark_growth = 150,
-	spark_life = 0.2,
 	-- Bolts of another player that start less than this far apart (in seconds) belong to the same shot
 	shot_gap = 0.1,
 }
@@ -80,11 +76,29 @@ local SPARKS = {
 	rate = 40,
 	life = 0.5,
 	speed = { 175, 225 },
+	direction_deviation = 0.75,
 	position_deviation = 8,
 	size = { 8, 12 },
 	color = 150 / 255,
 	attenuation = 0.1,
 }
+
+-- LinkProjSparks (yellow with links: LinkProjSparksYellow), where a bolt ends: 8 line particles off the surface, spread wide
+local BOLT_SPARKS = {
+	count = 8,
+	life = 0.5,
+	speed = { 100, 175 },
+	direction_deviation = 1.5,
+	position_deviation = 10,
+	size = { 8, 12 },
+	color = 150 / 255,
+	attenuation = 0.1,
+}
+
+-- A line particle (PT_Line) is a streak along the way it moves, as long as the spark is fast (mSpawnVecB.Z seconds of its speed), and
+-- falls (its mMassRange; as fast as the Bio Rifle's sparks fall)
+local SPARK_STREAK_SECONDS = 0.06
+local SPARK_GRAVITY = 10.7 -- m/s^2
 
 local FLASH_3RD = { rate = 12, life = 0.25, size = { 50, 60 }, color = 180 / 255 }
 local FLASH_1ST = { life = 0.25, size = 24, color = 200 / 255, interval = 0.12 }
@@ -102,6 +116,72 @@ local GRIPS = {
 	link_new_bw = { hand_node = "j_rightweaponattach", right = 0, forward = 5, up = 4, yaw = 0, pitch = 0, roll = 0, follow = nil },
 	link_new_we = { hand_node = "j_leftweaponattach", right = -4, forward = -4, up = 0, yaw = -110, pitch = 0, roll = -25, follow = 3 },
 }
+
+-- A random direction within a cone about a direction, as xEmitter's mDirDev: a share of each axis across it
+local function deviate(direction, across)
+	local side = Vector3.normalize(Vector3.cross(direction, Vector3.up()))
+
+	if Vector3.length(side) < 0.1 then
+		side = Vector3.right()
+	end
+
+	local up = Vector3.cross(side, direction)
+
+	return Vector3.normalize(direction + side * (math.random() * 2 - 1) * across + up * (math.random() * 2 - 1) * across)
+end
+
+local function random_between(range)
+	return range[1] + (range[2] - range[1]) * math.random()
+end
+
+-- Throws a spark from a place along a way. The texture has two parts (tools/asset_conversion/split_spark.py): the body is a streak from
+-- the tail to the head, and the head is a glow at the front. spec: the SPARKS or BOLT_SPARKS numbers. texture: link_spark_green or
+-- link_spark_yellow. scale: how much bigger, faster and longer lived it is (for the links).
+local function throw_spark(spec, position, way, texture, size_scale, speed_scale, life_scale)
+	local offset = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1) * (spec.position_deviation * UNIT)
+	local origin = Vector3Box(position + offset)
+	local velocity = Vector3Box(deviate(way, spec.direction_deviation) * (random_between(spec.speed) * speed_scale * UNIT))
+	local width = random_between(spec.size) * size_scale * UNIT
+	local life = spec.life * life_scale
+	local started = Application.time_since_launch()
+	local color = { spec.color, spec.color, spec.color }
+
+	-- Returns where the spark's head is, and where its tail is
+	local function spark()
+		local age = Application.time_since_launch() - started
+		local moving = velocity:unbox() + Vector3(0, 0, -SPARK_GRAVITY * age)
+		local head = origin:unbox() + velocity:unbox() * age + Vector3(0, 0, -0.5 * SPARK_GRAVITY * age * age)
+		local speed = Vector3.length(moving)
+		local heading = speed > 0.001 and moving * (1 / speed) or Vector3.up()
+		local length = math.max(width, speed * SPARK_STREAK_SECONDS)
+
+		return head, head - heading * length
+	end
+
+	particles.beam({
+		attenuation = spec.attenuation,
+		color = color,
+		life = life,
+		size = width,
+		texture = texture .. "_body",
+		track = function ()
+			local head, tail = spark()
+
+			return tail, head
+		end,
+	})
+	particles.sprite({
+		angle = 0,
+		attenuation = spec.attenuation,
+		color = color,
+		follow = function ()
+			return (spark())
+		end,
+		life = life,
+		size = width,
+		texture = texture .. "_head",
+	})
+end
 
 -- The skin whose model the player sees now
 local function first_person_api()
@@ -239,7 +319,8 @@ mod.init_flow_event_filters.link_new = function (event_name)
 	return event_name == "lua_projectile_init" or event_name == "lua_trail" or event_name == "vfx_critical_strike"
 end
 
--- The bolts in flight, each { unit = the game's projectile, extension, position (a box), color, sound }
+-- The bolts in flight, each { unit = the game's projectile, extension, position and way (boxes: where it is, and the way it flies),
+-- color, sound }
 local bolts = {}
 
 -- A shot by another player, as seen on this machine: the flash and the sound come from the mesh in their hand, once for the bolt of a shot
@@ -260,6 +341,7 @@ mod.skin_init_callbacks.link_new_bolt = function (projectile)
 		unit = game_unit,
 		extension = projectile,
 		position = Vector3Box(Unit.world_position(game_unit, 0)),
+		way = Vector3Box(Quaternion.forward(Unit.world_rotation(game_unit, 0))),
 		color = color,
 		sound = utils.play_on_unit("ut_link_projectile_3d", game_unit),
 	}
@@ -325,17 +407,21 @@ local function update_bolts()
 		local alive = Unit.alive(bolt.unit) and not bolt.extension._stop_impacts
 
 		if alive then
-			bolt.position:store(Unit.world_position(bolt.unit, 0))
+			local position = Unit.world_position(bolt.unit, 0)
+			local moved = position - bolt.position:unbox()
+
+			if Vector3.length(moved) > 0.001 then
+				bolt.way:store(Vector3.normalize(moved))
+			end
+
+			bolt.position:store(position)
 		else
-			particles.sprite({
-				color = bolt.color,
-				growth = CONFIG.spark_growth * UNIT,
-				life = CONFIG.spark_life,
-				position = bolt.position:unbox(),
-				size = CONFIG.spark_size * UNIT,
-				spin = (math.random() * 2 - 1) * 0.5,
-				texture = bolt.color == CONFIG.bolt_color and "link_spark_green" or "link_spark_yellow",
-			})
+			-- (UT throws them along the normal of what the bolt hit: here back the way the bolt came)
+			local texture = bolt.color == CONFIG.bolt_color and "link_spark_green" or "link_spark_yellow"
+
+			for _ = 1, BOLT_SPARKS.count do
+				throw_spark(BOLT_SPARKS, bolt.position:unbox(), -bolt.way:unbox(), texture, 1, 1, 1)
+			end
 
 			if bolt.sound and Managers.world:has_world("level_world") then
 				utils.stop_sound(bolt.sound)
@@ -375,23 +461,6 @@ local visuals = {}
 
 local function turns_to_radians(turns)
 	return turns / 65536 * 2 * math.pi
-end
-
-local function random_between(range)
-	return range[1] + (range[2] - range[1]) * math.random()
-end
-
--- A random direction within a cone about a direction, as xEmitter's mDirDev: a share of each axis across it
-local function deviate(direction, across)
-	local side = Vector3.normalize(Vector3.cross(direction, Vector3.up()))
-
-	if Vector3.length(side) < 0.1 then
-		side = Vector3.right()
-	end
-
-	local up = Vector3.cross(side, direction)
-
-	return Vector3.normalize(direction + side * (math.random() * 2 - 1) * across + up * (math.random() * 2 - 1) * across)
 end
 
 -- The beam's color: the texture and the textures of its flashes and sparks
@@ -569,18 +638,7 @@ local function draw_beam(character, beam, dt)
 		while visual.spark_time >= 1 do
 			visual.spark_time = visual.spark_time - 1
 
-			local offset = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1) * (SPARKS.position_deviation * UNIT)
-			local speed = random_between(SPARKS.speed) * (link_scale * 0.7 + 1) * UNIT
-
-			particles.sprite({
-				attenuation = SPARKS.attenuation,
-				color = { SPARKS.color, SPARKS.color, SPARKS.color },
-				life = SPARKS.life * (link_scale + 1),
-				position = spark_place + offset,
-				size = random_between(SPARKS.size) * (link_scale + 1) * UNIT,
-				texture = spark_texture,
-				velocity = deviate(spark_way, 0.75) * speed,
-			})
+			throw_spark(SPARKS, spark_place, spark_way, spark_texture, link_scale + 1, link_scale * 0.7 + 1, link_scale + 1)
 		end
 	end
 

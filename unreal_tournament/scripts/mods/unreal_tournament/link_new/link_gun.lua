@@ -498,6 +498,11 @@ local function build_bolt_shot(hand, shot_anims)
 		aim_assist_ramp_decay_delay = 0.2,
 		aim_assist_ramp_multiplier = 0.1,
 		ut_link_new_shot = true,
+		-- The base's own tracer is not drawn (hooks.lua): the skin draws UT's bolt
+		ut_dropped_flow_events = {
+			lua_bullet_trail = true,
+			lua_bullet_trail_set = true,
+		},
 	}
 end
 
