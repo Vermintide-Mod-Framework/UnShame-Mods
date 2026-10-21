@@ -384,6 +384,9 @@ local function new_skin(setting_id)
 		offset_up = 0,
 		pivot_yaw = 500 / 65536 * 360,
 		bob_damping = 1.575,
+		-- LinkGun's EffectOffset (forward, right, up), 10 lower with UT2004's model in the right hand (GetEffectStart). The beam's flash
+		-- in the player's view is drawn there (see effect_start_in_view).
+		effect_offset = { 100, 25, -13 },
 		-- UT's third person mesh (LinkAttachment's NewLinkGun_3rd) at UT's size in a player's hand (DrawScale 0.4). Its origin is by its
 		-- grip, and its barrel runs along its forward to the muzzle (its upper flash bone).
 		third_person = third_person_of(setting_id, "units/ut/link/third_person", 75.5, 8.9),
@@ -399,6 +402,7 @@ local function new_skin(setting_id)
 				offset_right = -2,
 				offset_up = -3,
 				pivot_yaw = 500 / 65536 * 360,
+				effect_offset = { 100, 25, -3 },
 				third_person = third_person_of(setting_id, "units/ut/link2003/third_person", 99.2, 2.5),
 			},
 		},
@@ -698,6 +702,19 @@ local function colors_of(linking, links)
 	return "units/ut/fx/fx_link_beam_panned_green", "green", "link_spark_green"
 end
 
+-- The first person unit and where UT draws the beam's flash in its camera node's frame: LinkFire attaches it to no bone, so
+-- WeaponFire.DrawMuzzleFlash puts it at Weapon.GetEffectStart, which is the eye, the weapon's view offset (PlayerViewOffset, at
+-- 0.9 / DisplayFOV * 100 of its size, and the bob) and EffectOffset, drawn with the weapon's field of view. That is well ahead of the
+-- barrel, so the gun doesn't cut into it.
+local function effect_start_in_view(api)
+	local config = api.config
+	local view_scale = 0.9 / config.display_fov * 100
+	local effect = config.effect_offset
+
+	return api.view_point_in_view(effect[1] + config.offset_forward * view_scale, effect[2] + config.offset_right * view_scale,
+		effect[3] + config.offset_up * view_scale)
+end
+
 -- The first person unit and where the muzzle of the model in the player's own view is in its camera node's frame, as the camera sees it:
 -- the model is drawn with its own field of view, so the point is moved away from the view's axis by the ratio of the two
 local function seen_muzzle_in_view(api)
@@ -914,7 +931,7 @@ local function draw_beam(character, beam, dt)
 				life = FLASH_1ST.life,
 				locked = function ()
 					if visual.alive and api.state() == skin then
-						return api.model_point_in_view()
+						return effect_start_in_view(api)
 					end
 				end,
 				material = "units/ut/fx/fx_weapon_link_beam_flash_" .. flash_color,
