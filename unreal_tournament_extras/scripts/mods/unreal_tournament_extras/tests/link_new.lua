@@ -43,6 +43,17 @@ local CONFIG = {
 	ally_career = 1,
 	ally_distance = 4, -- m
 	link_time = 1, -- s
+	-- The bot that links on its own: Kerillian as a Waywatcher with her Link Gun, playing as the game's bots do, this far behind the
+	-- player. A bot it links stands this far ahead, and the player steps this far to the right, out of the way of the beam.
+	linker_profile = "wood_elf",
+	linker_career = 1,
+	linker_behind = -3, -- m
+	firer_ahead = 4, -- m
+	player_aside = 3, -- m
+	-- How long the bot may take to turn and link, and to let go once the firing stops (a bolt counts for half a second, and the link holds
+	-- half a second more)
+	bot_link_time = 5, -- s
+	bot_let_go_time = 2, -- s
 }
 
 local function is_bolt(action)
@@ -345,6 +356,106 @@ local function scenarios()
 					t.expect(math.abs(linked_beam / plain_beam - CONFIG.beam_link_scale) <= CONFIG.link_margin, "a linked beam did %.2f times the damage, not %.1f", linked_beam / plain_beam, CONFIG.beam_link_scale)
 					t.expect(ally_before - ally_after_bolt == CONFIG.bolt_ammo, "the linker paid %d ammo for the bolt, not %d", ally_before - ally_after_bolt, CONFIG.bolt_ammo)
 				end
+			end,
+		},
+		{
+			-- A bot links the player while they fire, as UT's bots link their leader (LinkGun.FocusOnLeader), and lets go when they stop
+			-- (link_new/bots.lua)
+			name = "a bot links the player who fires",
+			run = function (t)
+				t.look(10)
+
+				local bot = t.add_bot(CONFIG.linker_profile, CONFIG.linker_career, ut.items.weapons.link_new_we.key, CONFIG.linker_behind, nil, true)
+
+				if not t.expect(bot, "the bot could not be added") then
+					return
+				end
+
+				t.hold("action_one")
+
+				local linked = t.wait_until(function ()
+					return link.locked[bot] == t.unit()
+				end, CONFIG.bot_link_time, "the bot to link the player")
+				local links = link.links_of(t.unit())
+
+				t.release("action_one")
+
+				t.expect(linked, "the bot did not link the player in %d s", CONFIG.bot_link_time)
+				t.expect(not linked or links == 1, "the player had %d links, not 1", links)
+
+				local let_go = t.wait_until(function ()
+					return link.locked[bot] == nil
+				end, CONFIG.bot_let_go_time, "the bot to let go")
+
+				t.expect(let_go, "the bot still linked the player %d s after they stopped firing", CONFIG.bot_let_go_time)
+			end,
+		},
+		{
+			-- A bot does not step into the player's line of fire: it does not link a player who aims at it (FocusOnLeader). The player aims
+			-- over its head.
+			name = "a bot does not link a player who aims at it",
+			run = function (t)
+				local bot = t.add_bot(CONFIG.linker_profile, CONFIG.linker_career, ut.items.weapons.link_new_we.key, CONFIG.linker_behind, nil, true)
+
+				if not t.expect(bot, "the bot could not be added") then
+					return
+				end
+
+				local above = t.on_main_thread(function ()
+					local position = Unit.world_position(bot, 0)
+
+					return { Vector3.x(position), Vector3.y(position), Vector3.z(position) + 2 }
+				end)
+
+				t.aim_at_point(above[1], above[2], above[3])
+
+				local linked = false
+
+				t.press("action_one", CONFIG.bot_link_time, function ()
+					linked = linked or link.locked[bot] == t.unit()
+				end)
+
+				t.expect(not linked, "the bot linked the player who aimed at it")
+			end,
+		},
+		{
+			-- A bot links another bot who fires a Link Gun. The bot who fires stands ahead, looking away from the one behind, and the player
+			-- steps aside, or the beam would pass through them and link them instead.
+			name = "a bot links another bot who fires",
+			run = function (t)
+				local aside = t.ground_at(0, CONFIG.player_aside)
+
+				if not t.expect(aside, "there is no ground beside the player") then
+					return
+				end
+
+				local firer = t.add_bot(CONFIG.ally_profile, CONFIG.ally_career, ut.items.weapons.link_new_dr.key, CONFIG.firer_ahead)
+				local linker = t.add_bot(CONFIG.linker_profile, CONFIG.linker_career, ut.items.weapons.link_new_we.key, CONFIG.linker_behind, nil, true)
+
+				if not t.expect(firer and linker, "the bots could not be added") then
+					return
+				end
+
+				local away = t.on_main_thread(function ()
+					local direction = Vector3.normalize(Vector3.flat(Unit.world_position(firer, 0) - Unit.world_position(linker, 0)))
+
+					runner.move_player(t.unit(), Vector3(aside[1], aside[2], aside[3]))
+
+					return { Vector3.x(direction), Vector3.y(direction), 0 }
+				end)
+
+				t.bot_look(firer, away)
+
+				local linked = false
+				local start = Managers.time:time("game")
+
+				while not linked and Managers.time:time("game") - start < CONFIG.bot_link_time do
+					t.bot_press(firer, "fire")
+
+					linked = link.locked[linker] == firer
+				end
+
+				t.expect(linked, "the bot did not link the bot who fired in %d s", CONFIG.bot_link_time)
 			end,
 		},
 	}
