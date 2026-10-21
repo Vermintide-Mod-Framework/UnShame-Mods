@@ -864,6 +864,10 @@ local function draw_beam(character, beam, dt)
 			previous_start = Vector3Box(start),
 			previous_aim = Vector3Box(beam.aim:unbox()),
 			lines = {},
+			children = 0,
+			old_links = 0,
+			old_color = 0,
+			old_flash = false,
 			spark_time = 0,
 			flash_time = 0,
 			sphere_time = 0,
@@ -934,8 +938,18 @@ local function draw_beam(character, beam, dt)
 
 	local locked = visual.locked
 
-	-- The beam, and its children, each thinner, with a wider wave of their own
-	local children = math.min(links + 1, BEAM.max_children)
+	-- The beam, and its children, each thinner, with a wider wave of their own. UT makes the children (links + 1 of them) only when the
+	-- links, the color or the third person flash change from what they were (LinkBeamEffect.Tick), and they start as none, no color and
+	-- no flash: so the player's own beam has no child until it links or is linked, and then keeps them.
+	local color = linking and 2 or 0
+	local has_flash = not first_person
+
+	if links ~= visual.old_links or color ~= visual.old_color or has_flash ~= visual.old_flash then
+		visual.old_links, visual.old_color, visual.old_flash = links, color, has_flash
+		visual.children = math.min(links + 1, BEAM.max_children)
+	end
+
+	local children = visual.children
 	local main = visual.lines[1] or {}
 
 	visual.lines[1] = main
