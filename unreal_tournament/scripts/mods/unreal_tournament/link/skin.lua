@@ -815,6 +815,7 @@ local function draw_line(visual, line, material, size, color, locked)
 
 	particles.strip({
 		color = { color, color, color },
+		face_along_line = true,
 		fade_in = 0,
 		late = true,
 		life = math.huge,
@@ -829,10 +830,11 @@ local function draw_line(visual, line, material, size, color, locked)
 	})
 end
 
--- Puts a line's points along the beam: from the start along the bend to the end, every regen_dist, moved across by the wave. lock_end
--- holds the end still (mWaveLockEnd), and the start always is.
+-- Puts a line's points along the beam: from the start along the bend to the end, moved across by the wave. lock_end holds the end still
+-- (mWaveLockEnd), and the start always is. UT's beam is a smooth curve, and its texture repeats every regen_dist: the strip's repeats
+-- every particles.STRIP_REPEAT stretches, so the points are that many to a regen_dist.
 local function place_line(line, start, control, finish, length, regen_dist, amplitude, phase, wave_axis, lock_end)
-	local count = math.max(2, math.ceil(length / (regen_dist * UNIT)) + 1)
+	local count = math.min(particles.STRIP_POINTS, math.max(2, math.ceil(length / (regen_dist * UNIT / particles.STRIP_REPEAT)) + 1))
 
 	line.points = line.points or {}
 	line.count = count
