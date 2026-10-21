@@ -189,9 +189,9 @@ channels = 	{
 permutation_sets = {
 	vertex_modifiers = [
 		{ if: "num_skin_weights() == 4" define: { "macros": ["SKINNED_4WEIGHTS"] stages: ["vertex"] } }
-		//{ if: "num_skin_weights() == 3" define: { "macros": ["SKINNED_3WEIGHTS"] stages: ["vertex"] } }
-		//{ if: "num_skin_weights() == 2" define: { "macros": ["SKINNED_2WEIGHTS"] stages: ["vertex"] } }
-		//{ if: "num_skin_weights() == 1" define: { "macros": ["SKINNED_1WEIGHT"]  stages: ["vertex"] } }
+		{ if: "num_skin_weights() == 3" define: { "macros": ["SKINNED_3WEIGHTS"] stages: ["vertex"] } }
+		{ if: "num_skin_weights() == 2" define: { "macros": ["SKINNED_2WEIGHTS"] stages: ["vertex"] } }
+		{ if: "num_skin_weights() == 1" define: { "macros": ["SKINNED_1WEIGHT"]  stages: ["vertex"] } }
 		{ default = true }
 	]
 
