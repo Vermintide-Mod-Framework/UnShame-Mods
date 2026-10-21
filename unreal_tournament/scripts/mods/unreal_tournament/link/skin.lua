@@ -84,14 +84,15 @@ local CONFIG = {
 	-- Otherwise it is warmed up: its puffs are there from the start.
 	trail_scale = 0.5,
 	trail_delay = 0.1,
-	-- Its first emitter: one sprite (PlasmaShaft) along the way, 80 units long and 30 across, its middle 30 ahead of the bolt, colored
+	-- A UE2 sprite's size (StartSizeRange) is its radius: it is drawn twice as long and as wide (as the Minigun's skin has it).
+	-- Its first emitter: one sprite (PlasmaShaft) along the way, of size 80 along and 30 across, its middle 30 ahead of the bolt, colored
 	-- by ColorMultiplierRange (0.25, 1, 0): green, with links too (MakeYellow changes only the puffs)
 	shaft_ahead = 30,
 	shaft_length = 80,
 	shaft_width = 30,
 	shaft_color = { 0.25, 1, 0 },
 	-- Its second: puffs (SmokePanels1, a tile at random) that start 35 behind the bolt and go ahead of it at 400 units a second, for
-	-- 0.35 s, 6 at a time (so 6 / 0.35 a second), 20 units across, scaled by SizeScale: 0.5 at the start, 0.9 at 0.3 of their life and
+	-- 0.35 s, 6 at a time (so 6 / 0.35 a second), of size 20, scaled by SizeScale: 0.5 at the start, 0.9 at 0.3 of their life and
 	-- 0.25 at the end. Their color goes by ColorScale from black to (96, 255, 0) at 0.1 of their life, to (0, 255, 0) at 0.8 and back to
 	-- black, with R 255 at 0.1 and 0.8 with links (MakeYellow). UT draws them at its highest detail (DM_SuperHigh), as here.
 	puff_behind = 35,
@@ -120,11 +121,13 @@ local BEAM = {
 	size = 11,
 	color = 240 / 255,
 	child_color = 180 / 255,
-	-- The wave across the beam. It stays in place along the beam: UT's beam is one line whose zigzag goes with how far it reaches (seen in
-	-- UT). Moved by mWaveShift as turns a second and turned by mSpinRange, the beam and its child drifted apart into two lines.
+	-- The wave across the beam, which travels along it and turns about it. The child follows the beam's wave: at its own speed (UT's
+	-- mWaveShift * 0.6) the two drifted apart into two lines, where UT's beam is one.
 	wave_frequency = 0.06, -- radians a unit along the beam
 	wave_amplitude = 8,
 	max_amplitude = 16,
+	wave_shift = 100000, -- the wave's travel, turns a second
+	spin = 45000, -- turns a second
 	-- How far along the beam its bend reaches, as a share of its length. mBendStrength is 3, and how the engine uses it isn't in the
 	-- scripts: the bend reaches a third of the way (a choice, to be checked against UT).
 	bend_share = 1 / 3,
@@ -213,7 +216,8 @@ local function throw_spark(spec, position, way, texture, size_scale, speed_scale
 	local offset = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1) * (spec.position_deviation * UNIT)
 	local origin = Vector3Box(position + offset)
 	local velocity = Vector3Box(deviate(way, spec.direction_deviation) * (random_between(spec.speed) * speed_scale * UNIT))
-	local width = random_between(spec.size) * size_scale * UNIT
+	-- (mSizeRange is the radius of xEmitter's particle)
+	local width = 2 * random_between(spec.size) * size_scale * UNIT
 	local life = spec.life * life_scale
 	local started = Application.time_since_launch()
 	local color = { spec.color, spec.color, spec.color }
@@ -537,7 +541,7 @@ local function bolt_puff(bolt, age)
 		late = true,
 		life = life,
 		size_by = function (share)
-			return CONFIG.puff_size * trail_scale * scale_at(CONFIG.puff_sizes, share) * UNIT
+			return 2 * CONFIG.puff_size * trail_scale * scale_at(CONFIG.puff_sizes, share) * UNIT
 		end,
 		texture = "smoke_panels_" .. math.random(0, 15),
 	})
@@ -605,7 +609,7 @@ mod.skin_init_callbacks.link_bolt = function (projectile)
 		})
 	end
 
-	local half_shaft = CONFIG.shaft_length / 2 * CONFIG.trail_scale
+	local half_shaft = CONFIG.shaft_length * CONFIG.trail_scale
 	local shaft_middle = CONFIG.shaft_ahead * CONFIG.trail_scale
 
 	-- (the shaft's bright head is at the top of its texture, which is the beam's start: ahead)
@@ -615,7 +619,7 @@ mod.skin_init_callbacks.link_bolt = function (projectile)
 		fade_in = 0,
 		late = true,
 		life = math.huge,
-		size = CONFIG.shaft_width * CONFIG.trail_scale * UNIT,
+		size = 2 * CONFIG.shaft_width * CONFIG.trail_scale * UNIT,
 		texture = "plasma_shaft",
 		track = function ()
 			local head = on_bolt(bolt, shaft_middle + half_shaft)
@@ -818,7 +822,7 @@ end
 
 -- Puts a line's points along the beam: from the start along the bend to the end, every regen_dist, moved across by the wave. lock_end
 -- holds the end still (mWaveLockEnd), and the start always is.
-local function place_line(line, start, control, finish, length, regen_dist, amplitude, wave_axis, lock_end)
+local function place_line(line, start, control, finish, length, regen_dist, amplitude, phase, wave_axis, lock_end)
 	local count = math.max(2, math.ceil(length / (regen_dist * UNIT)) + 1)
 
 	line.points = line.points or {}
@@ -828,7 +832,7 @@ local function place_line(line, start, control, finish, length, regen_dist, ampl
 		local share = (i - 1) / (count - 1)
 		local along = (1 - share) * (1 - share) * start + 2 * share * (1 - share) * control + share * share * finish
 		local envelope = lock_end and math.sin(math.pi * share) or math.sin(math.pi * share * 0.5)
-		local wave = amplitude * UNIT * envelope * math.sin(BEAM.wave_frequency * share * length / UNIT)
+		local wave = amplitude * UNIT * envelope * math.sin(BEAM.wave_frequency * share * length / UNIT + phase)
 		local point = along + wave_axis * wave
 
 		if line.points[i] then
@@ -855,6 +859,8 @@ local function draw_beam(character, beam, dt)
 		visual = {
 			alive = true,
 			amplitude = BEAM.wave_amplitude,
+			phase = 0,
+			spin = 0,
 			previous_start = Vector3Box(start),
 			previous_aim = Vector3Box(beam.aim:unbox()),
 			lines = {},
@@ -892,8 +898,10 @@ local function draw_beam(character, beam, dt)
 
 	visual.previous_start:store(start)
 	visual.previous_aim:store(aim)
+	visual.phase = visual.phase + BEAM.wave_shift / 65536 * 2 * math.pi * (link_scale * 0.6 + 1) * dt
+	visual.spin = visual.spin + BEAM.spin / 65536 * 2 * math.pi * dt
 
-	-- The plane of the wave: across the beam, level
+	-- The plane of the wave, about the beam
 	local chord = finish - start
 	local length = Vector3.length(chord)
 	local side = Vector3.cross(beam_direction, Vector3.up())
@@ -902,7 +910,10 @@ local function draw_beam(character, beam, dt)
 		side = Vector3.right()
 	end
 
-	local wave_axis = Vector3.normalize(side)
+	side = Vector3.normalize(side)
+
+	local up = Vector3.cross(side, beam_direction)
+	local wave_axis = side * math.cos(visual.spin) + up * math.sin(visual.spin)
 	local control = start + aim * (length * BEAM.bend_share)
 	local beam_material, flash_color, spark_texture = colors_of(linking, links)
 
@@ -929,7 +940,7 @@ local function draw_beam(character, beam, dt)
 
 	visual.lines[1] = main
 
-	place_line(main, start, control, finish, length, BEAM.regen_dist, visual.amplitude, wave_axis, locked_on or linking)
+	place_line(main, start, control, finish, length, BEAM.regen_dist, visual.amplitude, visual.phase, wave_axis, locked_on or linking)
 	draw_line(visual, main, beam_material, 2 * BEAM.size * (link_scale * 0.6 + 1) * UNIT, BEAM.color, locked)
 
 	for c = 1, BEAM.max_children do
@@ -940,7 +951,7 @@ local function draw_beam(character, beam, dt)
 		if c <= children then
 			local amplitude = c * 4 + visual.amplitude * ((BEAM.max_amplitude - c * 4) / BEAM.max_amplitude)
 
-			place_line(line, start, control, finish, length, BEAM.child_regen_dist, amplitude, wave_axis, linking)
+			place_line(line, start, control, finish, length, BEAM.child_regen_dist, amplitude, visual.phase, wave_axis, linking)
 			draw_line(visual, line, beam_material, 2 * (2 + 4 * (children - c + 1)) * UNIT, BEAM.child_color, locked)
 		else
 			line.count = 0
@@ -1029,7 +1040,7 @@ local function draw_beam(character, beam, dt)
 				end,
 				life = SPHERE.life,
 				material = "units/ut/fx/fx_link_beam_flash_blue",
-				size = size * UNIT,
+				size = 2 * size * UNIT,
 				spin = (math.random() * 2 - 1) * 0.3,
 			})
 		end
