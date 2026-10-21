@@ -55,11 +55,12 @@ local CONFIG = {
 	linked_muzzle_flash = first_person_flash_settings("yellow"),
 	-- The flash of a bolt at the muzzle of the mesh in a character's hand: LinkMuzFlashProj3rd, attached to the mesh's tip but not scaled
 	-- with it. One mesh for a bolt, one of the 4 tiles at random, at a size of 0.6 times LinkFire's LinkScale of the links plus 1
-	-- (LinkAttachment.ThirdPersonEffects), for 0.08 to 0.12 s, mColorRange 70 of 255, mAttenKa 0.
+	-- (LinkAttachment.ThirdPersonEffects), for 0.08 to 0.12 s, mAttenKa 0. Its mColorRange (70 of 255) is not used: dimmed by it, the flash
+	-- was far fainter than UT's, whose mesh particles draw their texture as it is.
 	muzzle_flash_3rd = {
 		size = 0.6,
 		life = { 0.08, 0.12 },
-		color = 70 / 255,
+		color = 1,
 	},
 	-- LinkAltFire.FireAnimRate: the Fire animation plays at this much of its speed
 	fire_animation_rate = 0.75,
@@ -119,11 +120,11 @@ local BEAM = {
 	size = 11,
 	color = 240 / 255,
 	child_color = 180 / 255,
+	-- The wave across the beam. It stays in place along the beam: UT's beam is one line whose zigzag goes with how far it reaches (seen in
+	-- UT). Moved by mWaveShift as turns a second and turned by mSpinRange, the beam and its child drifted apart into two lines.
 	wave_frequency = 0.06, -- radians a unit along the beam
 	wave_amplitude = 8,
 	max_amplitude = 16,
-	wave_shift = 100000, -- the wave's travel, turns a second
-	spin = 45000, -- turns a second
 	-- How far along the beam its bend reaches, as a share of its length. mBendStrength is 3, and how the engine uses it isn't in the
 	-- scripts: the bend reaches a third of the way (a choice, to be checked against UT).
 	bend_share = 1 / 3,
@@ -742,10 +743,6 @@ end
 -- to the next spark, flash and disc
 local visuals = {}
 
-local function turns_to_radians(turns)
-	return turns / 65536 * 2 * math.pi
-end
-
 -- The beam's color: its material, the color of its flashes (link_beam_flash_<color>, made by make_weapon_fx.py) and the texture of its
 -- sparks. The material is UT's LinkBeamGreenFB and the others: FB_Brighten of the texture panned along the beam
 -- (tools/asset_conversion/make_combo_materials.py).
@@ -821,7 +818,7 @@ end
 
 -- Puts a line's points along the beam: from the start along the bend to the end, every regen_dist, moved across by the wave. lock_end
 -- holds the end still (mWaveLockEnd), and the start always is.
-local function place_line(line, start, control, finish, length, regen_dist, amplitude, phase, wave_axis, lock_end)
+local function place_line(line, start, control, finish, length, regen_dist, amplitude, wave_axis, lock_end)
 	local count = math.max(2, math.ceil(length / (regen_dist * UNIT)) + 1)
 
 	line.points = line.points or {}
@@ -831,7 +828,7 @@ local function place_line(line, start, control, finish, length, regen_dist, ampl
 		local share = (i - 1) / (count - 1)
 		local along = (1 - share) * (1 - share) * start + 2 * share * (1 - share) * control + share * share * finish
 		local envelope = lock_end and math.sin(math.pi * share) or math.sin(math.pi * share * 0.5)
-		local wave = amplitude * UNIT * envelope * math.sin(BEAM.wave_frequency * share * length / UNIT + phase)
+		local wave = amplitude * UNIT * envelope * math.sin(BEAM.wave_frequency * share * length / UNIT)
 		local point = along + wave_axis * wave
 
 		if line.points[i] then
@@ -858,8 +855,6 @@ local function draw_beam(character, beam, dt)
 		visual = {
 			alive = true,
 			amplitude = BEAM.wave_amplitude,
-			phase = 0,
-			spin = 0,
 			previous_start = Vector3Box(start),
 			previous_aim = Vector3Box(beam.aim:unbox()),
 			lines = {},
@@ -897,10 +892,8 @@ local function draw_beam(character, beam, dt)
 
 	visual.previous_start:store(start)
 	visual.previous_aim:store(aim)
-	visual.phase = visual.phase + turns_to_radians(BEAM.wave_shift * (link_scale * 0.6 + 1)) * dt
-	visual.spin = visual.spin + turns_to_radians(BEAM.spin) * dt
 
-	-- The plane of the wave, about the beam
+	-- The plane of the wave: across the beam, level
 	local chord = finish - start
 	local length = Vector3.length(chord)
 	local side = Vector3.cross(beam_direction, Vector3.up())
@@ -909,10 +902,7 @@ local function draw_beam(character, beam, dt)
 		side = Vector3.right()
 	end
 
-	side = Vector3.normalize(side)
-
-	local up = Vector3.cross(side, beam_direction)
-	local wave_axis = side * math.cos(visual.spin) + up * math.sin(visual.spin)
+	local wave_axis = Vector3.normalize(side)
 	local control = start + aim * (length * BEAM.bend_share)
 	local beam_material, flash_color, spark_texture = colors_of(linking, links)
 
@@ -939,7 +929,7 @@ local function draw_beam(character, beam, dt)
 
 	visual.lines[1] = main
 
-	place_line(main, start, control, finish, length, BEAM.regen_dist, visual.amplitude, visual.phase, wave_axis, locked_on or linking)
+	place_line(main, start, control, finish, length, BEAM.regen_dist, visual.amplitude, wave_axis, locked_on or linking)
 	draw_line(visual, main, beam_material, 2 * BEAM.size * (link_scale * 0.6 + 1) * UNIT, BEAM.color, locked)
 
 	for c = 1, BEAM.max_children do
@@ -950,7 +940,7 @@ local function draw_beam(character, beam, dt)
 		if c <= children then
 			local amplitude = c * 4 + visual.amplitude * ((BEAM.max_amplitude - c * 4) / BEAM.max_amplitude)
 
-			place_line(line, start, control, finish, length, BEAM.child_regen_dist, amplitude, visual.phase * 0.6, wave_axis, linking)
+			place_line(line, start, control, finish, length, BEAM.child_regen_dist, amplitude, wave_axis, linking)
 			draw_line(visual, line, beam_material, 2 * (2 + 4 * (children - c + 1)) * UNIT, BEAM.child_color, locked)
 		else
 			line.count = 0

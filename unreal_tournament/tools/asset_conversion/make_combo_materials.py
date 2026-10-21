@@ -590,7 +590,8 @@ for color, pan_v in (('green', -2), ('yellow', -2), ('blue', 2)):
 #        (2, 2) of LinkPowerYellow.
 #   m_2  LinkGlassShader: the glass, a reflection of a cube map, left as convert_weapon.py makes it.
 #   m_3  the body again (convert_weapon.py's overlays): m_0's glow, added over it. m_0 itself is the lit colour less the glow's mask.
-# A modifier changes the coordinates before the material inside it reads them. Offsets are texels of the 128 by 128 power textures. A
+# The coordinates go through the modifier nearest the texture first, then out: taken the other way, the eye's panner moved its texture
+# four times as fast (through its scaler of 4), which was far faster than UT's. Offsets are texels of the 128 by 128 power textures. A
 # panner moves along its yaw (65536 to the turn) at its rate in textures a second; a rotator turns at its yaw a second, the other way
 # from the SDK's rotator node. The glow is in the emissive layer, which is HDR: dimmed as the Bio Rifle's goo is, so that it shows as
 # the texture. The textures are units/ut/fx/link_power_<color> (make_weapon_fx.py), alpha and all.
@@ -648,26 +649,26 @@ def link_stretch(graph, name, uv, rate, amplitude, phases, u_center, v_center):
 # body's eye reads one, as it is; the tubes add two.
 def link_body_glow(graph, color):
     if color == 'yellow':
-        link_pan(graph, 'body_pan', 'uv', 0, -1)
-        link_scale(graph, 'body_uv', 'body_pan', 5, 2, 0, -32)
+        link_scale(graph, 'body_scale', 'uv', 5, 2, 0, -32)
+        link_pan(graph, 'body_uv', 'body_scale', 0, -1)
     else:
-        link_pan(graph, 'body_pan', 'uv', 2048, -1)
-        link_scale(graph, 'body_uv', 'body_pan', 4, 1)
+        link_scale(graph, 'body_scale', 'uv', 4, 1)
+        link_pan(graph, 'body_uv', 'body_scale', 2048, -1)
     sample(graph, 'glow', 'power_map', 'body_uv')
 
 def link_glow(graph, color):
     if color == 'yellow':
-        link_scale(graph, 'first_scale', 'uv', 3, 3)
-        link_rotate(graph, 'first_turn', 'first_scale', 5120, 24, 24)
-        link_stretch(graph, 'first_uv', 'first_turn', 0.2, 0.5, (0, 0.5), 48, 48)
-        link_pan(graph, 'second_pan', 'uv', 0, -1)
-        link_scale(graph, 'second_uv', 'second_pan', 2, 2)
+        link_stretch(graph, 'first_stretch', 'uv', 0.2, 0.5, (0, 0.5), 48, 48)
+        link_rotate(graph, 'first_turn', 'first_stretch', 5120, 24, 24)
+        link_scale(graph, 'first_uv', 'first_turn', 3, 3)
+        link_scale(graph, 'second_scale', 'uv', 2, 2)
+        link_pan(graph, 'second_uv', 'second_scale', 0, -1)
     else:
-        link_pan(graph, 'first_pan', 'uv', 4096, -0.2)
-        link_scale(graph, 'first_uv', 'first_pan', 2, 2)
-        link_scale(graph, 'second_scale', 'uv', 2, 2, 32, 32)
-        link_rotate(graph, 'second_turn', 'second_scale', 1024, 64, 64)
-        link_pan(graph, 'second_uv', 'second_turn', -4096, -0.2)
+        link_scale(graph, 'first_scale', 'uv', 2, 2)
+        link_pan(graph, 'first_uv', 'first_scale', 4096, -0.2)
+        link_pan(graph, 'second_pan', 'uv', -4096, -0.2)
+        link_rotate(graph, 'second_turn', 'second_pan', 1024, 64, 64)
+        link_scale(graph, 'second_uv', 'second_turn', 2, 2, 32, 32)
     texture(graph, 'first', 'power_map', 'first_uv')
     texture(graph, 'second', 'power_map', 'second_uv')
     graph.add('glow', 'core/shader_nodes/add')

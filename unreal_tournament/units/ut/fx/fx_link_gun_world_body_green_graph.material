@@ -62,8 +62,8 @@ shader = {
 		}
 		{
 			destination = {
-				connector_id = "40A76949-E7DB-47FB-9AEC-3FA98DD3FA2E"
-				instance_id = "c0de0001-0000-4000-8000-000000000008"
+				connector_id = "c5823c75-4ae5-4c71-b070-315fa4d03e8e"
+				instance_id = "c0de0001-0000-4000-8000-000000000009"
 			}
 			source = {
 				instance_id = "c0de0001-0000-4000-8000-000000000002"
@@ -71,26 +71,17 @@ shader = {
 		}
 		{
 			destination = {
-				connector_id = "0CE9AD0A-0B3F-43B1-9139-12176F3AAD8E"
-				instance_id = "c0de0001-0000-4000-8000-000000000008"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000007"
-			}
-		}
-		{
-			destination = {
-				connector_id = "c5823c75-4ae5-4c71-b070-315fa4d03e8e"
-				instance_id = "c0de0001-0000-4000-8000-000000000010"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000008"
-			}
-		}
-		{
-			destination = {
 				connector_id = "242d1648-a626-445b-9534-bccec094112f"
-				instance_id = "c0de0001-0000-4000-8000-000000000010"
+				instance_id = "c0de0001-0000-4000-8000-000000000009"
+			}
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000008"
+			}
+		}
+		{
+			destination = {
+				connector_id = "f72597c4-7487-419a-affb-df690e6582e1"
+				instance_id = "c0de0001-0000-4000-8000-000000000011"
 			}
 			source = {
 				instance_id = "c0de0001-0000-4000-8000-000000000009"
@@ -98,8 +89,8 @@ shader = {
 		}
 		{
 			destination = {
-				connector_id = "f72597c4-7487-419a-affb-df690e6582e1"
-				instance_id = "c0de0001-0000-4000-8000-000000000012"
+				connector_id = "0806db0d-2c4a-43ca-99cc-f5a2f036a8e8"
+				instance_id = "c0de0001-0000-4000-8000-000000000011"
 			}
 			source = {
 				instance_id = "c0de0001-0000-4000-8000-000000000010"
@@ -107,11 +98,20 @@ shader = {
 		}
 		{
 			destination = {
-				connector_id = "0806db0d-2c4a-43ca-99cc-f5a2f036a8e8"
+				connector_id = "40A76949-E7DB-47FB-9AEC-3FA98DD3FA2E"
 				instance_id = "c0de0001-0000-4000-8000-000000000012"
 			}
 			source = {
 				instance_id = "c0de0001-0000-4000-8000-000000000011"
+			}
+		}
+		{
+			destination = {
+				connector_id = "0CE9AD0A-0B3F-43B1-9139-12176F3AAD8E"
+				instance_id = "c0de0001-0000-4000-8000-000000000012"
+			}
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000007"
 			}
 		}
 		{
@@ -192,25 +192,9 @@ shader = {
 			]
 		}
 		{
-			connector_id = "9a282471-a2d2-4591-a57e-c70179bb1962"
+			connector_id = "6ff26be7-68a1-4b89-b9dd-551d216086c2"
 			id = "c0de0001-0000-4000-8000-000000001003"
 			instance_id = "c0de0001-0000-4000-8000-000000000008"
-			value = [
-				-0.9807852804032304
-			]
-		}
-		{
-			connector_id = "e3419eb2-3635-4586-b58c-89ffd88d20d5"
-			id = "c0de0001-0000-4000-8000-000000001004"
-			instance_id = "c0de0001-0000-4000-8000-000000000008"
-			value = [
-				-0.19509032201612825
-			]
-		}
-		{
-			connector_id = "6ff26be7-68a1-4b89-b9dd-551d216086c2"
-			id = "c0de0001-0000-4000-8000-000000001005"
-			instance_id = "c0de0001-0000-4000-8000-000000000009"
 			value = [
 				4
 				1
@@ -218,11 +202,27 @@ shader = {
 		}
 		{
 			connector_id = "6ff26be7-68a1-4b89-b9dd-551d216086c2"
-			id = "c0de0001-0000-4000-8000-000000001006"
-			instance_id = "c0de0001-0000-4000-8000-000000000011"
+			id = "c0de0001-0000-4000-8000-000000001004"
+			instance_id = "c0de0001-0000-4000-8000-000000000010"
 			value = [
 				0
 				0
+			]
+		}
+		{
+			connector_id = "9a282471-a2d2-4591-a57e-c70179bb1962"
+			id = "c0de0001-0000-4000-8000-000000001005"
+			instance_id = "c0de0001-0000-4000-8000-000000000012"
+			value = [
+				-0.9807852804032304
+			]
+		}
+		{
+			connector_id = "e3419eb2-3635-4586-b58c-89ffd88d20d5"
+			id = "c0de0001-0000-4000-8000-000000001006"
+			instance_id = "c0de0001-0000-4000-8000-000000000012"
+			value = [
+				-0.19509032201612825
 			]
 		}
 		{
@@ -400,7 +400,7 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/shader_nodes/panner"
+			type = "core/shader_nodes/constant_vector2"
 		}
 		{
 			content_size = [
@@ -418,7 +418,7 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/shader_nodes/constant_vector2"
+			type = "core/shader_nodes/mul"
 		}
 		{
 			content_size = [
@@ -436,7 +436,7 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/shader_nodes/mul"
+			type = "core/shader_nodes/constant_vector2"
 		}
 		{
 			content_size = [
@@ -454,7 +454,7 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/shader_nodes/constant_vector2"
+			type = "core/shader_nodes/add"
 		}
 		{
 			content_size = [
@@ -472,7 +472,7 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "core/shader_nodes/add"
+			type = "core/shader_nodes/panner"
 		}
 		{
 			content_size = [
