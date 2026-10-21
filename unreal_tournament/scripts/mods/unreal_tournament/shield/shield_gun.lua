@@ -1388,14 +1388,6 @@ local function segment_cylinder(from, to, center, radius, half_height)
 	return best
 end
 
--- Whether an attacker is an ally of a player: of a side that is not the player's enemy. What has no side (the level's exploding barrels)
--- is not, nor is the player themselves.
-local function is_ally(attacker_unit, unit)
-	local side = attacker_unit ~= unit and Managers.state.side.side_by_unit[attacker_unit]
-
-	return side and side.enemy_units_lookup[unit] == nil or false
-end
-
 -- Whether a player holds the Shield Gun's shield up
 local function shield_is_up(unit)
 	local status_extension = ScriptUnit.has_extension(unit, "status_system")
@@ -1446,10 +1438,7 @@ function mod.shield.reflect(from, to, radius, attacker_unit, ignore_unit, reache
 	local best_t, best_unit, best_center, best_distance
 
 	for _, unit in ipairs(heroes.PLAYER_AND_BOT_UNITS) do
-		-- (an ally's shot goes past a player's shield, and the attacker's own only comes back to them once it was reflected)
-		local counts = unit == attacker_unit and reaches_attacker or unit ~= attacker_unit and not is_ally(attacker_unit, unit)
-
-		if counts and unit ~= ignore_unit and Unit.alive(unit) then
+		if (unit ~= attacker_unit or reaches_attacker) and unit ~= ignore_unit and Unit.alive(unit) then
 			local status_extension = ScriptUnit.has_extension(unit, "status_system")
 			local height = status_extension and status_extension:is_crouching() and CONFIG.reach_height_crouched or CONFIG.reach_height
 			local center = POSITION_LOOKUP[unit] + Vector3(0, 0, height * UNIT)
@@ -1676,13 +1665,12 @@ mod:hook(BTCrazyJumpAction, "run", function (func, self, unit, blackboard, t, dt
 end)
 
 -- Whether a player's shield stops what comes at them from a place, by UT's arc (see mod.shield.reflect): it gets to their cylinder on
--- the side that faces that place. If it does, the shield pays for it. It stops all but an ally's: an enemy's, the level's and the
--- player's own (UT's stops its player's rockets).
+-- the side that faces that place. If it does, the shield pays for it.
 local function shield_stops(unit, from, attacker_unit, fatigue_type)
 	local game = Managers.state.network:game()
 	local go_id = Managers.state.unit_storage:go_id(unit)
 
-	if not game or not go_id or not shield_is_up(unit) or is_ally(attacker_unit, unit) then
+	if not game or not go_id or not shield_is_up(unit) then
 		return false
 	end
 
