@@ -107,26 +107,34 @@ local CONFIG = {
 	shot_gap = 0.1,
 }
 
--- LinkBeamEffect (an xEmitter of PT_Beam) and its LinkBeamChild: a beam of points every regen_dist UT units from the muzzle to where it
--- ends, which leaves the muzzle along the aim and bends to the end (mBendStrength), and waves across itself (mWaveFrequency,
--- mWaveAmplitude, mWaveShift), in a plane that spins about it (mSpinRange). The wave dies down while the beam is on an enemy or links an
--- ally, and grows while the gun moves. It is green, gold with links, and blue while it links an ally (LinkColor: the team colors are red
--- and blue, and the heroes are one team, as UT's blue). Each link makes it wider and its wave faster. The numbers are UT units, and the
--- turns are UT's (65536 to a whole turn).
+-- LinkBeamEffect, an xEmitter of PT_Beam, drawn as UE2 draws one (Engine.dll's beam drawing, decompiled):
+--   It has a point every regen_dist UT units from the muzzle to where it ends (the last one short), straight pieces between them, the
+--   texture once along each. Point k (from 1) is pulled toward the line along the aim by bend / (k + bend), so the beam leaves along the
+--   aim and comes round to its end (mBendStrength).
+--   It waves along two axes across it (U and V, across the line from start to end): along V by amplitude * (sin(a) + 0.5 * sin(4 * b))
+--   and along U by amplitude * (sin(b) + 0.5 * sin(4 * a)), with a = 65536 * frequency * x + phase_a and b = second_rate * 65536 *
+--   frequency * x + phase_b, in UE turns (65536 to a turn), x = k (+1, or the share of the last piece). The amplitude rises from nothing
+--   over the first ramp_pieces * regen_dist, and falls to nothing over the last as much when the end is locked (mWaveLockEnd). The two
+--   phases move by mWaveShift a second, a the one way and b the other.
+--   Each piece is drawn as planes flat ribbons about the line, size to each side (mSizeRange), turned 32768 / planes apart, half a turn
+--   between them, and all turning at spin a second (mSpinRange). LinkBeamEffect has 3 (mMaxParticles).
+-- The wave dies down while the beam is on an enemy or links an ally, and grows while the gun moves (LinkBeamEffect.Tick). It is green,
+-- gold with links, and blue while it links an ally (LinkColor: the team colors are red and blue, and the heroes are one team, as UT's
+-- blue). Each link makes it wider and its wave faster. UT also draws children (LinkBeamChild), thinner beams of their own beside it,
+-- which aren't drawn here. The numbers are UT units.
 local BEAM = {
 	regen_dist = 65,
-	-- (mSizeRange is half of the beam's width: its texture is a strip with a bright middle that fades out to both sides, and UT's beam
-	-- is about 22 units across)
 	size = 11,
 	color = 240 / 255,
-	wave_frequency = 0.06, -- radians a unit along the beam
+	planes = 3,
+	wave_frequency = 0.06, -- turns a regen_dist along the beam
+	second_rate = 80674.8125 / 65536,
+	ramp_pieces = 3,
 	wave_amplitude = 8,
 	max_amplitude = 16,
-	wave_shift = 100000, -- the wave's travel, turns a second
-	spin = 45000, -- turns a second
-	-- How far along the beam its bend reaches, as a share of its length. mBendStrength is 3, and how the engine uses it isn't in the
-	-- scripts: the bend reaches a third of the way (a choice, to be checked against UT).
-	bend_share = 1 / 3,
+	wave_shift = 100000, -- UE turns a second
+	spin = 45000, -- UE turns a second
+	bend = 3,
 	-- A linked beam ends this far short of the ally (LinkBeamEffect.Tick: EndEffect - BeamDir * 30)
 	linked_end_back = 30,
 	-- LinkFire.LinkScale: the size of everything by the links, up to 5
@@ -781,75 +789,108 @@ local function seen_muzzle_in_view(api)
 	return first_person_unit, Vector3(Vector3.x(point) * ratio, Vector3.y(point), Vector3.z(point) * ratio)
 end
 
--- Where the beam starts in the player's own view: where the muzzle is seen, but as far ahead as UT starts it (the effect start, about 92
--- units ahead), on the line from the eye through the muzzle. On the screen it is the muzzle. Started at the muzzle's own place, which is
--- close to the eye, the beam's near end was many times as wide as UT's, a bright blob over the gun.
-local function beam_start_in_view(api)
-	local first_person_unit, muzzle = seen_muzzle_in_view(api)
-	local _, effect = effect_start_in_view(api, 1)
-
-	if not first_person_unit or not effect or Vector3.y(muzzle) <= 0.001 then
-		return first_person_unit, muzzle
-	end
-
-	return first_person_unit, muzzle * (Vector3.y(effect) / Vector3.y(muzzle))
-end
-
--- Keeps a line's strip: one piece through all of its points, as UT's PT_Beam is, which follows them every frame. It ends when the line
--- has no points, or when its look changes (version), and a new one is made. It is placed late, after the gun's model has moved this
--- frame and the points have been worked out from its muzzle.
+-- Keeps one plane of the beam: a strip through the beam's points, a flat ribbon whose edges are plane.across to each side, which follows
+-- them every frame. It ends when the beam has no points, or when its look changes (version), and a new one is made. It is placed late,
+-- after the gun's model has moved this frame and the points have been worked out from its muzzle.
 -- locked: in the player's own view, a function that gives the first person unit and the muzzle in its camera node's frame
-local function draw_line(visual, line, material, size, color, locked)
-	if line.drawn and line.material == material and line.size == size and line.locked == locked then
+local function draw_plane(visual, line, plane, material, color, locked)
+	if plane.drawn and plane.material == material and plane.locked == locked then
 		return
 	end
 
-	line.material = material
-	line.size = size
-	line.locked = locked
-	line.version = (line.version or 0) + 1
-	line.drawn = true
+	plane.material = material
+	plane.locked = locked
+	plane.version = (plane.version or 0) + 1
+	plane.drawn = true
 
-	local version = line.version
+	local version = plane.version
 
 	particles.strip({
+		across = function ()
+			return plane.across:unbox()
+		end,
 		color = { color, color, color },
-		face_along_line = true,
 		fade_in = 0,
 		late = true,
 		life = math.huge,
 		locked = locked,
 		material = material,
 		points = function ()
-			if visual.alive and line.version == version and line.count >= 2 then
+			if visual.alive and plane.version == version and line.count >= 2 then
 				return line.points, line.count
 			end
 		end,
-		size = size,
+		size = 0,
 	})
 end
 
--- Puts a line's points along the beam: from the start along the bend to the end, moved across by the wave. lock_end holds the end still
--- (mWaveLockEnd), and the start always is. UT's beam is a smooth curve, and its texture repeats every regen_dist: the strip's repeats
--- every particles.STRIP_REPEAT stretches, so the points are that many to a regen_dist.
-local function place_line(line, start, control, finish, length, regen_dist, amplitude, phase, wave_axis, lock_end)
-	local count = math.min(particles.STRIP_POINTS, math.max(2, math.ceil(length / (regen_dist * UNIT / particles.STRIP_REPEAT)) + 1))
+-- The sine of an angle in UE turns (65536 to a turn)
+local function ue_sine(turns)
+	return math.sin(turns / 65536 * 2 * math.pi)
+end
+
+local function store_point(line, i, point)
+	if line.points[i] then
+		line.points[i]:store(point)
+	else
+		line.points[i] = Vector3Box(point)
+	end
+end
+
+-- Puts the beam's points from the start to the end, bent toward the aim and moved across by the wave, as UE2 does (see BEAM). u_axis
+-- and v_axis are across the line from the start to the end.
+local function place_points(line, start, finish, aim, amplitude, phase_a, phase_b, lock_end, u_axis, v_axis)
+	local regen = BEAM.regen_dist * UNIT
+	local chord = finish - start
+	local length = Vector3.length(chord)
+
+	if length < 0.001 then
+		line.count = 0
+
+		return
+	end
+
+	local direction = chord / length
+	local pieces = math.floor(length / regen) + 1
+	local ramp = BEAM.ramp_pieces * regen
 
 	line.points = line.points or {}
-	line.count = count
+	line.count = pieces + 1
 
-	for i = 1, count do
-		local share = (i - 1) / (count - 1)
-		local along = (1 - share) * (1 - share) * start + 2 * share * (1 - share) * control + share * share * finish
-		local envelope = lock_end and math.sin(math.pi * share) or math.sin(math.pi * share * 0.5)
-		local wave = amplitude * UNIT * envelope * math.sin(BEAM.wave_frequency * share * length / UNIT + phase)
-		local point = along + wave_axis * wave
+	store_point(line, 1, start)
 
-		if line.points[i] then
-			line.points[i]:store(point)
+	for k = 1, pieces do
+		local along = k * regen
+		local share_of_piece = 1
+		local point = start + direction * along
+
+		if k == pieces then
+			share_of_piece = 1 - (along - length) / regen
+			along = length
+			point = finish
 		else
-			line.points[i] = Vector3Box(point)
+			local pull = BEAM.bend / (k + BEAM.bend)
+
+			point = (start + aim * along) * pull + point * (1 - pull)
 		end
+
+		if amplitude > 0 then
+			local swing = amplitude
+
+			if along <= ramp then
+				swing = amplitude * along / ramp
+			elseif lock_end and along >= length - ramp then
+				swing = amplitude * (length - along) / ramp
+			end
+
+			local x = (share_of_piece + k) * BEAM.wave_frequency
+			local a = 65536 * x + phase_a
+			local b = BEAM.second_rate * 65536 * x + phase_b
+
+			point = point + v_axis * (swing * UNIT * (ue_sine(a) + 0.5 * ue_sine(4 * b))) + u_axis * (swing * UNIT * (ue_sine(b) + 0.5 * ue_sine(4 * a)))
+		end
+
+		store_point(line, k + 1, point)
 	end
 end
 
@@ -869,11 +910,14 @@ local function draw_beam(character, beam, dt)
 		visual = {
 			alive = true,
 			amplitude = BEAM.wave_amplitude,
-			phase = 0,
+			-- (UE2 starts a beam's two phases at random, and its turn at nothing)
+			phase_a = math.random() * 65536,
+			phase_b = math.random() * 65536,
 			spin = 0,
 			previous_start = Vector3Box(start),
 			previous_aim = Vector3Box(beam.aim:unbox()),
-			lines = {},
+			line = {},
+			planes = {},
 			spark_time = 0,
 			flash_time = 0,
 			sphere_time = 0,
@@ -908,23 +952,18 @@ local function draw_beam(character, beam, dt)
 
 	visual.previous_start:store(start)
 	visual.previous_aim:store(aim)
-	visual.phase = visual.phase + BEAM.wave_shift / 65536 * 2 * math.pi * (link_scale * 0.6 + 1) * dt
-	visual.spin = visual.spin + BEAM.spin / 65536 * 2 * math.pi * dt
 
-	-- The plane of the wave, about the beam
-	local chord = finish - start
-	local length = Vector3.length(chord)
-	local side = Vector3.cross(beam_direction, Vector3.up())
+	-- The phases of the wave move apart (mWaveShift, faster with links: LinkBeamEffect.Tick), and the planes turn
+	local shift = BEAM.wave_shift * (link_scale * 0.6 + 1) * dt
 
-	if Vector3.length(side) < 0.1 then
-		side = Vector3.right()
-	end
+	visual.phase_a = (visual.phase_a + shift) % 65536
+	visual.phase_b = (visual.phase_b - shift) % 65536
+	visual.spin = (visual.spin + BEAM.spin * dt) % 65536
 
-	side = Vector3.normalize(side)
-
-	local up = Vector3.cross(side, beam_direction)
-	local wave_axis = side * math.cos(visual.spin) + up * math.sin(visual.spin)
-	local control = start + aim * (length * BEAM.bend_share)
+	-- The two axes across the line from the start to the end
+	local reference = math.abs(Vector3.z(beam_direction)) > 0.57 and Vector3(1, 0, 0) or Vector3(0, 0, 1)
+	local u_axis = Vector3.normalize(Vector3.cross(beam_direction, reference))
+	local v_axis = Vector3.cross(beam_direction, u_axis)
 	local beam_material, flash_color, spark_texture = colors_of(linking, links)
 
 	-- In the player's own view the beam is linked to the camera, as the model is, and starts at the model's muzzle as the camera sees it,
@@ -944,14 +983,22 @@ local function draw_beam(character, beam, dt)
 
 	local locked = visual.locked
 
-	-- The beam: one line. UT also draws children (LinkBeamChild), thinner beams with a wider wave of their own, which here showed as a
-	-- second beam beside it.
-	local main = visual.lines[1] or {}
+	-- The beam's points, and its planes about them (mSizeRange, wider with links)
+	place_points(visual.line, start, finish, aim, visual.amplitude, visual.phase_a, visual.phase_b, locked_on or linking, u_axis, v_axis)
 
-	visual.lines[1] = main
+	local size = BEAM.size * (link_scale * 0.6 + 1) * UNIT
 
-	place_line(main, start, control, finish, length, BEAM.regen_dist, visual.amplitude, visual.phase, wave_axis, locked_on or linking)
-	draw_line(visual, main, beam_material, 2 * BEAM.size * (link_scale * 0.6 + 1) * UNIT, BEAM.color, locked)
+	for c = 1, BEAM.planes do
+		local plane = visual.planes[c] or {
+			across = Vector3Box(),
+		}
+		local angle = (c - 1) * 32768 / BEAM.planes + visual.spin
+
+		visual.planes[c] = plane
+
+		plane.across:store((v_axis * ue_sine(angle) + u_axis * ue_sine(angle + 16384)) * size)
+		draw_plane(visual, visual.line, plane, beam_material, BEAM.color, locked)
+	end
 
 	-- The sparks where it ends, but not on a link: back toward the shooter from what it hits, or on from its end in the air
 	if spark_texture then

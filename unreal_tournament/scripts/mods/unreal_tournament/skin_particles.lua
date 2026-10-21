@@ -40,12 +40,11 @@ local mod = get_mod("unreal_tournament")
 --   particles.beam(spec): goes from spec.from to spec.to. spec.size is how wide it is, and it faces the camera around its length.
 --       Instead of the two points, spec.track can be a function that returns from and to, or nothing when the beam should end.
 --   particles.strip(spec): a beam along a line of points, as one piece (UT's PT_Beam), spec.size wide, facing the camera about the line
---       at each point. spec.points is a function that returns the points (a list of boxes) and how many there are (up to
---       particles.STRIP_POINTS), or nothing when it should end. The texture repeats once every particles.STRIP_REPEAT stretches between
---       points. With spec.locked (which returns the first person unit
+--       at each point. spec.points is a function that returns the points (a list of boxes) and how many there are (up to 65), or
+--       nothing when it should end. The texture repeats once between two points. With spec.locked (which returns the first person unit
 --       and a point in its camera node's frame) it is linked to the camera node and starts at that point, so it stays on the model.
---       With spec.face_along_line, its width is across the line from its first point to its last at every point, not across the line
---       there: a line that runs away from the camera and waves toward it would otherwise turn its width over, a twist.
+--       With spec.across (a function that returns a vector in the world), the strip doesn't face the camera: its edges are that vector
+--       to each side of every point, a flat ribbon, as each quad of UE2's beam is.
 --   particles.mesh(spec): a mesh (units/ut/fx/coil, sphere, vortex, made by tools/asset_conversion/make_fx_meshes.py) at spec.position.
 --       It is turned by spec.rotation (or a function that returns it each frame), or it faces the camera with spec.face_camera (its z axis is the way it faces). It also turns by
 --       spec.spin about spec.spin_axis, a vector in the mesh's own axes. spec.scale is a function of how far into its life the mesh
@@ -90,13 +89,9 @@ local function acquire(world, unit_name)
 end
 
 -- The strip (units/ut/fx/beam_strip, tools/asset_conversion/make_fx_meshes.py's make_strip): this many points, with two triangles for
--- each stretch between two of them, on the nodes t_<i>_a and t_<i>_b (from 0), and its texture repeats once every STRIP_REPEAT stretches
+-- each stretch between two of them, on the nodes t_<i>_a and t_<i>_b (from 0)
 local STRIP_UNIT_NAME = "units/ut/fx/beam_strip"
-local STRIP_POINTS = 129
-local STRIP_REPEAT = 4
-
-particles.STRIP_POINTS = STRIP_POINTS
-particles.STRIP_REPEAT = STRIP_REPEAT
+local STRIP_POINTS = 65
 
 -- The nodes of a strip's triangles, { a, b } for each stretch
 local function strip_nodes(entry)
@@ -223,7 +218,7 @@ local function add(kind, spec)
 		intensity = spec.intensity or 1,
 		track = spec.track,
 		points = spec.points,
-		face_along_line = spec.face_along_line,
+		across = spec.across,
 		kind = kind,
 		life = spec.life,
 		size = spec.size,
@@ -515,18 +510,25 @@ local function place(particle, dt, camera_position, camera_rotation)
 		local half = size * 0.5
 		local left_before, right_before
 
+		-- With spec.across, the same offset to the edge at every point (in the world, taken into the camera node's frame when locked)
+		local fixed_across = particle.across and particle.across()
+
+		if fixed_across and frame then
+			local origin = points[1]:unbox()
+
+			fixed_across = Matrix4x4.transform(frame, origin + fixed_across) - Matrix4x4.transform(frame, origin)
+		end
+
 		-- Each point's two corners are across the line there, half the width to each side, turned about the line to face the camera. They
 		-- are in the root's frame, which is at the first point and not turned.
-		local line = particle.face_along_line and point_at(count) - point_at(1)
-
 		for i = 1, STRIP_POINTS do
 			local k = math.min(i, count)
 			local point = point_at(k)
 			local before = point_at(math.max(k - 1, 1))
 			local after = point_at(math.min(k + 1, count))
-			local across = Vector3.cross(line or after - before, camera_position - point)
+			local across = fixed_across or Vector3.cross(after - before, camera_position - point)
 
-			if Vector3.length(across) > 0.000001 then
+			if not fixed_across and Vector3.length(across) > 0.000001 then
 				across = Vector3.normalize(across) * half
 			end
 
