@@ -192,12 +192,11 @@ def make_strip(unit_name, segments):
                      '\t\tstreams = [\n%s ]\n\t}\n') % (len(index), ' '.join('[ %s ]' % il(s) for s in index_streams),
                                                          il(range(len(triangles))), il([1] * len(triangles)), '\n'.join(streams))
 
-    def translation(p):
-        return '1 0 0 0 0 1 0 0 0 0 1 0 %s 1' % fl(p)
-
-    joints = ''.join('\t\t\tj_%d = {\n\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t}\n' % (k, translation(p)) for k, p in enumerate(corners))
-    skin_joints = ''.join('\t\t\t{\n\t\t\t\tinv_bind_matrix = [ %s ]\n\t\t\t\tname = "j_%d"\n\t\t\t}\n' % (translation([-v for v in p]), k)
-                          for k, p in enumerate(corners))
+    # Every joint is at the root in the bind pose, so a corner is drawn at its joint's place plus its place in the bind pose, whichever way
+    # the engine reads the bind matrices (with a joint at its corner and the inverse of that as its inv_bind_matrix, the corners were drawn
+    # that far again from their joints). The effect places a joint at where its corner goes less the corner's place in the bind pose.
+    joints = ''.join('\t\t\tj_%d = {\n\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t}\n' % (k, IDENTITY) for k in range(count))
+    skin_joints = ''.join('\t\t\t{\n\t\t\t\tinv_bind_matrix = [ %s ]\n\t\t\t\tname = "j_%d"\n\t\t\t}\n' % (IDENTITY, k) for k in range(count))
     text = ('\ngeometries = {\n%s}\nnodes = {\n\troot = {\n\t\tchildren = {\n\t\t\tg_strip = {\n\t\t\t\tgeometries = [ "g_strip" ]\n'
             '\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t\tskin = "skin_g_strip"\n\t\t\t}\n%s\t\t}\n\t\tlocal = [ %s ]\n\t}\n}\n'
             'skins = {\n\tskin_g_strip = {\n\t\tbind_matrix = [ %s ]\n\t\tjoints = [\n%s\t\t]\n\t}\n}\nsource_path = "make_fx_meshes"\n') % (

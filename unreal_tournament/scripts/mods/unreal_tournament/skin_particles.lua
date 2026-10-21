@@ -485,8 +485,9 @@ local function place(particle, dt, camera_position, camera_rotation)
 				across = Vector3.zero()
 			end
 
-			Unit.set_local_position(unit, joints[2 * i - 1], point - across - position)
-			Unit.set_local_position(unit, joints[2 * i], point + across - position)
+			-- (a corner is drawn at its joint plus its place in the strip's bind pose: half a meter to its side and a meter a point along y)
+			Unit.set_local_position(unit, joints[2 * i - 1], point - across - position - Vector3(-0.5, i - 1, 0))
+			Unit.set_local_position(unit, joints[2 * i], point + across - position - Vector3(0.5, i - 1, 0))
 		end
 	elseif particle.kind == "disc" then
 		local normal = particle.normal_by and particle.normal_by() or particle.normal:unbox()
