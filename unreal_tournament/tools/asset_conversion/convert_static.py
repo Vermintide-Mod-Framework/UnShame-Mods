@@ -190,9 +190,10 @@ STATICS = {
         'scale': 0.02 * 0.4,
         'unit': 'units/ut/bio/third_person',
     },
+    # (its skin is LinkGunShader, the first person body's, glowing eye and all: make_combo_materials.py's link_gun_world_m0)
     'link_3rd': {
         'pskx': 'NewWeapons2004/SkeletalMesh/NewLinkGun_3rd.psk',
-        'materials': [('units/ut/link/pickup_2004_m0', 'existing')],
+        'materials': [('units/ut/link/link_gun_world_m0', 'existing')],
         'scale': 0.02 * 0.4,
         'unit': 'units/ut/link/third_person',
     },

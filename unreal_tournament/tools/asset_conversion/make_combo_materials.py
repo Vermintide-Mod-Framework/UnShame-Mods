@@ -724,6 +724,28 @@ def link_eye_graph(color):
     graph.constant('out', IN_OUT_ADDITIVE, 1)
     return graph
 
+IN_STANDARD_EMISSIVE = '1164a5ef-4563-4795-b3b5-42825d6df037'
+
+def link_world_body_graph(color):
+    # (the third person mesh, NewLinkGun_3rd, whose skin is LinkGunShader too: the body lit but for the glow, and the eye's glow as its
+    # emissive, which shows in the world, dimmed as the tubes' glow is. UT's attachment keeps it green whatever the links.)
+    graph = link_body_graph(color)
+    graph.add('time', 'core/shader_nodes/current_time')
+    link_body_glow(graph, color)
+    multiply(graph, 'masked_glow', 'glow', 'mask', 'rgb', 'a')
+    graph.add('dim_glow', 'core/shader_nodes/mul')
+    graph.connect('masked_glow', 'dim_glow', IN_MUL_A)
+    graph.constant('dim_glow', IN_MUL_B, LINK_GLOW)
+    graph.connect('dim_glow', 'out', IN_STANDARD_EMISSIVE)
+    return graph
+
+graph = link_world_body_graph('green')
+open('%s/fx_link_gun_world_body_green_graph.material' % FX, 'w', newline='\n').write(graph.text())
+open('%s/units/ut/link/link_gun_world_m0.material' % REPO, 'w', newline='\n').write(
+    'material_contexts = {\n\tsurface_material = ""\n}\nparent_material = "units/ut/fx/fx_link_gun_world_body_green_graph"\ntextures = {\n'
+    '\tpower_map = "units/ut/fx/link_power_green"\n\tbody_map = "units/ut/link/link_gun_fatlinkguntex0"\n}\nvariables = {\n}\n')
+print('wrote fx_link_gun_world_body_green_graph.material and link_gun_world_m0.material, %d nodes' % len(graph.nodes))
+
 for color in ('green', 'yellow', 'blue'):
     for part, slot, make in (('body', 'm0', link_body_graph), ('power', 'm1', link_power_graph), ('eye', 'm3', link_eye_graph)):
         name = 'link_gun_%s_%s' % (part, color)
