@@ -54,6 +54,20 @@ local CONFIG = {
 	-- half a second more)
 	bot_link_time = 5, -- s
 	bot_let_go_time = 2, -- s
+	-- Three bots link the player while the beam kills a monster. The monster stands still this far ahead, inside the beam's reach, and
+	-- far from the bots' melee range. The bots are the three other heroes with their Link Guns, playing as the game's bots do, in a row
+	-- behind the player. They have team_link_time to make three links (in a chain or all on the player, both count three: LinkGun.Links),
+	-- and the beam has kill_time to kill the monster. Everyone's ammo is filled when it runs below low_ammo.
+	monster = "skaven_rat_ogre",
+	monster_distance = 12, -- m
+	team = {
+		{ profile = "dwarf_ranger", career = 1, setting_id = "link_new_dr", distance = -3 },
+		{ profile = "wood_elf", career = 1, setting_id = "link_new_we", distance = -4.5 },
+		{ profile = "witch_hunter", career = 1, setting_id = "link_new_wh", distance = -6 },
+	},
+	team_link_time = 10, -- s
+	kill_time = 60, -- s
+	low_ammo = 40,
 }
 
 local function is_bolt(action)
@@ -90,6 +104,33 @@ local function bolt_tracker(t)
 			end
 		end
 	end
+end
+
+-- The ammo extension of a character's Link Gun (on the main thread)
+local function gun_ammo(unit)
+	local slot_data = Unit.alive(unit) and ScriptUnit.extension(unit, "inventory_system"):get_slot_data("slot_ranged")
+
+	return slot_data and GearUtils.get_ammo_extension(slot_data.right_unit_1p, slot_data.left_unit_1p)
+end
+
+-- The ammo of a character's Link Gun
+local function ammo_of(t, unit)
+	return t.on_main_thread(function ()
+		local ammo_extension = gun_ammo(unit)
+
+		return ammo_extension and ammo_extension:total_remaining_ammo() or 0
+	end)
+end
+
+-- Fills a character's Link Gun
+local function fill(t, unit)
+	t.on_main_thread(function ()
+		local ammo_extension = gun_ammo(unit)
+
+		if ammo_extension then
+			ammo_extension:add_ammo()
+		end
+	end)
 end
 
 local function count(set)
@@ -334,18 +375,9 @@ local function scenarios()
 					link.locked[ally] = nil
 				end)
 
-				local ally_ammo = function ()
-					return t.on_main_thread(function ()
-						local slot_data = ScriptUnit.extension(ally, "inventory_system"):get_slot_data("slot_ranged")
-						local ammo_extension = GearUtils.get_ammo_extension(slot_data.right_unit_1p, slot_data.left_unit_1p)
-
-						return ammo_extension and ammo_extension:total_remaining_ammo() or 0
-					end)
-				end
-
-				local ally_before = ally_ammo()
+				local ally_before = ammo_of(t, ally)
 				local linked_bolt = first_hit(t, "bolt")
-				local ally_after_bolt = ally_ammo()
+				local ally_after_bolt = ammo_of(t, ally)
 				local linked_beam = first_hit(t, "beam")
 
 				link.locked[ally] = nil
@@ -456,6 +488,95 @@ local function scenarios()
 				end
 
 				t.expect(linked, "the bot did not link the bot who fired in %d s", CONFIG.bot_link_time)
+			end,
+		},
+		{
+			-- The whole team: three bots link the player while the player's beam kills a monster. The player has three links, the beam
+			-- hits harder once they are made (1 + 1.5 links), and the bots pay ammo with the player.
+			name = "three bots link the player while the beam kills a monster",
+			run = function (t)
+				local key = item_key(t)
+				local monster = t.spawn(CONFIG.monster, CONFIG.monster_distance)
+
+				if not t.expect(monster, "the %s could not be spawned", CONFIG.monster) then
+					return
+				end
+
+				local bots = {}
+
+				for _, member in ipairs(CONFIG.team) do
+					local bot = t.add_bot(member.profile, member.career, ut.items.weapons[member.setting_id].key, member.distance, nil, true)
+
+					if not t.expect(bot, "the %s bot could not be added", member.profile) then
+						return
+					end
+
+					bots[#bots + 1] = bot
+				end
+
+				local full = ammo_of(t, bots[1])
+				local paid = {}
+
+				t.aim_at(monster)
+
+				local damage = t.track_damage(monster)
+				local most_links = 0
+				local linked_at
+				local watch_links = function ()
+					local links = link.links_of(t.unit())
+
+					most_links = math.max(most_links, links)
+
+					if links >= #bots and not linked_at then
+						linked_at = #damage.hits
+					end
+				end
+				local start = Managers.time:time("game")
+
+				t.hold("action_two")
+
+				while t.health_of(monster) > 0 and Managers.time:time("game") - start < CONFIG.kill_time do
+					t.watch(0.5, watch_links)
+					t.aim_at(monster)
+
+					if (t.ammo() or 0) < CONFIG.low_ammo then
+						t.refill()
+					end
+
+					for i, bot in ipairs(bots) do
+						local ammo = ammo_of(t, bot)
+
+						paid[i] = paid[i] or ammo < full
+
+						if ammo < CONFIG.low_ammo then
+							fill(t, bot)
+						end
+					end
+				end
+
+				t.release("action_two")
+
+				local took = Managers.time:time("game") - start
+				local first, strongest = nil, 0
+
+				for i, hit in ipairs(damage.hits) do
+					if hit.source == key then
+						first = first or hit.amount
+
+						if linked_at and i > linked_at then
+							strongest = math.max(strongest, hit.amount)
+						end
+					end
+				end
+
+				t.log("%d links at most, the %s took %d hits in %.1f s, the first %.1f and the strongest linked one %.1f", most_links, CONFIG.monster, #damage.hits, took, first or -1, strongest)
+				t.expect(most_links == #bots, "the player had %d links at most, not %d", most_links, #bots)
+				t.expect(t.health_of(monster) == 0, "the %s was not killed in %d s", CONFIG.monster, CONFIG.kill_time)
+				t.expect(first and strongest > first * 2, "the linked beam hit for %.1f at most, not much more than the first hit's %.1f", strongest, first or -1)
+
+				for i in ipairs(bots) do
+					t.expect(paid[i], "the %s bot paid no ammo for the links", CONFIG.team[i].profile)
+				end
 			end,
 		},
 	}
