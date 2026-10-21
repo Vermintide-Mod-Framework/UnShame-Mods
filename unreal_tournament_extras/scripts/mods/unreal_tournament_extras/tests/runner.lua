@@ -1218,9 +1218,13 @@ local function make_context(suite)
 				end
 			end
 
-			inventory_extension:destroy_slot(slot, true)
-			inventory_extension:add_equipment(slot, ItemMasterList[item_key])
-			inventory_extension:wield(slot)
+			-- (a bot with its own mind may be in the middle of an action, such as aiming the Waywatcher's volley, which the swap ends. Its end
+			-- looks at where the enemies are, and this runs in the mod's update, where those positions are stale.)
+			utils.with_valid_positions(function ()
+				inventory_extension:destroy_slot(slot, true)
+				inventory_extension:add_equipment(slot, ItemMasterList[item_key])
+				inventory_extension:wield(slot)
+			end)
 
 			return true
 		end)
@@ -1695,12 +1699,13 @@ local function clean_up_scenario(scenario)
 		conflict:destroy_all_units()
 	end
 
-	-- (the bots of t.add_bot, as the game mode takes away its own: GameModeBase._remove_bot_update_safe)
+	-- (the bots of t.add_bot, as the game mode takes away its own: GameModeBase._remove_bot_update_safe. An action a bot is in the middle
+	-- of ends with it, so the positions are made current, as in t.add_bot.)
 	local game_mode = Managers.state.game_mode and Managers.state.game_mode:game_mode()
 
 	for _, bot_player in ipairs(scenario.bots) do
 		if bot_player and game_mode then
-			game_mode:_remove_bot_update_safe(bot_player)
+			utils.with_valid_positions(game_mode._remove_bot_update_safe, game_mode, bot_player)
 		end
 	end
 end
