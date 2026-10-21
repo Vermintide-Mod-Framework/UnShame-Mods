@@ -398,7 +398,8 @@ local function is_body(unit)
 	return Unit.get_data(unit, "breed") ~= nil and not HEALTH_ALIVE[unit]
 end
 
--- The first such thing along the ray, past the dead bodies
+-- The first such thing along the ray, past the characters. A body is found as a target (targets_in_reach), and a living character's
+-- parts move, so is_object would take an ally for a thing and the punch would hit them (an enemy is found by first_punch_hit).
 local function first_object_hit(physics_world, origin, direction, range, owner_unit)
 	local hits = copies(PhysicsWorld.immediate_raycast(physics_world, origin, direction, range * UNIT, "all", "collision_filter", "filter_melee_sweep"))
 
@@ -406,7 +407,7 @@ local function first_object_hit(physics_world, origin, direction, range, owner_u
 		local actor = hits[i][4]
 		local unit = actor and Actor.unit(actor)
 
-		if unit and not is_body(unit) and is_object(unit, actor, owner_unit) then
+		if unit and not Unit.get_data(unit, "breed") and is_object(unit, actor, owner_unit) then
 			return hits[i]
 		end
 	end
@@ -505,7 +506,8 @@ local function targets_in_reach(owner_unit, physics_world, origin, direction, ra
 			targets[#targets + 1] = {
 				unit = unit,
 			}
-		elseif unit ~= owner_unit and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot then
+		elseif unit ~= owner_unit and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot and DamageUtils.is_enemy(owner_unit, unit) then
+			-- (only enemies: an ally that is not a player, such as a pet of the Necromancer's, is passed as a melee blow passes allies)
 			local hits = raycast(physics_world, origin, to / distance, range)
 
 			for i = 1, #(hits or {}) do
