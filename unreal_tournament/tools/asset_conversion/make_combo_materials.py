@@ -690,11 +690,11 @@ def link_power_graph(color):
     graph.connect('dim', 'out', IN_OUT_BASE_COLOR)
     return graph
 
-def link_body_graph(color):
+def link_body_graph(color, options=STANDARD_OPTIONS):
     # (the body lit, but for the glow: its colour times 1 - mask)
     graph = Graph()
     graph.no_variables = True
-    graph.add('out', 'core/stingray_renderer/output_nodes/standard_base', STANDARD_OPTIONS)
+    graph.add('out', 'core/stingray_renderer/output_nodes/standard_base', options)
     graph.add('uv', 'core/shader_nodes/texture_coordinate0')
     texture(graph, 'body', 'body_map', 'uv')
     texture(graph, 'mask', 'power_map', 'uv')
@@ -725,11 +725,17 @@ def link_eye_graph(color):
     return graph
 
 IN_STANDARD_EMISSIVE = '1164a5ef-4563-4795-b3b5-42825d6df037'
+# The options of a third person weapon's material (make_base_materials.py's world_standard): STANDARD_OPTIONS without the weapon's field
+# of view (HAS_FOV), which drew the mesh as the first person weapon is drawn, out of place in the world, and with jitter transparency, so
+# that it fades out near the camera as the characters do
+HAS_FOV = '901b44ce-d128-498a-9912-32cd9635c556'
+JITTER_TRANSPARENCY = '580cc6eb-3591-4c71-aa50-528af18ba160'
+WORLD_STANDARD_OPTIONS = tuple(option for option in STANDARD_OPTIONS if option != HAS_FOV) + (JITTER_TRANSPARENCY,)
 
 def link_world_body_graph(color):
     # (the third person mesh, NewLinkGun_3rd, whose skin is LinkGunShader too: the body lit but for the glow, and the eye's glow as its
     # emissive, which shows in the world, dimmed as the tubes' glow is. UT's attachment keeps it green whatever the links.)
-    graph = link_body_graph(color)
+    graph = link_body_graph(color, WORLD_STANDARD_OPTIONS)
     graph.add('time', 'core/shader_nodes/current_time')
     link_body_glow(graph, color)
     multiply(graph, 'masked_glow', 'glow', 'mask', 'rgb', 'a')
