@@ -624,8 +624,10 @@ local function apply_link_gun(template)
 
 	utils.set_actions_lookup_data(actions, template.name)
 
-	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots
+	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots. A base whose item has an ammo unit
+	-- (the crossbow's bolt) needs where to attach it, or the gun can't be spawned (GearUtils.spawn_inventory_unit).
 	template.ammo_data = {
+		ammo_unit_attachment_node_linking = base.ammo_data and base.ammo_data.ammo_unit_attachment_node_linking,
 		ammo_hand = hand,
 		max_ammo = CONFIG.max_ammo,
 		ammo_per_clip = CONFIG.max_ammo,
