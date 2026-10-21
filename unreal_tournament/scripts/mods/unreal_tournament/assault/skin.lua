@@ -24,6 +24,8 @@ local assault = mod.assault
 local CONFIG = {
 	-- The copies of the shot's sound in the bank, each at its own pitch (make_bank.py's ASSAULT_FIRE_PITCHES)
 	fire_sound_pitches = 6,
+	-- How far apart the two UT2003 rifles' pickups get, halfway through, as a share of the pickup (see time_curves)
+	pickup_stagger = 0.08,
 	-- The grenade's explosion: the game's own (its smoke and its mark), as the rocket's, and NewExplosionB's fireballs: three, 10 a
 	-- second, of exp1_frames (2 columns by 4 rows), size 60 to 80, life 0.4 to 0.6 s, starting up to 24 units from the middle. The
 	-- sizes and the spread are made larger as the rocket's are (NewExplosionA's 50 to 70 and 24 are 90 to 125 and 36 there).
@@ -573,13 +575,12 @@ local function new_skin(setting_id, mirror, owns_grenades)
 				animations = animations_2003,
 				muzzle_node = "b_bone_flash",
 				-- The old pickup starts turned in toward the middle of the view and swings out, so the two mirrored rifles would cross. The
-				-- right one swings out fast at first and the left one slowly at first, so they pass the middle at different times (a choice,
-				-- set in the game).
+				-- right one goes a little faster in the middle of the pickup and the left one a little slower, so they pass the middle at
+				-- slightly different times. Both start and end together. (pickup_stagger is how far apart they get, as a share of the pickup,
+				-- halfway through: set in the game.)
 				time_curves = {
-					Pickup = mirror and function (share)
-						return share * share * share
-					end or function (share)
-						return 1 - (1 - share) * (1 - share) * (1 - share)
+					Pickup = function (share)
+						return share + (mirror and -1 or 1) * CONFIG.pickup_stagger * share * (1 - share) * 4
 					end,
 				},
 				draw_scale = 1,
