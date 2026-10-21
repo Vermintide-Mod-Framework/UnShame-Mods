@@ -268,12 +268,18 @@ mod:hook_safe(PlayFabMirrorAdventure, "inventory_request_cb", function (self)
 	add_to_inventory(self)
 end)
 
--- Weapons the mod had and dropped: the Redeemer, which is now the Bounty Hunter's ability (redeemer.lua). A loadout that still holds
+-- Weapons the mod had and dropped: the Redeemer, which is now the Bounty Hunter's ability (redeemer.lua), and the names the Link Gun's
+-- copies had while it was being made (now ut_link_gun and the others, link/link_gun.lua). A loadout that still holds
 -- one names an item that is no longer in the inventory, which the game repairs itself when it starts (PlayFabMirrorBase's broken item
 -- slots, fixCareerData). After a reload, a character can still hold the item table of a dropped weapon from before it, and the tab
 -- screen draws its icon, whose material is gone (see retire_icon).
 local DROPPED_KEYS = {
 	ut_redeemer = true,
+	ut_link_new = true,
+	ut_link_new_dr = true,
+	ut_link_new_wh = true,
+	ut_link_new_bw = true,
+	ut_link_new_we = true,
 }
 
 for key in pairs(DROPPED_KEYS) do
