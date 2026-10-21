@@ -400,8 +400,8 @@ local function new_skin(setting_id)
 		-- eye, the barrel to the left, nearly level. Its back and bottom run off the right and bottom edges of the screen, as the
 		-- other weapons' do. Set with tools/asset_conversion/preview_weapon.py.
 		inspect_pose_right = 20,
-		inspect_pose_forward = -30,
-		inspect_pose_up = -13,
+		inspect_pose_forward = -38,
+		inspect_pose_up = -9,
 		inspect_pose_roll = -10,
 		inspect_pose_pitch = 0,
 		inspect_pose_yaw = 65,
