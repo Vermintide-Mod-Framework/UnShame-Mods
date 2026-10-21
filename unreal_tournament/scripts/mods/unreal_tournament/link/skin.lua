@@ -211,8 +211,7 @@ local function throw_spark(spec, position, way, texture, size_scale, speed_scale
 	local offset = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1) * (spec.position_deviation * UNIT)
 	local origin = Vector3Box(position + offset)
 	local velocity = Vector3Box(deviate(way, spec.direction_deviation) * (random_between(spec.speed) * speed_scale * UNIT))
-	-- (mSizeRange is the radius of xEmitter's particle)
-	local width = 2 * random_between(spec.size) * size_scale * UNIT
+	local width = random_between(spec.size) * size_scale * UNIT
 	local life = spec.life * life_scale
 	local started = Application.time_since_launch()
 	local color = { spec.color, spec.color, spec.color }
@@ -938,7 +937,7 @@ local function draw_beam(character, beam, dt)
 		visual.locked_skin = skin
 		visual.locked = skin and function ()
 			if visual.alive and api.state() == skin then
-				return beam_start_in_view(api)
+				return seen_muzzle_in_view(api)
 			end
 		end or nil
 	end
