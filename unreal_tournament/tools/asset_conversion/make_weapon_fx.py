@@ -66,6 +66,10 @@ TEXTURES = {
     # are, where make_fx_assets.py's link_muz_green is read as srgb)
     'link_bolt_green': ('XEffectMat/Texture/link_muz_green.tga', 1, 1),
     'link_bolt_yellow': ('XEffectMat/Texture/link_muz_yellow.tga', 1, 1),
+    # (and the beam's flashes, LinkMuzFlashBeam1st and 3rd: link_muz_green and the others, STY_Translucent)
+    'link_beam_flash_green': ('XEffectMat/Texture/link_muz_green.tga', 1, 1),
+    'link_beam_flash_yellow': ('XEffectMat/Texture/link_muz_yellow.tga', 1, 1),
+    'link_beam_flash_blue': ('XEffectMat/Texture/link_muz_blue.tga', 1, 1),
     'link_muzmesh_green': ('XEffectMat/Texture/link_muzmesh_green.tga', 2, 2),
     'link_muzmesh_yellow': ('XEffectMat/Texture/link_muzmesh_yellow.tga', 2, 2),
     'plasma_shaft': ('AW-2004Particles/Texture/PlasmaShaft.tga', 1, 1),
@@ -81,7 +85,8 @@ LIGHTENED = {'sniper_smoke': 0.5}
 
 # The textures that UT draws with FB_Brighten, or as STY_Translucent, which is the same: c + d * (1 - c). They are read as they are, and
 # their materials are derived from fx_particle_brighten_graph and fx_particle_weapon_brighten_graph (make_combo_materials.py).
-BRIGHTEN = ('minigun_burst', 'impact_smoke', 'minigun_flash_3rd', 'link_muzmesh_green', 'link_muzmesh_yellow')
+BRIGHTEN = ('minigun_burst', 'impact_smoke', 'minigun_flash_3rd', 'link_muzmesh_green', 'link_muzmesh_yellow', 'link_beam_flash_green',
+            'link_beam_flash_yellow', 'link_beam_flash_blue')
 
 # Of those, the ones read as srgb, with fx_particle_brighten_srgb_graph and fx_particle_weapon_brighten_srgb_graph: UT2004 draws in gamma
 # space and puts a texture's values on the screen as they are, which the game does for an srgb texture. Read as they are, the first
@@ -107,7 +112,8 @@ TOP_HALF = ('shield_charge_spark', 'speed_trail')
 # weapon model's field of view (units/ut/fx/particle_weapon_linear, or particle_weapon for an srgb one), so they are among the model's
 # parts. The Minigun's flash and shells are attached to the weapon (MinigunFire.InitEffects, Minigun.PostBeginPlay), and its smoke is
 # drawn with the weapon's field of view (WeaponFire.DrawMuzzleFlash).
-WEAPON = ('minigun_burst', 'shell_casing', 'muzzle_smoke', 'force_ring', 'shield_charge_spark', 'link_muzmesh_green', 'link_muzmesh_yellow')
+WEAPON = ('minigun_burst', 'shell_casing', 'muzzle_smoke', 'force_ring', 'shield_charge_spark', 'link_muzmesh_green', 'link_muzmesh_yellow',
+          'link_beam_flash_green', 'link_beam_flash_yellow', 'link_beam_flash_blue')
 
 def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_alpha=False):
     if keep_alpha:

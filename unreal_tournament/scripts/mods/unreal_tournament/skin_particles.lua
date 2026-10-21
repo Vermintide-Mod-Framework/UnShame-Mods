@@ -41,7 +41,8 @@ local mod = get_mod("unreal_tournament")
 --       Instead of the two points, spec.track can be a function that returns from and to, or nothing when the beam should end.
 --   particles.strip(spec): a beam along a line of points, as one piece (UT's PT_Beam), spec.size wide, facing the camera about the line
 --       at each point. spec.points is a function that returns the points (a list of boxes) and how many there are (up to 65), or
---       nothing when it should end. The texture repeats once between two points.
+--       nothing when it should end. The texture repeats once between two points. With spec.locked (which returns the first person unit
+--       and a point in its camera node's frame) it is linked to the camera node and starts at that point, so it stays on the model.
 --   particles.mesh(spec): a mesh (units/ut/fx/coil, sphere, vortex, made by tools/asset_conversion/make_fx_meshes.py) at spec.position.
 --       It is turned by spec.rotation (or a function that returns it each frame), or it faces the camera with spec.face_camera (its z axis is the way it faces). It also turns by
 --       spec.spin about spec.spin_axis, a vector in the mesh's own axes. spec.scale is a function of how far into its life the mesh
@@ -478,7 +479,27 @@ local function place(particle, dt, camera_position, camera_rotation)
 		end
 
 		count = math.min(count, STRIP_POINTS)
-		position = points[1]:unbox()
+
+		-- A locked strip is in the camera node's frame: its points are taken there from the world, and its start is moved to the place
+		-- that locked gives (and the rest of it with it, less and less to its end)
+		local frame, shift
+
+		if particle.locked then
+			frame = Matrix4x4.inverse(Unit.world_pose(particle.parent, utils.camera_node(particle.parent)))
+			shift = position - Matrix4x4.transform(frame, points[1]:unbox())
+		end
+
+		local function point_at(k)
+			local point = points[k]:unbox()
+
+			if frame then
+				point = Matrix4x4.transform(frame, point) + shift * (1 - (k - 1) / (count - 1))
+			end
+
+			return point
+		end
+
+		position = point_at(1)
 		rotation = Quaternion.identity()
 		scale = Vector3(1, 1, 1)
 
@@ -490,9 +511,9 @@ local function place(particle, dt, camera_position, camera_rotation)
 		-- are in the root's frame, which is at the first point and not turned.
 		for i = 1, STRIP_POINTS do
 			local k = math.min(i, count)
-			local point = points[k]:unbox()
-			local before = points[math.max(k - 1, 1)]:unbox()
-			local after = points[math.min(k + 1, count)]:unbox()
+			local point = point_at(k)
+			local before = point_at(math.max(k - 1, 1))
+			local after = point_at(math.min(k + 1, count))
 			local across = Vector3.cross(after - before, camera_position - point)
 
 			if Vector3.length(across) > 0.000001 then

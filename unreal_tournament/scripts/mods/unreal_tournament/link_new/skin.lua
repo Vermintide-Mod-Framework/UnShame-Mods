@@ -161,7 +161,8 @@ local BOLT_SPARKS = {
 local SPARK_STREAK_SECONDS = 0.06
 local SPARK_GRAVITY = 10.7 -- m/s^2
 
-local FLASH_3RD = { rate = 12, life = 0.25, size = { 50, 60 }, color = 180 / 255 }
+-- (LinkBeamEffect sets the third person flash's sizes both to 50 times LinkScale * 0.5 + 1, and xEmitter's sizes are half a width)
+local FLASH_3RD = { rate = 12, life = 0.25, size = 50, color = 180 / 255 }
 local FLASH_1ST = { life = 0.25, size = 24, color = 200 / 255, interval = 0.12 }
 local SPHERE = { rate = 12, life = 0.25, size = 35, own_size = 20, color = 180 / 255 }
 
@@ -684,28 +685,45 @@ local function turns_to_radians(turns)
 	return turns / 65536 * 2 * math.pi
 end
 
--- The beam's color: its material and the textures of its flashes and sparks. The material is UT's LinkBeamGreenFB and the others:
--- FB_Brighten of the texture panned along the beam (tools/asset_conversion/make_combo_materials.py).
+-- The beam's color: its material, the color of its flashes (link_beam_flash_<color>, made by make_weapon_fx.py) and the texture of its
+-- sparks. The material is UT's LinkBeamGreenFB and the others: FB_Brighten of the texture panned along the beam
+-- (tools/asset_conversion/make_combo_materials.py).
 local function colors_of(linking, links)
 	if linking then
-		return "units/ut/fx/fx_link_beam_panned_blue", "link_muz_blue", nil
+		return "units/ut/fx/fx_link_beam_panned_blue", "blue", nil
 	elseif links > 0 then
-		return "units/ut/fx/fx_link_beam_panned_yellow", "link_muz_yellow", "link_spark_yellow"
+		return "units/ut/fx/fx_link_beam_panned_yellow", "yellow", "link_spark_yellow"
 	end
 
-	return "units/ut/fx/fx_link_beam_panned_green", "link_muz_green", "link_spark_green"
+	return "units/ut/fx/fx_link_beam_panned_green", "green", "link_spark_green"
+end
+
+-- The first person unit and where the muzzle of the model in the player's own view is in its camera node's frame, as the camera sees it:
+-- the model is drawn with its own field of view, so the point is moved away from the view's axis by the ratio of the two
+local function seen_muzzle_in_view(api)
+	local first_person_unit, point = api.model_point_in_view()
+
+	if not first_person_unit then
+		return nil
+	end
+
+	local ratio = math.tan(Managers.state.camera:fov("player_1") / 2) / math.tan(api.weapon_vertical_fov() / 2)
+
+	return first_person_unit, Vector3(Vector3.x(point) * ratio, Vector3.y(point), Vector3.z(point) * ratio)
 end
 
 -- Keeps a line's strip: one piece through all of its points, as UT's PT_Beam is, which follows them every frame. It ends when the line
 -- has no points, or when its look changes (version), and a new one is made. It is placed late, after the gun's model has moved this
 -- frame and the points have been worked out from its muzzle.
-local function draw_line(visual, line, material, size, color)
-	if line.drawn and line.material == material and line.size == size then
+-- locked: in the player's own view, a function that gives the first person unit and the muzzle in its camera node's frame
+local function draw_line(visual, line, material, size, color, locked)
+	if line.drawn and line.material == material and line.size == size and line.locked == locked then
 		return
 	end
 
 	line.material = material
 	line.size = size
+	line.locked = locked
 	line.version = (line.version or 0) + 1
 	line.drawn = true
 
@@ -716,6 +734,7 @@ local function draw_line(visual, line, material, size, color)
 		fade_in = 0,
 		late = true,
 		life = math.huge,
+		locked = locked,
 		material = material,
 		points = function ()
 			if visual.alive and line.version == version and line.count >= 2 then
@@ -821,7 +840,24 @@ local function draw_beam(character, beam, dt)
 	local up = Vector3.cross(side, beam_direction)
 	local wave_axis = side * math.cos(visual.spin) + up * math.sin(visual.spin)
 	local control = start + aim * (length * BEAM.bend_share)
-	local beam_material, flash_texture, spark_texture = colors_of(linking, links)
+	local beam_material, flash_color, spark_texture = colors_of(linking, links)
+
+	-- In the player's own view the beam is linked to the camera, as the model is, and starts at the model's muzzle as the camera sees it,
+	-- so it stays on the gun however the view moves after this
+	local api = first_person_api()
+	local first_person = utils.is_local_player_unit(character) and api and not api.third_person.shows_weapon(character)
+	local skin = first_person and api.state() or nil
+
+	if visual.locked_skin ~= skin then
+		visual.locked_skin = skin
+		visual.locked = skin and function ()
+			if visual.alive and api.state() == skin then
+				return seen_muzzle_in_view(api)
+			end
+		end or nil
+	end
+
+	local locked = visual.locked
 
 	-- The beam, and its children, each thinner, with a wider wave of their own
 	local children = math.min(links + 1, BEAM.max_children)
@@ -830,7 +866,7 @@ local function draw_beam(character, beam, dt)
 	visual.lines[1] = main
 
 	place_line(main, start, control, finish, length, BEAM.regen_dist, visual.amplitude, visual.phase, wave_axis, locked_on or linking)
-	draw_line(visual, main, beam_material,2 * BEAM.size * (link_scale * 0.6 + 1) * UNIT, BEAM.color)
+	draw_line(visual, main, beam_material, 2 * BEAM.size * (link_scale * 0.6 + 1) * UNIT, BEAM.color, locked)
 
 	for c = 1, BEAM.max_children do
 		local line = visual.lines[c + 1] or {}
@@ -841,7 +877,7 @@ local function draw_beam(character, beam, dt)
 			local amplitude = c * 4 + visual.amplitude * ((BEAM.max_amplitude - c * 4) / BEAM.max_amplitude)
 
 			place_line(line, start, control, finish, length, BEAM.child_regen_dist, amplitude, visual.phase * 0.6, wave_axis, linking)
-			draw_line(visual, line, beam_material,2 * (2 + 4 * (children - c + 1)) * UNIT, BEAM.child_color)
+			draw_line(visual, line, beam_material, 2 * (2 + 4 * (children - c + 1)) * UNIT, BEAM.child_color, locked)
 		else
 			line.count = 0
 			line.drawn = false
@@ -862,44 +898,49 @@ local function draw_beam(character, beam, dt)
 		end
 	end
 
-	-- The flash at the muzzle: the mesh's in a character's hand, or the player's own model's for every hit
-	local first_person = utils.is_local_player_unit(character) and first_person_api() and not first_person_api().third_person.shows_weapon(character)
-	local flash_scale = link_scale * 0.5 + 1
-	local function follow_muzzle()
-		return visual.alive and (muzzle_of(character)) or nil
-	end
-
-	if first_person then
+	-- The flash at the muzzle: the player's own model's for every hit, linked to the model and drawn with its field of view (an fx_weapon_
+	-- material), so it stays on the gun and the parts of the gun in front of it hide it; or the mesh's in a character's hand, which UT
+	-- doesn't scale with the mesh, so it is in the world's units. Both are FB_Brighten of their textures as they are.
+	if skin then
 		visual.flash_time = visual.flash_time - dt
 
 		if visual.flash_time <= 0 then
 			visual.flash_time = visual.flash_time + FLASH_1ST.interval
 
 			particles.sprite({
+				additive = 0,
 				attenuation = 0,
 				color = { FLASH_1ST.color, FLASH_1ST.color, FLASH_1ST.color },
-				follow = follow_muzzle,
-				late = true,
 				life = FLASH_1ST.life,
-				size = FLASH_1ST.size * flash_scale * scale,
+				locked = function ()
+					if visual.alive and api.state() == skin then
+						return api.model_point_in_view()
+					end
+				end,
+				material = "units/ut/fx/fx_weapon_link_beam_flash_" .. flash_color,
+				size = 2 * FLASH_1ST.size * skin.view_across_scale,
 				spin = (math.random() * 2 - 1) * 0.3,
-				texture = flash_texture,
 			})
 		end
 	else
+		local flash_size = 2 * FLASH_3RD.size * (link_scale * 0.5 + 1) * UNIT
+
 		visual.flash_time = visual.flash_time + dt * FLASH_3RD.rate
 
 		while visual.flash_time >= 1 do
 			visual.flash_time = visual.flash_time - 1
 
 			particles.sprite({
+				additive = 0,
 				color = { FLASH_3RD.color, FLASH_3RD.color, FLASH_3RD.color },
-				follow = follow_muzzle,
+				follow = function ()
+					return visual.alive and (muzzle_of(character)) or nil
+				end,
 				late = true,
 				life = FLASH_3RD.life,
-				size = random_between(FLASH_3RD.size) * flash_scale * scale,
+				material = "units/ut/fx/fx_link_beam_flash_" .. flash_color,
+				size = flash_size,
 				spin = (math.random() * 2 - 1) * 0.3,
-				texture = flash_texture,
 			})
 		end
 	end
