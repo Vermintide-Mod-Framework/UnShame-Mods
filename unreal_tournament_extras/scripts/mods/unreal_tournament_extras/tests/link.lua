@@ -68,6 +68,9 @@ local CONFIG = {
 		{ profile = "witch_hunter", career = 1, setting_id = "link_gun_wh", distance = -4 },
 	},
 	team_link_time = 10, -- s
+	-- The heat given to Sienna to vent (her threshold is 10), and how long the reload button is held
+	vent_heat = 8,
+	vent_time = 1, -- s
 	kill_time = 60, -- s
 	low_ammo = 40,
 }
@@ -213,6 +216,34 @@ end
 
 local function scenarios()
 	return {
+		{
+			-- Sienna's heat is her career's, so it builds while she holds the Link Gun, and her copy vents it on the reload button, as her
+			-- staffs do. The heat is given here, and the button held for vent_time.
+			name = "Sienna's copy vents her heat on the reload button",
+			every_hero = true,
+			run = function (t)
+				if t.wielded() ~= ut.items.weapons.link_gun_bw.template then
+					t.skip("only Sienna's copy vents")
+				end
+
+				t.on_main_thread(function ()
+					ScriptUnit.extension(t.unit(), "overcharge_system"):add_charge(CONFIG.vent_heat)
+				end)
+
+				local before = t.overcharge()
+				local vented = false
+
+				t.press("weapon_reload", CONFIG.vent_time, function ()
+					local overcharge_extension = ScriptUnit.has_extension(t.unit(), "overcharge_system")
+
+					vented = vented or overcharge_extension ~= nil and overcharge_extension.venting_overcharge == true
+				end)
+
+				t.log("heat %.1f to %.1f", before, t.overcharge())
+				t.expect(before > 0, "the heat could not be given")
+				t.expect(vented, "holding the reload button didn't vent the heat")
+			end,
+		},
 		{
 			name = "all the ammo is in the clip",
 			every_hero = true,

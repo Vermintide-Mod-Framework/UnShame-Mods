@@ -51,7 +51,8 @@ local VARIANTS = {
 		hand = "left",
 	},
 	-- Sienna's staffs have no ammo. This copy has the Link Gun's. The local item list shows only her own staff to the Necromancer, so she
-	-- is named here, as the Shock Rifle does.
+	-- is named here, as the Shock Rifle does. Her heat is her career's, not the staff's, so her talents and skill still build it while
+	-- she holds the Link Gun, and the reload button vents it (vents).
 	{
 		base_item = "bw_skullstaff_beam",
 		deus_copy = "deus_bw_skullstaff_beam",
@@ -60,6 +61,7 @@ local VARIANTS = {
 		template = "ut_link_gun_bw_template",
 		hand = "right",
 		can_wield = { "bw_scholar", "bw_adept", "bw_unchained", "bw_necromancer" },
+		vents = true,
 	},
 	-- The Deepwood Staff's item lists only the Sister of the Thorn, but all four of Kerillian's careers share one third person body, which
 	-- has the staff's animations, so this copy lists all four (as the Lightning Gun's does). It has the Link Gun's ammo.
@@ -621,6 +623,20 @@ local function apply_link_gun(template)
 	-- Inspecting is the base's, kept by the shell.
 	actions.action_wield = table.clone(ActionTemplates.wield)
 	actions.weapon_reload = table.clone(ActionTemplates.reload)
+
+	-- A copy that vents has the base staff's vent on the reload button instead, without its animation, which the Link Gun's model doesn't
+	-- have. All the ammo is in the clip, so the gun never needs the reload.
+	if variant.vents then
+		local vent = table.clone(base.actions.weapon_reload.default)
+
+		vent.anim_event = nil
+		vent.anim_end_event = nil
+		vent.anim_end_event_condition_func = nil
+
+		actions.weapon_reload = {
+			default = vent,
+		}
+	end
 
 	utils.set_actions_lookup_data(actions, template.name)
 
