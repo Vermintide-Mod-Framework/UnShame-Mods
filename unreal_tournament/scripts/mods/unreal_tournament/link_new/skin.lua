@@ -61,6 +61,9 @@ local CONFIG = {
 	},
 	-- LinkAltFire.FireAnimRate: the Fire animation plays at this much of its speed
 	fire_animation_rate = 0.75,
+	inspect_pose_speed = 5, -- how fast the model moves to the inspect pose and back, per second
+	inspect_sway = 5, -- degrees of yaw each way while inspecting
+	inspect_sway_speed = 1.8, -- radians per second
 	-- LinkProjectile: its mesh (units/ut/fx/link_bolt_mesh, made from LinkProjectile's StaticMesh) at DrawScale3D 2.295 along its way and
 	-- 1.53 across, moved back by its PrePivot of 10 of the mesh's units (before it is scaled), turned at random about its way and
 	-- spinning about it at RotationRate roll 80000 of 65536 turns a second. Its skin is LinkProjGreenFB, link_muz_green added to the screen
@@ -393,6 +396,18 @@ local function new_skin(setting_id)
 		-- UT's third person mesh (LinkAttachment's NewLinkGun_3rd) at UT's size in a player's hand (DrawScale 0.4). Its origin is by its
 		-- grip, and its barrel runs along its forward to the muzzle (its upper flash bone).
 		third_person = third_person_of(setting_id, "units/ut/link/third_person", 75.5, 8.9),
+		-- UT2004 has no inspect animation. The inspect pose brings the gun to the middle of the view and turns it about its middle to show
+		-- its left side, with the eye, the barrel to the left, a little from above. Set with tools/asset_conversion/preview_weapon.py, and
+		-- held a little low, as the game shows a pose bigger and higher than the preview.
+		inspect_pose_right = 0,
+		inspect_pose_forward = 0,
+		inspect_pose_up = -4,
+		inspect_pose_roll = -20,
+		inspect_pose_pitch = 5,
+		inspect_pose_yaw = 65,
+		inspect_pivot_right = 18,
+		inspect_pivot_forward = 97,
+		inspect_pivot_up = -70,
 		looks = {
 			-- These come from LinkGun.uc with bUseOldWeaponMesh: OldMesh, OldPlayerViewOffset and OldPlayerViewPivot. Weapon.RenderOverlays
 			-- draws it at OldDrawScale, which is 1.
@@ -407,10 +422,20 @@ local function new_skin(setting_id)
 				pivot_yaw = 500 / 65536 * 360,
 				effect_offset = { 100, 25, -3 },
 				third_person = third_person_of(setting_id, "units/ut/link2003/third_person", 99.2, 2.5),
+				-- (the same pose, about the middle of the old model)
+				inspect_pivot_right = 0,
+				inspect_pivot_forward = 30,
+				inspect_pivot_up = -10,
 			},
 		},
 		on_create = function ()
 			api.play_sound("ut_link_select")
+		end,
+		-- Moves the model towards the inspect pose and back, and sways it while it is there.
+		on_update = function (skin, dt)
+			skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
+			skin.inspect_time = skin.inspecting and (skin.inspect_time or 0) + dt or 0
+			skin.extra_yaw = skin.inspect_pose * CONFIG.inspect_sway * math.sin(skin.inspect_time * CONFIG.inspect_sway_speed)
 		end,
 	})
 
@@ -419,6 +444,16 @@ end
 
 for _, setting_id in ipairs(VARIANTS) do
 	new_skin(setting_id)
+end
+
+-- Inspecting is the game's own action, held with the key. The gun is turned to show its side for as long as it lasts.
+mod.inspect_callbacks.link_new_skin = function (action, started)
+	local api = first_person_api()
+	local skin = api and api.state()
+
+	if skin and utils.is_local_player_unit(action.owner_unit) then
+		skin.inspecting = started
+	end
 end
 
 -- The bolts
