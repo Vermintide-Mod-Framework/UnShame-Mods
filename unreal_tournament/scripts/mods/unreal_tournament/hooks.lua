@@ -655,19 +655,35 @@ end)
 -- units (flow_query_wielded_weapon) and sends them flow events, which play the base weapon's sound and muzzle flash. A weapon can keep
 -- its third person units from the characters' flow, which then gets no unit, as for an empty hand:
 --   mod.third_person_weapons_hidden_from_flow[template] = true
+-- The flow is also given the first person units, and the same events make the player's own first person weapon play its shot sound,
+-- which only they hear. A weapon can keep those from the flow too:
+--   mod.first_person_weapons_hidden_from_flow[template] = true
 mod.third_person_weapons_hidden_from_flow = {}
+mod.first_person_weapons_hidden_from_flow = {}
 
 mod:hook(_G, "flow_query_wielded_weapon", function (func, params, ...)
 	local result = func(params, ...)
 	local character = params.player_unit
+	local template_name = result and character and Unit.alive(character) and utils.wielded_template_name(character)
 
-	if result and character and Unit.alive(character) and mod.third_person_weapons_hidden_from_flow[utils.wielded_template_name(character)] then
+	if template_name and mod.third_person_weapons_hidden_from_flow[template_name] then
 		local null_reference = Unit.null_reference()
 
 		result.righthandweapon3p = null_reference
 		result.righthandammo3p = null_reference
 		result.lefthandweapon3p = null_reference
 		result.lefthandammo3p = null_reference
+	end
+
+	if template_name and mod.first_person_weapons_hidden_from_flow[template_name] then
+		local null_reference = Unit.null_reference()
+
+		result.righthandweapon = null_reference
+		result.righthandammo1p = null_reference
+		result.lefthandweapon = null_reference
+		result.lefthandammo1p = null_reference
+		result.aliverighthandammo1p = false
+		result.alivelefthandammo1p = false
 	end
 
 	return result

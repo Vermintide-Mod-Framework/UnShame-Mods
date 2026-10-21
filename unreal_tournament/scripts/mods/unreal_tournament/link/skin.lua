@@ -1127,7 +1127,8 @@ mod.unload_callbacks[#mod.unload_callbacks + 1] = clear
 
 -- The base's own shot, reload and zoom animations are not played on the player's own first person unit: the skin's model plays UT's.
 -- Nor is venting's (cooldown_start), which the game plays when venting starts, whatever the action (PlayerUnitOverchargeExtension).
--- The characters' shot animation would have the base's unit play its shot sound and flash: the skin plays UT's.
+-- The characters' shot animation would have the base's units play its shot sound and flash, in third person and in the player's own
+-- first person: the skin plays UT's.
 for template_name in pairs(TEMPLATE_NAMES) do
 	mod.first_person_animation_filters[template_name] = function (event)
 		local actions = Weapons[template_name] and Weapons[template_name].actions
@@ -1141,4 +1142,5 @@ for template_name in pairs(TEMPLATE_NAMES) do
 	end
 
 	mod.third_person_weapons_hidden_from_flow[template_name] = true
+	mod.first_person_weapons_hidden_from_flow[template_name] = true
 end
