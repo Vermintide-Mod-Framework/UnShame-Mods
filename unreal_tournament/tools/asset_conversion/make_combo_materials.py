@@ -573,3 +573,158 @@ def link_beam_graph(pan_v):
 
 for color, pan_v in (('green', -2), ('yellow', -2), ('blue', 2)):
     write('link_beam_panned_' + color, link_beam_graph(pan_v), {'beam_map': 'link_beam_' + color})
+
+# ---------------------------------------------------------------- the Link Gun's model
+# UT2004's first person Link Gun (NewWeapons2004.FatLinkGun) has three materials (UT2004Weapons, group Shaders; read from a UModel export with
+# -groups, as other groups have objects of the same names). The model here has them as m_0, m_1 and m_2 (convert_weapon.py), and this
+# makes the first two, run after convert_weapon.py. LinkGun.UpdateLinkColor swaps them for the gold ones with links, and the team's
+# while it links an ally (the heroes are one team, as UT's blue).
+#   m_0  LinkGunShader: the body (FatLinkGunTex0), lit, with SelfIllumination TexPanner1 (PanDirection yaw 2048, PanRate -1) of TexScaler1
+#        (UScale 4, VScale 1) of LinkPowerGreen, masked by LinkPowerGreen's alpha (SelfIlluminationMask), which is the green eye on its side.
+#        Gold: TexPanner5 (yaw 0, -1) of TexScaler4 (5, 2, VOffset -32) of LinkPowerYellow. Blue: as green, of LinkPowerBlue.
+#   m_1  PowerPulseShader: the tubes, all self lit (Diffuse and SelfIllumination are Combiner12): CO_Add of TexPanner3 (yaw 4096, -0.2)
+#        of TexScaler2 (2, 2) of LinkPowerGreen, and TexScaler3 (2, 2, offset 32, 32) of TexRotator2 (constantly turning, yaw 1024 a
+#        second, about 64, 64) of TexPanner4 (yaw -4096, -0.2) of LinkPowerGreen. Blue (Combiner15): the same of LinkPowerBlue. Gold
+#        (Combiner17): CO_Add of TexScaler7 (3, 3) of TexRotator3 (yaw 5120 a second, about 24, 24) of TexOscillator2 (stretching U and V
+#        0.2 times a second by 0.5, V half a cycle later, about 48, 48) of LinkPowerYellow, and TexPanner7 (yaw 0, -1) of TexScaler8
+#        (2, 2) of LinkPowerYellow.
+#   m_2  LinkGlassShader: the glass, a reflection of a cube map, left as convert_weapon.py makes it.
+# A modifier changes the coordinates before the material inside it reads them. Offsets are texels of the 128 by 128 power textures. A
+# panner moves along its yaw (65536 to the turn) at its rate in textures a second; a rotator turns at its yaw a second, the other way
+# from the SDK's rotator node. The glow is in the emissive layer, which is HDR: dimmed as the Bio Rifle's goo is, so that it shows as
+# the texture. The textures are units/ut/fx/link_power_<color> (make_weapon_fx.py), alpha and all.
+LINK_GLOW = 0.04
+STANDARD_EMISSIVE = '1164a5ef-4563-4795-b3b5-42825d6df037'
+IN_ROT_UV, IN_ROT_TIME, IN_ROT_PIVOT, IN_ROT_SPEED = ('96650519-54EC-47A2-B34E-3B1989F56BB3', '178ABCED-40BA-40B1-BAA4-FB5F9732353B',
+                                                      'ffac2478-636b-4b9b-95b9-cd504781e2c2', '399aba19-4e60-4287-b1d3-ee2acb8fd406')
+IN_CONSTRUCT_X, IN_CONSTRUCT_Y = '8231a2cb-b751-4ecd-94eb-3e6d048ba173', '46536067-b418-47a5-bc6b-234972e963e9'
+POWER_SIZE = 128.0
+
+def link_pan(graph, name, uv, yaw, rate):
+    angle = yaw / 65536 * 2 * math.pi
+    panned_from(graph, name, uv, math.cos(angle) * rate, math.sin(angle) * rate)
+
+def link_scale(graph, name, uv, u_scale, v_scale, u_offset=0, v_offset=0):
+    scaled(graph, name, uv, [u_scale, v_scale], [u_offset / POWER_SIZE, v_offset / POWER_SIZE])
+
+def link_rotate(graph, name, uv, yaw_rate, u_center, v_center):
+    vector2(graph, name + '_pivot', [u_center / POWER_SIZE, v_center / POWER_SIZE])
+    graph.add(name, 'core/shader_nodes/rotator')
+    graph.connect(uv, name, IN_ROT_UV)
+    graph.connect('time', name, IN_ROT_TIME)
+    graph.connect(name + '_pivot', name, IN_ROT_PIVOT)
+    graph.constant(name, IN_ROT_SPEED, -yaw_rate / 65536 * 2 * math.pi)
+
+def link_stretch(graph, name, uv, rate, amplitude, phases, u_center, v_center):
+    # (OT_Stretch: each axis is scaled by 1 + amplitude * sin(rate turns a second, from its phase), about the center)
+    for axis, phase in zip(('u', 'v'), phases):
+        graph.add(name + '_angle_' + axis, 'core/shader_nodes/mul')
+        graph.connect('time', name + '_angle_' + axis, IN_MUL_A)
+        graph.constant(name + '_angle_' + axis, IN_MUL_B, 2 * math.pi * rate)
+        graph.add(name + '_phase_' + axis, 'core/shader_nodes/add')
+        graph.connect(name + '_angle_' + axis, name + '_phase_' + axis, IN_ADD_A)
+        graph.constant(name + '_phase_' + axis, IN_ADD_B, 2 * math.pi * phase)
+        graph.add(name + '_sin_' + axis, 'core/shader_nodes/sin')
+        graph.connect(name + '_phase_' + axis, name + '_sin_' + axis, IN_SIN)
+        graph.add(name + '_swing_' + axis, 'core/shader_nodes/mul')
+        graph.connect(name + '_sin_' + axis, name + '_swing_' + axis, IN_MUL_A)
+        graph.constant(name + '_swing_' + axis, IN_MUL_B, amplitude)
+        graph.add(name + '_scale_' + axis, 'core/shader_nodes/add')
+        graph.connect(name + '_swing_' + axis, name + '_scale_' + axis, IN_ADD_A)
+        graph.constant(name + '_scale_' + axis, IN_ADD_B, 1)
+    graph.add(name + '_scale', 'core/shader_nodes/construct_vector2')
+    graph.connect(name + '_scale_u', name + '_scale', IN_CONSTRUCT_X)
+    graph.connect(name + '_scale_v', name + '_scale', IN_CONSTRUCT_Y)
+    vector2(graph, name + '_center', [u_center / POWER_SIZE, v_center / POWER_SIZE])
+    graph.add(name + '_centered', 'core/shader_nodes/subtract')
+    graph.connect(uv, name + '_centered', IN_SUBTRACT_A)
+    graph.connect(name + '_center', name + '_centered', IN_SUBTRACT_B)
+    multiply(graph, name + '_stretched', name + '_centered', name + '_scale')
+    graph.add(name, 'core/shader_nodes/add')
+    graph.connect(name + '_stretched', name, IN_ADD_A)
+    graph.connect(name + '_center', name, IN_ADD_B)
+
+# The glow of a color on a part: the modifiers of the coordinates from the outside in, and the textures they read (the tubes add two).
+# Returns the name of the node with the glow.
+def link_glow(graph, color, part):
+    if part == 'body':
+        if color == 'yellow':
+            link_pan(graph, 'body_pan', 'uv', 0, -1)
+            link_scale(graph, 'body_uv', 'body_pan', 5, 2, 0, -32)
+        else:
+            link_pan(graph, 'body_pan', 'uv', 2048, -1)
+            link_scale(graph, 'body_uv', 'body_pan', 4, 1)
+        texture(graph, 'glow', 'power_map', 'body_uv')
+        return 'glow'
+    if color == 'yellow':
+        link_scale(graph, 'first_scale', 'uv', 3, 3)
+        link_rotate(graph, 'first_turn', 'first_scale', 5120, 24, 24)
+        link_stretch(graph, 'first_uv', 'first_turn', 0.2, 0.5, (0, 0.5), 48, 48)
+        link_pan(graph, 'second_pan', 'uv', 0, -1)
+        link_scale(graph, 'second_uv', 'second_pan', 2, 2)
+    else:
+        link_pan(graph, 'first_pan', 'uv', 4096, -0.2)
+        link_scale(graph, 'first_uv', 'first_pan', 2, 2)
+        link_scale(graph, 'second_scale', 'uv', 2, 2, 32, 32)
+        link_rotate(graph, 'second_turn', 'second_scale', 1024, 64, 64)
+        link_pan(graph, 'second_uv', 'second_turn', -4096, -0.2)
+    texture(graph, 'first', 'power_map', 'first_uv')
+    texture(graph, 'second', 'power_map', 'second_uv')
+    graph.add('glow', 'core/shader_nodes/add')
+    graph.connect('first', 'glow', IN_ADD_A, 'rgb')
+    graph.connect('second', 'glow', IN_ADD_B, 'rgb')
+    return 'glow'
+
+def link_power_graph(color):
+    graph = Graph()
+    graph.no_variables = True
+    graph.add('out', UNLIT, (LAYER_EMISSIVE, CUSTOM_FOV))
+    graph.add('uv', 'core/shader_nodes/texture_coordinate0')
+    graph.add('time', 'core/shader_nodes/current_time')
+    glow = link_glow(graph, color, 'power')
+    graph.add('clamped', 'core/shader_nodes/saturate')
+    graph.connect(glow, 'clamped', IN_SATURATE)
+    graph.add('dim', 'core/shader_nodes/mul')
+    graph.connect('clamped', 'dim', IN_MUL_A)
+    graph.constant('dim', IN_MUL_B, LINK_GLOW)
+    graph.connect('dim', 'out', IN_OUT_BASE_COLOR)
+    return graph
+
+def link_body_graph(color):
+    # (the body lit, and the glow where the mask is: the lit colour times 1 - mask, and the glow times the mask)
+    graph = Graph()
+    graph.no_variables = True
+    graph.add('out', 'core/stingray_renderer/output_nodes/standard_base', STANDARD_OPTIONS)
+    graph.add('uv', 'core/shader_nodes/texture_coordinate0')
+    graph.add('time', 'core/shader_nodes/current_time')
+    texture(graph, 'body', 'body_map', 'uv')
+    texture(graph, 'mask', 'power_map', 'uv')
+    glow = link_glow(graph, color, 'body')
+    graph.add('unmasked', 'core/shader_nodes/subtract')
+    graph.constant('unmasked', IN_SUBTRACT_A, 1)
+    graph.connect('mask', 'unmasked', IN_SUBTRACT_B, 'a')
+    multiply(graph, 'lit', 'body', 'unmasked', 'rgb')
+    graph.connect('lit', 'out', IN_OUT_BASE_COLOR)
+    multiply(graph, 'masked_glow', glow, 'mask', 'rgb', 'a')
+    graph.add('dim', 'core/shader_nodes/mul')
+    graph.connect('masked_glow', 'dim', IN_MUL_A)
+    graph.constant('dim', IN_MUL_B, LINK_GLOW)
+    graph.connect('dim', 'out', STANDARD_EMISSIVE)
+    graph.constant('out', IN_STANDARD_ROUGHNESS, 0.9)
+    graph.constant('out', IN_STANDARD_METALLIC, 0)
+    return graph
+
+for color in ('green', 'yellow', 'blue'):
+    for part, slot in (('body', 'm0'), ('power', 'm1')):
+        name = 'link_gun_%s_%s' % (part, color)
+        graph = link_body_graph(color) if part == 'body' else link_power_graph(color)
+        open('%s/fx_%s_graph.material' % (FX, name), 'w', newline='\n').write(graph.text())
+        bound = '\tpower_map = "units/ut/fx/link_power_%s"\n' % color
+        if part == 'body':
+            bound += '\tbody_map = "units/ut/link/link_gun_fatlinkguntex0"\n'
+        # (green is the model's own material, link_gun_m0 and m1; the skin swaps in the others, link_gun_m0_yellow and so on)
+        material = 'link_gun_%s' % slot if color == 'green' else 'link_gun_%s_%s' % (slot, color)
+        open('%s/units/ut/link/%s.material' % (REPO, material), 'w', newline='\n').write(
+            'material_contexts = {\n\tsurface_material = ""\n}\nparent_material = "units/ut/fx/fx_%s_graph"\ntextures = {\n%s}\nvariables = {\n}\n'
+            % (name, bound))
+        print('wrote fx_%s_graph.material and %s.material, %d nodes' % (name, material, len(graph.nodes)))

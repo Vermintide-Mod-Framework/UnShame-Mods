@@ -70,6 +70,11 @@ TEXTURES = {
     'link_beam_flash_green': ('XEffectMat/Texture/link_muz_green.tga', 1, 1),
     'link_beam_flash_yellow': ('XEffectMat/Texture/link_muz_yellow.tga', 1, 1),
     'link_beam_flash_blue': ('XEffectMat/Texture/link_muz_blue.tga', 1, 1),
+    # (and the glow on its model: LinkPowerGreen and the others, whose alpha is the mask of the body's glow, for make_combo_materials.py's
+    # link_gun materials)
+    'link_power_green': ('UT2004Weapons/Texture/LinkPowerGreen.tga', 1, 1),
+    'link_power_yellow': ('UT2004Weapons/Texture/LinkPowerYellow.tga', 1, 1),
+    'link_power_blue': ('UT2004Weapons/Texture/LinkPowerBlue.tga', 1, 1),
     'link_muzmesh_green': ('XEffectMat/Texture/link_muzmesh_green.tga', 2, 2),
     'link_muzmesh_yellow': ('XEffectMat/Texture/link_muzmesh_yellow.tga', 2, 2),
     'plasma_shaft': ('AW-2004Particles/Texture/PlasmaShaft.tga', 1, 1),
@@ -77,7 +82,7 @@ TEXTURES = {
 }
 
 # (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
-SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff', 'muzzle_smoke', 'sniper_smoke')
+SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff', 'muzzle_smoke', 'sniper_smoke', 'link_power_green', 'link_power_yellow', 'link_power_blue')
 
 # The textures whose colour is moved this share of the way to white, with their alpha kept: the dark grey in the Sniper Rifle's smoke
 # showed as dark spots, which pictures of UT show much fainter
@@ -95,7 +100,7 @@ SRGB_BRIGHTEN = ('minigun_burst',)
 
 # The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield and the
 # Redeemer blast's fx_ion_sphere and fx_flame_ring, made by make_combo_materials.py, which do FB_Brighten themselves and use the alpha)
-KEEP_ALPHA = ('shield_elec', 'shield_rip_elec', 'shield_edge', 'ion_burn', 'grad_falloff')
+KEEP_ALPHA = ('shield_elec', 'shield_rip_elec', 'shield_edge', 'ion_burn', 'grad_falloff', 'link_power_green', 'link_power_yellow', 'link_power_blue')
 
 # The textures that only those materials draw, so they have no particle material of their own (FlameGradient is the Redeemer ring's)
 COMBO_ONLY = KEEP_ALPHA + ('flame_gradient', 'red_bolt', 'invis_overlay')

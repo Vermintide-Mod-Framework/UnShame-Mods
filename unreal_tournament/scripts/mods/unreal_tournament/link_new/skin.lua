@@ -1002,6 +1002,36 @@ local function draw_beams(dt)
 	end
 end
 
+-- The glow of the model in the player's own view (its panning materials, made by make_combo_materials.py) is green, gold with links,
+-- and blue while it links an ally (LinkGun.UpdateLinkColor). UT has no colors for its old model, so UT2003's look keeps its own.
+local MODEL_UNIT_NAME = "units/ut/link/link_gun"
+local MODEL_MATERIALS = {
+	green = { m_0 = "units/ut/link/link_gun_m0", m_1 = "units/ut/link/link_gun_m1" },
+	yellow = { m_0 = "units/ut/link/link_gun_m0_yellow", m_1 = "units/ut/link/link_gun_m1_yellow" },
+	blue = { m_0 = "units/ut/link/link_gun_m0_blue", m_1 = "units/ut/link/link_gun_m1_blue" },
+}
+
+local function update_model_color()
+	local api = first_person_api()
+	local skin = api and api.state()
+	local player = Managers.player:local_player()
+	local character = player and player.player_unit
+
+	if not skin or not Unit.alive(skin.unit) or api.config.unit_name ~= MODEL_UNIT_NAME or not character then
+		return
+	end
+
+	local color = link.locked[character] and "blue" or link.links_of(character) > 0 and "yellow" or "green"
+
+	if skin.link_color ~= color then
+		skin.link_color = color
+
+		for slot, material in pairs(MODEL_MATERIALS[color]) do
+			Unit.set_material(skin.unit, slot, material)
+		end
+	end
+end
+
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	if not Managers.world:has_world("level_world") then
 		return
@@ -1009,6 +1039,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 
 	update_bolts(dt)
 	draw_beams(dt)
+	update_model_color()
 end
 
 local function clear()

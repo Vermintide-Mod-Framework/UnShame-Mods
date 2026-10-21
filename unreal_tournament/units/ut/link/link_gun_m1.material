@@ -1,21 +1,9 @@
 material_contexts = {
 	surface_material = ""
 }
-parent_material = "units/ut/weapon_standard_transparent"
+parent_material = "units/ut/fx/fx_link_gun_power_green_graph"
 textures = {
-	color_map = "units/ut/link/link_gun_linkpowergreen"
+	power_map = "units/ut/fx/link_power_green"
 }
 variables = {
-	use_color_map = {
-		type = "scalar"
-		value = 1
-	}
-	opacity = {
-		type = "scalar"
-		value = 0.7
-	}
-	roughness = {
-		type = "scalar"
-		value = 0.9
-	}
 }
