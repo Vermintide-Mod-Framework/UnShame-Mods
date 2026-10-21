@@ -163,7 +163,10 @@ local SPARK_GRAVITY = 10.7 -- m/s^2
 
 -- (LinkBeamEffect sets the third person flash's sizes both to 50 times LinkScale * 0.5 + 1, and xEmitter's sizes are half a width)
 local FLASH_3RD = { rate = 12, life = 0.25, size = 50, color = 180 / 255 }
-local FLASH_1ST = { life = 0.25, size = 24, color = 200 / 255, interval = 0.12 }
+-- UT draws the first person flash before the gun, without depth (Weapon.RenderOverlays), so the gun covers it. Here it is drawn
+-- behind_gun times further from the eye and that many times bigger, which looks the same and puts it behind the gun: it is 92.5 UT
+-- units ahead (effect_start_in_view), and the gun reaches about 127 (the mesh is 134 units ahead of its origin, which is 7.5 back).
+local FLASH_1ST = { life = 0.25, size = 24, color = 200 / 255, interval = 0.12, behind_gun = 1.5 }
 local SPHERE = { rate = 12, life = 0.25, size = 35, own_size = 20, color = 180 / 255 }
 
 -- How the third person mesh sits in each hero's hand: the hand the game links the base weapon to, and the point of the mesh in the hand
@@ -705,14 +708,14 @@ end
 -- The first person unit and where UT draws the beam's flash in its camera node's frame: LinkFire attaches it to no bone, so
 -- WeaponFire.DrawMuzzleFlash puts it at Weapon.GetEffectStart, which is the eye, the weapon's view offset (PlayerViewOffset, at
 -- 0.9 / DisplayFOV * 100 of its size, and the bob) and EffectOffset, drawn with the weapon's field of view. That is well ahead of the
--- barrel, so the gun doesn't cut into it.
-local function effect_start_in_view(api)
+-- barrel. distance_scale draws it that many times further (see FLASH_1ST.behind_gun).
+local function effect_start_in_view(api, distance_scale)
 	local config = api.config
 	local view_scale = 0.9 / config.display_fov * 100
 	local effect = config.effect_offset
 
 	return api.view_point_in_view(effect[1] + config.offset_forward * view_scale, effect[2] + config.offset_right * view_scale,
-		effect[3] + config.offset_up * view_scale)
+		effect[3] + config.offset_up * view_scale, distance_scale)
 end
 
 -- The first person unit and where the muzzle of the model in the player's own view is in its camera node's frame, as the camera sees it:
@@ -931,11 +934,11 @@ local function draw_beam(character, beam, dt)
 				life = FLASH_1ST.life,
 				locked = function ()
 					if visual.alive and api.state() == skin then
-						return effect_start_in_view(api)
+						return effect_start_in_view(api, FLASH_1ST.behind_gun)
 					end
 				end,
 				material = "units/ut/fx/fx_weapon_link_beam_flash_" .. flash_color,
-				size = 2 * FLASH_1ST.size * skin.view_across_scale,
+				size = 2 * FLASH_1ST.size * FLASH_1ST.behind_gun * skin.view_across_scale,
 				spin = (math.random() * 2 - 1) * 0.3,
 			})
 		end
