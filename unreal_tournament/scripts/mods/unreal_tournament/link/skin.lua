@@ -782,6 +782,20 @@ local function seen_muzzle_in_view(api)
 	return first_person_unit, Vector3(Vector3.x(point) * ratio, Vector3.y(point), Vector3.z(point) * ratio)
 end
 
+-- Where the beam starts in the player's own view: where the muzzle is seen, but as far ahead as UT starts it (the effect start, about 92
+-- units ahead), on the line from the eye through the muzzle. On the screen it is the muzzle. Started at the muzzle's own place, which is
+-- close to the eye, the beam's near end was many times as wide as UT's, a bright blob over the gun.
+local function beam_start_in_view(api)
+	local first_person_unit, muzzle = seen_muzzle_in_view(api)
+	local _, effect = effect_start_in_view(api, 1)
+
+	if not first_person_unit or not effect or Vector3.y(muzzle) <= 0.001 then
+		return first_person_unit, muzzle
+	end
+
+	return first_person_unit, muzzle * (Vector3.y(effect) / Vector3.y(muzzle))
+end
+
 -- Keeps a line's strip: one piece through all of its points, as UT's PT_Beam is, which follows them every frame. It ends when the line
 -- has no points, or when its look changes (version), and a new one is made. It is placed late, after the gun's model has moved this
 -- frame and the points have been worked out from its muzzle.
@@ -922,7 +936,7 @@ local function draw_beam(character, beam, dt)
 		visual.locked_skin = skin
 		visual.locked = skin and function ()
 			if visual.alive and api.state() == skin then
-				return seen_muzzle_in_view(api)
+				return beam_start_in_view(api)
 			end
 		end or nil
 	end
