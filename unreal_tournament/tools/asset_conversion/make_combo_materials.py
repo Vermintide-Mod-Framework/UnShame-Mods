@@ -589,12 +589,12 @@ for color, pan_v in (('green', -2), ('yellow', -2), ('blue', 2)):
 #        0.2 times a second by 0.5, V half a cycle later, about 48, 48) of LinkPowerYellow, and TexPanner7 (yaw 0, -1) of TexScaler8
 #        (2, 2) of LinkPowerYellow.
 #   m_2  LinkGlassShader: the glass, a reflection of a cube map, left as convert_weapon.py makes it.
+#   m_3  the body again (convert_weapon.py's overlays): m_0's glow, added over it. m_0 itself is the lit colour less the glow's mask.
 # A modifier changes the coordinates before the material inside it reads them. Offsets are texels of the 128 by 128 power textures. A
 # panner moves along its yaw (65536 to the turn) at its rate in textures a second; a rotator turns at its yaw a second, the other way
 # from the SDK's rotator node. The glow is in the emissive layer, which is HDR: dimmed as the Bio Rifle's goo is, so that it shows as
 # the texture. The textures are units/ut/fx/link_power_<color> (make_weapon_fx.py), alpha and all.
 LINK_GLOW = 0.04
-STANDARD_EMISSIVE = '1164a5ef-4563-4795-b3b5-42825d6df037'
 IN_ROT_UV, IN_ROT_TIME, IN_ROT_PIVOT, IN_ROT_SPEED = ('96650519-54EC-47A2-B34E-3B1989F56BB3', '178ABCED-40BA-40B1-BAA4-FB5F9732353B',
                                                       'ffac2478-636b-4b9b-95b9-cd504781e2c2', '399aba19-4e60-4287-b1d3-ee2acb8fd406')
 IN_CONSTRUCT_X, IN_CONSTRUCT_Y = '8231a2cb-b751-4ecd-94eb-3e6d048ba173', '46536067-b418-47a5-bc6b-234972e963e9'
@@ -644,18 +644,18 @@ def link_stretch(graph, name, uv, rate, amplitude, phases, u_center, v_center):
     graph.connect(name + '_stretched', name, IN_ADD_A)
     graph.connect(name + '_center', name, IN_ADD_B)
 
-# The glow of a color on a part: the modifiers of the coordinates from the outside in, and the textures they read (the tubes add two).
-# Returns the name of the node with the glow.
-def link_glow(graph, color, part):
-    if part == 'body':
-        if color == 'yellow':
-            link_pan(graph, 'body_pan', 'uv', 0, -1)
-            link_scale(graph, 'body_uv', 'body_pan', 5, 2, 0, -32)
-        else:
-            link_pan(graph, 'body_pan', 'uv', 2048, -1)
-            link_scale(graph, 'body_uv', 'body_pan', 4, 1)
-        texture(graph, 'glow', 'power_map', 'body_uv')
-        return 'glow'
+# The glow of a color: the modifiers of the coordinates from the outside in, and the textures they read, into the node 'glow'. The
+# body's eye reads one, as it is; the tubes add two.
+def link_body_glow(graph, color):
+    if color == 'yellow':
+        link_pan(graph, 'body_pan', 'uv', 0, -1)
+        link_scale(graph, 'body_uv', 'body_pan', 5, 2, 0, -32)
+    else:
+        link_pan(graph, 'body_pan', 'uv', 2048, -1)
+        link_scale(graph, 'body_uv', 'body_pan', 4, 1)
+    sample(graph, 'glow', 'power_map', 'body_uv')
+
+def link_glow(graph, color):
     if color == 'yellow':
         link_scale(graph, 'first_scale', 'uv', 3, 3)
         link_rotate(graph, 'first_turn', 'first_scale', 5120, 24, 24)
@@ -681,7 +681,7 @@ def link_power_graph(color):
     graph.add('out', UNLIT, (LAYER_EMISSIVE, CUSTOM_FOV))
     graph.add('uv', 'core/shader_nodes/texture_coordinate0')
     graph.add('time', 'core/shader_nodes/current_time')
-    glow = link_glow(graph, color, 'power')
+    glow = link_glow(graph, color)
     graph.add('clamped', 'core/shader_nodes/saturate')
     graph.connect(glow, 'clamped', IN_SATURATE)
     graph.add('dim', 'core/shader_nodes/mul')
@@ -691,38 +691,48 @@ def link_power_graph(color):
     return graph
 
 def link_body_graph(color):
-    # (the body lit, and the glow where the mask is: the lit colour times 1 - mask, and the glow times the mask)
+    # (the body lit, but for the glow: its colour times 1 - mask)
     graph = Graph()
     graph.no_variables = True
     graph.add('out', 'core/stingray_renderer/output_nodes/standard_base', STANDARD_OPTIONS)
     graph.add('uv', 'core/shader_nodes/texture_coordinate0')
-    graph.add('time', 'core/shader_nodes/current_time')
     texture(graph, 'body', 'body_map', 'uv')
     texture(graph, 'mask', 'power_map', 'uv')
-    glow = link_glow(graph, color, 'body')
     graph.add('unmasked', 'core/shader_nodes/subtract')
     graph.constant('unmasked', IN_SUBTRACT_A, 1)
     graph.connect('mask', 'unmasked', IN_SUBTRACT_B, 'a')
     multiply(graph, 'lit', 'body', 'unmasked', 'rgb')
     graph.connect('lit', 'out', IN_OUT_BASE_COLOR)
-    multiply(graph, 'masked_glow', glow, 'mask', 'rgb', 'a')
-    graph.add('dim', 'core/shader_nodes/mul')
-    graph.connect('masked_glow', 'dim', IN_MUL_A)
-    graph.constant('dim', IN_MUL_B, LINK_GLOW)
-    graph.connect('dim', 'out', STANDARD_EMISSIVE)
     graph.constant('out', IN_STANDARD_ROUGHNESS, 0.9)
     graph.constant('out', IN_STANDARD_METALLIC, 0)
     return graph
 
+def link_eye_graph(color):
+    # (the glow times the mask, added over the body: the body's faces again as m_3, convert_weapon.py's overlays. The lit node's
+    # emissive didn't show on the weapon: it draws where the depth is the same as the gbuffer's, which the first person layer's isn't.
+    # This is drawn as the effects drawn with the weapon are, after tone mapping, with the texture read as it is.)
+    graph = Graph()
+    graph.no_variables = True
+    graph.add('out', UNLIT, (OUT_OPTIONS[0], OUT_OPTIONS[2], OUT_OPTIONS[3], CUSTOM_FOV))
+    graph.add('uv', 'core/shader_nodes/texture_coordinate0')
+    graph.add('time', 'core/shader_nodes/current_time')
+    sample(graph, 'mask', 'power_map', 'uv')
+    link_body_glow(graph, color)
+    multiply(graph, 'masked_glow', 'glow', 'mask', 'rgb', 'a')
+    graph.connect('masked_glow', 'out', IN_OUT_BASE_COLOR)
+    graph.constant('out', IN_OUT_OPACITY, 1)
+    graph.constant('out', IN_OUT_ADDITIVE, 1)
+    return graph
+
 for color in ('green', 'yellow', 'blue'):
-    for part, slot in (('body', 'm0'), ('power', 'm1')):
+    for part, slot, make in (('body', 'm0', link_body_graph), ('power', 'm1', link_power_graph), ('eye', 'm3', link_eye_graph)):
         name = 'link_gun_%s_%s' % (part, color)
-        graph = link_body_graph(color) if part == 'body' else link_power_graph(color)
+        graph = make(color)
         open('%s/fx_%s_graph.material' % (FX, name), 'w', newline='\n').write(graph.text())
         bound = '\tpower_map = "units/ut/fx/link_power_%s"\n' % color
         if part == 'body':
             bound += '\tbody_map = "units/ut/link/link_gun_fatlinkguntex0"\n'
-        # (green is the model's own material, link_gun_m0 and m1; the skin swaps in the others, link_gun_m0_yellow and so on)
+        # (green is the model's own material, link_gun_m0, m1 and m3; the skin swaps in the others, link_gun_m0_yellow and so on)
         material = 'link_gun_%s' % slot if color == 'green' else 'link_gun_%s_%s' % (slot, color)
         open('%s/units/ut/link/%s.material' % (REPO, material), 'w', newline='\n').write(
             'material_contexts = {\n\tsurface_material = ""\n}\nparent_material = "units/ut/fx/fx_%s_graph"\ntextures = {\n%s}\nvariables = {\n}\n'

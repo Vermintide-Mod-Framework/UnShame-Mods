@@ -93,6 +93,8 @@ WEAPONS['link'] = {
     # the body, the glowing parts (the shader pans the green power texture over it), the glass
     'materials': [('UT2004Weapons/Texture/FatLinkGunTex0.tga', 'opaque'), ('UT2004Weapons/Texture/LinkPowerGreen.tga', 'alpha', 0.7),
                   ('UT2004Weapons/Texture/LinkPowerGreen.tga', 'alpha', 0.25)],
+    # (the body again as m_3, drawn over it: the glow of its eye, make_combo_materials.py's link_gun materials, which also make m_0 and m_1)
+    'overlays': {0: 3},
     'scale': 0.0125,
     'animations': [('Select', 'Pickup'), ('Idle', 'Idle'), ('Fire', 'Fire'), ('AltFire', 'AltFire')],
     'locators': ['bone flashA'],
@@ -524,6 +526,15 @@ def main():
             renderables.append(gname)
             print('geometry', gname, 'triangles', len(tris))
 
+            # (a material's faces again, in the material that 'overlays' names for it: one that is drawn over it, made elsewhere)
+            overlay = cfg.get('overlays', {}).get(mat)
+            if overlay is not None:
+                geometries.append(geometries[-1].replace('\t%s = {' % gname, '\t%s_overlay = {' % gname, 1)
+                                  .replace('name = "m_%d"' % mat, 'name = "m_%d"' % overlay, 1))
+                nodes[bone].append(gname + '_overlay')
+                renderables.append(gname + '_overlay')
+                print('geometry', gname + '_overlay', 'triangles', len(tris))
+
         # a node for each bone that has a mesh (the pieces hang off it) and for each locator
         locator_bones = [bone_names.index(n) for n in cfg['locators']]
         node_text = []
@@ -539,7 +550,8 @@ def main():
         print('wrote', unit_path + '.bsi', len(raw), 'bytes raw')
 
         # the unit, the materials and the textures
-        used_materials = sorted(set(m for b, m in pieces))
+        overlays = cfg.get('overlays', {})
+        used_materials = sorted(set(m for b, m in pieces) | set(overlays[m] for b, m in pieces if m in overlays))
         unit_text = 'materials = {\n' + ''.join('\tm_%d = "%s/%s_m%d"\n' % (m, unit_dir, unit_base, m) for m in used_materials) + '}\nrenderables = {\n'
         # (the renderables of a unit are the nodes that have geometry, by the name of the node: the geometries of a node are its pieces)
         for g in [sjson_node_name(b) for b in used_bones]:
@@ -550,6 +562,9 @@ def main():
     P, normals, pieces = unmirrored_P, unmirrored_normals, unmirrored_pieces
     done_textures = {}
     for m in used_materials:
+        # (an overlay's material is made elsewhere)
+        if m in cfg.get('overlays', {}).values():
+            continue
         tga, kind = cfg['materials'][m][:2]
         opacity = cfg['materials'][m][2] if len(cfg['materials'][m]) > 2 else None
         tname = os.path.splitext(os.path.basename(tga))[0].lower().replace(':', '_')

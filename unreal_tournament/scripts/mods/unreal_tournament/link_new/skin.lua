@@ -1026,9 +1026,9 @@ end
 -- and blue while it links an ally (LinkGun.UpdateLinkColor). UT has no colors for its old model, so UT2003's look keeps its own.
 local MODEL_UNIT_NAME = "units/ut/link/link_gun"
 local MODEL_MATERIALS = {
-	green = { m_0 = "units/ut/link/link_gun_m0", m_1 = "units/ut/link/link_gun_m1" },
-	yellow = { m_0 = "units/ut/link/link_gun_m0_yellow", m_1 = "units/ut/link/link_gun_m1_yellow" },
-	blue = { m_0 = "units/ut/link/link_gun_m0_blue", m_1 = "units/ut/link/link_gun_m1_blue" },
+	green = { m_0 = "units/ut/link/link_gun_m0", m_1 = "units/ut/link/link_gun_m1", m_3 = "units/ut/link/link_gun_m3" },
+	yellow = { m_0 = "units/ut/link/link_gun_m0_yellow", m_1 = "units/ut/link/link_gun_m1_yellow", m_3 = "units/ut/link/link_gun_m3_yellow" },
+	blue = { m_0 = "units/ut/link/link_gun_m0_blue", m_1 = "units/ut/link/link_gun_m1_blue", m_3 = "units/ut/link/link_gun_m3_blue" },
 }
 
 local function update_model_color()
