@@ -699,8 +699,15 @@ local function update_bolts(dt)
 				throw_spark(BOLT_SPARKS, bolt.position:unbox(), -bolt.way:unbox(), texture, 1, 1, 1, true)
 			end
 
-			if bolt.sound and Managers.world:has_world("level_world") then
-				utils.stop_sound(bolt.sound)
+			if Managers.world:has_world("level_world") then
+				if bolt.sound then
+					utils.stop_sound(bolt.sound)
+				end
+
+				-- (LinkProjectile.Explode's BioRifleGoo2)
+				if skin_apis[1] then
+					skin_apis[1].play_sound_at("ut_link_bolt_hit_3d", bolt.position:unbox())
+				end
 			end
 
 			table.remove(bolts, i)

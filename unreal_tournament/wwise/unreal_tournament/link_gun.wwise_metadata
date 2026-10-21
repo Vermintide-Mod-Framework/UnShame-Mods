@@ -12,14 +12,15 @@ events = {
 	ut_link_fire_3d_5 = { attenuation_max = 40 duration_type = "OneShot" duration_min = 0.564 duration_max = 0.564 positioning = "3D" }
 	ut_link_fire_3d_6 = { attenuation_max = 40 duration_type = "OneShot" duration_min = 0.559 duration_max = 0.559 positioning = "3D" }
 	ut_link_linked = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.974 duration_max = 0.974 positioning = "2D" }
-	ut_link_beam_1 = { attenuation_max = 0 duration_type = "OneShot" duration_min = 2.496 duration_max = 2.496 positioning = "2D" }
-	ut_link_beam_2 = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.787 duration_max = 1.787 positioning = "2D" }
-	ut_link_beam_3 = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.503 duration_max = 1.503 positioning = "2D" }
-	ut_link_beam_4 = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.262 duration_max = 1.262 positioning = "2D" }
-	ut_link_beam_3d_1 = { attenuation_max = 30 duration_type = "OneShot" duration_min = 2.496 duration_max = 2.496 positioning = "3D" }
-	ut_link_beam_3d_2 = { attenuation_max = 30 duration_type = "OneShot" duration_min = 1.787 duration_max = 1.787 positioning = "3D" }
-	ut_link_beam_3d_3 = { attenuation_max = 30 duration_type = "OneShot" duration_min = 1.503 duration_max = 1.503 positioning = "3D" }
-	ut_link_beam_3d_4 = { attenuation_max = 30 duration_type = "OneShot" duration_min = 1.262 duration_max = 1.262 positioning = "3D" }
+	ut_link_beam_1 = { attenuation_max = 0 duration_type = "Infinite" duration_min = 2.496 duration_max = 2.496 positioning = "2D" }
+	ut_link_beam_2 = { attenuation_max = 0 duration_type = "Infinite" duration_min = 1.787 duration_max = 1.787 positioning = "2D" }
+	ut_link_beam_3 = { attenuation_max = 0 duration_type = "Infinite" duration_min = 1.503 duration_max = 1.503 positioning = "2D" }
+	ut_link_beam_4 = { attenuation_max = 0 duration_type = "Infinite" duration_min = 1.262 duration_max = 1.262 positioning = "2D" }
+	ut_link_beam_3d_1 = { attenuation_max = 30 duration_type = "Infinite" duration_min = 2.496 duration_max = 2.496 positioning = "3D" }
+	ut_link_beam_3d_2 = { attenuation_max = 30 duration_type = "Infinite" duration_min = 1.787 duration_max = 1.787 positioning = "3D" }
+	ut_link_beam_3d_3 = { attenuation_max = 30 duration_type = "Infinite" duration_min = 1.503 duration_max = 1.503 positioning = "3D" }
+	ut_link_beam_3d_4 = { attenuation_max = 30 duration_type = "Infinite" duration_min = 1.262 duration_max = 1.262 positioning = "3D" }
 	ut_link_select = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.298 duration_max = 1.298 positioning = "2D" }
-	ut_link_projectile_3d = { attenuation_max = 25 duration_type = "OneShot" duration_min = 0.998 duration_max = 0.998 positioning = "3D" }
+	ut_link_projectile_3d = { attenuation_max = 25 duration_type = "Infinite" duration_min = 0.998 duration_max = 0.998 positioning = "3D" }
+	ut_link_bolt_hit_3d = { attenuation_max = 30 duration_type = "OneShot" duration_min = 0.680 duration_max = 0.680 positioning = "3D" }
 }
