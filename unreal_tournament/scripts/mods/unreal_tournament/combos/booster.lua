@@ -23,16 +23,17 @@ local CONFIG = {
 	stamina_regen = 4, -- added to the regeneration's multiplier of 1
 	-- How long a special that holds the character is staggered, which makes it let go (as Forgiving Disablers does, gameplay.lua)
 	release_stagger = 2, -- s
-	-- RegenCrosses: 10 crosses a second, each 6 units, from up to 35 units around the pawn's middle (45 up and down), for 2 s, brightest
-	-- at the middle of its life (mAttenKa 0.5); each keeps the pawn's speed (mOwnerVelocityFactor 1), slowed by mAirResistance 2, and
-	-- rises as gravity times its mMass -0.1 pulls it
+	-- RegenCrosses: 10 crosses a second, each 12 units across (mSizeRange 6, a half width), from 35 units around the pawn's middle (45 up
+	-- and down: ST_Explode puts it at mPosDev along a random direction), for 2 s, brightest at the middle of its life (mAttenKa 0.5 with
+	-- ATF_ExpInOut); each keeps the pawn's speed (mOwnerVelocityFactor 1), slowed by mAirResistance 2, and rises by its mass of -0.1
+	-- (utils.UT_PARTICLE_GRAVITY)
 	cross_rate = 10, -- a second
-	cross_size = 6, -- units
+	cross_size = 12, -- units across
 	cross_spread = { 35, 35, 45 }, -- units
 	cross_life = 2, -- s
 	cross_attenuation = 0.5,
 	cross_drag = 2, -- a second
-	cross_rise = 0.1 * 950, -- units a second squared (UT's gravity, PhysicsVolume.Gravity 950)
+	cross_rise = 0.1 * utils.UT_PARTICLE_GRAVITY, -- units a second squared
 	cross_texture = "green_cross",
 }
 
@@ -49,8 +50,7 @@ local boosted = {}
 
 -- A cross, from where it starts, with the pawn's speed slowed by the drag, and the rise as a constant pull against it
 local function cross(unit, velocity)
-	local spread = CONFIG.cross_spread
-	local offset = Vector3((math.random() * 2 - 1) * spread[1], (math.random() * 2 - 1) * spread[2], (math.random() * 2 - 1) * spread[3]) * UNIT
+	local offset = utils.ut_particle_offset(CONFIG.cross_spread) * UNIT
 	local start = Vector3Box(combos.pawn_middle(unit) + offset)
 	local speed = Vector3Box(velocity)
 	local born = Managers.time:time("game")
@@ -59,6 +59,7 @@ local function cross(unit, velocity)
 
 	particles.sprite({
 		attenuation = CONFIG.cross_attenuation,
+		exp_in_out = true,
 		life = CONFIG.cross_life,
 		size = CONFIG.cross_size * UNIT,
 		texture = CONFIG.cross_texture,

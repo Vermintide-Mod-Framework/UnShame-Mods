@@ -75,22 +75,22 @@ local CONFIG = {
 	-- A bounce faster than this plays the impact sound (Grenade.HitWall)
 	bounce_sound_speed = 250, -- UT units a second
 	-- GrenadeSmokeTrail, which a grenade leaves while it moves, if the view is within 5500 units when it is thrown (Grenade.PostBeginPlay),
-	-- and stops leaving when it comes to rest. It makes 30 puffs a second (mRegenRange). A puff lasts 1.3 to 1.5 s, starts 15 to 25 units
-	-- across and grows by 10 a second, drifts at 2 to 15 units a second, and rises (its mass is -0.01 to -0.08: by the Minigun smoke's
-	-- turning of mass into a rise, about 100 units a second for each 1 of it). It is a dark blue grey (mColorRange) at twice the light
-	-- (ScaleGlow 2), blended by its alpha (STY_Alpha), and fades as xEmitter's do (mAttenKa 0.2). Each is a tile of SmokeTex at random.
-	-- ScaleGlow brightens the colour, so it is in the colour here: a particle's intensity is how opaque a blended one is, and 2 made the
-	-- smoke twice as thick.
+	-- and stops leaving when it comes to rest. It makes 30 puffs a second (mRegenRange). A puff lasts 1.3 to 1.5 s, starts 30 to 50 units
+	-- across (mSizeRange 15 to 25, a half width) and grows by 20 a second, drifts at 2 to 15 units a second, slowed by 0.4 of its speed a
+	-- second, and rises by its mass of -0.08 to -0.01 (utils.UT_PARTICLE_GRAVITY). It is a dark blue grey (mColorRange: ScaleGlow does
+	-- nothing to an xEmitter's particles), blended by its alpha (STY_Alpha), and fades as xEmitter's do (mAttenKa 0.2). Each is a tile of
+	-- SmokeTex at random.
 	trail_view_range = 5500, -- UT units
 	trail_rate = 30, -- puffs a second
 	trail_life = { 1.3, 1.5 },
-	trail_size = { 15, 25 }, -- UT units across
-	trail_growth = 10, -- UT units across, a second
+	trail_size = { 30, 50 }, -- UT units across
+	trail_growth = 20, -- UT units across, a second
 	trail_speed = { 2, 15 }, -- UT units a second
-	trail_rise = { 1, 8 }, -- UT units a second
+	trail_mass = { -0.08, -0.01 },
+	trail_air_resistance = 0.4,
 	trail_color = {
-		{ 2 * 35 / 255, 2 * 45 / 255, 2 * 45 / 255 },
-		{ 2 * 50 / 255, 2 * 65 / 255, 2 * 65 / 255 },
+		{ 35 / 255, 45 / 255, 45 / 255 },
+		{ 50 / 255, 65 / 255, 65 / 255 },
 	},
 	trail_intensity = 1,
 	trail_attenuation = 0.2,
@@ -400,13 +400,15 @@ local function trail_puffs(entry, dt)
 			additive = 0,
 			attenuation = CONFIG.trail_attenuation,
 			color = { low[1] + (high[1] - low[1]) * share, low[2] + (high[2] - low[2]) * share, low[3] + (high[3] - low[3]) * share },
+			drag = CONFIG.trail_air_resistance,
+			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.trail_mass) * UNIT,
 			growth = CONFIG.trail_growth * UNIT,
 			intensity = CONFIG.trail_intensity,
 			life = life,
 			position = position,
 			size = random_between(CONFIG.trail_size) * UNIT,
 			texture = "muzzle_smoke_" .. math.random(0, CONFIG.trail_tiles - 1),
-			velocity = (drift + Vector3(0, 0, random_between(CONFIG.trail_rise))) * UNIT,
+			velocity = drift * UNIT,
 		})
 	end
 end

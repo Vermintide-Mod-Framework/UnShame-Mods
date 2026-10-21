@@ -15,9 +15,9 @@ local CONFIG = {
 	attack_speed = 1 / 0.75 - 1,
 	-- Added to the multipliers of stagger, push and melee cleave
 	power = 1 / 0.75 - 1,
-	-- OffensiveEffect: 3 rings a second, each for 1 s, at up to 10 units from the pawn's middle, turned at random, 0.7 to 1.1 times
-	-- the size of the mesh, brightest halfway through its life (mAttenKa 0.5). UT fades them with ATF_ExpInOut, whose curve is in
-	-- its engine code, not its scripts, so they fade in and out in straight lines here.
+	-- OffensiveEffect: 3 rings a second, each for 1 s, 10 units from the pawn's middle (mPosDev: utils.ut_particle_offset), turned at
+	-- random, 0.7 to 1.1 times
+	-- the size of the mesh, fading in and out with ATF_ExpInOut (mAttenKa 0.5: see skin_particles.lua's exp_in_out)
 	ring_rate = 3, -- a second
 	ring_life = 1, -- s
 	ring_spread = 10, -- units
@@ -56,13 +56,13 @@ end
 
 -- A ring that moves with the character
 local function ring(unit)
-	local spread = CONFIG.ring_spread * UNIT
-	local offset = Vector3Box((math.random() * 2 - 1) * spread, (math.random() * 2 - 1) * spread, (math.random() * 2 - 1) * spread)
+	local offset = Vector3Box(mod.utils.ut_particle_offset(CONFIG.ring_spread) * UNIT)
 	local size = CONFIG.ring_size[1] + math.random() * (CONFIG.ring_size[2] - CONFIG.ring_size[1])
 
 	particles.mesh({
 		additive = 0,
 		attenuation = CONFIG.ring_attenuation,
+		exp_in_out = true,
 		color = CONFIG.ring_color,
 		life = CONFIG.ring_life,
 		material = CONFIG.ring_material,

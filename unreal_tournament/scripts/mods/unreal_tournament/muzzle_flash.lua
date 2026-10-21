@@ -31,11 +31,11 @@ local CONFIG = {
 	life = {0.1, 0.15},
 	attenuation = 0.2,
 	color = { 1, 1, 1 }, -- mColorRange, of 255
-	-- How xEmitter scales a mesh particle by its size is in UT's engine, not its scripts. The numbers above drew the flash twice as
-	-- wide as pictures of UT2004 show it, so they are multiplied by this (fitted to those pictures, and checked again side by side).
-	-- This flash gets most of its size from growing, as the Rocket Launcher's third person one does, which also looks right halved.
-	-- The Rocket Launcher's first person flash does not grow and is drawn at its size as it is, so the halving is probably how UT
-	-- grows a particle.
+	-- The numbers above drew the flash twice as wide as pictures of UT2004 show it, so they are multiplied by this (fitted to those
+	-- pictures, and checked again side by side). This flash gets most of its size from growing, as the Rocket Launcher's third person one
+	-- does, which also looks right halved; the Rocket Launcher's first person flash does not grow and looks right as it is. The cause is
+	-- not in the emitter: Engine.dll (decompiled) scales a mesh particle by its size times the DrawScale and grows the size by
+	-- mGrowthRate a second, with nothing halved. It is not known.
 	fit = 0.5,
 }
 

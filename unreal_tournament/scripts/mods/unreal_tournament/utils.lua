@@ -430,6 +430,10 @@ end
 -- Meters in one Unreal unit of the world. A UT2004 player is 88 units high, about 1.8 m.
 utils.UT_UNIT = 0.02
 
+-- How fast an xEmitter's particle of mass 1 falls, in UT units a second squared: Engine.dll's particle update pulls it by the zone's
+-- gravity (950) times 0.35, times its mass (mMassRange). A negative mass makes it rise.
+utils.UT_PARTICLE_GRAVITY = 950 * 0.35
+
 -- How easily a projectile hits an enemy. UT's projectile is a point that hits a player's collision cylinder, 25 uu (0.5 m) in radius.
 -- Here the projectile is a sphere that hits the enemy's body, which is about 0.2 m from its middle to its side, so the sphere reaches
 -- the rest of the way. A projectile that is bigger than a point in UT adds its own size. Walls are hit by a ray, or by a sphere of the
@@ -456,6 +460,32 @@ function utils.random_direction()
 	end
 
 	return direction / length
+end
+
+-- How an xEmitter starts a particle (Engine.dll's InitParticle, decompiled, for its default ST_Sphere). The velocity is the speed times
+-- the emitter's direction plus mDirDev times a random direction (VRand), axis by axis. That sum isn't made 1 long again, so a particle
+-- that is turned aside flies faster than its speed. The place is the emitter's plus mPosDev times another random direction, which is on
+-- the surface of that ellipsoid. mDirDev and mPosDev are along the world's axes. They are given as a number for all three, or as UT's
+-- { X, Y, Z }, which are this game's y, x and z (as the meshes are turned: tools/asset_conversion).
+local function ut_axes(deviation)
+	if type(deviation) == "number" then
+		return Vector3(deviation, deviation, deviation)
+	end
+
+	return Vector3(deviation[2], deviation[1], deviation[3])
+end
+
+function utils.ut_particle_velocity(direction, deviation, speed)
+	local random, scale = utils.random_direction(), ut_axes(deviation)
+
+	return (direction + Vector3(Vector3.x(random) * Vector3.x(scale), Vector3.y(random) * Vector3.y(scale), Vector3.z(random) * Vector3.z(scale))) * speed
+end
+
+-- The offset of a particle's place from the emitter's (see above), in the units of mPosDev
+function utils.ut_particle_offset(deviation)
+	local random, scale = utils.random_direction(), ut_axes(deviation)
+
+	return Vector3(Vector3.x(random) * Vector3.x(scale), Vector3.y(random) * Vector3.y(scale), Vector3.z(random) * Vector3.z(scale))
 end
 
 -- Returns the aim moved by UT's random spread: a random direction, a random share of the spread long (InstantFire.DoFireEffect)

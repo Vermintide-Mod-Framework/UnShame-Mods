@@ -47,24 +47,27 @@ local CONFIG = {
 	-- ShieldCharge, the sparks of the charge (ShieldFire.Timer): lines that appear up to 5 units from GetEffectStart (mPosDev) and fly
 	-- towards it, at ChargeScale * 15 units a second, 20 + ChargeScale * 10 a second, each lasting max(ChargeScale / 30, 0.2) s, where
 	-- ChargeScale is the time charged, up to FullyChargedTime. A line is 0.2 to 0.4 units in size (xEmitter's sizes are a half width, so
-	-- twice that wide) and 0.05 s of its travel long (mSpawnVecB.X 5), green ((45, 220, 45) to (65, 250, 65)), added. The colours' alpha
-	-- (25 to 200) does nothing: STY_Additive adds the colour as it is.
+	-- twice that wide) and 0.08 s of its travel long (mSpawnVecB.Z), with a head 10 units across (mSpawnVecB.X 5: see particles.line),
+	-- green ((45, 220, 45) to (65, 250, 65)), added, fading in until 0.2 of its life (xEmitter's mAttenKa). The colours' alpha (25 to 200)
+	-- does nothing: STY_Additive adds the colour as it is.
 	charge_spread = 5, -- UT units
 	charge_speed = 15, -- UT units a second, for each second of charge
 	charge_rate = {20, 10}, -- a second: the first, and more for each second of charge
 	charge_min_life = 0.2,
 	charge_width = {0.4, 0.8}, -- UT units
-	charge_length = 0.05, -- seconds of travel
+	charge_length = 0.08, -- seconds of travel
+	charge_head = 10, -- UT units across
+	charge_attenuation = 0.2,
 	charge_colors = { { 45 / 255, 220 / 255, 45 / 255 }, { 65 / 255, 250 / 255, 65 / 255 } },
 	-- The emitter spins about the world's vertical, to the right as seen from above (PHYS_Rotating, RotationRate.Yaw 16000), and its
 	-- sparks are placed relative to it (mPosRelative), so each one swings round the middle by this much for each second of its age
 	charge_spin = 16000 / 65536 * 360, -- degrees a second
 	-- ShieldSparks, the sparks when the shield stops something (ShieldEffect3rd.Flash): 16 lines at once, each starting up to 0.1 s
-	-- late, lasting 0.4 to 0.6 s and flying at 150 to 300 units a second along the shield's facing, spread by up to 0.9 on each axis
-	-- (mDirDev). They start up to 6 units from their place on each axis (mPosDev), and the place is a random spot hit_sparks_scatter
+	-- late, lasting 0.4 to 0.6 s and flying at 150 to 300 units a second along the shield's facing, turned by 0.9 (mDirDev). They start
+	-- 6 units from their place (mPosDev), and the place is a random spot hit_sparks_scatter
 	-- units from the shield (VRand times 12 in first person, 8 in third). A line is 5 units wide, shrinking by 8 a second (sizes are
-	-- half widths), and 0.02 s of its travel long (mSpawnVecB.X 2), dimming from the start (mAttenKa 0), added. They fall: xEmitter's
-	-- code (native) is not in UT's source, so the zone's gravity, 950 units a second squared, is used for all of them, without their mass.
+	-- half widths), and 0.03 s of its travel long (mSpawnVecB.Z), with a head 4 units across (mSpawnVecB.X 2), dimming from the start
+	-- (mAttenKa 0), added. They fall by their mass of 1.5 to 2.5 (utils.UT_PARTICLE_GRAVITY).
 	hit_sparks = 16,
 	hit_spark_delay = 0.1, -- seconds
 	hit_spark_life = {0.4, 0.6}, -- seconds
@@ -74,8 +77,9 @@ local CONFIG = {
 	hit_sparks_scatter = {12, 8}, -- UT units: first person, third person
 	hit_spark_width = 5, -- UT units
 	hit_spark_growth = -8, -- UT units a second
-	hit_spark_length = 0.02, -- seconds of travel
-	hit_spark_gravity = 950, -- UT units a second squared
+	hit_spark_length = 0.03, -- seconds of travel
+	hit_spark_head = 4, -- UT units across
+	hit_spark_mass = {1.5, 2.5},
 	-- ShieldFire.ShakeOffsetMag, ShakeOffsetRate and ShakeOffsetTime: a punch moves the view back by up to 20 units at 1000 a second,
 	-- and it swings back and forth for a few frames (see view_shake.lua). It has no turn (ShakeRotMag is 0).
 	shake_offset = -20, -- UT units, along the view
@@ -238,39 +242,64 @@ local function charge_sparks(api, skin, dt)
 		local color = CONFIG.charge_colors[1]
 		local other = CONFIG.charge_colors[2]
 		local share = math.random()
+		local mixed = {
+			color[1] + (other[1] - color[1]) * share,
+			color[2] + (other[2] - color[2]) * share,
+			color[3] + (other[3] - color[3]) * share,
+		}
+		local life = math.max(charged / 30, CONFIG.charge_min_life)
+		local view_scale = (skin.view_across_scale or 0.01) * CONFIG.behind_gun
 
-		particles.beam({
-			attenuation = 0.5,
-			color = {
-				color[1] + (other[1] - color[1]) * share,
-				color[2] + (other[2] - color[2]) * share,
-				color[3] + (other[3] - color[3]) * share,
-			},
-			life = math.max(charged / 30, CONFIG.charge_min_life),
-			material = "units/ut/fx/fx_weapon_shield_charge_spark",
-			size = random_between(CONFIG.charge_width) * (skin.view_across_scale or 0.01) * CONFIG.behind_gun,
-			texture = "shield_charge_spark",
-			-- (it flies towards the middle: ST_Explode with a speed below 0, and swings round it as the emitter spins)
+		-- Returns the first person unit, and the spark's tail and head in its frame. It flies towards the middle (ST_Explode with a speed
+		-- below 0), and swings round it as the emitter spins.
+		local function ends()
+			local age = Managers.time:time("game") - born
+			local at = math.max(0, distance - speed * age) / distance
+			local tail = math.max(0, distance - speed * (age - CONFIG.charge_length)) / distance
+			local first_person_unit = api.view_point_in_view(0, 0, 0)
+
+			if not first_person_unit then
+				return nil
+			end
+
+			local sx, sy, sz = spin_in_view(Unit.world_rotation(first_person_unit, 0), x, y, z, CONFIG.charge_spin * age)
+			local parent, head = view_point(api, skin, center_forward + sx * at, center_right + sy * at, center_up + sz * at)
+			local _, back = view_point(api, skin, center_forward + sx * tail, center_right + sy * tail, center_up + sz * tail)
+
+			if not parent or not back then
+				return nil
+			end
+
+			return parent, back, head
+		end
+
+		-- (a line, as particles.line draws one, linked to the first person unit)
+		local width = random_between(CONFIG.charge_width) * view_scale
+
+		for _, axis in ipairs({ "right", "up" }) do
+			particles.beam({
+				attenuation = CONFIG.charge_attenuation,
+				color = mixed,
+				life = life,
+				locked = ends,
+				material = "units/ut/fx/fx_weapon_shield_charge_spark_body",
+				screen_axis = axis,
+				size = width,
+			})
+		end
+
+		particles.sprite({
+			angle = 0,
+			attenuation = CONFIG.charge_attenuation,
+			color = mixed,
+			life = life,
 			locked = function ()
-				local age = Managers.time:time("game") - born
-				local at = math.max(0, distance - speed * age) / distance
-				local tail = math.max(0, distance - speed * (age - CONFIG.charge_length)) / distance
-				local first_person_unit = api.view_point_in_view(0, 0, 0)
+				local parent, _, head = ends()
 
-				if not first_person_unit then
-					return nil
-				end
-
-				local sx, sy, sz = spin_in_view(Unit.world_rotation(first_person_unit, 0), x, y, z, CONFIG.charge_spin * age)
-				local parent, head = view_point(api, skin, center_forward + sx * at, center_right + sy * at, center_up + sz * at)
-				local _, back = view_point(api, skin, center_forward + sx * tail, center_right + sy * tail, center_up + sz * tail)
-
-				if not parent or not back then
-					return nil
-				end
-
-				return parent, back, head
+				return parent, head
 			end,
+			material = "units/ut/fx/fx_weapon_shield_charge_spark_head",
+			size = CONFIG.charge_head * view_scale,
 		})
 	end
 end
@@ -329,64 +358,27 @@ local function show_shield(api)
 end
 
 -- The sparks of the shield stopping something (ShieldSparks, see CONFIG), in the world: from around origin, along the way rotation faces.
--- meters is the meters of a UT unit, and scatter how far from origin they start, in UT units. Each spark is a line along its way (the
--- body of the texture) with a glow at its front (the head), as the Bio Rifle's sparks are (split_spark.py).
+-- meters is the meters of a UT unit, and scatter how far from origin they start, in UT units. Each is a line (particles.line), started
+-- as xEmitter starts one (utils.ut_particle_velocity).
 local function hit_sparks(origin, rotation, meters, scatter)
-	local forward, right, up = Quaternion.forward(rotation), Quaternion.right(rotation), Quaternion.up(rotation)
-	local forward_box = Vector3Box(forward)
-	local spread, position_spread = CONFIG.hit_spark_spread, CONFIG.hit_spark_position_spread
-	local now = Managers.time:time("game")
+	local forward = Quaternion.forward(rotation)
 
 	for _ = 1, CONFIG.hit_sparks do
-		-- (a random direction, as VRand)
-		local z, angle = math.random() * 2 - 1, math.random() * math.pi * 2
-		local across = math.sqrt(1 - z * z)
-		local around = Vector3(across * math.cos(angle), across * math.sin(angle), z)
-		local offset = around * scatter + forward * random_between({-position_spread, position_spread}) + right * random_between({-position_spread, position_spread}) + up * random_between({-position_spread, position_spread})
-		local direction = Vector3.normalize(forward * (1 + random_between({-spread, spread})) + right * random_between({-spread, spread}) + up * random_between({-spread, spread}))
-		local start = Vector3Box(origin + offset * meters)
-		local velocity = Vector3Box(direction * (random_between(CONFIG.hit_spark_speed) * meters))
-		local delay = math.random() * CONFIG.hit_spark_delay
-		local born = now + delay
-		local life = random_between(CONFIG.hit_spark_life)
-		local width = CONFIG.hit_spark_width * meters
-		local fall = CONFIG.hit_spark_gravity * meters
+		-- (VRand times the scatter, then the emitter's mPosDev)
+		local offset = utils.random_direction() * scatter + utils.ut_particle_offset(CONFIG.hit_spark_position_spread)
 
-		-- Returns where the spark's head is, and where its tail is
-		local function spark()
-			local age = math.max(0, Managers.time:time("game") - born)
-			local moving = velocity:unbox() - Vector3(0, 0, fall * age)
-			local head = start:unbox() + velocity:unbox() * age - Vector3(0, 0, 0.5 * fall * age * age)
-			local speed = Vector3.length(moving)
-			local heading = speed > 0.001 and moving * (1 / speed) or forward_box:unbox()
-
-			return head, head - heading * math.max(width, speed * CONFIG.hit_spark_length)
-		end
-
-		particles.beam({
+		particles.line({
 			attenuation = 0,
-			delay = delay,
+			delay = math.random() * CONFIG.hit_spark_delay,
+			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.hit_spark_mass) * meters,
 			growth = CONFIG.hit_spark_growth * meters,
-			life = life,
-			size = width,
-			texture = "shield_spark_body",
-			track = function ()
-				local head, tail = spark()
-
-				return tail, head
-			end,
-		})
-		particles.sprite({
-			angle = 0,
-			attenuation = 0,
-			delay = delay,
-			follow = function ()
-				return (spark())
-			end,
-			growth = CONFIG.hit_spark_growth * meters,
-			life = life,
-			size = width,
-			texture = "shield_spark_head",
+			head_size = CONFIG.hit_spark_head * meters,
+			length = CONFIG.hit_spark_length,
+			life = random_between(CONFIG.hit_spark_life),
+			position = origin + offset * meters,
+			size = CONFIG.hit_spark_width * meters,
+			texture = "shield_spark",
+			velocity = utils.ut_particle_velocity(forward, CONFIG.hit_spark_spread, random_between(CONFIG.hit_spark_speed) * meters),
 		})
 	end
 end
@@ -837,37 +829,35 @@ local function third_person_sparks(api, unit, state, dt)
 		local distance = math.max(Vector3.length(offset), 0.001)
 		local boxed = Vector3Box(offset * meters)
 		local speed = CONFIG.charge_speed * charged
-		local born = now()
 		local color = CONFIG.charge_colors[1]
 		local other = CONFIG.charge_colors[2]
 		local share = math.random()
 
-		particles.beam({
-			attenuation = 0.5,
+		particles.line({
+			attenuation = CONFIG.charge_attenuation,
 			color = {
 				color[1] + (other[1] - color[1]) * share,
 				color[2] + (other[2] - color[2]) * share,
 				color[3] + (other[3] - color[3]) * share,
 			},
+			head_size = CONFIG.charge_head * meters,
+			length = CONFIG.charge_length,
 			life = math.max(charged / 30, CONFIG.charge_min_life),
-			material = "units/ut/fx/fx_shield_charge_spark",
 			size = random_between(CONFIG.charge_width) * meters,
 			texture = "shield_charge_spark",
 			-- (it flies towards the end of the gun, and swings round it as the first person's do: to the right as seen from above, which
 			-- is a turn below 0 about the world's up)
-			track = function ()
+			motion = function (age)
 				local center = api.third_person.muzzle_position(unit)
 
 				if not center then
 					return nil
 				end
 
-				local age = now() - born
-				local at = math.max(0, distance - speed * age) / distance
-				local tail = math.max(0, distance - speed * (age - CONFIG.charge_length)) / distance
 				local reach = Quaternion.rotate(Quaternion(Vector3.up(), -math.rad(CONFIG.charge_spin * age)), boxed:unbox())
+				local inward = distance - speed * age > 0 and speed / distance or 0
 
-				return center + reach * tail, center + reach * at
+				return center + reach * (math.max(0, distance - speed * age) / distance), reach * -inward
 			end,
 		})
 	end

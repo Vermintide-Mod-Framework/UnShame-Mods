@@ -47,7 +47,7 @@ What each script makes, and the tables in it that say what it converts, are in i
 | `make_lightning_assets.py <export dir>` | the Lightning Gun's effect textures, and its scope as gui materials |
 | `make_sniper_scope.py <export dir>` | the Sniper Rifle's scope, as a gui material |
 | `make_flak_flash.py <export dir> [name]` | the texture of a first person muzzle flash drawn on `flak_flash_mesh` |
-| `split_flak_trail.py <export dir>`, `split_smoke.py <export dir>`, `split_explosion.py <export dir>`, `split_spark.py` | textures cut from UT's sheets, or generated where UT's look wrong here |
+| `split_flak_trail.py <export dir>`, `split_smoke.py <export dir>`, `split_explosion.py <export dir>`, `split_spark.py <export dir>` | textures cut from UT's sheets (the line particles' body and head as UE2 maps them), or generated where UT's look wrong here |
 | `make_fx_meshes.py <export dir>` | the meshes of the effects, and the light |
 | `make_goop_mesh.py <export dir>` | the Bio Rifle's glob: a unit for each frame of its animations |
 | `make_decal_unit.py` | the box that the Bio Rifle's splat is projected from |

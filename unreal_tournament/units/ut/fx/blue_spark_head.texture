@@ -1,6 +1,6 @@
 common = {
 	input = {
-		filename = "units/ut/fx/blue_spark_line"
+		filename = "units/ut/fx/blue_spark_head"
 	}
 	output = {
 		apply_processing = true

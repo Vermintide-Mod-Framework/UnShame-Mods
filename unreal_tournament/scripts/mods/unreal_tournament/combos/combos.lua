@@ -40,8 +40,10 @@ local CONFIG = {
 	bot_interval = 1, -- s
 	-- Combo.ActivateSound, at the pawn
 	activate_sound = "ut_combo_activated_3d",
-	-- ComboActivation: a burst of 20 balls of light (80 a second for 0.25 s) from up to 10 units around the pawn's middle, out from it at 75
-	-- units a second, faster as they go (mAirResistance -4), red to white, size 3, for 0.75 s, following the pawn (mPosRelative)
+	-- ComboActivation: a burst of 20 balls of light (80 a second for 0.25 s) from 10 units around the pawn's middle, out from it at 75
+	-- units a second, faster as they go (mAirResistance -4), red to white, 6 units across (mSizeRange 3, a half width), for 0.75 s,
+	-- following the pawn (mPosRelative). It is ST_Explode: each starts mPosDev along a random direction and flies along it (Engine.dll's
+	-- InitParticle, decompiled).
 	burst = {
 		count = 20,
 		spawn_time = 0.25, -- s
@@ -49,7 +51,7 @@ local CONFIG = {
 		speed = 75, -- units a second
 		acceleration = 4, -- the speed times this a second
 		life = 0.75, -- s
-		size = 3, -- units
+		size = 6, -- units across
 		colors = { { 1, 0, 0 }, { 1, 1, 1 } },
 		texture = "combo_ball",
 	},
@@ -149,7 +151,7 @@ local function burst(unit)
 
 	for i = 1, settings.count do
 		local direction = utils.random_direction()
-		local start = Vector3Box(direction * (math.random() * settings.spread * UNIT))
+		local start = Vector3Box(direction * (settings.spread * UNIT))
 		local way = Vector3Box(direction)
 		local share = math.random()
 		local accel = settings.acceleration

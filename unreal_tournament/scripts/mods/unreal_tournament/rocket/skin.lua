@@ -50,20 +50,17 @@ local CONFIG = {
 	corona_intensity = 2.2, -- brightness, where 1 is the texture as it is
 	corona_back = 0.2, -- m
 	corona_toward_camera = 0.4, -- m
-	-- RocketTrailSmoke: wisps, 90 a second, each lasting 1.25 s. They are 15 to 20 units wide, grow 13 units a second, and rise a little.
+	-- RocketTrailSmoke: wisps, 90 a second, each lasting 1.25 s, left where they start. They are 30 to 40 units wide (mSizeRange 15 to 20)
+	-- and grow 26 a second, white to (255, 210, 210), blended by their alpha (STY_Alpha), fading with ATF_ExpInOut (mAttenKa 0.2). They
+	-- rise by their mass of -0.03 to -0.01 (utils.UT_PARTICLE_GRAVITY), slowed by 0.4 of their speed a second.
 	smoke_interval = 1 / 90,
 	smoke_life = 1.25,
-	smoke_size = {
-		15,
-		20,
-	},
-	smoke_growth = 13,
-	smoke_rise = 0.3, -- m/s
-	smoke_color = {
-		0.9,
-		0.85,
-		0.85,
-	},
+	smoke_size = { 30, 40 }, -- UT units across
+	smoke_growth = 26, -- UT units across, a second
+	smoke_mass = { -0.03, -0.01 },
+	smoke_air_resistance = 0.4,
+	smoke_attenuation = 0.2,
+	smoke_colors = { { 1, 1, 1 }, { 1, 210 / 255, 210 / 255 } },
 	-- The explosion (NewExplosionA) has the game's own explosion, with its smoke and the mark it leaves, a flash, and three fireballs.
 	-- Each fireball plays a sheet of 16 frames. All three use the same sheet, one of two.
 	explosion_effect = mod.effects.game_effect("fx/wpnfx_frag_grenade_impact"),
@@ -269,17 +266,27 @@ local function update_visuals(dt)
 			while visual.smoke_time <= 0 do
 				visual.smoke_time = visual.smoke_time + CONFIG.smoke_interval
 
+				local low, high = CONFIG.smoke_colors[1], CONFIG.smoke_colors[2]
+				local share = math.random()
+
 				particles.sprite({
 					additive = 0,
-					color = CONFIG.smoke_color,
+					attenuation = CONFIG.smoke_attenuation,
+					color = {
+						low[1] + (high[1] - low[1]) * share,
+						low[2] + (high[2] - low[2]) * share,
+						low[3] + (high[3] - low[3]) * share,
+					},
+					drag = CONFIG.smoke_air_resistance,
+					exp_in_out = true,
+					fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.smoke_mass) * UNIT,
 					growth = CONFIG.smoke_growth * UNIT,
-					intensity = 0.9,
 					life = CONFIG.smoke_life,
 					position = position,
 					size = random_between(CONFIG.smoke_size) * UNIT,
 					spin = (math.random() * 2 - 1) * 0.3,
 					texture = "smoke",
-					velocity = Vector3(0, 0, CONFIG.smoke_rise),
+					velocity = Vector3.zero(),
 				})
 			end
 

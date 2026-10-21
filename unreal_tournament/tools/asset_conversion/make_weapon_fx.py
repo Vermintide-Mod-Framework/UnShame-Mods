@@ -35,9 +35,8 @@ TEXTURES = {
     # (ShieldRip3rdFB, the shield as it stops something: its lines and the fade of its rim)
     'shield_rip_elec': ('XEffectMat/Texture/shield_elec_green_rip_a.tga', 1, 1),
     'shield_edge': ('XEffectMat/Texture/edgegrad.tga', 1, 1),
-    # (ForceRingA's rings of the punch and ShieldCharge's sparks of the charge)
+    # (ForceRingA's rings of the punch. ShieldCharge's sparks of the charge are split_spark.py's.)
     'force_ring': ('XEffectMat/Texture/shock_ring_b.tga', 1, 1),
-    'shield_charge_spark': ('XEffects/Texture/FlakTrailTex.tga', 1, 1),
     # The Redeemer (NewRedeemerTrail's flames and smoke, RedeemerExplosion's puffs and the gradient of its ring and sphere)
     'redeemer_flame': ('AW-2004Explosions/Texture/Part_explode2.tga', 4, 4),
     'redeemer_smoke': ('AW-2004Particles/Texture/MuchSmoke1.tga', 4, 4),
@@ -107,17 +106,16 @@ COMBO_ONLY = KEEP_ALPHA + ('flame_gradient', 'red_bolt', 'invis_overlay')
 
 # The textures that are turned a quarter, because they are drawn on a beam, which lays v along its length (TracerShot is a streak along
 # u, the way NewTracer's sprite moves: PTDU_Right)
-TURNED = ('tracer_shot', 'shield_charge_spark', 'white_streak', 'speed_trail', 'plasma_shaft')
+TURNED = ('tracer_shot', 'white_streak', 'speed_trail', 'plasma_shaft')
 
-# The textures of which only the top half is used: FlakTrailTex is a streak above a dot, and a line particle (PT_Line) is the streak, as
-# SpeedTrailTex is for a stream (PT_Stream)
-TOP_HALF = ('shield_charge_spark', 'speed_trail')
+# The textures of which only the top half is used: SpeedTrailTex is a streak above a dot, and a stream (PT_Stream) is the streak
+TOP_HALF = ('speed_trail',)
 
 # The effects that UT draws with the weapon in the player's view (attached to it) also get fx_weapon_<name>, which draws with the
 # weapon model's field of view (units/ut/fx/particle_weapon_linear, or particle_weapon for an srgb one), so they are among the model's
 # parts. The Minigun's flash and shells are attached to the weapon (MinigunFire.InitEffects, Minigun.PostBeginPlay), and its smoke is
 # drawn with the weapon's field of view (WeaponFire.DrawMuzzleFlash).
-WEAPON = ('minigun_burst', 'shell_casing', 'muzzle_smoke', 'force_ring', 'shield_charge_spark', 'link_muzmesh_green', 'link_muzmesh_yellow',
+WEAPON = ('minigun_burst', 'shell_casing', 'muzzle_smoke', 'force_ring', 'link_muzmesh_green', 'link_muzmesh_yellow',
           'link_beam_flash_green', 'link_beam_flash_yellow', 'link_beam_flash_blue')
 
 def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_alpha=False):

@@ -28,11 +28,10 @@ local CONFIG = {
 	light_life = 0.15,
 	light_period = 3, -- LightPeriod
 	-- The smoke at the muzzle in the player's own view (MinigunMuzzleSmoke): a round sets it to 30 puffs a second, and the rate falls
-	-- towards none by its own amount a second (Lerp(dt) in MuzzleSmoke.Tick) and stops below 1. A puff lasts 0.6 to 1.2 s, starts 15 to 20
-	-- units across and grows by 4 a second, is a grey of 70 to 113 out of 255, and is blended by the texture's alpha (STY_Alpha). It
-	-- rises slowly (its mass is -0.15 to -0.25, which xEmitter turns into a rise in its engine, not its scripts), and fades from the start,
-	-- so the puffs stay together by the muzzle and thin out as they rise (both set in the game: rising by that much of the zone's gravity
-	-- sent them up in a long column, and fading only from a fifth of their life kept the column thick).
+	-- towards none by its own amount a second (Lerp(dt) in MuzzleSmoke.Tick) and stops below 1. A puff lasts 0.6 to 1.2 s, starts 30 to 40
+	-- units across (mSizeRange 15 to 20, a half width) and grows by 8 a second, is a grey of 70 to 113 out of 255, and is blended by the
+	-- texture's alpha (STY_Alpha). It starts still and rises by its mass of -0.25 to -0.15 (utils.UT_PARTICLE_GRAVITY), slowed by 0.4 of
+	-- its speed a second, and is brightest at 0.2 of its life (mAttenKa).
 	smoke_rate = 30, -- puffs a second
 	-- How many puffs each mode's smoke holds at a time (mMaxParticles: MinigunAltMuzzleSmoke holds half as many)
 	smoke_max = {
@@ -40,11 +39,12 @@ local CONFIG = {
 		alt = 15,
 	},
 	smoke_life = { 0.6, 1.2 },
-	smoke_size = { 15, 20 }, -- UT units across
-	smoke_growth = 4, -- UT units across, a second
+	smoke_size = { 30, 40 }, -- UT units across
+	smoke_growth = 8, -- UT units across, a second
 	smoke_grey = { 70 / 255, 113 / 255 },
-	smoke_rise = { 15, 30 }, -- UT units a second
-	smoke_attenuation = 0,
+	smoke_mass = { -0.25, -0.15 },
+	smoke_air_resistance = 0.4,
+	smoke_attenuation = 0.2,
 	-- SmokeTex is a sheet of puffs (pclSmoke's mNumTileColumns and mNumTileRows, 4 by 4), and each puff is one of them (mRandTextures)
 	smoke_tiles = 16,
 	-- The third person flash (NewMinigunMFlash): four flames in a row along the barrel, each smaller and further out, the last two up to 8
@@ -82,7 +82,7 @@ local CONFIG = {
 	shell_life = {0.5, 1},
 	-- The shell's size: mSizeRange 10 times DrawScale 0.05
 	shell_scale = 0.5,
-	shell_gravity = 950, -- UT units a second squared (PhysicsVolume's)
+	shell_gravity = 2 * utils.UT_PARTICLE_GRAVITY, -- UT units a second squared (its mass of 2)
 	-- How much of its speed a shell loses in a second (xEmitter's mAirResistance, which ShellSpewer leaves at 0.4)
 	shell_air_resistance = 0.4,
 	shell_spin = 12, -- radians a second, at most, each way
@@ -352,7 +352,6 @@ local function update_smoke_emitter(api, mode, world_unit, dt)
 	while emitter.owed >= 1 and muzzle do
 		local life = random_between(CONFIG.smoke_life)
 		local grey = random_between(CONFIG.smoke_grey)
-		local rise = random_between(CONFIG.smoke_rise)
 
 		emitter.owed = emitter.owed - 1
 
@@ -363,12 +362,14 @@ local function update_smoke_emitter(api, mode, world_unit, dt)
 				additive = 0,
 				attenuation = CONFIG.smoke_attenuation,
 				color = { grey, grey, grey },
+				drag = CONFIG.smoke_air_resistance,
+				fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.smoke_mass) * world_unit,
 				growth = CONFIG.smoke_growth * world_unit,
 				life = life,
 				material = "units/ut/fx/fx_weapon_muzzle_smoke_" .. math.random(0, CONFIG.smoke_tiles - 1),
 				position = muzzle,
 				size = random_between(CONFIG.smoke_size) * world_unit,
-				velocity = Vector3(0, 0, rise * world_unit),
+				velocity = Vector3.zero(),
 			})
 		end
 	end

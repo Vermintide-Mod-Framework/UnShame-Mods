@@ -45,25 +45,23 @@ local CONFIG = {
 	-- is (28, 100, -26), and these are fitted to a picture of UT2004, which has the eye's bob and the view's height in it too.
 	flare_view_offset = {25, 100, -19.8},
 	flare_view_size = 44,
-	-- ChildBlueSparks: each arc (ChildLightningBolt) throws 10 sparks from where it starts, which is where the bolt hit. They fly along
-	-- the arc's hit normal, up to 0.6 off it in each axis (mDirDev), at 250 to 350 units a second, slowed by 0.2 of their speed a second
-	-- (mAirResistance), and last 0.8 to 1.2 s. Each is a line (PT_Line) 2 to 3 units wide that thins by 3 units a second. Its length
-	-- goes with its speed: spark_length seconds of its travel, which is UT's mSpawnVecB.X of 5 in hundredths of a second, fitted to
-	-- pictures of UT2004. They are twice as bright as the texture (ScaleGlow).
+	-- ChildBlueSparks: each arc (ChildLightningBolt) throws 10 sparks from 0.8 units around where it starts (mPosDev), which is where the
+	-- bolt hit. They fly along the arc's hit normal, turned by 0.6 (mDirDev), at 250 to 350 units a second, slowed by 0.2 of their speed a second
+	-- (mAirResistance), and last 0.8 to 1.2 s. Each is a line (particles.line) 6 to 4 units wide (mSizeRange 3 to 2) that thins by 6
+	-- units a second, 0.05 s of its travel long (mSpawnVecB.Z, which ChildBlueSparks leaves at xEmitter's), with a head 10 units across
+	-- (mSpawnVecB.X 5). They fall by their mass (mMassRange 1.5 to 2.5).
 	spark_count = 10,
 	spark_life = {0.8, 1.2},
 	spark_speed = {250, 350},
 	spark_direction_spread = 0.6,
+	spark_position_spread = 0.8, -- UT units
 	spark_air_resistance = 0.2,
-	-- They fall: xEmitter pulls a particle by the zone's gravity times its mass (mMassRange 1.5 to 2.5), as a negative mass makes smoke
-	-- rise
-	spark_gravity = 950, -- UT units a second squared (PhysicsVolume's)
 	spark_mass = {1.5, 2.5},
-	spark_width = {2, 3}, -- UT units
-	spark_thinning = 3, -- UT units a second
+	spark_width = {6, 4}, -- UT units across
+	spark_thinning = 6, -- UT units across, a second
 	spark_length = 0.05, -- seconds of travel
+	spark_head = 10, -- UT units across
 	spark_attenuation = 0.1,
-	spark_intensity = 2,
 	-- LightningCharge: 10 sparks a second at the tip, each 0.2 s long, one of the four pictures of the texture, turned at random. They
 	-- stop while the weapon cannot fire (its next shot is not yet due, or it has no ammo: here, it is locked out). The emitter is attached
 	-- to the model's tip, 30 of the model's units behind it along the barrel (RelativeLocation, in the bone's frame), and its sparks move
@@ -255,46 +253,22 @@ local function flare(position, size, material)
 	})
 end
 
--- The sparks an arc throws from where it starts (ChildBlueSparks), along the arc's hit normal. Each is a streak from where it is back
--- along its velocity, drawn as a beam that follows it.
+-- The sparks an arc throws from where it starts (ChildBlueSparks), along the arc's hit normal, started as xEmitter starts them
+-- (utils.ut_particle_velocity)
 local function sparks(position, normal)
-	local spread = CONFIG.spark_direction_spread
-	local air = CONFIG.spark_air_resistance
-
 	for _ = 1, CONFIG.spark_count do
-		local direction = Vector3.normalize(normal + Vector3(random_between({-spread, spread}), random_between({-spread, spread}), random_between({-spread, spread})))
-		local velocity = Vector3Box(direction * (random_between(CONFIG.spark_speed) * UNIT))
-		local start = Vector3Box(position)
-		local born = Managers.time:time("game")
-		local width = random_between(CONFIG.spark_width)
-		-- (the pull of gravity on it, and the speed it would fall at in the air: gravity / air)
-		local fall = CONFIG.spark_gravity * random_between(CONFIG.spark_mass) * UNIT
-		local terminal = Vector3Box(Vector3(0, 0, -fall / air))
-
-		particles.beam({
+		particles.line({
 			attenuation = CONFIG.spark_attenuation,
-			color = {
-				1,
-				1,
-				1,
-			},
-			intensity = CONFIG.spark_intensity,
-			life = random_between(CONFIG.spark_life),
-			size = width * UNIT,
+			drag = CONFIG.spark_air_resistance,
+			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.spark_mass) * UNIT,
 			growth = -CONFIG.spark_thinning * UNIT,
-			texture = "blue_spark_line",
-			-- The air slows it by air times its speed a second, and gravity pulls it down. With w the speed it falls at in the end
-			-- (gravity / air), its velocity is w + (v - w) * e^(-air * t), and it has gone w * t + (v - w) * (1 - e^(-air * t)) / air.
-			track = function ()
-				local age = Managers.time:time("game") - born
-				local speed_left = math.exp(-air * age)
-				local w = terminal:unbox()
-				local rest = velocity:unbox() - w
-				local at = start:unbox() + w * age + rest * ((1 - speed_left) / air)
-				local now = w + rest * speed_left
-
-				return at - now * CONFIG.spark_length, at
-			end,
+			head_size = CONFIG.spark_head * UNIT,
+			length = CONFIG.spark_length,
+			life = random_between(CONFIG.spark_life),
+			position = position + utils.ut_particle_offset(CONFIG.spark_position_spread) * UNIT,
+			size = random_between(CONFIG.spark_width) * UNIT,
+			texture = "blue_spark",
+			velocity = utils.ut_particle_velocity(normal, CONFIG.spark_direction_spread, random_between(CONFIG.spark_speed) * UNIT),
 		})
 	end
 end

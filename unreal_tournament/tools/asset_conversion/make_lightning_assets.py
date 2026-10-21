@@ -1,8 +1,9 @@
 import sys, os, struct, zlib
 
 # Makes the effect textures and the scope textures of the Lightning Gun, from the UModel export (export.py):
-#   units/ut/fx/lightning_bolt, lightning_charge, blue_spark_line: UT's LightningBoltT, LightningChargeT and pcl_BlueSpark, each with the
-#       material fx_<name> that adds its colour to the screen (the same as make_fx_assets.py makes, except for the flare: see LINEAR)
+#   units/ut/fx/lightning_bolt, lightning_charge: UT's LightningBoltT and LightningChargeT, each with the material fx_<name> that adds
+#       its colour to the screen (the same as make_fx_assets.py makes, except for the flare: see LINEAR). The sparks' pcl_BlueSpark is
+#       split_spark.py's.
 #   ui/ut/lightning_scope_*: the textures of the scope's overlay (SniperRifle.RenderOverlays) as gui materials, in the file
 #       ui/ut/lightning_scope.material: the ring (SniperFocus), the four arrows (SniperArrows), and the scan lines and lens of the
 #       screen (XGameShaders.ZoomFB, a multiply of the screen that is turned here into black with an alpha, which is as near as the
@@ -20,7 +21,7 @@ from resources import texture_text, particle_material_text, gui_material_text
 # LightningBoltT is two pictures: the streak of lightning in the top half, and the flare in the bottom half. UT's bolt draws each from
 # the half it needs. LightningChargeT is four pictures (the charge's emitter has 2 columns and 2 rows of tiles), which a spark picks from.
 # The textures that are turned a quarter, because they are drawn on a beam
-TURNED = ('lightning_bolt', 'blue_spark_line')
+TURNED = ('lightning_bolt',)
 
 FX = {
     'lightning_bolt': ('XEffects/Texture/LightningBoltT.tga', (0, 0.5, 0, 1)),
@@ -29,15 +30,13 @@ FX = {
     'lightning_charge_1': ('XEffects/Texture/LightningChargeT.tga', (0, 0.5, 0.5, 1)),
     'lightning_charge_2': ('XEffects/Texture/LightningChargeT.tga', (0.5, 1, 0, 0.5)),
     'lightning_charge_3': ('XEffects/Texture/LightningChargeT.tga', (0.5, 1, 0.5, 1)),
-    # pcl_BlueSpark is a streak above a dot. A line particle (the sparks of ChildBlueSparks) is the streak along its length.
-    'blue_spark_line': ('XEffects/Texture/pcl_BlueSpark.tga', (0, 0.5, 0, 1)),
 }
 
 # UT adds an effect's texture to the screen as it is. The particle materials draw after tone mapping, onto the screen's colours, but
 # units/ut/fx/particle reads its texture as srgb, which turns each value v into about v^2.2 and leaves the faint parts of the texture
 # much fainter than UT's. particle_linear reads the values as they are. The flare, the bolt and the sparks use it (checked against
 # pictures of UT2004).
-LINEAR = ('lightning_flare', 'lightning_bolt', 'blue_spark_line')
+LINEAR = ('lightning_flare', 'lightning_bolt')
 # The charge's sparks are also drawn with the weapon in the player's view, so they also get fx_weapon_<name>, which draws with the weapon
 # model's field of view (as make_weapon_fx.py's WEAPON do): the sparks are among the model's parts, which hide them
 WEAPON = ('lightning_charge_0', 'lightning_charge_1', 'lightning_charge_2', 'lightning_charge_3')

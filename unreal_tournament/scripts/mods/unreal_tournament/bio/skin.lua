@@ -62,51 +62,35 @@ local CONFIG = {
 		hit = { start = 20, count = 18 },
 		slide = { start = 83, count = 39 },
 	},
-	glob_color = {
-		0.55,
-		1,
-		0.35,
-	},
-	-- GoopSmoke is 10 slow green puffs, 20 to 30 units wide, lasting 1 to 2 s. GoopSparks is 10 sparks 4 units wide, lasting 0.5 to
-	-- 0.8 s, moving 80 to 240 units a second.
-	-- Both are made along the rotation of the glob (the way a landed glob faces, or the way a flying one goes), spread by a deviation
-	-- (mDirDev) of this much on each axis. The puffs start within mPosDev of the glob, 8 units on each axis.
+	-- The splash of a glob (BioGlob.Destroyed spawns both, at their own size, whatever the glob's), made along the rotation of the glob
+	-- (the way a landed glob faces, or the way a flying one goes), as xEmitter starts a particle (utils.ut_particle_velocity: mDirDev
+	-- and mPosDev). GoopSmoke: 10 slow green puffs ((20, 120, 20) to (20, 150, 20)), 40 to 60 units wide (mSizeRange 20 to 30) and
+	-- growing by 20 a second, lasting 1 to 2 s, flying at 20 to 80 units a second, slowed by 1.1 of their speed a second, a random tile
+	-- of EmitSmoke_t, STY_Translucent, brightest at 0.1 of their life (mAttenKa).
+	burst_puffs = 10,
 	burst_puff_direction_spread = 0.25,
+	burst_puff_position_spread = 8, -- UT units
+	burst_puff_size = { 40, 60 }, -- UT units across
+	burst_puff_growth = 20, -- UT units across, a second
+	burst_puff_life = { 1, 2 },
+	burst_puff_speed = { 20, 80 },
+	burst_puff_drag = 1.1,
+	burst_puff_colors = { { 20 / 255, 120 / 255, 20 / 255 }, { 20 / 255, 150 / 255, 20 / 255 } },
+	burst_puff_attenuation = 0.1,
+	-- GoopSparks: 10 lines (particles.line) of link_spark_green, (160, 160, 180), 8 units wide (mSizeRange 4) and thinning by 4 a second,
+	-- 0.04 s of their travel long (mSpawnVecB.Z) with a head 16 units across (mSpawnVecB.X 8), lasting 0.5 to 0.8 s, flying at 80 to 240
+	-- units a second, slowed by 2 of their speed a second and falling by their mass of 1.5 to 2, added
+	burst_sparks = 10,
 	burst_spark_direction_spread = 0.8,
-	burst_puff_position_spread = 8,
-	burst_puffs = 6,
-	burst_puff_size = {
-		20,
-		30,
-	},
-	burst_puff_life = {
-		1,
-		2,
-	},
-	burst_puff_speed = {
-		20,
-		80,
-	},
-	burst_puff_color = {
-		0.1,
-		0.55,
-		0.1,
-	},
-	burst_sparks = 8,
-	burst_spark_size = 3,
-	-- GoopSparks have an air resistance of 2. A streak is this many seconds of the spark's speed long.
+	burst_spark_size = 8, -- UT units across
+	burst_spark_growth = -4, -- UT units across, a second
+	burst_spark_length = 0.04, -- seconds of travel
+	burst_spark_head = 16, -- UT units across
+	burst_spark_life = { 0.5, 0.8 },
+	burst_spark_speed = { 80, 240 },
 	burst_spark_drag = 2,
-	burst_spark_length = 0.06,
-	burst_spark_life = {
-		0.5,
-		0.8,
-	},
-	-- The sparks of UT2004 fly faster than its numbers say here (80 to 240), and fall as they go; these are matched to how they look there.
-	burst_spark_speed = {
-		140,
-		420,
-	},
-	burst_spark_gravity = 10.7, -- m/s^2, the same as a glob's
+	burst_spark_mass = { 1.5, 2 },
+	burst_spark_color = { 160 / 255, 160 / 255, 180 / 255 },
 	-- BioDecal is the splat that a landing glob leaves on the surface. It is the same size for every glob, and it lasts 6 seconds
 	-- (LifeSpan).
 	-- The decal's box is this wide and this deep, in meters. It is shallow so that it does not reach the player's weapon when the splat is
@@ -618,101 +602,55 @@ mod.skin_init_callbacks.bio = function (projectile)
 	end
 end
 
--- Returns a random vector in a box of the given half size on each axis.
-local function random_box(spread)
-	return Vector3((math.random() * 2 - 1) * spread, (math.random() * 2 - 1) * spread, (math.random() * 2 - 1) * spread)
-end
+-- Shows the splash of a glob: GoopSmoke and GoopSparks. They go the way the glob was pointed, which is the way the surface faces for a
+-- glob that landed.
+local function splash(position, direction)
+	local low, high = CONFIG.burst_puff_colors[1], CONFIG.burst_puff_colors[2]
 
--- Returns a direction that is the given one, deviated by up to the spread on each axis (xEmitter's mDirDev).
-local function deviated(direction, spread)
-	return Vector3.normalize(direction + random_box(spread))
-end
-
--- Shows the splash of a glob: GoopSmoke and GoopSparks, as many as the size calls for. They go the way the glob was pointed, which is the
--- way the surface faces for a glob that landed.
-local function splash(position, scale, direction)
-	local puffs = math.max(2, math.floor(CONFIG.burst_puffs * scale + 0.5))
-	local sparks = math.max(2, math.floor(CONFIG.burst_sparks * scale + 0.5))
-
-	for _ = 1, puffs do
-		local speed = random_between(CONFIG.burst_puff_speed) * UNIT
+	for _ = 1, CONFIG.burst_puffs do
+		local share = math.random()
 
 		particles.sprite({
-			attenuation = 0.1,
-			color = CONFIG.burst_puff_color,
-			drag = 1.1,
-			growth = 10 * UNIT,
-			intensity = 1.4,
+			-- (STY_Translucent, which is FB_Brighten, as hit_effects.lua's impact smoke, with the same texture)
+			additive = 0,
+			attenuation = CONFIG.burst_puff_attenuation,
+			color = {
+				low[1] + (high[1] - low[1]) * share,
+				low[2] + (high[2] - low[2]) * share,
+				low[3] + (high[3] - low[3]) * share,
+			},
+			drag = CONFIG.burst_puff_drag,
+			growth = CONFIG.burst_puff_growth * UNIT,
 			life = random_between(CONFIG.burst_puff_life),
-			position = position + random_box(CONFIG.burst_puff_position_spread * UNIT),
-			size = random_between(CONFIG.burst_puff_size) * UNIT * scale,
+			position = position + utils.ut_particle_offset(CONFIG.burst_puff_position_spread) * UNIT,
+			size = random_between(CONFIG.burst_puff_size) * UNIT,
 			spin = (math.random() * 2 - 1) * 0.4,
-			texture = "smoke",
-			velocity = deviated(direction, CONFIG.burst_puff_direction_spread) * speed,
+			texture = "impact_smoke_" .. math.random(0, 15),
+			velocity = utils.ut_particle_velocity(direction, CONFIG.burst_puff_direction_spread, random_between(CONFIG.burst_puff_speed) * UNIT),
 		})
 	end
 
-	-- GoopSparks are lines (PT_Line): each is a streak along the way the spark moves, as long as the spark is fast, with a glow at its
-	-- front. The texture of a spark has both (see tools/asset_conversion/split_spark.py): the body is a beam from the tail to the head, and
-	-- the head is a sprite at the head. The position of a spark is its start plus its velocity, which the air slows (drag), so it is worked
-	-- out from how long the spark has been going.
-	for _ = 1, sparks do
-		local origin = Vector3Box(position)
-		local start_velocity = deviated(direction, CONFIG.burst_spark_direction_spread) * (random_between(CONFIG.burst_spark_speed) * UNIT)
-		local velocity_box = Vector3Box(start_velocity)
-		local started = Application.time_since_launch()
-		local drag = CONFIG.burst_spark_drag
-		local width = CONFIG.burst_spark_size * UNIT * scale
-		local life = random_between(CONFIG.burst_spark_life)
-
-		-- Returns where the spark's head is, and where its tail is. The air slows the spark and gravity pulls it down, so its velocity
-		-- goes toward the speed it falls at (gravity / drag).
-		local function spark()
-			local age = Application.time_since_launch() - started
-			local slowed = math.exp(-drag * age)
-			local fall = Vector3(0, 0, -CONFIG.burst_spark_gravity)
-			local velocity = velocity_box:unbox() * slowed + fall * ((1 - slowed) / drag)
-			local head = origin:unbox() + velocity_box:unbox() * ((1 - slowed) / drag) + fall * (age / drag - (1 - slowed) / (drag * drag))
-			local speed = Vector3.length(velocity)
-			local heading = speed > 0.001 and velocity * (1 / speed) or Vector3.up()
-			local length = math.max(width, speed * CONFIG.burst_spark_length)
-
-			return head, head - heading * length
-		end
-
-		particles.beam({
+	for _ = 1, CONFIG.burst_sparks do
+		particles.line({
 			attenuation = 0,
-			color = CONFIG.glob_color,
-			growth = -3 * UNIT,
-			life = life,
-			size = width,
-			texture = "link_spark_green_body",
-			track = function ()
-				local head, tail = spark()
-
-				return tail, head
-			end,
-		})
-		particles.sprite({
-			angle = 0,
-			attenuation = 0,
-			color = CONFIG.glob_color,
-			follow = function ()
-				return (spark())
-			end,
-			growth = -3 * UNIT,
-			life = life,
-			size = width,
-			texture = "link_spark_green_head",
+			color = CONFIG.burst_spark_color,
+			drag = CONFIG.burst_spark_drag,
+			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.burst_spark_mass) * UNIT,
+			growth = CONFIG.burst_spark_growth * UNIT,
+			head_size = CONFIG.burst_spark_head * UNIT,
+			length = CONFIG.burst_spark_length,
+			life = random_between(CONFIG.burst_spark_life),
+			position = position,
+			size = CONFIG.burst_spark_size * UNIT,
+			texture = "link_spark_green",
+			velocity = utils.ut_particle_velocity(direction, CONFIG.burst_spark_direction_spread, random_between(CONFIG.burst_spark_speed) * UNIT),
 		})
 	end
 end
 
--- A glob explodes: the splash is as big as the glob's volume.
+-- A glob explodes
 local function blast_effect(world, position, rotation, scale)
-	local volume = mod.bio_goop.volume_of_level(mod.bio_goop.level_of_scale(scale))
-
-	splash(position, volume, Quaternion.forward(rotation))
+	splash(position, Quaternion.forward(rotation))
 	skin_api.play_sound_at("ut_bio_splat_3d", position)
 end
 

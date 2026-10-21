@@ -13,13 +13,16 @@ local mod = get_mod("unreal_tournament")
 --   size, growth: the size of the sprite, and how much it changes in a second (a negative growth shrinks it).
 --   color: { r, g, b }. intensity: the most light it gives (1 is the texture as it is).
 --   attenuation: UT's mAttenKa, how far into its life the particle is brightest (0 is the start). It fades in before that and out
---       after it.
+--       after it, in straight lines (xEmitter's ATF_LerpInOut).
+--   exp_in_out: fades as xEmitter's ATF_ExpInOut does instead: the same rise and fall, taken at 1 less the square of the share of its
+--       life that is left, so it rises sooner and falls later.
 --   fade_in, fade_out: UT's FadeInEndTime and FadeOutStartTime, in seconds. The particle is fully visible from fade_in until fade_out.
 --       They are used instead of attenuation.
 --   size_by, color_by: functions of how far into its life the particle is (0 to 1) that return its size, and its color { r, g, b }, in
 --       place of size and growth, and of color (UT's SizeScale and ColorScale).
 --   spin: turns per second. The angle it starts at is random, or spec.angle in degrees (0 keeps a sprite upright on the screen).
---   position: where it is. velocity, drag: where it goes and how fast that slows down (per second).
+--   position: where it is. velocity, drag: where it goes and how fast that slows down (per second). fall: how much downward speed it
+--       gains a second, in m/s^2 (below 0 it rises). xEmitter pulls a particle by its mass (utils.UT_PARTICLE_GRAVITY).
 --   follow: a function that returns where the particle is now, or nothing when it should end.
 --   locked: used instead of follow. A function that returns a unit and the particle's position in that unit's frame. For the first
 --       person unit the frame is its camera node's (utils.camera_node): at the camera, looking along y. The particle is linked to it and
@@ -39,6 +42,9 @@ local mod = get_mod("unreal_tournament")
 --       how bright it is, and spec.falloff how far it reaches. It fades like the other particles.
 --   particles.beam(spec): goes from spec.from to spec.to. spec.size is how wide it is, and it faces the camera around its length.
 --       Instead of the two points, spec.track can be a function that returns from and to, or nothing when the beam should end.
+--       spec.screen_axis ("right" or "up") draws one of the two quads of a UE2 line instead: its corners are size / 2 to each side
+--       along that axis of the screen, so it is as wide across the beam as that axis is across it on the screen.
+--   particles.line(spec): a UE2 line particle (PT_Line), see the function.
 --   particles.strip(spec): a beam along a line of points, as one piece (UT's PT_Beam), spec.size wide, facing the camera about the line
 --       at each point. spec.points is a function that returns the points (a list of boxes) and how many there are (up to 65), or
 --       nothing when it should end. The texture repeats once between two points. With spec.locked (which returns the first person unit
@@ -198,6 +204,9 @@ local function add(kind, spec)
 			1,
 		},
 		drag = spec.drag or 0,
+		fall = spec.fall or 0,
+		exp_in_out = spec.exp_in_out,
+		screen_axis = spec.screen_axis,
 		entry = entry,
 		fade_in = spec.fade_in,
 		fade_out = spec.fade_out,
@@ -296,11 +305,108 @@ function particles.attenuation(fraction, ka)
 	return (1 - fraction) / (1 - ka)
 end
 
+-- The same for xEmitter's ATF_ExpInOut (with mAttenKb 1): the curve above, at 1 less the square of the share of the life that is left
+function particles.exp_in_out(fraction, ka)
+	local left = 1 - fraction
+
+	return particles.attenuation(1 - left * left, ka)
+end
+
+-- A UE2 line particle (PT_Line), as Engine.dll draws one (decompiled). Its body goes from where the particle is back along its velocity,
+-- spec.length seconds of it (mSpawnVecB.Z). It is two quads, one widened along the screen's right and one along its up, spec.size wide
+-- along each (twice mSizeRange), changing by spec.growth a second. The body shows the top half of the texture (<texture>_body, made by
+-- tools/asset_conversion/split_spark.py). At the front is the head, a square of spec.head_size (twice mSpawnVecB.X) that stays upright
+-- on the screen and doesn't change size, showing the bottom half (<texture>_head). Both have the particle's color and fade.
+-- The particle starts at spec.position with spec.velocity, slowed by spec.drag (mAirResistance) and pulled down by spec.fall (m/s^2), or
+-- spec.motion(age) returns where it is and its velocity, or nothing when it should end. spec.body_material and spec.head_material can
+-- name materials of their own. The rest (life, delay, color, intensity, attenuation, exp_in_out, additive) is as for the other kinds.
+function particles.line(spec)
+	local born = Managers.time:time("game") + (spec.delay or 0)
+	local motion = spec.motion
+
+	if not motion then
+		local start = Vector3Box(spec.position)
+		local velocity = Vector3Box(spec.velocity)
+		local drag = spec.drag or 0
+		local fall = spec.fall or 0
+
+		-- (with drag k and the pull g, the velocity goes toward w = g / k: it is w + (v - w) * e^(-k * t))
+		motion = function (age)
+			local v = velocity:unbox()
+
+			if drag == 0 then
+				local pull = Vector3(0, 0, -fall)
+
+				return start:unbox() + v * age + pull * (0.5 * age * age), v + pull * age
+			end
+
+			local w = Vector3(0, 0, -fall / drag)
+			local left = math.exp(-drag * age)
+
+			return start:unbox() + w * age + (v - w) * ((1 - left) / drag), w + (v - w) * left
+		end
+	end
+
+	-- Returns where the head is, and where the tail is
+	local function ends()
+		local head, velocity = motion(math.max(0, Managers.time:time("game") - born))
+
+		if not head then
+			return nil
+		end
+
+		return head, head - velocity * spec.length
+	end
+
+	for _, axis in ipairs({ "right", "up" }) do
+		add("beam", {
+			additive = spec.additive,
+			attenuation = spec.attenuation,
+			color = spec.color,
+			delay = spec.delay,
+			exp_in_out = spec.exp_in_out,
+			growth = spec.growth,
+			intensity = spec.intensity,
+			life = spec.life,
+			material = spec.body_material,
+			screen_axis = axis,
+			size = spec.size,
+			texture = not spec.body_material and spec.texture .. "_body" or nil,
+			track = function ()
+				local head, tail = ends()
+
+				if head then
+					return tail, head
+				end
+			end,
+		})
+	end
+
+	add("sprite", {
+		additive = spec.additive,
+		angle = 0,
+		attenuation = spec.attenuation,
+		color = spec.color,
+		delay = spec.delay,
+		exp_in_out = spec.exp_in_out,
+		follow = function ()
+			return (ends())
+		end,
+		intensity = spec.intensity,
+		life = spec.life,
+		material = spec.head_material,
+		size = spec.head_size,
+		texture = not spec.head_material and spec.texture .. "_head" or nil,
+	})
+end
+
 -- Returns how bright a particle is at its age. It uses the times when the particle is fully there and when it starts to go (UT's
 -- FadeInEndTime and FadeOutStartTime, which multiply together), or else the attenuation.
 local function brightness(particle)
 	if not particle.fade_in and not particle.fade_out then
-		return math.max(0, particles.attenuation(particle.age / particle.life, particle.attenuation))
+		local fade = particle.exp_in_out and particles.exp_in_out or particles.attenuation
+
+		return math.max(0, fade(particle.age / particle.life, particle.attenuation))
 	end
 
 	local result = 1
@@ -380,7 +486,8 @@ local function place(particle, dt, camera_position, camera_rotation)
 		position = particle.position:unbox()
 
 		if particle.velocity then
-			local velocity = particle.velocity:unbox()
+			-- (in xEmitter's order: the pull, the move, then the drag)
+			local velocity = particle.velocity:unbox() - Vector3(0, 0, particle.fall * dt)
 
 			position = position + velocity * dt
 
@@ -468,10 +575,21 @@ local function place(particle, dt, camera_position, camera_rotation)
 
 		local along = to - from
 		local length = Vector3.length(along)
+		local width = size
+
+		-- (a quad of a UE2 line is a parallelogram widened along one axis of the screen: on the screen, its width across the beam is
+		-- size times how much of the beam's way on the screen is along the other axis)
+		if particle.screen_axis then
+			local right, up = Vector3.dot(along, Quaternion.right(camera_rotation)), Vector3.dot(along, Quaternion.up(camera_rotation))
+			local on_screen = math.sqrt(right * right + up * up)
+			local other = particle.screen_axis == "right" and up or right
+
+			width = on_screen > 0.000001 and size * math.abs(other) / on_screen or 0
+		end
 
 		position = (from + to) * 0.5
 		rotation = facing(camera_position - position, along)
-		scale = Vector3(size, math.max(length, 0.001), 1)
+		scale = Vector3(width, math.max(length, 0.001), 1)
 	elseif particle.kind == "strip" then
 		local points, count = particle.points()
 
