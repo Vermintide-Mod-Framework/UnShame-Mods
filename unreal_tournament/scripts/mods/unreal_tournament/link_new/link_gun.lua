@@ -222,7 +222,7 @@ local BEAM = utils.damage_profile_spec(BOLT, {
 	charge_value = "instant_projectile",
 	-- (the Beam Staff's beam's hit reactions, and the repeater's hit effects)
 	attack_template = "wizard_staff_beam",
-	damage_type = "shot_repeating",
+	damage_type = "shot_repeating_handgun",
 	attack_power = attack_power_for(CONFIG.beam_damage),
 	impact_power = impact_power_for(CONFIG.beam_damage),
 	armor_attack = CONFIG.beam_armor_attack,

@@ -50,9 +50,17 @@ local CONFIG = {
 local BEAM = {
 	regen_dist = 65,
 	child_regen_dist = 75,
+	-- (mSizeRange is half of the beam's width: its texture is a strip with a bright middle that fades out to both sides, and UT's beam
+	-- is about 22 units across)
 	size = 11,
 	color = 240 / 255,
 	child_color = 180 / 255,
+	-- UT draws it with FB_Brighten, which takes its bright middle to nearly white. Here it adds its light, this many times over.
+	intensity = 2,
+	-- In the player's own view the beam starts at the gun's effect start (LinkGun.GetEffectStart: the eye, the weapon's view offset at
+	-- 0.9 / DisplayFOV * 100 of its size, and EffectOffset), 60 units back along the view (LinkBeamEffect.SetBeamLocation): a place in the
+	-- world, not on the model, which is drawn with a field of view of its own.
+	start_back = 60,
 	wave_frequency = 0.06, -- radians a unit along the beam
 	wave_amplitude = 8,
 	max_amplitude = 16,
@@ -206,6 +214,29 @@ local function muzzle_of(character)
 	return muzzle, holder and holder.third_person.meters_per_unit
 end
 
+-- Where a character's beam starts: in the player's own view the place UT's LinkBeamEffect starts from (BEAM.start_back), and otherwise
+-- the end of the barrel of the mesh in the hand
+local function beam_start(character)
+	local api = first_person_api()
+
+	if utils.is_local_player_unit(character) and api and not api.third_person.shows_weapon(character) then
+		local camera_position, camera_rotation = utils.camera_pose()
+
+		if camera_position then
+			local config = api.config
+			local view_scale = 0.9 / config.display_fov * 100
+			local effect = config.effect_offset
+			local forward = effect[1] + config.offset_forward * view_scale - BEAM.start_back
+			local right = effect[2] + config.offset_right * view_scale
+			local up = effect[3] + config.offset_up * view_scale
+
+			return camera_position + (Quaternion.forward(camera_rotation) * forward + Quaternion.right(camera_rotation) * right + Quaternion.up(camera_rotation) * up) * UNIT
+		end
+	end
+
+	return (muzzle_of(character))
+end
+
 local function color_of(character)
 	return link.links_of(character) > 0 and CONFIG.linked_color or CONFIG.bolt_color
 end
@@ -282,6 +313,9 @@ local function new_skin(setting_id)
 		offset_up = 0,
 		pivot_yaw = 500 / 65536 * 360,
 		bob_damping = 1.575,
+		-- LinkGun.GetEffectStart: EffectOffset (forward, right, up), 10 lower with UT2004's model. The beam starts from there (see
+		-- beam_start).
+		effect_offset = { 100, 25, -13 },
 		-- UT's third person mesh (LinkAttachment's NewLinkGun_3rd) at UT's size in a player's hand (DrawScale 0.4). Its origin is by its
 		-- grip, and its barrel runs along its forward to the muzzle (its upper flash bone).
 		third_person = third_person_of(setting_id, "units/ut/link/third_person", 75.5, 8.9),
@@ -297,6 +331,7 @@ local function new_skin(setting_id)
 				offset_right = -2,
 				offset_up = -3,
 				pivot_yaw = 500 / 65536 * 360,
+				effect_offset = { 100, 25, -3 },
 				third_person = third_person_of(setting_id, "units/ut/link2003/third_person", 99.2, 2.5),
 			},
 		},
@@ -492,6 +527,7 @@ local function draw_line(visual, line, texture, size, color)
 		particles.beam({
 			color = { color, color, color },
 			fade_in = 0,
+			intensity = BEAM.intensity,
 			life = math.huge,
 			size = size,
 			texture = texture,
@@ -531,9 +567,10 @@ end
 
 -- Draws one character's beam for a frame (LinkBeamEffect.Tick)
 local function draw_beam(character, beam, dt)
-	local start, scale = muzzle_of(character)
+	local muzzle, scale = muzzle_of(character)
+	local start = beam_start(character)
 
-	if not start then
+	if not muzzle or not start then
 		return
 	end
 
@@ -610,7 +647,7 @@ local function draw_beam(character, beam, dt)
 	visual.lines[1] = main
 
 	place_line(main, start, control, finish, length, BEAM.regen_dist, visual.amplitude, visual.phase, wave_axis, locked_on or linking)
-	draw_line(visual, main, beam_texture, BEAM.size * (link_scale * 0.6 + 1) * UNIT, BEAM.color)
+	draw_line(visual, main, beam_texture, 2 * BEAM.size * (link_scale * 0.6 + 1) * UNIT, BEAM.color)
 
 	for c = 1, BEAM.max_children do
 		local line = visual.lines[c + 1] or {}
@@ -621,7 +658,7 @@ local function draw_beam(character, beam, dt)
 			local amplitude = c * 4 + visual.amplitude * ((BEAM.max_amplitude - c * 4) / BEAM.max_amplitude)
 
 			place_line(line, start, control, finish, length, BEAM.child_regen_dist, amplitude, visual.phase * 0.6, wave_axis, linking)
-			draw_line(visual, line, beam_texture, (2 + 4 * (children - c + 1)) * UNIT, BEAM.child_color)
+			draw_line(visual, line, beam_texture, 2 * (2 + 4 * (children - c + 1)) * UNIT, BEAM.child_color)
 		else
 			line.count = 0
 			line.made = 0
