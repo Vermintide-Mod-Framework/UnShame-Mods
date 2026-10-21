@@ -85,22 +85,39 @@ local function acquire(world, unit_name)
 	}
 end
 
--- The strip (units/ut/fx/beam_strip, tools/asset_conversion/make_fx_meshes.py's make_strip): this many points, each with two corners
--- that move with joints j_<2i> and j_<2i + 1> (from 0)
+-- The strip (units/ut/fx/beam_strip, tools/asset_conversion/make_fx_meshes.py's make_strip): this many points, with two triangles for
+-- each stretch between two of them, on the nodes t_<i>_a and t_<i>_b (from 0)
 local STRIP_UNIT_NAME = "units/ut/fx/beam_strip"
 local STRIP_POINTS = 65
 
--- The nodes of a strip's joints, in the order of its corners
-local function strip_joints(entry)
-	if not entry.joints then
-		entry.joints = {}
+-- The nodes of a strip's triangles, { a, b } for each stretch
+local function strip_nodes(entry)
+	if not entry.triangles then
+		entry.triangles = {}
 
-		for k = 0, 2 * STRIP_POINTS - 1 do
-			entry.joints[k + 1] = Unit.node(entry.unit, "j_" .. k)
+		for i = 0, STRIP_POINTS - 2 do
+			entry.triangles[i + 1] = { Unit.node(entry.unit, "t_" .. i .. "_a"), Unit.node(entry.unit, "t_" .. i .. "_b") }
 		end
 	end
 
-	return entry.joints
+	return entry.triangles
+end
+
+-- The pose that puts a strip's triangle, whose corners are (0, 0, 0), (1, 0, 0) and (0, 1, 0), on three points: its x and y axes go from
+-- the first to the other two, so it is sheared
+local function triangle_pose(first, second, third)
+	local x_axis = second - first
+	local y_axis = third - first
+	local z_axis = Vector3.cross(x_axis, y_axis)
+
+	if Vector3.length(z_axis) > 0.000001 then
+		z_axis = Vector3.normalize(z_axis)
+	else
+		z_axis = Vector3.up()
+	end
+
+	return Matrix4x4.from_elements(Vector3.x(x_axis), Vector3.y(x_axis), Vector3.z(x_axis), Vector3.x(y_axis), Vector3.y(y_axis), Vector3.z(y_axis),
+		Vector3.x(z_axis), Vector3.y(z_axis), Vector3.z(z_axis), Vector3.x(first), Vector3.y(first), Vector3.z(first))
 end
 
 local function release(particle)
@@ -465,10 +482,12 @@ local function place(particle, dt, camera_position, camera_rotation)
 		rotation = Quaternion.identity()
 		scale = Vector3(1, 1, 1)
 
-		local joints = strip_joints(particle.entry)
+		local triangles = strip_nodes(particle.entry)
 		local half = size * 0.5
+		local left_before, right_before
 
-		-- Each point's two corners are across the line there, half the width to each side, turned about the line to face the camera
+		-- Each point's two corners are across the line there, half the width to each side, turned about the line to face the camera. They
+		-- are in the root's frame, which is at the first point and not turned.
 		for i = 1, STRIP_POINTS do
 			local k = math.min(i, count)
 			local point = points[k]:unbox()
@@ -480,14 +499,21 @@ local function place(particle, dt, camera_position, camera_rotation)
 				across = Vector3.normalize(across) * half
 			end
 
-			-- (the points past the last are all at the last, so the rest of the strip has no size)
+			-- (the stretches past the last point are all at the last point, so they have no size)
 			if i > count then
 				across = Vector3.zero()
 			end
 
-			-- (a corner is drawn at its joint plus its place in the strip's bind pose: half a meter to its side and a meter a point along y)
-			Unit.set_local_position(unit, joints[2 * i - 1], point - across - position - Vector3(-0.5, i - 1, 0))
-			Unit.set_local_position(unit, joints[2 * i], point + across - position - Vector3(0.5, i - 1, 0))
+			local left, right = point - across - position, point + across - position
+
+			if i > 1 then
+				local stretch = triangles[i - 1]
+
+				Unit.set_local_pose(unit, stretch[1], triangle_pose(left_before, right_before, left))
+				Unit.set_local_pose(unit, stretch[2], triangle_pose(right, left, right_before))
+			end
+
+			left_before, right_before = left, right
 		end
 	elseif particle.kind == "disc" then
 		local normal = particle.normal_by and particle.normal_by() or particle.normal:unbox()

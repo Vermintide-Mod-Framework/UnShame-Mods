@@ -15,12 +15,5 @@ BLEND = '''				dest_blend = "blend_inv_src_alpha"
 assert source.count(BLEND) == 1
 source = source.replace(BLEND, BLEND.replace('blend_inv_src_alpha', 'blend_inv_src_color'))
 
-# The SDK's node skins only a mesh with 4 weights for each point; the others are commented out. The Link Gun's beam is a strip whose points
-# move with one joint each (units/ut/fx/beam_strip, make_fx_meshes.py), drawn unskinned with only the 4 weights case, so the others are on.
-for weights in ('3WEIGHTS', '2WEIGHTS', '1WEIGHT'):
-    line = '//{ if: "num_skin_weights() == %s" define: { "macros": ["SKINNED_%s"]' % (weights[0], weights)
-    assert source.count(line) == 1
-    source = source.replace(line, line[2:])
-
 open('%s/units/ut/fx/brighten_base.shader_node' % REPO, 'w', newline='\n').write(source)
 print('wrote brighten_base.shader_node')

@@ -440,3 +440,49 @@ mod:command("skin", "<weapon> debug | report | play <animation> | set <number> <
 		mod:echo("skin: one of %s", table.concat(names, ", "))
 	end
 end)
+
+-- /strip: a wave of 40 points in front of the camera, drawn by the skin particles' strip (the Link Gun's beam), until /strip again
+local strip_test
+
+mod:command("strip", "- a beam strip in front of you, or away again (for checking how the skins draw a beam)", function ()
+	if strip_test then
+		strip_test.stop()
+
+		strip_test = nil
+
+		return
+	end
+
+	local camera_position, camera_rotation = ut.utils.camera_pose()
+	local forward, right, up = Quaternion.forward(camera_rotation), Quaternion.right(camera_rotation), Quaternion.up(camera_rotation)
+	local origin = camera_position + forward * 2 - up * 0.5
+	local boxes = { origin = Vector3Box(origin), forward = Vector3Box(forward), right = Vector3Box(right) }
+	local points = {}
+	local alive = true
+
+	strip_test = { stop = function () alive = false end }
+
+	ut.skin_particles.strip({
+		color = { 0.94, 0.94, 0.94 },
+		fade_in = 0,
+		late = true,
+		life = math.huge,
+		material = "units/ut/fx/fx_link_beam_panned_green",
+		points = function ()
+			if not alive then
+				return
+			end
+
+			local t = Managers.time:time("main")
+
+			for i = 1, 40 do
+				local point = boxes.origin:unbox() + boxes.forward:unbox() * ((i - 1) * 0.15) + boxes.right:unbox() * (math.sin(i * 0.5 + t * 3) * 0.3)
+
+				points[i] = Vector3Box(point)
+			end
+
+			return points, 40
+		end,
+		size = 0.2,
+	})
+end)
