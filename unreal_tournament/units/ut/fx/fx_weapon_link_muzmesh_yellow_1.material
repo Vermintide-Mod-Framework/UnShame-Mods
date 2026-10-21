@@ -1,0 +1,9 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_particle_weapon_brighten_srgb_graph"
+textures = {
+	texture_map = "units/ut/fx/link_muzmesh_yellow_1"
+}
+variables = {
+}

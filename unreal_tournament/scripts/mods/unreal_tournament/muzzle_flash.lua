@@ -9,7 +9,9 @@ local mod = get_mod("unreal_tournament")
 --       given, is used instead of follow: it returns the first person unit and the muzzle in its camera node's frame
 --       (weapon_skin's model_point_in_view), so the flash is linked to the unit and stays on the muzzle as the view turns, as UT's is
 --       attached to the weapon. emitter_settings, if it is given, are the numbers of another emitter that draws the same mesh, in the
---       form of CONFIG's (the Rocket Launcher's RocketMuzFlash1st).
+--       form of CONFIG's (the Rocket Launcher's RocketMuzFlash1st). They can also name another mesh (unit), its materials (material:
+--       the name of the first tile's material without its number), whether a mesh keeps the tile it starts at (still_tiles) and how many
+--       meshes the emitter has room for (max) (the Link Gun's LinkMuzFlashProj1st).
 
 local utils = mod.utils
 local particles = mod.skin_particles
@@ -74,7 +76,9 @@ function mod.muzzle_flash(emitter, follow, world_unit, draw_scale, locked, emitt
 	-- The mesh is made at 0.02 m per UT unit
 	local factor = world_unit / UNIT * draw_scale * settings.fit
 
-	for _ = 1, settings.count - #ends do
+	local material = settings.material or "units/ut/fx/fx_weapon_minigun_burst_"
+
+	for _ = 1, math.min(settings.count, (settings.max or settings.count) - #ends) do
 		local tile = math.random(0, 3)
 		local life = random_between(settings.life)
 		local start = random_between(settings.scale)
@@ -94,10 +98,10 @@ function mod.muzzle_flash(emitter, follow, world_unit, draw_scale, locked, emitt
 			follow = not locked and follow or nil,
 			locked = locked or nil,
 			life = life,
-			material = "units/ut/fx/fx_weapon_minigun_burst_" .. tile,
-			material_by = function (fraction)
-				return "units/ut/fx/fx_weapon_minigun_burst_" .. (tile + math.min(math.floor(fraction * TILES), TILES - 1)) % TILES
-			end,
+			material = material .. tile,
+			material_by = not settings.still_tiles and function (fraction)
+				return material .. (tile + math.min(math.floor(fraction * TILES), TILES - 1)) % TILES
+			end or nil,
 			rotation = rotation,
 			scale = function (fraction)
 				return (start + settings.growth * fraction * life) * factor
@@ -105,7 +109,7 @@ function mod.muzzle_flash(emitter, follow, world_unit, draw_scale, locked, emitt
 			spin = 0,
 			angle = math.random() * 360,
 			spin_axis = Vector3(0, 1, 0),
-			unit = "units/ut/fx/minigun_flash_mesh",
+			unit = settings.unit or "units/ut/fx/minigun_flash_mesh",
 		})
 	end
 end

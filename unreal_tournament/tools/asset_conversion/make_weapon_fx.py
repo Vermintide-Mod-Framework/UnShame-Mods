@@ -60,6 +60,12 @@ TEXTURES = {
     'green_cross': ('XEffectMat/Texture/greencross.tga', 1, 1),
     'red_bolt': ('XEffectMat/Texture/redbolt.tga', 1, 1),
     'invis_overlay': ('XEffectMat/Texture/invis_overlay.tga', 1, 1),
+    # The Link Gun's bolt: the flashes on its mesh (LinkMuzFlashProj1st and 3rd: LinkMuzProjGreenFB and LinkMuzProjYellowFB, FB_Brighten),
+    # and its trail (NewLinkTrail: a shaft along its way, PlasmaShaft, and puffs, SmokePanels1's 16 tiles)
+    'link_muzmesh_green': ('XEffectMat/Texture/link_muzmesh_green.tga', 2, 2),
+    'link_muzmesh_yellow': ('XEffectMat/Texture/link_muzmesh_yellow.tga', 2, 2),
+    'plasma_shaft': ('AW-2004Particles/Texture/PlasmaShaft.tga', 1, 1),
+    'smoke_panels': ('AW-2004Particles/Texture/SmokePanels1.tga', 4, 4),
 }
 
 # (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
@@ -71,12 +77,12 @@ LIGHTENED = {'sniper_smoke': 0.5}
 
 # The textures that UT draws with FB_Brighten, or as STY_Translucent, which is the same: c + d * (1 - c). They are read as they are, and
 # their materials are derived from fx_particle_brighten_graph and fx_particle_weapon_brighten_graph (make_combo_materials.py).
-BRIGHTEN = ('minigun_burst', 'impact_smoke', 'minigun_flash_3rd')
+BRIGHTEN = ('minigun_burst', 'impact_smoke', 'minigun_flash_3rd', 'link_muzmesh_green', 'link_muzmesh_yellow')
 
 # Of those, the ones read as srgb, with fx_particle_brighten_srgb_graph and fx_particle_weapon_brighten_srgb_graph: UT2004 draws in gamma
 # space and puts a texture's values on the screen as they are, which the game does for an srgb texture. Read as they are, the first
 # person flash (MinigunMuzFlash1st's Minigun_burst) was paler and yellower than UT's orange.
-SRGB_BRIGHTEN = ('minigun_burst',)
+SRGB_BRIGHTEN = ('minigun_burst', 'link_muzmesh_green', 'link_muzmesh_yellow')
 
 # The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield and the
 # Redeemer blast's fx_ion_sphere and fx_flame_ring, made by make_combo_materials.py, which do FB_Brighten themselves and use the alpha)
@@ -87,7 +93,7 @@ COMBO_ONLY = KEEP_ALPHA + ('flame_gradient', 'red_bolt', 'invis_overlay')
 
 # The textures that are turned a quarter, because they are drawn on a beam, which lays v along its length (TracerShot is a streak along
 # u, the way NewTracer's sprite moves: PTDU_Right)
-TURNED = ('tracer_shot', 'shield_charge_spark', 'white_streak', 'speed_trail')
+TURNED = ('tracer_shot', 'shield_charge_spark', 'white_streak', 'speed_trail', 'plasma_shaft')
 
 # The textures of which only the top half is used: FlakTrailTex is a streak above a dot, and a line particle (PT_Line) is the streak, as
 # SpeedTrailTex is for a stream (PT_Stream)
@@ -97,7 +103,7 @@ TOP_HALF = ('shield_charge_spark', 'speed_trail')
 # weapon model's field of view (units/ut/fx/particle_weapon_linear, or particle_weapon for an srgb one), so they are among the model's
 # parts. The Minigun's flash and shells are attached to the weapon (MinigunFire.InitEffects, Minigun.PostBeginPlay), and its smoke is
 # drawn with the weapon's field of view (WeaponFire.DrawMuzzleFlash).
-WEAPON = ('minigun_burst', 'shell_casing', 'muzzle_smoke', 'force_ring', 'shield_charge_spark')
+WEAPON = ('minigun_burst', 'shell_casing', 'muzzle_smoke', 'force_ring', 'shield_charge_spark', 'link_muzmesh_green', 'link_muzmesh_yellow')
 
 def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_alpha=False):
     if keep_alpha:

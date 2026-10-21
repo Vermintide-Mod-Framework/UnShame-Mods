@@ -984,6 +984,16 @@ mod.charge_update_callbacks.link_new_beam = function (action, dt, t, world)
 
 	local end_position = target and linked_end(target) or first and first[1] or origin + direction * range
 
+	-- What the beam hits, for how it is drawn: an enemy it hurts (LinkBeamEffect.bLockedOn), the level or a thing (bHitSomething), or
+	-- nothing. (This is before the damage: an enemy the damage kills loses its actor.)
+	local hit = 0
+
+	if first and not target then
+		local hit_unit = Actor.unit(first[4])
+
+		hit = Unit.get_data(hit_unit, "breed") and HEALTH_ALIVE[hit_unit] and 2 or 1
+	end
+
 	-- Damage is done at the fire rate (LinkFire.DoFireEffect). A link does none, and takes no ammo (LinkGun.ConsumeAmmo).
 	run.next_hit = run.next_hit - dt
 
@@ -1000,16 +1010,6 @@ mod.charge_update_callbacks.link_new_beam = function (action, dt, t, world)
 				DamageUtils.process_projectile_hit(world, action.item_name, unit, action.is_server, hits, action.current_action, direction, true, nil, nil, is_critical_strike, power_level, beam_profile(link.links_of(unit)))
 			end
 		end
-	end
-
-	-- What the beam hits, for how it is drawn: an enemy it hurts (LinkBeamEffect.bLockedOn), the level or a thing (bHitSomething), or
-	-- nothing
-	local hit = 0
-
-	if first and not target then
-		local hit_unit = Actor.unit(first[4])
-
-		hit = Unit.get_data(hit_unit, "breed") and HEALTH_ALIVE[hit_unit] and 2 or 1
 	end
 
 	local beam = beams[unit] or new_beam(false)

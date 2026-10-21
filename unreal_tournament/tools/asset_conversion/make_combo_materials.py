@@ -535,3 +535,31 @@ def invisible_graph(weapon):
 
 write('invisible', invisible_graph(False), {'overlay_map': 'invis_overlay'})
 write('weapon_invisible', invisible_graph(True), {'overlay_map': 'invis_overlay'})
+
+# ---------------------------------------------------------------- the Link Gun's beam
+# LinkBeamEffect's and LinkBeamChild's skins LinkBeamGreenFB, LinkBeamYellowFB and LinkBeamBlueFB (XEffectMat): FB_Brighten of the TexPanners
+# LinkBeamGreenPanner, LinkBeamYellowPanner and LinkBeamBluePanner (PanDirection yaw 16384: along V, which is along the beam; PanRate -2, and 2
+# for the blue one) of link_beam_green, link_beam_yellow and link_beam_blue (make_fx_assets.py). The texture is read as srgb, as the
+# Minigun's flash is (see brighten_graph). The materials are fx_link_beam_panned_<color>. A beam is drawn as a quad for each stretch, made
+# at different times, so it pans with the game's time, not with a particle's age, and the stretches line up.
+def link_beam_graph(pan_v):
+    graph = Graph()
+    graph.add('out', BRIGHTEN, OUT_OPTIONS)
+    graph.add('uv', 'core/shader_nodes/texture_coordinate0')
+    graph.add('time', 'core/shader_nodes/current_time')
+    # (unused: every graph here has the variables of the particles)
+    graph.add('age', 'core/shader_nodes/material_variable', export=float_variable('age', 'Age', 0), title='Age')
+    graph.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
+    graph.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
+    graph.add('additive', 'core/shader_nodes/material_variable', export=float_variable('additive', 'Additive', 0), title='Additive')
+    graph.connect('additive', 'out', IN_OUT_ADDITIVE)
+    panned(graph, 'pan', 0, pan_v)
+    graph.add('beam', 'core/shader_nodes/sample_texture', SAMPLE_OPTIONS, samplers=sampler('beam_map'), title='beam_map')
+    graph.connect('pan', 'beam', IN_SAMPLE_UV)
+    multiply(graph, 'color', 'beam', 'tint', 'rgb')
+    graph.connect('color', 'out', IN_OUT_BASE_COLOR)
+    graph.connect('intensity', 'out', IN_OUT_OPACITY)
+    return graph
+
+for color, pan_v in (('green', -2), ('yellow', -2), ('blue', 2)):
+    write('link_beam_panned_' + color, link_beam_graph(pan_v), {'beam_map': 'link_beam_' + color})

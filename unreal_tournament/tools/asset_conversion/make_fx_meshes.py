@@ -14,6 +14,9 @@ from formats import read_chunks as chunks
 #   units/ut/fx/explosion_ring, explosion_sphere  ParticleMeshes.ExplosionRing (a flat ring 512 units across) and ExplosionSphere (256
 #                       across), the meshes of the Redeemer's blast
 #   units/ut/fx/tele_ring  XEffects.TeleRing, the ring of the Berserk combo's OffensiveEffect
+#   units/ut/fx/link_bolt_mesh  WeaponStaticMesh.LinkProjectile, the Link Gun's bolt: it lies along y, the way it flies, from 0.6
+#                       to 26 units, and is 20 across
+#   units/ut/fx/link_flash_mesh  XEffects.LinkMuzFlashMesh, the mesh of the Link Gun's flashes of a bolt (LinkMuzFlashProj1st and 3rd)
 # They are made in meters, a UT unit being 0.02 m (as everything of the effects is), turned from UT's axes (x forward, y right, z up) to
 # this game's (x right, y forward, z up), which makes the mesh the other way round: the long axis of the coil is y.
 # One material slot, m_fx, as the quad of the particles has (units/ut/fx/quad): the effects set the material of the texture they want.
@@ -182,3 +185,6 @@ if __name__ == '__main__':
     make_static('explosion_ring', 'ExplosionRing', EXPORT + '/ParticleMeshes')
     make_static('explosion_sphere', 'ExplosionSphere', EXPORT + '/ParticleMeshes')
     make_static('tele_ring', 'TeleRing')
+    make_static('link_bolt_mesh', 'LinkProjectile', EXPORT + '/WeaponStaticMesh')
+    # (its UVs are in the tile of column 0 and row 1 of link_muzmesh_green's 2 by 2)
+    make_static('link_flash_mesh', 'LinkMuzFlashMesh', tile=(2, 2, 0, 1))

@@ -26,6 +26,9 @@ local mod = get_mod("unreal_tournament")
 --       placed in pre_render, so it
 --       doesn't trail behind what it follows. It returns nothing when the particle should end. A beam's returns the unit and both of
 --       its ends. A locked disc's normal and a locked mesh's rotation are in the unit's frame too.
+--   late: the particle is placed in pre_render, after the mod's update, instead of in this file's update, which runs before the
+--       weapons' updates. For a follow or track that reads what a weapon moves in its update this frame (the model's muzzle). It has no
+--       velocity.
 --   delay: seconds before the particle shows.
 --   additive: 1 (the default) adds its color to the screen. 0 blends it as the transparency of its texture says (smoke).
 --   falloff: how far a light reaches, in meters (only for particles.light).
@@ -159,6 +162,7 @@ local function add(kind, spec)
 		fade_out = spec.fade_out,
 		follow = spec.follow,
 		locked = spec.locked,
+		late = spec.late or spec.locked ~= nil,
 		face_camera = spec.face_camera,
 		frame = spec.frame,
 		material_by = spec.material_by,
@@ -265,7 +269,8 @@ local function brightness(particle)
 	return math.max(0, result)
 end
 
--- Returns a rotation whose z axis is the way the quad faces and whose y axis is as close as possible to the way its top points.
+-- Returns a rotation whose y axis is the way the quad's top points and whose z axis is as close as possible to the way it faces. A
+-- beam's quad lies exactly along the beam and turns about it to face the camera.
 local function facing(front, top)
 	return Quaternion.look(top, front)
 end
@@ -469,8 +474,8 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 			release(particle)
 			table.remove(active, i)
 		elseif particle.age >= 0 then
-			-- Linked particles are placed in pre_render, after the skin has moved its model this frame.
-			if not particle.locked then
+			-- Linked and late particles are placed in pre_render, after the skin has moved its model this frame.
+			if not particle.late then
 				place(particle, dt, camera_position, camera_rotation)
 			end
 
@@ -490,7 +495,7 @@ mod.pre_render_callbacks.skin_particles = function ()
 	end
 
 	for _, particle in ipairs(active) do
-		if particle.locked and particle.age >= 0 and particle.age < particle.life then
+		if particle.late and particle.age >= 0 and particle.age < particle.life then
 			place(particle, 0, camera_position, camera_rotation)
 		end
 	end

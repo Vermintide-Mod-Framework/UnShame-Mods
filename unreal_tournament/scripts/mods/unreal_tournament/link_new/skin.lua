@@ -25,18 +25,79 @@ for _, setting_id in ipairs(VARIANTS) do
 	TEMPLATE_NAMES[mod.items.weapons[setting_id].template] = true
 end
 
+-- UT draws in gamma space, and these flashes' textures are read as srgb (make_weapon_fx.py), so a color or a fade that UT multiplies them
+-- by is that to the power of 2.2 here
+local GAMMA = 2.2
+
+-- The flash of a bolt, green, or gold with links (LinkAltFire.FlashMuzzleFlash). In the player's view it is LinkMuzFlashProj1st: 2
+-- meshes (LinkMuzFlashMesh) for a bolt, with room for 5, each one of the 4 tiles of its texture at random (mRandTextures, which it
+-- keeps: no mTileAnimation), turned at random about the barrel (mRandOrient), at a size of 0.6 to 0.8 that does not grow, for 0.1 to
+-- 0.14 s, mColorRange 75 of 255, and xEmitter's default mAttenKa of 0.2. It doesn't grow, so it isn't halved (see the Rocket
+-- Launcher's flash and muzzle_flash.lua's fit).
+local function first_person_flash_settings(color)
+	return {
+		count = 2,
+		max = 5,
+		scale = { 0.6, 0.8 },
+		growth = 0,
+		life = { 0.1, 0.14 },
+		attenuation = 0.2,
+		color = { (75 / 255) ^ GAMMA, (75 / 255) ^ GAMMA, (75 / 255) ^ GAMMA },
+		fit = 1,
+		unit = "units/ut/fx/link_flash_mesh",
+		material = "units/ut/fx/fx_weapon_link_muzmesh_" .. color .. "_",
+		still_tiles = true,
+	}
+end
+
 local CONFIG = {
-	-- LinkMuzFlashProj1st, the flash of a bolt: green, or gold with links
-	muzzle_size = 45,
-	muzzle_growth = 100,
-	muzzle_life = 0.1,
+	muzzle_flash = first_person_flash_settings("green"),
+	linked_muzzle_flash = first_person_flash_settings("yellow"),
+	-- The flash of a bolt at the muzzle of the mesh in a character's hand: LinkMuzFlashProj3rd, attached to the mesh's tip but not scaled
+	-- with it. One mesh for a bolt, one of the 4 tiles at random, at a size of 0.6 times LinkFire's LinkScale of the links plus 1
+	-- (LinkAttachment.ThirdPersonEffects), for 0.08 to 0.12 s, mColorRange 70 of 255, mAttenKa 0.
+	muzzle_flash_3rd = {
+		size = 0.6,
+		life = { 0.08, 0.12 },
+		color = 70 / 255,
+	},
 	-- LinkAltFire.FireAnimRate: the Fire animation plays at this much of its speed
 	fire_animation_rate = 0.75,
-	-- LinkProjectile: a green plasma bolt, gold with links (LinkAdjust). Here it is sprites that follow the game's projectile.
-	bolt_size = 40,
-	bolt_glow_size = 70,
-	bolt_color = { 0.5, 1, 0.4 },
-	linked_color = { 1, 0.85, 0.3 },
+	-- LinkProjectile: its mesh (units/ut/fx/link_bolt_mesh, made from LinkProjectile's StaticMesh) at DrawScale3D 2.295 along its way and
+	-- 1.53 across, moved back by its PrePivot of 10 of the mesh's units (before it is scaled), turned at random about its way and
+	-- spinning about it at RotationRate roll 80000 of 65536 turns a second. Its skin is LinkProjGreenFB, link_muz_green added to the screen
+	-- (FB_Translucent), and LinkProjYellowFB with links (LinkAdjust).
+	bolt_scale = { 1.53, 2.295, 1.53 }, -- across, along and up
+	bolt_pre_pivot = 10,
+	bolt_spin = 80000 / 65536, -- turns a second
+	-- Its light, for its own player only (PostNetBeginPlay): LightHue 100 of 255 and LightSaturation 100 (0 is all colour, 255 is white)
+	-- are green, LightHue 40 with links is yellow, and LightRadius 3 is in steps of 25 units: 1.5 m.
+	bolt_light_color = { 0.39, 1, 0.6 },
+	linked_bolt_light_color = { 1, 0.96, 0.39 },
+	bolt_light_falloff = 1.5, -- meters
+	-- Its trail (NewLinkTrail), an Emitter at DrawScale 0.5, which scales its sizes, places and speeds. The emitter is placed and turned
+	-- with the bolt (PTCS_Relative, PHYS_Trailer). For the player's own bolt it starts 0.1 s late (Delay), so it doesn't show at the eye.
+	-- Otherwise it is warmed up: its puffs are there from the start.
+	trail_scale = 0.5,
+	trail_delay = 0.1,
+	-- Its first emitter: one sprite (PlasmaShaft) along the way, 80 units long and 30 across, its middle 30 ahead of the bolt, colored
+	-- by ColorMultiplierRange (0.25, 1, 0): green, with links too (MakeYellow changes only the puffs)
+	shaft_ahead = 30,
+	shaft_length = 80,
+	shaft_width = 30,
+	shaft_color = { 0.25, 1, 0 },
+	-- Its second: puffs (SmokePanels1, a tile at random) that start 35 behind the bolt and go ahead of it at 400 units a second, for
+	-- 0.35 s, 6 at a time (so 6 / 0.35 a second), 20 units across, scaled by SizeScale: 0.5 at the start, 0.9 at 0.3 of their life and
+	-- 0.25 at the end. Their color goes by ColorScale from black to (96, 255, 0) at 0.1 of their life, to (0, 255, 0) at 0.8 and back to
+	-- black, with R 255 at 0.1 and 0.8 with links (MakeYellow). UT draws them at its highest detail (DM_SuperHigh), as here.
+	puff_behind = 35,
+	puff_speed = 400,
+	puff_life = 0.35,
+	puff_count = 6,
+	puff_size = 20,
+	puff_sizes = { { 0, 0.5 }, { 0.3, 0.9 }, { 1, 0.25 } },
+	puff_colors = { { 0, { 0, 0, 0 } }, { 0.1, { 96, 255, 0 } }, { 0.8, { 0, 255, 0 } }, { 1, { 0, 0, 0 } } },
+	linked_puff_colors = { { 0, { 0, 0, 0 } }, { 0.1, { 255, 255, 0 } }, { 0.8, { 255, 255, 0 } }, { 1, { 0, 0, 0 } } },
 	-- Bolts of another player that start less than this far apart (in seconds) belong to the same shot
 	shot_gap = 0.1,
 }
@@ -55,12 +116,6 @@ local BEAM = {
 	size = 11,
 	color = 240 / 255,
 	child_color = 180 / 255,
-	-- UT draws it with FB_Brighten, which takes its bright middle to nearly white. Here it adds its light, this many times over.
-	intensity = 2,
-	-- In the player's own view the beam starts at the gun's effect start (LinkGun.GetEffectStart: the eye, the weapon's view offset at
-	-- 0.9 / DisplayFOV * 100 of its size, and EffectOffset), 60 units back along the view (LinkBeamEffect.SetBeamLocation): a place in the
-	-- world, not on the model, which is drawn with a field of view of its own.
-	start_back = 60,
 	wave_frequency = 0.06, -- radians a unit along the beam
 	wave_amplitude = 8,
 	max_amplitude = 16,
@@ -214,52 +269,59 @@ local function muzzle_of(character)
 	return muzzle, holder and holder.third_person.meters_per_unit
 end
 
--- Where a character's beam starts: in the player's own view the place UT's LinkBeamEffect starts from (BEAM.start_back), and otherwise
--- the end of the barrel of the mesh in the hand
-local function beam_start(character)
-	local api = first_person_api()
+-- The flash of a bolt at the muzzle of the model in the player's own view, linked to it (LinkMuzFlashProj1st, drawn with the model)
+local function first_person_flash(api, links)
+	local skin = api.state()
 
-	if utils.is_local_player_unit(character) and api and not api.third_person.shows_weapon(character) then
-		local camera_position, camera_rotation = utils.camera_pose()
-
-		if camera_position then
-			local config = api.config
-			local view_scale = 0.9 / config.display_fov * 100
-			local effect = config.effect_offset
-			local forward = effect[1] + config.offset_forward * view_scale - BEAM.start_back
-			local right = effect[2] + config.offset_right * view_scale
-			local up = effect[3] + config.offset_up * view_scale
-
-			return camera_position + (Quaternion.forward(camera_rotation) * forward + Quaternion.right(camera_rotation) * right + Quaternion.up(camera_rotation) * up) * UNIT
-		end
-	end
-
-	return (muzzle_of(character))
-end
-
-local function color_of(character)
-	return link.links_of(character) > 0 and CONFIG.linked_color or CONFIG.bolt_color
-end
-
-local function muzzle_flash(character)
-	local _, scale = muzzle_of(character)
-
-	if not scale then
+	if not skin then
 		return
 	end
 
-	local gold = link.links_of(character) > 0
+	mod.muzzle_flash(api, function ()
+		return api.state() == skin and api.muzzle_model_position() or nil
+	end, skin.unit_scale / api.draw_scale(), 1, function ()
+		if api.state() == skin then
+			return api.model_point_in_view()
+		end
+	end, links > 0 and CONFIG.linked_muzzle_flash or CONFIG.muzzle_flash)
+end
 
-	particles.sprite({
-		color = { 1, 1, 1 },
-		follow = function ()
-			return (muzzle_of(character))
+-- The flash of a bolt at the muzzle of the mesh in a character's hand (LinkMuzFlashProj3rd): one mesh along the barrel. The flash mesh
+-- points along its y, as the held mesh's barrel does.
+local function third_person_flash(character, links)
+	local _, holder = held_muzzle(character)
+
+	if not holder then
+		return
+	end
+
+	local third_person = holder.third_person
+	local settings = CONFIG.muzzle_flash_3rd
+	local size = settings.size * (BEAM.link_scale[math.min(links, 5) + 1] + 1)
+	local color = settings.color ^ GAMMA
+
+	particles.mesh({
+		additive = 0,
+		brightness = function (fraction)
+			return particles.attenuation(fraction, 0) ^ GAMMA
 		end,
-		growth = CONFIG.muzzle_growth * scale,
-		life = CONFIG.muzzle_life,
-		size = CONFIG.muzzle_size * scale,
-		spin = (math.random() * 2 - 1) * 0.2,
-		texture = gold and "link_muz_yellow" or "link_muz_green",
+		color = { color, color, color },
+		follow = function ()
+			return third_person.muzzle_position(character)
+		end,
+		late = true,
+		life = random_between(settings.life),
+		material = (links > 0 and "units/ut/fx/fx_link_muzmesh_yellow_" or "units/ut/fx/fx_link_muzmesh_green_") .. math.random(0, 3),
+		rotation = function ()
+			return third_person.muzzle_rotation(character) or Quaternion.identity()
+		end,
+		scale = function ()
+			return size
+		end,
+		spin = 0,
+		angle = 0,
+		spin_axis = Vector3(0, 1, 0),
+		unit = "units/ut/fx/link_flash_mesh",
 	})
 end
 
@@ -313,9 +375,6 @@ local function new_skin(setting_id)
 		offset_up = 0,
 		pivot_yaw = 500 / 65536 * 360,
 		bob_damping = 1.575,
-		-- LinkGun.GetEffectStart: EffectOffset (forward, right, up), 10 lower with UT2004's model. The beam starts from there (see
-		-- beam_start).
-		effect_offset = { 100, 25, -13 },
 		-- UT's third person mesh (LinkAttachment's NewLinkGun_3rd) at UT's size in a player's hand (DrawScale 0.4). Its origin is by its
 		-- grip, and its barrel runs along its forward to the muzzle (its upper flash bone).
 		third_person = third_person_of(setting_id, "units/ut/link/third_person", 75.5, 8.9),
@@ -331,7 +390,6 @@ local function new_skin(setting_id)
 				offset_right = -2,
 				offset_up = -3,
 				pivot_yaw = 500 / 65536 * 360,
-				effect_offset = { 100, 25, -3 },
 				third_person = third_person_of(setting_id, "units/ut/link2003/third_person", 99.2, 2.5),
 			},
 		},
@@ -355,20 +413,82 @@ mod.init_flow_event_filters.link_new = function (event_name)
 end
 
 -- The bolts in flight, each { unit = the game's projectile, extension, position and way (boxes: where it is, and the way it flies),
--- color, sound }
+-- alive, links, sound, trail_delay (how long until its trail starts), puff_time (the puffs that are due) }
 local bolts = {}
 
 -- A shot by another player, as seen on this machine: the flash and the sound come from the mesh in their hand, once for the bolt of a shot
 local remote_shots = utils.shot_grouping(CONFIG.shot_gap)
 
--- Adds a bolt on every machine: a green blob and its glow follow the game's projectile, gold with links (LinkAdjust), and its hum
+-- Returns a value of a scale (UT's SizeScale and ColorScale: { relative time, value } in order) at a share of a particle's life
+local function scale_at(scale, share)
+	for i = 2, #scale do
+		local after = scale[i]
+
+		if share <= after[1] then
+			local before = scale[i - 1]
+			local within = (share - before[1]) / math.max(after[1] - before[1], 0.0001)
+
+			if type(before[2]) == "table" then
+				local color = {}
+
+				for c = 1, 3 do
+					color[c] = (before[2][c] + (after[2][c] - before[2][c]) * within) / 255
+				end
+
+				return color
+			end
+
+			return before[2] + (after[2] - before[2]) * within
+		end
+	end
+
+	local last = scale[#scale][2]
+
+	return type(last) == "table" and { last[1] / 255, last[2] / 255, last[3] / 255 } or last
+end
+
+-- Where a point is that goes with a bolt: this far ahead of it along its way, in UT units, or nothing once the bolt is gone. The
+-- particles of a bolt are placed late (after the game has moved its projectile this frame), where the projectile is then.
+local function on_bolt(bolt, ahead)
+	if bolt.alive and Unit.alive(bolt.unit) then
+		return Unit.world_position(bolt.unit, 0) + bolt.way:unbox() * (ahead * UNIT)
+	end
+end
+
+-- A puff of a bolt's trail, which goes with the bolt and moves ahead along it. age: how far into its life it starts (the warm up).
+local function bolt_puff(bolt, age)
+	local trail_scale = CONFIG.trail_scale
+	local life = CONFIG.puff_life
+	local colors = bolt.links > 0 and CONFIG.linked_puff_colors or CONFIG.puff_colors
+	local started = Application.time_since_launch() - age
+
+	particles.sprite({
+		color_by = function (share)
+			return scale_at(colors, share)
+		end,
+		delay = -age,
+		follow = function ()
+			local since = math.min(Application.time_since_launch() - started, life)
+
+			return on_bolt(bolt, (-CONFIG.puff_behind + CONFIG.puff_speed * since) * trail_scale)
+		end,
+		late = true,
+		life = life,
+		size_by = function (share)
+			return CONFIG.puff_size * trail_scale * scale_at(CONFIG.puff_sizes, share) * UNIT
+		end,
+		texture = "smoke_panels_" .. math.random(0, 15),
+	})
+end
+
+-- Adds a bolt on every machine: UT's mesh, trail and light follow the game's projectile, gold with links (LinkAdjust), with its hum
 -- (LinkProjectile's AmbientSound). For the player's own shot this also plays the animation, the flash and the sound. For another
 -- player's it plays the flash and the sound from their mesh.
 mod.skin_init_callbacks.link_new_bolt = function (projectile)
 	local game_unit = projectile._projectile_unit
 	local owner_unit = projectile._owner_unit
 	local links = projectile._current_action and projectile._current_action.ut_link_new_links or 0
-	local color = links > 0 and CONFIG.linked_color or CONFIG.bolt_color
+	local own = utils.is_local_player_unit(owner_unit)
 
 	Unit.set_unit_visibility(game_unit, false)
 
@@ -377,66 +497,110 @@ mod.skin_init_callbacks.link_new_bolt = function (projectile)
 		extension = projectile,
 		position = Vector3Box(Unit.world_position(game_unit, 0)),
 		way = Vector3Box(Quaternion.forward(Unit.world_rotation(game_unit, 0))),
-		color = color,
+		alive = true,
+		links = links,
 		sound = utils.play_on_unit("ut_link_projectile_3d", game_unit),
+		trail_delay = own and CONFIG.trail_delay or 0,
+		puff_time = 0,
 	}
 
 	bolts[#bolts + 1] = bolt
 
-	local function follow()
-		if Unit.alive(game_unit) and not projectile._stop_impacts then
-			return Unit.world_position(game_unit, 0)
-		end
+	local scale = CONFIG.bolt_scale
+
+	particles.mesh({
+		brightness = function ()
+			return 1
+		end,
+		follow = function ()
+			return on_bolt(bolt, -CONFIG.bolt_pre_pivot * scale[2])
+		end,
+		late = true,
+		life = math.huge,
+		rotation = function ()
+			return Quaternion.look(bolt.way:unbox(), Vector3.up())
+		end,
+		scale = function ()
+			return Vector3(scale[1], scale[2], scale[3])
+		end,
+		spin = CONFIG.bolt_spin,
+		spin_axis = Vector3(0, 1, 0),
+		texture = links > 0 and "link_muz_yellow" or "link_muz_green",
+		unit = "units/ut/fx/link_bolt_mesh",
+	})
+
+	if own then
+		particles.light({
+			color = links > 0 and CONFIG.linked_bolt_light_color or CONFIG.bolt_light_color,
+			fade_in = 0,
+			falloff = CONFIG.bolt_light_falloff,
+			follow = function ()
+				return on_bolt(bolt, 0)
+			end,
+			intensity = utils.WEAPON_LIGHT_INTENSITY,
+			late = true,
+			life = math.huge,
+		})
 	end
 
-	particles.sprite({
-		color = color,
+	local half_shaft = CONFIG.shaft_length / 2 * CONFIG.trail_scale
+	local shaft_middle = CONFIG.shaft_ahead * CONFIG.trail_scale
+
+	-- (the shaft's bright head is at the top of its texture, which is the beam's start: ahead)
+	particles.beam({
+		color = CONFIG.shaft_color,
+		delay = bolt.trail_delay,
 		fade_in = 0,
-		follow = follow,
-		life = 10,
-		size = CONFIG.bolt_size * UNIT,
-		spin = 0.2,
-		texture = links > 0 and "link_muz_yellow" or "link_muz_green",
+		late = true,
+		life = math.huge,
+		size = CONFIG.shaft_width * CONFIG.trail_scale * UNIT,
+		texture = "plasma_shaft",
+		track = function ()
+			local head = on_bolt(bolt, shaft_middle + half_shaft)
+
+			if head then
+				return head, on_bolt(bolt, shaft_middle - half_shaft)
+			end
+		end,
 	})
-	particles.sprite({
-		color = color,
-		fade_in = 0,
-		follow = follow,
-		intensity = 0.5,
-		life = 10,
-		size = CONFIG.bolt_glow_size * UNIT,
-		texture = "muzzle_white",
-	})
+
+	if bolt.trail_delay == 0 then
+		for p = 1, CONFIG.puff_count do
+			bolt_puff(bolt, CONFIG.puff_life * (p - 1) / CONFIG.puff_count)
+		end
+	end
 
 	-- (a bolt that a shield reflected is not a shot)
 	if projectile._ut_reflected_by then
 		return
 	end
 
-	if utils.is_local_player_unit(owner_unit) then
+	if own then
 		local api = first_person_api()
 
-		if api then
-			if not api.third_person.shows_weapon(owner_unit) then
-				api.play("Fire", api.animation_duration("Fire") / CONFIG.fire_animation_rate)
-			end
-
-			api.play_sound(links > 0 and "ut_link_linked" or "ut_link_fire")
+		if api and not api.third_person.shows_weapon(owner_unit) then
+			api.play("Fire", api.animation_duration("Fire") / CONFIG.fire_animation_rate)
+			first_person_flash(api, links)
+		else
+			third_person_flash(owner_unit, links)
 		end
 
-		muzzle_flash(owner_unit)
+		if api then
+			api.play_sound(links > 0 and "ut_link_linked" or "ut_link_fire")
+		end
 	elseif remote_shots.is_new_shot(owner_unit) then
 		local muzzle, holder = held_muzzle(owner_unit)
 
 		if muzzle then
-			muzzle_flash(owner_unit)
+			third_person_flash(owner_unit, links)
 			holder.play_sound_at("ut_link_fire_3d", muzzle)
 		end
 	end
 end
 
--- Follows the bolts, and puts sparks where one ends (LinkProjectile.Explode: LinkProjSparks, yellow with links)
-local function update_bolts()
+-- Follows the bolts, makes their trails' puffs, and puts sparks where one ends (LinkProjectile.Explode: LinkProjSparks, yellow with
+-- links)
+local function update_bolts(dt)
 	for i = #bolts, 1, -1 do
 		local bolt = bolts[i]
 		local alive = Unit.alive(bolt.unit) and not bolt.extension._stop_impacts
@@ -450,9 +614,23 @@ local function update_bolts()
 			end
 
 			bolt.position:store(position)
+
+			if bolt.trail_delay > 0 then
+				bolt.trail_delay = bolt.trail_delay - dt
+			else
+				bolt.puff_time = bolt.puff_time + dt * CONFIG.puff_count / CONFIG.puff_life
+
+				while bolt.puff_time >= 1 do
+					bolt.puff_time = bolt.puff_time - 1
+
+					bolt_puff(bolt, 0)
+				end
+			end
 		else
+			bolt.alive = false
+
 			-- (UT throws them along the normal of what the bolt hit: here back the way the bolt came)
-			local texture = bolt.color == CONFIG.bolt_color and "link_spark_green" or "link_spark_yellow"
+			local texture = bolt.links > 0 and "link_spark_yellow" or "link_spark_green"
 
 			for _ = 1, BOLT_SPARKS.count do
 				throw_spark(BOLT_SPARKS, bolt.position:unbox(), -bolt.way:unbox(), texture, 1, 1, 1)
@@ -498,22 +676,24 @@ local function turns_to_radians(turns)
 	return turns / 65536 * 2 * math.pi
 end
 
--- The beam's color: the texture and the textures of its flashes and sparks
+-- The beam's color: its material and the textures of its flashes and sparks. The material is UT's LinkBeamGreenFB and the others:
+-- FB_Brighten of the texture panned along the beam (tools/asset_conversion/make_combo_materials.py).
 local function colors_of(linking, links)
 	if linking then
-		return "link_beam_blue", "link_muz_blue", nil
+		return "units/ut/fx/fx_link_beam_panned_blue", "link_muz_blue", nil
 	elseif links > 0 then
-		return "link_beam_yellow", "link_muz_yellow", "link_spark_yellow"
+		return "units/ut/fx/fx_link_beam_panned_yellow", "link_muz_yellow", "link_spark_yellow"
 	end
 
-	return "link_beam_green", "link_muz_green", "link_spark_green"
+	return "units/ut/fx/fx_link_beam_panned_green", "link_muz_green", "link_spark_green"
 end
 
 -- Keeps a line's segments: one particle for each stretch between two of its points, which follows those points every frame and ends
--- when the line has fewer points, or when its look changes (version)
-local function draw_line(visual, line, texture, size, color)
-	if line.texture ~= texture or line.size ~= size then
-		line.texture = texture
+-- when the line has fewer points, or when its look changes (version). The particles are placed late, after the gun's model has moved
+-- this frame and the points have been worked out from its muzzle.
+local function draw_line(visual, line, material, size, color)
+	if line.material ~= material or line.size ~= size then
+		line.material = material
 		line.size = size
 		line.version = (line.version or 0) + 1
 		line.made = 0
@@ -527,10 +707,10 @@ local function draw_line(visual, line, texture, size, color)
 		particles.beam({
 			color = { color, color, color },
 			fade_in = 0,
-			intensity = BEAM.intensity,
+			late = true,
 			life = math.huge,
+			material = material,
 			size = size,
-			texture = texture,
 			track = function ()
 				if visual.alive and line.version == version and i < line.count then
 					return line.points[i]:unbox(), line.points[i + 1]:unbox()
@@ -567,10 +747,9 @@ end
 
 -- Draws one character's beam for a frame (LinkBeamEffect.Tick)
 local function draw_beam(character, beam, dt)
-	local muzzle, scale = muzzle_of(character)
-	local start = beam_start(character)
+	local start, scale = muzzle_of(character)
 
-	if not muzzle or not start then
+	if not start then
 		return
 	end
 
@@ -638,7 +817,7 @@ local function draw_beam(character, beam, dt)
 	local up = Vector3.cross(side, beam_direction)
 	local wave_axis = side * math.cos(visual.spin) + up * math.sin(visual.spin)
 	local control = start + aim * (length * BEAM.bend_share)
-	local beam_texture, flash_texture, spark_texture = colors_of(linking, links)
+	local beam_material, flash_texture, spark_texture = colors_of(linking, links)
 
 	-- The beam, and its children, each thinner, with a wider wave of their own
 	local children = math.min(links + 1, BEAM.max_children)
@@ -647,7 +826,7 @@ local function draw_beam(character, beam, dt)
 	visual.lines[1] = main
 
 	place_line(main, start, control, finish, length, BEAM.regen_dist, visual.amplitude, visual.phase, wave_axis, locked_on or linking)
-	draw_line(visual, main, beam_texture, 2 * BEAM.size * (link_scale * 0.6 + 1) * UNIT, BEAM.color)
+	draw_line(visual, main, beam_material,2 * BEAM.size * (link_scale * 0.6 + 1) * UNIT, BEAM.color)
 
 	for c = 1, BEAM.max_children do
 		local line = visual.lines[c + 1] or {}
@@ -658,7 +837,7 @@ local function draw_beam(character, beam, dt)
 			local amplitude = c * 4 + visual.amplitude * ((BEAM.max_amplitude - c * 4) / BEAM.max_amplitude)
 
 			place_line(line, start, control, finish, length, BEAM.child_regen_dist, amplitude, visual.phase * 0.6, wave_axis, linking)
-			draw_line(visual, line, beam_texture, 2 * (2 + 4 * (children - c + 1)) * UNIT, BEAM.child_color)
+			draw_line(visual, line, beam_material,2 * (2 + 4 * (children - c + 1)) * UNIT, BEAM.child_color)
 		else
 			line.count = 0
 			line.made = 0
@@ -696,6 +875,7 @@ local function draw_beam(character, beam, dt)
 				attenuation = 0,
 				color = { FLASH_1ST.color, FLASH_1ST.color, FLASH_1ST.color },
 				follow = follow_muzzle,
+				late = true,
 				life = FLASH_1ST.life,
 				size = FLASH_1ST.size * flash_scale * scale,
 				spin = (math.random() * 2 - 1) * 0.3,
@@ -711,6 +891,7 @@ local function draw_beam(character, beam, dt)
 			particles.sprite({
 				color = { FLASH_3RD.color, FLASH_3RD.color, FLASH_3RD.color },
 				follow = follow_muzzle,
+				late = true,
 				life = FLASH_3RD.life,
 				size = random_between(FLASH_3RD.size) * flash_scale * scale,
 				spin = (math.random() * 2 - 1) * 0.3,
@@ -781,7 +962,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 		return
 	end
 
-	update_bolts()
+	update_bolts(dt)
 	draw_beams(dt)
 end
 
