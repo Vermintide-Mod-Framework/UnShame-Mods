@@ -258,9 +258,11 @@ end
 --   locked[unit] = the ally that unit's beam links
 --   beams[unit] = { end_position, aim (boxes: where it ends, and the way the character aims), hit (0: nothing, 1: the level or a thing,
 --   2: an enemy it hurts), received } while that unit's beam is held
+--   bolt_times[unit] = when that unit last fired a bolt (game time), which the bots read (bots.lua)
 local link = {
 	locked = {},
 	beams = {},
+	bolt_times = {},
 	templates = {},
 }
 
@@ -773,6 +775,8 @@ local last_bolt_positions = setmetatable({}, {
 mod.init_callbacks.link_new_bolt = function (extension)
 	local links = extension._current_action and extension._current_action.ut_link_new_links or 0
 
+	link.bolt_times[extension._owner_unit] = Managers.time:time("game")
+
 	bolts[#bolts + 1] = {
 		unit = extension._projectile_unit,
 		max_speed = (CONFIG.bolt_max_speed + CONFIG.bolt_max_speed_per_link * links) * UNIT,
@@ -1080,6 +1084,12 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 			runs[unit] = nil
 		end
 	end
+
+	for unit in pairs(link.bolt_times) do
+		if not Unit.alive(unit) then
+			link.bolt_times[unit] = nil
+		end
+	end
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
@@ -1087,7 +1097,11 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(runs)
 	table.clear(locked)
 	table.clear(beams)
+	table.clear(link.bolt_times)
 end
 
 link.config = CONFIG
 link.item_keys = ITEM_KEYS
+link.linkable = linkable
+link.beam_range = beam_range
+link.linked_end = linked_end
