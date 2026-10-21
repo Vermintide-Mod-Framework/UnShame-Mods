@@ -106,6 +106,17 @@ local function bolt_tracker(t)
 	end
 end
 
+-- Keeps a bot from using its career skill, as the Lightning Gun's bot tests do: the skill is put on its cooldown, which is paused. The bot
+-- is taken away after the scenario.
+local function no_career_skill(t, bot)
+	t.on_main_thread(function ()
+		local career_extension = ScriptUnit.extension(bot, "career_system")
+
+		career_extension:start_activated_ability_cooldown(1, nil, nil, true)
+		career_extension:set_activated_ability_cooldown_paused(1)
+	end)
+end
+
 -- The ammo extension of a character's Link Gun (on the main thread)
 local function gun_ammo(unit)
 	local slot_data = Unit.alive(unit) and ScriptUnit.extension(unit, "inventory_system"):get_slot_data("slot_ranged")
@@ -433,19 +444,31 @@ local function scenarios()
 					return
 				end
 
-				local above = t.on_main_thread(function ()
-					local position = Unit.world_position(bot, 0)
+				-- (the bot walks about, so the aim follows it)
+				local aim_over_bot = function ()
+					local above = t.on_main_thread(function ()
+						local position = Unit.world_position(bot, 0)
 
-					return { Vector3.x(position), Vector3.y(position), Vector3.z(position) + 2 }
-				end)
+						return { Vector3.x(position), Vector3.y(position), Vector3.z(position) + 2 }
+					end)
 
-				t.aim_at_point(above[1], above[2], above[3])
-
+					t.aim_at_point(above[1], above[2], above[3])
+				end
 				local linked = false
-
-				t.press("action_one", CONFIG.bot_link_time, function ()
+				local watch = function ()
 					linked = linked or link.locked[bot] == t.unit()
-				end)
+				end
+				local start = Managers.time:time("game")
+
+				aim_over_bot()
+				t.hold("action_one")
+
+				while Managers.time:time("game") - start < CONFIG.bot_link_time do
+					t.watch(0.2, watch)
+					aim_over_bot()
+				end
+
+				t.release("action_one")
 
 				t.expect(not linked, "the bot linked the player who aimed at it")
 			end,
@@ -496,14 +519,10 @@ local function scenarios()
 			name = "three bots link the player while the beam kills a monster",
 			run = function (t)
 				local key = item_key(t)
-				local monster = t.spawn(CONFIG.monster, CONFIG.monster_distance)
-
-				if not t.expect(monster, "the %s could not be spawned", CONFIG.monster) then
-					return
-				end
-
 				local bots = {}
 
+				-- The bots come first, and the monster after them, with their career skills held back: otherwise they attack it while the
+				-- others are added (the Waystalker's volley at once), and it is dead before the player fires.
 				for _, member in ipairs(CONFIG.team) do
 					local bot = t.add_bot(member.profile, member.career, ut.items.weapons[member.setting_id].key, member.distance, nil, true)
 
@@ -511,7 +530,21 @@ local function scenarios()
 						return
 					end
 
+					no_career_skill(t, bot)
+
 					bots[#bots + 1] = bot
+				end
+
+				local monster = t.spawn(CONFIG.monster, CONFIG.monster_distance)
+
+				if not t.expect(monster, "the %s could not be spawned", CONFIG.monster) then
+					return
+				end
+
+				t.wait(1)
+
+				if not t.expect(t.health_of(monster) > 0, "the %s died before the player fired", CONFIG.monster) then
+					return
 				end
 
 				local full = ammo_of(t, bots[1])
