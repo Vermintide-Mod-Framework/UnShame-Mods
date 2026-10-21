@@ -819,7 +819,18 @@ end
 -- uses it as its action's hit_effect. The game needs a name there, and sends it to the other players as a number from a lookup table.
 -- That table is full, and adding a name is an error, so these names can't be sent. The hooks below skip playing and sending them.
 -- Walls and props, and enemies (flesh, armor), each have a local and a remote function, so all four are hooked.
-mod.silent_hit_effects = {}
+-- Each name also gets an empty mapping of the game's (MaterialEffectMappings: no decal, sound or particles), which stays through a reload
+-- of the mod. While the mod reloads its hooks are gone, and a projectile that was in flight and hits a wall then would have the game
+-- look up a mapping by that name, and crash on finding none (EffectHelper.play_surface_material_effects).
+mod.silent_hit_effects = setmetatable({}, {
+	__newindex = function (silent_hit_effects, effect_name, value)
+		rawset(silent_hit_effects, effect_name, value)
+
+		if value and not rawget(MaterialEffectMappings, effect_name) then
+			MaterialEffectMappings[effect_name] = {}
+		end
+	end,
+})
 
 for _, function_name in ipairs({
 	"play_surface_material_effects",
