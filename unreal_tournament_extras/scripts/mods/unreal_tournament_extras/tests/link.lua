@@ -565,15 +565,37 @@ local function scenarios()
 					return
 				end
 
-				local full = ammo_of(t, bots[1])
-				local paid = {}
+				-- For each bot: the ammo when it was last read, all it has paid, and how long its beam linked someone
+				local last_ammo, spent, linked_for = {}, {}, {}
+
+				for i, bot in ipairs(bots) do
+					last_ammo[i], spent[i], linked_for[i] = ammo_of(t, bot), 0, 0
+				end
+
+				-- Adds what each bot has paid since the last read, and fills a bot that runs low
+				local read_ammo = function ()
+					for i, bot in ipairs(bots) do
+						local ammo = ammo_of(t, bot)
+
+						spent[i] = spent[i] + math.max(last_ammo[i] - ammo, 0)
+						last_ammo[i] = ammo
+
+						if ammo < CONFIG.low_ammo then
+							fill(t, bot)
+
+							last_ammo[i] = ammo_of(t, bot)
+						end
+					end
+				end
 
 				t.aim_at(monster)
 
 				local damage = t.track_damage(monster)
 				local most_links = 0
 				local linked_at
+				local last_frame = Managers.time:time("game")
 				local watch_links = function ()
+					local now = Managers.time:time("game")
 					local links = link.links_of(t.unit())
 
 					most_links = math.max(most_links, links)
@@ -581,6 +603,14 @@ local function scenarios()
 					if links >= #bots and not linked_at then
 						linked_at = #damage.hits
 					end
+
+					for i, bot in ipairs(bots) do
+						if link.locked[bot] then
+							linked_for[i] = linked_for[i] + now - last_frame
+						end
+					end
+
+					last_frame = now
 				end
 				local start = Managers.time:time("game")
 
@@ -594,18 +624,15 @@ local function scenarios()
 						t.refill()
 					end
 
-					for i, bot in ipairs(bots) do
-						local ammo = ammo_of(t, bot)
-
-						paid[i] = paid[i] or ammo < full
-
-						if ammo < CONFIG.low_ammo then
-							fill(t, bot)
-						end
-					end
+					read_ammo()
 				end
 
 				t.release("action_two")
+				read_ammo()
+
+				for i in ipairs(bots) do
+					t.log("the %s bot linked for %.1f s and paid %d ammo", CONFIG.team[i].profile, linked_for[i], spent[i])
+				end
 
 				local took = Managers.time:time("game") - start
 				local first, strongest = nil, 0
@@ -626,7 +653,8 @@ local function scenarios()
 				t.expect(first and strongest > first * 2, "the linked beam hit for %.1f at most, not much more than the first hit's %.1f", strongest, first or -1)
 
 				for i in ipairs(bots) do
-					t.expect(paid[i], "the %s bot paid no ammo for the links", CONFIG.team[i].profile)
+					t.expect(linked_for[i] > 0, "the %s bot never linked", CONFIG.team[i].profile)
+					t.expect(linked_for[i] == 0 or spent[i] > 0, "the %s bot linked for %.1f s and paid no ammo", CONFIG.team[i].profile, linked_for[i])
 				end
 			end,
 		},
