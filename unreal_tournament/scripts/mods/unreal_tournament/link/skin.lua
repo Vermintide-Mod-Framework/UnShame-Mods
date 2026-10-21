@@ -206,8 +206,9 @@ end
 
 -- Throws a spark from a place along a way. The texture has two parts (tools/asset_conversion/split_spark.py): the body is a streak from
 -- the tail to the head, and the head is a glow at the front. spec: the SPARKS or BOLT_SPARKS numbers. texture: link_spark_green or
--- link_spark_yellow. scale: how much bigger, faster and longer lived it is (for the links).
-local function throw_spark(spec, position, way, texture, size_scale, speed_scale, life_scale)
+-- link_spark_yellow. scale: how much bigger, faster and longer lived it is (for the links). brighten: drawn with FB_Brighten (the bolt's
+-- LinkProjSparks are STY_Translucent), where the beam's LinkSparks are added to the screen.
+local function throw_spark(spec, position, way, texture, size_scale, speed_scale, life_scale, brighten)
 	local offset = Vector3(math.random() * 2 - 1, math.random() * 2 - 1, math.random() * 2 - 1) * (spec.position_deviation * UNIT)
 	local origin = Vector3Box(position + offset)
 	local velocity = Vector3Box(deviate(way, spec.direction_deviation) * (random_between(spec.speed) * speed_scale * UNIT))
@@ -229,11 +230,13 @@ local function throw_spark(spec, position, way, texture, size_scale, speed_scale
 	end
 
 	particles.beam({
+		additive = brighten and 0 or 1,
 		attenuation = spec.attenuation,
 		color = color,
 		life = life,
+		material = brighten and "units/ut/fx/fx_" .. texture .. "_body_brighten" or nil,
 		size = width,
-		texture = texture .. "_body",
+		texture = not brighten and texture .. "_body" or nil,
 		track = function ()
 			local head, tail = spark()
 
@@ -241,6 +244,7 @@ local function throw_spark(spec, position, way, texture, size_scale, speed_scale
 		end,
 	})
 	particles.sprite({
+		additive = brighten and 0 or 1,
 		angle = 0,
 		attenuation = spec.attenuation,
 		color = color,
@@ -248,8 +252,9 @@ local function throw_spark(spec, position, way, texture, size_scale, speed_scale
 			return (spark())
 		end,
 		life = life,
+		material = brighten and "units/ut/fx/fx_" .. texture .. "_head_brighten" or nil,
 		size = width,
-		texture = texture .. "_head",
+		texture = not brighten and texture .. "_head" or nil,
 	})
 end
 
@@ -691,7 +696,7 @@ local function update_bolts(dt)
 			local texture = bolt.links > 0 and "link_spark_yellow" or "link_spark_green"
 
 			for _ = 1, BOLT_SPARKS.count do
-				throw_spark(BOLT_SPARKS, bolt.position:unbox(), -bolt.way:unbox(), texture, 1, 1, 1)
+				throw_spark(BOLT_SPARKS, bolt.position:unbox(), -bolt.way:unbox(), texture, 1, 1, 1, true)
 			end
 
 			if bolt.sound and Managers.world:has_world("level_world") then
@@ -1018,15 +1023,17 @@ local function draw_beam(character, beam, dt)
 		while visual.sphere_time >= 1 do
 			visual.sphere_time = visual.sphere_time - 1
 
+			-- (LinkProtSphere: link_muz_blue, STY_Translucent, which is FB_Brighten: the beam flash's blue material)
 			particles.sprite({
+				additive = 0,
 				color = { SPHERE.color, SPHERE.color, SPHERE.color },
 				follow = function ()
 					return visual.alive and beam.end_position:unbox() or nil
 				end,
 				life = SPHERE.life,
+				material = "units/ut/fx/fx_link_beam_flash_blue",
 				size = size * UNIT,
 				spin = (math.random() * 2 - 1) * 0.3,
-				texture = "link_muz_blue",
 			})
 		end
 	end
