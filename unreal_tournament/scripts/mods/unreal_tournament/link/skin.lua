@@ -122,8 +122,13 @@ local BEAM = {
 	color = 240 / 255,
 	child_color = 180 / 255,
 	-- The wave across the beam, which travels along it and turns about it, and grows toward the end. The child follows the beam's wave: at
-	-- its own speed (UT's mWaveShift * 0.6) the two drifted apart into two lines, where UT's beam is one.
-	wave_frequency = 0.06, -- radians a unit along the beam
+	-- its own speed (UT's mWaveShift * 0.6) the two drifted apart into two lines, where UT's beam is one. How UE2 draws mWaveFrequency and
+	-- mWaveAmplitude isn't in the scripts. As fitted to pictures of UT, where the beam is a long smooth wave that swings wider the further
+	-- it reaches: the wave goes wave_frequency turns along each regen_dist of the beam (about one wave over a thousand units), and at an
+	-- amplitude of 8 it reaches wave_reach of the beam's length to the side. Taken as radians a unit (a wave every 2 m), the far waves were
+	-- tight zigzags in which the strip folded over itself.
+	wave_frequency = 0.06, -- turns a regen_dist along the beam
+	wave_reach = 0.07,
 	wave_amplitude = 8,
 	max_amplitude = 16,
 	wave_shift = 100000, -- the wave's travel, turns a second
@@ -822,7 +827,7 @@ end
 
 -- Puts a line's points along the beam: from the start along the bend to the end, moved across by the wave. lock_end holds the end still
 -- (mWaveLockEnd), and the start always is. UT's texture repeats every regen_dist, and the strip's every 4 stretches (skin_particles.lua),
--- so the points are a quarter of regen_dist apart: one every regen_dist was less than two a wave, which made it jagged.
+-- so the points are a quarter of regen_dist apart: one every regen_dist made the wave a line of straight pieces.
 local function place_line(line, start, control, finish, length, regen_dist, amplitude, phase, wave_axis, lock_end)
 	local count = math.min(particles.STRIP_POINTS, math.max(2, math.ceil(length / (regen_dist * UNIT / particles.STRIP_REPEAT)) + 1))
 
@@ -833,7 +838,8 @@ local function place_line(line, start, control, finish, length, regen_dist, ampl
 		local share = (i - 1) / (count - 1)
 		local along = (1 - share) * (1 - share) * start + 2 * share * (1 - share) * control + share * share * finish
 		local envelope = lock_end and math.sin(math.pi * share) or math.sin(math.pi * share * 0.5)
-		local wave = amplitude * UNIT * envelope * math.sin(BEAM.wave_frequency * share * length / UNIT + phase)
+		local turns = BEAM.wave_frequency * share * length / (regen_dist * UNIT)
+		local wave = amplitude / BEAM.wave_amplitude * BEAM.wave_reach * length * envelope * math.sin(2 * math.pi * turns + phase)
 		local point = along + wave_axis * wave
 
 		if line.points[i] then
