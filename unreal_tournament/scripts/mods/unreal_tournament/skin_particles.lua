@@ -39,6 +39,9 @@ local mod = get_mod("unreal_tournament")
 --       how bright it is, and spec.falloff how far it reaches. It fades like the other particles.
 --   particles.beam(spec): goes from spec.from to spec.to. spec.size is how wide it is, and it faces the camera around its length.
 --       Instead of the two points, spec.track can be a function that returns from and to, or nothing when the beam should end.
+--   particles.strip(spec): a beam along a line of points, as one piece (UT's PT_Beam), spec.size wide, facing the camera about the line
+--       at each point. spec.points is a function that returns the points (a list of boxes) and how many there are (up to 65), or
+--       nothing when it should end. The texture repeats once between two points.
 --   particles.mesh(spec): a mesh (units/ut/fx/coil, sphere, vortex, made by tools/asset_conversion/make_fx_meshes.py) at spec.position.
 --       It is turned by spec.rotation (or a function that returns it each frame), or it faces the camera with spec.face_camera (its z axis is the way it faces). It also turns by
 --       spec.spin about spec.spin_axis, a vector in the mesh's own axes. spec.scale is a function of how far into its life the mesh
@@ -82,6 +85,24 @@ local function acquire(world, unit_name)
 	}
 end
 
+-- The strip (units/ut/fx/beam_strip, tools/asset_conversion/make_fx_meshes.py's make_strip): this many points, each with two corners
+-- that move with joints j_<2i> and j_<2i + 1> (from 0)
+local STRIP_UNIT_NAME = "units/ut/fx/beam_strip"
+local STRIP_POINTS = 65
+
+-- The nodes of a strip's joints, in the order of its corners
+local function strip_joints(entry)
+	if not entry.joints then
+		entry.joints = {}
+
+		for k = 0, 2 * STRIP_POINTS - 1 do
+			entry.joints[k + 1] = Unit.node(entry.unit, "j_" .. k)
+		end
+	end
+
+	return entry.joints
+end
+
 local function release(particle)
 	if particle.parent then
 		-- The parent may be gone already, so check that before unlinking.
@@ -109,7 +130,7 @@ local function add(kind, spec)
 	end
 
 	local world = Managers.world:world("level_world")
-	local entry = acquire(world, spec.unit or (kind == "light" and LIGHT_UNIT_NAME) or UNIT_NAME)
+	local entry = acquire(world, spec.unit or (kind == "light" and LIGHT_UNIT_NAME) or (kind == "strip" and STRIP_UNIT_NAME) or UNIT_NAME)
 	local material
 
 	if kind == "light" then
@@ -176,6 +197,7 @@ local function add(kind, spec)
 		own_material = spec.material ~= nil,
 		intensity = spec.intensity or 1,
 		track = spec.track,
+		points = spec.points,
 		kind = kind,
 		life = spec.life,
 		size = spec.size,
@@ -225,6 +247,10 @@ end
 
 function particles.beam(spec)
 	add("beam", spec)
+end
+
+function particles.strip(spec)
+	add("strip", spec)
 end
 
 function particles.mesh(spec)
@@ -425,6 +451,43 @@ local function place(particle, dt, camera_position, camera_rotation)
 		position = (from + to) * 0.5
 		rotation = facing(camera_position - position, along)
 		scale = Vector3(size, math.max(length, 0.001), 1)
+	elseif particle.kind == "strip" then
+		local points, count = particle.points()
+
+		if not points or count < 2 then
+			particle.age = particle.life
+
+			return
+		end
+
+		count = math.min(count, STRIP_POINTS)
+		position = points[1]:unbox()
+		rotation = Quaternion.identity()
+		scale = Vector3(1, 1, 1)
+
+		local joints = strip_joints(particle.entry)
+		local half = size * 0.5
+
+		-- Each point's two corners are across the line there, half the width to each side, turned about the line to face the camera
+		for i = 1, STRIP_POINTS do
+			local k = math.min(i, count)
+			local point = points[k]:unbox()
+			local before = points[math.max(k - 1, 1)]:unbox()
+			local after = points[math.min(k + 1, count)]:unbox()
+			local across = Vector3.cross(after - before, camera_position - point)
+
+			if Vector3.length(across) > 0.000001 then
+				across = Vector3.normalize(across) * half
+			end
+
+			-- (the points past the last are all at the last, so the rest of the strip has no size)
+			if i > count then
+				across = Vector3.zero()
+			end
+
+			Unit.set_local_position(unit, joints[2 * i - 1], point - across - position)
+			Unit.set_local_position(unit, joints[2 * i], point + across - position)
+		end
 	elseif particle.kind == "disc" then
 		local normal = particle.normal_by and particle.normal_by() or particle.normal:unbox()
 		local side = Vector3.cross(normal, Vector3.up())

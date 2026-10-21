@@ -17,6 +17,7 @@ from formats import read_chunks as chunks
 #   units/ut/fx/link_bolt_mesh  WeaponStaticMesh.LinkProjectile, the Link Gun's bolt: it lies along y, the way it flies, from 0.6
 #                       to 26 units, and is 20 across
 #   units/ut/fx/link_flash_mesh  XEffects.LinkMuzFlashMesh, the mesh of the Link Gun's flashes of a bolt (LinkMuzFlashProj1st and 3rd)
+#   units/ut/fx/beam_strip  a skinned strip of quads whose corners the effects place, for the Link Gun's beam (see make_strip)
 # They are made in meters, a UT unit being 0.02 m (as everything of the effects is), turned from UT's axes (x forward, y right, z up) to
 # this game's (x right, y forward, z up), which makes the mesh the other way round: the long axis of the coil is y.
 # One material slot, m_fx, as the quad of the particles has (units/ut/fx/quad): the effects set the material of the texture they want.
@@ -162,6 +163,52 @@ def make_vortex(unit_name, mesh_name):
     write_unit(unit_name, [geometry('g_mesh', positions, position_index, uvs, uv_index)], {'g_mesh': 'g_mesh'})
     print(unit_name, 'frame 0 of', frames, len(triangles), 'triangles')
 
+def make_strip(unit_name, segments):
+    # A strip of quads, one after another, for a beam that is one piece as UT's PT_Beam is: point i of the beam has two corners, j_<2i>
+    # on its left (u 0) and j_<2i + 1> on its right (u 1), at v = i, so the texture repeats once a stretch. Each corner moves with a joint of
+    # its own (the mesh is skinned, each corner wholly to its joint), which the effect places every frame (skin_particles.lua's strip).
+    # In the bind pose the strip lies along y, a meter a stretch and a meter across.
+    corners = [((-0.5 if side == 0 else 0.5), float(i), 0.0) for i in range(segments + 1) for side in (0, 1)]
+    uvs = [(float(side), float(i)) for i in range(segments + 1) for side in (0, 1)]
+    triangles = []
+    for i in range(segments):
+        a, b, c, d = 2 * i, 2 * i + 1, 2 * i + 2, 2 * i + 3
+        triangles += [(a, c, b), (b, c, d)]
+    index = [k for t in triangles for k in t]
+    count = len(corners)
+    streams = [
+        stream('POSITION', 'CT_FLOAT3', 12, [v for p in corners for v in p], count),
+        stream('NORMAL', 'CT_FLOAT3', 12, [0, 0, 1], 1),
+        stream('TEXCOORD', 'CT_FLOAT2', 8, [v for uv in uvs for v in uv], count),
+        stream('BINORMAL', 'CT_FLOAT3', 12, [0, 1, 0], 1),
+        stream('TANGENT', 'CT_FLOAT3', 12, [1, 0, 0], 1),
+        stream('BLENDINDICES', 'CT_FLOAT4', 16, [v for k in range(count) for v in (k, 0, 0, 0)], count),
+        stream('BLENDWEIGHTS', 'CT_FLOAT4', 16, [v for k in range(count) for v in (1, 0, 0, 0)], count),
+    ]
+    zeros = [0] * len(index)
+    index_streams = [index, zeros, index, zeros, zeros, index, index]
+    geometry_text = ('\tg_strip = {\n\t\tindices = {\n\t\t\tsize = %d\n\t\t\tstreams = [ %s ]\n\t\t\ttype = "TRIANGLE_LIST"\n\t\t}\n'
+                     '\t\tmaterials = [\n\t\t\t{\n\t\t\t\tname = "m_fx"\n\t\t\t\tprimitives = [ %s ]\n\t\t\t} ]\n\t\tsmoothing = [ %s ]\n'
+                     '\t\tstreams = [\n%s ]\n\t}\n') % (len(index), ' '.join('[ %s ]' % il(s) for s in index_streams),
+                                                         il(range(len(triangles))), il([1] * len(triangles)), '\n'.join(streams))
+
+    def translation(p):
+        return '1 0 0 0 0 1 0 0 0 0 1 0 %s 1' % fl(p)
+
+    joints = ''.join('\t\t\tj_%d = {\n\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t}\n' % (k, translation(p)) for k, p in enumerate(corners))
+    skin_joints = ''.join('\t\t\t{\n\t\t\t\tinv_bind_matrix = [ %s ]\n\t\t\t\tname = "j_%d"\n\t\t\t}\n' % (translation([-v for v in p]), k)
+                          for k, p in enumerate(corners))
+    text = ('\ngeometries = {\n%s}\nnodes = {\n\troot = {\n\t\tchildren = {\n\t\t\tg_strip = {\n\t\t\t\tgeometries = [ "g_strip" ]\n'
+            '\t\t\t\tlocal = [ %s ]\n\t\t\t\tparent = "root"\n\t\t\t\tskin = "skin_g_strip"\n\t\t\t}\n%s\t\t}\n\t\tlocal = [ %s ]\n\t}\n}\n'
+            'skins = {\n\tskin_g_strip = {\n\t\tbind_matrix = [ %s ]\n\t\tjoints = [\n%s\t\t]\n\t}\n}\nsource_path = "make_fx_meshes"\n') % (
+                geometry_text, IDENTITY, joints, IDENTITY, IDENTITY, skin_joints)
+    raw = text.encode('latin1')
+    open('%s/%s.bsi' % (FX, unit_name), 'wb').write(b'bsiz' + struct.pack('<I', len(raw)) + zlib.compress(raw))
+    open('%s/%s.unit' % (FX, unit_name), 'w', newline='\n').write(
+        'materials = {\n\tm_fx = "units/ut/fx/fx_shock_sparkle"\n}\nrenderables = {\n\tg_strip = {\n\t\talways_keep = false\n\t\tculling = "disabled"\n'
+        '\t\tgenerate_uv_unwrap = false\n\t\toccluder = false\n\t\tshadow_caster = false\n\t\tsurface_queries = false\n\t\tviewport_visible = true\n\t}\n}\n')
+    print(unit_name, segments, 'stretches', count, 'joints')
+
 def make_light(unit_name):
     # A unit that is only a point light at its root (what UT's dynamic lights, LightType Steady, are: the effects set its color, brightness and
     # reach, and move it)
@@ -188,3 +235,5 @@ if __name__ == '__main__':
     make_static('link_bolt_mesh', 'LinkProjectile', EXPORT + '/WeaponStaticMesh')
     # (its UVs are in the tile of column 0 and row 1 of link_muzmesh_green's 2 by 2)
     make_static('link_flash_mesh', 'LinkMuzFlashMesh', tile=(2, 2, 0, 1))
+    # (the Link Gun's beam, up to 3525 units long with links and a link (LinkFire.TraceRange and its link scale), a point every 65)
+    make_strip('beam_strip', 64)

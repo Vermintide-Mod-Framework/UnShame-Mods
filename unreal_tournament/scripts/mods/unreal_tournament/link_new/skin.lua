@@ -696,38 +696,34 @@ local function colors_of(linking, links)
 	return "units/ut/fx/fx_link_beam_panned_green", "link_muz_green", "link_spark_green"
 end
 
--- Keeps a line's segments: one particle for each stretch between two of its points, which follows those points every frame and ends
--- when the line has fewer points, or when its look changes (version). The particles are placed late, after the gun's model has moved
--- this frame and the points have been worked out from its muzzle.
+-- Keeps a line's strip: one piece through all of its points, as UT's PT_Beam is, which follows them every frame. It ends when the line
+-- has no points, or when its look changes (version), and a new one is made. It is placed late, after the gun's model has moved this
+-- frame and the points have been worked out from its muzzle.
 local function draw_line(visual, line, material, size, color)
-	if line.material ~= material or line.size ~= size then
-		line.material = material
-		line.size = size
-		line.version = (line.version or 0) + 1
-		line.made = 0
+	if line.drawn and line.material == material and line.size == size then
+		return
 	end
 
-	line.made = math.min(line.made, line.count - 1)
+	line.material = material
+	line.size = size
+	line.version = (line.version or 0) + 1
+	line.drawn = true
 
-	for i = line.made + 1, line.count - 1 do
-		local version = line.version
+	local version = line.version
 
-		particles.beam({
-			color = { color, color, color },
-			fade_in = 0,
-			late = true,
-			life = math.huge,
-			material = material,
-			size = size,
-			track = function ()
-				if visual.alive and line.version == version and i < line.count then
-					return line.points[i]:unbox(), line.points[i + 1]:unbox()
-				end
-			end,
-		})
-	end
-
-	line.made = math.max(line.made, line.count - 1)
+	particles.strip({
+		color = { color, color, color },
+		fade_in = 0,
+		late = true,
+		life = math.huge,
+		material = material,
+		points = function ()
+			if visual.alive and line.version == version and line.count >= 2 then
+				return line.points, line.count
+			end
+		end,
+		size = size,
+	})
 end
 
 -- Puts a line's points along the beam: from the start along the bend to the end, every regen_dist, moved across by the wave. lock_end
@@ -848,7 +844,7 @@ local function draw_beam(character, beam, dt)
 			draw_line(visual, line, beam_material,2 * (2 + 4 * (children - c + 1)) * UNIT, BEAM.child_color)
 		else
 			line.count = 0
-			line.made = 0
+			line.drawn = false
 		end
 	end
 
