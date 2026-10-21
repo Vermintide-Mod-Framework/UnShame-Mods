@@ -740,6 +740,24 @@ for template_name in pairs(VARIANT_OF) do
 
 		local start_position = utils.projectile_start(position, rotation, forward + CONFIG.bolt_start_per_link * links * UNIT, right, down)
 
+		-- UT's bolt flies along the aim, a few units off it. From the barrel it would be far off it, so it flies to what the crosshair is
+		-- on (or as far as a bolt can go) instead.
+		if muzzle then
+			local eye = utils.as_vector(position)
+			local aim = Quaternion.forward(rotation)
+			local reach = CONFIG.bolt_max_speed * CONFIG.bolt_life * UNIT
+			local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+			local hits = PhysicsWorld.immediate_raycast_actors(physics_world, eye, aim, reach, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
+			local first = utils.first_beam_hit(hits, owner_unit)
+			local way = (first and first[1] or eye + aim * reach) - start_position
+
+			if Vector3.dot(way, aim) > 0 then
+				rotation = Quaternion.look(way, Vector3.up())
+				angle = ActionUtils.pitch_from_rotation(rotation)
+				target_vector = Vector3.normalize(Vector3.flat(Quaternion.forward(rotation)))
+			end
+		end
+
 		return func(owner_unit, start_position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, BOLT_ACTION_NAME, BOLT_ACTIONS[links], ...)
 	end
 end
