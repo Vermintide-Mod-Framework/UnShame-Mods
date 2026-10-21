@@ -565,16 +565,16 @@ local function new_skin(setting_id, mirror, owns_grenades)
 		looks = {
 			-- These come from AssaultRifle.uc with bUseOldWeaponMesh: OldMesh, OldPlayerViewOffset and OldPlayerViewPivot. Weapon.RenderOverlays
 			-- draws it at OldDrawScale, which is 1. The rifle's muzzle is Bone_Flash (Bone_Flash02 is the grenade launcher's).
-			-- The rifle in the left hand is placed by RenderDualOverlay, which takes the default PlayerViewOffset (4, 5.5, -6), UT2004's,
-			-- not the old one: in UT it is 12 units further ahead than the one in the right hand, which Weapon.RenderOverlays places with
-			-- OldPlayerViewOffset (-8, 5, -6).
+			-- Both rifles are at OldPlayerViewOffset. (UT's RenderDualOverlay places the one in the left hand with the default
+			-- PlayerViewOffset, UT2004's, 12 units further ahead, where the side of the old mesh that has no faces shows: a bug of UT's,
+			-- which is not kept.)
 			[item_key .. "_skin_2003"] = {
 				unit_name = mirror and "units/ut/assault2003/assault_rifle_left" or "units/ut/assault2003/assault_rifle",
 				animations = animations_2003,
 				muzzle_node = "b_bone_flash",
 				draw_scale = 1,
-				offset_forward = mirror and 4 or -8,
-				offset_right = mirror and 5.5 or 5,
+				offset_forward = -8,
+				offset_right = 5,
 				offset_up = -6,
 				pivot_pitch = 400 / 65536 * 360,
 				-- The same pose as UT2004's: the rifle stood up with its inner side to the camera, the grip below the screen. This model is
