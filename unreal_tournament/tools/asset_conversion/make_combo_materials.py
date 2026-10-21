@@ -543,6 +543,11 @@ write('weapon_invisible', invisible_graph(True), {'overlay_map': 'invis_overlay'
 # particles are drawn after tone mapping, onto the screen's colours, as UT draws, and read as srgb its green sides and grey middle were
 # nearly gone (see make_lightning_assets.py). The materials are fx_link_beam_panned_<color>. A beam is drawn as a quad for each stretch,
 # made at different times, so it pans with the game's time, not with a particle's age, and the stretches line up.
+# The texture times the beam's colour (its tint, mColorRange) is doubled and clamped at 1, as Direct3D's MODULATE2X does. The texture is
+# dim (its middle is 101 of 255), and in a picture of UT2004 the beam's middle is white over a floor of (175, 105, 80): FB_Brighten
+# reaches that only with about twice the texture times its colour of 240.
+IN_SATURATE = '6cebb808-14e4-45d6-9816-3838b1f6f4c7'
+
 def link_beam_graph(pan_v):
     graph = Graph()
     graph.add('out', BRIGHTEN, OUT_OPTIONS)
@@ -556,7 +561,12 @@ def link_beam_graph(pan_v):
     graph.connect('additive', 'out', IN_OUT_ADDITIVE)
     panned(graph, 'pan', 0, pan_v)
     sample(graph, 'beam', 'beam_map', 'pan')
-    multiply(graph, 'color', 'beam', 'tint', 'rgb')
+    multiply(graph, 'tinted', 'beam', 'tint', 'rgb')
+    graph.add('doubled', 'core/shader_nodes/mul')
+    graph.connect('tinted', 'doubled', IN_MUL_A)
+    graph.constant('doubled', IN_MUL_B, 2)
+    graph.add('color', 'core/shader_nodes/saturate')
+    graph.connect('doubled', 'color', IN_SATURATE)
     graph.connect('color', 'out', IN_OUT_BASE_COLOR)
     graph.connect('intensity', 'out', IN_OUT_OPACITY)
     return graph

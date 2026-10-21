@@ -475,6 +475,9 @@ local function build_bolt_shot(hand, shot_anims)
 		total_time = CONFIG.bolt_rate + CONFIG.chain_margin,
 		allowed_chain_actions = chain_actions(CONFIG.bolt_rate),
 		hold_input = "action_one_hold",
+		-- Letting go of the button ends the shot, and a press starts the next from idle: the cooldown keeps that to the fire rate too
+		cooldown = CONFIG.bolt_rate,
+		cooldown_from_start = true,
 		uninterruptible = true,
 		enter_function = function (attacker_unit, input_extension)
 			input_extension:clear_input_buffer()
