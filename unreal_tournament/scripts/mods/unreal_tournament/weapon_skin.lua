@@ -33,6 +33,8 @@ local mod = get_mod("unreal_tournament")
 --       of the mesh (convert_weapon.py's mirror_unit).
 --   select_speed: how fast the pickup animation plays compared to its own rate (the weapon's SelectAnimRate). Without it the animation
 --       lasts as long as the game's wield of the base weapon.
+--   time_curves: { [animation name] = function (share of its time, 0 to 1) that returns the share of its frames to show }, to play an
+--       animation at another pace while it lasts as long (the two UT2003 Assault Rifles, whose pickups would cross)
 --   alt_pose_right/forward/up (UT units) and alt_pose_roll/pitch/yaw (degrees): a second place for the model in the view, for example
 --       held sideways. The roll puts the right side down, the pitch points the muzzle up, and the yaw points it to the left. The
 --       weapon's file moves the model there with skin.alt_pose, from 0 (where UT has it) to 1.
@@ -494,7 +496,18 @@ local function new(def)
 	end
 
 	local function current_pose()
-		local pose = sample(skin.animation, skin.time, skin.looping or skin.animation == (CONFIG.idle_animation or "Idle"))
+		local looping = skin.looping or skin.animation == (CONFIG.idle_animation or "Idle")
+		local time = skin.time
+		local curve = not looping and CONFIG.time_curves and CONFIG.time_curves[skin.animation]
+
+		-- (an animation with a time curve goes through its frames at another pace, and still ends when it would)
+		if curve then
+			local duration = self.animation_duration(skin.animation)
+
+			time = curve(math.clamp(time / duration, 0, 1)) * duration
+		end
+
+		local pose = sample(skin.animation, time, looping)
 
 		if skin.blend_from and skin.blend_left > 0 then
 			pose = blend_poses(skin.blend_from, pose, 1 - skin.blend_left / CONFIG.blend_time)

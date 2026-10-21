@@ -572,6 +572,16 @@ local function new_skin(setting_id, mirror, owns_grenades)
 				unit_name = mirror and "units/ut/assault2003/assault_rifle_left" or "units/ut/assault2003/assault_rifle",
 				animations = animations_2003,
 				muzzle_node = "b_bone_flash",
+				-- The old pickup starts turned in toward the middle of the view and swings out, so the two mirrored rifles would cross. The
+				-- right one swings out fast at first and the left one slowly at first, so they pass the middle at different times (a choice,
+				-- set in the game).
+				time_curves = {
+					Pickup = mirror and function (share)
+						return share * share * share
+					end or function (share)
+						return 1 - (1 - share) * (1 - share) * (1 - share)
+					end,
+				},
 				draw_scale = 1,
 				offset_forward = -8,
 				offset_right = 5,
