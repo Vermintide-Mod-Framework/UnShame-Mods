@@ -423,8 +423,8 @@ local function new_skin(setting_id)
 				effect_offset = { 100, 25, -3 },
 				third_person = third_person_of(setting_id, "units/ut/link2003/third_person", 99.2, 2.5),
 				-- (the same turn, about the middle of the old model, which is bigger in the view: moved less to run off the same edges)
-				inspect_pose_right = 5,
-				inspect_pose_forward = -28,
+				inspect_pose_right = -3,
+				inspect_pose_forward = -38,
 				inspect_pose_up = -13,
 				inspect_pivot_right = 0,
 				inspect_pivot_forward = 30,
