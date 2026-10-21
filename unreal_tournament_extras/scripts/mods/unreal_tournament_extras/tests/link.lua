@@ -54,16 +54,18 @@ local CONFIG = {
 	-- half a second more)
 	bot_link_time = 5, -- s
 	bot_let_go_time = 2, -- s
-	-- Three bots link the player while the beam kills a monster. The monster stands still this far ahead, inside the beam's reach, and
-	-- far from the bots' melee range. The bots are the three other heroes with their Link Guns, playing as the game's bots do, in a row
-	-- behind the player. They have team_link_time to make three links (in a chain or all on the player, both count three: LinkGun.Links),
-	-- and the beam has kill_time to kill the monster. Everyone's ammo is filled when it runs below low_ammo.
+	-- Three bots link the player while the beam kills a monster. The monster stands in the level's unreachable place, and the player
+	-- below it, this far ahead and to the right of below_unreachable, as in the Flak Cannon's boss test. The bots are the three other
+	-- heroes with their Link Guns, playing as the game's bots do, in a row behind the player. They have team_link_time to make three
+	-- links (in a chain or all on the player, both count three: LinkGun.Links), and the beam has kill_time to kill the monster.
+	-- Everyone's ammo is filled when it runs below low_ammo.
 	monster = "skaven_rat_ogre",
-	monster_distance = 12, -- m
+	player_ahead = 2, -- m
+	player_right = 2, -- m
 	team = {
-		{ profile = "dwarf_ranger", career = 1, setting_id = "link_gun_dr", distance = -3 },
-		{ profile = "wood_elf", career = 1, setting_id = "link_gun_we", distance = -4.5 },
-		{ profile = "witch_hunter", career = 1, setting_id = "link_gun_wh", distance = -6 },
+		{ profile = "dwarf_ranger", career = 1, setting_id = "link_gun_dr", distance = -2 },
+		{ profile = "wood_elf", career = 1, setting_id = "link_gun_we", distance = -3 },
+		{ profile = "witch_hunter", career = 1, setting_id = "link_gun_wh", distance = -4 },
 	},
 	team_link_time = 10, -- s
 	kill_time = 60, -- s
@@ -521,6 +523,22 @@ local function scenarios()
 				local key = item_key(t)
 				local bots = {}
 
+				-- The monster stands where bots can't walk to, and the player below it (the places of the Flak Cannon's "a bot fires shells
+				-- at a boss it can't reach"), so the bots can't melee it. A boss is no target for their Link Guns either (the attack_meta_data's
+				-- effective_against), so they are free to link.
+				t.go_to("below_unreachable")
+
+				local stand = t.ground_at(CONFIG.player_ahead, CONFIG.player_right)
+
+				if not t.expect(stand, "there is no ground where the player should stand") then
+					return
+				end
+
+				t.on_main_thread(function ()
+					runner.move_player(t.unit(), Vector3(stand[1], stand[2], stand[3]))
+				end)
+				t.wait(0.5)
+
 				-- The bots come first, and the monster after them, with their career skills held back: otherwise they attack it while the
 				-- others are added (the Waystalker's volley at once), and it is dead before the player fires.
 				for _, member in ipairs(CONFIG.team) do
@@ -535,7 +553,7 @@ local function scenarios()
 					bots[#bots + 1] = bot
 				end
 
-				local monster = t.spawn(CONFIG.monster, CONFIG.monster_distance)
+				local monster = t.spawn_at(CONFIG.monster, unpack(t.place("unreachable")))
 
 				if not t.expect(monster, "the %s could not be spawned", CONFIG.monster) then
 					return
