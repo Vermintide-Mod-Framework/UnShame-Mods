@@ -713,6 +713,8 @@ end
 
 -- The game spawns the bolt at the eye, as the action's projectile. It is moved to UT's ProjSpawnOffset, and further ahead for each link,
 -- and spawned as the bolt for the player's links. A bolt that a shield reflects is spawned again from its own action, and kept as it is.
+-- UT's offset puts the bolt at the end of the barrel of UT's model as UT draws it. The skin's model is drawn further out, so the player's
+-- own bolt starts at the end of its barrel as the camera sees it instead (link.seen_muzzle, which the skin sets), when the model is shown.
 for template_name in pairs(VARIANT_OF) do
 	mod.spawn_projectile_callbacks[template_name] = function (func, owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
 		if action_name ~= "action_one" or sub_action_name ~= "default" then
@@ -721,7 +723,22 @@ for template_name in pairs(VARIANT_OF) do
 
 		local links = link.links_of(owner_unit)
 		local start = CONFIG.bolt_start
-		local start_position = utils.projectile_start(position, rotation, (start[1] + CONFIG.bolt_start_per_link * links) * UNIT, start[2] * UNIT, start[3] * UNIT)
+		local forward, right, down = start[1] * UNIT, start[2] * UNIT, start[3] * UNIT
+		local muzzle = link.seen_muzzle and link.seen_muzzle(owner_unit)
+
+		if muzzle then
+			-- (in the axes utils.projectile_start uses: the aim's, level)
+			local level = Quaternion.look(Quaternion.forward(rotation), Vector3.up())
+			local offset = muzzle - utils.as_vector(position)
+
+			if Vector3.dot(offset, Quaternion.forward(level)) > 0 then
+				forward = Vector3.dot(offset, Quaternion.forward(level))
+				right = Vector3.dot(offset, Quaternion.right(level))
+				down = -Vector3.dot(offset, Quaternion.up(level))
+			end
+		end
+
+		local start_position = utils.projectile_start(position, rotation, forward + CONFIG.bolt_start_per_link * links * UNIT, right, down)
 
 		return func(owner_unit, start_position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, BOLT_ACTION_NAME, BOLT_ACTIONS[links], ...)
 	end
