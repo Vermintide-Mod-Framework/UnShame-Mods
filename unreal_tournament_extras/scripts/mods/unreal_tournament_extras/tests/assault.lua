@@ -669,7 +669,34 @@ ut.assault_round_callbacks.ut_test_bots = function (owner_unit)
 	end
 end
 
--- The bot shoots the enemy with the rifle up close, and never hurts the player
+-- Watches every frame whether a bot's rifles start a grenade's charge, which a bot never should: it doesn't throw grenades, and a bot
+-- that charged one stood charging it (the rifle's block button is the charge). Returns { charged }, which is set once one starts.
+local function watch_charges(bot)
+	local seen = { charged = false }
+
+	runner.frame_watchers[#runner.frame_watchers + 1] = function ()
+		local inventory_extension = Unit.alive(bot) and ScriptUnit.has_extension(bot, "inventory_system")
+		local equipment = inventory_extension and inventory_extension:equipment()
+
+		if not equipment then
+			return
+		end
+
+		for _, key in ipairs({ "right_hand_wielded_unit", "left_hand_wielded_unit" }) do
+			local weapon_unit = equipment[key]
+			local weapon_extension = weapon_unit and Unit.alive(weapon_unit) and ScriptUnit.has_extension(weapon_unit, "weapon_system")
+			local action = weapon_extension and weapon_extension.current_action_settings
+
+			if action and action.ut_assault_charge then
+				seen.charged = true
+			end
+		end
+	end
+
+	return seen
+end
+
+-- The bot shoots the enemy with the rifle up close, never hurts the player, and never charges a grenade
 local function bot_scenario(profile, career, setting_id)
 	local item_key = ut.items.weapons[setting_id].key
 
@@ -703,6 +730,8 @@ local function bot_scenario(profile, career, setting_id)
 				return
 			end
 
+			local charges = watch_charges(bot)
+
 			t.on_main_thread(function ()
 				runner.move_player(t.unit(), Vector3(aside[1], aside[2], aside[3]))
 			end)
@@ -722,6 +751,7 @@ local function bot_scenario(profile, career, setting_id)
 			t.expect((rounds_by[bot] or 0) > 0, "the bot fired no rounds the skin was told of")
 			t.expect(from_item(damage, item_key) > 0, "the bot did not hurt the %s with the rifle in %d s", BOTS.enemy, BOTS.fight_time)
 			t.expect(from_item(player_damage, item_key) == 0, "the bot's rounds hurt the player %.1f", from_item(player_damage, item_key))
+			t.expect(not charges.charged, "the bot charged a grenade")
 		end,
 	}
 end
@@ -768,6 +798,7 @@ local function bot_range_scenario(profile, career, setting_id)
 
 			local start = position_of(t, bot)
 			local damage = t.track_damage(enemy)
+			local charges = watch_charges(bot)
 
 			-- (a bot fights an enemy only once it has been seen, which a calm one never is)
 			t.on_main_thread(function ()
@@ -788,6 +819,7 @@ local function bot_range_scenario(profile, career, setting_id)
 
 			t.log("the bot moved %.1f m before its rounds first hurt the enemy", moved)
 			t.expect(moved < BOTS.stand_still, "the bot moved %.1f m before it hurt the enemy, at most %.1f", moved, BOTS.stand_still)
+			t.expect(not charges.charged, "the bot charged a grenade")
 		end,
 	}
 end
@@ -806,6 +838,8 @@ local function bot_revive_scenario(profile, career, setting_id)
 				return
 			end
 
+			local charges = watch_charges(bot)
+
 			if not t.expect(t.knock_down(item_key), "the player was not knocked down") then
 				return
 			end
@@ -819,6 +853,7 @@ local function bot_revive_scenario(profile, career, setting_id)
 			end, BOTS.revive_time, "the bot to revive the player")
 
 			t.expect(revived, "the bot did not revive the player in %d s", BOTS.revive_time)
+			t.expect(not charges.charged, "the bot charged a grenade while it revived the player")
 
 			-- (the player is stood up for the next scenario if the bot didn't)
 			t.revive()
