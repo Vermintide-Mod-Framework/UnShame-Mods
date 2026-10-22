@@ -53,8 +53,8 @@ local VARIANTS = {
 	-- Sienna's staffs have no ammo. This copy has the Link Gun's. The local item list shows only her own staff to the Necromancer, so she
 	-- is named here, as the Shock Rifle does. Her heat is her career's, not the staff's, so her talents and skill still build it while
 	-- she holds the Link Gun, and the reload button vents it (vents). The staff's shot animation is the start of its beam, so her bolt
-	-- plays none (no_shot_animation). Her beam starts with the arm held out, the animation of the Shock Rifle's
-	-- ball (beam_animation).
+	-- plays none (no_shot_animation). Her beam plays the staff's beam, which holds the arm out until it ends
+	-- (beam_animation).
 	{
 		base_item = "bw_skullstaff_beam",
 		deus_copy = "deus_bw_skullstaff_beam",
@@ -65,7 +65,7 @@ local VARIANTS = {
 		can_wield = { "bw_scholar", "bw_adept", "bw_unchained", "bw_necromancer" },
 		vents = true,
 		no_shot_animation = true,
-		beam_animation = "attack_shoot_fireball",
+		beam_animation = { "attack_shoot_beam_start", "attack_shoot_beam_end" },
 	},
 	-- The Deepwood Staff's item lists only the Sister of the Thorn, but all four of Kerillian's careers share one third person body, which
 	-- has the staff's animations, so this copy lists all four (as the Lightning Gun's does). It has the Link Gun's ammo. The staff's shot
@@ -560,12 +560,13 @@ local function build_bolt_projectile(links)
 end
 
 -- The beam, a charge that is held. What it does is in the charge callbacks below. It needs ammo to start.
--- anim_event is the base's animation the beam plays as it starts (none if it is nil).
-local function build_beam(hand, anim_event)
+-- anims is the base's animation the beam plays as it starts and the one as it ends (none if it is nil).
+local function build_beam(hand, anims)
 	return {
 		kind = "charge",
 		weapon_action_hand = hand,
-		anim_event = anim_event,
+		anim_event = anims and anims[1],
+		anim_end_event = anims and anims[2],
 		charge_time = 1000, -- the charge is never "full"
 		hold_input = "action_two_hold",
 		minimum_hold_time = 0,
