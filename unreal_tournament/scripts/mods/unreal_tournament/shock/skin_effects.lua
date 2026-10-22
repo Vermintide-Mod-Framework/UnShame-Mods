@@ -224,6 +224,15 @@ local CONFIG = {
 
 	-- Turns a second of the things that spin. UT's mSpinRange is in units of its own.
 	spin = 0.3,
+
+	-- ComboDecal, the mark of the combo on the floor (ShockProjectile.SuperExplosion): SaDScorcht (128 by 128) at DrawScale 3, for
+	-- xScorch's LifeSpan of 8 s, if a trace finds the level this far below the combo, with its projector pointing down from there (see
+	-- scorches.lua)
+	combo_mark_unit = "units/ut/fx/decal_shock_scorch",
+	combo_mark_size = 384, -- units
+	combo_mark_life = 8, -- s
+	combo_mark_pool_size = 10, -- for each life
+	combo_mark_reach = 120, -- units
 }
 
 local UNIT = utils.UT_UNIT
@@ -896,10 +905,27 @@ local function combo_wiggles(position)
 	end
 end
 
--- Draws the combo (ShockCombo): the ring, the core, the flash, the lights, the flares, the wiggles, the sphere and the vortex. UT's
--- ComboDecal, the mark on the floor, is not made. A flat disc only works on a flat floor, and the game's own effects that leave a mark
--- are whole effects.
+mod.scorches.add_kind("ut_shock_combo_mark", CONFIG.combo_mark_unit, CONFIG.combo_mark_life, CONFIG.combo_mark_pool_size)
+
+-- The combo's mark on the floor below it (see CONFIG.combo_mark_*)
+local function combo_mark(position)
+	if not Managers.world:has_world("level_world") then
+		return
+	end
+
+	local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+	local down = Vector3(0, 0, -1)
+	local hit, floor = PhysicsWorld.immediate_raycast(physics_world, position, down, CONFIG.combo_mark_reach * UNIT, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
+
+	if hit then
+		mod.scorches.project("ut_shock_combo_mark", floor, down, CONFIG.combo_mark_size * UNIT)
+	end
+end
+
+-- Draws the combo (ShockCombo): the ring, the core, the flash, the lights, the flares, the wiggles, the sphere and the vortex, and
+-- ComboDecal, the mark on the floor.
 function fx.combo(position)
+	combo_mark(position)
 	combo_ring(position)
 	combo_core(position)
 	combo_flash(position)

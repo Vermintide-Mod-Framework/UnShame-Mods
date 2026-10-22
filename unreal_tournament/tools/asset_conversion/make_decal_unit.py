@@ -1,6 +1,6 @@
 import os, sys
 
-# Makes the units of the Bio Rifle's splat and the Link Gun's scorch, projected decals like the game's own (units/decals/projection_blood_01). The game's decal
+# Makes the units of the Bio Rifle's splat and of UT's scorches, projected decals like the game's own (units/decals/projection_blood_01). The game's decal
 # manager (DecalManager.add_projection_decal) places the unit, scales it by the extents it is given, and draws it onto the surfaces it
 # reaches, so it follows walls, corners and floors. The unit is a box, 1 by 1 by 1, with the material fx_decal_bio (make_combo_materials.py), whose
 # shader draws the box as a decal. Each triangle is made twice, once for each side, because the decal shader draws only one of them.
@@ -28,8 +28,8 @@ uv_index = []
 for _ in faces:
     uv_index += [0, 1, 2, 0, 2, 3, 0, 2, 1, 0, 3, 2]
 
-# (the Bio Rifle's splat, and the Link Gun's scorch, each with its material of the same name: fx_decal_bio and fx_decal_scorch)
-for name in ('decal_bio', 'decal_scorch'):
+# (the Bio Rifle's splat and the scorches, each with its material of the same name: fx_decal_bio, fx_decal_scorch and so on)
+for name in ('decal_bio', 'decal_scorch', 'decal_rocket_mark', 'decal_shock_scorch'):
     fx.write_unit(name, [fx.geometry('g_box', corners, indices, uvs, uv_index)], {'g_box': 'g_box'}, TURNED, 'bounding_volume')
     path = '%s/%s.unit' % (fx.FX, name)
     text = open(path).read().replace('units/ut/fx/fx_shock_sparkle', 'units/ut/fx/fx_' + name)

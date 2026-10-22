@@ -69,12 +69,15 @@ DERIVED = {
     # Here it is black blended by how much darker it makes the surface, in linear space: 1 - (r / 128) ^ 2.2, as a gray.
     'scorch_mask': ('XEffects/Texture/rocketblastmark.tga',
                     lambda r, g, b, a: ((round(255 * (1 - (min(r, 128) / 128) ** 2.2)),) * 3) + (255,)),
+    # The same for the scorch of the Flak Cannon's shell and the Shock Rifle's combo (ShockAltDecal and ComboDecal project SaDScorcht)
+    'shock_scorch_mask': ('XEffects/Texture/SaDScorcht.tga',
+                          lambda r, g, b, a: ((round(255 * (1 - (min(r, 128) / 128) ** 2.2)),) * 3) + (255,)),
 }
 
 # Textures that are wider than they are high and are drawn as sprites
 SQUARE = ('rocket_flare',)
 # Textures that are masks, not colors: not sRGB, and with no particle material
-MASKS = ('bio_splat_mask', 'scorch_mask')
+MASKS = ('bio_splat_mask', 'scorch_mask', 'shock_scorch_mask')
 # Textures that only make_combo_materials.py's materials draw, so they have no particle material of their own
 COMBO_ONLY = ('shock_elec_a', 'shock_gradient_b', 'shock_electricity', 'shock_dark')
 

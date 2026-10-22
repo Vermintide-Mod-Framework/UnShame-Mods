@@ -109,7 +109,8 @@ local CONFIG = {
 	shot_gap = 0.1,
 	-- The scorches (xScorch): a bolt's where it hits a wall (LinkBoltScorch) and the beam's where it hits the level, every 0.07 s
 	-- (LinkScorch, LinkBeamEffect.Tick). They are rocketblastmark (128 by 128) at DrawScale 0.5 and 0.4, so 64 and 51.2 units wide. A
-	-- scorch lasts its LifeSpan, 2 s and 1 s, plus -2 to 1 s at random, but at least 0.5 s.
+	-- scorch lasts its LifeSpan, 2 s and 1 s (see scorches.lua). It is drawn a little lighter than UT's
+	-- (make_combo_materials.py's decal_scorch).
 	scorch_unit = "units/ut/fx/decal_scorch",
 	bolt_scorch_size = 64,
 	bolt_scorch_life = 2,
@@ -118,11 +119,6 @@ local CONFIG = {
 	beam_scorch_interval = 0.07, -- s
 	-- The beam's trace for its scorch reaches this far before and past the beam's end (units)
 	beam_scorch_trace = 100,
-	-- UT's projector starts 24 units off the wall (PushBack) and reaches 60 units (MaxTraceDistance), so 36 units into it. The decal's
-	-- box here reaches that far in, but only as far out as the Bio Rifle's splat (in meters), so that it doesn't reach the player's
-	-- weapon: UT's projector skips actors (bProjectActor false), and the game's decal doesn't.
-	scorch_reach_in = 36,
-	scorch_reach_out = 0.15,
 	scorch_pool_size = 40, -- for each life
 }
 
@@ -474,33 +470,7 @@ local bolts = {}
 -- A shot by another player, as seen on this machine: the flash and the sound come from the mesh in their hand, once for the bolt of a shot
 local remote_shots = utils.shot_grouping(CONFIG.shot_gap)
 
--- Returns a value of a scale (UT's SizeScale and ColorScale: { relative time, value } in order) at a share of a particle's life
-local function scale_at(scale, share)
-	for i = 2, #scale do
-		local after = scale[i]
-
-		if share <= after[1] then
-			local before = scale[i - 1]
-			local within = (share - before[1]) / math.max(after[1] - before[1], 0.0001)
-
-			if type(before[2]) == "table" then
-				local color = {}
-
-				for c = 1, 3 do
-					color[c] = (before[2][c] + (after[2][c] - before[2][c]) * within) / 255
-				end
-
-				return color
-			end
-
-			return before[2] + (after[2] - before[2]) * within
-		end
-	end
-
-	local last = scale[#scale][2]
-
-	return type(last) == "table" and { last[1] / 255, last[2] / 255, last[3] / 255 } or last
-end
+local scale_at = particles.scale_at
 
 -- Where a point is that goes with a bolt: this far ahead of it along its way, in UT units, or nothing once the bolt is gone. The
 -- particles of a bolt are placed late (after the game has moved its projectile this frame), where the projectile is then.
@@ -656,28 +626,12 @@ mod.skin_init_callbacks.link_bolt = function (projectile)
 	end
 end
 
--- The scorches are decals of the game's decal manager. A pool's decals all last as long, so there is a pool for each life a scorch can
--- have (see mod.add_decal_pool in hooks.lua).
-local SCORCH_LIVES = { 0.5, 1, 2, 3 }
-
-for _, life in ipairs(SCORCH_LIVES) do
-	mod.add_decal_pool("ut_link_scorch_" .. life, CONFIG.scorch_unit, life, CONFIG.scorch_pool_size)
-end
-
--- Puts a scorch on the surface at a position, size units wide, for a LifeSpan randomized as xScorch.PostBeginPlay does
-local function scorch(position, normal, size, life, hit_unit, hit_actor)
-	life = math.max(0.5, life + math.random(0, 3) - 2)
-
-	local reach_in = CONFIG.scorch_reach_in * UNIT
-	local reach_out = CONFIG.scorch_reach_out
-	local middle = position - normal * ((reach_in - reach_out) / 2)
-
-	mod.add_decal("ut_link_scorch_" .. life, middle, normal, size * UNIT, reach_in + reach_out, hit_unit, hit_actor)
-end
+mod.scorches.add_kind("ut_link_bolt_scorch", CONFIG.scorch_unit, CONFIG.bolt_scorch_life, CONFIG.scorch_pool_size)
+mod.scorches.add_kind("ut_link_beam_scorch", CONFIG.scorch_unit, CONFIG.beam_scorch_life, CONFIG.scorch_pool_size)
 
 link.bolt_hit_wall_callbacks.skin = function (_, hit_unit, position, normal, hit_actor)
 	if normal and Vector3.length(normal) > 0.5 then
-		scorch(position, Vector3.normalize(normal), CONFIG.bolt_scorch_size, CONFIG.bolt_scorch_life, hit_unit, hit_actor)
+		mod.scorches.put("ut_link_bolt_scorch", position, Vector3.normalize(normal), CONFIG.bolt_scorch_size * UNIT, hit_unit, hit_actor)
 	end
 end
 
@@ -694,7 +648,7 @@ local function beam_scorch(finish, beam_direction)
 	local hit, position, _, normal, actor = PhysicsWorld.immediate_raycast(physics_world, finish - beam_direction * trace, beam_direction, 2 * trace, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
 
 	if hit and normal and Vector3.length(normal) > 0.5 then
-		scorch(position, Vector3.normalize(normal), CONFIG.beam_scorch_size, CONFIG.beam_scorch_life, actor and Actor.unit(actor), actor)
+		mod.scorches.put("ut_link_beam_scorch", position, Vector3.normalize(normal), CONFIG.beam_scorch_size * UNIT, actor and Actor.unit(actor), actor)
 	end
 end
 

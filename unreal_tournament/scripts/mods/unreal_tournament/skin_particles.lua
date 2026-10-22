@@ -352,6 +352,35 @@ function particles.attenuation(fraction, ka)
 	return (1 - fraction) / (1 - ka)
 end
 
+-- Returns a value of a scale (an Emitter's SizeScale and ColorScale: { relative time, value } in order) at a share of a particle's
+-- life. A value is a number, or a color { r, g, b } of 255, which is returned as a color of 1.
+function particles.scale_at(scale, share)
+	for i = 2, #scale do
+		local after = scale[i]
+
+		if share <= after[1] then
+			local before = scale[i - 1]
+			local within = (share - before[1]) / math.max(after[1] - before[1], 0.0001)
+
+			if type(before[2]) == "table" then
+				local color = {}
+
+				for c = 1, 3 do
+					color[c] = (before[2][c] + (after[2][c] - before[2][c]) * within) / 255
+				end
+
+				return color
+			end
+
+			return before[2] + (after[2] - before[2]) * within
+		end
+	end
+
+	local last = scale[#scale][2]
+
+	return type(last) == "table" and { last[1] / 255, last[2] / 255, last[3] / 255 } or last
+end
+
 -- The same for xEmitter's ATF_ExpInOut (with mAttenKb 1): the curve above, at 1 less the square of the share of the life that is left
 function particles.exp_in_out(fraction, ka)
 	local left = 1 - fraction

@@ -48,6 +48,10 @@ TEXTURES = {
     'white_streak': ('EpicParticles/Texture/WhiteStreak01aw.tga', 1, 1),
     # The Sniper Rifle's smoke (ClassicSniperSmoke: a frame of SmokeReOrdered at random, blended by its alpha)
     'sniper_smoke': ('ExplosionTex/Texture/SmokeReOrdered.tga', 4, 4),
+    # The smoke of the Rocket Launcher's and the grenade's explosions (NewExplosionA and NewExplosionB: SmokeReOrdered, as it is) and the
+    # rocks the rocket's throws (ExplosionCrap: rockchunks02). Both are blended by their alpha.
+    'explosion_smoke': ('ExplosionTex/Texture/SmokeReOrdered.tga', 4, 4),
+    'rock_chunks': ('EmitterTextures/Texture/rockchunks02.tga', 4, 4),
     # (the textures of the Redeemer blast's spheres and ring, whose materials make_combo_materials.py makes: fx_ion_sphere and fx_flame_ring)
     'ion_burn': ('EpicParticles/Texture/IonBurn.tga', 1, 1),
     'grad_falloff': ('EpicParticles/Texture/Grad_Falloff.tga', 1, 1),
@@ -86,7 +90,7 @@ TEXTURES = {
 }
 
 # (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
-SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff', 'muzzle_smoke', 'sniper_smoke', 'link_power_green', 'link_power_yellow', 'link_power_blue')
+SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff', 'muzzle_smoke', 'sniper_smoke', 'explosion_smoke', 'rock_chunks', 'link_power_green', 'link_power_yellow', 'link_power_blue')
 
 # The textures whose colour is moved this share of the way to white, with their alpha kept: the dark grey in the Sniper Rifle's smoke
 # showed as dark spots, which pictures of UT show much fainter

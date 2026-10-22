@@ -236,22 +236,39 @@ decal.connect('shape', 'out', IN_DECAL_MASK, 'r')
 decal.constant('out', IN_DECAL_MASK_THRESHOLD, 0.05)
 write('decal_bio', decal, {'splat_map': 'bio_splat', 'shape_map': 'bio_splat_mask'})
 
-# The Link Gun's scorch (LinkBoltScorch and LinkScorch: rocketblastmark, which UT multiplies the surface by), drawn the same way onto the
-# surfaces under the box of the unit decal_scorch: black, blended by scorch_mask, which is how much darker UT makes the surface
-# (make_fx_assets.py). Blending to black by that much is the same as multiplying by what is left.
-scorch = Graph()
-scorch.no_variables = True
-scorch.add('out', 'core/stingray_renderer/output_nodes/decal_base', ('4035efa3-d637-4d4d-865d-24653f90b7a3',))
-scorch.add('uv', 'core/shader_nodes/decal_uv')
-texture(scorch, 'shape', 'shape_map', 'uv')
-scorch.add('black', 'core/shader_nodes/mul')
-scorch.connect('shape', 'black', IN_MUL_A, 'rgb')
-scorch.constant('black', IN_MUL_B, 0)
-scorch.connect('black', 'out', IN_OUT_BASE_COLOR)
-scorch.connect('shape', 'out', IN_DECAL_BASE_COLOR_OPACITY, 'r')
-scorch.connect('shape', 'out', IN_DECAL_MASK, 'r')
-scorch.constant('out', IN_DECAL_MASK_THRESHOLD, 0.02)
-write('decal_scorch', scorch, {'shape_map': 'scorch_mask'})
+# UT's scorches (xScorch: a texture that UT's projector multiplies the surface by), drawn the same way onto the surfaces under the box of
+# their unit: black, blended by a mask of how much darker UT makes the surface (make_fx_assets.py), times opacity. Blending to black by
+# that much is the same as multiplying by what is left.
+def scorch_graph(name, mask, opacity):
+    scorch = Graph()
+    scorch.no_variables = True
+    scorch.add('out', 'core/stingray_renderer/output_nodes/decal_base', ('4035efa3-d637-4d4d-865d-24653f90b7a3',))
+    scorch.add('uv', 'core/shader_nodes/decal_uv')
+    texture(scorch, 'shape', 'shape_map', 'uv')
+    scorch.add('black', 'core/shader_nodes/mul')
+    scorch.connect('shape', 'black', IN_MUL_A, 'rgb')
+    scorch.constant('black', IN_MUL_B, 0)
+    scorch.add('opacity', 'core/shader_nodes/mul')
+    scorch.connect('shape', 'opacity', IN_MUL_A, 'r')
+    scorch.constant('opacity', IN_MUL_B, opacity)
+    scorch.connect('black', 'out', IN_OUT_BASE_COLOR)
+    scorch.connect('opacity', 'out', IN_DECAL_BASE_COLOR_OPACITY)
+    scorch.connect('shape', 'out', IN_DECAL_MASK, 'r')
+    scorch.constant('out', IN_DECAL_MASK_THRESHOLD, 0.02)
+    write(name, scorch, {'shape_map': mask})
+
+# Each scorch's mask and opacity: the Link Gun's (LinkBoltScorch and LinkScorch: rocketblastmark), drawn a little lighter than UT's; the
+# Rocket Launcher's and the grenade's (RocketMark: rocketblastmark); the Flak Cannon shell's and the Shock Rifle combo's (ShockAltDecal and
+# ComboDecal: SaDScorcht). The opacity is here, in the material, because the game's decal manager makes the decals' units itself, so the
+# mod can't set a value on them.
+SCORCHES = {
+    'decal_scorch': ('scorch_mask', 0.85),
+    'decal_rocket_mark': ('scorch_mask', 1),
+    'decal_shock_scorch': ('shock_scorch_mask', 1),
+}
+
+for name, (mask, opacity) in SCORCHES.items():
+    scorch_graph(name, mask, opacity)
 
 # ---------------------------------------------------------------- the goop in the Bio Rifle's tank
 # The Bio Rifle's first person mesh has its third material, BRPickupC (WeaponSkins): a Combiner (CO_AlphaBlend_With_Mask) of the TexPanner BRpickupP

@@ -26,10 +26,9 @@ local CONFIG = {
 	fire_sound_pitches = 6,
 	-- How far apart the two UT2003 rifles' pickups get, halfway through, as a share of the pickup (see time_curves)
 	pickup_stagger = 0.08,
-	-- The grenade's explosion: the game's own (its smoke and its mark), as the rocket's, and NewExplosionB's fireballs: three, 10 a
-	-- second, of exp1_frames (2 columns by 4 rows), size 60 to 80, life 0.4 to 0.6 s, starting up to 24 units from the middle. The
-	-- sizes and the spread are made larger as the rocket's are (NewExplosionA's 50 to 70 and 24 are 90 to 125 and 36 there).
-	explosion_effect = mod.effects.game_effect("fx/wpnfx_frag_grenade_impact"),
+	-- The grenade's explosion: NewExplosionB's smoke, as NewExplosionA's (rocket/skin.lua), and its fireballs: three, 10 a second, of
+	-- exp1_frames (2 columns by 4 rows), size 60 to 80, life 0.4 to 0.6 s, starting up to 24 units from the middle. The sizes and the
+	-- spread are made larger as the rocket's are (NewExplosionA's 50 to 70 and 24 are 90 to 125 and 36 there). And the rocket's mark.
 	explosion_fireballs = {
 		sheet = "explosion_c_",
 		columns = 2,
@@ -463,14 +462,12 @@ end
 
 -- The grenade's explosion (Grenade.Explode): NewExplosionB where the grenade is, with no lift off the surface, and BExplosion3. It is
 -- the rocket's NewExplosionA (rocket/skin.lua) with no flash and one sheet, exp1_frames, its fireballs larger and starting anywhere within
--- the sphere. Its smoke and the mark it leaves are the game's own explosion, as the rocket's are.
-mod.skin_explosion_callbacks[assault.explosion] = function (world, position, rotation)
+-- the sphere. UT spawns it facing up, and RocketMark with its projector pointing down, as a grenade that goes off by itself explodes
+-- with an upward normal (Grenade.Timer).
+mod.skin_explosion_callbacks[assault.explosion] = function (_, position)
 	skin_apis[1].play_sound_at("ut_assault_grenade_explosion_3d", position)
-
-	if CONFIG.explosion_effect then
-		mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
-	end
-
+	mod.rocket_mark(position, Vector3(0, 0, -1))
+	mod.explosion_smoke(position, Vector3.up())
 	mod.explosion_fireballs(position, CONFIG.explosion_fireballs)
 end
 

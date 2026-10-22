@@ -58,9 +58,50 @@ local CONFIG = {
 	smoke_air_resistance = 0.4,
 	smoke_attenuation = 0.2,
 	smoke_colors = { { 1, 1, 1 }, { 1, 210 / 255, 210 / 255 } },
-	-- The explosion (NewExplosionA) has the game's own explosion, with its smoke and the mark it leaves, a flash, and three fireballs.
-	-- Each fireball plays a sheet of 16 frames. All three use the same sheet, one of two.
-	explosion_effect = mod.effects.game_effect("fx/wpnfx_frag_grenade_impact"),
+	-- The explosion: NewExplosionA (three fireballs, each playing a sheet of 16 frames, one of two for all three, a flash and the smoke),
+	-- ExplosionCrap's rocks, and RocketMark where the rocket hit a wall (Projectile.HitWall).
+	-- RocketMark: rocketblastmark (128 by 128) at DrawScale 2, for xScorch's LifeSpan of 8 s (see scorches.lua)
+	mark_unit = "units/ut/fx/decal_rocket_mark",
+	mark_size = 256, -- units
+	mark_life = 8, -- s
+	mark_pool_size = 20, -- for each life
+	-- NewExplosionA's smoke (its second emitter), which NewExplosionB has too: 15 puffs of SmokeReOrdered, one of its 16 at random,
+	-- blended by their alpha, for 2 s. They start 10 units out on a ring about the surface's normal (PTLS_Polar, turned by the
+	-- emitter's rotation and RotationOffset: UParticleEmitter::SpawnParticle, decompiled) and go out along it at 200 units a second
+	-- (PTVD_AddRadial), times VelocityScale, while Acceleration lifts them. They are StartSizeRange's default 100 times SizeScale (a
+	-- rectangle of that radius), and ColorScale's color and alpha. They spin up to 0.1 turns a second (SpinsPerSecondRange) either way
+	-- (SpinCCWorCW), from any angle.
+	smoke = {
+		count = 15,
+		life = 2,
+		ring_radius = 10, -- units
+		speed = 200, -- units a second
+		velocity_scale = { { 0, 1 }, { 0.3, 0.1 }, { 1, 0 } },
+		rise = 20, -- units a second squared
+		size = 100, -- units
+		size_scale = { { 0, 0.2 }, { 1, 0.5 } },
+		colors = { { 0, { 255, 255, 255 } }, { 0.125, { 255, 255, 255 } }, { 0.33, { 255, 255, 255 } }, { 0.75, { 128, 128, 128 } },
+			{ 1, { 64, 64, 64 } } },
+		alphas = { { 0, 0 }, { 0.125, 0 }, { 0.33, 1 }, { 0.75, 1 }, { 1, 0 } },
+		spin = 0.1, -- turns a second
+	},
+	-- ExplosionCrap: 150 rocks (rockchunks02, one of its 16 at random, blended by their alpha), off the surface's normal at 200 to 700 units
+	-- a second, spread by 0.4 (mDirDev) and up to 30 units out of place (mPosDev), of size 2 to 6, falling by their mass of 2 to 3.5
+	-- (utils.UT_PARTICLE_GRAVITY), slowed by 0.3 of their speed a second, for 1.2 to 2.4 s, fading in until 0.2 of it and out after
+	-- (xEmitter's mAttenKa). Their mSpinRange of -80 to 80 is rotator units a second (Engine.dll's xEmitter update adds it to the roll,
+	-- 65536 to a turn), so they barely turn.
+	crap = {
+		count = 150,
+		life = { 1.2, 2.4 },
+		speed = { 200, 700 },
+		direction_deviation = 0.4, -- on each axis
+		position_deviation = 30, -- units, on each axis
+		size = { 2, 6 },
+		mass = { 2, 3.5 },
+		air_resistance = 0.3,
+		attenuation = 0.2,
+		spin = 80 / 65536, -- turns a second
+	},
 	explosion_flash_size = 300,
 	explosion_flash_growth = 500,
 	explosion_flash_life = 0.25,
@@ -805,31 +846,107 @@ mod.skin_init_callbacks.rocket = function (projectile)
 	end
 end
 
--- Returns the way the surface of an explosion faces. The rocket flew into the surface, so this is against its flight, or the normal
--- that a ray along the flight finds.
-local function surface_normal(world, position, rotation)
-	local forward = Quaternion.forward(rotation)
-	local physics_world = World.get_data(world, "physics_world")
-	local hit, _, _, normal = PhysicsWorld.immediate_raycast(physics_world, position - forward * 0.5, forward, 1, "closest", "collision_filter", "filter_ai_line_of_sight_check")
-
-	if hit and normal and Vector3.length(normal) > 0.5 then
-		return Vector3.normalize(normal)
-	end
-
-	return -forward
-end
+local surface_normal = utils.explosion_normal
 
 -- Draws the explosion of a rocket, on every machine. The game's own effects of it are not made. Like UT's, the explosion sits a
 -- little way off the surface, or the surface would cut the fireballs.
+mod.scorches.add_kind("ut_rocket_mark", CONFIG.mark_unit, CONFIG.mark_life, CONFIG.mark_pool_size)
+
+-- RocketMark, which the grenade leaves too, where UT's projector would put it from position along direction (see scorches.lua)
+function mod.rocket_mark(position, direction)
+	mod.scorches.project("ut_rocket_mark", position, direction, CONFIG.mark_size * UNIT)
+end
+
+-- NewExplosionA's smoke, which NewExplosionB has too, at center, on a ring about the surface's normal (see CONFIG.smoke)
+function mod.explosion_smoke(center, normal)
+	local settings = CONFIG.smoke
+	local side = Vector3.cross(normal, Vector3.up())
+
+	if Vector3.length(side) < 0.1 then
+		side = Vector3.cross(normal, Vector3.right())
+	end
+
+	side = Vector3.normalize(side)
+
+	local other = Vector3.cross(normal, side)
+	local center_box = Vector3Box(center)
+
+	for _ = 1, settings.count do
+		local angle = math.random() * 2 * math.pi
+		local out = Vector3Box(side * math.cos(angle) + other * math.sin(angle))
+		local born = Application.time_since_launch()
+		-- How far out along the ring a puff is, and how far it has risen and how fast, in units. Each frame they change by the velocity
+		-- times VelocityScale at the share of the life that has gone.
+		local moved = {
+			time = 0,
+			out = settings.ring_radius,
+			rise = 0,
+			rise_speed = 0,
+		}
+
+		particles.sprite({
+			additive = 0,
+			brightness = function (fraction)
+				return particles.scale_at(settings.alphas, fraction)
+			end,
+			color_by = function (fraction)
+				return particles.scale_at(settings.colors, fraction)
+			end,
+			follow = function ()
+				local age = math.min(Application.time_since_launch() - born, settings.life)
+				local step = age - moved.time
+
+				if step > 0 then
+					local scale = particles.scale_at(settings.velocity_scale, moved.time / settings.life)
+
+					moved.out = moved.out + settings.speed * scale * step
+					moved.rise_speed = moved.rise_speed + settings.rise * step
+					moved.rise = moved.rise + moved.rise_speed * scale * step
+					moved.time = age
+				end
+
+				return center_box:unbox() + (out:unbox() * moved.out + Vector3(0, 0, moved.rise)) * UNIT
+			end,
+			life = settings.life,
+			size_by = function (fraction)
+				return 2 * settings.size * particles.scale_at(settings.size_scale, fraction) * UNIT
+			end,
+			spin = (math.random() < 0.5 and -1 or 1) * math.random() * settings.spin,
+			texture = "explosion_smoke_" .. math.random(0, 15),
+		})
+	end
+end
+
+-- ExplosionCrap's rocks at center, thrown off the surface's normal (see CONFIG.crap)
+local function explosion_rocks(center, normal)
+	local settings = CONFIG.crap
+
+	for _ = 1, settings.count do
+		particles.sprite({
+			additive = 0,
+			attenuation = settings.attenuation,
+			drag = settings.air_resistance,
+			fall = utils.UT_PARTICLE_GRAVITY * random_between(settings.mass) * UNIT,
+			life = random_between(settings.life),
+			position = center + utils.ut_particle_offset(settings.position_deviation) * UNIT,
+			size = random_between(settings.size) * utils.UT_SPRITE_SIDE * UNIT,
+			spin = (math.random() * 2 - 1) * settings.spin,
+			texture = "rock_chunks_" .. math.random(0, 15),
+			velocity = utils.ut_particle_velocity(normal, settings.direction_deviation, random_between(settings.speed) * UNIT),
+		})
+	end
+end
+
 mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, rotation)
 	local normal = surface_normal(world, position, rotation)
 	local center = position + normal * (CONFIG.explosion_lift * UNIT)
 
 	skin_api.play_sound_at("ut_rocket_explosion_3d", center)
 
-	if CONFIG.explosion_effect then
-		mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
-	end
+	-- (Projectile.HitWall puts the mark where the rocket hit, with the projector pointing into the wall)
+	mod.rocket_mark(position, Quaternion.forward(rotation))
+	mod.explosion_smoke(center, normal)
+	explosion_rocks(center, normal)
 
 	particles.sprite({
 		attenuation = 0,

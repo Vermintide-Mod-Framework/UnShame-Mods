@@ -100,8 +100,51 @@ local CONFIG = {
 	explosion_flash_growth = 500, -- mGrowthRate, a second
 	explosion_flash_life = 0.25,
 	explosion_flash_attenuation = 0.2,
-	-- The game's own explosion, with its smoke and the mark it leaves, is played together with the flash
-	explosion_effect = mod.effects.game_effect("fx/wpnfx_frag_grenade_impact"),
+	-- The rest of the explosion (FlakShell.SpawnEffects), 16 units off the surface: FlakExplosion with its light, RocketSmokeRing and
+	-- another, which FlakExplosion spawns itself (RocketExplosion.PostBeginPlay), and ShockAltDecal where the shell hit.
+	explosion_lift = 16, -- units
+	-- ShockAltDecal: SaDScorcht (128 by 128) at DrawScale 2, for xScorch's LifeSpan of 8 s (see scorches.lua)
+	mark_unit = "units/ut/fx/decal_shock_scorch",
+	mark_size = 256, -- units
+	mark_life = 8, -- s
+	mark_pool_size = 20, -- for each life
+	-- FlakExplosion (a RocketExplosion): 5 sprites of fexpt, of size 91 to 161, up to 55 units out of place (mPosDev), at 3 to 20 units a
+	-- second along the world's x spread by 2 (mDirDev: it is spawned unturned), rising by their mass of -0.2 to -0.6
+	-- (utils.UT_PARTICLE_GRAVITY), slowed by xEmitter's 0.4 of their speed a second, for 0.9 to 1.8 s, fading in until 0.2 of it and out
+	-- after, added (STY_Additive, which fades by the square). Their mSpinRange of -3 to 3 rotator units a second doesn't turn them.
+	fire = {
+		count = 5,
+		size = { 91, 161 },
+		position_deviation = 55, -- units, on each axis
+		speed = { 3, 20 }, -- units a second
+		direction_deviation = 2, -- on each axis
+		mass = { -0.2, -0.6 },
+		air_resistance = 0.4,
+		life = { 0.9, 1.8 },
+		attenuation = 0.2,
+	},
+	-- Its light: LightHue 28 and LightSaturation 100 at LightBrightness 255 (FGetHSV), reaching (LightRadius 8 + 1) * 25 units and falling
+	-- off as LE_QuadraticNonIncidence (xEmitter's), LT_FadeOut over its LifeSpan of 2 s: 1.5 times the share of the LifeSpan left, at most
+	-- 1 (FDynamicLight::Update, decompiled).
+	light_color = { 1, 0.74, 0.49 },
+	light_reach = 225, -- units
+	light_life = 2, -- s
+	light_fade = 1.5,
+	-- RocketSmokeRing: 15 puffs of SmokeAlphab_t, one of its 16 at random, blended by their alpha. They start 20 units out (mPosDev) on a
+	-- ring across the world's x (ST_ExplodeRing: AxEmitter::InitParticle, decompiled, doesn't turn it by the emitter) and go out along it
+	-- at 100 units a second, slowed by 1.9 of their speed a second, of size 20 to 30 growing 40 a second, for 1.3 to 1.7 s, whole until
+	-- half of it and then fading out (ATF_SmoothStep, mAttenKa 0 and mAttenKb 0.5).
+	smoke_ring = {
+		count = 15,
+		ring_radius = 20, -- units
+		speed = 100, -- units a second
+		air_resistance = 1.9,
+		size = { 20, 30 },
+		growth = 40, -- a second
+		life = { 1.3, 1.7 },
+		whole = 0.5, -- of the life
+	},
+	smoke_rings = 2,
 	-- Another player's shot is recognized by its first chunk. Chunks that start further apart than this many seconds are another shot.
 	shot_gap = 0.25,
 	inspect_pose_speed = 5, -- how fast the model moves to the inspect pose and back, per second
@@ -628,10 +671,82 @@ mod.skin_init_callbacks.ut_flak_shell = function (projectile)
 	})
 end
 
+mod.scorches.add_kind("ut_flak_mark", CONFIG.mark_unit, CONFIG.mark_life, CONFIG.mark_pool_size)
+
+-- FlakExplosion's fire and light at center (see CONFIG.fire)
+local function explosion_fire(center)
+	local settings = CONFIG.fire
+	-- (the world's x in UT's axes is this game's y)
+	local along = Vector3(0, 1, 0)
+
+	for _ = 1, settings.count do
+		local life = utils.random_between(settings.life)
+
+		particles.sprite({
+			attenuation = settings.attenuation,
+			drag = settings.air_resistance,
+			fade_squared = true,
+			fall = utils.UT_PARTICLE_GRAVITY * utils.random_between(settings.mass) * UNIT,
+			life = life,
+			position = center + utils.ut_particle_offset(settings.position_deviation) * UNIT,
+			size = utils.random_between(settings.size) * utils.UT_SPRITE_SIDE * UNIT,
+			texture = "flak_explosion",
+			velocity = utils.ut_particle_velocity(along, settings.direction_deviation, utils.random_between(settings.speed) * UNIT),
+		})
+	end
+
+	local color = CONFIG.light_color
+
+	particles.light({
+		brightness = function (fraction)
+			return math.min(1, CONFIG.light_fade * (1 - fraction))
+		end,
+		color = color,
+		falloff = CONFIG.light_reach * UNIT,
+		intensity = utils.WEAPON_LIGHT_INTENSITY,
+		life = CONFIG.light_life,
+		position = center,
+		quadratic = true,
+	})
+end
+
+-- A RocketSmokeRing at center (see CONFIG.smoke_ring)
+local function smoke_ring(center)
+	local settings = CONFIG.smoke_ring
+
+	for _ = 1, settings.count do
+		local angle = math.random() * 2 * math.pi
+		-- (UT's ring has no x: in this game's axes, no y)
+		local out = Vector3(math.cos(angle), 0, math.sin(angle))
+		local life = utils.random_between(settings.life)
+
+		particles.sprite({
+			additive = 0,
+			drag = settings.air_resistance,
+			fade_in = 0,
+			fade_out = settings.whole * life,
+			growth = settings.growth * utils.UT_SPRITE_SIDE * UNIT,
+			life = life,
+			position = center + out * (settings.ring_radius * UNIT),
+			size = utils.random_between(settings.size) * utils.UT_SPRITE_SIDE * UNIT,
+			texture = "smoke_" .. math.random(0, 15),
+			velocity = out * (settings.speed * UNIT),
+		})
+	end
+end
+
 -- The explosion of the shell, on every machine. The game's own effects of it are not made (see flak_cannon.lua).
 mod.skin_explosion_callbacks.ut_flak_shell_explosion = function (world, position, rotation)
+	local normal = utils.explosion_normal(world, position, rotation)
+	local center = position + normal * (CONFIG.explosion_lift * UNIT)
+
 	skin_apis[1].play_sound_at("ut_flak_explosion_3d", position)
-	mod.effects.create(world, CONFIG.explosion_effect, position, rotation)
+	mod.scorches.project("ut_flak_mark", position, Quaternion.forward(rotation), CONFIG.mark_size * UNIT)
+	explosion_fire(center)
+
+	for _ = 1, CONFIG.smoke_rings do
+		smoke_ring(center)
+	end
 
 	particles.sprite({
 		attenuation = CONFIG.explosion_flash_attenuation,
@@ -642,7 +757,7 @@ mod.skin_explosion_callbacks.ut_flak_shell_explosion = function (world, position
 		},
 		growth = CONFIG.explosion_flash_growth * utils.UT_SPRITE_SIDE * UNIT,
 		life = CONFIG.explosion_flash_life,
-		position = position,
+		position = center,
 		size = CONFIG.explosion_flash_size * utils.UT_SPRITE_SIDE * UNIT,
 		spin = (math.random() * 2 - 1) * 0.12,
 		texture = "explosion_flash",
