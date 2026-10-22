@@ -146,12 +146,10 @@ local function locked_out()
 	return overcharge_extension and overcharge_extension:are_you_locked_out() or false
 end
 
--- The time between the local player's shots, shorter with the game's attack speed buffs (as lightning_gun.lua's ready_to_fire has it)
+-- The time between the local player's last shot and the next, scaled by the game's attack speed buffs (lightning_gun.lua's
+-- ready_to_fire)
 local function fire_rate()
-	local player = Managers.player and Managers.player:local_player()
-	local unit = player and player.player_unit
-
-	return lightning.fire_rate / utils.attack_speed(unit and Unit.alive(unit) and unit or nil)
+	return lightning.shot_wait or lightning.fire_rate
 end
 
 local TEMPLATE_NAMES = {}

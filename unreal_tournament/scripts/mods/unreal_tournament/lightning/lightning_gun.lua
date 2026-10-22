@@ -6,7 +6,7 @@ local mod = get_mod("unreal_tournament")
 --       to enemies near it. A hit on the head does double damage.
 --   Right button: zooms. Holding it zooms in, until it is let go, and the zoom stays. Pressing it again zooms out.
 --   Reload: vents the heat, as the staff does.
--- UT's Lightning Gun has 40 rounds of ammo. Here a bolt adds heat instead, as much as the Beam Staff's charged shot, and overheating
+-- UT's Lightning Gun has 40 rounds of ammo. Here a bolt adds heat instead, half as much as the Beam Staff's charged shot, and overheating
 -- is the Deepwood Staff's: the player loses part of their health and the gun is locked out while the heat cools.
 -- The staff is the Sister of the Thorn's only, so the copy is given to all four of Kerillian's careers. They have the same third person
 -- body (way_watcher), whose animations the staff uses. The skin (skin.lua) draws all of it, and this file only sets what it does to
@@ -46,9 +46,9 @@ local TEMPLATE_NAMES = {
 }
 
 local CONFIG = {
-	-- The heat of a bolt: the Beam Staff's charged shot's (8 of the 40 a player can take), so five bolts heat the gun to the top and a
-	-- sixth overheats it. UT's gun has 40 rounds instead.
-	bolt_overcharge = PlayerUnitStatusSettings.overcharge_values.beam_staff_sniper,
+	-- The heat of a bolt: half the Beam Staff's charged shot's (4 of the 40 a player can take), so ten bolts heat the gun to the top and
+	-- an eleventh overheats it. UT's gun has 40 rounds instead.
+	bolt_overcharge = PlayerUnitStatusSettings.overcharge_values.beam_staff_sniper / 2,
 	-- Every career of Kerillian overheats as the Sister of the Thorn does with the staff (her OverchargeData): she loses 40% of her
 	-- health, the staff is locked out until the heat is gone, and there is no explosion. The other careers have no data of their own,
 	-- which would make them overheat as Sienna does, losing all of their health.
@@ -87,12 +87,14 @@ local TOTAL_TIME = CONFIG.fire_rate + CONFIG.chain_margin
 PlayerUnitStatusSettings.overcharge_values.ut_lightning_bolt = CONFIG.bolt_overcharge
 
 -- The overheating of the Sister of the Thorn for the careers that have none of their own. The game reads it when it spawns a
--- character, so a career has it from its next spawn.
+-- character, so a career has it from its next spawn. Her burst of thorns as she overheats (explode_vfx_name) is left out: its effect is
+-- in her career's package, which the game loads only for her, and playing an effect that isn't loaded crashes the game.
 local overheat_given = {}
 
 for _, career_name in ipairs(CAREERS) do
 	if not OverchargeData[career_name] then
 		OverchargeData[career_name] = table.clone(OverchargeData[CONFIG.overheat_like])
+		OverchargeData[career_name].explode_vfx_name = nil
 		overheat_given[#overheat_given + 1] = career_name
 	end
 end
@@ -171,8 +173,11 @@ local ARC_ACTION = {
 
 -- Weapon template
 
--- When each character last fired, on the machine that runs their actions. A shot waits for UT's fire time after the last one whatever
--- action it starts from (the zoom's, which a shot can turn into at once, say).
+-- When each character last fired, on the machine that runs their actions, and how long the next shot waits: UT's fire time, scaled as
+-- the game scaled that shot's action, whatever action the next one starts from (the zoom's, which a shot can turn into at once, say).
+-- The scale is the one the shot's action started with, as the game keeps it for the action's chain window: the overheat's slower
+-- attacks (the overcharged buff) start with the shot that heats the gun that far, so the shot after it must wait as long as its window
+-- says, or a held button would miss the window and stop.
 local last_shots = setmetatable({}, {
 	__mode = "k",
 })
@@ -180,7 +185,7 @@ local last_shots = setmetatable({}, {
 local function ready_to_fire(unit)
 	local last = last_shots[unit]
 
-	return not last or Managers.time:time("game") - last >= CONFIG.fire_rate / mod.utils.attack_speed(unit) - 0.01
+	return not last or Managers.time:time("game") - last.time >= last.wait - 0.01
 end
 
 -- The actions that can follow a shot. Holding the button repeats the shot, as in UT, the heat can be vented, and the zoom can start at
@@ -577,7 +582,10 @@ mod.handgun_start_callbacks.lightning = function (self, new_action)
 	self._ut_lightning_checked = not new_action.ut_lightning_bolt
 
 	if new_action.ut_lightning_bolt then
-		last_shots[self.owner_unit] = Managers.time:time("game")
+		last_shots[self.owner_unit] = {
+			time = Managers.time:time("game"),
+			wait = CONFIG.fire_rate / ActionUtils.get_action_time_scale(self.owner_unit, new_action),
+		}
 	end
 end
 
@@ -607,6 +615,7 @@ mod.handgun_update_callbacks.lightning = function (self)
 	-- The scope's charge bar and the sparks at the tip of the weapon follow the player's shots
 	if utils.is_local_player_unit(owner_unit) then
 		mod.lightning.last_fire_time = Managers.time:time("game")
+		mod.lightning.shot_wait = last_shots[owner_unit] and last_shots[owner_unit].wait or CONFIG.fire_rate
 	end
 
 	mod.lightning.bolt(owner_unit, end_position, hit_normal, arcs, arcs_start, arc_normals)
@@ -615,15 +624,17 @@ end
 -- What the skin is told (mod.lightning_bolt_callbacks in hooks.lua), and what is sent to the other players. The skin draws the bolt of
 -- the player who fires, from the weapon in their own view, and the others see it come from the weapon of the player's character.
 mod.lightning = {
-	-- The seconds between shots, and when the player last fired
+	-- The seconds between shots, when the player last fired, and how long the player's next shot waits after that (see ready_to_fire)
 	fire_rate = CONFIG.fire_rate,
 	last_fire_time = nil,
+	shot_wait = nil,
 }
 
 -- The game's time starts again in each level, so a shot of the last level would keep the gun from being ready until the new level's time
 -- got as far
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	mod.lightning.last_fire_time = nil
+	mod.lightning.shot_wait = nil
 
 	table.clear(last_shots)
 end

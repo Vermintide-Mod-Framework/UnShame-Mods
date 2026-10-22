@@ -210,7 +210,9 @@ local function scenarios()
 		},
 		{
 			-- The Deepwood Staff's overheat: the player loses 40% of their health, and the gun is locked out until the heat is gone. Bolts
-			-- can't be fired while it is. The heat cools between bolts, so it takes 7 at the fire rate.
+			-- can't be fired while it is. The heat cools between bolts, so it takes 14 at the fire rate: the 13th stops just short of the top
+			-- (the game's critical margin) and the 14th overheats it. From 65% of the heat the game slows attacks (the overcharged buff),
+			-- so the last bolts come further apart, and it takes about 25 s.
 			name = "overheating locks the gun out",
 			run = function (t)
 				t.hurtable(true)
@@ -223,7 +225,7 @@ local function scenarios()
 
 				local overheated = t.wait_until(function ()
 					return locked_out(t)
-				end, 15, "the gun to overheat")
+				end, 40, "the gun to overheat")
 
 				t.release("action_one")
 				t.wait(0.5)
@@ -232,7 +234,13 @@ local function scenarios()
 				local fired = #bolts
 
 				t.expect(overheated, "%d bolts did not overheat the gun (heat %.1f)", fired, t.overcharge())
-				t.expect(fired == 7, "%d bolts were fired before the gun overheated, not 7", fired)
+				local times = {}
+
+				for _, bolt in ipairs(bolts) do
+					times[#times + 1] = string.format("%.2f", bolt.time - bolts[1].time)
+				end
+
+				t.expect(fired == 14, "%d bolts were fired before the gun overheated, not 14 (at %s)", fired, table.concat(times, ", "))
 
 				local lost = health - t.health()
 
