@@ -266,16 +266,6 @@ local function muzzle_of(character)
 	return muzzle, holder and holder.third_person.meters_per_unit
 end
 
--- Where the barrel of the model in the player's own view ends, as the camera sees it, or nil when the model isn't shown. The player's
--- bolts start there (link_gun.lua).
-function link.seen_muzzle(character)
-	local api = first_person_api()
-
-	if utils.is_local_player_unit(character) and api and not api.third_person.shows_weapon(character) then
-		return api.muzzle_position()
-	end
-end
-
 -- The flash of a bolt at the muzzle of the model in the player's own view, linked to it (LinkMuzFlashProj1st, drawn with the model)
 local function first_person_flash(api, links)
 	local skin = api.state()

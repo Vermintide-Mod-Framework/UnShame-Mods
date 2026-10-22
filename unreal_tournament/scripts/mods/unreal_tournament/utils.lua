@@ -74,19 +74,34 @@ function utils.character_animation_is_free(unit)
 	return status_extension == nil or not (status_extension:get_is_ledge_hanging() or status_extension:is_knocked_down() or status_extension:is_dead())
 end
 
+-- Whether the game has a reason of its own to hide the weapon (on a ladder, say). The reasons of the skins are not the game's: a weapon
+-- drawn as two models has two skins, each with its own reason.
+local function game_hides_weapon(first_person_extension)
+	for reason in pairs(first_person_extension.hide_weapon_reasons) do
+		if string.sub(reason, 1, 8) ~= "ut_skin_" then
+			return true
+		end
+	end
+
+	return false
+end
+
 -- Whether the game would show its own first person weapon now, from the player's first person extension: in the first person view,
 -- with the arms and weapons shown (/hud), and with no reason of the game's own to hide the weapon (on a ladder, say), and with the
 -- character's animations free (utils.character_animation_is_free). The skins' models, and the effects linked to them, show only then.
 function utils.first_person_weapon_shown(first_person_extension)
-	-- (the reasons of the skins are not the game's: a weapon drawn as two models has two skins, each with its own reason)
-	for reason in pairs(first_person_extension.hide_weapon_reasons) do
-		if string.sub(reason, 1, 8) ~= "ut_skin_" then
-			return false
-		end
-	end
+	return not game_hides_weapon(first_person_extension) and first_person_extension:first_person_mode_active() and
+		first_person_extension:first_person_units_visible() and utils.character_animation_is_free(first_person_extension.unit)
+end
 
-	return first_person_extension:first_person_mode_active() and first_person_extension:first_person_units_visible() and
-		utils.character_animation_is_free(first_person_extension.unit)
+-- Whether the player's weapon can be used now: as for utils.first_person_weapon_shown, but in any view, and with the character not
+-- disabled (grabbed, pounced, knocked down and the like). A ladder hides the weapon and ends its action (the game's climbing state), and a
+-- disabler stops it, so what a weapon does while its button is held (the Minigun's barrels and their sounds) stops too.
+function utils.weapon_usable(unit)
+	local first_person_extension = ScriptUnit.has_extension(unit, "first_person_system")
+	local status_extension = ScriptUnit.has_extension(unit, "status_system")
+
+	return not (first_person_extension and game_hides_weapon(first_person_extension)) and not (status_extension and status_extension:is_disabled())
 end
 
 -- The unit that holds a player right now, if there is one. The game's own get_disabler_unit doesn't work for this: the unit that grabbed

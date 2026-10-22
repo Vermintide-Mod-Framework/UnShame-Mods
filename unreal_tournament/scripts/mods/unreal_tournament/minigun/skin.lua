@@ -383,6 +383,15 @@ local function update_smoke_emitter(api, mode, world_unit, dt)
 end
 
 local function update_smoke(api, world_unit, dt)
+	-- (UT draws the smoke with the weapon, WeaponFire.DrawMuzzleFlash: none is made while the model isn't shown, on a ladder say, and
+	-- what the last rounds owed is dropped)
+	if not api.shown_in_first_person() then
+		smoke.primary.rate, smoke.primary.owed = 0, 0
+		smoke.alt.rate, smoke.alt.owed = 0, 0
+
+		return
+	end
+
 	update_smoke_emitter(api, "primary", world_unit, dt)
 	update_smoke_emitter(api, "alt", world_unit, dt)
 end

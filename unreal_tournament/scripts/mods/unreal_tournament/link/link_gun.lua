@@ -734,9 +734,8 @@ mod.handgun_start_callbacks.link = function (self, new_action)
 end
 
 -- The game spawns the bolt at the eye, as the action's projectile. It is moved to UT's ProjSpawnOffset, and further ahead for each link,
--- and spawned as the bolt for the player's links. A bolt that a shield reflects is spawned again from its own action, and kept as it is.
--- UT's offset puts the bolt at the end of the barrel of UT's model as UT draws it. The skin's model is drawn further out, so the player's
--- own bolt starts at the end of its barrel as the camera sees it instead (link.seen_muzzle, which the skin sets), when the model is shown.
+-- and spawned as the bolt for the player's links. It flies along the aim, as UT's does. A bolt that a shield reflects is spawned again
+-- from its own action, and kept as it is.
 for template_name in pairs(VARIANT_OF) do
 	mod.spawn_projectile_callbacks[template_name] = function (func, owner_unit, position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, action_name, sub_action_name, ...)
 		if action_name ~= "action_one" or sub_action_name ~= "default" then
@@ -745,40 +744,7 @@ for template_name in pairs(VARIANT_OF) do
 
 		local links = link.links_of(owner_unit)
 		local start = CONFIG.bolt_start
-		local forward, right, down = start[1] * UNIT, start[2] * UNIT, start[3] * UNIT
-		local muzzle = link.seen_muzzle and link.seen_muzzle(owner_unit)
-
-		if muzzle then
-			-- (in the axes utils.projectile_start uses: the aim's, level)
-			local level = Quaternion.look(Quaternion.forward(rotation), Vector3.up())
-			local offset = muzzle - utils.as_vector(position)
-
-			if Vector3.dot(offset, Quaternion.forward(level)) > 0 then
-				forward = Vector3.dot(offset, Quaternion.forward(level))
-				right = Vector3.dot(offset, Quaternion.right(level))
-				down = -Vector3.dot(offset, Quaternion.up(level))
-			end
-		end
-
-		local start_position = utils.projectile_start(position, rotation, forward + CONFIG.bolt_start_per_link * links * UNIT, right, down)
-
-		-- UT's bolt flies along the aim, a few units off it. From the barrel it would be far off it, so it flies to what the crosshair is
-		-- on (or as far as a bolt can go) instead.
-		if muzzle then
-			local eye = utils.as_vector(position)
-			local aim = Quaternion.forward(rotation)
-			local reach = CONFIG.bolt_max_speed * CONFIG.bolt_life * UNIT
-			local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
-			local hits = PhysicsWorld.immediate_raycast_actors(physics_world, eye, aim, reach, "static_collision_filter", "filter_player_ray_projectile_static_only", "dynamic_collision_filter", "filter_player_ray_projectile_ai_only", "dynamic_collision_filter", "filter_player_ray_projectile_hitbox_only")
-			local first = utils.first_beam_hit(hits, owner_unit)
-			local way = (first and first[1] or eye + aim * reach) - start_position
-
-			if Vector3.dot(way, aim) > 0 then
-				rotation = Quaternion.look(way, Vector3.up())
-				angle = ActionUtils.pitch_from_rotation(rotation)
-				target_vector = Vector3.normalize(Vector3.flat(Quaternion.forward(rotation)))
-			end
-		end
+		local start_position = utils.projectile_start(position, rotation, (start[1] + CONFIG.bolt_start_per_link * links) * UNIT, start[2] * UNIT, start[3] * UNIT)
 
 		return func(owner_unit, start_position, rotation, scale, angle, target_vector, speed, item_name, item_template_name, BOLT_ACTION_NAME, BOLT_ACTIONS[links], ...)
 	end

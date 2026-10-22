@@ -528,7 +528,9 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	local player = Managers.player and Managers.player:local_player_safe()
 	local unit = player and player.player_unit
 
-	if not unit or not Unit.alive(unit) or not TEMPLATE_NAMES[utils.wielded_template_name(unit)] then
+	-- (the barrels stop as when the gun is put away while it can't be used: on a ladder the game hides the weapon and ends its action,
+	-- and a disabled character runs none, so a held button does nothing then)
+	if not unit or not Unit.alive(unit) or not TEMPLATE_NAMES[utils.wielded_template_name(unit)] or not utils.weapon_usable(unit) then
 		stop_barrels(state)
 		state.held.primary = false
 		state.held.alt = false
