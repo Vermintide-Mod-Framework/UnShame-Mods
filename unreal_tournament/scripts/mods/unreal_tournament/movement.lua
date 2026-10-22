@@ -47,13 +47,15 @@ local CONFIG = {
 	-- A wall is found by sweeping a sphere of this radius sideways at these heights above the feet.
 	wall_sweep_heights = {0.3, 0.9, 1.5}, -- m
 	wall_sweep_radius = 0.25, -- m
-	-- Momentum damage: melee hits do more damage the faster the player is moving. There is no bonus up to momentum_min_speed,
-	-- which is about running speed (the game's is 4 m/s). The bonus then rises to momentum_damage_bonus at momentum_full_speed
+	-- Momentum damage: melee hits have more power the faster the player is moving. There is no bonus up to momentum_min_speed,
+	-- which is about running speed (the game's is 4 m/s). The bonus then rises to momentum_power_bonus at momentum_full_speed
 	-- (a dodge launch is 9 m/s at most), and keeps rising above that. A speed still counts for momentum_grace seconds after it
 	-- is lost, so that slowing down (a hit, the end of a dodge) does not take the bonus away at once.
+	-- The damage goes up by less than the power: the game's damage is a profile's least damage plus a share of its range that
+	-- grows with the power (DamageUtils.calculate_damage).
 	momentum_min_speed = 4.5, -- m/s
 	momentum_full_speed = 9, -- m/s
-	momentum_damage_bonus = 0.25, -- the bonus at full speed: 0.25 is 25% more damage
+	momentum_power_bonus = 0.25, -- the bonus at full speed: 0.25 is 25% more power
 	momentum_grace = 0.1, -- seconds
 	-- Fall damage, as UT's Pawn.TakeFallingDamage: landing faster than MaxFallSpeed hurts 100 * (speed - MaxFallSpeed) / MaxFallSpeed,
 	-- however far the fall was. UT speeds are turned into this game's by the ratio of the jumps (UT's JumpZ against this mod's jump), as
@@ -1046,7 +1048,7 @@ local function momentum_damage_multiplier(owner_unit)
 	local speed = momentum_speed(owner_unit, locomotion_extension)
 	local share = momentum_share(speed)
 
-	return 1 + CONFIG.momentum_damage_bonus * share
+	return 1 + CONFIG.momentum_power_bonus * share
 end
 
 mod:hook(ActionSweep, "_send_attack_hit", function (func, self, t, damage_source_id, attacker_unit_id, hit_unit_id, hit_zone_id, hit_position, attack_direction, damage_profile_id, ...)

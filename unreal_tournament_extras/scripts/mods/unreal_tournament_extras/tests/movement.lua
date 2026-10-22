@@ -32,11 +32,45 @@ local CONFIG = {
 	max_time_at_top = 0.15, -- s
 	-- How far off a measured speed may be
 	speed_margin = 0.35, -- m/s
-	-- The momentum damage: this much more damage at the full speed, none up to the least speed
+	-- The momentum damage: this much more power at the full speed, none up to the least speed
 	momentum_bonus = 0.25,
 	momentum_min_speed = 4.5, -- m/s
 	momentum_full_speed = 9, -- m/s
 }
+
+-- The arguments of the game's last damage calculation for damage_target, while it is set, by the unit
+local damage_target
+local damage_args = {}
+
+mod:hook_safe(DamageUtils, "calculate_damage", function (damage_output, target_unit, ...)
+	if damage_target and target_unit == damage_target then
+		damage_args[target_unit] = { damage_output, target_unit, ... }
+	end
+end)
+
+-- The damage the game's last hit on a unit would have done with its power level times each of the multipliers
+local function damage_with_power(unit, multipliers)
+	local args = damage_args[unit]
+
+	if not args then
+		return nil
+	end
+
+	-- (these calculations are not recorded)
+	damage_target = nil
+
+	local results = {}
+
+	for i, multiplier in ipairs(multipliers) do
+		local changed = { unpack(args, 1, 12) }
+
+		-- (the fifth is the power level the hit was sent with)
+		changed[5] = args[5] * multiplier
+		results[i] = DamageUtils.calculate_damage(unpack(changed, 1, 12))
+	end
+
+	return results
+end
 
 -- The game's jump speed and gravity for the player, and the player's way to the right on the ground
 local function movement_settings(t)
@@ -495,11 +529,17 @@ local function scenarios()
 				end
 
 				-- A light attack of the game's sword (the suite's loadout) standing still, and one in a dodge forward at the enemy (about
-				-- 7 m/s, so about 14% more). Each is done three times and the least is taken, as a hit can be a critical hit.
+				-- 7.8 m/s, so about 18% more power). The bonus is on the power, and the damage it gives is the game's: the standing hit's
+				-- damage calculation is made again with the power of the full-speed bonus. The damage is a straight line of the power
+				-- between the two, so the bonus at a hit's speed gets its share of that gain. There are no critical hits.
+				t.critical_hits(false)
 				t.on_main_thread(function ()
 					ScriptUnit.extension(t.unit(), "inventory_system"):wield("slot_melee")
 				end)
 				t.wait(1.5)
+
+				-- The damage a full-speed hit gains over a standing one, as a share
+				local full_gain
 
 				local function punch(moving)
 					local target = t.spawn_target(moving and 3.5 or 1.5)
@@ -510,6 +550,8 @@ local function scenarios()
 
 					local damage = t.track_damage(target)
 					local speed_at_hit
+
+					damage_target = target
 
 					-- (a light attack starts as the button is let go and hits about half a second later: the dodge comes in that time)
 					t.press("action_one", 0.05)
@@ -528,21 +570,48 @@ local function scenarios()
 							speed_at_hit = math.sqrt(vx * vx + vy * vy)
 						end
 					end)
+
+					if not moving and not full_gain then
+						local results = t.on_main_thread(function ()
+							return damage_with_power(target, { 1, 1 + CONFIG.momentum_bonus })
+						end)
+
+						full_gain = results and results[1] > 0 and results[2] / results[1] - 1
+					end
+
+					damage_target = nil
+					damage_args[target] = nil
+
 					t.remove(target)
 					t.go_to_start()
-					t.log("%s: %.1f damage, at %.1f m/s", moving and "in a dodge" or "standing", damage.total, speed_at_hit or 0)
+
+					-- (a swing in a dodge can end up at the head, which does more: only hits on the body count)
+					local zones = {}
+					local on_head = false
+
+					for _, hit in ipairs(damage.hits) do
+						zones[#zones + 1] = tostring(hit.zone)
+						on_head = on_head or hit.zone == "head" or hit.zone == "neck"
+					end
+
+					t.log("%s: %.1f damage on the %s, at %.1f m/s", moving and "in a dodge" or "standing", damage.total, table.concat(zones, ", "), speed_at_hit or 0)
+
+					if on_head then
+						return nil
+					end
 
 					return damage.total, speed_at_hit or 0
 				end
 
-				local standing, moving, speed = math.huge, math.huge, math.huge
+				local standing
+				local hits = {}
 
-				-- (a swing in a dodge can pass the enemy: only the ones that hit count)
+				-- (a swing in a dodge can pass the enemy: only the ones that hit the body count)
 				for _ = 1, 4 do
 					local damage = punch(false)
 
 					if damage and damage > 0 then
-						standing = math.min(standing, damage)
+						standing = damage
 					end
 
 					local at
@@ -550,8 +619,7 @@ local function scenarios()
 					damage, at = punch(true)
 
 					if damage and damage > 0 then
-						moving = math.min(moving, damage)
-						speed = math.min(speed, at)
+						hits[#hits + 1] = { damage = damage, speed = at }
 					end
 				end
 
@@ -560,13 +628,27 @@ local function scenarios()
 				end)
 				t.wait(1.5)
 
-				-- The bonus the movement gives at the speed of the hit (movement.lua: 25% at 9 m/s, none up to 4.5 m/s), of which most has to
-				-- show, the damage being rounded
-				local bonus = CONFIG.momentum_bonus * math.max(speed - CONFIG.momentum_min_speed, 0) / (CONFIG.momentum_full_speed - CONFIG.momentum_min_speed)
+				if not t.expect(standing and #hits > 0, "a target could not be hit") or not t.expect(full_gain, "the standing hit's damage could not be worked out") then
+					return
+				end
 
-				t.expect(standing < math.huge and moving < math.huge, "a target could not be spawned")
-				t.expect(speed > CONFIG.momentum_min_speed, "the hit in a dodge came at %.1f m/s, too slow for a bonus", speed)
-				t.expect(moving >= standing * (1 + bonus * 0.7), "a hit at %.1f m/s did %.1f, %.0f%% more than one standing (%.1f), not %.0f%%", speed, moving, (moving / standing - 1) * 100, standing, bonus * 100)
+				-- The damage at a speed: the share of the full-speed bonus (movement.lua: 25% more power at 9 m/s, none up to 4.5 m/s)
+				local function expected_at(speed)
+					local share = math.max(speed - CONFIG.momentum_min_speed, 0) / (CONFIG.momentum_full_speed - CONFIG.momentum_min_speed)
+
+					return standing * (1 + full_gain * share)
+				end
+
+				t.log("a full-speed hit does %.1f%% more damage than a standing one", full_gain * 100)
+
+				-- The speed is read a frame or so after the hit, and the damage is rounded to a quarter
+				for _, hit in ipairs(hits) do
+					local least = expected_at(hit.speed - CONFIG.speed_margin) - 0.25
+					local most = expected_at(hit.speed + CONFIG.speed_margin) + 0.25
+
+					t.expect(hit.speed > CONFIG.momentum_min_speed, "the hit in a dodge came at %.1f m/s, too slow for a bonus", hit.speed)
+					t.expect(hit.damage >= least and hit.damage <= most, "a hit at %.1f m/s did %.1f, not %.1f to %.1f (%.1f standing)", hit.speed, hit.damage, least, most, standing)
+				end
 			end,
 		},
 		{
