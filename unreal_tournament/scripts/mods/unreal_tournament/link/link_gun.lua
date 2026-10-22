@@ -42,6 +42,7 @@ local VARIANTS = {
 		template = "ut_link_gun_dr_template",
 		hand = "right",
 	},
+	-- The beam holds the crossbow's aim, its alt fire, until it ends (beam_animation).
 	{
 		base_item = "wh_crossbow",
 		deus_copy = "deus_wh_crossbow",
@@ -49,6 +50,7 @@ local VARIANTS = {
 		key = "ut_link_gun_wh",
 		template = "ut_link_gun_wh_template",
 		hand = "left",
+		beam_animation = { "to_zoom", "to_unzoom" },
 	},
 	-- Sienna's staffs have no ammo. This copy has the Link Gun's. The local item list shows only her own staff to the Necromancer, so she
 	-- is named here, as the Shock Rifle does. Her heat is her career's, not the staff's, so her talents and skill still build it while
