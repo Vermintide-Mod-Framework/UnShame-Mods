@@ -134,9 +134,6 @@ local CONFIG = {
 	-- LinkProjectile: Damage, Speed, the acceleration along its way (PostNetBeginPlay), MaxSpeed and the speed each link adds to it
 	-- (LinkAdjust), and LifeSpan. The speeds are UT units a second, turned into meters by the size of a UT unit.
 	bolt_damage = 30,
-	-- The bolt's damage is scaled down as the Rocket Launcher's and the Bio Rifle's are (UT's 90 is 60 here), because the game's enemies
-	-- walk into the bolts, where UT's players dodge them
-	bolt_damage_scale = 60 / 90,
 	bolt_speed = 1000,
 	bolt_acceleration = 3000,
 	bolt_max_speed = 4000,
@@ -148,6 +145,9 @@ local CONFIG = {
 	beam_rate = 0.12, -- s
 	beam_ammo = 1,
 	beam_damage = 9,
+	-- The bolt's and the beam's damage are scaled down as the Rocket Launcher's and the Bio Rifle's are (UT's 90 is 60 here), because
+	-- the game's enemies walk into the bolts and stand in the beam, where UT's players dodge them
+	damage_scale = 60 / 90,
 	beam_range = 1100, -- UT units
 	beam_range_per_link = 250,
 	linked_range_scale = 1.5,
@@ -211,8 +211,8 @@ local BOLT = {
 	-- (the Shock Rifle's ball's hit reactions and effects)
 	attack_template = "fireball",
 	damage_type = "grenade",
-	attack_power = attack_power_for(CONFIG.bolt_damage * CONFIG.bolt_damage_scale),
-	impact_power = impact_power_for(CONFIG.bolt_damage * CONFIG.bolt_damage_scale),
+	attack_power = attack_power_for(CONFIG.bolt_damage * CONFIG.damage_scale),
+	impact_power = impact_power_for(CONFIG.bolt_damage * CONFIG.damage_scale),
 	armor_attack = CONFIG.bolt_armor_attack,
 	armor_impact = CONFIG.bolt_armor_impact,
 	critical_armor_attack = CONFIG.bolt_armor_attack,
@@ -238,8 +238,8 @@ local BEAM = utils.damage_profile_spec(BOLT, {
 	-- (the Beam Staff's beam's hit reactions, and the repeater's hit effects)
 	attack_template = "wizard_staff_beam",
 	damage_type = "shot_repeating_handgun",
-	attack_power = attack_power_for(CONFIG.beam_damage),
-	impact_power = impact_power_for(CONFIG.beam_damage),
+	attack_power = attack_power_for(CONFIG.beam_damage * CONFIG.damage_scale),
+	impact_power = impact_power_for(CONFIG.beam_damage * CONFIG.damage_scale),
 	armor_attack = CONFIG.beam_armor_attack,
 	armor_impact = CONFIG.beam_armor_impact,
 	critical_armor_attack = CONFIG.beam_armor_attack,
@@ -616,19 +616,22 @@ local function apply_link_gun(template)
 
 	-- The chart of the item's stats, from 0 to 7. The bolts are the light attack, and the beam is the heavy one.
 	template.weapon_diagram = {
+		-- (0.31 of attack and 0.13 of impact a bolt, where the Repeater Pistol's 0.33 and 0.18 show 3 and 1; 0.8 to armor)
 		light_attack = {
-			[DamageTypes.ARMOR_PIERCING] = 4,
+			[DamageTypes.ARMOR_PIERCING] = 3,
 			[DamageTypes.CLEAVE] = 1,
 			[DamageTypes.SPEED] = 5,
-			[DamageTypes.STAGGER] = 2,
-			[DamageTypes.DAMAGE] = 4,
+			[DamageTypes.STAGGER] = 1,
+			[DamageTypes.DAMAGE] = 3,
 		},
+		-- (0.09 of attack and 0.04 of impact a hit, near the Beam Staff's beam, which shows 3 and 0, at half the bolts' damage a
+		-- second; 0.5 to armor)
 		heavy_attack = {
 			[DamageTypes.ARMOR_PIERCING] = 2,
 			[DamageTypes.CLEAVE] = 1,
 			[DamageTypes.SPEED] = 7,
-			[DamageTypes.STAGGER] = 1,
-			[DamageTypes.DAMAGE] = 3,
+			[DamageTypes.STAGGER] = 0,
+			[DamageTypes.DAMAGE] = 2,
 		},
 	}
 
