@@ -232,11 +232,12 @@ local function new(def, looks)
 			return nil
 		end
 
-		-- Both hands' units are needed, because the Beam Staff's left hand has the flame
+		-- Both hands' units are needed, because the Beam Staff's left hand has the flame. The ammo's units are hidden too: the crossbow's
+		-- bolt is one, linked to the hand, not to the crossbow.
 		local units = {}
 
 		-- The keys are walked by name, because ipairs stops at a missing hand. The Repeating Crossbow is in the left hand only.
-		for _, key in ipairs({"right_hand_wielded_unit_3p", "left_hand_wielded_unit_3p"}) do
+		for _, key in ipairs({"right_hand_wielded_unit_3p", "left_hand_wielded_unit_3p", "right_hand_ammo_unit_3p", "left_hand_ammo_unit_3p"}) do
 			local game_unit = equipment[key]
 
 			if game_unit and Unit.alive(game_unit) then
