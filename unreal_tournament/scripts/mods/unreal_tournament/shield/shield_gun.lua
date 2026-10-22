@@ -20,12 +20,13 @@ local impact_power_for = utils.impact_power_for
 
 local DESCRIPTION = "The Kemphler DD280 Riot Control Device has the ability to resist and reflect incoming projectiles and energy beams. The plasma wave inflicts massive damage, rupturing tissue, pulverizing organs, and flooding the bloodstream with dangerous gas bubbles."
 
--- The items, one for each hero. The careers of each are those of its base. What the game's talents, traits and properties take each for
--- is its base's kind of weapon (weapon_type), so that each hero's talents see his own.
+-- The items, one for each hero. The careers of each are those of its base, with the ones the DLCs add to it (Kerillian's spear gets the
+-- Sister of the Thorn). What the game's talents, traits and properties take each for is its base's kind of weapon (weapon_type), so that
+-- each hero's talents see his own.
 local VARIANTS = {
 	{
 		base_item = "es_bastard_sword",
-		deus_copy = "deus_es_bastard_sword",
+		can_wield = { "es_huntsman", "es_knight", "es_mercenary", "es_questingknight" },
 		id = "shield_gun",
 		key = "ut_shield_gun",
 		template = "ut_shield_gun_template",
@@ -37,7 +38,7 @@ local VARIANTS = {
 	},
 	{
 		base_item = "dr_2h_cog_hammer",
-		deus_copy = "deus_dr_2h_cog_hammer",
+		can_wield = { "dr_engineer", "dr_ranger", "dr_ironbreaker", "dr_slayer" },
 		id = "shield_gun_dr",
 		key = "ut_shield_gun_dr",
 		template = "ut_shield_gun_dr_template",
@@ -50,7 +51,7 @@ local VARIANTS = {
 	},
 	{
 		base_item = "bw_ghost_scythe",
-		deus_copy = "deus_bw_ghost_scythe",
+		can_wield = { "bw_scholar", "bw_adept", "bw_unchained", "bw_necromancer" },
 		id = "shield_gun_bw",
 		key = "ut_shield_gun_bw",
 		template = "ut_shield_gun_bw_template",
@@ -62,7 +63,7 @@ local VARIANTS = {
 	},
 	{
 		base_item = "wh_2h_billhook",
-		deus_copy = "deus_wh_2h_billhook",
+		can_wield = { "wh_zealot", "wh_bountyhunter", "wh_captain" },
 		id = "shield_gun_wh",
 		key = "ut_shield_gun_wh",
 		template = "ut_shield_gun_wh_template",
@@ -77,7 +78,7 @@ local VARIANTS = {
 	},
 	{
 		base_item = "we_spear",
-		deus_copy = "deus_we_spear",
+		can_wield = { "we_shade", "we_maidenguard", "we_waywatcher", "we_thornsister" },
 		id = "shield_gun_we",
 		key = "ut_shield_gun_we",
 		template = "ut_shield_gun_we_template",
@@ -95,7 +96,13 @@ for _, variant in ipairs(VARIANTS) do
 		key = variant.key,
 		template = variant.template,
 		base_item = variant.base_item,
-		deus_copy = variant.deus_copy,
+		can_wield = variant.can_wield,
+		-- A two-handed melee weapon's, for every hero's copy
+		slot_type = "melee",
+		property_table_name = "melee",
+		trait_table_name = "melee",
+		deus_property_table_name = "deus_melee",
+		deus_trait_table_name = "deus_heavy_melee",
 		name = "UT2004 Shield Gun",
 		type_name = "Shield Gun",
 		description = DESCRIPTION,

@@ -14,9 +14,14 @@ mod.items.register(SETTING_ID, {
 	key = ITEM_KEY,
 	template = TEMPLATE_NAME,
 	base_item = "bw_skullstaff_beam",
-	deus_copy = "deus_bw_skullstaff_beam",
-	-- The careers are the Beam Staff's, plus the Necromancer, which is a DLC career that has its own staffs.
+	-- The careers are the Beam Staff's: its own and the Necromancer, whom her DLC adds to it
 	can_wield = { "bw_scholar", "bw_adept", "bw_unchained", "bw_necromancer" },
+	-- A staff's: the overcharge traits
+	slot_type = "ranged",
+	property_table_name = "ranged",
+	trait_table_name = "ranged_heat",
+	deus_property_table_name = "deus_ranged",
+	deus_trait_table_name = "deus_ranged_heat",
 	name = "UT2004 Shock Rifle",
 	type_name = "Shock Rifle",
 	-- This is UT2004's description, shortened.

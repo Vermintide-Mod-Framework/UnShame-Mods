@@ -23,64 +23,114 @@ local UNIT = utils.UT_UNIT
 
 local DESCRIPTION = "Riordan Dynamic Weapon Systems combines the best of weapon design in the Advanced Plasma Rifle v23, commonly known as the Link Gun. Its secondary mode is a switchable energy matrix: on a teammate it becomes a harmless carrier stream that boosts the output of any targeted player also using the Link."
 
--- The items, one for each hero, on the base that reaches the most of the hero's careers. hand is the hand that holds the base's weapon,
--- which the actions and the ammo are on.
+-- The aim assist for a controller of the guns (the repeater handgun's) and of the staffs (their own, which only turns the aim when the
+-- player doesn't)
+local GUN_AIM_ASSIST = {
+	always_auto_aim = true,
+	base_multiplier = 0.15,
+	effective_max_range = 10,
+	max_range = 22,
+	no_aim_input_multiplier = 0,
+	breed_scalars = {
+		skaven_clan_rat = 1,
+		skaven_slave = 1,
+		skaven_storm_vermin = 0.25,
+	},
+}
+local STAFF_AIM_ASSIST = {
+	always_auto_aim = true,
+	base_multiplier = 0,
+	effective_max_range = 30,
+	max_range = 50,
+	no_aim_input_multiplier = 0,
+	target_node = "j_spine1",
+	breed_scalars = {
+		skaven_clan_rat = 1,
+		skaven_slave = 1,
+		skaven_storm_vermin = 1,
+	},
+}
+
+-- The items, one for each hero, on the base that reaches the most of the hero's careers.
+--   can_wield: the base's careers, with those its DLCs add to it.
+--   hand: the hand that holds the base's weapon, which the actions and the ammo are on.
+--   weapon_type, dodge_count, spread_template, aim_assist: the base's kind of weapon, which the game's talents, traits and properties
+--       go by, so that each hero's talents see his own, and its dodges, spread and aim assist.
 local VARIANTS = {
 	{
 		base_item = "es_repeating_handgun",
-		deus_copy = "deus_es_repeating_handgun",
+		can_wield = { "es_huntsman", "es_knight", "es_mercenary" },
 		id = "link_gun",
 		key = "ut_link_gun",
 		template = "ut_link_gun_template",
 		hand = "right",
+		weapon_type = "REPEATING_HANDGUN",
+		dodge_count = 1,
+		spread_template = "repeating_handgun",
+		aim_assist = GUN_AIM_ASSIST,
 	},
 	{
 		base_item = "dr_handgun",
-		deus_copy = "deus_dr_handgun",
+		can_wield = { "dr_ironbreaker", "dr_ranger", "dr_engineer" },
 		id = "link_gun_dr",
 		key = "ut_link_gun_dr",
 		template = "ut_link_gun_dr_template",
 		hand = "right",
+		weapon_type = "HANDGUN",
+		dodge_count = 2,
+		spread_template = "handgun",
+		aim_assist = GUN_AIM_ASSIST,
 	},
 	-- The beam holds the crossbow's aim, its alt fire, until it ends (beam_animation).
 	{
 		base_item = "wh_crossbow",
-		deus_copy = "deus_wh_crossbow",
+		can_wield = { "wh_zealot", "wh_bountyhunter", "wh_captain" },
 		id = "link_gun_wh",
 		key = "ut_link_gun_wh",
 		template = "ut_link_gun_wh_template",
 		hand = "left",
 		beam_animation = { "to_zoom", "to_unzoom" },
+		-- (where its item's ammo unit, the bolt, is attached: the gun can't be spawned without it)
+		ammo_unit_linking = AttachmentNodeLinking.bolt,
+		weapon_type = "CROSSBOW",
+		dodge_count = 1,
+		spread_template = "crossbow",
+		aim_assist = GUN_AIM_ASSIST,
 	},
-	-- Sienna's staffs have no ammo. This copy has the Link Gun's. The local item list shows only her own staff to the Necromancer, so she
-	-- is named here, as the Shock Rifle does. Her heat is her career's, not the staff's, so her talents and skill still build it while
-	-- she holds the Link Gun, and the reload button vents it (vents). The staff's shot animation is the start of its beam, so her bolt
-	-- plays none (no_shot_animation). Her beam plays the staff's beam, which holds the arm out until it ends
+	-- Sienna's staffs have no ammo. This copy has the Link Gun's. Her heat is her career's, not the staff's, so her talents and skill still
+	-- build it while she holds the Link Gun, and the reload button vents it (vents). The staff's shot animation is the start of its beam,
+	-- so her bolt plays none (no_shot_animation). Her beam plays the staff's beam, which holds the arm out until it ends
 	-- (beam_animation).
 	{
 		base_item = "bw_skullstaff_beam",
-		deus_copy = "deus_bw_skullstaff_beam",
+		can_wield = { "bw_scholar", "bw_adept", "bw_unchained", "bw_necromancer" },
 		id = "link_gun_bw",
 		key = "ut_link_gun_bw",
 		template = "ut_link_gun_bw_template",
 		hand = "right",
-		can_wield = { "bw_scholar", "bw_adept", "bw_unchained", "bw_necromancer" },
 		vents = true,
 		no_shot_animation = true,
 		beam_animation = { "attack_shoot_beam_start", "attack_shoot_beam_end" },
+		weapon_type = "FIRE_STAFF",
+		dodge_count = 2,
+		spread_template = "spear",
+		aim_assist = STAFF_AIM_ASSIST,
 	},
 	-- The Deepwood Staff's item lists only the Sister of the Thorn, but all four of Kerillian's careers share one third person body, which
 	-- has the staff's animations, so this copy lists all four (as the Lightning Gun's does). It has the Link Gun's ammo. The staff's shot
 	-- animation is a spell cast with the whole arm, so her bolt plays none (no_shot_animation).
 	{
 		base_item = "we_life_staff",
-		deus_copy = "deus_we_life_staff",
+		can_wield = { "we_shade", "we_maidenguard", "we_waywatcher", "we_thornsister" },
 		id = "link_gun_we",
 		key = "ut_link_gun_we",
 		template = "ut_link_gun_we_template",
 		hand = "left",
-		can_wield = { "we_shade", "we_maidenguard", "we_waywatcher", "we_thornsister" },
 		no_shot_animation = true,
+		weapon_type = "LIFE_STAFF",
+		dodge_count = 2,
+		spread_template = "spear",
+		aim_assist = STAFF_AIM_ASSIST,
 	},
 }
 
@@ -93,8 +143,13 @@ for _, variant in ipairs(VARIANTS) do
 		key = variant.key,
 		template = variant.template,
 		base_item = variant.base_item,
-		deus_copy = variant.deus_copy,
 		can_wield = variant.can_wield,
+		-- A gun's, for every hero's copy, the staffs' too, as all of them use ammo: the ammo traits
+		slot_type = "ranged",
+		property_table_name = "ranged",
+		trait_table_name = "ranged_ammo",
+		deus_property_table_name = "deus_ranged_ammo",
+		deus_trait_table_name = "deus_ranged_ammo",
 		name = "UT2004 Link Gun",
 		type_name = "Link Gun",
 		description = DESCRIPTION,
@@ -607,6 +662,53 @@ local function build_beam(hand, anims)
 	}
 end
 
+-- Venting Sienna's heat, as her Beam Staff does: holding the reload button vents it over 3 seconds while she is slowed, when there is
+-- heat. It has no animation, which the Link Gun's model doesn't have.
+local function has_heat(action_user)
+	return ScriptUnit.extension(action_user, "overcharge_system"):get_overcharge_value() ~= 0
+end
+
+local function build_vent()
+	return {
+		kind = "charge",
+		charge_effect_material_name = "Fire",
+		charge_effect_material_variable_name = "intensity",
+		charge_sound_name = "player_combat_weapon_staff_cooldown",
+		charge_sound_parameter_name = "drakegun_charge_fire",
+		charge_sound_stop_event = "stop_player_combat_weapon_staff_cooldown",
+		charge_sound_switch = "projectile_charge_sound",
+		charge_time = 3,
+		do_not_validate_with_hold = true,
+		hold_input = "weapon_reload_hold",
+		minimum_hold_time = 0.5,
+		uninterruptible = true,
+		vent_overcharge = true,
+		total_time = math.huge,
+		buff_data = {
+			{
+				buff_name = "planted_fast_decrease_movement",
+				external_multiplier = 0.2,
+				start_time = 0,
+				end_time = math.huge,
+			},
+		},
+		enter_function = function (attacker_unit, input_extension)
+			input_extension:reset_release_input()
+			input_extension:clear_input_buffer()
+		end,
+		allowed_chain_actions = {
+			{
+				action = "action_wield",
+				input = "action_wield",
+				start_time = 0.2,
+				sub_action = "default",
+			},
+		},
+		condition_func = has_heat,
+		chain_condition_func = has_heat,
+	}
+end
+
 -- Makes the gun on the shell of its base (utils.template_shell): everything that is not the base's animations, models and sounds is set
 -- here
 local function apply_link_gun(template)
@@ -653,17 +755,10 @@ local function apply_link_gun(template)
 	actions.action_wield = table.clone(ActionTemplates.wield)
 	actions.weapon_reload = table.clone(ActionTemplates.reload)
 
-	-- A copy that vents has the base staff's vent on the reload button instead, without its animation, which the Link Gun's model doesn't
-	-- have. All the ammo is in the clip, so the gun never needs the reload.
+	-- A copy that vents has a vent on the reload button instead. All the ammo is in the clip, so the gun never needs the reload.
 	if variant.vents then
-		local vent = table.clone(base.actions.weapon_reload.default)
-
-		vent.anim_event = nil
-		vent.anim_end_event = nil
-		vent.anim_end_event_condition_func = nil
-
 		actions.weapon_reload = {
-			default = vent,
+			default = build_vent(),
 		}
 	end
 
@@ -672,7 +767,7 @@ local function apply_link_gun(template)
 	-- All the ammo is the clip, and picked up ammo is added to it, so there is no reload between shots. A base whose item has an ammo unit
 	-- (the crossbow's bolt) needs where to attach it, or the gun can't be spawned (GearUtils.spawn_inventory_unit).
 	template.ammo_data = {
-		ammo_unit_attachment_node_linking = base.ammo_data and base.ammo_data.ammo_unit_attachment_node_linking,
+		ammo_unit_attachment_node_linking = variant.ammo_unit_linking,
 		ammo_hand = hand,
 		max_ammo = CONFIG.max_ammo,
 		ammo_per_clip = CONFIG.max_ammo,
@@ -702,14 +797,21 @@ local function apply_link_gun(template)
 		max_range = CONFIG.bot_max_range,
 	}
 
-	-- What the game's talents, traits and properties take it for, and dodging, the crosshair and the aim assist: the base's
+	-- What the game's talents, traits and properties take it for, and dodging, the crosshair and the aim assist (see VARIANTS)
 	template.buff_type = "RANGED"
-	template.weapon_type = base.weapon_type
-	template.dodge_count = base.dodge_count
-	template.buffs = base.buffs and table.clone(base.buffs)
+	template.weapon_type = variant.weapon_type
+	template.dodge_count = variant.dodge_count
+	template.buffs = {
+		change_dodge_distance = {
+			external_optional_multiplier = 1,
+		},
+		change_dodge_speed = {
+			external_optional_multiplier = 1,
+		},
+	}
 	template.crosshair_style = "default"
-	template.default_spread_template = base.default_spread_template
-	template.aim_assist_settings = base.aim_assist_settings and table.clone(base.aim_assist_settings)
+	template.default_spread_template = variant.spread_template
+	template.aim_assist_settings = table.clone(variant.aim_assist)
 
 	-- The tooltip's light attack is the bolts, and its heavy attack the beam
 	template.tooltip_compare = {

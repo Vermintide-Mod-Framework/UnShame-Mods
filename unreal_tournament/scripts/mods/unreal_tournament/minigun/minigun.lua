@@ -14,13 +14,14 @@ local DESCRIPTION = "The Schultz-Metzger T23-A 23mm rotary cannon is capable of 
 
 -- The items. Kruber's careers have a repeating gun, and Saltzpyre's a repeater pistol, and they are separate templates. What the two
 -- copies set differently is here, the base weapons' own values: the rest is the same for both (see apply_gun).
+--   can_wield: the careers, the base weapon's.
 --   weapon_type: what the game's talents, traits and properties take the weapon for, which each hero's own talents look for.
 --   update_anim_ammo: whether the gun's animations are told how much ammo is left. fire_at_gaze_setting: the setting of Tobii's eye
 --       tracking that fires where the player looks.
 local VARIANTS = {
 	{
 		base_item = "es_repeating_handgun",
-		deus_copy = "deus_es_repeating_handgun",
+		can_wield = { "es_huntsman", "es_knight", "es_mercenary" },
 		id = "minigun",
 		key = "ut_minigun",
 		template = "ut_minigun_template",
@@ -30,7 +31,7 @@ local VARIANTS = {
 	},
 	{
 		base_item = "wh_repeating_pistols",
-		deus_copy = "deus_wh_repeating_pistols",
+		can_wield = { "wh_zealot", "wh_bountyhunter", "wh_captain" },
 		id = "minigun_wh",
 		key = "ut_minigun_wh",
 		template = "ut_minigun_wh_template",
@@ -47,7 +48,13 @@ for _, variant in ipairs(VARIANTS) do
 		key = variant.key,
 		template = variant.template,
 		base_item = variant.base_item,
-		deus_copy = variant.deus_copy,
+		can_wield = variant.can_wield,
+		-- A gun's: the ammo traits
+		slot_type = "ranged",
+		property_table_name = "ranged",
+		trait_table_name = "ranged_ammo",
+		deus_property_table_name = "deus_ranged_ammo",
+		deus_trait_table_name = "deus_ranged_ammo",
 		name = "UT2004 Minigun",
 		type_name = "Minigun",
 		description = DESCRIPTION,

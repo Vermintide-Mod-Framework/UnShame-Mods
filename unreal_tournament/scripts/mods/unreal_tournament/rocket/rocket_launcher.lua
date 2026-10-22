@@ -21,7 +21,14 @@ mod.items.register(SETTING_ID, {
 	key = ITEM_KEY,
 	template = TEMPLATE_NAME,
 	base_item = "wh_crossbow_repeater",
-	deus_copy = "deus_wh_crossbow_repeater",
+	-- (the Repeating Crossbow's careers)
+	can_wield = { "wh_zealot", "wh_bountyhunter", "wh_captain" },
+	-- A gun's: the ammo traits
+	slot_type = "ranged",
+	property_table_name = "ranged",
+	trait_table_name = "ranged_ammo",
+	deus_property_table_name = "deus_ranged_ammo",
+	deus_trait_table_name = "deus_ranged_ammo",
 	name = "UT2004 Rocket Launcher",
 	type_name = "Rocket Launcher",
 	description = "The Trident Tri-barrel Rocket Launcher is extremely popular among competitors who enjoy more bang for their buck. The rotating rear-loading barrel design allows for both single- and multi-warhead launches, letting you place up to three dumbfire rockets on target.",

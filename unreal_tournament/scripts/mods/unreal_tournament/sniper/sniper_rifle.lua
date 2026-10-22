@@ -14,18 +14,18 @@ local first_beam_hit = utils.first_beam_hit
 
 local DESCRIPTION = "This high muzzle velocity sniper rifle with a 10X scope is a lethal weapon at any range, especially if you can land a head shot."
 
--- The two items. The careers of each are those of its base.
+-- The two items. The careers of each are those of its base: Bardin's handgun's are its own and the Engineer, whom his DLC adds to it.
 local VARIANTS = {
 	{
 		base_item = "es_handgun",
-		deus_copy = "deus_es_handgun",
+		can_wield = { "es_huntsman", "es_knight", "es_mercenary" },
 		id = "sniper_rifle",
 		key = "ut_sniper_rifle",
 		template = "ut_sniper_rifle_template",
 	},
 	{
 		base_item = "dr_handgun",
-		deus_copy = "deus_dr_handgun",
+		can_wield = { "dr_ironbreaker", "dr_ranger", "dr_engineer" },
 		id = "sniper_rifle_dr",
 		key = "ut_sniper_rifle_dr",
 		template = "ut_sniper_rifle_dr_template",
@@ -37,7 +37,13 @@ for _, variant in ipairs(VARIANTS) do
 		key = variant.key,
 		template = variant.template,
 		base_item = variant.base_item,
-		deus_copy = variant.deus_copy,
+		can_wield = variant.can_wield,
+		-- A gun's: the ammo traits
+		slot_type = "ranged",
+		property_table_name = "ranged",
+		trait_table_name = "ranged_ammo",
+		deus_property_table_name = "deus_ranged_ammo",
+		deus_trait_table_name = "deus_ranged_ammo",
 		name = "UT2004 Sniper Rifle",
 		type_name = "Sniper Rifle",
 		description = DESCRIPTION,

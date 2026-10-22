@@ -2,7 +2,14 @@
 
 Made in the game at build 1282, with a command that has since been removed: each finished weapon's template compared with the
 template of the game weapon it is a copy of. Every weapon here has been made on the shell of its base since (`utils.template_shell`),
-with what it took from the base set in its own file, so this is what was written out. The Shield Gun's five copies were made one:
+with what it took from the base set in its own file, so this is what was written out. The weapons made after it (the Assault Rifle,
+the Sniper Rifle and the Link Gun) are made the same way.
+
+What a weapon still takes from its base is only what belongs to the base's animations, models and sounds: the template fields in
+`utils.template_shell`'s `SHELL_FIELDS`, the inspect and career skill actions, the animation events each weapon's file names, and
+the item's models. The item's careers, slot, properties and traits, in Chaos Wastes too, are given by each weapon's
+`items.register`. The careers are written out as the base item has them once the game has loaded, with the careers its DLCs add to it
+(`UpdateItemMasterList`: the cog DLC adds the Engineer to Bardin's handgun, Grudge-raker and Drakefire Pistols). The Shield Gun's five copies were made one:
 what they don't take from their base by name is the bastard sword's, and their dodging the billhook's. A part that the mod sets to the same value as the base's is listed too, because the
 comparison can't tell the two apart. A sub-action the base has none of by its name (made from a copy of one of the base's) is
 compared with the base's sub-action it shares the most with. The actions' lookup_data is left out. The damage profiles are

@@ -26,16 +26,18 @@ local impact_power_for = utils.impact_power_for
 
 local DESCRIPTION = "Inexpensive and easily produced, the AR770 provides a lightweight 5.56mm combat solution that is most effective against unarmored foes. The optional M355 Grenade Launcher provides the punch that makes this weapon effective against heavily armored enemies."
 
--- The two items. Each has its base's careers, but Bardin's is for all three of his careers with a ranged slot: the Engineer has the
--- Drakefire Pistols in Versus, and the three share one third person body.
+-- The two items. Each has its base's careers, but Bardin's is for all three of his careers with a ranged slot: the Engineer, whom his
+-- DLC adds to the Drakefire Pistols, and the Ranger, as the three share one third person body.
 --   stance, shot: the base's sub-actions whose third person animations the rifle plays (see stance_linger): its aim, and the shot from
 --       its aim
 --   weapon_type, dodge_count, dodge: the base's, for the game's talents and the dodges
---   deus_melee_tables: the hero's Chaos Wastes melee weapon whose traits it takes there (items.lua's melee_slot)
+--   deus_property_table_name: the properties of its Chaos Wastes weapon, those of the base's there. The traits are a melee weapon's
+--       (items.lua's melee_slot), in Chaos Wastes too.
 local VARIANTS = {
 	{
 		base_item = "wh_brace_of_pistols",
-		deus_copy = "deus_wh_brace_of_pistols",
+		can_wield = { "wh_zealot", "wh_bountyhunter", "wh_captain" },
+		deus_property_table_name = "deus_ranged_ammo",
 		id = "assault_rifle",
 		key = "ut_assault_rifle",
 		template = "ut_assault_rifle_template",
@@ -45,22 +47,20 @@ local VARIANTS = {
 		dodge_count = 100,
 		dodge = 1.25,
 		spread_template = "brace_of_pistols",
-		deus_melee_tables = "deus_wh_1h_axe",
 	},
 	{
 		base_item = "dr_drake_pistol",
-		deus_copy = "deus_dr_drake_pistol",
+		can_wield = { "dr_ironbreaker", "dr_ranger", "dr_engineer" },
+		deus_property_table_name = "deus_ranged",
 		id = "assault_rifle_dr",
 		key = "ut_assault_rifle_dr",
 		template = "ut_assault_rifle_dr_template",
-		can_wield = { "dr_ironbreaker", "dr_ranger", "dr_engineer" },
 		stance = { "action_two", "default" },
 		shot = { "action_one", "shoot_charged" },
 		weapon_type = "DRAKEFIRE",
 		dodge_count = 2,
 		dodge = 1,
 		spread_template = "brace_of_drake_pistols",
-		deus_melee_tables = "deus_dr_1h_axe",
 	},
 }
 
@@ -73,10 +73,15 @@ for _, variant in ipairs(VARIANTS) do
 		key = variant.key,
 		template = variant.template,
 		base_item = variant.base_item,
-		deus_copy = variant.deus_copy,
 		can_wield = variant.can_wield,
 		melee_slot = true,
-		deus_melee_tables = variant.deus_melee_tables,
+		-- A gun's properties (critical strikes and power against enemies, which work on any weapon) and a melee weapon's traits (the
+		-- ranged ones are about ammo)
+		slot_type = "melee",
+		property_table_name = "ranged",
+		trait_table_name = "melee",
+		deus_property_table_name = variant.deus_property_table_name,
+		deus_trait_table_name = "deus_melee",
 		name = "UT2004 Assault Rifles",
 		type_name = "Assault Rifles",
 		description = DESCRIPTION,
@@ -934,11 +939,11 @@ local function apply_template(template)
 	template.buff_type = "MELEE"
 	template.weapon_type = variant.weapon_type
 
-	-- A melee weapon's stamina and block angles, which the tooltip of a melee item shows (and stops the game without): those items.lua
-	-- gave its base copy (melee_slot)
-	template.max_fatigue_points = base.max_fatigue_points
-	template.block_angle = base.block_angle
-	template.outer_block_angle = base.outer_block_angle
+	-- A melee weapon's stamina and block angles, which the tooltip of a melee item shows (and stops the game without): there is no
+	-- block, so the angles are 0, and the stamina is the least the tooltip shows, one shield (as items.lua's melee_slot gives the copy)
+	template.max_fatigue_points = 2
+	template.block_angle = 0
+	template.outer_block_angle = 0
 
 	-- Dodging: the base's. The game's crosshair, and the spread of the base, which each round sets (see handgun_start_callbacks).
 	template.dodge_count = variant.dodge_count

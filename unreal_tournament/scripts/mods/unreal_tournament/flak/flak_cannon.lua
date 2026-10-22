@@ -13,11 +13,11 @@ local register_network_lookup = utils.register_network_lookup
 local attack_power_for = utils.attack_power_for
 local impact_power_for = utils.impact_power_for
 
--- The two items. The careers of each are those of its base.
+-- The two items. The careers of each are those of its base: the Grudge-raker's are its own and the Engineer, whom his DLC adds to it.
 local VARIANTS = {
 	{
 		base_item = "es_blunderbuss",
-		deus_copy = "deus_es_blunderbuss",
+		can_wield = { "es_huntsman", "es_knight", "es_mercenary" },
 		id = "flak_cannon",
 		key = "ut_flak_cannon",
 		template = "ut_flak_cannon_template",
@@ -26,7 +26,7 @@ local VARIANTS = {
 	},
 	{
 		base_item = "dr_rakegun",
-		deus_copy = "deus_dr_rakegun",
+		can_wield = { "dr_ironbreaker", "dr_ranger", "dr_engineer" },
 		id = "flak_cannon_dr",
 		key = "ut_flak_cannon_dr",
 		template = "ut_flak_cannon_dr_template",
@@ -44,7 +44,13 @@ for _, variant in ipairs(VARIANTS) do
 		key = variant.key,
 		template = variant.template,
 		base_item = variant.base_item,
-		deus_copy = variant.deus_copy,
+		can_wield = variant.can_wield,
+		-- A gun's: the ammo traits
+		slot_type = "ranged",
+		property_table_name = "ranged",
+		trait_table_name = "ranged_ammo",
+		deus_property_table_name = "deus_ranged_ammo",
+		deus_trait_table_name = "deus_ranged_ammo",
 		name = "UT2004 Flak Cannon",
 		type_name = "Flak Cannon",
 		description = "The Trident Series 7 Flechette Cannon has evolved into the \"Mk3 Negotiator\". Its ionized flechettes burn and cauterize flesh, fired in a spread from the barrel or by grenades that explode on impact and radiate flechettes.",

@@ -28,7 +28,14 @@ mod.items.register(SETTING_ID, {
 	key = ITEM_KEY,
 	template = TEMPLATE_NAME,
 	base_item = "dr_steam_pistol",
-	deus_copy = "deus_dr_steam_pistol",
+	-- (the Masterwork Pistol's careers)
+	can_wield = { "dr_engineer", "dr_ranger", "dr_ironbreaker" },
+	-- A gun's: the ammo traits
+	slot_type = "ranged",
+	property_table_name = "ranged",
+	trait_table_name = "ranged_ammo",
+	deus_property_table_name = "deus_ranged_ammo",
+	deus_trait_table_name = "deus_ranged_ammo",
 	name = "UT2004 Bio Rifle",
 	type_name = "Bio Rifle",
 	-- This is UT2004's description, shortened.

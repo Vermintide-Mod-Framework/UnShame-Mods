@@ -1,18 +1,21 @@
 local mod = get_mod("unreal_tournament")
 
--- The mod's weapons as items of their own. Each is a copy of a game weapon (its template and its item) with a name of its own. The
--- careers that can use the game's weapon can use the copy. The game's weapon itself is left unchanged.
+-- The mod's weapons as items of their own. Each is made on a game weapon (its template and its item), whose models and animations
+-- it uses, and everything else is given here or by the weapon's own file. The game's weapon itself is left unchanged.
 --
---   items.register(setting_id, { key, template, base_item, deus_copy, name, type_name, description, keywords, texts, icon, icon_package,
+--   items.register(setting_id, { key, template, base_item, can_wield, slot_type, property_table_name, trait_table_name,
+--       deus_property_table_name, deus_trait_table_name, name, type_name, description, keywords, texts, icon, icon_package,
 --       icon_materials })
 --     key: the item's name. It is also used for damage sources, loadouts and the network.
 --     template: the name of the weapon template, which is a copy of base_item's.
---     base_item: the game item that is copied. Its models are used.
---     deus_copy: the Chaos Wastes weapon (a DeusWeapons key) of base_item. The item's Chaos Wastes weapon is a copy of it.
---     can_wield: the careers that can use the item, if they differ from base_item's.
---     melee_slot: the item goes in the melee slot, though base_item is a ranged weapon. It keeps base_item's properties (critical
---         strikes and power against enemies, which work on any weapon), and takes the traits of a melee weapon (the ranged ones are about
---         ammo), in Chaos Wastes those of deus_melee_tables (a DeusWeapons key of a melee weapon).
+--     base_item: the game item that the models come from.
+--     can_wield: the careers that can use the item. The first person animations, units and attachments are made for base_item's careers,
+--         which are its own and those its DLCs add as the game loads (UpdateItemMasterList), and another career that equips the item
+--         crashes the game.
+--     slot_type: "ranged" or "melee".
+--     property_table_name, trait_table_name: the properties and traits the item can have (the game's WeaponProperties and WeaponTraits
+--         tables), and deus_property_table_name, deus_trait_table_name: those of its Chaos Wastes weapon.
+--     melee_slot: the item goes in the melee slot, though base_item is a ranged weapon, so its template has a melee weapon's fields.
 --     name, type_name (the line under the name), description: the texts of the item.
 --     keywords: localization ids for the line under the power. texts: { id = text } for the ids that are the mod's own.
 --     icon: a material in the file icon_materials, which is in the package icon_package.
@@ -439,27 +442,27 @@ function items.register(setting_id, definition)
 	item.description = definition.key .. "_description"
 	-- This is the line under the name in the inventory.
 	item.item_type = definition.key .. "_type"
-	-- The item uses the careers of the weapon it is a copy of. The first person animations, units and attachments are made for those
-	-- careers, and another career that equips the item crashes the game.
-	item.can_wield = table.clone(definition.can_wield or ItemMasterList[definition.base_item].can_wield)
+	item.can_wield = table.clone(definition.can_wield)
+	item.slot_type = definition.slot_type
+	item.property_table_name = definition.property_table_name
+	item.trait_table_name = definition.trait_table_name
+	item.has_power_level = true
+	item.rarity = "plentiful"
 	-- The game's weapon may need a DLC to own it, but the mod's weapon does not.
 	item.required_dlc = nil
 	-- The base weapon's skins don't apply to the item. register_skins gives it skins of its own.
 	item.skin_combination_table = nil
 
 	if definition.melee_slot then
-		item.slot_type = "melee"
-		item.trait_table_name = "melee"
-
 		-- An item of the melee slot has no ammo: the game carries each slot's ammo over to the next level, and stops on a template with
-		-- ammo whose units have none. Its tooltip shows a melee weapon's stamina and block angles, and stops without them. The base
-		-- weapon has no block, so its angles are 0 and its stamina is the least the tooltip shows, one shield. Its bots take it for a
-		-- melee weapon, with the game's default data for one (a ranged weapon's in the melee slot stopped them). This holds for the copy
-		-- below too, which is the template whenever the mod is off (and while it reloads).
+		-- ammo whose units have none. Its tooltip shows a melee weapon's stamina and block angles, and stops without them. The weapon
+		-- has no block, so its angles are 0 and its stamina is the least the tooltip shows, one shield. Its bots take it for a melee
+		-- weapon, with the game's default data for one (a ranged weapon's in the melee slot stopped them). This holds for the copy below
+		-- too, which is the template whenever the mod is off (and while it reloads).
 		template.ammo_data = nil
-		template.max_fatigue_points = template.max_fatigue_points or 2
-		template.block_angle = template.block_angle or 0
-		template.outer_block_angle = template.outer_block_angle or 0
+		template.max_fatigue_points = 2
+		template.block_angle = 0
+		template.outer_block_angle = 0
 		template.buff_type = "MELEE"
 		template.attack_meta_data = nil
 	end
@@ -504,17 +507,28 @@ function items.register(setting_id, definition)
 	-- Chaos Wastes builds its loadouts and drops from its own tables. They are read-only, so rawset is used. They only exist with the DLC.
 	if rawget(_G, "DeusWeapons") then
 		local deus_key = "deus_" .. definition.key
-		local deus_weapon = table.clone(DeusWeapons[definition.deus_copy])
+		-- The trait combinations it can roll, as the game bakes them for its own weapons as it loads (deus_weapons.lua): a trait made
+		-- for some weapons only (compatible_weapon_list) names the game's items, and so never this one
+		local baked_trait_combinations = {}
 
-		deus_weapon.base_item = definition.key
+		for _, combination in ipairs(WeaponTraits.combinations[definition.deus_trait_table_name]) do
+			local valid = true
 
-		-- (DeusWeapons filled these in from the base item as it loaded)
-		if definition.melee_slot then
-			local melee = DeusWeapons[definition.deus_melee_tables]
+			for _, trait_name in ipairs(combination) do
+				valid = valid and not WeaponTraits.traits[trait_name].compatible_weapon_list
+			end
 
-			deus_weapon.trait_table_name = melee.trait_table_name
-			deus_weapon.baked_trait_combinations = melee.baked_trait_combinations
+			if valid then
+				baked_trait_combinations[#baked_trait_combinations + 1] = combination
+			end
 		end
+
+		local deus_weapon = {
+			base_item = definition.key,
+			property_table_name = definition.deus_property_table_name,
+			trait_table_name = definition.deus_trait_table_name,
+			baked_trait_combinations = baked_trait_combinations,
+		}
 
 		rawset(DeusWeapons, deus_key, deus_weapon)
 		rawset(DeusStartingWeaponTypeMapping, definition.key, deus_key)
