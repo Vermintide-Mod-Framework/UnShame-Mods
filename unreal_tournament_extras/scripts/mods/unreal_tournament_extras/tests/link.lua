@@ -38,6 +38,43 @@ local CONFIG = {
 	-- The enemy that is shot, and how far ahead it stands
 	breed = "chaos_marauder",
 	enemy_distance = 6, -- m
+	-- The damage of a bolt and of the beam against armour and monsters, of the damage against an enemy with none, with this much either
+	-- way (link_gun.lua's bolt_armor_attack and beam_armor_attack). Only a first hit is compared, before the enemy is staggered. A
+	-- Stormvermin is armoured, a Chaos warrior's body is super armour, and a rat ogre is a monster and a boss, whose damage the game takes
+	-- down to 0.45 (boss_damage_reduction).
+	bolt_armour_breeds = {
+		{ "skaven_storm_vermin", 0.8 },
+		{ "chaos_warrior", 0.5 },
+		{ "skaven_rat_ogre", 1 * 0.45 },
+	},
+	beam_armour_breeds = {
+		{ "skaven_storm_vermin", 0.5 },
+		{ "chaos_warrior", 0.3 },
+		{ "skaven_rat_ogre", 1 * 0.45 },
+	},
+	armour_margin = 0.1,
+	-- A bolt on the head of an enemy with no armour does the game's head bonus: 0.4 more on linesman_curve, with a boost of 0.5, as the
+	-- Minigun's. The most of a few bolts at the head is taken, as one can hit the neck.
+	headshot_ratio = 1.4,
+	headshot_margin = 0.1,
+	head_tries = 3,
+	-- A critical hit does at least this much more than a plain one, and the breed it is checked against, with the share of the damage
+	-- it takes (the critical armour values are the plain ones)
+	crit_least_ratio = 1.2,
+	crit_armour_breed = { "chaos_warrior", 0.5 },
+	-- An enemy that raises a shield
+	shield_breed = "skaven_clan_rat_with_shield",
+	-- LinkAltFire.ProjSpawnOffset: the bolt starts 8 UT units to the right of the eye and 3 below it (0.02 m a unit), with this much
+	-- either way, and two bolts start within start_same of each other
+	bolt_start_right = 0.16, -- m
+	bolt_start_down = 0.06, -- m
+	start_margin = 0.03, -- m
+	start_same = 0.01, -- m
+	-- LinkProjectile.LifeSpan, with this much either way
+	bolt_life = 3, -- s
+	life_margin = 0.2, -- s
+	-- The beam can start once the bolt's fire rate has passed after a bolt (link_gun.lua's chain_actions), at most this much later
+	switch_late = 0.15, -- s
 	-- The ally who is linked: Bardin as a Ranger with his Link Gun, this far ahead, standing still
 	ally_profile = "dwarf_ranger",
 	ally_career = 1,
@@ -50,6 +87,8 @@ local CONFIG = {
 	linker_behind = -3, -- m
 	firer_ahead = 4, -- m
 	player_aside = 3, -- m
+	-- How long a bot has to hurt an enemy with its Link Gun
+	bot_fight_time = 30, -- s
 	-- How long the bot may take to turn and link, and to let go once the firing stops (a bolt counts for half a second, and the link holds
 	-- half a second more)
 	bot_link_time = 5, -- s
@@ -185,18 +224,32 @@ local function speed_between(track, from, to)
 	return distance / (b[1] - a[1])
 end
 
--- The damage of the first hit of a mode on an enemy ahead: "bolt" (a tap of the left button) or "beam" (a moment of the right button)
-local function first_hit(t, mode)
+-- The damage of the first hit of a mode on an enemy ahead: "bolt" (a tap of the left button) or "beam" (a moment of the right button). The
+-- enemy is CONFIG.breed if no breed is given, and the shot is aimed at its middle, or at its head.
+local function first_hit(t, mode, breed_name, at_head)
+	breed_name = breed_name or CONFIG.breed
+
 	t.go_to_start()
 
-	local enemy = t.spawn(CONFIG.breed, CONFIG.enemy_distance)
+	local enemy = t.spawn(breed_name, CONFIG.enemy_distance)
 
-	if not t.expect(enemy, "the %s could not be spawned", CONFIG.breed) then
+	if not t.expect(enemy, "the %s could not be spawned", breed_name) then
 		return nil
 	end
 
 	t.wait(1)
-	t.aim_at(enemy)
+
+	if at_head then
+		local head = t.on_main_thread(function ()
+			local position = Unit.world_position(enemy, Unit.node(enemy, "j_head"))
+
+			return { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
+		end)
+
+		t.aim_at_point(head[1], head[2], head[3])
+	else
+		t.aim_at(enemy)
+	end
 
 	local damage = t.track_damage(enemy)
 
@@ -212,6 +265,81 @@ local function first_hit(t, mode)
 	t.wait(0.5)
 
 	return damage.hits[1] and damage.hits[1].amount
+end
+
+-- Checks a mode's damage against each armour type, as a share of the damage against an enemy with none. There are no critical hits.
+local function check_armour(t, mode, breeds)
+	t.critical_hits(false)
+
+	local plain = first_hit(t, mode)
+
+	if not t.expect(plain, "the %s did not hurt the %s", mode, CONFIG.breed) then
+		return
+	end
+
+	for _, entry in ipairs(breeds) do
+		local breed_name, share = entry[1], entry[2]
+		local damage = first_hit(t, mode, breed_name)
+
+		if t.expect(damage, "the %s did not hurt the %s", mode, breed_name) then
+			t.log("%s, %s: %.2f, %.2f of the marauder's %.2f", mode, breed_name, damage, damage / plain, plain)
+			t.expect(math.abs(damage / plain - share) <= CONFIG.armour_margin, "the %s did %.2f of its damage to the %s, not %.2f", mode, damage / plain, breed_name, share)
+		end
+	end
+end
+
+-- Takes all the ammo out of the player's Link Gun
+local function empty(t)
+	t.on_main_thread(function ()
+		local ammo_extension = gun_ammo(t.unit())
+
+		if ammo_extension then
+			ammo_extension:use_ammo(ammo_extension:ammo_count())
+		end
+	end)
+	t.wait(0.2)
+end
+
+-- Where the player's eye is and the way it looks: { position, forward, right, up }, boxed
+local function eye_of(t)
+	return t.on_main_thread(function ()
+		local first_person_extension = ScriptUnit.extension(t.unit(), "first_person_system")
+		local rotation = first_person_extension:current_rotation()
+
+		return {
+			position = Vector3Box(first_person_extension:current_position()),
+			forward = Vector3Box(Quaternion.forward(rotation)),
+			right = Vector3Box(Quaternion.right(rotation)),
+			up = Vector3Box(Quaternion.up(rotation)),
+		}
+	end)
+end
+
+-- How far to the right of the eye and below it a track's first point is
+local function start_offset(track, eye)
+	local point = track and track[1]
+
+	if not point then
+		return nil
+	end
+
+	local offset = Vector3(point[2], point[3], point[4]) - eye.position:unbox()
+
+	return { Vector3.dot(offset, eye.right:unbox()), -Vector3.dot(offset, eye.up:unbox()) }
+end
+
+-- The bolt the player fires with a tap, as it flies: its unit, or nil if none was seen
+local function fire_and_find_bolt(t)
+	local found
+
+	local function look()
+		found = found or t.projectiles(is_bolt)[1]
+	end
+
+	t.press("action_one", 0.05, look)
+	t.watch(0.2, look)
+
+	return found
 end
 
 local function scenarios()
@@ -367,6 +495,355 @@ local function scenarios()
 				t.log("%d hits and %d ammo in %.1f s", hits, used, CONFIG.beam_time)
 				t.expect(math.abs(hits - expected) <= CONFIG.hit_margin, "the beam hurt the %s %d times, not about %d", CONFIG.breed, hits, expected)
 				t.expect(math.abs(used - expected * CONFIG.beam_ammo) <= CONFIG.hit_margin, "the beam used %d ammo, not about %d", used, expected * CONFIG.beam_ammo)
+			end,
+		},
+		{
+			name = "with no ammo nothing is fired",
+			run = function (t)
+				empty(t)
+				t.expect(t.ammo() == 0, "%s ammo is left, not 0", tostring(t.ammo()))
+
+				local tracks, observe = bolt_tracker(t)
+				local beamed = false
+
+				local function watch()
+					observe()
+
+					beamed = beamed or link.beams[t.unit()] ~= nil
+				end
+
+				t.press("action_one", 0.5, watch)
+				t.press("action_two", 0.5, watch)
+				t.watch(0.3, watch)
+
+				t.expect(count(tracks) == 0, "%d bolts were fired with no ammo", count(tracks))
+				t.expect(not beamed, "the beam was fired with no ammo")
+			end,
+		},
+		{
+			-- The bolt starts ProjSpawnOffset from the eye, and two bolts start in the same place
+			name = "a bolt starts to the right of the eye and below it, in the same place each time",
+			run = function (t)
+				local starts = {}
+
+				for i = 1, 2 do
+					t.look(0)
+
+					local eye = eye_of(t)
+					local tracks, observe = bolt_tracker(t)
+
+					t.press("action_one", 0.05, observe)
+					t.watch(0.15, observe)
+
+					starts[i] = start_offset(next(tracks) and tracks[next(tracks)], eye)
+
+					if not t.expect(starts[i], "bolt %d was not seen flying", i) then
+						return
+					end
+
+					t.log("bolt %d: %.3f m right, %.3f m down", i, starts[i][1], starts[i][2])
+					t.wait(CONFIG.bolt_rate)
+				end
+
+				for i, start in ipairs(starts) do
+					t.expect(math.abs(start[1] - CONFIG.bolt_start_right) <= CONFIG.start_margin, "bolt %d started %.2f m to the right of the eye, not %.2f", i, start[1], CONFIG.bolt_start_right)
+					t.expect(math.abs(start[2] - CONFIG.bolt_start_down) <= CONFIG.start_margin, "bolt %d started %.2f m below the eye, not %.2f", i, start[2], CONFIG.bolt_start_down)
+				end
+
+				t.expect(math.abs(starts[1][1] - starts[2][1]) <= CONFIG.start_same and math.abs(starts[1][2] - starts[2][2]) <= CONFIG.start_same, "the two bolts started in different places")
+			end,
+		},
+		{
+			-- A bolt that hits nothing is gone after LinkProjectile.LifeSpan
+			name = "a bolt that hits nothing is gone after its life",
+			run = function (t)
+				t.look(60)
+
+				local tracks, observe = bolt_tracker(t)
+
+				t.press("action_one", 0.05, observe)
+				t.watch(CONFIG.bolt_life + 1, observe)
+
+				local track = next(tracks) and tracks[next(tracks)]
+
+				if not t.expect(track, "no bolt was fired") then
+					return
+				end
+
+				local life = track[#track][1] - track[1][1]
+
+				t.log("the bolt flew for %.2f s", life)
+				t.expect(math.abs(life - CONFIG.bolt_life) <= CONFIG.life_margin, "the bolt flew for %.2f s, not %.1f", life, CONFIG.bolt_life)
+			end,
+		},
+		{
+			-- The bolt hits an enemy as a rocket does (utils.UT_PROJECTILE_RADIUS), and a wall by a ray, as UT's bolt is a point
+			name = "a bolt's sphere is UT's against enemies, and a ray against walls",
+			run = function (t)
+				t.look(20)
+
+				local bolt = fire_and_find_bolt(t)
+
+				if not t.expect(bolt, "no bolt flew") then
+					return
+				end
+
+				local sizes = t.on_main_thread(function ()
+					local impact_extension = Unit.alive(bolt) and ScriptUnit.has_extension(bolt, "projectile_impact_system")
+
+					return impact_extension and { radius = impact_extension.radius, static_impact_type = impact_extension.static_impact_type }
+				end)
+
+				if t.expect(sizes, "the bolt was gone before it was looked at") then
+					t.log("enemies %.2f m, walls %s", sizes.radius, tostring(sizes.static_impact_type))
+					t.expect(math.abs(sizes.radius - ut.utils.UT_PROJECTILE_RADIUS) < 0.001, "the bolt's sphere against enemies is %.2f m, not %.2f", sizes.radius, ut.utils.UT_PROJECTILE_RADIUS)
+					t.expect(sizes.static_impact_type == "raycast", "the bolt meets walls by %s, not a ray", tostring(sizes.static_impact_type))
+				end
+			end,
+		},
+		{
+			-- A held right button starts the beam once the bolt's fire rate has passed after a bolt
+			name = "the beam waits for the bolt's fire rate",
+			run = function (t)
+				t.look(10)
+
+				local tracks, observe = bolt_tracker(t)
+				local beam_t
+
+				local function watch()
+					observe()
+
+					if not beam_t and link.beams[t.unit()] then
+						beam_t = Managers.time:time("game")
+					end
+				end
+
+				t.press("action_one", 0.05, watch)
+				t.press("action_two", CONFIG.bolt_rate + 0.5, watch)
+
+				local track = next(tracks) and tracks[next(tracks)]
+
+				if not t.expect(track and beam_t, "the bolt or the beam was not seen (bolt %s, beam %s)", tostring(track ~= nil), tostring(beam_t)) then
+					return
+				end
+
+				local gap = beam_t - track[1][1]
+
+				t.log("the beam started %.2f s after the bolt", gap)
+				t.expect(gap >= CONFIG.bolt_rate - 0.05, "the beam started %.2f s after the bolt, before its fire rate of %.2f s", gap, CONFIG.bolt_rate)
+				t.expect(gap <= CONFIG.bolt_rate + CONFIG.switch_late, "the beam started %.2f s after the bolt, not soon after its fire rate of %.2f s", gap, CONFIG.bolt_rate)
+			end,
+		},
+		{
+			-- The gun can be put away while the beam is held, and the beam stops
+			name = "the gun can be put away while the beam fires",
+			every_hero = true,
+			run = function (t)
+				local template = t.wielded()
+				local enemy = t.spawn(CONFIG.breed, CONFIG.enemy_distance)
+
+				if not t.expect(enemy, "the %s could not be spawned", CONFIG.breed) then
+					return
+				end
+
+				t.wait(1)
+				t.aim_at(enemy)
+
+				local damage = t.track_damage(enemy)
+
+				t.hold("action_two")
+				t.wait(0.5)
+				t.tap("wield_1")
+				t.wait(0.3)
+
+				local hits_at_switch = #damage.hits
+
+				t.wait(1)
+				t.release("action_two")
+
+				t.expect(t.wielded() ~= template, "the gun is still in the hands (%s)", tostring(t.wielded()))
+				t.expect(link.beams[t.unit()] == nil, "the beam is still held after the gun was put away")
+				t.expect(#damage.hits - hits_at_switch <= 1, "the beam hurt the %s %d times after the gun was put away", CONFIG.breed, #damage.hits - hits_at_switch)
+
+				t.tap("wield_2")
+				t.wait(1.5)
+			end,
+		},
+		{
+			-- A bolt and a hit of the beam stop at the first enemy, as UT's do
+			name = "a bolt and the beam stop at the first enemy",
+			run = function (t)
+				for _, entry in ipairs({ { "action_one", 0.05, "bolt" }, { "action_two", 0.6, "beam" } }) do
+					local button, time, name = entry[1], entry[2], entry[3]
+
+					t.go_to_start()
+
+					local near = t.spawn(runner.target_breed, 3)
+					local far = t.spawn(runner.target_breed, 6)
+
+					if not t.expect(near and far, "the targets could not be spawned") then
+						return
+					end
+
+					t.wait(1)
+					t.aim_at(near)
+
+					local near_damage, far_damage = t.track_damage(near), t.track_damage(far)
+
+					t.press(button, time)
+					t.wait(1)
+
+					t.expect(near_damage.total > 0, "the %s did not hurt the near target", name)
+					t.expect(far_damage.total == 0, "the %s hurt the far target, behind the near one: %.1f", name, far_damage.total)
+
+					t.remove(near)
+					t.remove(far)
+				end
+			end,
+		},
+		{
+			-- There are no critical hits, so a hit on the body is the same each time
+			name = "a bolt on the head does the game's head bonus",
+			run = function (t)
+				t.critical_hits(false)
+
+				local body = first_hit(t, "bolt")
+				local head
+
+				for _ = 1, CONFIG.head_tries do
+					local damage = first_hit(t, "bolt", nil, true)
+
+					if damage then
+						head = math.max(head or 0, damage)
+					end
+				end
+
+				if t.expect(body and head, "a bolt did not hurt the %s (body %s, head %s)", CONFIG.breed, tostring(body), tostring(head)) then
+					t.log("body %.2f, head %.2f", body, head)
+					t.expect(math.abs(head / body - CONFIG.headshot_ratio) <= CONFIG.headshot_margin, "a bolt on the head did %.2f times the body's, not %.2f", head / body, CONFIG.headshot_ratio)
+				end
+			end,
+		},
+		{
+			name = "bolts hurt armoured enemies and monsters by their armour",
+			run = function (t)
+				check_armour(t, "bolt", CONFIG.bolt_armour_breeds)
+			end,
+		},
+		{
+			name = "the beam hurts armoured enemies and monsters by their armour",
+			run = function (t)
+				check_armour(t, "beam", CONFIG.beam_armour_breeds)
+			end,
+		},
+		{
+			-- A shield blocks the bolts and the beam, and they don't break it (shield_break)
+			name = "a raised shield stops the bolts and the beam",
+			run = function (t)
+				for _, entry in ipairs({ { "action_one", 0.05, "bolt" }, { "action_two", 0.6, "beam" } }) do
+					local button, time, name = entry[1], entry[2], entry[3]
+
+					t.go_to_start()
+
+					local enemy = t.spawn(CONFIG.shield_breed, CONFIG.enemy_distance)
+
+					if not t.expect(enemy, "the %s could not be spawned", CONFIG.shield_breed) then
+						return
+					end
+
+					t.raise_shield(enemy)
+					t.wait(1)
+					t.aim_at(enemy)
+
+					local damage = t.track_damage(enemy)
+
+					t.press(button, time)
+					t.wait(1)
+
+					t.expect(not t.shield_broken(enemy), "the %s broke the %s's shield", name, CONFIG.shield_breed)
+					t.expect(damage.total == 0, "the %s hurt the %s through its shield (%.1f)", name, CONFIG.shield_breed, damage.total)
+
+					t.remove(enemy)
+				end
+			end,
+		},
+		{
+			-- A critical hit does more damage, and armour takes the same share of it as of a plain hit (the profile's critical armour
+			-- values are its plain ones)
+			name = "a critical bolt does more damage, and armour takes the same share of it",
+			run = function (t)
+				t.critical_hits(false)
+
+				local plain = first_hit(t, "bolt")
+
+				t.critical_hits(true)
+
+				local critical = first_hit(t, "bolt")
+				local armoured = first_hit(t, "bolt", CONFIG.crit_armour_breed[1])
+
+				if not t.expect(plain and critical and armoured, "a bolt did not hurt its enemy") then
+					return
+				end
+
+				t.log("plain %.2f, critical %.2f, critical against the %s %.2f", plain, critical, CONFIG.crit_armour_breed[1], armoured)
+				t.expect(critical > plain * CONFIG.crit_least_ratio, "a critical bolt did %.2f, not more than the plain %.2f", critical, plain)
+				t.expect(math.abs(armoured / critical - CONFIG.crit_armour_breed[2]) <= CONFIG.armour_margin, "a critical bolt did %.2f of its damage to the %s, not %.2f", armoured / critical, CONFIG.crit_armour_breed[1], CONFIG.crit_armour_breed[2])
+			end,
+		},
+		{
+			-- A bot fights an enemy with its Link Gun, and never hurts the player beside it
+			name = "a bot shoots enemies with it",
+			run = function (t)
+				t.hurtable(true)
+
+				local key = ut.items.weapons.link_gun_we.key
+				local enemy = t.spawn(CONFIG.breed, CONFIG.enemy_distance)
+
+				if not t.expect(enemy, "the %s could not be spawned", CONFIG.breed) then
+					return
+				end
+
+				local aside = t.ground_at(0, CONFIG.player_aside)
+
+				if not t.expect(aside, "there is no ground beside the player") then
+					return
+				end
+
+				local damage = t.track_damage(enemy)
+				local player_damage = t.track_damage(t.unit())
+				local bot = t.add_bot(CONFIG.linker_profile, CONFIG.linker_career, key, CONFIG.linker_behind, nil, true)
+
+				if not t.expect(bot, "the bot could not be added") then
+					return
+				end
+
+				no_career_skill(t, bot)
+
+				t.on_main_thread(function ()
+					runner.move_player(t.unit(), Vector3(aside[1], aside[2], aside[3]))
+					-- (a bot fights an enemy only once it has been seen, which a calm one never is)
+					runner.provoke(enemy)
+				end)
+
+				local function from_gun(record)
+					local total = 0
+
+					for _, hit in ipairs(record.hits) do
+						if hit.source == key then
+							total = total + hit.amount
+						end
+					end
+
+					return total
+				end
+
+				t.wait_until(function ()
+					return from_gun(damage) > 0
+				end, CONFIG.bot_fight_time, "the bot to hurt the enemy")
+				t.wait(3)
+
+				t.expect(from_gun(damage) > 0, "the bot did not hurt the %s with its Link Gun in %d s", CONFIG.breed, CONFIG.bot_fight_time)
+				t.expect(from_gun(player_damage) == 0, "the bot's Link Gun hurt the player %.1f", from_gun(player_damage))
 			end,
 		},
 		{
