@@ -53,7 +53,8 @@ local VARIANTS = {
 	-- Sienna's staffs have no ammo. This copy has the Link Gun's. The local item list shows only her own staff to the Necromancer, so she
 	-- is named here, as the Shock Rifle does. Her heat is her career's, not the staff's, so her talents and skill still build it while
 	-- she holds the Link Gun, and the reload button vents it (vents). The staff's shot animation is the start of its beam, so her bolt
-	-- plays none (no_shot_animation). Her beam plays the staff's alt fire, which holds the staff out at arm's length (beam_animation).
+	-- plays none (no_shot_animation). Her beam starts with the arm held out, the animation of the Shock Rifle's
+	-- ball (beam_animation).
 	{
 		base_item = "bw_skullstaff_beam",
 		deus_copy = "deus_bw_skullstaff_beam",
@@ -64,7 +65,7 @@ local VARIANTS = {
 		can_wield = { "bw_scholar", "bw_adept", "bw_unchained", "bw_necromancer" },
 		vents = true,
 		no_shot_animation = true,
-		beam_animation = true,
+		beam_animation = "attack_shoot_fireball",
 	},
 	-- The Deepwood Staff's item lists only the Sister of the Thorn, but all four of Kerillian's careers share one third person body, which
 	-- has the staff's animations, so this copy lists all four (as the Lightning Gun's does). It has the Link Gun's ammo. The staff's shot
@@ -559,14 +560,12 @@ local function build_bolt_projectile(links)
 end
 
 -- The beam, a charge that is held. What it does is in the charge callbacks below. It needs ammo to start.
--- beam_anims is the base weapon's action whose animations the beam plays (none if it is empty).
-local function build_beam(hand, beam_anims)
+-- anim_event is the base's animation the beam plays as it starts (none if it is nil).
+local function build_beam(hand, anim_event)
 	return {
 		kind = "charge",
 		weapon_action_hand = hand,
-		anim_event = beam_anims.anim_event,
-		anim_end_event = beam_anims.anim_end_event,
-		anim_end_event_condition_func = beam_anims.anim_end_event_condition_func,
+		anim_event = anim_event,
 		charge_time = 1000, -- the charge is never "full"
 		hold_input = "action_two_hold",
 		minimum_hold_time = 0,
@@ -638,7 +637,7 @@ local function apply_link_gun(template)
 	end
 
 	actions.action_two = {
-		default = build_beam(hand, variant.beam_animation and base.actions.action_two.default or {}),
+		default = build_beam(hand, variant.beam_animation),
 	}
 	-- The game's own wielding and reload, which every gun of the game has (the reload only comes with picked up ammo, see ammo_data).
 	-- Inspecting is the base's, kept by the shell.
