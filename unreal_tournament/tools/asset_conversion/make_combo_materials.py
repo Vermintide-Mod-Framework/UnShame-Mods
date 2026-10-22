@@ -106,19 +106,36 @@ class Graph:
         return text
 
 UNLIT = 'core/stingray_renderer/output_nodes/unlit_base'
-# (the unlit node that blends as FB_Brighten does: make_brighten_node.py)
+# (the unlit node that blends as FB_Translucent does, c + d * (1 - c) in each channel: make_brighten_node.py. The files that draw with it
+# are named "brighten", from when that was taken for FB_Brighten.)
 BRIGHTEN = 'units/ut/fx/brighten_base'
 
-def common(graph, output=UNLIT):
+# UE2's FB_Brighten adds the colour times the material's alpha (OpenGLDrv.dll, decompiled: SRC_ALPHA, ONE). The unlit node adds its base
+# colour times its opacity when its additive is 1. added: the graph is drawn that way, whatever the particle sets as its additive, and
+# its opacity is set by the caller (the intensity, which is the particle's fade, times the material's alpha).
+def common(graph, output=UNLIT, added=False):
     graph.add('out', output, OUT_OPTIONS)
     graph.add('uv', 'core/shader_nodes/texture_coordinate0')
     # (the time of the panning is how long the effect has been going, set by the particle: UT's panners start with the effect, not with the game)
     graph.add('time', 'core/shader_nodes/material_variable', export=float_variable('age', 'Age', 0), title='Age')
     graph.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
     graph.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
-    # (blended by its opacity, not added: the effects of the particles set "additive" on all the materials of a unit, and this is 0 as it is)
+    # (the effects of the particles set "additive" on all the materials of a unit: blended by its opacity, not added, it is 0 as it is)
     graph.add('additive', 'core/shader_nodes/material_variable', export=float_variable('additive', 'Additive', 0), title='Additive')
-    graph.connect('additive', 'out', IN_OUT_ADDITIVE)
+    if added:
+        graph.constant('out', IN_OUT_ADDITIVE, 1)
+    else:
+        graph.connect('additive', 'out', IN_OUT_ADDITIVE)
+
+# Draws a graph's 'color' as FB_Brighten (see common, with added): its opacity is the intensity times alpha (a node, and its channel), or
+# the intensity alone for a material with no alpha
+def added_color(graph, alpha=None, alpha_select=None):
+    graph.connect('color', 'out', IN_OUT_BASE_COLOR)
+    if alpha:
+        multiply(graph, 'opacity', 'intensity', alpha, None, alpha_select)
+        graph.connect('opacity', 'out', IN_OUT_OPACITY)
+    else:
+        graph.connect('intensity', 'out', IN_OUT_OPACITY)
 
 def panned(graph, name, speed_u, speed_v):
     # (the coordinates of the texture, moved by speed_u and speed_v of it a second)
@@ -291,19 +308,13 @@ print('wrote fx_sniper_screen_graph.material and lightning_gun_m1.material, %d n
 # ShieldEffect's FinalBlend Shield3rdFB (XEffectMat): FB_Brighten of the Shader Shader3, whose diffuse is the TexPanner TexPanner2 (PanDirection
 # yaw 16384: along V, PanRate 0.2) of the TexOscillator TexOscillator2 (OT_Pan along U, amplitude 0.1, rate 0.2 a second) of the texture
 # shield_elec_green_a, and whose opacity is that texture as it is, not panned. Its alpha fades in over the first sixth of V, which is the rim
-# of the shield's dish, so the rim fades out; here the colour is multiplied by it.
-# FB_Brighten is c + d * (1 - c) for each channel. The output node blends by one number for all three, as c + d * (1 - a) with a its opacity
-# times (1 - additive). Here a is the luminance of c: on a grey background that gives the same brightness as UT, and only the tint behind the
-# shield is a little off. (Its brightest channel, which the texture had baked in before, darkened what is behind it too much.) So the opacity
-# is the intensity, and additive is 1 - luminance.
+# of the shield's dish, so the rim fades out. FB_Brighten adds the colour times that opacity (see common).
 # The oscillation is left out: it sways the lines by a tenth of the texture every five seconds. It is drawn with the weapons' field of view,
 # as UT draws it with the weapon (ShieldAltFire.DrawMuzzleFlash), and the texture is read as it is (not srgb), alpha and all
 # (units/ut/fx/shield_elec, make_weapon_fx.py).
-IN_DOT_A, IN_DOT_B = '1227923c-0ef1-4823-b673-301cc9a5fc69', '0e627d0f-2503-4925-9811-d44aca00e49c'
 IN_SUBTRACT_A, IN_SUBTRACT_B = 'd5e375bc-daa4-4464-8448-14bf08d97f0e', 'cff85d3c-d5da-4ffc-ad20-f3872809ac4f'
 IN_ADD_A, IN_ADD_B = 'f72597c4-7487-419a-affb-df690e6582e1', '0806db0d-2c4a-43ca-99cc-f5a2f036a8e8'
 IN_CONSTANT_VECTOR3 = '6ff26be7-68a1-4b89-b9dd-551d216086c2'
-IN_CONSTANT_SCALAR = 'c4d6bc08-c489-430f-a836-ed490e59c3f9'
 LINEAR_SAMPLE_OPTIONS = ('5dd59b3d-1762-4a14-9930-7500230ef3db', 'f669a3a6-0376-4187-840e-80000e2939d5', 'e94e53e6-49b6-4194-a747-8f064a5932e0')
 
 # The shield's graph: the lines panned by pan_u and pan_v a second, faded by the alpha of the fade texture as it is, and with
@@ -316,43 +327,20 @@ def shield_graph(pan_u, pan_v, lines_alpha, world=False):
     shield.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
     shield.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
     shield.add('additive', 'core/shader_nodes/material_variable', export=float_variable('additive', 'Additive', 0), title='Additive')
+    shield.constant('out', IN_OUT_ADDITIVE, 1)
     panned(shield, 'pan', pan_u, pan_v)
     shield.add('lines', 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('lines_map'), title='lines_map')
     shield.connect('pan', 'lines', IN_SAMPLE_UV)
     shield.add('fade', 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler('fade_map'), title='fade_map')
     shield.connect('uv', 'fade', IN_SAMPLE_UV)
-    # (the colour: the lines, faded at the rim, tinted)
+    # (the colour: the lines, tinted; the alpha: the rim's fade, times the lines' own alpha with lines_alpha)
+    multiply(shield, 'color', 'lines', 'tint', 'rgb')
     if lines_alpha:
-        multiply(shield, 'lines_faded', 'lines', 'lines', 'rgb', 'a')
-        multiply(shield, 'faded', 'lines_faded', 'fade', None, 'a')
+        multiply(shield, 'alpha', 'lines', 'fade', 'a', 'a')
+        added_color(shield, 'alpha')
     else:
-        multiply(shield, 'faded', 'lines', 'fade', 'rgb', 'a')
-    multiply(shield, 'color', 'faded', 'tint')
-    brightened(shield)
+        added_color(shield, 'fade', 'a')
     return shield
-
-# Draws a graph's 'color' node as FB_Brighten does, as near as one number for the three channels can: c + d * (1 - a), with a the
-# luminance of c. FB_Brighten is exact in each channel; one number can only be exact in one, and the luminance is right for a grey and
-# near for a pale colour. The opacity is the intensity, and additive is 1 - a plus the particles' own additive, which they set to 0 for
-# these. The shield is drawn this way; the other FB_Brighten materials are drawn by BRIGHTEN, which blends each channel as FB_Brighten
-# does.
-def brightened(graph):
-    graph.connect('color', 'out', IN_OUT_BASE_COLOR)
-    graph.connect('intensity', 'out', IN_OUT_OPACITY)
-    graph.add('weights', 'core/shader_nodes/constant_vector3')
-    graph.constant('weights', IN_CONSTANT_VECTOR3, [0.2126, 0.7152, 0.0722])
-    graph.add('luminance', 'core/shader_nodes/dot')
-    graph.connect('color', 'luminance', IN_DOT_A)
-    graph.connect('weights', 'luminance', IN_DOT_B)
-    graph.add('one', 'core/shader_nodes/constant_scalar')
-    graph.constant('one', IN_CONSTANT_SCALAR, 1)
-    graph.add('see_through', 'core/shader_nodes/subtract')
-    graph.connect('one', 'see_through', IN_SUBTRACT_A)
-    graph.connect('luminance', 'see_through', IN_SUBTRACT_B)
-    graph.add('blend', 'core/shader_nodes/add')
-    graph.connect('see_through', 'blend', IN_ADD_A)
-    graph.connect('additive', 'blend', IN_ADD_B)
-    graph.connect('blend', 'out', IN_OUT_ADDITIVE)
 
 write('shield', shield_graph(0, 0.2, False), {'lines_map': 'shield_elec', 'fade_map': 'shield_elec'})
 write('shield_world', shield_graph(0, 0.2, False, True), {'lines_map': 'shield_elec', 'fade_map': 'shield_elec'})
@@ -365,13 +353,12 @@ RIP_PAN = 12000 / 65536 * 2 * math.pi
 write('shield_rip', shield_graph(0.35 * math.cos(RIP_PAN), 0.35 * math.sin(RIP_PAN), True), {'lines_map': 'shield_rip_elec', 'fade_map': 'shield_edge'})
 write('shield_rip_world', shield_graph(0.35 * math.cos(RIP_PAN), 0.35 * math.sin(RIP_PAN), True, True), {'lines_map': 'shield_rip_elec', 'fade_map': 'shield_edge'})
 
-# ---------------------------------------------------------------- the particles that UT draws with FB_Brighten
-# The Minigun's first person flash (MinigunMuzFlash1stFinal, FB_Brighten) and the dust where its rounds hit (pclImpactSmoke, STY_Translucent,
-# which is the same: c + d * (1 - c) for each channel) are drawn by these, with the node that blends each channel as FB_Brighten does
-# (BRIGHTEN). The texture is read as it is (not srgb), and the colour is its own, tinted. fx_particle_brighten_graph draws with the
-# camera's field of view and fx_particle_weapon_brighten_graph with the weapons'. make_weapon_fx.py derives a material of each of those
-# textures from them. The _srgb ones read the texture as srgb: UT2004 draws in gamma space and puts a texture's values on the screen as
-# they are, and read linearly the game turns them into the screen's values brighter and paler (the first person flash's orange).
+# ---------------------------------------------------------------- the particles that UT draws with FB_Translucent
+# The particles UT draws as STY_Translucent, which is FB_Translucent, c + d * (1 - c) for each channel (the dust where the Minigun's rounds
+# hit, pclImpactSmoke, and the Link Gun's beam flashes), are drawn by these, with the node that blends each channel that way (BRIGHTEN).
+# The texture is read as it is (not srgb), and the colour is its own, tinted. fx_particle_brighten_graph draws with the camera's field of
+# view and fx_particle_weapon_brighten_graph with the weapons'. make_weapon_fx.py derives a material of each of those textures from them.
+# The _srgb ones read the texture as srgb: UT2004 draws in gamma space and puts a texture's values on the screen as they are.
 def brighten_graph(weapon, srgb=False):
     graph = Graph()
     graph.add('out', BRIGHTEN, OUT_OPTIONS + ((CUSTOM_FOV,) if weapon else ()))
@@ -408,7 +395,7 @@ for name, weapon, srgb in (('particle_brighten', False, False), ('particle_weapo
 # intensity (its fade).
 IN_SIN = '0505200e-439a-476b-b6a6-d643cf80e20b'
 ion = Graph()
-common(ion, BRIGHTEN)
+common(ion, added=True)
 
 def vector2(graph, name, value):
     graph.add(name, 'core/shader_nodes/constant_vector2')
@@ -459,8 +446,8 @@ ion.connect('second', 'mix', IN_LERP_A, 'rgb')
 ion.connect('first', 'mix', IN_LERP_B, 'rgb')
 ion.connect('first', 'mix', IN_LERP_W, 'a')
 multiply(ion, 'color', 'mix', 'tint')
-ion.connect('color', 'out', IN_OUT_BASE_COLOR)
-ion.connect('intensity', 'out', IN_OUT_OPACITY)
+# (FB_Brighten, see common: the Shader's opacity is Combiner4, whose alpha is its mask, the first layer's alpha (AO_Use_Mask))
+added_color(ion, 'first', 'a')
 write('ion_sphere', ion, {'burn_map': 'ion_burn'})
 
 # ---------------------------------------------------------------- the Redeemer blast's ring
@@ -472,7 +459,7 @@ write('ion_sphere', ion, {'burn_map': 'ion_burn'})
 #   the second, TexPanner3 (up V, 0.4 of the texture a second) of TexScaler6 (UScale 0.5, moved by 128 texels)
 # The shader's opacity is Grad_Falloff too, which fades the colour to nothing at the mesh's inner edge (v 1), which is jagged.
 ring = Graph()
-common(ring, BRIGHTEN)
+common(ring, added=True)
 
 def sample(graph, name, slot, uv):
     graph.add(name, 'core/shader_nodes/sample_texture', LINEAR_SAMPLE_OPTIONS, samplers=sampler(slot), title=slot)
@@ -489,10 +476,9 @@ ring.add('mix', 'core/shader_nodes/lerp')
 ring.connect('second', 'mix', IN_LERP_A, 'rgb')
 ring.connect('first', 'mix', IN_LERP_B, 'rgb')
 ring.connect('falloff', 'mix', IN_LERP_W, 'a')
-multiply(ring, 'faded', 'mix', 'falloff', None, 'a')
-multiply(ring, 'color', 'faded', 'tint')
-ring.connect('color', 'out', IN_OUT_BASE_COLOR)
-ring.connect('intensity', 'out', IN_OUT_OPACITY)
+multiply(ring, 'color', 'mix', 'tint')
+# (FB_Brighten, see common, with the Shader's opacity)
+added_color(ring, 'falloff', 'a')
 write('flame_ring', ring, {'flame_map': 'flame_gradient', 'falloff_map': 'grad_falloff'})
 
 # ---------------------------------------------------------------- the Berserk combo's rings
@@ -500,12 +486,12 @@ write('flame_ring', ring, {'flame_map': 'flame_gradient', 'falloff_map': 'grad_f
 # second) of the texture redbolt (units/ut/fx/red_bolt, make_weapon_fx.py), on the mesh TeleRing (units/ut/fx/tele_ring, make_fx_meshes.py).
 # The particle sets the tint (its colour) and the intensity (its fade).
 berserk = Graph()
-common(berserk, BRIGHTEN)
+common(berserk, added=True)
 panned(berserk, 'pan', 1, 0)
 sample(berserk, 'bolts', 'bolts_map', 'pan')
 multiply(berserk, 'color', 'bolts', 'tint', 'rgb')
-berserk.connect('color', 'out', IN_OUT_BASE_COLOR)
-berserk.connect('intensity', 'out', IN_OUT_OPACITY)
+# (FB_Brighten, see common: redbolt has no alpha)
+added_color(berserk)
 write('berserk_ring', berserk, {'bolts_map': 'red_bolt'})
 
 # ---------------------------------------------------------------- the Invisible combo
@@ -519,7 +505,7 @@ INVIS_PAN = 8000 / 65536 * 2 * math.pi
 def invisible_graph(weapon):
     graph = Graph()
     # (OUT_OPTIONS without DOUBLE_SIDED and DISABLE_DEPTH_WRITE)
-    graph.add('out', BRIGHTEN, (OUT_OPTIONS[0], OUT_OPTIONS[2]) + ((CUSTOM_FOV,) if weapon else ()))
+    graph.add('out', UNLIT, (OUT_OPTIONS[0], OUT_OPTIONS[2]) + ((CUSTOM_FOV,) if weapon else ()))
     graph.add('uv', 'core/shader_nodes/texture_coordinate0')
     graph.add('time', 'core/shader_nodes/current_time')
     # (unused: every graph here has the variables of the particles)
@@ -527,12 +513,12 @@ def invisible_graph(weapon):
     graph.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
     graph.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
     graph.add('additive', 'core/shader_nodes/material_variable', export=float_variable('additive', 'Additive', 0), title='Additive')
-    graph.connect('additive', 'out', IN_OUT_ADDITIVE)
+    graph.constant('out', IN_OUT_ADDITIVE, 1)
     panned(graph, 'pan', 0.25 * math.cos(INVIS_PAN), 0.25 * math.sin(INVIS_PAN))
     sample(graph, 'overlay', 'overlay_map', 'pan')
     multiply(graph, 'color', 'overlay', 'tint', 'rgb')
-    graph.connect('color', 'out', IN_OUT_BASE_COLOR)
-    graph.connect('intensity', 'out', IN_OUT_OPACITY)
+    # (FB_Brighten, see common, by the texture's alpha)
+    added_color(graph, 'overlay', 'a')
     return graph
 
 write('invisible', invisible_graph(False), {'overlay_map': 'invis_overlay'})
@@ -545,14 +531,14 @@ write('weapon_invisible', invisible_graph(True), {'overlay_map': 'invis_overlay'
 # particles are drawn after tone mapping, onto the screen's colours, as UT draws, and read as srgb its green sides and grey middle were
 # nearly gone (see make_lightning_assets.py). The materials are fx_link_beam_panned_<color>. A beam is drawn as a quad for each stretch,
 # made at different times, so it pans with the game's time, not with a particle's age, and the stretches line up.
-# The texture times the beam's colour (its tint, mColorRange) is doubled and clamped at 1, as Direct3D's MODULATE2X does. The texture is
-# dim (its middle is 101 of 255), and in a picture of UT2004 the beam's middle is white over a floor of (175, 105, 80): FB_Brighten
-# reaches that only with about twice the texture times its colour of 240.
+# FB_Brighten adds the texture times the beam's colour (its tint, mColorRange; the texture has no alpha), see common. (It was once drawn
+# as FB_Translucent, which needed twice the texture to reach the white middle that pictures of UT2004 show; added, the beam's planes
+# reach it where they cross.)
 IN_SATURATE = '6cebb808-14e4-45d6-9816-3838b1f6f4c7'
 
 def link_beam_graph(pan_v):
     graph = Graph()
-    graph.add('out', BRIGHTEN, OUT_OPTIONS)
+    graph.add('out', UNLIT, OUT_OPTIONS)
     graph.add('uv', 'core/shader_nodes/texture_coordinate0')
     graph.add('time', 'core/shader_nodes/current_time')
     # (unused: every graph here has the variables of the particles)
@@ -560,17 +546,11 @@ def link_beam_graph(pan_v):
     graph.add('intensity', 'core/shader_nodes/material_variable', export=float_variable('intensity', 'Intensity', 1), title='Intensity')
     graph.add('tint', 'core/shader_nodes/material_variable', export=color_variable('tint', 'Tint'), title='Tint')
     graph.add('additive', 'core/shader_nodes/material_variable', export=float_variable('additive', 'Additive', 0), title='Additive')
-    graph.connect('additive', 'out', IN_OUT_ADDITIVE)
+    graph.constant('out', IN_OUT_ADDITIVE, 1)
     panned(graph, 'pan', 0, pan_v)
     sample(graph, 'beam', 'beam_map', 'pan')
-    multiply(graph, 'tinted', 'beam', 'tint', 'rgb')
-    graph.add('doubled', 'core/shader_nodes/mul')
-    graph.connect('tinted', 'doubled', IN_MUL_A)
-    graph.constant('doubled', IN_MUL_B, 2)
-    graph.add('color', 'core/shader_nodes/saturate')
-    graph.connect('doubled', 'color', IN_SATURATE)
-    graph.connect('color', 'out', IN_OUT_BASE_COLOR)
-    graph.connect('intensity', 'out', IN_OUT_OPACITY)
+    multiply(graph, 'color', 'beam', 'tint', 'rgb')
+    added_color(graph)
     return graph
 
 # (the pan's sign is the way that moves the texture along the beam as UT's does: the other sign scrolled it backwards)

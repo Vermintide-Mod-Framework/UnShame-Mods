@@ -28,9 +28,8 @@ end
 -- The flash of a bolt, green, or gold with links (LinkAltFire.FlashMuzzleFlash). In the player's view it is LinkMuzFlashProj1st: 2
 -- meshes (LinkMuzFlashMesh) for a bolt, with room for 5, each one of the 4 tiles of its texture at random (mRandTextures, which it
 -- keeps: no mTileAnimation), turned at random about the barrel (mRandOrient), at a size of 0.6 to 0.8 that does not grow, for 0.1 to
--- 0.14 s, mColorRange 75 of 255, and xEmitter's default mAttenKa of 0.2. It doesn't grow, so it isn't halved (see the Rocket
--- Launcher's flash and muzzle_flash.lua's fit). Its texture is read as it is (make_weapon_fx.py), as UT puts it on the screen, so UT's
--- color and fade are kept.
+-- 0.14 s, mColorRange 75 of 255, and xEmitter's default mAttenKa of 0.2. Its texture is read as it is (make_weapon_fx.py), as UT puts
+-- it on the screen, so UT's color and fade are kept.
 local function first_person_flash_settings(color)
 	return {
 		count = 2,
@@ -40,7 +39,6 @@ local function first_person_flash_settings(color)
 		life = { 0.1, 0.14 },
 		attenuation = 0.2,
 		color = { 75 / 255, 75 / 255, 75 / 255 },
-		fit = 1,
 		linear = true,
 		unit = "units/ut/fx/link_flash_mesh",
 		material = "units/ut/fx/fx_weapon_link_muzmesh_" .. color .. "_",
@@ -69,8 +67,9 @@ local CONFIG = {
 	inspect_sway_speed = 1.8, -- radians per second
 	-- LinkProjectile: its mesh (units/ut/fx/link_bolt_mesh, made from LinkProjectile's StaticMesh) at DrawScale3D 2.295 along its way and
 	-- 1.53 across, moved back by its PrePivot of 10 of the mesh's units (before it is scaled), turned at random about its way and
-	-- spinning about it at RotationRate roll 80000 of 65536 turns a second. Its skin is LinkProjGreenFB, link_muz_green added to the screen
-	-- (FB_Translucent), and LinkProjYellowFB with links (LinkAdjust).
+	-- spinning about it at RotationRate roll 80000 of 65536 turns a second. Its skin is LinkProjGreenFB, link_muz_green blended as
+	-- FB_Translucent (c + d * (1 - c): make_weapon_fx.py's BRIGHTEN), and LinkProjYellowFB with links (LinkAdjust). Its trail's sprites are
+	-- the Emitter's PTDS_Translucent, which is not the same: they are added (OpenGLDrv.dll, decompiled).
 	bolt_scale = { 1.53, 2.295, 1.53 }, -- across, along and up
 	bolt_pre_pivot = 10,
 	bolt_spin = 80000 / 65536, -- turns a second
@@ -297,10 +296,13 @@ local function third_person_flash(character, links)
 	local size = settings.size * (BEAM.link_scale[math.min(links, 5) + 1] + 1)
 	local color = settings.color
 
+	-- (LinkMuzProjGreenFB is FB_Brighten: added by its alpha, and fading by the square, as muzzle_flash.lua's)
 	particles.mesh({
-		additive = 0,
+		additive = 1,
 		brightness = function (fraction)
-			return particles.attenuation(fraction, 0)
+			local fade = particles.attenuation(fraction, 0)
+
+			return fade * fade
 		end,
 		color = { color, color, color },
 		follow = function ()

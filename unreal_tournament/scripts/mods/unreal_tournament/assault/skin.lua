@@ -40,9 +40,7 @@ local CONFIG = {
 		life = { 0.4, 0.6 }, -- s
 		spread = { 0, 24 * 1.5 },
 	},
-	-- AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2 (see muzzle_flash.lua), with MinigunMuzFlash1st's numbers at UT's size,
-	-- as the Sniper Rifle's: the Minigun's own is drawn at half of it (its fit), which was fitted to pictures of UT with a blend that
-	-- showed the flash bigger than it is; on this rifle that looked too small beside UT's (set in the game)
+	-- AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2 (see muzzle_flash.lua), with MinigunMuzFlash1st's numbers
 	flash_draw_scale = 1.2,
 	muzzle_flash = {
 		count = 5,
@@ -51,17 +49,16 @@ local CONFIG = {
 		life = { 0.1, 0.15 },
 		attenuation = 0.2,
 		color = { 1, 1, 1 },
-		fit = 1,
 	},
 	-- AssaultMuzFlash3rd, on each rifle in a character's hands for a round (AssaultAttachment.MakeMuzzleFlash, which flashes the twin
 	-- too), and on the throwing rifle's grenade launcher for a grenade (its tip2, Bone_Flash02): MinigunMuzFlash3rd at DrawScale 0.6,
-	-- as the Sniper Rifle's, which has it at 1 (see the Sniper Rifle's skin)
+	-- as the Sniper Rifle's, which has it at 1 (see the Sniper Rifle's skin). MinigunFlashFinal is FB_Brighten: added by its alpha, and
+	-- fading by the square, as muzzle_flash.lua's.
 	muzzle_flash_3rd = {
 		size = { 0.05 * 0.6, 0.08 * 0.6 },
 		growth = 2.2 * 0.6,
 		life = { 0.15, 0.2 },
 		attenuation = 0.2,
-		fit = 0.5,
 	},
 	launcher_muzzle = { 0, 44.0, 10.3 }, -- right, forward, up in the mesh's UT units (Bone_Flash02)
 	-- The weapon's light (xWeaponAttachment.WeaponLight): every shot turns it on for 0.15 s, at the rifle in the character's right hand.
@@ -163,9 +160,11 @@ local function third_person_flash(owner_unit, api, point)
 	local size = utils.random_between(settings.size)
 
 	particles.mesh({
-		additive = 0,
+		additive = 1,
 		brightness = function (fraction)
-			return particles.attenuation(fraction, settings.attenuation)
+			local fade = particles.attenuation(fraction, settings.attenuation)
+
+			return fade * fade
 		end,
 		color = { 1, 1, 1 },
 		follow = function ()
@@ -177,7 +176,7 @@ local function third_person_flash(owner_unit, api, point)
 			return third_person.muzzle_rotation(owner_unit) or Quaternion.identity()
 		end,
 		scale = function (fraction)
-			return (size + settings.growth * fraction * life) * settings.fit
+			return size + settings.growth * fraction * life
 		end,
 		spin = 0,
 		angle = math.random() * 360,

@@ -63,6 +63,7 @@ local function ring(unit)
 		additive = 0,
 		attenuation = CONFIG.ring_attenuation,
 		exp_in_out = true,
+		fade_squared = true,
 		color = CONFIG.ring_color,
 		life = CONFIG.ring_life,
 		material = CONFIG.ring_material,

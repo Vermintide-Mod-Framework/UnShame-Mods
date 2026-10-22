@@ -19,8 +19,7 @@ local CONFIG = {
 	fire_animations = { "Fire1", "Fire2", "Fire3" },
 	fire_animation_rate = 1.5,
 	-- AssaultMuzFlash1st at the end of the barrel (ClassicSniperFire.FlashEmitterClass): the Minigun's flash at DrawScale 1.2 (see
-	-- muzzle_flash.lua), with MinigunMuzFlash1st's numbers at UT's size. The Minigun's own is drawn at half of it (its fit), which was
-	-- fitted to pictures of UT with a blend that showed the flash bigger than it is; on this rifle that looked too small.
+	-- muzzle_flash.lua), with MinigunMuzFlash1st's numbers.
 	flash_draw_scale = 1.2,
 	muzzle_flash = {
 		count = 5,
@@ -29,17 +28,16 @@ local CONFIG = {
 		life = { 0.1, 0.15 },
 		attenuation = 0.2,
 		color = { 1, 1, 1 },
-		fit = 1,
 	},
 	-- AssaultMuzFlash3rd at the end of the rifle in a character's hand (ClassicSniperAttachment, which sets its DrawScale to 1): one mesh
 	-- (MinigunMuzFlash3rd's MinigunFlashMesh, as the Rocket Launcher's third person flash) for a shot, of a size of 0.05 to 0.08 that
-	-- grows by 2.2 a second, for 0.15 to 0.2 s, turned at random about the barrel (mRandOrient). fit is the Minigun's (muzzle_flash.lua).
+	-- grows by 2.2 a second, for 0.15 to 0.2 s, turned at random about the barrel (mRandOrient). MinigunFlashFinal is FB_Brighten: added
+	-- by its alpha, and fading by the square, as muzzle_flash.lua's.
 	muzzle_flash_3rd = {
 		size = {0.05, 0.08},
 		growth = 2.2,
 		life = {0.15, 0.2},
 		attenuation = 0.2,
-		fit = 0.5,
 	},
 	-- ClassicSniperSmoke: 5 puffs within 12 units of where the shot was fired, which grow from 20 to 50 units across over their life
 	-- (SizeScale 0.2 to 0.5 of 100), rise from still (Acceleration Z 20 units a second squared), and fade from 2 s until they are gone at
@@ -145,9 +143,11 @@ local function third_person_flash(owner_unit, holder)
 	local size = random_between(settings.size)
 
 	particles.mesh({
-		additive = 0,
+		additive = 1,
 		brightness = function (fraction)
-			return particles.attenuation(fraction, settings.attenuation)
+			local fade = particles.attenuation(fraction, settings.attenuation)
+
+			return fade * fade
 		end,
 		color = { 1, 1, 1 },
 		follow = function ()
@@ -159,7 +159,7 @@ local function third_person_flash(owner_unit, holder)
 			return third_person.muzzle_rotation(owner_unit) or Quaternion.identity()
 		end,
 		scale = function (fraction)
-			return (size + settings.growth * fraction * life) * settings.fit
+			return size + settings.growth * fraction * life
 		end,
 		spin = 0,
 		angle = math.random() * 360,

@@ -330,12 +330,10 @@ end
 -- not turned. ShockProjMuzFlash: 3 MinigunMuzFlash1stMesh for a shot, with room for 6, of size 0.6 to 0.7, for 0.2 s, not turned, each
 -- one of the 4 tiles of shock_muzflash_1st at random, kept (mRandTextures). Both fade from the start (mAttenKa 0), FB_Brighten.
 fx.BEAM_FLASH = {
-	added = true,
 	angle = 0,
 	attenuation = 0,
 	color = { 1, 1, 1 },
 	count = 1,
-	fit = 1,
 	growth = 5,
 	life = { 0.14, 0.14 },
 	linear = true,
@@ -346,12 +344,10 @@ fx.BEAM_FLASH = {
 	unit = "units/ut/fx/shock_flash_mesh",
 }
 fx.BALL_FLASH = {
-	added = true,
 	angle = 0,
 	attenuation = 0,
 	color = { 1, 1, 1 },
 	count = 3,
-	fit = 1,
 	growth = 0,
 	life = { 0.2, 0.2 },
 	linear = true,

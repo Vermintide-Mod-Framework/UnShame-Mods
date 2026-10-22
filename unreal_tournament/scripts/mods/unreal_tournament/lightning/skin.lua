@@ -15,36 +15,38 @@ local particles = mod.skin_particles
 
 local CONFIG = {
 	fire_animation_rate = 1.25, -- SniperFire.FireAnimRate: the Fire animation plays this much faster than its own rate
-	-- NewLightningBolt (PT_Branch) is 30 particles of size 30, each out of place by up to 5 units (mPosDev). It is drawn as a line of
-	-- parts of the streak texture (the upper half of LightningBoltT), each bolt_width units wide and bolt_stretch times that long, so the
-	-- texture's zigzag is drawn out along the bolt (set against pictures of UT2004: parts twice as long as wide repeated the zigzag
-	-- evenly and tightly). The corners between the parts are out of line by up to bolt_jitter units, UT's mPosDev. How PT_Branch lays the
-	-- texture along the bolt is in UT's engine, not its scripts: one part for each of the 30 particles, squeezed along a short bolt,
-	-- looked like a hatched band in pictures, not UT's thin ragged line. It is the same emitter as the flare, so it fades the same way
-	-- (flare_life). In pictures of UT2004 its streaks look like the texture added once (white middles, thin blue edges), while the flare
-	-- is 9 times the texture: the particles all add their flare at the start, but their streaks lie along the bolt.
-	bolt_width = 30, -- UT units
-	bolt_stretch = 16, -- a part's length, in widths
+	-- NewLightningBolt (PT_Branch) is 30 particles of size 30, each out of place by up to 5 units (mPosDev). Engine.dll (decompiled) draws
+	-- a PT_Branch as quads between its particles, each widened by the size to each side along both axes of the screen (as a line's two
+	-- quads are: particles.beam's screen_axis), so the bolt is twice its size wide, with the upper half of LightningBoltT across it.
+	-- Here it is a line of parts, each bolt_part_length units long with the texture once along it, so the texture's zigzag is drawn out
+	-- along the bolt (set against pictures of UT2004: shorter parts repeated the zigzag evenly and tightly). The corners between the
+	-- parts are out of line by up to bolt_jitter units, UT's mPosDev. Where UT puts the particles along the bolt is not known here. It is
+	-- the same emitter as the flare, so it fades the same way (flare_life). In pictures of UT2004 its streaks look like the texture added
+	-- once (white middles, thin blue edges), while the flare is 9 times the texture.
+	bolt_size = 30, -- mSizeRange: UT units to each side
+	bolt_part_length = 480, -- UT units
 	bolt_jitter = 5, -- UT units
 	bolt_intensity = 1,
 	-- ChildLightningBolt: 10 particles of size 15, out of place by up to 15 units (mPosDev). In pictures of UT2004 an arc is a different
 	-- sight from the bolt: long drawn out zigzags with no line through them. A part is as long as a full arc (arc_range), so an arc is
 	-- one part (set against those pictures).
-	arc_width = 15,
-	arc_stretch = 20, -- a part's length, in widths
+	arc_size = 15, -- mSizeRange: UT units to each side
+	arc_part_length = 300, -- UT units
 	arc_jitter = 15, -- UT units
 	arc_life = 0.5,
 	arc_intensity = 1,
-	-- The flare where the bolt starts and ends (the lower half of LightningBoltT). It is 30 units wide, the size of NewLightningBolt's
-	-- particles. In pictures of UT2004 taken 25 ms apart, it starts at 9 times the texture, which makes a white disk with a blue rim, and
-	-- dims evenly until it is gone 0.4 s after the shot, showing the ring and the spikes on the way.
-	flare_size = 30,
+	-- The flares where the bolt starts and ends: PT_Branch draws a sprite of the lower half of LightningBoltT at the emitter, of size
+	-- mSpawnVecB.X, and at the end, of size mSpawnVecB.Y, a square turned 45 degrees that doesn't turn (utils.UT_SPRITE_SIDE times the
+	-- size across). NewLightningBolt's are 40 and 40; an arc has one of 20 where it starts (ChildLightningBolt's X) and none at its end.
+	-- In pictures of UT2004 taken 25 ms apart, it starts at 9 times the texture, which makes a white disk with a blue rim, and dims evenly
+	-- until it is gone 0.4 s after the shot, showing the ring and the spikes on the way.
+	flare_size = 40, -- mSpawnVecB.X and Y
+	arc_flare_size = 20, -- ChildLightningBolt's mSpawnVecB.X
 	flare_life = 0.4,
 	flare_intensity = 9,
-	-- Where the flare is in the player's view (right, forward, up, UT units from the eye) and how wide it is. SniperRifle.EffectOffset
-	-- is (28, 100, -26), and these are fitted to a picture of UT2004, which has the eye's bob and the view's height in it too.
+	-- Where the flare is in the player's view (right, forward, up, UT units from the eye), fitted to a picture of UT2004, which has the eye's
+	-- bob and the view's height in it too (SniperRifle.EffectOffset is (28, 100, -26)). It is drawn there at flare_size.
 	flare_view_offset = {25, 100, -19.8},
-	flare_view_size = 44,
 	-- ChildBlueSparks: each arc (ChildLightningBolt) throws 10 sparks from 0.8 units around where it starts (mPosDev), which is where the
 	-- bolt hit. They fly along the arc's hit normal, turned by 0.6 (mDirDev), at 250 to 350 units a second, slowed by 0.2 of their speed a second
 	-- (mAirResistance), and last 0.8 to 1.2 s. Each is a line (particles.line) 6 to 4 units wide (mSizeRange 3 to 2) that thins by 6
@@ -167,18 +169,10 @@ local random_between = utils.random_between
 -- The most parts a bolt is drawn with. A long bolt has longer parts instead, far away where they are small on the screen.
 local MAX_BOLT_PARTS = 100
 
--- The bolt: a line of parts, each a streak of the texture stretch times as long as it is wide, out of line by a little. A part runs from
--- the end of the one before it. With core, the texture is also drawn once along the whole bolt under them, drawn out into a nearly
--- straight line that runs through the zigzags, as in pictures of UT2004.
-local function draw_bolt(from, to, width, stretch, jitter, life, intensity, core)
-	local offset = to - from
-	local length = Vector3.length(offset)
-
-	if length < 0.01 then
-		return
-	end
-
-	if core then
+-- A piece of the bolt from one place to another, as PT_Branch draws one: two quads, each widened by size to each side along one axis of
+-- the screen
+local function bolt_piece(from, to, size, life, intensity)
+	for _, axis in ipairs({ "right", "up" }) do
 		particles.beam({
 			attenuation = 0,
 			color = {
@@ -189,13 +183,30 @@ local function draw_bolt(from, to, width, stretch, jitter, life, intensity, core
 			from = from,
 			intensity = intensity,
 			life = life,
-			size = width,
+			screen_axis = axis,
+			size = 2 * size,
 			texture = "lightning_bolt",
 			to = to,
 		})
 	end
+end
 
-	local count = math.clamp(math.ceil(length / (stretch * width)), 1, MAX_BOLT_PARTS)
+-- The bolt: a line of parts, each a streak of the texture part_length long, out of line by a little. A part runs from the end of the one
+-- before it. With core, the texture is also drawn once along the whole bolt under them, drawn out into a nearly straight line that runs
+-- through the zigzags, as in pictures of UT2004.
+local function draw_bolt(from, to, size, part_length, jitter, life, intensity, core)
+	local offset = to - from
+	local length = Vector3.length(offset)
+
+	if length < 0.01 then
+		return
+	end
+
+	if core then
+		bolt_piece(from, to, size, life, intensity)
+	end
+
+	local count = math.clamp(math.ceil(length / part_length), 1, MAX_BOLT_PARTS)
 	local direction = offset * (1 / length)
 	local across = Vector3.cross(direction, Vector3.up())
 
@@ -215,28 +226,17 @@ local function draw_bolt(from, to, width, stretch, jitter, life, intensity, core
 			point = from + direction * (length * i / count) + across * ((math.random() * 2 - 1) * jitter) + other * ((math.random() * 2 - 1) * jitter)
 		end
 
-		particles.beam({
-			attenuation = 0,
-			color = {
-				1,
-				1,
-				1,
-			},
-			from = previous,
-			intensity = intensity,
-			life = life,
-			size = width,
-			texture = "lightning_bolt",
-			to = point,
-		})
+		bolt_piece(previous, point, size, life, intensity)
 
 		previous = point
 	end
 end
 
--- A flare at a place. The material is the texture's own, or another one for the flare in the player's view (see show_bolt).
-local function flare(position, size, material)
+-- A flare at a place, size across. The material is the texture's own, or another one for the flare in the player's view (see show_bolt).
+-- intensity and life are the bolt's flare's unless given. (PT_Branch's sprite is a square turned 45 degrees, which doesn't turn.)
+local function flare(position, size, material, intensity, life)
 	particles.sprite({
+		angle = 45,
 		material = material,
 		attenuation = 0,
 		color = {
@@ -244,11 +244,10 @@ local function flare(position, size, material)
 			1,
 			1,
 		},
-		intensity = CONFIG.flare_intensity,
-		life = CONFIG.flare_life,
+		intensity = intensity or CONFIG.flare_intensity,
+		life = life or CONFIG.flare_life,
 		position = position,
 		size = size,
-		spin = (math.random() * 2 - 1) * 0.2,
 		texture = "lightning_flare",
 	})
 end
@@ -431,7 +430,9 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start,
 		return
 	end
 
-	draw_bolt(start, end_position, CONFIG.bolt_width * UNIT, CONFIG.bolt_stretch, CONFIG.bolt_jitter * UNIT, CONFIG.flare_life, CONFIG.bolt_intensity, true)
+	draw_bolt(start, end_position, CONFIG.bolt_size * UNIT, CONFIG.bolt_part_length * UNIT, CONFIG.bolt_jitter * UNIT, CONFIG.flare_life, CONFIG.bolt_intensity, true)
+
+	local flare_size = CONFIG.flare_size * utils.UT_SPRITE_SIDE * UNIT
 
 	local camera_position = utils.camera_pose()
 	local api = utils.is_local_player_unit(owner_unit) and first_person_api()
@@ -447,24 +448,25 @@ local function show_bolt(owner_unit, end_position, hit_normal, arcs, arcs_start,
 		-- (UT's view of 90 degrees across at 16 by 9 is 0.5625 of a tangent up and down)
 		local scale = math.tan(Managers.state.camera:fov(player.viewport_name) / 2) / 0.5625
 
-		flare(start, CONFIG.flare_view_size * UNIT * scale)
+		flare(start, flare_size * scale)
 	else
-		flare(start, CONFIG.flare_size * UNIT)
+		flare(start, flare_size)
 	end
 
-	-- The flare where the bolt ends. In UT it is drawn whole even where it reaches into the surface that was hit, so here it is moved
-	-- towards the camera by half its size, which keeps the surface from cutting it.
-	if Vector3.length(hit_normal) > 0.01 then
-		local size = CONFIG.flare_size * UNIT
-		local towards_camera = camera_position and Vector3.normalize(camera_position - end_position) or hit_normal
+	-- The flare where the bolt ends, hit or not. In UT it is drawn whole even where it reaches into the surface that was hit, so here it
+	-- is moved towards the camera by half its size, which keeps the surface from cutting it.
+	local towards_camera = camera_position and Vector3.normalize(camera_position - end_position) or hit_normal
 
-		flare(end_position + towards_camera * (size / 2), size)
-	end
+	flare(end_position + towards_camera * (flare_size / 2), flare_size)
 
 	-- Each arc throws its sparks from where it starts, along the normal of what the arc hit, or back along the arc if it hit nothing
-	-- (SniperFire.DoTrace, which lightning_gun.lua works out)
+	-- (SniperFire.DoTrace, which lightning_gun.lua works out). It has its own flare where it starts, the texture added once.
 	for i, arc_end in ipairs(arcs) do
-		draw_bolt(arcs_start, arc_end, CONFIG.arc_width * UNIT, CONFIG.arc_stretch, CONFIG.arc_jitter * UNIT, CONFIG.arc_life, CONFIG.arc_intensity)
+		draw_bolt(arcs_start, arc_end, CONFIG.arc_size * UNIT, CONFIG.arc_part_length * UNIT, CONFIG.arc_jitter * UNIT, CONFIG.arc_life, CONFIG.arc_intensity)
+
+		local arc_flare_size = CONFIG.arc_flare_size * utils.UT_SPRITE_SIDE * UNIT
+
+		flare(arcs_start + towards_camera * (arc_flare_size / 2), arc_flare_size, nil, CONFIG.arc_intensity, CONFIG.arc_life)
 
 		local normal = arc_normals[i]
 

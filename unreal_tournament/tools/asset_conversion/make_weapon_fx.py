@@ -61,7 +61,7 @@ TEXTURES = {
     'invis_overlay': ('XEffectMat/Texture/invis_overlay.tga', 1, 1),
     # The Link Gun's bolt: the flashes on its mesh (LinkMuzFlashProj1st and 3rd: LinkMuzProjGreenFB and LinkMuzProjYellowFB, FB_Brighten),
     # and its trail (NewLinkTrail: a shaft along its way, PlasmaShaft, and puffs, SmokePanels1's 16 tiles)
-    # (and the bolt's mesh: LinkProjGreenFB and LinkProjYellowFB, link_muz_green and link_muz_yellow added to the screen, read as they
+    # (and the bolt's mesh: LinkProjGreenFB and LinkProjYellowFB, FB_Translucent of link_muz_green and link_muz_yellow, read as they
     # are, where make_fx_assets.py's link_muz_green is read as srgb)
     'link_bolt_green': ('XEffectMat/Texture/link_muz_green.tga', 1, 1),
     'link_bolt_yellow': ('XEffectMat/Texture/link_muz_yellow.tga', 1, 1),
@@ -92,19 +92,21 @@ SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff', 'muzzle_smoke', 'sniper_
 # showed as dark spots, which pictures of UT show much fainter
 LIGHTENED = {'sniper_smoke': 0.5}
 
-# The textures that UT draws with FB_Brighten, or as STY_Translucent, which is the same: c + d * (1 - c). They are read as they are, and
-# their materials are derived from fx_particle_brighten_graph and fx_particle_weapon_brighten_graph (make_combo_materials.py).
-BRIGHTEN = ('minigun_burst', 'impact_smoke', 'minigun_flash_3rd', 'link_muzmesh_green', 'link_muzmesh_yellow', 'link_beam_flash_green',
-            'link_beam_flash_yellow', 'link_beam_flash_blue')
+# The textures that UT draws as STY_Translucent or with a FinalBlend of FB_Translucent: c + d * (1 - c) (OpenGLDrv.dll, decompiled). They
+# are read as they are, and their materials are derived from fx_particle_brighten_graph and fx_particle_weapon_brighten_graph
+# (make_combo_materials.py, which names them after FB_Brighten, as they were once taken for it). (An Emitter's PTDS_Translucent is not
+# this: it adds, ONE and ONE.)
+BRIGHTEN = ('impact_smoke', 'link_beam_flash_green', 'link_beam_flash_yellow', 'link_beam_flash_blue', 'link_bolt_green', 'link_bolt_yellow')
 
-# Of those, the ones read as srgb, with fx_particle_brighten_srgb_graph and fx_particle_weapon_brighten_srgb_graph: UT2004 draws in gamma
-# space and puts a texture's values on the screen as they are, which the game does for an srgb texture. Read as they are, the first
-# person flash (MinigunMuzFlash1st's Minigun_burst) was paler and yellower than UT's orange.
+# The ones read as srgb: UT2004 draws in gamma space and puts a texture's values on the screen as they are, which the game does for an srgb
+# texture. Read as they are, the first person flash (MinigunMuzFlash1st's Minigun_burst) was paler and yellower than UT's orange.
 SRGB_BRIGHTEN = ('minigun_burst',)
 
-# The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield and the
-# Redeemer blast's fx_ion_sphere and fx_flame_ring, made by make_combo_materials.py, which do FB_Brighten themselves and use the alpha)
-KEEP_ALPHA = ('shield_elec', 'shield_rip_elec', 'shield_edge', 'ion_burn', 'grad_falloff', 'link_power_green', 'link_power_yellow', 'link_power_blue')
+# The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield, the
+# Redeemer blast's fx_ion_sphere and fx_flame_ring and the Invisible combo's overlay, made by make_combo_materials.py, which draw them
+# as FB_Brighten does, by their alpha)
+KEEP_ALPHA = ('shield_elec', 'shield_rip_elec', 'shield_edge', 'ion_burn', 'grad_falloff', 'link_power_green', 'link_power_yellow', 'link_power_blue',
+              'invis_overlay')
 
 # The textures that only those materials draw, so they have no particle material of their own (FlameGradient is the Redeemer ring's)
 COMBO_ONLY = KEEP_ALPHA + ('flame_gradient', 'red_bolt', 'invis_overlay')
@@ -125,7 +127,8 @@ WEAPON = ('minigun_burst', 'shell_casing', 'muzzle_smoke', 'force_ring', 'link_m
 
 # The textures UT draws with FB_Brighten that are added here as UE2 adds them: the colour times the alpha (OpenGLDrv.dll, decompiled:
 # SRC_ALPHA, ONE), so their alpha is kept for the particle material, which multiplies the colour by it
-ADDED_BY_ALPHA = ('shock_beam_flash', 'shock_muzflash_1st', 'shock_muzflash_3rd')
+ADDED_BY_ALPHA = ('shock_beam_flash', 'shock_muzflash_1st', 'shock_muzflash_3rd', 'minigun_burst', 'minigun_flash_3rd', 'link_muzmesh_green',
+                  'link_muzmesh_yellow')
 
 def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_alpha=False):
     if keep_alpha:

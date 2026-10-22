@@ -2,15 +2,6 @@ shader = {
 	connections = [
 		{
 			destination = {
-				connector_id = "c9a30d71-a8ad-4b9e-aedf-d785ae7e301f"
-				instance_id = "c0de0001-0000-4000-8000-000000000001"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000006"
-			}
-		}
-		{
-			destination = {
 				connector_id = "40A76949-E7DB-47FB-9AEC-3FA98DD3FA2E"
 				instance_id = "c0de0001-0000-4000-8000-000000000007"
 			}
@@ -194,27 +185,6 @@ shader = {
 				connector_id = "242d1648-a626-445b-9534-bccec094112f"
 				instance_id = "c0de0001-0000-4000-8000-000000000021"
 			}
-			select = [
-				"a"
-			]
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000019"
-			}
-		}
-		{
-			destination = {
-				connector_id = "c5823c75-4ae5-4c71-b070-315fa4d03e8e"
-				instance_id = "c0de0001-0000-4000-8000-000000000022"
-			}
-			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000021"
-			}
-		}
-		{
-			destination = {
-				connector_id = "242d1648-a626-445b-9534-bccec094112f"
-				instance_id = "c0de0001-0000-4000-8000-000000000022"
-			}
 			source = {
 				instance_id = "c0de0001-0000-4000-8000-000000000005"
 			}
@@ -225,7 +195,28 @@ shader = {
 				instance_id = "c0de0001-0000-4000-8000-000000000001"
 			}
 			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000021"
+			}
+		}
+		{
+			destination = {
+				connector_id = "c5823c75-4ae5-4c71-b070-315fa4d03e8e"
 				instance_id = "c0de0001-0000-4000-8000-000000000022"
+			}
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000004"
+			}
+		}
+		{
+			destination = {
+				connector_id = "242d1648-a626-445b-9534-bccec094112f"
+				instance_id = "c0de0001-0000-4000-8000-000000000022"
+			}
+			select = [
+				"a"
+			]
+			source = {
+				instance_id = "c0de0001-0000-4000-8000-000000000019"
 			}
 		}
 		{
@@ -234,14 +225,22 @@ shader = {
 				instance_id = "c0de0001-0000-4000-8000-000000000001"
 			}
 			source = {
-				instance_id = "c0de0001-0000-4000-8000-000000000004"
+				instance_id = "c0de0001-0000-4000-8000-000000000022"
 			}
 		}
 	]
 	constants = [
 		{
-			connector_id = "9a282471-a2d2-4591-a57e-c70179bb1962"
+			connector_id = "c9a30d71-a8ad-4b9e-aedf-d785ae7e301f"
 			id = "c0de0001-0000-4000-8000-000000001000"
+			instance_id = "c0de0001-0000-4000-8000-000000000001"
+			value = [
+				1
+			]
+		}
+		{
+			connector_id = "9a282471-a2d2-4591-a57e-c70179bb1962"
+			id = "c0de0001-0000-4000-8000-000000001001"
 			instance_id = "c0de0001-0000-4000-8000-000000000007"
 			value = [
 				0
@@ -249,7 +248,7 @@ shader = {
 		}
 		{
 			connector_id = "e3419eb2-3635-4586-b58c-89ffd88d20d5"
-			id = "c0de0001-0000-4000-8000-000000001001"
+			id = "c0de0001-0000-4000-8000-000000001002"
 			instance_id = "c0de0001-0000-4000-8000-000000000007"
 			value = [
 				-0.25
@@ -257,7 +256,7 @@ shader = {
 		}
 		{
 			connector_id = "6ff26be7-68a1-4b89-b9dd-551d216086c2"
-			id = "c0de0001-0000-4000-8000-000000001002"
+			id = "c0de0001-0000-4000-8000-000000001003"
 			instance_id = "c0de0001-0000-4000-8000-000000000008"
 			value = [
 				2
@@ -266,7 +265,7 @@ shader = {
 		}
 		{
 			connector_id = "6ff26be7-68a1-4b89-b9dd-551d216086c2"
-			id = "c0de0001-0000-4000-8000-000000001003"
+			id = "c0de0001-0000-4000-8000-000000001004"
 			instance_id = "c0de0001-0000-4000-8000-000000000010"
 			value = [
 				0
@@ -275,7 +274,7 @@ shader = {
 		}
 		{
 			connector_id = "9a282471-a2d2-4591-a57e-c70179bb1962"
-			id = "c0de0001-0000-4000-8000-000000001004"
+			id = "c0de0001-0000-4000-8000-000000001005"
 			instance_id = "c0de0001-0000-4000-8000-000000000013"
 			value = [
 				0
@@ -283,7 +282,7 @@ shader = {
 		}
 		{
 			connector_id = "e3419eb2-3635-4586-b58c-89ffd88d20d5"
-			id = "c0de0001-0000-4000-8000-000000001005"
+			id = "c0de0001-0000-4000-8000-000000001006"
 			instance_id = "c0de0001-0000-4000-8000-000000000013"
 			value = [
 				-0.4
@@ -291,7 +290,7 @@ shader = {
 		}
 		{
 			connector_id = "6ff26be7-68a1-4b89-b9dd-551d216086c2"
-			id = "c0de0001-0000-4000-8000-000000001006"
+			id = "c0de0001-0000-4000-8000-000000001007"
 			instance_id = "c0de0001-0000-4000-8000-000000000014"
 			value = [
 				2
@@ -300,7 +299,7 @@ shader = {
 		}
 		{
 			connector_id = "6ff26be7-68a1-4b89-b9dd-551d216086c2"
-			id = "c0de0001-0000-4000-8000-000000001007"
+			id = "c0de0001-0000-4000-8000-000000001008"
 			instance_id = "c0de0001-0000-4000-8000-000000000016"
 			value = [
 				0.25
@@ -331,7 +330,7 @@ shader = {
 			]
 			samplers = {
 			}
-			type = "units/ut/fx/brighten_base"
+			type = "core/stingray_renderer/output_nodes/unlit_base"
 		}
 		{
 			content_size = [
