@@ -296,21 +296,35 @@ local FREE_CAMERA_PARAMS = {
 -- (PlayerCharacterStateEmote: its zoom goes to 0.7, and the camera's variable is 1 minus that)
 local FREE_CAMERA_ZOOM = 0.3
 
+-- How far the free camera is, as the emote camera's zoom. A smaller number brings it closer.
+local free_camera_zoom = FREE_CAMERA_ZOOM
+
 local function start_free_camera(player, unit)
 	local params = table.clone(FREE_CAMERA_PARAMS)
 
 	params.override_follow_unit = unit
 
 	Managers.state.entity:system("camera_system"):external_state_change(player, "follow_third_person", params)
-	Managers.state.camera:set_variable(player.viewport_name, "emote_zoom", FREE_CAMERA_ZOOM)
+	Managers.state.camera:set_variable(player.viewport_name, "emote_zoom", free_camera_zoom)
 	ScriptUnit.extension(unit, "first_person_system"):set_first_person_mode(false)
 end
 
-mod:command("freecamera", "- the camera goes behind you, and the mouse turns it around you, or back (UT's freecamera)", function ()
+mod:command("freecamera", "[distance] - the camera goes behind you, and the mouse turns it around you, or back (UT's freecamera). The distance (0.3 if not given) moves it closer or further.", function (distance)
 	local player, unit = local_player_and_unit()
 
 	if not unit then
 		return
+	end
+
+	-- With a distance, the free camera stays on and moves to it
+	if tonumber(distance) then
+		free_camera_zoom = tonumber(distance)
+
+		if free_camera_unit then
+			Managers.state.camera:set_variable(player.viewport_name, "emote_zoom", free_camera_zoom)
+
+			return
+		end
 	end
 
 	if free_camera_unit then
