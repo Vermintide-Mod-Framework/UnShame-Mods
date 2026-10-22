@@ -233,19 +233,19 @@ local FLASH_1ST = { life = 0.25, size = 24, color = 200 / 255, interval = 0.12, 
 local SPHERE = { rate = 12, life = 0.25, size = 35, own_size = 20, color = 180 / 255 }
 
 -- How the third person mesh sits in each hero's hand: the hand the game links the base weapon to, and the point of the mesh in the hand
--- (UT units) and its turn (set in the game). The mesh's origin is the top of its pistol grip, and the grip's middle is 3 back and 6
--- down from it, which is where the hand holds it. The crossbow is linked to Saltzpyre's left hand, which holds its front, so the
--- point there is under the gun's front, and his right hand is on the pistol grip. Sienna's staff pose holds the hand up at her chest, so
--- her hand is at the top of the grip, which keeps the gun lower.
+-- (UT units) and its turn (set in the game). The hand holds the grip under the middle of the gun, 15 ahead of the mesh's origin and 7
+-- down, where UT's hand bone is (LinkAttachment's RelativeLocation, with the mesh turned over by its RelativeRotation). The crossbow is
+-- linked to Saltzpyre's left hand, which holds its front, so the point there is under the gun's front, and his right hand is on the
+-- back of the gun.
 --   follow_game_unit 2: the mesh turns with the base weapon's unit, which the arms animate (the guns). 3: with the hand's node, turned
 --   by yaw, pitch and roll (the Deepwood Staff, as the Lightning Gun's). nil: level, the way the character faces (the Beam Staff, as the
 --   Shock Rifle's).
 local GRIPS = {
-	link_gun = { hand_node = "j_rightweaponattach", right = 0, forward = -3, up = -6, yaw = 0, pitch = 0, roll = 0, follow = 2 },
-	link_gun_dr = { hand_node = "j_rightweaponattach", right = 0, forward = -3, up = -6, yaw = 0, pitch = 0, roll = 0, follow = 2 },
+	link_gun = { hand_node = "j_rightweaponattach", right = 0, forward = 15, up = -7, yaw = 0, pitch = 0, roll = 0, follow = 2 },
+	link_gun_dr = { hand_node = "j_rightweaponattach", right = 0, forward = 15, up = -7, yaw = 0, pitch = 0, roll = 0, follow = 2 },
 	link_gun_wh = { hand_node = "j_leftweaponattach", right = -7, forward = 24, up = -15, yaw = 0, pitch = 0, roll = 0, follow = 2 },
-	link_gun_bw = { hand_node = "j_rightweaponattach", right = 0, forward = -3, up = 0, yaw = 0, pitch = 0, roll = 0, follow = nil },
-	link_gun_we = { hand_node = "j_leftweaponattach", right = 0, forward = -3, up = -6, yaw = -110, pitch = 0, roll = -25, follow = 3 },
+	link_gun_bw = { hand_node = "j_rightweaponattach", right = 0, forward = 15, up = -7, yaw = 0, pitch = 0, roll = 0, follow = nil },
+	link_gun_we = { hand_node = "j_leftweaponattach", right = 0, forward = 15, up = -7, yaw = -110, pitch = 0, roll = -25, follow = 3 },
 }
 
 local random_between = utils.random_between
