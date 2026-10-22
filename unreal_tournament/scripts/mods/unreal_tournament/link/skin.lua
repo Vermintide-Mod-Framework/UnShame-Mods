@@ -236,7 +236,7 @@ local SPHERE = { rate = 12, life = 0.25, size = 35, own_size = 20, color = 180 /
 -- (UT units) and its turn (set in the game). The hand holds the grip under the middle of the gun, 15 ahead of the mesh's origin and 7
 -- down, where UT's hand bone is (LinkAttachment's RelativeLocation, with the mesh turned over by its RelativeRotation). The crossbow is
 -- linked to Saltzpyre's left hand, which holds its front, so the point there is under the gun's front, and his right hand is on the
--- back of the gun.
+-- back of the gun. Sienna's staff pose holds her hand up at her chest, so her point is higher on the gun, which keeps it lower.
 --   follow_game_unit 2: the mesh turns with the base weapon's unit, which the arms animate (the guns). 3: with the hand's node, turned
 --   by yaw, pitch and roll (the Deepwood Staff, as the Lightning Gun's). nil: level, the way the character faces (the Beam Staff, as the
 --   Shock Rifle's).
@@ -244,7 +244,7 @@ local GRIPS = {
 	link_gun = { hand_node = "j_rightweaponattach", right = 0, forward = 15, up = -7, yaw = 0, pitch = 0, roll = 0, follow = 2 },
 	link_gun_dr = { hand_node = "j_rightweaponattach", right = 0, forward = 15, up = -7, yaw = 0, pitch = 0, roll = 0, follow = 2 },
 	link_gun_wh = { hand_node = "j_leftweaponattach", right = -7, forward = 24, up = -15, yaw = 0, pitch = 0, roll = 0, follow = 2 },
-	link_gun_bw = { hand_node = "j_rightweaponattach", right = 0, forward = 15, up = -7, yaw = 0, pitch = 0, roll = 0, follow = nil },
+	link_gun_bw = { hand_node = "j_rightweaponattach", right = 0, forward = 20, up = 5, yaw = 0, pitch = 0, roll = 0, follow = nil },
 	link_gun_we = { hand_node = "j_leftweaponattach", right = 0, forward = 15, up = -7, yaw = -110, pitch = 0, roll = -25, follow = 3 },
 }
 
