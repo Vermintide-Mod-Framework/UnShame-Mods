@@ -372,7 +372,7 @@ local function register_skins(definition, item)
 		set_icons({ skin_data, skin_item }, skin.icon or definition.icon)
 
 		retire_icon(WeaponSkins.skins[skin.key])
-		retire_icon(ItemMasterList[skin.key])
+		retire_icon(rawget(ItemMasterList, skin.key))
 
 		WeaponSkins.skins[skin.key] = skin_data
 		ItemMasterList[skin.key] = skin_item
@@ -488,7 +488,8 @@ function items.register(setting_id, definition)
 	add_material_set(definition.icon_materials)
 	set_icons({ item }, definition.icon)
 
-	retire_icon(ItemMasterList[definition.key])
+	-- (rawget: the list reports an exception for a key it doesn't have, as on the first load)
+	retire_icon(rawget(ItemMasterList, definition.key))
 
 	ItemMasterList[definition.key] = item
 
