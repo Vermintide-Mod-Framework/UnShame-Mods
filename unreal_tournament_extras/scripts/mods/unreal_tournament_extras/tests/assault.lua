@@ -761,7 +761,8 @@ end
 -- Where a unit stands, as { x, y, z }
 local function position_of(t, unit)
 	return t.on_main_thread(function ()
-		local position = Unit.alive(unit) and POSITION_LOOKUP[unit]
+		-- (POSITION_LOOKUP's entry of a player is not a plain vector)
+		local position = Unit.alive(unit) and Unit.world_position(unit, 0)
 
 		return position and { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
 	end)
@@ -841,6 +842,9 @@ local function bot_revive_scenario(profile, career, setting_id)
 			end
 
 			local charges = watch_charges(bot)
+
+			-- (a wounded player, revived before, would die of the hit)
+			t.heal()
 
 			if not t.expect(t.knock_down(item_key), "the player was not knocked down") then
 				return

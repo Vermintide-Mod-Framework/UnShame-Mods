@@ -557,12 +557,19 @@ local function make_context(suite)
 		scenario.hurtable = on
 	end
 
+	-- Heals the player fully, and takes away the wound of a revive, as a healing kit does: a player who is knocked down while wounded
+	-- dies
 	function t.heal()
 		engine(function ()
 			local health_extension = extension("health_system")
+			local status_extension = extension("status_system")
 
 			if health_extension then
 				health_extension:reset()
+			end
+
+			if status_extension and status_extension:is_wounded() then
+				StatusUtils.set_wounded_network(player_unit(), false, "healed")
 			end
 		end)
 	end
@@ -1168,10 +1175,22 @@ local function make_context(suite)
 		slot = slot or "slot_ranged"
 
 		local bot_player = on_main_thread(function ()
+			-- A level that is ending has no game session any more. A bot added then is half made: it is in the party with its stats, but
+			-- its unit can't be made, and its stats left behind stop the game as the level goes.
+			if not Managers.state.network:game() then
+				return nil
+			end
+
 			local game_mode = Managers.state.game_mode:game_mode()
 
 			return game_mode:_add_bot_to_party(1, FindProfileIndex(profile_name), career_index)
 		end)
+
+		if not bot_player then
+			log("there is no game session to add a bot to: the level is ending")
+
+			return nil
+		end
 
 		scenario.bots[#scenario.bots + 1] = bot_player
 
