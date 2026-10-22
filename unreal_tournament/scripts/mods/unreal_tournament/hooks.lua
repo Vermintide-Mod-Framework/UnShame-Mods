@@ -271,15 +271,34 @@ mod.goop_visual_callbacks = {}
 --   mod.overheat_callbacks[template] = function (state, item_data)
 mod.overheat_callbacks = {}
 
+-- How much of the player's max health an overheat takes, by the weapon's template, in place of the career's own (its OverchargeData)
+--   mod.overheat_health_lost[template] = 0.1
+mod.overheat_health_lost = {}
+
+local function wielded_item_data(state)
+	local inventory_extension = state.inventory_extension
+	local slot_name = inventory_extension:get_wielded_slot_name()
+	local slot_data = slot_name and inventory_extension:get_slot_data(slot_name)
+
+	return slot_data and slot_data.item_data
+end
+
+-- The game takes the share of health from the career when the overheat starts
+mod:hook_safe(PlayerCharacterStateOverchargeExploding, "on_enter", function (self)
+	local item_data = wielded_item_data(self)
+	local health_lost = item_data and mod.overheat_health_lost[item_data.template]
+
+	if health_lost then
+		self.percent_health_lost = health_lost
+	end
+end)
+
 mod:hook_safe(PlayerCharacterStateOverchargeExploding, "explode", function (self)
 	if self.inside_inn then
 		return
 	end
 
-	local inventory_extension = self.inventory_extension
-	local slot_name = inventory_extension:get_wielded_slot_name()
-	local slot_data = slot_name and inventory_extension:get_slot_data(slot_name)
-	local item_data = slot_data and slot_data.item_data
+	local item_data = wielded_item_data(self)
 	local callback = item_data and mod.overheat_callbacks[item_data.template]
 
 	if callback then

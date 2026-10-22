@@ -7,7 +7,7 @@ local mod = get_mod("unreal_tournament")
 --   Right button: zooms. Holding it zooms in, until it is let go, and the zoom stays. Pressing it again zooms out.
 --   Reload: vents the heat, as the staff does.
 -- UT's Lightning Gun has 40 rounds of ammo. Here a bolt adds heat instead, half as much as the Beam Staff's charged shot, and overheating
--- is the Deepwood Staff's: the player loses part of their health and the gun is locked out while the heat cools.
+-- is the Deepwood Staff's: the gun is locked out while the heat cools. The player loses 10% of their health, where the staff takes 40%.
 -- The staff is the Sister of the Thorn's only, so the copy is given to all four of Kerillian's careers. They have the same third person
 -- body (way_watcher), whose animations the staff uses. The skin (skin.lua) draws all of it, and this file only sets what it does to
 -- the game.
@@ -54,10 +54,12 @@ local CONFIG = {
 	-- The heat of a bolt: half the Beam Staff's charged shot's (4 of the 40 a player can take), so ten bolts heat the gun to the top and
 	-- an eleventh overheats it. UT's gun has 40 rounds instead.
 	bolt_overcharge = PlayerUnitStatusSettings.overcharge_values.beam_staff_sniper / 2,
-	-- Every career of Kerillian overheats as the Sister of the Thorn does with the staff (her OverchargeData): she loses 40% of her
-	-- health, the staff is locked out until the heat is gone, and there is no explosion. The other careers have no data of their own,
-	-- which would make them overheat as Sienna does, losing all of their health.
+	-- Every career of Kerillian overheats as the Sister of the Thorn does with the staff (her OverchargeData): the staff is locked out
+	-- until the heat is gone, and there is no explosion. The other careers have no data of their own, which would make them overheat as
+	-- Sienna does, losing all of their health.
 	overheat_like = "we_thornsister",
+	-- The share of max health an overheat takes. The staff's takes 40%.
+	overheat_health_lost = 0.1,
 	-- SniperFire.FireRate. After a shot, the next one can be made once this much time has passed.
 	fire_rate = 1.6,
 	chain_margin = 0.15, -- seconds
@@ -90,6 +92,7 @@ local CONFIG = {
 local TOTAL_TIME = CONFIG.fire_rate + CONFIG.chain_margin
 
 PlayerUnitStatusSettings.overcharge_values.ut_lightning_bolt = CONFIG.bolt_overcharge
+mod.overheat_health_lost[TEMPLATE_NAME] = CONFIG.overheat_health_lost
 
 -- The overheating of the Sister of the Thorn for the careers that have none of their own. The game reads it when it spawns a
 -- character, so a career has it from its next spawn. Her burst of thorns as she overheats (explode_vfx_name) is left out: its effect is

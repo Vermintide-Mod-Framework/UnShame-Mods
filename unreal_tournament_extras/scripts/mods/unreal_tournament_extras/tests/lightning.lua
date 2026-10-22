@@ -209,7 +209,8 @@ local function scenarios()
 			end,
 		},
 		{
-			-- The Deepwood Staff's overheat: the player loses 40% of their health, and the gun is locked out until the heat is gone. Bolts
+			-- The Deepwood Staff's overheat: the gun is locked out until the heat is gone, and the player loses the gun's share of their health
+			-- (lightning_gun.lua's overheat_health_lost; the staff's is 40%). Bolts
 			-- can't be fired while it is. The heat cools between bolts, so it takes 14 at the fire rate: the 13th stops just short of the top
 			-- (the game's critical margin) and the 14th overheats it. From 65% of the heat the game slows attacks (the overcharged buff),
 			-- so the last bolts come further apart, and it takes about 25 s.
@@ -245,7 +246,9 @@ local function scenarios()
 				local lost = health - t.health()
 
 				t.log("%d bolts, the overheat took %.0f of %.0f health", fired, lost, health)
-				t.expect(math.abs(lost / health - 0.4) < 0.05, "overheating took %.0f%% of the player's health, not 40%%", lost / health * 100)
+				local share = ut.overheat_health_lost[definition.template]
+
+				t.expect(math.abs(lost / health - share) < 0.05, "overheating took %.0f%% of the player's health, not %.0f%%", lost / health * 100, share * 100)
 
 				start_recording()
 				t.press("action_one", 1)

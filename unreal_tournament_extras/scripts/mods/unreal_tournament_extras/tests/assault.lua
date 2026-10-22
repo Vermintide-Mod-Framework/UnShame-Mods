@@ -642,6 +642,11 @@ local BOTS = {
 	-- moves less than stand_still before its rounds first hurt the enemy, where it used to walk up to it
 	far_enemy_distance = 9, -- m
 	stand_still = 2, -- m
+	-- The bot first walks to its place by the player. It has stopped once it moves less than settled_step in a settle_step,
+	-- and it gets settle_time for it
+	settled_step = 0.1, -- m
+	settle_step = 0.5, -- s
+	settle_time = 10, -- s
 	-- How long the bot has to revive the player who is down
 	revive_time = 20, -- s
 	-- How long a bot is asked to block
@@ -768,6 +773,29 @@ local function position_of(t, unit)
 	end)
 end
 
+-- Waits until the bot has stopped walking, at most settle_time. Returns whether it stopped.
+local function wait_until_still(t, bot)
+	local last = position_of(t, bot)
+
+	for _ = 1, BOTS.settle_time / BOTS.settle_step do
+		t.wait(BOTS.settle_step)
+
+		local now = position_of(t, bot)
+
+		if not (last and now) then
+			return false
+		end
+
+		if math.sqrt((now[1] - last[1]) ^ 2 + (now[2] - last[2]) ^ 2) < BOTS.settled_step then
+			return true
+		end
+
+		last = now
+	end
+
+	return false
+end
+
 -- The bot fires at an enemy further off from where it stands, and doesn't walk up to it
 local function bot_range_scenario(profile, career, setting_id)
 	local item_key = ut.items.weapons[setting_id].key
@@ -792,6 +820,11 @@ local function bot_range_scenario(profile, career, setting_id)
 			t.on_main_thread(function ()
 				runner.move_player(t.unit(), Vector3(aside[1], aside[2], aside[3]))
 			end)
+
+			-- (its walk to the player is not a walk to the enemy)
+			if not t.expect(wait_until_still(t, bot), "the bot did not stop walking in %d s", BOTS.settle_time) then
+				return
+			end
 
 			local enemy = t.spawn(BOTS.enemy, BOTS.far_enemy_distance)
 

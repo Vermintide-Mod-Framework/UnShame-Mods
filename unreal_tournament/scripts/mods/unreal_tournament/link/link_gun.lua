@@ -606,6 +606,8 @@ local function build_bolt_projectile(links)
 		kind = "charged_projectile",
 		hit_effect = BOLT_HIT_EFFECT,
 		projectile_info = projectile_info,
+		-- The speed a bolt starts at. A bolt that a shield reflects is spawned again at it (shield_gun.lua's reflect_projectile).
+		speed = CONFIG.bolt_speed * UNIT * 100,
 		impact_data = {
 			damage_profile = bolt_profile(links),
 		},
