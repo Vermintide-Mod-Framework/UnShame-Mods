@@ -196,12 +196,11 @@ local function scenarios()
 			run = function (t)
 				local unit = t.unit()
 
+				-- (read as it is, without t.on_main_thread: the wait's condition runs in the update, on the main thread)
 				local function status()
-					return t.on_main_thread(function ()
-						local status_extension = ScriptUnit.extension(unit, "status_system")
+					local status_extension = ScriptUnit.extension(unit, "status_system")
 
-						return { down = status_extension:is_knocked_down(), wounded = status_extension:is_wounded() }
-					end)
+					return { down = status_extension:is_knocked_down(), wounded = status_extension:is_wounded() }
 				end
 
 				local down = t.knock_down(flak.key)

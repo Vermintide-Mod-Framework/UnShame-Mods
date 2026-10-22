@@ -1122,7 +1122,10 @@ mod.charge_update_callbacks.link_beam = function (action, dt, t, world)
 	local hits = beam_hits(physics_world, origin, direction, range)
 	local first = utils.first_beam_hit(hits, unit)
 	local first_distance = first and first[2] or range
-	local ally = ally_on_beam(unit, origin, direction, first_distance, physics_world)
+	-- An ally the beam hits is linked (LinkFire.Trace locks on the pawn it hits). The beam hits allies when friendly fire is on, and
+	-- their body is then nearer than their middle, which ally_on_beam looks for.
+	local first_unit = first and Actor.unit(first[4])
+	local ally = first_unit and linkable(unit, first_unit) and first_unit or ally_on_beam(unit, origin, direction, first_distance, physics_world)
 
 	if ally then
 		set_lock(unit, ally)

@@ -20,10 +20,11 @@ local CONFIG = {
 	-- Another line, played this long before the announcement is due
 	other_line = "ut_announcer_double_kill",
 	line_before = 0.5, -- s
-	-- A special and a monster to kill, and damage that kills anything at once
+	-- A special and a monster to kill, damage that is as much as a hit can be, and how many such hits an enemy can take at most
 	special_breed = "skaven_ratling_gunner",
 	boss_breed = "skaven_rat_ogre",
 	lethal = 100000,
+	most_hits = 10,
 }
 
 local function amount(t)
@@ -31,7 +32,7 @@ local function amount(t)
 end
 
 -- Kills an enemy as the player: { breed = its breed (a counted one if not given), zone = the hit zone, ranged = whether the hit is a
--- ranged shot }. Returns whether it was there to be killed.
+-- ranged shot }. Returns whether it was killed.
 local function kill_one(t, how)
 	how = how or {}
 
@@ -39,17 +40,31 @@ local function kill_one(t, how)
 
 	t.wait(1)
 
-	local killed = t.on_main_thread(function ()
-		if HEALTH_ALIVE[rat] then
-			local player = t.unit()
+	if not HEALTH_ALIVE[rat] then
+		return false
+	end
 
-			DamageUtils.add_damage_network(rat, player, CONFIG.lethal, how.zone or "torso", "cutting", nil, Vector3(0, 0, -1), shock.key, nil, player, how.ranged and "instant_projectile" or nil)
+	-- The damage of one hit is no more than the network sends (NetworkConstants.damage), which is less than a monster's health, so it
+	-- takes a few hits
+	for _ = 1, CONFIG.most_hits do
+		t.on_main_thread(function ()
+			if HEALTH_ALIVE[rat] then
+				local player = t.unit()
 
-			return true
+				DamageUtils.add_damage_network(rat, player, CONFIG.lethal, how.zone or "torso", "cutting", nil, Vector3(0, 0, -1), shock.key, nil, player, how.ranged and "instant_projectile" or nil)
+			end
+		end)
+		t.wait(0.1)
+
+		if not HEALTH_ALIVE[rat] then
+			break
 		end
-	end)
+	end
 
 	t.wait(0.5)
+
+	local killed = not HEALTH_ALIVE[rat]
+
 	t.remove(rat)
 
 	return killed

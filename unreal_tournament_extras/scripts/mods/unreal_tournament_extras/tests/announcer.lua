@@ -335,7 +335,7 @@ local function scenarios()
 				-- The combo's kills as the Shock Rifle reports them (ut.shock_combo_callbacks), 15 at a time
 				for _ = 1, CONFIG.call_out / #rats do
 					t.on_main_thread(function ()
-						ut.shock_combo_callbacks.announcer(t.unit(), rats)
+						ut.shock_combo_callbacks.rewards(t.unit(), rats)
 					end)
 					t.wait(0.2)
 				end
