@@ -39,7 +39,8 @@ local mod = get_mod("unreal_tournament")
 --   particles.sprite(spec): faces the camera.
 --   particles.disc(spec): lies on a surface. spec.normal is the way it faces, or a function that returns it each frame.
 --   particles.light(spec): a point light (units/ut/fx/light) at spec.position or spec.follow. spec.color is its color, spec.intensity
---       how bright it is, and spec.falloff how far it reaches. It fades like the other particles.
+--       how bright it is, and spec.falloff how far it reaches. It fades like the other particles. With spec.quadratic it falls off as
+--       UE2's LE_QuadraticNonIncidence does (see quadratic_start).
 --   particles.beam(spec): goes from spec.from to spec.to. spec.size is how wide it is, and it faces the camera around its length.
 --       Instead of the two points, spec.track can be a function that returns from and to, or nothing when the beam should end.
 --       spec.screen_axis ("right" or "up") draws one of the two quads of a UE2 line instead: its corners are size / 2 to each side
@@ -150,6 +151,48 @@ local function release(particle)
 	pool[#pool + 1] = particle.entry
 end
 
+-- This game's light is at full strength out to its falloff start, and past it falls off as (1 - a^4)^2 / (x^2 + 1), x being the
+-- meters past the start and a the share of the way to the end (lighting_common.shader_source). UE2's LE_QuadraticNonIncidence falls off
+-- as 1 - (d / r)^2 (Engine.dll's FDynamicLight::SampleIntensity, decompiled). This returns the start that brings the first nearest to the
+-- second, for a light that reaches reach meters.
+local quadratic_starts = {}
+
+local function quadratic_start(reach)
+	if quadratic_starts[reach] then
+		return quadratic_starts[reach]
+	end
+
+	local best, best_miss = 0, math.huge
+
+	for i = 0, 99 do
+		local start = reach * i / 100
+		local miss = 0
+
+		for k = 0, 40 do
+			local d = reach * k / 40
+			local ours = 1
+
+			if d > start then
+				local past = d - start
+				local a = past / (reach - start)
+				local window = math.max(0, 1 - a ^ 4)
+
+				ours = window * window / (past * past + 1)
+			end
+
+			miss = miss + (ours - (1 - (k / 40) ^ 2)) ^ 2
+		end
+
+		if miss < best_miss then
+			best, best_miss = start, miss
+		end
+	end
+
+	quadratic_starts[reach] = best
+
+	return best
+end
+
 local function add(kind, spec)
 	if #active >= MAX_PARTICLES or not Managers.world:has_world("level_world") then
 		return
@@ -162,7 +205,7 @@ local function add(kind, spec)
 	if kind == "light" then
 		entry.light = entry.light or Unit.light(entry.unit, "light")
 
-		Light.set_falloff_start(entry.light, 0)
+		Light.set_falloff_start(entry.light, spec.quadratic and quadratic_start(spec.falloff) or 0)
 		Light.set_falloff_end(entry.light, spec.falloff)
 		Light.set_enabled(entry.light, false)
 	else
@@ -315,8 +358,9 @@ end
 -- A UE2 line particle (PT_Line), as Engine.dll draws one (decompiled). Its body goes from where the particle is back along its velocity,
 -- spec.length seconds of it (mSpawnVecB.Z). It is two quads, one widened along the screen's right and one along its up, spec.size wide
 -- along each (twice mSizeRange), changing by spec.growth a second. The body shows the top half of the texture (<texture>_body, made by
--- tools/asset_conversion/split_spark.py). At the front is the head, a square of spec.head_size (twice mSpawnVecB.X) that stays upright
--- on the screen and doesn't change size, showing the bottom half (<texture>_head). Both have the particle's color and fade.
+-- tools/asset_conversion/split_spark.py). At the front is the head, a sprite of spec.head_size across (utils.UT_SPRITE_SIDE times
+-- mSpawnVecB.X), turned 45 degrees on the screen as an xEmitter's sprites are, that doesn't change size, showing the bottom half
+-- (<texture>_head). Both have the particle's color and fade.
 -- The particle starts at spec.position with spec.velocity, slowed by spec.drag (mAirResistance) and pulled down by spec.fall (m/s^2), or
 -- spec.motion(age) returns where it is and its velocity, or nothing when it should end. spec.body_material and spec.head_material can
 -- name materials of their own. The rest (life, delay, color, intensity, attenuation, exp_in_out, additive) is as for the other kinds.
@@ -384,7 +428,7 @@ function particles.line(spec)
 
 	add("sprite", {
 		additive = spec.additive,
-		angle = 0,
+		angle = 45,
 		attenuation = spec.attenuation,
 		color = spec.color,
 		delay = spec.delay,

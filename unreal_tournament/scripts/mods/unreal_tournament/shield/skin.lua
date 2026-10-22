@@ -28,26 +28,26 @@ local CONFIG = {
 	-- A wall nearer than they are drawn hides them, so it is no more than it needs to be.
 	behind_gun = 3,
 	-- ForceRingA, the rings of a punch: 16 a second for 0.2 s, each 0.25 s long, flying forward at 100 units a second from GetEffectStart,
-	-- of size 1 and growing by 100 a second (xEmitter's sizes are a half width, so twice that across), dimming from the start (mAttenKa 0),
-	-- added. Its colour is (B=32,R=32): the fields that
+	-- of size 1 and growing by 100 a second (utils.UT_SPRITE_SIDE times that across), dimming from the start (mAttenKa 0), added. Its
+	-- colour is (B=32,R=32): the fields that
 	-- a struct in defaultproperties leaves out keep the parent's, and xEmitter's is white, so green is 255. That makes the purple
 	-- shock ring green.
 	ring_rate = 16,
 	ring_time = 0.2,
 	ring_life = 0.25,
 	ring_speed = 100, -- UT units a second
-	ring_size = 2, -- UT units across
-	ring_growth = 200, -- UT units across, a second
+	ring_size = 1, -- mSizeRange
+	ring_growth = 100, -- mGrowthRate, a second
 	ring_color = { 32 / 255, 1, 32 / 255 },
-	-- Next to a picture of UT's, the rings were too big, too bright and too slow, so they are drawn at this share of UT's size and
-	-- brightness, and play this many times faster (the same path in less time). This is the mod's own.
-	ring_view_scale = 0.75,
+	-- Next to a picture of UT's, the rings were too bright and too slow, so they are drawn at this share of UT's brightness, and play this
+	-- many times faster (the same path in less time). This is the mod's own. (They were also too big, by about the 1 / UT_SPRITE_SIDE that
+	-- drawing a disc twice its size across made them.)
 	ring_intensity = 0.7,
 	ring_time_scale = 1.5,
 	-- ShieldCharge, the sparks of the charge (ShieldFire.Timer): lines that appear up to 5 units from GetEffectStart (mPosDev) and fly
 	-- towards it, at ChargeScale * 15 units a second, 20 + ChargeScale * 10 a second, each lasting max(ChargeScale / 30, 0.2) s, where
-	-- ChargeScale is the time charged, up to FullyChargedTime. A line is 0.2 to 0.4 units in size (xEmitter's sizes are a half width, so
-	-- twice that wide) and 0.08 s of its travel long (mSpawnVecB.Z), with a head 10 units across (mSpawnVecB.X 5: see particles.line),
+	-- ChargeScale is the time charged, up to FullyChargedTime. A line is 0.2 to 0.4 units in size (a line's size is half its width, so it
+	-- is twice that wide) and 0.08 s of its travel long (mSpawnVecB.Z), with a head of mSpawnVecB.X 5 (see particles.line),
 	-- green ((45, 220, 45) to (65, 250, 65)), added, fading in until 0.2 of its life (xEmitter's mAttenKa). The colours' alpha (25 to 200)
 	-- does nothing: STY_Additive adds the colour as it is.
 	charge_spread = 5, -- UT units
@@ -56,7 +56,7 @@ local CONFIG = {
 	charge_min_life = 0.2,
 	charge_width = {0.4, 0.8}, -- UT units
 	charge_length = 0.08, -- seconds of travel
-	charge_head = 10, -- UT units across
+	charge_head = 5, -- mSpawnVecB.X
 	charge_attenuation = 0.2,
 	charge_colors = { { 45 / 255, 220 / 255, 45 / 255 }, { 65 / 255, 250 / 255, 65 / 255 } },
 	-- The emitter spins about the world's vertical, to the right as seen from above (PHYS_Rotating, RotationRate.Yaw 16000), and its
@@ -66,7 +66,7 @@ local CONFIG = {
 	-- late, lasting 0.4 to 0.6 s and flying at 150 to 300 units a second along the shield's facing, turned by 0.9 (mDirDev). They start
 	-- 6 units from their place (mPosDev), and the place is a random spot hit_sparks_scatter
 	-- units from the shield (VRand times 12 in first person, 8 in third). A line is 5 units wide, shrinking by 8 a second (sizes are
-	-- half widths), and 0.03 s of its travel long (mSpawnVecB.Z), with a head 4 units across (mSpawnVecB.X 2), dimming from the start
+	-- half widths), and 0.03 s of its travel long (mSpawnVecB.Z), with a head of mSpawnVecB.X 2, dimming from the start
 	-- (mAttenKa 0), added. They fall by their mass of 1.5 to 2.5 (utils.UT_PARTICLE_GRAVITY).
 	hit_sparks = 16,
 	hit_spark_delay = 0.1, -- seconds
@@ -78,7 +78,7 @@ local CONFIG = {
 	hit_spark_width = 5, -- UT units
 	hit_spark_growth = -8, -- UT units a second
 	hit_spark_length = 0.03, -- seconds of travel
-	hit_spark_head = 4, -- UT units across
+	hit_spark_head = 2, -- mSpawnVecB.X
 	hit_spark_mass = {1.5, 2.5},
 	-- ShieldFire.ShakeOffsetMag, ShakeOffsetRate and ShakeOffsetTime: a punch moves the view back by up to 20 units at 1000 a second,
 	-- and it swings back and forth for a few frames (see view_shake.lua). It has no turn (ShakeRotMag is 0).
@@ -182,7 +182,7 @@ local function force_rings(api)
 
 	local forward, right, up = effect_start()
 	local count = math.floor(CONFIG.ring_rate * CONFIG.ring_time) + 1
-	local scale = (skin.view_across_scale or 0.01) * CONFIG.behind_gun * CONFIG.ring_view_scale
+	local scale = (skin.view_across_scale or 0.01) * CONFIG.behind_gun
 	local quicker = CONFIG.ring_time_scale
 
 	for i = 1, count do
@@ -200,12 +200,12 @@ local function force_rings(api)
 				-- (from where the gun is: a bash punches from the end of the shove)
 				return view_point(api, skin, forward + CONFIG.shove_forward * (skin.alt_pose or 0) + CONFIG.ring_speed * quicker * age, right, up)
 			end,
-			growth = CONFIG.ring_growth * quicker * scale,
+			growth = CONFIG.ring_growth * quicker * scale * utils.UT_SPRITE_SIDE,
 			life = CONFIG.ring_life / quicker,
 			material = "units/ut/fx/fx_weapon_force_ring",
 			-- (ahead, in the frame of the first person unit)
 			normal = Vector3(0, 1, 0),
-			size = CONFIG.ring_size * scale,
+			size = CONFIG.ring_size * scale * utils.UT_SPRITE_SIDE,
 			texture = "force_ring",
 		})
 	end
@@ -289,7 +289,7 @@ local function charge_sparks(api, skin, dt)
 		end
 
 		particles.sprite({
-			angle = 0,
+			angle = 45,
 			attenuation = CONFIG.charge_attenuation,
 			color = mixed,
 			life = life,
@@ -299,7 +299,7 @@ local function charge_sparks(api, skin, dt)
 				return parent, head
 			end,
 			material = "units/ut/fx/fx_weapon_shield_charge_spark_head",
-			size = CONFIG.charge_head * view_scale,
+			size = CONFIG.charge_head * view_scale * utils.UT_SPRITE_SIDE,
 		})
 	end
 end
@@ -372,7 +372,7 @@ local function hit_sparks(origin, rotation, meters, scatter)
 			delay = math.random() * CONFIG.hit_spark_delay,
 			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.hit_spark_mass) * meters,
 			growth = CONFIG.hit_spark_growth * meters,
-			head_size = CONFIG.hit_spark_head * meters,
+			head_size = CONFIG.hit_spark_head * meters * utils.UT_SPRITE_SIDE,
 			length = CONFIG.hit_spark_length,
 			life = random_between(CONFIG.hit_spark_life),
 			position = origin + offset * meters,
@@ -684,13 +684,13 @@ local THIRD_PERSON = {
 	-- way the gun points.
 	shield_draw_scale = 3.2,
 	-- ForceRing (ShieldAttachment.ThirdPersonEffects, at the gun's tip): 24 rings a second for 0.2 s, each 0.25 s long, flying out at 250
-	-- units a second with the gun, of size 1 and growing by 200 a second (xEmitter's sizes are a half width, so twice that across)
+	-- units a second with the gun, of size 1 and growing by 200 a second (utils.UT_SPRITE_SIDE times that across)
 	ring_rate = 24,
 	ring_time = 0.2,
 	ring_life = 0.25,
 	ring_speed = 250, -- UT units a second
-	ring_size = 2, -- UT units across
-	ring_growth = 400, -- UT units across, a second
+	ring_size = 1, -- mSizeRange
+	ring_growth = 200, -- mGrowthRate, a second
 	-- The charge's sparks are the first person's, this many times larger (their spread, width and speed), so that they show from a few
 	-- meters away (a choice)
 	charge_scale = 3,
@@ -795,7 +795,7 @@ local function third_person_rings(api, unit)
 
 				return position + Quaternion.forward(api.third_person.muzzle_rotation(unit)) * (THIRD_PERSON.ring_speed * age * meters)
 			end,
-			growth = THIRD_PERSON.ring_growth * meters,
+			growth = THIRD_PERSON.ring_growth * meters * utils.UT_SPRITE_SIDE,
 			life = THIRD_PERSON.ring_life,
 			material = "units/ut/fx/fx_force_ring",
 			-- (it faces the way the gun points now, as it flies the way the gun points now)
@@ -804,7 +804,7 @@ local function third_person_rings(api, unit)
 
 				return Quaternion.forward(now_rotation or rotation_box:unbox())
 			end,
-			size = THIRD_PERSON.ring_size * meters,
+			size = THIRD_PERSON.ring_size * meters * utils.UT_SPRITE_SIDE,
 			texture = "force_ring",
 		})
 	end
@@ -840,7 +840,7 @@ local function third_person_sparks(api, unit, state, dt)
 				color[2] + (other[2] - color[2]) * share,
 				color[3] + (other[3] - color[3]) * share,
 			},
-			head_size = CONFIG.charge_head * meters,
+			head_size = CONFIG.charge_head * meters * utils.UT_SPRITE_SIDE,
 			length = CONFIG.charge_length,
 			life = math.max(charged / 30, CONFIG.charge_min_life),
 			size = random_between(CONFIG.charge_width) * meters,

@@ -13,7 +13,8 @@ from resources import texture_text
 # pskx: the mesh; materials: the texture (tga) and kind of each material of it; roughness: of the materials, one for all or
 # { index = roughness } (0.9 if not given: matte, as UT's weapon bodies are plain textures with no specular; only what shines in UT
 # has less, such as the Bio Rifle's glass); scale: meters a UT unit of the mesh is as it is drawn; culling: of the unit's meshes
-# ("disabled" if not given, so that the engine doesn't cull them by their distance: small ones vanished at a distance)
+# ("disabled" if not given, so that the engine doesn't cull them by their distance: small ones vanished at a distance); overlays:
+# { material = other material }, for faces drawn a second time in the other material, over them
 # (the DrawScale of its actor is in it: a pickup of the weapon in the hand is 0.011, 0.02 meters a unit and 0.55)
 STATICS = {
     'flak_pickup': {
@@ -190,10 +191,12 @@ STATICS = {
         'scale': 0.02 * 0.4,
         'unit': 'units/ut/bio/third_person',
     },
-    # (its skin is LinkGunShader, the first person body's, glowing eye and all: make_combo_materials.py's link_gun_world_m0)
+    # (its skin is LinkGunShader, the first person body's, glowing eye and all: make_combo_materials.py's link_gun_world_m0, with the
+    # eye's glow drawn over it by link_gun_world_m1)
     'link_3rd': {
         'pskx': 'NewWeapons2004/SkeletalMesh/NewLinkGun_3rd.psk',
-        'materials': [('units/ut/link/link_gun_world_m0', 'existing')],
+        'materials': [('units/ut/link/link_gun_world_m0', 'existing'), ('units/ut/link/link_gun_world_m1', 'existing')],
+        'overlays': {0: 1},
         'scale': 0.02 * 0.4,
         'unit': 'units/ut/link/third_person',
     },
@@ -300,6 +303,28 @@ def reflect_labels(psk, rows, labels, material, folder):
     open(path, 'wb').write(data)
     return path, [bytes(row) for row in copy]
 
+def add_overlays(psk, overlays, folder):
+    """The faces of each material in overlays are added again with the other material. Returns the changed psk (written in the folder)."""
+    data = open(psk, 'rb').read()
+    chunks = chunk_offsets(data)
+    face_chunk = 'FACE0000' if 'FACE0000' in chunks else 'FACE3200'
+    size, count, start = chunks[face_chunk]
+    material_offset = 6 if face_chunk == 'FACE0000' else 12
+    added = []
+    for i in range(count):
+        face = bytearray(data[start + i * size:start + (i + 1) * size])
+        if face[material_offset] in overlays:
+            face[material_offset] = overlays[face[material_offset]]
+            added.append(bytes(face))
+    print('faces drawn again over others', len(added))
+    end = start + size * count
+    # (the chunk's header ends with its item count, just before its items)
+    header = bytearray(data[start - 32:start])
+    struct.pack_into('<i', header, 28, count + len(added))
+    path = os.path.join(folder, os.path.basename(psk))
+    open(path, 'wb').write(data[:start - 32] + bytes(header) + data[start:end] + b''.join(added) + data[end:])
+    return path
+
 def roughness_of(cfg, index):
     roughness = cfg.get('roughness', 0.9)
 
@@ -321,6 +346,8 @@ def main():
         w, h, rows = read_tga(export + '/' + tga)
         psk, rows = reflect_labels(psk, rows, cfg['labels'], len(materials), folder.name)
         materials.append((tga, kind, opacity, os.path.splitext(os.path.basename(tga))[0].lower() + '_reflected_labels', rows))
+    if cfg.get('overlays'):
+        psk = add_overlays(psk, cfg['overlays'], folder.name)
     mat_names = ['m_%d' % i for i in range(len(materials))]
     parts = cfg.get('parts', {})
     subprocess.check_call([sys.executable, os.path.join(os.path.dirname(__file__), 'psk2bsi.py'), psk,

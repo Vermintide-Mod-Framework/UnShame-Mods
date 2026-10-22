@@ -28,8 +28,8 @@ local CONFIG = {
 	light_life = 0.15,
 	light_period = 3, -- LightPeriod
 	-- The smoke at the muzzle in the player's own view (MinigunMuzzleSmoke): a round sets it to 30 puffs a second, and the rate falls
-	-- towards none by its own amount a second (Lerp(dt) in MuzzleSmoke.Tick) and stops below 1. A puff lasts 0.6 to 1.2 s, starts 30 to 40
-	-- units across (mSizeRange 15 to 20, a half width) and grows by 8 a second, is a grey of 70 to 113 out of 255, and is blended by the
+	-- towards none by its own amount a second (Lerp(dt) in MuzzleSmoke.Tick) and stops below 1. A puff lasts 0.6 to 1.2 s, starts at a
+	-- size of 15 to 20 (utils.UT_SPRITE_SIDE times that across) and grows by 4 a second, is a grey of 70 to 113 out of 255, and is blended by the
 	-- texture's alpha (STY_Alpha). It starts still and rises by its mass of -0.25 to -0.15 (utils.UT_PARTICLE_GRAVITY), slowed by 0.4 of
 	-- its speed a second, and is brightest at 0.2 of its life (mAttenKa).
 	smoke_rate = 30, -- puffs a second
@@ -39,8 +39,8 @@ local CONFIG = {
 		alt = 15,
 	},
 	smoke_life = { 0.6, 1.2 },
-	smoke_size = { 30, 40 }, -- UT units across
-	smoke_growth = 8, -- UT units across, a second
+	smoke_size = { 15, 20 }, -- mSizeRange
+	smoke_growth = 4, -- mGrowthRate, a second
 	smoke_grey = { 70 / 255, 113 / 255 },
 	smoke_mass = { -0.25, -0.15 },
 	smoke_air_resistance = 0.4,
@@ -364,11 +364,11 @@ local function update_smoke_emitter(api, mode, world_unit, dt)
 				color = { grey, grey, grey },
 				drag = CONFIG.smoke_air_resistance,
 				fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.smoke_mass) * world_unit,
-				growth = CONFIG.smoke_growth * world_unit,
+				growth = CONFIG.smoke_growth * utils.UT_SPRITE_SIDE * world_unit,
 				life = life,
 				material = "units/ut/fx/fx_weapon_muzzle_smoke_" .. math.random(0, CONFIG.smoke_tiles - 1),
 				position = muzzle,
-				size = random_between(CONFIG.smoke_size) * world_unit,
+				size = random_between(CONFIG.smoke_size) * utils.UT_SPRITE_SIDE * world_unit,
 				velocity = Vector3.zero(),
 			})
 		end

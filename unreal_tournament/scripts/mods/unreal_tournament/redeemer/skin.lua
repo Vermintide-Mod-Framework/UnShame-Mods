@@ -535,8 +535,9 @@ local function flares(center)
 		color = { 1, 1, 1 },
 		life = 1,
 		position = center,
-		-- (IonCore is an xEmitter, whose sprite is twice its size wide: mSizeRange 300. It doesn't fade: mAttenuate is off.)
-		size = 600 * UNIT,
+		-- (IonCore is an xEmitter, whose sprite is utils.UT_SPRITE_SIDE times its size across: mSizeRange 300. It doesn't fade:
+		-- mAttenuate is off.)
+		size = 300 * utils.UT_SPRITE_SIDE * UNIT,
 		texture = "shock_core",
 	})
 end

@@ -5,9 +5,10 @@ local mod = get_mod("unreal_tournament")
 --       Sniper Rifle's SniperWallHitEffect.
 --   hit_effects.impact_smoke(position, normal): pclImpactSmoke, the puffs of xHeavyWallHitEffect and ExploWallHit.
 --   hit_effects.small_explosion(position, normal): SmallExplosion, the fire of ExploWallHit (the Minigun's alt fire).
--- They are xEmitters, drawn as Engine.dll draws them (decompiled): a sprite's size (mSizeRange) is half its width, a particle is
--- mColorRange times its fade (ScaleGlow does nothing to it), and it fades in until mAttenKa of its life and out after (0.2 unless the
--- class sets it). They start as xEmitter starts them (utils.ut_particle_velocity), off the surface's normal. The air slows them by mAirResistance of their speed a second. The textures were made with
+-- They are xEmitters, drawn as Engine.dll draws them (decompiled): a sprite is a square turned 45 degrees, utils.UT_SPRITE_SIDE times
+-- its size (mSizeRange) on a side, a particle is mColorRange times its fade (ScaleGlow does nothing to it), and it fades in until
+-- mAttenKa of its life and out after (0.2 unless the class sets it). They start as xEmitter starts them (utils.ut_particle_velocity),
+-- off the surface's normal. The air slows them by mAirResistance of their speed a second. The textures were made with
 -- tools/asset_conversion (split_spark.py for the sparks, make_weapon_fx.py for the smoke and the fire).
 
 local utils = mod.utils
@@ -16,8 +17,8 @@ local particles = mod.skin_particles
 local CONFIG = {
 	-- WallSparks: 8 lines at once (particles.line), 0.5 to 0.8 s long, flying at 50 to 300 units a second off the surface, spread by 0.6
 	-- on each axis (mDirDev), up to 0.8 units out of place, 6 to 4 units wide (mSizeRange 3 to 2), shrinking by 8 a second, 0.03 s of
-	-- their travel long (mSpawnVecB.Z) with a head 10 units across (mSpawnVecB.X 5), dimming from the start, added. They fall by their
-	-- mass of 1.5 to 2.5.
+	-- their travel long (mSpawnVecB.Z) with a head of mSpawnVecB.X 5, dimming from the start, added. They fall by their mass of 1.5 to
+	-- 2.5.
 	spark_count = 8,
 	spark_life = { 0.5, 0.8 },
 	spark_speed = { 50, 300 },
@@ -26,10 +27,10 @@ local CONFIG = {
 	spark_width = { 6, 4 }, -- UT units across
 	spark_growth = -8, -- UT units across, a second
 	spark_length = 0.03, -- seconds of travel
-	spark_head = 10, -- UT units across
+	spark_head = 5, -- mSpawnVecB.X
 	spark_mass = { 1.5, 2.5 },
 	-- pclImpactSmoke: 7 puffs, each after up to 0.1 s (mDelayRange), for 0.5 to 1.5 s, flying at 10 to 60 units a second off the surface,
-	-- spread by 0.15 on each axis, up to 8 units out of place, 20 to 50 units across, turned at random, with a random
+	-- spread by 0.15 on each axis, up to 8 units out of place, of size 10 to 25, turned at random, with a random
 	-- tile of EmitSmoke_t. They are STY_Translucent (c + d * (1 - c)) and dark: mColorRange 20 to 40 of 255.
 	smoke_count = 7,
 	smoke_delay = { 0, 0.1 },
@@ -37,22 +38,24 @@ local CONFIG = {
 	smoke_speed = { 10, 60 },
 	smoke_spread = 0.15,
 	smoke_position_spread = 8, -- UT units
-	smoke_size = { 20, 50 }, -- UT units across
+	smoke_size = { 10, 25 }, -- mSizeRange
 	smoke_tiles = 16,
 	smoke_brightness = { 20 / 255, 40 / 255 },
 	-- SmallExplosion: a RocketExplosion of 4 pieces of fire (Rexpt), for 0.5 to 1 s, drifting at 3 to 10 units a second any way off the
-	-- surface (mDirDev 1 on each axis), 40 to 80 units across, turned at random, added
+	-- surface (mDirDev 1 on each axis), of size 20 to 40, turned at random, added
 	explosion_count = 4,
 	explosion_life = { 0.5, 1 },
 	explosion_speed = { 3, 10 },
 	explosion_spread = 1,
-	explosion_size = { 40, 80 }, -- UT units across
+	explosion_size = { 20, 40 }, -- mSizeRange
 	-- The puffs' and the fire's mAttenKa, and their mAirResistance
 	attenuation = 0.2,
 	air_resistance = 0.4, -- of the speed, a second
 }
 
 local UNIT = utils.UT_UNIT
+-- (the meters across a sprite for each unit of an xEmitter's size)
+local SPRITE = utils.UT_SPRITE_SIDE * UNIT
 
 local random_between = utils.random_between
 
@@ -76,7 +79,7 @@ function hit_effects.wall_sparks(position, normal)
 			attenuation = 0,
 			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.spark_mass) * UNIT,
 			growth = CONFIG.spark_growth * UNIT,
-			head_size = CONFIG.spark_head * UNIT,
+			head_size = CONFIG.spark_head * SPRITE,
 			length = CONFIG.spark_length,
 			life = random_between(CONFIG.spark_life),
 			position = scattered(position, CONFIG.spark_position_spread),
@@ -101,7 +104,7 @@ function hit_effects.impact_smoke(position, normal)
 			intensity = random_between(CONFIG.smoke_brightness),
 			life = random_between(CONFIG.smoke_life),
 			position = scattered(position, CONFIG.smoke_position_spread),
-			size = random_between(CONFIG.smoke_size) * UNIT,
+			size = random_between(CONFIG.smoke_size) * SPRITE,
 			texture = "impact_smoke_" .. math.random(0, CONFIG.smoke_tiles - 1),
 			velocity = deviated(normal, CONFIG.smoke_spread, random_between(CONFIG.smoke_speed)),
 		})
@@ -116,7 +119,7 @@ function hit_effects.small_explosion(position, normal)
 			drag = CONFIG.air_resistance,
 			life = random_between(CONFIG.explosion_life),
 			position = position,
-			size = random_between(CONFIG.explosion_size) * UNIT,
+			size = random_between(CONFIG.explosion_size) * SPRITE,
 			texture = "small_explosion",
 			velocity = deviated(normal, CONFIG.explosion_spread, random_between(CONFIG.explosion_speed)),
 		})

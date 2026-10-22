@@ -434,6 +434,11 @@ utils.UT_UNIT = 0.02
 -- gravity (950) times 0.35, times its mass (mMassRange). A negative mass makes it rise.
 utils.UT_PARTICLE_GRAVITY = 950 * 0.35
 
+-- An xEmitter's sprite or disc has its corners its size from its middle, along the two axes of the screen (or of the disc), so it is
+-- a square turned 45 degrees, with its texture turned with it (Engine.dll, decompiled). Its side is this many times its size. UT's
+-- green cross texture is an x, which shows as a + this way.
+utils.UT_SPRITE_SIDE = math.sqrt(2)
+
 -- How easily a projectile hits an enemy. UT's projectile is a point that hits a player's collision cylinder, 25 uu (0.5 m) in radius.
 -- Here the projectile is a sphere that hits the enemy's body, which is about 0.2 m from its middle to its side, so the sphere reaches
 -- the rest of the way. A projectile that is bigger than a point in UT adds its own size. Walls are hit by a ray, or by a sphere of the

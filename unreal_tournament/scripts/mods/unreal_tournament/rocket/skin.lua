@@ -50,13 +50,13 @@ local CONFIG = {
 	corona_intensity = 2.2, -- brightness, where 1 is the texture as it is
 	corona_back = 0.2, -- m
 	corona_toward_camera = 0.4, -- m
-	-- RocketTrailSmoke: wisps, 90 a second, each lasting 1.25 s, left where they start. They are 30 to 40 units wide (mSizeRange 15 to 20)
-	-- and grow 26 a second, white to (255, 210, 210), blended by their alpha (STY_Alpha), fading with ATF_ExpInOut (mAttenKa 0.2). They
+	-- RocketTrailSmoke: wisps, 90 a second, each lasting 1.25 s, left where they start. They are of size 15 to 20 (utils.UT_SPRITE_SIDE
+	-- times that across) and grow 13 a second, white to (255, 210, 210), blended by their alpha (STY_Alpha), fading with ATF_ExpInOut (mAttenKa 0.2). They
 	-- rise by their mass of -0.03 to -0.01 (utils.UT_PARTICLE_GRAVITY), slowed by 0.4 of their speed a second.
 	smoke_interval = 1 / 90,
 	smoke_life = 1.25,
-	smoke_size = { 30, 40 }, -- UT units across
-	smoke_growth = 26, -- UT units across, a second
+	smoke_size = { 15, 20 }, -- mSizeRange
+	smoke_growth = 13, -- mGrowthRate, a second
 	smoke_mass = { -0.03, -0.01 },
 	smoke_air_resistance = 0.4,
 	smoke_attenuation = 0.2,
@@ -280,10 +280,10 @@ local function update_visuals(dt)
 					drag = CONFIG.smoke_air_resistance,
 					exp_in_out = true,
 					fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.smoke_mass) * UNIT,
-					growth = CONFIG.smoke_growth * UNIT,
+					growth = CONFIG.smoke_growth * utils.UT_SPRITE_SIDE * UNIT,
 					life = CONFIG.smoke_life,
 					position = position,
-					size = random_between(CONFIG.smoke_size) * UNIT,
+					size = random_between(CONFIG.smoke_size) * utils.UT_SPRITE_SIDE * UNIT,
 					spin = (math.random() * 2 - 1) * 0.3,
 					texture = "smoke",
 					velocity = Vector3.zero(),

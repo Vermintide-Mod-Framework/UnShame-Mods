@@ -41,7 +41,7 @@ local CONFIG = {
 	-- Combo.ActivateSound, at the pawn
 	activate_sound = "ut_combo_activated_3d",
 	-- ComboActivation: a burst of 20 balls of light (80 a second for 0.25 s) from 10 units around the pawn's middle, out from it at 75
-	-- units a second, faster as they go (mAirResistance -4), red to white, 6 units across (mSizeRange 3, a half width), for 0.75 s,
+	-- units a second, faster as they go (mAirResistance -4), red to white, of size 3 (utils.UT_SPRITE_SIDE times that across), for 0.75 s,
 	-- following the pawn (mPosRelative). It is ST_Explode: each starts mPosDev along a random direction and flies along it (Engine.dll's
 	-- InitParticle, decompiled).
 	burst = {
@@ -51,7 +51,7 @@ local CONFIG = {
 		speed = 75, -- units a second
 		acceleration = 4, -- the speed times this a second
 		life = 0.75, -- s
-		size = 6, -- units across
+		size = 3, -- mSizeRange
 		colors = { { 1, 0, 0 }, { 1, 1, 1 } },
 		texture = "combo_ball",
 	},
@@ -163,7 +163,7 @@ local function burst(unit)
 			color = { low[1] + (high[1] - low[1]) * share, low[2] + (high[2] - low[2]) * share, low[3] + (high[3] - low[3]) * share },
 			delay = delay,
 			life = settings.life,
-			size = settings.size * UNIT,
+			size = settings.size * utils.UT_SPRITE_SIDE * UNIT,
 			texture = settings.texture,
 			follow = function ()
 				if not Unit.alive(unit) then

@@ -77,7 +77,7 @@ local CONFIG = {
 	-- A chunk that has gone cold and landed stays on the ground for this many seconds (FlakChunk.Landed sets its life span to 1)
 	chunk_lie_seconds = 1,
 	-- FlakShell is the mesh, FlakGlow (a gold sprite) and FlakShellTrail: 50 puffs a second, 2 units around the shell (mPosDev), each
-	-- lasting 0.5 to 0.6 s, 40 to 70 units wide (mSizeRange 20 to 35, a half width) and growing 30 a second, (120, 110, 100) to
+	-- lasting 0.5 to 0.6 s, of size 20 to 35 (utils.UT_SPRITE_SIDE times that across) growing 15 a second, (120, 110, 100) to
 	-- (180, 180, 180), blended by its alpha (STY_Alpha), brightest at 0.2 of its life (mAttenKa). They start still.
 	shell_glow_size = 22, -- UT units, a little wider than the shell's mesh, so that a ring of glow shows around the mesh
 	shell_glow_behind = 0.1, -- m, away from the camera, so that the mesh covers the middle of the glow
@@ -89,15 +89,15 @@ local CONFIG = {
 	shell_glow_intensity = 1.5,
 	shell_smoke_interval = 0.02,
 	shell_smoke_life = { 0.5, 0.6 },
-	shell_smoke_size = { 40, 70 }, -- UT units across
-	shell_smoke_growth = 30, -- UT units across, a second
+	shell_smoke_size = { 20, 35 }, -- mSizeRange
+	shell_smoke_growth = 15, -- mGrowthRate, a second
 	shell_smoke_spread = 2, -- UT units
 	shell_smoke_attenuation = 0.2,
 	shell_smoke_colors = { { 120 / 255, 110 / 255, 100 / 255 }, { 180 / 255, 180 / 255, 180 / 255 } },
-	-- FlashExplosion: 300 units wide (mSizeRange 150, a half width), growing 1000 a second, lasting 0.25 s, brightest at 0.2 of it
+	-- FlashExplosion: of size 150 (utils.UT_SPRITE_SIDE times that across), growing 500 a second, lasting 0.25 s, brightest at 0.2 of it
 	-- (mAttenKa), at its texture's own brightness
-	explosion_flash_size = 300, -- UT units across
-	explosion_flash_growth = 1000, -- UT units across, a second
+	explosion_flash_size = 150, -- mSizeRange
+	explosion_flash_growth = 500, -- mGrowthRate, a second
 	explosion_flash_life = 0.25,
 	explosion_flash_attenuation = 0.2,
 	-- The game's own explosion, with its smoke and the mark it leaves, is played together with the flash
@@ -228,10 +228,10 @@ local function update_visuals(dt)
 							low[2] + (high[2] - low[2]) * share,
 							low[3] + (high[3] - low[3]) * share,
 						},
-						growth = CONFIG.shell_smoke_growth * UNIT,
+						growth = CONFIG.shell_smoke_growth * utils.UT_SPRITE_SIDE * UNIT,
 						life = utils.random_between(CONFIG.shell_smoke_life),
 						position = position + utils.ut_particle_offset(CONFIG.shell_smoke_spread) * UNIT,
-						size = utils.random_between(CONFIG.shell_smoke_size) * UNIT,
+						size = utils.random_between(CONFIG.shell_smoke_size) * utils.UT_SPRITE_SIDE * UNIT,
 						spin = (math.random() * 2 - 1) * 0.3,
 						texture = "smoke",
 					})
@@ -640,10 +640,10 @@ mod.skin_explosion_callbacks.ut_flak_shell_explosion = function (world, position
 			1,
 			1,
 		},
-		growth = CONFIG.explosion_flash_growth * UNIT,
+		growth = CONFIG.explosion_flash_growth * utils.UT_SPRITE_SIDE * UNIT,
 		life = CONFIG.explosion_flash_life,
 		position = position,
-		size = CONFIG.explosion_flash_size * UNIT,
+		size = CONFIG.explosion_flash_size * utils.UT_SPRITE_SIDE * UNIT,
 		spin = (math.random() * 2 - 1) * 0.12,
 		texture = "explosion_flash",
 	})

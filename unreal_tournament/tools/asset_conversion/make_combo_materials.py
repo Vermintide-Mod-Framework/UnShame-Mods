@@ -400,10 +400,11 @@ for name, weapon, srgb in (('particle_brighten', False, False), ('particle_weapo
 # spheres are ExplosionSphere, whose material is IonSphereFinal (EpicParticles), FB_Brighten of the Shader IonSphere, whose diffuse, opacity and self illumination are the Combiner Combiner4
 # (CO_AlphaBlend_With_Mask with no mask: the second layer over the first by the first's alpha) of two layers of the texture IonBurn,
 # which is 256 texels square (units/ut/fx/ion_burn, make_weapon_fx.py):
-#   the first, TexPanner5 (along U, half the texture a second) of TexScaler1 (U times 0.5, V times 1.5, V moved by 48 texels)
-#   the second, TexScaler2 (V times 2, moved by 64 texels) of TexPanner6 (along U, a texture a second the other way) of TexOscillator0
+#   the first, TexPanner5 (along U, half the texture a second) of TexScaler1 (UScale 0.5, VScale 1.5, V moved by 48 texels)
+#   the second, TexScaler2 (VScale 2, moved by 64 texels) of TexPanner6 (along U, a texture a second the other way) of TexOscillator0
 #   (along V, a tenth of the texture each way, once a second)
-# A modifier changes the coordinates before the material inside it reads them. The particle sets the tint (its colour) and the
+# A modifier changes the coordinates before the material inside it reads them (the renderer multiplies their matrices from the outside
+# in, D3DDrv.dll decompiled). The particle sets the tint (its colour) and the
 # intensity (its fade).
 IN_SIN = '0505200e-439a-476b-b6a6-d643cf80e20b'
 ion = Graph()
@@ -414,8 +415,9 @@ def vector2(graph, name, value):
     graph.constant(name, IN_CONSTANT_VECTOR3, value)
 
 def scaled(graph, name, uv, scale, offset):
-    # (uv times scale, plus offset)
-    vector2(graph, name + '_scale', scale)
+    # (uv divided by scale, plus offset, as UE2's TexScaler does: its matrix has 1 / UScale and 1 / VScale (Engine.dll, decompiled), so
+    # a scale of 2 draws the texture twice as big)
+    vector2(graph, name + '_scale', [1 / s for s in scale])
     multiply(graph, name + '_times', uv, name + '_scale')
     vector2(graph, name + '_offset', offset)
     graph.add(name, 'core/shader_nodes/add')
@@ -466,8 +468,8 @@ write('ion_sphere', ion, {'burn_map': 'ion_burn'})
 # illumination is the Combiner Combiner3 (CO_AlphaBlend_With_Mask: the first layer over the second by the alpha of Grad_Falloff, which
 # fades from the top of the texture to its bottom) of two layers of FlameGradient, which is 512 texels square (units/ut/fx/flame_gradient
 # and grad_falloff, make_weapon_fx.py):
-#   the first, TexPanner2 (up V, a quarter of the texture a second) of TexScaler5 (U times 0.5)
-#   the second, TexPanner3 (up V, 0.4 of the texture a second) of TexScaler6 (U times 0.5, moved by 128 texels)
+#   the first, TexPanner2 (up V, a quarter of the texture a second) of TexScaler5 (UScale 0.5)
+#   the second, TexPanner3 (up V, 0.4 of the texture a second) of TexScaler6 (UScale 0.5, moved by 128 texels)
 # The shader's opacity is Grad_Falloff too, which fades the colour to nothing at the mesh's inner edge (v 1), which is jagged.
 ring = Graph()
 common(ring, BRIGHTEN)
@@ -571,7 +573,8 @@ def link_beam_graph(pan_v):
     graph.connect('intensity', 'out', IN_OUT_OPACITY)
     return graph
 
-for color, pan_v in (('green', -2), ('yellow', -2), ('blue', 2)):
+# (the pan's sign is the way that moves the texture along the beam as UT's does: the other sign scrolled it backwards)
+for color, pan_v in (('green', 2), ('yellow', 2), ('blue', -2)):
     write('link_beam_panned_' + color, link_beam_graph(pan_v), {'beam_map': 'link_beam_' + color})
 
 # ---------------------------------------------------------------- the Link Gun's model
@@ -590,10 +593,10 @@ for color, pan_v in (('green', -2), ('yellow', -2), ('blue', 2)):
 #        (2, 2) of LinkPowerYellow.
 #   m_2  LinkGlassShader: the glass, a reflection of a cube map, left as convert_weapon.py makes it.
 #   m_3  the body again (convert_weapon.py's overlays): m_0's glow, added over it. m_0 itself is the lit colour less the glow's mask.
-# The coordinates go through the modifier nearest the texture first, then out: taken the other way, the eye's panner moved its texture
-# four times as fast (through its scaler of 4), which was far faster than UT's. Offsets are texels of the 128 by 128 power textures. A
-# panner moves along its yaw (65536 to the turn) at its rate in textures a second; a rotator turns at its yaw a second, the other way
-# from the SDK's rotator node. The glow is in the emissive layer, which is HDR: dimmed as the Bio Rifle's goo is, so that it shows as
+# The coordinates go through the outermost modifier first, then in to the texture: D3DDrv.dll (decompiled) multiplies the modifiers'
+# matrices from the outside in, and a texture's coordinates are a row times the matrix. A scaler divides by its scale (see scaled).
+# Offsets are texels of the 128 by 128 power textures. A panner moves along its yaw (65536 to the turn) at its rate in textures a
+# second; a rotator turns at its yaw a second, the other way from the SDK's rotator node. The glow is in the emissive layer, which is HDR: dimmed as the Bio Rifle's goo is, so that it shows as
 # the texture. The textures are units/ut/fx/link_power_<color> (make_weapon_fx.py), alpha and all.
 LINK_GLOW = 0.04
 IN_ROT_UV, IN_ROT_TIME, IN_ROT_PIVOT, IN_ROT_SPEED = ('96650519-54EC-47A2-B34E-3B1989F56BB3', '178ABCED-40BA-40B1-BAA4-FB5F9732353B',
@@ -649,26 +652,26 @@ def link_stretch(graph, name, uv, rate, amplitude, phases, u_center, v_center):
 # body's eye reads one, as it is; the tubes add two.
 def link_body_glow(graph, color):
     if color == 'yellow':
-        link_scale(graph, 'body_scale', 'uv', 5, 2, 0, -32)
-        link_pan(graph, 'body_uv', 'body_scale', 0, -1)
+        link_pan(graph, 'body_pan', 'uv', 0, -1)
+        link_scale(graph, 'body_uv', 'body_pan', 5, 2, 0, -32)
     else:
-        link_scale(graph, 'body_scale', 'uv', 4, 1)
-        link_pan(graph, 'body_uv', 'body_scale', 2048, -1)
+        link_pan(graph, 'body_pan', 'uv', 2048, -1)
+        link_scale(graph, 'body_uv', 'body_pan', 4, 1)
     sample(graph, 'glow', 'power_map', 'body_uv')
 
 def link_glow(graph, color):
     if color == 'yellow':
-        link_stretch(graph, 'first_stretch', 'uv', 0.2, 0.5, (0, 0.5), 48, 48)
-        link_rotate(graph, 'first_turn', 'first_stretch', 5120, 24, 24)
-        link_scale(graph, 'first_uv', 'first_turn', 3, 3)
-        link_scale(graph, 'second_scale', 'uv', 2, 2)
-        link_pan(graph, 'second_uv', 'second_scale', 0, -1)
+        link_scale(graph, 'first_scale', 'uv', 3, 3)
+        link_rotate(graph, 'first_turn', 'first_scale', 5120, 24, 24)
+        link_stretch(graph, 'first_uv', 'first_turn', 0.2, 0.5, (0, 0.5), 48, 48)
+        link_pan(graph, 'second_pan', 'uv', 0, -1)
+        link_scale(graph, 'second_uv', 'second_pan', 2, 2)
     else:
-        link_scale(graph, 'first_scale', 'uv', 2, 2)
-        link_pan(graph, 'first_uv', 'first_scale', 4096, -0.2)
-        link_pan(graph, 'second_pan', 'uv', -4096, -0.2)
-        link_rotate(graph, 'second_turn', 'second_pan', 1024, 64, 64)
-        link_scale(graph, 'second_uv', 'second_turn', 2, 2, 32, 32)
+        link_pan(graph, 'first_pan', 'uv', 4096, -0.2)
+        link_scale(graph, 'first_uv', 'first_pan', 2, 2)
+        link_scale(graph, 'second_scale', 'uv', 2, 2, 32, 32)
+        link_rotate(graph, 'second_turn', 'second_scale', 1024, 64, 64)
+        link_pan(graph, 'second_uv', 'second_turn', -4096, -0.2)
     texture(graph, 'first', 'power_map', 'first_uv')
     texture(graph, 'second', 'power_map', 'second_uv')
     graph.add('glow', 'core/shader_nodes/add')
@@ -708,13 +711,14 @@ def link_body_graph(color, options=STANDARD_OPTIONS):
     graph.constant('out', IN_STANDARD_METALLIC, 0)
     return graph
 
-def link_eye_graph(color):
+def link_eye_graph(color, world=False):
     # (the glow times the mask, added over the body: the body's faces again as m_3, convert_weapon.py's overlays. The lit node's
     # emissive didn't show on the weapon: it draws where the depth is the same as the gbuffer's, which the first person layer's isn't.
-    # This is drawn as the effects drawn with the weapon are, after tone mapping, with the texture read as it is.)
+    # This is drawn as the effects drawn with the weapon are, after tone mapping, with the texture read as it is. world: for the third
+    # person mesh, without the weapon's field of view.)
     graph = Graph()
     graph.no_variables = True
-    graph.add('out', UNLIT, (OUT_OPTIONS[0], OUT_OPTIONS[2], OUT_OPTIONS[3], CUSTOM_FOV))
+    graph.add('out', UNLIT, (OUT_OPTIONS[0], OUT_OPTIONS[2], OUT_OPTIONS[3]) + (() if world else (CUSTOM_FOV,)))
     graph.add('uv', 'core/shader_nodes/texture_coordinate0')
     graph.add('time', 'core/shader_nodes/current_time')
     sample(graph, 'mask', 'power_map', 'uv')
@@ -725,7 +729,6 @@ def link_eye_graph(color):
     graph.constant('out', IN_OUT_ADDITIVE, 1)
     return graph
 
-IN_STANDARD_EMISSIVE = '1164a5ef-4563-4795-b3b5-42825d6df037'
 # The options of a third person weapon's material (make_base_materials.py's world_standard): STANDARD_OPTIONS without the weapon's field
 # of view (HAS_FOV), which drew the mesh as the first person weapon is drawn, out of place in the world, and with jitter transparency, so
 # that it fades out near the camera as the characters do
@@ -733,25 +736,20 @@ HAS_FOV = '901b44ce-d128-498a-9912-32cd9635c556'
 JITTER_TRANSPARENCY = '580cc6eb-3591-4c71-aa50-528af18ba160'
 WORLD_STANDARD_OPTIONS = tuple(option for option in STANDARD_OPTIONS if option != HAS_FOV) + (JITTER_TRANSPARENCY,)
 
-def link_world_body_graph(color):
-    # (the third person mesh, NewLinkGun_3rd, whose skin is LinkGunShader too: the body lit but for the glow, and the eye's glow as its
-    # emissive, which shows in the world, dimmed as the tubes' glow is. UT's attachment keeps it green whatever the links.)
-    graph = link_body_graph(color, WORLD_STANDARD_OPTIONS)
-    graph.add('time', 'core/shader_nodes/current_time')
-    link_body_glow(graph, color)
-    multiply(graph, 'masked_glow', 'glow', 'mask', 'rgb', 'a')
-    graph.add('dim_glow', 'core/shader_nodes/mul')
-    graph.connect('masked_glow', 'dim_glow', IN_MUL_A)
-    graph.constant('dim_glow', IN_MUL_B, LINK_GLOW)
-    graph.connect('dim_glow', 'out', IN_STANDARD_EMISSIVE)
-    return graph
-
-graph = link_world_body_graph('green')
-open('%s/fx_link_gun_world_body_green_graph.material' % FX, 'w', newline='\n').write(graph.text())
-open('%s/units/ut/link/link_gun_world_m0.material' % REPO, 'w', newline='\n').write(
-    'material_contexts = {\n\tsurface_material = ""\n}\nparent_material = "units/ut/fx/fx_link_gun_world_body_green_graph"\ntextures = {\n'
-    '\tpower_map = "units/ut/fx/link_power_green"\n\tbody_map = "units/ut/link/link_gun_fatlinkguntex0"\n}\nvariables = {\n}\n')
-print('wrote fx_link_gun_world_body_green_graph.material and link_gun_world_m0.material, %d nodes' % len(graph.nodes))
+# The third person mesh, NewLinkGun_3rd, whose skin is LinkGunShader too: m_0 the body, lit but for the glow, and m_1 the eye's glow,
+# drawn over it as the first person model's is (convert_static.py's overlays). As the emissive of the lit material the glow was too dim
+# to see in the world. UT's attachment keeps it green whatever the links.
+for part, slot, make in (('body', 'm0', lambda color: link_body_graph(color, WORLD_STANDARD_OPTIONS)),
+                         ('eye', 'm1', lambda color: link_eye_graph(color, world=True))):
+    graph = make('green')
+    open('%s/fx_link_gun_world_%s_green_graph.material' % (FX, part), 'w', newline='\n').write(graph.text())
+    bound = '\tpower_map = "units/ut/fx/link_power_green"\n'
+    if part == 'body':
+        bound += '\tbody_map = "units/ut/link/link_gun_fatlinkguntex0"\n'
+    open('%s/units/ut/link/link_gun_world_%s.material' % (REPO, slot), 'w', newline='\n').write(
+        'material_contexts = {\n\tsurface_material = ""\n}\nparent_material = "units/ut/fx/fx_link_gun_world_%s_green_graph"\ntextures = {\n%s}\n'
+        'variables = {\n}\n' % (part, bound))
+    print('wrote fx_link_gun_world_%s_green_graph.material and link_gun_world_%s.material, %d nodes' % (part, slot, len(graph.nodes)))
 
 for color in ('green', 'yellow', 'blue'):
     for part, slot, make in (('body', 'm0', link_body_graph), ('power', 'm1', link_power_graph), ('eye', 'm3', link_eye_graph)):

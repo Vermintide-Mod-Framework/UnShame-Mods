@@ -2,9 +2,10 @@ local mod = get_mod("unreal_tournament")
 
 -- The effects of the Shock Rifle's skin. They are what UT2004's own rifle shows (XEffects: ShockMuzFlash, ShockBeamEffect,
 -- ShockImpact*, ShockBall, ShockExplosion*, ShockCombo*), drawn with the particles of skin_particles.lua. UT's speeds and times are used
--- as they are, in UT units. The sizes here are widths: Engine.dll (decompiled) draws an xEmitter's sprite or disc with its size
--- (mSizeRange, and mGrowthRate a second) as half its width, so they are twice UT's numbers. The textures are UT's own, converted (tools/asset_conversion/make_fx_assets.py). The meshes
--- (units/ut/fx, made by tools/asset_conversion/make_fx_meshes.py) are the beam's coil and the combo's sphere and vortex.
+-- as they are, in UT units. The sizes of the xEmitters' sprites and discs are UT's (mSizeRange, and mGrowthRate a second), and each is
+-- drawn utils.UT_SPRITE_SIDE times that across (SPRITE below). The textures are UT's own, converted
+-- (tools/asset_conversion/make_fx_assets.py). The meshes (units/ut/fx, made by tools/asset_conversion/make_fx_meshes.py) are the beam's
+-- coil and the combo's sphere and vortex.
 --
 -- skin.lua calls these functions, because it knows when and where an effect happens.
 
@@ -36,16 +37,16 @@ local CONFIG = {
 	-- What the beam makes where it hits a surface: ShockImpactFlare, ShockImpactRing, the core and ShockImpactScorch.
 	impact_flare_count = 3,
 	impact_flare_size = {
-		100,
-		120,
+		50,
+		60,
 	},
-	impact_flare_growth = 200,
+	impact_flare_growth = 100,
 	impact_flare_life = 0.5,
-	impact_ring_size = 60,
-	impact_ring_growth = 520,
+	impact_ring_size = 30,
+	impact_ring_growth = 260,
 	impact_ring_life = 0.5,
-	impact_core_size = 80,
-	impact_core_growth = 200,
+	impact_core_size = 40,
+	impact_core_growth = 100,
 	impact_core_life = 1,
 	impact_core_offset = 8, -- units from the surface
 	scorch_size = 64,
@@ -53,8 +54,8 @@ local CONFIG = {
 
 	-- Muzzle flashes. The beam has a sparkle and a flash (ShockMuzFlash, ShockBeamMuzFlash), and the ball has ShockProjMuzFlash. UT's
 	-- flashes are meshes (ShockMuzFlash's mesh, and MinigunMuzFlash1stMesh at 0.6 to 0.7): here they are sprites of their own size.
-	muzzle_sparkle_size = 100,
-	muzzle_sparkle_growth = 100,
+	muzzle_sparkle_size = 50,
+	muzzle_sparkle_growth = 50,
 	muzzle_sparkle_life = 0.5,
 	muzzle_flash_size = 60,
 	muzzle_flash_life = 0.14,
@@ -101,8 +102,8 @@ local CONFIG = {
 	-- radius). Here it is drawn with the combo's smoother sphere mesh (sphere_mesh_radius units in radius). It starts at
 	-- explosion_sphere_size times its radius, grows explosion_sphere_growth of that a second, and fades in and out with ATF_ExpInOut
 	-- (skin_particles.lua's exp_in_out) at explosion_sphere_attenuation.
-	explosion_core_size = 80,
-	explosion_core_growth = 200,
+	explosion_core_size = 40,
+	explosion_core_growth = 100,
 	explosion_core_life = 1,
 	explosion_sphere_life = 0.6,
 	explosion_sphere_size = 0.6,
@@ -131,30 +132,30 @@ local CONFIG = {
 	combo_flash_light_life = 0.3,
 
 	-- The combo: ShockCombo and what it spawns
-	combo_core_size = 100,
-	combo_core_growth = 800,
+	combo_core_size = 50,
+	combo_core_growth = 400,
 	combo_core_life = 1.5,
-	combo_flare_size = 170,
-	combo_flare_growth = 520,
+	combo_flare_size = 85,
+	combo_flare_growth = 260,
 	combo_flare_life = 0.5,
 	combo_flare_attenuation = 0.2,
 	combo_flare_rate = 5, -- flares a second
 	combo_flare_time = 0.9, -- how long flares keep coming. After that two big ones come.
-	combo_big_flare_size = 300,
-	combo_big_flare_growth = -1000,
+	combo_big_flare_size = 150,
+	combo_big_flare_growth = -500,
 	combo_big_flare_life = 0.3,
-	combo_flash_size = { 960, 1320 },
-	combo_flash_growth = 1000,
+	combo_flash_size = { 480, 660 },
+	combo_flash_growth = 500,
 	combo_flash_life = 0.25,
 	combo_flash_attenuation = 0.2,
 	-- ShockComboExpRing is one ring sprite that grows from nothing.
-	combo_ring_growth = 1000,
+	combo_ring_growth = 500,
 	combo_ring_life = 0.5,
 	combo_ring_attenuation = 0.4,
-	-- The wiggles (ShockComboWiggles). In UT mSizeRange is 120 and mSpeedRange is 300, but a sprite's size is its radius there, so
-	-- they look twice as big in UT. Here they are subtler, and they don't go as far as that speed would take them.
+	-- The wiggles (ShockComboWiggles): mSizeRange 120 and mSpeedRange 300. Here they are subtler, and they don't go as far as that speed
+	-- would take them.
 	combo_wiggle_count = 25,
-	combo_wiggle_size = 240,
+	combo_wiggle_size = 120,
 	combo_wiggle_intensity = 0.4,
 	combo_wiggle_speed = 150,
 	combo_wiggle_life = 0.75,
@@ -216,6 +217,8 @@ local CONFIG = {
 }
 
 local UNIT = utils.UT_UNIT
+-- (the meters across an xEmitter's sprite or disc for each unit of its size)
+local SPRITE = utils.UT_SPRITE_SIDE * UNIT
 
 local fx = {}
 
@@ -322,9 +325,9 @@ function fx.beam_muzzle_flash(follow, scale, locked, red)
 		color = red and RED or WHITE,
 		follow = follow,
 		locked = locked,
-		growth = CONFIG.muzzle_sparkle_growth * scale,
+		growth = CONFIG.muzzle_sparkle_growth * utils.UT_SPRITE_SIDE * scale,
 		life = CONFIG.muzzle_sparkle_life,
-		size = CONFIG.muzzle_sparkle_size * scale,
+		size = CONFIG.muzzle_sparkle_size * utils.UT_SPRITE_SIDE * scale,
 		spin = random_spin(),
 		texture = "shock_sparkle",
 	})
@@ -366,11 +369,11 @@ local function impact(position, normal, red)
 		particles.disc({
 			attenuation = 0,
 			color = color,
-			growth = CONFIG.impact_flare_growth * UNIT,
+			growth = CONFIG.impact_flare_growth * SPRITE,
 			life = CONFIG.impact_flare_life,
 			normal = normal,
 			position = lifted,
-			size = random_between(CONFIG.impact_flare_size) * UNIT,
+			size = random_between(CONFIG.impact_flare_size) * SPRITE,
 			spin = random_spin(),
 			texture = "shock_flare_a",
 		})
@@ -379,21 +382,21 @@ local function impact(position, normal, red)
 	particles.disc({
 		attenuation = 0,
 		color = color,
-		growth = CONFIG.impact_ring_growth * UNIT,
+		growth = CONFIG.impact_ring_growth * SPRITE,
 		life = CONFIG.impact_ring_life,
 		normal = normal,
 		position = lifted,
-		size = CONFIG.impact_ring_size * UNIT,
+		size = CONFIG.impact_ring_size * SPRITE,
 		spin = random_spin(),
 		texture = "shock_ring_b",
 	})
 	particles.sprite({
 		attenuation = 0,
 		color = color,
-		growth = CONFIG.impact_core_growth * UNIT,
+		growth = CONFIG.impact_core_growth * SPRITE,
 		life = CONFIG.impact_core_life,
 		position = position + normal * (CONFIG.impact_core_offset * UNIT),
-		size = CONFIG.impact_core_size * UNIT,
+		size = CONFIG.impact_core_size * SPRITE,
 		texture = "shock_core",
 	})
 	particles.disc({
@@ -628,10 +631,10 @@ function fx.ball_explosion(position)
 	particles.sprite({
 		attenuation = 0,
 		color = WHITE,
-		growth = CONFIG.explosion_core_growth * UNIT,
+		growth = CONFIG.explosion_core_growth * SPRITE,
 		life = CONFIG.explosion_core_life,
 		position = position,
-		size = CONFIG.explosion_core_size * UNIT,
+		size = CONFIG.explosion_core_size * SPRITE,
 		texture = "shock_core",
 	})
 end
@@ -680,7 +683,7 @@ local function combo_ring(position)
 	particles.sprite({
 		attenuation = CONFIG.combo_ring_attenuation,
 		color = WHITE,
-		growth = CONFIG.combo_ring_growth * UNIT,
+		growth = CONFIG.combo_ring_growth * SPRITE,
 		life = CONFIG.combo_ring_life,
 		position = position,
 		size = 0,
@@ -693,10 +696,10 @@ local function combo_core(position)
 	particles.sprite({
 		attenuation = 0,
 		color = WHITE,
-		growth = CONFIG.combo_core_growth * UNIT,
+		growth = CONFIG.combo_core_growth * SPRITE,
 		life = CONFIG.combo_core_life,
 		position = position,
-		size = CONFIG.combo_core_size * UNIT,
+		size = CONFIG.combo_core_size * SPRITE,
 		texture = "shock_core",
 	})
 end
@@ -724,10 +727,10 @@ local function combo_flash(position)
 	particles.sprite({
 		attenuation = CONFIG.combo_flash_attenuation,
 		color = WHITE,
-		growth = CONFIG.combo_flash_growth * UNIT,
+		growth = CONFIG.combo_flash_growth * SPRITE,
 		life = CONFIG.combo_flash_life,
 		position = position,
-		size = random_between(CONFIG.combo_flash_size) * UNIT,
+		size = random_between(CONFIG.combo_flash_size) * SPRITE,
 		spin = random_spin(),
 		texture = "shock_combo_flash",
 	})
@@ -742,10 +745,10 @@ local function combo_flares(position)
 			attenuation = CONFIG.combo_flare_attenuation,
 			color = WHITE,
 			delay = i / CONFIG.combo_flare_rate,
-			growth = CONFIG.combo_flare_growth * UNIT,
+			growth = CONFIG.combo_flare_growth * SPRITE,
 			life = CONFIG.combo_flare_life,
 			position = position,
-			size = CONFIG.combo_flare_size * UNIT,
+			size = CONFIG.combo_flare_size * SPRITE,
 			spin = random_spin(),
 			texture = "shock_flare_a",
 		})
@@ -756,10 +759,10 @@ local function combo_flares(position)
 			attenuation = 0.9,
 			color = WHITE,
 			delay = CONFIG.combo_flare_time,
-			growth = CONFIG.combo_big_flare_growth * UNIT,
+			growth = CONFIG.combo_big_flare_growth * SPRITE,
 			life = CONFIG.combo_big_flare_life,
 			position = position,
-			size = CONFIG.combo_big_flare_size * UNIT,
+			size = CONFIG.combo_big_flare_size * SPRITE,
 			spin = random_spin(),
 			texture = "shock_flare_a",
 		})
@@ -781,7 +784,7 @@ local function combo_wiggles(position)
 			intensity = CONFIG.combo_wiggle_intensity,
 			life = CONFIG.combo_wiggle_life,
 			position = position,
-			size = CONFIG.combo_wiggle_size * UNIT,
+			size = CONFIG.combo_wiggle_size * SPRITE,
 			texture = "shock_sparkle",
 			velocity = random_direction() * (CONFIG.combo_wiggle_speed * UNIT),
 		})

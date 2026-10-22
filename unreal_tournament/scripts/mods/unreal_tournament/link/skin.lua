@@ -75,10 +75,11 @@ local CONFIG = {
 	bolt_pre_pivot = 10,
 	bolt_spin = 80000 / 65536, -- turns a second
 	-- Its light, for its own player only (PostNetBeginPlay): LightHue 100 of 255 and LightSaturation 100 (0 is all colour, 255 is white)
-	-- are green, LightHue 40 with links is yellow, and LightRadius 3 is in steps of 25 units: 1.5 m.
+	-- are green, LightHue 40 with links is yellow. It reaches 25 units for each LightRadius and one more (AActor::WorldLightRadius,
+	-- decompiled): 100 units for LightRadius 3. It falls off as LE_QuadraticNonIncidence does, smoothly to nothing there.
 	bolt_light_color = { 0.39, 1, 0.6 },
 	linked_bolt_light_color = { 1, 0.96, 0.39 },
-	bolt_light_falloff = 1.5, -- meters
+	bolt_light_falloff = 2, -- meters
 	-- Its trail (NewLinkTrail), an Emitter at DrawScale 0.5, which scales its sizes, places and speeds. The emitter is placed and turned
 	-- with the bolt (PTCS_Relative, PHYS_Trailer). For the player's own bolt it starts 0.1 s late (Delay), so it doesn't show at the eye.
 	-- Otherwise it is warmed up: its puffs are there from the start.
@@ -194,8 +195,9 @@ local YELLOW_BOLT_SPARKS = {
 	air_resistance = 0.4,
 }
 
--- (LinkBeamEffect sets the third person flash's sizes both to 50 times LinkScale * 0.5 + 1, and xEmitter's sizes are half a width)
-local FLASH_3RD = { rate = 12, life = 0.25, size = 50, color = 180 / 255 }
+-- (LinkBeamEffect sets the third person flash's sizes both to 50 times LinkScale * 0.5 + 1. An xEmitter's sprite is utils.UT_SPRITE_SIDE
+-- times its size across, turned 45 degrees, which the flashes' and the sphere's random turn hides.)
+local FLASH_3RD = { rate = 12, life = 0.25, size = 50, color = 180 / 255, attenuation = 0.2 }
 -- UT draws the first person flash before the gun, without depth (Weapon.RenderOverlays), so the gun covers it. Here it is drawn
 -- behind_gun times further from the eye and that many times bigger, which looks the same and puts it behind the gun: it is 92.5 UT
 -- units ahead (effect_start_in_view), and the gun reaches about 127 (the mesh is 134 units ahead of its origin, which is 7.5 back).
@@ -229,7 +231,7 @@ local function throw_spark(spec, position, way, texture, size_scale, speed_scale
 		drag = spec.air_resistance,
 		fall = utils.UT_PARTICLE_GRAVITY * spec.mass * UNIT,
 		head_material = brighten and "units/ut/fx/fx_" .. texture .. "_head_brighten" or nil,
-		head_size = 2 * spec.head * UNIT,
+		head_size = utils.UT_SPRITE_SIDE * spec.head * UNIT,
 		length = spec.length,
 		life = spec.life * life_scale,
 		position = position + utils.ut_particle_offset(spec.position_deviation) * UNIT,
@@ -582,6 +584,7 @@ mod.skin_init_callbacks.link_bolt = function (projectile)
 			intensity = utils.WEAPON_LIGHT_INTENSITY,
 			late = true,
 			life = math.huge,
+			quadratic = true,
 		})
 	end
 
@@ -1009,12 +1012,12 @@ local function draw_beam(character, beam, dt)
 					end
 				end,
 				material = "units/ut/fx/fx_weapon_link_beam_flash_" .. flash_color,
-				size = 2 * FLASH_1ST.size * FLASH_1ST.behind_gun * skin.view_across_scale,
+				size = utils.UT_SPRITE_SIDE * FLASH_1ST.size * FLASH_1ST.behind_gun * skin.view_across_scale,
 				spin = (math.random() * 2 - 1) * 0.3,
 			})
 		end
 	else
-		local flash_size = 2 * FLASH_3RD.size * (link_scale * 0.5 + 1) * UNIT
+		local flash_size = utils.UT_SPRITE_SIDE * FLASH_3RD.size * (link_scale * 0.5 + 1) * UNIT
 
 		visual.flash_time = visual.flash_time + dt * FLASH_3RD.rate
 
@@ -1023,6 +1026,7 @@ local function draw_beam(character, beam, dt)
 
 			particles.sprite({
 				additive = 0,
+				attenuation = FLASH_3RD.attenuation,
 				color = { FLASH_3RD.color, FLASH_3RD.color, FLASH_3RD.color },
 				follow = function ()
 					return visual.alive and (muzzle_of(character)) or nil
@@ -1056,7 +1060,7 @@ local function draw_beam(character, beam, dt)
 				end,
 				life = SPHERE.life,
 				material = "units/ut/fx/fx_link_beam_flash_blue",
-				size = 2 * size * UNIT,
+				size = utils.UT_SPRITE_SIDE * size * UNIT,
 				spin = (math.random() * 2 - 1) * 0.3,
 			})
 		end

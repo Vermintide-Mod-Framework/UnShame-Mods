@@ -23,12 +23,13 @@ local CONFIG = {
 	stamina_regen = 4, -- added to the regeneration's multiplier of 1
 	-- How long a special that holds the character is staggered, which makes it let go (as Forgiving Disablers does, gameplay.lua)
 	release_stagger = 2, -- s
-	-- RegenCrosses: 10 crosses a second, each 12 units across (mSizeRange 6, a half width), from 35 units around the pawn's middle (45 up
+	-- RegenCrosses: 10 crosses a second, each of size 6 (a sprite utils.UT_SPRITE_SIDE times that across, turned 45 degrees: the texture's
+	-- x shows as a +, and the crosses don't turn), from 35 units around the pawn's middle (45 up
 	-- and down: ST_Explode puts it at mPosDev along a random direction), for 2 s, brightest at the middle of its life (mAttenKa 0.5 with
 	-- ATF_ExpInOut); each keeps the pawn's speed (mOwnerVelocityFactor 1), slowed by mAirResistance 2, and rises by its mass of -0.1
 	-- (utils.UT_PARTICLE_GRAVITY)
 	cross_rate = 10, -- a second
-	cross_size = 12, -- units across
+	cross_size = 6, -- mSizeRange
 	cross_spread = { 35, 35, 45 }, -- units
 	cross_life = 2, -- s
 	cross_attenuation = 0.5,
@@ -58,10 +59,11 @@ local function cross(unit, velocity)
 	local rise = CONFIG.cross_rise * UNIT
 
 	particles.sprite({
+		angle = 45,
 		attenuation = CONFIG.cross_attenuation,
 		exp_in_out = true,
 		life = CONFIG.cross_life,
-		size = CONFIG.cross_size * UNIT,
+		size = CONFIG.cross_size * utils.UT_SPRITE_SIDE * UNIT,
 		texture = CONFIG.cross_texture,
 		follow = function ()
 			local t = Managers.time:time("game") - born

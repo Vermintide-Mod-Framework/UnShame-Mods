@@ -48,8 +48,8 @@ local CONFIG = {
 	-- ChildBlueSparks: each arc (ChildLightningBolt) throws 10 sparks from 0.8 units around where it starts (mPosDev), which is where the
 	-- bolt hit. They fly along the arc's hit normal, turned by 0.6 (mDirDev), at 250 to 350 units a second, slowed by 0.2 of their speed a second
 	-- (mAirResistance), and last 0.8 to 1.2 s. Each is a line (particles.line) 6 to 4 units wide (mSizeRange 3 to 2) that thins by 6
-	-- units a second, 0.05 s of its travel long (mSpawnVecB.Z, which ChildBlueSparks leaves at xEmitter's), with a head 10 units across
-	-- (mSpawnVecB.X 5). They fall by their mass (mMassRange 1.5 to 2.5).
+	-- units a second, 0.05 s of its travel long (mSpawnVecB.Z, which ChildBlueSparks leaves at xEmitter's), with a head of mSpawnVecB.X
+	-- 5. They fall by their mass (mMassRange 1.5 to 2.5).
 	spark_count = 10,
 	spark_life = {0.8, 1.2},
 	spark_speed = {250, 350},
@@ -60,18 +60,18 @@ local CONFIG = {
 	spark_width = {6, 4}, -- UT units across
 	spark_thinning = 6, -- UT units across, a second
 	spark_length = 0.05, -- seconds of travel
-	spark_head = 10, -- UT units across
+	spark_head = 5, -- mSpawnVecB.X
 	spark_attenuation = 0.1,
 	-- LightningCharge: 10 sparks a second at the tip, each 0.2 s long, one of the four pictures of the texture, turned at random. They
 	-- stop while the weapon cannot fire (its next shot is not yet due, or it has no ammo: here, it is locked out). The emitter is attached
 	-- to the model's tip, 30 of the model's units behind it along the barrel (RelativeLocation, in the bone's frame), and its sparks move
 	-- with it (mPosRelative). Its own numbers are in the units of the view, as the emitter isn't drawn at the model's DrawScale: each spark
-	-- is up to 10 units from it along the barrel (mPosDev), so some are out in front of the tip, and 5 units in size (mSizeRange), a half
-	-- width. So the sparks fill the cage and reach out past the tip, as in pictures of UT2004. They are a little smaller here (set in the
-	-- game): at 10 across they came through the front of the gun.
+	-- is up to 10 units from it along the barrel (mPosDev), so some are out in front of the tip, and 5 units in size (mSizeRange: a sprite
+	-- utils.UT_SPRITE_SIDE times that across). So the sparks fill the cage and reach out past the tip, as in pictures of UT2004. (They
+	-- were once drawn smaller than UT's numbers: at twice their size across, they came through the front of the gun.)
 	charge_rate = 10,
 	charge_life = 0.2,
-	charge_size = 4, -- half width, units of the view
+	charge_size = 5, -- mSizeRange, units of the view
 	charge_back = 30, -- the model's units
 	charge_spread = 10, -- units of the view
 	-- How bright the sparks are (fitted to a picture of UT2004)
@@ -79,7 +79,7 @@ local CONFIG = {
 	-- The sparks at the tip of the gun in a character's hands (LightningCharge3rd, attached to the mesh's tip). UT spawns them with the
 	-- character's first shot. Here they show as soon as the gun is held, as the first person sparks do (the mod's choice). They don't
 	-- stop when the gun can't fire: 40 a second, each 0.2 s long, 5 units in size
-	-- (a half width), up to 5 units from the emitter along the barrel, turned at random. The emitter is at RelativeLocation (-30, 3, 0)
+	-- (mSizeRange), up to 5 units from the emitter along the barrel, turned at random. The emitter is at RelativeLocation (-30, 3, 0)
 	-- in the frame of the tip, taken in the mesh's units, as for the first person charge. The mesh has no bone named tip: it is taken to
 	-- be Bone_Flash, where the muzzle is. That bone's frame is turned a quarter about the barrel from the mesh's (its parent Bone_weapon
 	-- is), so its Y is the mesh's down: the emitter is 30 units behind the tip and 3 below it. Its own numbers are UT's world units, as
@@ -87,7 +87,7 @@ local CONFIG = {
 	-- the camera with the character.
 	third_person_charge_rate = 40,
 	third_person_charge_life = 0.2,
-	third_person_charge_size = 5, -- half width, UT units
+	third_person_charge_size = 5, -- mSizeRange, UT units
 	third_person_charge_spread = 5, -- UT units
 	third_person_charge_back = 30, -- the mesh's units
 	third_person_charge_down = 3, -- the mesh's units
@@ -262,7 +262,7 @@ local function sparks(position, normal)
 			drag = CONFIG.spark_air_resistance,
 			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.spark_mass) * UNIT,
 			growth = -CONFIG.spark_thinning * UNIT,
-			head_size = CONFIG.spark_head * UNIT,
+			head_size = CONFIG.spark_head * utils.UT_SPRITE_SIDE * UNIT,
 			length = CONFIG.spark_length,
 			life = random_between(CONFIG.spark_life),
 			position = position + utils.ut_particle_offset(CONFIG.spark_position_spread) * UNIT,
@@ -346,7 +346,7 @@ local function third_person_charge_spark(character, api)
 		end,
 		intensity = CONFIG.charge_intensity,
 		life = CONFIG.third_person_charge_life,
-		size = 2 * CONFIG.third_person_charge_size * UNIT,
+		size = utils.UT_SPRITE_SIDE * CONFIG.third_person_charge_size * UNIT,
 		texture = "lightning_charge_" .. math.random(0, 3),
 	})
 end
@@ -545,7 +545,7 @@ local function update_charge(skin, dt, api)
 			intensity = CONFIG.charge_intensity,
 			life = CONFIG.charge_life,
 			material = "units/ut/fx/fx_weapon_lightning_charge_" .. math.random(0, 3),
-			size = 2 * CONFIG.charge_size * skin.view_across_scale,
+			size = utils.UT_SPRITE_SIDE * CONFIG.charge_size * skin.view_across_scale,
 		})
 	end
 end

@@ -64,28 +64,28 @@ local CONFIG = {
 	},
 	-- The splash of a glob (BioGlob.Destroyed spawns both, at their own size, whatever the glob's), made along the rotation of the glob
 	-- (the way a landed glob faces, or the way a flying one goes), as xEmitter starts a particle (utils.ut_particle_velocity: mDirDev
-	-- and mPosDev). GoopSmoke: 10 slow green puffs ((20, 120, 20) to (20, 150, 20)), 40 to 60 units wide (mSizeRange 20 to 30) and
-	-- growing by 20 a second, lasting 1 to 2 s, flying at 20 to 80 units a second, slowed by 1.1 of their speed a second, a random tile
+	-- and mPosDev). GoopSmoke: 10 slow green puffs ((20, 120, 20) to (20, 150, 20)), of size 20 to 30 (utils.UT_SPRITE_SIDE times that
+	-- across) growing by 10 a second, lasting 1 to 2 s, flying at 20 to 80 units a second, slowed by 1.1 of their speed a second, a random tile
 	-- of EmitSmoke_t, STY_Translucent, brightest at 0.1 of their life (mAttenKa).
 	burst_puffs = 10,
 	burst_puff_direction_spread = 0.25,
 	burst_puff_position_spread = 8, -- UT units
-	burst_puff_size = { 40, 60 }, -- UT units across
-	burst_puff_growth = 20, -- UT units across, a second
+	burst_puff_size = { 20, 30 }, -- mSizeRange
+	burst_puff_growth = 10, -- mGrowthRate, a second
 	burst_puff_life = { 1, 2 },
 	burst_puff_speed = { 20, 80 },
 	burst_puff_drag = 1.1,
 	burst_puff_colors = { { 20 / 255, 120 / 255, 20 / 255 }, { 20 / 255, 150 / 255, 20 / 255 } },
 	burst_puff_attenuation = 0.1,
 	-- GoopSparks: 10 lines (particles.line) of link_spark_green, (160, 160, 180), 8 units wide (mSizeRange 4) and thinning by 4 a second,
-	-- 0.04 s of their travel long (mSpawnVecB.Z) with a head 16 units across (mSpawnVecB.X 8), lasting 0.5 to 0.8 s, flying at 80 to 240
+	-- 0.04 s of their travel long (mSpawnVecB.Z) with a head of mSpawnVecB.X 8, lasting 0.5 to 0.8 s, flying at 80 to 240
 	-- units a second, slowed by 2 of their speed a second and falling by their mass of 1.5 to 2, added
 	burst_sparks = 10,
 	burst_spark_direction_spread = 0.8,
 	burst_spark_size = 8, -- UT units across
 	burst_spark_growth = -4, -- UT units across, a second
 	burst_spark_length = 0.04, -- seconds of travel
-	burst_spark_head = 16, -- UT units across
+	burst_spark_head = 8, -- mSpawnVecB.X
 	burst_spark_life = { 0.5, 0.8 },
 	burst_spark_speed = { 80, 240 },
 	burst_spark_drag = 2,
@@ -620,10 +620,10 @@ local function splash(position, direction)
 				low[3] + (high[3] - low[3]) * share,
 			},
 			drag = CONFIG.burst_puff_drag,
-			growth = CONFIG.burst_puff_growth * UNIT,
+			growth = CONFIG.burst_puff_growth * utils.UT_SPRITE_SIDE * UNIT,
 			life = random_between(CONFIG.burst_puff_life),
 			position = position + utils.ut_particle_offset(CONFIG.burst_puff_position_spread) * UNIT,
-			size = random_between(CONFIG.burst_puff_size) * UNIT,
+			size = random_between(CONFIG.burst_puff_size) * utils.UT_SPRITE_SIDE * UNIT,
 			spin = (math.random() * 2 - 1) * 0.4,
 			texture = "impact_smoke_" .. math.random(0, 15),
 			velocity = utils.ut_particle_velocity(direction, CONFIG.burst_puff_direction_spread, random_between(CONFIG.burst_puff_speed) * UNIT),
@@ -637,7 +637,7 @@ local function splash(position, direction)
 			drag = CONFIG.burst_spark_drag,
 			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.burst_spark_mass) * UNIT,
 			growth = CONFIG.burst_spark_growth * UNIT,
-			head_size = CONFIG.burst_spark_head * UNIT,
+			head_size = CONFIG.burst_spark_head * utils.UT_SPRITE_SIDE * UNIT,
 			length = CONFIG.burst_spark_length,
 			life = random_between(CONFIG.burst_spark_life),
 			position = position,
