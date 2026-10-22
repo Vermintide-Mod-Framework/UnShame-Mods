@@ -58,12 +58,14 @@ local CONFIG = {
 	headshot_ratio = 1.4,
 	headshot_margin = 0.1,
 	head_tries = 3,
-	-- A critical hit does at least this much more than a plain one, and the breed it is checked against, with the share of the damage
-	-- it takes (the critical armour values are the plain ones)
+	-- A critical hit does at least crit_least_ratio more than a plain one against an enemy with no armour, and more than a plain one
+	-- against super armour, where the game adds less of a critical hit's bonus (a Chaos warrior's body)
 	crit_least_ratio = 1.2,
-	crit_armour_breed = { "chaos_warrior", 0.5 },
-	-- An enemy that raises a shield
+	crit_armour_breed = "chaos_warrior",
+	-- An enemy that raises a shield. One hit is fired at it: quick hits break its guard, as quick melee hits do.
 	shield_breed = "skaven_clan_rat_with_shield",
+	-- The enemy in front, in the test that a hit stops at the first enemy: one the hits don't kill
+	sturdy_breed = "chaos_warrior",
 	-- LinkAltFire.ProjSpawnOffset: the bolt starts 8 UT units to the right of the eye and 3 below it (0.02 m a unit), with this much
 	-- either way, and two bolts start within start_same of each other
 	bolt_start_right = 0.16, -- m
@@ -73,7 +75,8 @@ local CONFIG = {
 	-- LinkProjectile.LifeSpan, with this much either way
 	bolt_life = 3, -- s
 	life_margin = 0.2, -- s
-	-- The beam can start once the bolt's fire rate has passed after a bolt (link_gun.lua's chain_actions), at most this much later
+	-- The beam starts at once after a bolt whose button was let go, at most this much later: in UT a fire mode only keeps the other from
+	-- starting while its button is held (Weapon.ReadyToFire, bModeExclusive and bIsFiring, which letting go clears)
 	switch_late = 0.15, -- s
 	-- The ally who is linked: Bardin as a Ranger with his Link Gun, this far ahead, standing still
 	ally_profile = "dwarf_ranger",
@@ -87,7 +90,10 @@ local CONFIG = {
 	linker_behind = -3, -- m
 	firer_ahead = 4, -- m
 	player_aside = 3, -- m
-	-- How long a bot has to hurt an enemy with its Link Gun
+	-- The enemy a bot shoots with its Link Gun, a special this far off, as the Lightning Gun's test has: an enemy near a bot (within 12
+	-- m) has it fight with its melee weapon (BTConditions.bot_in_melee_range). How long the bot has to hurt it.
+	bot_special = "skaven_ratling_gunner",
+	bot_special_distance = 14, -- m
 	bot_fight_time = 30, -- s
 	-- How long the bot may take to turn and link, and to let go once the firing stops (a bolt counts for half a second, and the link holds
 	-- half a second more)
@@ -602,8 +608,8 @@ local function scenarios()
 			end,
 		},
 		{
-			-- A held right button starts the beam once the bolt's fire rate has passed after a bolt
-			name = "the beam waits for the bolt's fire rate",
+			-- The right button starts the beam at once after a bolt whose button was let go, as UT's does
+			name = "the beam starts right after a bolt",
 			run = function (t)
 				t.look(10)
 
@@ -630,8 +636,7 @@ local function scenarios()
 				local gap = beam_t - track[1][1]
 
 				t.log("the beam started %.2f s after the bolt", gap)
-				t.expect(gap >= CONFIG.bolt_rate - 0.05, "the beam started %.2f s after the bolt, before its fire rate of %.2f s", gap, CONFIG.bolt_rate)
-				t.expect(gap <= CONFIG.bolt_rate + CONFIG.switch_late, "the beam started %.2f s after the bolt, not soon after its fire rate of %.2f s", gap, CONFIG.bolt_rate)
+				t.expect(gap <= CONFIG.switch_late, "the beam started %.2f s after the bolt, not at once", gap)
 			end,
 		},
 		{
@@ -670,15 +675,16 @@ local function scenarios()
 			end,
 		},
 		{
-			-- A bolt and a hit of the beam stop at the first enemy, as UT's do
+			-- A bolt and a hit of the beam stop at the first enemy, as UT's do. The near one is one the hits don't kill, else the beam
+			-- goes on to the far one once it is dead.
 			name = "a bolt and the beam stop at the first enemy",
 			run = function (t)
-				for _, entry in ipairs({ { "action_one", 0.05, "bolt" }, { "action_two", 0.6, "beam" } }) do
+				for _, entry in ipairs({ { "action_one", 0.05, "bolt" }, { "action_two", CONFIG.beam_rate * 3, "beam" } }) do
 					local button, time, name = entry[1], entry[2], entry[3]
 
 					t.go_to_start()
 
-					local near = t.spawn(runner.target_breed, 3)
+					local near = t.spawn(CONFIG.sturdy_breed, 3)
 					local far = t.spawn(runner.target_breed, 6)
 
 					if not t.expect(near and far, "the targets could not be spawned") then
@@ -737,10 +743,10 @@ local function scenarios()
 			end,
 		},
 		{
-			-- A shield blocks the bolts and the beam, and they don't break it (shield_break)
-			name = "a raised shield stops the bolts and the beam",
+			-- A shield blocks a bolt and a hit of the beam, and they don't break it (shield_break)
+			name = "a raised shield stops a bolt and a hit of the beam",
 			run = function (t)
-				for _, entry in ipairs({ { "action_one", 0.05, "bolt" }, { "action_two", 0.6, "beam" } }) do
+				for _, entry in ipairs({ { "action_one", 0.05, "bolt" }, { "action_two", CONFIG.beam_rate * 0.5, "beam" } }) do
 					local button, time, name = entry[1], entry[2], entry[3]
 
 					t.go_to_start()
@@ -768,26 +774,28 @@ local function scenarios()
 			end,
 		},
 		{
-			-- A critical hit does more damage, and armour takes the same share of it as of a plain hit (the profile's critical armour
-			-- values are its plain ones)
-			name = "a critical bolt does more damage, and armour takes the same share of it",
+			-- A critical bolt does more damage than a plain one, against an enemy with no armour and against super armour
+			name = "a critical bolt does more damage, against super armour too",
 			run = function (t)
+				local armoured_breed = CONFIG.crit_armour_breed
+
 				t.critical_hits(false)
 
 				local plain = first_hit(t, "bolt")
+				local plain_armoured = first_hit(t, "bolt", armoured_breed)
 
 				t.critical_hits(true)
 
 				local critical = first_hit(t, "bolt")
-				local armoured = first_hit(t, "bolt", CONFIG.crit_armour_breed[1])
+				local critical_armoured = first_hit(t, "bolt", armoured_breed)
 
-				if not t.expect(plain and critical and armoured, "a bolt did not hurt its enemy") then
+				if not t.expect(plain and plain_armoured and critical and critical_armoured, "a bolt did not hurt its enemy") then
 					return
 				end
 
-				t.log("plain %.2f, critical %.2f, critical against the %s %.2f", plain, critical, CONFIG.crit_armour_breed[1], armoured)
+				t.log("plain %.2f, critical %.2f; against the %s plain %.2f, critical %.2f", plain, critical, armoured_breed, plain_armoured, critical_armoured)
 				t.expect(critical > plain * CONFIG.crit_least_ratio, "a critical bolt did %.2f, not more than the plain %.2f", critical, plain)
-				t.expect(math.abs(armoured / critical - CONFIG.crit_armour_breed[2]) <= CONFIG.armour_margin, "a critical bolt did %.2f of its damage to the %s, not %.2f", armoured / critical, CONFIG.crit_armour_breed[1], CONFIG.crit_armour_breed[2])
+				t.expect(critical_armoured > plain_armoured, "a critical bolt did %.2f to the %s, not more than the plain %.2f", critical_armoured, armoured_breed, plain_armoured)
 			end,
 		},
 		{
@@ -797,9 +805,9 @@ local function scenarios()
 				t.hurtable(true)
 
 				local key = ut.items.weapons.link_gun_we.key
-				local enemy = t.spawn(CONFIG.breed, CONFIG.enemy_distance)
+				local enemy = t.spawn(CONFIG.bot_special, CONFIG.bot_special_distance)
 
-				if not t.expect(enemy, "the %s could not be spawned", CONFIG.breed) then
+				if not t.expect(enemy, "the %s could not be spawned", CONFIG.bot_special) then
 					return
 				end
 
@@ -842,7 +850,7 @@ local function scenarios()
 				end, CONFIG.bot_fight_time, "the bot to hurt the enemy")
 				t.wait(3)
 
-				t.expect(from_gun(damage) > 0, "the bot did not hurt the %s with its Link Gun in %d s", CONFIG.breed, CONFIG.bot_fight_time)
+				t.expect(from_gun(damage) > 0, "the bot did not hurt the %s with its Link Gun in %d s", CONFIG.bot_special, CONFIG.bot_fight_time)
 				t.expect(from_gun(player_damage) == 0, "the bot's Link Gun hurt the player %.1f", from_gun(player_damage))
 			end,
 		},
