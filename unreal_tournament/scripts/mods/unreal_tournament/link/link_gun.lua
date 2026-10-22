@@ -66,7 +66,8 @@ local VARIANTS = {
 		no_shot_animation = true,
 	},
 	-- The Deepwood Staff's item lists only the Sister of the Thorn, but all four of Kerillian's careers share one third person body, which
-	-- has the staff's animations, so this copy lists all four (as the Lightning Gun's does). It has the Link Gun's ammo.
+	-- has the staff's animations, so this copy lists all four (as the Lightning Gun's does). It has the Link Gun's ammo. The staff's shot
+	-- animation is a spell cast with the whole arm, so her bolt plays none (no_shot_animation).
 	{
 		base_item = "we_life_staff",
 		deus_copy = "deus_we_life_staff",
@@ -75,6 +76,7 @@ local VARIANTS = {
 		template = "ut_link_gun_we_template",
 		hand = "left",
 		can_wield = { "we_shade", "we_maidenguard", "we_waywatcher", "we_thornsister" },
+		no_shot_animation = true,
 	},
 }
 
