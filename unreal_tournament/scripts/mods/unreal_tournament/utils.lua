@@ -94,16 +94,6 @@ function utils.first_person_weapon_shown(first_person_extension)
 		first_person_extension:first_person_units_visible() and utils.character_animation_is_free(first_person_extension.unit)
 end
 
--- Whether the player's weapon can be used now: as for utils.first_person_weapon_shown, but in any view, and with the character not
--- disabled (grabbed, pounced, knocked down and the like). A ladder hides the weapon and ends its action (the game's climbing state), and a
--- disabler stops it, so what a weapon does while its button is held (the Minigun's barrels and their sounds) stops too.
-function utils.weapon_usable(unit)
-	local first_person_extension = ScriptUnit.has_extension(unit, "first_person_system")
-	local status_extension = ScriptUnit.has_extension(unit, "status_system")
-
-	return not (first_person_extension and game_hides_weapon(first_person_extension)) and not (status_extension and status_extension:is_disabled())
-end
-
 -- The unit that holds a player right now, if there is one. The game's own get_disabler_unit doesn't work for this: the unit that grabbed
 -- a player (a Chaos Spawn, say) stays in their status after they are let go and comes first in its order, so it would be found again
 -- for a later grab by another disabler. This only looks at what the status says is going on.

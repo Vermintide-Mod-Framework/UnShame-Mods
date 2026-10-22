@@ -170,6 +170,8 @@ local CONFIG = {
 -- The bolts and the beam have no hit effect of their own. Without one the game would play the sound, particles and decals of the surface
 -- that is hit, and with none at all it stops on a hit on the level. The skin draws UT's (see mod.silent_hit_effects in hooks.lua).
 local NO_HIT_EFFECT = "ut_link_impact"
+-- The bolt's has a name of its own, so that the skin is told where a bolt hits a wall (link.bolt_hit_wall_callbacks).
+local BOLT_HIT_EFFECT = "ut_link_bolt_impact"
 
 mod.silent_hit_effects[NO_HIT_EFFECT] = true
 
@@ -355,6 +357,16 @@ end
 -- What the skin is told when a link is made or broken: link.lock_callbacks[name] = function (unit, target)
 link.lock_callbacks = {}
 
+-- What the skin is told when a bolt hits a wall or a prop, on every machine:
+--   link.bolt_hit_wall_callbacks[name] = function (world, hit_unit, position, normal, hit_actor)
+link.bolt_hit_wall_callbacks = {}
+
+mod.silent_hit_effects[BOLT_HIT_EFFECT] = function (...)
+	for _, callback in pairs(link.bolt_hit_wall_callbacks) do
+		callback(...)
+	end
+end
+
 mod:network_register("ut_link_lock", function (_, unit_id, target_id)
 	local unit = unit_of(unit_id)
 
@@ -528,7 +540,7 @@ local function build_bolt_projectile(links)
 
 	return {
 		kind = "charged_projectile",
-		hit_effect = NO_HIT_EFFECT,
+		hit_effect = BOLT_HIT_EFFECT,
 		projectile_info = projectile_info,
 		impact_data = {
 			damage_profile = bolt_profile(links),

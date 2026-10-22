@@ -153,7 +153,7 @@ mod.minigun = {
 	mode = nil,
 	spin = 0,
 	winding_down = false,
-	-- Whether the button of each mode is held, with ammo to fire
+	-- Whether a round of each mode is the weapon's action now (see the barrels' update)
 	held = {
 		primary = false,
 		alt = false,
@@ -513,14 +513,30 @@ mod:network_register("ut_minigun_shot", function (_, owner_go_id, alt, x, y, z, 
 	end
 end)
 
--- The barrels, like MinigunFire's Idle, WindUp, FireLoop and WindDown states. When they are still, a held button picks the mode, and they
--- speed up at its rate while its button stays held. Once it is let go they slow down at the same rate until they stop, whatever is held
--- then: only stopped barrels can wind up again, for either mode. mod.minigun.spin (0 to 1 of the mode's speed), mode and winding_down
--- are for the skin and for when a round can start (can_start).
+-- The barrels, like MinigunFire's Idle, WindUp, FireLoop and WindDown states. They follow the gun's actions: while a round of a mode is
+-- the weapon's action (the first one's wind up is part of its action, before it fires), they speed up at that mode's rate, and once no
+-- round is going they slow down at the same rate until they stop: only stopped barrels can wind up again, for either mode. So whatever
+-- ends a round, or keeps one from starting, stops them too, as the game decides it: letting go of the button, a ladder, a disabler, a
+-- weapon switch, no ammo. mod.minigun.spin (0 to 1 of the mode's speed), mode and winding_down are for the skin and for when a round can
+-- start (can_start), and held says which mode's round is going.
 local function stop_barrels(state)
 	state.spin = 0
 	state.mode = nil
 	state.winding_down = false
+end
+
+-- The mode of the round that is the player's weapon's action now, or nil
+local function round_going(unit)
+	local inventory_extension = ScriptUnit.has_extension(unit, "inventory_system")
+
+	if not inventory_extension then
+		return nil
+	end
+
+	local _, right_hand_weapon_extension, left_hand_weapon_extension = CharacterStateHelper.get_item_data_and_weapon_extensions(inventory_extension)
+	local action = CharacterStateHelper.get_current_action_data(left_hand_weapon_extension, right_hand_weapon_extension)
+
+	return action and action.ut_minigun or nil
 end
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
@@ -528,9 +544,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 	local player = Managers.player and Managers.player:local_player_safe()
 	local unit = player and player.player_unit
 
-	-- (the barrels stop as when the gun is put away while it can't be used: on a ladder the game hides the weapon and ends its action,
-	-- and a disabled character runs none, so a held button does nothing then)
-	if not unit or not Unit.alive(unit) or not TEMPLATE_NAMES[utils.wielded_template_name(unit)] or not utils.weapon_usable(unit) then
+	if not unit or not Unit.alive(unit) or not TEMPLATE_NAMES[utils.wielded_template_name(unit)] then
 		stop_barrels(state)
 		state.held.primary = false
 		state.held.alt = false
@@ -538,17 +552,16 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 		return
 	end
 
-	local input_extension = ScriptUnit.extension(unit, "input_system")
-	local has_ammo = (utils.local_ranged_ammo() or 0) > 0
+	local going = round_going(unit)
 
-	state.held.primary = has_ammo and input_extension:get("action_one_hold") or false
-	state.held.alt = has_ammo and input_extension:get("action_two_hold") or false
+	state.held.primary = going == "primary"
+	state.held.alt = going == "alt"
 
 	if state.spin <= 0 then
 		stop_barrels(state)
 
 		-- (the mode of a round that has started is set by it, see handgun_start_callbacks)
-		state.mode = state.held.primary and "primary" or state.held.alt and "alt" or nil
+		state.mode = going
 	end
 
 	if state.mode then

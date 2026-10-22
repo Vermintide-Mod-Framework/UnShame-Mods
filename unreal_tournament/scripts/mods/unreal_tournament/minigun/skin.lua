@@ -525,7 +525,8 @@ local function stop_sounds(api)
 end
 
 local function update_sounds(api, dt)
-	-- The fire stops as soon as its mode's button is let go (to stop, or to switch: the other mode's fire starts with its own first round)
+	-- The fire stops as soon as its mode's rounds do (minigun.held: the button let go, or anything else that ends the round's action; a
+	-- switch of modes starts the other mode's fire with its own first round)
 	if sound.fire_id and not minigun.held[sound.fire_mode] then
 		stop_fire_sound(api)
 

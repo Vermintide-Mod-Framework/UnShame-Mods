@@ -32,7 +32,7 @@ local CONFIG = {
 	-- AssaultMuzFlash3rd at the end of the rifle in a character's hand (ClassicSniperAttachment, which sets its DrawScale to 1): one mesh
 	-- (MinigunMuzFlash3rd's MinigunFlashMesh, as the Rocket Launcher's third person flash) for a shot, of a size of 0.05 to 0.08 that
 	-- grows by 2.2 a second, for 0.15 to 0.2 s, turned at random about the barrel (mRandOrient). MinigunFlashFinal is FB_Brighten: added
-	-- by its alpha, and fading by the square, as muzzle_flash.lua's.
+	-- by its alpha, and fading once, as muzzle_flash.lua's.
 	muzzle_flash_3rd = {
 		size = {0.05, 0.08},
 		growth = 2.2,
@@ -145,9 +145,7 @@ local function third_person_flash(owner_unit, holder)
 	particles.mesh({
 		additive = 1,
 		brightness = function (fraction)
-			local fade = particles.attenuation(fraction, settings.attenuation)
-
-			return fade * fade
+			return particles.attenuation(fraction, settings.attenuation)
 		end,
 		color = { 1, 1, 1 },
 		follow = function ()

@@ -76,6 +76,7 @@ unit = [
 	"units/ut/fx/beam_strip"
 	"units/ut/fx/goop/*"
 	"units/ut/fx/decal_bio"
+	"units/ut/fx/decal_scorch"
 ]
 
 material = [

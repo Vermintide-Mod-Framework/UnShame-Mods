@@ -822,6 +822,9 @@ end
 -- Each name also gets an empty mapping of the game's (MaterialEffectMappings: no decal, sound or particles), which stays through a reload
 -- of the mod. While the mod reloads its hooks are gone, and a projectile that was in flight and hits a wall then would have the game
 -- look up a mapping by that name, and crash on finding none (EffectHelper.play_surface_material_effects).
+-- The value can also be a function, which is called when a projectile with that hit effect hits a wall or a prop. It is called on every
+-- machine, for the player's own projectile and for the copies of other players' projectiles:
+--   mod.silent_hit_effects[name] = function (world, hit_unit, position, normal, hit_actor) ... end
 mod.silent_hit_effects = setmetatable({}, {
 	__newindex = function (silent_hit_effects, effect_name, value)
 		rawset(silent_hit_effects, effect_name, value)
@@ -839,7 +842,15 @@ for _, function_name in ipairs({
 	"remote_play_skinned_surface_material_effects",
 }) do
 	mod:hook(EffectHelper, function_name, function (func, effect_name, ...)
-		if mod.silent_hit_effects[effect_name] then
+		local silent = mod.silent_hit_effects[effect_name]
+
+		if silent then
+			if type(silent) == "function" and function_name == "play_surface_material_effects" then
+				local world, hit_unit, position, _, normal, _, _, _, hit_actor = ...
+
+				silent(world, hit_unit, position, normal, hit_actor)
+			end
+
 			return
 		end
 

@@ -64,12 +64,17 @@ DERIVED = {
     # How much of the splat there is, as a gray: the decal shader cuts it out and blends it by this. (A texture's alpha did not make the decal
     # transparent.) It is not a color, so it is not made linear (units/ut/fx/bio_splat_mask.texture has srgb = false).
     'bio_splat_mask': ('XEffects/Texture/xbiosplat.tga', lambda r, g, b, a: ((max(0, min(255, (128 - r) * 255 // 104)),) * 3) + (255,)),
+    # The scorch of the Link Gun's bolt and beam (LinkBoltScorch and LinkScorch project the Rocket Launcher's rocketblastmark). UT's projector
+    # multiplies the surface by it and by 2, in gamma space: gray (128) leaves it as it is, and the darkest (24) takes it to about a fifth.
+    # Here it is black blended by how much darker it makes the surface, in linear space: 1 - (r / 128) ^ 2.2, as a gray.
+    'scorch_mask': ('XEffects/Texture/rocketblastmark.tga',
+                    lambda r, g, b, a: ((round(255 * (1 - (min(r, 128) / 128) ** 2.2)),) * 3) + (255,)),
 }
 
 # Textures that are wider than they are high and are drawn as sprites
 SQUARE = ('rocket_flare',)
 # Textures that are masks, not colors: not sRGB, and with no particle material
-MASKS = ('bio_splat_mask',)
+MASKS = ('bio_splat_mask', 'scorch_mask')
 # Textures that only make_combo_materials.py's materials draw, so they have no particle material of their own
 COMBO_ONLY = ('shock_elec_a', 'shock_gradient_b', 'shock_electricity', 'shock_dark')
 

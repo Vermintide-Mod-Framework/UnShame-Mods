@@ -53,7 +53,7 @@ local CONFIG = {
 	-- AssaultMuzFlash3rd, on each rifle in a character's hands for a round (AssaultAttachment.MakeMuzzleFlash, which flashes the twin
 	-- too), and on the throwing rifle's grenade launcher for a grenade (its tip2, Bone_Flash02): MinigunMuzFlash3rd at DrawScale 0.6,
 	-- as the Sniper Rifle's, which has it at 1 (see the Sniper Rifle's skin). MinigunFlashFinal is FB_Brighten: added by its alpha, and
-	-- fading by the square, as muzzle_flash.lua's.
+	-- fading once, as muzzle_flash.lua's.
 	muzzle_flash_3rd = {
 		size = { 0.05 * 0.6, 0.08 * 0.6 },
 		growth = 2.2 * 0.6,
@@ -162,9 +162,7 @@ local function third_person_flash(owner_unit, api, point)
 	particles.mesh({
 		additive = 1,
 		brightness = function (fraction)
-			local fade = particles.attenuation(fraction, settings.attenuation)
-
-			return fade * fade
+			return particles.attenuation(fraction, settings.attenuation)
 		end,
 		color = { 1, 1, 1 },
 		follow = function ()

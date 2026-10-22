@@ -11,11 +11,15 @@ local mod = get_mod("unreal_tournament")
 --       attached to the weapon. emitter_settings, if it is given, are the numbers of another emitter that draws the same mesh, in the
 --       form of CONFIG's (the Rocket Launcher's RocketMuzFlash1st). They can also name another mesh (unit), its materials (material:
 --       the name of the first tile's material without its number), whether a mesh keeps the tile it starts at (still_tiles), how many
---       meshes the emitter has room for (max) and whether the texture is read as it is (linear) (the Link Gun's LinkMuzFlashProj1st).
---       tiles is how many tiles the material has (4 if not given; with 1, material is the whole name). angle (degrees) is the turn
---       about the barrel, for an emitter that doesn't turn its meshes at random (mRandOrient).
--- All of these flashes are FinalBlends of FB_Brighten, which UE2 draws as the colour times the texture's alpha, added (OpenGLDrv.dll,
--- decompiled), and an xEmitter's fade dims the vertex alpha as well as the colour, so a mesh fades by the square of its fade.
+--       meshes the emitter has room for (max) (the Link Gun's LinkMuzFlashProj1st). tiles is how many tiles the material has (4 if not
+--       given; with 1, material is the whole name). angle (degrees) is the turn about the barrel, for an emitter that doesn't turn its
+--       meshes at random (mRandOrient). light, if it is given, is a function of the seconds since the shot that returns the light
+--       (r, g, b) of something else that reaches the muzzle (the Rocket Launcher's rocket).
+-- All of these flashes are FinalBlends of FB_Brighten, which UE2 draws as the colour times the texture's alpha, added (D3DDrv.dll,
+-- decompiled). An xEmitter's mesh is lit: its colour times its fade is the ambient light, and the lights near it add to that, up to 1
+-- (Engine.dll and D3DDrv.dll, decompiled). The texture's alpha is left as it is, so a mesh fades once.
+-- UT adds in gamma space and the game in linear space. Over the lit scene a flash is seen on, adding a little in gamma space is about
+-- the same as adding it in linear space, so the colour and the fade are used as they are.
 
 local utils = mod.utils
 local particles = mod.skin_particles
@@ -23,7 +27,6 @@ local random_between = utils.random_between
 local attenuation = particles.attenuation
 
 local UNIT = utils.UT_UNIT
-local GAMMA = 2.2
 
 local CONFIG = {
 	-- 5 meshes (MinigunMuzFlash1stMesh) at the muzzle for every round (mNumPerFlash), turned at random about the barrel, each lasting
@@ -78,6 +81,7 @@ function mod.muzzle_flash(emitter, follow, world_unit, draw_scale, locked, emitt
 
 	local material = settings.material or "units/ut/fx/fx_weapon_minigun_burst_"
 	local tiles = settings.tiles or TILES
+	local light = settings.light
 
 	for _ = 1, math.min(settings.count, (settings.max or settings.count) - #ends) do
 		local tile = math.random(0, tiles - 1)
@@ -88,14 +92,17 @@ function mod.muzzle_flash(emitter, follow, world_unit, draw_scale, locked, emitt
 
 		particles.mesh({
 			additive = 1,
-			-- (UT fades it in gamma space, as it draws: a texture read as srgb here (make_weapon_fx.py's SRGB_BRIGHTEN) shows its light to
-			-- the power of 2.2, so its fade is taken to that power too. A texture that is read as it is (settings.linear) fades as UT's does.)
 			brightness = function (fraction)
-				local fade = attenuation(fraction, settings.attenuation)
-
-				return (fade * fade) ^ (settings.linear and 1 or GAMMA)
+				return light and 1 or attenuation(fraction, settings.attenuation)
 			end,
 			color = settings.color,
+			color_by = light and function (fraction)
+				local fade = attenuation(fraction, settings.attenuation)
+				local r, g, b = light(fraction * life)
+				local color = settings.color
+
+				return { math.min(1, color[1] * fade + r), math.min(1, color[2] * fade + g), math.min(1, color[3] * fade + b) }
+			end or nil,
 			follow = not locked and follow or nil,
 			locked = locked or nil,
 			life = life,

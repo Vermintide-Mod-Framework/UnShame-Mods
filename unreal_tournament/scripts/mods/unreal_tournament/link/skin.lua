@@ -29,7 +29,7 @@ end
 -- meshes (LinkMuzFlashMesh) for a bolt, with room for 5, each one of the 4 tiles of its texture at random (mRandTextures, which it
 -- keeps: no mTileAnimation), turned at random about the barrel (mRandOrient), at a size of 0.6 to 0.8 that does not grow, for 0.1 to
 -- 0.14 s, mColorRange 75 of 255, and xEmitter's default mAttenKa of 0.2. Its texture is read as it is (make_weapon_fx.py), as UT puts
--- it on the screen, so UT's color and fade are kept.
+-- it on the screen.
 local function first_person_flash_settings(color)
 	return {
 		count = 2,
@@ -39,7 +39,6 @@ local function first_person_flash_settings(color)
 		life = { 0.1, 0.14 },
 		attenuation = 0.2,
 		color = { 75 / 255, 75 / 255, 75 / 255 },
-		linear = true,
 		unit = "units/ut/fx/link_flash_mesh",
 		material = "units/ut/fx/fx_weapon_link_muzmesh_" .. color .. "_",
 		still_tiles = true,
@@ -105,6 +104,23 @@ local CONFIG = {
 	linked_puff_colors = { { 0, { 0, 0, 0 } }, { 0.1, { 255, 255, 0 } }, { 0.8, { 255, 255, 0 } }, { 1, { 0, 0, 0 } } },
 	-- Bolts of another player that start less than this far apart (in seconds) belong to the same shot
 	shot_gap = 0.1,
+	-- The scorches (xScorch): a bolt's where it hits a wall (LinkBoltScorch) and the beam's where it hits the level, every 0.07 s
+	-- (LinkScorch, LinkBeamEffect.Tick). They are rocketblastmark (128 by 128) at DrawScale 0.5 and 0.4, so 64 and 51.2 units wide. A
+	-- scorch lasts its LifeSpan, 2 s and 1 s, plus -2 to 1 s at random, but at least 0.5 s.
+	scorch_unit = "units/ut/fx/decal_scorch",
+	bolt_scorch_size = 64,
+	bolt_scorch_life = 2,
+	beam_scorch_size = 51.2,
+	beam_scorch_life = 1,
+	beam_scorch_interval = 0.07, -- s
+	-- The beam's trace for its scorch reaches this far before and past the beam's end (units)
+	beam_scorch_trace = 100,
+	-- UT's projector starts 24 units off the wall (PushBack) and reaches 60 units (MaxTraceDistance), so 36 units into it. The decal's
+	-- box here reaches that far in, but only as far out as the Bio Rifle's splat (in meters), so that it doesn't reach the player's
+	-- weapon: UT's projector skips actors (bProjectActor false), and the game's decal doesn't.
+	scorch_reach_in = 36,
+	scorch_reach_out = 0.15,
+	scorch_pool_size = 40, -- for each life
 }
 
 -- LinkBeamEffect, an xEmitter of PT_Beam, drawn as UE2 draws one (Engine.dll's beam drawing, decompiled):
@@ -296,13 +312,11 @@ local function third_person_flash(character, links)
 	local size = settings.size * (BEAM.link_scale[math.min(links, 5) + 1] + 1)
 	local color = settings.color
 
-	-- (LinkMuzProjGreenFB is FB_Brighten: added by its alpha, and fading by the square, as muzzle_flash.lua's)
+	-- (LinkMuzProjGreenFB is FB_Brighten: added by its alpha, and fading once, as muzzle_flash.lua's)
 	particles.mesh({
 		additive = 1,
 		brightness = function (fraction)
-			local fade = particles.attenuation(fraction, 0)
-
-			return fade * fade
+			return particles.attenuation(fraction, 0)
 		end,
 		color = { color, color, color },
 		follow = function ()
@@ -383,9 +397,9 @@ local function new_skin(setting_id)
 		-- UT2004 has no inspect animation. The inspect pose brings the gun in and turns it about its middle to show its left side, with the
 		-- eye, the barrel to the left, nearly level. Its back and bottom run off the right and bottom edges of the screen, as the
 		-- other weapons' do. Set with tools/asset_conversion/preview_weapon.py.
-		inspect_pose_right = 20,
-		inspect_pose_forward = -38,
-		inspect_pose_up = -9,
+		inspect_pose_right = 16,
+		inspect_pose_forward = -55,
+		inspect_pose_up = -6,
 		inspect_pose_roll = -10,
 		inspect_pose_pitch = 0,
 		inspect_pose_yaw = 65,
@@ -636,6 +650,48 @@ mod.skin_init_callbacks.link_bolt = function (projectile)
 			third_person_flash(owner_unit, links)
 			holder.play_sound_at("ut_link_fire_3d_" .. math.random(1, CONFIG.fire_sound_pitches), muzzle)
 		end
+	end
+end
+
+-- The scorches are decals of the game's decal manager. A pool's decals all last as long, so there is a pool for each life a scorch can
+-- have (see mod.add_decal_pool in hooks.lua).
+local SCORCH_LIVES = { 0.5, 1, 2, 3 }
+
+for _, life in ipairs(SCORCH_LIVES) do
+	mod.add_decal_pool("ut_link_scorch_" .. life, CONFIG.scorch_unit, life, CONFIG.scorch_pool_size)
+end
+
+-- Puts a scorch on the surface at a position, size units wide, for a LifeSpan randomized as xScorch.PostBeginPlay does
+local function scorch(position, normal, size, life, hit_unit, hit_actor)
+	life = math.max(0.5, life + math.random(0, 3) - 2)
+
+	local reach_in = CONFIG.scorch_reach_in * UNIT
+	local reach_out = CONFIG.scorch_reach_out
+	local middle = position - normal * ((reach_in - reach_out) / 2)
+
+	mod.add_decal("ut_link_scorch_" .. life, middle, normal, size * UNIT, reach_in + reach_out, hit_unit, hit_actor)
+end
+
+link.bolt_hit_wall_callbacks.skin = function (_, hit_unit, position, normal, hit_actor)
+	if normal and Vector3.length(normal) > 0.5 then
+		scorch(position, Vector3.normalize(normal), CONFIG.bolt_scorch_size, CONFIG.bolt_scorch_life, hit_unit, hit_actor)
+	end
+end
+
+-- The beam's scorch: a trace through the beam's end, and a scorch where it hits the level (LinkBeamEffect.Tick, on bWorldGeometry)
+local function beam_scorch(finish, beam_direction)
+	local world = Managers.world:has_world("level_world") and Managers.world:world("level_world")
+
+	if not world then
+		return
+	end
+
+	local physics_world = World.get_data(world, "physics_world")
+	local trace = CONFIG.beam_scorch_trace * UNIT
+	local hit, position, _, normal, actor = PhysicsWorld.immediate_raycast(physics_world, finish - beam_direction * trace, beam_direction, 2 * trace, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
+
+	if hit and normal and Vector3.length(normal) > 0.5 then
+		scorch(position, Vector3.normalize(normal), CONFIG.beam_scorch_size, CONFIG.beam_scorch_life, actor and Actor.unit(actor), actor)
 	end
 end
 
@@ -892,6 +948,7 @@ local function draw_beam(character, beam, dt)
 			planes = {},
 			spark_time = 0,
 			flash_time = 0,
+			scorch_time = 0,
 			sphere_time = 0,
 		}
 		visuals[character] = visual
@@ -984,6 +1041,14 @@ local function draw_beam(character, beam, dt)
 
 			throw_spark(SPARKS, spark_place, spark_way, spark_texture, link_scale + 1, link_scale * 0.7 + 1, link_scale + 1)
 		end
+	end
+
+	visual.scorch_time = visual.scorch_time + dt
+
+	if beam.hit > 0 and visual.scorch_time > CONFIG.beam_scorch_interval then
+		visual.scorch_time = 0
+
+		beam_scorch(finish, beam_direction)
 	end
 
 	-- The flash at the muzzle: the player's own model's for every hit, linked to the model and drawn with its field of view (an fx_weapon_

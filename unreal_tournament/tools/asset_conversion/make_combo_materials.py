@@ -236,6 +236,23 @@ decal.connect('shape', 'out', IN_DECAL_MASK, 'r')
 decal.constant('out', IN_DECAL_MASK_THRESHOLD, 0.05)
 write('decal_bio', decal, {'splat_map': 'bio_splat', 'shape_map': 'bio_splat_mask'})
 
+# The Link Gun's scorch (LinkBoltScorch and LinkScorch: rocketblastmark, which UT multiplies the surface by), drawn the same way onto the
+# surfaces under the box of the unit decal_scorch: black, blended by scorch_mask, which is how much darker UT makes the surface
+# (make_fx_assets.py). Blending to black by that much is the same as multiplying by what is left.
+scorch = Graph()
+scorch.no_variables = True
+scorch.add('out', 'core/stingray_renderer/output_nodes/decal_base', ('4035efa3-d637-4d4d-865d-24653f90b7a3',))
+scorch.add('uv', 'core/shader_nodes/decal_uv')
+texture(scorch, 'shape', 'shape_map', 'uv')
+scorch.add('black', 'core/shader_nodes/mul')
+scorch.connect('shape', 'black', IN_MUL_A, 'rgb')
+scorch.constant('black', IN_MUL_B, 0)
+scorch.connect('black', 'out', IN_OUT_BASE_COLOR)
+scorch.connect('shape', 'out', IN_DECAL_BASE_COLOR_OPACITY, 'r')
+scorch.connect('shape', 'out', IN_DECAL_MASK, 'r')
+scorch.constant('out', IN_DECAL_MASK_THRESHOLD, 0.02)
+write('decal_scorch', scorch, {'shape_map': 'scorch_mask'})
+
 # ---------------------------------------------------------------- the goop in the Bio Rifle's tank
 # The Bio Rifle's first person mesh has its third material, BRPickupC (WeaponSkins): a Combiner (CO_AlphaBlend_With_Mask) of the TexPanner BRpickupP
 # (BioGoo.BRInnerGoo, PanRate 0.3 along U) and the TexPanner BRBubblesP (BioGoo.BRInnerBubbles, PanRate 0.8 along V), with the bubbles as the mask:

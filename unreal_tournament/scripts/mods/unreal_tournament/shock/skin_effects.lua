@@ -63,8 +63,8 @@ local CONFIG = {
 	-- second for 0.5 s, and no mesh. A ball has its flash on the model (fx.BALL_FLASH), or ShockProjMuzFlash3rd on the mesh in a
 	-- character's hand (ShockAttachment.ThirdPersonEffects): one MinigunFlashMesh, of size 0.35 to 0.4 growing 3.2 a second, for 0.13 s,
 	-- turned at random about the barrel, ShockMuzFlash3rdFinal times its mColorRange (50, 255, 255: the colour's fields that the class
-	-- leaves out are xEmitter's 255). All are STY_Additive, or FB_Brighten for the meshes, which add their colour times its alpha and
-	-- fade by the square.
+	-- leaves out are xEmitter's 255). All are STY_Additive, which adds the colour times its alpha and fades by the square, or
+	-- FB_Brighten for the meshes, which adds the colour times the texture's alpha and fades once (see muzzle_flash.lua).
 	muzzle_sparkle_size = 50,
 	muzzle_sparkle_growth = 50,
 	muzzle_sparkle_life = 0.5,
@@ -394,9 +394,7 @@ function fx.ball_muzzle_flash(follow, scale, locked, rotation)
 	-- (the mesh is made at 0.02 m a UT unit, so a scale of 1 is UT's size in the world; it points along its x, turned to the barrel)
 	particles.mesh({
 		brightness = function (fraction)
-			local left = 1 - fraction
-
-			return left * left
+			return 1 - fraction
 		end,
 		color = CONFIG.ball_3rd_color,
 		follow = follow,
