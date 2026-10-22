@@ -626,7 +626,8 @@ runner.add_suite({
 	scenarios = scenarios(),
 })
 
--- Bots with the Assault Rifle (its attack_meta_data in assault_rifle.lua), which is their melee weapon: they fire it at an enemy up close.
+-- Bots with the Assault Rifle (its attack_meta_data in assault_rifle.lua), which is their melee weapon: they fire it at an enemy up close,
+-- and at one further off from where they stand, and they revive the player with it in hand.
 -- A hero can't be a bot and the player at once, so these run in a suite of their own with the player as Sienna, and the bots are Victor as
 -- a Captain and Bardin as an Ironbreaker, with their own minds. The enemy stands ahead and comes at them, and the player stands aside,
 -- out of the bot's way.
@@ -637,6 +638,12 @@ local BOTS = {
 	enemy_distance = 3, -- m
 	-- How long the bot has to hurt the enemy
 	fight_time = 30, -- s
+	-- An enemy this far ahead is within the bot's range (assault_rifle.lua's bot_range), and the bot fires from where it stands: it
+	-- moves less than stand_still before its rounds first hurt the enemy, where it used to walk up to it
+	far_enemy_distance = 9, -- m
+	stand_still = 2, -- m
+	-- How long the bot has to revive the player who is down
+	revive_time = 20, -- s
 }
 
 -- The damage from an item in a record of t.track_damage
@@ -719,6 +726,106 @@ local function bot_scenario(profile, career, setting_id)
 	}
 end
 
+-- Where a unit stands, as { x, y, z }
+local function position_of(t, unit)
+	return t.on_main_thread(function ()
+		local position = Unit.alive(unit) and POSITION_LOOKUP[unit]
+
+		return position and { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
+	end)
+end
+
+-- The bot fires at an enemy further off from where it stands, and doesn't walk up to it
+local function bot_range_scenario(profile, career, setting_id)
+	local item_key = ut.items.weapons[setting_id].key
+
+	return {
+		name = string.format("a bot (%s) fires at an enemy %d m off from where it stands", profile, BOTS.far_enemy_distance),
+		run = function (t)
+			t.hurtable(true)
+
+			local aside = t.ground_at(0, BOTS.player_aside)
+
+			if not t.expect(aside, "there is no ground beside the player") then
+				return
+			end
+
+			local bot = t.add_bot(profile, career, item_key, BOTS.behind, "slot_melee", true)
+
+			if not t.expect(bot, "the bot could not be added") then
+				return
+			end
+
+			t.on_main_thread(function ()
+				runner.move_player(t.unit(), Vector3(aside[1], aside[2], aside[3]))
+			end)
+
+			local enemy = t.spawn(BOTS.enemy, BOTS.far_enemy_distance)
+
+			if not t.expect(enemy, "the %s could not be spawned", BOTS.enemy) then
+				return
+			end
+
+			local start = position_of(t, bot)
+			local damage = t.track_damage(enemy)
+
+			-- (a bot fights an enemy only once it has been seen, which a calm one never is)
+			t.on_main_thread(function ()
+				runner.provoke(enemy)
+			end)
+
+			local hurt = t.wait_until(function ()
+				return from_item(damage, item_key) > 0
+			end, BOTS.fight_time, "the bot to hurt the enemy")
+
+			local now = position_of(t, bot)
+
+			if not t.expect(hurt, "the bot did not hurt the %s with the rifle in %d s", BOTS.enemy, BOTS.fight_time) or not (start and now) then
+				return
+			end
+
+			local moved = math.sqrt((now[1] - start[1]) ^ 2 + (now[2] - start[2]) ^ 2)
+
+			t.log("the bot moved %.1f m before its rounds first hurt the enemy", moved)
+			t.expect(moved < BOTS.stand_still, "the bot moved %.1f m before it hurt the enemy, at most %.1f", moved, BOTS.stand_still)
+		end,
+	}
+end
+
+-- The bot revives the player who is down. The game's bots block while they revive, and wait until they block: the rifle's block
+-- button charges a grenade, and a bot used to stand charging it (assault_rifle.lua's BTBotInteractAction hook).
+local function bot_revive_scenario(profile, career, setting_id)
+	local item_key = ut.items.weapons[setting_id].key
+
+	return {
+		name = string.format("a bot (%s) revives the player who is down", profile),
+		run = function (t)
+			local bot = t.add_bot(profile, career, item_key, BOTS.behind, "slot_melee", true)
+
+			if not t.expect(bot, "the bot could not be added") then
+				return
+			end
+
+			if not t.expect(t.knock_down(item_key), "the player was not knocked down") then
+				return
+			end
+
+			-- (the condition runs in the update, on the main thread)
+			local revived = t.wait_until(function ()
+				local unit = t.unit()
+				local status_extension = unit and ScriptUnit.has_extension(unit, "status_system")
+
+				return status_extension ~= nil and not status_extension:is_knocked_down()
+			end, BOTS.revive_time, "the bot to revive the player")
+
+			t.expect(revived, "the bot did not revive the player in %d s", BOTS.revive_time)
+
+			-- (the player is stood up for the next scenario if the bot didn't)
+			t.revive()
+		end,
+	}
+end
+
 local shock_rifle = ut.items.weapons.shock_rifle
 
 runner.add_suite({
@@ -730,5 +837,9 @@ runner.add_suite({
 	scenarios = {
 		bot_scenario("witch_hunter", 1, "assault_rifle"),
 		bot_scenario("dwarf_ranger", 1, "assault_rifle_dr"),
+		bot_range_scenario("witch_hunter", 1, "assault_rifle"),
+		bot_range_scenario("dwarf_ranger", 1, "assault_rifle_dr"),
+		bot_revive_scenario("witch_hunter", 1, "assault_rifle"),
+		bot_revive_scenario("dwarf_ranger", 1, "assault_rifle_dr"),
 	},
 })

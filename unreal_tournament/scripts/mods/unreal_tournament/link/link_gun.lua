@@ -161,9 +161,9 @@ local CONFIG = {
 	pawn_height = 88,
 	linked_end_height = 55,
 	-- The multipliers of the damage and the stagger for each armor type: unarmored, armored, monsters, players, berserkers and super armor.
-	-- UT has no armor. The bolts are plasma, as hard on armor as the Shock Rifle's beam, and the beam's many small hits are poor against
-	-- it, as the Minigun's rounds are (a choice, to be set in the game).
-	bolt_armor_attack = { 1, 0.8, 1.5, 1, 1, 0.5 },
+	-- UT has no armor. The bolts are plasma, as hard on armor as the Shock Rifle's beam, but without its extra damage to monsters, and the
+	-- beam's many small hits are poor against it, as the Minigun's rounds are (a choice, to be set in the game).
+	bolt_armor_attack = { 1, 0.8, 1, 1, 1, 0.5 },
 	bolt_armor_impact = { 1, 0.8, 1, 1, 1, 0.5 },
 	beam_armor_attack = { 1, 0.5, 1, 1, 1, 0.3 },
 	beam_armor_impact = { 1, 1, 1, 1, 1, 0.5 },
