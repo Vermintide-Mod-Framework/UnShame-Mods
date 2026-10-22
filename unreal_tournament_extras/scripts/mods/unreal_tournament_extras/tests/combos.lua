@@ -269,6 +269,24 @@ local function scenarios()
 				end)
 				fill(t, bot)
 
+				-- When the bot first has the rat as its target, alive, and when the rat dies
+				local filled_at = Managers.time:time("game")
+				local seen = {}
+
+				runner.frame_watchers[#runner.frame_watchers + 1] = function ()
+					local now = Managers.time:time("game") - filled_at
+					local ai_extension = Unit.alive(bot) and ScriptUnit.has_extension(bot, "ai_system")
+					local target = ai_extension and ai_extension:blackboard().target_unit
+
+					if not seen.targeted and target == rat and HEALTH_ALIVE[rat] then
+						seen.targeted = now
+					end
+
+					if not seen.died and not HEALTH_ALIVE[rat] then
+						seen.died = now
+					end
+				end
+
 				local started = t.wait_until(function ()
 					return combos.kind_of(bot) ~= nil
 				end, CONFIG.bot_wait, "the bot to start a combo")
@@ -278,7 +296,8 @@ local function scenarios()
 						return ScriptUnit.extension(bot, "ai_system"):blackboard().target_unit
 					end)
 
-					t.log("the bot's target: %s, its meter: %s", tostring(target), tostring(adrenaline.of(bot)))
+					t.log("the bot's target: %s (the rat: %s), its meter: %s; it first had the rat as its target at %s s, and the rat died at %s s",
+						tostring(target), tostring(target == rat), tostring(adrenaline.of(bot)), tostring(seen.targeted), tostring(seen.died))
 				end
 
 				t.expect(started, "the bot started no combo")

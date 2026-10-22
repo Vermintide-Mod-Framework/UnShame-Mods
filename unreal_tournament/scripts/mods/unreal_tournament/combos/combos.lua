@@ -496,6 +496,10 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	history[1] = 0
 	old_key = 0
 	last_key_time = -math.huge
+
+	-- (the game's clock starts again at 0 in the next level)
+	next_sync = 0
+	next_bot_check = 0
 end
 
 combos.index_of = index_of
