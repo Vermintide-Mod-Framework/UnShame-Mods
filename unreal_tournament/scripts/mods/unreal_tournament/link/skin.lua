@@ -243,7 +243,7 @@ local SPHERE = { rate = 12, life = 0.25, size = 35, own_size = 20, color = 180 /
 local GRIPS = {
 	link_gun = { hand_node = "j_rightweaponattach", right = 0, forward = 15, up = -7, yaw = 0, pitch = 10, roll = 0, follow = 2 },
 	link_gun_dr = { hand_node = "j_rightweaponattach", right = 0, forward = 25, up = -10, yaw = 0, pitch = 10, roll = 0, follow = 2 },
-	link_gun_wh = { hand_node = "j_leftweaponattach", right = 0, forward = 40, up = 0, yaw = 8, pitch = 10, roll = 0, follow = 2 },
+	link_gun_wh = { hand_node = "j_leftweaponattach", right = 0, forward = 40, up = 0, yaw = 5, pitch = 10, roll = 0, follow = 2 },
 	link_gun_bw = { hand_node = "j_rightweaponattach", right = 0, forward = 20, up = 5, yaw = 0, pitch = 0, roll = 0, follow = nil },
 	link_gun_we = { hand_node = "j_leftweaponattach", right = 0, forward = 20, up = -7, yaw = -110, pitch = 0, roll = -25, follow = 3 },
 }
