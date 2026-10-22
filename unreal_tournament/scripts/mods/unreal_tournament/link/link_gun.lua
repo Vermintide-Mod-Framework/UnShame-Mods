@@ -134,6 +134,9 @@ local CONFIG = {
 	-- LinkProjectile: Damage, Speed, the acceleration along its way (PostNetBeginPlay), MaxSpeed and the speed each link adds to it
 	-- (LinkAdjust), and LifeSpan. The speeds are UT units a second, turned into meters by the size of a UT unit.
 	bolt_damage = 30,
+	-- The bolt's damage is scaled down as the Rocket Launcher's and the Bio Rifle's are (UT's 90 is 60 here), because the game's enemies
+	-- walk into the bolts, where UT's players dodge them
+	bolt_damage_scale = 60 / 90,
 	bolt_speed = 1000,
 	bolt_acceleration = 3000,
 	bolt_max_speed = 4000,
@@ -208,8 +211,8 @@ local BOLT = {
 	-- (the Shock Rifle's ball's hit reactions and effects)
 	attack_template = "fireball",
 	damage_type = "grenade",
-	attack_power = attack_power_for(CONFIG.bolt_damage),
-	impact_power = impact_power_for(CONFIG.bolt_damage),
+	attack_power = attack_power_for(CONFIG.bolt_damage * CONFIG.bolt_damage_scale),
+	impact_power = impact_power_for(CONFIG.bolt_damage * CONFIG.bolt_damage_scale),
 	armor_attack = CONFIG.bolt_armor_attack,
 	armor_impact = CONFIG.bolt_armor_impact,
 	critical_armor_attack = CONFIG.bolt_armor_attack,
