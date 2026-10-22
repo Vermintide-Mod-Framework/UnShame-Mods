@@ -176,41 +176,11 @@ local function largest_hit(record)
 	return largest
 end
 
--- The damage of the explosion of a small glob at an enemy of a breed, enemy_distance ahead, aimed at its middle
-local function glob_damage(t, breed_name)
-	t.go_to_start()
-
-	local enemy = t.spawn(breed_name, CONFIG.enemy_distance)
-
-	if not t.expect(enemy, "the %s could not be spawned", breed_name) then
-		return nil
-	end
-
-	t.wait(1)
-	t.aim_at(enemy)
-
-	local damage = t.track_damage(enemy)
-
-	t.press("action_one", 0.05)
-	t.wait(1)
-	t.remove(enemy)
-
-	local hits = {}
-
-	for _, hit in ipairs(damage.hits) do
-		hits[#hits + 1] = string.format("%.1f %s", hit.amount, tostring(hit.type))
-	end
-
-	t.log("a glob at the %s: %s", breed_name, table.concat(hits, ", "))
-
-	return largest_hit(damage)
-end
-
 -- The damage of a small glob's blast that goes off at the middle of an enemy of a breed, enemy_distance ahead. A glob that hits an
 -- enemy goes off on its body, and the blast does its full damage only near its middle (bio_rifle.lua's blast_full_damage_share), so how
 -- much of the blast a hit enemy takes goes with its size. Here the blast is made at the enemy's middle, as a glob's is
--- (AreaDamageSystem.create_explosion), so that only the armour counts.
-local function blast_damage(t, breed_name)
+-- (AreaDamageSystem.create_explosion), so that only the armour counts. critical makes it a critical hit's blast.
+local function blast_damage(t, breed_name, critical)
 	t.go_to_start()
 
 	local enemy = t.spawn(breed_name, CONFIG.enemy_distance)
@@ -230,7 +200,7 @@ local function blast_damage(t, breed_name)
 		local area_damage_system = Managers.state.entity:system("area_damage_system")
 
 		-- (with the units' positions made current, as the rifle's own blasts are: utils.with_valid_positions)
-		ut.utils.with_valid_positions(area_damage_system.create_explosion, area_damage_system, player, Unit.world_position(enemy, node), Quaternion.identity(), "ut_bio_blast", 0, definition.key, power_level, false, player)
+		ut.utils.with_valid_positions(area_damage_system.create_explosion, area_damage_system, player, Unit.world_position(enemy, node), Quaternion.identity(), "ut_bio_blast", 0, definition.key, power_level, critical == true, player)
 	end)
 	t.wait(0.5)
 	t.remove(enemy)
@@ -651,16 +621,12 @@ local function scenarios()
 		},
 		{
 			-- A critical glob does the same damage as a plain one: the blast has no critical boost, as the game's explosions have none
-			-- (bio_rifle.lua's BLAST)
+			-- (bio_rifle.lua's BLAST). The blasts are made at the enemy's middle: a glob that is fired goes off where it hits the body,
+			-- and the blast glances (less damage) when that is outside its inner radius, critical or not.
 			name = "a critical glob does the same damage",
 			run = function (t)
-				t.critical_hits(false)
-
-				local plain = glob_damage(t, CONFIG.plain_breed)
-
-				t.critical_hits(true)
-
-				local critical = glob_damage(t, CONFIG.plain_breed)
+				local plain = blast_damage(t, CONFIG.plain_breed, false)
+				local critical = blast_damage(t, CONFIG.plain_breed, true)
 
 				if t.expect(plain and critical and plain > 0, "a glob did not hurt the %s", CONFIG.plain_breed) then
 					t.log("plain %.1f, critical %.1f", plain, critical)

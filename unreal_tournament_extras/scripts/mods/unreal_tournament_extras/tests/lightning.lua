@@ -382,6 +382,8 @@ local function scenarios()
 		{
 			name = "bolts hurt armoured enemies and monsters by their armour",
 			run = function (t)
+				t.critical_hits(false)
+
 				local plain = first_hit(t, CONFIG.plain_breed)
 
 				if not t.expect(plain, "a bolt did not hurt the %s", CONFIG.plain_breed) then

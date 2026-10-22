@@ -362,6 +362,9 @@ end
 -- Checks that chunks or shells do the armour's share of their damage against an enemy with none, for each breed
 local function check_armour(t, shell, breeds)
 	local what = shell and "the shell's explosion" or "a chunk"
+
+	t.critical_hits(false)
+
 	local plain = armour_damage(t, CONFIG.plain_breed, shell)
 
 	if not t.expect(plain, "%s did not hurt the %s", what, CONFIG.plain_breed) then

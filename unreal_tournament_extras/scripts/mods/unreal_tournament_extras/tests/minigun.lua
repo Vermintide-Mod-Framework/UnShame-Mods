@@ -151,6 +151,8 @@ end
 
 -- Checks a mode's damage against each armour type, as a share of the damage against an enemy with none
 local function check_armour(t, mode, breeds)
+	t.critical_hits(false)
+
 	local plain = first_hit(t, CONFIG.plain_breed, mode)
 
 	if not t.expect(plain, "a %s round did not hurt the %s", mode, CONFIG.plain_breed) then

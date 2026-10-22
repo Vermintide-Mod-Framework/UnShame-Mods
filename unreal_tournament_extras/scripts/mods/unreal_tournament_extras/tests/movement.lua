@@ -530,6 +530,7 @@ local function scenarios()
 					end)
 					t.remove(target)
 					t.go_to_start()
+					t.log("%s: %.1f damage, at %.1f m/s", moving and "in a dodge" or "standing", damage.total, speed_at_hit or 0)
 
 					return damage.total, speed_at_hit or 0
 				end

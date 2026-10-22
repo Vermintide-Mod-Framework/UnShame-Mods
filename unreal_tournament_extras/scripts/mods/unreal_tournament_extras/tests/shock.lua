@@ -600,9 +600,12 @@ local function scenarios()
 			end,
 		},
 		{
-			-- The beam's damage is the armour's share of its damage against an enemy with none (a Chaos marauder)
+			-- The beam's damage is the armour's share of its damage against an enemy with none (a Chaos marauder). The hits are plain:
+			-- a critical one has its own boost.
 			name = "a beam hurts armoured enemies and monsters by their armour",
 			run = function (t)
+				t.critical_hits(false)
+
 				local plain = beam_damage(t, "chaos_marauder")
 
 				if not plain or not t.expect(plain > 0, "the beam did not hurt the marauder") then
