@@ -85,7 +85,10 @@ local CONFIG = {
 	trail_delay = 0.1,
 	-- A UE2 sprite's size (StartSizeRange) is its radius: it is drawn twice as long and as wide (as the Minigun's skin has it).
 	-- Its first emitter: one sprite (PlasmaShaft) along the way, of size 80 along and 30 across, its middle 30 ahead of the bolt, colored
-	-- by ColorMultiplierRange (0.25, 1, 0): green, with links too (MakeYellow changes only the puffs)
+	-- by ColorMultiplierRange (0.25, 1, 0): green, with links too (MakeYellow changes only the puffs). It is PTDU_Right: the texture's
+	-- U runs along the particle's velocity times its X size (Engine.dll's USpriteEmitter::FillVertexBuffer, decompiled). Its velocity is
+	-- backward (-10) and its X size is -80, so U runs forward, and the texture's bright round head (at its left) is just behind the bolt,
+	-- with the faint end ahead of it.
 	shaft_ahead = 30,
 	shaft_length = 80,
 	shaft_width = 30,
@@ -599,7 +602,7 @@ mod.skin_init_callbacks.link_bolt = function (projectile)
 	local half_shaft = CONFIG.shaft_length * CONFIG.trail_scale
 	local shaft_middle = CONFIG.shaft_ahead * CONFIG.trail_scale
 
-	-- (the shaft's bright head is at the top of its texture, which is the beam's start: ahead)
+	-- (the shaft's bright head is at the top of its texture, which is the beam's start: behind)
 	particles.beam({
 		color = CONFIG.shaft_color,
 		delay = bolt.trail_delay,
@@ -609,10 +612,10 @@ mod.skin_init_callbacks.link_bolt = function (projectile)
 		size = 2 * CONFIG.shaft_width * CONFIG.trail_scale * UNIT,
 		texture = "plasma_shaft",
 		track = function ()
-			local head = on_bolt(bolt, shaft_middle + half_shaft)
+			local head = on_bolt(bolt, shaft_middle - half_shaft)
 
 			if head then
-				return head, on_bolt(bolt, shaft_middle - half_shaft)
+				return head, on_bolt(bolt, shaft_middle + half_shaft)
 			end
 		end,
 	})

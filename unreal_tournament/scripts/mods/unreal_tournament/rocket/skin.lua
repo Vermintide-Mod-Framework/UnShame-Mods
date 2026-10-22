@@ -39,13 +39,6 @@ local CONFIG = {
 		life = {0.15, 0.2},
 		attenuation = 0.2,
 	},
-	-- The rocket's light (RocketProj), which lights both flashes as the rocket leaves the muzzle: their meshes are lit, as all of an
-	-- xEmitter's (see muzzle_flash.lua). LightHue 28 and LightSaturation 0 at LightBrightness 255 are this orange (FGetHSV). It reaches
-	-- (LightRadius 5 + 1) * 25 units, and falls off as LE_QuadraticNonIncidence: twice 1.02 less the square of the share of that reach
-	-- (FDynamicLight::SampleIntensity, decompiled). The rocket flies at 1350 units a second (Speed), from about the muzzle.
-	rocket_light_color = { 0.551, 0.270, 0 },
-	rocket_light_reach = 150, -- units
-	rocket_speed = 1350, -- units a second
 	-- RocketProj: the mesh spins. Its RotationRate roll is 50000 out of 65536 for a full turn, per second.
 	rocket_turns_per_second = 50000 / 65536,
 	-- RocketCorona (RocketFlare): 1.2 times the 128 units of its texture (UT's also pulses between 0.9 and 1.5 of it, which this does
@@ -355,17 +348,6 @@ local function add_visual(projectile)
 	return visual
 end
 
--- The light of the rocket at the muzzle, age seconds after the shot (r, g, b)
-local function rocket_light(age)
-	local share = CONFIG.rocket_speed * age / CONFIG.rocket_light_reach
-	local intensity = math.max(0, 2 * (1.02 - share * share))
-	local color = CONFIG.rocket_light_color
-
-	return color[1] * intensity, color[2] * intensity, color[3] * intensity
-end
-
-CONFIG.muzzle_flash.light = rocket_light
-
 -- The flash at the muzzle of the model in the player's own view, linked to it
 local function first_person_flash(skin)
 	mod.muzzle_flash("rocket", function ()
@@ -391,16 +373,10 @@ local function third_person_flash(owner_unit)
 
 	particles.mesh({
 		additive = 1,
-		brightness = function ()
-			return 1
+		brightness = function (fraction)
+			return particles.attenuation(fraction, settings.attenuation)
 		end,
-		-- (its mColorRange is xEmitter's white, times its fade, and the rocket's light, up to 1)
-		color_by = function (fraction)
-			local fade = particles.attenuation(fraction, settings.attenuation)
-			local r, g, b = rocket_light(fraction * life)
-
-			return { math.min(1, fade + r), math.min(1, fade + g), math.min(1, fade + b) }
-		end,
+		color = { 1, 1, 1 },
 		follow = function ()
 			return third_person.muzzle_position(owner_unit)
 		end,
