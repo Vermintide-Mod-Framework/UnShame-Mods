@@ -151,8 +151,9 @@ local CONFIG = {
 	bullet_impact_share = 0.5,
 	grenade_armor_attack = { 1, 1, 1.5, 1, 1, 0.5 },
 	grenade_armor_impact = { 1, 1, 1, 1, 1, 0.5 },
-	-- How close a bot fires its rounds from, as its melee weapon (a choice: the game's bots fight with the melee slot up close)
-	bot_range = 5, -- m
+	-- How far a bot fires its rounds from, as its melee weapon: the furthest the game has its bots fight with the melee slot
+	-- (BTConditions.bot_in_melee_range), so that a bot fires from where it is and doesn't walk up to the enemy
+	bot_range = 12, -- m
 	chain_margin = 0.05,
 	recoil_climb = 0.08,
 	-- The characters fire both modes in the stance of the base's alt attack, as actions that chain into each other, as the base's do (its
@@ -995,6 +996,31 @@ mod:hook(BTBotMeleeAction, "_defend", function (func, self, unit, blackboard, ..
 	end
 
 	return func(self, unit, blackboard, ...)
+end)
+
+-- A bot revives an ally, or helps one off a hook or a ledge, with its melee weapon held up to block (use_block_interaction), and
+-- waits until it blocks. The rifle has no block, and the button charges a grenade, so the bot stood charging and never helped. A bot
+-- that holds the rifle helps without the block.
+mod:hook(BTBotInteractAction, "run", function (func, self, unit, blackboard, ...)
+	local action_data = self._tree_node.action_data
+	local template = blackboard.wielded_item_template
+
+	if not (action_data and action_data.use_block_interaction and template and VARIANT_OF[template.name]) then
+		return func(self, unit, blackboard, ...)
+	end
+
+	-- (the action's data is the game's, shared by every bot, so it is put back at once)
+	action_data.use_block_interaction = nil
+
+	local ok, result, evaluate = pcall(func, self, unit, blackboard, ...)
+
+	action_data.use_block_interaction = true
+
+	if not ok then
+		error(result, 0)
+	end
+
+	return result, evaluate
 end)
 
 -- (the templates, for the skin; and Victor's, for the tests)
