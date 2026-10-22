@@ -62,6 +62,7 @@ unit = [
 	"units/ut/fx/sphere"
 	"units/ut/fx/vortex"
 	"units/ut/fx/light"
+	"units/ut/fx/light_spot"
 	"units/ut/fx/flak_flash_mesh"
 	"units/ut/fx/minigun_flash_mesh"
 	"units/ut/fx/minigun_flash_3rd_mesh"

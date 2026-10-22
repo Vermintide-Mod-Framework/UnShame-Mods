@@ -42,7 +42,9 @@ local mod = get_mod("unreal_tournament")
 --   particles.disc(spec): lies on a surface. spec.normal is the way it faces, or a function that returns it each frame.
 --   particles.light(spec): a point light (units/ut/fx/light) at spec.position or spec.follow. spec.color is its color, spec.intensity
 --       how bright it is, and spec.falloff how far it reaches. It fades like the other particles. With spec.quadratic it falls off as
---       UE2's LE_QuadraticNonIncidence does (see quadratic_start).
+--       UE2's LE_QuadraticNonIncidence does (see quadratic_start). With spec.facing, a function that returns a way in the world, it is
+--       a spot light (units/ut/fx/light_spot) pointing that way, which lights up to 85 degrees from it: in the player's own view it lights
+--       what is ahead of the muzzle but not the gun behind it.
 --   particles.beam(spec): goes from spec.from to spec.to. spec.size is how wide it is, and it faces the camera around its length.
 --       Instead of the two points, spec.track can be a function that returns from and to, or nothing when the beam should end.
 --       spec.screen_axis ("right" or "up") draws one of the two quads of a UE2 line instead: its corners are size / 2 to each side
@@ -71,6 +73,7 @@ mod.skin_particles = particles
 
 local UNIT_NAME = "units/ut/fx/quad"
 local LIGHT_UNIT_NAME = "units/ut/fx/light"
+local SPOT_LIGHT_UNIT_NAME = "units/ut/fx/light_spot"
 local MATERIAL_FORMAT = "units/ut/fx/fx_%s"
 local MAX_PARTICLES = 800
 -- (the sort orders that blended particles take in turn, see add)
@@ -209,7 +212,8 @@ local function add(kind, spec)
 	end
 
 	local world = Managers.world:world("level_world")
-	local entry = acquire(world, spec.unit or (kind == "light" and LIGHT_UNIT_NAME) or (kind == "strip" and STRIP_UNIT_NAME) or UNIT_NAME)
+	local light_unit_name = spec.facing and SPOT_LIGHT_UNIT_NAME or LIGHT_UNIT_NAME
+	local entry = acquire(world, spec.unit or (kind == "light" and light_unit_name) or (kind == "strip" and STRIP_UNIT_NAME) or UNIT_NAME)
 	local material
 
 	if kind == "light" then
@@ -280,6 +284,7 @@ local function add(kind, spec)
 		own_material = spec.material ~= nil,
 		intensity = spec.intensity or 1,
 		track = spec.track,
+		facing = spec.facing,
 		points = spec.points,
 		across = spec.across,
 		kind = kind,
@@ -343,6 +348,13 @@ end
 
 function particles.light(spec)
 	add("light", spec)
+end
+
+-- The way the camera looks, for the facing of a light in the player's own view
+function particles.view_forward()
+	local _, camera_rotation = utils.camera_pose()
+
+	return camera_rotation and Quaternion.forward(camera_rotation)
 end
 
 -- Returns how bright a particle is at a fraction of its life. This is UT's attenuation: it brightens until ka and dims from there.
@@ -586,6 +598,15 @@ local function place(particle, dt, camera_position, camera_rotation)
 
 	if particle.kind == "light" then
 		Unit.set_local_position(unit, 0, position)
+
+		if particle.facing then
+			local way = particle.facing()
+
+			if way and Vector3.length(way) > 0.001 then
+				Unit.set_local_rotation(unit, 0, Quaternion.look(way, Vector3.up()))
+			end
+		end
+
 		local color = particle.color
 		local grey = 0.2126 * color[1] + 0.7152 * color[2] + 0.0722 * color[3]
 		local keep = LIGHT_CONFIG.saturation

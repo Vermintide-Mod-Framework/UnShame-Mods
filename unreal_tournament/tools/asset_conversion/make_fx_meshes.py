@@ -185,18 +185,23 @@ def make_strip(unit_name, segments):
     write_unit(unit_name, geometries, nodes)
     print(unit_name, segments, 'stretches', len(nodes), 'triangles')
 
-def make_light(unit_name):
-    # A unit that is only a point light at its root (what UT's dynamic lights, LightType Steady, are: the effects set its color, brightness and
-    # reach, and move it)
+def make_light(unit_name, spot_angle=None):
+    # A unit that is only a light at its root (what UT's dynamic lights, LightType Steady, are: the effects set its color, brightness and
+    # reach, and move it). A point light, or with spot_angle a spot light that points along the root's forward and reaches that many
+    # radians to each side of it.
     write_unit(unit_name, [], {})
+    kind = '\t\ttype = "omni"\n' if spot_angle is None else '\t\tspot_angle_end = %s\n\t\tspot_angle_start = 0\n\t\ttype = "spot"\n' % spot_angle
     open('%s/%s.unit' % (FX, unit_name), 'w', newline='\n').write(
         'lights = {\n\tlight = {\n\t\tcast_shadows = false\n\t\tcolor = [ 1 1 1 ]\n\t\tfalloff_end = 2\n\t\tfalloff_exponent = 1\n\t\tfalloff_start = 0\n'
-        '\t\tnode = "root"\n\t\ttype = "omni"\n\t\tvolumetric_intensity = 0\n\t}\n}\n')
+        '\t\tnode = "root"\n' + kind + '\t\tvolumetric_intensity = 0\n\t}\n}\n')
     print(unit_name, 'a light')
 
 if __name__ == '__main__':
     make_static('coil', 'ShockCoil')
     make_light('light')
+    # (the light of a shot in the player's own view: it lights what is ahead of the muzzle and to its sides, up to 85 degrees from the
+    # aim, but not the gun behind it)
+    make_light('light_spot', 1.4835)
     make_static('sphere', 'TexPropSphere', EXPORT + '/Editor')
     make_vortex('vortex', 'ShockVortexMesh')
     make_static('flak_flash_mesh', 'FlakMuzFlashMesh')

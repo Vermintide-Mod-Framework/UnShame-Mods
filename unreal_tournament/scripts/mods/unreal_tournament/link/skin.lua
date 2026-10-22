@@ -78,7 +78,7 @@ local CONFIG = {
 	bolt_light_color = { 0.39, 1, 0.6 },
 	linked_bolt_light_color = { 1, 0.96, 0.39 },
 	bolt_light_falloff = 2, -- meters
-	-- The beam's light (LinkBeamEffect), at its start, in a character's hand: LightHue 100 (green), 40 with links (yellow) and 160 while
+	-- The beam's light (LinkBeamEffect), at its start: LightHue 100 (green), 40 with links (yellow) and 160 while
 	-- it links an ally (blue), LightSaturation 100, LightBrightness 180 and 40 more for each step of LinkScale, reaching (LightRadius + 1)
 	-- * 25 units, its LightRadius 6 and 3 more for each step of LinkScale, falling off as LE_QuadraticNonIncidence (xEmitter's)
 	beam_light_colors = {
@@ -993,8 +993,9 @@ local function draw_beam(character, beam, dt)
 
 	local locked = visual.locked
 
-	-- The beam's light in a character's hand. A new one is made when its color or reach changes, and the old one ends.
-	local light_key = not first_person and flash_color .. link_scale or nil
+	-- The beam's light, at its start. In the player's own view it is a spot light ahead of the muzzle, which doesn't light the gun behind
+	-- it (particles.light's facing). A new one is made when its color, reach or view changes, and the old one ends.
+	local light_key = flash_color .. link_scale .. (first_person and "first" or "third")
 
 	if visual.light_key ~= light_key then
 		visual.light_key = light_key
@@ -1005,6 +1006,7 @@ local function draw_beam(character, beam, dt)
 
 			particles.light({
 				color = CONFIG.beam_light_colors[flash_color],
+				facing = first_person and particles.view_forward or nil,
 				fade_in = 0,
 				falloff = (radius + 1) * 25 * UNIT,
 				follow = function ()
