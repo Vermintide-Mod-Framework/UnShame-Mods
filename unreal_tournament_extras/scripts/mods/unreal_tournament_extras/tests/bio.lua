@@ -259,11 +259,12 @@ local function scenarios()
 
 				local before = t.ammo()
 
-				-- (shots at 0, 0.33 and 0.66 s)
-				t.press("action_one", 0.9)
+				-- (shots at 0, 0.33 and 0.66 s. The button is let go about halfway to the fourth at 0.99 s, which a late frame used to reach
+				-- when it was let go at 0.9 s.)
+				t.press("action_one", 0.8)
 				t.wait(0.3)
 
-				t.expect(before - (t.ammo() or 0) == 3, "%s shots in 0.9 s, not 3", tostring(before - (t.ammo() or 0)))
+				t.expect(before - (t.ammo() or 0) == 3, "%s shots in 0.8 s, not 3", tostring(before - (t.ammo() or 0)))
 			end,
 		},
 		{

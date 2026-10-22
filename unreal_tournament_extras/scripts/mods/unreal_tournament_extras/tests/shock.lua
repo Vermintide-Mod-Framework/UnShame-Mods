@@ -240,12 +240,12 @@ local function scenarios()
 			run = function (t)
 				t.look(20)
 				record_beams()
-				t.press("action_one", 2)
+				-- (shots at 0, 0.7 and 1.4 s. The button is let go halfway to the fourth at 2.1 s, so that a late frame doesn't reach it.)
+				t.press("action_one", 1.75)
 				t.wait(0.3)
 				recording = false
 
-				-- (shots at 0, 0.7 and 1.4 s)
-				t.expect(#beams == 3, "%d beams in 2 s, not 3", #beams)
+				t.expect(#beams == 3, "%d beams in 1.75 s, not 3", #beams)
 
 				for i = 2, #beams do
 					local gap = beams[i] - beams[i - 1]
