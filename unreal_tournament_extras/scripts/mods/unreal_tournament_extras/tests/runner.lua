@@ -1556,6 +1556,15 @@ local function setup_character(t, suite, career)
 		return false
 	end
 
+	-- A career that equips an item not made for it has none of its animations, and stops the game
+	local item_data = rawget(ItemMasterList, hero.item)
+
+	if not item_data or not table.contains(item_data.can_wield, career) then
+		log("%s can't wield %s", career, hero.item)
+
+		return false
+	end
+
 	local item = BackendUtils.try_set_loadout_item(career, suite.slot, hero.item)
 
 	if not item then

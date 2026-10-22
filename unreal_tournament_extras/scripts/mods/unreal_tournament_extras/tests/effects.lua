@@ -29,7 +29,8 @@ local function scenarios()
 	}
 end
 
-local definition = ut.items.weapons.flak_cannon
+-- (Bardin's copy, on the Grudge-raker: Kruber's is on the Blunderbuss, whose wield animation Bardin doesn't have)
+local definition = ut.items.weapons.flak_cannon_dr
 
 runner.add_suite({
 	name = "effects",

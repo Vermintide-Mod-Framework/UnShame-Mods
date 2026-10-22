@@ -377,7 +377,7 @@ runner.add_suite({
 	slot = "slot_ranged",
 	heroes = {
 		hero("sniper_rifle", { "es_mercenary", "es_huntsman", "es_knight" }),
-		hero("sniper_rifle_dr", { "dr_ironbreaker", "dr_ranger" }),
+		hero("sniper_rifle_dr", { "dr_ironbreaker", "dr_ranger", "dr_engineer" }),
 	},
 	scenarios = scenarios(),
 })
