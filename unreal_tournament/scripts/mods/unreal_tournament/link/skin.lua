@@ -245,7 +245,7 @@ local GRIPS = {
 	link_gun_dr = { hand_node = "j_rightweaponattach", right = 0, forward = 15, up = -7, yaw = 0, pitch = 0, roll = 0, follow = 2 },
 	link_gun_wh = { hand_node = "j_leftweaponattach", right = -7, forward = 24, up = -15, yaw = 0, pitch = 0, roll = 0, follow = 2 },
 	link_gun_bw = { hand_node = "j_rightweaponattach", right = 0, forward = 20, up = 5, yaw = 0, pitch = 0, roll = 0, follow = nil },
-	link_gun_we = { hand_node = "j_leftweaponattach", right = 0, forward = 15, up = -7, yaw = -110, pitch = 0, roll = -25, follow = 3 },
+	link_gun_we = { hand_node = "j_leftweaponattach", right = 0, forward = 20, up = -7, yaw = -110, pitch = 0, roll = -25, follow = 3 },
 }
 
 local random_between = utils.random_between
