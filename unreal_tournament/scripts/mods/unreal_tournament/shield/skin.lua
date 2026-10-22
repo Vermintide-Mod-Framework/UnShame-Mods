@@ -39,17 +39,16 @@ local CONFIG = {
 	ring_size = 1, -- mSizeRange
 	ring_growth = 100, -- mGrowthRate, a second
 	ring_color = { 32 / 255, 1, 32 / 255 },
-	-- Next to a picture of UT's, the rings were too bright and too slow, so they are drawn at this share of UT's brightness, and play this
-	-- many times faster (the same path in less time). This is the mod's own. (They were also too big, by about the 1 / UT_SPRITE_SIDE that
-	-- drawing a disc twice its size across made them.)
-	ring_intensity = 0.7,
+	-- Next to a picture of UT's, the rings were too slow, so they play this many times faster (the same path in less time). This is the
+	-- mod's own. (They were also too big and too bright, which drawing a disc twice its size across and fading it once, not by the
+	-- square, made them.)
 	ring_time_scale = 1.5,
 	-- ShieldCharge, the sparks of the charge (ShieldFire.Timer): lines that appear up to 5 units from GetEffectStart (mPosDev) and fly
 	-- towards it, at ChargeScale * 15 units a second, 20 + ChargeScale * 10 a second, each lasting max(ChargeScale / 30, 0.2) s, where
 	-- ChargeScale is the time charged, up to FullyChargedTime. A line is 0.2 to 0.4 units in size (a line's size is half its width, so it
 	-- is twice that wide) and 0.08 s of its travel long (mSpawnVecB.Z), with a head of mSpawnVecB.X 5 (see particles.line),
-	-- green ((45, 220, 45) to (65, 250, 65)), added, fading in until 0.2 of its life (xEmitter's mAttenKa). The colours' alpha (25 to 200)
-	-- does nothing: STY_Additive adds the colour as it is.
+	-- green ((45, 220, 45) to (65, 250, 65)), fading in until 0.2 of its life (xEmitter's mAttenKa). It is STY_Additive, which adds the
+	-- colour times its alpha (25 to 200 of 255, chosen with the colour), and fades by the square (skin_particles.lua's fade_squared).
 	charge_spread = 5, -- UT units
 	charge_speed = 15, -- UT units a second, for each second of charge
 	charge_rate = {20, 10}, -- a second: the first, and more for each second of charge
@@ -59,6 +58,7 @@ local CONFIG = {
 	charge_head = 5, -- mSpawnVecB.X
 	charge_attenuation = 0.2,
 	charge_colors = { { 45 / 255, 220 / 255, 45 / 255 }, { 65 / 255, 250 / 255, 65 / 255 } },
+	charge_alphas = { 25 / 255, 200 / 255 },
 	-- The emitter spins about the world's vertical, to the right as seen from above (PHYS_Rotating, RotationRate.Yaw 16000), and its
 	-- sparks are placed relative to it (mPosRelative), so each one swings round the middle by this much for each second of its age
 	charge_spin = 16000 / 65536 * 360, -- degrees a second
@@ -193,7 +193,7 @@ local function force_rings(api)
 			attenuation = 0,
 			color = CONFIG.ring_color,
 			delay = delay,
-			intensity = CONFIG.ring_intensity,
+			fade_squared = true,
 			locked = function ()
 				local age = math.max(0, Managers.time:time("game") - born)
 
@@ -247,6 +247,7 @@ local function charge_sparks(api, skin, dt)
 			color[2] + (other[2] - color[2]) * share,
 			color[3] + (other[3] - color[3]) * share,
 		}
+		local alpha = CONFIG.charge_alphas[1] + (CONFIG.charge_alphas[2] - CONFIG.charge_alphas[1]) * share
 		local life = math.max(charged / 30, CONFIG.charge_min_life)
 		local view_scale = (skin.view_across_scale or 0.01) * CONFIG.behind_gun
 
@@ -280,6 +281,8 @@ local function charge_sparks(api, skin, dt)
 			particles.beam({
 				attenuation = CONFIG.charge_attenuation,
 				color = mixed,
+				fade_squared = true,
+				intensity = alpha,
 				life = life,
 				locked = ends,
 				material = "units/ut/fx/fx_weapon_shield_charge_spark_body",
@@ -292,6 +295,8 @@ local function charge_sparks(api, skin, dt)
 			angle = 45,
 			attenuation = CONFIG.charge_attenuation,
 			color = mixed,
+			fade_squared = true,
+			intensity = alpha,
 			life = life,
 			locked = function ()
 				local parent, _, head = ends()
@@ -370,6 +375,7 @@ local function hit_sparks(origin, rotation, meters, scatter)
 		particles.line({
 			attenuation = 0,
 			delay = math.random() * CONFIG.hit_spark_delay,
+			fade_squared = true,
 			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.hit_spark_mass) * meters,
 			growth = CONFIG.hit_spark_growth * meters,
 			head_size = CONFIG.hit_spark_head * meters * utils.UT_SPRITE_SIDE,
@@ -784,6 +790,7 @@ local function third_person_rings(api, unit)
 			attenuation = 0,
 			color = CONFIG.ring_color,
 			delay = delay,
+			fade_squared = true,
 			follow = function ()
 				local position = api.third_person.muzzle_position(unit)
 
@@ -840,6 +847,8 @@ local function third_person_sparks(api, unit, state, dt)
 				color[2] + (other[2] - color[2]) * share,
 				color[3] + (other[3] - color[3]) * share,
 			},
+			fade_squared = true,
+			intensity = CONFIG.charge_alphas[1] + (CONFIG.charge_alphas[2] - CONFIG.charge_alphas[1]) * share,
 			head_size = CONFIG.charge_head * meters * utils.UT_SPRITE_SIDE,
 			length = CONFIG.charge_length,
 			life = math.max(charged / 30, CONFIG.charge_min_life),

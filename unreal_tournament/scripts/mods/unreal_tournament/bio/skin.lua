@@ -635,6 +635,7 @@ local function splash(position, direction)
 			attenuation = 0,
 			color = CONFIG.burst_spark_color,
 			drag = CONFIG.burst_spark_drag,
+			fade_squared = true,
 			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.burst_spark_mass) * UNIT,
 			growth = CONFIG.burst_spark_growth * UNIT,
 			head_size = CONFIG.burst_spark_head * utils.UT_SPRITE_SIDE * UNIT,

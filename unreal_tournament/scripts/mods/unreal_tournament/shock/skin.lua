@@ -21,6 +21,8 @@ local animations = mod:dofile("scripts/mods/unreal_tournament/shock/skin_animati
 local animations_2003 = mod:dofile("scripts/mods/unreal_tournament/shock/skin_animations_2003")
 local fx = mod:dofile("scripts/mods/unreal_tournament/shock/skin_effects")
 
+local UNIT = utils.UT_UNIT
+
 local TEMPLATE_NAME = mod.items.weapons.shock_rifle.template
 local SETTING_ID = "shock_rifle"
 
@@ -288,7 +290,8 @@ local function shot(action, new_action, animation_name)
 
 		return skin_api.state() == skin and skin_api.muzzle_position() or nil
 	end
-	local scale = in_third_person and third_person.meters_per_unit_of(owner_unit) or skin.unit_scale
+	-- (UT doesn't scale an emitter attached to the weapon by the weapon's DrawScale, so in a character's hand it is in the world's units)
+	local scale = in_third_person and UNIT or skin.unit_scale
 
 	-- In the first person view the flash is linked to the first person unit, like the model.
 	local locked
@@ -301,10 +304,25 @@ local function shot(action, new_action, animation_name)
 		end
 	end
 
+	local function rotation()
+		return third_person.muzzle_rotation(owner_unit)
+	end
+
 	if animation_name == "Fire" then
 		fx.beam_muzzle_flash(follow, scale, locked, utils.wielded_skin(owner_unit) == INSTAGIB_SKIN)
 	else
-		fx.ball_muzzle_flash(follow, scale, locked)
+		fx.ball_muzzle_flash(follow, scale, locked, rotation)
+	end
+
+	-- The flash on the model, linked to it (mod.muzzle_flash, in the units of the view without the model's DrawScale)
+	if not in_third_person then
+		mod.muzzle_flash(animation_name, function ()
+			return skin_api.state() == skin and skin_api.muzzle_model_position() or nil
+		end, skin.unit_scale / skin_api.draw_scale(), 1, function ()
+			if skin_api.state() == skin then
+				return skin_api.model_point_in_view()
+			end
+		end, animation_name == "Fire" and fx.BEAM_FLASH or fx.BALL_FLASH)
 	end
 end
 
@@ -341,7 +359,7 @@ mod.shock_beam_callbacks.skin = function (owner_unit, start_position, end_positi
 		if not is_local then
 			fx.beam_muzzle_flash(function ()
 				return third_person.muzzle_position(owner_unit)
-			end, third_person.meters_per_unit_of(owner_unit), nil, utils.wielded_skin(owner_unit) == INSTAGIB_SKIN)
+			end, UNIT, nil, utils.wielded_skin(owner_unit) == INSTAGIB_SKIN)
 		end
 	end
 
@@ -376,7 +394,9 @@ mod.init_callbacks.shock_ball = function (projectile)
 		skin_api.play_sound_at("ut_shock_alt_fire_3d", Unit.world_position(unit, 0))
 		fx.ball_muzzle_flash(function ()
 			return third_person.muzzle_position(owner_unit)
-		end, third_person.meters_per_unit_of(owner_unit))
+		end, UNIT, nil, function ()
+			return third_person.muzzle_rotation(owner_unit)
+		end)
 	end
 
 	-- The ball is gone as soon as it has hit something. The game only notices a hit in its next update, by which time the projectile

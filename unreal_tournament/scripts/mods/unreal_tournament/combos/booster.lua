@@ -62,6 +62,7 @@ local function cross(unit, velocity)
 		angle = 45,
 		attenuation = CONFIG.cross_attenuation,
 		exp_in_out = true,
+		fade_squared = true,
 		life = CONFIG.cross_life,
 		size = CONFIG.cross_size * utils.UT_SPRITE_SIDE * UNIT,
 		texture = CONFIG.cross_texture,

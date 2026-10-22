@@ -17,6 +17,8 @@ from formats import read_chunks as chunks
 #   units/ut/fx/link_bolt_mesh  WeaponStaticMesh.LinkProjectile, the Link Gun's bolt: it lies along y, the way it flies, from 0.6
 #                       to 26 units, and is 20 across
 #   units/ut/fx/link_flash_mesh  XEffects.LinkMuzFlashMesh, the mesh of the Link Gun's flashes of a bolt (LinkMuzFlashProj1st and 3rd)
+#   units/ut/fx/shock_flash_mesh  WeaponStaticMesh.ShockMuzFlash, the mesh of the Shock Rifle's first person flash of a beam
+#                       (ShockBeamMuzFlash)
 #   units/ut/fx/beam_strip  a strip of triangles whose corners the effects place, for the Link Gun's beam (see make_strip)
 # They are made in meters, a UT unit being 0.02 m (as everything of the effects is), turned from UT's axes (x forward, y right, z up) to
 # this game's (x right, y forward, z up), which makes the mesh the other way round: the long axis of the coil is y.
@@ -209,5 +211,6 @@ if __name__ == '__main__':
     make_static('link_bolt_mesh', 'LinkProjectile', EXPORT + '/WeaponStaticMesh')
     # (its UVs are in the tile of column 0 and row 1 of link_muzmesh_green's 2 by 2)
     make_static('link_flash_mesh', 'LinkMuzFlashMesh', tile=(2, 2, 0, 1))
+    make_static('shock_flash_mesh', 'ShockMuzFlash', EXPORT + '/WeaponStaticMesh')
     # (the Link Gun's beam, up to 3525 units long with links and a link (LinkFire.TraceRange and its link scale), a point every 65)
     make_strip('beam_strip', 64)

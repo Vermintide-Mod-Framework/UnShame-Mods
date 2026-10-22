@@ -12,6 +12,10 @@ local mod = get_mod("unreal_tournament")
 --       form of CONFIG's (the Rocket Launcher's RocketMuzFlash1st). They can also name another mesh (unit), its materials (material:
 --       the name of the first tile's material without its number), whether a mesh keeps the tile it starts at (still_tiles), how many
 --       meshes the emitter has room for (max) and whether the texture is read as it is (linear) (the Link Gun's LinkMuzFlashProj1st).
+--       tiles is how many tiles the material has (4 if not given; with 1, material is the whole name). angle (degrees) is the turn
+--       about the barrel, for an emitter that doesn't turn its meshes at random (mRandOrient). added draws it as UE2 draws
+--       FB_Brighten: the colour times the texture's alpha, added (OpenGLDrv.dll, decompiled), fading by the square of its fade, which dims
+--       the vertex alpha as well as the colour (the Shock Rifle's flashes).
 
 local utils = mod.utils
 local particles = mod.skin_particles
@@ -77,37 +81,45 @@ function mod.muzzle_flash(emitter, follow, world_unit, draw_scale, locked, emitt
 	local factor = world_unit / UNIT * draw_scale * settings.fit
 
 	local material = settings.material or "units/ut/fx/fx_weapon_minigun_burst_"
+	local tiles = settings.tiles or TILES
 
 	for _ = 1, math.min(settings.count, (settings.max or settings.count) - #ends) do
-		local tile = math.random(0, 3)
+		local tile = math.random(0, tiles - 1)
 		local life = random_between(settings.life)
 		local start = random_between(settings.scale)
 
 		ends[#ends + 1] = now + life
 
 		particles.mesh({
-			-- (FB_Brighten: its material brightens what is behind it as FB_Brighten does, see make_combo_materials.py, with no added part
+			-- (without added: its material brightens what is behind it as make_combo_materials.py's brighten graphs do, with no added part
 			-- of its own)
-			additive = 0,
+			additive = settings.added and 1 or 0,
 			-- (UT fades it in gamma space, as it draws: its texture is read as srgb here (make_weapon_fx.py's SRGB_BRIGHTEN), and the light
 			-- that shows as UT's fade is that to the power of 2.2. A texture that is read as it is (settings.linear) fades as UT's does.)
 			brightness = function (fraction)
-				return attenuation(fraction, settings.attenuation) ^ (settings.linear and 1 or GAMMA)
+				local fade = attenuation(fraction, settings.attenuation)
+
+				if settings.added then
+					return fade * fade
+				end
+
+				return fade ^ (settings.linear and 1 or GAMMA)
 			end,
 			color = settings.color,
 			follow = not locked and follow or nil,
 			locked = locked or nil,
 			life = life,
-			material = material .. tile,
-			material_by = not settings.still_tiles and function (fraction)
-				return material .. (tile + math.min(math.floor(fraction * TILES), TILES - 1)) % TILES
+			material = tiles > 1 and material .. tile or material,
+			material_by = tiles > 1 and not settings.still_tiles and function (fraction)
+				return material .. (tile + math.min(math.floor(fraction * tiles), tiles - 1)) % tiles
 			end or nil,
 			rotation = rotation,
 			scale = function (fraction)
 				return (start + settings.growth * fraction * life) * factor
 			end,
 			spin = 0,
-			angle = math.random() * 360,
+			-- (turned at random about the barrel, or not at all for an emitter without mRandOrient: settings.angle 0)
+			angle = settings.angle or math.random() * 360,
 			spin_axis = Vector3(0, 1, 0),
 			unit = settings.unit or "units/ut/fx/minigun_flash_mesh",
 		})

@@ -16,6 +16,8 @@ local mod = get_mod("unreal_tournament")
 --       after it, in straight lines (xEmitter's ATF_LerpInOut).
 --   exp_in_out: fades as xEmitter's ATF_ExpInOut does instead: the same rise and fall, taken at 1 less the square of the share of its
 --       life that is left, so it rises sooner and falls later.
+--   fade_squared: fades by the square of its fade, as an xEmitter's STY_Additive particle does. UE2 draws that style with FB_Brighten,
+--       which adds the colour times its alpha (OpenGLDrv.dll, decompiled), and the fade dims the alpha as well as the colour.
 --   fade_in, fade_out: UT's FadeInEndTime and FadeOutStartTime, in seconds. The particle is fully visible from fade_in until fade_out.
 --       They are used instead of attenuation.
 --   size_by, color_by: functions of how far into its life the particle is (0 to 1) that return its size, and its color { r, g, b }, in
@@ -99,6 +101,7 @@ end
 -- each stretch between two of them, on the nodes t_<i>_a and t_<i>_b (from 0)
 local STRIP_UNIT_NAME = "units/ut/fx/beam_strip"
 local STRIP_POINTS = 65
+particles.STRIP_POINTS = STRIP_POINTS
 
 -- The nodes of a strip's triangles, { a, b } for each stretch
 local function strip_nodes(entry)
@@ -249,6 +252,7 @@ local function add(kind, spec)
 		drag = spec.drag or 0,
 		fall = spec.fall or 0,
 		exp_in_out = spec.exp_in_out,
+		fade_squared = spec.fade_squared,
 		screen_axis = spec.screen_axis,
 		entry = entry,
 		fade_in = spec.fade_in,
@@ -363,7 +367,8 @@ end
 -- (<texture>_head). Both have the particle's color and fade.
 -- The particle starts at spec.position with spec.velocity, slowed by spec.drag (mAirResistance) and pulled down by spec.fall (m/s^2), or
 -- spec.motion(age) returns where it is and its velocity, or nothing when it should end. spec.body_material and spec.head_material can
--- name materials of their own. The rest (life, delay, color, intensity, attenuation, exp_in_out, additive) is as for the other kinds.
+-- name materials of their own. The rest (life, delay, color, intensity, attenuation, exp_in_out, fade_squared, additive) is as for the
+-- other kinds.
 function particles.line(spec)
 	local born = Managers.time:time("game") + (spec.delay or 0)
 	local motion = spec.motion
@@ -409,6 +414,7 @@ function particles.line(spec)
 			color = spec.color,
 			delay = spec.delay,
 			exp_in_out = spec.exp_in_out,
+			fade_squared = spec.fade_squared,
 			growth = spec.growth,
 			intensity = spec.intensity,
 			life = spec.life,
@@ -433,6 +439,7 @@ function particles.line(spec)
 		color = spec.color,
 		delay = spec.delay,
 		exp_in_out = spec.exp_in_out,
+		fade_squared = spec.fade_squared,
 		follow = function ()
 			return (ends())
 		end,
@@ -448,9 +455,10 @@ end
 -- FadeInEndTime and FadeOutStartTime, which multiply together), or else the attenuation.
 local function brightness(particle)
 	if not particle.fade_in and not particle.fade_out then
-		local fade = particle.exp_in_out and particles.exp_in_out or particles.attenuation
+		local curve = particle.exp_in_out and particles.exp_in_out or particles.attenuation
+		local fade = math.max(0, curve(particle.age / particle.life, particle.attenuation))
 
-		return math.max(0, fade(particle.age / particle.life, particle.attenuation))
+		return particle.fade_squared and fade * fade or fade
 	end
 
 	local result = 1

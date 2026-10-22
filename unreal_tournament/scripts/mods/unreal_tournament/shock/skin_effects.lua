@@ -13,11 +13,17 @@ local utils = mod.utils
 local particles = mod.skin_particles
 
 local CONFIG = {
-	-- The beam (ShockBeamEffect) is made of pieces beam_piece_length long and beam_width wide. Each piece lasts beam_life.
-	beam_piece_length = 150,
-	beam_width = 36,
+	-- The beam (ShockBeamEffect), an xEmitter of PT_Beam drawn as Engine.dll draws one (decompiled; see the Link Gun's skin): a point
+	-- every beam_regen_dist (mRegenDist) from the start to the end, the last piece short, and beam_planes (mMaxParticles) flat ribbons
+	-- through them, turned half a turn / beam_planes apart about the line, which don't turn (mSpinRange 0). The texture is once along
+	-- each piece. While it fades (mAttenuate), each ribbon reaches beam_size[1] to each side at the start of its life and grows to
+	-- beam_size[2] by the square of the share of its life gone (mSizeRange), and it is its colour times the square of the share left
+	-- (its mAttenKa is not used). It is STY_Additive, which adds the colour times its alpha, faded the same: it shows the fourth power.
+	-- It lasts beam_life (mLifeRange[0], and the actor's LifeSpan).
+	beam_regen_dist = 150, -- UT units
+	beam_planes = 3,
+	beam_size = { 24, 48 }, -- UT units to each side
 	beam_life = 0.75,
-	beam_attenuation = 0.1,
 	-- The beam's coil (ShockBeamCoil) is a piece of the coil mesh (30 units long) every coil_piece_length along the beam. Each piece is
 	-- scaled by coil_length_scale along the beam and coil_radius_scale across it, times a size from coil_size (mSizeRange). It turns
 	-- about the beam coil_spin turns a second (mSpinRange 32000 out of 65536). coil_color is its brightness: UT's mColorRange is 50 out
@@ -52,19 +58,23 @@ local CONFIG = {
 	scorch_size = 64,
 	scorch_life = 2.2,
 
-	-- Muzzle flashes. The beam has a sparkle and a flash (ShockMuzFlash, ShockBeamMuzFlash), and the ball has ShockProjMuzFlash. UT's
-	-- flashes are meshes (ShockMuzFlash's mesh, and MinigunMuzFlash1stMesh at 0.6 to 0.7): here they are sprites of their own size.
+	-- Muzzle flashes. A beam in the player's own view has ShockMuzFlash's sparkle at the weapon's effect start (ShockBeamEffect), and
+	-- the flash on the model (fx.BEAM_FLASH); in a character's hand it has ShockMuzFlash3rd's sparkle instead, of size 65 growing 80 a
+	-- second for 0.5 s, and no mesh. A ball has its flash on the model (fx.BALL_FLASH), or ShockProjMuzFlash3rd on the mesh in a
+	-- character's hand (ShockAttachment.ThirdPersonEffects): one MinigunFlashMesh, of size 0.35 to 0.4 growing 3.2 a second, for 0.13 s,
+	-- turned at random about the barrel, ShockMuzFlash3rdFinal times its mColorRange (50, 255, 255: the colour's fields that the class
+	-- leaves out are xEmitter's 255). All are STY_Additive, or FB_Brighten for the meshes, which add their colour times its alpha and
+	-- fade by the square.
 	muzzle_sparkle_size = 50,
 	muzzle_sparkle_growth = 50,
 	muzzle_sparkle_life = 0.5,
-	muzzle_flash_size = 60,
-	muzzle_flash_life = 0.14,
-	ball_flash_count = 3,
-	ball_flash_size = {
-		40,
-		60,
-	},
-	ball_flash_life = 0.2,
+	muzzle_3rd_size = 65,
+	muzzle_3rd_growth = 80,
+	muzzle_3rd_life = 0.5,
+	ball_3rd_size = { 0.35, 0.4 },
+	ball_3rd_growth = 3.2,
+	ball_3rd_life = 0.13,
+	ball_3rd_color = { 50 / 255, 1, 1 },
 
 	-- The flying ball (ShockProjectile and ShockBall). The ball itself is a sprite that lasts as long as the ball does. There are
 	-- ball_sprite_layers of them added together, and each turns its own way (up to ball_sprite_spin turns a second) so that the spikes
@@ -315,49 +325,100 @@ local function fire_light(follow, locked)
 	})
 end
 
--- The two muzzle flashes. `follow` returns the position. `locked` is used in the player's own first person view: it returns a unit and
--- a position in that unit (see skin_particles.lua).
+-- The flashes on the model in the player's own view, for mod.muzzle_flash (UT draws them on the weapon's tip, with its field of view,
+-- at their own DrawScale of 1). ShockBeamMuzFlash: one ShockMuzFlash mesh for a shot, of size 0.5 growing 5 a second, for 0.14 s,
+-- not turned. ShockProjMuzFlash: 3 MinigunMuzFlash1stMesh for a shot, with room for 6, of size 0.6 to 0.7, for 0.2 s, not turned, each
+-- one of the 4 tiles of shock_muzflash_1st at random, kept (mRandTextures). Both fade from the start (mAttenKa 0), FB_Brighten.
+fx.BEAM_FLASH = {
+	added = true,
+	angle = 0,
+	attenuation = 0,
+	color = { 1, 1, 1 },
+	count = 1,
+	fit = 1,
+	growth = 5,
+	life = { 0.14, 0.14 },
+	linear = true,
+	material = "units/ut/fx/fx_weapon_shock_beam_flash",
+	max = 5,
+	scale = { 0.5, 0.5 },
+	tiles = 1,
+	unit = "units/ut/fx/shock_flash_mesh",
+}
+fx.BALL_FLASH = {
+	added = true,
+	angle = 0,
+	attenuation = 0,
+	color = { 1, 1, 1 },
+	count = 3,
+	fit = 1,
+	growth = 0,
+	life = { 0.2, 0.2 },
+	linear = true,
+	material = "units/ut/fx/fx_weapon_shock_muzflash_1st_",
+	max = 6,
+	scale = { 0.6, 0.7 },
+	still_tiles = true,
+	unit = "units/ut/fx/minigun_flash_mesh",
+}
+
+-- The sparkles and the light of a shot (see CONFIG). `follow` returns the position. `locked` is used in the player's own first person
+-- view: it returns a unit and a position in that unit (see skin_particles.lua). `rotation` returns the way the mesh in a character's
+-- hand points (for the ball's flash there).
 function fx.beam_muzzle_flash(follow, scale, locked, red)
 	fire_light(follow, locked)
 
+	local size = locked and CONFIG.muzzle_sparkle_size or CONFIG.muzzle_3rd_size
+	local growth = locked and CONFIG.muzzle_sparkle_growth or CONFIG.muzzle_3rd_growth
+
 	particles.sprite({
 		attenuation = 0,
 		color = red and RED or WHITE,
+		fade_squared = true,
 		follow = follow,
 		locked = locked,
-		growth = CONFIG.muzzle_sparkle_growth * utils.UT_SPRITE_SIDE * scale,
-		life = CONFIG.muzzle_sparkle_life,
-		size = CONFIG.muzzle_sparkle_size * utils.UT_SPRITE_SIDE * scale,
+		growth = growth * utils.UT_SPRITE_SIDE * scale,
+		life = locked and CONFIG.muzzle_sparkle_life or CONFIG.muzzle_3rd_life,
+		size = size * utils.UT_SPRITE_SIDE * scale,
 		spin = random_spin(),
 		texture = "shock_sparkle",
 	})
-	particles.sprite({
-		attenuation = 0,
-		color = red and RED or WHITE,
-		follow = follow,
-		locked = locked,
-		life = CONFIG.muzzle_flash_life,
-		size = CONFIG.muzzle_flash_size * scale,
-		spin = random_spin(),
-		texture = "shock_flash",
-	})
 end
 
-function fx.ball_muzzle_flash(follow, scale, locked)
+function fx.ball_muzzle_flash(follow, scale, locked, rotation)
 	fire_light(follow, locked)
 
-	for _ = 1, CONFIG.ball_flash_count do
-		particles.sprite({
-			attenuation = 0,
-			color = PURPLE,
-			follow = follow,
-			locked = locked,
-			life = CONFIG.ball_flash_life,
-			size = random_between(CONFIG.ball_flash_size) * scale,
-			spin = random_spin(),
-			texture = "shock_flare_b",
-		})
+	if locked or not rotation then
+		return
 	end
+
+	local life = CONFIG.ball_3rd_life
+	local size = random_between(CONFIG.ball_3rd_size)
+
+	-- (the mesh is made at 0.02 m a UT unit, so a scale of 1 is UT's size in the world; it points along its x, turned to the barrel)
+	particles.mesh({
+		brightness = function (fraction)
+			local left = 1 - fraction
+
+			return left * left
+		end,
+		color = CONFIG.ball_3rd_color,
+		follow = follow,
+		life = life,
+		material = "units/ut/fx/fx_shock_muzflash_3rd",
+		rotation = function ()
+			local now = rotation()
+
+			return now and Quaternion.multiply(now, Quaternion.axis_angle(Vector3(0, 0, 1), math.pi / 2)) or Quaternion.identity()
+		end,
+		scale = function (fraction)
+			return (size + CONFIG.ball_3rd_growth * fraction * life) * scale / UNIT
+		end,
+		spin = 0,
+		angle = math.random() * 360,
+		spin_axis = Vector3(0, 1, 0),
+		unit = "units/ut/fx/minigun_flash_3rd_mesh",
+	})
 end
 
 -- What a beam makes where it hits a surface that faces the way `normal` points: flares, a ring, a core and a scorch mark.
@@ -369,6 +430,7 @@ local function impact(position, normal, red)
 		particles.disc({
 			attenuation = 0,
 			color = color,
+			fade_squared = true,
 			growth = CONFIG.impact_flare_growth * SPRITE,
 			life = CONFIG.impact_flare_life,
 			normal = normal,
@@ -382,6 +444,7 @@ local function impact(position, normal, red)
 	particles.disc({
 		attenuation = 0,
 		color = color,
+		fade_squared = true,
 		growth = CONFIG.impact_ring_growth * SPRITE,
 		life = CONFIG.impact_ring_life,
 		normal = normal,
@@ -393,6 +456,7 @@ local function impact(position, normal, red)
 	particles.sprite({
 		attenuation = 0,
 		color = color,
+		fade_squared = true,
 		growth = CONFIG.impact_core_growth * SPRITE,
 		life = CONFIG.impact_core_life,
 		position = position + normal * (CONFIG.impact_core_offset * UNIT),
@@ -457,21 +521,63 @@ function fx.beam(start, stop, normal, red)
 	if length > 0.01 then
 		coil(start, stop, red)
 
-		local piece_length = CONFIG.beam_piece_length * UNIT
-		local count = math.max(1, math.ceil(length / piece_length))
+		-- The points: one every regen_dist, and the end
+		local direction = along * (1 / length)
+		local regen = CONFIG.beam_regen_dist * UNIT
+		local points = {}
+
+		for i = 0, math.floor(length / regen) do
+			points[#points + 1] = Vector3Box(start + direction * (i * regen))
+		end
+
+		if length - (#points - 1) * regen > 0.001 then
+			points[#points + 1] = Vector3Box(stop)
+		end
+
+		-- The axes across the line, as UE2 picks them (see the Link Gun's skin)
+		local reference = math.abs(Vector3.z(direction)) > 0.57 and Vector3(1, 0, 0) or Vector3(0, 0, 1)
+		local u_axis = Vector3.normalize(Vector3.cross(direction, reference))
+		local v_axis = Vector3.cross(direction, u_axis)
+		local born = Managers.time:time("game")
+		local life = CONFIG.beam_life
+		local low, high = CONFIG.beam_size[1] * UNIT, CONFIG.beam_size[2] * UNIT
+
+		-- A strip has room for STRIP_POINTS points, so a long beam is drawn in pieces that share their ends
+		local per_strip = particles.STRIP_POINTS - 1
 
 		-- The Instagib beam is red and drawn twice, because SuperShockBeamEffect adds an ExtraRedBeam.
 		for _ = 1, red and 2 or 1 do
-			for i = 0, count - 1 do
-				particles.beam({
-					attenuation = CONFIG.beam_attenuation,
-					color = red and RED or WHITE,
-					from = start + along * (i / count),
-					life = CONFIG.beam_life,
-					size = CONFIG.beam_width * UNIT,
-					texture = "shock_beam",
-					to = start + along * ((i + 1) / count),
-				})
+			for plane = 1, CONFIG.beam_planes do
+				local angle = (plane - 1) * math.pi / CONFIG.beam_planes
+				local across = Vector3Box(v_axis * math.sin(angle) + u_axis * math.cos(angle))
+
+				for first = 1, #points - 1, per_strip do
+					local chunk = {}
+
+					for i = first, math.min(first + per_strip, #points) do
+						chunk[#chunk + 1] = points[i]
+					end
+
+					particles.strip({
+						across = function ()
+							local gone = math.min(1, (Managers.time:time("game") - born) / life)
+
+							return across:unbox() * (low + (high - low) * gone * gone)
+						end,
+						brightness = function (fraction)
+							local left = 1 - fraction
+
+							return left * left * left * left
+						end,
+						color = red and RED or WHITE,
+						life = life,
+						points = function ()
+							return chunk, #chunk
+						end,
+						size = 0,
+						texture = "shock_beam",
+					})
+				end
 			end
 		end
 	end
@@ -631,6 +737,7 @@ function fx.ball_explosion(position)
 	particles.sprite({
 		attenuation = 0,
 		color = WHITE,
+		fade_squared = true,
 		growth = CONFIG.explosion_core_growth * SPRITE,
 		life = CONFIG.explosion_core_life,
 		position = position,
@@ -683,6 +790,7 @@ local function combo_ring(position)
 	particles.sprite({
 		attenuation = CONFIG.combo_ring_attenuation,
 		color = WHITE,
+		fade_squared = true,
 		growth = CONFIG.combo_ring_growth * SPRITE,
 		life = CONFIG.combo_ring_life,
 		position = position,
@@ -696,6 +804,7 @@ local function combo_core(position)
 	particles.sprite({
 		attenuation = 0,
 		color = WHITE,
+		fade_squared = true,
 		growth = CONFIG.combo_core_growth * SPRITE,
 		life = CONFIG.combo_core_life,
 		position = position,
@@ -744,6 +853,7 @@ local function combo_flares(position)
 		particles.sprite({
 			attenuation = CONFIG.combo_flare_attenuation,
 			color = WHITE,
+			fade_squared = true,
 			delay = i / CONFIG.combo_flare_rate,
 			growth = CONFIG.combo_flare_growth * SPRITE,
 			life = CONFIG.combo_flare_life,
@@ -758,6 +868,7 @@ local function combo_flares(position)
 		particles.sprite({
 			attenuation = 0.9,
 			color = WHITE,
+			fade_squared = true,
 			delay = CONFIG.combo_flare_time,
 			growth = CONFIG.combo_big_flare_growth * SPRITE,
 			life = CONFIG.combo_big_flare_life,

@@ -78,6 +78,11 @@ TEXTURES = {
     'link_muzmesh_yellow': ('XEffectMat/Texture/link_muzmesh_yellow.tga', 2, 2),
     'plasma_shaft': ('AW-2004Particles/Texture/PlasmaShaft.tga', 1, 1),
     'smoke_panels': ('AW-2004Particles/Texture/SmokePanels1.tga', 4, 4),
+    # The Shock Rifle's flashes on meshes, all FB_Brighten: ShockBeamMuzFlash's ShockFlashFB (shock_flash, on the ShockMuzFlash mesh),
+    # ShockProjMuzFlash's ShockMuzFlash1stFinal (shock_muzflash_1st, 4 tiles) and ShockProjMuzFlash3rd's ShockMuzFlash3rdFinal
+    'shock_beam_flash': ('XEffectMat/Texture/shock_flash.tga', 1, 1),
+    'shock_muzflash_1st': ('XGameShaders/Texture/shock_muzflash_1st.tga', 2, 2),
+    'shock_muzflash_3rd': ('XGameShaders/Texture/shock_muzflash_3rd.tga', 1, 1),
 }
 
 # (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
@@ -116,7 +121,11 @@ TOP_HALF = ('speed_trail',)
 # parts. The Minigun's flash and shells are attached to the weapon (MinigunFire.InitEffects, Minigun.PostBeginPlay), and its smoke is
 # drawn with the weapon's field of view (WeaponFire.DrawMuzzleFlash).
 WEAPON = ('minigun_burst', 'shell_casing', 'muzzle_smoke', 'force_ring', 'link_muzmesh_green', 'link_muzmesh_yellow',
-          'link_beam_flash_green', 'link_beam_flash_yellow', 'link_beam_flash_blue')
+          'link_beam_flash_green', 'link_beam_flash_yellow', 'link_beam_flash_blue', 'shock_beam_flash', 'shock_muzflash_1st')
+
+# The textures UT draws with FB_Brighten that are added here as UE2 adds them: the colour times the alpha (OpenGLDrv.dll, decompiled:
+# SRC_ALPHA, ONE), so their alpha is kept for the particle material, which multiplies the colour by it
+ADDED_BY_ALPHA = ('shock_beam_flash', 'shock_muzflash_1st', 'shock_muzflash_3rd')
 
 def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_alpha=False):
     if keep_alpha:
@@ -155,7 +164,7 @@ for name, (tga, columns, rows_count) in TEXTURES.items():
         width, height = height, width
 
     if columns == 1 and rows_count == 1:
-        write(name, width, height, rows, name not in SRGB + SRGB_BRIGHTEN, name in WEAPON, name in BRIGHTEN, name in KEEP_ALPHA)
+        write(name, width, height, rows, name not in SRGB + SRGB_BRIGHTEN, name in WEAPON, name in BRIGHTEN, name in KEEP_ALPHA + ADDED_BY_ALPHA)
         print('texture', name, width, height)
 
         continue
@@ -167,7 +176,8 @@ for name, (tga, columns, rows_count) in TEXTURES.items():
         # (a row from read_tga is four bytes for each pixel)
         tile = [line[4 * column * tile_width:4 * (column + 1) * tile_width] for line in rows[row * tile_height:(row + 1) * tile_height]]
 
-        write('%s_%d' % (name, index), tile_width, tile_height, tile, name not in SRGB + SRGB_BRIGHTEN, name in WEAPON, name in BRIGHTEN, name in KEEP_ALPHA)
+        write('%s_%d' % (name, index), tile_width, tile_height, tile, name not in SRGB + SRGB_BRIGHTEN, name in WEAPON, name in BRIGHTEN,
+              name in KEEP_ALPHA + ADDED_BY_ALPHA)
 
     print('sheet', name, columns * rows_count, 'tiles of', tile_width, tile_height)
 

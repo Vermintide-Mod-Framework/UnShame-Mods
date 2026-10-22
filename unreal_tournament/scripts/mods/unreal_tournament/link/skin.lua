@@ -227,6 +227,8 @@ local function throw_spark(spec, position, way, texture, size_scale, speed_scale
 		additive = brighten and 0 or 1,
 		attenuation = spec.attenuation,
 		body_material = brighten and "units/ut/fx/fx_" .. texture .. "_body_brighten" or nil,
+		-- (STY_Additive fades by the square; STY_Translucent's FB_Translucent fades once)
+		fade_squared = not brighten,
 		color = { spec.color, spec.color, spec.color },
 		drag = spec.air_resistance,
 		fall = utils.UT_PARTICLE_GRAVITY * spec.mass * UNIT,

@@ -77,6 +77,7 @@ function hit_effects.wall_sparks(position, normal)
 	for _ = 1, CONFIG.spark_count do
 		particles.line({
 			attenuation = 0,
+			fade_squared = true,
 			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.spark_mass) * UNIT,
 			growth = CONFIG.spark_growth * UNIT,
 			head_size = CONFIG.spark_head * SPRITE,
@@ -117,6 +118,7 @@ function hit_effects.small_explosion(position, normal)
 		particles.sprite({
 			attenuation = CONFIG.attenuation,
 			drag = CONFIG.air_resistance,
+			fade_squared = true,
 			life = random_between(CONFIG.explosion_life),
 			position = position,
 			size = random_between(CONFIG.explosion_size) * SPRITE,

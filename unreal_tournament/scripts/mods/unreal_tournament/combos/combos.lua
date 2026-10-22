@@ -162,6 +162,7 @@ local function burst(unit)
 		particles.sprite({
 			color = { low[1] + (high[1] - low[1]) * share, low[2] + (high[2] - low[2]) * share, low[3] + (high[3] - low[3]) * share },
 			delay = delay,
+			fade_squared = true,
 			life = settings.life,
 			size = settings.size * utils.UT_SPRITE_SIDE * UNIT,
 			texture = settings.texture,

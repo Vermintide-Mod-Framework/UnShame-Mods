@@ -260,6 +260,7 @@ local function sparks(position, normal)
 		particles.line({
 			attenuation = CONFIG.spark_attenuation,
 			drag = CONFIG.spark_air_resistance,
+			fade_squared = true,
 			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.spark_mass) * UNIT,
 			growth = -CONFIG.spark_thinning * UNIT,
 			head_size = CONFIG.spark_head * utils.UT_SPRITE_SIDE * UNIT,
