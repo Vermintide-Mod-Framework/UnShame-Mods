@@ -991,12 +991,27 @@ for template_name in pairs(VARIANT_OF) do
 	mod.items.set_template_changes(template_name, apply_template)
 end
 
--- A bot that holds the rifle doesn't defend, and keeps firing instead: the rifle has no block, and its defence (the right button)
--- would charge a grenade
-mod:hook(BTBotMeleeAction, "_defend", function (func, self, unit, blackboard, ...)
-	local template = blackboard.wielded_item_template
+-- Whether a character has the rifles in its hands now
+local function holds_rifle(unit)
+	return VARIANT_OF[utils.wielded_template_name(unit)] ~= nil
+end
 
-	if template and VARIANT_OF[template.name] then
+-- The rifle has no block, and the block's button (the right one) charges a grenade, which a bot never throws. So a bot that holds the
+-- rifle doesn't block or push, whatever asks it to: its fight (BTBotMeleeAction._defend), a revive or a rescue (use_block_interaction)
+-- or the Ironbreaker's career skill, which blocks while it lasts (the wait_action of PlayerBotSettings' use_ability).
+for _, function_name in ipairs({ "defend", "melee_push" }) do
+	mod:hook(PlayerBotInput, function_name, function (func, self, ...)
+		if holds_rifle(self.unit) then
+			return
+		end
+
+		return func(self, ...)
+	end)
+end
+
+-- A bot that holds the rifle keeps firing where it would defend
+mod:hook(BTBotMeleeAction, "_defend", function (func, self, unit, blackboard, ...)
+	if holds_rifle(unit) then
 		return false
 	end
 
@@ -1004,13 +1019,11 @@ mod:hook(BTBotMeleeAction, "_defend", function (func, self, unit, blackboard, ..
 end)
 
 -- A bot revives an ally, or helps one off a hook or a ledge, with its melee weapon held up to block (use_block_interaction), and
--- waits until it blocks. The rifle has no block, and the button charges a grenade, so the bot stood charging and never helped. A bot
--- that holds the rifle helps without the block.
+-- waits until it blocks. The rifle has no block, so a bot that holds the rifle helps without it.
 mod:hook(BTBotInteractAction, "run", function (func, self, unit, blackboard, ...)
 	local action_data = self._tree_node.action_data
-	local template = blackboard.wielded_item_template
 
-	if not (action_data and action_data.use_block_interaction and template and VARIANT_OF[template.name]) then
+	if not (action_data and action_data.use_block_interaction and holds_rifle(unit)) then
 		return func(self, unit, blackboard, ...)
 	end
 

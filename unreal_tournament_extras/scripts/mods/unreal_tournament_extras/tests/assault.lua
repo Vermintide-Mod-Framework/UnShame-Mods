@@ -644,6 +644,8 @@ local BOTS = {
 	stand_still = 2, -- m
 	-- How long the bot has to revive the player who is down
 	revive_time = 20, -- s
+	-- How long a bot is asked to block
+	block_time = 2, -- s
 }
 
 -- The damage from an item in a record of t.track_damage
@@ -861,6 +863,32 @@ local function bot_revive_scenario(profile, career, setting_id)
 	}
 end
 
+-- A bot that is asked to block (as the Ironbreaker's career skill asks while it lasts) doesn't charge a grenade: the rifle has no
+-- block, and its block button is the charge (assault_rifle.lua's PlayerBotInput hooks)
+local function bot_block_scenario(profile, career, setting_id)
+	local item_key = ut.items.weapons[setting_id].key
+
+	return {
+		name = string.format("a bot (%s) asked to block doesn't charge a grenade", profile),
+		run = function (t)
+			local bot = t.add_bot(profile, career, item_key, BOTS.behind, "slot_melee")
+
+			if not t.expect(bot, "the bot could not be added") then
+				return
+			end
+
+			local charges = watch_charges(bot)
+
+			t.bot_defend(bot, true)
+			t.wait(BOTS.block_time)
+			t.bot_defend(bot, false)
+			t.wait(0.5)
+
+			t.expect(not charges.charged, "the bot charged a grenade when it was asked to block")
+		end,
+	}
+end
+
 local shock_rifle = ut.items.weapons.shock_rifle
 
 runner.add_suite({
@@ -876,5 +904,7 @@ runner.add_suite({
 		bot_range_scenario("dwarf_ranger", 1, "assault_rifle_dr"),
 		bot_revive_scenario("witch_hunter", 1, "assault_rifle"),
 		bot_revive_scenario("dwarf_ranger", 1, "assault_rifle_dr"),
+		bot_block_scenario("witch_hunter", 1, "assault_rifle"),
+		bot_block_scenario("dwarf_ranger", 1, "assault_rifle_dr"),
 	},
 })
