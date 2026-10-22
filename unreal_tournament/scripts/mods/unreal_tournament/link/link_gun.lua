@@ -98,7 +98,7 @@ for _, variant in ipairs(VARIANTS) do
 		name = "UT2004 Link Gun",
 		type_name = "Link Gun",
 		description = DESCRIPTION,
-		keywords = { "weapon_keyword_rapid_fire", "weapon_keyword_versatile", "weapon_keyword_crowd_control" },
+		keywords = { "weapon_keyword_rapid_fire", "weapon_keyword_armour_piercing", "weapon_keyword_versatile" },
 		icon = "ut_link_gun_icon",
 		icon_package = "resource_packages/unreal_tournament/icons",
 		icon_materials = "ui/ut/link_gun_icon",
