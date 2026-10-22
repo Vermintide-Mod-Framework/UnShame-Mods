@@ -81,7 +81,10 @@ local CONFIG = {
 	trail_life = { 1.3, 1.5 },
 	trail_size = { 15, 25 }, -- mSizeRange
 	trail_growth = 10, -- mGrowthRate, a second
+	-- The drift is along the emitter's facing, spread by 0.2 (mDirDev). The emitter faces back along the grenade's flight: a trailer that
+	-- doesn't keep its owner's rotation is turned against its velocity (AActor::physTrailer, decompiled).
 	trail_speed = { 2, 15 }, -- UT units a second
+	trail_deviation = 0.2, -- on each axis
 	trail_mass = { -0.08, -0.01 },
 	trail_air_resistance = 0.4,
 	trail_color = {
@@ -383,6 +386,8 @@ local function trail_puffs(entry, dt)
 	entry.trail_owed = entry.trail_owed + CONFIG.trail_rate * dt
 
 	local position = entry.grenade.position:unbox()
+	local velocity = entry.grenade.velocity:unbox()
+	local back = Vector3.length(velocity) > 0.001 and -Vector3.normalize(velocity) or Vector3.zero()
 
 	while entry.trail_owed >= 1 do
 		entry.trail_owed = entry.trail_owed - 1
@@ -390,7 +395,7 @@ local function trail_puffs(entry, dt)
 		local life = random_between(CONFIG.trail_life)
 		local share = math.random()
 		local low, high = CONFIG.trail_color[1], CONFIG.trail_color[2]
-		local drift = utils.random_direction() * random_between(CONFIG.trail_speed)
+		local drift = utils.ut_particle_velocity(back, CONFIG.trail_deviation, random_between(CONFIG.trail_speed))
 
 		particles.sprite({
 			additive = 0,

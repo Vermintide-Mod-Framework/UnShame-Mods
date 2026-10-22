@@ -78,26 +78,40 @@ local CONFIG = {
 	bolt_light_color = { 0.39, 1, 0.6 },
 	linked_bolt_light_color = { 1, 0.96, 0.39 },
 	bolt_light_falloff = 2, -- meters
-	-- Its trail (NewLinkTrail), an Emitter at DrawScale 0.5, which scales its sizes, places and speeds. The emitter is placed and turned
-	-- with the bolt (PTCS_Relative, PHYS_Trailer). For the player's own bolt it starts 0.1 s late (Delay), so it doesn't show at the eye.
-	-- Otherwise it is warmed up: its puffs are there from the start.
-	trail_scale = 0.5,
+	-- The beam's light (LinkBeamEffect), at its start, in a character's hand: LightHue 100 (green), 40 with links (yellow) and 160 while
+	-- it links an ally (blue), LightSaturation 100, LightBrightness 180 and 40 more for each step of LinkScale, reaching (LightRadius + 1)
+	-- * 25 units, its LightRadius 6 and 3 more for each step of LinkScale, falling off as LE_QuadraticNonIncidence (xEmitter's)
+	beam_light_colors = {
+		green = { 0.39, 1, 0.6 },
+		yellow = { 1, 0.96, 0.39 },
+		blue = { 0.42, 0.5, 1 },
+	},
+	beam_light_brightness = { 180, 40 }, -- of 255: the base, and more for each step of LinkScale
+	beam_light_radius = { 6, 3 }, -- LightRadius: the base, and more for each step of LinkScale
+	-- Its trail (NewLinkTrail), an Emitter. Its DrawScale of 0.5 does nothing to its particles: Engine.dll's emitters never read an
+	-- Emitter's DrawScale as they spawn, move and draw them, and UParticleEmitter::Scale, which would scale their ranges, isn't called
+	-- in the game (decompiled). The emitter follows the bolt (PHYS_Trailer) and its particles move with it (PTCS_Relative). It faces
+	-- backward: a trailer that doesn't keep its owner's rotation is turned to face against the owner's velocity (AActor::physTrailer,
+	-- decompiled), so the emitter's forward is the bolt's back. For the player's own bolt it starts 0.1 s late (Delay), so it doesn't
+	-- show at the eye. It starts warmed up, its puffs already along it.
 	trail_delay = 0.1,
 	-- A UE2 sprite's size (StartSizeRange) is its radius: it is drawn twice as long and as wide (as the Minigun's skin has it).
-	-- Its first emitter: one sprite (PlasmaShaft) along the way, of size 80 along and 30 across, its middle 30 ahead of the bolt, colored
-	-- by ColorMultiplierRange (0.25, 1, 0): green, with links too (MakeYellow changes only the puffs). It is PTDU_Right: the texture's
-	-- U runs along the particle's velocity times its X size (Engine.dll's USpriteEmitter::FillVertexBuffer, decompiled). Its velocity is
-	-- backward (-10) and its X size is -80, so U runs forward, and the texture's bright round head (at its left) is just behind the bolt,
-	-- with the faint end ahead of it.
-	shaft_ahead = 30,
+	-- Its first emitter: one sprite (PlasmaShaft) along the way, of size 80 along and 30 across, its middle 30 behind the bolt
+	-- (StartLocationOffset X 30, along the emitter's forward), colored by ColorMultiplierRange (0.25, 1, 0): green, with links too
+	-- (MakeYellow changes only the puffs). It is PTDU_Right: the texture's U runs along the particle's way times its X size (Engine.dll's
+	-- USpriteEmitter::FillVertexBuffer, decompiled). Its velocity is -10 along the emitter's forward, so it moves forward along the
+	-- bolt's flight, and with its X size of -80 U runs backward: the texture's bright round head (at its left) is at the front, about 18
+	-- ahead of the bolt, and the faint end trails 110 behind it.
+	shaft_behind = 30,
 	shaft_length = 80,
 	shaft_width = 30,
 	shaft_color = { 0.25, 1, 0 },
-	-- Its second: puffs (SmokePanels1, a tile at random) that start 35 behind the bolt and go ahead of it at 400 units a second, for
-	-- 0.35 s, 6 at a time (so 6 / 0.35 a second), of size 20, scaled by SizeScale: 0.5 at the start, 0.9 at 0.3 of their life and
-	-- 0.25 at the end. Their color goes by ColorScale from black to (96, 255, 0) at 0.1 of their life, to (0, 255, 0) at 0.8 and back to
-	-- black, with R 255 at 0.1 and 0.8 with links (MakeYellow). UT draws them at its highest detail (DM_SuperHigh), as here.
-	puff_behind = 35,
+	-- Its second: puffs (SmokePanels1, a tile at random) that start 35 ahead of the bolt (StartLocationOffset X -35) and stream back
+	-- along it at 400 units a second (along the emitter's forward), to the shaft's tail, for 0.35 s, 6 at a time (so 6 / 0.35 a second),
+	-- of size 20, scaled by SizeScale: 0.5 at the start, 0.9 at 0.3 of their life and 0.25 at the end. Their color goes by ColorScale
+	-- from black to (96, 255, 0) at 0.1 of their life, to (0, 255, 0) at 0.8 and back to black, with R 255 at 0.1 and 0.8 with links
+	-- (MakeYellow). UT draws them at its highest detail (DM_SuperHigh), as here.
+	puff_ahead = 35,
 	puff_speed = 400,
 	puff_life = 0.35,
 	puff_count = 6,
@@ -480,27 +494,30 @@ local function on_bolt(bolt, ahead)
 	end
 end
 
--- A puff of a bolt's trail, which goes with the bolt and moves ahead along it. age: how far into its life it starts (the warm up).
+-- A puff of a bolt's trail, which goes with the bolt and moves back along it. age: how far into its life it starts (the warm up).
 local function bolt_puff(bolt, age)
-	local trail_scale = CONFIG.trail_scale
 	local life = CONFIG.puff_life
 	local colors = bolt.links > 0 and CONFIG.linked_puff_colors or CONFIG.puff_colors
-	local started = Application.time_since_launch() - age
+	local started = Managers.time:time("game") - age
 
 	particles.sprite({
+		-- (an Emitter's particle has no fade of its own: only its ColorScale)
+		brightness = function ()
+			return 1
+		end,
 		color_by = function (share)
 			return scale_at(colors, share)
 		end,
 		delay = -age,
 		follow = function ()
-			local since = math.min(Application.time_since_launch() - started, life)
+			local since = math.min(Managers.time:time("game") - started, life)
 
-			return on_bolt(bolt, (-CONFIG.puff_behind + CONFIG.puff_speed * since) * trail_scale)
+			return on_bolt(bolt, CONFIG.puff_ahead - CONFIG.puff_speed * since)
 		end,
 		late = true,
 		life = life,
 		size_by = function (share)
-			return 2 * CONFIG.puff_size * trail_scale * scale_at(CONFIG.puff_sizes, share) * UNIT
+			return 2 * CONFIG.puff_size * scale_at(CONFIG.puff_sizes, share) * UNIT
 		end,
 		texture = "smoke_panels_" .. math.random(0, 15),
 	})
@@ -569,23 +586,23 @@ mod.skin_init_callbacks.link_bolt = function (projectile)
 		})
 	end
 
-	local half_shaft = CONFIG.shaft_length * CONFIG.trail_scale
-	local shaft_middle = CONFIG.shaft_ahead * CONFIG.trail_scale
+	local half_shaft = CONFIG.shaft_length
+	local shaft_middle = -CONFIG.shaft_behind
 
-	-- (the shaft's bright head is at the top of its texture, which is the beam's start: behind)
+	-- (the top of the texture, where its bright head is, is drawn at the beam's end: the shaft's front end is returned second)
 	particles.beam({
 		color = CONFIG.shaft_color,
 		delay = bolt.trail_delay,
 		fade_in = 0,
 		late = true,
 		life = math.huge,
-		size = 2 * CONFIG.shaft_width * CONFIG.trail_scale * UNIT,
+		size = 2 * CONFIG.shaft_width * UNIT,
 		texture = "plasma_shaft",
 		track = function ()
-			local head = on_bolt(bolt, shaft_middle - half_shaft)
+			local back = on_bolt(bolt, shaft_middle - half_shaft)
 
-			if head then
-				return head, on_bolt(bolt, shaft_middle + half_shaft)
+			if back then
+				return back, on_bolt(bolt, shaft_middle + half_shaft)
 			end
 		end,
 	})
@@ -671,6 +688,13 @@ local function update_bolts(dt)
 
 			if bolt.trail_delay > 0 then
 				bolt.trail_delay = bolt.trail_delay - dt
+
+				-- (the trail starts warmed up, its puffs already along it)
+				if bolt.trail_delay <= 0 then
+					for p = 1, CONFIG.puff_count do
+						bolt_puff(bolt, CONFIG.puff_life * (p - 1) / CONFIG.puff_count)
+					end
+				end
 			else
 				bolt.puff_time = bolt.puff_time + dt * CONFIG.puff_count / CONFIG.puff_life
 
@@ -968,6 +992,33 @@ local function draw_beam(character, beam, dt)
 	end
 
 	local locked = visual.locked
+
+	-- The beam's light in a character's hand. A new one is made when its color or reach changes, and the old one ends.
+	local light_key = not first_person and flash_color .. link_scale or nil
+
+	if visual.light_key ~= light_key then
+		visual.light_key = light_key
+
+		if light_key then
+			local brightness = (CONFIG.beam_light_brightness[1] + CONFIG.beam_light_brightness[2] * link_scale) / 255
+			local radius = CONFIG.beam_light_radius[1] + CONFIG.beam_light_radius[2] * link_scale
+
+			particles.light({
+				color = CONFIG.beam_light_colors[flash_color],
+				fade_in = 0,
+				falloff = (radius + 1) * 25 * UNIT,
+				follow = function ()
+					if visual.alive and visual.light_key == light_key then
+						return (muzzle_of(character))
+					end
+				end,
+				intensity = utils.WEAPON_LIGHT_INTENSITY * brightness,
+				late = true,
+				life = math.huge,
+				quadratic = true,
+			})
+		end
+	end
 
 	-- The beam's points, and its planes about them (mSizeRange, wider with links)
 	place_points(visual.line, start, finish, aim, visual.amplitude, visual.phase_a, visual.phase_b, locked_on or linking, u_axis, v_axis)

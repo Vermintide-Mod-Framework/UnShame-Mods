@@ -874,7 +874,7 @@ function mod.explosion_smoke(center, normal)
 	for _ = 1, settings.count do
 		local angle = math.random() * 2 * math.pi
 		local out = Vector3Box(side * math.cos(angle) + other * math.sin(angle))
-		local born = Application.time_since_launch()
+		local born = Managers.time:time("game")
 		-- How far out along the ring a puff is, and how far it has risen and how fast, in units. Each frame they change by the velocity
 		-- times VelocityScale at the share of the life that has gone.
 		local moved = {
@@ -893,7 +893,7 @@ function mod.explosion_smoke(center, normal)
 				return particles.scale_at(settings.colors, fraction)
 			end,
 			follow = function ()
-				local age = math.min(Application.time_since_launch() - born, settings.life)
+				local age = math.min(Managers.time:time("game") - born, settings.life)
 				local step = age - moved.time
 
 				if step > 0 then

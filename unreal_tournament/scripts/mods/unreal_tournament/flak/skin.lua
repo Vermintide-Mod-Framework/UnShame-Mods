@@ -78,7 +78,10 @@ local CONFIG = {
 	chunk_lie_seconds = 1,
 	-- FlakShell is the mesh, FlakGlow (a gold sprite) and FlakShellTrail: 50 puffs a second, 2 units around the shell (mPosDev), each
 	-- lasting 0.5 to 0.6 s, of size 20 to 35 (utils.UT_SPRITE_SIDE times that across) growing 15 a second, (120, 110, 100) to
-	-- (180, 180, 180), blended by its alpha (STY_Alpha), brightest at 0.2 of its life (mAttenKa). They start still.
+	-- (180, 180, 180), blended by its alpha (STY_Alpha), brightest at 0.2 of its life (mAttenKa). They start at xEmitter's 40 units a
+	-- second (mSpeedRange) along the emitter's facing, spread by 0.1 (mDirDev), slowed by xEmitter's 0.4 of their speed a second. The
+	-- emitter faces back along the shell's flight: a trailer that doesn't keep its owner's rotation is turned against its velocity
+	-- (AActor::physTrailer, decompiled).
 	shell_glow_size = 22, -- UT units, a little wider than the shell's mesh, so that a ring of glow shows around the mesh
 	shell_glow_behind = 0.1, -- m, away from the camera, so that the mesh covers the middle of the glow
 	shell_glow_color = {
@@ -92,6 +95,9 @@ local CONFIG = {
 	shell_smoke_size = { 20, 35 }, -- mSizeRange
 	shell_smoke_growth = 15, -- mGrowthRate, a second
 	shell_smoke_spread = 2, -- UT units
+	shell_smoke_speed = 40, -- UT units a second
+	shell_smoke_deviation = 0.1, -- on each axis
+	shell_smoke_air_resistance = 0.4,
 	shell_smoke_attenuation = 0.2,
 	shell_smoke_colors = { { 120 / 255, 110 / 255, 100 / 255 }, { 180 / 255, 180 / 255, 180 / 255 } },
 	-- FlashExplosion: of size 150 (utils.UT_SPRITE_SIDE times that across), growing 500 a second, lasting 0.25 s, brightest at 0.2 of it
@@ -271,12 +277,14 @@ local function update_visuals(dt)
 							low[2] + (high[2] - low[2]) * share,
 							low[3] + (high[3] - low[3]) * share,
 						},
+						drag = CONFIG.shell_smoke_air_resistance,
 						growth = CONFIG.shell_smoke_growth * utils.UT_SPRITE_SIDE * UNIT,
 						life = utils.random_between(CONFIG.shell_smoke_life),
 						position = position + utils.ut_particle_offset(CONFIG.shell_smoke_spread) * UNIT,
 						size = utils.random_between(CONFIG.shell_smoke_size) * utils.UT_SPRITE_SIDE * UNIT,
 						spin = (math.random() * 2 - 1) * 0.3,
 						texture = "smoke",
+						velocity = utils.ut_particle_velocity(-visual.direction:unbox(), CONFIG.shell_smoke_deviation, CONFIG.shell_smoke_speed * UNIT),
 					})
 				end
 
