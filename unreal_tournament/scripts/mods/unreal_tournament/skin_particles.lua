@@ -75,6 +75,13 @@ local MATERIAL_FORMAT = "units/ut/fx/fx_%s"
 local MAX_PARTICLES = 800
 -- (the sort orders that blended particles take in turn, see add)
 local MAX_SORT_ORDER = 255
+-- Every light of the weapons is made dimmer and paler by these. UT2004 adds a light's colour onto lighting drawn in gamma space, where
+-- it tints what is lit a little. This game's lights, at the same numbers, flooded the scene with bright, strong colour (compared
+-- with UT2004 in the game).
+local LIGHT_CONFIG = {
+	intensity = 0.4, -- times each light's own
+	saturation = 0.5, -- how much of its colour is kept: 0 is a grey as bright, 1 the colour as it is
+}
 local blended_count = 0
 
 local active = {}
@@ -579,8 +586,12 @@ local function place(particle, dt, camera_position, camera_rotation)
 
 	if particle.kind == "light" then
 		Unit.set_local_position(unit, 0, position)
-		Light.set_color(particle.entry.light, Vector3(particle.color[1], particle.color[2], particle.color[3]))
-		Light.set_intensity(particle.entry.light, light)
+		local color = particle.color
+		local grey = 0.2126 * color[1] + 0.7152 * color[2] + 0.0722 * color[3]
+		local keep = LIGHT_CONFIG.saturation
+
+		Light.set_color(particle.entry.light, Vector3(grey + (color[1] - grey) * keep, grey + (color[2] - grey) * keep, grey + (color[3] - grey) * keep))
+		Light.set_intensity(particle.entry.light, light * LIGHT_CONFIG.intensity)
 		Light.set_enabled(particle.entry.light, true)
 		World.update_unit(particle.world, unit)
 
