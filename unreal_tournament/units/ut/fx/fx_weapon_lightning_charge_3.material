@@ -1,0 +1,9 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/particle_weapon"
+textures = {
+	texture_map = "units/ut/fx/lightning_charge_3"
+}
+variables = {
+}

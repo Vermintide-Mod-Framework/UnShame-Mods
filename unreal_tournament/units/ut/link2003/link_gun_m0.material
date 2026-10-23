@@ -1,0 +1,13 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/weapon_standard"
+textures = {
+	color_map = "units/ut/link2003/link_gun_linktex0"
+}
+variables = {
+	use_color_map = {
+		type = "scalar"
+		value = 1
+	}
+}

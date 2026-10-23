@@ -1,0 +1,9 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_link_beam_panned_yellow_graph"
+textures = {
+	beam_map = "units/ut/fx/link_beam_yellow"
+}
+variables = {
+}

@@ -1,0 +1,9 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/particle"
+textures = {
+	texture_map = "units/ut/fx/smoke_5"
+}
+variables = {
+}

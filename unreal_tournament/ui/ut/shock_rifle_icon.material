@@ -1,0 +1,9 @@
+ut_shock_rifle_icon = {
+	material_contexts = {
+		surface_material = ""
+	}
+	shader = "gui:DIFFUSE_MAP"
+	textures = {
+		diffuse_map = "ui/ut/shock_rifle_icon"
+	}
+}

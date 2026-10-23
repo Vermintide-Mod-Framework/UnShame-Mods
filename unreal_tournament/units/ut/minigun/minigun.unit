@@ -1,0 +1,32 @@
+materials = {
+	m_0 = "units/ut/minigun/minigun_m0"
+}
+renderables = {
+	b_bone_weapon = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_barrels = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_gear = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+}

@@ -1,0 +1,18 @@
+ut_hud = {
+	material_contexts = {
+		surface_material = ""
+	}
+	shader = "gui:DIFFUSE_MAP"
+	textures = {
+		diffuse_map = "ui/ut/hud"
+	}
+}
+ut_glow_circle = {
+	material_contexts = {
+		surface_material = ""
+	}
+	shader = "gui:DIFFUSE_MAP"
+	textures = {
+		diffuse_map = "ui/ut/glow_circle"
+	}
+}

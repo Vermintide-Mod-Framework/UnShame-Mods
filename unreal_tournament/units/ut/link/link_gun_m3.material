@@ -1,0 +1,9 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_link_gun_eye_green_graph"
+textures = {
+	power_map = "units/ut/fx/link_power_green"
+}
+variables = {
+}

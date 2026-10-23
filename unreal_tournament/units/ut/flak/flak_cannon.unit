@@ -1,0 +1,151 @@
+materials = {
+	m_0 = "units/ut/flak/flak_cannon_m0"
+	m_1 = "units/ut/flak/flak_cannon_m1"
+	m_2 = "units/ut/flak/flak_cannon_m2"
+}
+renderables = {
+	b_bone_weapon = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_hammer01 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_flak01 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_hydraulic01 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_barrel01 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_tooth01 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_tooth02 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_tooth03 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_tooth04 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_tooth06 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_tooth07 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_tooth08 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_tooth09 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_tooth10 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_chamber01 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_coil01 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+}

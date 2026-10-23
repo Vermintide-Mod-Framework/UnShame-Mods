@@ -1,0 +1,1049 @@
+local mod = get_mod("unreal_tournament")
+
+-- Shield Gun skin: how UT2004's Shield Gun looks and sounds.
+--
+-- weapon_skin.lua does the model, its placement and animations, the bob and the third person. This file does what is the Shield Gun's
+-- own: the animations of the charge, the punch and the shield, and their sounds. The gameplay is in shield_gun.lua, which tells this file
+-- what happens through mod.shield.
+--
+-- The assets were made with tools/asset_conversion (convert_weapon.py shield, convert_static.py shield_pickup, render_icon.py and
+-- make_bank.py shield_gun).
+
+local utils = mod.utils
+local animations = mod:dofile("scripts/mods/unreal_tournament/shield/skin_animations")
+local particles = mod.skin_particles
+
+local CONFIG = {
+	-- ShieldGun.PlayerViewOffset (forward, right, up) and DisplayFOV, which CalcDrawOffset scales the offset by (0.9 / DisplayFOV * 100)
+	view_offset = {2, -0.7, -2.7},
+	display_fov = 60,
+	-- ShieldGun.EffectOffset (forward, right, up): where GetEffectStart is from the weapon, and ShieldEffect's DrawScale
+	effect_offset = {15, 5.5, 2},
+	shield_draw_scale = 1.8,
+	-- ShieldEffect.Flash: how long the shield shows its other skin when it stops something (its timer)
+	flash_time = 0.2, -- seconds
+	-- UT draws the effects at GetEffectStart before the gun, without depth (ShieldGun.RenderOverlays), so the gun covers them. Here they
+	-- are drawn this many times further from the eye and this many times bigger, which looks the same, and that puts them behind the
+	-- gun: they start 18 UT units ahead, and the gun reaches about 35 (the mesh is 79 units ahead of its origin, at DrawScale 0.4).
+	-- A wall nearer than they are drawn hides them, so it is no more than it needs to be.
+	behind_gun = 3,
+	-- ForceRingA, the rings of a punch: 16 a second for 0.2 s, each 0.25 s long, flying forward at 100 units a second from GetEffectStart,
+	-- of size 1 and growing by 100 a second (utils.UT_SPRITE_SIDE times that across), dimming from the start (mAttenKa 0), added. Its
+	-- colour is (B=32,R=32): the fields that
+	-- a struct in defaultproperties leaves out keep the parent's, and xEmitter's is white, so green is 255. That makes the purple
+	-- shock ring green.
+	ring_rate = 16,
+	ring_time = 0.2,
+	ring_life = 0.25,
+	ring_speed = 100, -- UT units a second
+	ring_size = 1, -- mSizeRange
+	ring_growth = 100, -- mGrowthRate, a second
+	ring_color = { 32 / 255, 1, 32 / 255 },
+	-- Next to a picture of UT's, the rings were too slow, so they play this many times faster (the same path in less time). This is the
+	-- mod's own. (They were also too big and too bright, which drawing a disc twice its size across and fading it once, not by the
+	-- square, made them.)
+	ring_time_scale = 1.5,
+	-- ShieldCharge, the sparks of the charge (ShieldFire.Timer): lines that appear up to 5 units from GetEffectStart (mPosDev) and fly
+	-- towards it, at ChargeScale * 15 units a second, 20 + ChargeScale * 10 a second, each lasting max(ChargeScale / 30, 0.2) s, where
+	-- ChargeScale is the time charged, up to FullyChargedTime. A line is 0.2 to 0.4 units in size (a line's size is half its width, so it
+	-- is twice that wide) and 0.08 s of its travel long (mSpawnVecB.Z), with a head of mSpawnVecB.X 5 (see particles.line),
+	-- green ((45, 220, 45) to (65, 250, 65)), fading in until 0.2 of its life (xEmitter's mAttenKa). It is STY_Additive, which adds the
+	-- colour times its alpha (25 to 200 of 255, chosen with the colour), and fades by the square (skin_particles.lua's fade_squared).
+	charge_spread = 5, -- UT units
+	charge_speed = 15, -- UT units a second, for each second of charge
+	charge_rate = {20, 10}, -- a second: the first, and more for each second of charge
+	charge_min_life = 0.2,
+	charge_width = {0.4, 0.8}, -- UT units
+	charge_length = 0.08, -- seconds of travel
+	charge_head = 5, -- mSpawnVecB.X
+	charge_attenuation = 0.2,
+	charge_colors = { { 45 / 255, 220 / 255, 45 / 255 }, { 65 / 255, 250 / 255, 65 / 255 } },
+	charge_alphas = { 25 / 255, 200 / 255 },
+	-- The emitter spins about the world's vertical, to the right as seen from above (PHYS_Rotating, RotationRate.Yaw 16000), and its
+	-- sparks are placed relative to it (mPosRelative), so each one swings round the middle by this much for each second of its age
+	charge_spin = 16000 / 65536 * 360, -- degrees a second
+	-- ShieldSparks, the sparks when the shield stops something (ShieldEffect3rd.Flash): 16 lines at once, each starting up to 0.1 s
+	-- late, lasting 0.4 to 0.6 s and flying at 150 to 300 units a second along the shield's facing, turned by 0.9 (mDirDev). They start
+	-- 6 units from their place (mPosDev), and the place is a random spot hit_sparks_scatter
+	-- units from the shield (VRand times 12 in first person, 8 in third). A line is 5 units wide, shrinking by 8 a second (sizes are
+	-- half widths), and 0.03 s of its travel long (mSpawnVecB.Z), with a head of mSpawnVecB.X 2, dimming from the start
+	-- (mAttenKa 0), added. They fall by their mass of 1.5 to 2.5 (utils.UT_PARTICLE_GRAVITY).
+	hit_sparks = 16,
+	hit_spark_delay = 0.1, -- seconds
+	hit_spark_life = {0.4, 0.6}, -- seconds
+	hit_spark_speed = {150, 300}, -- UT units a second
+	hit_spark_spread = 0.9,
+	hit_spark_position_spread = 6, -- UT units
+	hit_sparks_scatter = {12, 8}, -- UT units: first person, third person
+	hit_spark_width = 5, -- UT units
+	hit_spark_growth = -8, -- UT units a second
+	hit_spark_length = 0.03, -- seconds of travel
+	hit_spark_head = 2, -- mSpawnVecB.X
+	hit_spark_mass = {1.5, 2.5},
+	-- ShieldFire.ShakeOffsetMag, ShakeOffsetRate and ShakeOffsetTime: a punch moves the view back by up to 20 units at 1000 a second,
+	-- and it swings back and forth for a few frames (see view_shake.lua). It has no turn (ShakeRotMag is 0).
+	shake_offset = -20, -- UT units, along the view
+	shake_rate = -1000, -- UT units a second
+	shake_time = 2,
+	-- The shove of a push (UT has no push). The gun and the shield move on a spring, which goes shove_frequency radians a second and is
+	-- damped by shove_damping (1 is just enough not to swing past). They are pulled towards shove_forward ahead in the view (UT units) for
+	-- shove_out seconds, which takes them out quickly and a little past it. While both buttons are held for a bash they settle back to
+	-- shove_hold of the way, and the bash punches from there (its Fire animation and rings). Then they go home. The shield is up while they
+	-- are out, but for the bash. These numbers are a guess. With them the shove is all the way out at 0.1 s, a tap is home by 0.2 s, and
+	-- a hold has settled back by 0.2 s, before the bash can come at 0.4 s.
+	shove_forward = 10,
+	shove_out = 0.11,
+	shove_hold = 0.65,
+	shove_frequency = 32,
+	shove_damping = 0.65,
+	-- The colour of the charge on the overcharge bar (R, G, B): ShieldGun.HudColor (0, 188, 121) made as bright as it goes, its
+	-- strongest part at 255, because the bar's texture darkens it (a choice)
+	charge_bar_color = { 0, 255, 164 },
+	inspect_pose_speed = 5,
+}
+
+-- UT's effects are actors of their own, at the world's scale
+local UNIT = utils.UT_UNIT
+
+local shield = mod.shield
+
+local VARIANTS = {
+	"shield_gun",
+	"shield_gun_dr",
+	"shield_gun_bw",
+	"shield_gun_wh",
+	"shield_gun_we",
+}
+
+local skin_apis = {}
+
+-- Whether the player holds both buttons, which after a push makes a bash
+local function local_player_holds_both()
+	local player = Managers.player and Managers.player:local_player()
+	local unit = player and player.player_unit
+	local input_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "input_system")
+
+	return input_extension and input_extension:get("action_one_hold") and input_extension:get("action_two_hold") or false
+end
+
+-- Whether the player's own character is blocking, which is the shield being up
+local function local_player_blocking()
+	local player = Managers.player and Managers.player:local_player()
+	local unit = player and player.player_unit
+	local status_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "status_system")
+
+	return status_extension and status_extension:is_blocking() or false
+end
+
+-- The local player's character, or nil
+local function local_player_unit()
+	local player = Managers.player and Managers.player:local_player()
+	local unit = player and player.player_unit
+
+	return unit and Unit.alive(unit) and unit or nil
+end
+
+-- How long a charge has gone, up to full, in the charge's own time: the game's attack speed buffs make it charge faster, as the punch
+-- has it (shield_gun.lua)
+local function charged_time(unit, started)
+	return math.min((Managers.time:time("game") - started) * utils.attack_speed(unit), shield.fully_charged_time)
+end
+
+-- A point of the player's view in UT units from the eye (forward, right, up), where the weapon's projection draws it, moved by the gun's
+-- bob (weapon_skin.lua) and pushed back behind the gun (behind_gun). Effects that UT draws with the weapon (Canvas.DrawActor with
+-- DisplayFOV) are placed with it and have the materials that draw with the weapon's field of view. It returns the first person unit, which
+-- the gun is linked to, and the point in its frame, for particles that are linked to the unit (skin_particles.lua, locked), so that they
+-- move with the gun. It returns nothing once the skin is gone.
+local function view_point(api, skin, forward, right, up)
+	if api.state() ~= skin then
+		return nil
+	end
+
+	-- (behind_gun times further, but moved by the view shake as far as the camera is, or the shake would move it behind_gun times as far)
+	return api.view_point_in_view(forward, right, up, CONFIG.behind_gun)
+end
+
+-- GetEffectStart: the weapon's place (PlayerViewOffset, scaled by CalcDrawOffset) and EffectOffset from it, as forward, right, up
+local function effect_start()
+	local offset_scale = 90 / CONFIG.display_fov
+
+	return CONFIG.view_offset[1] * offset_scale + CONFIG.effect_offset[1], CONFIG.view_offset[2] * offset_scale + CONFIG.effect_offset[2], CONFIG.view_offset[3] * offset_scale + CONFIG.effect_offset[3]
+end
+
+local random_between = utils.random_between
+
+-- The rings of a punch (ForceRingA): discs that face the way the view looks and fly ahead
+local function force_rings(api)
+	local skin = api.state()
+
+	if not skin then
+		return
+	end
+
+	local forward, right, up = effect_start()
+	local count = math.floor(CONFIG.ring_rate * CONFIG.ring_time) + 1
+	local scale = (skin.view_across_scale or 0.01) * CONFIG.behind_gun
+	local quicker = CONFIG.ring_time_scale
+
+	for i = 1, count do
+		local delay = (i - 1) / (CONFIG.ring_rate * quicker)
+		local born = Managers.time:time("game") + delay
+
+		particles.disc({
+			attenuation = 0,
+			color = CONFIG.ring_color,
+			delay = delay,
+			fade_squared = true,
+			locked = function ()
+				local age = math.max(0, Managers.time:time("game") - born)
+
+				-- (from where the gun is: a bash punches from the end of the shove)
+				return view_point(api, skin, forward + CONFIG.shove_forward * (skin.alt_pose or 0) + CONFIG.ring_speed * quicker * age, right, up)
+			end,
+			growth = CONFIG.ring_growth * quicker * scale * utils.UT_SPRITE_SIDE,
+			life = CONFIG.ring_life / quicker,
+			material = "units/ut/fx/fx_weapon_force_ring",
+			-- (ahead, in the frame of the first person unit)
+			normal = Vector3(0, 1, 0),
+			size = CONFIG.ring_size * scale * utils.UT_SPRITE_SIDE,
+			texture = "force_ring",
+		})
+	end
+end
+
+-- Turns a point of the view (forward, right, up, as UT's X, Y and Z) about the world's vertical by the given degrees, to the right as
+-- seen from above, as UT's yaw turns. rotation is the view's. (Rodrigues' formula, in the view's axes, where the world's up is a.)
+local function spin_in_view(rotation, forward, right, up, degrees)
+	local af, ar, au = Vector3.z(Quaternion.forward(rotation)), Vector3.z(Quaternion.right(rotation)), Vector3.z(Quaternion.up(rotation))
+	local angle = math.rad(degrees)
+	local c, s = math.cos(angle), math.sin(angle)
+	local along = (af * forward + ar * right + au * up) * (1 - c)
+
+	return forward * c + (ar * up - au * right) * s + af * along, right * c + (au * forward - af * up) * s + ar * along, up * c + (af * right - ar * forward) * s + au * along
+end
+
+-- The sparks of the charge (ShieldCharge), made each frame while the gun charges
+local function charge_sparks(api, skin, dt)
+	local charged = charged_time(local_player_unit(), shield.charge_started)
+
+	skin.spark_time = (skin.spark_time or 0) + dt
+
+	local interval = 1 / (CONFIG.charge_rate[1] + CONFIG.charge_rate[2] * charged)
+	local center_forward, center_right, center_up = effect_start()
+
+	while skin.spark_time >= interval do
+		skin.spark_time = skin.spark_time - interval
+
+		local spread = CONFIG.charge_spread
+		local x, y, z = random_between({-spread, spread}), random_between({-spread, spread}), random_between({-spread, spread})
+		local distance = math.max(math.sqrt(x * x + y * y + z * z), 0.001)
+		local speed = CONFIG.charge_speed * charged
+		local born = Managers.time:time("game")
+		local color = CONFIG.charge_colors[1]
+		local other = CONFIG.charge_colors[2]
+		local share = math.random()
+		local mixed = {
+			color[1] + (other[1] - color[1]) * share,
+			color[2] + (other[2] - color[2]) * share,
+			color[3] + (other[3] - color[3]) * share,
+		}
+		local alpha = CONFIG.charge_alphas[1] + (CONFIG.charge_alphas[2] - CONFIG.charge_alphas[1]) * share
+		local life = math.max(charged / 30, CONFIG.charge_min_life)
+		local view_scale = (skin.view_across_scale or 0.01) * CONFIG.behind_gun
+
+		-- Returns the first person unit, and the spark's tail and head in its frame. It flies towards the middle (ST_Explode with a speed
+		-- below 0), and swings round it as the emitter spins.
+		local function ends()
+			local age = Managers.time:time("game") - born
+			local at = math.max(0, distance - speed * age) / distance
+			local tail = math.max(0, distance - speed * (age - CONFIG.charge_length)) / distance
+			local first_person_unit = api.view_point_in_view(0, 0, 0)
+
+			if not first_person_unit then
+				return nil
+			end
+
+			local sx, sy, sz = spin_in_view(Unit.world_rotation(first_person_unit, 0), x, y, z, CONFIG.charge_spin * age)
+			local parent, head = view_point(api, skin, center_forward + sx * at, center_right + sy * at, center_up + sz * at)
+			local _, back = view_point(api, skin, center_forward + sx * tail, center_right + sy * tail, center_up + sz * tail)
+
+			if not parent or not back then
+				return nil
+			end
+
+			return parent, back, head
+		end
+
+		-- (a line, as particles.line draws one, linked to the first person unit)
+		local width = random_between(CONFIG.charge_width) * view_scale
+
+		for _, axis in ipairs({ "right", "up" }) do
+			particles.beam({
+				attenuation = CONFIG.charge_attenuation,
+				color = mixed,
+				fade_squared = true,
+				intensity = alpha,
+				life = life,
+				locked = ends,
+				material = "units/ut/fx/fx_weapon_shield_charge_spark_body",
+				screen_axis = axis,
+				size = width,
+			})
+		end
+
+		particles.sprite({
+			angle = 45,
+			attenuation = CONFIG.charge_attenuation,
+			color = mixed,
+			fade_squared = true,
+			intensity = alpha,
+			life = life,
+			locked = function ()
+				local parent, _, head = ends()
+
+				return parent, head
+			end,
+			material = "units/ut/fx/fx_weapon_shield_charge_spark_head",
+			size = CONFIG.charge_head * view_scale * utils.UT_SPRITE_SIDE,
+		})
+	end
+end
+
+-- The shield while it is up (ShieldAltFire.DrawMuzzleFlash): UT's Shield mesh at GetEffectStart, turned as the view is, drawn with the weapon's
+-- projection. Here it has the material that draws with the weapon's field of view (fx_shield), placed and scaled in the view as the model is
+-- (weapon_skin.lua), and it pans its texture by its age. It ends when the shield goes down or the model is gone.
+-- A shield mesh with a material, for as long as life says and while the shield is up. brightness is a function that says how bright it is.
+local function shield_mesh(api, skin, material, life, brightness)
+	local mesh_unit = 0.02 -- meters of a UT unit of the mesh (make_fx_meshes.py)
+	local forward, right, up = effect_start()
+
+	particles.mesh({
+		additive = 0,
+		brightness = brightness,
+		color = {
+			1,
+			1,
+			1,
+		},
+		locked = function ()
+			if not skin.shield_up then
+				return nil
+			end
+
+			-- (the shove moves it ahead with the gun)
+			return view_point(api, skin, forward + CONFIG.shove_forward * (skin.alt_pose or 0), right, up)
+		end,
+		-- (the mesh's dish faces along its y, which is the way the view looks in the frame of the first person unit, and it is not turned
+		-- about anything else)
+		angle = 0,
+		rotation = Quaternion.identity(),
+		life = life,
+		material = material,
+		scale = function ()
+			local across = (skin.view_across_scale or 0.01) / mesh_unit * CONFIG.shield_draw_scale * CONFIG.behind_gun
+			local along = (skin.view_forward_scale or 0.01) / mesh_unit * CONFIG.shield_draw_scale * CONFIG.behind_gun
+
+			return Vector3(across, along, across)
+		end,
+		unit = "units/ut/fx/shield_mesh",
+	})
+end
+
+-- The shield while it is up. It is not drawn while it flashes (below).
+local function show_shield(api)
+	local skin = api.state()
+
+	if not skin then
+		return
+	end
+
+	shield_mesh(api, skin, "units/ut/fx/fx_shield", math.huge, function ()
+		return skin.flash_until and Managers.time:time("game") < skin.flash_until and 0 or 1
+	end)
+end
+
+-- The sparks of the shield stopping something (ShieldSparks, see CONFIG), in the world: from around origin, along the way rotation faces.
+-- meters is the meters of a UT unit, and scatter how far from origin they start, in UT units. Each is a line (particles.line), started
+-- as xEmitter starts one (utils.ut_particle_velocity).
+local function hit_sparks(origin, rotation, meters, scatter)
+	local forward = Quaternion.forward(rotation)
+
+	for _ = 1, CONFIG.hit_sparks do
+		-- (VRand times the scatter, then the emitter's mPosDev)
+		local offset = utils.random_direction() * scatter + utils.ut_particle_offset(CONFIG.hit_spark_position_spread)
+
+		particles.line({
+			attenuation = 0,
+			delay = math.random() * CONFIG.hit_spark_delay,
+			fade_squared = true,
+			fall = utils.UT_PARTICLE_GRAVITY * random_between(CONFIG.hit_spark_mass) * meters,
+			growth = CONFIG.hit_spark_growth * meters,
+			head_size = CONFIG.hit_spark_head * meters * utils.UT_SPRITE_SIDE,
+			length = CONFIG.hit_spark_length,
+			life = random_between(CONFIG.hit_spark_life),
+			position = origin + offset * meters,
+			size = CONFIG.hit_spark_width * meters,
+			texture = "shield_spark",
+			velocity = utils.ut_particle_velocity(forward, CONFIG.hit_spark_spread, random_between(CONFIG.hit_spark_speed) * meters),
+		})
+	end
+end
+
+-- The shield stopping something (ShieldEffect.Flash): its other skin (fx_shield_rip) for flash_time, and BShieldReflection
+local function flash_shield(api)
+	local skin = api.state()
+
+	if not skin or not skin.shield_up then
+		return
+	end
+
+	skin.flash_until = Managers.time:time("game") + CONFIG.flash_time
+
+	shield_mesh(api, skin, "units/ut/fx/fx_shield_rip", CONFIG.flash_time, function ()
+		return 1
+	end)
+	api.play_sound("ut_shield_hit")
+
+	-- The sparks start where the shield is drawn in the view (behind_gun times GetEffectStart, in the world's UT units). UT starts them
+	-- 20 units above its third person shield, which is lower than the eye. (a departure)
+	local camera_position, camera_rotation = utils.camera_pose()
+
+	if camera_position then
+		local forward, right, up = effect_start()
+		local point = Vector3(right, forward, up) * (CONFIG.behind_gun * UNIT)
+
+		hit_sparks(camera_position + Quaternion.rotate(camera_rotation, point), camera_rotation, UNIT, CONFIG.hit_sparks_scatter[1])
+	end
+end
+
+-- A punch shakes the view (ShieldFire's ShakeOffset settings, see CONFIG, and view_shake.lua)
+local function start_view_shake()
+	mod.view_shake.start({ CONFIG.shake_offset, 0, 0 }, { CONFIG.shake_rate, 0, 0 }, CONFIG.shake_time)
+end
+
+-- The animations follow what the gun does (ShieldFire and ShieldAltFire): the charge plays Charge over FullyChargedTime and then loops
+-- Charged (PlayPreFire, ShieldGun.AnimEnd), the punch plays Fire, and the shield loops Shield while it is up.
+local function update_state(api, skin, dt)
+	local charging = shield.charge_started ~= nil
+	local blocking = local_player_blocking()
+
+	if charging then
+		charge_sparks(api, skin, dt)
+	else
+		skin.spark_time = 0
+	end
+
+	if charging and skin.seen_charge ~= shield.charge_started then
+		skin.seen_charge = shield.charge_started
+		skin.charged = false
+
+		api.play("Charge", shield.fully_charged_time / utils.attack_speed(local_player_unit()))
+
+		-- (held on its last frame at the end, so that it doesn't go back to Idle before Charged is played below)
+		skin.hold = true
+
+		api.stop_sound(skin.charge_sound)
+
+		skin.charge_sound = api.play_sound("ut_shield_charge")
+	elseif charging and not skin.charged and skin.animation == "Charge" and skin.time >= api.animation_duration("Charge") then
+		skin.charged = true
+
+		api.play("Charged", nil, true)
+	end
+
+	-- The charge sound is UT's AmbientSound while the gun charges, which loops (the bank's sound loops). It stops when the charge does.
+	if not charging and skin.charge_sound then
+		api.stop_sound(skin.charge_sound)
+
+		skin.charge_sound = nil
+	end
+
+	if shield.last_punch and skin.seen_punch ~= shield.last_punch then
+		skin.seen_punch = shield.last_punch
+
+		api.stop_sound(skin.charge_sound)
+
+		skin.charge_sound = nil
+
+		api.play("Fire")
+		api.play_sound("ut_shield_fire")
+		force_rings(api)
+		start_view_shake()
+	end
+
+	-- The shove of a push, held out for a bash and through it. alt_pose moves the model (1 is the shove's distance), and the shield and
+	-- the bash's rings follow it.
+	local t = Managers.time:time("game")
+	-- (a time after now is from before the game's clock started over, and is no push)
+	local since_push = shield.last_push and t >= shield.last_push and t - shield.last_push or math.huge
+	local since_bash = shield.last_bash and shield.last_push and shield.last_bash >= shield.last_push and t >= shield.last_bash and t - shield.last_bash or math.huge
+	local bashing = since_bash < api.animation_duration("Fire")
+	local holding = since_bash == math.huge and since_push < shield.bash_window_end and local_player_holds_both()
+	local target = 0
+
+	if since_push < CONFIG.shove_out then
+		target = 1
+	elseif holding or bashing then
+		target = CONFIG.shove_hold
+	end
+
+	-- (the spring: pulled towards the target, held back by its speed; the step is kept small so that a long frame doesn't make it jump)
+	local omega, damping = CONFIG.shove_frequency, CONFIG.shove_damping
+	local shove, speed = skin.alt_pose or 0, skin.shove_speed or 0
+	local left = math.min(dt, 0.1)
+
+	while left > 0 do
+		local step = math.min(left, 1 / 240)
+
+		speed = speed + (omega * omega * (target - shove) - 2 * damping * omega * speed) * step
+		shove = shove + speed * step
+		left = left - step
+	end
+
+	skin.alt_pose, skin.shove_speed = shove, speed
+
+	-- The shield is up while blocking, and while shoving or held out but for a bash. A bash's Fire animation is not cut short when it
+	-- goes down.
+	local shield_up = blocking or (since_push < CONFIG.shove_out or holding) and not bashing
+
+	if shield_up ~= skin.shield_up then
+		skin.shield_up = shield_up
+
+		if shield_up then
+			api.play("Shield", nil, true)
+			show_shield(api)
+
+			skin.shield_sound = api.play_sound("ut_shield_up")
+		else
+			api.stop_sound(skin.shield_sound)
+
+			skin.shield_sound = nil
+
+			if not charging and skin.animation ~= "Fire" then
+				api.play("Idle")
+			end
+		end
+	end
+end
+
+-- How the third person mesh sits in the hand (weapon_skin_third_person.lua), by the copy of the weapon: each hero holds it in the pose
+-- of a weapon of their own (shield_gun.lua's pose_3p), which puts the hand differently. The mesh's origin is its grip, where UT holds it.
+local GRIPS = {
+	-- The grudge-raker's pose: the mesh is turned as the game's unit in the hand is, with no turn of its own, which holds it as the
+	-- grudge-raker is held (and on the hero screen too, where it then moves with the hand)
+	shield_gun_dr = {
+		grip_right = 0,
+		grip_forward = 0,
+		grip_up = 0,
+		yaw = 0,
+		pitch = 0,
+		roll = 0,
+		follow_game_unit = 2,
+	},
+	-- The blunderbuss's pose, the same way, turned a little to the hero's left, as the blunderbuss points, its front tipped up a little, and moved back a little
+	shield_gun = {
+		grip_right = 0,
+		grip_forward = 10,
+		grip_up = 0,
+		yaw = 12,
+		pitch = 5,
+		roll = 0,
+		follow_game_unit = 2,
+	},
+	-- The Volley Crossbow's pose: the game links the crossbow to the left hand's node, so the mesh is linked there and turned as the
+	-- node is (and the billhook or the hammer in the right hand stays hidden). It lies across the waist and points to the hero's left, as
+	-- the crossbow does. The left hand holds it under its front and the right hand is at its handle, as they hold the crossbow.
+	shield_gun_wh = {
+		hand_node = "j_leftweaponattach",
+		grip_right = 0,
+		grip_forward = 25,
+		grip_up = 15,
+		yaw = 0,
+		pitch = 0,
+		roll = 0,
+		follow_game_unit = 3,
+	},
+	-- Sienna has no weapon held like a gun. In the staffs' pose, as her Shock Rifle is held: in the right hand, pointing the way she faces,
+	-- level, and a little lower in the hand
+	shield_gun_bw = {
+		grip_right = 0,
+		grip_forward = 0,
+		grip_up = 10,
+		yaw = 0,
+		pitch = 0,
+		roll = 0,
+		follow_game_unit = 0,
+	},
+	-- The Life Staff's pose: the game links the staff to the left hand's node (AttachmentNodeLinking.one_handed_melee_weapon.left), so the
+	-- mesh is linked there and turned as the node is, as for the Volley Crossbow, and turned well over a quarter to the hero's right to
+	-- point ahead
+	shield_gun_we = {
+		hand_node = "j_leftweaponattach",
+		grip_right = 0,
+		grip_forward = 0,
+		grip_up = 0,
+		yaw = -130,
+		pitch = 0,
+		roll = 0,
+		follow_game_unit = 3,
+	},
+}
+
+local function new_skin(setting_id)
+	local definition = mod.items.weapons[setting_id]
+	local grip = GRIPS[setting_id]
+	local api
+
+	api = mod.weapon_skin.new({
+		id = setting_id,
+		name = "shield gun",
+		template = definition.template,
+		unit_name = "units/ut/shield/shield_gun",
+		animations = animations,
+		muzzle_node = "b_bone_flash",
+		-- model_meters_per_unit is the meters per UT unit at which the model was converted (tools/asset_conversion/convert_weapon.py).
+		-- meters_per_unit is the distance scale: the meters of forward in the view that one UT unit of the model takes up.
+		model_meters_per_unit = 0.0125,
+		meters_per_unit = 0.01,
+		-- ShieldGun.uc
+		display_fov = 60,
+		draw_scale = 0.4,
+		select_speed = 1.3636, -- Weapon's default SelectAnimRate
+		offset_forward = 2,
+		offset_right = -0.7,
+		offset_up = -2.7,
+		pivot_pitch = 500 / 65536 * 360,
+		pivot_yaw = 500 / 65536 * 360,
+		bob_damping = 2.2,
+		-- The second place is the shove of a push (update_state)
+		alt_pose_forward = CONFIG.shove_forward,
+		-- The inspect pose brings the gun towards the middle of the view, level, and turns it to the left about its middle until it is nearly
+		-- across the view, with its right side towards the player. It is still held: it runs off the bottom and the right of the view. The
+		-- turn goes with the move, as the Rocket Launcher's does. The place was checked with preview_weapon.py shield: from 240 of 960
+		-- across and 267 of 540 down, to both edges; it was lowered a little after that.
+		inspect_pose_right = -16,
+		inspect_pose_forward = 0,
+		inspect_pose_up = 1,
+		inspect_pose_roll = 0,
+		inspect_pose_pitch = 0,
+		inspect_pose_yaw = 75,
+		inspect_turn_start = 0,
+		inspect_pivot_right = 0,
+		inspect_pivot_forward = 20,
+		inspect_pivot_up = 0,
+		-- Weapons.ShieldGun_3rd, ShieldAttachment's mesh (convert_static.py shield_3rd), at UT's size in a player's hand: it runs
+		-- along its forward, with the emitter ahead. The game links a melee weapon to the right hand's node.
+		third_person = {
+			id = setting_id,
+			template = definition.template,
+			unit_name = "units/ut/shield/third_person",
+			hand_node = grip.hand_node or "j_rightweaponattach",
+			meters_per_unit = 0.02 * 0.4,
+			scale = 1,
+			grip_right = grip.grip_right,
+			grip_forward = grip.grip_forward,
+			grip_up = grip.grip_up,
+			yaw = grip.yaw,
+			pitch = grip.pitch,
+			roll = grip.roll,
+			follow_game_unit = grip.follow_game_unit,
+			muzzle_right = 0,
+			muzzle_forward = 68,
+			muzzle_up = 8,
+			menu_yaw = -90,
+		},
+		on_create = function (skin)
+			api.play_sound("ut_shield_select")
+
+			-- (a punch from before the gun was put away is not played again when it is taken out, and the shield starts down, so that the
+			-- first frame doesn't put it down and play Idle over the pickup)
+			skin.seen_punch = shield.last_punch
+			skin.shield_up = false
+		end,
+		on_update = function (skin, dt)
+			-- (the inspect pose comes in and goes out, and holds still in between)
+			skin.inspect_pose = (skin.inspect_pose or 0) + ((skin.inspecting and 1 or 0) - (skin.inspect_pose or 0)) * math.min(1, CONFIG.inspect_pose_speed * dt)
+
+			update_state(api, skin, dt)
+		end,
+		on_destroy = function (skin)
+			api.stop_sound(skin.charge_sound)
+			api.stop_sound(skin.shield_sound)
+		end,
+	})
+
+	skin_apis[#skin_apis + 1] = api
+
+	return api
+end
+
+for _, setting_id in ipairs(VARIANTS) do
+	new_skin(setting_id)
+end
+
+-- The third person: the Shield Gun of the other characters (players and bots), and the player's own in a third person view. The shield is
+-- up while the character blocks, which every machine knows. The charge, the punch and the shield stopping something are told by the
+-- machine that owns the character's actions (shield_gun.lua's events), which sends them to the others (ut_shield_3p). The effects are at
+-- the end of the gun in the character's hand, and the sounds come from the character.
+local THIRD_PERSON = {
+	-- ShieldEffect3rd: UT's Shield mesh at DrawScale 3.2, ahead of the player along the aim. Here it is at the end of the gun, facing the
+	-- way the gun points.
+	shield_draw_scale = 3.2,
+	-- ForceRing (ShieldAttachment.ThirdPersonEffects, at the gun's tip): 24 rings a second for 0.2 s, each 0.25 s long, flying out at 250
+	-- units a second with the gun, of size 1 and growing by 200 a second (utils.UT_SPRITE_SIDE times that across)
+	ring_rate = 24,
+	ring_time = 0.2,
+	ring_life = 0.25,
+	ring_speed = 250, -- UT units a second
+	ring_size = 1, -- mSizeRange
+	ring_growth = 200, -- mGrowthRate, a second
+	-- The charge's sparks are the first person's, this many times larger (their spread, width and speed), so that they show from a few
+	-- meters away (a choice)
+	charge_scale = 3,
+}
+
+local events = shield.events
+
+-- What each character's gun shows, as [unit] = { charge_started, spark_time, charge_sound, shield_up, shield_sound,
+-- flash_until }
+local characters = {}
+
+local function now()
+	return Managers.time:time("game")
+end
+
+-- The skin whose mesh the character holds in third person, or nil
+local function third_person_api(unit)
+	for _, api in ipairs(skin_apis) do
+		if api.third_person.muzzle_position(unit) then
+			return api
+		end
+	end
+end
+
+local play_on_unit = utils.play_on_unit
+local stop_handle = utils.stop_sound
+
+local function forget(unit)
+	local state = characters[unit]
+
+	if state then
+		stop_handle(state.charge_sound)
+		stop_handle(state.shield_sound)
+
+		characters[unit] = nil
+	end
+end
+
+-- The shield: a mesh at the end of the gun, for as long as life says and while the shield is up
+local function third_person_shield(api, unit, state, material, life, brightness)
+	local scale = THIRD_PERSON.shield_draw_scale * UNIT / 0.02 -- (0.02: the meters of a UT unit of the mesh)
+
+	particles.mesh({
+		additive = 0,
+		angle = 0,
+		brightness = brightness,
+		color = {
+			1,
+			1,
+			1,
+		},
+		follow = function ()
+			if characters[unit] ~= state or not state.shield_up then
+				return nil
+			end
+
+			return api.third_person.muzzle_position(unit)
+		end,
+		life = life,
+		material = material,
+		-- (the mesh's dish faces along its y, as the gun's mesh points)
+		rotation = function ()
+			return api.third_person.muzzle_rotation(unit) or Quaternion.identity()
+		end,
+		scale = function ()
+			return Vector3(scale, scale, scale)
+		end,
+		unit = "units/ut/fx/shield_mesh",
+	})
+end
+
+-- The rings of a punch, which fly ahead of the gun and move with it, and the punch's sound
+local function third_person_rings(api, unit)
+	local muzzle = api.third_person.muzzle_position(unit)
+	local rotation = api.third_person.muzzle_rotation(unit)
+
+	if not muzzle then
+		return
+	end
+
+	-- (the way the gun pointed at the punch, for a frame where it is gone)
+	local rotation_box = QuaternionBox(rotation)
+	local meters = UNIT
+	local count = math.floor(THIRD_PERSON.ring_rate * THIRD_PERSON.ring_time) + 1
+
+	for i = 1, count do
+		local delay = (i - 1) / THIRD_PERSON.ring_rate
+		local born = now() + delay
+
+		particles.disc({
+			attenuation = 0,
+			color = CONFIG.ring_color,
+			delay = delay,
+			fade_squared = true,
+			follow = function ()
+				local position = api.third_person.muzzle_position(unit)
+
+				if not position then
+					return nil
+				end
+
+				local age = math.max(0, now() - born)
+
+				return position + Quaternion.forward(api.third_person.muzzle_rotation(unit)) * (THIRD_PERSON.ring_speed * age * meters)
+			end,
+			growth = THIRD_PERSON.ring_growth * meters * utils.UT_SPRITE_SIDE,
+			life = THIRD_PERSON.ring_life,
+			material = "units/ut/fx/fx_force_ring",
+			-- (it faces the way the gun points now, as it flies the way the gun points now)
+			normal = function ()
+				local now_rotation = api.third_person.muzzle_rotation(unit)
+
+				return Quaternion.forward(now_rotation or rotation_box:unbox())
+			end,
+			size = THIRD_PERSON.ring_size * meters * utils.UT_SPRITE_SIDE,
+			texture = "force_ring",
+		})
+	end
+
+	api.play_sound_at("ut_shield_fire_3d", muzzle)
+end
+
+-- The sparks of the charge, made each frame while the gun charges: as the first person's, around the end of the gun, charge_scale times
+-- the world's scale (UT shows no charge on another player; this is the mod's own)
+local function third_person_sparks(api, unit, state, dt)
+	local charged = charged_time(unit, state.charge_started)
+	local interval = 1 / (CONFIG.charge_rate[1] + CONFIG.charge_rate[2] * charged)
+	local meters = UNIT * THIRD_PERSON.charge_scale
+
+	state.spark_time = (state.spark_time or 0) + dt
+
+	while state.spark_time >= interval do
+		state.spark_time = state.spark_time - interval
+
+		local spread = CONFIG.charge_spread
+		local offset = Vector3(random_between({-spread, spread}), random_between({-spread, spread}), random_between({-spread, spread}))
+		local distance = math.max(Vector3.length(offset), 0.001)
+		local boxed = Vector3Box(offset * meters)
+		local speed = CONFIG.charge_speed * charged
+		local color = CONFIG.charge_colors[1]
+		local other = CONFIG.charge_colors[2]
+		local share = math.random()
+
+		particles.line({
+			attenuation = CONFIG.charge_attenuation,
+			color = {
+				color[1] + (other[1] - color[1]) * share,
+				color[2] + (other[2] - color[2]) * share,
+				color[3] + (other[3] - color[3]) * share,
+			},
+			fade_squared = true,
+			intensity = CONFIG.charge_alphas[1] + (CONFIG.charge_alphas[2] - CONFIG.charge_alphas[1]) * share,
+			head_size = CONFIG.charge_head * meters * utils.UT_SPRITE_SIDE,
+			length = CONFIG.charge_length,
+			life = math.max(charged / 30, CONFIG.charge_min_life),
+			size = random_between(CONFIG.charge_width) * meters,
+			texture = "shield_charge_spark",
+			-- (it flies towards the end of the gun, and swings round it as the first person's do: to the right as seen from above, which
+			-- is a turn below 0 about the world's up)
+			motion = function (age)
+				local center = api.third_person.muzzle_position(unit)
+
+				if not center then
+					return nil
+				end
+
+				local reach = Quaternion.rotate(Quaternion(Vector3.up(), -math.rad(CONFIG.charge_spin * age)), boxed:unbox())
+				local inward = distance - speed * age > 0 and speed / distance or 0
+
+				return center + reach * (math.max(0, distance - speed * age) / distance), reach * -inward
+			end,
+		})
+	end
+end
+
+-- What a character's gun did, told on this machine
+local function on_event(unit, event)
+	local api = third_person_api(unit)
+
+	if not api or not api.third_person.shows_weapon(unit) then
+		return
+	end
+
+	local state = characters[unit] or {}
+
+	characters[unit] = state
+
+	if event == events.charge then
+		stop_handle(state.charge_sound)
+
+		state.charge_started = now()
+		state.spark_time = 0
+		state.charge_sound = play_on_unit("ut_shield_charge_3d", unit)
+	elseif event == events.charge_end or event == events.punch then
+		stop_handle(state.charge_sound)
+
+		state.charge_started = nil
+		state.charge_sound = nil
+
+		if event == events.punch then
+			third_person_rings(api, unit)
+		end
+	elseif event == events.hit and state.shield_up then
+		-- (its other skin for flash_time, as the first person's)
+		state.flash_until = now() + CONFIG.flash_time
+
+		third_person_shield(api, unit, state, "units/ut/fx/fx_shield_rip_world", CONFIG.flash_time, function ()
+			return 1
+		end)
+
+		local muzzle = api.third_person.muzzle_position(unit)
+
+		if muzzle then
+			api.play_sound_at("ut_shield_hit_3d", muzzle)
+			hit_sparks(muzzle, api.third_person.muzzle_rotation(unit), UNIT, CONFIG.hit_sparks_scatter[2])
+		end
+	end
+end
+
+-- On the machine that owns the character's actions: shown here, and sent to the others
+shield.event_callbacks.skin_third_person = function (owner_unit, event)
+	on_event(owner_unit, event)
+
+	local go_id = Managers.state.unit_storage and Managers.state.unit_storage:go_id(owner_unit)
+
+	if go_id then
+		mod:network_send("ut_shield_3p", "others", go_id, event)
+	end
+end
+
+mod:network_register("ut_shield_3p", function (_, go_id, event)
+	local unit = Managers.state.unit_storage and Managers.state.unit_storage:unit(go_id)
+
+	if unit and Unit.alive(unit) then
+		on_event(unit, event)
+	end
+end)
+
+-- Each frame: the shield of each character that blocks, and the charge's sparks and sound. A character that no longer holds the gun in
+-- third person is forgotten.
+mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
+	local players = Managers.player and Managers.player:human_and_bot_players()
+	local seen = {}
+
+	for _, player in pairs(players or {}) do
+		local unit = player.player_unit
+		local api = unit and Unit.alive(unit) and third_person_api(unit)
+
+		if api and api.third_person.shows_weapon(unit) then
+			local state = characters[unit] or {}
+			local status_extension = ScriptUnit.has_extension(unit, "status_system")
+			local blocking = status_extension and status_extension:is_blocking() or false
+
+			characters[unit] = state
+			seen[unit] = true
+
+			if blocking ~= (state.shield_up or false) then
+				state.shield_up = blocking
+
+				if blocking then
+					third_person_shield(api, unit, state, "units/ut/fx/fx_shield_world", math.huge, function ()
+						return state.flash_until and now() < state.flash_until and 0 or 1
+					end)
+
+					state.shield_sound = play_on_unit("ut_shield_up_3d", unit)
+
+					-- (ShieldAltFire's FireSound, which UT plays for the others and not for the one who raises it: ServerPlayFiring)
+					if not utils.is_local_player_unit(unit) then
+						play_on_unit("ut_shield_regen_3d", unit)
+					end
+				else
+					stop_handle(state.shield_sound)
+
+					state.shield_sound = nil
+				end
+			end
+
+			if state.charge_started then
+				third_person_sparks(api, unit, state, dt)
+			end
+		end
+	end
+
+	for unit in pairs(characters) do
+		if not seen[unit] then
+			forget(unit)
+		end
+	end
+end
+
+local function forget_all()
+	for unit in pairs(characters) do
+		forget(unit)
+	end
+end
+
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = forget_all
+mod.unload_callbacks[#mod.unload_callbacks + 1] = forget_all
+
+-- A block stops something: the shield flashes, in first person for the player, and in third person for everyone who sees the character.
+-- The machine that owns the character's actions tells the others: the player's own, and the host for its bots.
+mod.block_callbacks.shield_skin = function (status_extension)
+	local unit = status_extension.unit
+
+	if utils.is_local_player_unit(unit) then
+		for _, api in ipairs(skin_apis) do
+			flash_shield(api)
+		end
+	end
+
+	local player = Managers.player:owner(unit)
+	local owned_here = utils.is_local_player_unit(unit) or player and player.bot_player and Managers.player.is_server
+
+	if owned_here and shield.template_names[utils.wielded_template_name(unit)] then
+		shield.event_callbacks.skin_third_person(unit, events.hit)
+	end
+end
+
+-- Inspecting is the game's own action, held with the key
+mod.inspect_callbacks.shield_skin = function (action, started)
+	for _, api in ipairs(skin_apis) do
+		local skin = api.state()
+
+		if skin and utils.is_local_player_unit(action.owner_unit) then
+			skin.inspecting = started
+		end
+	end
+end
+
+-- The charge is shown on the charge bar (charge_bar.lua): from empty to full (FullyChargedTime), in the Shield Gun's HudColor. Its two
+-- marks are where the punch becomes the next blow (shield.charge_marks). UT shows no charge; this is the mod's own.
+local function shield_charge()
+	return {
+		color = CONFIG.charge_bar_color,
+		fraction = shield.charge_started and charged_time(local_player_unit(), shield.charge_started) / shield.fully_charged_time or 0,
+		marks = shield.charge_marks,
+	}
+end
+
+for template_name in pairs(shield.template_names) do
+	mod.charge_bars[template_name] = shield_charge
+end
+
+-- The melee weapon's own swings are not played on the player's own first person unit: their sounds are in the animations. The skin's
+-- model plays UT's. The push is the base weapon's own, so its animation is played for its sound (the arms are hidden).
+for template_name in pairs(shield.template_names) do
+	mod.first_person_animation_filters[template_name] = function (event)
+		return event ~= "attack_push" and string.find(event, "attack", 1, true) ~= nil
+	end
+end
