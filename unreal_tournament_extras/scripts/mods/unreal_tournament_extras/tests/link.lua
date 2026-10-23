@@ -230,11 +230,8 @@ local function speed_between(track, from, to)
 	return distance / (b[1] - a[1])
 end
 
--- The damage of the first hit of a mode on an enemy ahead: "bolt" (a tap of the left button) or "beam" (a moment of the right button). The
--- enemy is CONFIG.breed if no breed is given, and the shot is aimed at its middle, or at its head.
-local function first_hit(t, mode, breed_name, at_head)
-	breed_name = breed_name or CONFIG.breed
-
+-- The player's first hit of a mode on an enemy ahead, aimed at its middle or at its head: its damage and its hit zone
+local function one_hit(t, mode, breed_name, at_head)
 	t.go_to_start()
 
 	local enemy = t.spawn(breed_name, CONFIG.enemy_distance)
@@ -270,7 +267,40 @@ local function first_hit(t, mode, breed_name, at_head)
 	t.remove(enemy)
 	t.wait(0.5)
 
-	return damage.hits[1] and damage.hits[1].amount
+	-- The player's own first hit (an ally bot can shoot the enemy too)
+	local first
+	local hits = {}
+
+	for _, hit in ipairs(damage.hits) do
+		hits[#hits + 1] = string.format("%.1f by %s on the %s", hit.amount, hit.attacker, tostring(hit.zone))
+
+		if not first and hit.attacker == "self" then
+			first = hit
+		end
+	end
+
+	t.log("%s at the %s: %s", mode, breed_name, table.concat(hits, ", "))
+
+	return first and first.amount, first and first.zone
+end
+
+-- The damage of the first hit of a mode on an enemy ahead: "bolt" (a tap of the left button) or "beam" (a moment of the right button). The
+-- enemy is CONFIG.breed if no breed is given, and the shot is aimed at its middle, or at its head. A shot at the middle can hit the head
+-- (a linked bolt starts further ahead, and the enemy's idle moves its head), which does the head bonus: it is shot again then.
+local function first_hit(t, mode, breed_name, at_head)
+	breed_name = breed_name or CONFIG.breed
+
+	local amount, zone
+
+	for _ = 1, 3 do
+		amount, zone = one_hit(t, mode, breed_name, at_head)
+
+		if at_head or (zone ~= "head" and zone ~= "neck") then
+			return amount
+		end
+	end
+
+	return nil
 end
 
 -- Checks a mode's damage against each armour type, as a share of the damage against an enemy with none. There are no critical hits.
