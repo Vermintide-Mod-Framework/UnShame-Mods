@@ -163,13 +163,13 @@ local TEMPLATES = {
 -- the game's weapon in the hand is, which the game animates with the arms.
 local GRIPS = {
 	-- The repeating handgun's pose: the game links the gun to the right hand, and the left holds its front. The mesh is linked to the
-	-- left hand's node, moved back and to the left from the mesh's origin, and tipped up so that the gun's line runs through the right
-	-- hand too (set in the game).
+	-- right hand's node, at the same point of the mesh as the repeater pistol's, so it stays in the hand when the left hand lets go (in
+	-- the inspect). It is tipped up so that the gun's line runs through the left hand too (set in the game).
 	minigun = {
-		hand_node = "j_leftweaponattach",
-		grip_right = -15,
-		grip_forward = 60,
-		grip_up = 0,
+		hand_node = "j_rightweaponattach",
+		grip_right = -5.9,
+		grip_forward = 13.2,
+		grip_up = -0.2,
 		yaw = 0,
 		pitch = 9.9,
 		roll = 0,
