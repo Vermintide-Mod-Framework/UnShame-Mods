@@ -307,21 +307,35 @@ local function shown_entry()
 	return entry
 end
 
--- The kill feed (PositiveReinforcementUI) is at the top right too: while the counter is shown it starts below it, as far below as it is
--- below the top of the screen otherwise. Its scenegraph is 1080 high, and the counter's lowest widget (the glow) ends this far down.
+-- The kill feed (PositiveReinforcementUI) and the Chaos Wastes coins (DeusSoftCurrencyIndicatorUI) are at the top right too: while the
+-- counter is shown they start below it, as far below as they are below the top of the screen otherwise. Their scenegraphs are 1080
+-- high, and the counter's lowest widget (the glow) ends this far down.
 local function counter_bottom()
 	local alert = CONFIG.alert
 
 	return (alert.y + alert[4] - alert[2]) * alert.scale * 1080 / 480
 end
 
-mod:hook(PositiveReinforcementUI, "update", function (func, self, ...)
-	local node = self.ui_scenegraph and self.ui_scenegraph.message_animated
-
+-- Moves a scenegraph node down below the counter while it is shown. self keeps the node's own height.
+local function move_below_counter(self, node)
 	if node then
-		self._ut_feed_y = self._ut_feed_y or node.local_position[2]
-		node.local_position[2] = self._ut_feed_y - (shown_entry() and counter_bottom() or 0)
+		self._ut_top_y = self._ut_top_y or node.local_position[2]
+		node.local_position[2] = self._ut_top_y - (shown_entry() and counter_bottom() or 0)
 	end
+end
+
+mod:hook(PositiveReinforcementUI, "update", function (func, self, ...)
+	move_below_counter(self, self.ui_scenegraph and self.ui_scenegraph.message_animated)
+
+	return func(self, ...)
+end)
+
+-- The game loads the coins' file only with the Chaos Wastes' HUD. It is loaded here so that it can be hooked. require keeps it loaded,
+-- so the game does not load it again.
+require("scripts/ui/hud_ui/deus_soft_currency_indicator_ui")
+
+mod:hook(DeusSoftCurrencyIndicatorUI, "update", function (func, self, ...)
+	move_below_counter(self, self._ui_scenegraph and self._ui_scenegraph.coin_ui)
 
 	return func(self, ...)
 end)
