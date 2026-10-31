@@ -1,21 +1,22 @@
 import sys, os, re, subprocess
 
-# Makes the Workshop preview, item_preview.png, of this mod and of the extras mod. It starts from the framework's default preview (the
-# template's item_preview.png, 360 by 360), covers its Vermintide logo with burlap copied from the top and bottom of the same picture,
-# puts the round UT2004 emblem over it, the largest picture in ut2004_emblem.ico next to this script, and writes the mod's name under it
-# in Impact. Every step is ffmpeg's, which must be on the PATH.
-# Usage: make_item_preview.py <template item_preview.png>
+# Makes the Workshop preview, item_preview.png, of this mod and of the extras mod: a square of a screenshot of the mod in the game
+# (item_preview_background.jpg next to this script), the round UT2004 emblem over it, the largest picture in ut2004_emblem.ico next to
+# this script, and the mod's name under it in Impact. Every step is ffmpeg's, which must be on the PATH.
+# Usage: make_item_preview.py
 
-REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-ICON = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ut2004_emblem.ico')
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.abspath(os.path.join(HERE, '..', '..'))
 OUTPUTS = [os.path.join(REPO, 'item_preview.png'), os.path.join(REPO, '..', 'unreal_tournament_extras', 'item_preview.png')]
+BACKGROUND = os.path.join(HERE, 'item_preview_background.jpg')
+ICON = os.path.join(HERE, 'ut2004_emblem.ico')
 FONT = 'C\\:/Windows/Fonts/impact.ttf'
 
-LOGO_WIDTH = 240  # pixels
-LOGO_Y = 56
-LINES = [('UNREAL TOURNAMENT', 39, 256), ('WEAPONS & MOVEMENT', 29, 299)]  # text, size, top
-
-TEMPLATE = sys.argv[1]
+SIZE = 360  # pixels, as the framework's default preview
+CROP_X = 840  # the left edge of the square taken from the screenshot, in its pixels: the right of it, with the weapon
+LOGO_WIDTH = 220
+LOGO_Y = 14
+LINES = [('UNREAL TOURNAMENT', 38, 172), ('WEAPONS & MOVEMENT', 28, 213)]  # text, size, top
 
 
 def largest_picture(ico):
@@ -43,31 +44,24 @@ stream = largest_picture(ICON)
 box = visible_box(ICON, stream)
 
 graph = ';'.join([
-    # The burlap that covers the Vermintide logo: the top 96 rows over the bottom 122, faded into each other and into the picture.
-    '[0:v]format=rgba,split=3[bg][top][bottom]',
-    '[top]crop=360:96:0:0[a]',
-    "[bottom]crop=360:122:0:238,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='255*min(1,Y/24)'[b]",
-    'color=black@0:s=360x194,format=rgba[canvas]',
-    '[canvas][a]overlay=0:0:format=auto[p1]',
-    "[p1][b]overlay=0:72:format=auto,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='alpha(X,Y)*min(1,min(Y/16,(H-1-Y)/16))'[patch]",
-    '[bg][patch]overlay=0:62:format=auto[covered]',
+    '[0:v]crop=ih:ih:%d:0,scale=%d:%d:flags=lanczos,format=rgba[background]' % (CROP_X, SIZE, SIZE),
 
     # The emblem, and its soft shadow down and to the right.
     '[1:%d]crop=%s,scale=%d:-1:flags=lanczos,format=rgba,split[logo][logo_shape]' % (stream, box, LOGO_WIDTH),
     "[logo_shape]geq=r=0:g=0:b=0:a='alpha(X,Y)',pad=iw+60:ih+60:30:30:color=black@0,gblur=sigma=8,colorchannelmixer=aa=0.9[logo_shadow]",
 
     # The text, over its shadow drawn twice to be darker.
-    'color=black@0:s=360x360,format=rgba,%s,gblur=sigma=3,split[ts1][ts2]' % ','.join(drawtext(*line, True) for line in LINES),
-    'color=black@0:s=360x360,format=rgba,%s[text]' % ','.join(drawtext(*line, False) for line in LINES),
+    'color=black@0:s=%dx%d,format=rgba,%s,gblur=sigma=3,split[ts1][ts2]' % (SIZE, SIZE, ','.join(drawtext(*line, True) for line in LINES)),
+    'color=black@0:s=%dx%d,format=rgba,%s[text]' % (SIZE, SIZE, ','.join(drawtext(*line, False) for line in LINES)),
 
-    '[covered][logo_shadow]overlay=(W-w)/2+3:%d:format=auto[c1]' % (LOGO_Y - 25),
+    '[background][logo_shadow]overlay=(W-w)/2+3:%d:format=auto[c1]' % (LOGO_Y - 25),
     '[c1][logo]overlay=(W-w)/2:%d:format=auto[c2]' % LOGO_Y,
     '[c2][ts1]overlay=0:0:format=auto[c3]',
     '[c3][ts2]overlay=0:0:format=auto[c4]',
     '[c4][text]overlay=0:0:format=auto,format=rgb24,split=%d%s' % (len(OUTPUTS), ''.join('[out%d]' % i for i in range(len(OUTPUTS)))),
 ])
 
-command = ['ffmpeg', '-v', 'error', '-y', '-i', TEMPLATE, '-i', ICON, '-filter_complex', graph]
+command = ['ffmpeg', '-v', 'error', '-y', '-i', BACKGROUND, '-i', ICON, '-filter_complex', graph]
 
 for i, path in enumerate(OUTPUTS):
     command += ['-map', '[out%d]' % i, '-frames:v', '1', os.path.abspath(path)]

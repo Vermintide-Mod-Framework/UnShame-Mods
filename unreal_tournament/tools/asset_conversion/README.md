@@ -57,7 +57,7 @@ What each script makes, and the tables in it that say what it converts, are in i
 
 | Script | Makes |
 |---|---|
-| `make_item_preview.py <template item_preview.png>` | the Workshop preview of this mod and of the extras mod, from the framework's default preview and the round UT2004 emblem in `ut2004_emblem.ico`. It needs ffmpeg |
+| `make_item_preview.py` | the Workshop preview of this mod and of the extras mod, from a screenshot of the mod in the game (`item_preview_background.jpg`) and the round UT2004 emblem in `ut2004_emblem.ico`. It needs ffmpeg |
 
 **Checks and pieces**
 
