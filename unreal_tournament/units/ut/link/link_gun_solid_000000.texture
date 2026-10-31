@@ -1,6 +1,6 @@
 common = {
 	input = {
-		filename = "units/ut/link/link_gun_solid_353a43"
+		filename = "units/ut/link/link_gun_solid_000000"
 	}
 	output = {
 		apply_processing = true

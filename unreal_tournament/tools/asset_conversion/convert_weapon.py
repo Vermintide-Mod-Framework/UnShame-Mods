@@ -86,15 +86,17 @@ WEAPONS['bio'] = {
 }
 
 WEAPONS['link'] = {
-    # UT's body and glowing parts have no specular
-    'roughness': {0: 0.9, 1: 0.9},
+    # UT's body and glowing parts have no specular, and the glass is a reflection
+    'roughness': {0: 0.9, 1: 0.9, 2: 0.12},
     'psk': 'NewWeapons2004/SkeletalMesh/FatLinkGun.psk',
     'psa': 'NewWeapons2004/MeshAnimation/LinkGun.psa',
     # the body, the glowing parts (the shader pans the green power texture over it), the glass. The glass is LinkGlassShader, the
     # reflection of a cube map (CubeMaps.geothermal) with no colour of its own, which UT keeps when the gun changes colour for a link.
-    # It is OB_Translucent, which adds to what is behind it and never darkens it: here it adds the average colour of the cube's faces.
+    # It is OB_Translucent, which adds to what is behind it and never darkens it. Here it is the game's own reflections, as the other
+    # weapons' cube maps are (see GLOSS_MATTE): the transparent material at no opacity adds only its reflection to what is behind it,
+    # and none of its colour.
     'materials': [('UT2004Weapons/Texture/FatLinkGunTex0.tga', 'opaque'), ('UT2004Weapons/Texture/LinkPowerGreen.tga', 'alpha', 0.7),
-                  ('solid:353a43', 'additive')],
+                  ('solid:000000', 'alpha', 0)],
     # (the body again as m_3, drawn over it: the glow of its eye, make_combo_materials.py's link_gun materials, which also make m_0 and m_1)
     'overlays': {0: 3},
     'scale': 0.0125,
