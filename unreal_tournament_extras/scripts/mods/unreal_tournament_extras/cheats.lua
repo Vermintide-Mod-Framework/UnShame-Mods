@@ -51,7 +51,7 @@ local function send_god_mode(unit)
 	end
 end
 
-mod:command("god", "- turns taking no damage on or off", function ()
+mod:command("god", "- toggles taking no damage", function ()
 	local _, unit = local_player_and_unit()
 
 	god_mode = not god_mode
@@ -126,7 +126,7 @@ mod:command("fly", "- fly where you look, until /walk", function ()
 	end
 end)
 
-mod:command("ghost", "- fly where you look and through walls, until /walk", function ()
+mod:command("ghost", "- fly where you look, through walls, until /walk", function ()
 	if ut.flight.start(true) then
 		mod:echo("You feel ethereal")
 	end
@@ -210,7 +210,7 @@ local function bot_command(command, argument)
 	return true, number
 end
 
-mod:command("addbots", "[number] - adds hero bots to the empty places, one by default", function (argument)
+mod:command("addbots", "[number] - adds hero bots, 1 by default", function (argument)
 	local ok, number = bot_command("addbots", argument)
 
 	if ok then
@@ -218,7 +218,7 @@ mod:command("addbots", "[number] - adds hero bots to the empty places, one by de
 	end
 end)
 
-mod:command("killbots", "[number] - removes hero bots, all of them by default", function (argument)
+mod:command("killbots", "[number] - removes hero bots, all by default", function (argument)
 	local ok, number = bot_command("killbots", argument)
 
 	if ok then
@@ -255,7 +255,7 @@ local function show_first_person_units(unit, show)
 	end
 end
 
-mod:command("hud", "[1] - hides or shows the HUD, crosshair and weapon. With 1 the weapon stays", function (argument)
+mod:command("hud", "[1] - toggles the HUD, crosshair and weapon. 1 keeps the weapon", function (argument)
 	local _, unit = local_player_and_unit()
 	local hide = argument == "1" and "hud" or "all"
 
@@ -317,7 +317,7 @@ local function start_free_camera(player, unit)
 	ScriptUnit.extension(unit, "first_person_system"):set_first_person_mode(false)
 end
 
-mod:command("freecamera", "[distance] - turns a third person camera on or off, which the mouse turns around you. Smaller distances are closer, 0.3 by default", function (distance)
+mod:command("freecamera", "[distance] - toggles a third person camera you move around yourself with the mouse. The distance is 0.3 by default", function (distance)
 	local player, unit = local_player_and_unit()
 
 	if not unit then

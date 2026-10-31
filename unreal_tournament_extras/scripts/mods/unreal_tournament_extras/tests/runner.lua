@@ -2400,7 +2400,7 @@ end
 
 -- For looking at a weapon: an enemy that stands still in front of the player, and the flags that keep the level empty and the
 -- player unhurt (the ones a suite sets).
-mod:command("ut_spawn", "<breed> [distance] - spawns an enemy on the ground ahead of you, 5 m away by default", function (breed_name, distance)
+mod:command("ut_spawn", "<breed> [distance] - spawns an enemy ahead of you, 5 m away by default", function (breed_name, distance)
 	local unit = player_unit()
 	local breed = Breeds[breed_name or "chaos_marauder"]
 	local first_person_extension = unit and ScriptUnit.has_extension(unit, "first_person_system")
@@ -2445,7 +2445,7 @@ end)
 -- when nothing sets it.
 local LEVEL_DIFFICULTIES = { "normal", "hard", "harder", "hardest", "cataclysm", "cataclysm_2", "cataclysm_3" }
 
-mod:command("ut_level", "<level> [weather] [difficulty] - loads a level, such as military for Righteous Stand. Weather: random, or one of the level's by name or number, 0 by default. Difficulty: normal (Recruit, the default), hard, harder, hardest (Legend), cataclysm, cataclysm_2 or cataclysm_3", function (level_key, ...)
+mod:command("ut_level", "<level> [weather] [difficulty] - loads a level, such as military for Righteous Stand. Weather: random, or the level's weather by name or number, 0 by default. Difficulty: normal (Recruit, the default), hard, harder, hardest (Legend), cataclysm, cataclysm_2 or cataclysm_3", function (level_key, ...)
 	if not level_key or not LevelSettings[level_key] then
 		log("ut_level: there is no level %s", tostring(level_key))
 
@@ -2562,7 +2562,7 @@ end)
 
 -- For looking at the weapon in the character's hand: the camera goes behind the shoulder, and the character is shown. The game does this
 -- for its own third person debug mode.
-mod:command("ut_3p", "on | off - turns the third person view on or off", function (argument)
+mod:command("ut_3p", "on | off - switches the third person view on or off", function (argument)
 	local player = local_player()
 	local unit = player_unit()
 	local first_person_extension = unit and ScriptUnit.has_extension(unit, "first_person_system")
