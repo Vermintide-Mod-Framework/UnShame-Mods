@@ -1,0 +1,27 @@
+Cheats, tests and dev commands for [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3814159978]Unreal Tournament Weapons & Movement[/url]. It needs that mod, and has to be below it in the load order.
+
+[h1]UT Cheats[/h1]
+[list]
+[*][b]/god[/b] - take no damage.
+[*][b]/allammo[/b] - fill your ammo.
+[*][b]/fly[/b], [b]/ghost[/b] - fly where you look, through walls with ghost. [b]/walk[/b] ends both.
+[*][b]/suicide[/b] - die at once.
+[*][b]/addbots[/b], [b]/killbots[/b] - add or remove hero bots.
+[*][b]/hud[/b] - hide the HUD, crosshair and weapon. [b]/hud 1[/b] keeps the weapon.
+[*][b]/freecamera[/b] - a third person camera you can turn around your character.
+[/list]
+
+[h1]Other Commands[/h1]
+[list]
+[*][b]/slomo[/b] - change the game speed.
+[*][b]/recharge[/b] - fill your career skill and adrenaline.
+[*][b]/ut_level[/b] - load any level, with an optional weather and difficulty.
+[/list]
+
+[h1]Development[/h1]
+In-game tests for every weapon ([b]/ut_test[/b]), and commands for spawning enemies, teleporting and checking the weapon models, which were used to make the mod.
+
+[h1]Links[/h1]
+[list]
+[*][url=https://github.com/Vermintide-Mod-Framework/UnShame-Mods/tree/master/unreal_tournament_extras]Source Code[/url]
+[/list]
