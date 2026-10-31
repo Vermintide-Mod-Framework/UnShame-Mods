@@ -2428,7 +2428,7 @@ mod:command("ut_spawn", "<breed> [distance] - spawns an enemy ahead of you, 5 m 
 	}, Quaternion.look(-flat, Vector3.up()))
 end)
 
-mod:command("ut_quiet", "on | off - keeps the level empty and you unhurt, as the tests do", function (argument)
+mod:command("ut_quiet", "on | off - stops enemies and bots from spawning and enemies from noticing you, and makes you invincible", function (argument)
 	if argument == "off" then
 		if runner.quiet_restore then
 			runner.quiet_restore()
