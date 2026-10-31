@@ -19,10 +19,15 @@ local parents = {}
 
 local function read_widgets(widgets, parent)
 	for _, widget in ipairs(widgets or {}) do
-		defaults[widget.setting_id] = widget.default_value
-		parents[widget.setting_id] = parent
+		-- A group only holds options under a heading. It is not an option, so the ones in it don't depend on it.
+		if widget.type == "group" then
+			read_widgets(widget.sub_widgets, parent)
+		else
+			defaults[widget.setting_id] = widget.default_value
+			parents[widget.setting_id] = parent
 
-		read_widgets(widget.sub_widgets, widget.setting_id)
+			read_widgets(widget.sub_widgets, widget.setting_id)
+		end
 	end
 end
 

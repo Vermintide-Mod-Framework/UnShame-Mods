@@ -139,6 +139,8 @@ mod:dofile("scripts/mods/unreal_tournament/assault/assault_rifle")
 mod:dofile("scripts/mods/unreal_tournament/assault/skin")
 -- Crafting for those items.
 mod:dofile("scripts/mods/unreal_tournament/crafting")
+-- Those items in Chaos Wastes' Reliquaries
+mod:dofile("scripts/mods/unreal_tournament/chaos_wastes")
 
 -- Weapon skins in the menus
 mod:dofile("scripts/mods/unreal_tournament/menu_preview")
@@ -160,5 +162,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 1726)")
+	mod:echo("Unreal Tournament loaded (build 1727)")
 end

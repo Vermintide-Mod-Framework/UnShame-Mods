@@ -106,6 +106,17 @@ return {
 					},
 				},
 			},
+			{
+				setting_id = "chaos_wastes",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "reliquary_ut_weapons",
+						type = "checkbox",
+						default_value = false,
+					},
+				},
+			},
 		},
 	},
 }

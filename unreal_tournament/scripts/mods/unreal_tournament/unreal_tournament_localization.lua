@@ -110,4 +110,13 @@ return {
 	more_ammo_pickups_description = {
 		en = "Levels have more ammo pickups. Applies from the next level that starts.",
 	},
+	chaos_wastes = {
+		en = "Chaos Wastes",
+	},
+	reliquary_ut_weapons = {
+		en = "UT Weapons from Reliquaries",
+	},
+	reliquary_ut_weapons_description = {
+		en = "A Reliquary only gives Unreal Tournament weapons. If your career has none for that slot, it gives one of the game's.",
+	},
 }

@@ -199,6 +199,11 @@ function items.is_custom(backend_id)
 	return item ~= nil and item.UtCustom == true
 end
 
+-- Returns whether an item key is one of the mod's weapons.
+function items.is_registered(key)
+	return definitions[key] ~= nil
+end
+
 -- Makes a new crafted weapon and returns its backend id and inventory item. The game's craft adds it to the inventory.
 function items.new_crafted(saved, key, record)
 	local backend_id = string.format("%s#%d", key, saved.next_id)
