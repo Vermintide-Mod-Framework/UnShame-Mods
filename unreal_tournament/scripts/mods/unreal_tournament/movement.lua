@@ -14,9 +14,10 @@ local CONFIG = {
 	gravity_multiplier = 950 * (4.25 * 1.35 / 340) / 11,
 	-- The air control, which is how fast the player can change direction in the air, relative to the game's
 	air_control_multiplier = 0.7,
-	-- After the player climbs off the top of a ladder the gravity is the game's until they land, for this long at most. The climb ends
-	-- a little above the platform, and the player is in the air for a moment. With the stronger gravity they fall back down the ladder
-	-- before they can move onto the platform.
+	-- After the player climbs off the top of a ladder the gravity and the air control are the game's until they land, for this long at
+	-- most. The climb ends a little above the platform, and the player is in the air for a moment. With the stronger gravity and the
+	-- weaker air control they fall back down the ladder before they can move onto the platform. The dwarf still did with only the
+	-- game's gravity.
 	ladder_exit_grace = 1, -- seconds
 	-- A crouching player does not walk off ledges. The center of the player may be this far past the edge, so a bit more
 	-- than half of them hangs off. Further out, the physics starts to make them slide off by themselves.
@@ -301,12 +302,15 @@ end)
 
 -- The game's air movement limits the horizontal speed to the run speed, which would take the speed of the dodge launch away at
 -- once. This lets a dodge launch or a push keep its speed, and steering still works. The speed passed to the air movement is how much
--- the player can steer, and it is scaled by the air control. A push keeps its speed with the UT movement option off too.
+-- the player can steer, and it is scaled by the air control, except while the player climbs off a ladder (ladder_exit_grace). A push
+-- keeps its speed with the UT movement option off too.
 mod:hook(CharacterStateHelper, "move_in_air", function (func, first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
 	local state = air_state[unit]
 	local speed_before = state and state.keep_speed and Vector3.length(Vector3.flat(locomotion_extension:current_velocity()))
 
-	func(first_person_extension, input_extension, locomotion_extension, is_movement_enabled() and speed * CONFIG.air_control_multiplier or speed, unit, ...)
+	local weaker = is_movement_enabled() and not recently_left_ladder(unit)
+
+	func(first_person_extension, input_extension, locomotion_extension, weaker and speed * CONFIG.air_control_multiplier or speed, unit, ...)
 
 	if speed_before then
 		local wanted_flat = Vector3.flat(locomotion_extension.velocity_wanted:unbox())
