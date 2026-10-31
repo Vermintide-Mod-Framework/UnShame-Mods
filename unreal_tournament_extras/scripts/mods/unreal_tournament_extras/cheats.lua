@@ -15,7 +15,7 @@ local function local_player_and_unit()
 end
 
 -- UT's "slomo": the game runs at that speed. Below 1 slows it down, above 1 speeds it up, 1 is normal.
-mod:command("slomo", "<number> - the speed of the game: below 1 slower, above 1 faster, 1 is normal", function (scale)
+mod:command("slomo", "<speed> - sets the game speed: 1 is normal, lower is slower, higher is faster", function (scale)
 	local number = tonumber(scale)
 
 	if not number or number < 0 then
@@ -51,7 +51,7 @@ local function send_god_mode(unit)
 	end
 end
 
-mod:command("god", "- you take no damage, or take it again (UT's god)", function ()
+mod:command("god", "- turns taking no damage on or off", function ()
 	local _, unit = local_player_and_unit()
 
 	god_mode = not god_mode
@@ -81,7 +81,7 @@ end
 
 -- UT's cheat "allammo" (CheatManager.AllAmmo): fills the ranged weapon's ammo, or sets it to the amount given, and fills the Assault
 -- Rifle's grenades (its rounds are endless)
-mod:command("allammo", "[amount] - fills the ammo of the ranged weapon, or sets it to that (a whole number), and the grenades", function (amount)
+mod:command("allammo", "[amount] - fills your ranged weapon's ammo and your grenades, or sets the ammo to the amount", function (amount)
 	local number = tonumber(amount)
 
 	if amount and (not number or number ~= math.floor(number) or number < 0) then
@@ -120,26 +120,26 @@ mod:command("allammo", "[amount] - fills the ammo of the ranged weapon, or sets 
 end)
 
 -- UT's cheats "fly", "ghost" and "walk": the flight is the Unreal Tournament mod's (movement.lua, mod.flight)
-mod:command("fly", "- you fly the way you look, with no gravity, until /walk (UT's fly)", function ()
+mod:command("fly", "- fly where you look, until /walk", function ()
 	if ut.flight.start(false) then
 		mod:echo("You feel much lighter")
 	end
 end)
 
-mod:command("ghost", "- you fly the way you look, through walls, until /walk (UT's ghost)", function ()
+mod:command("ghost", "- fly where you look and through walls, until /walk", function ()
 	if ut.flight.start(true) then
 		mod:echo("You feel ethereal")
 	end
 end)
 
-mod:command("walk", "- ends /fly and /ghost", function ()
+mod:command("walk", "- stops flying", function ()
 	ut.flight.stop()
 end)
 
 -- UT's "suicide" (PlayerController.Suicide): the player dies at once. The host is asked to kill the character with the request the game
 -- sends when a player falls into a kill zone (PlayerUnitHealthExtension.entered_kill_volume), with the game's damage type for a forced
 -- kill.
-mod:command("suicide", "- you die at once (UT's suicide)", function ()
+mod:command("suicide", "- kills you", function ()
 	local _, unit = local_player_and_unit()
 	local unit_id = unit and Managers.state.unit_storage:go_id(unit)
 
@@ -150,7 +150,7 @@ end)
 
 -- Fills the career ability's bar at once (the cooldown runs on the machine of the player whose it is), and the adrenaline when it is on
 -- (the host keeps it: adrenaline.lua)
-mod:command("recharge", "- fills your career ability's bar and your adrenaline at once", function ()
+mod:command("recharge", "- fills your career skill and adrenaline", function ()
 	local _, unit = local_player_and_unit()
 	local career_extension = unit and ScriptUnit.has_extension(unit, "career_system")
 
@@ -210,7 +210,7 @@ local function bot_command(command, argument)
 	return true, number
 end
 
-mod:command("addbots", "[number] - adds that many hero bots (1), as there are empty places (UT's addbots)", function (argument)
+mod:command("addbots", "[number] - adds hero bots to the empty places, one by default", function (argument)
 	local ok, number = bot_command("addbots", argument)
 
 	if ok then
@@ -218,7 +218,7 @@ mod:command("addbots", "[number] - adds that many hero bots (1), as there are em
 	end
 end)
 
-mod:command("killbots", "[number] - removes that many hero bots, or all of them (UT's killbots)", function (argument)
+mod:command("killbots", "[number] - removes hero bots, all of them by default", function (argument)
 	local ok, number = bot_command("killbots", argument)
 
 	if ok then
@@ -255,7 +255,7 @@ local function show_first_person_units(unit, show)
 	end
 end
 
-mod:command("hud", "[1] - hides the HUD, the crosshair and the weapon, or shows them again (UT's togglescreenshotmode). With 1 the weapon stays", function (argument)
+mod:command("hud", "[1] - hides or shows the HUD, crosshair and weapon. With 1 the weapon stays", function (argument)
 	local _, unit = local_player_and_unit()
 	local hide = argument == "1" and "hud" or "all"
 
@@ -317,7 +317,7 @@ local function start_free_camera(player, unit)
 	ScriptUnit.extension(unit, "first_person_system"):set_first_person_mode(false)
 end
 
-mod:command("freecamera", "[distance] - the camera goes behind you, and the mouse turns it around you, or back (UT's freecamera). The distance (0.3 if not given) moves it closer or further.", function (distance)
+mod:command("freecamera", "[distance] - turns a third person camera on or off, which the mouse turns around you. Smaller distances are closer, 0.3 by default", function (distance)
 	local player, unit = local_player_and_unit()
 
 	if not unit then
@@ -445,7 +445,7 @@ mod:hook(PlayerUnitFirstPerson, "set_look_delta", function (func, self, look_del
 end)
 
 -- The weapon skins' development commands (weapon_skin.lua's command of each skin)
-mod:command("skin", "<weapon> debug | report | play <animation> | set <number> <value> | 3p <number> <value> - the weapon skins", function (id, ...)
+mod:command("skin", "<weapon> debug | report | play <animation> | set <number> <value> | 3p <number> <value> - inspects and adjusts a weapon's model", function (id, ...)
 	local skins = ut.weapon_skin.skins
 	local skin = id and skins[id]
 
@@ -466,7 +466,7 @@ end)
 -- /strip: a wave of 40 points in front of the camera, drawn by the skin particles' strip (the Link Gun's beam), until /strip again
 local strip_test
 
-mod:command("strip", "- a beam strip in front of you, or away again (for checking how the skins draw a beam)", function ()
+mod:command("strip", "- shows or hides a test beam in front of you", function ()
 	if strip_test then
 		strip_test.stop()
 

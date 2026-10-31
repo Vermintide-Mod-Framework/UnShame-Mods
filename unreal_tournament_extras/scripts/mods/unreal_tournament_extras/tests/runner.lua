@@ -2400,7 +2400,7 @@ end
 
 -- For looking at a weapon: an enemy that stands still in front of the player, and the flags that keep the level empty and the
 -- player unhurt (the ones a suite sets).
-mod:command("ut_spawn", "<breed> [distance] - spawns an enemy that distance (5 m) ahead of the player, on the ground", function (breed_name, distance)
+mod:command("ut_spawn", "<breed> [distance] - spawns an enemy on the ground ahead of you, 5 m away by default", function (breed_name, distance)
 	local unit = player_unit()
 	local breed = Breeds[breed_name or "chaos_marauder"]
 	local first_person_extension = unit and ScriptUnit.has_extension(unit, "first_person_system")
@@ -2428,7 +2428,7 @@ mod:command("ut_spawn", "<breed> [distance] - spawns an enemy that distance (5 m
 	}, Quaternion.look(-flat, Vector3.up()))
 end)
 
-mod:command("ut_quiet", "on | off - keeps the level empty and the player unhurt, like a suite does", function (argument)
+mod:command("ut_quiet", "on | off - keeps the level empty and you unhurt, as the tests do", function (argument)
 	if argument == "off" then
 		if runner.quiet_restore then
 			runner.quiet_restore()
@@ -2445,7 +2445,7 @@ end)
 -- when nothing sets it.
 local LEVEL_DIFFICULTIES = { "normal", "hard", "harder", "hardest", "cataclysm", "cataclysm_2", "cataclysm_3" }
 
-mod:command("ut_level", "<level> [weather] [difficulty] - loads a level, as the tests do (military is Righteous Stand). The weather is the level's default, or random, or one of the level's weathers by name or number (0 is the default). The difficulty is normal (Recruit, if not given), hard, harder, hardest (Legend), cataclysm, cataclysm_2 or cataclysm_3", function (level_key, ...)
+mod:command("ut_level", "<level> [weather] [difficulty] - loads a level, such as military for Righteous Stand. Weather: random, or one of the level's by name or number, 0 by default. Difficulty: normal (Recruit, the default), hard, harder, hardest (Legend), cataclysm, cataclysm_2 or cataclysm_3", function (level_key, ...)
 	if not level_key or not LevelSettings[level_key] then
 		log("ut_level: there is no level %s", tostring(level_key))
 
@@ -2494,7 +2494,7 @@ mod:command("ut_level", "<level> [weather] [difficulty] - loads a level, as the 
 	script_data.current_difficulty_setting = difficulty_setting
 end)
 
-mod:command("ut_tp", "<x> <y> <z> [yaw] - puts the player there, facing that way (degrees)", function (x, y, z, yaw)
+mod:command("ut_tp", "<x> <y> <z> [yaw] - moves you to that point, facing the yaw in degrees", function (x, y, z, yaw)
 	local unit = player_unit()
 
 	if not unit or not tonumber(z) then
@@ -2507,7 +2507,7 @@ mod:command("ut_tp", "<x> <y> <z> [yaw] - puts the player there, facing that way
 end)
 
 -- How far the level is from the player: up, and level in eight ways around them, for finding a place under a ceiling or by a wall
-mod:command("ut_probe", "- says how far the level is above the player and around them", function ()
+mod:command("ut_probe", "- shows how far the level is above and around you", function ()
 	local unit = player_unit()
 
 	if not unit then
@@ -2543,7 +2543,7 @@ mod:command("ut_probe", "- says how far the level is above the player and around
 end)
 
 -- Where the player stands, for a test that has to run at a certain place
-mod:command("ut_where", "- says where the player stands", function ()
+mod:command("ut_where", "- shows where you stand", function ()
 	local unit = player_unit()
 
 	if not unit then
@@ -2562,7 +2562,7 @@ end)
 
 -- For looking at the weapon in the character's hand: the camera goes behind the shoulder, and the character is shown. The game does this
 -- for its own third person debug mode.
-mod:command("ut_3p", "on | off - the third person view, for looking at the weapon in the hand", function (argument)
+mod:command("ut_3p", "on | off - turns the third person view on or off", function (argument)
 	local player = local_player()
 	local unit = player_unit()
 	local first_person_extension = unit and ScriptUnit.has_extension(unit, "first_person_system")
@@ -2589,7 +2589,7 @@ mod:command("ut_3p", "on | off - the third person view, for looking at the weapo
 	first_person_extension:set_first_person_mode(not on)
 end)
 
-mod:command("ut_equip","<suite> [career] | back - puts the weapon of a suite in your hands, or puts your loadout back", function (argument, career)
+mod:command("ut_equip","<suite> [career] | back - equips a test suite's weapon, or puts your loadout back", function (argument, career)
 	if argument == "back" or not argument then
 		runner.unequip()
 	else
@@ -2597,7 +2597,7 @@ mod:command("ut_equip","<suite> [career] | back - puts the weapon of a suite in 
 	end
 end)
 
-mod:command("ut_test", "list | stop | all | <suite> [<suite> ...] [career] - runs the in-game tests of weapons", function (...)
+mod:command("ut_test", "list | stop | all | <suite> [<suite> ...] [career] - runs the weapons' tests", function (...)
 	local arguments = { ... }
 	local argument = arguments[1]
 
