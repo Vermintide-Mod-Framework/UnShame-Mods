@@ -66,6 +66,7 @@ The mod was balanced around being fun for me in true solo in Adventure or with b
 [*]Melee careers get shafted with this mod, since it's very ranged-centric - most of them only get the shield gun. Warrior Priest gets nothing because he uses a custom rig and I didn't want to support a sixth character that still wouldn't have a full arsenal.
 [*]Versus and Weaves are not supported.
 [*]The old menu layout does not allow crafting the weapons.
+[*]Disabling the mod leaves its weapons in the inventory as their base weapons until the game is restarted. Enabling it requires a restart for them to be added back, and any that were equipped need to be equipped again.
 [/list]
 
 [h1]Links[/h1]
