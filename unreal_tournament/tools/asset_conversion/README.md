@@ -53,6 +53,12 @@ What each script makes, and the tables in it that say what it converts, are in i
 | `make_decal_unit.py` | the box that the Bio Rifle's splat is projected from |
 | `make_combo_materials.py` | the effects' shader graphs, for what UT pans or combines: the combo, the dark sphere, the goop, the shield, the Lightning Gun's screen |
 
+**Workshop**
+
+| Script | Makes |
+|---|---|
+| `make_item_preview.py <template item_preview.png> <UT2004 icon .ico>` | the Workshop preview of this mod and of the extras mod, from the framework's default preview and the round UT2004 emblem in an icon of the game. It needs ffmpeg |
+
 **Checks and pieces**
 
 | Script | Makes |
