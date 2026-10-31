@@ -43,7 +43,13 @@ mod.on_setting_changed = function (...)
 	call_all(mod.setting_changed_callbacks, ...)
 end
 
+-- The framework calls update even while the mod is switched off. The weapons make their models and effects in it, so it only runs
+-- while the mod is on.
 mod.update = function (...)
+	if not mod:is_enabled() then
+		return
+	end
+
 	call_all(mod.update_callbacks, ...)
 end
 
@@ -162,5 +168,5 @@ mod:dofile("scripts/mods/unreal_tournament/gameplay")
 -- number is the repository's commit count, which goes up by one with every change. It only appears with the mod framework's
 -- developer mode on.
 if get_mod("VMF"):get("developer_mode") then
-	mod:echo("Unreal Tournament loaded (build 1761)")
+	mod:echo("Unreal Tournament loaded (build 1762)")
 end
