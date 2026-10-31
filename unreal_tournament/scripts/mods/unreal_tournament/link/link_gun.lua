@@ -111,6 +111,9 @@ local VARIANTS = {
 		vents = true,
 		no_shot_animation = true,
 		beam_animation = { "attack_shoot_beam_start", "attack_shoot_beam_end" },
+		-- The end animation is not taken until the start has played this long: the staff's own beam lasts at least this long (its
+		-- minimum_hold_time), and a shorter one left her arm held out
+		beam_animation_time = 0.5, -- s
 		weapon_type = "FIRE_STAFF",
 		dodge_count = 2,
 		spread_template = "spear",
@@ -621,14 +624,53 @@ local function build_bolt_projectile(links)
 	}
 end
 
+-- When each character's beam started, and the end animation still to play after a short beam: { event, due }
+local beam_started = {}
+local late_beam_ends = {}
+
+-- Plays the end animation of a beam that was let go too soon for it, once it is due. It is dropped if a new beam has started or the
+-- character holds another weapon.
+local function update_late_beam_ends(t)
+	for unit, late in pairs(late_beam_ends) do
+		if not Unit.alive(unit) or not link.holds_link(unit) then
+			late_beam_ends[unit] = nil
+		elseif t >= late.due then
+			late_beam_ends[unit] = nil
+
+			Managers.state.network:anim_event(unit, late.event)
+
+			local first_person_extension = ScriptUnit.has_extension(unit, "first_person_system")
+
+			if first_person_extension then
+				first_person_extension:animation_event(late.event)
+			end
+		end
+	end
+end
+
 -- The beam, a charge that is held. What it does is in the charge callbacks below. It needs ammo to start.
--- anims is the base's animation the beam plays as it starts and the one as it ends (none if it is nil).
-local function build_beam(hand, anims)
+-- anims is the base's animation the beam plays as it starts and the one as it ends (none if it is nil). A beam let go sooner than
+-- anim_time after it started plays its end animation at that time.
+local function build_beam(hand, anims, anim_time)
+	local end_event = anims and anims[2]
+
 	return {
 		kind = "charge",
 		weapon_action_hand = hand,
 		anim_event = anims and anims[1],
-		anim_end_event = anims and anims[2],
+		anim_end_event = end_event,
+		anim_end_event_condition_func = function (unit)
+			local due = (beam_started[unit] or 0) + (anim_time or 0)
+			local t = Managers.time:time("game")
+
+			if not end_event or t >= due then
+				return true
+			end
+
+			late_beam_ends[unit] = { event = end_event, due = due }
+
+			return false
+		end,
 		charge_time = 1000, -- the charge is never "full"
 		hold_input = "action_two_hold",
 		minimum_hold_time = 0,
@@ -647,6 +689,9 @@ local function build_beam(hand, anims)
 			return not ammo_extension or ammo_extension:total_remaining_ammo() >= CONFIG.beam_ammo
 		end,
 		enter_function = function (attacker_unit, input_extension)
+			beam_started[attacker_unit] = Managers.time:time("game")
+			late_beam_ends[attacker_unit] = nil
+
 			input_extension:clear_input_buffer()
 
 			return input_extension:reset_release_input()
@@ -750,7 +795,7 @@ local function apply_link_gun(template)
 	end
 
 	actions.action_two = {
-		default = build_beam(hand, variant.beam_animation),
+		default = build_beam(hand, variant.beam_animation, variant.beam_animation_time),
 	}
 	-- The game's own wielding and reload, which every gun of the game has (the reload only comes with picked up ammo, see ammo_data).
 	-- Inspecting is the base's, kept by the shell.
@@ -1210,6 +1255,16 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 			link.bolt_times[unit] = nil
 		end
 	end
+
+	for unit in pairs(beam_started) do
+		if not Unit.alive(unit) then
+			beam_started[unit] = nil
+		end
+	end
+
+	if next(late_beam_ends) and Managers.time:has_timer("game") then
+		update_late_beam_ends(Managers.time:time("game"))
+	end
 end
 
 mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
@@ -1218,6 +1273,8 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 	table.clear(locked)
 	table.clear(beams)
 	table.clear(link.bolt_times)
+	table.clear(beam_started)
+	table.clear(late_beam_ends)
 end
 
 link.config = CONFIG
