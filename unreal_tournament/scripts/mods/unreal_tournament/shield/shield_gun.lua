@@ -186,20 +186,10 @@ local CONFIG = {
 	-- ShieldFire.AutoFireTestFreq: how often the charge looks for an enemy in reach
 	auto_fire_test_freq = 0.15,
 	-- ShieldFire.MinForce and MaxForce: the push of a punch, UT's momentum. A wall pushes the player back with SelfForceScale (1) of
-	-- it. UT divides momentum by the player's mass (100) for the speed, and on the ground makes the upward part at least 0.4 of it
-	-- (Pawn.TakeDamage).
+	-- it (utils.apply_ut_momentum).
 	min_force = 65000,
 	max_force = 100000,
 	self_force_scale = 1,
-	ut_mass = 100,
-	ground_lift = 0.4,
-	-- Pawn.TakeDamage takes the momentum a player gives themselves down to this share (instigatedBy == self), after the lift
-	self_momentum = 0.6,
-	-- UT speeds are turned into meters a second by the ratio of the jumps: UT's JumpZ is 340 units a second, and the mod's jump is
-	-- 4.25 * 1.35 m/s (movement.lua). The same ratio is used in every direction, so the push goes the way UT's does.
-	ut_speed_to_mps = 4.25 * 1.35 / 340,
-	-- Pawn.AddVelocity halves the upward part of a push while the player already rises faster than this (UT units a second)
-	ut_fast_rise = 380,
 	-- The multipliers of the damage and the stagger for each armor type: unarmored, armored, monsters, players, berserkers and super
 	-- armor. UT has no armor, and the punch's force is not stopped by it.
 	armor_attack = {1, 1, 1, 1, 1, 0.8},
@@ -650,39 +640,10 @@ local function enemy_in_reach(unit)
 	return false
 end
 
--- The shield jump: punching a wall pushes the player away from it (ShieldFire.DoFireEffect, Pawn.TakeDamage)
+-- The shield jump: punching a wall pushes the player away from it (ShieldFire.DoFireEffect)
 local function push_player(owner_unit, direction, force)
-	local locomotion_extension = ScriptUnit.has_extension(owner_unit, "locomotion_system")
-
-	if not locomotion_extension then
-		return
-	end
-
 	-- (twice as hard in the Berserk combo: ShieldFire.DoFireEffect, bBerserk)
-	local momentum = -direction * (CONFIG.self_force_scale * force * utils.push_scale(owner_unit) / CONFIG.ut_mass)
-
-	if locomotion_extension:is_on_ground() then
-		local size = Vector3.length(momentum)
-
-		momentum = Vector3(momentum.x, momentum.y, math.max(momentum.z, CONFIG.ground_lift * size))
-	end
-
-	local push = momentum * (CONFIG.self_momentum * CONFIG.ut_speed_to_mps)
-	local current = locomotion_extension:current_velocity()
-
-	if Vector3.z(current) > CONFIG.ut_fast_rise * CONFIG.ut_speed_to_mps and Vector3.z(push) > 0 then
-		push = Vector3(Vector3.x(push), Vector3.y(push), Vector3.z(push) * 0.5)
-	end
-
-	local velocity = current + push
-
-	locomotion_extension:set_maximum_upwards_velocity(math.huge)
-	locomotion_extension:force_on_ground(false)
-	locomotion_extension:set_forced_velocity(velocity)
-	locomotion_extension:set_wanted_velocity(velocity)
-
-	-- (the game's air movement would cut the push along the ground down to the run speed)
-	mod.keep_air_speed(owner_unit, Vector3.length(Vector3.flat(velocity)))
+	utils.apply_ut_momentum(owner_unit, -direction * (CONFIG.self_force_scale * force * utils.push_scale(owner_unit)), true)
 end
 
 -- What a punch throws, besides the push that the game gives a body for any hit. This runs on every machine, because the physics of bodies

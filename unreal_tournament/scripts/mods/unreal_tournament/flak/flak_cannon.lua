@@ -117,6 +117,8 @@ local CONFIG = {
 	chunk_self_damage = 8,
 	chunk_self_hit_radius = 0.45, -- m
 	chunk_self_hit_height = 1.6, -- m, the height of that line
+	-- FlakChunk.MomentumTransfer: the push of a chunk that hits the player who fired it, along its way (utils.apply_ut_momentum)
+	chunk_momentum = 10000,
 	-- Fire rates (FlakFire.FireRate and FlakAltFire.FireRate). After a shot, either fire mode can be used again once this much
 	-- time has passed. There is no reload. All the ammo is the clip, and picked up ammo goes straight into it
 	-- (ammo_immediately_available).
@@ -983,7 +985,7 @@ end
 
 local flying_projectiles = utils.flying_projectiles
 
--- Hurts the player if a bounced chunk of theirs hits them.
+-- Hurts and pushes the player if a bounced chunk of theirs hits them.
 local function hit_owner(chunk)
 	local extension = chunk.extension
 	local owner_unit = extension._owner_unit
@@ -1009,7 +1011,17 @@ local function hit_owner(chunk)
 
 	extension._ut_flak_hit_owner = true
 
-	utils.apply_self_damage(owner_unit, position, Vector3.normalize(position - closest), extension.item_name, CONFIG.chunk_self_damage)
+	-- The chunk's way, from how far it moved in the last frame. A chunk too slow to hurt also doesn't push (FlakChunk.ProcessTouch).
+	local locomotion = extension.locomotion_extension
+	local frame_time = locomotion and locomotion.dt or 0
+	local moved = locomotion and locomotion:current_velocity() or Vector3.zero()
+	local speed = frame_time > 0.0001 and Vector3.length(moved) / frame_time or 0
+
+	if speed >= CONFIG.chunk_speed / 100 * CONFIG.chunk_min_speed_fraction then
+		utils.apply_self_damage(owner_unit, position, Vector3.normalize(position - closest), extension.item_name, CONFIG.chunk_self_damage)
+		utils.apply_ut_momentum(owner_unit, Vector3.normalize(moved) * CONFIG.chunk_momentum, true)
+	end
+
 	extension:stop()
 end
 

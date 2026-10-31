@@ -824,6 +824,52 @@ function utils.apply_explosion_push(position, explosion, speed)
 	mod.keep_air_speed(unit, Vector3.length(Vector3.flat(velocity)))
 end
 
+-- UT speeds are turned into meters a second by the ratio of the jumps: UT's JumpZ is 340 units a second, and the mod's jump is
+-- 4.25 * 1.35 m/s (movement.lua). The same ratio is used in every direction, so a push goes the way UT's does.
+utils.UT_SPEED_TO_MPS = 4.25 * 1.35 / 340
+
+-- A player's mass in UT (Pawn.Mass), which a hit's momentum is divided by for the speed it gives
+local UT_MASS = 100
+-- On the ground, the upward part of a hit's momentum is made at least this share of it (Pawn.TakeDamage, bExtraMomentumZ)
+local UT_GROUND_LIFT = 0.4
+-- The share of the momentum a player gives themselves (Pawn.TakeDamage, instigatedBy == self)
+local UT_SELF_MOMENTUM = 0.6
+-- Pawn.AddVelocity halves the upward part of a push while the player already rises faster than this (UT units a second)
+local UT_FAST_RISE = 380
+
+-- Pushes a player with a hit's momentum in UT's units, as UT's Pawn.TakeDamage and Pawn.AddVelocity do: a hit on the ground lifts
+-- them, and they leave the ground. own: the player hit themselves. The push keeps its speed in the air until they land.
+function utils.apply_ut_momentum(unit, momentum, own)
+	local locomotion_extension = ScriptUnit.has_extension(unit, "locomotion_system")
+
+	if not locomotion_extension then
+		return
+	end
+
+	if locomotion_extension:is_on_ground() then
+		local size = Vector3.length(momentum)
+
+		momentum = Vector3(Vector3.x(momentum), Vector3.y(momentum), math.max(Vector3.z(momentum), UT_GROUND_LIFT * size))
+	end
+
+	local push = momentum * ((own and UT_SELF_MOMENTUM or 1) / UT_MASS * utils.UT_SPEED_TO_MPS)
+	local current = locomotion_extension:current_velocity()
+
+	if Vector3.z(current) > UT_FAST_RISE * utils.UT_SPEED_TO_MPS and Vector3.z(push) > 0 then
+		push = Vector3(Vector3.x(push), Vector3.y(push), Vector3.z(push) * 0.5)
+	end
+
+	local velocity = current + push
+
+	locomotion_extension:set_maximum_upwards_velocity(math.huge)
+	locomotion_extension:force_on_ground(false)
+	locomotion_extension:set_forced_velocity(velocity)
+	locomotion_extension:set_wanted_velocity(velocity)
+
+	-- (the game's air movement would cut the speed along the ground down to the run speed)
+	mod.keep_air_speed(unit, Vector3.length(Vector3.flat(velocity)))
+end
+
 -- Makes a spread template with no spread: a copy of another one with all its numbers set to zero, so the weapon shoots where the
 -- crosshair is. It is made again on every load.
 function utils.zero_spread_template(name, base_name)
