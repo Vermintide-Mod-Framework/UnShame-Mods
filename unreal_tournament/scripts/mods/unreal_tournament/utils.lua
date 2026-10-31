@@ -819,6 +819,9 @@ function utils.apply_explosion_push(position, explosion, speed)
 	locomotion_extension:set_maximum_upwards_velocity(math.huge)
 	locomotion_extension:set_forced_velocity(velocity)
 	locomotion_extension:set_wanted_velocity(velocity)
+
+	-- (the game's air movement would cut the speed along the ground down to the run speed, or to a dodge's)
+	mod.keep_air_speed(unit, Vector3.length(Vector3.flat(velocity)))
 end
 
 -- Makes a spread template with no spread: a copy of another one with all its numbers set to zero, so the weapon shoots where the

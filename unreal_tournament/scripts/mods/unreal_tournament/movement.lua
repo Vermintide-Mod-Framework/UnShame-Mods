@@ -107,7 +107,7 @@ local function get_air_state(unit)
 	return state
 end
 
--- A push that throws the player into the air (the Shield Gun's jump) keeps its horizontal speed until they land, as UT keeps the speed
+-- A push that throws the player into the air (the Shield Gun's jump, a rocket or shock jump) keeps its horizontal speed until they land, as UT keeps the speed
 -- of a push in the air. speed is the horizontal speed it starts with (m/s).
 function mod.keep_air_speed(unit, speed)
 	get_air_state(unit).keep_speed = speed
