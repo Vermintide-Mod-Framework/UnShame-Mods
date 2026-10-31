@@ -14,20 +14,24 @@ FONT = 'C\\:/Windows/Fonts/impact.ttf'
 SIZE = 360  # pixels, as the framework's default preview
 CROP_X = 840  # the left edge of the square taken from the screenshot, in its pixels: the right of it, with the weapon
 
-# Each mod's preview: the emblem's width and top, and the lines of text (text, size, top), all in pixels. The text stays above the
-# gun, which starts about 235 pixels down, so the extras mod's third line moves everything up and makes the emblem smaller.
+# Each mod's preview: the emblem's width and top, and the lines of text (text, size, top), all in pixels. The name stays above the gun,
+# which starts about 235 pixels down. The extras mod's is the same, with EXTRAS in bigger letters over the gun.
+LOGO_WIDTH = 180
+LOGO_Y = 14
+NAME = [('UNREAL TOURNAMENT', 38, 152), ('WEAPONS & MOVEMENT', 28, 193)]
+
 PREVIEWS = [
     {
         'path': os.path.join(REPO, 'item_preview.png'),
-        'logo_width': 180,
-        'logo_y': 14,
-        'lines': [('UNREAL TOURNAMENT', 38, 152), ('WEAPONS & MOVEMENT', 28, 193)],
+        'logo_width': LOGO_WIDTH,
+        'logo_y': LOGO_Y,
+        'lines': NAME,
     },
     {
         'path': os.path.join(REPO, '..', 'unreal_tournament_extras', 'item_preview.png'),
-        'logo_width': 150,
-        'logo_y': 8,
-        'lines': [('UNREAL TOURNAMENT', 38, 116), ('WEAPONS & MOVEMENT', 28, 157), ('EXTRAS', 28, 190)],
+        'logo_width': LOGO_WIDTH,
+        'logo_y': LOGO_Y,
+        'lines': NAME + [('EXTRAS', 56, 232)],
     },
 ]
 
