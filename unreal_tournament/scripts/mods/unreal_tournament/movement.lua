@@ -908,7 +908,8 @@ local applied_unit
 local applied_enabled = false
 
 local function update_mover_filter()
-	local player = Managers.player:local_player_safe()
+	-- (the framework switches a mod off as it loads, if it was off, before the game has its player manager)
+	local player = Managers.player and Managers.player:local_player_safe()
 	local unit = player and player.player_unit
 
 	if not unit or not Unit.alive(unit) then
