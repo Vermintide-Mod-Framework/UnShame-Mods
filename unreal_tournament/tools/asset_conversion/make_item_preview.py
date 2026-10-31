@@ -7,16 +7,29 @@ import sys, os, re, subprocess
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, '..', '..'))
-OUTPUTS = [os.path.join(REPO, 'item_preview.png'), os.path.join(REPO, '..', 'unreal_tournament_extras', 'item_preview.png')]
 BACKGROUND = os.path.join(HERE, 'item_preview_background.jpg')
 ICON = os.path.join(HERE, 'ut2004_emblem.ico')
 FONT = 'C\\:/Windows/Fonts/impact.ttf'
 
 SIZE = 360  # pixels, as the framework's default preview
 CROP_X = 840  # the left edge of the square taken from the screenshot, in its pixels: the right of it, with the weapon
-LOGO_WIDTH = 180
-LOGO_Y = 14
-LINES = [('UNREAL TOURNAMENT', 38, 152), ('WEAPONS & MOVEMENT', 28, 193)]  # text, size, top
+
+# Each mod's preview: the emblem's width and top, and the lines of text (text, size, top), all in pixels. The text stays above the
+# gun, which starts about 235 pixels down, so the extras mod's third line moves everything up and makes the emblem smaller.
+PREVIEWS = [
+    {
+        'path': os.path.join(REPO, 'item_preview.png'),
+        'logo_width': 180,
+        'logo_y': 14,
+        'lines': [('UNREAL TOURNAMENT', 38, 152), ('WEAPONS & MOVEMENT', 28, 193)],
+    },
+    {
+        'path': os.path.join(REPO, '..', 'unreal_tournament_extras', 'item_preview.png'),
+        'logo_width': 150,
+        'logo_y': 8,
+        'lines': [('UNREAL TOURNAMENT', 38, 116), ('WEAPONS & MOVEMENT', 28, 157), ('EXTRAS', 28, 190)],
+    },
+]
 
 
 def largest_picture(ico):
@@ -43,28 +56,26 @@ def drawtext(text, size, top, shadow):
 stream = largest_picture(ICON)
 box = visible_box(ICON, stream)
 
-graph = ';'.join([
-    '[0:v]crop=ih:ih:%d:0,scale=%d:%d:flags=lanczos,format=rgba[background]' % (CROP_X, SIZE, SIZE),
+for preview in PREVIEWS:
+    lines = preview['lines']
+    graph = ';'.join([
+        '[0:v]crop=ih:ih:%d:0,scale=%d:%d:flags=lanczos,format=rgba[background]' % (CROP_X, SIZE, SIZE),
 
-    # The emblem, and its soft shadow down and to the right.
-    '[1:%d]crop=%s,scale=%d:-1:flags=lanczos,format=rgba,split[logo][logo_shape]' % (stream, box, LOGO_WIDTH),
-    "[logo_shape]geq=r=0:g=0:b=0:a='alpha(X,Y)',pad=iw+60:ih+60:30:30:color=black@0,gblur=sigma=8,colorchannelmixer=aa=0.9[logo_shadow]",
+        # The emblem, and its soft shadow down and to the right.
+        '[1:%d]crop=%s,scale=%d:-1:flags=lanczos,format=rgba,split[logo][logo_shape]' % (stream, box, preview['logo_width']),
+        "[logo_shape]geq=r=0:g=0:b=0:a='alpha(X,Y)',pad=iw+60:ih+60:30:30:color=black@0,gblur=sigma=8,colorchannelmixer=aa=0.9[logo_shadow]",
 
-    # The text, over its shadow drawn twice to be darker.
-    'color=black@0:s=%dx%d,format=rgba,%s,gblur=sigma=3,split[ts1][ts2]' % (SIZE, SIZE, ','.join(drawtext(*line, True) for line in LINES)),
-    'color=black@0:s=%dx%d,format=rgba,%s[text]' % (SIZE, SIZE, ','.join(drawtext(*line, False) for line in LINES)),
+        # The text, over its shadow drawn twice to be darker.
+        'color=black@0:s=%dx%d,format=rgba,%s,gblur=sigma=3,split[ts1][ts2]' % (SIZE, SIZE, ','.join(drawtext(*line, True) for line in lines)),
+        'color=black@0:s=%dx%d,format=rgba,%s[text]' % (SIZE, SIZE, ','.join(drawtext(*line, False) for line in lines)),
 
-    '[background][logo_shadow]overlay=(W-w)/2+3:%d:format=auto[c1]' % (LOGO_Y - 25),
-    '[c1][logo]overlay=(W-w)/2:%d:format=auto[c2]' % LOGO_Y,
-    '[c2][ts1]overlay=0:0:format=auto[c3]',
-    '[c3][ts2]overlay=0:0:format=auto[c4]',
-    '[c4][text]overlay=0:0:format=auto,format=rgb24,split=%d%s' % (len(OUTPUTS), ''.join('[out%d]' % i for i in range(len(OUTPUTS)))),
-])
+        '[background][logo_shadow]overlay=(W-w)/2+3:%d:format=auto[c1]' % (preview['logo_y'] - 25),
+        '[c1][logo]overlay=(W-w)/2:%d:format=auto[c2]' % preview['logo_y'],
+        '[c2][ts1]overlay=0:0:format=auto[c3]',
+        '[c3][ts2]overlay=0:0:format=auto[c4]',
+        '[c4][text]overlay=0:0:format=auto,format=rgb24',
+    ])
+    path = os.path.abspath(preview['path'])
 
-command = ['ffmpeg', '-v', 'error', '-y', '-i', BACKGROUND, '-i', ICON, '-filter_complex', graph]
-
-for i, path in enumerate(OUTPUTS):
-    command += ['-map', '[out%d]' % i, '-frames:v', '1', os.path.abspath(path)]
-
-subprocess.check_call(command)
-print('emblem', box, '->', ', '.join(os.path.abspath(path) for path in OUTPUTS))
+    subprocess.check_call(['ffmpeg', '-v', 'error', '-y', '-i', BACKGROUND, '-i', ICON, '-filter_complex', graph, '-frames:v', '1', path])
+    print('emblem', box, '->', path)
