@@ -14,24 +14,23 @@ Experience the classic Unreal Tournament weapons from the far future of 2004, no
 [b]Recommended[/b]: turn Double Tap Dodge on in the game's settings and rebind Jump/Dodge to Jump Only, to match how the original game controls.
 
 [h1]Weapons[/h1]
-[b]Shield gun[/b] - the main melee weapon of the mod, available for all characters and (almost) all careers. The primary fire charges and blasts enemies with a short ranged force wave and lets the player shield jump, while secondary blocks with a semi-transparent energy field that has an added property of reflecting some projectiles the game throws at you (even some living ones!). As an extra, which makes the gun fit better into Vermintide, the push performs a shield bash and the push attack performs an extended punch.
+[img]https://images.steamusercontent.com/ugc/16319278551025418351/6D0EFD4CDBB8EC3F315387E961CE9C492C637B4D/[/img]
 
-[b]Assault rifles[/b] - this weapon allows you to trade your block and push for extra ranged firepower, as the double rifles can occupy the melee slot for Bardin's and Saltzpyre's ranged careers. The primary fire is a fairly inaccurate but very rapid stream of bullets with infinite ammo, while secondary charges and lobs a bouncy grenade that inherits your velocity and blows up on contact with enemies. The attacks count as melee, so your talents still work.
+[img]https://images.steamusercontent.com/ugc/14706357725887251031/EF7CCA55D0748346A4FA5BFDD79C74DD481B7599/[/img]
 
-[img]https://images.steamusercontent.com/ugc/17883176974864235292/10CB9C5AC18B97EFFA2D2D25A7B4315B99B51352/[/img]
-[b]Shock Rifle[/b] - the impetus for this mod, this weapon was originally planned as just a variant of the beam staff, but soon expanded far beyond that initial scope. Available to all of Sienna's careers, it allows you to create a huge explosion that sucks in everything it kills by shooting the secondary energy ball with the primary energy beam. The catch is, of course, that all of that quickly uses up the heat meter, so prepare to vent a lot if you want to use this gun often. As a bonus, it has an Instagib illusion that dismembers almost everything it hits in one shot.
+[img]https://images.steamusercontent.com/ugc/15374315108292164377/93D99683614E17EB60F73050D76825F9BDB2E203/[/img]
 
 [b]Flak Cannon[/b] - a staple of the UT series, this gun lets you shred your enemies at close range with flak shards or lob flak shells at them from afar, which also explode into shards that bounce around. Be careful around shielded enemies, as one careless shot will bounce the metal shards right back in your face. It is available for both Kruber’s and Bardin’s ranged careers.
 
-[b]Rocket Launcher[/b] - Saltzpyre's ranged careers get the rocket launcher, which can load up and shoot up to three rockets at a time. Use the primary fire while holding secondary to change how the rockets fly, and hold your crosshair on an enemy to lock on. Rocket jumps are possible, but not advisable, as they do a lot of self damage.
+[img]https://images.steamusercontent.com/ugc/12749470281900316149/55360415449512B0CD560D8335FEB87925BBE301/[/img]
 
-[b]Redeemer[/b] - equipping the rocket launcher on Bounty Hunter replaces his ability with a shot from the Redeemer - a portable nuclear warhead that creates six waves of explosions, wiping out everything in its huge blast radius, including the players. Taking shelter while the blast is going off is the only way to use it relatively safely, as it doesn’t damage players through walls, making it slightly less impractical than it sounds.
+[img]https://images.steamusercontent.com/ugc/17263180785923538130/3313892705F58500E9A452DBD361F97040DF1CA8/[/img]
 
-[b]Bio Rifle[/b] - Bardin’s unique weapon, it lobs globs of toxic green goo that damages any living creature it comes in contact with or sticks to floors, walls and ceilings, creating an improvised minefield for your enemies or yourself. The secondary allows you to charge a larger glob that bursts into smaller ones on impact.
+[img]https://images.steamusercontent.com/ugc/12041104073178813800/202D9A04D5CC926D73FC72BAF5818D786E3B43F4/[/img]
 
-[b]Link Gun[/b] - this weapon is available to all ranged careers and lets the party link up together with the secondary fire, giving the last player (or bot) in the chain a huge boost of damage, allowing them to melt any enemy with the primary bursts of plasma.
+[img]https://images.steamusercontent.com/ugc/12919557415996352705/670A2AEE5E17C5933BF7C277EA9F1073B173D73E/[/img]
 
-[b]Minigun[/b] - a fairly straightforward anti-horde weapon for Saltzpyre's and Kruber's ranged careers, with faster primary fire that does less damage and slower secondary that does more. Bardin's Crank Gun has nothing on this one.
+[img]https://images.steamusercontent.com/ugc/18131620651000899054/EB981EDCA1C0E003253C29110981D1A10592BF48/[/img]
 
 [b]Sniper Rifle[/b] - the classic sniper weapon for Kruber’s and Bardin’s ranged careers, it does double damage on head shots and features a 10x scope that’s overkill for most environments in this game. The annoying puff of smoke that obscures your vision after every shot, forcing you to move around, is present as well.
 
