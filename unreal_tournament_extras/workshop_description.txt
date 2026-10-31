@@ -1,4 +1,4 @@
-Cheats, tests and dev commands for [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3814159978]Unreal Tournament Weapons & Movement[/url]. It needs that mod, and has to be below it in the load order.
+Cheats, tests and dev commands for [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3814159978]Unreal Tournament Weapons & Movement[/url]. Place it below that mod in the load order.
 
 [h1]Chat Commands[/h1]
 [list]
