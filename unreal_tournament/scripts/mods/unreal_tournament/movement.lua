@@ -81,7 +81,7 @@ end
 -- What has happened in the air since the player was last on the ground, for each unit:
 --   double_jumped: the extra jump was used.
 --   dodged: a dodge was done, on the ground or on a wall. Landing then locks dodging for a while.
---   keep_speed: a dodge launch is in progress, and its horizontal speed is kept.
+--   keep_speed: a dodge launch or a push (mod.keep_air_speed) is in progress, and its horizontal speed is kept.
 local air_state = setmetatable({}, {
 	__mode = "k",
 })
@@ -99,6 +99,12 @@ local function get_air_state(unit)
 	end
 
 	return state
+end
+
+-- A push that throws the player into the air (the Shield Gun's jump) keeps its horizontal speed until they land, as UT keeps the speed
+-- of a push in the air
+function mod.keep_air_speed(unit)
+	get_air_state(unit).keep_speed = true
 end
 
 -- The time until which dodging is locked, for each unit
@@ -287,13 +293,9 @@ mod:hook_safe(PlayerCharacterStateDodging, "on_enter", function (self, unit, inp
 end)
 
 -- The game's air movement limits the horizontal speed to the run speed, which would take the speed of the dodge launch away at
--- once. This lets a dodge launch keep its speed, and steering still works. The speed passed to the air movement is how much the
--- player can steer, and it is scaled by the air control.
+-- once. This lets a dodge launch or a push keep its speed, and steering still works. The speed passed to the air movement is how much
+-- the player can steer, and it is scaled by the air control. A push keeps its speed with the UT movement option off too.
 mod:hook(CharacterStateHelper, "move_in_air", function (func, first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
-	if not is_movement_enabled() then
-		return func(first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
-	end
-
 	if recently_left_ladder(unit) then
 		return func(first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
 	end
@@ -301,7 +303,7 @@ mod:hook(CharacterStateHelper, "move_in_air", function (func, first_person_exten
 	local state = air_state[unit]
 	local speed_before = state and state.keep_speed and Vector3.length(Vector3.flat(locomotion_extension:current_velocity()))
 
-	func(first_person_extension, input_extension, locomotion_extension, speed * CONFIG.air_control_multiplier, unit, ...)
+	func(first_person_extension, input_extension, locomotion_extension, is_movement_enabled() and speed * CONFIG.air_control_multiplier or speed, unit, ...)
 
 	if speed_before then
 		local wanted_flat = Vector3.flat(locomotion_extension.velocity_wanted:unbox())
