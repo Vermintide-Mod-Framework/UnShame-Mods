@@ -19,7 +19,17 @@ Cheats, tests and dev commands for [url=https://steamcommunity.com/sharedfiles/f
 [/list]
 
 [h1]Development[/h1]
-In-game tests for every weapon ([b]/ut_test[/b]), and commands for spawning enemies, teleporting and checking the weapon models, which were used to make the mod.
+[list]
+[*][b]/ut_test[/b] - run the in-game tests of the weapons.
+[*][b]/ut_equip[/b] - equip a test's weapon, or put your loadout back.
+[*][b]/ut_quiet[/b] - keep the level empty and yourself unhurt, as the tests do.
+[*][b]/ut_spawn[/b] - spawn an enemy ahead of you.
+[*][b]/ut_tp[/b] - move to a point.
+[*][b]/ut_where[/b] - show where you stand.
+[*][b]/ut_probe[/b] - show how far the level is above and around you.
+[*][b]/ut_3p[/b] - switch the third person view on or off.
+[*][b]/skin[/b] - inspect and adjust a weapon's model.
+[/list]
 
 [h1]Links[/h1]
 [list]
