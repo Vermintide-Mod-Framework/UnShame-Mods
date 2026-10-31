@@ -1,4 +1,4 @@
-Cheats, tests and dev commands for [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3814159978]Unreal Tournament Weapons & Movement[/url].
+Chat commands and development tools for [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3814159978]Unreal Tournament Weapons & Movement[/url].
 
 [h1]Chat Commands[/h1]
 [list]
