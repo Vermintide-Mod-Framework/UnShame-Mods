@@ -84,7 +84,10 @@ end
 -- What has happened in the air since the player was last on the ground, for each unit:
 --   double_jumped: the extra jump was used.
 --   dodged: a dodge was done, on the ground or on a wall. Landing then locks dodging for a while.
---   keep_speed: a dodge launch or a push (mod.keep_air_speed) is in progress, and its horizontal speed is kept.
+--   keep_speed: a dodge launch or a push (mod.keep_air_speed) is in progress, and its horizontal speed is kept, at most this speed
+--       (m/s), the speed it started with. The game steers a player around an enemy in the way at the speed of their whole velocity,
+--       the vertical speed too (PlayerUnitLocomotionExtension.update_script_driven_movement), which is faster than the speed along the
+--       ground. Without the limit that speed was kept, and grew every frame by the enemy.
 local air_state = setmetatable({}, {
 	__mode = "k",
 })
@@ -105,9 +108,9 @@ local function get_air_state(unit)
 end
 
 -- A push that throws the player into the air (the Shield Gun's jump) keeps its horizontal speed until they land, as UT keeps the speed
--- of a push in the air
-function mod.keep_air_speed(unit)
-	get_air_state(unit).keep_speed = true
+-- of a push in the air. speed is the horizontal speed it starts with (m/s).
+function mod.keep_air_speed(unit, speed)
+	get_air_state(unit).keep_speed = speed
 end
 
 -- The time until which dodging is locked, for each unit
@@ -296,7 +299,7 @@ mod:hook_safe(PlayerCharacterStateDodging, "on_enter", function (self, unit, inp
 
 	air_state[unit] = {
 		dodged = true,
-		keep_speed = true,
+		keep_speed = Vector3.length(horizontal_velocity),
 	}
 end)
 
@@ -306,7 +309,7 @@ end)
 -- keeps its speed with the UT movement option off too.
 mod:hook(CharacterStateHelper, "move_in_air", function (func, first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
 	local state = air_state[unit]
-	local speed_before = state and state.keep_speed and Vector3.length(Vector3.flat(locomotion_extension:current_velocity()))
+	local speed_before = state and state.keep_speed and math.min(Vector3.length(Vector3.flat(locomotion_extension:current_velocity())), state.keep_speed)
 
 	local weaker = is_movement_enabled() and not recently_left_ladder(unit)
 
@@ -485,7 +488,7 @@ local function try_wall_dodge(self, unit, t)
 	locomotion_extension:set_wanted_velocity(dodge_velocity)
 
 	state.dodged = true
-	state.keep_speed = true
+	state.keep_speed = Vector3.length(horizontal_velocity)
 
 	-- With multidodge, every wall dodge gives the double jump back.
 	if is_multidodge(unit) then

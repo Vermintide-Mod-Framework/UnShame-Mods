@@ -682,7 +682,7 @@ local function push_player(owner_unit, direction, force)
 	locomotion_extension:set_wanted_velocity(velocity)
 
 	-- (the game's air movement would cut the push along the ground down to the run speed)
-	mod.keep_air_speed(owner_unit)
+	mod.keep_air_speed(owner_unit, Vector3.length(Vector3.flat(velocity)))
 end
 
 -- What a punch throws, besides the push that the game gives a body for any hit. This runs on every machine, because the physics of bodies
