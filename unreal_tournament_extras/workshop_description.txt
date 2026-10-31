@@ -18,7 +18,7 @@ Chat commands and development tools for [url=https://steamcommunity.com/sharedfi
 [*][b]/ut_level[/b] - load any level, with an optional weather and difficulty.
 [*][b]/ut_test[/b] - run the in-game tests of the weapons.
 [*][b]/ut_equip[/b] - equip a test's weapon, or put your loadout back.
-[*][b]/ut_quiet[/b] - stop enemies and bots from spawning, stop enemies from noticing you, and make you invincible.
+[*][b]/ut_quiet[/b] - no enemies, and nothing hurts you.
 [*][b]/ut_spawn[/b] - spawn an enemy ahead of you.
 [*][b]/ut_tp[/b] - move to a point.
 [*][b]/ut_where[/b] - show where you stand.
