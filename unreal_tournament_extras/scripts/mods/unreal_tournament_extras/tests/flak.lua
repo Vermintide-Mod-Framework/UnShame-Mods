@@ -544,8 +544,8 @@ local function scenarios()
 					up = math.max(up, z)
 				end)
 
-				-- The explosion's hurt is the first. The chunks it throws bounce off the floor at the player's feet and hit them too,
-				-- as UT's FlakChunk hits its shooter once it falls.
+				-- The explosion's hurt is the first. A chunk it throws can hit the player too, if it bounces and comes back into them, as
+				-- UT's FlakChunk touches its shooter once it falls. Those that start in them at their feet don't.
 				local blast = taken.hits[1]
 
 				t.expect(blast, "the shell's explosion did not hurt the player")

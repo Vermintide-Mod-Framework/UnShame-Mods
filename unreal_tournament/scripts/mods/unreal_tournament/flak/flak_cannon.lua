@@ -985,12 +985,13 @@ end
 
 local flying_projectiles = utils.flying_projectiles
 
--- Hurts and pushes the player if a bounced chunk of theirs hits them.
+-- Hurts and pushes the player if a bounced chunk of theirs hits them. A chunk hits when it comes into the player, as UT's chunk does
+-- when it touches them (FlakChunk.ProcessTouch). One that is in them already, as the shell's chunks at their feet are, doesn't.
 local function hit_owner(chunk)
 	local extension = chunk.extension
 	local owner_unit = extension._owner_unit
 
-	if not extension._ut_flak_bounced or extension._ut_flak_hit_owner or extension._stop_impacts then
+	if extension._ut_flak_hit_owner or extension._stop_impacts then
 		return
 	end
 
@@ -1004,8 +1005,17 @@ local function hit_owner(chunk)
 
 	local feet_z = Vector3.z(feet)
 	local closest = Vector3(Vector3.x(feet), Vector3.y(feet), feet_z + math.clamp(Vector3.z(position) - feet_z, 0, CONFIG.chunk_self_hit_height))
+	local inside = Vector3.distance(position, closest) <= CONFIG.chunk_self_hit_radius
+	local was_inside = extension._ut_flak_in_owner
 
-	if Vector3.distance(position, closest) > CONFIG.chunk_self_hit_radius then
+	-- (a chunk first seen in the player started in them)
+	if was_inside == nil then
+		was_inside = inside
+	end
+
+	extension._ut_flak_in_owner = inside
+
+	if not inside or was_inside or not extension._ut_flak_bounced then
 		return
 	end
 
