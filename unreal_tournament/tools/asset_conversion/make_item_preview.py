@@ -2,11 +2,12 @@ import sys, os, re, subprocess
 
 # Makes the Workshop preview, item_preview.png, of this mod and of the extras mod. It starts from the framework's default preview (the
 # template's item_preview.png, 360 by 360), covers its Vermintide logo with burlap copied from the top and bottom of the same picture,
-# puts the round UT2004 emblem over it, the largest picture in the icon, and writes the mod's name under it in Impact.
-# Every step is ffmpeg's, which must be on the PATH.
-# Usage: make_item_preview.py <template item_preview.png> <UT2004 icon .ico>
+# puts the round UT2004 emblem over it, the largest picture in ut2004_emblem.ico next to this script, and writes the mod's name under it
+# in Impact. Every step is ffmpeg's, which must be on the PATH.
+# Usage: make_item_preview.py <template item_preview.png>
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+ICON = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ut2004_emblem.ico')
 OUTPUTS = [os.path.join(REPO, 'item_preview.png'), os.path.join(REPO, '..', 'unreal_tournament_extras', 'item_preview.png')]
 FONT = 'C\\:/Windows/Fonts/impact.ttf'
 
@@ -14,7 +15,7 @@ LOGO_WIDTH = 240  # pixels
 LOGO_Y = 56
 LINES = [('UNREAL TOURNAMENT', 39, 256), ('WEAPONS & MOVEMENT', 29, 299)]  # text, size, top
 
-TEMPLATE, ICON = sys.argv[1], sys.argv[2]
+TEMPLATE = sys.argv[1]
 
 
 def largest_picture(ico):
