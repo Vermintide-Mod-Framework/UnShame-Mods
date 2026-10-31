@@ -81,7 +81,7 @@ end
 
 -- UT's cheat "allammo" (CheatManager.AllAmmo): fills the ranged weapon's ammo, or sets it to the amount given, and fills the Assault
 -- Rifle's grenades (its rounds are endless)
-mod:command("allammo", "[amount] - fills your ranged weapon's ammo and your grenades, or sets the ammo to the amount", function (amount)
+mod:command("allammo", "[amount] - fills your ranged weapon's ammo and the Assault Rifles' grenades, or sets the ammo to the amount", function (amount)
 	local number = tonumber(amount)
 
 	if amount and (not number or number ~= math.floor(number) or number < 0) then
