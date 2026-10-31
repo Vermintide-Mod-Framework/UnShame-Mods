@@ -9,11 +9,11 @@ Cheats, tests and dev commands for [url=https://steamcommunity.com/sharedfiles/f
 [*][b]/addbots[/b], [b]/killbots[/b] - add or remove hero bots.
 [*][b]/hud[/b] - hide the HUD, crosshair and weapon. [b]/hud 1[/b] keeps the weapon.
 [*][b]/freecamera[/b] - a third person camera you can turn around your character.
+[*][b]/slomo[/b] - change the game speed. 0 stops time.
 [/list]
 
 [h1]Other Commands[/h1]
 [list]
-[*][b]/slomo[/b] - change the game speed.
 [*][b]/recharge[/b] - fill your career skill and adrenaline.
 [*][b]/ut_level[/b] - load any level, with an optional weather and difficulty.
 [/list]

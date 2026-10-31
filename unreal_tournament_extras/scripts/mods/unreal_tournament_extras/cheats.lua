@@ -15,7 +15,7 @@ local function local_player_and_unit()
 end
 
 -- UT's "slomo": the game runs at that speed. Below 1 slows it down, above 1 speeds it up, 1 is normal.
-mod:command("slomo", "<speed> - sets the game speed: 1 is normal, lower is slower, higher is faster", function (scale)
+mod:command("slomo", "<speed> - sets the game speed: 1 is normal, lower is slower, higher is faster, 0 stops time", function (scale)
 	local number = tonumber(scale)
 
 	if not number or number < 0 then
