@@ -72,5 +72,5 @@ The mod was balanced around being fun for me in true solo in Adventure or with b
 [h1]Links[/h1]
 [list]
 [*][url=https://github.com/Vermintide-Mod-Framework/UnShame-Mods/tree/master/unreal_tournament]Source Code[/url] - includes the asset conversion code.
-[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3821517994]Extras Mod[/url] - chat commands and development tools.
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3831256065]Extras Mod[/url] - chat commands and development tools.
 [/list]
