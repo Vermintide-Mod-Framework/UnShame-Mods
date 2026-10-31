@@ -944,6 +944,17 @@ function utils.local_ranged_out_of_ammo()
 	return utils.local_ranged_ammo() == 0
 end
 
+-- Whether the game shows its HUD as it does for a living player: its "alive" visibility group, which the weapons' panel is shown in
+-- (hud_component_list_adventure.lua). The others are a menu, a cutscene, the end screen, photo mode, being dead, and so on.
+function utils.hud_shown()
+	local ui_manager = Managers.ui
+	local ingame_ui = ui_manager and ui_manager._ui_enabled and ui_manager._ingame_ui
+	local ingame_hud = ingame_ui and ingame_ui.ingame_hud
+
+	-- (ingame_hud is false, not nil, while the UI is off)
+	return ingame_hud and ingame_hud._current_group_name == "alive" or false
+end
+
 -- The projectiles in flight, this machine's own and the copies of other players'. Returns a list of { unit, extension, own }.
 function utils.flying_projectiles()
 	local entity = Managers.state and Managers.state.entity

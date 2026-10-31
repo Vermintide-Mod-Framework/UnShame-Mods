@@ -182,9 +182,10 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	end
 end
 
--- Draws the words every frame. The game's own user interface draws them, the way it draws its debug texts.
+-- Draws the words every frame. The game's own user interface draws them, the way it draws its debug texts. They are hidden with the
+-- game's HUD (photo mode, /hud, a menu), and they keep fading while hidden.
 mod.ingame_ui_post_update_callbacks.announcer = function (self)
-	if not next(messages) then
+	if not next(messages) or not mod.utils.hud_shown() then
 		return
 	end
 

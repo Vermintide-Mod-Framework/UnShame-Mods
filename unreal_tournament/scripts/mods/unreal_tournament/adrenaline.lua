@@ -278,21 +278,10 @@ local function draw_count(gui, value, scale, width, height)
 	end
 end
 
--- Whether the game shows its HUD as it does for a living player: its "alive" visibility group, which the weapons' panel is shown in
--- (hud_component_list_adventure.lua). The others are a menu, a cutscene, the end screen, photo mode, being dead, and so on.
-local function hud_shown()
-	local ui_manager = Managers.ui
-	local ingame_ui = ui_manager and ui_manager._ui_enabled and ui_manager._ingame_ui
-	local ingame_hud = ingame_ui and ingame_ui.ingame_hud
-
-	-- (ingame_hud is false, not nil, while the UI is off)
-	return ingame_hud and ingame_hud._current_group_name == "alive" or false
-end
-
 -- What is known of the player's adrenaline while the counter is shown, or nil
 local function shown_entry()
 	-- (not in the Keep, which is a hub level: StateIngame sets this, nor while the game's HUD is hidden)
-	if DamageUtils.is_in_inn or not hud_shown() then
+	if DamageUtils.is_in_inn or not utils.hud_shown() then
 		return nil
 	end
 
