@@ -1,21 +1,9 @@
 material_contexts = {
 	surface_material = ""
 }
-parent_material = "units/ut/weapon_standard_transparent"
+parent_material = "units/ut/fx/particle_weapon"
 textures = {
-	color_map = "units/ut/link/link_gun_solid_353a43"
+	texture_map = "units/ut/link/link_gun_solid_353a43"
 }
 variables = {
-	use_color_map = {
-		type = "scalar"
-		value = 1
-	}
-	opacity = {
-		type = "scalar"
-		value = 0.25
-	}
-	roughness = {
-		type = "scalar"
-		value = 0.12
-	}
 }
