@@ -2439,15 +2439,37 @@ mod:command("ut_quiet", "on | off - keeps the level empty and the player unhurt,
 	end
 end)
 
--- For finding the places of a level: loading it, as a suite does, and moving the player to a point
-mod:command("ut_level", "<level> - loads a level, as the tests do (military is Righteous Stand)", function (level_key)
+-- For finding the places of a level: loading it, as a suite does, and moving the player to a point.
+-- A level has its default weather (0), or one of the others its LevelSettings list in environment_variations (1 and on).
+mod:command("ut_level", "<level> [weather] - loads a level, as the tests do (military is Righteous Stand). The weather is the level's default, or random, or one of the level's weathers by name or number (0 is the default)", function (level_key, weather)
 	if not level_key or not LevelSettings[level_key] then
 		log("ut_level: there is no level %s", tostring(level_key))
 
 		return
 	end
 
-	Managers.mechanism:debug_load_level(level_key, 0)
+	local variations = LevelSettings[level_key].environment_variations or {}
+	local variation_id = 0
+
+	if weather == "random" then
+		variation_id = LevelHelper:get_random_variation_id(level_key)
+	elseif weather then
+		variation_id = table.find(variations, weather) or tonumber(weather)
+
+		if not variation_id or variation_id ~= math.floor(variation_id) or variation_id < 0 or variation_id > #variations then
+			local names = { "0 (the default)" }
+
+			for i, name in ipairs(variations) do
+				names[#names + 1] = i .. " " .. name
+			end
+
+			log("ut_level: %s has no weather %s; its weathers are %s", level_key, weather, table.concat(names, ", "))
+
+			return
+		end
+	end
+
+	Managers.mechanism:debug_load_level(level_key, variation_id)
 end)
 
 mod:command("ut_tp", "<x> <y> <z> [yaw] - puts the player there, facing that way (degrees)", function (x, y, z, yaw)
