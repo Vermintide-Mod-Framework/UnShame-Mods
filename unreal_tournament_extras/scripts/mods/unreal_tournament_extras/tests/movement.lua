@@ -9,7 +9,7 @@ local runner = mod.test_runner
 local CONFIG = {
 	-- The mod's multipliers of the game's jump and gravity (movement.lua)
 	jump_multiplier = 1.35,
-	gravity_multiplier = 1.3,
+	gravity_multiplier = 950 * (4.25 * 1.35 / 340) / 11,
 	-- The dodge launch: the upward speed, and the speed along the dodge it adds (up to 9 m/s in all)
 	dodge_up = 4.25, -- m/s
 	dodge_speed = 7, -- m/s

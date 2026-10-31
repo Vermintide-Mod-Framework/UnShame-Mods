@@ -8,8 +8,10 @@ local mod = get_mod("unreal_tournament")
 --   * Crouching players don't walk off ledges.
 
 local CONFIG = {
-	-- The gravity, relative to the game's (11 m/s^2). Jumps get lower and shorter with it.
-	gravity_multiplier = 1.3,
+	-- The gravity, relative to the game's (11 m/s^2). It is UT's gravity (950 units/s^2) turned into m/s^2 by the ratio of the jumps
+	-- (UT's JumpZ of 340 units a second against this mod's jump of 4.25 * 1.35 m/s), which is 16 m/s^2. A jump then takes as long as
+	-- UT's, and every jump and push keeps UT's shape.
+	gravity_multiplier = 950 * (4.25 * 1.35 / 340) / 11,
 	-- The air control, which is how fast the player can change direction in the air, relative to the game's
 	air_control_multiplier = 0.7,
 	-- After the player climbs off the top of a ladder the gravity and the air control are the game's for this long. The climb ends a
@@ -59,7 +61,7 @@ local CONFIG = {
 	momentum_grace = 0.1, -- seconds
 	-- Fall damage, as UT's Pawn.TakeFallingDamage: landing faster than MaxFallSpeed hurts 100 * (speed - MaxFallSpeed) / MaxFallSpeed,
 	-- however far the fall was. UT speeds are turned into this game's by the ratio of the jumps (UT's JumpZ against this mod's jump), as
-	-- the weapon jumps are. That makes MaxFallSpeed about 20 m/s, a fall of about 14 m with the gravity above.
+	-- the weapon jumps are. That makes MaxFallSpeed about 20 m/s, a fall of about 13 m with the gravity above.
 	ut_max_fall_speed = 1200, -- UT units a second
 	ut_jump_speed = 340, -- UT units a second
 }
