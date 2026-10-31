@@ -12,7 +12,7 @@ FONT = 'C\\:/Windows/Fonts/impact.ttf'
 
 LOGO_WIDTH = 240  # pixels
 LOGO_Y = 56
-LINES = [('UNREAL TOURNAMENT', 39, 232), ('WEAPONS & MOVEMENT', 29, 275)]  # text, size, top
+LINES = [('UNREAL TOURNAMENT', 39, 256), ('WEAPONS & MOVEMENT', 29, 299)]  # text, size, top
 
 TEMPLATE, ICON = sys.argv[1], sys.argv[2]
 
