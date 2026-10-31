@@ -234,7 +234,9 @@ end
 -- The HUD goes with the game's photo mode, which is what hides it while emoting (the HUD's "emote_photomode" group shows nothing, and the
 -- outlines are hidden too, as UT hides its team beacons). The arms and the weapon go with the game's own switch for the first person
 -- units, which the weapon skins follow. A new character (after dying, or in the next level) is hidden too.
-local hud_hidden = false
+-- "/hud 1" hides everything but the arms and the weapon.
+-- What is hidden: nil for nothing, "all", or "hud" for all but the weapon.
+local hud_hidden
 local hud_unit
 
 local function set_photomode(enabled)
@@ -253,13 +255,19 @@ local function show_first_person_units(unit, show)
 	end
 end
 
-mod:command("hud", "- hides the HUD, the crosshair and the weapon, or shows them again (UT's togglescreenshotmode)", function ()
+mod:command("hud", "[1] - hides the HUD, the crosshair and the weapon, or shows them again (UT's togglescreenshotmode). With 1 the weapon stays", function (argument)
 	local _, unit = local_player_and_unit()
+	local hide = argument == "1" and "hud" or "all"
 
-	hud_hidden = not hud_hidden
+	-- The same command again shows everything; the other one switches to what it hides.
+	if hud_hidden == hide then
+		hud_hidden = nil
+	else
+		hud_hidden = hide
+	end
 
-	set_photomode(hud_hidden)
-	show_first_person_units(unit, not hud_hidden)
+	set_photomode(hud_hidden ~= nil)
+	show_first_person_units(unit, hud_hidden ~= "all")
 
 	hud_unit = hud_hidden and unit or nil
 end)
@@ -275,7 +283,7 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 		hud_unit = unit
 
 		set_photomode(true)
-		show_first_person_units(unit, false)
+		show_first_person_units(unit, hud_hidden ~= "all")
 	end
 end
 
