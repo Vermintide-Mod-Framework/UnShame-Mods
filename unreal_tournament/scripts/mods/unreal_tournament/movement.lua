@@ -14,9 +14,9 @@ local CONFIG = {
 	gravity_multiplier = 950 * (4.25 * 1.35 / 340) / 11,
 	-- The air control, which is how fast the player can change direction in the air, relative to the game's
 	air_control_multiplier = 0.7,
-	-- After the player climbs off the top of a ladder the gravity and the air control are the game's for this long. The climb ends a
-	-- little above the platform, and the player is in the air for a moment. With the stronger gravity and the weaker air control they
-	-- fall back down the ladder before they can move onto the platform.
+	-- After the player climbs off the top of a ladder the gravity is the game's until they land, for this long at most. The climb ends
+	-- a little above the platform, and the player is in the air for a moment. With the stronger gravity they fall back down the ladder
+	-- before they can move onto the platform.
 	ladder_exit_grace = 1, -- seconds
 	-- A crouching player does not walk off ledges. The center of the player may be this far past the edge, so a bit more
 	-- than half of them hangs off. Further out, the physics starts to make them slide off by themselves.
@@ -114,13 +114,23 @@ local dodge_unlocked_t = setmetatable({}, {
 	__mode = "k",
 })
 
--- Landing starts a new time in the air for the next jump. Landing from a dodge also locks dodging for a while.
+-- When the player last climbed off the top of a ladder, for each unit.
+local ladder_exit_t = setmetatable({}, {
+	__mode = "k",
+})
+
+-- Landing starts a new time in the air for the next jump. Landing from a dodge also locks dodging for a while. Landing from a fall
+-- ends the ladder's gravity (see ladder_exit_grace).
 for _, state in ipairs({
 	PlayerCharacterStateWalking,
 	PlayerCharacterStateStanding,
 }) do
-	mod:hook_safe(state, "on_enter", function (self, unit, input, dt, context, t)
+	mod:hook_safe(state, "on_enter", function (self, unit, input, dt, context, t, previous_state)
 		local air_state_before = air_state[unit]
+
+		if previous_state == "falling" then
+			ladder_exit_t[unit] = nil
+		end
 
 		if air_state_before and air_state_before.dodged then
 			dodge_unlocked_t[unit] = t + CONFIG.dodge_landing_delay
@@ -159,11 +169,6 @@ mod:hook(PlayerCharacterStateClimbingLadder, "update", function (func, self, uni
 
 	return func(self, unit, ...)
 end)
-
--- When the player last climbed off the top of a ladder, for each unit.
-local ladder_exit_t = setmetatable({}, {
-	__mode = "k",
-})
 
 local function recently_left_ladder(unit)
 	local exit_t = ladder_exit_t[unit]
@@ -298,10 +303,6 @@ end)
 -- once. This lets a dodge launch or a push keep its speed, and steering still works. The speed passed to the air movement is how much
 -- the player can steer, and it is scaled by the air control. A push keeps its speed with the UT movement option off too.
 mod:hook(CharacterStateHelper, "move_in_air", function (func, first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
-	if recently_left_ladder(unit) then
-		return func(first_person_extension, input_extension, locomotion_extension, speed, unit, ...)
-	end
-
 	local state = air_state[unit]
 	local speed_before = state and state.keep_speed and Vector3.length(Vector3.flat(locomotion_extension:current_velocity()))
 
