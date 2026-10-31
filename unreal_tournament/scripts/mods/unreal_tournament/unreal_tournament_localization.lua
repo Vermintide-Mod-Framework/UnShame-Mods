@@ -69,7 +69,7 @@ return {
 		en = "You are no longer put back on a lift or a moving platform when you leave it while it moves.",
 	},
 	gameplay = {
-		en = "Gameplay",
+		en = "Gameplay Tweaks",
 	},
 	gameplay_description = {
 		en = "Miscellaneous options to make the game easier or more convenient.",

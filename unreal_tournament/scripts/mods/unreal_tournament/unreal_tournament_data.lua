@@ -70,6 +70,17 @@ return {
 				},
 			},
 			{
+				setting_id = "chaos_wastes",
+				type = "group",
+				sub_widgets = {
+					{
+						setting_id = "reliquary_ut_weapons",
+						type = "checkbox",
+						default_value = false,
+					},
+				},
+			},
+			{
 				setting_id = "gameplay",
 				type = "checkbox",
 				default_value = false,
@@ -101,17 +112,6 @@ return {
 					},
 					{
 						setting_id = "no_friendly_fire",
-						type = "checkbox",
-						default_value = false,
-					},
-				},
-			},
-			{
-				setting_id = "chaos_wastes",
-				type = "group",
-				sub_widgets = {
-					{
-						setting_id = "reliquary_ut_weapons",
 						type = "checkbox",
 						default_value = false,
 					},
