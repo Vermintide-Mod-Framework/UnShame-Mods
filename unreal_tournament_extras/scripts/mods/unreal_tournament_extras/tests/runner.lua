@@ -2445,7 +2445,7 @@ end)
 -- when nothing sets it.
 local LEVEL_DIFFICULTIES = { "normal", "hard", "harder", "hardest", "cataclysm", "cataclysm_2", "cataclysm_3" }
 
-mod:command("ut_level", "<level> [weather] [difficulty] - loads a level, such as military for Righteous Stand. Weather: random, or the level's weather by name or number, 0 by default. Difficulty: normal (Recruit, the default), hard, harder, hardest (Legend), cataclysm, cataclysm_2 or cataclysm_3", function (level_key, ...)
+mod:command("ut_level", "<level> [weather] [difficulty] - loads a level, such as military for Righteous Stand. Weather: random, or the level's weather by name or number, 0 by default. Difficulty: normal (default), hard, harder, hardest, cataclysm, cataclysm_2 or cataclysm_3", function (level_key, ...)
 	if not level_key or not LevelSettings[level_key] then
 		log("ut_level: there is no level %s", tostring(level_key))
 
