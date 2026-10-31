@@ -17,7 +17,7 @@ Chat commands and development tools for [url=https://steamcommunity.com/sharedfi
 [list]
 [*][b]/ut_level[/b] - load any level, with an optional weather and difficulty.
 [*][b]/ut_test[/b] - run the in-game tests of the weapons.
-[*][b]/ut_equip[/b] - equip a test's weapon, or put your loadout back.
+[*][b]/ut_equip[/b] - equip one of the mod's weapons, such as flak, switching career if needed. [b]/ut_equip back[/b] puts your loadout back.
 [*][b]/ut_quiet[/b] - no enemies, and nothing hurts you.
 [*][b]/ut_spawn[/b] - spawn an enemy ahead of you.
 [*][b]/ut_tp[/b] - move to a point.

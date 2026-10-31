@@ -2589,7 +2589,7 @@ mod:command("ut_3p", "on | off - switches the third person view on or off", func
 	first_person_extension:set_first_person_mode(not on)
 end)
 
-mod:command("ut_equip","<suite> [career] | back - equips a test suite's weapon, or puts your loadout back", function (argument, career)
+mod:command("ut_equip","<weapon> [career] | back - equips one of the mod's weapons, such as flak, or puts your loadout back", function (argument, career)
 	if argument == "back" or not argument then
 		runner.unequip()
 	else
