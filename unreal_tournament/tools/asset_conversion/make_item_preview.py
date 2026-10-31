@@ -14,9 +14,9 @@ FONT = 'C\\:/Windows/Fonts/impact.ttf'
 
 SIZE = 360  # pixels, as the framework's default preview
 CROP_X = 840  # the left edge of the square taken from the screenshot, in its pixels: the right of it, with the weapon
-LOGO_WIDTH = 220
+LOGO_WIDTH = 180
 LOGO_Y = 14
-LINES = [('UNREAL TOURNAMENT', 38, 172), ('WEAPONS & MOVEMENT', 28, 213)]  # text, size, top
+LINES = [('UNREAL TOURNAMENT', 38, 146), ('WEAPONS & MOVEMENT', 28, 187)]  # text, size, top
 
 
 def largest_picture(ico):
