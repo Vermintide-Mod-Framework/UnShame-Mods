@@ -3,7 +3,7 @@ material_contexts = {
 }
 parent_material = "units/ut/weapon_standard_transparent"
 textures = {
-	color_map = "units/ut/link/link_gun_linkpowergreen"
+	color_map = "units/ut/link/link_gun_solid_353a43"
 }
 variables = {
 	use_color_map = {

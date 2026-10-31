@@ -90,9 +90,11 @@ WEAPONS['link'] = {
     'roughness': {0: 0.9, 1: 0.9, 2: 0.12},
     'psk': 'NewWeapons2004/SkeletalMesh/FatLinkGun.psk',
     'psa': 'NewWeapons2004/MeshAnimation/LinkGun.psa',
-    # the body, the glowing parts (the shader pans the green power texture over it), the glass
+    # the body, the glowing parts (the shader pans the green power texture over it), the glass. The glass is LinkGlassShader, the
+    # reflection of a cube map (CubeMaps.geothermal) with no colour of its own, which UT keeps when the gun changes colour for a link: it
+    # is the average colour of the cube's six faces, and the game's own reflections.
     'materials': [('UT2004Weapons/Texture/FatLinkGunTex0.tga', 'opaque'), ('UT2004Weapons/Texture/LinkPowerGreen.tga', 'alpha', 0.7),
-                  ('UT2004Weapons/Texture/LinkPowerGreen.tga', 'alpha', 0.25)],
+                  ('solid:353a43', 'alpha', 0.25)],
     # (the body again as m_3, drawn over it: the glow of its eye, make_combo_materials.py's link_gun materials, which also make m_0 and m_1)
     'overlays': {0: 3},
     'scale': 0.0125,
