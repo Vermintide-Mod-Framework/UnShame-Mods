@@ -2440,10 +2440,42 @@ mod:command("ut_quiet", "on | off - keeps the level empty and the player unhurt,
 end)
 
 -- For finding the places of a level: loading it, as a suite does, and moving the player to a point.
--- A level has its default weather (0), or one of the others its LevelSettings list in environment_variations (1 and on).
-mod:command("ut_level", "<level> [weather] - loads a level, as the tests do (military is Righteous Stand). The weather is the level's default, or random, or one of the level's weathers by name or number (0 is the default)", function (level_key, weather)
+-- A mission has its default weather (0), or one of the others its LevelSettings list in environment_variations (1 and on).
+-- The Keep picks its own weather at random, in its level's flow. Its level also has an event for each weather, which this triggers after
+-- the events the game triggers when the Keep starts (StateIngame._gather_backend_flow_events, keep_event_default).
+local KEEP_WEATHERS = { "sunny_day", "evening", "foggy", "night_blue", "night_green", "rainy_day", "rainy_night", "thunderstorm" }
+
+-- The level and the weather event that the next load of a Keep triggers
+local keep_weather
+
+mod:hook_safe(StateIngame, "_gather_backend_flow_events", function (self)
+	if keep_weather and keep_weather.level_key == self.level_key then
+		self._level_flow_events[#self._level_flow_events + 1] = keep_weather.flow_event
+	end
+
+	keep_weather = nil
+end)
+
+mod:command("ut_level", "<level> [weather] - loads a level, as the tests do (military is Righteous Stand). The weather is the level's default, or random, or one of the level's weathers by name or number (0 is the default). The Keep's weathers are sunny_day, evening, foggy, night_blue, night_green, rainy_day, rainy_night and thunderstorm", function (level_key, weather)
 	if not level_key or not LevelSettings[level_key] then
 		log("ut_level: there is no level %s", tostring(level_key))
+
+		return
+	end
+
+	if LevelSettings[level_key].hub_level and weather and weather ~= "random" then
+		if not table.find(KEEP_WEATHERS, weather) then
+			log("ut_level: the Keep has no weather %s; its weathers are %s", weather, table.concat(KEEP_WEATHERS, ", "))
+
+			return
+		end
+
+		keep_weather = {
+			flow_event = "flow_weather_" .. weather,
+			level_key = level_key,
+		}
+
+		Managers.mechanism:debug_load_level(level_key, 0)
 
 		return
 	end
