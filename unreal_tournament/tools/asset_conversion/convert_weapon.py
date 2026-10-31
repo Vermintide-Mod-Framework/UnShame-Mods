@@ -18,7 +18,6 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 # textures: more tgas to convert next to the unit's own textures, for a material that another script makes.
 # gloss: the materials (by index) whose texture's alpha is where UT's weapon overlay shines (see GLOSS_MATTE): they get a roughness map
 # made from it. roughness is then only for the other materials. gloss_shiny: { material index = roughness } in place of GLOSS_SHINY.
-# linear: the materials (by index) whose texture is read as it is, not as srgb.
 WEAPONS = {
     'flak': {
         'psk': 'Weapons/SkeletalMesh/Flak_1st.psk',
@@ -94,11 +93,8 @@ WEAPONS['link'] = {
     # the body, the glowing parts (the shader pans the green power texture over it), the glass. The glass is LinkGlassShader, the
     # reflection of a cube map (CubeMaps.geothermal) with no colour of its own, which UT keeps when the gun changes colour for a link.
     # It is OB_Translucent, which adds to what is behind it and never darkens it: here it adds the average colour of the cube's faces.
-    # The added material is drawn after tone mapping, as UE2 draws everything, so the colour is read as it is: as srgb it adds a sixth
-    # as much, and the tube's dark gaps under the glass are black.
     'materials': [('UT2004Weapons/Texture/FatLinkGunTex0.tga', 'opaque'), ('UT2004Weapons/Texture/LinkPowerGreen.tga', 'alpha', 0.7),
                   ('solid:353a43', 'additive')],
-    'linear': (2,),
     # (the body again as m_3, drawn over it: the glow of its eye, make_combo_materials.py's link_gun materials, which also make m_0 and m_1)
     'overlays': {0: 3},
     'scale': 0.0125,
@@ -582,7 +578,7 @@ def main():
             else:
                 w, h, rows = read_tga(export + '/' + tga)
             write_png('%s/%s.png' % (REPO, texture), w, h, rows)
-            open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(texture_text(texture, m not in cfg.get('linear', ())))
+            open('%s/%s.texture' % (REPO, texture), 'w', newline='\n').write(texture_text(texture))
             done_textures[texture] = (w, h, rows)
         roughness_map = None
         if m in cfg.get('gloss', ()):
