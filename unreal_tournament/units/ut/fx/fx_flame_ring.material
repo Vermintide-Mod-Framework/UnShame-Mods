@@ -1,0 +1,10 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_flame_ring_graph"
+textures = {
+	flame_map = "units/ut/fx/flame_gradient"
+	falloff_map = "units/ut/fx/grad_falloff"
+}
+variables = {
+}

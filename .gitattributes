@@ -1,0 +1,5 @@
+# Text files have LF line endings, in the repository and in the working tree. Git finds the binary files itself and leaves them alone.
+* text=auto eol=lf
+
+# The IDE's own files are left as it writes them
+.idea/** -text

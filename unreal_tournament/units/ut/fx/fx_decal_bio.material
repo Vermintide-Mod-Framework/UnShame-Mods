@@ -1,0 +1,10 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_decal_bio_graph"
+textures = {
+	splat_map = "units/ut/fx/bio_splat"
+	shape_map = "units/ut/fx/bio_splat_mask"
+}
+variables = {
+}

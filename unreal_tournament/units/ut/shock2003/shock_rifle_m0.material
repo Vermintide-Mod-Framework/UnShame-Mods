@@ -1,0 +1,13 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/weapon_standard"
+textures = {
+	color_map = "units/ut/shock2003/shock_rifle_shocktex0"
+}
+variables = {
+	use_color_map = {
+		type = "scalar"
+		value = 1
+	}
+}

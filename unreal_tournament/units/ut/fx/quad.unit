@@ -1,0 +1,14 @@
+materials = {
+	m_fx = "units/ut/fx/fx_shock_sparkle"
+}
+renderables = {
+	g_quad = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+}

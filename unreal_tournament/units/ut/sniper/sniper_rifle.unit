@@ -1,0 +1,15 @@
+materials = {
+	m_0 = "units/ut/sniper/sniper_rifle_m0"
+	m_1 = "units/ut/sniper/sniper_rifle_m1"
+}
+renderables = {
+	b_root = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+}
