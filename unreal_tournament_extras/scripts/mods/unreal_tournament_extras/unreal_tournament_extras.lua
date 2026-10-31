@@ -35,7 +35,7 @@ mod.on_game_state_changed = function (status, state_name)
 	end
 end
 
--- UT's console commands, and /skin for the weapon skins
+-- UT's console commands, and /ut_skin for the weapon skins
 mod:dofile("scripts/mods/unreal_tournament_extras/cheats")
 
 -- The in-game tests, run with /ut_test. The runner is loaded once, and each weapon's file adds its suite to it. The runner also has the

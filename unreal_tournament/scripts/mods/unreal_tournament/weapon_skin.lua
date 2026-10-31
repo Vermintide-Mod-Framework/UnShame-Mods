@@ -17,7 +17,7 @@ local mod = get_mod("unreal_tournament")
 -- action starts. The game has no animation for putting a weapon down, so the model just disappears when the weapon is put away.
 --
 -- A definition holds the numbers of the weapon's class in UT2004, and the files that tools/asset_conversion made:
---   id, name: the weapon's id (flak_cannon, used by /skin) and its name in messages. template: the game weapon template this is the
+--   id, name: the weapon's id (flak_cannon, used by /ut_skin) and its name in messages. template: the game weapon template this is the
 --       skin of. applies(unit), if it is given: whether the skin draws the template for that character now (the Redeemer draws the
 --       Bounty Hunter's career pistol only while he holds the Rocket Launcher). third_person takes it too.
 --   unit_name, animations: the unit and its animations. animations is { bones = { "root", nodes... }, animations = { Name = { rate,
@@ -60,7 +60,7 @@ local mod = get_mod("unreal_tournament")
 local utils = mod.utils
 local third_person_module = mod:dofile("scripts/mods/unreal_tournament/weapon_skin_third_person")
 
--- The skins, by id (used by /skin)
+-- The skins, by id (used by /ut_skin)
 local skins = {}
 
 -- How much bigger a weapon's horizontal field of view is than tan(DisplayFOV / 2) at the reference aspect. 1.345 is the value that
@@ -976,7 +976,7 @@ local function new(def)
 		end
 	end
 
-	-- Development commands (the extras mod's /skin): print what the skin does, play an animation, or set a number of the definition.
+	-- Development commands (the extras mod's /ut_skin): print what the skin does, play an animation, or set a number of the definition.
 	function self.command(command, name, value)
 		if command == "debug" then
 			debug_enabled = not debug_enabled

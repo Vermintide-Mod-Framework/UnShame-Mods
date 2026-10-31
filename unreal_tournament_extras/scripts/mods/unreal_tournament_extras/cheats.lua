@@ -1,7 +1,7 @@
 local mod = get_mod("unreal_tournament_extras")
 local ut = get_mod("unreal_tournament")
 
--- UT's console commands as chat commands, done with the game's own mechanics, and /skin for the weapon skins.
+-- UT's console commands as chat commands, done with the game's own mechanics, and /ut_skin for the weapon skins.
 
 local function local_player_and_unit()
 	local player = Managers.player:local_player_safe()
@@ -445,7 +445,7 @@ mod:hook(PlayerUnitFirstPerson, "set_look_delta", function (func, self, look_del
 end)
 
 -- The weapon skins' development commands (weapon_skin.lua's command of each skin)
-mod:command("skin", "<weapon> debug | report | play <animation> | set <number> <value> | 3p <number> <value> - inspects and adjusts a weapon's model", function (id, ...)
+mod:command("ut_skin", "<weapon> debug | report | play <animation> | set <number> <value> | 3p <number> <value> - inspects and adjusts a weapon's model", function (id, ...)
 	local skins = ut.weapon_skin.skins
 	local skin = id and skins[id]
 
@@ -459,6 +459,6 @@ mod:command("skin", "<weapon> debug | report | play <animation> | set <number> <
 		end
 
 		table.sort(names)
-		mod:echo("skin: one of %s", table.concat(names, ", "))
+		mod:echo("ut_skin: one of %s", table.concat(names, ", "))
 	end
 end)

@@ -52,7 +52,7 @@ What the mod contains at the moment is in the code. `TODO.md` is what is not don
   so a commit carries its own number, and a screenshot says which build it is.
 - **Test in game.** The mod can be reloaded in game without a restart. The game's logs are in `%APPDATA%\Fatshark\Vermintide 2\console_logs` and
   its crash dumps in `crash_dumps`.
-- **Chat commands** are in the extras mod: UT's cheats (`cheats.lua`), changing a skin's numbers while playing (`/skin`), and the commands of the
+- **Chat commands** are in the extras mod: UT's cheats (`cheats.lua`), changing a skin's numbers while playing (`/ut_skin`), and the commands of the
   tests (`tests/runner.lua`).
 - **Placing a model** (idle, inspect, third person) can be checked without the game: `tools/asset_conversion/preview_weapon.py`.
 - **Commit** each change, with the build number, and push.

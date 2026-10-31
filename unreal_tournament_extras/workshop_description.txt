@@ -28,7 +28,7 @@ Cheats, tests and dev commands for [url=https://steamcommunity.com/sharedfiles/f
 [*][b]/ut_where[/b] - show where you stand.
 [*][b]/ut_probe[/b] - show how far the level is above and around you.
 [*][b]/ut_3p[/b] - switch the third person view on or off.
-[*][b]/skin[/b] - inspect and adjust a weapon's model.
+[*][b]/ut_skin[/b] - inspect and adjust a weapon's model.
 [/list]
 
 [h1]Links[/h1]

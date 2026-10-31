@@ -178,14 +178,14 @@ skin_api = mod.weapon_skin.new({
 	-- damping is ShockRifle.BobDamping.
 	bob = 0.0035,
 	bob_damping = 1.8,
-	-- The pose held while it overheats, sideways. These numbers are a guess. Try others with /skin shock_rifle set alt_pose_roll
+	-- The pose held while it overheats, sideways. These numbers are a guess. Try others with /ut_skin shock_rifle set alt_pose_roll
 	-- <degrees>, and so on.
 	alt_pose_roll = 35,
 	alt_pose_right = 4,
 	alt_pose_forward = 0,
 	alt_pose_up = -3,
 	-- The inspect pose is held across the view, level, with the muzzle to the left, as the game's own weapons are inspected. That shows
-	-- the left side. These numbers are a guess. Try others with /skin shock_rifle set inspect_pose_yaw <degrees>, and so on. The rifle
+	-- the left side. These numbers are a guess. Try others with /ut_skin shock_rifle set inspect_pose_yaw <degrees>, and so on. The rifle
 	-- is held further away, with its top turned towards the view, because seen from below it would show its underside, and UT's model
 	-- has no faces there.
 	inspect_pose_right = -2,
