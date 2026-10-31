@@ -2441,11 +2441,25 @@ end)
 
 -- For finding the places of a level: loading it, as a suite does, and moving the player to a point.
 -- A mission has its default weather (0), or one of the others its LevelSettings list in environment_variations (1 and on).
-mod:command("ut_level", "<level> [weather] - loads a level, as the tests do (military is Righteous Stand). The weather is the level's default, or random, or one of the level's weathers by name or number (0 is the default)", function (level_key, weather)
+-- The difficulty is the game's name for it, given in either place after the level. Without one the level is on Recruit, the game's own
+-- when nothing sets it.
+local LEVEL_DIFFICULTIES = { "normal", "hard", "harder", "hardest", "cataclysm", "cataclysm_2", "cataclysm_3" }
+
+mod:command("ut_level", "<level> [weather] [difficulty] - loads a level, as the tests do (military is Righteous Stand). The weather is the level's default, or random, or one of the level's weathers by name or number (0 is the default). The difficulty is normal (Recruit, if not given), hard, harder, hardest (Legend), cataclysm, cataclysm_2 or cataclysm_3", function (level_key, ...)
 	if not level_key or not LevelSettings[level_key] then
 		log("ut_level: there is no level %s", tostring(level_key))
 
 		return
+	end
+
+	local weather, difficulty
+
+	for _, argument in ipairs({ ... }) do
+		if table.find(LEVEL_DIFFICULTIES, argument) then
+			difficulty = argument
+		else
+			weather = argument
+		end
 	end
 
 	local variations = LevelSettings[level_key].environment_variations or {}
@@ -2469,7 +2483,15 @@ mod:command("ut_level", "<level> [weather] - loads a level, as the tests do (mil
 		end
 	end
 
+	-- (the game takes the difficulty of the next level from this setting first, LevelTransitionHandler.apply_defaults_to_level_data, as
+	-- load_level does for the suites)
+	local difficulty_setting = script_data.current_difficulty_setting
+
+	script_data.current_difficulty_setting = difficulty or "normal"
+
 	Managers.mechanism:debug_load_level(level_key, variation_id)
+
+	script_data.current_difficulty_setting = difficulty_setting
 end)
 
 mod:command("ut_tp", "<x> <y> <z> [yaw] - puts the player there, facing that way (degrees)", function (x, y, z, yaw)
