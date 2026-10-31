@@ -32,6 +32,8 @@ TEXTURES = {
     'explosion_flash': 'XEffects/Texture/ExplosionFlashTex.tga',
     'muzzle_white': 'XEffects/Texture/MuzFlashWhite_t.tga',
     'rocket_flare': 'XEffects/Texture/RocketFlare.tga',
+    # the flash of the rocket's explosion (NewExplosionA's third emitter)
+    'rocket_explosion_flash': 'XEffects/Texture/Rexpt.tga',
     # the Bio Rifle (the goo, the splat decal)
     'bio_goop': 'XEffectMat/Texture/goop_green_a.tga',
     # the Link Gun (sparks, the flash, the beams, the splash of a plasma bolt)

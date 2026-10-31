@@ -27,17 +27,16 @@ local CONFIG = {
 	-- How far apart the two UT2003 rifles' pickups get, halfway through, as a share of the pickup (see time_curves)
 	pickup_stagger = 0.08,
 	-- The grenade's explosion: NewExplosionB's smoke, as NewExplosionA's (rocket/skin.lua), and its fireballs: three, 10 a second, of
-	-- exp1_frames (2 columns by 4 rows), size 60 to 80, life 0.4 to 0.6 s, starting up to 24 units from the middle. The sizes and the
-	-- spread are made larger as the rocket's are (NewExplosionA's 50 to 70 and 24 are 90 to 125 and 36 there). And the rocket's mark.
+	-- exp1_frames (2 columns by 4 rows), size 60 to 80, life 0.4 to 0.6 s, starting up to 24 units from the middle. And the rocket's mark.
 	explosion_fireballs = {
 		sheet = "explosion_c_",
 		columns = 2,
 		rows = 4,
 		count = 3,
 		gap = 0.1, -- s
-		size = { 60 * 125 / 70, 80 * 125 / 70 },
+		size = { 60, 80 },
 		life = { 0.4, 0.6 }, -- s
-		spread = { 0, 24 * 1.5 },
+		spread = { 0, 24 },
 	},
 	-- AssaultMuzFlash1st: the Minigun's flash at DrawScale 1.2 (see muzzle_flash.lua), with MinigunMuzFlash1st's numbers
 	flash_draw_scale = 1.2,

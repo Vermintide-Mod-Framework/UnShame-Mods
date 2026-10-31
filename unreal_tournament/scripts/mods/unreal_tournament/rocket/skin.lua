@@ -102,31 +102,21 @@ local CONFIG = {
 		attenuation = 0.2,
 		spin = 80 / 65536, -- turns a second
 	},
-	explosion_flash_size = 300,
-	explosion_flash_growth = 500,
-	explosion_flash_life = 0.25,
-	explosion_flash_intensity = 0.5,
+	-- NewExplosionA's emitters are drawn as an Emitter's default PTDS_Translucent, which adds them to the screen. A sprite's size is its
+	-- radius, so it is drawn twice as wide.
+	-- The flash (its third emitter): Rexpt, 110 to 120 units of size, growing from 0.7 of that to all of it over its 0.3 s
+	-- (SizeScale), and fading out from 0.05 s (FadeOutStartTime)
+	explosion_flash_size = { 110, 120 },
+	explosion_flash_size_scale = { { 0, 0.7 }, { 1, 1 } },
+	explosion_flash_life = 0.3,
+	explosion_flash_fade_out = 0.05,
+	-- The fireballs (its first emitter): 3 at 10 a second, of size 50 to 70, on a sphere of 24 units about the explosion, each playing
+	-- the 16 frames of one of the two sheets over its life
 	explosion_fire_count = 3,
-	explosion_fire_gap = 0.1, -- seconds between the fireballs starting (UT: 10 a second)
-	-- A UE2 sprite is about twice as wide as its size number says. UT's explosion is as wide as its blast, 3 m of radius, and its
-	-- three fireballs of size 50 to 70 only reach that width because of this.
-	explosion_fire_size = {
-		90,
-		125,
-	},
-	explosion_fire_life = {
-		0.4,
-		0.6,
-	},
-	explosion_fire_spread = 36, -- units, the radius of the sphere the fireballs start in
-	-- The frames are drawn in a colour brighter than white, which the game's lighting turns into a glow. The texture alone, at 1, looks
-	-- dull grey in the game. The colour is yellow, and the frames' own colours make the middle of a fireball brighter than its edge.
-	explosion_fire_intensity = 0.6, -- how solid the frames are: their transparency times this
-	explosion_fire_color = {
-		1.5,
-		1.25,
-		0.8,
-	},
+	explosion_fire_gap = 0.1, -- seconds between the fireballs starting
+	explosion_fire_size = { 50, 70 },
+	explosion_fire_life = { 0.4, 0.6 },
+	explosion_fire_spread = 24, -- units
 	explosion_lift = 20, -- units off the surface (NewExplosionA is spawned 20 units along the surface's normal)
 	inspect_pose_speed = 5, -- how fast the model moves to the inspect pose and back, per second
 	inspect_sway = 5, -- degrees of yaw each way while inspecting
@@ -948,20 +938,17 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 	mod.explosion_smoke(center, normal)
 	explosion_rocks(center, normal)
 
+	local flash_size = 2 * random_between(CONFIG.explosion_flash_size) * UNIT
+
 	particles.sprite({
-		attenuation = 0,
-		color = {
-			1,
-			1,
-			1,
-		},
-		growth = CONFIG.explosion_flash_growth * UNIT,
-		intensity = CONFIG.explosion_flash_intensity,
+		angle = math.random() * 360,
+		fade_out = CONFIG.explosion_flash_fade_out,
 		life = CONFIG.explosion_flash_life,
 		position = center,
-		size = CONFIG.explosion_flash_size * UNIT,
-		spin = (math.random() * 2 - 1) * 0.12,
-		texture = "explosion_flash",
+		size_by = function (fraction)
+			return flash_size * particles.scale_at(CONFIG.explosion_flash_size_scale, fraction)
+		end,
+		texture = "rocket_explosion_flash",
 	})
 
 	-- The fireballs: the 16 frames of one of two sheets, the same for all three
@@ -977,37 +964,34 @@ mod.skin_explosion_callbacks.ut_rocket_explosion = function (world, position, ro
 	})
 end
 
--- The fireballs of UT's explosion emitters (NewExplosionA's, and NewExplosionB's of the Assault Rifle's grenade), around center. Each
--- plays the frames of its sheet as a sprite for each frame, one over the other, and they start one after another.
+-- The fireballs of UT's explosion emitters (NewExplosionA's, and NewExplosionB's of the Assault Rifle's grenade), around center. They
+-- start one after another, and each plays the frames of its sheet over its life. They are added to the screen, as an Emitter's default
+-- PTDS_Translucent is.
 --   settings: sheet (the prefix of its frames' textures, split_explosion.py), columns and rows (of the sheet: the frames run down each
---       column), count, gap (seconds between their starts), size and life ({ least, most }), spread ({ least, most } units from center)
+--       column), count, gap (seconds between their starts), size (UT's, a radius) and life ({ least, most }), spread ({ least, most }
+--       units from center)
 function mod.explosion_fireballs(center, settings)
 	local frames = settings.columns * settings.rows
 
 	for index = 0, settings.count - 1 do
 		local life = random_between(settings.life)
 		local start = index * settings.gap
-		local size = random_between(settings.size) * UNIT
+		local size = 2 * random_between(settings.size) * UNIT
 		local fire_center = center + random_direction() * (random_between(settings.spread) * UNIT)
 		local angle = math.random() * 360
+		local frame_time = life / frames
 
+		-- Each frame is a sprite. With BlendBetweenSubdivisions, UE2 blends each frame into the next: a frame is whole at its own time
+		-- and fades into its neighbours over one frame's time on each side, so the two that show at once always add up to one.
 		for frame = 0, frames - 1 do
-			-- The sprites are blended, not added to the screen, because the later frames are dark, the soot of the fire, and only
-			-- blending shows that.
-			-- A frame fades in over one frame's time on top of the previous frame. The previous frame stays until the new one is
-			-- fully there, and then goes. So no frame is ever less than whole under the next, and the fireball is never thin. The
-			-- last frame fades out.
-			local frame_time = life / frames
+			local first = frame == 0
 
 			particles.sprite({
-				additive = 0,
 				angle = angle,
-				color = CONFIG.explosion_fire_color,
-				intensity = CONFIG.explosion_fire_intensity,
-				delay = start + frame * frame_time,
-				fade_in = frame_time,
-				fade_out = frame == frames - 1 and frame_time or 2 * frame_time - 0.001,
-				life = 2 * frame_time,
+				delay = start + math.max(frame - 1, 0) * frame_time,
+				fade_in = not first and frame_time or nil,
+				fade_out = first and 0 or frame_time,
+				life = first and frame_time or 2 * frame_time,
 				position = fire_center,
 				size = size,
 				texture = settings.sheet .. (frame % settings.rows * settings.columns + math.floor(frame / settings.rows)),
