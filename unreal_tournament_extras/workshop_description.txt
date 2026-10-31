@@ -1,6 +1,6 @@
 Cheats, tests and dev commands for [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3814159978]Unreal Tournament Weapons & Movement[/url]. It needs that mod, and has to be below it in the load order.
 
-[h1]UT Cheats[/h1]
+[h1]Chat Commands[/h1]
 [list]
 [*][b]/god[/b] - take no damage.
 [*][b]/allammo[/b] - fill your ammo.
@@ -10,16 +10,12 @@ Cheats, tests and dev commands for [url=https://steamcommunity.com/sharedfiles/f
 [*][b]/hud[/b] - hide the HUD, crosshair and weapon. [b]/hud 1[/b] keeps the weapon.
 [*][b]/freecamera[/b] - a third person camera you can turn around your character.
 [*][b]/slomo[/b] - change the game speed. 0 stops time.
-[/list]
-
-[h1]Other Commands[/h1]
-[list]
 [*][b]/recharge[/b] - fill your career skill and adrenaline.
-[*][b]/ut_level[/b] - load any level, with an optional weather and difficulty.
 [/list]
 
 [h1]Development[/h1]
 [list]
+[*][b]/ut_level[/b] - load any level, with an optional weather and difficulty.
 [*][b]/ut_test[/b] - run the in-game tests of the weapons.
 [*][b]/ut_equip[/b] - equip a test's weapon, or put your loadout back.
 [*][b]/ut_quiet[/b] - keep the level empty and yourself unhurt, as the tests do.
