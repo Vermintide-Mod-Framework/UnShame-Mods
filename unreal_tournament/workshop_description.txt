@@ -41,6 +41,7 @@ Kill enemies in quick succession, without taking damage or in specific ways to e
 [*][b]Berserk[/b] (W W S S) - attack faster, with more stagger, cleave and momentum.
 [*][b]Invisibility[/b] (D D A A) - enemies lose track of you.
 [/list]
+[img]https://images.steamusercontent.com/ugc/17825659616010993825/1442E54C60C18846C400D7CC18AB3D4D25CB4C40/[/img]
 
 [h1]Balance and Game Modes[/h1]
 The mod was balanced around being fun for me in true solo in Adventure or with bots in Chaos Wastes, on Legend. There are options to make those playstyles easier/more convenient without needing extra mods. For multiplayer, kick the difficulty up to Cataclysm or higher. Most options are controlled by the host.
