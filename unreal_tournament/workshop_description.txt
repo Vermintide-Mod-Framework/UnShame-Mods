@@ -36,10 +36,11 @@ Use the weapon screen or the crafting tab to upgrade the weapons, reroll their p
 [h1]Movement[/h1]
 The altered movement lets you combine UT's dodges and double-jumps to quickly move around the map and avoid enemies, as well as propel yourself by shooting at your feet with select weapons. The extra mobility lets you outrun most enemies, but comes with drawbacks - it can put you in an exposed position, and the time between dodges is significantly higher than Vermintide's.
 
-Two extra movement options are available:
+Three extra movement options are available:
 [list]
 [*][b]Multidodge[/b] - disables limits on dodging.
 [*][b]Momentum Damage[/b] - melee hits do more damage the faster you move.
+[*][b]Remove Barriers[/b] - lets you explore more of the levels with the extra movement, taking away most of what keeps you in bounds.
 [/list]
 
 [h1]Adrenaline[/h1]
