@@ -26,11 +26,12 @@ Experience the classic Unreal Tournament weapons from the distant future of 2004
 [img]https://images.steamusercontent.com/ugc/15103507277094903356/BB433719CA0E1EC0E3A61B6EEB87D04830CF1E98/[/img]
 [img]https://images.steamusercontent.com/ugc/11287699748260636292/9F70613BCF3EEA825DEAAD9371E3C4E812DD7543/[/img]
 
-[h2]Crafting[/h2]
+[h1]Crafting[/h1]
 The new weapons are available in the inventory of the characters that can use them - as a 5 power Blueprint and as a 300 power Plentiful weapon.
 
-Use the weapon screen or the crafting tab to upgrade the weapons, reroll their properties and traits, and apply illusions to the ones that have them.
-Use the crafting tab to make more copies of a weapon from its Blueprint.
+Use the weapon screen or the crafting tab to upgrade the weapons, reroll their properties and traits, and apply illusions to the ones that have them. Use the crafting tab to make more copies of a weapon from its Blueprint.
+
+[img]https://images.steamusercontent.com/ugc/13212828609946786143/451D40A1262FEFB9CD4AB19FC356B7A74F62BE90/[/img]
 
 [h1]Adrenaline[/h1]
 Kill enemies in quick succession, without taking damage or in specific ways to earn adrenaline. Once you have 100, tap a key sequence to start a combo:
