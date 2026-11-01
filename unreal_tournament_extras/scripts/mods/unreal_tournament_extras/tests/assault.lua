@@ -540,6 +540,43 @@ local function scenarios()
 			end,
 		},
 		{
+			-- A grenade thrown at an enemy's feet bounces off the floor in front of it and goes off on it, not on the 2 s timer: the floor
+			-- next to the grenade doesn't hide the enemy from it
+			name = "a grenade thrown at an enemy's feet goes off on it",
+			run = function (t)
+				t.wait_until(function ()
+					return #assault.grenades == 0
+				end, 10, "the grenades in flight to go off")
+
+				local enemy = t.spawn(CONFIG.plain_breed, CONFIG.grenade_enemy_distance)
+
+				if not t.expect(enemy, "the %s could not be spawned", CONFIG.plain_breed) then
+					return
+				end
+
+				t.wait(1)
+
+				local feet = t.on_main_thread(function ()
+					local position = Unit.local_position(enemy, 0)
+
+					return { Vector3.x(position), Vector3.y(position), Vector3.z(position) }
+				end)
+
+				t.aim_at_point(feet[1], feet[2], feet[3])
+
+				local damage = t.track_damage(enemy)
+
+				start_recording()
+				t.press("action_two", CONFIG.one_round)
+				t.wait(CONFIG.grenade_touch_time)
+
+				recording = false
+
+				t.expect(explosions == 1, "%d grenades went off within %.1f s, not 1", explosions, CONFIG.grenade_touch_time)
+				t.expect(damage.total > 0, "the grenade did not hurt the %s", CONFIG.plain_breed)
+			end,
+		},
+		{
 			-- The grenade's explosion hurts the player who threw it, far less than the Rocket Launcher's
 			name = "a grenade that goes off at the feet hurts the player, at most 7",
 			run = function (t)

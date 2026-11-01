@@ -365,9 +365,10 @@ end
 
 -- Where a grenade moving from from to to touches an enemy, if it does before the level: as a rocket does, it is a sphere that hits an
 -- enemy's body (utils.UT_PROJECTILE_RADIUS, UT's collision cylinder of a player), and walls are hit by a ray. The grenade flies itself, as
--- the game's projectiles can't bounce as it does, so the sphere is swept here the way the game sweeps one for its own aim at enemies
--- (WeaponHelper.look_at_enemy_or_static_position). The bigger zone around an enemy for near misses ("afro") is not its body, so the
--- grenade goes through it.
+-- the game's projectiles can't bounce as it does, so the sphere is swept here as the game sweeps a projectile's
+-- (PlayerProjectileImpactUnitExtension.update_sphere_sweep). Like the game's, it only looks for enemies and leaves the level to the ray:
+-- a grenade near the floor or a wall is already touching it. The bigger zone around an enemy for near misses ("afro") is not its body,
+-- so the grenade goes through it.
 local function enemy_touch(physics_world, from, to, owner_unit)
 	local along = to - from
 	local length = Vector3.length(along)
@@ -384,7 +385,7 @@ local function enemy_touch(physics_world, from, to, owner_unit)
 
 	PhysicsWorld.prepare_actors_for_overlap(physics_world, from + direction * reach / 2, (reach / 2 + radius) ^ 2)
 
-	local hits = PhysicsWorld.linear_sphere_sweep(physics_world, from, from + direction * reach, radius, 100, "types", "both", "collision_filter", "filter_player_ray_projectile", "report_initial_overlap")
+	local hits = PhysicsWorld.linear_sphere_sweep(physics_world, from, from + direction * reach, radius, 100, "collision_filter", "filter_player_ray_projectile_dynamic_only", "report_initial_overlap")
 
 	for _, hit in ipairs(hits or {}) do
 		-- (a hit on an enemy's shield is a hit on the enemy)
