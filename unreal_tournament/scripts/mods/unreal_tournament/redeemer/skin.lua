@@ -167,19 +167,21 @@ mod.skin_init_callbacks.redeemer = function (projectile)
 	local world = Managers.world:world("level_world")
 	local game_unit = projectile._projectile_unit
 	local position = Unit.world_position(game_unit, 0)
+	-- (until the missile has moved, the way it flies is the way the game's unit was spawned facing: the shot's)
+	local direction = Quaternion.forward(Unit.world_rotation(game_unit, 0))
 
 	Unit.set_unit_visibility(game_unit, false)
 
 	local missile = {
-		-- (until the missile has moved, the way it flies is the way the game's unit was spawned facing: the shot's)
-		direction = Vector3Box(Quaternion.forward(Unit.world_rotation(game_unit, 0))),
+		direction = Vector3Box(direction),
 		flame_time = 0,
 		game_unit = game_unit,
 		previous = Vector3Box(position),
 		projectile = projectile,
 		smoke_time = 0,
 		time = 0,
-		unit = World.spawn_unit(world, "units/ut/redeemer/missile", position),
+		-- It faces the way it flies from the start: the missiles are only turned in the next frame's update
+		unit = World.spawn_unit(world, "units/ut/redeemer/missile", position, Quaternion.look(direction, Vector3.up())),
 		world = world,
 	}
 

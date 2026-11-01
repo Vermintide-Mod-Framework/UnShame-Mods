@@ -331,12 +331,15 @@ local function add_visual(projectile)
 	local world = Managers.world:world("level_world")
 	local game_unit = projectile._projectile_unit
 	local position = Unit.world_position(game_unit, 0)
-	local unit = World.spawn_unit(world, "units/ut/rocket/projectile", position)
+	-- Until the rocket has moved, the way it flies is the way the game's unit was spawned facing: the shot's. The rocket faces it from
+	-- the start, since the rockets are only turned in the next frame's update.
+	local direction = Quaternion.forward(Unit.world_rotation(game_unit, 0))
+	local unit = World.spawn_unit(world, "units/ut/rocket/projectile", position, Quaternion.look(direction, Vector3.up()))
 
 	Unit.set_unit_visibility(game_unit, false)
 
 	local visual = {
-		direction = Vector3Box(Vector3.forward()),
+		direction = Vector3Box(direction),
 		game_unit = game_unit,
 		previous = Vector3Box(position),
 		projectile = projectile,
