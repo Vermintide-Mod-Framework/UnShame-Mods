@@ -2102,7 +2102,9 @@ function runner.calm(unit)
 	keep_calm(unit)
 end
 
--- Lets an enemy that was calmed see and pick its targets again, as its breed does, so that it attacks the player
+-- Lets an enemy that was calmed see and pick its targets again, as its breed does, so that it attacks the player. A boss that is
+-- spawned is angry from the start and picks with its angry selection (AiBreedSnippets' setup_start_angry). Its other one is for a boss
+-- that waits in the level, and needs the waiting state that only such a boss has.
 function runner.provoke(unit)
 	calmed[unit] = nil
 
@@ -2111,7 +2113,9 @@ function runner.provoke(unit)
 	local breed = blackboard and blackboard.breed
 
 	if ai_extension and ai_extension.set_perception and breed then
-		ai_extension:set_perception(breed.perception, breed.target_selection)
+		local angry = blackboard.is_angry and breed.target_selection_angry
+
+		ai_extension:set_perception(breed.perception, angry or breed.target_selection)
 	end
 
 	if blackboard then

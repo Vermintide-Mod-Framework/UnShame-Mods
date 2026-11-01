@@ -171,7 +171,9 @@ local function monster_scenario(hold, charging)
 			t.wait(1)
 
 			if charging then
-				runner.provoke(monster)
+				t.on_main_thread(function ()
+					runner.provoke(monster)
+				end)
 
 				if not t.wait_until(function ()
 					local player_unit = t.unit()
