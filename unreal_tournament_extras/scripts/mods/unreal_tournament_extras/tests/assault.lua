@@ -29,6 +29,13 @@ local CONFIG = {
 	grenade_self_damage = 7,
 	grenade_feet_wait = 3.5, -- s
 	grenade_move_before = 0.3, -- s
+	-- The Minotaur, which grenades were seen flying through. It stands this far ahead, or charges from further and the grenade is thrown
+	-- once it is this close. A grenade that is held for this long is thrown at its full speed.
+	monster_breed = "beastmen_minotaur",
+	monster_distance = 5, -- m
+	monster_charge_from = 14, -- m
+	monster_charge_wait = 5, -- s, at most
+	full_charge = 1, -- s
 }
 
 -- The key of the rifle in the melee slot
@@ -141,6 +148,105 @@ end
 
 -- How far a stance's leave may be from when it is due
 local STANCE_TOLERANCE = 0.15 -- s
+
+-- A grenade thrown at the middle of a Minotaur goes off on it (Grenade.ProcessTouch), not on the 2 s timer. Held for hold seconds; with
+-- charging, the Minotaur runs at the player and the grenade is thrown once it is close. The log has how close the grenade came to the
+-- middle of each part of its body, and how far the parts were from the bones they follow, which is more than 0 if they lag behind.
+local function monster_scenario(hold, charging)
+	return {
+		name = string.format("a grenade %s at %s Minotaur goes off on it", hold > CONFIG.one_round and "thrown at full speed" or "thrown",
+			charging and "a charging" or "a"),
+		run = function (t)
+			t.wait_until(function ()
+				return #assault.grenades == 0
+			end, 10, "the grenades in flight to go off")
+
+			local key = rifle_key(t)
+			local monster = t.spawn(CONFIG.monster_breed, charging and CONFIG.monster_charge_from or CONFIG.monster_distance)
+
+			if not t.expect(monster, "the %s could not be spawned", CONFIG.monster_breed) then
+				return
+			end
+
+			t.wait(1)
+
+			if charging then
+				runner.provoke(monster)
+
+				if not t.wait_until(function ()
+					local player_unit = t.unit()
+
+					return Unit.alive(monster) and Vector3.distance(Unit.local_position(monster, 0), Unit.local_position(player_unit, 0)) < CONFIG.monster_distance
+				end, CONFIG.monster_charge_wait, "the Minotaur to come close") then
+					return
+				end
+			end
+
+			t.aim_at(monster)
+
+			local damage = t.track_damage(monster)
+			local where = t.explosions()
+			local grenade
+			local closest, closest_zone = math.huge, nil
+			local lag = 0
+
+			local function observe()
+				grenade = grenade or assault.grenades[1]
+
+				if not grenade or grenade.exploded or not Unit.alive(monster) then
+					return
+				end
+
+				local position = grenade.position:unbox()
+
+				for zone, data in pairs(Unit.get_data(monster, "breed").hit_zones) do
+					for _, actor_name in ipairs(zone ~= "afro" and data.actors or {}) do
+						local actor = Unit.actor(monster, actor_name)
+
+						if actor then
+							local distance = Vector3.distance(position, Actor.center_of_mass(actor))
+
+							if distance < closest then
+								closest, closest_zone = distance, zone
+							end
+
+							lag = math.max(lag, Vector3.distance(Actor.position(actor), Unit.world_position(monster, Actor.node(actor))))
+						end
+					end
+				end
+			end
+
+			start_recording()
+			t.press("action_two", hold, observe)
+			t.watch(CONFIG.grenade_touch_time, observe)
+
+			recording = false
+
+			local from_grenade = 0
+
+			for _, hit in ipairs(damage.hits) do
+				if hit.source == key then
+					from_grenade = from_grenade + hit.amount
+				end
+			end
+
+			for i, name in ipairs(where) do
+				local position = where.positions[i]
+				local to_monster = t.on_main_thread(function ()
+					local node = Unit.has_node(monster, "j_spine") and Unit.node(monster, "j_spine") or 0
+
+					return Unit.alive(monster) and Vector3.distance(Vector3(position[1], position[2], position[3]), Unit.world_position(monster, node))
+				end)
+
+				t.log("%s %s m from the Minotaur's middle", name, to_monster and string.format("%.2f", to_monster) or "?")
+			end
+
+			t.log("the grenade came %.2f m from the middle of its %s; its parts were up to %.2f m from their bones", closest, tostring(closest_zone), lag)
+			t.expect(explosions == 1, "%d grenades went off within %.1f s, not 1", explosions, CONFIG.grenade_touch_time)
+			t.expect(from_grenade > 0, "the grenade did not hurt the Minotaur")
+		end,
+	}
+end
 
 local function scenarios()
 	return {
@@ -576,6 +682,9 @@ local function scenarios()
 				t.expect(damage.total > 0, "the grenade did not hurt the %s", CONFIG.plain_breed)
 			end,
 		},
+		monster_scenario(CONFIG.one_round),
+		monster_scenario(CONFIG.full_charge),
+		monster_scenario(CONFIG.one_round, true),
 		{
 			-- The grenade's explosion hurts the player who threw it, far less than the Rocket Launcher's
 			name = "a grenade that goes off at the feet hurts the player, at most 7",
