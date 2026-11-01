@@ -507,16 +507,17 @@ end
 
 -- Returns the way the surface faces where a projectile exploded, from the explosion's rotation (the projectile's, along its flight). The
 -- projectile flew into the surface, so this is the normal that a ray along the flight finds, or against the flight if it finds none.
+-- The second value is whether a surface was found.
 function utils.explosion_normal(world, position, rotation)
 	local forward = Quaternion.forward(rotation)
 	local physics_world = World.get_data(world, "physics_world")
 	local hit, _, _, normal = PhysicsWorld.immediate_raycast(physics_world, position - forward * 0.5, forward, 1, "closest", "collision_filter", "filter_ai_line_of_sight_check")
 
 	if hit and normal and Vector3.length(normal) > 0.5 then
-		return Vector3.normalize(normal)
+		return Vector3.normalize(normal), true
 	end
 
-	return -forward
+	return -forward, false
 end
 
 -- Returns where a projectile starts, as UT's ProjectileFire puts it (ProjSpawnOffset): forward, right and down meters from the eye at

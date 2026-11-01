@@ -131,7 +131,8 @@ local CONFIG = {
 	},
 	-- Its light: LightHue 28 and LightSaturation 100 at LightBrightness 255 (FGetHSV), reaching (LightRadius 8 + 1) * 25 units and falling
 	-- off as LE_QuadraticNonIncidence (xEmitter's), LT_FadeOut over its LifeSpan of 2 s: 1.5 times the share of the LifeSpan left, at most
-	-- 1 (FDynamicLight::Update, decompiled).
+	-- 1 (FDynamicLight::Update, decompiled). On a surface it is raised to light it evenly, as UT's does (skin_particles.lua's
+	-- surface_fit).
 	light_color = { 1, 0.74, 0.49 },
 	light_reach = 225, -- units
 	light_life = 2, -- s
@@ -681,8 +682,9 @@ end
 
 mod.scorches.add_kind("ut_flak_mark", CONFIG.mark_unit, CONFIG.mark_life, CONFIG.mark_pool_size)
 
--- FlakExplosion's fire and light at center (see CONFIG.fire)
-local function explosion_fire(center)
+-- FlakExplosion's fire and light at center, which is off the surface at position that faces along normal, if there is a surface
+-- (see CONFIG.fire). With no surface (the shell hit an enemy), the light is at center.
+local function explosion_fire(center, position, normal, on_surface)
 	local settings = CONFIG.fire
 	-- (the world's x in UT's axes is this game's y)
 	local along = Vector3(0, 1, 0)
@@ -713,8 +715,9 @@ local function explosion_fire(center)
 		falloff = CONFIG.light_reach * UNIT,
 		intensity = utils.WEAPON_LIGHT_INTENSITY,
 		life = CONFIG.light_life,
-		position = center,
-		quadratic = true,
+		position = on_surface and position or center,
+		quadratic = not on_surface,
+		surface_normal = on_surface and normal or nil,
 	})
 end
 
@@ -745,12 +748,12 @@ end
 
 -- The explosion of the shell, on every machine. The game's own effects of it are not made (see flak_cannon.lua).
 mod.skin_explosion_callbacks.ut_flak_shell_explosion = function (world, position, rotation)
-	local normal = utils.explosion_normal(world, position, rotation)
+	local normal, on_surface = utils.explosion_normal(world, position, rotation)
 	local center = position + normal * (CONFIG.explosion_lift * UNIT)
 
 	skin_apis[1].play_sound_at("ut_flak_explosion_3d", position)
 	mod.scorches.project("ut_flak_mark", position, Quaternion.forward(rotation), CONFIG.mark_size * UNIT)
-	explosion_fire(center)
+	explosion_fire(center, position, normal, on_surface)
 
 	for _ = 1, CONFIG.smoke_rings do
 		smoke_ring(center)

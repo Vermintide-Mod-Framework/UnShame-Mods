@@ -42,7 +42,8 @@ local mod = get_mod("unreal_tournament")
 --   particles.disc(spec): lies on a surface. spec.normal is the way it faces, or a function that returns it each frame.
 --   particles.light(spec): a point light (units/ut/fx/light) at spec.position or spec.follow. spec.color is its color, spec.intensity
 --       how bright it is, and spec.falloff how far it reaches. It fades like the other particles. With spec.quadratic it falls off as
---       UE2's LE_QuadraticNonIncidence does (see quadratic_start).
+--       UE2's LE_QuadraticNonIncidence does (see quadratic_start). With spec.surface_normal, spec.position is on a surface that faces
+--       that way, and the light lights the surface as LE_QuadraticNonIncidence does, evenly (see surface_fit).
 --   particles.beam(spec): goes from spec.from to spec.to. spec.size is how wide it is, and it faces the camera around its length.
 --       Instead of the two points, spec.track can be a function that returns from and to, or nothing when the beam should end.
 --       spec.screen_axis ("right" or "up") draws one of the two quads of a UE2 line instead: its corners are size / 2 to each side
@@ -162,9 +163,20 @@ local function release(particle)
 end
 
 -- This game's light is at full strength out to its falloff start, and past it falls off as (1 - a^4)^2 / (x^2 + 1), x being the
--- meters past the start and a the share of the way to the end (lighting_common.shader_source). UE2's LE_QuadraticNonIncidence falls off
--- as 1 - (d / r)^2 (Engine.dll's FDynamicLight::SampleIntensity, decompiled). This returns the start that brings the first nearest to the
--- second, for a light that reaches reach meters.
+-- meters past the start and a the share of the way to the end (lighting_common.shader_source)
+local function game_falloff(d, start, finish)
+	if d <= start then
+		return 1
+	end
+
+	local past = d - start
+	local window = math.max(0, 1 - (past / (finish - start)) ^ 4)
+
+	return window * window / (past * past + 1)
+end
+
+-- UE2's LE_QuadraticNonIncidence falls off as 1 - (d / r)^2 (Engine.dll's FDynamicLight::SampleIntensity, decompiled). This returns the
+-- start that brings this game's falloff nearest to it, for a light that reaches reach meters.
 local quadratic_starts = {}
 
 local function quadratic_start(reach)
@@ -179,18 +191,7 @@ local function quadratic_start(reach)
 		local miss = 0
 
 		for k = 0, 40 do
-			local d = reach * k / 40
-			local ours = 1
-
-			if d > start then
-				local past = d - start
-				local a = past / (reach - start)
-				local window = math.max(0, 1 - a ^ 4)
-
-				ours = window * window / (past * past + 1)
-			end
-
-			miss = miss + (ours - (1 - (k / 40) ^ 2)) ^ 2
+			miss = miss + (game_falloff(reach * k / 40, start, reach) - (1 - (k / 40) ^ 2)) ^ 2
 		end
 
 		if miss < best_miss then
@@ -202,6 +203,51 @@ local function quadratic_start(reach)
 
 	return best
 end
+
+-- UE2's LE_QuadraticNonIncidence also ignores the angle at which the light meets a surface, so the surface under it is lit evenly, by
+-- 1 - (r / reach)^2 at r meters out. This game's lights dim with that angle, so a light just off the floor makes a small bright spot.
+-- Raised higher, the light meets the floor around it more squarely. This returns how high to raise it and its falloff's start and end,
+-- that light the surface nearest to UE2's, for a light that reaches reach meters. The middle stays at full strength (start >= height).
+local surface_fits = {}
+
+local function surface_fit(reach)
+	if surface_fits[reach] then
+		return surface_fits[reach]
+	end
+
+	local best, best_miss = nil, math.huge
+
+	for i = 1, 40 do
+		local height = reach * i / 40
+		local finish = math.sqrt(reach * reach + height * height)
+
+		for j = 0, 99 do
+			local start = finish * j / 100
+
+			if start >= height then
+				local miss = 0
+
+				for k = 0, 20 do
+					local r = reach * k / 20
+					local d = math.sqrt(r * r + height * height)
+
+					miss = miss + (game_falloff(d, start, finish) * height / d - (1 - (k / 20) ^ 2)) ^ 2
+				end
+
+				if miss < best_miss then
+					best, best_miss = { height = height, start = start, finish = finish }, miss
+				end
+			end
+		end
+	end
+
+	surface_fits[reach] = best
+
+	return best
+end
+
+-- Keeps a raised light this far below a ceiling over it
+local CEILING_GAP = 0.2 -- m
 
 local function add(kind, spec)
 	if #active >= MAX_PARTICLES or not Managers.world:has_world("level_world") then
@@ -215,7 +261,7 @@ local function add(kind, spec)
 	if kind == "light" then
 		entry.light = entry.light or Unit.light(entry.unit, "light")
 
-		Light.set_falloff_start(entry.light, spec.quadratic and quadratic_start(spec.falloff) or 0)
+		Light.set_falloff_start(entry.light, spec.falloff_start or spec.quadratic and quadratic_start(spec.falloff) or 0)
 		Light.set_falloff_end(entry.light, spec.falloff)
 		Light.set_enabled(entry.light, false)
 	else
@@ -342,6 +388,19 @@ function particles.mesh(spec)
 end
 
 function particles.light(spec)
+	-- (a light on a surface is raised off it to light it as UE2's does, see surface_fit, but not through a ceiling)
+	if spec.surface_normal and Managers.world:has_world("level_world") then
+		local fit = surface_fit(spec.falloff)
+		local physics_world = World.get_data(Managers.world:world("level_world"), "physics_world")
+		-- (the ray starts CEILING_GAP off the surface so that it doesn't find the surface itself: the light can go as far as it reaches)
+		local _, _, ceiling = PhysicsWorld.immediate_raycast(physics_world, spec.position + spec.surface_normal * CEILING_GAP, spec.surface_normal, fit.height, "closest", "collision_filter", "filter_ai_line_of_sight_check")
+		local height = ceiling or fit.height
+
+		spec.position = spec.position + spec.surface_normal * height
+		spec.falloff_start = fit.start
+		spec.falloff = fit.finish
+	end
+
 	add("light", spec)
 end
 
