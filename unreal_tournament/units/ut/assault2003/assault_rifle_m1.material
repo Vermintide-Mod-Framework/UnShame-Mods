@@ -1,0 +1,17 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/weapon_standard"
+textures = {
+	color_map = "units/ut/assault2003/assault_rifle_grenadeendtex"
+}
+variables = {
+	use_color_map = {
+		type = "scalar"
+		value = 1
+	}
+	roughness = {
+		type = "scalar"
+		value = 0.9
+	}
+}

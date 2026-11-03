@@ -1,0 +1,9 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_weapon_invisible_graph"
+textures = {
+	overlay_map = "units/ut/fx/invis_overlay"
+}
+variables = {
+}

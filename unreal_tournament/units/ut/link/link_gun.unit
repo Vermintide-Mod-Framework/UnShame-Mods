@@ -1,0 +1,17 @@
+materials = {
+	m_0 = "units/ut/link/link_gun_m0"
+	m_1 = "units/ut/link/link_gun_m1"
+	m_2 = "units/ut/link/link_gun_m2"
+	m_3 = "units/ut/link/link_gun_m3"
+}
+renderables = {
+	b_bone_weapon = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+}

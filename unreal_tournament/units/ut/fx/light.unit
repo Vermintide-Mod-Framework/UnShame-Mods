@@ -1,0 +1,12 @@
+lights = {
+	light = {
+		cast_shadows = false
+		color = [ 1 1 1 ]
+		falloff_end = 2
+		falloff_exponent = 1
+		falloff_start = 0
+		node = "root"
+		type = "omni"
+		volumetric_intensity = 0
+	}
+}

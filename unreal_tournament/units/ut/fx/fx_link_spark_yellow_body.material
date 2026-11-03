@@ -1,0 +1,9 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/particle_linear"
+textures = {
+	texture_map = "units/ut/fx/link_spark_yellow_body"
+}
+variables = {
+}

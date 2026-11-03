@@ -1,0 +1,3 @@
+events = {
+	ut_combo_activated_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 1.305 duration_max = 1.305 positioning = "3D" }
+}

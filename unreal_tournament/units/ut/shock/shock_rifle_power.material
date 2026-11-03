@@ -1,0 +1,10 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/shock/shock_rifle_chamber"
+textures = {
+	gel_map = "units/ut/shock/shock_power_df"
+	glass_map = "units/ut/shock/shock_glass"
+}
+variables = {
+}

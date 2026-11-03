@@ -1,0 +1,24 @@
+materials = {
+	m_0 = "units/ut/redeemer/missile_m0"
+	m_1 = "units/ut/redeemer/missile_m1"
+}
+renderables = {
+	g_missile_0 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	g_missile_1 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+}

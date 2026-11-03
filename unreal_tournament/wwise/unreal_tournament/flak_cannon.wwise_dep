@@ -1,0 +1,8 @@
+win32 = {
+	banks = [
+		"wwise/unreal_tournament/flak_cannon"
+	]
+	streams = [
+	]
+	metadata = "wwise/unreal_tournament/flak_cannon"
+}

@@ -1,0 +1,33 @@
+Chat commands and development tools for [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3814159978]Unreal Tournament Weapons & Movement[/url].
+
+[h1]Chat Commands[/h1]
+[list]
+[*][b]/god[/b] - take no damage.
+[*][b]/allammo[/b] - fill your ammo.
+[*][b]/fly[/b], [b]/ghost[/b] - fly where you look, through walls with ghost. [b]/walk[/b] ends both.
+[*][b]/suicide[/b] - die at once.
+[*][b]/addbots[/b], [b]/killbots[/b] - add or remove hero bots.
+[*][b]/hud[/b] - hide the HUD, crosshair and weapon. [b]/hud 1[/b] keeps the weapon.
+[*][b]/freecamera[/b] - a third person camera you can turn around your character.
+[*][b]/slomo[/b] - change the game speed. 0 stops time.
+[*][b]/recharge[/b] - fill your career skill and adrenaline.
+[/list]
+
+[h1]Development[/h1]
+[list]
+[*][b]/ut_level[/b] - load any level, with an optional weather and difficulty.
+[*][b]/ut_test[/b] - run the in-game tests of the weapons.
+[*][b]/ut_equip[/b] - equip one of the mod's weapons, such as flak, switching career if needed. [b]/ut_equip back[/b] puts your loadout back.
+[*][b]/ut_quiet[/b] - no enemies, and nothing hurts you.
+[*][b]/ut_spawn[/b] - spawn an enemy ahead of you.
+[*][b]/ut_tp[/b] - move to a point.
+[*][b]/ut_where[/b] - show where you stand.
+[*][b]/ut_probe[/b] - show how far the level is above and around you.
+[*][b]/ut_3p[/b] - switch the third person view on or off.
+[*][b]/ut_skin[/b] - inspect and adjust a weapon's model.
+[/list]
+
+[h1]Links[/h1]
+[list]
+[*][url=https://github.com/Vermintide-Mod-Framework/UnShame-Mods/tree/master/unreal_tournament_extras]Source Code[/url]
+[/list]

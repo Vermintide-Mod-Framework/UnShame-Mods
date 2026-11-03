@@ -1,0 +1,9 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_decal_scorch_graph"
+textures = {
+	shape_map = "units/ut/fx/scorch_mask"
+}
+variables = {
+}

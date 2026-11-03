@@ -1,0 +1,17 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/world_standard"
+textures = {
+	color_map = "units/ut/sniper/third_person_sniper1"
+}
+variables = {
+	use_color_map = {
+		type = "scalar"
+		value = 1
+	}
+	roughness = {
+		type = "scalar"
+		value = 0.9
+	}
+}

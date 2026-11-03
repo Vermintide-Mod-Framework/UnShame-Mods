@@ -1,0 +1,244 @@
+local mod = get_mod("unreal_tournament")
+
+local utils = mod.utils
+
+-- Gameplay options
+local CONFIG = {
+	-- More Ammo Pickups: a level gets this many times as many ammo pickups
+	ammo_multiplier = 8,
+	-- Forgiving Disablers: a player who has been held by a disabler for disable_time seconds is let go, and the disabler is staggered
+	-- for stagger_duration.
+	disable_time = 2, -- seconds
+	stagger_duration = 2, -- seconds
+	-- Auto Revive: a player who has been knocked down for self_revive_time seconds gets up, and can't be hurt for
+	-- self_revive_invulnerable_time after that.
+	self_revive_time = 3, -- seconds
+	self_revive_invulnerable_time = 2, -- seconds
+}
+
+-- Returns whether an option is on: its own checkbox and the Gameplay checkbox above all of them, the host's in a game (mod.option)
+local function is_option_on(setting_id)
+	return mod.option(setting_id)
+end
+
+-- No Bots: the game modes have a flag that says there are no bots, and they remove any existing bots when it is set. The flag is set
+-- for the length of the call that handles the bots.
+for _, game_mode_name in ipairs({
+	"GameModeAdventure",
+	"GameModeDeus",
+	"GameModeWeave",
+}) do
+	local game_mode = rawget(_G, game_mode_name)
+
+	if game_mode then
+		mod:hook(game_mode, "_handle_bots", function (func, self, ...)
+			local bots_disabled = script_data.ai_bots_disabled
+
+			if is_option_on("no_bots") then
+				script_data.ai_bots_disabled = true
+			end
+
+			func(self, ...)
+
+			script_data.ai_bots_disabled = bots_disabled
+		end)
+	end
+end
+
+-- Without bots, the game can fail to find the places to put the players at the start of a level.
+local adventure_spawning = rawget(_G, "AdventureSpawning")
+
+if adventure_spawning then
+	mod:hook(adventure_spawning, "force_update_spawn_positions", function (func, ...)
+		if not is_option_on("no_bots") then
+			return func(...)
+		end
+
+		pcall(func, ...)
+	end)
+end
+
+-- No Friendly Fire: the damage a player does to an ally (not to themselves) is dropped at the point where it is handed to the game.
+-- That is on the machine of whoever deals it, and on the host that applies it. The damage to a player goes through
+-- add_damage_network_player. The damage to anything else, and damage over time, goes through add_damage_network.
+local function is_friendly_fire(attacker_unit, target_unit)
+	if not is_option_on("no_friendly_fire") or not attacker_unit or attacker_unit == target_unit then
+		return false
+	end
+
+	local breed = Unit.alive(attacker_unit) and Unit.get_data(attacker_unit, "breed")
+
+	return breed and breed.is_player and Managers.state.side:is_ally(attacker_unit, target_unit)
+end
+
+mod:hook(DamageUtils, "add_damage_network", function (func, attacked_unit, attacker_unit, ...)
+	if is_friendly_fire(attacker_unit, attacked_unit) then
+		return 0
+	end
+
+	return func(attacked_unit, attacker_unit, ...)
+end)
+
+mod:hook(DamageUtils, "add_damage_network_player", function (func, damage_profile, target_index, power_level, hit_unit, attacker_unit, ...)
+	if is_friendly_fire(attacker_unit, hit_unit) then
+		return 0
+	end
+
+	return func(damage_profile, target_index, power_level, hit_unit, attacker_unit, ...)
+end)
+
+-- Auto Restart: a level that is lost starts again, instead of sending the players back to the keep.
+mod:hook(GameModeAdventure, "evaluate_end_conditions", function (func, self, ...)
+	local ended, reason, reason_data = func(self, ...)
+
+	if ended and reason == "lost" and is_option_on("auto_restart") then
+		return ended, "reload", reason_data
+	end
+
+	return ended, reason, reason_data
+end)
+
+-- More Ammo Pickups: the game works out how many pickups of each kind a level gets, from its settings for the difficulty and the
+-- multipliers of the mutators that are on. This scales the ammo among them. The pickups are still put where the level has places for
+-- them, so a level with few places can't get as many as the setting says. Only the host decides what a level gets.
+local function scale(amount, multiplier)
+	return math.ceil(amount * multiplier)
+end
+
+mod:hook(MutatorHandler, "pickup_settings_updated_settings", function (func, self, pickup_settings)
+	local updated_settings = func(self, pickup_settings)
+
+	if not updated_settings or not is_option_on("more_ammo_pickups") then
+		return updated_settings
+	end
+
+	local multiplier = CONFIG.ammo_multiplier
+
+	-- What the game returns is a copy, so it is changed in place.
+	local ammo = updated_settings.ammo
+
+	if type(ammo) == "table" then
+		for pickup_name, amount in pairs(ammo) do
+			ammo[pickup_name] = scale(amount, multiplier)
+		end
+	elseif type(ammo) == "number" then
+		updated_settings.ammo = scale(ammo, multiplier)
+	end
+
+	return updated_settings
+end)
+
+-- Forgiving Disablers: a player who has been held by a disabler for disable_time seconds is let go. The disabler is staggered, which
+-- interrupts its hold and frees the player. It is staggered once per hold. If it holds on after that, it is not staggered again,
+-- because that would only keep it stunned. The host does this, since the enemies are on the host.
+-- For each player's unit this holds { disabler = the unit holding them, t = since when, released = whether it was staggered }.
+local disabled_since = {}
+
+local function update_forgiving_disablers(t)
+	if not t or not is_option_on("forgiving_disablers") then
+		table.clear(disabled_since)
+
+		return
+	end
+
+	local network_manager = Managers.state.network
+	local side_manager = Managers.state.side
+	local side = network_manager and network_manager.is_server and side_manager and side_manager:get_side_from_name("heroes")
+
+	if not side then
+		return
+	end
+
+	for _, player_unit in ipairs(side.PLAYER_AND_BOT_UNITS) do
+		local status_extension = Unit.alive(player_unit) and ScriptUnit.has_extension(player_unit, "status_system")
+		local disabler_unit = status_extension and utils.get_disabler(status_extension)
+		local state = disabled_since[player_unit]
+
+		if not disabler_unit then
+			disabled_since[player_unit] = nil
+		elseif not state or state.disabler ~= disabler_unit then
+			disabled_since[player_unit] = {
+				disabler = disabler_unit,
+				t = t,
+			}
+		elseif not state.released and t - state.t >= CONFIG.disable_time then
+			state.released = true
+
+			utils.release_from_disabler(disabler_unit, player_unit, t, CONFIG.stagger_duration)
+		end
+	end
+end
+
+-- Auto Revive: a player who has been knocked down for self_revive_time seconds gets back up, every time. This does not happen while
+-- something is holding them, so the disabler comes first (see Forgiving Disablers). The host does this, since it decides the revives.
+local SELF_REVIVE_BUFF = "ut_self_revive_invulnerability"
+local knocked_down_since = {} -- for each player's unit, since when it was knocked down
+
+-- The protection is a buff like the one from the game's invulnerability potion, with a duration of its own. Buffs go over the network
+-- by name, so everyone in the game needs the mod.
+BuffTemplates[SELF_REVIVE_BUFF] = {
+	buffs = {
+		{
+			duration = CONFIG.self_revive_invulnerable_time,
+			max_stacks = 1,
+			name = SELF_REVIVE_BUFF,
+			refresh_durations = true,
+			perks = {
+				require("scripts/unit_extensions/default_player_unit/buffs/settings/buff_perk_names").invulnerable,
+			},
+		},
+	},
+}
+
+utils.register_network_lookup("buff_templates", SELF_REVIVE_BUFF)
+
+-- On the host: gets a knocked down player up, as a revive by a teammate does. Auto Revive and the Booster combo use it.
+function mod.get_up(player_unit)
+	StatusUtils.set_revived_network(player_unit, true, player_unit)
+	CharacterStateHelper.play_animation_event(player_unit, "revive_complete")
+end
+
+local function update_self_revive(t)
+	if not t or not is_option_on("auto_revive") then
+		table.clear(knocked_down_since)
+
+		return
+	end
+
+	local network_manager = Managers.state.network
+	local side_manager = Managers.state.side
+	local side = network_manager and network_manager.is_server and side_manager and side_manager:get_side_from_name("heroes")
+
+	if not side then
+		return
+	end
+
+	for _, player_unit in ipairs(side.PLAYER_AND_BOT_UNITS) do
+		local player = Managers.player:owner(player_unit)
+		local status_extension = Unit.alive(player_unit) and HEALTH_ALIVE[player_unit] and player and not player.bot_player and ScriptUnit.has_extension(player_unit, "status_system")
+		local can_get_up = status_extension and status_extension:is_knocked_down() and not status_extension:is_disabled_by_pact_sworn()
+
+		if not can_get_up then
+			knocked_down_since[player_unit] = nil
+		elseif not knocked_down_since[player_unit] then
+			knocked_down_since[player_unit] = t
+		elseif t - knocked_down_since[player_unit] >= CONFIG.self_revive_time then
+			knocked_down_since[player_unit] = nil
+
+			mod.get_up(player_unit)
+			Managers.state.entity:system("buff_system"):add_buff(player_unit, SELF_REVIVE_BUFF, player_unit, false)
+		end
+	end
+end
+
+mod.update_callbacks[#mod.update_callbacks + 1] = function ()
+	local t = Managers.time:time("game")
+
+	update_forgiving_disablers(t)
+	update_self_revive(t)
+end
+
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	table.clear(disabled_since)
+	table.clear(knocked_down_since)
+end
