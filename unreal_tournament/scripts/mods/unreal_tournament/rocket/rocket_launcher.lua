@@ -315,11 +315,20 @@ local function build_rocket_action(is_salvo)
 			climb_function = math.easeInCubic,
 			restore_function = math.ease_out_quad,
 		}
+		-- A held primary button fires a rocket as soon as the salvo's fire rate has passed. UT asks to fire every frame the button is
+		-- down, and RocketLauncher.StartFire refuses until the other mode's NextFireTime. The aiming still needs its button released
+		-- first (see needs_release).
 		action.allowed_chain_actions = {
 			{
 				action = "action_wield",
 				input = "action_wield",
 				start_time = 0.4,
+				sub_action = "default",
+			},
+			{
+				action = "action_one",
+				input = "action_one_hold",
+				start_time = CONFIG.salvo_fire_interval,
 				sub_action = "default",
 			},
 		}
