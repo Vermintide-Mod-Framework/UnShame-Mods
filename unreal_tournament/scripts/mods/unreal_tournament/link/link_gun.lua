@@ -388,7 +388,7 @@ local function go_id(unit)
 end
 
 local function unit_of(id)
-	return id ~= 0 and Managers.state.unit_storage:unit(id) or nil
+	return id ~= 0 and utils.unit_of_go_id(id) or nil
 end
 
 -- The ammo extension of a character's Link Gun, if it holds one

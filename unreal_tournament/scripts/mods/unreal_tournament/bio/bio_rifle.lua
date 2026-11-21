@@ -814,7 +814,7 @@ local function carrier_ids(unit, node)
 end
 
 local function carrier_unit(id, is_level_unit)
-	return id >= 0 and Managers.state.network:game_object_or_level_unit(id, is_level_unit == 1) or nil
+	return id >= 0 and utils.game_object_or_level_unit(id, is_level_unit == 1) or nil
 end
 
 local function glob_landed(id, position, normal, level, on_unit, on_node)
@@ -1226,7 +1226,7 @@ mod:network_register("ut_bio_goo", function (_, owner_go_id, item_name, is_criti
 		return
 	end
 
-	local owner_unit = Managers.state.unit_storage:unit(owner_go_id)
+	local owner_unit = utils.unit_of_go_id(owner_go_id)
 	local t = Managers.time:time("game")
 
 	if not owner_unit or not Unit.alive(owner_unit) or not t then

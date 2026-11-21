@@ -509,7 +509,7 @@ function mod.minigun_shot(owner_unit, mode, end_position, hit_normal, hit_level,
 end
 
 mod:network_register("ut_minigun_shot", function (_, owner_go_id, alt, x, y, z, normal_x, normal_y, normal_z, hit)
-	local unit = Managers.state.unit_storage:unit(owner_go_id)
+	local unit = utils.unit_of_go_id(owner_go_id)
 
 	if not unit or not Unit.alive(unit) then
 		return

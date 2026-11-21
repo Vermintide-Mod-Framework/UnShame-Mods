@@ -742,7 +742,7 @@ mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
 end
 
 mod:network_register("ut_shield_throw", function (_, id, is_level_unit, kind, x, y, z, spin_x, spin_y, spin_z, at_x, at_y, at_z)
-	local unit = Managers.state.network:game_object_or_level_unit(id, is_level_unit == 1)
+	local unit = utils.game_object_or_level_unit(id, is_level_unit == 1)
 
 	if unit and Unit.alive(unit) then
 		add_throw(unit, kind, Vector3(x, y, z), Vector3(spin_x or 0, spin_y or 0, spin_z or 0), at_x and Vector3(at_x, at_y, at_z) or Unit.world_position(unit, 0))
@@ -803,7 +803,7 @@ local function push_body(unit, zone_name, direction)
 end
 
 mod:network_register("ut_shield_body_push", function (_, id, zone_name, x, y, z)
-	local unit = Managers.state.unit_storage:unit(id)
+	local unit = utils.unit_of_go_id(id)
 
 	if unit and Unit.alive(unit) then
 		push_body(unit, zone_name, Vector3(x, y, z))
@@ -838,7 +838,7 @@ local function give_simple_damage(unit, actor, position, direction)
 end
 
 mod:network_register("ut_shield_simple_damage", function (_, id, is_level_unit, actor_index, x, y, z, direction_x, direction_y, direction_z)
-	local unit = Managers.state.network:game_object_or_level_unit(id, is_level_unit == 1)
+	local unit = utils.game_object_or_level_unit(id, is_level_unit == 1)
 	local actor = unit and Unit.alive(unit) and actor_index < Unit.num_actors(unit) and Unit.actor(unit, actor_index)
 
 	if actor then

@@ -35,7 +35,7 @@ local god_mode = false
 local god_unit
 
 mod:network_register("ut_god", function (_, go_id, enabled)
-	local unit = Managers.player.is_server and Managers.state.unit_storage:unit(go_id)
+	local unit = Managers.player.is_server and ut.utils.unit_of_go_id(go_id)
 	local health_extension = unit and Unit.alive(unit) and ScriptUnit.has_extension(unit, "health_system")
 
 	if health_extension then

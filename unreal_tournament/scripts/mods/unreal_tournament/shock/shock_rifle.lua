@@ -770,7 +770,7 @@ end
 -- applies the damage on the server with the shooter as the attacker. The player whose ball it is gets told to end it on their
 -- machine, where it flies.
 mod:network_register("ut_shock_ball_stop", function (_, ball_go_id)
-	local ball_unit = Managers.state.unit_storage:unit(ball_go_id)
+	local ball_unit = utils.unit_of_go_id(ball_go_id)
 	local extension = ball_unit and Unit.alive(ball_unit) and ScriptUnit.has_extension(ball_unit, "projectile_system")
 
 	-- Only the real unit can be told to stop, not its copies.
@@ -992,7 +992,7 @@ local function spawn_trail(action, end_position, hit_normal, start_position)
 end
 
 mod:network_register("ut_shock_trail", function (_, owner_go_id, x, y, z, normal_x, normal_y, normal_z, start_x, start_y, start_z)
-	local unit = Managers.state.unit_storage:unit(owner_go_id)
+	local unit = utils.unit_of_go_id(owner_go_id)
 
 	if start_x and unit then
 		for _, callback in pairs(mod.shock_beam_callbacks) do

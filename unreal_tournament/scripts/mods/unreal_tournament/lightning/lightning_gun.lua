@@ -681,7 +681,7 @@ function mod.lightning.bolt(owner_unit, end_position, hit_normal, arcs, arcs_sta
 end
 
 mod:network_register("ut_lightning_bolt", function (_, owner_go_id, x, y, z, normal_x, normal_y, normal_z, start_x, start_y, start_z, arc_numbers)
-	local unit = Managers.state.unit_storage:unit(owner_go_id)
+	local unit = utils.unit_of_go_id(owner_go_id)
 
 	if not unit or not Unit.alive(unit) then
 		return

@@ -680,6 +680,21 @@ function utils.explosive_bot_shot(min_range, ally_clearance)
 	end
 end
 
+-- The unit of a game object id from a network message, or nil. A message can arrive while a level is left, when the unit storage is
+-- already gone.
+function utils.unit_of_go_id(go_id)
+	local unit_storage = Managers.state.unit_storage
+
+	return unit_storage and unit_storage:unit(go_id) or nil
+end
+
+-- The unit of a game object or level unit id from a network message, or nil, as utils.unit_of_go_id.
+function utils.game_object_or_level_unit(id, is_level_unit)
+	local network = Managers.state.network
+
+	return network and network:game_object_or_level_unit(id, is_level_unit) or nil
+end
+
 -- Plays a sound that follows a unit. Returns a handle for utils.stop_sound, or nil if it didn't play.
 function utils.play_on_unit(event, unit)
 	local id, _, wwise_world = WwiseUtils.trigger_unit_event(Managers.world:world("level_world"), event, unit)

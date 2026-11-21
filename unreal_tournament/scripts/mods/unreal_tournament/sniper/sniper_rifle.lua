@@ -454,7 +454,7 @@ mod.handgun_update_callbacks.sniper = function (self)
 end
 
 mod:network_register("ut_sniper_shot", function (_, owner_go_id, x, y, z, normal_x, normal_y, normal_z, start_x, start_y, start_z, direction_x, direction_y, direction_z)
-	local unit = Managers.state.unit_storage:unit(owner_go_id)
+	local unit = utils.unit_of_go_id(owner_go_id)
 
 	if not unit or not Unit.alive(unit) then
 		return

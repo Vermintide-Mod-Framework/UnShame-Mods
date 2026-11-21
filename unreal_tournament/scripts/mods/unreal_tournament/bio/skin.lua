@@ -231,7 +231,7 @@ local function stop_all_remote_charges()
 end
 
 mod:network_register("ut_bio_charge", function (_, owner_go_id, stage)
-	local unit = Managers.state.unit_storage:unit(owner_go_id)
+	local unit = utils.unit_of_go_id(owner_go_id)
 
 	if not unit or not Unit.alive(unit) or utils.is_local_player_unit(unit) or not Managers.world:has_world("level_world") then
 		return

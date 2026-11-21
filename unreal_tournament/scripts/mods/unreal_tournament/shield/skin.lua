@@ -928,7 +928,7 @@ shield.event_callbacks.skin_third_person = function (owner_unit, event)
 end
 
 mod:network_register("ut_shield_3p", function (_, go_id, event)
-	local unit = Managers.state.unit_storage and Managers.state.unit_storage:unit(go_id)
+	local unit = utils.unit_of_go_id(go_id)
 
 	if unit and Unit.alive(unit) then
 		on_event(unit, event)

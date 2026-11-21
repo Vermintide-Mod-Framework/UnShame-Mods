@@ -289,7 +289,7 @@ function mod.assault_round(owner_unit, end_position, hit_normal)
 end
 
 mod:network_register("ut_assault_round", function (_, owner_go_id, x, y, z, normal_x, normal_y, normal_z)
-	local unit = Managers.state.unit_storage:unit(owner_go_id)
+	local unit = utils.unit_of_go_id(owner_go_id)
 
 	if unit and Unit.alive(unit) then
 		for _, callback in pairs(mod.assault_round_callbacks) do
@@ -543,7 +543,7 @@ local function throw(action, hold_time)
 end
 
 mod:network_register("ut_assault_grenade", function (_, id, owner_go_id, x, y, z, vx, vy, vz, left)
-	local unit = Managers.state.unit_storage:unit(owner_go_id)
+	local unit = utils.unit_of_go_id(owner_go_id)
 
 	if unit and Unit.alive(unit) then
 		local grenade = add_grenade(id, unit, Vector3(x, y, z), Vector3(vx, vy, vz), false)
