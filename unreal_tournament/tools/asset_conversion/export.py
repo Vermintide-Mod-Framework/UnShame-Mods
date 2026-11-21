@@ -17,6 +17,8 @@ PACKAGES = [
     'WeaponSounds', 'NewWeaponSounds', 'AnnouncerMale2K4', 'GameSounds',
     # the HUD's pictures (the Assault Rifle's grenades)
     'HudContent',
+    # the main menu's logo (the title for videos, make_title.py)
+    '2K4Menus',
 ]
 
 def main():
