@@ -438,7 +438,7 @@ mod.charge_start_callbacks.bio_skin = function (action, new_action)
 	end
 end
 
--- Letting go cuts off the animation and the sounds.
+-- Letting go cuts off the animation and the sounds. The host also runs its bots' charges, so only the player's own charge ends this.
 mod.charge_finish_callbacks.bio_skin = function (action)
 	if broadcasting and action.owner_unit == broadcasting.owner_unit then
 		send_charge(broadcasting.owner_unit, CHARGE_END)
@@ -446,7 +446,7 @@ mod.charge_finish_callbacks.bio_skin = function (action)
 		broadcasting = nil
 	end
 
-	if not charging then
+	if not charging or action.owner_unit ~= charging.owner_unit then
 		return
 	end
 
