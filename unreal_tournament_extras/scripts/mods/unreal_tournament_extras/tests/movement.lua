@@ -36,6 +36,9 @@ local CONFIG = {
 	momentum_bonus = 0.25,
 	momentum_min_speed = 4.5, -- m/s
 	momentum_full_speed = 9, -- m/s
+	-- The mod counts the fastest speed of this last stretch of time (movement.lua's momentum_grace), and the hit's damage shows up here a
+	-- frame or two after the swing's power was worked out
+	momentum_window = 0.1 + 0.05, -- s
 }
 
 -- The arguments of the game's last damage calculation for damage_target, while it is set, by the unit
@@ -563,11 +566,28 @@ local function scenarios()
 						t.move()
 					end
 
-					t.watch(0.8, function ()
-						if not speed_at_hit and damage.total > 0 then
-							local vx, vy = t.velocity()
+					-- The speed the mod gives the bonus for: the whole velocity, the dodge's rise too, at its fastest over the last
+					-- momentum_window before the damage shows up
+					local speeds = {}
 
-							speed_at_hit = math.sqrt(vx * vx + vy * vy)
+					t.watch(0.8, function ()
+						if speed_at_hit then
+							return
+						end
+
+						local now = Managers.time:time("game")
+						local vx, vy, vz = t.velocity()
+
+						speeds[#speeds + 1] = { t = now, speed = math.sqrt(vx * vx + vy * vy + vz * vz) }
+
+						if damage.total > 0 then
+							speed_at_hit = 0
+
+							for _, sample in ipairs(speeds) do
+								if now - sample.t <= CONFIG.momentum_window then
+									speed_at_hit = math.max(speed_at_hit, sample.speed)
+								end
+							end
 						end
 					end)
 

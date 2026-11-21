@@ -123,6 +123,12 @@ local function start_recording()
 end
 
 -- The events of the stance on the wielded copy: its take, its leave, and the grenade's shot (assault_rifle.lua's VARIANTS)
+-- Gives the player all their grenades. The grenades are the player's, not the hero's, so a scenario that throws one starts with them all,
+-- whatever the scenarios before it threw.
+local function refill_grenades()
+	assault.grenade_count = assault.max_grenades
+end
+
 local function stance_events(t)
 	local actions = Weapons[ut.utils.wielded_template_name(t.unit())].actions
 
@@ -338,6 +344,7 @@ local function scenarios()
 				local charge_of = ut.charge_bars[ut.utils.wielded_template_name(t.unit())]
 				local fraction
 
+				refill_grenades()
 				t.hold("action_two")
 				t.wait(0.5)
 
@@ -358,6 +365,8 @@ local function scenarios()
 				t.wait_until(function ()
 					return #assault.grenades == 0
 				end, 10, "the grenades in flight to go off")
+
+				refill_grenades()
 
 				local before = assault.grenade_count
 
@@ -410,6 +419,7 @@ local function scenarios()
 			run = function (t)
 				local events = stance_events(t)
 
+				refill_grenades()
 				t.wait(1.5)
 				start_recording()
 				t.hold("action_two")
