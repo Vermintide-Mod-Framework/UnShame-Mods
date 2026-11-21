@@ -188,11 +188,8 @@ local function remote_shot(owner_unit)
 	end
 end
 
--- The charge that is going, as { owner_unit, sound, loop_sound, loop_timer }.
+-- The charge that is going, as { owner_unit, sound, loop_sound }. BioGoopLoop loops in the bank, so it is started once and stopped.
 local charging
-
--- How long BioGoopLoop lasts, in seconds. It is played again when it ends, as it is a loop in UT.
-local GOOP_LOOP_TIME = 2.25
 
 -- What other players hear of a charge. UT plays Biorifle_charge for everyone near when the charge starts (Weapon.PlayOwnedSound), and puts
 -- BioGoopLoop on the pawn (its AmbientSound) once the load is full. The player who charges sends three messages (see send_charge):
@@ -202,7 +199,7 @@ local CHARGE_START, CHARGE_FULL, CHARGE_END = 0, 1, 2
 -- The charge of the local player that the others are told about, as { owner_unit, full_sent }
 local broadcasting
 
--- The charges of other players on this machine, as [unit] = { sound, loop_sound, loop_timer, full, world }
+-- The charges of other players on this machine, as [unit] = { sound, loop_sound, full }
 local remote_charges = {}
 
 local function send_charge(owner_unit, stage)
@@ -244,7 +241,6 @@ mod:network_register("ut_bio_charge", function (_, owner_go_id, stage)
 		stop_remote_charge(unit)
 
 		remote_charges[unit] = {
-			loop_timer = 0,
 			sound = play_on_unit("ut_bio_charge_3d", unit),
 		}
 	elseif stage == CHARGE_FULL then
@@ -264,17 +260,12 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
 		send_charge(broadcasting.owner_unit, CHARGE_FULL)
 	end
 
-	-- The charges of the others. The loop is played again each time it ends, and a charge whose player is gone ends.
+	-- The charges of the others. The loop starts when the load is full, and a charge whose player is gone ends.
 	for unit, remote in pairs(remote_charges) do
 		if not Unit.alive(unit) then
 			stop_remote_charge(unit)
-		elseif remote.full then
-			remote.loop_timer = remote.loop_timer - dt
-
-			if remote.loop_timer <= 0 then
-				remote.loop_sound = play_on_unit("ut_bio_goop_loop_3d", unit)
-				remote.loop_timer = GOOP_LOOP_TIME
-			end
+		elseif remote.full and not remote.loop_sound then
+			remote.loop_sound = play_on_unit("ut_bio_goop_loop_3d", unit)
 		end
 	end
 end
@@ -366,11 +357,8 @@ skin_api = mod.weapon_skin.new({
 				skin.speed = 0
 			end
 
-			charging.loop_timer = charging.loop_timer - dt
-
-			if charging.loop_timer <= 0 then
+			if not charging.loop_sound then
 				charging.loop_sound = skin_api.play_sound("ut_bio_goop_loop")
-				charging.loop_timer = GOOP_LOOP_TIME
 			end
 		end
 
@@ -444,7 +432,6 @@ mod.charge_start_callbacks.bio_skin = function (action, new_action)
 
 		skin.hold = true
 		charging = {
-			loop_timer = 0,
 			owner_unit = action.owner_unit,
 			sound = skin_api.play_sound("ut_bio_charge"),
 		}
