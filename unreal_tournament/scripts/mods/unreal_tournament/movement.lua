@@ -670,6 +670,11 @@ local fall_speeds = setmetatable({}, {
 -- takes away the speed that goes into what the player hit. Here the upward speed is cut to what the player moved when the mover
 -- hit something, as the game already does for the speed sideways.
 mod:hook(PlayerUnitLocomotionExtension, "update_script_driven_movement", function (func, self, unit, dt, t, calculate_fall_velocity, ...)
+	-- (a flight is not a fall: a fall from before it does not hurt when the flight touches the ground)
+	if unit == flying_unit then
+		fall_speeds[unit] = nil
+	end
+
 	-- (a ghost moves without the mover, which is put where they are, see /ghost)
 	if unit == flying_unit and ghost then
 		self:update_script_driven_no_mover_movement(unit, dt, t)

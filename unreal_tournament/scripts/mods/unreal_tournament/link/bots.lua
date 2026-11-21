@@ -62,7 +62,8 @@ end
 BTConditions[NODE_NAME] = function (blackboard)
 	blackboard.ut_link_target = nil
 
-	if not can_beam(blackboard) or BTConditions.bot_in_melee_range(blackboard) then
+	-- (the bots' tree keeps this node while the mod is switched off, when the Link Gun is its base weapon)
+	if not mod:is_enabled() or not can_beam(blackboard) or BTConditions.bot_in_melee_range(blackboard) then
 		return false
 	end
 

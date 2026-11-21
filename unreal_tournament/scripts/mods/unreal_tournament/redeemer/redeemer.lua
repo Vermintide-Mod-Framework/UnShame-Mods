@@ -401,7 +401,11 @@ local function restore_template()
 	template.actions.action_career_release[SELECT_ACTION] = nil
 end
 
+-- The template is changed while the mod is on. Switched off, the Bounty Hunter's ability is the game's again: the hooks that make the
+-- Redeemer's shot work are off then.
 apply_template()
+mod.enabled_callbacks[#mod.enabled_callbacks + 1] = apply_template
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = restore_template
 mod.unload_callbacks[#mod.unload_callbacks + 1] = restore_template
 
 -- With the Redeemer only the upper barrel fires: the lower one and the push around the shooter are marked done before they come.
@@ -519,8 +523,17 @@ mod.update_callbacks[#mod.update_callbacks + 1] = function ()
 	end
 end
 
-mod.unload_callbacks[#mod.unload_callbacks + 1] = function ()
+-- The cooldown is the game's again when the mod is switched off or unloaded. Switched on, the update above sets it again.
+local function remove_cooldown_bonus()
 	for career_extension in pairs(cooldown_bonus) do
 		set_cooldown_bonus(career_extension, 0)
 	end
+end
+
+mod.disabled_callbacks[#mod.disabled_callbacks + 1] = remove_cooldown_bonus
+mod.unload_callbacks[#mod.unload_callbacks + 1] = remove_cooldown_bonus
+
+-- The characters' career extensions go with the level
+mod.level_exit_callbacks[#mod.level_exit_callbacks + 1] = function ()
+	table.clear(cooldown_bonus)
 end
