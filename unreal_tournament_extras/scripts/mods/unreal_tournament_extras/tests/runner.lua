@@ -1985,6 +1985,17 @@ function runner.start(names, career)
 		return
 	end
 
+	-- The runner sets the loadout in the Adventure inventory. In Chaos Wastes the weapons of the run are in an inventory of their own,
+	-- which refuses the mod's items, and a level loaded from there stays in Chaos Wastes mode.
+	local mechanism = Managers.mechanism:current_mechanism_name()
+
+	if mechanism ~= "adventure" then
+		log("the tests run in Adventure mode, and the game is in %s mode: go back to the Adventure keep first", tostring(mechanism))
+		push_log_out()
+
+		return
+	end
+
 	if #names == 1 and names[1] == "all" then
 		names = table.keys(runner.suites)
 		table.sort(names)
