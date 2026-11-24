@@ -487,47 +487,68 @@ end
 -- The enemies and bodies in the cone of the punch (hit_angle) within the range, that a ray from the player reaches without a wall in
 -- the way. Each is { unit, hit }: the hit is where that ray meets it, as a shot's hit is. The cone is about the crosshair, so the origin
 -- is the eye.
+-- Returns the target that a node of the unit makes, if the node is in the cone: a body as it is, and an enemy if a ray from the origin
+-- to the node reaches it
+local function target_at_node(owner_unit, physics_world, origin, direction, min_dot, range, unit, node)
+	local to = Unit.world_position(unit, node) - origin
+	local distance = Vector3.length(to)
+
+	if unit == owner_unit or distance <= 0.01 or Vector3.dot(to / distance, direction) < min_dot then
+		return nil
+	end
+
+	if not HEALTH_ALIVE[unit] then
+		-- (a body: its hit zones are off, so it is thrown without looking for them)
+		return {
+			unit = unit,
+		}
+	end
+
+	-- (only enemies: an ally that is not a player, such as a pet of the Necromancer's, is passed as a melee blow passes allies)
+	if not DamageUtils.is_enemy(owner_unit, unit) then
+		return nil
+	end
+
+	local hits = raycast(physics_world, origin, to / distance, range)
+
+	for i = 1, #(hits or {}) do
+		local hit_actor = hits[i][4]
+		local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit_actor), hit_actor)
+		local breed = Unit.get_data(hit_unit, "breed")
+		local zone = breed and breed.hit_zones_lookup and breed.hit_zones_lookup[Actor.node(hit_actor)]
+
+		-- (the "afro" zone is far bigger than the enemy, for near misses, and a hit on it does nothing: the ray goes on)
+		if hit_unit == unit and not (zone and zone.name == "afro") then
+			return {
+				hit = hits[i],
+				unit = unit,
+			}
+		elseif not breed then
+			-- (a wall in the way)
+			return nil
+		end
+	end
+end
+
 local function targets_in_reach(owner_unit, physics_world, origin, direction, range)
 	local world = Managers.world:world("level_world")
 	local min_dot = math.cos(math.rad(CONFIG.hit_angle / 2))
 	local targets = {}
 
 	for unit in pairs(utils.units_in_radius(world, origin, range * UNIT)) do
-		-- The middle of the body: its spine, or for a breed without one (the Chaos Wastes' orb), the part that is its torso zone
+		-- The middle of the body is its spine, and if that misses, the part that is its torso zone. The spine node of the Chaos
+		-- Wastes' orb is not where the orb is.
 		local breed = Unit.get_data(unit, "breed")
 		local torso = breed and breed.hit_zones_lookup and breed.hit_zones_lookup.torso
-		local node = Unit.has_node(unit, "j_spine") and Unit.node(unit, "j_spine") or torso or 0
-		local to = Unit.world_position(unit, node) - origin
-		local distance = Vector3.length(to)
+		local spine = Unit.has_node(unit, "j_spine") and Unit.node(unit, "j_spine")
+		local target = target_at_node(owner_unit, physics_world, origin, direction, min_dot, range, unit, spine or torso or 0)
 
-		if unit ~= owner_unit and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot and not HEALTH_ALIVE[unit] then
-			-- (a body: its hit zones are off, so it is thrown without looking for them)
-			targets[#targets + 1] = {
-				unit = unit,
-			}
-		elseif unit ~= owner_unit and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot and DamageUtils.is_enemy(owner_unit, unit) then
-			-- (only enemies: an ally that is not a player, such as a pet of the Necromancer's, is passed as a melee blow passes allies)
-			local hits = raycast(physics_world, origin, to / distance, range)
+		if not target and spine and torso then
+			target = target_at_node(owner_unit, physics_world, origin, direction, min_dot, range, unit, torso)
+		end
 
-			for i = 1, #(hits or {}) do
-				local hit_actor = hits[i][4]
-				local hit_unit = ActionUtils.redirect_shield_hit(Actor.unit(hit_actor), hit_actor)
-				local breed = Unit.get_data(hit_unit, "breed")
-				local zone = breed and breed.hit_zones_lookup and breed.hit_zones_lookup[Actor.node(hit_actor)]
-
-				-- (the "afro" zone is far bigger than the enemy, for near misses, and a hit on it does nothing: the ray goes on)
-				if hit_unit == unit and not (zone and zone.name == "afro") then
-					targets[#targets + 1] = {
-						hit = hits[i],
-						unit = unit,
-					}
-
-					break
-				elseif not breed then
-					-- (a wall in the way)
-					break
-				end
-			end
+		if target then
+			targets[#targets + 1] = target
 		end
 	end
 
