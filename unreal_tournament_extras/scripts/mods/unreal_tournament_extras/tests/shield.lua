@@ -970,6 +970,10 @@ local function scenarios()
 					return
 				end
 
+				-- The orb runs from its spawn on (the flee action of its behaviour has no condition), so its speed is made 0
+				t.on_main_thread(function ()
+					ScriptUnit.extension(orb, "ai_navigation_system"):add_movement_modifier(0)
+				end)
 				t.wait(1)
 
 				local lookup = Breeds[ORB_BREED].hit_zones_lookup
@@ -989,7 +993,7 @@ local function scenarios()
 						local flat = Vector3.normalize(Vector3.flat(position - Unit.local_position(t.unit(), 0)))
 						local aimed = position + Vector3.cross(flat, Vector3.up()) * (beside or 0)
 
-						return { Vector3.x(aimed), Vector3.y(aimed), Vector3.z(aimed) }
+						return { Vector3.x(aimed), Vector3.y(aimed), Vector3.z(aimed), Vector3.distance(position, ScriptUnit.extension(t.unit(), "first_person_system"):current_position()) }
 					end)
 
 					t.aim_at_point(at[1], at[2], at[3])
@@ -1001,7 +1005,7 @@ local function scenarios()
 
 					local hit = damage.hits[1]
 
-					t.expect(damage.total > 0, "a punch at the orb with its part named %s%s did no damage", name, beside and ", aimed beside it" or "")
+					t.expect(damage.total > 0, "a punch at the orb with its part named %s%s, %.2f m from the eyes, did no damage", name, beside and ", aimed beside it" or "", at[4])
 					t.expect(not hit or hit.zone == "torso", "the punch hit the orb's %s, not its torso", hit and tostring(hit.zone))
 				end
 
