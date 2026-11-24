@@ -18,6 +18,10 @@ local CONFIG = {
 	-- BioChargedFire.MaxGoopLoad, and the level a glob that has landed keeps at most (the rest is thrown off)
 	max_goop_load = 10,
 	max_landed_level = 4,
+	-- "a load that runs out of ammo goes on when ammo is picked up": the ammo the rifle has when the load starts, and the ammo picked up
+	-- while it waits
+	short_ammo = 3,
+	picked_up_ammo = 4,
 	-- How much of a level 1 glob's damage (20 + 19, scaled by 60 / 90) the player who fired it takes at most
 	glob_self_damage = (20 + 19) * 60 / 90 * 0.75,
 	-- The explosion throws the player up at least this fast when it goes off at their feet
@@ -163,6 +167,42 @@ local function ammo_extension_of(unit)
 	local slot_data = inventory_extension:get_slot_data("slot_ranged")
 
 	return GearUtils.get_ammo_extension(slot_data.right_unit_1p, slot_data.left_unit_1p)
+end
+
+-- Whether the player's rifle is in its charge action, loading goop
+local function charging(t)
+	return t.on_main_thread(function ()
+		local inventory_extension = ScriptUnit.extension(t.unit(), "inventory_system")
+		local slot_data = inventory_extension:get_slot_data("slot_ranged")
+		local weapon_unit = slot_data and slot_data.right_unit_1p
+		local weapon_extension = weapon_unit and ScriptUnit.has_extension(weapon_unit, "weapon_system")
+		local action = weapon_extension and weapon_extension.current_action_settings
+
+		return action ~= nil and action.ut_charge_callback == "bio"
+	end)
+end
+
+-- Takes ammo away until the rifle has this much
+local function set_ammo(t, amount)
+	t.on_main_thread(function ()
+		local ammo_extension = ammo_extension_of(t.unit())
+		local extra = ammo_extension:total_remaining_ammo() - amount
+
+		if extra > 0 then
+			ammo_extension:use_ammo(extra)
+		end
+	end)
+
+	-- (the game takes used ammo from the clip in its next update)
+	t.wait(0.2)
+end
+
+-- A hit on the player by a clan rat's blade, which ends a weapon action that can be interrupted (the game's hit reaction:
+-- CharacterStateHelper.update_weapon_actions)
+local function hit_player(t, rat)
+	t.on_main_thread(function ()
+		DamageUtils.add_damage_network(t.unit(), rat, 1, "torso", "cutting", nil, Vector3(0, 0, -1), "skaven_clan_rat", nil, rat)
+	end)
 end
 
 -- The largest hit in a record of t.track_damage: the explosion's
@@ -378,6 +418,96 @@ local function scenarios()
 
 				t.expect(loaded > 0, "the load used no ammo")
 				t.expect(after == before, "%s ammo after the switch, not the %s before the load", tostring(after), tostring(before))
+			end,
+		},
+		{
+			-- UT stops a load for good when the ammo runs out. The mod's waits, and goes on when ammo is picked up while the button is
+			-- held: one unit at once, and the rest each 0.25 s.
+			name = "a load that runs out of ammo goes on when ammo is picked up",
+			run = function (t)
+				t.look(20)
+				set_ammo(t, CONFIG.short_ammo)
+
+				local globs, observe = watch_globs(t, is_shot)
+				local function load_amount()
+					return t.on_main_thread(function ()
+						return ut.bio_goop.load_amount(t.unit())
+					end)
+				end
+
+				t.hold("action_two")
+				t.wait(1.5)
+
+				local stalled = load_amount()
+				local waited = charging(t)
+
+				t.on_main_thread(function ()
+					ammo_extension_of(t.unit()):add_ammo(CONFIG.picked_up_ammo)
+				end)
+				t.wait(CONFIG.picked_up_ammo * 0.25 + 0.5)
+
+				local resumed = load_amount()
+
+				t.release("action_two")
+				t.watch(0.3, observe)
+
+				local expected = CONFIG.short_ammo + CONFIG.picked_up_ammo
+
+				t.expect(stalled == CONFIG.short_ammo, "the load stopped at %s, not at the %d ammo there was", tostring(stalled), CONFIG.short_ammo)
+				t.expect(waited, "the charge ended when the ammo ran out")
+				t.expect(resumed == expected, "the load is %s after %d ammo was picked up, not %d", tostring(resumed), CONFIG.picked_up_ammo, expected)
+				t.expect(globs[1] and globs[globs[1]].level == expected, "the glob has %s goop, not %d", globs[1] and tostring(globs[globs[1]].level) or "no", expected)
+			end,
+		},
+		{
+			-- A hit ends a weapon action that can be interrupted (the game's hit reaction). The load can't be, as in UT. The same hit is
+			-- tried first on a load made interruptible, to show that the hit is one that interrupts.
+			name = "getting hit does not end a load",
+			run = function (t)
+				local rat = t.spawn("skaven_clan_rat", 3)
+
+				if not t.expect(rat, "the clan rat could not be spawned") then
+					return
+				end
+
+				local charge_action = Weapons[definition.template].actions.action_two.default
+
+				t.look(20)
+				t.hurtable(true)
+
+				charge_action.uninterruptible = nil
+
+				t.hold("action_two")
+				t.wait(0.5)
+				hit_player(t, rat)
+				t.wait(0.3)
+
+				local interrupted = not charging(t)
+
+				t.release("action_two")
+				charge_action.uninterruptible = true
+
+				-- (past the game's cooldown between interrupting hits, GenericStatusExtension.hitreact_interrupt)
+				t.wait(1.5)
+				t.heal()
+
+				local globs, observe = watch_globs(t, is_shot)
+
+				t.hold("action_two")
+				t.wait(0.5)
+				hit_player(t, rat)
+				t.wait(0.3)
+
+				local kept = charging(t)
+
+				t.wait(2.5)
+				t.release("action_two")
+				t.watch(0.3, observe)
+				t.hurtable(false)
+
+				t.expect(interrupted, "the hit did not end a load that can be interrupted, so this test proves nothing")
+				t.expect(kept, "the hit ended the load")
+				t.expect(globs[1] and globs[globs[1]].level == CONFIG.max_goop_load, "the glob has %s goop, not %d", globs[1] and tostring(globs[globs[1]].level) or "no", CONFIG.max_goop_load)
 			end,
 		},
 		{

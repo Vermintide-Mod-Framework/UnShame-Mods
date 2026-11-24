@@ -655,7 +655,7 @@ local function new_skin(variant)
 		-- the gun, which the first person mesh doesn't have, stays below the screen. Checked with preview_weapon.py.
 		inspect_pose_right = 10,
 		inspect_pose_forward = 0,
-		inspect_pose_up = -4,
+		inspect_pose_up = -2,
 		inspect_pose_roll = 15,
 		inspect_pose_pitch = 40,
 		inspect_pose_yaw = 45,

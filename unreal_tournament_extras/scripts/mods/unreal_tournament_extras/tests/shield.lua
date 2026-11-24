@@ -41,6 +41,16 @@ local STANDARD_UNIT = "units/weapons/enemy/wpn_bm_standard_01/wpn_bm_standard_01
 local STANDARD_DISTANCE = 1.5 -- m
 local STANDARD_HEALTH = 10
 local STANDARD_MAX_PUNCHES = 10
+-- "a punch hits a standard where its pole is aimed at": its health, which the punches don't use up, and where the pole is aimed at, as
+-- shares of the standard's height
+local STANDARD_SPARE_HEALTH = 1000
+local STANDARD_AIM_SHARES = { 0.15, 0.5, 0.85 }
+
+-- "a punch hits the supply orb": the orb's breed, how far ahead it is, and how far beside it the last punch is aimed: inside the punch's
+-- cone (60 degrees across) at that distance, and past the orb's part
+local ORB_BREED = "chaos_greed_pinata"
+local ORB_DISTANCE = 1.8 -- m
+local ORB_BESIDE = 0.8 -- m
 
 -- "a full punch at the floor hurts the player as UT's": how long the charge is held (past the full charge's 2.5 s), how far the player
 -- looks down, and the damage UT's punch of a wall does at a full charge, halved as shield_gun.lua halves it (MinSelfDamage 8 +
@@ -80,6 +90,61 @@ local ALLY_ENEMY_SHORT = 0.3 -- m
 -- The enemy, which has no armour, and how far ahead it stands
 local CHARGE_BREED = "chaos_marauder"
 local CHARGE_DISTANCE = 1.5 -- m
+
+-- Plants a standard STANDARD_DISTANCE ahead, as a standard bearer plants it (BTPlaceStandardAction), with this much health. Returns it
+-- and the spot on the ground it stands on, or nothing if it could not be spawned.
+local function plant_standard(t, health)
+	-- Spawning the bearer loads the beastmen's package, which has the standard. The standard takes the bearer's side.
+	local bearer = t.spawn("beastmen_standard_bearer", 8)
+
+	if not t.expect(bearer, "the standard bearer could not be spawned") then
+		return nil
+	end
+
+	local spot = t.ground_at(STANDARD_DISTANCE, 0)
+	local standard
+
+	t.on_main_thread(function ()
+		if not spot or not Application.can_get("unit", STANDARD_UNIT) then
+			return
+		end
+
+		standard = Managers.state.unit_spawner:spawn_network_unit(STANDARD_UNIT, "standard_unit", {
+			health_system = {
+				health = health,
+			},
+			death_system = {
+				death_reaction_template = "standard",
+			},
+			ai_supplementary_system = {
+				standard_template_name = "healing_standard",
+				standard_bearer_unit = bearer,
+			},
+			ping_system = {
+				always_pingable = true,
+			},
+		}, Vector3(spot[1], spot[2], spot[3]))
+	end)
+
+	t.remove(bearer)
+
+	if not t.expect(standard, "the standard could not be spawned") then
+		return nil
+	end
+
+	t.wait(0.5)
+
+	return standard, spot
+end
+
+-- Removes a standard that still stands
+local function remove_standard(t, standard)
+	t.on_main_thread(function ()
+		if Unit.alive(standard) and HEALTH_ALIVE[standard] then
+			Managers.state.unit_spawner:mark_for_deletion(standard)
+		end
+	end)
+end
 
 -- Has the gun punch an enemy with a shield ahead, charged past a third or not, and returns the damage it took and whether its shield
 -- is broken. A charged punch is charged facing away, as the charge punches by itself once an enemy is in reach, and then the player
@@ -811,45 +876,12 @@ local function scenarios()
 			-- and punched until it falls.
 			name = "punches destroy a standard",
 			run = function (t)
-				-- Spawning the bearer loads the beastmen's package, which has the standard. The standard takes the bearer's side.
-				local bearer = t.spawn("beastmen_standard_bearer", 8)
+				local standard, spot = plant_standard(t, STANDARD_HEALTH)
 
-				if not t.expect(bearer, "the standard bearer could not be spawned") then
+				if not standard then
 					return
 				end
 
-				local spot = t.ground_at(STANDARD_DISTANCE, 0)
-				local standard
-
-				t.on_main_thread(function ()
-					if not spot or not Application.can_get("unit", STANDARD_UNIT) then
-						return
-					end
-
-					standard = Managers.state.unit_spawner:spawn_network_unit(STANDARD_UNIT, "standard_unit", {
-						health_system = {
-							health = STANDARD_HEALTH,
-						},
-						death_system = {
-							death_reaction_template = "standard",
-						},
-						ai_supplementary_system = {
-							standard_template_name = "healing_standard",
-							standard_bearer_unit = bearer,
-						},
-						ping_system = {
-							always_pingable = true,
-						},
-					}, Vector3(spot[1], spot[2], spot[3]))
-				end)
-
-				t.remove(bearer)
-
-				if not t.expect(standard, "the standard could not be spawned") then
-					return
-				end
-
-				t.wait(0.5)
 				t.aim_at_point(spot[1], spot[2], spot[3] + 1)
 
 				local punches = 0
@@ -871,11 +903,94 @@ local function scenarios()
 				t.expect(first_damage and first_damage > 0, "the first punch did not damage the standard")
 				t.expect(left == 0, "%d punches did not destroy the standard", punches)
 
-				t.on_main_thread(function ()
-					if Unit.alive(standard) and HEALTH_ALIVE[standard] then
-						Managers.state.unit_spawner:mark_for_deletion(standard)
-					end
+				remove_standard(t, standard)
+			end,
+		},
+		{
+			-- A punch reaches a standard at whatever part of its pole the player aims at, as a melee swing does. The pole is aimed at from
+			-- its foot to near its top, at shares of the height of the standard's box. Aimed high, the foot is outside the punch's cone.
+			name = "a punch hits a standard where its pole is aimed at",
+			run = function (t)
+				local standard, spot = plant_standard(t, STANDARD_SPARE_HEALTH)
+
+				if not standard then
+					return
+				end
+
+				local height = t.on_main_thread(function ()
+					local pose, half_extents = Unit.box(standard)
+					local top = Vector3.z(Matrix4x4.translation(pose)) + math.abs(Vector3.z(Matrix4x4.x(pose))) * Vector3.x(half_extents) + math.abs(Vector3.z(Matrix4x4.y(pose))) * Vector3.y(half_extents) + math.abs(Vector3.z(Matrix4x4.z(pose))) * Vector3.z(half_extents)
+
+					return top - spot[3]
 				end)
+
+				t.log("the standard is %.2f m high", height)
+
+				for _, share in ipairs(STANDARD_AIM_SHARES) do
+					local before = t.health_of(standard)
+
+					t.aim_at_point(spot[1], spot[2], spot[3] + share * height)
+					t.press("action_one", 0.1)
+					t.wait(0.8)
+
+					t.expect(t.health_of(standard) < before, "a punch aimed %.2f m up the pole did not damage the standard", share * height)
+				end
+
+				remove_standard(t, standard)
+			end,
+		},
+		{
+			-- The Chaos Wastes' orb that drops supplies has one part, which is both its torso and its neck zone, and the game names it by one
+			-- of the two (DamageUtils.create_hit_zone_lookup). A punch has no headshots, and hits it either way, as a torso. It is punched
+			-- with the part named each way, and once aimed beside it, inside the punch's cone.
+			name = "a punch hits the supply orb",
+			run = function (t)
+				local orb = t.spawn(ORB_BREED, ORB_DISTANCE)
+
+				if not t.expect(orb, "the orb could not be spawned") then
+					return
+				end
+
+				t.wait(1)
+
+				local lookup = Breeds[ORB_BREED].hit_zones_lookup
+				local node = lookup.torso
+				local zone = lookup[node]
+				local own_name = zone.name
+
+				-- Punches the orb, aimed at its part or this far to the side of it
+				local function punch(name, beside)
+					zone.name = name
+
+					local at = t.on_main_thread(function ()
+						-- (healed, so that the punches before don't kill it)
+						ScriptUnit.extension(orb, "health_system"):set_current_damage(0)
+
+						local position = Unit.world_position(orb, node)
+						local flat = Vector3.normalize(Vector3.flat(position - Unit.local_position(t.unit(), 0)))
+						local aimed = position + Vector3.cross(flat, Vector3.up()) * (beside or 0)
+
+						return { Vector3.x(aimed), Vector3.y(aimed), Vector3.z(aimed) }
+					end)
+
+					t.aim_at_point(at[1], at[2], at[3])
+
+					local damage = t.track_damage(orb)
+
+					t.press("action_one", 0.1)
+					t.wait(0.8)
+
+					local hit = damage.hits[1]
+
+					t.expect(damage.total > 0, "a punch at the orb with its part named %s%s did no damage", name, beside and ", aimed beside it" or "")
+					t.expect(not hit or hit.zone == "torso", "the punch hit the orb's %s, not its torso", hit and tostring(hit.zone))
+				end
+
+				punch("neck")
+				punch("torso")
+				punch(own_name, ORB_BESIDE)
+
+				zone.name = own_name
 			end,
 		},
 		{
