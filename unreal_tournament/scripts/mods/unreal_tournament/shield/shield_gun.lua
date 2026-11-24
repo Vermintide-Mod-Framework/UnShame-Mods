@@ -493,7 +493,10 @@ local function targets_in_reach(owner_unit, physics_world, origin, direction, ra
 	local targets = {}
 
 	for unit in pairs(utils.units_in_radius(world, origin, range * UNIT)) do
-		local node = Unit.has_node(unit, "j_spine") and Unit.node(unit, "j_spine") or 0
+		-- The middle of the body: its spine, or for a breed without one (the Chaos Wastes' orb), the part that is its torso zone
+		local breed = Unit.get_data(unit, "breed")
+		local torso = breed and breed.hit_zones_lookup and breed.hit_zones_lookup.torso
+		local node = Unit.has_node(unit, "j_spine") and Unit.node(unit, "j_spine") or torso or 0
 		local to = Unit.world_position(unit, node) - origin
 		local distance = Vector3.length(to)
 
@@ -538,6 +541,51 @@ end
 -- second kind is reached if no wall is in the way.
 local OBJECT_FILTERS = { "filter_melee_sweep", "filter_explosion_overlap" }
 
+-- Returns the point of the unit's upright line through the actor's origin that is nearest the line of the aim, kept within the height
+-- of the unit's box. A standard is a tall pole whose origin is at its foot, so this is the part of the pole the player aims at.
+local function upright_point(unit, actor, origin, direction)
+	local base = Actor.position(actor)
+	local up = Vector3.dot(direction, Vector3.up())
+	local across = 1 - up * up
+
+	if across < 0.001 then
+		return nil
+	end
+
+	local offset = origin - base
+	local height = (Vector3.dot(offset, Vector3.up()) - up * Vector3.dot(direction, offset)) / across
+	local pose, half_extents = Unit.box(unit)
+	local center = Vector3.z(Matrix4x4.translation(pose))
+	local half_height = math.abs(Vector3.z(Matrix4x4.x(pose))) * Vector3.x(half_extents) + math.abs(Vector3.z(Matrix4x4.y(pose))) * Vector3.y(half_extents) + math.abs(Vector3.z(Matrix4x4.z(pose))) * Vector3.z(half_extents)
+	local z = math.clamp(Vector3.z(base) + height, center - half_height, center + half_height)
+
+	return Vector3(Vector3.x(base), Vector3.y(base), z)
+end
+
+-- Returns the hit of a ray from origin to a point on the unit, if the point is in the cone and nothing else is hit first (characters
+-- and the player don't count)
+local function ray_to_object(physics_world, origin, direction, min_dot, range, point, unit, owner_unit)
+	local to = point - origin
+	local distance = Vector3.length(to)
+
+	if distance <= 0.01 or Vector3.dot(to / distance, direction) < min_dot then
+		return nil
+	end
+
+	local hits = copies(PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, range * UNIT, "all", "collision_filter", "filter_melee_sweep"))
+
+	for j = 1, #hits do
+		local hit_unit = hits[j][4] and Actor.unit(hits[j][4])
+
+		if hit_unit == unit then
+			return hits[j]
+		elseif hit_unit ~= owner_unit and not (hit_unit and Unit.get_data(hit_unit, "breed")) then
+			-- (a wall or another thing in the way)
+			return nil
+		end
+	end
+end
+
 local function objects_in_reach(owner_unit, physics_world, origin, direction, range)
 	local min_dot = math.cos(math.rad(CONFIG.hit_angle / 2))
 	local objects = {}
@@ -552,25 +600,16 @@ local function objects_in_reach(owner_unit, physics_world, origin, direction, ra
 			local to = unit and Actor.position(actor) - origin
 			local distance = to and Vector3.length(to)
 
-			if unit and not found[unit] and not Unit.get_data(unit, "breed") and is_object(unit, actor, owner_unit) and distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot then
+			if unit and not found[unit] and not Unit.get_data(unit, "breed") and is_object(unit, actor, owner_unit) then
 				local hit
 
 				if filter == "filter_melee_sweep" then
-					local hits = copies(PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, range * UNIT, "all", "collision_filter", filter))
+					-- The ray goes to the part of the thing the player aims at, and if that misses, to its origin
+					local aimed = upright_point(unit, actor, origin, direction)
 
-					for j = 1, #hits do
-						local hit_unit = hits[j][4] and Actor.unit(hits[j][4])
-
-						if hit_unit == unit then
-							hit = hits[j]
-
-							break
-						elseif hit_unit ~= owner_unit and not (hit_unit and Unit.get_data(hit_unit, "breed")) then
-							-- (a wall or another thing in the way)
-							break
-						end
-					end
-				elseif not Actor.is_static(actor) then
+					hit = aimed and ray_to_object(physics_world, origin, direction, min_dot, range, aimed, unit, owner_unit)
+					hit = hit or ray_to_object(physics_world, origin, direction, min_dot, range, Actor.position(actor), unit, owner_unit)
+				elseif distance > 0.01 and Vector3.dot(to / distance, direction) >= min_dot and not Actor.is_static(actor) then
 					local wall, _, wall_distance = PhysicsWorld.immediate_raycast(physics_world, origin, to / distance, distance, "closest", "collision_filter", "filter_player_ray_projectile_static_only")
 
 					if not wall or wall_distance >= distance - 0.05 then
@@ -899,7 +938,12 @@ local function melee_hit(action, punch_action, hit_unit, hit, direction, power_l
 		return
 	end
 
-	local zone_name = hit_zone_name(hit) or "torso"
+	-- A punch has no headshots, so a hit on a zone it doesn't punch counts as one on the torso (see body_hit)
+	local zone_name = hit_zone_name(hit)
+
+	if not zone_name or NOT_PUNCHED[zone_name] then
+		zone_name = "torso"
+	end
 	local position = hit[1]
 	local damage_profile = DamageProfileTemplates[punch_action.damage_profile]
 	local alive = HEALTH_ALIVE[hit_unit]
@@ -951,23 +995,31 @@ local function melee_hit(action, punch_action, hit_unit, hit, direction, power_l
 end
 
 -- A hit on a body at its part nearest a point, as a ray's hit is ({ position, distance, normal, actor }). Only a part that is a hit zone
--- of the body's breed will do, because the game looks the zone up, and not one of NOT_PUNCHED.
+-- of the body's breed will do, because the game looks the zone up, and not one of NOT_PUNCHED. A breed whose every part is one of
+-- NOT_PUNCHED is hit at its nearest part other than the afro: the Chaos Wastes' orb has one part, and the game may name it its neck.
+-- melee_hit counts such a hit as a hit on the torso.
 local function body_hit(unit, from, direction)
 	local breed = Unit.get_data(unit, "breed")
 	local lookup = breed and breed.hit_zones_lookup
 	local best, best_distance
+	local fallback, fallback_distance
 
 	for i = 0, Unit.num_actors(unit) - 1 do
 		local actor = Unit.actor(unit, i)
 		local zone = actor and lookup and lookup[Actor.node(actor)]
+		local distance = zone and Vector3.distance(Actor.position(actor), from)
 
 		if zone and not NOT_PUNCHED[zone.name] then
-			local distance = Vector3.distance(Actor.position(actor), from)
-
 			if not best or distance < best_distance then
 				best, best_distance = actor, distance
 			end
+		elseif zone and zone.name ~= "afro" and (not fallback or distance < fallback_distance) then
+			fallback, fallback_distance = actor, distance
 		end
+	end
+
+	if not best then
+		best, best_distance = fallback, fallback_distance
 	end
 
 	return best and {
