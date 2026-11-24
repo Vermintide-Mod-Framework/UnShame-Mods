@@ -998,6 +998,18 @@ local function scenarios()
 
 					t.aim_at_point(at[1], at[2], at[3])
 
+					-- What the punch's search for enemies off the aim sees of the orb (shield_gun.lua's targets_in_reach): whether the search
+					-- around the eyes finds it, how far its part is off the aim (the cone is 30 degrees to each side), and whether it is alive
+					local seen = t.on_main_thread(function ()
+						local first_person_extension = ScriptUnit.extension(t.unit(), "first_person_system")
+						local eye = first_person_extension:current_position()
+						local forward = Quaternion.forward(first_person_extension:current_rotation())
+						local to = Vector3.normalize(Unit.world_position(orb, node) - eye)
+						local found = ut.utils.units_in_radius(Managers.world:world("level_world"), eye, shield.reach)[orb] ~= nil
+
+						return { found, math.deg(math.acos(math.clamp(Vector3.dot(to, forward), -1, 1))), HEALTH_ALIVE[orb] ~= nil }
+					end)
+
 					local damage = t.track_damage(orb)
 
 					t.press("action_one", 0.1)
@@ -1005,7 +1017,7 @@ local function scenarios()
 
 					local hit = damage.hits[1]
 
-					t.expect(damage.total > 0, "a punch at the orb with its part named %s%s, %.2f m from the eyes, did no damage", name, beside and ", aimed beside it" or "", at[4])
+					t.expect(damage.total > 0, "a punch at the orb with its part named %s%s, %.2f m from the eyes, did no damage (found around the eyes: %s, %.1f degrees off the aim, alive: %s)", name, beside and ", aimed beside it" or "", at[4], tostring(seen[1]), seen[2], tostring(seen[3]))
 					t.expect(not hit or hit.zone == "torso", "the punch hit the orb's %s, not its torso", hit and tostring(hit.zone))
 				end
 
