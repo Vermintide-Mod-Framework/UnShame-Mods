@@ -651,14 +651,14 @@ local function new_skin(variant)
 		offset_right = 2.3,
 		offset_up = 0,
 		bob_damping = 2.3,
-		-- The inspect pose turns the rifle to show its left side, like the other weapons. These numbers are a guess.
-		-- (to the right, so that the back of the gun, which the first person mesh doesn't have, stays off the screen as it turns)
+		-- The inspect pose tips the rifle up, as the lockout pose does, and turns it to the left to show its side. Tipped up, the back of
+		-- the gun, which the first person mesh doesn't have, stays below the screen. Checked with preview_weapon.py.
 		inspect_pose_right = 10,
-		inspect_pose_forward = 4,
-		inspect_pose_up = -3,
-		inspect_pose_roll = 10,
-		inspect_pose_pitch = 4,
-		inspect_pose_yaw = 55,
+		inspect_pose_forward = 0,
+		inspect_pose_up = -4,
+		inspect_pose_roll = 15,
+		inspect_pose_pitch = 40,
+		inspect_pose_yaw = 45,
 		inspect_turn_start = 0.35,
 		inspect_pivot_right = 0,
 		inspect_pivot_forward = 30,

@@ -40,6 +40,8 @@ local mod = get_mod("unreal_tournament")
 --       weapon's file moves the model there with skin.alt_pose, from 0 (where UT has it) to 1.
 --       inspect_pose_* is a third place, for inspecting, used with skin.inspect_pose. skin.extra_yaw adds a turn (in degrees) to
 --       them, for things that move while the model is held there.
+--   keep_to_edge: on a screen wider than 16:9 the model moves out to the side with the screen's edge, for a model whose back end
+--       has no faces
 --   third_person: what weapon_skin_third_person.lua takes
 --   looks: { [skin key] = { ... } }. Skins (illusions, see items.lua) that look different. While a weapon with that skin is wielded,
 --       the values in its look replace the same values in the definition (the unit, its animations, where it is drawn, and so on).
@@ -805,6 +807,15 @@ local function new(def)
 			local moved = pivot_point - Quaternion.rotate(turn, pivot_point)
 
 			position = position + Vector3(moved.x * across_scale, moved.y * forward_scale, moved.z * across_scale)
+		end
+
+		-- On a screen wider than the reference, a model with keep_to_edge moves out to the side by as much as the screen's edge moves
+		-- out at the model's depth. It stays as close to the edge as on a 16:9 screen, so its open back end stays off the screen.
+		if CONFIG.keep_to_edge then
+			local width, height = Application.resolution()
+			local extra = math.max(0, width / height - REFERENCE_ASPECT) * tangent_vertical
+
+			position = position + Vector3(position.y * extra, 0, 0)
 		end
 
 		-- The model's pose is the turn followed by the view's scale (across, forward, across). The scale has to be applied after the

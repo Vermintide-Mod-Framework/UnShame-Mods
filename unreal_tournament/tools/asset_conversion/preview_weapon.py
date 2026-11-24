@@ -4,7 +4,8 @@ from quat import qmul, rotate, axis_angle
 
 # A software preview of a first person weapon of the mod, drawn the way weapon_skin.lua places it: the weapon's idle pose, the view offset
 # and pivot of UT's weapon class, and optionally the inspect pose (the offsets, the turn, and the point it turns about). It is for checking
-# a pose without starting the game: the picture agrees with the game to within a few pixels. The picture is a 16:9 view of 960 by 540.
+# a pose without starting the game: the picture agrees with the game to within a few pixels. The picture is a 16:9 view of 960 by 540,
+# unless PREVIEW_ASPECT is set. With PREVIEW_BACKFACES set, faces seen from behind are magenta, which shows where the mesh has holes.
 #
 # Usage: preview_weapon.py <weapon> <umodel export dir> out.png [right forward up roll pitch yaw [pivot_right pivot_forward pivot_up]]
 #   weapon: one of WEAPONS below. The export dir has the weapon's psk (see README.md). Without the numbers the weapon is in its idle pose;
@@ -14,7 +15,12 @@ from quat import qmul, rotate, axis_angle
 # for instance, is not where the animation puts it), and the lighting is a simple shading from the way a face points.
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-WIDTH, HEIGHT = 960, 540
+# The environment variable PREVIEW_ASPECT makes the picture wider or narrower, for example 2.39 for a 21:9 screen. The height and the
+# vertical field of view stay the same, as in the game.
+HEIGHT = 540
+WIDTH = round(HEIGHT * float(os.environ.get('PREVIEW_ASPECT', 16 / 9)))
+REFERENCE_WIDTH = 960
+SHOW_BACKFACES = bool(os.environ.get('PREVIEW_BACKFACES'))
 # The horizontal field of view of the weapon is that of the class's DisplayFOV times this (see weapon_skin.lua, FIELD_OF_VIEW_FACTOR), unless
 # the weapon has one of its own
 FIELD_OF_VIEW_FACTOR = 1.345
@@ -51,7 +57,7 @@ WEAPONS = {
     },
     'sniper': {
         'psk': 'Weapons/SkeletalMesh/Sniper_1st.psk',
-        'textures': ['units/ut/lightning/lightning_gun_snipertex0.png', 'units/ut/lightning/lightning_gun_sniperscreen1c.png', 'units/ut/lightning/lightning_gun_sniperscreen2.png'],
+        'textures': ['units/ut/lightning/lightning_gun_snipertex0.png', 'units/ut/lightning/lightning_gun_sniperscreen1.png', 'units/ut/lightning/lightning_gun_sniperscreen2.png'],
         'lua': 'scripts/mods/unreal_tournament/lightning/skin_animations.lua',
         'display_fov': 60,
         'draw_scale': 0.4,
@@ -94,6 +100,7 @@ WEAPONS = {
         'draw_scale': 1,
         'offset': (5, -8, -6),
         'pivot': (0, 400 / 65536 * 360, 0),
+        'keep_to_edge': True,
     },
     'link': {
         'psk': 'NewWeapons2004/SkeletalMesh/FatLinkGun.psk',
@@ -172,11 +179,15 @@ def preview(weapon, export_dir, out_path, inspect=(0, 0, 0, 0, 0, 0), pivot_poin
     turned_pivot = rotate(turn, pivot_point)
     base = [base[i] + pivot_point[i] - turned_pivot[i] for i in range(3)]
 
+    horizontal_fov = math.radians(config['field_of_view']) if 'field_of_view' in config else 2 * math.atan(math.tan(math.radians(config['display_fov']) / 2) * FIELD_OF_VIEW_FACTOR)
+    focal = (REFERENCE_WIDTH / 2) / math.tan(horizontal_fov / 2)
+
+    # A weapon with keep_to_edge moves out to the side as the edge of a wider picture does, at the depth of its origin (weapon_skin.lua)
+    if config.get('keep_to_edge') and WIDTH > REFERENCE_WIDTH:
+        base[0] += base[1] * (WIDTH - REFERENCE_WIDTH) / 2 / focal
+
     # The model's (right, forward, up) is (-y, x, z) of the psk's
     view = [tuple(config['draw_scale'] * rotate(total, (-p[1], p[0], p[2]))[i] + base[i] for i in range(3)) for p in points]
-
-    horizontal_fov = math.radians(config['field_of_view']) if 'field_of_view' in config else 2 * math.atan(math.tan(math.radians(config['display_fov']) / 2) * FIELD_OF_VIEW_FACTOR)
-    focal = (WIDTH / 2) / math.tan(horizontal_fov / 2)
     screen = [(WIDTH / 2 + focal * v[0] / v[1], HEIGHT / 2 - focal * v[2] / v[1], v[1]) if v[1] > 1 else None for v in view]
 
     image = [[(30, 40, 30)] * WIDTH for _ in range(HEIGHT)]
@@ -199,6 +210,9 @@ def preview(weapon, export_dir, out_path, inspect=(0, 0, 0, 0, 0, 0), pivot_poin
 
         if abs(denominator) < 1e-9:
             continue
+
+        # With PREVIEW_BACKFACES set, a face seen from behind is drawn magenta. The game does not draw those, so magenta is a hole.
+        back_face = denominator < 0
 
         # Lit by the way the face points (towards the viewer is lit)
         p0, p1, p2 = [view[w[0]] for w in corners]
@@ -229,7 +243,7 @@ def preview(weapon, export_dir, out_path, inspect=(0, 0, 0, 0, 0, 0), pivot_poin
                 depth[y][x] = z
                 u = l0 * corners[0][1] + l1 * corners[1][1] + l2 * corners[2][1]
                 v = l0 * corners[0][2] + l1 * corners[1][2] + l2 * corners[2][2]
-                r, g, bl = pixel(int(u * tw) % tw, int(v * th) % th)
+                r, g, bl = (255, 0, 255) if SHOW_BACKFACES and back_face else pixel(int(u * tw) % tw, int(v * th) % th)
                 image[y][x] = (min(255, int(r * shade)), min(255, int(g * shade)), min(255, int(bl * shade)))
 
     write_png(out_path, WIDTH, HEIGHT, [b''.join(bytes(p) for p in row) for row in image], channels=3)

@@ -105,7 +105,8 @@ locked, and the game fails when it is unloaded.
 - `preview_weapon.py` draws a weapon the way the game places it, with the idle pose of its animations, the view offset and pivot of UT's class,
   and (with the numbers) an inspect pose: `right forward up roll pitch yaw` and where it turns about, `inspect_pose_*` and `inspect_pivot_*`
   of the skin. It agrees with the game to within a few pixels. Only the root bone is posed (the rest of the model is in its reference pose),
-  and the lighting is a simple shading. The weapons it knows are in its `WEAPONS`.
+  and the lighting is a simple shading. The weapons it knows are in its `WEAPONS`. `PREVIEW_ASPECT=2.39` draws it on a wider screen, and
+  `PREVIEW_BACKFACES=1` paints faces seen from behind magenta: the game doesn't draw them, so magenta shows a hole in the mesh.
 
 ## What was found
 

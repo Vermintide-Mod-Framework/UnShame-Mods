@@ -192,9 +192,15 @@ end
 local charging
 
 -- What other players hear of a charge. UT plays Biorifle_charge for everyone near when the charge starts (Weapon.PlayOwnedSound), and puts
--- BioGoopLoop on the pawn (its AmbientSound) once the load is full. The player who charges sends three messages (see send_charge):
--- 0 the charge starts, 1 the load is full (or the ammo is gone), 2 the charge ends. They are told as { stage }.
-local CHARGE_START, CHARGE_FULL, CHARGE_END = 0, 1, 2
+-- BioGoopLoop on the pawn (its AmbientSound) once the load is full. The player who charges sends these messages (see send_charge):
+-- 0 the charge starts, 1 the load is full or waits for ammo, 2 the charge ends, 3 the load goes on after ammo is picked up. They are
+-- told as { stage }.
+local CHARGE_START, CHARGE_FULL, CHARGE_END, CHARGE_RESUME = 0, 1, 2, 3
+
+-- Returns whether a player's load has stopped growing: it is full, or it waits for ammo
+local function is_load_stopped(owner_unit)
+	return mod.bio_goop.is_load_done(owner_unit) or mod.bio_goop.is_load_waiting(owner_unit)
+end
 
 -- The charge of the local player that the others are told about, as { owner_unit, full_sent }
 local broadcasting
@@ -247,17 +253,34 @@ mod:network_register("ut_bio_charge", function (_, owner_go_id, stage)
 		if remote_charges[unit] then
 			remote_charges[unit].full = true
 		end
+	elseif stage == CHARGE_RESUME then
+		local remote = remote_charges[unit]
+
+		if remote then
+			stop_handle(remote.loop_sound)
+
+			remote.loop_sound = nil
+			remote.full = false
+		end
 	else
 		stop_remote_charge(unit)
 	end
 end)
 
 mod.update_callbacks[#mod.update_callbacks + 1] = function (dt)
-	-- The local player's charge: the others are told when the load is full.
-	if broadcasting and not broadcasting.full_sent and mod.bio_goop.is_load_done(broadcasting.owner_unit) then
-		broadcasting.full_sent = true
+	-- The local player's charge: the others are told when the load stops growing, and when it goes on again after ammo is picked up.
+	if broadcasting then
+		local stopped = is_load_stopped(broadcasting.owner_unit)
 
-		send_charge(broadcasting.owner_unit, CHARGE_FULL)
+		if stopped and not broadcasting.full_sent then
+			broadcasting.full_sent = true
+
+			send_charge(broadcasting.owner_unit, CHARGE_FULL)
+		elseif not stopped and broadcasting.full_sent then
+			broadcasting.full_sent = false
+
+			send_charge(broadcasting.owner_unit, CHARGE_RESUME)
+		end
 	end
 
 	-- The charges of the others. The loop starts when the load is full, and a charge whose player is gone ends.
@@ -349,16 +372,30 @@ skin_api = mod.weapon_skin.new({
 	end,
 	-- Moves the model towards the inspect pose and back, and sways it while it is there.
 	on_update = function (skin, dt)
-		-- Once the load is full (or the ammo is gone), UT plays BioGoopLoop until the charge is let go. A load that stopped because the ammo
-		-- ran out stops the animation where it is.
-		if charging and mod.bio_goop.is_load_done(charging.owner_unit) then
-			if not charging.stopped and mod.bio_goop.load_amount(charging.owner_unit) < mod.bio_goop.max_load then
-				charging.stopped = true
+		-- While the load is not growing, because it is full or waits for ammo, UT plays BioGoopLoop. A load that waits for ammo also
+		-- stops the animation where it is, and both go on when the load does.
+		if charging then
+			local waiting = mod.bio_goop.is_load_waiting(charging.owner_unit)
+
+			if waiting and not charging.paused_speed then
+				charging.paused_speed = skin.speed
 				skin.speed = 0
+			elseif not waiting and charging.paused_speed then
+				if skin.animation == "AltFire" then
+					skin.speed = charging.paused_speed
+				end
+
+				charging.paused_speed = nil
 			end
 
-			if not charging.loop_sound then
-				charging.loop_sound = skin_api.play_sound("ut_bio_goop_loop")
+			if is_load_stopped(charging.owner_unit) then
+				if not charging.loop_sound then
+					charging.loop_sound = skin_api.play_sound("ut_bio_goop_loop")
+				end
+			elseif charging.loop_sound then
+				skin_api.stop_sound(charging.loop_sound)
+
+				charging.loop_sound = nil
 			end
 		end
 

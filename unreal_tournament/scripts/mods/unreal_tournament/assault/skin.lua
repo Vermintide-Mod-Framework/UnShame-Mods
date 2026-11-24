@@ -588,6 +588,9 @@ local function new_skin(setting_id, mirror, owns_grenades)
 				offset_right = 5,
 				offset_up = -6,
 				pivot_pitch = 400 / 65536 * 360,
+				-- The old mesh's stock is open at its back, which a screen wider than 16:9 shows beside the rifle. Each rifle keeps to its
+				-- side of the screen there, departing from UT, which draws them in the same place on any screen.
+				keep_to_edge = true,
 				-- The same pose as UT2004's: the rifle stood up with its inner side to the camera, the grip below the screen. This model is
 				-- made about another point, so it turns about its own middle (in its axes: the middle of its length, a little above its
 				-- origin) and sits where UT2004's does (checked with preview_weapon.py assault2003).

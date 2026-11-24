@@ -453,6 +453,8 @@ local function build_charge_action()
 		kind = "charge",
 		minimum_hold_time = 0.05,
 		total_time = math.huge,
+		-- Getting hit does not end the charge, as in UT. The game's hit reaction would stop it otherwise.
+		uninterruptible = true,
 		ut_charge_callback = "bio",
 		zoom_condition_function = function ()
 			return false
@@ -624,7 +626,7 @@ local goop_loads = setmetatable({}, {
 	__mode = "k",
 })
 
--- Used by the skin: how long a full load takes, and whether a player's load is done (full, or the ammo ran out).
+-- Used by the skin: how long a full load takes, whether a player's load is full, and whether it waits for ammo.
 mod.bio_goop.load_time = CONFIG.goop_up_rate * CONFIG.max_goop_load
 mod.bio_goop.max_load = CONFIG.max_goop_load
 mod.bio_goop.load_amount = function (owner_unit)
@@ -637,9 +639,15 @@ mod.bio_goop.is_load_done = function (owner_unit)
 
 	return state ~= nil and state.done
 end
+mod.bio_goop.is_load_waiting = function (owner_unit)
+	local state = goop_loads[owner_unit]
 
--- Loads one more unit of goop. It takes 1 ammo, and nothing is loaded if there is none. The loading is done when the load is full or
--- the ammo is gone.
+	return state ~= nil and state.waiting
+end
+
+-- Loads one more unit of goop. It takes 1 ammo, and nothing is loaded if there is none. The loading is done when the load is full.
+-- When the ammo runs out first, the load waits, and goes on when ammo is picked up while the button is still held. UT stops the load
+-- for good there.
 local function add_goop(action, state)
 	local ammo_extension = action.ammo_extension
 
@@ -649,9 +657,8 @@ local function add_goop(action, state)
 		ammo_extension:use_ammo(1)
 	end
 
-	if state.load >= CONFIG.max_goop_load or not ammo_extension or ammo_extension:ammo_count() <= 0 then
-		state.done = true
-	end
+	state.done = state.load >= CONFIG.max_goop_load or not ammo_extension
+	state.waiting = not state.done and ammo_extension:ammo_count() <= 0
 end
 
 -- BioChargedFire.Hold: one unit of goop at once, and then one every GoopUpRate seconds.
@@ -678,9 +685,19 @@ mod.charge_update_callbacks.bio = function (action, dt)
 		return
 	end
 
+	-- A load that waits for ammo goes on as soon as there is some, with the next unit a full step later.
+	if state.waiting then
+		if action.ammo_extension:ammo_count() <= 0 then
+			return
+		end
+
+		state.waiting = false
+		state.timer = 0
+	end
+
 	state.timer = state.timer + dt
 
-	while state.timer >= CONFIG.goop_up_rate and not state.done do
+	while state.timer >= CONFIG.goop_up_rate and not state.done and not state.waiting do
 		state.timer = state.timer - CONFIG.goop_up_rate
 
 		add_goop(action, state)
