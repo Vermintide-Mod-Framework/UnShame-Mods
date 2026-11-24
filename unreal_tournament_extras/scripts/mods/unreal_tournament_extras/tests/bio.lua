@@ -22,6 +22,11 @@ local CONFIG = {
 	-- while it waits
 	short_ammo = 3,
 	picked_up_ammo = 4,
+	-- "getting hit does not end a load": how far ahead the clan rat that attacks starts, how long it has to hit the player, and how
+	-- long a full load takes (10 units, one at once and one each 0.25 s), with a margin
+	attacker_distance = 1.5, -- m
+	attack_time = 8, -- s
+	full_load_time = 2.6, -- s
 	-- How much of a level 1 glob's damage (20 + 19, scaled by 60 / 90) the player who fired it takes at most
 	glob_self_damage = (20 + 19) * 60 / 90 * 0.75,
 	-- The explosion throws the player up at least this fast when it goes off at their feet
@@ -197,12 +202,36 @@ local function set_ammo(t, amount)
 	t.wait(0.2)
 end
 
--- A hit on the player by a clan rat's blade, which ends a weapon action that can be interrupted (the game's hit reaction:
--- CharacterStateHelper.update_weapon_actions)
-local function hit_player(t, rat)
+-- Spawns a clan rat ahead, starts a load, and lets the rat attack until it hits the player. Its blade's hit ends a weapon action that
+-- can be interrupted (the game's hit reaction: CharacterStateHelper.update_weapon_actions). Returns whether the load still goes on after
+-- the hit, or nil if there was no hit. The button is still held, and the rat is removed.
+local function charge_through_attack(t)
+	local rat = t.spawn("skaven_clan_rat", CONFIG.attacker_distance)
+
+	if not t.expect(rat, "the clan rat could not be spawned") then
+		return nil
+	end
+
+	t.aim_at(rat)
+
+	local damage = t.track_damage(t.unit())
+
+	t.hold("action_two")
 	t.on_main_thread(function ()
-		DamageUtils.add_damage_network(t.unit(), rat, 1, "torso", "cutting", nil, Vector3(0, 0, -1), "skaven_clan_rat", nil, rat)
+		runner.provoke(rat)
 	end)
+
+	local hit = t.wait_until(function ()
+		return damage.total > 0
+	end, CONFIG.attack_time, "the clan rat to hit the player")
+
+	t.wait(0.3)
+
+	local still = hit and charging(t) or nil
+
+	t.remove(rat)
+
+	return still
 end
 
 -- The largest hit in a record of t.track_damage: the explosion's
@@ -460,29 +489,17 @@ local function scenarios()
 			end,
 		},
 		{
-			-- A hit ends a weapon action that can be interrupted (the game's hit reaction). The load can't be, as in UT. The same hit is
-			-- tried first on a load made interruptible, to show that the hit is one that interrupts.
+			-- A hit ends a weapon action that can be interrupted (the game's hit reaction). The load can't be, as in UT. A clan rat's
+			-- attack is tried first on a load made interruptible, to show that its hit is one that interrupts.
 			name = "getting hit does not end a load",
 			run = function (t)
-				local rat = t.spawn("skaven_clan_rat", 3)
-
-				if not t.expect(rat, "the clan rat could not be spawned") then
-					return
-				end
-
 				local charge_action = Weapons[definition.template].actions.action_two.default
 
-				t.look(20)
 				t.hurtable(true)
 
 				charge_action.uninterruptible = nil
 
-				t.hold("action_two")
-				t.wait(0.5)
-				hit_player(t, rat)
-				t.wait(0.3)
-
-				local interrupted = not charging(t)
+				local interrupted = charge_through_attack(t) == false
 
 				t.release("action_two")
 				charge_action.uninterruptible = true
@@ -492,21 +509,16 @@ local function scenarios()
 				t.heal()
 
 				local globs, observe = watch_globs(t, is_shot)
+				local kept = charge_through_attack(t)
 
-				t.hold("action_two")
-				t.wait(0.5)
-				hit_player(t, rat)
-				t.wait(0.3)
-
-				local kept = charging(t)
-
-				t.wait(2.5)
+				-- (the rest of a full load)
+				t.wait(CONFIG.full_load_time)
 				t.release("action_two")
 				t.watch(0.3, observe)
 				t.hurtable(false)
 
-				t.expect(interrupted, "the hit did not end a load that can be interrupted, so this test proves nothing")
-				t.expect(kept, "the hit ended the load")
+				t.expect(interrupted, "the clan rat's hit did not end a load that can be interrupted, so this test proves nothing")
+				t.expect(kept, "the clan rat's hit ended the load")
 				t.expect(globs[1] and globs[globs[1]].level == CONFIG.max_goop_load, "the glob has %s goop, not %d", globs[1] and tostring(globs[globs[1]].level) or "no", CONFIG.max_goop_load)
 			end,
 		},

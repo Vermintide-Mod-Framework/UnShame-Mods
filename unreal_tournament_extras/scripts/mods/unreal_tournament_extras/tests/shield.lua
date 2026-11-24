@@ -49,6 +49,7 @@ local STANDARD_AIM_SHARES = { 0.15, 0.5, 0.85 }
 -- "a punch hits the supply orb": the orb's breed, how far ahead it is, and how far beside it the last punch is aimed: inside the punch's
 -- cone (60 degrees across) at that distance, and past the orb's part
 local ORB_BREED = "chaos_greed_pinata"
+local ORB_PACKAGE = "resource_packages/mutators/mutator_curse_greed_pinata"
 local ORB_DISTANCE = 1.8 -- m
 local ORB_BESIDE = 0.8 -- m
 
@@ -945,6 +946,24 @@ local function scenarios()
 			-- with the part named each way, and once aimed beside it, inside the punch's cone.
 			name = "a punch hits the supply orb",
 			run = function (t)
+				if not Breeds[ORB_BREED] then
+					t.skip("the game has no Chaos Wastes")
+				end
+
+				-- The orb's unit is in the package of the Chaos Wastes curse that spawns orbs, which a level outside Chaos Wastes doesn't
+				-- load. Spawning a unit that isn't loaded crashes the game.
+				local loaded = t.on_main_thread(function ()
+					if not Managers.package:has_loaded(ORB_PACKAGE, "ut_test") then
+						Managers.package:load(ORB_PACKAGE, "ut_test", nil, false)
+					end
+
+					return Application.can_get("unit", Breeds[ORB_BREED].base_unit)
+				end)
+
+				if not t.expect(loaded, "the orb's unit could not be loaded") then
+					return
+				end
+
 				local orb = t.spawn(ORB_BREED, ORB_DISTANCE)
 
 				if not t.expect(orb, "the orb could not be spawned") then
