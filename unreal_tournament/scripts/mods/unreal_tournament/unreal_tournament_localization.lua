@@ -120,9 +120,9 @@ return {
 		en = "Only receive Unreal Tournament weapons, if any are available, when swapping weapons in Chaos Wastes.",
 	},
 	no_rampart = {
-		en = "No Rampart",
+		en = "No Rampart Monsters",
 	},
 	no_rampart_description = {
-		en = "Enemies in Chaos Wastes never get Rampart, which makes them immune to ranged attacks. Applies to enemies that spawn after it is turned on.",
+		en = "Monsters in Chaos Wastes never get Rampart, which makes them immune to ranged attacks. Applies to monsters that spawn after it is turned on.",
 	},
 }

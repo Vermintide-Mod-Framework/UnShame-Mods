@@ -6,9 +6,9 @@ local mod = get_mod("unreal_tournament")
 -- of the pool, as the game does. Once all of the mod's weapons for a slot have been left out, they are all in it again, as the game does
 -- for its own when a slot runs out. A career that has none of the mod's weapons for the slot gets the game's.
 --
--- With the no_rampart option, no enemy gets Rampart, the modifier that makes it immune to ranged attacks (ranged_immune). An enemy
+-- With the no_rampart option, no monster gets Rampart, the modifier that makes it immune to ranged attacks (ranged_immune). A monster
 -- rolls its modifiers from a pool (TerrorEventUtils.generate_enhanced_breed, BossGrudgeMarks), and the modifier is left out of it, so the
--- enemy gets another one instead. Bel'akor's shadow lieutenants pick from small sets of their own, in the terror event, so the modifier is
+-- monster gets another one instead. Bel'akor's shadow lieutenants pick from small sets of their own, in the terror event, so the modifier is
 -- taken off them when they spawn, and they have one fewer.
 
 local items = mod.items
