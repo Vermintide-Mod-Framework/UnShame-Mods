@@ -1,0 +1,10 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_bio_goo_graph"
+textures = {
+	goo_map = "units/ut/bio/bio_rifle_brinnergoo"
+	bubbles_map = "units/ut/bio/bio_rifle_brinnerbubbles"
+}
+variables = {
+}

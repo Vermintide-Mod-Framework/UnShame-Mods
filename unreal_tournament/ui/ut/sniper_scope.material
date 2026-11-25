@@ -1,0 +1,9 @@
+ut_sniper_scope = {
+	material_contexts = {
+		surface_material = ""
+	}
+	shader = "gui:DIFFUSE_MAP"
+	textures = {
+		diffuse_map = "ui/ut/sniper_scope"
+	}
+}

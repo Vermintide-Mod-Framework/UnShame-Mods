@@ -1,0 +1,10 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_sniper_screen_graph"
+textures = {
+	screen_map = "units/ut/lightning/lightning_gun_sniperscreen1"
+	lines_map = "units/ut/lightning/lightning_gun_sniperscreen1pan"
+}
+variables = {
+}

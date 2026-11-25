@@ -1,0 +1,108 @@
+local mod = get_mod("unreal_tournament")
+
+-- Bots with the Shock Rifle. The game's own bot shooting (BTBotShootAction) aims at an enemy and fires the weapon's primary attack,
+-- which is the beam here, so bots already shoot the beam. This teaches them the combo. Against an elite or a boss, or a cluster of
+-- enemies, a bot fires the ball (the secondary attack), waits for it to get near the target, and then fires the beam along the line
+-- the ball flew. The beam passes through the ball, and the ball goes off (see find_ball_hit_by_beam in shock_rifle.lua).
+
+local utils = mod.utils
+
+local TEMPLATE_NAME = mod.items.weapons.shock_rifle.template
+
+local CONFIG = {
+	-- The ball is used against a target at this distance, in meters. Nearer, the ball is gone before the beam can follow it. Further
+	-- away, the beam is out of range of the bot's aim.
+	min_range = 3,
+	max_range = 60,
+	-- The beam is fired when the ball is this far from the target, in meters.
+	meet_distance = 3,
+	-- A cluster is this many enemies within this radius of the target. The combo's explosion is 3.8 m in radius.
+	cluster_size = 2,
+	cluster_radius = 5,
+	-- No ball is fired when a player or bot is this close to the target, because the combo's explosion would hurt them.
+	ally_clearance = 2,
+	-- cooldown is the seconds between a bot's balls. wait_grace is how long the bot waits, past the time the ball takes to get there,
+	-- before it shoots the beam anyway.
+	cooldown = 2,
+	wait_grace = 1.5,
+	-- The least time, in seconds, between the ball and the beam
+	min_wait = 0.4,
+}
+
+-- Returns how fast the ball flies, in meters a second. The action's speed is in centimeters.
+local function ball_speed()
+	local template = rawget(Weapons, TEMPLATE_NAME)
+	local action = template and template.actions.action_two.default
+
+	return action.speed / 100
+end
+
+-- Returns whether the bot should fire the ball at this target.
+local function worth_a_ball(target_unit, target_position, world)
+	local breed = Unit.get_data(target_unit, "breed")
+
+	for _, player in pairs(Managers.player:players()) do
+		local player_unit = player.player_unit
+
+		if player_unit and Unit.alive(player_unit) and Vector3.distance(POSITION_LOOKUP[player_unit], target_position) < CONFIG.ally_clearance then
+			return false
+		end
+	end
+
+	if breed.elite or breed.boss then
+		return true
+	end
+
+	local enemies = 0
+
+	for unit in pairs(utils.units_in_radius(world, target_position, CONFIG.cluster_radius)) do
+		if HEALTH_ALIVE[unit] then
+			enemies = enemies + 1
+		end
+	end
+
+	return enemies >= CONFIG.cluster_size
+end
+
+-- The bot fires a ball, waits for it, and then fires the beam. Or it fires just the beam.
+mod.bot_shot_callbacks.ut_shock = function (func, self, shoot_blackboard, action_data, input_extension, t)
+	local target_unit = shoot_blackboard.target_unit
+	local pending = shoot_blackboard.ut_pending
+
+	if pending then
+		if not HEALTH_ALIVE[target_unit] or t >= pending.expire then
+			shoot_blackboard.ut_pending = nil
+		elseif t < pending.fire_time then
+			return
+		else
+			shoot_blackboard.ut_pending = nil
+		end
+
+		return func(self, shoot_blackboard, action_data, input_extension, t)
+	end
+
+	local bot_unit = shoot_blackboard.ut_unit
+
+	if bot_unit and HEALTH_ALIVE[target_unit] and t >= (shoot_blackboard.ut_next_ball or 0) then
+		local target_position = POSITION_LOOKUP[target_unit]
+		local distance = Vector3.distance(POSITION_LOOKUP[bot_unit], target_position)
+
+		if distance >= CONFIG.min_range and distance <= CONFIG.max_range and worth_a_ball(target_unit, target_position, Managers.world:world("level_world")) then
+			local flight = math.max(CONFIG.min_wait, (distance - CONFIG.meet_distance) / ball_speed())
+
+			shoot_blackboard.fired = true
+			shoot_blackboard.stop_fire_t = t + shoot_blackboard.stop_fire_delay
+			shoot_blackboard.ut_next_ball = t + CONFIG.cooldown
+			shoot_blackboard.ut_pending = {
+				expire = t + flight + CONFIG.wait_grace,
+				fire_time = t + flight,
+			}
+
+			input_extension:charge_shot()
+
+			return
+		end
+	end
+
+	return func(self, shoot_blackboard, action_data, input_extension, t)
+end

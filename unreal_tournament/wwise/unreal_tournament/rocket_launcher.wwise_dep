@@ -1,0 +1,8 @@
+win32 = {
+	banks = [
+		"wwise/unreal_tournament/rocket_launcher"
+	]
+	streams = [
+	]
+	metadata = "wwise/unreal_tournament/rocket_launcher"
+}

@@ -1,0 +1,124 @@
+materials = {
+	m_0 = "units/ut/lightning/lightning_gun_m0"
+	m_1 = "units/ut/lightning/lightning_gun_m1"
+	m_2 = "units/ut/lightning/lightning_gun_m2"
+}
+renderables = {
+	b_bone_weapon = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_strut02 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_armature02 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_rod02 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_strut01 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_armature01 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_rod01 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_strut04 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_armature04 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_rod04 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_strut03 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_armature03 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	b_bone_rod03 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+}

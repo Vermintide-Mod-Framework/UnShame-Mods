@@ -1,0 +1,9 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_explosion_dark_graph"
+textures = {
+	blobs_map = "units/ut/fx/shock_dark"
+}
+variables = {
+}

@@ -1,0 +1,14 @@
+events = {
+	ut_rocket_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.424 duration_max = 1.424 positioning = "2D" }
+	ut_rocket_alt_fire = { attenuation_max = 0 duration_type = "OneShot" duration_min = 1.910 duration_max = 1.910 positioning = "2D" }
+	ut_rocket_load = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.524 duration_max = 0.524 positioning = "2D" }
+	ut_rocket_plunger = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.803 duration_max = 0.803 positioning = "2D" }
+	ut_rocket_lock = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.096 duration_max = 0.096 positioning = "2D" }
+	ut_rocket_seek_lost = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.197 duration_max = 0.197 positioning = "2D" }
+	ut_rocket_select = { attenuation_max = 0 duration_type = "OneShot" duration_min = 0.680 duration_max = 0.680 positioning = "2D" }
+	ut_rocket_fire_3d = { attenuation_max = 40 duration_type = "OneShot" duration_min = 1.424 duration_max = 1.424 positioning = "3D" }
+	ut_rocket_load_3d = { attenuation_max = 25 duration_type = "OneShot" duration_min = 0.524 duration_max = 0.524 positioning = "3D" }
+	ut_rocket_plunger_3d = { attenuation_max = 25 duration_type = "OneShot" duration_min = 0.803 duration_max = 0.803 positioning = "3D" }
+	ut_rocket_projectile_3d = { attenuation_max = 25 duration_type = "Infinite" duration_min = 1.865 duration_max = 1.865 positioning = "3D" }
+	ut_rocket_explosion_3d = { attenuation_max = 50 duration_type = "OneShot" duration_min = 2.363 duration_max = 2.363 positioning = "3D" }
+}

@@ -1,0 +1,9 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_berserk_ring_graph"
+textures = {
+	bolts_map = "units/ut/fx/red_bolt"
+}
+variables = {
+}

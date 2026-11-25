@@ -1,0 +1,24 @@
+materials = {
+	m_0 = "units/ut/shock/shock_rifle_body"
+	m_1 = "units/ut/shock/shock_rifle_power"
+}
+renderables = {
+	g_third_person_0 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	g_third_person_1 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+}

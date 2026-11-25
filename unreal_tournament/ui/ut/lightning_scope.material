@@ -1,0 +1,27 @@
+ut_lightning_scope_focus = {
+	material_contexts = {
+		surface_material = ""
+	}
+	shader = "gui:DIFFUSE_MAP"
+	textures = {
+		diffuse_map = "ui/ut/lightning_scope_focus"
+	}
+}
+ut_lightning_scope_arrows = {
+	material_contexts = {
+		surface_material = ""
+	}
+	shader = "gui:DIFFUSE_MAP"
+	textures = {
+		diffuse_map = "ui/ut/lightning_scope_arrows"
+	}
+}
+ut_lightning_scope_lens = {
+	material_contexts = {
+		surface_material = ""
+	}
+	shader = "gui:DIFFUSE_MAP"
+	textures = {
+		diffuse_map = "ui/ut/lightning_scope_lens"
+	}
+}

@@ -1,0 +1,9 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "units/ut/fx/fx_goop_graph"
+textures = {
+	goop_map = "units/ut/fx/bio_goop"
+}
+variables = {
+}

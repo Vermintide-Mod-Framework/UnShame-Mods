@@ -1,0 +1,17 @@
+material_contexts = {
+	surface_material = ""
+}
+parent_material = "core/stingray_renderer/shader_import/standard"
+textures = {
+	color_map = "units/ut/redeemer/missile_rdmr_missile"
+}
+variables = {
+	use_color_map = {
+		type = "scalar"
+		value = 1
+	}
+	roughness = {
+		type = "scalar"
+		value = 0.9
+	}
+}

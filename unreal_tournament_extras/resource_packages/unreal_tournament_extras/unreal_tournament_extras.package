@@ -1,0 +1,11 @@
+mod = [
+	"unreal_tournament_extras"
+]
+
+package = [
+	"resource_packages/unreal_tournament_extras/unreal_tournament_extras"
+]
+
+lua = [
+	"scripts/mods/unreal_tournament_extras/*"
+]

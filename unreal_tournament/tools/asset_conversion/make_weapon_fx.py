@@ -1,0 +1,215 @@
+import sys, os
+
+# Makes the effect textures of the Minigun, Shield Gun, Assault Rifle and Redeemer from the UModel export (export.py): each as
+# units/ut/fx/<name>.png and .texture, with the material fx_<name> that adds its colour to the screen (the same as make_fx_assets.py
+# makes). A sheet of tiles (a texture with columns and rows of pictures, which UT's emitters pick from) is cut into one texture for each
+# tile, named <name>_0, <name>_1 and so on from the top left.
+# The effects that UT adds to the screen are read linearly (units/ut/fx/particle_linear, see make_lightning_assets.py): the values of the
+# texture are added as they are. The shell casing is blended, not added, so it keeps the srgb read.
+# Usage: make_weapon_fx.py <export dir>
+
+REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+EXPORT = sys.argv[1]
+
+sys.path.insert(0, os.path.dirname(__file__))
+from formats import read_tga, write_png
+from resources import texture_text, particle_material_text
+
+# name: (the tga, columns, rows). A texture that is not a sheet has 1 and 1.
+TEXTURES = {
+    # The Minigun (MinigunMuzFlash1st, MinigunFlash, NewMinigunMFlash, NewTracer, ShellSpewer). minigun_flash_3rd is MinigunFlashFinal's
+    # texture, which the Rocket Launcher's third person flash (RocketMuzFlash3rd) draws on its mesh.
+    'minigun_burst': ('XGameShaders/Texture/Minigun_burst.tga', 2, 2),
+    'minigun_flash_3rd': ('XGameShaders/Texture/minigunflash.tga', 1, 1),
+    'minigun_flame': ('AW-2004Explosions/Texture/Part_explode2s.tga', 4, 4),
+    'tracer_shot': ('AW-2004Particles/Texture/TracerShot.tga', 1, 1),
+    'shell_casing': ('XEffects/Texture/ShellCasingTex.tga', 1, 1),
+    # (the smoke at the muzzle in the player's view: MinigunMuzzleSmoke's SmokeTex, a sheet of 16 puffs (pclSmoke's tiles), blended by
+    # its alpha: STY_Alpha)
+    'muzzle_smoke': ('XEffects/Texture/SmokeTex.tga', 4, 4),
+    # (where its rounds hit a wall: pclImpactSmoke's puffs and SmallExplosion's fire, a RocketExplosion)
+    'impact_smoke': ('XEffects/Texture/EmitSmoke_t.tga', 4, 4),
+    'small_explosion': ('XEffects/Texture/Rexpt.tga', 1, 1),
+    # The Shield Gun (ShieldEffect's Shield3rdFB: its material is units/ut/fx/fx_shield, made by make_combo_materials.py)
+    'shield_elec': ('XEffectMat/Texture/shield_elec_green_a.tga', 1, 1),
+    # (ShieldRip3rdFB, the shield as it stops something: its lines and the fade of its rim)
+    'shield_rip_elec': ('XEffectMat/Texture/shield_elec_green_rip_a.tga', 1, 1),
+    'shield_edge': ('XEffectMat/Texture/edgegrad.tga', 1, 1),
+    # (ForceRingA's rings of the punch. ShieldCharge's sparks of the charge are split_spark.py's.)
+    'force_ring': ('XEffectMat/Texture/shock_ring_b.tga', 1, 1),
+    # The Redeemer (NewRedeemerTrail's flames and smoke, RedeemerExplosion's puffs and the gradient of its ring and sphere)
+    'redeemer_flame': ('AW-2004Explosions/Texture/Part_explode2.tga', 4, 4),
+    'redeemer_smoke': ('AW-2004Particles/Texture/MuchSmoke1.tga', 4, 4),
+    'smoke_puff': ('EpicParticles/Texture/Smokepuff.tga', 1, 1),
+    'smoke_puff2': ('EpicParticles/Texture/Smokepuff2.tga', 1, 1),
+    'flame_gradient': ('EpicParticles/Texture/FlameGradient.tga', 1, 1),
+    'burn_flare': ('EpicParticles/Texture/BurnFlare1.tga', 1, 1),
+    'soft_flare': ('EpicParticles/Texture/SoftFlare.tga', 1, 1),
+    'white_streak': ('EpicParticles/Texture/WhiteStreak01aw.tga', 1, 1),
+    # The Sniper Rifle's smoke (ClassicSniperSmoke: a frame of SmokeReOrdered at random, blended by its alpha)
+    'sniper_smoke': ('ExplosionTex/Texture/SmokeReOrdered.tga', 4, 4),
+    # The smoke of the Rocket Launcher's and the grenade's explosions (NewExplosionA and NewExplosionB: SmokeReOrdered, as it is) and the
+    # rocks the rocket's throws (ExplosionCrap: rockchunks02). Both are blended by their alpha.
+    'explosion_smoke': ('ExplosionTex/Texture/SmokeReOrdered.tga', 4, 4),
+    'rock_chunks': ('EmitterTextures/Texture/rockchunks02.tga', 4, 4),
+    # (the textures of the Redeemer blast's spheres and ring, whose materials make_combo_materials.py makes: fx_ion_sphere and fx_flame_ring)
+    'ion_burn': ('EpicParticles/Texture/IonBurn.tga', 1, 1),
+    'grad_falloff': ('EpicParticles/Texture/Grad_Falloff.tga', 1, 1),
+    # The adrenaline combos: ComboActivation's balls, SpeedTrail's streak, RegenCrosses' cross (Booster), and the textures of the
+    # panned materials of OffensiveEffect's rings (Berserk: RedBoltFB) and of the invisible (InvisOverlayFB), which make_combo_materials.py
+    # makes: fx_berserk_ring and fx_invisible
+    'combo_ball': ('XEffects/Texture/pcl_ball.tga', 1, 1),
+    'speed_trail': ('XEffects/Texture/SpeedTrailTex.tga', 1, 1),
+    'green_cross': ('XEffectMat/Texture/greencross.tga', 1, 1),
+    'red_bolt': ('XEffectMat/Texture/redbolt.tga', 1, 1),
+    'invis_overlay': ('XEffectMat/Texture/invis_overlay.tga', 1, 1),
+    # The Link Gun's bolt: the flashes on its mesh (LinkMuzFlashProj1st and 3rd: LinkMuzProjGreenFB and LinkMuzProjYellowFB, FB_Brighten),
+    # and its trail (NewLinkTrail: a shaft along its way, PlasmaShaft, and puffs, SmokePanels1's 16 tiles)
+    # (and the bolt's mesh: LinkProjGreenFB and LinkProjYellowFB, FB_Translucent of link_muz_green and link_muz_yellow, read as they
+    # are, where make_fx_assets.py's link_muz_green is read as srgb)
+    'link_bolt_green': ('XEffectMat/Texture/link_muz_green.tga', 1, 1),
+    'link_bolt_yellow': ('XEffectMat/Texture/link_muz_yellow.tga', 1, 1),
+    # (and the beam's flashes, LinkMuzFlashBeam1st and 3rd: link_muz_green and the others, STY_Translucent)
+    'link_beam_flash_green': ('XEffectMat/Texture/link_muz_green.tga', 1, 1),
+    'link_beam_flash_yellow': ('XEffectMat/Texture/link_muz_yellow.tga', 1, 1),
+    'link_beam_flash_blue': ('XEffectMat/Texture/link_muz_blue.tga', 1, 1),
+    # (and the glow on its model: LinkPowerGreen and the others, whose alpha is the mask of the body's glow, for make_combo_materials.py's
+    # link_gun materials)
+    'link_power_green': ('UT2004Weapons/Texture/LinkPowerGreen.tga', 1, 1),
+    'link_power_yellow': ('UT2004Weapons/Texture/LinkPowerYellow.tga', 1, 1),
+    'link_power_blue': ('UT2004Weapons/Texture/LinkPowerBlue.tga', 1, 1),
+    'link_muzmesh_green': ('XEffectMat/Texture/link_muzmesh_green.tga', 2, 2),
+    'link_muzmesh_yellow': ('XEffectMat/Texture/link_muzmesh_yellow.tga', 2, 2),
+    'plasma_shaft': ('AW-2004Particles/Texture/PlasmaShaft.tga', 1, 1),
+    'smoke_panels': ('AW-2004Particles/Texture/SmokePanels1.tga', 4, 4),
+    # The Shock Rifle's flashes on meshes, all FB_Brighten: ShockBeamMuzFlash's ShockFlashFB (shock_flash, on the ShockMuzFlash mesh),
+    # ShockProjMuzFlash's ShockMuzFlash1stFinal (shock_muzflash_1st, 4 tiles) and ShockProjMuzFlash3rd's ShockMuzFlash3rdFinal
+    'shock_beam_flash': ('XEffectMat/Texture/shock_flash.tga', 1, 1),
+    'shock_muzflash_1st': ('XGameShaders/Texture/shock_muzflash_1st.tga', 2, 2),
+    'shock_muzflash_3rd': ('XGameShaders/Texture/shock_muzflash_3rd.tga', 1, 1),
+}
+
+# (the ones UT blends by their alpha, not adds: PTDS_AlphaBlend)
+SRGB = ('shell_casing', 'redeemer_smoke', 'smoke_puff', 'muzzle_smoke', 'sniper_smoke', 'explosion_smoke', 'rock_chunks', 'link_power_green', 'link_power_yellow', 'link_power_blue')
+
+# The textures whose colour is moved this share of the way to white, with their alpha kept: the dark grey in the Sniper Rifle's smoke
+# showed as dark spots, which pictures of UT show much fainter
+LIGHTENED = {'sniper_smoke': 0.5}
+
+# The textures that UT draws as STY_Translucent or with a FinalBlend of FB_Translucent: c + d * (1 - c) (OpenGLDrv.dll, decompiled). They
+# are read as they are, and their materials are derived from fx_particle_brighten_graph and fx_particle_weapon_brighten_graph
+# (make_combo_materials.py, which names them after FB_Brighten, as they were once taken for it). (An Emitter's PTDS_Translucent is not
+# this: it adds, ONE and ONE.)
+BRIGHTEN = ('impact_smoke', 'link_beam_flash_green', 'link_beam_flash_yellow', 'link_beam_flash_blue', 'link_bolt_green', 'link_bolt_yellow')
+
+# The ones read as srgb: UT2004 draws in gamma space and puts a texture's values on the screen as they are, which the game does for an srgb
+# texture. Read as they are, the first person flash (MinigunMuzFlash1st's Minigun_burst) was paler and yellower than UT's orange.
+SRGB_BRIGHTEN = ('minigun_burst',)
+
+# The textures that are kept as they are, alpha and all, for a material of their own that reads it (the shield's fx_shield, the
+# Redeemer blast's fx_ion_sphere and fx_flame_ring and the Invisible combo's overlay, made by make_combo_materials.py, which draw them
+# as FB_Brighten does, by their alpha)
+KEEP_ALPHA = ('shield_elec', 'shield_rip_elec', 'shield_edge', 'ion_burn', 'grad_falloff', 'link_power_green', 'link_power_yellow', 'link_power_blue',
+              'invis_overlay')
+
+# The textures that only those materials draw, so they have no particle material of their own (FlameGradient is the Redeemer ring's)
+COMBO_ONLY = KEEP_ALPHA + ('flame_gradient', 'red_bolt', 'invis_overlay')
+
+# The textures that are turned a quarter, because they are drawn on a beam, which lays v along its length (TracerShot is a streak along
+# u, the way NewTracer's sprite moves: PTDU_Right)
+TURNED = ('tracer_shot', 'white_streak', 'speed_trail', 'plasma_shaft')
+
+# The textures of which only the top half is used: SpeedTrailTex is a streak above a dot, and a stream (PT_Stream) is the streak
+TOP_HALF = ('speed_trail',)
+
+# The effects that UT draws with the weapon in the player's view (attached to it) also get fx_weapon_<name>, which draws with the
+# weapon model's field of view (units/ut/fx/particle_weapon_linear, or particle_weapon for an srgb one), so they are among the model's
+# parts. The Minigun's flash and shells are attached to the weapon (MinigunFire.InitEffects, Minigun.PostBeginPlay), and its smoke is
+# drawn with the weapon's field of view (WeaponFire.DrawMuzzleFlash).
+WEAPON = ('minigun_burst', 'shell_casing', 'muzzle_smoke', 'force_ring', 'link_muzmesh_green', 'link_muzmesh_yellow',
+          'link_beam_flash_green', 'link_beam_flash_yellow', 'link_beam_flash_blue', 'shock_beam_flash', 'shock_muzflash_1st')
+
+# The textures UT draws with FB_Brighten that are added here as UE2 adds them: the colour times the alpha (OpenGLDrv.dll, decompiled:
+# SRC_ALPHA, ONE), so their alpha is kept for the particle material, which multiplies the colour by it
+ADDED_BY_ALPHA = ('shock_beam_flash', 'shock_muzflash_1st', 'shock_muzflash_3rd', 'minigun_burst', 'minigun_flash_3rd', 'link_muzmesh_green',
+                  'link_muzmesh_yellow')
+
+def write(name, width, height, rows, linear, weapon=False, brighten=False, keep_alpha=False):
+    if keep_alpha:
+        pass
+    elif linear:
+        # UT's additive styles leave out the texture's alpha, while the particle material multiplies the colour by it, so it is made
+        # opaque here
+        rows = [bytes(255 if i % 4 == 3 else v for i, v in enumerate(row)) for row in rows]
+    write_png('%s/units/ut/fx/%s.png' % (REPO, name), width, height, rows)
+    open('%s/units/ut/fx/%s.texture' % (REPO, name), 'w', newline='\n').write(texture_text('units/ut/fx/' + name, not linear))
+    if name in COMBO_ONLY:
+        return
+    if brighten and not linear:
+        parent, weapon_parent = 'fx_particle_brighten_srgb_graph', 'fx_particle_weapon_brighten_srgb_graph'
+    elif brighten:
+        parent, weapon_parent = 'fx_particle_brighten_graph', 'fx_particle_weapon_brighten_graph'
+    else:
+        parent, weapon_parent = ('particle_linear', 'particle_weapon_linear') if linear else ('particle', 'particle_weapon')
+    open('%s/units/ut/fx/fx_%s.material' % (REPO, name), 'w', newline='\n').write(particle_material_text(name, parent))
+    if weapon:
+        open('%s/units/ut/fx/fx_weapon_%s.material' % (REPO, name), 'w', newline='\n').write(particle_material_text(name, weapon_parent))
+
+for name, (tga, columns, rows_count) in TEXTURES.items():
+    width, height, rows = read_tga('%s/%s' % (EXPORT, tga))
+
+    if name in LIGHTENED:
+        share = LIGHTENED[name]
+        rows = [bytes(v if i % 4 == 3 else round(v + (255 - v) * share) for i, v in enumerate(row)) for row in rows]
+
+    if name in TOP_HALF:
+        rows = rows[:height // 2]
+        height = len(rows)
+
+    if name in TURNED:
+        rows = [b''.join(rows[y][x * 4:x * 4 + 4] for y in range(height)) for x in range(width)]
+        width, height = height, width
+
+    if columns == 1 and rows_count == 1:
+        write(name, width, height, rows, name not in SRGB + SRGB_BRIGHTEN, name in WEAPON, name in BRIGHTEN, name in KEEP_ALPHA + ADDED_BY_ALPHA)
+        print('texture', name, width, height)
+
+        continue
+
+    tile_width, tile_height = width // columns, height // rows_count
+
+    for index in range(columns * rows_count):
+        column, row = index % columns, index // columns
+        # (a row from read_tga is four bytes for each pixel)
+        tile = [line[4 * column * tile_width:4 * (column + 1) * tile_width] for line in rows[row * tile_height:(row + 1) * tile_height]]
+
+        write('%s_%d' % (name, index), tile_width, tile_height, tile, name not in SRGB + SRGB_BRIGHTEN, name in WEAPON, name in BRIGHTEN,
+              name in KEEP_ALPHA + ADDED_BY_ALPHA)
+
+    print('sheet', name, columns * rows_count, 'tiles of', tile_width, tile_height)
+
+# The shell casing is also drawn lit (fx_shell_casing_lit): ShellSpewer's meshes are lit by the level (its Style is UT's default,
+# STY_Normal), which makes them dark grey. Unlit, the texture was drawn at full brightness. The parent is the SDK's standard
+# material, not world_standard, which fades out near the camera, where the player's own shells are.
+LIT_MATERIAL = '''material_contexts = {
+	surface_material = ""
+}
+parent_material = "core/stingray_renderer/shader_import/standard"
+textures = {
+	color_map = "units/ut/fx/%s"
+}
+variables = {
+	use_color_map = {
+		type = "scalar"
+		value = 1
+	}
+	roughness = {
+		type = "scalar"
+		value = 0.9
+	}
+}
+'''
+
+for name in ('shell_casing',):
+    open('%s/units/ut/fx/fx_%s_lit.material' % (REPO, name), 'w', newline='\n').write(LIT_MATERIAL % name)
+    print('lit material', name)

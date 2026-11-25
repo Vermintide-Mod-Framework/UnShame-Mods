@@ -1,0 +1,14 @@
+materials = {
+	m_0 = "units/ut/flak/pickup_m0"
+}
+renderables = {
+	g_third_person_0 = {
+		always_keep = false
+		culling = "disabled"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+}
