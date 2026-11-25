@@ -108,6 +108,9 @@ local CONFIG = {
 	detonation_delay = 0.1,
 	-- A glob that drips starts with the gravity times 0.2 as its speed (190 uu/s).
 	drip_speed_uu = 190,
+	-- A glob that drips starts with this gap between its sphere and the ceiling. UT's starts touching it, but the game's first sweep
+	-- would count the touch as a hit.
+	drip_gap = 0.01, -- m
 	-- The glob's Hit animation plays when it lands. A glob on a ceiling starts to drip when the animation ends. The animation is 18 frames
 	-- (BioRifle_rc.uc) at the frame rate of 30 a second, which the skin assumes (see goop_frame_rate in bio/skin.lua).
 	hit_animation_time = 0.6,
@@ -308,6 +311,9 @@ local function enter_function(attacker_unit, input_extension)
 	return input_extension:reset_release_input()
 end
 
+-- The radius of the sphere that a glob in the air is swept against walls with: the base's
+local WALL_RADIUS = Projectiles.brace_of_drake_pistols_shot.radius
+
 local function build_projectile_info()
 	local projectile_info = table.clone(Projectiles.brace_of_drake_pistols_shot)
 
@@ -318,7 +324,7 @@ local function build_projectile_info()
 	-- base's sphere, as before.
 	projectile_info.radius = CONFIG.flying_collision_uu * UNIT + utils.UT_PROJECTILE_RADIUS
 	projectile_info.static_impact_type = "sphere_sweep"
-	projectile_info.ut_wall_radius = Projectiles.brace_of_drake_pistols_shot.radius
+	projectile_info.ut_wall_radius = WALL_RADIUS
 
 	return projectile_info
 end
@@ -930,12 +936,19 @@ local function blow_up(glob)
 	end_visual(glob)
 end
 
+-- Returns where a glob that comes off a glob that has landed starts: its sphere against walls (WALL_RADIUS) is clear of the surface by
+-- the gap. The game's first sweep starts there, and a sphere that already touches the surface hits it and sticks to it again. A glob
+-- that has landed is on the surface, where UT's sits its collision radius off it.
+local function off_surface(position, normal, gap)
+	return position + normal * (WALL_RADIUS + gap)
+end
+
 -- A glob on a ceiling falls, as a glob of the same level.
 local function drip(glob)
 	stop_avoiding(glob)
 
 	local context = glob.context
-	local position = glob.position:unbox() + glob.normal:unbox() * 0.1
+	local position = off_surface(glob.position:unbox(), glob.normal:unbox(), CONFIG.drip_gap)
 	local speed = CONFIG.drip_speed_uu * UNIT * CONFIG.speed_scale
 
 	spawn_glob(context, position, Vector3(0, 0, -speed), glob.level)
@@ -943,9 +956,9 @@ local function drip(glob)
 end
 
 -- BioGlob.SplashGlobs: small globs fly off the surface. They start a little off it, and fly away from it in random directions. The
--- glob that landed gives them a tenth of its velocity, reflected.
+-- glob that landed gives them a tenth of its velocity, reflected. The gap between their sphere and the surface is UT's.
 local function splash_globs(context, position, normal, landing_velocity, count, volume)
-	local start = position + normal * (volume * (CONFIG.flying_collision_uu + 4) * UNIT)
+	local start = off_surface(position, normal, volume * (CONFIG.flying_collision_uu + 4) * UNIT)
 	local reflected = landing_velocity and (landing_velocity - normal * (Vector3.dot(landing_velocity, normal) * 2)) * CONFIG.globling_inherit_share or Vector3.zero()
 
 	for _ = 1, count do

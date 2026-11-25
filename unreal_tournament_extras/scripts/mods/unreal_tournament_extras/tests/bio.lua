@@ -626,9 +626,12 @@ local function scenarios()
 
 				if landed[1] and landed[2] then
 					local hang = landed[2].t - landed[1].t
+					local fall = landed[1].z - landed[2].z
 
-					-- (the drip falls after the landing's animation and the drip time, 2.4 s, and falls 3 m)
+					-- (the drip falls after the landing's animation and the drip time, 2.4 s, and then falls to the floor 4.8 m below)
 					t.expect(hang > 2.2 and hang < 3.5, "it hung on the ceiling %.2f s", hang)
+					-- (a glob that sticks to the ceiling again lands just below it)
+					t.expect(fall > 4, "it fell %.2f m, not to the floor", fall)
 				end
 			end,
 		},
