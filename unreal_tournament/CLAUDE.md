@@ -9,7 +9,10 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
   extras mod, `../unreal_tournament_extras`, has the chat commands and the tests). **Read the output for errors before committing**: a build with a Lua error still produces files, and a broken commit has been pushed that way. Only report a build to the user if
   it fails.
 - Every commit has its build number: in `scripts/mods/unreal_tournament/unreal_tournament.lua`, `(build N)` with N the number of commits
-  (`git rev-list --count HEAD`) plus one. Bump it, build, commit, **and push**, for every change, on this branch too. Do not ask whether to commit.
+  (`git rev-list --count HEAD`) plus one. Bump it, build, commit, **and push** to `master`, for every change. Do not ask whether to commit.
+  A change to documentation only (READMEs, this file) gets no bump and no build: commit and push it.
+- Upload to the Workshop only when asked: `../vmb.exe upload unreal_tournament unreal_tournament_extras -f . --rc ../vmb-rc -n "Build N"`,
+  with N the build number in `unreal_tournament.lua`. The change note of every upload is that build number.
 - Edit code with the Edit and Write tools, not with Python or sed scripts through the shell (they have mangled backslashes and line endings). Every
   text file has LF line endings (`.gitattributes` in the `mods` folder).
 - The game can be started and driven from here with the scripts in `tools/` (PowerShell). `run_tests.ps1 -Suite <suite>` does the whole loop: it
@@ -33,7 +36,9 @@ Read `README.md` here first (what the mod is, the layout, how it fits together),
 - In-game tests are in the extras mod, `../unreal_tournament_extras/scripts/mods/unreal_tournament_extras/tests` (`runner.lua`, and a suite for
   each weapon). A test reaches this mod's tables through `ut` (`get_mod("unreal_tournament")`), and registers its commands and hooks on its own
   mod. `/ut_test <suite>` runs one (or
-  `tools/run_tests.ps1 -Suite <suite>`; several with `-Suite a,b` or `-Suite all`, in one command): it loads its level, sets the career and weapon, and goes back to the Keep. The results are lines that
+  `tools/run_tests.ps1 -Suite <suite>`; several with `-Suite a,b` or `-Suite all`, in one command): it loads its level, sets the career and weapon, and goes back to the Keep.
+  `<suite>:<words>` runs only the tests of the suite whose names contain the words, with `_` for each space and case-sensitive:
+  `/ut_test bio:ceiling_drips` or `run_tests.ps1 -Suite bio:ceiling_drips` runs only "a glob on a ceiling drips". The results are lines that
   start with `[ut_test]` in the console log. The game's engine calls that use the world or physics are made on the main thread
   (`t.on_main_thread`), because a coroutine's references are refused.
 
