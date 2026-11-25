@@ -123,6 +123,6 @@ return {
 		en = "No Rampart Monsters",
 	},
 	no_rampart_description = {
-		en = "Monsters in Chaos Wastes never get Rampart, which makes them immune to ranged attacks. Applies to monsters that spawn after it is turned on.",
+		en = "Monsters in Chaos Wastes are never immune to ranged attacks.",
 	},
 }
