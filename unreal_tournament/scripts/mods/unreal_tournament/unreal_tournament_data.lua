@@ -78,6 +78,11 @@ return {
 						type = "checkbox",
 						default_value = false,
 					},
+					{
+						setting_id = "no_ranged_immune_bosses",
+						type = "checkbox",
+						default_value = false,
+					},
 				},
 			},
 			{
