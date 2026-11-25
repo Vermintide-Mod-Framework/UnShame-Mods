@@ -6,9 +6,9 @@ local mod = get_mod("unreal_tournament")
 -- of the pool, as the game does. Once all of the mod's weapons for a slot have been left out, they are all in it again, as the game does
 -- for its own when a slot runs out. A career that has none of the mod's weapons for the slot gets the game's.
 --
--- With the no_ranged_immune_bosses option, no enemy gets Rampart, the modifier that makes it immune to ranged attacks (ranged_immune). A boss
+-- With the no_rampart option, no enemy gets Rampart, the modifier that makes it immune to ranged attacks (ranged_immune). An enemy
 -- rolls its modifiers from a pool (TerrorEventUtils.generate_enhanced_breed, BossGrudgeMarks), and the modifier is left out of it, so the
--- boss gets another one instead. Bel'akor's shadow lieutenants pick from small sets of their own, in the terror event, so the modifier is
+-- enemy gets another one instead. Bel'akor's shadow lieutenants pick from small sets of their own, in the terror event, so the modifier is
 -- taken off them when they spawn, and they have one fewer.
 
 local items = mod.items
@@ -67,7 +67,7 @@ require("scripts/settings/terror_events/terror_event_utils")
 mod:hook(TerrorEventUtils, "generate_enhanced_breed", function (func, num_enhancements, breed_name, enhancement_set)
 	enhancement_set = enhancement_set or BossGrudgeMarks
 
-	if mod.option("no_ranged_immune_bosses") and enhancement_set[RANGED_IMMUNE] then
+	if mod.option("no_rampart") and enhancement_set[RANGED_IMMUNE] then
 		enhancement_set = table.clone(enhancement_set)
 		enhancement_set[RANGED_IMMUNE] = nil
 	end
@@ -78,7 +78,7 @@ end)
 mod:hook(TerrorEventUtils, "apply_breed_enhancements", function (func, unit, breed, optional_data)
 	local enhancements = optional_data.enhancements
 
-	if mod.option("no_ranged_immune_bosses") and table.find_by_key(enhancements, "name", RANGED_IMMUNE) then
+	if mod.option("no_rampart") and table.find_by_key(enhancements, "name", RANGED_IMMUNE) then
 		local kept = {}
 
 		for _, enhancement_data in ipairs(enhancements) do

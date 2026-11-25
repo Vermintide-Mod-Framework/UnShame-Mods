@@ -79,7 +79,7 @@ return {
 						default_value = false,
 					},
 					{
-						setting_id = "no_ranged_immune_bosses",
+						setting_id = "no_rampart",
 						type = "checkbox",
 						default_value = false,
 					},

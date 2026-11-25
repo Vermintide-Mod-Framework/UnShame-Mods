@@ -119,10 +119,10 @@ return {
 	reliquary_ut_weapons_description = {
 		en = "Only receive Unreal Tournament weapons, if any are available, when swapping weapons in Chaos Wastes.",
 	},
-	no_ranged_immune_bosses = {
-		en = "No Rampart Bosses",
+	no_rampart = {
+		en = "No Rampart",
 	},
-	no_ranged_immune_bosses_description = {
-		en = "Bosses and Bel'akor's lieutenants in Chaos Wastes never get Rampart, which makes them immune to ranged attacks. A boss gets another modifier instead. Applies to enemies that spawn after it is turned on.",
+	no_rampart_description = {
+		en = "Enemies in Chaos Wastes never get Rampart, which makes them immune to ranged attacks. Applies to enemies that spawn after it is turned on.",
 	},
 }
