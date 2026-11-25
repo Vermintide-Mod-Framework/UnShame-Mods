@@ -751,7 +751,8 @@ local function push_part(unit, velocity, at)
 end
 
 -- Sets the velocity and the spin (radians a second, about each axis) of the moving parts of a unit, as one body: each part also moves
--- with the spin about the middle of the parts, so that the whole body turns, not each part in its place. Returns whether anything moved.
+-- with the spin about the middle of the parts, so that the whole body turns, not each part in its place. A heavy body goes slower, as the
+-- other weapons throw it (utils.throw_share). Returns whether anything moved.
 local function move_parts(unit, velocity, spin)
 	local actors = {}
 	local middle = Vector3.zero()
@@ -770,6 +771,11 @@ local function move_parts(unit, velocity, spin)
 	end
 
 	middle = middle / #actors
+
+	local share = utils.throw_share(unit)
+
+	velocity = velocity * share
+	spin = spin * share
 
 	for _, actor in ipairs(actors) do
 		Actor.set_velocity(actor, velocity + Vector3.cross(spin, Actor.position(actor) - middle))
