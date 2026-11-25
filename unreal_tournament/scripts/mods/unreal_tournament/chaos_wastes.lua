@@ -8,8 +8,7 @@ local mod = get_mod("unreal_tournament")
 --
 -- With the no_rampart option, no monster gets Rampart, the modifier that makes it immune to ranged attacks (ranged_immune). A monster
 -- rolls its modifiers from a pool (TerrorEventUtils.generate_enhanced_breed, BossGrudgeMarks), and the modifier is left out of it, so the
--- monster gets another one instead. Bel'akor's shadow lieutenants pick from small sets of their own, in the terror event, so the modifier is
--- taken off them when they spawn, and they have one fewer.
+-- monster gets another one instead.
 
 local items = mod.items
 
@@ -73,22 +72,4 @@ mod:hook(TerrorEventUtils, "generate_enhanced_breed", function (func, num_enhanc
 	end
 
 	return func(num_enhancements, breed_name, enhancement_set)
-end)
-
-mod:hook(TerrorEventUtils, "apply_breed_enhancements", function (func, unit, breed, optional_data)
-	local enhancements = optional_data.enhancements
-
-	if mod.option("no_rampart") and table.find_by_key(enhancements, "name", RANGED_IMMUNE) then
-		local kept = {}
-
-		for _, enhancement_data in ipairs(enhancements) do
-			if enhancement_data.name ~= RANGED_IMMUNE then
-				kept[#kept + 1] = enhancement_data
-			end
-		end
-
-		optional_data.enhancements = kept
-	end
-
-	return func(unit, breed, optional_data)
 end)
