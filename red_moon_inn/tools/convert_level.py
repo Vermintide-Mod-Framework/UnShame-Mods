@@ -81,10 +81,9 @@ SUBSTITUTES = {
 # Units Vermintide 2 has under the inn's names but made again in another shape, and the unit of Vermintide 2 that has the inn's
 # shape, with the materials to give it. Vermintide 2's 4 m beams are thicker uneven logs of other lengths, so what was put
 # against the inn's straight beams doesn't meet them; the wizard tower's beams are the inn's, square and 4 m long, with the
-# same origin. They are given the material the inn's beams had.
+# same origin. They keep their own material: given the inn's beams' material, Vermintide 2's texture of it shows carvings.
 REPLACEMENTS = {
-    'units/architecture/generic/generic_wood_beam_4m_%02d' % n: (
-        'units/architecture/wizard/wizard_wood_beam_4m_%02d' % n, {'beams': 'units/materials/g/generic_wood_beams_01'})
+    'units/architecture/generic/generic_wood_beam_4m_%02d' % n: ('units/architecture/wizard/wizard_wood_beam_4m_%02d' % n, {})
     for n in (1, 2, 3)
 }
 
@@ -629,21 +628,30 @@ class Converter:
 
 
 def replace_units(level):
-    """Gives the units of REPLACEMENTS their replacement, in what the game reads and in what the editor reads.
-    Returns how many units were changed; units replaced already are left as they are."""
+    """Gives the units of REPLACEMENTS their replacement, in what the game reads and in what the editor reads, and gives
+    replacements that are in the level already the materials REPLACEMENTS gives them. Returns how many units were changed."""
+    slots_of = {new: slots for new, slots in REPLACEMENTS.values()}
     changed = 0
 
     for u in level['units']:
+        before = (u['type'], u['materials'])
+
         if u['type'] in REPLACEMENTS:
-            u['type'], slots = REPLACEMENTS[u['type']]
-            u['materials'] = dict(slots)
+            u['type'] = REPLACEMENTS[u['type']][0]
+
+        if u['type'] in slots_of:
+            u['materials'] = dict(slots_of[u['type']])
+
+        if (u['type'], u['materials']) != before:
             changed += 1
 
     for u in level['editor_metadata']['Units']:
         if u['Type'] in REPLACEMENTS:
-            u['Type'], slots = REPLACEMENTS[u['Type']]
+            u['Type'] = REPLACEMENTS[u['Type']][0]
             u['Path'] = u['Type']
-            u['MaterialSlots'] = dict(slots)
+
+        if u['Type'] in slots_of:
+            u['MaterialSlots'] = dict(slots_of[u['Type']])
 
     return changed
 
