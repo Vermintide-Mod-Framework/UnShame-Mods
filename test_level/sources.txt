@@ -1,3 +1,4 @@
+global.script_flow_nodes
 environment/default_honduras_02.shading_environment
 environment/textures/color_grading_honduras_sharp_02.dds
 environment/textures/color_grading_honduras_sharp_02.texture
