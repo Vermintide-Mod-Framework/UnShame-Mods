@@ -21,6 +21,30 @@ from vt1_bundles import name_hash, name_hash32
 INN_PACKAGE = 'resource_packages/levels/inn'
 INN_LEVEL = 'levels/inn/world'
 
+# The converted level, as the game names it
+LEVEL_RESOURCE = 'levels/red_moon_inn/red_moon_inn/world'
+
+# The navigation mesh's settings: those of Vermintide 2's keep
+NAV_GEN_SETTINGS = {
+    'altitudeTolerance': 0.5,
+    'cellSize': 20,
+    'consumeAllPrototypes': True,
+    'consumeGwNavGenExclusiveObjectSets': True,
+    'consumeGwNavGenObjectSets': True,
+    'consumeLevelReferenceSeedPoints': True,
+    'consumePhysicsMesh': True,
+    'consumeStingrayNavMeshTriangles': False,
+    'consumeTerrain': True,
+    'consumeUnitsMode': 'All units without gwnavgenexcluded script data',
+    'entityHeight': 1.6,
+    'entityRadius': 0.38,
+    'minNavigableSurface': 0.5,
+    'rasterPrecision': 0.2,
+    'slopeMax': 60,
+    'stepMax': 0.6,
+    'terrainSamplingInMeters': 10,
+}
+
 # Used for what the inn has and Vermintide 2 doesn't, where the level needs something there
 SHADING_ENVIRONMENT = 'environment/honduras_keep_02'
 
@@ -31,8 +55,9 @@ LEVEL_SETTINGS_KEYS = ['num_background_units', 'shading_environment', 'sound_env
 FOUND_NAMES = ['units/materials/g/generic_door_01']
 
 # Units of the inn that Vermintide 2 doesn't have, and the unit of Vermintide 2 that is used instead
+SKYDOME = 'units/skydome/skydome_hdr'
 SUBSTITUTES = {
-    'units/skydome/skydome': 'units/skydome/skydome_hdr',
+    'units/skydome/skydome': SKYDOME,
 }
 
 # The editor names a placed unit after its type, with a number
@@ -230,7 +255,6 @@ class Converter:
 
             if types[k] is None and substitute:
                 types[k] = substitute
-                u['material'] = 0
                 self.substituted[(self.vt1_name(u['type']), substitute)] += 1
 
         names = self.unit_names(units, types)
@@ -247,13 +271,9 @@ class Converter:
                 self.where[name].append('at %s%s' % (' '.join('%.2f' % v for v in u['pos']), ', in ' + sets if sets else ''))
                 continue
 
-            material = ''
-            if u['material']:
-                material = self.resource(u['material'], 'material')
-
-                if material is None:
-                    self.missing['material of a unit'][self.vt1_name(u['material'])] += 1
-                    material = ''
+            # Vermintide 1 gives most units a material, which is one of the unit's own: in Vermintide 2 a unit's material
+            # replaces all of its materials, and only the skydome has one, which the editor sets from its settings
+            material = types[k] if types[k] == SKYDOME else ''
 
             data = {}
             for path, _, value in unit_data.get(k, []):
@@ -408,7 +428,6 @@ class Converter:
         effects, effect_index = self.particle_effects()
 
         level = {
-            'editor_metadata': {'Triggers': [], 'Units': [], 'Volumes': []},
             'flow': {'nodes': []},
             'level_references': [],
             'level_settings': self.level_settings(),
@@ -425,6 +444,9 @@ class Converter:
             'units': units,
             'volumes': self.volumes(),
         }
+        level['editor_metadata'] = editor_metadata(level)
+        self.notes.append('Units keep their own materials: the material Vermintide 1 gives %d units is one of their own, '
+                          'or the one of their Vermintide 1 version.' % sum(1 for u in self.level.units() if u['material']))
 
         for what, count in self.level.counts().items():
             if count:
@@ -458,6 +480,129 @@ class Converter:
                     lines.extend('    ' + w for w in self.where[name])
 
         return '\n'.join(lines) + '\n'
+
+
+def _vector(v):
+    return {'X': v[0], 'Y': v[1], 'Z': v[2]}
+
+
+def _rotation(q):
+    return {'X': q[0], 'Y': q[1], 'Z': q[2], 'W': q[3]}
+
+
+def _placed(item, layer, path):
+    """What the editor keeps of anything placed in the level."""
+    return {
+        'Id': item['id'],
+        'Layer': layer,
+        'Path': path,
+        'Pivot': _vector([0, 0, 0]),
+        'Pos': _vector(item['pos']),
+        'Rot': _rotation(item['rot']),
+        'Scl': _vector(item['scl']),
+    }
+
+
+def _editor_light(light):
+    """A light as the editor keeps it: its color in 0 to 255, its angles in degrees and its material as MaterialResource."""
+    return {
+        'BoxMax': _vector(light['box_max']),
+        'BoxMin': _vector(light['box_min']),
+        'CastShadows': light['cast_shadows'],
+        'Color': {'R': round(light['color'][0] * 255), 'G': round(light['color'][1] * 255), 'B': round(light['color'][2] * 255), 'A': 255},
+        'FalloffEnd': light['falloff_end'],
+        'FalloffExponent': light['falloff_exponent'],
+        'FalloffStart': light['falloff_start'],
+        'Intensity': light['intensity'],
+        'Material': '',
+        'MaterialResource': light['material'],
+        'SpotAngleEnd': math.degrees(light['spot_angle_end']),
+        'SpotAngleStart': math.degrees(light['spot_angle_start']),
+        'Type': light['type'],
+        'VolumetricIntensity': light['volumetric_intensity'],
+    }
+
+
+def editor_metadata(level):
+    """What the editor reads the level from. The rest of the level is what the game reads, and the editor writes it from this
+    when the level is saved. The editor has the skydome in its settings, not with the units."""
+    units = []
+
+    for u in level['units']:
+        if u['type'] == SKYDOME:
+            continue
+
+        item = _placed(u, 'Default', u['type'])
+        item.update({
+            'Cameras': {},
+            'Lights': {name: _editor_light(light) for name, light in u['lights'].items()},
+            'MaterialSlots': dict(u['materials']),
+            'Name': u['name'],
+            'OverridePoses': {},
+            'ScriptData': dict(u['data']),
+            'StoryOverridePoses': {},
+            'Type': u['type'],
+        })
+        units.append(item)
+
+    effects = []
+
+    for k, p in enumerate(level['particle_effects']):
+        item = _placed(p, 'fx', 'particleeffect')
+        item.update({'Effect': p['effect'], 'Name': 'particle_effect_%d' % (k + 1), 'Spawn': p['spawn']})
+        effects.append(item)
+
+    volumes = []
+
+    for v in level['volumes']:
+        item = _placed(v, 'volumes', 'volume')
+        item.update({
+            'Bottom': v['bottom'],
+            'CapTriangulation': v['cap_triangulation'],
+            'Name': v['name'],
+            'Points': [_vector(p) for p in v['points']],
+            'Top': v['top'],
+            'Type': v['type'],
+        })
+        volumes.append(item)
+
+    nav_data = 'navigation\\' + LEVEL_RESOURCE.replace('/', '\\')
+
+    return {
+        'Flow': {'Connections': [], 'Groups': [], 'Nodes': []},
+        'Groups': [],
+        'GwNavGenSettings': dict(NAV_GEN_SETTINGS, generatedNavDataPath=nav_data),
+        'Layers': ['Default', 'fx', 'volumes'],
+        'LevelObjectSets': {
+            'NestedSetNamesBySetName': {},
+            'ObjectIdsBySetName': level['object_sets'],
+            'VisibleSetNames': sorted(level['object_sets']),
+        },
+        'LevelReferences': [],
+        'LightBakeSettings': {'ExcludedObjectSets': [], 'Layers': []},
+        'LuaPluginObjects': [],
+        'Notes': [],
+        'Overrides': [],
+        'ParticleEffects': effects,
+        'PositionMarkers': [],
+        'Prototypes': [],
+        'Replays': [],
+        'Scatter': {'Dirty': False, 'PoolSettings': {}, 'ScatterData': {}},
+        'Settings': {
+            'FrozenLayers': [],
+            'HiddenLayers': [],
+            'HiddenObjects': [],
+            'LastHiddenObjects': [],
+            'ShadingEnvironment': level['level_settings']['shading_environment'],
+            'SkydomeUnit': SKYDOME,
+        },
+        'Sounds': [],
+        'Splines': [],
+        'Stories': [],
+        'Triggers': [],
+        'Units': units,
+        'Volumes': volumes,
+    }
 
 
 def matrix_pose(m):

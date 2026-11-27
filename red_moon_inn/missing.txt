@@ -7,17 +7,12 @@ Kept: 1186 of 1236 units, 16 of 31 particle effects, 4 volumes, 12 object sets.
 The shading environment environment/red_moon_inn is not in Vermintide 2: environment/honduras_keep_02 is used.
 Level setting sound_environment = "" is left out.
 Level setting timpani_sound_environment = "default" is left out.
+Units keep their own materials: the material Vermintide 1 gives 1014 units is one of their own, or the one of their Vermintide 1 version.
 Not converted: triggers (9).
 Not converted: stories (8).
 Not converted: scatter (7).
 Not converted: flow bytes (22964).
 units/skydome/skydome is not in Vermintide 2: units/skydome/skydome_hdr is used.
-
-Not in Vermintide 2 (material of a unit):
-  751754377575848e (x106)
-  eaa9effb4269472f (x3)
-  units/materials/g/generic_door_01
-  units/props/inn/props_generic_book_01 (x8)
 
 Not in Vermintide 2 (particle effect):
   25130bc88ea78193
