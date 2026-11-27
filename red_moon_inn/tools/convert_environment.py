@@ -35,6 +35,13 @@ RENAMED = {
     'light_shaft_weigth': 'light_shafts_weigth',
 }
 
+# Textures used where Vermintide 2 doesn't have the inn's. The global probes give the ambient light and reflections, and
+# without them only what the lights reach is lit: the probes Horn of Magnus uses, baked in Ubersreik, where the inn is.
+TEXTURE_STAND_INS = {
+    'global_diffuse_map': 'levels/honduras/bell/world_bake_result_global_02_diffuse',
+    'global_specular_map': 'levels/honduras/bell/world_bake_result_global_02_specular',
+}
+
 # Settings Vermintide 2's game looks for that Vermintide 1's inn doesn't have, and the inn's setting that is copied for them.
 # An end zone blends the level's environment to waystone_environment_01 when it opens.
 ADDED_SETTINGS = {'waystone_environment_01': 'default'}
@@ -138,7 +145,7 @@ def convert(vt1_dir, content_dir, sdk_dir, strings_path):
 
                 if value is None:
                     missing_textures.add((name, strings.get(h, '%016x' % h)))
-                    value = template[name].get('value', '')
+                    value = TEXTURE_STAND_INS.get(name, template[name].get('value', ''))
             elif type_id == 11:
                 value = int(round(struct.unpack('<f', raw)[0]))
             elif name in WORKED_OUT:
@@ -175,8 +182,11 @@ def convert(vt1_dir, content_dir, sdk_dir, strings_path):
     report.append('Variables Vermintide 2\'s template doesn\'t have (left out):')
     report.extend('  ' + n for n in sorted(left_out))
     report.append('')
-    report.append('Textures Vermintide 2 doesn\'t have (the template\'s default is used):')
+    report.append('Textures Vermintide 2 doesn\'t have (the template\'s default is used, or the texture of TEXTURE_STAND_INS):')
     report.extend('  %s: %s' % kv for kv in sorted(missing_textures))
+
+    for name, texture in sorted(TEXTURE_STAND_INS.items()):
+        report.append('%s: %s is used.' % (name, texture))
 
     return {'settings': settings, 'template': TEMPLATE}, '\n'.join(report) + '\n'
 

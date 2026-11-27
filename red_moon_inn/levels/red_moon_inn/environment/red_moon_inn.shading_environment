@@ -113,10 +113,10 @@ settings = {
 				0.01023648
 			]
 			fog_enabled = 1
-			global_diffuse_map = ""
+			global_diffuse_map = "levels/honduras/bell/world_bake_result_global_02_diffuse"
 			global_lens_dirt_map = "environment/textures/lensdirt"
 			global_roughness_multiplier = 1
-			global_specular_map = ""
+			global_specular_map = "levels/honduras/bell/world_bake_result_global_02_specular"
 			heatmap_world_extents = [
 				1000
 				1000
@@ -378,10 +378,10 @@ settings = {
 				0.01023648
 			]
 			fog_enabled = 1
-			global_diffuse_map = ""
+			global_diffuse_map = "levels/honduras/bell/world_bake_result_global_02_diffuse"
 			global_lens_dirt_map = "environment/textures/lensdirt"
 			global_roughness_multiplier = 1
-			global_specular_map = ""
+			global_specular_map = "levels/honduras/bell/world_bake_result_global_02_specular"
 			heatmap_world_extents = [
 				1000
 				1000
@@ -643,10 +643,10 @@ settings = {
 				0.01740197
 			]
 			fog_enabled = 1
-			global_diffuse_map = ""
+			global_diffuse_map = "levels/honduras/bell/world_bake_result_global_02_diffuse"
 			global_lens_dirt_map = "environment/textures/lensdirt"
 			global_roughness_multiplier = 1
-			global_specular_map = ""
+			global_specular_map = "levels/honduras/bell/world_bake_result_global_02_specular"
 			heatmap_world_extents = [
 				1000
 				1000
@@ -908,10 +908,10 @@ settings = {
 				0.01740197
 			]
 			fog_enabled = 1
-			global_diffuse_map = ""
+			global_diffuse_map = "levels/honduras/bell/world_bake_result_global_02_diffuse"
 			global_lens_dirt_map = "environment/textures/lensdirt"
 			global_roughness_multiplier = 1
-			global_specular_map = ""
+			global_specular_map = "levels/honduras/bell/world_bake_result_global_02_specular"
 			heatmap_world_extents = [
 				1000
 				1000
@@ -1134,10 +1134,10 @@ settings = {
 				0
 			]
 			fog_enabled = 1
-			global_diffuse_map = ""
+			global_diffuse_map = "levels/honduras/bell/world_bake_result_global_02_diffuse"
 			global_lens_dirt_map = "environment/textures/lensdirt"
 			global_roughness_multiplier = 2
-			global_specular_map = ""
+			global_specular_map = "levels/honduras/bell/world_bake_result_global_02_specular"
 			heatmap_world_extents = [
 				1000
 				1000
@@ -1344,10 +1344,10 @@ settings = {
 				0.01740197
 			]
 			fog_enabled = 1
-			global_diffuse_map = ""
+			global_diffuse_map = "levels/honduras/bell/world_bake_result_global_02_diffuse"
 			global_lens_dirt_map = "environment/textures/lensdirt"
 			global_roughness_multiplier = 1
-			global_specular_map = ""
+			global_specular_map = "levels/honduras/bell/world_bake_result_global_02_specular"
 			heatmap_world_extents = [
 				1000
 				1000
@@ -1554,10 +1554,10 @@ settings = {
 				0.01740197
 			]
 			fog_enabled = 1
-			global_diffuse_map = ""
+			global_diffuse_map = "levels/honduras/bell/world_bake_result_global_02_diffuse"
 			global_lens_dirt_map = "environment/textures/lensdirt"
 			global_roughness_multiplier = 1
-			global_specular_map = ""
+			global_specular_map = "levels/honduras/bell/world_bake_result_global_02_specular"
 			heatmap_world_extents = [
 				1000
 				1000
