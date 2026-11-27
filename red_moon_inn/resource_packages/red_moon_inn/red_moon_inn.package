@@ -1,0 +1,11 @@
+mod = [
+	"red_moon_inn"
+]
+
+package = [
+	"resource_packages/red_moon_inn/red_moon_inn"
+]
+
+lua = [
+	"scripts/mods/red_moon_inn/*"
+]

@@ -1,0 +1,128 @@
+Red Moon Inn: what the conversion left out
+
+From levels/inn/world, 8e0929053dd7ecd0.patch_029 in resource_packages/levels/inn.
+Kept: 1186 of 1236 units, 16 of 31 particle effects, 4 volumes, 12 object sets.
+
+214 units have a name made here: their names in Vermintide 1 are not found from their hashes.
+The shading environment environment/red_moon_inn is not in Vermintide 2: environment/honduras_keep_02 is used.
+Level setting sound_environment = "" is left out.
+Level setting timpani_sound_environment = "default" is left out.
+Not converted: triggers (9).
+Not converted: stories (8).
+Not converted: scatter (7).
+Not converted: flow bytes (22964).
+units/skydome/skydome is not in Vermintide 2: units/skydome/skydome_hdr is used.
+
+Not in Vermintide 2 (material of a unit):
+  751754377575848e (x106)
+  eaa9effb4269472f (x3)
+  units/materials/g/generic_door_01
+  units/props/inn/props_generic_book_01 (x8)
+
+Not in Vermintide 2 (particle effect):
+  25130bc88ea78193
+    at 8.97 -3.07 0.85
+  29ea8fb980816d15
+    at -7.38 0.54 7.14
+  a9a0c245db34f2b9 (x4)
+    at -8.75 -4.24 4.25
+    at -8.64 -5.02 2.72
+    at -8.62 -7.88 2.85
+    at -9.27 -8.55 2.45
+  b0e280ba2b14137d (x3)
+    at -8.94 -3.67 4.35
+    at -8.83 -3.98 3.67
+    at -7.54 0.04 6.94
+  c6dc7fac3e97651d (x4)
+    at -0.14 0.38 5.43
+    at -4.18 -0.09 5.41
+    at 7.20 -3.20 2.04
+    at 7.20 -3.20 2.04
+  caa775dc2b2af811 (x2)
+    at -8.14 -3.03 3.67
+    at -9.51 -10.79 0.91
+
+Not in Vermintide 2 (shading environment):
+  environment/red_moon_inn
+
+Not in Vermintide 2 (unit):
+  1539b52a5947cf9e
+    at 0.00 0.00 0.00
+  19d892bb8c0e32f9
+    at 1.59 -6.37 1.61, in flow_drachenfels
+  1d154654f8765b8e
+    at 10.87 4.94 2.51
+  241904ffe4a89865
+    at -7.81 -1.70 5.75
+  28a7608ea378d5d4
+    at 11.56 1.00 0.64, in flow_act_01
+  2d76ddf99c180e8d
+    at 5.30 4.93 2.57
+  33e8fd23dbc55619
+    at 6.81 -0.44 0.65
+  5c2918816057a706
+    at -0.60 -0.28 3.01
+  67b7f04822a93e53
+    at 0.49 -4.30 2.02
+  6b9ad3bebc3d3260 (x11)
+    at -8.00 1.00 0.86
+    at -8.00 -3.00 0.86
+    at 3.25 5.25 0.64
+    at 7.25 5.25 0.64
+    at 11.25 5.25 0.64
+    at 3.25 1.25 0.64
+    at 7.25 1.25 0.64
+    at 11.25 1.25 0.64
+    at 3.25 -2.75 0.64
+    at 7.25 -2.75 0.64
+    at 11.25 -2.75 0.64
+  74196c3af84deed6 (x2)
+    at -6.29 -8.04 1.00, in flow_prologue
+    at -6.29 -8.04 1.00, in flow_act_02, flow_act_03, flow_act_clear
+  8c001ad7a12311f7
+    at -7.81 0.10 3.30
+  8cf2303d5d610761
+    at -2.06 -5.49 1.32, in flow_act_01
+  8d72b9d6fa50ecb5 (x3)
+    at -7.43 6.60 6.60
+    at -3.75 8.50 6.60
+    at 0.38 8.94 6.85
+  91f790f86abf8c11
+    at -7.41 -12.48 0.93
+  922e9f0f7181b7ce (x4)
+    at 3.35 3.30 4.24
+    at 2.47 7.85 3.93
+    at -2.15 8.70 3.57
+    at -6.79 7.31 3.58
+  9d458644a1f68911
+    at -7.85 0.11 5.74
+  a7e6d593fbf9b950
+    at 8.21 4.94 1.50
+  adcae9212f59ccc0
+    at -7.81 -1.72 3.30
+  b188281b7f790414
+    at -8.00 -7.00 0.86
+  bba5204f40d04a30
+    at -1.68 -4.09 1.95
+  c2f0983a0f402dfb
+    at -6.65 -4.46 5.70
+  ed5162fac1b804d5 (x8)
+    at -5.62 -8.42 0.93
+    at -3.64 8.50 3.60
+    at -7.87 6.29 3.60
+    at 1.07 8.50 3.96
+    at 3.54 1.80 4.23
+    at -3.07 8.74 -1.64
+    at 2.00 8.50 -4.79
+    at 5.26 11.40 0.37
+  units/gameplay/difficulty_banner_01
+    at 2.95 1.09 4.84
+  units/gameplay/difficulty_banner_02
+    at 2.94 0.52 4.84
+  units/gameplay/difficulty_banner_03
+    at 2.94 -0.09 4.84
+  units/gameplay/difficulty_banner_04
+    at 2.93 -0.69 4.84
+
+Not in Vermintide 2 (volume name):
+  a9d37d9c
