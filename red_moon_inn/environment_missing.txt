@@ -8,6 +8,7 @@ light_shaft_settings is light_shafts_settings in Vermintide 2.
 light_shaft_weigth is light_shafts_weigth in Vermintide 2.
 sun_shadow_slice_depth_ranges is the keep's: Vermintide 1 has it in other units.
 sun_world_to_shadow_slice0, sun_world_to_shadow_slice1, sun_world_to_shadow_slice2, sun_world_to_shadow_slice3 are left to the engine, which works them out.
+fog_depth_range is volumetric_extinction = 3 / its end: Vermintide 2's fog is exponential, and is made 95% thick where Vermintide 1's linear fog is all fog.
 
 Variables Vermintide 2's template doesn't have (left out):
   ambient_diffuse_fade
@@ -18,7 +19,6 @@ Variables Vermintide 2's template doesn't have (left out):
   custom_fog_blend_color
   custom_fog_blend_direction
   custom_fog_blend_enabled
-  fog_depth_range
   fog_sun_blend
   fog_type
   height_fog_offset_falloff

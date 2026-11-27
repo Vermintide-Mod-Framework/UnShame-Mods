@@ -79,8 +79,15 @@ WORKED_OUT = {
     'sun_shadow_slice_depth_ranges': [0, 0.956971, 0.956971, 2.41255, 2.41255, 5.61306, 5.61306, 14.9202],
 }
 
+# Vermintide 1's fog is fog by distance, from fog_depth_range.x to .y metres, in fog_color. Vermintide 2's is volumetric: the
+# fog_color is its albedo, and how thick it is comes from volumetric_extinction (per metre) and two height fogs, all 0 by
+# default, which is no fog. The inn's fog is given as volumetric_extinction: Vermintide 2's fog grows exponentially where
+# Vermintide 1's grows linearly, so it is made 95% thick (exp(-3)) where Vermintide 1's is all fog, 3 / fog_depth_range.y.
+# The inn's height fog starts at z 0, below its floors, and is left out.
+FOG_THICKNESS_AT_END = 3
+
 # Variables the engine works out while running, which source files don't have
-NOT_IN_SOURCE = {'sun_world_to_shadow_slice0', 'sun_world_to_shadow_slice1', 'sun_world_to_shadow_slice2', 'sun_world_to_shadow_slice3'}
+NOT_IN_SOURCE ={'sun_world_to_shadow_slice0', 'sun_world_to_shadow_slice1', 'sun_world_to_shadow_slice2', 'sun_world_to_shadow_slice3'}
 
 
 def _float(x):
@@ -154,6 +161,15 @@ def convert(vt1_dir, content_dir, sdk_dir, strings_path):
             if name in NOT_IN_SOURCE:
                 continue
 
+            if name == 'fog_depth_range':
+                start, end = struct.unpack_from('<2f', values, offset)
+                variables['volumetric_extinction'] = _float(FOG_THICKNESS_AT_END / end) if end > 0 else 0
+
+                if weight == 0:
+                    variable_weights['volumetric_extinction'] = 0
+
+                continue
+
             if name not in template:
                 left_out.add(vt1_name)
                 continue
@@ -202,6 +218,8 @@ def convert(vt1_dir, content_dir, sdk_dir, strings_path):
         report.append('%s is the keep\'s: Vermintide 1 has it in other units.' % name)
 
     report.append('%s are left to the engine, which works them out.' % ', '.join(sorted(NOT_IN_SOURCE)))
+    report.append('fog_depth_range is volumetric_extinction = %g / its end: Vermintide 2\'s fog is exponential, and is made '
+                  '95%% thick where Vermintide 1\'s linear fog is all fog.' % FOG_THICKNESS_AT_END)
 
     report.append('')
     report.append('Variables Vermintide 2\'s template doesn\'t have (left out):')

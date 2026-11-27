@@ -257,6 +257,7 @@ settings = {
 				5
 				0.25
 			]
+			volumetric_extinction = 0.04100041
 			wind_amount = [
 				0
 				0
@@ -522,6 +523,7 @@ settings = {
 				5
 				0.25
 			]
+			volumetric_extinction = 0.04100041
 			wind_amount = [
 				0
 				0
@@ -787,6 +789,7 @@ settings = {
 				5
 				0.25
 			]
+			volumetric_extinction = 0.04100041
 			wind_amount = [
 				0
 				0
@@ -1052,6 +1055,7 @@ settings = {
 				5
 				0.25
 			]
+			volumetric_extinction = 0.04100041
 			wind_amount = [
 				0
 				0
@@ -1278,6 +1282,7 @@ settings = {
 				5
 				0.5
 			]
+			volumetric_extinction = 0.02942619
 			wind_amount = [
 				0
 				0
@@ -1488,6 +1493,7 @@ settings = {
 				5
 				0.25
 			]
+			volumetric_extinction = 0.04100041
 			wind_amount = [
 				0
 				0
@@ -1698,6 +1704,7 @@ settings = {
 				5
 				0.25
 			]
+			volumetric_extinction = 0.04100041
 			wind_amount = [
 				0
 				0
