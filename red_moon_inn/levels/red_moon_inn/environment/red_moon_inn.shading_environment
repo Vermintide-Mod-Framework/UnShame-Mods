@@ -108,9 +108,9 @@ settings = {
 			]
 			eye_intensity = 1
 			fog_color = [
-				0.006703892
-				0.007618212
-				0.01023648
+				0.09041469
+				0.1604504
+				0.3655036
 			]
 			fog_enabled = 1
 			global_diffuse_map = "levels/red_moon_inn/environment/textures/global_diffuse_map_0e19b28f"
@@ -374,9 +374,9 @@ settings = {
 			]
 			eye_intensity = 1
 			fog_color = [
-				0.006703892
-				0.007618212
-				0.01023648
+				0.1639993
+				0.291034
+				0.6629712
 			]
 			fog_enabled = 1
 			global_diffuse_map = "levels/red_moon_inn/environment/textures/global_diffuse_map_0e19b28f"
@@ -640,9 +640,9 @@ settings = {
 			]
 			eye_intensity = 1
 			fog_color = [
-				0.01303443
-				0.01416485
-				0.01740197
+				0.2040115
+				0.3462186
+				0.721091
 			]
 			fog_enabled = 1
 			global_diffuse_map = "levels/red_moon_inn/environment/textures/global_diffuse_map_0e19b28f"
@@ -906,9 +906,9 @@ settings = {
 			]
 			eye_intensity = 1
 			fog_color = [
-				0.01303443
-				0.01416485
-				0.01740197
+				0.1824596
+				0.3096438
+				0.6449144
 			]
 			fog_enabled = 1
 			global_diffuse_map = "levels/red_moon_inn/environment/textures/global_diffuse_map_0e19b28f"
@@ -1344,9 +1344,9 @@ settings = {
 			]
 			eye_intensity = 1
 			fog_color = [
-				0.01303443
-				0.01416485
-				0.01740197
+				0.3761221
+				0.6382996
+				1
 			]
 			fog_enabled = 1
 			global_diffuse_map = "levels/red_moon_inn/environment/textures/global_diffuse_map_0e19b28f"
@@ -1555,9 +1555,9 @@ settings = {
 			]
 			eye_intensity = 1
 			fog_color = [
-				0.01303443
-				0.01416485
-				0.01740197
+				0.3761221
+				0.6382996
+				1
 			]
 			fog_enabled = 1
 			global_diffuse_map = "levels/red_moon_inn/environment/textures/global_diffuse_map_0e19b28f"

@@ -1,4 +1,4 @@
-import argparse, os, struct
+import argparse, copy, math, os, struct
 
 import sjson
 import vt1_bundles
@@ -39,6 +39,11 @@ RENAMED = {
 # mod they are written to, by their resource name. The global probes give the ambient light and reflections, and the inn's
 # ambient_tint is set for the inn's own. They are 8 bit cubemaps encoded as RGBM, as Vermintide 2's default probes, whose
 # texture settings they get (and global_probe_rgbm_encoded is left at the template's 1).
+#
+# Vermintide 2 decodes RGBM as (6 * rgb * a) squared, from texels read as sRGB; read so, the inn's probes are 69 times as red as
+# blue, darker than its fog. Read as they are, with 6 * rgb * a (linear RGBM), they keep the colour of their texels, and the
+# inn's fog colour is a third of the ambient light. They are taken as linear RGBM, encoded again with Vermintide 2's encoding
+# (rgbm_encode) and read without sRGB, so that Vermintide 2's decoding gives the same light.
 PORTED_TEXTURES = {'global_diffuse_map', 'global_specular_map'}
 TEXTURE_FOLDER = 'levels/red_moon_inn/environment/textures'
 PROBE_TEXTURE = '''common = {
@@ -57,11 +62,58 @@ PROBE_TEXTURE = '''common = {
 		mipmap_num_largest_steps_to_discard = 0
 		mipmap_num_smallest_steps_to_discard = 0
 		resident_mips = 0
-		srgb = true
+		srgb = false
 		streamable = false
 	}
 }
 '''
+
+
+def _texels(dds):
+    """The (b, g, r, a) bytes of an uncompressed 32 bit DDS, all faces and mips, after its 128 byte header."""
+    return [dds[k:k + 4] for k in range(128, len(dds) - 3, 4)]
+
+
+def vt1_probe_light(texel):
+    """The light of a texel of the inn's probes: linear RGBM, 6 * rgb * a."""
+    b, g, r, a = texel
+    return [6 * c / 255 * a / 255 for c in (r, g, b)]
+
+
+def rgbm_encode(light):
+    """Vermintide 2's rgbm_encode (common.shader_source), as (b, g, r, a) bytes."""
+    color = [math.sqrt(c) / 6 for c in light]
+    a = min(max(max(color), 0.0), 1.0)
+    a = math.ceil(a * 255) / 255
+
+    if a == 0:
+        return bytes((0, 0, 0, 0))
+
+    r, g, b = [min(int(round(c / a * 255)), 255) for c in color]
+    return bytes((b, g, r, int(round(a * 255))))
+
+
+def rgbm_decode(texel):
+    """Vermintide 2's rgbm_decode of a texel read without sRGB: (6 * rgb * a) squared."""
+    b, g, r, a = texel
+    return [(6 * c / 255 * a / 255) ** 2 for c in (r, g, b)]
+
+
+def reencode_probe(dds):
+    """The inn's probe with each texel encoded again with Vermintide 2's RGBM."""
+    return dds[:128] + b''.join(rgbm_encode(vt1_probe_light(t)) for t in _texels(dds))
+
+
+def probe_average(dds):
+    """The average light of a probe encoded with Vermintide 2's RGBM, as Vermintide 2 decodes it."""
+    texels = _texels(dds)
+    total = [0.0, 0.0, 0.0]
+
+    for t in texels:
+        for i, c in enumerate(rgbm_decode(t)):
+            total[i] += c
+
+    return [t / len(texels) for t in total]
 
 # Settings Vermintide 2's game looks for that Vermintide 1's inn doesn't have, and the inn's setting that is copied for them.
 # An end zone blends the level's environment to waystone_environment_01 when it opens.
@@ -208,7 +260,7 @@ def convert(vt1_dir, content_dir, sdk_dir, strings_path):
 
     for added, copied in ADDED_SETTINGS.items():
         if added not in settings:
-            settings[added] = settings[copied]
+            settings[added] = copy.deepcopy(settings[copied])
             report.append('Setting %s, which Vermintide 2 looks for, is a copy of %s.' % (added, copied))
 
     for old, new in sorted(RENAMED.items()):
@@ -239,6 +291,25 @@ def convert(vt1_dir, content_dir, sdk_dir, strings_path):
         for type_h, name_h, variants in vt1_bundles.resources(path):
             if type_h == name_hash('texture') and name_h in wanted and variants:
                 dds[wanted[name_h]] = variants[0]
+
+    dds = {resource: reencode_probe(data) for resource, data in dds.items()}
+
+    # Vermintide 1 blends the image to fog_color, a colour of light. Vermintide 2's fog_color is how much of the light reaching
+    # the fog it sends on: where the fog is thick, its colour is fog_color times that light (calculate_volumetric_lighting).
+    # The ambient light reaching it is the global diffuse probe times ambient_tint, ambient_global_tint and
+    # volumetric_ambient_multiplier (1 in the inn), so fog_color is the inn's divided by the probe's average and ambient_tint,
+    # and thick fog has the inn's colour. The candles' light reaching the fog adds to it.
+    for name, setting in sorted(settings.items()):
+        v = setting['variables']
+        probe = dds.get(v.get('global_diffuse_map'))
+
+        if 'fog_color' not in v or probe is None:
+            continue
+
+        light = [p * t for p, t in zip(probe_average(probe), v.get('ambient_tint', [1, 1, 1]))]
+        v['fog_color'] = [_float(min(f / l, 1.0)) if l > 0 else 0 for f, l in zip(v['fog_color'], light)]
+        report.append('Setting %s: fog_color %s, for the inn\'s fog colour in an ambient light of %s.' % (
+            name, v['fog_color'], [round(x, 5) for x in light]))
 
     return {'settings': settings, 'template': TEMPLATE}, dds, '\n'.join(report) + '\n'
 

@@ -39,3 +39,10 @@ Textures taken from Vermintide 1:
   levels/red_moon_inn/environment/textures/global_diffuse_map_8863cee9 (8863cee99545d454)
   levels/red_moon_inn/environment/textures/global_specular_map_153eee00 (153eee00bad66198)
   levels/red_moon_inn/environment/textures/global_specular_map_e4bfd231 (e4bfd231bf998892)
+Setting act_00: fog_color [0.09041469, 0.1604504, 0.3655036], for the inn's fog colour in an ambient light of [0.07415, 0.04748, 0.02801].
+Setting act_01: fog_color [0.1639993, 0.291034, 0.6629712], for the inn's fog colour in an ambient light of [0.04088, 0.02618, 0.01544].
+Setting act_02: fog_color [0.2040115, 0.3462186, 0.721091], for the inn's fog colour in an ambient light of [0.06389, 0.04091, 0.02413].
+Setting act_03: fog_color [0.1824596, 0.3096438, 0.6449144], for the inn's fog colour in an ambient light of [0.07144, 0.04575, 0.02698].
+Setting death_zone: fog_color [0, 0, 0], for the inn's fog colour in an ambient light of [0.0, 0.0, 0.0].
+Setting default: fog_color [0.3761221, 0.6382996, 1.0], for the inn's fog colour in an ambient light of [0.03465, 0.02219, 0.01309].
+Setting waystone_environment_01: fog_color [0.3761221, 0.6382996, 1.0], for the inn's fog colour in an ambient light of [0.03465, 0.02219, 0.01309].
