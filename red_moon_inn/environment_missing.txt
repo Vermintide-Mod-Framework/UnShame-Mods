@@ -1,0 +1,39 @@
+Red Moon Inn environment: what the conversion left out
+
+From environment/red_moon_inn, 8e0929053dd7ecd0.patch_024 in resource_packages/levels/inn.
+
+Setting waystone_environment_01, which Vermintide 2 looks for, is a copy of default.
+light_shaft_enabled is light_shafts_enabled in Vermintide 2.
+light_shaft_settings is light_shafts_settings in Vermintide 2.
+light_shaft_weigth is light_shafts_weigth in Vermintide 2.
+sun_shadow_slice_depth_ranges is the keep's: Vermintide 1 has it in other units.
+sun_world_to_shadow_slice0, sun_world_to_shadow_slice1, sun_world_to_shadow_slice2, sun_world_to_shadow_slice3 are left to the engine, which works them out.
+
+Variables Vermintide 2's template doesn't have (left out):
+  ambient_diffuse_fade
+  ambient_diffuse_fade_type
+  ao_intensity
+  ao_radius
+  custom_fog_blend
+  custom_fog_blend_color
+  custom_fog_blend_direction
+  custom_fog_blend_enabled
+  fog_depth_range
+  fog_sun_blend
+  fog_type
+  height_fog_offset_falloff
+  outline_multiplier_alpha
+  outline_multiplier_blue
+  outline_multiplier_green
+  outline_multiplier_red
+  outline_thickness
+  secondary_sun_blend
+  temporal_effects_enabled
+
+Textures Vermintide 2 doesn't have (the template's default is used):
+  global_diffuse_map: 0e19b28f0d2d33d2
+  global_diffuse_map: 8863cee99545d454
+  global_specular_map: 153eee00bad66198
+  global_specular_map: e4bfd231bf998892
+  skydome_map: 3493e2833ea0d84f
+  skydome_map: 5997e38d55de9290

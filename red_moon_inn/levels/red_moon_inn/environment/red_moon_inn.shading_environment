@@ -1,0 +1,1709 @@
+settings = {
+	act_00 = {
+		editor_variables = {
+			shadow_slice_depth_ranges = [
+				0
+				80
+				0.4
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				15
+				0.202
+			]
+		}
+		variable_weights = {
+			ambient_tint = 0
+			ao_enabled = 0
+			ao_quality = 0
+			bloom_enabled = 0
+			bloom_lens_dirt_amount = 0
+			bloom_threshold_offset_falloff = 0
+			bloom_tint = 0
+			dof_enabled = 0
+			dof_focal_distance = 0
+			dof_focal_far_scale = 0
+			dof_focal_near_scale = 0
+			dof_focal_region = 0
+			dof_focal_region_end = 0
+			dof_focal_region_start = 0
+			emissive_particle_intensity = 0
+			eye_adaptation_enabled = 0
+			eye_adaptation_speed_min_max = 0
+			global_diffuse_map = 0
+			global_lens_dirt_map = 0
+			global_roughness_multiplier = 0
+			global_specular_map = 0
+			lens_quality_enabled = 0
+			lens_quality_properties = 0
+			light_shafts_enabled = 0
+			light_shafts_settings = 0
+			motion_blur_amount = 0
+			motion_blur_enabled = 0
+			outline_enabled = 0
+			secondary_sun_color = 0
+			secondary_sun_direction = 0
+			secondary_sun_enabled = 0
+			skydome_cloud_map = 0
+			skydome_cloud_speed_scale = 0
+			skydome_fog_height_falloff = 0
+			skydome_intensity = 0
+			skydome_map = 0
+			skydome_u_offset = 0
+			ssm_center = 0
+			ssm_constant_update_enabled = 0
+			ssm_enabled = 0
+			ssm_near_far = 0
+			ssm_radius = 0
+			ssm_rotation = 0
+			ssr_enabled = 0
+			ssr_ray_bending_enabled = 0
+			ssr_screen_edge_threshold = 0
+			ssr_surface_thickness_threshold = 0
+			sun_color = 0
+			sun_direction = 0
+			sun_enabled = 0
+			sun_shadow_slice_depth_ranges = 0
+			sun_shadows_enabled = 0
+			vignette_color = 0
+			vignette_enabled = 0
+			vignette_scale_falloff_opacity = 0
+		}
+		variables = {
+			ambient_tint = [
+				0.7564493
+				0.7564493
+				0.7564493
+			]
+			ao_enabled = 1
+			ao_quality = 2
+			bloom_enabled = 1
+			bloom_lens_dirt_amount = 9
+			bloom_threshold_offset_falloff = [
+				5
+				1
+				0.2
+			]
+			bloom_tint = [
+				1
+				1
+				1
+			]
+			color_grading_enabled = 0
+			color_grading_map = "environment/textures/color_grading_coaching_inn"
+			dof_enabled = 0
+			dof_focal_distance = 0
+			dof_focal_far_scale = 1
+			dof_focal_near_scale = 1
+			dof_focal_region = 7
+			dof_focal_region_end = 21
+			dof_focal_region_start = 0.01
+			emissive_particle_intensity = 1
+			exposure = 0.23
+			eye_adaptation_enabled = 1
+			eye_adaptation_speed_min_max = [
+				5
+				0.01
+				30
+			]
+			eye_intensity = 1
+			fog_color = [
+				0.006703892
+				0.007618212
+				0.01023648
+			]
+			fog_enabled = 1
+			global_diffuse_map = ""
+			global_lens_dirt_map = "environment/textures/lensdirt"
+			global_roughness_multiplier = 1
+			global_specular_map = ""
+			heatmap_world_extents = [
+				1000
+				1000
+			]
+			heatmap_world_position = [
+				-500
+				-500
+			]
+			lens_quality_enabled = 0
+			lens_quality_properties = [
+				0
+				0
+				0
+			]
+			light_shafts_enabled = 0
+			light_shafts_settings = [
+				0.127
+				0.4
+			]
+			light_shafts_weigth = 0.01
+			local_shadow_map_bias = [
+				0.0001
+				0.015
+				50
+			]
+			motion_blur_amount = 0
+			motion_blur_enabled = 0
+			offscreen_target_projection = 0
+			outline_color_alpha = [
+				1
+				1
+				0.3
+			]
+			outline_color_blue = [
+				1
+				1
+				0.3
+			]
+			outline_color_green = [
+				1
+				1
+				0.3
+			]
+			outline_color_red = [
+				1
+				1
+				0.3
+			]
+			outline_enabled = 1
+			secondary_sun_color = [
+				1
+				1
+				1
+			]
+			secondary_sun_direction = [
+				0
+				0
+				-1
+			]
+			secondary_sun_enabled = 0
+			skydome_cloud_map = "units/textures/g/generic_texture_black"
+			skydome_cloud_speed_scale = [
+				0
+				1
+			]
+			skydome_fog_height_falloff = [
+				0
+				-50
+			]
+			skydome_intensity = 1
+			skydome_map = "units/textures/g/generic_texture_black"
+			skydome_tint_color = [
+				7.403922
+				11.85366
+				16
+			]
+			skydome_u_offset = 0
+			ssm_center = [
+				0
+				0
+				0
+			]
+			ssm_constant_update_enabled = 0
+			ssm_enabled = 0
+			ssm_near_far = [
+				0
+				0
+			]
+			ssm_radius = 200
+			ssm_rotation = 0
+			ssm_shadow_map_bias = [
+				0.0005
+				0.0001
+				20
+			]
+			ssr_enabled = 1
+			ssr_ray_bending_enabled = 0
+			ssr_screen_edge_threshold = 0.05
+			ssr_surface_thickness_threshold = [
+				0.001
+				5
+			]
+			sun_color = [
+				0.7411765
+				0.2971545
+				0.02906576
+			]
+			sun_direction = [
+				0.05574153
+				-0.2043856
+				-0.9773021
+			]
+			sun_enabled = 0
+			sun_shadow_map_bias = [
+				0.0001
+				0.001
+				50
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				0.956971
+				0.956971
+				2.41255
+				2.41255
+				5.61306
+				5.61306
+				14.9202
+			]
+			sun_shadows_enabled = 1
+			vignette_color = [
+				0
+				0
+				0
+			]
+			vignette_enabled = 1
+			vignette_scale_falloff_opacity = [
+				5
+				5
+				0.25
+			]
+			wind_amount = [
+				0
+				0
+				0
+			]
+		}
+	}
+	act_01 = {
+		editor_variables = {
+			shadow_slice_depth_ranges = [
+				0
+				80
+				0.4
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				15
+				0.202
+			]
+		}
+		variable_weights = {
+			ao_enabled = 0
+			ao_quality = 0
+			bloom_enabled = 0
+			bloom_lens_dirt_amount = 0
+			bloom_threshold_offset_falloff = 0
+			bloom_tint = 0
+			dof_enabled = 0
+			dof_focal_distance = 0
+			dof_focal_far_scale = 0
+			dof_focal_near_scale = 0
+			dof_focal_region = 0
+			dof_focal_region_end = 0
+			dof_focal_region_start = 0
+			emissive_particle_intensity = 0
+			eye_adaptation_enabled = 0
+			eye_adaptation_speed_min_max = 0
+			global_diffuse_map = 0
+			global_lens_dirt_map = 0
+			global_roughness_multiplier = 0
+			global_specular_map = 0
+			lens_quality_enabled = 0
+			lens_quality_properties = 0
+			light_shafts_enabled = 0
+			light_shafts_settings = 0
+			motion_blur_amount = 0
+			motion_blur_enabled = 0
+			outline_enabled = 0
+			secondary_sun_color = 0
+			secondary_sun_direction = 0
+			secondary_sun_enabled = 0
+			skydome_cloud_map = 0
+			skydome_cloud_speed_scale = 0
+			skydome_fog_height_falloff = 0
+			skydome_intensity = 0
+			skydome_map = 0
+			skydome_tint_color = 0
+			skydome_u_offset = 0
+			ssm_center = 0
+			ssm_constant_update_enabled = 0
+			ssm_enabled = 0
+			ssm_near_far = 0
+			ssm_radius = 0
+			ssm_rotation = 0
+			ssr_enabled = 0
+			ssr_ray_bending_enabled = 0
+			ssr_screen_edge_threshold = 0
+			ssr_surface_thickness_threshold = 0
+			sun_color = 0
+			sun_direction = 0
+			sun_enabled = 0
+			sun_shadow_slice_depth_ranges = 0
+			sun_shadows_enabled = 0
+			vignette_color = 0
+			vignette_enabled = 0
+			vignette_scale_falloff_opacity = 0
+		}
+		variables = {
+			ambient_tint = [
+				0.4170392
+				0.4170392
+				0.4170392
+			]
+			ao_enabled = 1
+			ao_quality = 2
+			bloom_enabled = 1
+			bloom_lens_dirt_amount = 9
+			bloom_threshold_offset_falloff = [
+				5
+				1
+				0.2
+			]
+			bloom_tint = [
+				1
+				1
+				1
+			]
+			color_grading_enabled = 0
+			color_grading_map = "environment/textures/color_grading_coaching_inn"
+			dof_enabled = 0
+			dof_focal_distance = 0
+			dof_focal_far_scale = 1
+			dof_focal_near_scale = 1
+			dof_focal_region = 7
+			dof_focal_region_end = 26
+			dof_focal_region_start = 5
+			emissive_particle_intensity = 1
+			exposure = 0.23
+			eye_adaptation_enabled = 1
+			eye_adaptation_speed_min_max = [
+				5
+				0.01
+				30
+			]
+			eye_intensity = 1
+			fog_color = [
+				0.006703892
+				0.007618212
+				0.01023648
+			]
+			fog_enabled = 1
+			global_diffuse_map = ""
+			global_lens_dirt_map = "environment/textures/lensdirt"
+			global_roughness_multiplier = 1
+			global_specular_map = ""
+			heatmap_world_extents = [
+				1000
+				1000
+			]
+			heatmap_world_position = [
+				-500
+				-500
+			]
+			lens_quality_enabled = 0
+			lens_quality_properties = [
+				0
+				0
+				0
+			]
+			light_shafts_enabled = 0
+			light_shafts_settings = [
+				0.127
+				0.4
+			]
+			light_shafts_weigth = 0.01
+			local_shadow_map_bias = [
+				0.0001
+				0.015
+				50
+			]
+			motion_blur_amount = 0
+			motion_blur_enabled = 0
+			offscreen_target_projection = 0
+			outline_color_alpha = [
+				1
+				1
+				0.3
+			]
+			outline_color_blue = [
+				1
+				1
+				0.3
+			]
+			outline_color_green = [
+				1
+				1
+				0.3
+			]
+			outline_color_red = [
+				1
+				1
+				0.3
+			]
+			outline_enabled = 1
+			secondary_sun_color = [
+				1
+				1
+				1
+			]
+			secondary_sun_direction = [
+				0
+				0
+				-1
+			]
+			secondary_sun_enabled = 0
+			skydome_cloud_map = "units/textures/g/generic_texture_black"
+			skydome_cloud_speed_scale = [
+				0
+				1
+			]
+			skydome_fog_height_falloff = [
+				0
+				-50
+			]
+			skydome_intensity = 1
+			skydome_map = "units/textures/g/generic_texture_black"
+			skydome_tint_color = [
+				0.981564
+				0.981564
+				0.981564
+			]
+			skydome_u_offset = 0
+			ssm_center = [
+				0
+				0
+				0
+			]
+			ssm_constant_update_enabled = 0
+			ssm_enabled = 0
+			ssm_near_far = [
+				0
+				0
+			]
+			ssm_radius = 200
+			ssm_rotation = 0
+			ssm_shadow_map_bias = [
+				0.0005
+				0.0001
+				20
+			]
+			ssr_enabled = 1
+			ssr_ray_bending_enabled = 0
+			ssr_screen_edge_threshold = 0.05
+			ssr_surface_thickness_threshold = [
+				0.001
+				5
+			]
+			sun_color = [
+				0.7411765
+				0.2971545
+				0.02906576
+			]
+			sun_direction = [
+				0.05574153
+				-0.2043856
+				-0.9773021
+			]
+			sun_enabled = 0
+			sun_shadow_map_bias = [
+				0.0001
+				0.001
+				50
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				0.956971
+				0.956971
+				2.41255
+				2.41255
+				5.61306
+				5.61306
+				14.9202
+			]
+			sun_shadows_enabled = 1
+			vignette_color = [
+				0
+				0
+				0
+			]
+			vignette_enabled = 1
+			vignette_scale_falloff_opacity = [
+				5
+				5
+				0.25
+			]
+			wind_amount = [
+				0
+				0
+				0
+			]
+		}
+	}
+	act_02 = {
+		editor_variables = {
+			shadow_slice_depth_ranges = [
+				0
+				80
+				0.4
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				15
+				0.202
+			]
+		}
+		variable_weights = {
+			ao_enabled = 0
+			ao_quality = 0
+			bloom_enabled = 0
+			bloom_lens_dirt_amount = 0
+			bloom_threshold_offset_falloff = 0
+			bloom_tint = 0
+			dof_enabled = 0
+			dof_focal_distance = 0
+			dof_focal_far_scale = 0
+			dof_focal_near_scale = 0
+			dof_focal_region = 0
+			dof_focal_region_end = 0
+			dof_focal_region_start = 0
+			emissive_particle_intensity = 0
+			eye_adaptation_enabled = 0
+			eye_adaptation_speed_min_max = 0
+			global_diffuse_map = 0
+			global_lens_dirt_map = 0
+			global_roughness_multiplier = 0
+			global_specular_map = 0
+			lens_quality_enabled = 0
+			lens_quality_properties = 0
+			light_shafts_enabled = 0
+			light_shafts_settings = 0
+			motion_blur_amount = 0
+			motion_blur_enabled = 0
+			outline_enabled = 0
+			secondary_sun_color = 0
+			secondary_sun_direction = 0
+			secondary_sun_enabled = 0
+			skydome_cloud_map = 0
+			skydome_cloud_speed_scale = 0
+			skydome_fog_height_falloff = 0
+			skydome_intensity = 0
+			skydome_map = 0
+			skydome_tint_color = 0
+			skydome_u_offset = 0
+			ssm_center = 0
+			ssm_constant_update_enabled = 0
+			ssm_enabled = 0
+			ssm_near_far = 0
+			ssm_radius = 0
+			ssm_rotation = 0
+			ssr_enabled = 0
+			ssr_ray_bending_enabled = 0
+			ssr_screen_edge_threshold = 0
+			ssr_surface_thickness_threshold = 0
+			sun_color = 0
+			sun_direction = 0
+			sun_enabled = 0
+			sun_shadow_slice_depth_ranges = 0
+			sun_shadows_enabled = 0
+			vignette_color = 0
+			vignette_enabled = 0
+			vignette_scale_falloff_opacity = 0
+		}
+		variables = {
+			ambient_tint = [
+				0.6518223
+				0.6518223
+				0.6518223
+			]
+			ao_enabled = 1
+			ao_quality = 2
+			bloom_enabled = 1
+			bloom_lens_dirt_amount = 9
+			bloom_threshold_offset_falloff = [
+				5
+				1
+				0.2
+			]
+			bloom_tint = [
+				1
+				1
+				1
+			]
+			color_grading_enabled = 0
+			color_grading_map = "environment/textures/color_grading_coaching_inn"
+			dof_enabled = 0
+			dof_focal_distance = 0
+			dof_focal_far_scale = 1
+			dof_focal_near_scale = 1
+			dof_focal_region = 7
+			dof_focal_region_end = 26
+			dof_focal_region_start = 5
+			emissive_particle_intensity = 1
+			exposure = 0.23
+			eye_adaptation_enabled = 1
+			eye_adaptation_speed_min_max = [
+				5
+				0.01
+				30
+			]
+			eye_intensity = 1
+			fog_color = [
+				0.01303443
+				0.01416485
+				0.01740197
+			]
+			fog_enabled = 1
+			global_diffuse_map = ""
+			global_lens_dirt_map = "environment/textures/lensdirt"
+			global_roughness_multiplier = 1
+			global_specular_map = ""
+			heatmap_world_extents = [
+				1000
+				1000
+			]
+			heatmap_world_position = [
+				-500
+				-500
+			]
+			lens_quality_enabled = 0
+			lens_quality_properties = [
+				0
+				0
+				0
+			]
+			light_shafts_enabled = 0
+			light_shafts_settings = [
+				0.127
+				0.4
+			]
+			light_shafts_weigth = 0.01
+			local_shadow_map_bias = [
+				0.0001
+				0.015
+				50
+			]
+			motion_blur_amount = 0
+			motion_blur_enabled = 0
+			offscreen_target_projection = 0
+			outline_color_alpha = [
+				1
+				1
+				0.3
+			]
+			outline_color_blue = [
+				1
+				1
+				0.3
+			]
+			outline_color_green = [
+				1
+				1
+				0.3
+			]
+			outline_color_red = [
+				1
+				1
+				0.3
+			]
+			outline_enabled = 1
+			secondary_sun_color = [
+				1
+				1
+				1
+			]
+			secondary_sun_direction = [
+				0
+				0
+				-1
+			]
+			secondary_sun_enabled = 0
+			skydome_cloud_map = "units/textures/g/generic_texture_black"
+			skydome_cloud_speed_scale = [
+				0
+				1
+			]
+			skydome_fog_height_falloff = [
+				0
+				-50
+			]
+			skydome_intensity = 1
+			skydome_map = "units/textures/g/generic_texture_black"
+			skydome_tint_color = [
+				0.9111571
+				0.9111571
+				0.9111571
+			]
+			skydome_u_offset = 0
+			ssm_center = [
+				0
+				0
+				0
+			]
+			ssm_constant_update_enabled = 0
+			ssm_enabled = 0
+			ssm_near_far = [
+				0
+				0
+			]
+			ssm_radius = 200
+			ssm_rotation = 0
+			ssm_shadow_map_bias = [
+				0.0005
+				0.0001
+				20
+			]
+			ssr_enabled = 1
+			ssr_ray_bending_enabled = 0
+			ssr_screen_edge_threshold = 0.05
+			ssr_surface_thickness_threshold = [
+				0.001
+				5
+			]
+			sun_color = [
+				0.7411765
+				0.2971545
+				0.02906576
+			]
+			sun_direction = [
+				0.05574153
+				-0.2043856
+				-0.9773021
+			]
+			sun_enabled = 0
+			sun_shadow_map_bias = [
+				0.0001
+				0.001
+				50
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				0.956971
+				0.956971
+				2.41255
+				2.41255
+				5.61306
+				5.61306
+				14.9202
+			]
+			sun_shadows_enabled = 1
+			vignette_color = [
+				0
+				0
+				0
+			]
+			vignette_enabled = 1
+			vignette_scale_falloff_opacity = [
+				5
+				5
+				0.25
+			]
+			wind_amount = [
+				0
+				0
+				0
+			]
+		}
+	}
+	act_03 = {
+		editor_variables = {
+			shadow_slice_depth_ranges = [
+				0
+				80
+				0.4
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				15
+				0.202
+			]
+		}
+		variable_weights = {
+			ao_enabled = 0
+			ao_quality = 0
+			bloom_enabled = 0
+			bloom_lens_dirt_amount = 0
+			bloom_threshold_offset_falloff = 0
+			bloom_tint = 0
+			dof_enabled = 0
+			dof_focal_distance = 0
+			dof_focal_far_scale = 0
+			dof_focal_near_scale = 0
+			dof_focal_region = 0
+			dof_focal_region_end = 0
+			dof_focal_region_start = 0
+			emissive_particle_intensity = 0
+			eye_adaptation_enabled = 0
+			eye_adaptation_speed_min_max = 0
+			global_diffuse_map = 0
+			global_lens_dirt_map = 0
+			global_roughness_multiplier = 0
+			global_specular_map = 0
+			lens_quality_enabled = 0
+			lens_quality_properties = 0
+			light_shafts_enabled = 0
+			light_shafts_settings = 0
+			motion_blur_amount = 0
+			motion_blur_enabled = 0
+			outline_enabled = 0
+			secondary_sun_color = 0
+			secondary_sun_direction = 0
+			secondary_sun_enabled = 0
+			skydome_cloud_map = 0
+			skydome_cloud_speed_scale = 0
+			skydome_fog_height_falloff = 0
+			skydome_intensity = 0
+			skydome_map = 0
+			skydome_tint_color = 0
+			skydome_u_offset = 0
+			ssm_center = 0
+			ssm_constant_update_enabled = 0
+			ssm_enabled = 0
+			ssm_near_far = 0
+			ssm_radius = 0
+			ssm_rotation = 0
+			ssr_enabled = 0
+			ssr_ray_bending_enabled = 0
+			ssr_screen_edge_threshold = 0
+			ssr_surface_thickness_threshold = 0
+			sun_color = 0
+			sun_direction = 0
+			sun_enabled = 0
+			sun_shadow_slice_depth_ranges = 0
+			sun_shadows_enabled = 0
+			vignette_color = 0
+			vignette_enabled = 0
+			vignette_scale_falloff_opacity = 0
+		}
+		variables = {
+			ambient_tint = [
+				0.7288148
+				0.7288148
+				0.7288148
+			]
+			ao_enabled = 1
+			ao_quality = 2
+			bloom_enabled = 1
+			bloom_lens_dirt_amount = 9
+			bloom_threshold_offset_falloff = [
+				5
+				1
+				0.2
+			]
+			bloom_tint = [
+				1
+				1
+				1
+			]
+			color_grading_enabled = 0
+			color_grading_map = "environment/textures/color_grading_coaching_inn"
+			dof_enabled = 0
+			dof_focal_distance = 0
+			dof_focal_far_scale = 1
+			dof_focal_near_scale = 1
+			dof_focal_region = 7
+			dof_focal_region_end = 26
+			dof_focal_region_start = 5
+			emissive_particle_intensity = 1
+			exposure = 0.23
+			eye_adaptation_enabled = 1
+			eye_adaptation_speed_min_max = [
+				5
+				0.01
+				30
+			]
+			eye_intensity = 1
+			fog_color = [
+				0.01303443
+				0.01416485
+				0.01740197
+			]
+			fog_enabled = 1
+			global_diffuse_map = ""
+			global_lens_dirt_map = "environment/textures/lensdirt"
+			global_roughness_multiplier = 1
+			global_specular_map = ""
+			heatmap_world_extents = [
+				1000
+				1000
+			]
+			heatmap_world_position = [
+				-500
+				-500
+			]
+			lens_quality_enabled = 0
+			lens_quality_properties = [
+				0
+				0
+				0
+			]
+			light_shafts_enabled = 0
+			light_shafts_settings = [
+				0.127
+				0.4
+			]
+			light_shafts_weigth = 0.01
+			local_shadow_map_bias = [
+				0.0001
+				0.015
+				50
+			]
+			motion_blur_amount = 0
+			motion_blur_enabled = 0
+			offscreen_target_projection = 0
+			outline_color_alpha = [
+				1
+				1
+				0.3
+			]
+			outline_color_blue = [
+				1
+				1
+				0.3
+			]
+			outline_color_green = [
+				1
+				1
+				0.3
+			]
+			outline_color_red = [
+				1
+				1
+				0.3
+			]
+			outline_enabled = 1
+			secondary_sun_color = [
+				1
+				1
+				1
+			]
+			secondary_sun_direction = [
+				0
+				0
+				-1
+			]
+			secondary_sun_enabled = 0
+			skydome_cloud_map = "units/textures/g/generic_texture_black"
+			skydome_cloud_speed_scale = [
+				0
+				1
+			]
+			skydome_fog_height_falloff = [
+				0
+				-50
+			]
+			skydome_intensity = 1
+			skydome_map = "units/textures/g/generic_texture_black"
+			skydome_tint_color = [
+				0.9111571
+				0.9111571
+				0.9111571
+			]
+			skydome_u_offset = 0
+			ssm_center = [
+				0
+				0
+				0
+			]
+			ssm_constant_update_enabled = 0
+			ssm_enabled = 0
+			ssm_near_far = [
+				0
+				0
+			]
+			ssm_radius = 200
+			ssm_rotation = 0
+			ssm_shadow_map_bias = [
+				0.0005
+				0.0001
+				20
+			]
+			ssr_enabled = 1
+			ssr_ray_bending_enabled = 0
+			ssr_screen_edge_threshold = 0.05
+			ssr_surface_thickness_threshold = [
+				0.001
+				5
+			]
+			sun_color = [
+				0.7411765
+				0.2971545
+				0.02906576
+			]
+			sun_direction = [
+				0.05574153
+				-0.2043856
+				-0.9773021
+			]
+			sun_enabled = 0
+			sun_shadow_map_bias = [
+				0.0001
+				0.001
+				50
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				0.956971
+				0.956971
+				2.41255
+				2.41255
+				5.61306
+				5.61306
+				14.9202
+			]
+			sun_shadows_enabled = 1
+			vignette_color = [
+				0
+				0
+				0
+			]
+			vignette_enabled = 1
+			vignette_scale_falloff_opacity = [
+				5
+				5
+				0.25
+			]
+			wind_amount = [
+				0
+				0
+				0
+			]
+		}
+	}
+	death_zone = {
+		editor_variables = {
+			shadow_slice_depth_ranges = [
+				0
+				80
+				0.4
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				15
+				0.202
+			]
+		}
+		variable_weights = {
+			color_grading_map = 0
+			global_diffuse_map = 0
+			global_lens_dirt_map = 0
+			global_specular_map = 0
+			light_shafts_enabled = 0
+			skydome_cloud_map = 0
+			skydome_cloud_speed_scale = 0
+			skydome_map = 0
+			skydome_u_offset = 0
+			ssm_center = 0
+			ssm_constant_update_enabled = 0
+			ssm_enabled = 0
+			ssm_near_far = 0
+			ssm_radius = 0
+			ssm_rotation = 0
+			sun_shadow_slice_depth_ranges = 0
+		}
+		variables = {
+			ambient_tint = [
+				0
+				0
+				0
+			]
+			ao_enabled = 1
+			ao_quality = 1
+			bloom_enabled = 1
+			bloom_lens_dirt_amount = 9
+			bloom_threshold_offset_falloff = [
+				1.78
+				1.786
+				1
+			]
+			bloom_tint = [
+				0
+				0
+				0
+			]
+			color_grading_enabled = 0
+			color_grading_map = "environment/textures/color_grading_coaching_inn"
+			dof_enabled = 1
+			dof_focal_distance = 0
+			dof_focal_far_scale = 0.224
+			dof_focal_near_scale = 1
+			dof_focal_region = 12.2
+			dof_focal_region_end = 121.95
+			dof_focal_region_start = 5
+			emissive_particle_intensity = 0.001
+			exposure = 0.001
+			eye_adaptation_enabled = 1
+			eye_adaptation_speed_min_max = [
+				4.833
+				0.01
+				30
+			]
+			eye_intensity = 1
+			fog_color = [
+				0
+				0
+				0
+			]
+			fog_enabled = 1
+			global_diffuse_map = ""
+			global_lens_dirt_map = "environment/textures/lensdirt"
+			global_roughness_multiplier = 2
+			global_specular_map = ""
+			heatmap_world_extents = [
+				1000
+				1000
+			]
+			heatmap_world_position = [
+				-500
+				-500
+			]
+			lens_quality_enabled = 0
+			lens_quality_properties = [
+				0
+				0
+				0
+			]
+			light_shafts_enabled = 1
+			light_shafts_settings = [
+				0.625078
+				0.771
+			]
+			light_shafts_weigth = 0.01
+			local_shadow_map_bias = [
+				0.0001
+				0.015
+				50
+			]
+			motion_blur_amount = 0.2
+			motion_blur_enabled = 1
+			offscreen_target_projection = 0
+			outline_color_alpha = [
+				1
+				1
+				0.3
+			]
+			outline_color_blue = [
+				1
+				1
+				0.3
+			]
+			outline_color_green = [
+				1
+				1
+				0.3
+			]
+			outline_color_red = [
+				1
+				1
+				0.3
+			]
+			outline_enabled = 0
+			secondary_sun_color = [
+				0
+				0
+				0
+			]
+			secondary_sun_direction = [
+				0.0436797
+				0.5896754
+				-0.8064582
+			]
+			secondary_sun_enabled = 0
+			skydome_cloud_map = "environment/textures/skydome_cloud_texture_01"
+			skydome_cloud_speed_scale = [
+				0.571
+				0.507
+			]
+			skydome_fog_height_falloff = [
+				0.024
+				-0.24
+			]
+			skydome_intensity = 0.001
+			skydome_map = ""
+			skydome_tint_color = [
+				0
+				0
+				0
+			]
+			skydome_u_offset = 0.263
+			ssm_center = [
+				0
+				0
+				0
+			]
+			ssm_constant_update_enabled = 0
+			ssm_enabled = 0
+			ssm_near_far = [
+				0
+				0
+			]
+			ssm_radius = 200
+			ssm_rotation = 0
+			ssm_shadow_map_bias = [
+				0.0005
+				0.0001
+				20
+			]
+			ssr_enabled = 1
+			ssr_ray_bending_enabled = 0
+			ssr_screen_edge_threshold = 0.05
+			ssr_surface_thickness_threshold = [
+				0.001
+				5
+			]
+			sun_color = [
+				0
+				0
+				0
+			]
+			sun_direction = [
+				0.904185
+				0.3579066
+				-0.2331359
+			]
+			sun_enabled = 0
+			sun_shadow_map_bias = [
+				0.0001
+				0.001
+				50
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				0.956971
+				0.956971
+				2.41255
+				2.41255
+				5.61306
+				5.61306
+				14.9202
+			]
+			sun_shadows_enabled = 0
+			vignette_color = [
+				0
+				0
+				0
+			]
+			vignette_enabled = 1
+			vignette_scale_falloff_opacity = [
+				5
+				5
+				0.5
+			]
+			wind_amount = [
+				0
+				0
+				0
+			]
+		}
+	}
+	default = {
+		editor_variables = {
+			shadow_slice_depth_ranges = [
+				0
+				80
+				0.4
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				15
+				0.202
+			]
+		}
+		variable_weights = {
+		}
+		variables = {
+			ambient_tint = [
+				0.3535534
+				0.3535534
+				0.3535534
+			]
+			ao_enabled = 1
+			ao_quality = 2
+			bloom_enabled = 1
+			bloom_lens_dirt_amount = 9
+			bloom_threshold_offset_falloff = [
+				5
+				1
+				0.3
+			]
+			bloom_tint = [
+				1
+				1
+				1
+			]
+			color_grading_enabled = 0
+			color_grading_map = "environment/textures/color_grading_coaching_inn"
+			dof_enabled = 1
+			dof_focal_distance = 0
+			dof_focal_far_scale = 1
+			dof_focal_near_scale = 1
+			dof_focal_region = 10
+			dof_focal_region_end = 22
+			dof_focal_region_start = 0.01
+			emissive_particle_intensity = 1
+			exposure = 0.23
+			eye_adaptation_enabled = 1
+			eye_adaptation_speed_min_max = [
+				5
+				0.01
+				30
+			]
+			eye_intensity = 1
+			fog_color = [
+				0.01303443
+				0.01416485
+				0.01740197
+			]
+			fog_enabled = 1
+			global_diffuse_map = ""
+			global_lens_dirt_map = "environment/textures/lensdirt"
+			global_roughness_multiplier = 1
+			global_specular_map = ""
+			heatmap_world_extents = [
+				1000
+				1000
+			]
+			heatmap_world_position = [
+				-500
+				-500
+			]
+			lens_quality_enabled = 0
+			lens_quality_properties = [
+				0
+				0
+				0
+			]
+			light_shafts_enabled = 0
+			light_shafts_settings = [
+				0.127
+				0.4
+			]
+			light_shafts_weigth = 0.01
+			local_shadow_map_bias = [
+				0.0001
+				0.015
+				50
+			]
+			motion_blur_amount = 2
+			motion_blur_enabled = 0
+			offscreen_target_projection = 0
+			outline_color_alpha = [
+				1
+				1
+				0.3
+			]
+			outline_color_blue = [
+				1
+				1
+				0.3
+			]
+			outline_color_green = [
+				1
+				1
+				0.3
+			]
+			outline_color_red = [
+				1
+				1
+				0.3
+			]
+			outline_enabled = 1
+			secondary_sun_color = [
+				1
+				1
+				1
+			]
+			secondary_sun_direction = [
+				0
+				0
+				-1
+			]
+			secondary_sun_enabled = 0
+			skydome_cloud_map = "units/textures/g/generic_texture_black"
+			skydome_cloud_speed_scale = [
+				0
+				1
+			]
+			skydome_fog_height_falloff = [
+				0
+				-50
+			]
+			skydome_intensity = 2
+			skydome_map = ""
+			skydome_tint_color = [
+				6.461269
+				16
+				4.580392
+			]
+			skydome_u_offset = 0
+			ssm_center = [
+				0
+				0
+				0
+			]
+			ssm_constant_update_enabled = 0
+			ssm_enabled = 0
+			ssm_near_far = [
+				0
+				0
+			]
+			ssm_radius = 200
+			ssm_rotation = 0
+			ssm_shadow_map_bias = [
+				0.0005
+				0.0001
+				20
+			]
+			ssr_enabled = 1
+			ssr_ray_bending_enabled = 0
+			ssr_screen_edge_threshold = 0.05
+			ssr_surface_thickness_threshold = [
+				0.001
+				5
+			]
+			sun_color = [
+				0.7411765
+				0.2971545
+				0.02906576
+			]
+			sun_direction = [
+				0.05574153
+				-0.2043856
+				-0.9773021
+			]
+			sun_enabled = 0
+			sun_shadow_map_bias = [
+				0.0001
+				0.001
+				50
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				0.956971
+				0.956971
+				2.41255
+				2.41255
+				5.61306
+				5.61306
+				14.9202
+			]
+			sun_shadows_enabled = 1
+			vignette_color = [
+				0
+				0
+				0
+			]
+			vignette_enabled = 1
+			vignette_scale_falloff_opacity = [
+				5
+				5
+				0.25
+			]
+			wind_amount = [
+				0
+				0
+				0
+			]
+		}
+	}
+	waystone_environment_01 = {
+		editor_variables = {
+			shadow_slice_depth_ranges = [
+				0
+				80
+				0.4
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				15
+				0.202
+			]
+		}
+		variable_weights = {
+		}
+		variables = {
+			ambient_tint = [
+				0.3535534
+				0.3535534
+				0.3535534
+			]
+			ao_enabled = 1
+			ao_quality = 2
+			bloom_enabled = 1
+			bloom_lens_dirt_amount = 9
+			bloom_threshold_offset_falloff = [
+				5
+				1
+				0.3
+			]
+			bloom_tint = [
+				1
+				1
+				1
+			]
+			color_grading_enabled = 0
+			color_grading_map = "environment/textures/color_grading_coaching_inn"
+			dof_enabled = 1
+			dof_focal_distance = 0
+			dof_focal_far_scale = 1
+			dof_focal_near_scale = 1
+			dof_focal_region = 10
+			dof_focal_region_end = 22
+			dof_focal_region_start = 0.01
+			emissive_particle_intensity = 1
+			exposure = 0.23
+			eye_adaptation_enabled = 1
+			eye_adaptation_speed_min_max = [
+				5
+				0.01
+				30
+			]
+			eye_intensity = 1
+			fog_color = [
+				0.01303443
+				0.01416485
+				0.01740197
+			]
+			fog_enabled = 1
+			global_diffuse_map = ""
+			global_lens_dirt_map = "environment/textures/lensdirt"
+			global_roughness_multiplier = 1
+			global_specular_map = ""
+			heatmap_world_extents = [
+				1000
+				1000
+			]
+			heatmap_world_position = [
+				-500
+				-500
+			]
+			lens_quality_enabled = 0
+			lens_quality_properties = [
+				0
+				0
+				0
+			]
+			light_shafts_enabled = 0
+			light_shafts_settings = [
+				0.127
+				0.4
+			]
+			light_shafts_weigth = 0.01
+			local_shadow_map_bias = [
+				0.0001
+				0.015
+				50
+			]
+			motion_blur_amount = 2
+			motion_blur_enabled = 0
+			offscreen_target_projection = 0
+			outline_color_alpha = [
+				1
+				1
+				0.3
+			]
+			outline_color_blue = [
+				1
+				1
+				0.3
+			]
+			outline_color_green = [
+				1
+				1
+				0.3
+			]
+			outline_color_red = [
+				1
+				1
+				0.3
+			]
+			outline_enabled = 1
+			secondary_sun_color = [
+				1
+				1
+				1
+			]
+			secondary_sun_direction = [
+				0
+				0
+				-1
+			]
+			secondary_sun_enabled = 0
+			skydome_cloud_map = "units/textures/g/generic_texture_black"
+			skydome_cloud_speed_scale = [
+				0
+				1
+			]
+			skydome_fog_height_falloff = [
+				0
+				-50
+			]
+			skydome_intensity = 2
+			skydome_map = ""
+			skydome_tint_color = [
+				6.461269
+				16
+				4.580392
+			]
+			skydome_u_offset = 0
+			ssm_center = [
+				0
+				0
+				0
+			]
+			ssm_constant_update_enabled = 0
+			ssm_enabled = 0
+			ssm_near_far = [
+				0
+				0
+			]
+			ssm_radius = 200
+			ssm_rotation = 0
+			ssm_shadow_map_bias = [
+				0.0005
+				0.0001
+				20
+			]
+			ssr_enabled = 1
+			ssr_ray_bending_enabled = 0
+			ssr_screen_edge_threshold = 0.05
+			ssr_surface_thickness_threshold = [
+				0.001
+				5
+			]
+			sun_color = [
+				0.7411765
+				0.2971545
+				0.02906576
+			]
+			sun_direction = [
+				0.05574153
+				-0.2043856
+				-0.9773021
+			]
+			sun_enabled = 0
+			sun_shadow_map_bias = [
+				0.0001
+				0.001
+				50
+			]
+			sun_shadow_slice_depth_ranges = [
+				0
+				0.956971
+				0.956971
+				2.41255
+				2.41255
+				5.61306
+				5.61306
+				14.9202
+			]
+			sun_shadows_enabled = 1
+			vignette_color = [
+				0
+				0
+				0
+			]
+			vignette_enabled = 1
+			vignette_scale_falloff_opacity = [
+				5
+				5
+				0.25
+			]
+			wind_amount = [
+				0
+				0
+				0
+			]
+		}
+	}
+}
+template = "core/stingray_renderer/environments/outdoor.shading_environment_template"

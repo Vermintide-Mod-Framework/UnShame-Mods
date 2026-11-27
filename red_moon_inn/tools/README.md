@@ -22,6 +22,11 @@ Vermintide 2 doesn't have is left out of the level and listed in `missing.txt`, 
 
    Reload the level in the editor afterwards: saving the copy the editor has open writes over the file.
 
+The inn's environment is converted the same way, to `levels/red_moon_inn/environment/red_moon_inn.shading_environment`. What
+Vermintide 2's template doesn't have is listed in `environment_missing.txt`:
+
+    python convert_environment.py "<Vermintide 1>" "<Modding Tools Content>/content" "<Vermintide 2 SDK>" vt1_strings.txt ../levels/red_moon_inn/environment/red_moon_inn.shading_environment ../environment_missing.txt
+
 `compiled_level.py` says how the compiled level was read. Its fields were found by comparing Vermintide 2's keep, which is
 compiled in Vermintide 2's bundles and in source in the Content: both games' compiled levels are laid out the same way, with a few
 differences.
