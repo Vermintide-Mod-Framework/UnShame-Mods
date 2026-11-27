@@ -65,7 +65,12 @@ SHADING_ENVIRONMENT = 'environment/honduras_keep_02'
 LEVEL_SETTINGS_KEYS = ['num_background_units', 'shading_environment', 'sound_environment', 'timpani_sound_environment']
 
 # Names of the inn's resources that neither game's strings have, found by trying names under the folders the inn uses
-FOUND_NAMES = ['units/materials/g/generic_door_01']
+FOUND_NAMES = [
+    'units/materials/g/generic_door_01',
+    'units/architecture/inn/modular_assets/inn_doorframe_3x3m_01',
+    'units/architecture/inn/modular_assets/inn_plaster_wall_4x2m_01',
+    'units/architecture/inn/modular_assets/inn_stone_floor_2x4m_01',
+]
 
 # Units of the inn that Vermintide 2 doesn't have, and the unit of Vermintide 2 that is used instead
 SKYDOME = 'units/skydome/skydome_hdr'
