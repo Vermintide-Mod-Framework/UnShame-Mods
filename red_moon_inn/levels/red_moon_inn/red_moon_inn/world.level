@@ -20,13 +20,13 @@ editor_metadata = {
 		consumeStingrayNavMeshTriangles = false
 		consumeTerrain = true
 		consumeUnitsMode = "All units without gwnavgenexcluded script data"
-		entityHeight = 1.6
-		entityRadius = 0.38
+		entityHeight = 1.60000002384186
+		entityRadius = 0.379999995231628
 		generatedNavDataPath = "navigation\\levels\\red_moon_inn\\red_moon_inn\\world"
 		minNavigableSurface = 0.5
-		rasterPrecision = 0.2
+		rasterPrecision = 0.200000002980232
 		slopeMax = 60
-		stepMax = 0.6
+		stepMax = 0.600000023841858
 		terrainSamplingInMeters = 10
 	}
 	Layers = [
@@ -828,8 +828,6 @@ editor_metadata = {
 	]
 	Prototypes = [
 	]
-	Replays = [
-	]
 	Scatter = {
 		Dirty = false
 		PoolSettings = {
@@ -858,7 +856,7 @@ editor_metadata = {
 	Transients = {
 		Camera = {
 			FarRange = 1000
-			InterestPointDistance = 10
+			InterestPointDistance = 4.1372
 			OrthographicPlane = {
 				W = 1
 				X = 0
@@ -867,19 +865,19 @@ editor_metadata = {
 			}
 			OrthographicZoom = 10
 			Pos = {
-				X = 0
-				Y = -8
-				Z = 3
+				X = -0.712047
+				Y = -1.436386
+				Z = 6.214819
 			}
 			ProjectionType = 1
 			Rot = {
-				W = 0.996195
-				X = -0.087156
-				Y = 0
-				Z = 0
+				W = -0.76056
+				X = 0.366248
+				Y = -0.232601
+				Z = 0.483019
 			}
 			RotationSpeed = 0.003
-			TranslationSpeed = 1
+			TranslationSpeed = 0.087791
 		}
 	}
 	Triggers = [
@@ -41867,6 +41865,7 @@ editor_metadata = {
 				frag_grenade_t2 = false
 				guaranteed_spawn = true
 				healing_draught = false
+				percentage_through_level = 0
 				smoke_grenade_t1 = false
 				smoke_grenade_t2 = false
 				speed_boost_potion = false
@@ -51215,6 +51214,1311 @@ editor_metadata = {
 			}
 			Type = "units/lights/light"
 		}
+		{
+			Cameras = {
+			}
+			Id = "dd107db1-ddc4-4a14-ab6d-8850dfc08592"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "path_marker_001"
+			OverridePoses = {
+			}
+			Path = "units/gamemode/path_marker"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0
+				Y = 6
+				Z = 3.912
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/gamemode/path_marker"
+		}
+		{
+			Cameras = {
+			}
+			Id = "8c3d9ffc-eb47-48c8-960e-acefd4a50f90"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "coop_spawnpoint_002"
+			OverridePoses = {
+			}
+			Path = "units/hub_elements/coop_spawnpoint"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.929624
+				Y = 7.631488
+				Z = 3.912
+			}
+			Rot = {
+				W = 0.316329
+				X = 0
+				Y = 0
+				Z = 0.94865
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/hub_elements/coop_spawnpoint"
+		}
+		{
+			Cameras = {
+			}
+			Id = "47d54961-e0d1-4842-a3e9-be7438ebcb67"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "coop_spawnpoint_001"
+			OverridePoses = {
+			}
+			Path = "units/hub_elements/coop_spawnpoint"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 3
+				Y = 4
+				Z = 4.175
+			}
+			Rot = {
+				W = -0.777078
+				X = 0
+				Y = 0
+				Z = -0.629404
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/hub_elements/coop_spawnpoint"
+		}
+		{
+			Cameras = {
+			}
+			Id = "652e3f60-f589-4702-9d7b-df0ae3699b4d"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "coop_spawnpoint_003"
+			OverridePoses = {
+			}
+			Path = "units/hub_elements/coop_spawnpoint"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -2
+				Y = 8
+				Z = 3.604
+			}
+			Rot = {
+				W = -0.065024
+				X = 0
+				Y = 0
+				Z = 0.997884
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/hub_elements/coop_spawnpoint"
+		}
+		{
+			Cameras = {
+			}
+			Id = "65698455-f396-4b2e-bc19-d6f20210981e"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "coop_spawnpoint_004"
+			OverridePoses = {
+			}
+			Path = "units/hub_elements/coop_spawnpoint"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -6
+				Y = 7
+				Z = 3.604
+			}
+			Rot = {
+				W = 0.02987
+				X = 0
+				Y = 0
+				Z = 0.999554
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/hub_elements/coop_spawnpoint"
+		}
+		{
+			Cameras = {
+			}
+			Id = "068a3bbd-5504-48e7-b82f-b24391ca524f"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "path_marker_003"
+			OverridePoses = {
+			}
+			Path = "units/gamemode/path_marker"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -7
+				Y = -1
+				Z = 0.965
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				order = 3
+			}
+			Type = "units/gamemode/path_marker"
+		}
+		{
+			Cameras = {
+			}
+			Id = "b8ce7511-b7d2-4be9-9d89-a4eaac1f6c5a"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "path_marker"
+			OverridePoses = {
+			}
+			Path = "units/gamemode/path_marker"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2
+				Y = 0
+				Z = 1.69
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				order = 4
+			}
+			Type = "units/gamemode/path_marker"
+		}
+		{
+			Cameras = {
+			}
+			Id = "be5a4cd2-d37e-4111-a996-944af38603ec"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "path_marker_002"
+			OverridePoses = {
+			}
+			Path = "units/gamemode/path_marker"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -7
+				Y = 6
+				Z = 3.604
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				order = 2
+			}
+			Type = "units/gamemode/path_marker"
+		}
+		{
+			Cameras = {
+			}
+			Id = "13f30b3f-361f-46b8-96b9-12ac8c370c3d"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "blockout_modular_floor_4m_01"
+			OverridePoses = {
+			}
+			Path = "units/whitebox/blockout_modular_floor_4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -8
+				Y = -6
+				Z = 1.018
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1.096716
+				Y = 1.647491
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/whitebox/blockout_modular_floor_4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "3fe6922f-8a18-57ba-994f-04ce6c66978e"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_doorframe_4x4m_01_vt1_80"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -5.623093128204346
+				Y = -8.41645336151123
+				Z = 0.9262229204177856
+			}
+			Rot = {
+				W = 0.3701150119304657
+				X = 0
+				Y = 0
+				Z = 0.9289859533309937
+			}
+			Scl = {
+				X = 0.75
+				Y = 0.75
+				Z = 0.75
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "2e9dce68-cb66-54ae-8ac0-34e6c9fa047b"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_doorframe_4x4m_01_vt1_82"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -3.6385700702667236
+				Y = 8.5
+				Z = 3.5989999771118164
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 0.75
+				Y = 0.75
+				Z = 0.75
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "be663034-6845-5bc8-aa51-1f761b17b813"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_doorframe_4x4m_01_vt1_103"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -7.869110107421875
+				Y = 6.2873311042785645
+				Z = 3.5989999771118164
+			}
+			Rot = {
+				W = -0.9517569541931152
+				X = 0
+				Y = 0
+				Z = -0.3068540394306183
+			}
+			Scl = {
+				X = 0.75
+				Y = 0.75
+				Z = 0.75
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "a067c74c-87ab-5a10-a22b-ec6bbd60d7da"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_doorframe_4x4m_01_vt1_104"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.0743839740753174
+				Y = 8.5
+				Z = 3.9554600715637207
+			}
+			Rot = {
+				W = -0.9600560069084167
+				X = 0
+				Y = 0
+				Z = 0.27980703115463257
+			}
+			Scl = {
+				X = 0.75
+				Y = 0.75
+				Z = 0.75
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "6c4304a5-e7b0-5799-8b6a-f8e51196af92"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_doorframe_4x4m_01_vt1_173"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 3.543619155883789
+				Y = 1.7971420288085938
+				Z = 4.232323169708252
+			}
+			Rot = {
+				W = -0.7071070075035095
+				X = 0
+				Y = 0
+				Z = -0.7071070075035095
+			}
+			Scl = {
+				X = 0.75
+				Y = 0.75
+				Z = 0.75
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "762e87dd-7694-5492-9bb7-a7f750697645"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_plaster_wall_4x3m_01_vt1_358"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -7.432352066040039
+				Y = 6.601630210876465
+				Z = 6.598999977111816
+			}
+			Rot = {
+				W = -0.9517569541931152
+				X = 0
+				Y = 0
+				Z = -0.3068540394306183
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 0.6666666666666666
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "c37b0c5e-5746-5457-b75d-ea39ba78da7f"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_plaster_wall_4x3m_01_vt1_359"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -3.75
+				Y = 8.5
+				Z = 6.598999977111816
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 0.6666666666666666
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "ac0f2197-c3e1-50ef-b9ba-2fc10fdc41a5"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_plaster_wall_4x3m_01_vt1_360"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.3790859878063202
+				Y = 8.942909240722656
+				Z = 6.848999977111816
+			}
+			Rot = {
+				W = -0.9600560069084167
+				X = 0
+				Y = 0
+				Z = 0.27980703115463257
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 0.6666666666666666
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "6c91c089-b89d-53de-8fdf-ccab95892892"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_wall_stone_4x4m_01_vt1_482"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -7.408164978027344
+				Y = -12.482401847839355
+				Z = 0.9262229204177856
+			}
+			Rot = {
+				W = 0.3701150119304657
+				X = 0
+				Y = 0
+				Z = 0.9289859533309937
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "5bf25803-0eaf-53a5-bc74-1cf65df9e27b"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_doorframe_4x4m_01_vt1_850"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -3.0733730792999268
+				Y = 8.73792839050293
+				Z = -1.6360009908676147
+			}
+			Rot = {
+				W = 0.7071068286895752
+				X = 0
+				Y = 0
+				Z = 0.7071068286895752
+			}
+			Scl = {
+				X = 0.75
+				Y = 0.75
+				Z = 0.75
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "2dc327af-ffc5-50c7-a272-aa37299efce6"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_doorframe_4x4m_01_vt1_895"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2
+				Y = 8.5
+				Z = -4.790999889373779
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 0.75
+				Y = 0.75
+				Z = 0.75
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "5f835725-51e1-5e3b-81d7-eec8608e2aa4"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_doorframe_4x4m_01_vt1_904"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.263156890869141
+				Y = 11.396197319030762
+				Z = 0.37170299887657166
+			}
+			Rot = {
+				W = -0.9996029734611511
+				X = 0
+				Y = 0
+				Z = 0.028181001543998718
+			}
+			Scl = {
+				X = 0.75
+				Y = 0.75
+				Z = 0.75
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "af671581-3ae8-57c3-9898-00a837f52876"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_mud_floor_4x4m_01_vt1_1085"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -6
+				Y = -1
+				Z = 0.859000027179718
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "2500f2d7-f321-529c-a273-659cec8991f5"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_mud_floor_4x4m_01_vt1_1086"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -6
+				Y = -5
+				Z = 0.859000027179718
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "51f16561-89f2-5fc4-9e0f-cd3dc5071cba"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_mud_floor_4x4m_01_vt1_1087"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -6
+				Y = -8
+				Z = 0.859000027179718
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 0.5
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "9d0f6dac-543b-5d57-bf07-f6d8ea709184"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_mud_floor_4x4m_01_vt1_1088"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.25
+				Y = 3.25
+				Z = 0.6365660429000854
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "d1df36db-2643-529a-93bb-945c462f536a"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_mud_floor_4x4m_01_vt1_1089"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 9.25
+				Y = 3.25
+				Z = 0.6365660429000854
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "56c59bfa-180d-5e71-8dbb-bad88fcb276e"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_mud_floor_4x4m_01_vt1_1090"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 13.25
+				Y = 3.25
+				Z = 0.6365660429000854
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "eae3cc98-e918-5b26-b016-313551b5327c"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_mud_floor_4x4m_01_vt1_1091"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.25
+				Y = -0.75
+				Z = 0.6365660429000854
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "b3a17fbf-d875-5619-82fb-e2b4e0145b5f"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_mud_floor_4x4m_01_vt1_1092"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 9.25
+				Y = -0.75
+				Z = 0.6365660429000854
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "94900fd2-0e9f-5ee5-9202-a2ecdb4a5151"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_mud_floor_4x4m_01_vt1_1093"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 13.25
+				Y = -0.75
+				Z = 0.6365660429000854
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "90944fa9-5dd1-54f9-8e7d-0375ceb0b076"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_mud_floor_4x4m_01_vt1_1094"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.25
+				Y = -4.75
+				Z = 0.6365660429000854
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "ae37c295-a3a4-5b14-b0fc-f7fa66ea7652"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_mud_floor_4x4m_01_vt1_1095"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 9.25
+				Y = -4.75
+				Z = 0.6365660429000854
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "656a025a-ee46-5f9c-a7bf-bd85d0e11fa6"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_mud_floor_4x4m_01_vt1_1096"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 13.25
+				Y = -4.75
+				Z = 0.6365660429000854
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
 	]
 	Volumes = [
 		{
@@ -51583,293 +52887,289 @@ level_settings = {
 }
 object_sets = {
 	flow_act_01 = [
-		"225a5530-aeb8-5ae3-884d-d81e644dc640"
-		"0dda862c-6679-5331-8e39-b0019e87a299"
-		"3f79c30a-4e7c-5521-9865-34bdbbd086a4"
-		"d633ad6f-1f78-5c35-8916-9b5873d19e71"
-		"0a22315a-0210-554c-a61b-1a52a9dce90c"
-		"98a4e8d7-45d3-5179-a889-161243c7d9dc"
-		"24043e88-b1bd-5376-8bf6-c6ae5a2d0c1e"
-		"f2ea7a8c-df45-5074-958e-6daea680312a"
-		"1aa763d3-79d0-5a5a-b187-eafb6b40f05f"
-		"eb1b5ae7-d231-5033-9ed1-f9819e0e77ae"
-		"96c5769f-37d1-5046-a591-3f69059ecabd"
-		"7e9fae04-b9ba-5210-aa8d-de38fd71e119"
-		"ed0aa4b1-642e-5788-afb0-3130030303fb"
-		"ac0857cb-9cd6-5de7-9cfa-e5e3fa51ea2f"
-		"a0dbe20e-36c0-58eb-ba32-fccd16fe5920"
-		"cdcf742b-f372-51cf-b726-b5830d46e118"
-		"80e489c7-a0bf-573a-baa0-472a438d5a6d"
-		"e902adac-e79d-598b-a13d-0422eb364ad8"
-		"43ff3bc0-47af-56ea-b3f5-f68881037e5a"
-		"c870c4b1-b4e8-5f54-ae1c-b7872f02c052"
-		"283eee46-b3f8-5d1f-9281-9c7f69e545d1"
-		"0f8225b2-b3f7-5907-a03b-f0352b08948a"
-		"608d10e5-e89a-57aa-8cbd-d993cd931c88"
-		"80167856-d50c-5ba6-946e-f31776ec236d"
-		"f4abcce3-069c-5b42-959d-12c6b15fa513"
-		"44d3a939-7f56-5594-87a4-0129bf17147e"
-		"e8cdeb2f-cdfd-5f66-afb3-0cff22c86bde"
-		"3e58a823-4de6-5d6b-a3f4-143adf1ff7c6"
-		"d539efe3-72fa-56fc-9836-c5861af78c1e"
-		"c5747244-8e63-5942-89c1-c140cd7c0e3f"
-		"592b86b4-63a2-5b9f-bae3-c3b082c69f61"
-		"c5a17eea-8496-5f36-af15-ce4a0bd91f23"
-		"87b037ed-f0af-562c-81a3-701f9e15e404"
-		"82b9f3cf-0a91-5a89-8224-10874f8eeaa4"
-		"2dde6c3a-e865-525a-b8f0-442a3a0eb8c6"
-		"21021efd-c560-5e69-abe3-1b162a2cb6f3"
-		"e3c4fca0-5cf8-59fc-a4d8-264b28491472"
-		"734f1ca7-cd5f-547a-942d-d05b60d8ef52"
-		"cfe2f905-6bb8-531c-be55-d4d72356a617"
-		"8b43d8fa-9728-5a02-a742-672db8cc8330"
-		"5afeabe3-00cb-5a1d-a9d4-93cee1dcaa6e"
-		"4db5ade2-e3e4-5ff4-b702-8f18a67952f9"
-		"ff8fdd19-dd74-51f6-b1f5-e5486cff1b06"
-		"89f19a0b-1123-5e76-b7a4-b2ac8b0cbaf4"
-		"4d365136-36c6-505b-ab3d-bf20ffa57eb0"
-		"3c7c94a6-02c4-575d-9cbb-a98301c7852c"
-		"f381a99c-6905-570f-b882-f9f4af5f38f2"
-		"e621dbf1-5d73-5c64-8b67-371fc92244b1"
-		"54113bae-f6b0-5b01-a350-a162351589ad"
-		"0817958c-dcfd-5306-9357-e47632857cb6"
-		"1a5130e2-34c8-59a8-b610-ac96e3ae5c60"
-		"aba67b33-7005-5a5b-b1aa-054c3c387060"
-		"d6cff360-e6ce-545c-b04a-5bc8652a025c"
-		"c15aaa86-9306-5cac-b920-cbf543a0a928"
-		"cff01ce3-981b-59dc-ba47-f7660cc5e7e2"
-		"ac932b86-32c3-5157-93f9-277f87117eb1"
-		"3bc5256b-30cf-5722-abec-581924b9fbe8"
 		"008a1e10-ea33-51f3-b888-20df85298012"
-		"70582a52-e116-5555-9874-7d8e34aa89db"
-		"e8933c37-5d7c-500a-9e3b-1b63459b07e0"
+		"0817958c-dcfd-5306-9357-e47632857cb6"
+		"0a22315a-0210-554c-a61b-1a52a9dce90c"
+		"0dda862c-6679-5331-8e39-b0019e87a299"
+		"0f8225b2-b3f7-5907-a03b-f0352b08948a"
+		"1a5130e2-34c8-59a8-b610-ac96e3ae5c60"
+		"1aa763d3-79d0-5a5a-b187-eafb6b40f05f"
+		"21021efd-c560-5e69-abe3-1b162a2cb6f3"
+		"225a5530-aeb8-5ae3-884d-d81e644dc640"
+		"24043e88-b1bd-5376-8bf6-c6ae5a2d0c1e"
+		"283eee46-b3f8-5d1f-9281-9c7f69e545d1"
+		"2dde6c3a-e865-525a-b8f0-442a3a0eb8c6"
+		"3bc5256b-30cf-5722-abec-581924b9fbe8"
+		"3c7c94a6-02c4-575d-9cbb-a98301c7852c"
+		"3e58a823-4de6-5d6b-a3f4-143adf1ff7c6"
+		"3f79c30a-4e7c-5521-9865-34bdbbd086a4"
+		"43ff3bc0-47af-56ea-b3f5-f68881037e5a"
+		"44d3a939-7f56-5594-87a4-0129bf17147e"
+		"4d365136-36c6-505b-ab3d-bf20ffa57eb0"
+		"4db5ade2-e3e4-5ff4-b702-8f18a67952f9"
+		"54113bae-f6b0-5b01-a350-a162351589ad"
+		"592b86b4-63a2-5b9f-bae3-c3b082c69f61"
+		"5afeabe3-00cb-5a1d-a9d4-93cee1dcaa6e"
+		"608d10e5-e89a-57aa-8cbd-d993cd931c88"
 		"6f73e545-f5ee-592b-a0e7-e2fe43a25f70"
+		"70582a52-e116-5555-9874-7d8e34aa89db"
+		"734f1ca7-cd5f-547a-942d-d05b60d8ef52"
+		"7e9fae04-b9ba-5210-aa8d-de38fd71e119"
+		"80167856-d50c-5ba6-946e-f31776ec236d"
+		"80e489c7-a0bf-573a-baa0-472a438d5a6d"
+		"82b9f3cf-0a91-5a89-8224-10874f8eeaa4"
+		"87b037ed-f0af-562c-81a3-701f9e15e404"
+		"89f19a0b-1123-5e76-b7a4-b2ac8b0cbaf4"
+		"8b43d8fa-9728-5a02-a742-672db8cc8330"
+		"96c5769f-37d1-5046-a591-3f69059ecabd"
+		"98a4e8d7-45d3-5179-a889-161243c7d9dc"
+		"a0dbe20e-36c0-58eb-ba32-fccd16fe5920"
+		"aba67b33-7005-5a5b-b1aa-054c3c387060"
 		"abcb9e23-05e1-5eca-b466-88e5038afc22"
+		"ac0857cb-9cd6-5de7-9cfa-e5e3fa51ea2f"
+		"ac932b86-32c3-5157-93f9-277f87117eb1"
+		"c15aaa86-9306-5cac-b920-cbf543a0a928"
+		"c5747244-8e63-5942-89c1-c140cd7c0e3f"
+		"c5a17eea-8496-5f36-af15-ce4a0bd91f23"
+		"c870c4b1-b4e8-5f54-ae1c-b7872f02c052"
+		"cdcf742b-f372-51cf-b726-b5830d46e118"
+		"cfe2f905-6bb8-531c-be55-d4d72356a617"
+		"cff01ce3-981b-59dc-ba47-f7660cc5e7e2"
+		"d539efe3-72fa-56fc-9836-c5861af78c1e"
+		"d633ad6f-1f78-5c35-8916-9b5873d19e71"
+		"d6cff360-e6ce-545c-b04a-5bc8652a025c"
+		"e3c4fca0-5cf8-59fc-a4d8-264b28491472"
+		"e621dbf1-5d73-5c64-8b67-371fc92244b1"
+		"e8933c37-5d7c-500a-9e3b-1b63459b07e0"
+		"e8cdeb2f-cdfd-5f66-afb3-0cff22c86bde"
+		"e902adac-e79d-598b-a13d-0422eb364ad8"
+		"eb1b5ae7-d231-5033-9ed1-f9819e0e77ae"
+		"ed0aa4b1-642e-5788-afb0-3130030303fb"
+		"f2ea7a8c-df45-5074-958e-6daea680312a"
+		"f381a99c-6905-570f-b882-f9f4af5f38f2"
+		"f4abcce3-069c-5b42-959d-12c6b15fa513"
+		"ff8fdd19-dd74-51f6-b1f5-e5486cff1b06"
 	]
 	flow_act_01_inventory_chest = [
 		"079c626f-ffa1-5034-8957-b0c12338e4bc"
 	]
 	flow_act_02 = [
-		"4c22dc4a-f3c4-57cc-a029-bb1cc683a242"
-		"8f786894-5862-59e2-bfbc-bdcef373f888"
-		"d4871b4a-5ed4-5dd7-8285-80d6346d8ce7"
-		"5c6e8fcb-40f1-5c9f-b424-06475adb704a"
-		"bc0d7b9e-7a56-52ce-962e-665f7d914e82"
-		"b24577ab-b788-531c-b9c3-ae6328acb9c4"
-		"47b08cab-8e1e-5a30-9b1b-efd03384e1fe"
-		"b2133d46-5735-59eb-92fa-ec5c259e9a1d"
-		"a2671dd1-61a8-55a2-8c9b-8b14c186bf6d"
-		"e7b9cacb-d3a3-5267-82ae-cc1ab67985d4"
-		"ab7ef979-5a07-541d-8a8f-f76a6b23ec18"
-		"dcbdc088-ca30-50f9-a746-d2ae8edadf80"
-		"692ccc43-5981-570d-9e20-886f2fd42e1c"
-		"cab3b17b-5de1-5e58-9afe-2962bc755170"
-		"ae54b366-4e77-587d-ab1b-24d1282c060c"
-		"eb74cef5-d4fc-58c4-a7d0-2ab0d79e64f5"
-		"a52e6b45-e2fd-5022-8d6b-48789de6b9e5"
-		"67cd04f5-0fa8-5746-ae5e-cfbb02377023"
-		"8650e6f3-6a75-5370-9ad3-7a2ee3bc4982"
-		"0c9cf0c7-3687-53e2-abc3-d61f74e171bf"
-		"bd21d85c-d2c1-5bc5-85bc-0a2f4cad20ff"
-		"a172806d-d8c4-56e2-a02c-72fd2d0d2c43"
-		"77959c6d-438b-54c1-906a-0ca96e857836"
-		"c42769cf-e28c-5082-93f0-b7ea46e93451"
-		"98b80750-329c-5fe8-b5a2-7de47ee9a8dc"
-		"38a9a6c7-94d3-5589-a004-2aea014d666f"
-		"46fef6a8-808a-5daf-b8d3-702bdfe8d189"
-		"bfdbdc18-2231-52ee-ba24-48db9afc0d1e"
-		"8f066b49-0ccf-51fc-81f8-5fec22c07890"
-		"3e90c217-5673-5ef4-95fb-883d1bc3cbd5"
-		"845b8847-fb23-5cb4-8908-db7e38cdc10b"
-		"4a2577e3-34a1-5c22-b542-e513e4b7fa03"
-		"1f1f714e-d9a3-5ee2-84d4-25fd795add59"
-		"01973466-f175-5b58-8864-f5422c44fc10"
-		"3a9a341d-395f-568f-8820-44992918474e"
-		"639854fd-ae97-58dd-8e93-d5f217e56af0"
-		"67b475e3-987d-5ce3-b01a-b398f2a9130e"
-		"a574b6af-739e-5279-b8e3-8b0b9f46e14d"
-		"65ad6a7a-147d-595f-8288-5df31004e51d"
-		"d47a049b-58c9-510b-bd4a-01b92477c4cc"
-		"da19facd-a863-5a1a-9074-2ed88217057a"
-		"b24401bf-63e1-50f3-8855-96ff75af3a7b"
-		"c9d30b96-e6eb-5792-bd3a-5229f845501c"
-		"5eb99f57-3a92-5724-bd79-8cc372fd7eca"
-		"37d99a2d-79a0-5b2b-baa3-af55840a31f8"
-		"4b391723-c790-5c14-8530-64afa600f2ac"
-		"6107fa20-20b8-5aae-9882-0c1c3f52916a"
-		"25f0dbf4-7f1d-5710-8bfd-89d7e6118cd3"
-		"248b9bf5-2949-5789-ad2a-6adfa3bde91c"
-		"3d944177-e699-55c0-a35f-2ebb2835ad0c"
-		"381b4c3c-41d5-5755-9fd2-9ac5f289a258"
-		"1f353c45-6b58-5284-a8eb-9dd5451ef874"
-		"d894e3ba-3b96-5348-9f03-0f4aa3da8e5f"
-		"74d89169-a3b1-5c58-a3c9-c18f61c32eb9"
-		"0e18043c-fbbb-5b80-b369-7df4f238f716"
-		"83275578-940f-5853-8c14-6556ef3f3d45"
-		"a5332efe-ecc0-5d61-915e-0cc407de725f"
-		"e0e92a33-3645-5aad-a66e-57b1807fb002"
-		"81eefb8e-8410-58c9-83d3-0f267213f938"
-		"a61a7b93-3221-5563-a2c3-5f6c9885722a"
-		"43d5ed93-8a52-5b4f-8c0f-0cd2a3d66521"
-		"8c3c0964-f7ab-5429-8f96-c652e2138f14"
-		"7df27325-90b3-5395-b133-69218cb1c85f"
-		"4a88a8cc-b37d-5645-bee6-05291ddad241"
-		"789cdae4-dce0-5f51-add9-ed9c994b8670"
-		"9eb915f4-dda2-5557-a98d-cfb1380d0624"
-		"e69b7262-e367-51c3-8aa3-e536ff3dc9b5"
-		"0209c8f1-0524-5be5-9be4-69be4737a7f8"
-		"be6ee2e2-fc06-58ef-a468-4c02fd091fae"
-		"a073cdf1-5364-5237-a43f-e32ddacd1946"
-		"9e193a43-5ec9-59fc-9d6b-49643829fc21"
-		"8a7ca050-c5a6-59af-8fe0-f13b9ffeb41a"
-		"423aacc3-d18b-5462-9df6-b2f14fc2cab7"
-		"31da2341-8060-514c-8352-f8ed7d275e49"
-		"714a51a3-45fc-57a3-85ab-db136fd71c2d"
-		"89f19a0b-1123-5e76-b7a4-b2ac8b0cbaf4"
-		"1f60911a-4b97-5c01-a0cd-4204e8780c47"
-		"1354c3a2-6f99-5507-b22e-fb66e70dfd24"
-		"4213b8aa-a7bc-54a6-a191-c65ab8d60935"
-		"5449de99-ca08-5174-8413-5749f0d8352a"
 		"00426808-c0e1-5900-bb1e-430d0713dc6e"
-		"f5508b2e-4476-55bc-9c92-debb16ef8416"
-		"5e7978b8-c8c5-53d4-94e3-a48b962bbbcd"
-		"a8c55167-f45f-5acc-9adc-bc0a17955a2f"
-		"a3387539-4a46-5a98-a611-563416848a8b"
-		"057598e5-b0d0-5020-b36e-5179076de8e9"
-		"5ec95985-dfd6-5135-82f0-1793b337abaf"
-		"34e323b1-2c32-525e-b586-35fc705541bb"
-		"89445389-c039-5a3c-a90e-cc32b7a3d5d4"
-		"4a9bb632-3b70-56b5-a937-0050929bcdb1"
-		"770d4a9f-d643-5ce3-ac8a-4933a139b80a"
-		"9347e15c-5d63-575b-9808-dca3276530db"
-		"546e051e-118a-553c-ad0c-058f84bd6b62"
-		"39b18df3-95ca-553b-a802-b764a4bf7e7d"
-		"c33469f9-7d2c-5d97-93c7-a99147ef49ea"
-		"628add06-cfd0-56ae-9a3a-6711f20bdc38"
-		"b332b0cf-adff-581b-8261-efd4de392f7e"
-		"9f152f08-e4ad-5509-bc21-87e87bcb6cc9"
-		"975e0ab5-11ae-513a-989c-4c3f48501ed5"
-		"566d8f88-36d0-5e1c-9b6c-ca51ca7a7f77"
-		"c3988100-e363-5c12-8ea0-bb9d8be7a56d"
 		"00aa94ef-3ee6-57b7-9918-8b7b24cb28ee"
-		"c3d1f1c9-2517-548c-9881-73a544dc10e0"
-		"fc458864-0dab-571c-b4a2-13a9418e8e6c"
-		"af9d4a6f-c12a-54d4-b37f-6297f78662fa"
-		"aafb0109-e75b-5bd0-a200-ef0fbe94c6da"
-		"a795e847-0e04-505d-9b62-80607a8cc9d4"
-		"6b5ca49b-d3b0-51a1-88a3-6d7bb955b617"
-		"1c2ce1ec-8dd2-5cae-906b-47735fa09ee1"
-		"445ad9f4-2016-5732-8c3e-e9ba57a21b5a"
-		"39a12861-a124-56a7-8583-8ab8e4133789"
-		"12373a94-6f95-523a-8d74-e07b2c46b9f1"
-		"fc2155ea-95c1-5472-a2bb-36cc1dbce946"
-		"1200f216-998d-59a8-8dbf-b118d90b3fb6"
-		"55949436-7a95-52a3-8e4f-9ce686c2fdde"
-		"90658e18-4268-53d8-a00a-e03685802d66"
-		"574d7cbc-6af4-50c9-b82c-ef5f73e46af7"
-		"a8f414e5-0b81-52d4-983c-6086d85cf60c"
-		"6cb7e1bc-76a0-51a6-9cf0-2f6f03133d31"
-		"4de75ff8-5698-51f8-a693-ab7894d9d704"
-		"e4de4c6b-914a-560e-8287-cf12148706df"
-		"6e5b214e-fcd6-5fc1-a7b1-6c3fc4e1d7d8"
-		"236c4269-7276-51d7-a30c-ddf04c78a5d8"
-		"f381a99c-6905-570f-b882-f9f4af5f38f2"
-		"6345248f-cafd-5442-adf1-e4c505f43a3e"
-		"634e9c85-9fe8-51cc-ac77-4d4e26b4b5d1"
-		"7232a1c9-38a7-5a05-8ef1-47aff22d0b0f"
-		"bd815c06-9b4b-5226-bf07-8591ef4cd9d7"
-		"217ee68d-cf57-53d0-bfcd-7973155bc6ad"
+		"01973466-f175-5b58-8864-f5422c44fc10"
+		"0209c8f1-0524-5be5-9be4-69be4737a7f8"
+		"057598e5-b0d0-5020-b36e-5179076de8e9"
 		"05d6e43f-d9f9-5591-99fd-6b58d0371ce6"
-		"7a7310b9-bbf4-546a-9f4b-a95b06683e74"
-		"60b4122a-9d04-5424-a87a-93dd93befc6b"
-		"998b17ee-e87e-5e1c-bbfb-4bd65efb5e23"
-		"43ad04d5-55e5-5a85-acc9-c76c97b42ca8"
-		"ffa3a3a4-7074-5e54-bffe-2d487fc2ee02"
-		"3a426fcd-a403-5456-8f04-00bed2e12743"
-		"e4b6b7f5-e71a-5fab-91de-805c592cbe89"
-		"bd9cfeef-634c-5900-a6bf-6d5322cc2652"
+		"0c9cf0c7-3687-53e2-abc3-d61f74e171bf"
+		"0e18043c-fbbb-5b80-b369-7df4f238f716"
 		"0fa7d4df-d464-5d0a-ac5b-8b5e8002fef5"
-		"828679ca-a924-547a-baf5-d96d43dbe3a8"
-		"34392b33-6602-588b-938b-288a010fa266"
+		"1200f216-998d-59a8-8dbf-b118d90b3fb6"
+		"12373a94-6f95-523a-8d74-e07b2c46b9f1"
+		"1354c3a2-6f99-5507-b22e-fb66e70dfd24"
+		"1c2ce1ec-8dd2-5cae-906b-47735fa09ee1"
 		"1cc1fb03-5ead-5e29-9f10-517b1cc5a284"
-		"f327c909-541d-55cd-aad2-e5ede59861d3"
-		"6348ebbd-14e5-5faf-bd4f-e9552c1ee996"
-		"3c50142d-13d9-5640-8f6a-ef6fad12befc"
-		"8d700e74-92fb-5f60-b167-f573694f7b11"
-		"df5728eb-bbde-5532-a436-7249ed13b67a"
+		"1f1f714e-d9a3-5ee2-84d4-25fd795add59"
+		"1f353c45-6b58-5284-a8eb-9dd5451ef874"
+		"1f60911a-4b97-5c01-a0cd-4204e8780c47"
+		"217ee68d-cf57-53d0-bfcd-7973155bc6ad"
+		"236c4269-7276-51d7-a30c-ddf04c78a5d8"
+		"248b9bf5-2949-5789-ad2a-6adfa3bde91c"
+		"25f0dbf4-7f1d-5710-8bfd-89d7e6118cd3"
 		"307ddb6f-fe31-511e-9582-e504be701bd6"
-		"826e393c-7037-5b4b-9813-8080b2e2d5a2"
-		"d751832f-043b-51ff-ba2f-f6c59dc6c715"
-		"edb72785-46d7-56d0-888a-cc278fb79ff1"
-		"44590992-387f-5e29-9bbb-ddd67de74506"
-		"ed97ee79-f7a8-5036-b7ab-97691a7d9aa5"
-		"4a0cb651-573a-5d3c-9817-de6674c38454"
+		"31da2341-8060-514c-8352-f8ed7d275e49"
+		"34392b33-6602-588b-938b-288a010fa266"
+		"34e323b1-2c32-525e-b586-35fc705541bb"
+		"37d99a2d-79a0-5b2b-baa3-af55840a31f8"
+		"381b4c3c-41d5-5755-9fd2-9ac5f289a258"
+		"38a9a6c7-94d3-5589-a004-2aea014d666f"
+		"39a12861-a124-56a7-8583-8ab8e4133789"
+		"39b18df3-95ca-553b-a802-b764a4bf7e7d"
+		"3a426fcd-a403-5456-8f04-00bed2e12743"
+		"3a9a341d-395f-568f-8820-44992918474e"
+		"3c50142d-13d9-5640-8f6a-ef6fad12befc"
 		"3d64b40e-cffe-5779-a723-d06143c0fc8b"
+		"3d944177-e699-55c0-a35f-2ebb2835ad0c"
+		"3e90c217-5673-5ef4-95fb-883d1bc3cbd5"
+		"4213b8aa-a7bc-54a6-a191-c65ab8d60935"
+		"423aacc3-d18b-5462-9df6-b2f14fc2cab7"
+		"43ad04d5-55e5-5a85-acc9-c76c97b42ca8"
+		"43d5ed93-8a52-5b4f-8c0f-0cd2a3d66521"
+		"44590992-387f-5e29-9bbb-ddd67de74506"
+		"445ad9f4-2016-5732-8c3e-e9ba57a21b5a"
+		"46fef6a8-808a-5daf-b8d3-702bdfe8d189"
+		"47b08cab-8e1e-5a30-9b1b-efd03384e1fe"
+		"4a0cb651-573a-5d3c-9817-de6674c38454"
+		"4a2577e3-34a1-5c22-b542-e513e4b7fa03"
+		"4a88a8cc-b37d-5645-bee6-05291ddad241"
+		"4a9bb632-3b70-56b5-a937-0050929bcdb1"
+		"4b391723-c790-5c14-8530-64afa600f2ac"
+		"4c22dc4a-f3c4-57cc-a029-bb1cc683a242"
+		"4de75ff8-5698-51f8-a693-ab7894d9d704"
+		"5449de99-ca08-5174-8413-5749f0d8352a"
+		"546e051e-118a-553c-ad0c-058f84bd6b62"
+		"55949436-7a95-52a3-8e4f-9ce686c2fdde"
+		"566d8f88-36d0-5e1c-9b6c-ca51ca7a7f77"
+		"574d7cbc-6af4-50c9-b82c-ef5f73e46af7"
+		"5c6e8fcb-40f1-5c9f-b424-06475adb704a"
+		"5e7978b8-c8c5-53d4-94e3-a48b962bbbcd"
+		"5eb99f57-3a92-5724-bd79-8cc372fd7eca"
+		"5ec95985-dfd6-5135-82f0-1793b337abaf"
+		"60b4122a-9d04-5424-a87a-93dd93befc6b"
+		"6107fa20-20b8-5aae-9882-0c1c3f52916a"
+		"628add06-cfd0-56ae-9a3a-6711f20bdc38"
+		"6345248f-cafd-5442-adf1-e4c505f43a3e"
+		"6348ebbd-14e5-5faf-bd4f-e9552c1ee996"
+		"634e9c85-9fe8-51cc-ac77-4d4e26b4b5d1"
+		"639854fd-ae97-58dd-8e93-d5f217e56af0"
+		"65ad6a7a-147d-595f-8288-5df31004e51d"
+		"67b475e3-987d-5ce3-b01a-b398f2a9130e"
+		"67cd04f5-0fa8-5746-ae5e-cfbb02377023"
+		"692ccc43-5981-570d-9e20-886f2fd42e1c"
+		"6b5ca49b-d3b0-51a1-88a3-6d7bb955b617"
+		"6cb7e1bc-76a0-51a6-9cf0-2f6f03133d31"
+		"6e5b214e-fcd6-5fc1-a7b1-6c3fc4e1d7d8"
+		"714a51a3-45fc-57a3-85ab-db136fd71c2d"
+		"7232a1c9-38a7-5a05-8ef1-47aff22d0b0f"
+		"74d89169-a3b1-5c58-a3c9-c18f61c32eb9"
+		"770d4a9f-d643-5ce3-ac8a-4933a139b80a"
+		"77959c6d-438b-54c1-906a-0ca96e857836"
+		"789cdae4-dce0-5f51-add9-ed9c994b8670"
+		"7a7310b9-bbf4-546a-9f4b-a95b06683e74"
+		"7df27325-90b3-5395-b133-69218cb1c85f"
+		"81eefb8e-8410-58c9-83d3-0f267213f938"
 		"81f26922-75b0-507d-8ca6-331e10a582b9"
+		"826e393c-7037-5b4b-9813-8080b2e2d5a2"
+		"828679ca-a924-547a-baf5-d96d43dbe3a8"
+		"83275578-940f-5853-8c14-6556ef3f3d45"
+		"845b8847-fb23-5cb4-8908-db7e38cdc10b"
+		"8650e6f3-6a75-5370-9ad3-7a2ee3bc4982"
+		"89445389-c039-5a3c-a90e-cc32b7a3d5d4"
+		"89f19a0b-1123-5e76-b7a4-b2ac8b0cbaf4"
+		"8a7ca050-c5a6-59af-8fe0-f13b9ffeb41a"
+		"8c3c0964-f7ab-5429-8f96-c652e2138f14"
+		"8d700e74-92fb-5f60-b167-f573694f7b11"
+		"8f066b49-0ccf-51fc-81f8-5fec22c07890"
+		"8f786894-5862-59e2-bfbc-bdcef373f888"
+		"90658e18-4268-53d8-a00a-e03685802d66"
+		"9347e15c-5d63-575b-9808-dca3276530db"
+		"975e0ab5-11ae-513a-989c-4c3f48501ed5"
+		"98b80750-329c-5fe8-b5a2-7de47ee9a8dc"
+		"998b17ee-e87e-5e1c-bbfb-4bd65efb5e23"
+		"9e193a43-5ec9-59fc-9d6b-49643829fc21"
+		"9eb915f4-dda2-5557-a98d-cfb1380d0624"
+		"9f152f08-e4ad-5509-bc21-87e87bcb6cc9"
+		"a073cdf1-5364-5237-a43f-e32ddacd1946"
+		"a172806d-d8c4-56e2-a02c-72fd2d0d2c43"
+		"a2671dd1-61a8-55a2-8c9b-8b14c186bf6d"
+		"a3387539-4a46-5a98-a611-563416848a8b"
+		"a52e6b45-e2fd-5022-8d6b-48789de6b9e5"
+		"a5332efe-ecc0-5d61-915e-0cc407de725f"
+		"a574b6af-739e-5279-b8e3-8b0b9f46e14d"
+		"a61a7b93-3221-5563-a2c3-5f6c9885722a"
+		"a795e847-0e04-505d-9b62-80607a8cc9d4"
+		"a8c55167-f45f-5acc-9adc-bc0a17955a2f"
+		"a8f414e5-0b81-52d4-983c-6086d85cf60c"
+		"aafb0109-e75b-5bd0-a200-ef0fbe94c6da"
+		"ab7ef979-5a07-541d-8a8f-f76a6b23ec18"
+		"ae54b366-4e77-587d-ab1b-24d1282c060c"
+		"af9d4a6f-c12a-54d4-b37f-6297f78662fa"
+		"b2133d46-5735-59eb-92fa-ec5c259e9a1d"
+		"b24401bf-63e1-50f3-8855-96ff75af3a7b"
+		"b24577ab-b788-531c-b9c3-ae6328acb9c4"
+		"b332b0cf-adff-581b-8261-efd4de392f7e"
+		"bc0d7b9e-7a56-52ce-962e-665f7d914e82"
+		"bd21d85c-d2c1-5bc5-85bc-0a2f4cad20ff"
+		"bd815c06-9b4b-5226-bf07-8591ef4cd9d7"
+		"bd9cfeef-634c-5900-a6bf-6d5322cc2652"
+		"be6ee2e2-fc06-58ef-a468-4c02fd091fae"
+		"bfdbdc18-2231-52ee-ba24-48db9afc0d1e"
+		"c33469f9-7d2c-5d97-93c7-a99147ef49ea"
+		"c3988100-e363-5c12-8ea0-bb9d8be7a56d"
+		"c3d1f1c9-2517-548c-9881-73a544dc10e0"
+		"c42769cf-e28c-5082-93f0-b7ea46e93451"
+		"c9d30b96-e6eb-5792-bd3a-5229f845501c"
+		"cab3b17b-5de1-5e58-9afe-2962bc755170"
+		"d47a049b-58c9-510b-bd4a-01b92477c4cc"
+		"d4871b4a-5ed4-5dd7-8285-80d6346d8ce7"
+		"d751832f-043b-51ff-ba2f-f6c59dc6c715"
+		"d894e3ba-3b96-5348-9f03-0f4aa3da8e5f"
+		"da19facd-a863-5a1a-9074-2ed88217057a"
+		"dcbdc088-ca30-50f9-a746-d2ae8edadf80"
+		"df5728eb-bbde-5532-a436-7249ed13b67a"
+		"e0e92a33-3645-5aad-a66e-57b1807fb002"
+		"e4b6b7f5-e71a-5fab-91de-805c592cbe89"
+		"e4de4c6b-914a-560e-8287-cf12148706df"
+		"e69b7262-e367-51c3-8aa3-e536ff3dc9b5"
+		"e7b9cacb-d3a3-5267-82ae-cc1ab67985d4"
+		"eb74cef5-d4fc-58c4-a7d0-2ab0d79e64f5"
+		"ed97ee79-f7a8-5036-b7ab-97691a7d9aa5"
+		"edb72785-46d7-56d0-888a-cc278fb79ff1"
+		"f327c909-541d-55cd-aad2-e5ede59861d3"
+		"f381a99c-6905-570f-b882-f9f4af5f38f2"
+		"f5508b2e-4476-55bc-9c92-debb16ef8416"
+		"fc2155ea-95c1-5472-a2bb-36cc1dbce946"
+		"fc458864-0dab-571c-b4a2-13a9418e8e6c"
+		"ffa3a3a4-7074-5e54-bffe-2d487fc2ee02"
 	]
 	flow_act_03 = [
-		"0e33556b-74ce-5bd0-b226-ab6554234251"
-		"a98349be-9171-5a20-9233-de42925ce31e"
-		"106490bc-b456-5d48-a118-71fc37a41b27"
-		"e54e5e99-0014-59a6-aad7-e2cc8de9a98a"
 		"006d6665-17f4-5548-b802-3bf54ba5b7bd"
-		"538e82dd-739b-5253-b15f-670790ecefda"
+		"0e33556b-74ce-5bd0-b226-ab6554234251"
+		"106490bc-b456-5d48-a118-71fc37a41b27"
 		"254bd9c8-2411-5a94-9bf4-584e74d529a1"
-		"f45d135e-0578-5801-bf5b-fb1f6592bc93"
 		"3439b197-6522-5b31-8519-27638882879c"
-		"3b2dce02-cb64-5ec7-a418-0a6a5b60d2e7"
-		"a00ae841-088e-5e4d-9721-39a976558a8b"
-		"f8254e5a-3a08-5604-bfdf-2e07e62cefc1"
-		"c0e47da5-9a92-50ce-9cca-ef1c9fac66d4"
-		"68944a84-6262-57c4-8a38-0fb061858d8c"
-		"d16e0398-ed46-5081-8bb1-cd2fc742e250"
-		"9289ac31-954e-55b8-a0bf-11171ce06ec9"
-		"435edd50-4c72-54fc-8ee5-a41b54107d02"
-		"bb71f604-c20c-552b-a061-d8e8639fadcc"
 		"3a7fa989-4db6-55a0-8dec-eb56da168372"
+		"3b2dce02-cb64-5ec7-a418-0a6a5b60d2e7"
+		"435edd50-4c72-54fc-8ee5-a41b54107d02"
+		"538e82dd-739b-5253-b15f-670790ecefda"
+		"68944a84-6262-57c4-8a38-0fb061858d8c"
+		"9289ac31-954e-55b8-a0bf-11171ce06ec9"
+		"a00ae841-088e-5e4d-9721-39a976558a8b"
+		"a98349be-9171-5a20-9233-de42925ce31e"
+		"bb71f604-c20c-552b-a061-d8e8639fadcc"
+		"c0e47da5-9a92-50ce-9cca-ef1c9fac66d4"
+		"d16e0398-ed46-5081-8bb1-cd2fc742e250"
+		"e54e5e99-0014-59a6-aad7-e2cc8de9a98a"
+		"f45d135e-0578-5801-bf5b-fb1f6592bc93"
+		"f8254e5a-3a08-5604-bfdf-2e07e62cefc1"
 	]
 	flow_act_clear = [
 		"3e4e0a29-542b-5dda-8d55-dd6367d0e48c"
-		"bbafa1fd-4a6d-58a1-bd88-6b9f028bc52f"
-		"b72a743a-194c-5381-a75c-a553cc169237"
-		"c169125a-2b03-5f18-9c08-93996d1ccf65"
-		"8af72ba2-5eaf-5c7f-9e59-ece6aaf3870a"
 		"5cb74fdc-bbca-51a7-8969-3c23863fd26e"
+		"8af72ba2-5eaf-5c7f-9e59-ece6aaf3870a"
 		"8d2c1620-b4fc-5e09-9db6-b2395ef4362e"
-	]
-	flow_altar = [
+		"b72a743a-194c-5381-a75c-a553cc169237"
+		"bbafa1fd-4a6d-58a1-bd88-6b9f028bc52f"
+		"c169125a-2b03-5f18-9c08-93996d1ccf65"
 	]
 	flow_chandelier_off = [
 		"fd81998e-f817-5486-b313-b17b6d06f04a"
 	]
-	flow_drachenfels = [
-	]
 	flow_dwarf = [
+		"42e01f08-2cac-5867-9135-6416422c8182"
 		"882962a1-c5a5-5c80-8f9a-8dacd91b42e6"
 		"c0956153-36bf-5d52-aa9b-31c9c54ac742"
-		"42e01f08-2cac-5867-9135-6416422c8182"
 	]
 	flow_last_stand = [
-		"b40aa63b-5d3d-5717-bfb1-74cd9d99ef9b"
-		"6a722ad5-8376-5a92-973c-13766a2265b6"
-		"4a2c5fd6-9fc1-5db0-931c-40fc894c1c3a"
-		"227e652a-7fe0-5d93-8ef6-b6f307b79ab9"
 		"06df41d5-8aa3-538a-8b70-cf3f361846f2"
+		"227e652a-7fe0-5d93-8ef6-b6f307b79ab9"
+		"4a2c5fd6-9fc1-5db0-931c-40fc894c1c3a"
+		"6a722ad5-8376-5a92-973c-13766a2265b6"
+		"b40aa63b-5d3d-5717-bfb1-74cd9d99ef9b"
 		"e0151af2-8743-546f-8df7-d61a91131a39"
 	]
 	flow_prologue = [
+		"1d7348cb-3b13-57d3-80c4-1877de1af991"
+		"326ea2d1-0321-5d25-81c5-e18f1fc6ecc4"
+		"3666bcd5-a06e-5a6f-be8d-c0873ba1fec7"
 		"3a2e217a-269a-5015-b3f4-36254288e5b8"
 		"7a4ecadb-bb21-5e30-9afe-fc2bb0ad87b0"
-		"e5af6da9-fc39-574b-b0a6-41f6ca65ef98"
-		"1d7348cb-3b13-57d3-80c4-1877de1af991"
-		"b6f43df3-0bae-5706-bd0e-1f047aa9cd2c"
-		"326ea2d1-0321-5d25-81c5-e18f1fc6ecc4"
 		"9c834959-f7a6-5735-bc2e-e908baccf72f"
-		"3666bcd5-a06e-5a6f-be8d-c0873ba1fec7"
+		"b6f43df3-0bae-5706-bd0e-1f047aa9cd2c"
+		"e5af6da9-fc39-574b-b0a6-41f6ca65ef98"
 	]
 	flow_stromdorf = [
-		"7549b7a6-2ac0-5a6a-9f42-31f357bd3fd7"
 		"14cd8b10-80dd-57aa-a64e-c2c5be86e69e"
+		"7549b7a6-2ac0-5a6a-9f42-31f357bd3fd7"
 		"faafe776-cdd9-55a4-ad85-81b777a98ee5"
 	]
 }
@@ -52214,8 +53514,6 @@ particle_effects = [
 	}
 ]
 prototypes = [
-]
-replays = [
 ]
 scatter = [
 ]
@@ -76399,7 +77697,7 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.388235
+					0.388235294117647
 					0
 				]
 				falloff_end = 1
@@ -76407,7 +77705,7 @@ units = [
 				falloff_start = 0
 				intensity = 1
 				material = ""
-				spot_angle_end = 2.0944
+				spot_angle_end = 2.0943951023932
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -76456,7 +77754,7 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.721569
+					0.72156862745098
 					0
 				]
 				falloff_end = 0.5
@@ -76464,7 +77762,7 @@ units = [
 				falloff_start = 0
 				intensity = 2
 				material = ""
-				spot_angle_end = 1.5708
+				spot_angle_end = 1.5707963267949
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -79182,16 +80480,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.682353
+					0.682352941176471
 					1
-					0.490196
+					0.490196078431373
 				]
 				falloff_end = 6
 				falloff_exponent = 0
 				falloff_start = 1
 				intensity = 10
 				material = "units/lights/cookie_window_10"
-				spot_angle_end = 1.0472
+				spot_angle_end = 1.0471975511966
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -79570,15 +80868,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.454902
-					0.12549
+					0.454901960784314
+					0.125490196078431
 				]
 				falloff_end = 1
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.2
 				material = ""
-				spot_angle_end = 1.5708
+				spot_angle_end = 1.5707963267949
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -80489,7 +81787,7 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.360784
+					0.36078431372549
 					0
 				]
 				falloff_end = 0
@@ -80497,7 +81795,7 @@ units = [
 				falloff_start = 0
 				intensity = 2
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -80605,8 +81903,8 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.52549
-					0.74902
+					0.525490196078431
+					0.749019607843137
 					1
 				]
 				falloff_end = 8
@@ -80614,7 +81912,7 @@ units = [
 				falloff_start = 2
 				intensity = 12
 				material = "units/lights/cookie_window_10"
-				spot_angle_end = 1.0472
+				spot_angle_end = 1.0471975511966
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -80663,7 +81961,7 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.305882
+					0.305882352941176
 					0
 				]
 				falloff_end = 1.6
@@ -80719,8 +82017,8 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.541176
-					0.847059
+					0.541176470588235
+					0.847058823529412
 					1
 				]
 				falloff_end = 6
@@ -80728,7 +82026,7 @@ units = [
 				falloff_start = 1
 				intensity = 10
 				material = "units/lights/cookie_window_10"
-				spot_angle_end = 1.0472
+				spot_angle_end = 1.0471975511966
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -82952,9 +84250,9 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.968628
-					0.607843
-					0.278431
+					0.968627450980392
+					0.607843137254902
+					0.27843137254902
 				]
 				falloff_end = 3
 				falloff_exponent = 0
@@ -83001,6 +84299,7 @@ units = [
 			frag_grenade_t2 = false
 			guaranteed_spawn = true
 			healing_draught = false
+			percentage_through_level = 0
 			smoke_grenade_t1 = false
 			smoke_grenade_t2 = false
 			speed_boost_potion = false
@@ -83081,15 +84380,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.529412
-					0.270588
+					0.529411764705882
+					0.270588235294118
 				]
 				falloff_end = 2
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.3
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -83137,16 +84436,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.498039
+					0.498039215686275
 					1
-					0.411765
+					0.411764705882353
 				]
 				falloff_end = 4
 				falloff_exponent = 0
 				falloff_start = 1
 				intensity = 10
 				material = "units/lights/cookie_window_10"
-				spot_angle_end = 1.0472
+				spot_angle_end = 1.0471975511966
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -83194,16 +84493,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.486275
+					0.486274509803922
 					1
-					0.396078
+					0.396078431372549
 				]
 				falloff_end = 4
 				falloff_exponent = 0
 				falloff_start = 1
 				intensity = 10
 				material = "units/lights/cookie_window_10"
-				spot_angle_end = 1.0472
+				spot_angle_end = 1.0471975511966
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -83312,15 +84611,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.560784
-					0.286275
+					0.56078431372549
+					0.286274509803922
 				]
 				falloff_end = 2.2
 				falloff_exponent = 0
 				falloff_start = 1
 				intensity = 3
 				material = ""
-				spot_angle_end = 0.436332
+				spot_angle_end = 0.436332312998582
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -83369,15 +84668,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.560784
-					0.286275
+					0.56078431372549
+					0.286274509803922
 				]
 				falloff_end = 2.2
 				falloff_exponent = 0
 				falloff_start = 1
 				intensity = 3
 				material = ""
-				spot_angle_end = 0.436332
+				spot_angle_end = 0.436332312998582
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -83426,15 +84725,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.560784
-					0.286275
+					0.56078431372549
+					0.286274509803922
 				]
 				falloff_end = 2.2
 				falloff_exponent = 0
 				falloff_start = 1
 				intensity = 3
 				material = ""
-				spot_angle_end = 0.436332
+				spot_angle_end = 0.436332312998582
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -83483,15 +84782,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.560784
-					0.286275
+					0.56078431372549
+					0.286274509803922
 				]
 				falloff_end = 2.2
 				falloff_exponent = 0
 				falloff_start = 1
 				intensity = 3
 				material = ""
-				spot_angle_end = 0.436332
+				spot_angle_end = 0.436332312998582
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -83540,15 +84839,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.560784
-					0.286275
+					0.56078431372549
+					0.286274509803922
 				]
 				falloff_end = 1
 				falloff_exponent = 0
 				falloff_start = 0.1
 				intensity = 2
 				material = ""
-				spot_angle_end = 0.767945
+				spot_angle_end = 0.767944870877505
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -83597,15 +84896,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.560784
-					0.286275
+					0.56078431372549
+					0.286274509803922
 				]
 				falloff_end = 2.2
 				falloff_exponent = 0
 				falloff_start = 1
 				intensity = 2
 				material = ""
-				spot_angle_end = 0.366519
+				spot_angle_end = 0.366519142918809
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -83654,15 +84953,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.560784
-					0.286275
+					0.56078431372549
+					0.286274509803922
 				]
 				falloff_end = 1
 				falloff_exponent = 0
 				falloff_start = 0.1
 				intensity = 1
 				material = ""
-				spot_angle_end = 0.767945
+				spot_angle_end = 0.767944870877505
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -83711,15 +85010,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.560784
-					0.286275
+					0.56078431372549
+					0.286274509803922
 				]
 				falloff_end = 1
 				falloff_exponent = 0
 				falloff_start = 0.1
 				intensity = 1
 				material = ""
-				spot_angle_end = 0.767945
+				spot_angle_end = 0.767944870877505
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -83768,15 +85067,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.560784
-					0.286275
+					0.56078431372549
+					0.286274509803922
 				]
 				falloff_end = 1
 				falloff_exponent = 0
 				falloff_start = 0.1
 				intensity = 1
 				material = ""
-				spot_angle_end = 0.767945
+				spot_angle_end = 0.767944870877505
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -83825,15 +85124,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.560784
-					0.286275
+					0.56078431372549
+					0.286274509803922
 				]
 				falloff_end = 1
 				falloff_exponent = 0
 				falloff_start = 0.1
 				intensity = 1
 				material = ""
-				spot_angle_end = 0.767945
+				spot_angle_end = 0.767944870877505
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -84952,8 +86251,8 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.52549
-					0.74902
+					0.525490196078431
+					0.749019607843137
 					1
 				]
 				falloff_end = 8
@@ -84961,7 +86260,7 @@ units = [
 				falloff_start = 2
 				intensity = 10
 				material = "units/lights/cookie_window_10"
-				spot_angle_end = 1.0472
+				spot_angle_end = 1.0471975511966
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -85009,8 +86308,8 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.52549
-					0.74902
+					0.525490196078431
+					0.749019607843137
 					1
 				]
 				falloff_end = 2.5
@@ -85067,8 +86366,8 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.52549
-					0.207843
+					0.525490196078431
+					0.207843137254902
 				]
 				falloff_end = 1.4
 				falloff_exponent = 0
@@ -85124,8 +86423,8 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.345098
-					0.0784313
+					0.345098039215686
+					0.0784313725490196
 				]
 				falloff_end = 1.5
 				falloff_exponent = 0
@@ -85180,9 +86479,9 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 1.2
 				falloff_exponent = 0
@@ -85238,8 +86537,8 @@ units = [
 				cast_shadows = true
 				color = [
 					1
-					0.52549
-					0.0941177
+					0.525490196078431
+					0.0941176470588235
 				]
 				falloff_end = 1
 				falloff_exponent = 0
@@ -85384,16 +86683,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 3
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.3
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -85441,16 +86740,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 3
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.3
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -85498,16 +86797,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 3
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.2
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -85555,16 +86854,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 1.5
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.6
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -85612,16 +86911,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 1.5
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 1
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -85669,16 +86968,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 1.5
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.6
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -85726,16 +87025,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 1.5
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.4
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -85783,16 +87082,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 1.5
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.4
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -85841,7 +87140,7 @@ units = [
 				cast_shadows = true
 				color = [
 					1
-					0.239216
+					0.23921568627451
 					0
 				]
 				falloff_end = 5
@@ -85849,7 +87148,7 @@ units = [
 				falloff_start = 2
 				intensity = 2
 				material = ""
-				spot_angle_end = 1.5708
+				spot_angle_end = 1.5707963267949
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -85898,7 +87197,7 @@ units = [
 				cast_shadows = true
 				color = [
 					1
-					0.239216
+					0.23921568627451
 					0
 				]
 				falloff_end = 8
@@ -85906,7 +87205,7 @@ units = [
 				falloff_start = 2
 				intensity = 1
 				material = ""
-				spot_angle_end = 2.0944
+				spot_angle_end = 2.0943951023932
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -85955,7 +87254,7 @@ units = [
 				cast_shadows = true
 				color = [
 					1
-					0.239216
+					0.23921568627451
 					0
 				]
 				falloff_end = 8
@@ -85963,7 +87262,7 @@ units = [
 				falloff_start = 2
 				intensity = 1
 				material = ""
-				spot_angle_end = 2.0944
+				spot_angle_end = 2.0943951023932
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -86012,7 +87311,7 @@ units = [
 				cast_shadows = true
 				color = [
 					1
-					0.239216
+					0.23921568627451
 					0
 				]
 				falloff_end = 8
@@ -86020,7 +87319,7 @@ units = [
 				falloff_start = 2
 				intensity = 1
 				material = ""
-				spot_angle_end = 2.0944
+				spot_angle_end = 2.0943951023932
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -86068,9 +87367,9 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 2
 				falloff_exponent = 0
@@ -86126,8 +87425,8 @@ units = [
 				cast_shadows = true
 				color = [
 					1
-					0.513726
-					0.207843
+					0.513725490196078
+					0.207843137254902
 				]
 				falloff_end = 1.5
 				falloff_exponent = 0
@@ -86182,9 +87481,9 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 1
 				falloff_exponent = 0
@@ -86239,16 +87538,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 1
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.3
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -86296,9 +87595,9 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 2.5
 				falloff_exponent = 0
@@ -86353,9 +87652,9 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 0.5
 				falloff_exponent = 0
@@ -86411,8 +87710,8 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.52549
-					0.207843
+					0.525490196078431
+					0.207843137254902
 				]
 				falloff_end = 1
 				falloff_exponent = 0
@@ -86468,8 +87767,8 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.494118
-					0.176471
+					0.494117647058824
+					0.176470588235294
 				]
 				falloff_end = 8
 				falloff_exponent = 0
@@ -86525,15 +87824,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.572549
-					0.192157
+					0.572549019607843
+					0.192156862745098
 				]
 				falloff_end = 2
 				falloff_exponent = 0
 				falloff_start = 0.5
 				intensity = 1
 				material = ""
-				spot_angle_end = 1.5708
+				spot_angle_end = 1.5707963267949
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -86581,8 +87880,8 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.52549
-					0.74902
+					0.525490196078431
+					0.749019607843137
 					1
 				]
 				falloff_end = 7
@@ -86638,9 +87937,9 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.458824
+					0.458823529411765
 					1
-					0.364706
+					0.364705882352941
 				]
 				falloff_end = 2.5
 				falloff_exponent = 0
@@ -86696,7 +87995,7 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.254902
+					0.254901960784314
 					0
 				]
 				falloff_end = 9
@@ -86753,15 +88052,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.454902
-					0.12549
+					0.454901960784314
+					0.125490196078431
 				]
 				falloff_end = 2
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.15
 				material = ""
-				spot_angle_end = 1.5708
+				spot_angle_end = 1.5707963267949
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -86810,15 +88109,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.454902
-					0.12549
+					0.454901960784314
+					0.125490196078431
 				]
 				falloff_end = 2
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.15
 				material = ""
-				spot_angle_end = 1.5708
+				spot_angle_end = 1.5707963267949
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -86866,9 +88165,9 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.968628
-					0.607843
-					0.278431
+					0.968627450980392
+					0.607843137254902
+					0.27843137254902
 				]
 				falloff_end = 1.4
 				falloff_exponent = 0
@@ -86924,8 +88223,8 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.486275
-					0.141176
+					0.486274509803922
+					0.141176470588235
 				]
 				falloff_end = 6
 				falloff_exponent = 2
@@ -86981,8 +88280,8 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.435294
-					0.0784313
+					0.435294117647059
+					0.0784313725490196
 				]
 				falloff_end = 7
 				falloff_exponent = 0
@@ -87037,16 +88336,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 2.5
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.2
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -87095,7 +88394,7 @@ units = [
 				cast_shadows = true
 				color = [
 					1
-					0.431373
+					0.431372549019608
 					0
 				]
 				falloff_end = 2.5
@@ -87152,8 +88451,8 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.454902
-					0.141176
+					0.454901960784314
+					0.141176470588235
 				]
 				falloff_end = 2.4
 				falloff_exponent = 0
@@ -87208,16 +88507,16 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 3
 				falloff_exponent = 0
 				falloff_start = 0.5
 				intensity = 0.17
 				material = ""
-				spot_angle_end = 2.0944
+				spot_angle_end = 2.0943951023932
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -87265,9 +88564,9 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 1
 				falloff_exponent = 0
@@ -87322,16 +88621,16 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 1.3
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.15
 				material = ""
-				spot_angle_end = 1.5708
+				spot_angle_end = 1.5707963267949
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -87379,16 +88678,16 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 1.2
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.2
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -87436,16 +88735,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 0.8
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.2
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -87493,16 +88792,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 1.3
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.2
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -87551,8 +88850,8 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.470588
-					0.141176
+					0.470588235294118
+					0.141176470588235
 				]
 				falloff_end = 2
 				falloff_exponent = 0
@@ -87608,15 +88907,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.458824
-					0.176471
+					0.458823529411765
+					0.176470588235294
 				]
 				falloff_end = 1.5
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.15
 				material = ""
-				spot_angle_end = 1.5708
+				spot_angle_end = 1.5707963267949
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -87664,9 +88963,9 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.258824
-					0.364706
-					0.25098
+					0.258823529411765
+					0.364705882352941
+					0.250980392156863
 				]
 				falloff_end = 4
 				falloff_exponent = 0
@@ -87721,9 +89020,9 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.258824
-					0.364706
-					0.25098
+					0.258823529411765
+					0.364705882352941
+					0.250980392156863
 				]
 				falloff_end = 4
 				falloff_exponent = 0
@@ -87778,9 +89077,9 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.443137
+					0.443137254901961
 					1
-					0.333333
+					0.333333333333333
 				]
 				falloff_end = 7
 				falloff_exponent = 0
@@ -87835,9 +89134,9 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.427451
+					0.427450980392157
 					1
-					0.333333
+					0.333333333333333
 				]
 				falloff_end = 3.4
 				falloff_exponent = 0
@@ -87892,9 +89191,9 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.427451
+					0.427450980392157
 					1
-					0.333333
+					0.333333333333333
 				]
 				falloff_end = 2
 				falloff_exponent = 0
@@ -88130,9 +89429,9 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.286275
+					0.286274509803922
 					1
-					0.317647
+					0.317647058823529
 				]
 				falloff_end = 3
 				falloff_exponent = 0
@@ -88217,17 +89516,17 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.494118
+					0.494117647058824
 					1
-					0.337255
+					0.337254901960784
 				]
 				falloff_end = 30
 				falloff_exponent = 0
 				falloff_start = 17
 				intensity = 0.07
 				material = ""
-				spot_angle_end = 1.48353
-				spot_angle_start = 1.22173
+				spot_angle_end = 1.48352986419518
+				spot_angle_start = 1.22173047639603
 				type = "spot"
 				volumetric_intensity = 0
 			}
@@ -88274,8 +89573,8 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.509804
-					0.831372
+					0.509803921568627
+					0.831372549019608
 					1
 				]
 				falloff_end = 30
@@ -88283,8 +89582,8 @@ units = [
 				falloff_start = 20
 				intensity = 0.07
 				material = ""
-				spot_angle_end = 1.48353
-				spot_angle_start = 1.22173
+				spot_angle_end = 1.48352986419518
+				spot_angle_start = 1.22173047639603
 				type = "spot"
 				volumetric_intensity = 0
 			}
@@ -88512,9 +89811,9 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.87451
-					0.403922
-					0.164706
+					0.874509803921569
+					0.403921568627451
+					0.164705882352941
 				]
 				falloff_end = 0.5
 				falloff_exponent = 0
@@ -88571,15 +89870,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.454902
-					0.12549
+					0.454901960784314
+					0.125490196078431
 				]
 				falloff_end = 2
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.25
 				material = ""
-				spot_angle_end = 1.5708
+				spot_angle_end = 1.5707963267949
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -88628,9 +89927,9 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.87451
-					0.403922
-					0.164706
+					0.874509803921569
+					0.403921568627451
+					0.164705882352941
 				]
 				falloff_end = 0.5
 				falloff_exponent = 0
@@ -88686,9 +89985,9 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.87451
-					0.403922
-					0.164706
+					0.874509803921569
+					0.403921568627451
+					0.164705882352941
 				]
 				falloff_end = 2.5
 				falloff_exponent = 0
@@ -88744,9 +90043,9 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.87451
-					0.403922
-					0.164706
+					0.874509803921569
+					0.403921568627451
+					0.164705882352941
 				]
 				falloff_end = 0.5
 				falloff_exponent = 0
@@ -88802,9 +90101,9 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.87451
-					0.403922
-					0.164706
+					0.874509803921569
+					0.403921568627451
+					0.164705882352941
 				]
 				falloff_end = 0.8
 				falloff_exponent = 0
@@ -88861,15 +90160,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.458824
-					0.176471
+					0.458823529411765
+					0.176470588235294
 				]
 				falloff_end = 2
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.1
 				material = ""
-				spot_angle_end = 1.5708
+				spot_angle_end = 1.5707963267949
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -88978,16 +90277,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 2
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.2
 				material = ""
-				spot_angle_end = 2.44346
+				spot_angle_end = 2.44346095279206
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -89036,15 +90335,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.529412
-					0.270588
+					0.529411764705882
+					0.270588235294118
 				]
 				falloff_end = 0
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.2
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -89094,8 +90393,8 @@ units = [
 				cast_shadows = true
 				color = [
 					1
-					0.494118
-					0.176471
+					0.494117647058824
+					0.176470588235294
 				]
 				falloff_end = 2
 				falloff_exponent = 0
@@ -89182,8 +90481,8 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.494118
-					0.176471
+					0.494117647058824
+					0.176470588235294
 				]
 				falloff_end = 1.3
 				falloff_exponent = 0
@@ -89239,15 +90538,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.529412
-					0.270588
+					0.529411764705882
+					0.270588235294118
 				]
 				falloff_end = 0
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.2
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -89296,15 +90595,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.529412
-					0.270588
+					0.529411764705882
+					0.270588235294118
 				]
 				falloff_end = 0
 				falloff_exponent = 1
 				falloff_start = 0
 				intensity = 0.2
 				material = ""
-				spot_angle_end = 0.785398
+				spot_angle_end = 0.785398163397448
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -89354,15 +90653,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.666667
-					0.47451
+					0.666666666666667
+					0.474509803921569
 				]
 				falloff_end = 1
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.05
 				material = ""
-				spot_angle_end = 2.44346
+				spot_angle_end = 2.44346095279206
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -89412,15 +90711,15 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.666667
-					0.47451
+					0.666666666666667
+					0.474509803921569
 				]
 				falloff_end = 1
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.05
 				material = ""
-				spot_angle_end = 2.44346
+				spot_angle_end = 2.44346095279206
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -89469,16 +90768,16 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 3
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.1
 				material = ""
-				spot_angle_end = 2.44346
+				spot_angle_end = 2.44346095279206
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -89527,16 +90826,16 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 3
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.15
 				material = ""
-				spot_angle_end = 2.44346
+				spot_angle_end = 2.44346095279206
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -89585,16 +90884,16 @@ units = [
 				]
 				cast_shadows = true
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 3
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.2
 				material = ""
-				spot_angle_end = 2.44346
+				spot_angle_end = 2.44346095279206
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -89825,16 +91124,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.984314
-					0.466667
-					0.172549
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
 				]
 				falloff_end = 3
 				falloff_exponent = 0
 				falloff_start = 0
 				intensity = 0.2
 				material = ""
-				spot_angle_end = 2.44346
+				spot_angle_end = 2.44346095279206
 				spot_angle_start = 0
 				type = "omni"
 				volumetric_intensity = 0
@@ -90371,8 +91670,8 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.52549
-					0.74902
+					0.525490196078431
+					0.749019607843137
 					1
 				]
 				falloff_end = 3.4
@@ -90428,16 +91727,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.443137
+					0.443137254901961
 					1
-					0.34902
+					0.349019607843137
 				]
 				falloff_end = 8
 				falloff_exponent = 0
 				falloff_start = 2
 				intensity = 12
 				material = "units/lights/cookie_window_10"
-				spot_angle_end = 1.0472
+				spot_angle_end = 1.0471975511966
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -90485,16 +91784,16 @@ units = [
 				]
 				cast_shadows = false
 				color = [
-					0.470588
+					0.470588235294118
 					1
-					0.380392
+					0.380392156862745
 				]
 				falloff_end = 8
 				falloff_exponent = 0
 				falloff_start = 2
 				intensity = 2.5
 				material = "units/lights/cookie_window_10"
-				spot_angle_end = 1.0472
+				spot_angle_end = 1.0471975511966
 				spot_angle_start = 0
 				type = "spot"
 				volumetric_intensity = 0
@@ -90527,13 +91826,286 @@ units = [
 		}
 		data = {
 		}
-		id = "5b801435-4bee-5cb9-aed8-88985334a947"
+		id = "dd107db1-ddc4-4a14-ab6d-8850dfc08592"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "path_marker_001"
+		pos = [
+			0
+			6
+			3.912
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/gamemode/path_marker"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "8c3d9ffc-eb47-48c8-960e-acefd4a50f90"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "coop_spawnpoint_002"
+		pos = [
+			1.929624
+			7.631488
+			3.912
+		]
+		rot = [
+			0
+			0
+			0.94865
+			0.316329
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/hub_elements/coop_spawnpoint"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "47d54961-e0d1-4842-a3e9-be7438ebcb67"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "coop_spawnpoint_001"
+		pos = [
+			3
+			4
+			4.175
+		]
+		rot = [
+			0
+			0
+			-0.629404
+			-0.777078
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/hub_elements/coop_spawnpoint"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "652e3f60-f589-4702-9d7b-df0ae3699b4d"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "coop_spawnpoint_003"
+		pos = [
+			-2
+			8
+			3.604
+		]
+		rot = [
+			0
+			0
+			0.997884
+			-0.065024
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/hub_elements/coop_spawnpoint"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "65698455-f396-4b2e-bc19-d6f20210981e"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "coop_spawnpoint_004"
+		pos = [
+			-6
+			7
+			3.604
+		]
+		rot = [
+			0
+			0
+			0.999554
+			0.02987
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/hub_elements/coop_spawnpoint"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			order = 3
+		}
+		id = "068a3bbd-5504-48e7-b82f-b24391ca524f"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "path_marker_003"
+		pos = [
+			-7
+			-1
+			0.965
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/gamemode/path_marker"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			order = 4
+		}
+		id = "b8ce7511-b7d2-4be9-9d89-a4eaac1f6c5a"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "path_marker"
+		pos = [
+			2
+			0
+			1.69
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/gamemode/path_marker"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			order = 2
+		}
+		id = "be5a4cd2-d37e-4111-a996-944af38603ec"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "path_marker_002"
+		pos = [
+			-7
+			6
+			3.604
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/gamemode/path_marker"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "13f30b3f-361f-46b8-96b9-12ac8c370c3d"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "blockout_modular_floor_4m_01"
+		pos = [
+			-8
+			-6
+			1.018
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1.096716
+			1.647491
+			1
+		]
+		type = "units/whitebox/blockout_modular_floor_4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "skydome-unit"
 		lights = {
 		}
 		material = "units/skydome/skydome_hdr"
 		materials = {
 		}
-		name = "skydome_hdr_vt1_1235"
+		name = ""
 		pos = [
 			0
 			0
@@ -90551,6 +92123,726 @@ units = [
 			1
 		]
 		type = "units/skydome/skydome_hdr"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "3fe6922f-8a18-57ba-994f-04ce6c66978e"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_doorframe_4x4m_01_vt1_80"
+		pos = [
+			-5.623093128204346
+			-8.41645336151123
+			0.9262229204177856
+		]
+		rot = [
+			0
+			0
+			0.9289859533309937
+			0.3701150119304657
+		]
+		scl = [
+			0.75
+			0.75
+			0.75
+		]
+		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "2e9dce68-cb66-54ae-8ac0-34e6c9fa047b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_doorframe_4x4m_01_vt1_82"
+		pos = [
+			-3.6385700702667236
+			8.5
+			3.5989999771118164
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			0.75
+			0.75
+			0.75
+		]
+		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "be663034-6845-5bc8-aa51-1f761b17b813"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_doorframe_4x4m_01_vt1_103"
+		pos = [
+			-7.869110107421875
+			6.2873311042785645
+			3.5989999771118164
+		]
+		rot = [
+			0
+			0
+			-0.3068540394306183
+			-0.9517569541931152
+		]
+		scl = [
+			0.75
+			0.75
+			0.75
+		]
+		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "a067c74c-87ab-5a10-a22b-ec6bbd60d7da"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_doorframe_4x4m_01_vt1_104"
+		pos = [
+			1.0743839740753174
+			8.5
+			3.9554600715637207
+		]
+		rot = [
+			0
+			0
+			0.27980703115463257
+			-0.9600560069084167
+		]
+		scl = [
+			0.75
+			0.75
+			0.75
+		]
+		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "6c4304a5-e7b0-5799-8b6a-f8e51196af92"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_doorframe_4x4m_01_vt1_173"
+		pos = [
+			3.543619155883789
+			1.7971420288085938
+			4.232323169708252
+		]
+		rot = [
+			0
+			0
+			-0.7071070075035095
+			-0.7071070075035095
+		]
+		scl = [
+			0.75
+			0.75
+			0.75
+		]
+		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "762e87dd-7694-5492-9bb7-a7f750697645"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_plaster_wall_4x3m_01_vt1_358"
+		pos = [
+			-7.432352066040039
+			6.601630210876465
+			6.598999977111816
+		]
+		rot = [
+			0
+			0
+			-0.3068540394306183
+			-0.9517569541931152
+		]
+		scl = [
+			1
+			1
+			0.6666666666666666
+		]
+		type = "units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "c37b0c5e-5746-5457-b75d-ea39ba78da7f"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_plaster_wall_4x3m_01_vt1_359"
+		pos = [
+			-3.75
+			8.5
+			6.598999977111816
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			0.6666666666666666
+		]
+		type = "units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "ac0f2197-c3e1-50ef-b9ba-2fc10fdc41a5"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_plaster_wall_4x3m_01_vt1_360"
+		pos = [
+			0.3790859878063202
+			8.942909240722656
+			6.848999977111816
+		]
+		rot = [
+			0
+			0
+			0.27980703115463257
+			-0.9600560069084167
+		]
+		scl = [
+			1
+			1
+			0.6666666666666666
+		]
+		type = "units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "6c91c089-b89d-53de-8fdf-ccab95892892"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_wall_stone_4x4m_01_vt1_482"
+		pos = [
+			-7.408164978027344
+			-12.482401847839355
+			0.9262229204177856
+		]
+		rot = [
+			0
+			0
+			0.9289859533309937
+			0.3701150119304657
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "5bf25803-0eaf-53a5-bc74-1cf65df9e27b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_doorframe_4x4m_01_vt1_850"
+		pos = [
+			-3.0733730792999268
+			8.73792839050293
+			-1.6360009908676147
+		]
+		rot = [
+			0
+			0
+			0.7071068286895752
+			0.7071068286895752
+		]
+		scl = [
+			0.75
+			0.75
+			0.75
+		]
+		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "2dc327af-ffc5-50c7-a272-aa37299efce6"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_doorframe_4x4m_01_vt1_895"
+		pos = [
+			2
+			8.5
+			-4.790999889373779
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			0.75
+			0.75
+			0.75
+		]
+		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "5f835725-51e1-5e3b-81d7-eec8608e2aa4"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_doorframe_4x4m_01_vt1_904"
+		pos = [
+			5.263156890869141
+			11.396197319030762
+			0.37170299887657166
+		]
+		rot = [
+			0
+			0
+			0.028181001543998718
+			-0.9996029734611511
+		]
+		scl = [
+			0.75
+			0.75
+			0.75
+		]
+		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "af671581-3ae8-57c3-9898-00a837f52876"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_mud_floor_4x4m_01_vt1_1085"
+		pos = [
+			-6
+			-1
+			0.859000027179718
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "2500f2d7-f321-529c-a273-659cec8991f5"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_mud_floor_4x4m_01_vt1_1086"
+		pos = [
+			-6
+			-5
+			0.859000027179718
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "51f16561-89f2-5fc4-9e0f-cd3dc5071cba"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_mud_floor_4x4m_01_vt1_1087"
+		pos = [
+			-6
+			-8
+			0.859000027179718
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			0.5
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "9d0f6dac-543b-5d57-bf07-f6d8ea709184"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_mud_floor_4x4m_01_vt1_1088"
+		pos = [
+			5.25
+			3.25
+			0.6365660429000854
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "d1df36db-2643-529a-93bb-945c462f536a"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_mud_floor_4x4m_01_vt1_1089"
+		pos = [
+			9.25
+			3.25
+			0.6365660429000854
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "56c59bfa-180d-5e71-8dbb-bad88fcb276e"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_mud_floor_4x4m_01_vt1_1090"
+		pos = [
+			13.25
+			3.25
+			0.6365660429000854
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "eae3cc98-e918-5b26-b016-313551b5327c"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_mud_floor_4x4m_01_vt1_1091"
+		pos = [
+			5.25
+			-0.75
+			0.6365660429000854
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "b3a17fbf-d875-5619-82fb-e2b4e0145b5f"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_mud_floor_4x4m_01_vt1_1092"
+		pos = [
+			9.25
+			-0.75
+			0.6365660429000854
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "94900fd2-0e9f-5ee5-9202-a2ecdb4a5151"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_mud_floor_4x4m_01_vt1_1093"
+		pos = [
+			13.25
+			-0.75
+			0.6365660429000854
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "90944fa9-5dd1-54f9-8e7d-0375ceb0b076"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_mud_floor_4x4m_01_vt1_1094"
+		pos = [
+			5.25
+			-4.75
+			0.6365660429000854
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "ae37c295-a3a4-5b14-b0fc-f7fa66ea7652"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_mud_floor_4x4m_01_vt1_1095"
+		pos = [
+			9.25
+			-4.75
+			0.6365660429000854
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "656a025a-ee46-5f9c-a7bf-bd85d0e11fa6"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_mud_floor_4x4m_01_vt1_1096"
+		pos = [
+			13.25
+			-4.75
+			0.6365660429000854
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
 	}
 ]
 volumes = [

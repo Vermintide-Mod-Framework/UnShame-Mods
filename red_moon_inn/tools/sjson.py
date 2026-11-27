@@ -83,7 +83,8 @@ def _number(v):
     if isinstance(v, int) or float(v).is_integer() and abs(v) < 1e15:
         return str(int(v))
 
-    return '%.6g' % v
+    # The shortest text that reads back as the same number, so a level read and written again keeps every number
+    return repr(float(v))
 
 
 def _key(k):

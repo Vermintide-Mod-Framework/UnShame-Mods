@@ -78,6 +78,25 @@ SUBSTITUTES = {
     'units/skydome/skydome': SKYDOME,
 }
 
+# Pieces of the inn that Vermintide 2 doesn't have, and the piece of Vermintide 2's inn put in their place: its unit, and its
+# position and scale in the inn piece's own space. The inn pieces of both games have their origin at a corner: x along the
+# piece, y through it and z up. The sizes are from Vermintide 1's compiled meshes and Vermintide 2's .bsi files.
+STAND_INS = {
+    # A 4x4 m stone floor tile (0..4 along x, -4..0 along y). Vermintide 2's inn has a stone floor in its middle, 4.2 m wide.
+    '6b9ad3bebc3d3260': ('units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01', [2, -2, 0], [1, 1, 1]),
+    # The same floor, 4 m along x and 2 m along y
+    'units/architecture/inn/modular_assets/inn_stone_floor_2x4m_01':
+        ('units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01', [2, -1, 0], [1, 0.5, 1]),
+    # A plaster wall 2 m high: the 3 m one, lower
+    'units/architecture/inn/modular_assets/inn_plaster_wall_4x2m_01':
+        ('units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01', [0, 0, 0], [1, 1, 2 / 3]),
+    # A doorframe 3 m wide and high: the 4 m one, smaller
+    'units/architecture/inn/modular_assets/inn_doorframe_3x3m_01':
+        ('units/architecture/inn/modular_assets/inn_doorframe_4x4m_01', [0, 0, 0], [0.75, 0.75, 0.75]),
+    # A stone doorway with steps down to a cellar Vermintide 2 doesn't have: a stone wall closes it
+    '91f790f86abf8c11': ('units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01', [0, 0, 0], [1, 1, 1]),
+}
+
 # The editor names a placed unit after its type, with a number
 MAX_UNIT_NUMBER = 3000
 
@@ -177,6 +196,8 @@ class Converter:
         self.substituted = collections.Counter()
         self.where = collections.defaultdict(list)
         self.renamed_lights = collections.Counter()
+        self.stood_in = collections.Counter()
+        self.stand_in_ids = set()
         self.notes = []
 
     # Names
@@ -275,6 +296,15 @@ class Converter:
             if types[k] is None and substitute:
                 types[k] = substitute
                 self.substituted[(self.vt1_name(u['type']), substitute)] += 1
+
+            stand_in = STAND_INS.get(self.vt1_name(u['type']))
+
+            if types[k] is None and stand_in:
+                types[k], offset, scale = stand_in
+                u['pos'] = [p + d for p, d in zip(u['pos'], rotate(u['rot'], [o * s for o, s in zip(offset, u['scl'])]))]
+                u['scl'] = [a * b for a, b in zip(u['scl'], scale)]
+                self.stood_in[(self.vt1_name(u['type']), types[k])] += 1
+                self.stand_in_ids.add(str(uuid.uuid5(ID_NAMESPACE, '%016x' % u['id'])))
 
         names = self.unit_names(units, types)
         unit_data = self.level.unit_data()
@@ -513,6 +543,9 @@ class Converter:
         for (vt1, vt2), count in sorted(self.substituted.items()):
             lines.append('%s is not in Vermintide 2: %s is used%s.' % (vt1, vt2, ' (x%d)' % count if count > 1 else ''))
 
+        for (vt1, vt2), count in sorted(self.stood_in.items()):
+            lines.append('%s is not in Vermintide 2: %s stands in for it%s.' % (vt1, vt2, ' (x%d)' % count if count > 1 else ''))
+
         for (unit_type, vt1, vt2), count in sorted(self.renamed_lights.items()):
             lines.append('%s calls its light %s in Vermintide 2, not %s: the settings are given to %s%s.' % (
                 unit_type, vt2, vt1, vt2, ' (x%d)' % count if count > 1 else ''))
@@ -652,6 +685,15 @@ def editor_metadata(level):
         'Units': units,
         'Volumes': volumes,
     }
+
+
+def rotate(q, v):
+    """A vector turned by a rotation (x, y, z, w)."""
+    x, y, z, w = q
+    # v + 2w (q x v) + 2 q x (q x v)
+    cx, cy, cz = y * v[2] - z * v[1], z * v[0] - x * v[2], x * v[1] - y * v[0]
+    dx, dy, dz = y * cz - z * cy, z * cx - x * cz, x * cy - y * cx
+    return [v[0] + 2 * (w * cx + dx), v[1] + 2 * (w * cy + dy), v[2] + 2 * (w * cz + dz)]
 
 
 def matrix_pose(m):

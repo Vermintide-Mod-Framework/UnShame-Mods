@@ -1,7 +1,7 @@
 Red Moon Inn: what the conversion left out
 
 From levels/inn/world, 8e0929053dd7ecd0.patch_029 in resource_packages/levels/inn.
-Kept: 1185 of 1236 units, 16 of 31 particle effects, 4 volumes, 12 object sets.
+Kept: 1209 of 1236 units, 16 of 31 particle effects, 4 volumes, 12 object sets.
 
 214 units have a name made here: their names in Vermintide 1 are not found from their hashes.
 inn_bannister_stairs_wood_01_vt1_476 is a copy of inn_bannister_stairs_wood_01_1, in the same place: it is left out.
@@ -14,6 +14,11 @@ Not converted: stories (8).
 Not converted: scatter (7).
 Not converted: flow bytes (22964).
 units/skydome/skydome is not in Vermintide 2: units/skydome/skydome_hdr is used.
+6b9ad3bebc3d3260 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01 stands in for it (x11).
+91f790f86abf8c11 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01 stands in for it.
+units/architecture/inn/modular_assets/inn_doorframe_3x3m_01 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_doorframe_4x4m_01 stands in for it (x8).
+units/architecture/inn/modular_assets/inn_plaster_wall_4x2m_01 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01 stands in for it (x3).
+units/architecture/inn/modular_assets/inn_stone_floor_2x4m_01 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01 stands in for it.
 units/props/candles/generic_prop_wall_candle_02 calls its light light1 in Vermintide 2, not light: the settings are given to light1 (x4).
 units/props/inn/props_generic_chandelier_inn_01 calls its light omni2 in Vermintide 2, not omni: the settings are given to omni2.
 
@@ -62,18 +67,6 @@ Not in Vermintide 2 (unit):
     at -0.60 -0.28 3.01
   67b7f04822a93e53
     at 0.49 -4.30 2.02
-  6b9ad3bebc3d3260 (x11)
-    at -8.00 1.00 0.86
-    at -8.00 -3.00 0.86
-    at 3.25 5.25 0.64
-    at 7.25 5.25 0.64
-    at 11.25 5.25 0.64
-    at 3.25 1.25 0.64
-    at 7.25 1.25 0.64
-    at 11.25 1.25 0.64
-    at 3.25 -2.75 0.64
-    at 7.25 -2.75 0.64
-    at 11.25 -2.75 0.64
   74196c3af84deed6 (x2)
     at -6.29 -8.04 1.00, in flow_prologue
     at -6.29 -8.04 1.00, in flow_act_02, flow_act_03, flow_act_clear
@@ -81,8 +74,6 @@ Not in Vermintide 2 (unit):
     at -7.81 0.10 3.30
   8cf2303d5d610761
     at -2.06 -5.49 1.32, in flow_act_01
-  91f790f86abf8c11
-    at -7.41 -12.48 0.93
   922e9f0f7181b7ce (x4)
     at 3.35 3.30 4.24
     at 2.47 7.85 3.93
@@ -98,21 +89,6 @@ Not in Vermintide 2 (unit):
     at -1.68 -4.09 1.95
   c2f0983a0f402dfb
     at -6.65 -4.46 5.70
-  units/architecture/inn/modular_assets/inn_doorframe_3x3m_01 (x8)
-    at -5.62 -8.42 0.93
-    at -3.64 8.50 3.60
-    at -7.87 6.29 3.60
-    at 1.07 8.50 3.96
-    at 3.54 1.80 4.23
-    at -3.07 8.74 -1.64
-    at 2.00 8.50 -4.79
-    at 5.26 11.40 0.37
-  units/architecture/inn/modular_assets/inn_plaster_wall_4x2m_01 (x3)
-    at -7.43 6.60 6.60
-    at -3.75 8.50 6.60
-    at 0.38 8.94 6.85
-  units/architecture/inn/modular_assets/inn_stone_floor_2x4m_01
-    at -8.00 -7.00 0.86
   units/gameplay/difficulty_banner_01
     at 2.95 1.09 4.84
   units/gameplay/difficulty_banner_02
