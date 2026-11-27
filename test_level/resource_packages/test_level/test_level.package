@@ -1,0 +1,18 @@
+mod = [
+	"test_level"
+]
+
+package = [
+	"resource_packages/test_level/test_level"
+]
+
+lua = [
+	"scripts/mods/test_level/*"
+	"levels/test_level/world_nav_tag_volumes"
+	"levels/test_level/world_smartobjects"
+	"levels/test_level/world_spawn_zones"
+]
+
+level = [
+	"levels/test_level/world"
+]
