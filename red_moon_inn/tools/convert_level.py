@@ -93,8 +93,8 @@ STAND_INS = {
     # A doorframe 3 m wide and high: the 4 m one, smaller
     'units/architecture/inn/modular_assets/inn_doorframe_3x3m_01':
         ('units/architecture/inn/modular_assets/inn_doorframe_4x4m_01', [0, 0, 0], [0.75, 0.75, 0.75]),
-    # A stone doorway with steps down to a cellar Vermintide 2 doesn't have: a stone wall closes it
-    '91f790f86abf8c11': ('units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01', [0, 0, 0], [1, 1, 1]),
+    # The front door, with its frame and the steps down outside: Vermintide 2 has it under another name, with the same nodes
+    '91f790f86abf8c11': ('units/architecture/inn/modular_assets/inn_red_moon_front_door_outside_01', [0, 0, 0], [1, 1, 1]),
 }
 
 # The editor names a placed unit after its type, with a number

@@ -51888,10 +51888,10 @@ editor_metadata = {
 			}
 			MaterialSlots = {
 			}
-			Name = "inn_wall_stone_4x4m_01_vt1_482"
+			Name = "inn_red_moon_front_door_outside_01_vt1_482"
 			OverridePoses = {
 			}
-			Path = "units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01"
+			Path = "units/architecture/inn/modular_assets/inn_red_moon_front_door_outside_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -51917,7 +51917,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01"
+			Type = "units/architecture/inn/modular_assets/inn_red_moon_front_door_outside_01"
 		}
 		{
 			Cameras = {
@@ -92375,7 +92375,7 @@ units = [
 		material = ""
 		materials = {
 		}
-		name = "inn_wall_stone_4x4m_01_vt1_482"
+		name = "inn_red_moon_front_door_outside_01_vt1_482"
 		pos = [
 			-7.408164978027344
 			-12.482401847839355
@@ -92392,7 +92392,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01"
+		type = "units/architecture/inn/modular_assets/inn_red_moon_front_door_outside_01"
 	}
 	{
 		cameras = {

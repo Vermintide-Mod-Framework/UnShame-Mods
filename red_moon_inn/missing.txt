@@ -15,7 +15,7 @@ Not converted: scatter (7).
 Not converted: flow bytes (22964).
 units/skydome/skydome is not in Vermintide 2: units/skydome/skydome_hdr is used.
 6b9ad3bebc3d3260 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01 stands in for it (x11).
-91f790f86abf8c11 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01 stands in for it.
+91f790f86abf8c11 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_red_moon_front_door_outside_01 stands in for it.
 units/architecture/inn/modular_assets/inn_doorframe_3x3m_01 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_doorframe_4x4m_01 stands in for it (x8).
 units/architecture/inn/modular_assets/inn_plaster_wall_4x2m_01 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01 stands in for it (x3).
 units/architecture/inn/modular_assets/inn_stone_floor_2x4m_01 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01 stands in for it.
