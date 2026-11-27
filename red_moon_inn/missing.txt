@@ -1,7 +1,7 @@
 Red Moon Inn: what the conversion left out
 
 From levels/inn/world, 8e0929053dd7ecd0.patch_029 in resource_packages/levels/inn.
-Kept: 1209 of 1236 units, 16 of 31 particle effects, 4 volumes, 12 object sets.
+Kept: 1210 of 1236 units, 16 of 31 particle effects, 4 volumes, 12 object sets.
 
 214 units have a name made here: their names in Vermintide 1 are not found from their hashes.
 inn_bannister_stairs_wood_01_vt1_476 is a copy of inn_bannister_stairs_wood_01_1, in the same place: it is left out.
@@ -15,8 +15,9 @@ Not converted: scatter (7).
 Not converted: flow bytes (22964).
 units/skydome/skydome is not in Vermintide 2: units/skydome/skydome_hdr is used.
 6b9ad3bebc3d3260 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01 stands in for it (x11).
+91f790f86abf8c11 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01 stands in for it.
 91f790f86abf8c11 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_red_moon_front_door_outside_01 stands in for it.
-units/architecture/inn/modular_assets/inn_doorframe_3x3m_01 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_doorframe_4x4m_01 stands in for it (x8).
+units/architecture/inn/modular_assets/inn_doorframe_3x3m_01 is not in Vermintide 2: units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01 stands in for it (x8).
 units/architecture/inn/modular_assets/inn_plaster_wall_4x2m_01 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01 stands in for it (x3).
 units/architecture/inn/modular_assets/inn_stone_floor_2x4m_01 is not in Vermintide 2: units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01 stands in for it.
 units/props/candles/generic_prop_wall_candle_02 calls its light light1 in Vermintide 2, not light: the settings are given to light1 (x4).

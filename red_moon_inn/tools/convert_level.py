@@ -78,23 +78,28 @@ SUBSTITUTES = {
     'units/skydome/skydome': SKYDOME,
 }
 
-# Pieces of the inn that Vermintide 2 doesn't have, and the piece of Vermintide 2's inn put in their place: its unit, and its
-# position and scale in the inn piece's own space. The inn pieces of both games have their origin at a corner: x along the
-# piece, y through it and z up. The sizes are from Vermintide 1's compiled meshes and Vermintide 2's .bsi files.
+# Pieces of the inn that Vermintide 2 doesn't have, and the pieces of Vermintide 2's inn put in their place: for each, its unit,
+# and its position and scale in the inn piece's own space. The inn pieces of both games have their origin at a corner: x along
+# the piece, y through it and z up. The sizes are from Vermintide 1's compiled meshes and Vermintide 2's .bsi files.
 STAND_INS = {
     # A 4x4 m stone floor tile (0..4 along x, -4..0 along y). Vermintide 2's inn has a stone floor in its middle, 4.2 m wide.
-    '6b9ad3bebc3d3260': ('units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01', [2, -2, 0], [1, 1, 1]),
+    '6b9ad3bebc3d3260': [('units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01', [2, -2, 0], [1, 1, 1])],
     # The same floor, 4 m along x and 2 m along y
-    'units/architecture/inn/modular_assets/inn_stone_floor_2x4m_01':
-        ('units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01', [2, -1, 0], [1, 0.5, 1]),
+    'units/architecture/inn/modular_assets/inn_stone_floor_2x4m_01': [
+        ('units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01', [2, -1, 0], [1, 0.5, 1])],
     # A plaster wall 2 m high: the 3 m one, lower
-    'units/architecture/inn/modular_assets/inn_plaster_wall_4x2m_01':
-        ('units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01', [0, 0, 0], [1, 1, 2 / 3]),
-    # A doorframe 3 m wide and high: the 4 m one, smaller
-    'units/architecture/inn/modular_assets/inn_doorframe_3x3m_01':
-        ('units/architecture/inn/modular_assets/inn_doorframe_4x4m_01', [0, 0, 0], [0.75, 0.75, 0.75]),
-    # The front door, with its frame and the steps down outside: Vermintide 2 has it under another name, with the same nodes
-    '91f790f86abf8c11': ('units/architecture/inn/modular_assets/inn_red_moon_front_door_outside_01', [0, 0, 0], [1, 1, 1]),
+    'units/architecture/inn/modular_assets/inn_plaster_wall_4x2m_01': [
+        ('units/architecture/inn/modular_assets/inn_plaster_wall_4x3m_01', [0, 0, 0], [1, 1, 2 / 3])],
+    # A doorway 3 m wide and high in a 0.47 m wall (y -0.05..0.42): the merchant house's, which is as wide and high, in a wall
+    # 0.29 m thick around y 0, moved to the middle of the inn's wall and made as thick. The inn's 4 m doorframe made smaller
+    # has a door only 1.9 m high.
+    'units/architecture/inn/modular_assets/inn_doorframe_3x3m_01': [
+        ('units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01', [0, 0.183, 0], [1, 1.6, 1])],
+    # The front door with its frame, and the wooden floor inside it, level with the door (0..4 along x, -4..0 along y):
+    # Vermintide 2 has the door under another name, with the same nodes, and steps down inside where the floor was
+    '91f790f86abf8c11': [
+        ('units/architecture/inn/modular_assets/inn_red_moon_front_door_outside_01', [0, 0, 0], [1, 1, 1]),
+        ('units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01', [0, 0, 0], [1, 1, 1])],
 }
 
 # The editor names a placed unit after its type, with a number
@@ -289,6 +294,7 @@ class Converter:
     def units(self):
         units = self.level.units()
         types = [self.resource(u['type'], 'unit') for u in units]
+        extra = []
 
         for k, u in enumerate(units):
             substitute = SUBSTITUTES.get(self.vt1_name(u['type']))
@@ -297,14 +303,25 @@ class Converter:
                 types[k] = substitute
                 self.substituted[(self.vt1_name(u['type']), substitute)] += 1
 
-            stand_in = STAND_INS.get(self.vt1_name(u['type']))
+            stand_ins = STAND_INS.get(self.vt1_name(u['type']))
 
-            if types[k] is None and stand_in:
-                types[k], offset, scale = stand_in
-                u['pos'] = [p + d for p, d in zip(u['pos'], rotate(u['rot'], [o * s for o, s in zip(offset, u['scl'])]))]
-                u['scl'] = [a * b for a, b in zip(u['scl'], scale)]
-                self.stood_in[(self.vt1_name(u['type']), types[k])] += 1
-                self.stand_in_ids.add(str(uuid.uuid5(ID_NAMESPACE, '%016x' % u['id'])))
+            if types[k] is None and stand_ins:
+                # The first stand-in takes the inn piece's place in the level, the others are added after the inn's units
+                for n, (unit_type, offset, scale) in enumerate(stand_ins):
+                    placed = {
+                        'id': u['id'] if n == 0 else name_hash('%016x/%d' % (u['id'], n)),
+                        'pos': [p + d for p, d in zip(u['pos'], rotate(u['rot'], [o * s for o, s in zip(offset, u['scl'])]))],
+                        'rot': list(u['rot']),
+                        'scl': [a * b for a, b in zip(u['scl'], scale)],
+                    }
+                    self.stood_in[(self.vt1_name(u['type']), unit_type)] += 1
+                    self.stand_in_ids.add(str(uuid.uuid5(ID_NAMESPACE, '%016x' % placed['id'])))
+
+                    if n == 0:
+                        types[k] = unit_type
+                        u.update(placed)
+                    else:
+                        extra.append((placed, unit_type))
 
         names = self.unit_names(units, types)
         unit_data = self.level.unit_data()
@@ -346,6 +363,29 @@ class Converter:
                 'rot': u['rot'],
                 'scl': u['scl'],
                 'type': types[k],
+            })
+
+        used = {u['name'] for u in out}
+
+        for n, (placed, unit_type) in enumerate(extra):
+            name = '%s_stand_in_%d' % (unit_type.rsplit('/', 1)[-1], n + 1)
+
+            while name in used:
+                name += '_'
+
+            used.add(name)
+            out.append({
+                'cameras': {},
+                'data': {},
+                'id': str(uuid.uuid5(ID_NAMESPACE, '%016x' % placed['id'])),
+                'lights': {},
+                'material': '',
+                'materials': {},
+                'name': name,
+                'pos': placed['pos'],
+                'rot': placed['rot'],
+                'scl': placed['scl'],
+                'type': unit_type,
             })
 
         self.add_lights(out, index)

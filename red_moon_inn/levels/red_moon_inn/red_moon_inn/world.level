@@ -51568,18 +51568,18 @@ editor_metadata = {
 			}
 			MaterialSlots = {
 			}
-			Name = "inn_doorframe_4x4m_01_vt1_80"
+			Name = "merchant_int_doorframe_3x3m_01_vt1_80"
 			OverridePoses = {
 			}
-			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Path = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 			Pivot = {
 				X = 0
 				Y = 0
 				Z = 0
 			}
 			Pos = {
-				X = -5.623093128204346
-				Y = -8.41645336151123
+				X = -5.748935511079669
+				Y = -8.549316815455214
 				Z = 0.9262229204177856
 			}
 			Rot = {
@@ -51589,15 +51589,15 @@ editor_metadata = {
 				Z = 0.9289859533309937
 			}
 			Scl = {
-				X = 0.75
-				Y = 0.75
-				Z = 0.75
+				X = 1
+				Y = 1.6
+				Z = 1
 			}
 			ScriptData = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 		}
 		{
 			Cameras = {
@@ -51608,10 +51608,10 @@ editor_metadata = {
 			}
 			MaterialSlots = {
 			}
-			Name = "inn_doorframe_4x4m_01_vt1_82"
+			Name = "merchant_int_doorframe_3x3m_01_vt1_82"
 			OverridePoses = {
 			}
-			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Path = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -51619,7 +51619,7 @@ editor_metadata = {
 			}
 			Pos = {
 				X = -3.6385700702667236
-				Y = 8.5
+				Y = 8.683
 				Z = 3.5989999771118164
 			}
 			Rot = {
@@ -51629,15 +51629,15 @@ editor_metadata = {
 				Z = 0
 			}
 			Scl = {
-				X = 0.75
-				Y = 0.75
-				Z = 0.75
+				X = 1
+				Y = 1.6
+				Z = 1
 			}
 			ScriptData = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 		}
 		{
 			Cameras = {
@@ -51648,18 +51648,18 @@ editor_metadata = {
 			}
 			MaterialSlots = {
 			}
-			Name = "inn_doorframe_4x4m_01_vt1_103"
+			Name = "merchant_int_doorframe_3x3m_01_vt1_103"
 			OverridePoses = {
 			}
-			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Path = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 			Pivot = {
 				X = 0
 				Y = 0
 				Z = 0
 			}
 			Pos = {
-				X = -7.869110107421875
-				Y = 6.2873311042785645
+				X = -7.976000577959699
+				Y = 6.435868763324116
 				Z = 3.5989999771118164
 			}
 			Rot = {
@@ -51669,15 +51669,15 @@ editor_metadata = {
 				Z = -0.3068540394306183
 			}
 			Scl = {
-				X = 0.75
-				Y = 0.75
-				Z = 0.75
+				X = 1
+				Y = 1.6
+				Z = 1
 			}
 			ScriptData = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 		}
 		{
 			Cameras = {
@@ -51688,18 +51688,18 @@ editor_metadata = {
 			}
 			MaterialSlots = {
 			}
-			Name = "inn_doorframe_4x4m_01_vt1_104"
+			Name = "merchant_int_doorframe_3x3m_01_vt1_104"
 			OverridePoses = {
 			}
-			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Path = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 			Pivot = {
 				X = 0
 				Y = 0
 				Z = 0
 			}
 			Pos = {
-				X = 1.0743839740753174
-				Y = 8.5
+				X = 1.1727027081742063
+				Y = 8.654345137265814
 				Z = 3.9554600715637207
 			}
 			Rot = {
@@ -51709,15 +51709,15 @@ editor_metadata = {
 				Z = 0.27980703115463257
 			}
 			Scl = {
-				X = 0.75
-				Y = 0.75
-				Z = 0.75
+				X = 1
+				Y = 1.6
+				Z = 1
 			}
 			ScriptData = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 		}
 		{
 			Cameras = {
@@ -51728,18 +51728,18 @@ editor_metadata = {
 			}
 			MaterialSlots = {
 			}
-			Name = "inn_doorframe_4x4m_01_vt1_173"
+			Name = "merchant_int_doorframe_3x3m_01_vt1_173"
 			OverridePoses = {
 			}
-			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Path = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 			Pivot = {
 				X = 0
 				Y = 0
 				Z = 0
 			}
 			Pos = {
-				X = 3.543619155883789
-				Y = 1.7971420288085938
+				X = 3.3606190387416213
+				Y = 1.7971419116664258
 				Z = 4.232323169708252
 			}
 			Rot = {
@@ -51749,15 +51749,15 @@ editor_metadata = {
 				Z = -0.7071070075035095
 			}
 			Scl = {
-				X = 0.75
-				Y = 0.75
-				Z = 0.75
+				X = 1
+				Y = 1.6
+				Z = 1
 			}
 			ScriptData = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 		}
 		{
 			Cameras = {
@@ -51928,18 +51928,18 @@ editor_metadata = {
 			}
 			MaterialSlots = {
 			}
-			Name = "inn_doorframe_4x4m_01_vt1_850"
+			Name = "merchant_int_doorframe_3x3m_01_vt1_850"
 			OverridePoses = {
 			}
-			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Path = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 			Pivot = {
 				X = 0
 				Y = 0
 				Z = 0
 			}
 			Pos = {
-				X = -3.0733730792999268
-				Y = 8.73792839050293
+				X = -3.2563731038875976
+				Y = 8.73792836591526
 				Z = -1.6360009908676147
 			}
 			Rot = {
@@ -51949,15 +51949,15 @@ editor_metadata = {
 				Z = 0.7071068286895752
 			}
 			Scl = {
-				X = 0.75
-				Y = 0.75
-				Z = 0.75
+				X = 1
+				Y = 1.6
+				Z = 1
 			}
 			ScriptData = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 		}
 		{
 			Cameras = {
@@ -51968,10 +51968,10 @@ editor_metadata = {
 			}
 			MaterialSlots = {
 			}
-			Name = "inn_doorframe_4x4m_01_vt1_895"
+			Name = "merchant_int_doorframe_3x3m_01_vt1_895"
 			OverridePoses = {
 			}
-			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Path = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -51979,7 +51979,7 @@ editor_metadata = {
 			}
 			Pos = {
 				X = 2
-				Y = 8.5
+				Y = 8.683
 				Z = -4.790999889373779
 			}
 			Rot = {
@@ -51989,15 +51989,15 @@ editor_metadata = {
 				Z = 0
 			}
 			Scl = {
-				X = 0.75
-				Y = 0.75
-				Z = 0.75
+				X = 1
+				Y = 1.6
+				Z = 1
 			}
 			ScriptData = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 		}
 		{
 			Cameras = {
@@ -52008,18 +52008,18 @@ editor_metadata = {
 			}
 			MaterialSlots = {
 			}
-			Name = "inn_doorframe_4x4m_01_vt1_904"
+			Name = "merchant_int_doorframe_3x3m_01_vt1_904"
 			OverridePoses = {
 			}
-			Path = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Path = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 			Pivot = {
 				X = 0
 				Y = 0
 				Z = 0
 			}
 			Pos = {
-				X = 5.263156890869141
-				Y = 11.396197319030762
+				X = 5.273467042404629
+				Y = 11.578906653232385
 				Z = 0.37170299887657166
 			}
 			Rot = {
@@ -52029,15 +52029,15 @@ editor_metadata = {
 				Z = 0.028181001543998718
 			}
 			Scl = {
-				X = 0.75
-				Y = 0.75
-				Z = 0.75
+				X = 1
+				Y = 1.6
+				Z = 1
 			}
 			ScriptData = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+			Type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 		}
 		{
 			Cameras = {
@@ -52518,6 +52518,46 @@ editor_metadata = {
 			StoryOverridePoses = {
 			}
 			Type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "b923c642-7be9-5991-9321-9b2b3e129441"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_floor_wood_4x4m_01_stand_in_1"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -7.408164978027344
+				Y = -12.482401847839355
+				Z = 0.9262229204177856
+			}
+			Rot = {
+				W = 0.3701150119304657
+				X = 0
+				Y = 0
+				Z = 0.9289859533309937
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
 		}
 	]
 	Volumes = [
@@ -92135,10 +92175,10 @@ units = [
 		material = ""
 		materials = {
 		}
-		name = "inn_doorframe_4x4m_01_vt1_80"
+		name = "merchant_int_doorframe_3x3m_01_vt1_80"
 		pos = [
-			-5.623093128204346
-			-8.41645336151123
+			-5.748935511079669
+			-8.549316815455214
 			0.9262229204177856
 		]
 		rot = [
@@ -92148,11 +92188,11 @@ units = [
 			0.3701150119304657
 		]
 		scl = [
-			0.75
-			0.75
-			0.75
+			1
+			1.6
+			1
 		]
-		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 	}
 	{
 		cameras = {
@@ -92165,10 +92205,10 @@ units = [
 		material = ""
 		materials = {
 		}
-		name = "inn_doorframe_4x4m_01_vt1_82"
+		name = "merchant_int_doorframe_3x3m_01_vt1_82"
 		pos = [
 			-3.6385700702667236
-			8.5
+			8.683
 			3.5989999771118164
 		]
 		rot = [
@@ -92178,11 +92218,11 @@ units = [
 			-1
 		]
 		scl = [
-			0.75
-			0.75
-			0.75
+			1
+			1.6
+			1
 		]
-		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 	}
 	{
 		cameras = {
@@ -92195,10 +92235,10 @@ units = [
 		material = ""
 		materials = {
 		}
-		name = "inn_doorframe_4x4m_01_vt1_103"
+		name = "merchant_int_doorframe_3x3m_01_vt1_103"
 		pos = [
-			-7.869110107421875
-			6.2873311042785645
+			-7.976000577959699
+			6.435868763324116
 			3.5989999771118164
 		]
 		rot = [
@@ -92208,11 +92248,11 @@ units = [
 			-0.9517569541931152
 		]
 		scl = [
-			0.75
-			0.75
-			0.75
+			1
+			1.6
+			1
 		]
-		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 	}
 	{
 		cameras = {
@@ -92225,10 +92265,10 @@ units = [
 		material = ""
 		materials = {
 		}
-		name = "inn_doorframe_4x4m_01_vt1_104"
+		name = "merchant_int_doorframe_3x3m_01_vt1_104"
 		pos = [
-			1.0743839740753174
-			8.5
+			1.1727027081742063
+			8.654345137265814
 			3.9554600715637207
 		]
 		rot = [
@@ -92238,11 +92278,11 @@ units = [
 			-0.9600560069084167
 		]
 		scl = [
-			0.75
-			0.75
-			0.75
+			1
+			1.6
+			1
 		]
-		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 	}
 	{
 		cameras = {
@@ -92255,10 +92295,10 @@ units = [
 		material = ""
 		materials = {
 		}
-		name = "inn_doorframe_4x4m_01_vt1_173"
+		name = "merchant_int_doorframe_3x3m_01_vt1_173"
 		pos = [
-			3.543619155883789
-			1.7971420288085938
+			3.3606190387416213
+			1.7971419116664258
 			4.232323169708252
 		]
 		rot = [
@@ -92268,11 +92308,11 @@ units = [
 			-0.7071070075035095
 		]
 		scl = [
-			0.75
-			0.75
-			0.75
+			1
+			1.6
+			1
 		]
-		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 	}
 	{
 		cameras = {
@@ -92405,10 +92445,10 @@ units = [
 		material = ""
 		materials = {
 		}
-		name = "inn_doorframe_4x4m_01_vt1_850"
+		name = "merchant_int_doorframe_3x3m_01_vt1_850"
 		pos = [
-			-3.0733730792999268
-			8.73792839050293
+			-3.2563731038875976
+			8.73792836591526
 			-1.6360009908676147
 		]
 		rot = [
@@ -92418,11 +92458,11 @@ units = [
 			0.7071068286895752
 		]
 		scl = [
-			0.75
-			0.75
-			0.75
+			1
+			1.6
+			1
 		]
-		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 	}
 	{
 		cameras = {
@@ -92435,10 +92475,10 @@ units = [
 		material = ""
 		materials = {
 		}
-		name = "inn_doorframe_4x4m_01_vt1_895"
+		name = "merchant_int_doorframe_3x3m_01_vt1_895"
 		pos = [
 			2
-			8.5
+			8.683
 			-4.790999889373779
 		]
 		rot = [
@@ -92448,11 +92488,11 @@ units = [
 			-1
 		]
 		scl = [
-			0.75
-			0.75
-			0.75
+			1
+			1.6
+			1
 		]
-		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 	}
 	{
 		cameras = {
@@ -92465,10 +92505,10 @@ units = [
 		material = ""
 		materials = {
 		}
-		name = "inn_doorframe_4x4m_01_vt1_904"
+		name = "merchant_int_doorframe_3x3m_01_vt1_904"
 		pos = [
-			5.263156890869141
-			11.396197319030762
+			5.273467042404629
+			11.578906653232385
 			0.37170299887657166
 		]
 		rot = [
@@ -92478,11 +92518,11 @@ units = [
 			-0.9996029734611511
 		]
 		scl = [
-			0.75
-			0.75
-			0.75
+			1
+			1.6
+			1
 		]
-		type = "units/architecture/inn/modular_assets/inn_doorframe_4x4m_01"
+		type = "units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01"
 	}
 	{
 		cameras = {
@@ -92843,6 +92883,36 @@ units = [
 			1
 		]
 		type = "units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "b923c642-7be9-5991-9321-9b2b3e129441"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_floor_wood_4x4m_01_stand_in_1"
+		pos = [
+			-7.408164978027344
+			-12.482401847839355
+			0.9262229204177856
+		]
+		rot = [
+			0
+			0
+			0.9289859533309937
+			0.3701150119304657
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
 	}
 ]
 volumes = [
