@@ -6,3 +6,5 @@ __pycache__/
 unreal_tournament/tools/game_paths.json
 # The editor's Lua language server settings
 /.emmyrc.json
+# JetBrains project settings
+/.idea/
