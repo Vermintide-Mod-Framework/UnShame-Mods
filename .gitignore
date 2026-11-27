@@ -6,6 +6,10 @@ __pycache__/
 unreal_tournament/tools/game_paths.json
 # The level editor's backups of a level it changed on load
 *.level.backup
+# The navigation mesh generator's working files (the level keeps its .NavData)
+*.ClientInput
+Generator.DataIndex
+Generator.GenIO
 # The strings of Vermintide 1's bundles, made by red_moon_inn/tools/vt1_strings.py
 red_moon_inn/tools/vt1_strings.txt
 red_moon_inn/tools/vt1_strings.txt.batches/
