@@ -13,6 +13,8 @@ Not converted: stories (8).
 Not converted: scatter (7).
 Not converted: flow bytes (22964).
 units/skydome/skydome is not in Vermintide 2: units/skydome/skydome_hdr is used.
+units/props/candles/generic_prop_wall_candle_02 calls its light light1 in Vermintide 2, not light: the settings are given to light1 (x4).
+units/props/inn/props_generic_chandelier_inn_01 calls its light omni2 in Vermintide 2, not omni: the settings are given to omni2.
 
 Not in Vermintide 2 (particle effect):
   25130bc88ea78193

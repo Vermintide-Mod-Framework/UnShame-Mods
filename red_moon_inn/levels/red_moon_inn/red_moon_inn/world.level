@@ -855,6 +855,33 @@ editor_metadata = {
 	]
 	Stories = [
 	]
+	Transients = {
+		Camera = {
+			FarRange = 1000
+			InterestPointDistance = 10
+			OrthographicPlane = {
+				W = 1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			OrthographicZoom = 10
+			Pos = {
+				X = 0
+				Y = -8
+				Z = 3
+			}
+			ProjectionType = 1
+			Rot = {
+				W = 0.996195
+				X = -0.087156
+				Y = 0
+				Z = 0
+			}
+			RotationSpeed = 0.003
+			TranslationSpeed = 1
+		}
+	}
 	Triggers = [
 	]
 	Units = [
@@ -38522,35 +38549,6 @@ editor_metadata = {
 			Id = "254bd9c8-2411-5a94-9bf4-584e74d529a1"
 			Layer = "Default"
 			Lights = {
-				light = {
-					BoxMax = {
-						X = 10
-						Y = 10
-						Z = 10
-					}
-					BoxMin = {
-						X = -10
-						Y = 0
-						Z = -10
-					}
-					CastShadows = false
-					Color = {
-						A = 255
-						B = 0
-						G = 92
-						R = 255
-					}
-					FalloffEnd = 0
-					FalloffExponent = 0
-					FalloffStart = 0
-					Intensity = 0
-					Material = ""
-					MaterialResource = ""
-					SpotAngleEnd = 45
-					SpotAngleStart = 0
-					Type = "omni"
-					VolumetricIntensity = 0
-				}
 				light1 = {
 					BoxMax = {
 						X = 10
@@ -44885,35 +44883,6 @@ editor_metadata = {
 			Id = "c169125a-2b03-5f18-9c08-93996d1ccf65"
 			Layer = "Default"
 			Lights = {
-				light = {
-					BoxMax = {
-						X = 10
-						Y = 10
-						Z = 10
-					}
-					BoxMin = {
-						X = -10
-						Y = 0
-						Z = -10
-					}
-					CastShadows = false
-					Color = {
-						A = 255
-						B = 44
-						G = 119
-						R = 251
-					}
-					FalloffEnd = 0
-					FalloffExponent = 0
-					FalloffStart = 0
-					Intensity = 0
-					Material = ""
-					MaterialResource = ""
-					SpotAngleEnd = 45
-					SpotAngleStart = 0
-					Type = "omni"
-					VolumetricIntensity = 0
-				}
 				light1 = {
 					BoxMax = {
 						X = 10
@@ -44983,35 +44952,6 @@ editor_metadata = {
 			Id = "8af72ba2-5eaf-5c7f-9e59-ece6aaf3870a"
 			Layer = "Default"
 			Lights = {
-				light = {
-					BoxMax = {
-						X = 10
-						Y = 10
-						Z = 10
-					}
-					BoxMin = {
-						X = -10
-						Y = 0
-						Z = -10
-					}
-					CastShadows = false
-					Color = {
-						A = 255
-						B = 44
-						G = 119
-						R = 251
-					}
-					FalloffEnd = 0
-					FalloffExponent = 0
-					FalloffStart = 0
-					Intensity = 0
-					Material = ""
-					MaterialResource = ""
-					SpotAngleEnd = 45
-					SpotAngleStart = 0
-					Type = "omni"
-					VolumetricIntensity = 0
-				}
 				light1 = {
 					BoxMax = {
 						X = 10
@@ -45978,35 +45918,6 @@ editor_metadata = {
 			Id = "aba67b33-7005-5a5b-b1aa-054c3c387060"
 			Layer = "Default"
 			Lights = {
-				light = {
-					BoxMax = {
-						X = 10
-						Y = 10
-						Z = 10
-					}
-					BoxMin = {
-						X = -10
-						Y = 0
-						Z = -10
-					}
-					CastShadows = false
-					Color = {
-						A = 255
-						B = 53
-						G = 144
-						R = 255
-					}
-					FalloffEnd = 0
-					FalloffExponent = 0
-					FalloffStart = 0
-					Intensity = 0
-					Material = ""
-					MaterialResource = ""
-					SpotAngleEnd = 45
-					SpotAngleStart = 0
-					Type = "omni"
-					VolumetricIntensity = 0
-				}
 				light1 = {
 					BoxMax = {
 						X = 10
@@ -46835,35 +46746,6 @@ editor_metadata = {
 			Id = "c0e47da5-9a92-50ce-9cca-ef1c9fac66d4"
 			Layer = "Default"
 			Lights = {
-				omni = {
-					BoxMax = {
-						X = 10
-						Y = 10
-						Z = 10
-					}
-					BoxMin = {
-						X = -10
-						Y = 0
-						Z = -10
-					}
-					CastShadows = true
-					Color = {
-						A = 255
-						B = 36
-						G = 124
-						R = 255
-					}
-					FalloffEnd = 6
-					FalloffExponent = 0
-					FalloffStart = 1.6
-					Intensity = 0.3
-					Material = ""
-					MaterialResource = ""
-					SpotAngleEnd = 0
-					SpotAngleStart = 0
-					Type = "omni"
-					VolumetricIntensity = 0
-				}
 				omni2 = {
 					BoxMax = {
 						X = 10
@@ -80663,33 +80545,6 @@ units = [
 		}
 		id = "254bd9c8-2411-5a94-9bf4-584e74d529a1"
 		lights = {
-			light = {
-				box_max = [
-					10
-					10
-					10
-				]
-				box_min = [
-					-10
-					0
-					-10
-				]
-				cast_shadows = false
-				color = [
-					1
-					0.360784
-					0
-				]
-				falloff_end = 0
-				falloff_exponent = 0
-				falloff_start = 0
-				intensity = 0
-				material = ""
-				spot_angle_end = 0.785398
-				spot_angle_start = 0
-				type = "omni"
-				volumetric_intensity = 0
-			}
 			light1 = {
 				box_max = [
 					10
@@ -85586,33 +85441,6 @@ units = [
 		}
 		id = "c169125a-2b03-5f18-9c08-93996d1ccf65"
 		lights = {
-			light = {
-				box_max = [
-					10
-					10
-					10
-				]
-				box_min = [
-					-10
-					0
-					-10
-				]
-				cast_shadows = false
-				color = [
-					0.984314
-					0.466667
-					0.172549
-				]
-				falloff_end = 0
-				falloff_exponent = 0
-				falloff_start = 0
-				intensity = 0
-				material = ""
-				spot_angle_end = 0.785398
-				spot_angle_start = 0
-				type = "omni"
-				volumetric_intensity = 0
-			}
 			light1 = {
 				box_max = [
 					10
@@ -85670,33 +85498,6 @@ units = [
 		}
 		id = "8af72ba2-5eaf-5c7f-9e59-ece6aaf3870a"
 		lights = {
-			light = {
-				box_max = [
-					10
-					10
-					10
-				]
-				box_min = [
-					-10
-					0
-					-10
-				]
-				cast_shadows = false
-				color = [
-					0.984314
-					0.466667
-					0.172549
-				]
-				falloff_end = 0
-				falloff_exponent = 0
-				falloff_start = 0
-				intensity = 0
-				material = ""
-				spot_angle_end = 0.785398
-				spot_angle_start = 0
-				type = "omni"
-				volumetric_intensity = 0
-			}
 			light1 = {
 				box_max = [
 					10
@@ -86495,33 +86296,6 @@ units = [
 		}
 		id = "aba67b33-7005-5a5b-b1aa-054c3c387060"
 		lights = {
-			light = {
-				box_max = [
-					10
-					10
-					10
-				]
-				box_min = [
-					-10
-					0
-					-10
-				]
-				cast_shadows = false
-				color = [
-					1
-					0.564706
-					0.207843
-				]
-				falloff_end = 0
-				falloff_exponent = 0
-				falloff_start = 0
-				intensity = 0
-				material = ""
-				spot_angle_end = 0.785398
-				spot_angle_start = 0
-				type = "omni"
-				volumetric_intensity = 0
-			}
 			light1 = {
 				box_max = [
 					10
@@ -87206,33 +86980,6 @@ units = [
 		}
 		id = "c0e47da5-9a92-50ce-9cca-ef1c9fac66d4"
 		lights = {
-			omni = {
-				box_max = [
-					10
-					10
-					10
-				]
-				box_min = [
-					-10
-					0
-					-10
-				]
-				cast_shadows = true
-				color = [
-					1
-					0.486275
-					0.141176
-				]
-				falloff_end = 6
-				falloff_exponent = 0
-				falloff_start = 1.6
-				intensity = 0.3
-				material = ""
-				spot_angle_end = 0
-				spot_angle_start = 0
-				type = "omni"
-				volumetric_intensity = 0
-			}
 			omni2 = {
 				box_max = [
 					10

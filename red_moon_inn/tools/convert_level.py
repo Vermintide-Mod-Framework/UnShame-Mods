@@ -24,6 +24,19 @@ INN_LEVEL = 'levels/inn/world'
 # The converted level, as the game names it
 LEVEL_RESOURCE = 'levels/red_moon_inn/red_moon_inn/world'
 
+# Where the editor's camera starts: in the inn's main room, looking along y and 10 degrees down
+EDITOR_CAMERA = {
+    'FarRange': 1000,
+    'InterestPointDistance': 10,
+    'OrthographicPlane': {'W': 1, 'X': 0, 'Y': 0, 'Z': 0},
+    'OrthographicZoom': 10,
+    'Pos': {'X': 0, 'Y': -8, 'Z': 3},
+    'ProjectionType': 1,
+    'Rot': {'W': 0.996195, 'X': -0.087156, 'Y': 0, 'Z': 0},
+    'RotationSpeed': 0.003,
+    'TranslationSpeed': 1,
+}
+
 # The navigation mesh's settings: those of Vermintide 2's keep
 NAV_GEN_SETTINGS = {
     'altitudeTolerance': 0.5,
@@ -158,6 +171,7 @@ class Converter:
         self.missing = collections.defaultdict(collections.Counter)
         self.substituted = collections.Counter()
         self.where = collections.defaultdict(list)
+        self.renamed_lights = collections.Counter()
         self.notes = []
 
     # Names
@@ -310,10 +324,15 @@ class Converter:
             unit = units[index[unit_index]]
             defaults = self.unit_file(unit['type']).get('lights', {})
             names = {name_hash32(n): n for n in defaults}
-            name = names.get(name_h) or self.word(name_h)
+            name = names.get(name_h)
+
+            # Vermintide 2 renamed the light of some units: a unit with one light gets the settings of the light the inn sets
+            if name is None and len(defaults) == 1:
+                name = next(iter(defaults))
+                self.renamed_lights[(unit['type'], self.word(name_h) or '%08x' % name_h, name)] += 1
 
             if name is None:
-                self.missing['light name'][unit['type']] += 1
+                self.missing['light of a unit'][unit['type']] += 1
                 continue
 
             material = ''
@@ -469,6 +488,10 @@ class Converter:
         for (vt1, vt2), count in sorted(self.substituted.items()):
             lines.append('%s is not in Vermintide 2: %s is used%s.' % (vt1, vt2, ' (x%d)' % count if count > 1 else ''))
 
+        for (unit_type, vt1, vt2), count in sorted(self.renamed_lights.items()):
+            lines.append('%s calls its light %s in Vermintide 2, not %s: the settings are given to %s%s.' % (
+                unit_type, vt2, vt1, vt2, ' (x%d)' % count if count > 1 else ''))
+
         for kind in sorted(self.missing):
             lines.append('')
             lines.append('Not in Vermintide 2 (%s):' % kind)
@@ -599,6 +622,7 @@ def editor_metadata(level):
         'Sounds': [],
         'Splines': [],
         'Stories': [],
+        'Transients': {'Camera': dict(EDITOR_CAMERA)},
         'Triggers': [],
         'Units': units,
         'Volumes': volumes,
