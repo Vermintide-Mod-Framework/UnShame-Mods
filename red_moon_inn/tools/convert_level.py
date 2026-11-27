@@ -79,7 +79,7 @@ SUBSTITUTES = {
 }
 
 # Pieces of the inn that Vermintide 2 doesn't have, and the pieces of Vermintide 2's inn put in their place: for each, its unit,
-# and its position and scale in the inn piece's own space. The inn pieces of both games have their origin at a corner: x along
+# its position in the inn piece's own space, its scale along its own axes, and how far it is turned about z, in degrees. The inn pieces of both games have their origin at a corner: x along
 # the piece, y through it and z up. The sizes are from Vermintide 1's compiled meshes and Vermintide 2's .bsi files.
 STAND_INS = {
     # A 4x4 m stone floor tile (0..4 along x, -4..0 along y). Vermintide 2's inn has a stone floor in its middle, 4.2 m wide.
@@ -95,11 +95,18 @@ STAND_INS = {
     # has a door only 1.9 m high.
     'units/architecture/inn/modular_assets/inn_doorframe_3x3m_01': [
         ('units/architecture/merchant_interior/merchant_int_doorframe_3x3m_01', [0, 0.183, 0], [1, 1.6, 1])],
-    # The front door with its frame, and the wooden floor inside it, level with the door (0..4 along x, -4..0 along y):
-    # Vermintide 2 has the door under another name, with the same nodes, and steps down inside where the floor was
+    # The front door, and inside it the floor (0..4 along x, -4..0 along y) with an opening 2 m wide down to the door (x 1..3,
+    # y -2.2..0), where steps go down from the floor to a landing 1 m below it. Vermintide 2 has the door with the same frame for
+    # the inn seen from outside: its door is 1 m higher, with steps down outside. Lowered 1.28 m, the door's top step is the
+    # landing (z -1.03, to y -0.2) and its steps down are under the floor.
+    # The keep's stone stairs, turned to go up away from the door, go from the landing to the floor: made 1.35 times as deep
+    # so that their four steps reach y -2.2, as low as the landing is, and as wide as the opening. Their top is under the floor.
     '91f790f86abf8c11': [
-        ('units/architecture/inn/modular_assets/inn_red_moon_front_door_outside_01', [0, 0, 0], [1, 1, 1]),
-        ('units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01', [0, 0, 0], [1, 1, 1])],
+        ('units/architecture/inn/modular_assets/inn_red_moon_front_door_outside_01', [0, 0, -1.28], [1, 1, 1]),
+        ('units/architecture/hub/hub_stairs_02', [1.98, -0.511, -1.03], [1, 1.351, 0.971], 180),
+        ('units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01', [0, -2.2, 0], [1, 0.45, 1]),
+        ('units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01', [0, 0, 0], [0.2175, 0.55, 1]),
+        ('units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01', [3.13, 0, 0], [0.2175, 0.55, 1])],
 }
 
 # The editor names a placed unit after its type, with a number
@@ -306,13 +313,16 @@ class Converter:
             stand_ins = STAND_INS.get(self.vt1_name(u['type']))
 
             if types[k] is None and stand_ins:
-                # The first stand-in takes the inn piece's place in the level, the others are added after the inn's units
-                for n, (unit_type, offset, scale) in enumerate(stand_ins):
+                # The first stand-in takes the inn piece's place in the level, the others are added after the inn's units.
+                # All of them are placed from where the inn piece is.
+                piece = dict(u)
+
+                for n, (unit_type, offset, scale, *turn) in enumerate(stand_ins):
                     placed = {
-                        'id': u['id'] if n == 0 else name_hash('%016x/%d' % (u['id'], n)),
-                        'pos': [p + d for p, d in zip(u['pos'], rotate(u['rot'], [o * s for o, s in zip(offset, u['scl'])]))],
-                        'rot': list(u['rot']),
-                        'scl': [a * b for a, b in zip(u['scl'], scale)],
+                        'id': piece['id'] if n == 0 else name_hash('%016x/%d' % (piece['id'], n)),
+                        'pos': [p + d for p, d in zip(piece['pos'], rotate(piece['rot'], [o * s for o, s in zip(offset, piece['scl'])]))],
+                        'rot': multiply(piece['rot'], z_rotation(turn[0] if turn else 0)),
+                        'scl': [a * b for a, b in zip(piece['scl'], scale)],
                     }
                     self.stood_in[(self.vt1_name(u['type']), unit_type)] += 1
                     self.stand_in_ids.add(str(uuid.uuid5(ID_NAMESPACE, '%016x' % placed['id'])))
@@ -734,6 +744,21 @@ def rotate(q, v):
     cx, cy, cz = y * v[2] - z * v[1], z * v[0] - x * v[2], x * v[1] - y * v[0]
     dx, dy, dz = y * cz - z * cy, z * cx - x * cz, x * cy - y * cx
     return [v[0] + 2 * (w * cx + dx), v[1] + 2 * (w * cy + dy), v[2] + 2 * (w * cz + dz)]
+
+
+def multiply(a, b):
+    """The rotation b, then a (x, y, z, w)."""
+    ax, ay, az, aw = a
+    bx, by, bz, bw = b
+    return [aw * bx + ax * bw + ay * bz - az * by,
+            aw * by - ax * bz + ay * bw + az * bx,
+            aw * bz + ax * by - ay * bx + az * bw,
+            aw * bw - ax * bx - ay * by - az * bz]
+
+
+def z_rotation(degrees):
+    half = math.radians(degrees) / 2
+    return [0, 0, math.sin(half), math.cos(half)]
 
 
 def matrix_pose(m):

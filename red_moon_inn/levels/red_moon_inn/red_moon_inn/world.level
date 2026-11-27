@@ -1,4 +1,3 @@
-
 editor_metadata = {
 	Flow = {
 		Connections = [
@@ -2064,7 +2063,7 @@ editor_metadata = {
 			}
 			Pos = {
 				X = 10
-				Y = 3E-06
+				Y = 3e-06
 				Z = 3.43492
 			}
 			Rot = {
@@ -2468,7 +2467,7 @@ editor_metadata = {
 				Z = 5.92622
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.721793
 				Z = 0.692109
@@ -2508,7 +2507,7 @@ editor_metadata = {
 				Z = 5.92622
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.721793
 				Z = 0.692109
@@ -2548,7 +2547,7 @@ editor_metadata = {
 				Z = 5.92622
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.721793
 				Z = 0.692109
@@ -2588,7 +2587,7 @@ editor_metadata = {
 				Z = 5.8
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.02099
 				Z = 0.99978
@@ -2628,7 +2627,7 @@ editor_metadata = {
 				Z = 5.81918
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.02099
 				Z = 0.99978
@@ -2668,7 +2667,7 @@ editor_metadata = {
 				Z = 5.8
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.02099
 				Z = 0.99978
@@ -16629,7 +16628,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.996312
-				X = -7.5E-05
+				X = -7.5e-05
 				Y = 0.000875
 				Z = 0.085797
 			}
@@ -16748,7 +16747,7 @@ editor_metadata = {
 				Z = 0.848153
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = -0.000878
 				Y = 0
 				Z = 1
@@ -16788,7 +16787,7 @@ editor_metadata = {
 				Z = 0.848153
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = -0.000878
 				Y = 0
 				Z = 1
@@ -21151,7 +21150,7 @@ editor_metadata = {
 				W = -0.707107
 				X = 0.51466
 				Y = -0.484897
-				Z = 3.8E-05
+				Z = 3.8e-05
 			}
 			Scl = {
 				X = 0.484414
@@ -29471,7 +29470,7 @@ editor_metadata = {
 				W = -1
 				X = 0
 				Y = 0
-				Z = -1E-06
+				Z = -1e-06
 			}
 			Scl = {
 				X = 1
@@ -30310,7 +30309,7 @@ editor_metadata = {
 			Rot = {
 				W = -0.720745
 				X = -0.001566
-				Y = 8.3E-05
+				Y = 8.3e-05
 				Z = 0.693198
 			}
 			Scl = {
@@ -35006,7 +35005,7 @@ editor_metadata = {
 				Z = 5.88327
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.707107
 				Z = 0.707107
@@ -36957,7 +36956,7 @@ editor_metadata = {
 			Rot = {
 				W = -0.707107
 				X = 0
-				Y = 1E-06
+				Y = 1e-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -37385,7 +37384,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -1
-				X = -1E-06
+				X = -1e-06
 				Y = 0
 				Z = 0
 			}
@@ -49294,7 +49293,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -1
-				X = -2E-06
+				X = -2e-06
 				Y = 0
 				Z = 0
 			}
@@ -49364,8 +49363,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = 0
-				X = 2E-06
-				Y = -2E-06
+				X = 2e-06
+				Y = -2e-06
 				Z = 1
 			}
 			Scl = {
@@ -49613,8 +49612,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = 0
-				X = 2E-06
-				Y = -2E-06
+				X = 2e-06
+				Y = -2e-06
 				Z = 1
 			}
 			Scl = {
@@ -49682,8 +49681,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = 0
-				X = 2E-06
-				Y = -2E-06
+				X = 2e-06
+				Y = -2e-06
 				Z = 1
 			}
 			Scl = {
@@ -49891,8 +49890,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707107
-				X = -1E-06
-				Y = -1E-06
+				X = -1e-06
+				Y = -1e-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -49961,8 +49960,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707107
-				X = -1E-06
-				Y = -1E-06
+				X = -1e-06
+				Y = -1e-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -50031,8 +50030,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707107
-				X = -1E-06
-				Y = -1E-06
+				X = -1e-06
+				Y = -1e-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -50343,7 +50342,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -1
-				X = -2E-06
+				X = -2e-06
 				Y = 0
 				Z = 0
 			}
@@ -50993,8 +50992,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707106
-				X = -1E-06
-				Y = 1E-06
+				X = -1e-06
+				Y = 1e-06
 				Z = 0.707108
 			}
 			Scl = {
@@ -52507,7 +52506,47 @@ editor_metadata = {
 			}
 			MaterialSlots = {
 			}
-			Name = "inn_floor_wood_4x4m_01_stand_in_1"
+			Name = "hub_stairs_02_stand_in_1"
+			OverridePoses = {
+			}
+			Path = "units/architecture/hub/hub_stairs_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -8.494308044474328
+				Y = -10.749827295607032
+				Z = -0.10377707958221438
+			}
+			Rot = {
+				W = -0.9289859533309937
+				X = 0
+				Y = 0
+				Z = 0.37011501193046575
+			}
+			Scl = {
+				X = 1
+				Y = 1.351
+				Z = 0.971
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/hub/hub_stairs_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "49755118-4b8b-5402-9142-dafecca270af"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_floor_wood_4x4m_01_stand_in_2"
 			OverridePoses = {
 			}
 			Path = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
@@ -52517,19 +52556,99 @@ editor_metadata = {
 				Z = 0
 			}
 			Pos = {
-				X = -7.408165
-				Y = -12.482401
-				Z = 0.926223
+				X = -5.895305730345866
+				Y = -10.885136281299657
+				Z = 0.9262229204177856
 			}
 			Rot = {
-				W = 0.370115
+				W = 0.3701150119304657
 				X = 0
 				Y = 0
-				Z = 0.928986
+				Z = 0.9289859533309937
 			}
 			Scl = {
 				X = 1
-				Y = 1
+				Y = 0.45
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "10d994e2-8198-5385-a7de-5566cfc8737d"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_floor_wood_4x4m_01_stand_in_3"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -7.408164978027344
+				Y = -12.482401847839355
+				Z = 0.9262229204177856
+			}
+			Rot = {
+				W = 0.3701150119304657
+				X = 0
+				Y = 0
+				Z = 0.9289859533309937
+			}
+			Scl = {
+				X = 0.2175
+				Y = 0.55
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "c22140d0-1cf4-5c04-a4cb-67e9cf55b2b7"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_floor_wood_4x4m_01_stand_in_4"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -9.68063826133155
+				Y = -10.330015736365254
+				Z = 0.9262229204177856
+			}
+			Rot = {
+				W = 0.3701150119304657
+				X = 0
+				Y = 0
+				Z = 0.9289859533309937
+			}
+			Scl = {
+				X = 0.2175
+				Y = 0.55
 				Z = 1
 			}
 			ScriptData = {
@@ -54429,7 +54548,7 @@ units = [
 		name = "inn_floor_wood_4x4m_01_23"
 		pos = [
 			10
-			3E-06
+			3e-06
 			3.43492
 		]
 		rot = [
@@ -54736,7 +54855,7 @@ units = [
 			0
 			0.721793
 			0.692109
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -54766,7 +54885,7 @@ units = [
 			0
 			0.721793
 			0.692109
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -54796,7 +54915,7 @@ units = [
 			0
 			0.721793
 			0.692109
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -54826,7 +54945,7 @@ units = [
 			0
 			0.02099
 			0.99978
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -54856,7 +54975,7 @@ units = [
 			0
 			0.02099
 			0.99978
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -54886,7 +55005,7 @@ units = [
 			0
 			0.02099
 			0.99978
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -65353,7 +65472,7 @@ units = [
 			0.641384
 		]
 		rot = [
-			-7.5E-05
+			-7.5e-05
 			0.000875
 			0.085797
 			-0.996312
@@ -65446,7 +65565,7 @@ units = [
 			-0.000878
 			0
 			1
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -65476,7 +65595,7 @@ units = [
 			-0.000878
 			0
 			1
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -68745,7 +68864,7 @@ units = [
 		rot = [
 			0.51466
 			-0.484897
-			3.8E-05
+			3.8e-05
 			-0.707107
 		]
 		scl = [
@@ -74985,7 +75104,7 @@ units = [
 		rot = [
 			0
 			0
-			-1E-06
+			-1e-06
 			-1
 		]
 		scl = [
@@ -75614,7 +75733,7 @@ units = [
 		]
 		rot = [
 			-0.001566
-			8.3E-05
+			8.3e-05
 			0.693198
 			-0.720745
 		]
@@ -79150,7 +79269,7 @@ units = [
 			0
 			0.707107
 			0.707107
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -80615,7 +80734,7 @@ units = [
 		]
 		rot = [
 			0
-			1E-06
+			1e-06
 			0.707107
 			-0.707107
 		]
@@ -80941,7 +81060,7 @@ units = [
 			3.76244
 		]
 		rot = [
-			-1E-06
+			-1e-06
 			0
 			0
 			-1
@@ -90321,7 +90440,7 @@ units = [
 			4.48498
 		]
 		rot = [
-			-2E-06
+			-2e-06
 			0
 			0
 			-1
@@ -90378,8 +90497,8 @@ units = [
 			2.12696
 		]
 		rot = [
-			2E-06
-			-2E-06
+			2e-06
+			-2e-06
 			1
 			0
 		]
@@ -90581,8 +90700,8 @@ units = [
 			2.06178
 		]
 		rot = [
-			2E-06
-			-2E-06
+			2e-06
+			-2e-06
 			1
 			0
 		]
@@ -90638,8 +90757,8 @@ units = [
 			2.07534
 		]
 		rot = [
-			2E-06
-			-2E-06
+			2e-06
+			-2e-06
 			1
 			0
 		]
@@ -90812,8 +90931,8 @@ units = [
 			2.40859
 		]
 		rot = [
-			-1E-06
-			-1E-06
+			-1e-06
+			-1e-06
 			0.707107
 			-0.707107
 		]
@@ -90870,8 +90989,8 @@ units = [
 			2.45484
 		]
 		rot = [
-			-1E-06
-			-1E-06
+			-1e-06
+			-1e-06
 			0.707107
 			-0.707107
 		]
@@ -90928,8 +91047,8 @@ units = [
 			2.58995
 		]
 		rot = [
-			-1E-06
-			-1E-06
+			-1e-06
+			-1e-06
 			0.707107
 			-0.707107
 		]
@@ -91168,7 +91287,7 @@ units = [
 			1.74383
 		]
 		rot = [
-			-2E-06
+			-2e-06
 			0
 			0
 			-1
@@ -91657,8 +91776,8 @@ units = [
 			5.88232
 		]
 		rot = [
-			-1E-06
-			1E-06
+			-1e-06
+			1e-06
 			0.707108
 			-0.707106
 		]
@@ -92814,24 +92933,24 @@ units = [
 		material = ""
 		materials = {
 		}
-		name = "inn_floor_wood_4x4m_01_stand_in_1"
+		name = "hub_stairs_02_stand_in_1"
 		pos = [
-			-7.408165
-			-12.482401
-			0.926223
+			-8.494308044474328
+			-10.749827295607032
+			-0.10377707958221438
 		]
 		rot = [
 			0
 			0
-			0.928986
-			0.370115
+			0.37011501193046575
+			-0.9289859533309937
 		]
 		scl = [
 			1
-			1
-			1
+			1.351
+			0.971
 		]
-		type = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
+		type = "units/architecture/hub/hub_stairs_02"
 	}
 	{
 		cameras = {
@@ -92862,6 +92981,96 @@ units = [
 			1
 		]
 		type = "units/skydome/skydome_hdr"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "49755118-4b8b-5402-9142-dafecca270af"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_floor_wood_4x4m_01_stand_in_2"
+		pos = [
+			-5.895305730345866
+			-10.885136281299657
+			0.9262229204177856
+		]
+		rot = [
+			0
+			0
+			0.9289859533309937
+			0.3701150119304657
+		]
+		scl = [
+			1
+			0.45
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "10d994e2-8198-5385-a7de-5566cfc8737d"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_floor_wood_4x4m_01_stand_in_3"
+		pos = [
+			-7.408164978027344
+			-12.482401847839355
+			0.9262229204177856
+		]
+		rot = [
+			0
+			0
+			0.9289859533309937
+			0.3701150119304657
+		]
+		scl = [
+			0.2175
+			0.55
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "c22140d0-1cf4-5c04-a4cb-67e9cf55b2b7"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_floor_wood_4x4m_01_stand_in_4"
+		pos = [
+			-9.68063826133155
+			-10.330015736365254
+			0.9262229204177856
+		]
+		rot = [
+			0
+			0
+			0.9289859533309937
+			0.3701150119304657
+		]
+		scl = [
+			0.2175
+			0.55
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
 	}
 ]
 volumes = [
