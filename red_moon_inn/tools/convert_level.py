@@ -188,8 +188,11 @@ def numbered_variants(names, exts):
 
 class Converter:
 
-    def __init__(self, vt1_dir, content_dir, sdk_dir, strings_path):
+    def __init__(self, vt1_dir, content_dir, sdk_dir, strings_path, vt1_level=INN_LEVEL, level_resource=LEVEL_RESOURCE):
+        """vt1_level is the level of Vermintide 1's inn bundle to convert, level_resource the name of the converted level."""
         self.content_dir = content_dir
+        self.vt1_level = vt1_level
+        self.level_resource = level_resource
         self.resources = read_resource_names(content_dir)
         self.resources.update(read_resource_names(os.path.join(sdk_dir, 'sdk', 'core'), 'core/'))
         self.vt1_names, self.words = read_strings(strings_path)
@@ -209,7 +212,7 @@ class Converter:
         self.unit_files = {}
 
         data, self.source = vt1_bundles.newest_resource(os.path.join(vt1_dir, 'bundle'), '%016x' % name_hash(INN_PACKAGE),
-                                                        INN_LEVEL, 'level')
+                                                        vt1_level, 'level')
         self.level = compiled_level.Level(data)
 
         # What is left out, for the report: {kind: Counter(name)}
@@ -577,7 +580,7 @@ class Converter:
             'units': units,
             'volumes': self.volumes(),
         }
-        level['editor_metadata'] = editor_metadata(level)
+        level['editor_metadata'] = editor_metadata(level, self.level_resource)
 
         for old, (new, _) in sorted(REPLACEMENTS.items()):
             self.notes.append('%s has another shape in Vermintide 2: %s, which has the inn\'s, is used.' % (old, new))
@@ -587,14 +590,16 @@ class Converter:
                           'or the one of their Vermintide 1 version.' % sum(1 for u in self.level.units() if u['material']))
 
         for what, count in self.level.counts().items():
-            if count:
+            if count is None:
+                self.notes.append('Not converted: %s (how many is not known).' % what)
+            elif count:
                 self.notes.append('Not converted: %s (%d).' % (what, count))
 
         return level
 
     def report(self, level):
-        lines = ['Red Moon Inn: what the conversion left out', '',
-                 'From %s, %s in %s.' % (INN_LEVEL, os.path.basename(self.source), INN_PACKAGE),
+        lines = ['%s: what the conversion left out' % self.level_resource, '',
+                 'From %s, %s in %s.' % (self.vt1_level, os.path.basename(self.source), INN_PACKAGE),
                  'Kept: %d of %d units, %d of %d particle effects, %d volumes, %d object sets.' % (
                      len(level['units']), self.level.head[compiled_level.HEADER_UNITS],
                      len(level['particle_effects']), self.level.head[compiled_level.HEADER_PARTICLES],
@@ -697,7 +702,7 @@ def _editor_light(light):
     }
 
 
-def editor_metadata(level):
+def editor_metadata(level, level_resource=LEVEL_RESOURCE):
     """What the editor reads the level from. The rest of the level is what the game reads, and the editor writes it from this
     when the level is saved. The editor has the skydome in its settings, not with the units."""
     units = []
@@ -740,7 +745,7 @@ def editor_metadata(level):
         })
         volumes.append(item)
 
-    nav_data = 'navigation\\' + LEVEL_RESOURCE.replace('/', '\\')
+    nav_data = 'navigation\\' + level_resource.replace('/', '\\')
 
     return {
         'Flow': {'Connections': [], 'Groups': [], 'Nodes': []},
@@ -767,7 +772,7 @@ def editor_metadata(level):
             'HiddenLayers': [],
             'HiddenObjects': [],
             'LastHiddenObjects': [],
-            'ShadingEnvironment': level['level_settings']['shading_environment'],
+            'ShadingEnvironment': level['level_settings'].get('shading_environment', SHADING_ENVIRONMENT),
             'SkydomeUnit': SKYDOME,
         },
         'Sounds': [],
@@ -840,9 +845,11 @@ def main():
     parser.add_argument('strings', help='the strings of Vermintide 1\'s bundles, made by vt1_strings.py')
     parser.add_argument('level', help='the world.level to write')
     parser.add_argument('report', help='the report of what was left out, to write')
+    parser.add_argument('--vt1-level', default=INN_LEVEL, help='the level of Vermintide 1\'s inn bundle to convert')
+    parser.add_argument('--level-resource', default=LEVEL_RESOURCE, help='the name of the converted level')
     args = parser.parse_args()
 
-    converter = Converter(args.vt1_dir, args.content_dir, args.sdk_dir, args.strings)
+    converter = Converter(args.vt1_dir, args.content_dir, args.sdk_dir, args.strings, args.vt1_level, args.level_resource)
     level = converter.convert()
 
     with open(args.level, 'w', encoding='utf8', newline='\n') as f:

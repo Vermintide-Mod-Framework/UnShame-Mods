@@ -22,6 +22,11 @@ Vermintide 2 doesn't have is left out of the level and listed in `missing.txt`, 
 
    Reload the level in the editor afterwards: saving the copy the editor has open writes over the file.
 
+The heroes' rooms are levels of their own in the inn's bundle, which Vermintide 1 loads behind the doorways upstairs, at the
+inn's units with `room_id` script data. `convert_level.py` converts them with the level to read and the name to give it:
+
+    python convert_level.py ... ../levels/red_moon_inn/rooms/<hero>/world.level ../missing_rooms/<hero>.txt --vt1-level levels/inn/rooms/<hero>/world --level-resource levels/red_moon_inn/rooms/<hero>/world
+
 The inn's environment is converted the same way, to `levels/red_moon_inn/environment/red_moon_inn.shading_environment`. What
 Vermintide 2's template doesn't have is listed in `environment_missing.txt`:
 

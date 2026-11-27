@@ -220,11 +220,20 @@ class Level:
 
         return names, members(HEADER_UNIT_SETS, self.head[HEADER_UNITS]), members(HEADER_PARTICLE_SETS, self.head[HEADER_PARTICLES])
 
+    def _count_at(self, offset):
+        """The number at the start of a section, or None when it can't be a number of things: in the rooms' levels the
+        scatter header points at something else, which this reader doesn't know."""
+        if not 0 < offset <= len(self.data) - 4:
+            return None
+
+        count = self._u32(offset)
+        return count if count <= 100000 else None
+
     def counts(self):
-        """How many of the things this reader leaves out the level has."""
+        """How many of the things this reader leaves out the level has (None: not known)."""
         return {
             'triggers': self.head[HEADER_TRIGGERS],
-            'stories': self._u32(self.head[HEADER_STORIES]),
-            'scatter': self._u32(self.head[HEADER_SCATTER]),
+            'stories': self._count_at(self.head[HEADER_STORIES]),
+            'scatter': self._count_at(self.head[HEADER_SCATTER]),
             'flow bytes': self.head[HEADER_FLOW + 1] - self.head[HEADER_FLOW],
         }

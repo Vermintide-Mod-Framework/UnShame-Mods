@@ -1,0 +1,11058 @@
+editor_metadata = {
+	Flow = {
+		Connections = [
+		]
+		Groups = [
+		]
+		Nodes = [
+		]
+	}
+	Groups = [
+	]
+	GwNavGenSettings = {
+		altitudeTolerance = 0.5
+		cellSize = 20
+		consumeAllPrototypes = true
+		consumeGwNavGenExclusiveObjectSets = true
+		consumeGwNavGenObjectSets = true
+		consumeLevelReferenceSeedPoints = true
+		consumePhysicsMesh = true
+		consumeStingrayNavMeshTriangles = false
+		consumeTerrain = true
+		consumeUnitsMode = "All units without gwnavgenexcluded script data"
+		entityHeight = 1.6
+		entityRadius = 0.38
+		generatedNavDataPath = "navigation\\levels\\red_moon_inn\\rooms\\dwarf_ranger\\world"
+		minNavigableSurface = 0.5
+		rasterPrecision = 0.2
+		slopeMax = 60
+		stepMax = 0.6
+		terrainSamplingInMeters = 10
+	}
+	Layers = [
+		"Default"
+		"fx"
+		"volumes"
+	]
+	LevelObjectSets = {
+		NestedSetNamesBySetName = {
+		}
+		ObjectIdsBySetName = {
+			dwarf = [
+				"272df7fc-2c5b-54cb-afaf-92d19023ab8c"
+				"cdf77ead-9be5-5a20-8469-f52bfd40648a"
+				"815da15d-9123-51d7-9763-d4eca05f8c0b"
+				"9718bf7f-c809-52fe-844c-88855df29053"
+				"aed5af0d-cd6d-548d-84fd-49e55f880dab"
+				"668a8bdb-4760-5939-a313-0f4758fe9034"
+				"7833d3be-023a-593a-a60c-8a39ba7a7b04"
+				"973f0759-6472-55f8-bee8-4888cf3f4583"
+				"547cfbfd-2be7-5759-a3cc-c13b29e25b50"
+				"bc27e032-2bce-54cf-809e-2e2cde750a14"
+				"af9ff54e-8f14-5e49-8c84-d115a7ddba6b"
+				"70fe4d47-1a9d-546c-8a57-ceb42c503a16"
+				"f9478017-ed5d-5110-a143-3a4634c23630"
+				"7697d68f-0724-527c-80b7-aecb3da06ca4"
+				"20a41326-b1a5-5a43-b248-5905210fc4a9"
+				"3e00c5ec-1649-5d44-9f45-dc62f536c110"
+				"1b56ac08-fd52-59fe-96bb-9412f9591dc8"
+				"cb38e34e-a422-5dcb-894e-9c8cff880a05"
+				"5b1babfb-492f-5c4f-b241-87a10d08f479"
+				"1c48163c-1adb-5843-9cb4-09fc50b91481"
+				"106fe8fb-1133-5a18-bd86-815c2dcf825c"
+				"ef1f344b-611e-535d-a07c-18ed62be3bfc"
+				"b906962e-bbd4-54fa-aced-27fde047424d"
+				"d995c77f-c7cb-51ad-a0b8-f151f9755f92"
+				"4a077d2f-d39a-5cc3-99e5-bca4c26fc0e5"
+				"37ebe58d-3dfe-5904-8807-be34f646acb7"
+				"73e8f2f4-a17f-58e7-b793-7aeecffa3196"
+				"8b99eced-4ad6-5754-b0a4-6171665c2b92"
+				"89adcd59-dd2c-5b87-b8cf-749d9ab83990"
+				"2e928c1a-c28d-5a7b-b22c-f20485cb963c"
+				"25203f90-97da-5286-9d8d-e3b4047ff97b"
+				"ae146ebe-8bdc-58af-b750-027e828b98d8"
+				"b5c5b0c9-79b3-528f-9e32-badc4493ecb1"
+				"2dbe9871-219b-5708-ac5a-98a1cb9f27e2"
+				"4539f5e1-6b6d-5da9-8918-25f3d32fb3d1"
+				"c29d69c8-5583-57e9-b402-88e72233a772"
+				"784a5f22-370a-5b6f-9559-07e8b0b17c63"
+				"fa760ec1-3cb6-58a4-8de1-0e8c157f870b"
+				"5f67c5c1-dc2b-5d42-8951-69bdac9718cb"
+				"f70d76fc-7ad5-5cd5-b932-ef375f016619"
+				"86c17877-dea3-54c5-9167-8f5b2a5f520b"
+				"2c25d00c-5943-5bdc-8f24-e9b27abfa4ce"
+				"c9000e99-ead5-5719-b951-3c2baaa5be5b"
+				"47d5e249-351d-53a0-bb56-e59da1370e1b"
+				"7903b09e-7496-53c5-84e5-2c8ba5d0fb4a"
+				"009187bc-8c12-5b65-86a7-438993fd731d"
+				"0b6f1606-e6d4-5c62-9a26-8be1e56b0dbd"
+				"1a0358f8-08a6-5d3f-abb2-3a7bd8c2becf"
+				"77eefd9d-a699-5fdf-826d-5f621bfcfdc9"
+				"583f1b66-6004-5cd5-9328-226cd5ee2d3e"
+				"be452afa-57f4-5c7e-914b-dc3fb1d0e170"
+				"005d1f71-7d1c-5ede-98b4-c17229b01003"
+				"df563a08-9740-52a6-b5cb-14be5ad6a805"
+				"0be3151a-d248-5205-b7e0-c2a2e4806ffe"
+				"fea743b7-3011-5cf4-8e2b-07a118e0f052"
+				"f6b335b1-bb74-5974-b413-289e5931df36"
+				"d06ef76b-5f11-59bb-b6da-e1726d5eb807"
+				"943fcd15-d7c3-5ef1-af66-b96312f6735c"
+				"87e1adb1-cb33-578a-be8b-f36d1a4d1df3"
+				"1fea059d-a82d-5e3d-8883-bb0400180b07"
+				"ac7b9805-08f5-5db5-8be4-3dba8a060c9a"
+				"bd3ad01f-c9b5-5c79-bfa0-7c8866dce155"
+				"f3cc2cc3-b1bc-54cf-8138-8dd8e4d323d4"
+				"96530f79-bb62-5979-b4af-fcccddebd9b2"
+				"14d4f7b5-e996-5216-bc93-7808b911292e"
+				"b7436422-ad64-54ee-b4e7-6cbe70ea96f7"
+				"06d853e9-8f67-5212-a5b9-cf2f368b699d"
+				"1b5d1f51-6b2f-52d6-adca-c56bcfd0b4ea"
+				"37274fd8-8c06-59ca-997d-5f09a46c31bd"
+				"b0bdbb2d-0a12-5e10-8d31-0bf55e531591"
+				"9191310f-1e14-569f-b27c-81028338aaa4"
+				"d1c4cd37-7d38-53c3-b7d9-dc0216449574"
+				"28c2747a-0b2e-5132-888a-2ef59319d9e3"
+				"7e0be2b2-751b-51a8-b9a5-2b991ec532b8"
+				"f0715fe0-2155-5939-bbb1-c7a30c06d845"
+				"54cb900e-04c4-5692-94be-245a8f2ea2d2"
+				"0d33f3f5-d526-54bb-be9e-ab7db000c260"
+				"c7926a7f-06f8-5d6e-adbc-7b1979a62efa"
+				"860b0ea2-cd4b-54e1-877a-7ab2502c1cb7"
+				"9bba603d-a77d-56fe-88c7-326042687e6a"
+				"ca1ec17c-6cc2-50bf-81a1-87ea307f740a"
+				"19d3b32c-aedc-580a-be87-432824ccf75b"
+				"e61d284a-b22a-56b1-8afd-dfca7404baa3"
+				"d51a56f8-b6f5-5852-aab3-ea728d3e0ce1"
+				"4735b977-641d-5dea-aa2c-c5dd098cf8cf"
+				"3da3ce90-e466-54a1-b04a-a86fcc1d2307"
+				"55116283-17ec-5cea-93d7-248783547d83"
+				"1b022b78-349a-5b67-a327-f9c9b0b14228"
+				"93f73ffe-11e1-509d-9915-9a53bffb8c17"
+				"02ee86f6-3500-510e-a44e-cd083938f296"
+				"21a6823e-44df-53d1-9575-fed7f9dea553"
+				"0ac4623a-55be-5a9c-963e-9b318a83e975"
+				"bbff4f45-9094-5112-ad37-5dceedc3d357"
+				"1f6cfc25-358f-5af5-a351-28dc02727617"
+				"22fa691d-9d27-5112-ad55-6854fff12bb2"
+				"38a7ba26-7d00-536b-98d3-67993400a9c8"
+				"3d439263-a0a8-5380-8a3c-77351fb00807"
+				"3cfe4b5f-6d11-560b-91f2-8c88f4e9310d"
+				"5d49cd0d-3672-59c1-8684-2093df4764d2"
+			]
+		}
+		VisibleSetNames = [
+			"dwarf"
+		]
+	}
+	LevelReferences = [
+	]
+	LightBakeSettings = {
+		ExcludedObjectSets = [
+		]
+		Layers = [
+		]
+	}
+	LuaPluginObjects = [
+	]
+	Notes = [
+	]
+	Overrides = [
+	]
+	ParticleEffects = [
+	]
+	PositionMarkers = [
+	]
+	Prototypes = [
+	]
+	Replays = [
+	]
+	Scatter = {
+		Dirty = false
+		PoolSettings = {
+		}
+		ScatterData = {
+		}
+	}
+	Settings = {
+		FrozenLayers = [
+		]
+		HiddenLayers = [
+		]
+		HiddenObjects = [
+		]
+		LastHiddenObjects = [
+		]
+		ShadingEnvironment = "environment/honduras_keep_02"
+		SkydomeUnit = "units/skydome/skydome_hdr"
+	}
+	Sounds = [
+	]
+	Splines = [
+	]
+	Stories = [
+	]
+	Transients = {
+		Camera = {
+			FarRange = 1000
+			InterestPointDistance = 10
+			OrthographicPlane = {
+				W = 1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			OrthographicZoom = 10
+			Pos = {
+				X = 0
+				Y = -8
+				Z = 3
+			}
+			ProjectionType = 1
+			Rot = {
+				W = 0.996195
+				X = -0.087156
+				Y = 0
+				Z = 0
+			}
+			RotationSpeed = 0.003
+			TranslationSpeed = 1
+		}
+	}
+	Triggers = [
+	]
+	Units = [
+		{
+			Cameras = {
+			}
+			Id = "9f501245-f767-52a2-8590-dcfacc1f28b3"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "coop_spawnpoint_4"
+			OverridePoses = {
+			}
+			Path = "units/hub_elements/coop_spawnpoint"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.6044060587882996
+				Y = 5.10001277923584
+				Z = 0.07999800145626068
+			}
+			Rot = {
+				W = 0
+				X = 0
+				Y = 0
+				Z = 1
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/hub_elements/coop_spawnpoint"
+		}
+		{
+			Cameras = {
+			}
+			Id = "272df7fc-2c5b-54cb-afaf-92d19023ab8c"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_2m_01_vt1_2"
+			OverridePoses = {
+			}
+			Path = "units/architecture/generic/generic_wood_beam_2m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.053514003753662
+				Y = 2.4423539638519287
+				Z = 0.9998500347137451
+			}
+			Rot = {
+				W = 0.4139779806137085
+				X = 0.6285070180892944
+				Y = -0.36650702357292175
+				Z = 0.5470580458641052
+			}
+			Scl = {
+				X = 0.05079600214958191
+				Y = 0.05079600214958191
+				Z = 0.05079600214958191
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/generic/generic_wood_beam_2m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "cdf77ead-9be5-5a20-8469-f52bfd40648a"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_2m_01_vt1_3"
+			OverridePoses = {
+			}
+			Path = "units/architecture/generic/generic_wood_beam_2m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.0374319553375244
+				Y = 2.405919075012207
+				Z = 1.003957986831665
+			}
+			Rot = {
+				W = 0.4139779806137085
+				X = 0.6285070180892944
+				Y = -0.36650702357292175
+				Z = 0.5470580458641052
+			}
+			Scl = {
+				X = 0.05079600214958191
+				Y = 0.05079600214958191
+				Z = 0.05079600214958191
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/generic/generic_wood_beam_2m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "815da15d-9123-51d7-9763-d4eca05f8c0b"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_2m_01_vt1_4"
+			OverridePoses = {
+			}
+			Path = "units/architecture/generic/generic_wood_beam_2m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.0886330604553223
+				Y = 2.3985540866851807
+				Z = 1.0083650350570679
+			}
+			Rot = {
+				W = 0.4139779806137085
+				X = 0.6285070180892944
+				Y = -0.36650702357292175
+				Z = 0.5470580458641052
+			}
+			Scl = {
+				X = 0.05079600214958191
+				Y = 0.05079600214958191
+				Z = 0.05079600214958191
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/generic/generic_wood_beam_2m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "9718bf7f-c809-52fe-844c-88855df29053"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_2m_01_vt1_5"
+			OverridePoses = {
+			}
+			Path = "units/architecture/generic/generic_wood_beam_2m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.0933820009231567
+				Y = 2.41184401512146
+				Z = 1.0067930221557617
+			}
+			Rot = {
+				W = 0.4139779806137085
+				X = 0.6285070180892944
+				Y = -0.36650702357292175
+				Z = 0.5470580458641052
+			}
+			Scl = {
+				X = 0.05079600214958191
+				Y = 0.05079600214958191
+				Z = 0.05079600214958191
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/generic/generic_wood_beam_2m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "aed5af0d-cd6d-548d-84fd-49e55f880dab"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_2m_01_vt1_6"
+			OverridePoses = {
+			}
+			Path = "units/architecture/generic/generic_wood_beam_2m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.0419859886169434
+				Y = 2.4057350158691406
+				Z = 0.9894349575042725
+			}
+			Rot = {
+				W = 0.16285298764705658
+				X = -0.12878800928592682
+				Y = 0.7055270075798035
+				Z = -0.6775870323181152
+			}
+			Scl = {
+				X = 0.05079600214958191
+				Y = 0.03106599859893322
+				Z = 0.05079600214958191
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/generic/generic_wood_beam_2m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "668a8bdb-4760-5939-a313-0f4758fe9034"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_2m_01_vt1_7"
+			OverridePoses = {
+			}
+			Path = "units/architecture/generic/generic_wood_beam_2m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.0538510084152222
+				Y = 2.4425721168518066
+				Z = 0.9903729557991028
+			}
+			Rot = {
+				W = 0.16285298764705658
+				X = -0.12878800928592682
+				Y = 0.7055270075798035
+				Z = -0.6775870323181152
+			}
+			Scl = {
+				X = 0.05079600214958191
+				Y = 0.03106599859893322
+				Z = 0.05079600214958191
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/generic/generic_wood_beam_2m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "7833d3be-023a-593a-a60c-8a39ba7a7b04"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_bed_04_1"
+			OverridePoses = {
+			}
+			Path = "units/props/beds/prop_bed_04"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.7097560167312622
+				Y = 5.00453519821167
+				Z = 0.10261400043964386
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/beds/prop_bed_04"
+		}
+		{
+			Cameras = {
+			}
+			Id = "973f0759-6472-55f8-bee8-4888cf3f4583"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_pillow_01_9"
+			OverridePoses = {
+			}
+			Path = "units/props/beds/prop_pillow_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.361401081085205
+				Y = 5.5519700050354
+				Z = 0.9164469242095947
+			}
+			Rot = {
+				W = -0.6769669651985168
+				X = 0.21426300704479218
+				Y = -0.216481015086174
+				Z = 0.6700320243835449
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/beds/prop_pillow_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "547cfbfd-2be7-5759-a3cc-c13b29e25b50"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_pillow_01_10"
+			OverridePoses = {
+			}
+			Path = "units/props/beds/prop_pillow_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.3592679500579834
+				Y = 4.610016822814941
+				Z = 0.880946934223175
+			}
+			Rot = {
+				W = -0.72285395860672
+				X = 0.18802200257778168
+				Y = -0.24532701075077057
+				Z = 0.6180170178413391
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/beds/prop_pillow_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "bc27e032-2bce-54cf-809e-2e2cde750a14"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_stool_9"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_stool"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.701928973197937
+				Y = 2.906946897506714
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -0.9063079357147217
+				X = 0
+				Y = 0
+				Z = 0.42261803150177
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_stool"
+		}
+		{
+			Cameras = {
+			}
+			Id = "af9ff54e-8f14-5e49-8c84-d115a7ddba6b"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_pillow_01_11"
+			OverridePoses = {
+			}
+			Path = "units/props/beds/prop_pillow_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.701928973197937
+				Y = 2.906946897506714
+				Z = 0.5127579569816589
+			}
+			Rot = {
+				W = -0.9063079357147217
+				X = 0
+				Y = 0
+				Z = 0.42261803150177
+			}
+			Scl = {
+				X = 0.5811529755592346
+				Y = 0.5811529755592346
+				Z = 0.5811529755592346
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/beds/prop_pillow_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "70fe4d47-1a9d-546c-8a57-ceb42c503a16"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_99"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.795776903629303
+				Y = 6.184903144836426
+				Z = 1.2558900117874146
+			}
+			Rot = {
+				W = -0.5
+				X = -0.5
+				Y = -0.5
+				Z = 0.5
+			}
+			Scl = {
+				X = 0.4129579961299896
+				Y = 0.4129579961299896
+				Z = 0.4129579961299896
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "f9478017-ed5d-5110-a143-3a4634c23630"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_100"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.795776903629303
+				Y = 6.184903144836426
+				Z = 1.5746020078659058
+			}
+			Rot = {
+				W = -0.5
+				X = 0.5
+				Y = 0.5
+				Z = 0.5
+			}
+			Scl = {
+				X = 0.4129579961299896
+				Y = 0.4129579961299896
+				Z = 0.4129579961299896
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "7697d68f-0724-527c-80b7-aecb3da06ca4"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_beer_keg_01_1"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_beer_keg_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.2026830017566681
+				Y = 3.6567940711975098
+				Z = 1.9287779331207275
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_beer_keg_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "20a41326-b1a5-5a43-b248-5905210fc4a9"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_beer_keg_01_2"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_beer_keg_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.2513269782066345
+				Y = 4.178640842437744
+				Z = 1.9168848991394043
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_beer_keg_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "3e00c5ec-1649-5d44-9f45-dc62f536c110"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_beer_keg_tap_01_1"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_beer_keg_tap_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.2513269782066345
+				Y = 4.178640842437744
+				Z = 1.9168848991394043
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_beer_keg_tap_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "1b56ac08-fd52-59fe-96bb-9412f9591dc8"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_wood_table_02_5"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_wood_table_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.359591007232666
+				Y = 2.9284310340881348
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -0.7071070075035095
+				X = 0
+				Y = 0
+				Z = -0.7071070075035095
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_wood_table_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "cb38e34e-a422-5dcb-894e-9c8cff880a05"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_beer_keg_01_3"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_beer_keg_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.28125399351119995
+				Y = 5.730283737182617
+				Z = 0.09560200572013855
+			}
+			Rot = {
+				W = -0.9063079357147217
+				X = 0
+				Y = 0
+				Z = 0.42261803150177
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_beer_keg_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "5b1babfb-492f-5c4f-b241-87a10d08f479"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_stein_01_2"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_stein_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.3430938720703125
+				Y = 3.4344120025634766
+				Z = 0.9509999752044678
+			}
+			Rot = {
+				W = -0.17364799976348877
+				X = 0
+				Y = 0
+				Z = 0.9848079681396484
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_stein_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "1c48163c-1adb-5843-9cb4-09fc50b91481"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_hook_36"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_hook"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.0712750032544136
+				Y = 3.449431896209717
+				Z = 1.0709999799728394
+			}
+			Rot = {
+				W = -0.7071070075035095
+				X = 0
+				Y = 0
+				Z = -0.7071070075035095
+			}
+			Scl = {
+				X = 1
+				Y = 0.8227459788322449
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_hook"
+		}
+		{
+			Cameras = {
+			}
+			Id = "106fe8fb-1133-5a18-bd86-815c2dcf825c"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_hook_37"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_hook"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.0712750032544136
+				Y = 3.36142897605896
+				Z = 1.633023977279663
+			}
+			Rot = {
+				W = -0.7071070075035095
+				X = 0
+				Y = 0
+				Z = -0.7071070075035095
+			}
+			Scl = {
+				X = 0.876114010810852
+				Y = 0.7751839756965637
+				Z = 0.876114010810852
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_hook"
+		}
+		{
+			Cameras = {
+			}
+			Id = "ef1f344b-611e-535d-a07c-18ed62be3bfc"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_wood_drawer_01_vt1_23"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_wood_drawer_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.1573469638824463
+				Y = 1.9820950031280518
+				Z = 0.08187099546194077
+			}
+			Rot = {
+				W = -0.7190569639205933
+				X = 0
+				Y = 0
+				Z = 0.694951057434082
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_wood_drawer_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "b906962e-bbd4-54fa-aced-27fde047424d"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_4m_01_vt1_24"
+			OverridePoses = {
+			}
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.1293299198150635
+				Y = 4.375335216522217
+				Z = 0.06932999938726425
+			}
+			Rot = {
+				W = 0
+				X = 0
+				Y = 0.7071070075035095
+				Z = -0.7071070075035095
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "d995c77f-c7cb-51ad-a0b8-f151f9755f92"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "tunnels_wood_beam_rope_binding_01_vt1_25"
+			OverridePoses = {
+			}
+			Path = "units/architecture/tunnels/tunnels_wood_beam_rope_binding_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.1293299198150635
+				Y = 4.375335216522217
+				Z = 2.6152279376983643
+			}
+			Rot = {
+				W = 0
+				X = 0
+				Y = 0.7071070075035095
+				Z = -0.7071070075035095
+			}
+			Scl = {
+				X = 0.44593900442123413
+				Y = 0.44593900442123413
+				Z = 0.44593900442123413
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/tunnels/tunnels_wood_beam_rope_binding_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "4a077d2f-d39a-5cc3-99e5-bca4c26fc0e5"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_chest_6"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_chest"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.3924269676208496
+				Y = 5.336824893951416
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -0.7413550019264221
+				X = 0
+				Y = 0
+				Z = 0.6711130142211914
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_chest"
+		}
+		{
+			Cameras = {
+			}
+			Id = "37ebe58d-3dfe-5904-8807-be34f646acb7"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_hook_38"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_hook"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.9789669513702393
+				Y = 4.425682067871094
+				Z = 0.783782958984375
+			}
+			Rot = {
+				W = -0.7071070075035095
+				X = 0
+				Y = 0
+				Z = 0.7071070075035095
+			}
+			Scl = {
+				X = 1
+				Y = 0.8227459788322449
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_hook"
+		}
+		{
+			Cameras = {
+			}
+			Id = "73e8f2f4-a17f-58e7-b793-7aeecffa3196"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "tunnels_wood_beam_rope_binding_01_8"
+			OverridePoses = {
+			}
+			Path = "units/architecture/tunnels/tunnels_wood_beam_rope_binding_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.1293299198150635
+				Y = 4.375335216522217
+				Z = 0.7646269798278809
+			}
+			Rot = {
+				W = 0
+				X = 0
+				Y = 0.7071070075035095
+				Z = -0.7071070075035095
+			}
+			Scl = {
+				X = 0.44593900442123413
+				Y = 0.44593900442123413
+				Z = 0.44593900442123413
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/tunnels/tunnels_wood_beam_rope_binding_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "8b99eced-4ad6-5754-b0a4-6171665c2b92"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "rope_hanging_arch_6m_01_5"
+			OverridePoses = {
+			}
+			Path = "units/props/rope_hanging_arch_6m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.5968871116638184
+				Y = 6.346168041229248
+				Z = 2.8952889442443848
+			}
+			Rot = {
+				W = -0.7071070075035095
+				X = 0
+				Y = 0
+				Z = 0.7071070075035095
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/rope_hanging_arch_6m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "89adcd59-dd2c-5b87-b8cf-749d9ab83990"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_stool_10"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_stool"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.4517650008201599
+				Y = 5.8423590660095215
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_stool"
+		}
+		{
+			Cameras = {
+			}
+			Id = "2e928c1a-c28d-5a7b-b22c-f20485cb963c"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_book_05_6"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_book_05"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.44543102383613586
+				Y = 5.815790176391602
+				Z = 0.5429679751396179
+			}
+			Rot = {
+				W = -0.9961950182914734
+				X = 0
+				Y = 0
+				Z = 0.08715599775314331
+			}
+			Scl = {
+				X = 1.12819504737854
+				Y = 1.12819504737854
+				Z = 1.519544005393982
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_book_05"
+		}
+		{
+			Cameras = {
+			}
+			Id = "25203f90-97da-5286-9d8d-e3b4047ff97b"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "chain_l100_4"
+			OverridePoses = {
+			}
+			Path = "units/props/chains/chain_l100"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.2213210016489029
+				Y = 5.629082202911377
+				Z = 2.943969964981079
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1.1429259777069092
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/chains/chain_l100"
+		}
+		{
+			Cameras = {
+			}
+			Id = "ae146ebe-8bdc-58af-b750-027e828b98d8"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "chain_l100_5"
+			OverridePoses = {
+			}
+			Path = "units/props/chains/chain_l100"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.2408790588378906
+				Y = 2.4461610317230225
+				Z = 2.8241560459136963
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1.1429259777069092
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/chains/chain_l100"
+		}
+		{
+			Cameras = {
+			}
+			Id = "b5c5b0c9-79b3-528f-9e32-badc4493ecb1"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "wpn_dw_axe_01_t1_3p_1"
+			OverridePoses = {
+			}
+			Path = "units/weapons/player/wpn_dw_axe_01_t1/wpn_dw_axe_01_t1_3p"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.8363699913024902
+				Y = 4.590538024902344
+				Z = 0.21717001497745514
+			}
+			Rot = {
+				W = -0.9289819598197937
+				X = -0.07360199838876724
+				Y = -0.15727801620960236
+				Z = 0.32686105370521545
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/weapons/player/wpn_dw_axe_01_t1/wpn_dw_axe_01_t1_3p"
+		}
+		{
+			Cameras = {
+			}
+			Id = "2dbe9871-219b-5708-ac5a-98a1cb9f27e2"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "tunnels_wood_beam_rope_binding_01_9"
+			OverridePoses = {
+			}
+			Path = "units/architecture/tunnels/tunnels_wood_beam_rope_binding_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.1293299198150635
+				Y = 4.375335216522217
+				Z = 0.9587600231170654
+			}
+			Rot = {
+				W = 0
+				X = 0
+				Y = 0.7071070075035095
+				Z = -0.7071070075035095
+			}
+			Scl = {
+				X = 0.44593900442123413
+				Y = 0.44593900442123413
+				Z = 0.44593900442123413
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/tunnels/tunnels_wood_beam_rope_binding_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "4539f5e1-6b6d-5da9-8918-25f3d32fb3d1"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "wpn_dw_xbow_01_t1_3p_1"
+			OverridePoses = {
+			}
+			Path = "units/weapons/player/wpn_dw_xbow_01_t1/wpn_dw_xbow_01_t1_3p"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.19360089302063
+				Y = 2.7539329528808594
+				Z = 1.0138529539108276
+			}
+			Rot = {
+				W = -0.9465299844741821
+				X = 0.05608200281858444
+				Y = -0.018790999427437782
+				Z = 0.31714797019958496
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/weapons/player/wpn_dw_xbow_01_t1/wpn_dw_xbow_01_t1_3p"
+		}
+		{
+			Cameras = {
+			}
+			Id = "c29d69c8-5583-57e9-b402-88e72233a772"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_03b_1"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_03b"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.3376431465148926
+				Y = 3.759212017059326
+				Z = 0.939520001411438
+			}
+			Rot = {
+				W = -0.9961950182914734
+				X = 0
+				Y = 0
+				Z = -0.08715499937534332
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_bottle_03b"
+		}
+		{
+			Cameras = {
+			}
+			Id = "784a5f22-370a-5b6f-9559-07e8b0b17c63"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_03b_2"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_03b"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.7118568420410156
+				Y = 3.8447070121765137
+				Z = 0.9849929213523865
+			}
+			Rot = {
+				W = -0.6860550045967102
+				X = -0.6861670017242432
+				Y = 0.1710970103740692
+				Z = 0.1709650158882141
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_bottle_03b"
+		}
+		{
+			Cameras = {
+			}
+			Id = "fa760ec1-3cb6-58a4-8de1-0e8c157f870b"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_03b_3"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_03b"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.5859479904174805
+				Y = 3.416193962097168
+				Z = 1.0023390054702759
+			}
+			Rot = {
+				W = -0.6885090470314026
+				X = -0.7006459832191467
+				Y = -0.13356399536132812
+				Z = -0.13119299709796906
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_bottle_03b"
+		}
+		{
+			Cameras = {
+			}
+			Id = "5f67c5c1-dc2b-5d42-8951-69bdac9718cb"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_03b_4"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_03b"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.5130269527435303
+				Y = 4.164775848388672
+				Z = 0.20341601967811584
+			}
+			Rot = {
+				W = -0.694597065448761
+				X = -0.694610059261322
+				Y = -0.13241399824619293
+				Z = -0.13235299289226532
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_bottle_03b"
+		}
+		{
+			Cameras = {
+			}
+			Id = "f70d76fc-7ad5-5cd5-b932-ef375f016619"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_03b_5"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_03b"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.399172067642212
+				Y = 4.155745983123779
+				Z = 0.13674898445606232
+			}
+			Rot = {
+				W = -0.6860550045967102
+				X = -0.6861670017242432
+				Y = 0.1710970103740692
+				Z = 0.1709650158882141
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_bottle_03b"
+		}
+		{
+			Cameras = {
+			}
+			Id = "86c17877-dea3-54c5-9167-8f5b2a5f520b"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_crate_01_1"
+			OverridePoses = {
+			}
+			Path = "units/props/merchant/prop_crate_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.333081007003784
+				Y = 3.9971261024475098
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/merchant/prop_crate_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "2c25d00c-5943-5bdc-8f24-e9b27abfa4ce"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_03b_6"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_03b"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.0625340938568115
+				Y = 4.022490978240967
+				Z = 0.125
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_bottle_03b"
+		}
+		{
+			Cameras = {
+			}
+			Id = "c9000e99-ead5-5719-b951-3c2baaa5be5b"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_03b_7"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_03b"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.401953935623169
+				Y = 3.856813907623291
+				Z = 0.125
+			}
+			Rot = {
+				W = -0.7660439610481262
+				X = 0
+				Y = 0
+				Z = 0.6427879929542542
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_bottle_03b"
+		}
+		{
+			Cameras = {
+			}
+			Id = "47d5e249-351d-53a0-bb56-e59da1370e1b"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_plate_01_2"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_plate_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.3525280952453613
+				Y = 2.1542840003967285
+				Z = 0.9487450122833252
+			}
+			Rot = {
+				W = -0.9999269843101501
+				X = -0.004512000363320112
+				Y = 0.010959000326693058
+				Z = 0.002322999993339181
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_plate_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "7903b09e-7496-53c5-84e5-2c8ba5d0fb4a"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_meat_haunch_01_1"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_meat_haunch_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.357835054397583
+				Y = 2.205826997756958
+				Z = 0.8830350041389465
+			}
+			Rot = {
+				W = -0.9659259915351868
+				X = 0
+				Y = 0
+				Z = -0.25881901383399963
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_meat_haunch_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "009187bc-8c12-5b65-86a7-438993fd731d"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_meat_haunch_01_2"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_meat_haunch_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.308082103729248
+				Y = 2.181986093521118
+				Z = 1.066499948501587
+			}
+			Rot = {
+				W = -0.6037460565567017
+				X = -0.7093420028686523
+				Y = -0.2870350182056427
+				Z = -0.22346201539039612
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_meat_haunch_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "0b6f1606-e6d4-5c62-9a26-8be1e56b0dbd"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "wpn_crossbow_bolt_3p_1"
+			OverridePoses = {
+			}
+			Path = "units/weapons/player/wpn_crossbow_quiver/wpn_crossbow_bolt_3p"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2
+				Y = 3
+				Z = 0.9368959665298462
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/weapons/player/wpn_crossbow_quiver/wpn_crossbow_bolt_3p"
+		}
+		{
+			Cameras = {
+			}
+			Id = "1a0358f8-08a6-5d3f-abb2-3a7bd8c2becf"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "wpn_crossbow_bolt_3p_2"
+			OverridePoses = {
+			}
+			Path = "units/weapons/player/wpn_crossbow_quiver/wpn_crossbow_bolt_3p"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.953577995300293
+				Y = 2.955960988998413
+				Z = 0.9368959665298462
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/weapons/player/wpn_crossbow_quiver/wpn_crossbow_bolt_3p"
+		}
+		{
+			Cameras = {
+			}
+			Id = "77eefd9d-a699-5fdf-826d-5f621bfcfdc9"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "wpn_crossbow_bolt_3p_3"
+			OverridePoses = {
+			}
+			Path = "units/weapons/player/wpn_crossbow_quiver/wpn_crossbow_bolt_3p"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.895117998123169
+				Y = 2.980839967727661
+				Z = 0.932007908821106
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/weapons/player/wpn_crossbow_quiver/wpn_crossbow_bolt_3p"
+		}
+		{
+			Cameras = {
+			}
+			Id = "583f1b66-6004-5cd5-9328-226cd5ee2d3e"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "spider_web_03_3"
+			OverridePoses = {
+			}
+			Path = "units/generic/spider_web_03"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.1294900178909302
+				Y = 5.895751953125
+				Z = 2.330251932144165
+			}
+			Rot = {
+				W = -0.5734789967536926
+				X = 0.5172309875488281
+				Y = 0.43957599997520447
+				Z = 0.45865702629089355
+			}
+			Scl = {
+				X = 0.6808170080184937
+				Y = 0.6808170080184937
+				Z = 0.6808170080184937
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/generic/spider_web_03"
+		}
+		{
+			Cameras = {
+			}
+			Id = "be452afa-57f4-5c7e-914b-dc3fb1d0e170"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_coin_gold_5"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_coin_gold"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.45475202798843384
+				Y = 5.843809127807617
+				Z = 0.628000020980835
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_coin_gold"
+		}
+		{
+			Cameras = {
+			}
+			Id = "005d1f71-7d1c-5ede-98b4-c17229b01003"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_coin_gold_6"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_coin_gold"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.39551201462745667
+				Y = 5.881902694702148
+				Z = 0.628000020980835
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_coin_gold"
+		}
+		{
+			Cameras = {
+			}
+			Id = "df563a08-9740-52a6-b5cb-14be5ad6a805"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_coin_gold_7"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_coin_gold"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.39551201462745667
+				Y = 5.706564903259277
+				Z = 0.628000020980835
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_coin_gold"
+		}
+		{
+			Cameras = {
+			}
+			Id = "0be3151a-d248-5205-b7e0-c2a2e4806ffe"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_shovel_1"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_shovel"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.7278879880905151
+				Y = 0.9311999082565308
+				Z = 0.1339309960603714
+			}
+			Rot = {
+				W = 0.257409006357193
+				X = -0.00908299908041954
+				Y = -0.10382599383592606
+				Z = 0.9606649875640869
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_shovel"
+		}
+		{
+			Cameras = {
+			}
+			Id = "fea743b7-3011-5cf4-8e2b-07a118e0f052"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_jug_01_7"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_jug_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.007202000357210636
+				Y = 4.72723388671875
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_jug_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "f6b335b1-bb74-5974-b413-289e5931df36"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_bucket_02_2"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_bucket_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.6624550819396973
+				Y = 6.8182148933410645
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_bucket_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "d06ef76b-5f11-59bb-b6da-e1726d5eb807"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_4m_01_10"
+			OverridePoses = {
+			}
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.9276609420776367
+				Y = 3.2282679080963135
+				Z = 2.67065691947937
+			}
+			Rot = {
+				W = -0.5
+				X = -0.5
+				Y = -0.5
+				Z = 0.5
+			}
+			Scl = {
+				X = 0.9446869492530823
+				Y = 1.1469130516052246
+				Z = 0.9446869492530823
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "943fcd15-d7c3-5ef1-af66-b96312f6735c"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_4m_01_11"
+			OverridePoses = {
+			}
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.9276609420776367
+				Y = 1.4295099973678589
+				Z = 2.5774550437927246
+			}
+			Rot = {
+				W = -0.5
+				X = -0.5
+				Y = -0.5
+				Z = 0.5
+			}
+			Scl = {
+				X = 0.9446869492530823
+				Y = 1.1469130516052246
+				Z = 0.9446869492530823
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "87e1adb1-cb33-578a-be8b-f36d1a4d1df3"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_101"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.3399060070514679
+				Y = 3.3689370155334473
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -0.7071070075035095
+				X = 0
+				Y = 0
+				Z = 0.7071070075035095
+			}
+			Scl = {
+				X = 0.7843409776687622
+				Y = 1.2669659852981567
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "1fea059d-a82d-5e3d-8883-bb0400180b07"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_102"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.3399060070514679
+				Y = 0.562512993812561
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -0.7071070075035095
+				X = 0
+				Y = 0
+				Z = 0.7071070075035095
+			}
+			Scl = {
+				X = 0.7843409776687622
+				Y = 1.2669659852981567
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "ac7b9805-08f5-5db5-8be4-3dba8a060c9a"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "spider_web_01_8"
+			OverridePoses = {
+			}
+			Path = "units/generic/spider_web_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.628330945968628
+				Y = 4.7435479164123535
+				Z = 2.5564420223236084
+			}
+			Rot = {
+				W = -0.4167570173740387
+				X = 0.12027900665998459
+				Y = 0.43025001883506775
+				Z = 0.7916639447212219
+			}
+			Scl = {
+				X = 0.6566610336303711
+				Y = 0.6566610336303711
+				Z = 0.6566610336303711
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/generic/spider_web_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "bd3ad01f-c9b5-5c79-bfa0-7c8866dce155"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_barrel_02_1"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_barrel_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.314850091934204
+				Y = 0.563834011554718
+				Z = 0.15847201645374298
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_barrel_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "f3cc2cc3-b1bc-54cf-8138-8dd8e4d323d4"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_wall_shelf_01_vt1_64"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_wall_shelf_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.506775975227356
+				Y = 0.3772500157356262
+				Z = 1.3654249906539917
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_wall_shelf_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "96530f79-bb62-5979-b4af-fcccddebd9b2"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_wall_shelf_01_16"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_wall_shelf_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.3469839096069336
+				Y = 0.3772500157356262
+				Z = 1.9031100273132324
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_wall_shelf_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "14d4f7b5-e996-5216-bc93-7808b911292e"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_wall_shelf_01_17"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_wall_shelf_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.897770881652832
+				Y = 5
+				Z = 1.2999770641326904
+			}
+			Rot = {
+				W = -0.6984360814094543
+				X = 0
+				Y = 0
+				Z = -0.715671956539154
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_wall_shelf_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "b7436422-ad64-54ee-b4e7-6cbe70ea96f7"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_wall_shelf_01_18"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_wall_shelf_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.897770881652832
+				Y = 4.994046211242676
+				Z = 1.8318040370941162
+			}
+			Rot = {
+				W = -0.6984360814094543
+				X = 0
+				Y = 0
+				Z = -0.715671956539154
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_wall_shelf_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "06d853e9-8f67-5212-a5b9-cf2f368b699d"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "spider_web_01_9"
+			OverridePoses = {
+			}
+			Path = "units/generic/spider_web_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.83378005027771
+				Y = 4.96926212310791
+				Z = 1.9255579710006714
+			}
+			Rot = {
+				W = -0.7310749292373657
+				X = -0.13945899903774261
+				Y = 0.15705500543117523
+				Z = 0.649164080619812
+			}
+			Scl = {
+				X = 0.5598270297050476
+				Y = 0.3273650109767914
+				Z = 0.3273650109767914
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/generic/spider_web_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "1b5d1f51-6b2f-52d6-adca-c56bcfd0b4ea"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "spider_web_04_2"
+			OverridePoses = {
+			}
+			Path = "units/generic/spider_web_04"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.1474671363830566
+				Y = 0.5465280413627625
+				Z = 2.4722740650177
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 0.696107029914856
+				Y = 0.696107029914856
+				Z = 0.696107029914856
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/generic/spider_web_04"
+		}
+		{
+			Cameras = {
+			}
+			Id = "37274fd8-8c06-59ca-997d-5f09a46c31bd"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_06_6"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_06"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.71140193939209
+				Y = 5.347391128540039
+				Z = 1.3009999990463257
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_bottle_06"
+		}
+		{
+			Cameras = {
+			}
+			Id = "b0bdbb2d-0a12-5e10-8d31-0bf55e531591"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_06_7"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_06"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.736633777618408
+				Y = 5.118027210235596
+				Z = 1.3009999990463257
+			}
+			Rot = {
+				W = -0.8191520571708679
+				X = 0
+				Y = 0
+				Z = -0.5735769867897034
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_bottle_06"
+		}
+		{
+			Cameras = {
+			}
+			Id = "9191310f-1e14-569f-b27c-81028338aaa4"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_07_7"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_07"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.2566170692443848
+				Y = 0.5377010107040405
+				Z = 1.3660000562667847
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_bottle_07"
+		}
+		{
+			Cameras = {
+			}
+			Id = "d1c4cd37-7d38-53c3-b7d9-dc0216449574"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_08_5"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_08"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.4130100011825562
+				Y = 0.5078630447387695
+				Z = 1.3660000562667847
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_bottle_08"
+		}
+		{
+			Cameras = {
+			}
+			Id = "28c2747a-0b2e-5132-888a-2ef59319d9e3"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_wizard_paper_10_10"
+			OverridePoses = {
+			}
+			Path = "units/brushes/wizard/brush_wizard_paper_10"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.057239055633545
+				Y = 3.6101291179656982
+				Z = 0.9407129883766174
+			}
+			Rot = {
+				W = -0.7875980138778687
+				X = -0.011903000064194202
+				Y = 0.022192999720573425
+				Z = 0.6156749725341797
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 0.24319502711296082
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/wizard/brush_wizard_paper_10"
+		}
+		{
+			Cameras = {
+			}
+			Id = "7e0be2b2-751b-51a8-b9a5-2b991ec532b8"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_coin_copper_21"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_coin_copper"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.139103889465332
+				Y = 3.500885009765625
+				Z = 0.9498120546340942
+			}
+			Rot = {
+				W = -0.9996709823608398
+				X = 0.004414000082761049
+				Y = 0.024793000891804695
+				Z = -0.004970999900251627
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_coin_copper"
+		}
+		{
+			Cameras = {
+			}
+			Id = "f0715fe0-2155-5939-bbb1-c7a30c06d845"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_coin_gold_8"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_coin_gold"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.024195909500122
+				Y = 3.5597000122070312
+				Z = 0.9415960311889648
+			}
+			Rot = {
+				W = -0.9996709823608398
+				X = 0.004414000082761049
+				Y = 0.024793000891804695
+				Z = -0.004970999900251627
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_coin_gold"
+		}
+		{
+			Cameras = {
+			}
+			Id = "54cb900e-04c4-5692-94be-245a8f2ea2d2"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_coin_gold_9"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_coin_gold"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.116147994995117
+				Y = 3.617863178253174
+				Z = 0.9456639885902405
+			}
+			Rot = {
+				W = -0.9376829266548157
+				X = 0.012626999989151955
+				Y = 0.021789001300930977
+				Z = -0.3465780019760132
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_coin_gold"
+		}
+		{
+			Cameras = {
+			}
+			Id = "0d33f3f5-d526-54bb-be9e-ab7db000c260"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_coin_gold_10"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_coin_gold"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.9933569431304932
+				Y = 3.716320037841797
+				Z = 0.9397199749946594
+			}
+			Rot = {
+				W = -0.9996709823608398
+				X = 0.004414000082761049
+				Y = 0.024793000891804695
+				Z = -0.004970999900251627
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_coin_gold"
+		}
+		{
+			Cameras = {
+			}
+			Id = "c7926a7f-06f8-5d6e-adbc-7b1979a62efa"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_coin_gold_11"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_coin_gold"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.01229190826416
+				Y = 3.6542880535125732
+				Z = 0.9411929845809937
+			}
+			Rot = {
+				W = -0.9996709823608398
+				X = 0.004414000082761049
+				Y = 0.024793000891804695
+				Z = -0.004970999900251627
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_coin_gold"
+		}
+		{
+			Cameras = {
+			}
+			Id = "860b0ea2-cd4b-54e1-877a-7ab2502c1cb7"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "sign_emp_paper_06_5"
+			OverridePoses = {
+			}
+			Path = "units/props/signs/sign_emp_paper_06"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.8210809826850891
+				Y = 0.4398200213909149
+				Z = 1.2253620624542236
+			}
+			Rot = {
+				W = -0.023385999724268913
+				X = 0
+				Y = 0
+				Z = 0.9997270107269287
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/signs/sign_emp_paper_06"
+		}
+		{
+			Cameras = {
+			}
+			Id = "9bba603d-a77d-56fe-88c7-326042687e6a"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "sign_emp_paper_09_4"
+			OverridePoses = {
+			}
+			Path = "units/props/signs/sign_emp_paper_09"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.83604896068573
+				Y = 0.4398200213909149
+				Z = 1.4511469602584839
+			}
+			Rot = {
+				W = -0.023385999724268913
+				X = 0
+				Y = 0
+				Z = 0.9997270107269287
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/signs/sign_emp_paper_09"
+		}
+		{
+			Cameras = {
+			}
+			Id = "ca1ec17c-6cc2-50bf-81a1-87ea307f740a"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "sign_emp_paper_01_6"
+			OverridePoses = {
+			}
+			Path = "units/props/signs/sign_emp_paper_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.8782529830932617
+				Y = 0.4181149899959564
+				Z = 1.185716986656189
+			}
+			Rot = {
+				W = 0
+				X = 0
+				Y = 0
+				Z = 1
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/signs/sign_emp_paper_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "19d3b32c-aedc-580a-be87-432824ccf75b"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "decal_burn_mark_01_5"
+			OverridePoses = {
+			}
+			Path = "units/decals/decal_burn_mark_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.6980140209197998
+				Y = 4.842127799987793
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 2.624587059020996
+				Y = 2.624587059020996
+				Z = 2.624587059020996
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/decals/decal_burn_mark_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "e61d284a-b22a-56b1-8afd-dfca7404baa3"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_brick_small_01_2"
+			OverridePoses = {
+			}
+			Path = "units/brushes/brush_brick_small_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.1105871200561523
+				Y = 6.959260940551758
+				Z = 1.176198959350586
+			}
+			Rot = {
+				W = -0.9396929144859314
+				X = 0
+				Y = 0
+				Z = -0.3420200049877167
+			}
+			Scl = {
+				X = 1.1370799541473389
+				Y = 1.1370799541473389
+				Z = 1.1370799541473389
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/brush_brick_small_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "d51a56f8-b6f5-5852-aab3-ea728d3e0ce1"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_brick_small_01_3"
+			OverridePoses = {
+			}
+			Path = "units/brushes/brush_brick_small_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.2888360023498535
+				Y = 6.783380031585693
+				Z = 1.1553690433502197
+			}
+			Rot = {
+				W = -0.9396929144859314
+				X = 0
+				Y = 0
+				Z = -0.3420200049877167
+			}
+			Scl = {
+				X = 1.2544950246810913
+				Y = 1.2544950246810913
+				Z = 1.2544950246810913
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/brush_brick_small_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "4735b977-641d-5dea-aa2c-c5dd098cf8cf"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_brick_small_01_4"
+			OverridePoses = {
+			}
+			Path = "units/brushes/brush_brick_small_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.2103919982910156
+				Y = 6.876866817474365
+				Z = 1.2832039594650269
+			}
+			Rot = {
+				W = -0.9396929144859314
+				X = 0
+				Y = 0
+				Z = -0.3420200049877167
+			}
+			Scl = {
+				X = 1.13788902759552
+				Y = 1.13788902759552
+				Z = 1.13788902759552
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/brush_brick_small_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "3da3ce90-e466-54a1-b04a-a86fcc1d2307"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_brick_small_01_5"
+			OverridePoses = {
+			}
+			Path = "units/brushes/brush_brick_small_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.041033983230591
+				Y = 7.042150020599365
+				Z = 1.2878140211105347
+			}
+			Rot = {
+				W = -0.9396929144859314
+				X = 0
+				Y = 0
+				Z = -0.3420200049877167
+			}
+			Scl = {
+				X = 1.0910580158233643
+				Y = 1.0910580158233643
+				Z = 1.0910580158233643
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/brush_brick_small_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "55116283-17ec-5cea-93d7-248783547d83"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_brick_small_01_6"
+			OverridePoses = {
+			}
+			Path = "units/brushes/brush_brick_small_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.552886962890625
+				Y = 6.525024890899658
+				Z = 1.2670899629592896
+			}
+			Rot = {
+				W = -0.9396929144859314
+				X = 0
+				Y = 0
+				Z = -0.3420200049877167
+			}
+			Scl = {
+				X = 1.0910580158233643
+				Y = 1.0910580158233643
+				Z = 1.0910580158233643
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/brush_brick_small_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "1b022b78-349a-5b67-a327-f9c9b0b14228"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_brick_small_01_7"
+			OverridePoses = {
+			}
+			Path = "units/brushes/brush_brick_small_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.379826068878174
+				Y = 6.694723129272461
+				Z = 1.2725980281829834
+			}
+			Rot = {
+				W = -0.9396929144859314
+				X = 0
+				Y = 0
+				Z = -0.3420200049877167
+			}
+			Scl = {
+				X = 1.1831640005111694
+				Y = 1.1831640005111694
+				Z = 1.1831640005111694
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/brush_brick_small_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "93f73ffe-11e1-509d-9915-9a53bffb8c17"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_brick_small_01_8"
+			OverridePoses = {
+			}
+			Path = "units/brushes/brush_brick_small_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.461885929107666
+				Y = 6.596928119659424
+				Z = 1.1511839628219604
+			}
+			Rot = {
+				W = -0.9396929144859314
+				X = 0
+				Y = 0
+				Z = -0.3420200049877167
+			}
+			Scl = {
+				X = 1.213062047958374
+				Y = 1.213062047958374
+				Z = 1.213062047958374
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/brush_brick_small_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "02ee86f6-3500-510e-a44e-cd083938f296"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_basket_wicker_3"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_basket_wicker"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.3466640114784241
+				Y = 6.490914821624756
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -0.7660439610481262
+				X = 0
+				Y = 0
+				Z = -0.6427879929542542
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_basket_wicker"
+		}
+		{
+			Cameras = {
+			}
+			Id = "21a6823e-44df-53d1-9575-fed7f9dea553"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_apple_01_6"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_apple_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.3466640114784241
+				Y = 6.490914821624756
+				Z = 0.12200000137090683
+			}
+			Rot = {
+				W = -0.560359001159668
+				X = -0.522322952747345
+				Y = -0.43828099966049194
+				Z = -0.47019699215888977
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_apple_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "0ac4623a-55be-5a9c-963e-9b318a83e975"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_apple_01_7"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_apple_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.856603980064392
+				Y = 6.2747979164123535
+				Z = 0.16065698862075806
+			}
+			Rot = {
+				W = -0.7022449374198914
+				X = 0.08280499279499054
+				Y = -0.702242910861969
+				Z = -0.08276699483394623
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_apple_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "bbff4f45-9094-5112-ad37-5dceedc3d357"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_apple_01_8"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_apple_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.17558099329471588
+				Y = 5.99963903427124
+				Z = 0.16050998866558075
+			}
+			Rot = {
+				W = -0.6259989738464355
+				X = -0.32880303263664246
+				Y = 0.6260049939155579
+				Z = -0.32883402705192566
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_apple_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "1f6cfc25-358f-5af5-a351-28dc02727617"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_apple_01_9"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_apple_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.20352600514888763
+				Y = 6.540712833404541
+				Z = 0.16050799190998077
+			}
+			Rot = {
+				W = -0.17514799535274506
+				X = 0.6850640177726746
+				Y = 0.17511799931526184
+				Z = 0.6850869655609131
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_apple_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "22fa691d-9d27-5112-ad55-6854fff12bb2"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_apple_01_10"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_apple_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.2672170102596283
+				Y = 6.466242790222168
+				Z = 0.1606689989566803
+			}
+			Rot = {
+				W = -0.43761104345321655
+				X = -0.5554050207138062
+				Y = -0.43764200806617737
+				Z = 0.5554200410842896
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_apple_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "a4a50dd5-ef84-525c-ab33-483e3414c440"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_apple_01_vt1_97"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_apple_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.718392848968506
+				Y = 2.8673229217529297
+				Z = 0.9508650302886963
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_apple_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "42bff297-2a57-58da-a0e6-3215ce712eb6"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_apple_01_vt1_98"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_apple_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.0038130283355713
+				Y = 2.226686954498291
+				Z = 1.0027940273284912
+			}
+			Rot = {
+				W = -0.701056957244873
+				X = -0.6903460621833801
+				Y = -0.11224900186061859
+				Z = 0.13907501101493835
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_apple_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "21969006-8256-5f3d-9de5-f4f250a884dc"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_pie_01_1"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_pie_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.653510093688965
+				Y = 2.4974520206451416
+				Z = 0.9582859873771667
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_pie_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "fd3d524d-c6c0-5217-b016-ca97f1d00963"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_fork_01_1"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_fork_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.9487769603729248
+				Y = 2.2840518951416016
+				Z = 0.9348469376564026
+			}
+			Rot = {
+				W = -0.9622499346733093
+				X = -0.08418599516153336
+				Y = 0.022557999938726425
+				Z = -0.2578340172767639
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_fork_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "c7bd7860-acad-5f94-8782-f98d1cda8250"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_potatoe_01_1"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_potatoe_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.4848710298538208
+				Y = 3.8143811225891113
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -0.9659259915351868
+				X = 0
+				Y = 0
+				Z = 0.25881901383399963
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_potatoe_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "fe26a83d-c2bc-5413-b4d0-3747c6464928"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_potatoe_02_1"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_potatoe_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.9166159629821777
+				Y = 3.3935608863830566
+				Z = 0.14800000190734863
+			}
+			Rot = {
+				W = -0.8660250306129456
+				X = 0
+				Y = 0
+				Z = 0.5
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_potatoe_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "570caf17-0d43-5bbc-831e-ac937dde804d"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_potatoe_02_2"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_potatoe_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.263097047805786
+				Y = 2.2832860946655273
+				Z = 0.966090977191925
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_potatoe_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "c0984c0c-25cb-51ed-b31c-16ccf6941cfd"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_apple_01_vt1_104"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_apple_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.752384901046753
+				Y = 3.512134075164795
+				Z = 0.23579099774360657
+			}
+			Rot = {
+				W = -0.43045902252197266
+				X = -0.43045902252197266
+				Y = 0.5609859824180603
+				Z = 0.5609859824180603
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_apple_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "856c4f21-1f76-53f9-8638-3ff6d7eddb98"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_apple_01_vt1_105"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_apple_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.2000000424450263e-05
+				Y = 2.0000948905944824
+				Z = 0.16066500544548035
+			}
+			Rot = {
+				W = -0.7070990204811096
+				X = -0.0001049999991664663
+				Y = -0.7071150541305542
+				Z = 8.699999307282269e-05
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_apple_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "ef6396ff-ee83-5a37-8f98-a20ea3b0865a"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_stein_01_vt1_106"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_stein_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.0815199613571167
+				Y = 2.4483120441436768
+				Z = 1.1490000486373901
+			}
+			Rot = {
+				W = -0.8660250306129456
+				X = 0
+				Y = 0
+				Z = -0.5
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_stein_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "43d1661b-9174-565b-82ee-b18d7e44ab3d"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_brick_small_01_10"
+			OverridePoses = {
+			}
+			Path = "units/brushes/brush_brick_small_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.638282060623169
+				Y = 6.4251837730407715
+				Z = 1.1491169929504395
+			}
+			Rot = {
+				W = -0.9396929144859314
+				X = 0
+				Y = 0
+				Z = -0.3420200049877167
+			}
+			Scl = {
+				X = 1.0910580158233643
+				Y = 1.0910580158233643
+				Z = 1.0910580158233643
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/brush_brick_small_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "c1e679ef-ba4f-582b-a7ae-0dfefaacc01b"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_19"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.385295867919922
+				Y = 6.7031168937683105
+				Z = 2.483591079711914
+			}
+			Rot = {
+				W = -0.6451660990715027
+				X = 0.25221800804138184
+				Y = -0.6663399934768677
+				Z = -0.2759310305118561
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "dd661d48-4aee-59f4-b49a-ef52e058b56e"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_18"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.377340078353882
+				Y = 6.71054220199585
+				Z = 2.2451229095458984
+			}
+			Rot = {
+				W = -0.2759310305118561
+				X = 0.6663399934768677
+				Y = 0.25221800804138184
+				Z = 0.6451660990715027
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "3501c5fe-797e-5bc7-8e38-25031f876dc4"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_17"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.383362054824829
+				Y = 6.704783916473389
+				Z = 2.0084118843078613
+			}
+			Rot = {
+				W = -0.6663399934768677
+				X = -0.2759310305118561
+				Y = 0.6451660990715027
+				Z = -0.25221800804138184
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "74ae41a6-b21e-5e26-96e6-bc3b132550ae"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_16"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.328313112258911
+				Y = 6.754164218902588
+				Z = 1.7672760486602783
+			}
+			Rot = {
+				W = -0.2489130049943924
+				X = -0.6439690589904785
+				Y = -0.2735610008239746
+				Z = 0.6697100400924683
+			}
+			Scl = {
+				X = 0.5110309720039368
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "003f5a2a-5bdd-59dd-a3d2-a0257490c4ae"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_15"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.360629081726074
+				Y = 6.726274013519287
+				Z = 1.508952021598816
+			}
+			Rot = {
+				W = -0.6439690589904785
+				X = 0.2489130049943924
+				Y = -0.6697100400924683
+				Z = -0.2735610008239746
+			}
+			Scl = {
+				X = 0.5216899514198303
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "bac1216f-ae9b-5a02-8294-2d68704e6301"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_20"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.0606420040130615
+				Y = 7.147132873535156
+				Z = 1.906785011291504
+			}
+			Rot = {
+				W = -0.7031570076942444
+				X = 0.6821600198745728
+				Y = 0.1292240023612976
+				Z = 0.1533920168876648
+			}
+			Scl = {
+				X = 0.4902770221233368
+				Y = 0.369022011756897
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "b62e8680-cd0a-56f4-b403-afbc1083bc6e"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_11"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.2657380104064941
+				Y = 7.215392112731934
+				Z = 1.794255018234253
+			}
+			Rot = {
+				W = -0.5229359269142151
+				X = 0.4911389946937561
+				Y = -0.49073702096939087
+				Z = -0.49446600675582886
+			}
+			Scl = {
+				X = 0.511031985282898
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "7ea0b6b0-313c-599e-954e-5e23075160dd"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_10"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.197793960571289
+				Y = 7.199090003967285
+				Z = 2.0290980339050293
+			}
+			Rot = {
+				W = -0.49446600675582886
+				X = 0.49073800444602966
+				Y = 0.4911389946937561
+				Z = 0.5229359269142151
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "52b0143a-aab6-5216-8d7c-b4bd5e2844ba"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_9"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.2092820405960083
+				Y = 7.1942291259765625
+				Z = 2.265626907348633
+			}
+			Rot = {
+				W = -0.49073702096939087
+				X = -0.49446600675582886
+				Y = 0.5229359269142151
+				Z = -0.4911389946937561
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "bbb3c25e-fc3e-5ad4-96f0-a7a1ccb43bd4"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_8"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.201583981513977
+				Y = 7.188918113708496
+				Z = 2.504159927368164
+			}
+			Rot = {
+				W = 0.4911389946937561
+				X = 0.5229359269142151
+				Y = 0.49446702003479004
+				Z = -0.49073800444602966
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "27884a50-bc4b-549d-bd71-e2c307f4604f"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_12"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.218616008758545
+				Y = 7.216031074523926
+				Z = 1.5419280529022217
+			}
+			Rot = {
+				W = 0.4911389946937561
+				X = 0.5229359269142151
+				Y = 0.49446702003479004
+				Z = -0.49073800444602966
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "d246c3c6-28c3-5848-90d6-d33617e7c83b"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_13"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.2376559972763062
+				Y = 7.232025146484375
+				Z = 1.304103970527649
+			}
+			Rot = {
+				W = -0.49073702096939087
+				X = -0.49446600675582886
+				Y = 0.5229359269142151
+				Z = -0.4911389946937561
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "de732824-f725-561f-bbfc-d9cf4b72535d"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_7"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.029096998274326324
+				Y = 6.674962997436523
+				Z = 1.9433300495147705
+			}
+			Rot = {
+				W = -0.42138898372650146
+				X = -0.08331099152565002
+				Y = 0.6964840292930603
+				Z = 0.5748040080070496
+			}
+			Scl = {
+				X = 0.4541679918766022
+				Y = 0.4429120123386383
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "05e3ab8f-9562-58db-95de-1ed437be5293"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_3"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.007156999781727791
+				Y = 6.752570152282715
+				Z = 1.7090719938278198
+			}
+			Rot = {
+				W = 0.2952120304107666
+				X = -0.6482210755348206
+				Y = 0.2680310010910034
+				Z = 0.6487050652503967
+			}
+			Scl = {
+				X = 0.511031985282898
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "a594ed72-02c2-54d1-a76c-dbc46204da66"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_4"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.04838800057768822
+				Y = 6.695601940155029
+				Z = 1.9437799453735352
+			}
+			Rot = {
+				W = -0.6487050652503967
+				X = 0.2680310010910034
+				Y = 0.6482210755348206
+				Z = 0.2952120304107666
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "1a4c0f2d-d37c-53df-95f6-71e05c489321"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_6"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.041168998926877975
+				Y = 6.702603816986084
+				Z = 2.1804239749908447
+			}
+			Rot = {
+				W = 0.2680310010910034
+				X = 0.6487050652503967
+				Y = -0.2952120304107666
+				Z = 0.6482210755348206
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "b819cfd1-0ed6-5b71-801e-3b484d596998"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_5"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.047322001308202744
+				Y = 6.695824146270752
+				Z = 2.4189648628234863
+			}
+			Rot = {
+				W = -0.6482210755348206
+				X = -0.2952120304107666
+				Y = -0.6487050652503967
+				Z = 0.2680310010910034
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "cbde2ed0-0218-5ac5-9176-a6edbbe47cdf"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_2"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.0418269969522953
+				Y = 6.712371826171875
+				Z = 1.456247091293335
+			}
+			Rot = {
+				W = -0.6482210755348206
+				X = -0.2952120304107666
+				Y = -0.6487050652503967
+				Z = 0.2680310010910034
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "1021b2f0-d1e9-5fe1-be71-a8bda8791321"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "docks_wood_scaffold_plank_01_1"
+			OverridePoses = {
+			}
+			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.029767999425530434
+				Y = 6.7397260665893555
+				Z = 1.2185239791870117
+			}
+			Rot = {
+				W = 0.2680310010910034
+				X = 0.6487050652503967
+				Y = -0.2952120304107666
+				Z = 0.6482210755348206
+			}
+			Scl = {
+				X = 0.4833320081233978
+				Y = 0.30587103962898254
+				Z = 0.37108999490737915
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "95da8eaa-5329-53cb-a7e2-0e95df3223ab"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_brick_small_01_9"
+			OverridePoses = {
+			}
+			Path = "units/brushes/brush_brick_small_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.0705039501190186
+				Y = 6.623615264892578
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/brush_brick_small_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "545e574b-5e3f-5f9f-a909-501b7edd7cb9"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_brick_small_01_vt1_128"
+			OverridePoses = {
+			}
+			Path = "units/brushes/brush_brick_small_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.277301073074341
+				Y = 6.5131659507751465
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -0.8923099637031555
+				X = 0
+				Y = 0
+				Z = 0.4514240026473999
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/brush_brick_small_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "02994ebc-3a7a-5728-a3b7-431081433916"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_brick_small_01_11"
+			OverridePoses = {
+			}
+			Path = "units/brushes/brush_brick_small_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.0755550861358643
+				Y = 6.636654853820801
+				Z = 0.20100000500679016
+			}
+			Rot = {
+				W = -0.6484750509262085
+				X = 0
+				Y = 0
+				Z = -0.7612359523773193
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/brush_brick_small_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "0e57cae2-8037-5e7d-ba18-78c10dcc6f82"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_brick_small_01_12"
+			OverridePoses = {
+			}
+			Path = "units/brushes/brush_brick_small_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 1.3276760578155518
+				Y = 6.948451995849609
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/brushes/brush_brick_small_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "1b8e0709-3cc3-56f1-af3c-a5391419c964"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "rope_pile_01_1"
+			OverridePoses = {
+			}
+			Path = "units/props/rope_pile_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.1836509704589844
+				Y = 1.4149940013885498
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 0.6114769577980042
+				Y = 0.6114769577980042
+				Z = 0.6114769577980042
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/rope_pile_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "4b47887c-a823-5dbb-9364-1ab39374fa44"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_cup_01_1"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_cup_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.18792200088500977
+				Y = 5.463037014007568
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_cup_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "90a0511f-c39e-59f4-a17a-a507dc504396"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_cup_01_2"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_cup_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.5222499370574951
+				Y = 5.7427191734313965
+				Z = 0.628000020980835
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_cup_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "ba91f698-feb4-5704-ab3e-a9b06ecbee54"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_cup_01_3"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_cup_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.00044599996181204915
+				Y = 5.301329135894775
+				Z = 0.09800000488758087
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_cup_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "a70cdb6b-1c3c-5165-88ee-1d770622dac1"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_cup_01_4"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_cup_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.1177239939570427
+				Y = 4.363646984100342
+				Z = 0.1655929833650589
+			}
+			Rot = {
+				W = -0.7071070075035095
+				X = -0.7071070075035095
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_cup_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "38a7ba26-7d00-536b-98d3-67993400a9c8"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_jar_2"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_jar"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.6379299759864807
+				Y = 2.591202974319458
+				Z = 0.09784800559282303
+			}
+			Rot = {
+				W = -1
+				X = 1.1000000085914508e-05
+				Y = -9.999999974752427e-07
+				Z = 9.999999974752427e-07
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/generic/generic_prop_jar"
+		}
+		{
+			Cameras = {
+			}
+			Id = "3d439263-a0a8-5380-8a3c-77351fb00807"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_jar_02_8"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_jar_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.8275930285453796
+				Y = 2.8096160888671875
+				Z = 0.11633700132369995
+			}
+			Rot = {
+				W = -0.8191520571708679
+				X = 0
+				Y = 0
+				Z = 0.5735769867897034
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_jar_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "329d329d-5282-5226-9d27-332c08ea11fc"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_book_05_2"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_book_05"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -0.8642110228538513
+				Y = 2.1128549575805664
+				Z = 0.3942210376262665
+			}
+			Rot = {
+				W = -0.9971460700035095
+				X = 0
+				Y = -0.07549300789833069
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/inn/props_generic_book_05"
+		}
+		{
+			Cameras = {
+			}
+			Id = "3cfe4b5f-6d11-560b-91f2-8c88f4e9310d"
+			Layer = "Default"
+			Lights = {
+				omni = {
+					BoxMax = {
+						X = 10
+						Y = 10
+						Z = 10
+					}
+					BoxMin = {
+						X = -10
+						Y = 0
+						Z = -10
+					}
+					CastShadows = true
+					Color = {
+						A = 255
+						B = 56
+						G = 141
+						R = 255
+					}
+					FalloffEnd = 2.799999952316284
+					FalloffExponent = 2
+					FalloffStart = 0
+					Intensity = 0.25
+					Material = ""
+					MaterialResource = ""
+					SpotAngleEnd = 60.000001669652114
+					SpotAngleStart = 0
+					Type = "omni"
+					VolumetricIntensity = 0
+				}
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_lantern_02_2"
+			OverridePoses = {
+			}
+			Path = "units/props/lanterns/lantern_02/prop_lantern_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.2213210016489029
+				Y = 5.629082202911377
+				Z = 2.0096359252929688
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/lanterns/lantern_02/prop_lantern_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "5d49cd0d-3672-59c1-8684-2093df4764d2"
+			Layer = "Default"
+			Lights = {
+				omni = {
+					BoxMax = {
+						X = 10
+						Y = 10
+						Z = 10
+					}
+					BoxMin = {
+						X = -10
+						Y = 0
+						Z = -10
+					}
+					CastShadows = true
+					Color = {
+						A = 255
+						B = 56
+						G = 141
+						R = 255
+					}
+					FalloffEnd = 2
+					FalloffExponent = 2
+					FalloffStart = 0
+					Intensity = 0.15000000596046448
+					Material = ""
+					MaterialResource = ""
+					SpotAngleEnd = 60.000001669652114
+					SpotAngleStart = 0
+					Type = "omni"
+					VolumetricIntensity = 0
+				}
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_lantern_02_3"
+			OverridePoses = {
+			}
+			Path = "units/props/lanterns/lantern_02/prop_lantern_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 2.2408790588378906
+				Y = 2.4461610317230225
+				Z = 1.8898210525512695
+			}
+			Rot = {
+				W = -0.9396929144859314
+				X = 0
+				Y = 0
+				Z = 0.3420200049877167
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/props/lanterns/lantern_02/prop_lantern_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "80336bf6-a9e2-5e9c-ab8d-418661038bf3"
+			Layer = "Default"
+			Lights = {
+				omni = {
+					BoxMax = {
+						X = 10
+						Y = 10
+						Z = 10
+					}
+					BoxMin = {
+						X = -10
+						Y = 0
+						Z = -10
+					}
+					CastShadows = false
+					Color = {
+						A = 255
+						B = 45
+						G = 126
+						R = 255
+					}
+					FalloffEnd = 6
+					FalloffExponent = 0
+					FalloffStart = 1
+					Intensity = 0.03999999910593033
+					Material = ""
+					MaterialResource = ""
+					SpotAngleEnd = 0
+					SpotAngleStart = 0
+					Type = "omni"
+					VolumetricIntensity = 0
+				}
+			}
+			MaterialSlots = {
+			}
+			Name = "light_2"
+			OverridePoses = {
+			}
+			Path = "units/lights/light"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.8791550397872925
+				Y = 3.2195379734039307
+				Z = 1.8472449779510498
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			StoryOverridePoses = {
+			}
+			Type = "units/lights/light"
+		}
+	]
+	Volumes = [
+		{
+			Bottom = 0
+			CapTriangulation = [
+				4
+				1
+				2
+				3
+				4
+				2
+			]
+			Id = "4c280074-b492-5d35-b7b3-622cedb2f1c5"
+			Layer = "volumes"
+			Name = "volume_3"
+			Path = "volume"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Points = [
+				{
+					X = -1
+					Y = -1
+					Z = 0
+				}
+				{
+					X = 4
+					Y = -1
+					Z = 0
+				}
+				{
+					X = 4
+					Y = 7
+					Z = 0
+				}
+				{
+					X = -1
+					Y = 7
+					Z = 0
+				}
+			]
+			Pos = {
+				X = -0.7516739368438721
+				Y = 1.0687990188598633
+				Z = 2.940985918045044
+			}
+			Rot = {
+				W = 1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			Top = 0.20000001788139343
+			Type = "default"
+		}
+		{
+			Bottom = 0
+			CapTriangulation = [
+				15
+				1
+				2
+				15
+				2
+				3
+				15
+				3
+				4
+				14
+				15
+				4
+				14
+				4
+				5
+				13
+				14
+				5
+				13
+				5
+				6
+				12
+				13
+				6
+				12
+				6
+				7
+				11
+				12
+				7
+				11
+				7
+				8
+				10
+				11
+				8
+				9
+				10
+				8
+			]
+			Id = "4c92c33a-ba35-5d6a-9dbd-b3511a7bd09a"
+			Layer = "volumes"
+			Name = "volume_1"
+			Path = "volume"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Points = [
+				{
+					X = -1.197121024131775
+					Y = -1.8451800346374512
+					Z = 0
+				}
+				{
+					X = -1.1446959972381592
+					Y = -8.116257667541504
+					Z = 0
+				}
+				{
+					X = -1.089257001876831
+					Y = -8.135698318481445
+					Z = 0
+				}
+				{
+					X = -1.094020962715149
+					Y = -1.8175420761108398
+					Z = 0
+				}
+				{
+					X = -0.6837530136108398
+					Y = -1.7075610160827637
+					Z = 0
+				}
+				{
+					X = -0.4204850196838379
+					Y = -1
+					Z = 0
+				}
+				{
+					X = 0.2801550030708313
+					Y = -1
+					Z = 0
+				}
+				{
+					X = 0.6028140187263489
+					Y = -1.9070699214935303
+					Z = 0
+				}
+				{
+					X = 0.6196879744529724
+					Y = -8.137664794921875
+					Z = 0
+				}
+				{
+					X = 0.6776690483093262
+					Y = -8.117457389831543
+					Z = 0
+				}
+				{
+					X = 0.6490810513496399
+					Y = -1.846832036972046
+					Z = 0
+				}
+				{
+					X = 0.2214980125427246
+					Y = -0.7212599515914917
+					Z = 0
+				}
+				{
+					X = -0.3730269968509674
+					Y = -0.696712076663971
+					Z = 0
+				}
+				{
+					X = -0.728486955165863
+					Y = -1.4446110725402832
+					Z = 0
+				}
+				{
+					X = -1.173266053199768
+					Y = -1.6091840267181396
+					Z = 0
+				}
+			]
+			Pos = {
+				X = 1.3438340425491333
+				Y = 8.3463716506958
+				Z = -0.32322901487350464
+			}
+			Rot = {
+				W = 1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 2.8514280319213867
+				Y = 1
+				Z = 1.562520980834961
+			}
+			Top = 2
+			Type = "default"
+		}
+		{
+			Bottom = 0
+			CapTriangulation = [
+				4
+				1
+				2
+				3
+				4
+				2
+			]
+			Id = "f56f476b-aa77-5f22-94a0-dd5bd330ed90"
+			Layer = "volumes"
+			Name = "volume_2"
+			Path = "volume"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Points = [
+				{
+					X = -1
+					Y = -1
+					Z = 0
+				}
+				{
+					X = 4
+					Y = -1
+					Z = 0
+				}
+				{
+					X = 4
+					Y = 7
+					Z = 0
+				}
+				{
+					X = -1
+					Y = 7
+					Z = 0
+				}
+			]
+			Pos = {
+				X = -0.7516739368438721
+				Y = 1.0687990188598633
+				Z = -0.1699260026216507
+			}
+			Rot = {
+				W = 1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			Top = 0.20000001788139343
+			Type = "default"
+		}
+		{
+			Bottom = 0
+			CapTriangulation = [
+				4
+				1
+				2
+				3
+				4
+				2
+			]
+			Id = "6cf1bb23-627d-58d9-87b8-7ace74c12611"
+			Layer = "volumes"
+			Name = "room_volume"
+			Path = "volume"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Points = [
+				{
+					X = -1
+					Y = -1.4152230024337769
+					Z = 0
+				}
+				{
+					X = 0.7909579277038574
+					Y = -1.4152230024337769
+					Z = 0
+				}
+				{
+					X = 0.7909579277038574
+					Y = 1
+					Z = 0
+				}
+				{
+					X = -1
+					Y = 1
+					Z = 0
+				}
+			]
+			Pos = {
+				X = 1
+				Y = 4
+				Z = -0.36197900772094727
+			}
+			Rot = {
+				W = 1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 2.8525869846343994
+				Y = 4.096253871917725
+				Z = 1.7668559551239014
+			}
+			Top = 2
+			Type = "default"
+		}
+	]
+}
+flow = {
+	nodes = [
+	]
+}
+level_references = [
+]
+level_settings = {
+	num_background_units = 1
+	shading_environment = "environment/honduras_keep_02"
+}
+object_sets = {
+	dwarf = [
+		"272df7fc-2c5b-54cb-afaf-92d19023ab8c"
+		"cdf77ead-9be5-5a20-8469-f52bfd40648a"
+		"815da15d-9123-51d7-9763-d4eca05f8c0b"
+		"9718bf7f-c809-52fe-844c-88855df29053"
+		"aed5af0d-cd6d-548d-84fd-49e55f880dab"
+		"668a8bdb-4760-5939-a313-0f4758fe9034"
+		"7833d3be-023a-593a-a60c-8a39ba7a7b04"
+		"973f0759-6472-55f8-bee8-4888cf3f4583"
+		"547cfbfd-2be7-5759-a3cc-c13b29e25b50"
+		"bc27e032-2bce-54cf-809e-2e2cde750a14"
+		"af9ff54e-8f14-5e49-8c84-d115a7ddba6b"
+		"70fe4d47-1a9d-546c-8a57-ceb42c503a16"
+		"f9478017-ed5d-5110-a143-3a4634c23630"
+		"7697d68f-0724-527c-80b7-aecb3da06ca4"
+		"20a41326-b1a5-5a43-b248-5905210fc4a9"
+		"3e00c5ec-1649-5d44-9f45-dc62f536c110"
+		"1b56ac08-fd52-59fe-96bb-9412f9591dc8"
+		"cb38e34e-a422-5dcb-894e-9c8cff880a05"
+		"5b1babfb-492f-5c4f-b241-87a10d08f479"
+		"1c48163c-1adb-5843-9cb4-09fc50b91481"
+		"106fe8fb-1133-5a18-bd86-815c2dcf825c"
+		"ef1f344b-611e-535d-a07c-18ed62be3bfc"
+		"b906962e-bbd4-54fa-aced-27fde047424d"
+		"d995c77f-c7cb-51ad-a0b8-f151f9755f92"
+		"4a077d2f-d39a-5cc3-99e5-bca4c26fc0e5"
+		"37ebe58d-3dfe-5904-8807-be34f646acb7"
+		"73e8f2f4-a17f-58e7-b793-7aeecffa3196"
+		"8b99eced-4ad6-5754-b0a4-6171665c2b92"
+		"89adcd59-dd2c-5b87-b8cf-749d9ab83990"
+		"2e928c1a-c28d-5a7b-b22c-f20485cb963c"
+		"25203f90-97da-5286-9d8d-e3b4047ff97b"
+		"ae146ebe-8bdc-58af-b750-027e828b98d8"
+		"b5c5b0c9-79b3-528f-9e32-badc4493ecb1"
+		"2dbe9871-219b-5708-ac5a-98a1cb9f27e2"
+		"4539f5e1-6b6d-5da9-8918-25f3d32fb3d1"
+		"c29d69c8-5583-57e9-b402-88e72233a772"
+		"784a5f22-370a-5b6f-9559-07e8b0b17c63"
+		"fa760ec1-3cb6-58a4-8de1-0e8c157f870b"
+		"5f67c5c1-dc2b-5d42-8951-69bdac9718cb"
+		"f70d76fc-7ad5-5cd5-b932-ef375f016619"
+		"86c17877-dea3-54c5-9167-8f5b2a5f520b"
+		"2c25d00c-5943-5bdc-8f24-e9b27abfa4ce"
+		"c9000e99-ead5-5719-b951-3c2baaa5be5b"
+		"47d5e249-351d-53a0-bb56-e59da1370e1b"
+		"7903b09e-7496-53c5-84e5-2c8ba5d0fb4a"
+		"009187bc-8c12-5b65-86a7-438993fd731d"
+		"0b6f1606-e6d4-5c62-9a26-8be1e56b0dbd"
+		"1a0358f8-08a6-5d3f-abb2-3a7bd8c2becf"
+		"77eefd9d-a699-5fdf-826d-5f621bfcfdc9"
+		"583f1b66-6004-5cd5-9328-226cd5ee2d3e"
+		"be452afa-57f4-5c7e-914b-dc3fb1d0e170"
+		"005d1f71-7d1c-5ede-98b4-c17229b01003"
+		"df563a08-9740-52a6-b5cb-14be5ad6a805"
+		"0be3151a-d248-5205-b7e0-c2a2e4806ffe"
+		"fea743b7-3011-5cf4-8e2b-07a118e0f052"
+		"f6b335b1-bb74-5974-b413-289e5931df36"
+		"d06ef76b-5f11-59bb-b6da-e1726d5eb807"
+		"943fcd15-d7c3-5ef1-af66-b96312f6735c"
+		"87e1adb1-cb33-578a-be8b-f36d1a4d1df3"
+		"1fea059d-a82d-5e3d-8883-bb0400180b07"
+		"ac7b9805-08f5-5db5-8be4-3dba8a060c9a"
+		"bd3ad01f-c9b5-5c79-bfa0-7c8866dce155"
+		"f3cc2cc3-b1bc-54cf-8138-8dd8e4d323d4"
+		"96530f79-bb62-5979-b4af-fcccddebd9b2"
+		"14d4f7b5-e996-5216-bc93-7808b911292e"
+		"b7436422-ad64-54ee-b4e7-6cbe70ea96f7"
+		"06d853e9-8f67-5212-a5b9-cf2f368b699d"
+		"1b5d1f51-6b2f-52d6-adca-c56bcfd0b4ea"
+		"37274fd8-8c06-59ca-997d-5f09a46c31bd"
+		"b0bdbb2d-0a12-5e10-8d31-0bf55e531591"
+		"9191310f-1e14-569f-b27c-81028338aaa4"
+		"d1c4cd37-7d38-53c3-b7d9-dc0216449574"
+		"28c2747a-0b2e-5132-888a-2ef59319d9e3"
+		"7e0be2b2-751b-51a8-b9a5-2b991ec532b8"
+		"f0715fe0-2155-5939-bbb1-c7a30c06d845"
+		"54cb900e-04c4-5692-94be-245a8f2ea2d2"
+		"0d33f3f5-d526-54bb-be9e-ab7db000c260"
+		"c7926a7f-06f8-5d6e-adbc-7b1979a62efa"
+		"860b0ea2-cd4b-54e1-877a-7ab2502c1cb7"
+		"9bba603d-a77d-56fe-88c7-326042687e6a"
+		"ca1ec17c-6cc2-50bf-81a1-87ea307f740a"
+		"19d3b32c-aedc-580a-be87-432824ccf75b"
+		"e61d284a-b22a-56b1-8afd-dfca7404baa3"
+		"d51a56f8-b6f5-5852-aab3-ea728d3e0ce1"
+		"4735b977-641d-5dea-aa2c-c5dd098cf8cf"
+		"3da3ce90-e466-54a1-b04a-a86fcc1d2307"
+		"55116283-17ec-5cea-93d7-248783547d83"
+		"1b022b78-349a-5b67-a327-f9c9b0b14228"
+		"93f73ffe-11e1-509d-9915-9a53bffb8c17"
+		"02ee86f6-3500-510e-a44e-cd083938f296"
+		"21a6823e-44df-53d1-9575-fed7f9dea553"
+		"0ac4623a-55be-5a9c-963e-9b318a83e975"
+		"bbff4f45-9094-5112-ad37-5dceedc3d357"
+		"1f6cfc25-358f-5af5-a351-28dc02727617"
+		"22fa691d-9d27-5112-ad55-6854fff12bb2"
+		"38a7ba26-7d00-536b-98d3-67993400a9c8"
+		"3d439263-a0a8-5380-8a3c-77351fb00807"
+		"3cfe4b5f-6d11-560b-91f2-8c88f4e9310d"
+		"5d49cd0d-3672-59c1-8684-2093df4764d2"
+	]
+}
+overrides = [
+]
+particle_effects = [
+]
+prototypes = [
+]
+replays = [
+]
+scatter = [
+]
+sounds = [
+]
+splines = [
+]
+stories = [
+]
+triggers = [
+]
+units = [
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "9f501245-f767-52a2-8590-dcfacc1f28b3"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "coop_spawnpoint_4"
+		pos = [
+			0.6044060587882996
+			5.10001277923584
+			0.07999800145626068
+		]
+		rot = [
+			0
+			0
+			1
+			0
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/hub_elements/coop_spawnpoint"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "272df7fc-2c5b-54cb-afaf-92d19023ab8c"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_2m_01_vt1_2"
+		pos = [
+			-1.053514003753662
+			2.4423539638519287
+			0.9998500347137451
+		]
+		rot = [
+			0.6285070180892944
+			-0.36650702357292175
+			0.5470580458641052
+			0.4139779806137085
+		]
+		scl = [
+			0.05079600214958191
+			0.05079600214958191
+			0.05079600214958191
+		]
+		type = "units/architecture/generic/generic_wood_beam_2m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "cdf77ead-9be5-5a20-8469-f52bfd40648a"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_2m_01_vt1_3"
+		pos = [
+			-1.0374319553375244
+			2.405919075012207
+			1.003957986831665
+		]
+		rot = [
+			0.6285070180892944
+			-0.36650702357292175
+			0.5470580458641052
+			0.4139779806137085
+		]
+		scl = [
+			0.05079600214958191
+			0.05079600214958191
+			0.05079600214958191
+		]
+		type = "units/architecture/generic/generic_wood_beam_2m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "815da15d-9123-51d7-9763-d4eca05f8c0b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_2m_01_vt1_4"
+		pos = [
+			-1.0886330604553223
+			2.3985540866851807
+			1.0083650350570679
+		]
+		rot = [
+			0.6285070180892944
+			-0.36650702357292175
+			0.5470580458641052
+			0.4139779806137085
+		]
+		scl = [
+			0.05079600214958191
+			0.05079600214958191
+			0.05079600214958191
+		]
+		type = "units/architecture/generic/generic_wood_beam_2m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "9718bf7f-c809-52fe-844c-88855df29053"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_2m_01_vt1_5"
+		pos = [
+			-1.0933820009231567
+			2.41184401512146
+			1.0067930221557617
+		]
+		rot = [
+			0.6285070180892944
+			-0.36650702357292175
+			0.5470580458641052
+			0.4139779806137085
+		]
+		scl = [
+			0.05079600214958191
+			0.05079600214958191
+			0.05079600214958191
+		]
+		type = "units/architecture/generic/generic_wood_beam_2m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "aed5af0d-cd6d-548d-84fd-49e55f880dab"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_2m_01_vt1_6"
+		pos = [
+			-1.0419859886169434
+			2.4057350158691406
+			0.9894349575042725
+		]
+		rot = [
+			-0.12878800928592682
+			0.7055270075798035
+			-0.6775870323181152
+			0.16285298764705658
+		]
+		scl = [
+			0.05079600214958191
+			0.03106599859893322
+			0.05079600214958191
+		]
+		type = "units/architecture/generic/generic_wood_beam_2m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "668a8bdb-4760-5939-a313-0f4758fe9034"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_2m_01_vt1_7"
+		pos = [
+			-1.0538510084152222
+			2.4425721168518066
+			0.9903729557991028
+		]
+		rot = [
+			-0.12878800928592682
+			0.7055270075798035
+			-0.6775870323181152
+			0.16285298764705658
+		]
+		scl = [
+			0.05079600214958191
+			0.03106599859893322
+			0.05079600214958191
+		]
+		type = "units/architecture/generic/generic_wood_beam_2m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "7833d3be-023a-593a-a60c-8a39ba7a7b04"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_bed_04_1"
+		pos = [
+			-0.7097560167312622
+			5.00453519821167
+			0.10261400043964386
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/beds/prop_bed_04"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "973f0759-6472-55f8-bee8-4888cf3f4583"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_pillow_01_9"
+		pos = [
+			-1.361401081085205
+			5.5519700050354
+			0.9164469242095947
+		]
+		rot = [
+			0.21426300704479218
+			-0.216481015086174
+			0.6700320243835449
+			-0.6769669651985168
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/beds/prop_pillow_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "547cfbfd-2be7-5759-a3cc-c13b29e25b50"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_pillow_01_10"
+		pos = [
+			-1.3592679500579834
+			4.610016822814941
+			0.880946934223175
+		]
+		rot = [
+			0.18802200257778168
+			-0.24532701075077057
+			0.6180170178413391
+			-0.72285395860672
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/beds/prop_pillow_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "bc27e032-2bce-54cf-809e-2e2cde750a14"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_stool_9"
+		pos = [
+			1.701928973197937
+			2.906946897506714
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0.42261803150177
+			-0.9063079357147217
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_stool"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "af9ff54e-8f14-5e49-8c84-d115a7ddba6b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_pillow_01_11"
+		pos = [
+			1.701928973197937
+			2.906946897506714
+			0.5127579569816589
+		]
+		rot = [
+			0
+			0
+			0.42261803150177
+			-0.9063079357147217
+		]
+		scl = [
+			0.5811529755592346
+			0.5811529755592346
+			0.5811529755592346
+		]
+		type = "units/props/beds/prop_pillow_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "70fe4d47-1a9d-546c-8a57-ceb42c503a16"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_99"
+		pos = [
+			-0.795776903629303
+			6.184903144836426
+			1.2558900117874146
+		]
+		rot = [
+			-0.5
+			-0.5
+			0.5
+			-0.5
+		]
+		scl = [
+			0.4129579961299896
+			0.4129579961299896
+			0.4129579961299896
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "f9478017-ed5d-5110-a143-3a4634c23630"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_100"
+		pos = [
+			-0.795776903629303
+			6.184903144836426
+			1.5746020078659058
+		]
+		rot = [
+			0.5
+			0.5
+			0.5
+			-0.5
+		]
+		scl = [
+			0.4129579961299896
+			0.4129579961299896
+			0.4129579961299896
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "7697d68f-0724-527c-80b7-aecb3da06ca4"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_beer_keg_01_1"
+		pos = [
+			-0.2026830017566681
+			3.6567940711975098
+			1.9287779331207275
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_beer_keg_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "20a41326-b1a5-5a43-b248-5905210fc4a9"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_beer_keg_01_2"
+		pos = [
+			-0.2513269782066345
+			4.178640842437744
+			1.9168848991394043
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_beer_keg_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "3e00c5ec-1649-5d44-9f45-dc62f536c110"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_beer_keg_tap_01_1"
+		pos = [
+			-0.2513269782066345
+			4.178640842437744
+			1.9168848991394043
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_beer_keg_tap_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "1b56ac08-fd52-59fe-96bb-9412f9591dc8"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_wood_table_02_5"
+		pos = [
+			2.359591007232666
+			2.9284310340881348
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			-0.7071070075035095
+			-0.7071070075035095
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_wood_table_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "cb38e34e-a422-5dcb-894e-9c8cff880a05"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_beer_keg_01_3"
+		pos = [
+			-0.28125399351119995
+			5.730283737182617
+			0.09560200572013855
+		]
+		rot = [
+			0
+			0
+			0.42261803150177
+			-0.9063079357147217
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_beer_keg_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "5b1babfb-492f-5c4f-b241-87a10d08f479"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_stein_01_2"
+		pos = [
+			2.3430938720703125
+			3.4344120025634766
+			0.9509999752044678
+		]
+		rot = [
+			0
+			0
+			0.9848079681396484
+			-0.17364799976348877
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_stein_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "1c48163c-1adb-5843-9cb4-09fc50b91481"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_hook_36"
+		pos = [
+			0.0712750032544136
+			3.449431896209717
+			1.0709999799728394
+		]
+		rot = [
+			0
+			0
+			-0.7071070075035095
+			-0.7071070075035095
+		]
+		scl = [
+			1
+			0.8227459788322449
+			1
+		]
+		type = "units/props/generic/generic_prop_hook"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "106fe8fb-1133-5a18-bd86-815c2dcf825c"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_hook_37"
+		pos = [
+			0.0712750032544136
+			3.36142897605896
+			1.633023977279663
+		]
+		rot = [
+			0
+			0
+			-0.7071070075035095
+			-0.7071070075035095
+		]
+		scl = [
+			0.876114010810852
+			0.7751839756965637
+			0.876114010810852
+		]
+		type = "units/props/generic/generic_prop_hook"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "ef1f344b-611e-535d-a07c-18ed62be3bfc"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_wood_drawer_01_vt1_23"
+		pos = [
+			-1.1573469638824463
+			1.9820950031280518
+			0.08187099546194077
+		]
+		rot = [
+			0
+			0
+			0.694951057434082
+			-0.7190569639205933
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_wood_drawer_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "b906962e-bbd4-54fa-aced-27fde047424d"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_4m_01_vt1_24"
+		pos = [
+			2.1293299198150635
+			4.375335216522217
+			0.06932999938726425
+		]
+		rot = [
+			0
+			0.7071070075035095
+			-0.7071070075035095
+			0
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "d995c77f-c7cb-51ad-a0b8-f151f9755f92"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "tunnels_wood_beam_rope_binding_01_vt1_25"
+		pos = [
+			2.1293299198150635
+			4.375335216522217
+			2.6152279376983643
+		]
+		rot = [
+			0
+			0.7071070075035095
+			-0.7071070075035095
+			0
+		]
+		scl = [
+			0.44593900442123413
+			0.44593900442123413
+			0.44593900442123413
+		]
+		type = "units/architecture/tunnels/tunnels_wood_beam_rope_binding_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "4a077d2f-d39a-5cc3-99e5-bca4c26fc0e5"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_chest_6"
+		pos = [
+			2.3924269676208496
+			5.336824893951416
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0.6711130142211914
+			-0.7413550019264221
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_chest"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "37ebe58d-3dfe-5904-8807-be34f646acb7"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_hook_38"
+		pos = [
+			1.9789669513702393
+			4.425682067871094
+			0.783782958984375
+		]
+		rot = [
+			0
+			0
+			0.7071070075035095
+			-0.7071070075035095
+		]
+		scl = [
+			1
+			0.8227459788322449
+			1
+		]
+		type = "units/props/generic/generic_prop_hook"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "73e8f2f4-a17f-58e7-b793-7aeecffa3196"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "tunnels_wood_beam_rope_binding_01_8"
+		pos = [
+			2.1293299198150635
+			4.375335216522217
+			0.7646269798278809
+		]
+		rot = [
+			0
+			0.7071070075035095
+			-0.7071070075035095
+			0
+		]
+		scl = [
+			0.44593900442123413
+			0.44593900442123413
+			0.44593900442123413
+		]
+		type = "units/architecture/tunnels/tunnels_wood_beam_rope_binding_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "8b99eced-4ad6-5754-b0a4-6171665c2b92"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "rope_hanging_arch_6m_01_5"
+		pos = [
+			2.5968871116638184
+			6.346168041229248
+			2.8952889442443848
+		]
+		rot = [
+			0
+			0
+			0.7071070075035095
+			-0.7071070075035095
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/rope_hanging_arch_6m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "89adcd59-dd2c-5b87-b8cf-749d9ab83990"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_stool_10"
+		pos = [
+			0.4517650008201599
+			5.8423590660095215
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_stool"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "2e928c1a-c28d-5a7b-b22c-f20485cb963c"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_book_05_6"
+		pos = [
+			0.44543102383613586
+			5.815790176391602
+			0.5429679751396179
+		]
+		rot = [
+			0
+			0
+			0.08715599775314331
+			-0.9961950182914734
+		]
+		scl = [
+			1.12819504737854
+			1.12819504737854
+			1.519544005393982
+		]
+		type = "units/props/inn/props_generic_book_05"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "25203f90-97da-5286-9d8d-e3b4047ff97b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "chain_l100_4"
+		pos = [
+			0.2213210016489029
+			5.629082202911377
+			2.943969964981079
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1.1429259777069092
+		]
+		type = "units/props/chains/chain_l100"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "ae146ebe-8bdc-58af-b750-027e828b98d8"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "chain_l100_5"
+		pos = [
+			2.2408790588378906
+			2.4461610317230225
+			2.8241560459136963
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1.1429259777069092
+		]
+		type = "units/props/chains/chain_l100"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "b5c5b0c9-79b3-528f-9e32-badc4493ecb1"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "wpn_dw_axe_01_t1_3p_1"
+		pos = [
+			1.8363699913024902
+			4.590538024902344
+			0.21717001497745514
+		]
+		rot = [
+			-0.07360199838876724
+			-0.15727801620960236
+			0.32686105370521545
+			-0.9289819598197937
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/weapons/player/wpn_dw_axe_01_t1/wpn_dw_axe_01_t1_3p"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "2dbe9871-219b-5708-ac5a-98a1cb9f27e2"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "tunnels_wood_beam_rope_binding_01_9"
+		pos = [
+			2.1293299198150635
+			4.375335216522217
+			0.9587600231170654
+		]
+		rot = [
+			0
+			0.7071070075035095
+			-0.7071070075035095
+			0
+		]
+		scl = [
+			0.44593900442123413
+			0.44593900442123413
+			0.44593900442123413
+		]
+		type = "units/architecture/tunnels/tunnels_wood_beam_rope_binding_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "4539f5e1-6b6d-5da9-8918-25f3d32fb3d1"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "wpn_dw_xbow_01_t1_3p_1"
+		pos = [
+			2.19360089302063
+			2.7539329528808594
+			1.0138529539108276
+		]
+		rot = [
+			0.05608200281858444
+			-0.018790999427437782
+			0.31714797019958496
+			-0.9465299844741821
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/weapons/player/wpn_dw_xbow_01_t1/wpn_dw_xbow_01_t1_3p"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "c29d69c8-5583-57e9-b402-88e72233a772"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_03b_1"
+		pos = [
+			2.3376431465148926
+			3.759212017059326
+			0.939520001411438
+		]
+		rot = [
+			0
+			0
+			-0.08715499937534332
+			-0.9961950182914734
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_03b"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "784a5f22-370a-5b6f-9559-07e8b0b17c63"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_03b_2"
+		pos = [
+			2.7118568420410156
+			3.8447070121765137
+			0.9849929213523865
+		]
+		rot = [
+			-0.6861670017242432
+			0.1710970103740692
+			0.1709650158882141
+			-0.6860550045967102
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_03b"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "fa760ec1-3cb6-58a4-8de1-0e8c157f870b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_03b_3"
+		pos = [
+			2.5859479904174805
+			3.416193962097168
+			1.0023390054702759
+		]
+		rot = [
+			-0.7006459832191467
+			-0.13356399536132812
+			-0.13119299709796906
+			-0.6885090470314026
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_03b"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "5f67c5c1-dc2b-5d42-8951-69bdac9718cb"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_03b_4"
+		pos = [
+			2.5130269527435303
+			4.164775848388672
+			0.20341601967811584
+		]
+		rot = [
+			-0.694610059261322
+			-0.13241399824619293
+			-0.13235299289226532
+			-0.694597065448761
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_03b"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "f70d76fc-7ad5-5cd5-b932-ef375f016619"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_03b_5"
+		pos = [
+			2.399172067642212
+			4.155745983123779
+			0.13674898445606232
+		]
+		rot = [
+			-0.6861670017242432
+			0.1710970103740692
+			0.1709650158882141
+			-0.6860550045967102
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_03b"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "86c17877-dea3-54c5-9167-8f5b2a5f520b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_crate_01_1"
+		pos = [
+			2.333081007003784
+			3.9971261024475098
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/merchant/prop_crate_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "2c25d00c-5943-5bdc-8f24-e9b27abfa4ce"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_03b_6"
+		pos = [
+			2.0625340938568115
+			4.022490978240967
+			0.125
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_03b"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "c9000e99-ead5-5719-b951-3c2baaa5be5b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_03b_7"
+		pos = [
+			2.401953935623169
+			3.856813907623291
+			0.125
+		]
+		rot = [
+			0
+			0
+			0.6427879929542542
+			-0.7660439610481262
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_03b"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "47d5e249-351d-53a0-bb56-e59da1370e1b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_plate_01_2"
+		pos = [
+			2.3525280952453613
+			2.1542840003967285
+			0.9487450122833252
+		]
+		rot = [
+			-0.004512000363320112
+			0.010959000326693058
+			0.002322999993339181
+			-0.9999269843101501
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_plate_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "7903b09e-7496-53c5-84e5-2c8ba5d0fb4a"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_meat_haunch_01_1"
+		pos = [
+			2.357835054397583
+			2.205826997756958
+			0.8830350041389465
+		]
+		rot = [
+			0
+			0
+			-0.25881901383399963
+			-0.9659259915351868
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_meat_haunch_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "009187bc-8c12-5b65-86a7-438993fd731d"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_meat_haunch_01_2"
+		pos = [
+			2.308082103729248
+			2.181986093521118
+			1.066499948501587
+		]
+		rot = [
+			-0.7093420028686523
+			-0.2870350182056427
+			-0.22346201539039612
+			-0.6037460565567017
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_meat_haunch_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "0b6f1606-e6d4-5c62-9a26-8be1e56b0dbd"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "wpn_crossbow_bolt_3p_1"
+		pos = [
+			2
+			3
+			0.9368959665298462
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/weapons/player/wpn_crossbow_quiver/wpn_crossbow_bolt_3p"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "1a0358f8-08a6-5d3f-abb2-3a7bd8c2becf"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "wpn_crossbow_bolt_3p_2"
+		pos = [
+			1.953577995300293
+			2.955960988998413
+			0.9368959665298462
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/weapons/player/wpn_crossbow_quiver/wpn_crossbow_bolt_3p"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "77eefd9d-a699-5fdf-826d-5f621bfcfdc9"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "wpn_crossbow_bolt_3p_3"
+		pos = [
+			1.895117998123169
+			2.980839967727661
+			0.932007908821106
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/weapons/player/wpn_crossbow_quiver/wpn_crossbow_bolt_3p"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "583f1b66-6004-5cd5-9328-226cd5ee2d3e"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "spider_web_03_3"
+		pos = [
+			-1.1294900178909302
+			5.895751953125
+			2.330251932144165
+		]
+		rot = [
+			0.5172309875488281
+			0.43957599997520447
+			0.45865702629089355
+			-0.5734789967536926
+		]
+		scl = [
+			0.6808170080184937
+			0.6808170080184937
+			0.6808170080184937
+		]
+		type = "units/generic/spider_web_03"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "be452afa-57f4-5c7e-914b-dc3fb1d0e170"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_coin_gold_5"
+		pos = [
+			0.45475202798843384
+			5.843809127807617
+			0.628000020980835
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_coin_gold"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "005d1f71-7d1c-5ede-98b4-c17229b01003"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_coin_gold_6"
+		pos = [
+			0.39551201462745667
+			5.881902694702148
+			0.628000020980835
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_coin_gold"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "df563a08-9740-52a6-b5cb-14be5ad6a805"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_coin_gold_7"
+		pos = [
+			0.39551201462745667
+			5.706564903259277
+			0.628000020980835
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_coin_gold"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "0be3151a-d248-5205-b7e0-c2a2e4806ffe"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_shovel_1"
+		pos = [
+			1.7278879880905151
+			0.9311999082565308
+			0.1339309960603714
+		]
+		rot = [
+			-0.00908299908041954
+			-0.10382599383592606
+			0.9606649875640869
+			0.257409006357193
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_shovel"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "fea743b7-3011-5cf4-8e2b-07a118e0f052"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_jug_01_7"
+		pos = [
+			0.007202000357210636
+			4.72723388671875
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_jug_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "f6b335b1-bb74-5974-b413-289e5931df36"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_bucket_02_2"
+		pos = [
+			1.6624550819396973
+			6.8182148933410645
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_bucket_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "d06ef76b-5f11-59bb-b6da-e1726d5eb807"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_4m_01_10"
+		pos = [
+			2.9276609420776367
+			3.2282679080963135
+			2.67065691947937
+		]
+		rot = [
+			-0.5
+			-0.5
+			0.5
+			-0.5
+		]
+		scl = [
+			0.9446869492530823
+			1.1469130516052246
+			0.9446869492530823
+		]
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "943fcd15-d7c3-5ef1-af66-b96312f6735c"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_4m_01_11"
+		pos = [
+			2.9276609420776367
+			1.4295099973678589
+			2.5774550437927246
+		]
+		rot = [
+			-0.5
+			-0.5
+			0.5
+			-0.5
+		]
+		scl = [
+			0.9446869492530823
+			1.1469130516052246
+			0.9446869492530823
+		]
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "87e1adb1-cb33-578a-be8b-f36d1a4d1df3"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_101"
+		pos = [
+			0.3399060070514679
+			3.3689370155334473
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0.7071070075035095
+			-0.7071070075035095
+		]
+		scl = [
+			0.7843409776687622
+			1.2669659852981567
+			1
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "1fea059d-a82d-5e3d-8883-bb0400180b07"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_102"
+		pos = [
+			0.3399060070514679
+			0.562512993812561
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0.7071070075035095
+			-0.7071070075035095
+		]
+		scl = [
+			0.7843409776687622
+			1.2669659852981567
+			1
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "ac7b9805-08f5-5db5-8be4-3dba8a060c9a"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "spider_web_01_8"
+		pos = [
+			2.628330945968628
+			4.7435479164123535
+			2.5564420223236084
+		]
+		rot = [
+			0.12027900665998459
+			0.43025001883506775
+			0.7916639447212219
+			-0.4167570173740387
+		]
+		scl = [
+			0.6566610336303711
+			0.6566610336303711
+			0.6566610336303711
+		]
+		type = "units/generic/spider_web_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "bd3ad01f-c9b5-5c79-bfa0-7c8866dce155"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_barrel_02_1"
+		pos = [
+			1.314850091934204
+			0.563834011554718
+			0.15847201645374298
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_barrel_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "f3cc2cc3-b1bc-54cf-8138-8dd8e4d323d4"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_wall_shelf_01_vt1_64"
+		pos = [
+			1.506775975227356
+			0.3772500157356262
+			1.3654249906539917
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_wall_shelf_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "96530f79-bb62-5979-b4af-fcccddebd9b2"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_wall_shelf_01_16"
+		pos = [
+			2.3469839096069336
+			0.3772500157356262
+			1.9031100273132324
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_wall_shelf_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "14d4f7b5-e996-5216-bc93-7808b911292e"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_wall_shelf_01_17"
+		pos = [
+			2.897770881652832
+			5
+			1.2999770641326904
+		]
+		rot = [
+			0
+			0
+			-0.715671956539154
+			-0.6984360814094543
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_wall_shelf_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "b7436422-ad64-54ee-b4e7-6cbe70ea96f7"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_wall_shelf_01_18"
+		pos = [
+			2.897770881652832
+			4.994046211242676
+			1.8318040370941162
+		]
+		rot = [
+			0
+			0
+			-0.715671956539154
+			-0.6984360814094543
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_wall_shelf_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "06d853e9-8f67-5212-a5b9-cf2f368b699d"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "spider_web_01_9"
+		pos = [
+			2.83378005027771
+			4.96926212310791
+			1.9255579710006714
+		]
+		rot = [
+			-0.13945899903774261
+			0.15705500543117523
+			0.649164080619812
+			-0.7310749292373657
+		]
+		scl = [
+			0.5598270297050476
+			0.3273650109767914
+			0.3273650109767914
+		]
+		type = "units/generic/spider_web_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "1b5d1f51-6b2f-52d6-adca-c56bcfd0b4ea"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "spider_web_04_2"
+		pos = [
+			2.1474671363830566
+			0.5465280413627625
+			2.4722740650177
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			0.696107029914856
+			0.696107029914856
+			0.696107029914856
+		]
+		type = "units/generic/spider_web_04"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "37274fd8-8c06-59ca-997d-5f09a46c31bd"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_06_6"
+		pos = [
+			2.71140193939209
+			5.347391128540039
+			1.3009999990463257
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_06"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "b0bdbb2d-0a12-5e10-8d31-0bf55e531591"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_06_7"
+		pos = [
+			2.736633777618408
+			5.118027210235596
+			1.3009999990463257
+		]
+		rot = [
+			0
+			0
+			-0.5735769867897034
+			-0.8191520571708679
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_06"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "9191310f-1e14-569f-b27c-81028338aaa4"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_07_7"
+		pos = [
+			1.2566170692443848
+			0.5377010107040405
+			1.3660000562667847
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_07"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "d1c4cd37-7d38-53c3-b7d9-dc0216449574"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_08_5"
+		pos = [
+			1.4130100011825562
+			0.5078630447387695
+			1.3660000562667847
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_08"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "28c2747a-0b2e-5132-888a-2ef59319d9e3"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_wizard_paper_10_10"
+		pos = [
+			2.057239055633545
+			3.6101291179656982
+			0.9407129883766174
+		]
+		rot = [
+			-0.011903000064194202
+			0.022192999720573425
+			0.6156749725341797
+			-0.7875980138778687
+		]
+		scl = [
+			1
+			1
+			0.24319502711296082
+		]
+		type = "units/brushes/wizard/brush_wizard_paper_10"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "7e0be2b2-751b-51a8-b9a5-2b991ec532b8"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_coin_copper_21"
+		pos = [
+			2.139103889465332
+			3.500885009765625
+			0.9498120546340942
+		]
+		rot = [
+			0.004414000082761049
+			0.024793000891804695
+			-0.004970999900251627
+			-0.9996709823608398
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_coin_copper"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "f0715fe0-2155-5939-bbb1-c7a30c06d845"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_coin_gold_8"
+		pos = [
+			2.024195909500122
+			3.5597000122070312
+			0.9415960311889648
+		]
+		rot = [
+			0.004414000082761049
+			0.024793000891804695
+			-0.004970999900251627
+			-0.9996709823608398
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_coin_gold"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "54cb900e-04c4-5692-94be-245a8f2ea2d2"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_coin_gold_9"
+		pos = [
+			2.116147994995117
+			3.617863178253174
+			0.9456639885902405
+		]
+		rot = [
+			0.012626999989151955
+			0.021789001300930977
+			-0.3465780019760132
+			-0.9376829266548157
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_coin_gold"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "0d33f3f5-d526-54bb-be9e-ab7db000c260"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_coin_gold_10"
+		pos = [
+			1.9933569431304932
+			3.716320037841797
+			0.9397199749946594
+		]
+		rot = [
+			0.004414000082761049
+			0.024793000891804695
+			-0.004970999900251627
+			-0.9996709823608398
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_coin_gold"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "c7926a7f-06f8-5d6e-adbc-7b1979a62efa"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_coin_gold_11"
+		pos = [
+			2.01229190826416
+			3.6542880535125732
+			0.9411929845809937
+		]
+		rot = [
+			0.004414000082761049
+			0.024793000891804695
+			-0.004970999900251627
+			-0.9996709823608398
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_coin_gold"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "860b0ea2-cd4b-54e1-877a-7ab2502c1cb7"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "sign_emp_paper_06_5"
+		pos = [
+			-0.8210809826850891
+			0.4398200213909149
+			1.2253620624542236
+		]
+		rot = [
+			0
+			0
+			0.9997270107269287
+			-0.023385999724268913
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/signs/sign_emp_paper_06"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "9bba603d-a77d-56fe-88c7-326042687e6a"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "sign_emp_paper_09_4"
+		pos = [
+			-0.83604896068573
+			0.4398200213909149
+			1.4511469602584839
+		]
+		rot = [
+			0
+			0
+			0.9997270107269287
+			-0.023385999724268913
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/signs/sign_emp_paper_09"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "ca1ec17c-6cc2-50bf-81a1-87ea307f740a"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "sign_emp_paper_01_6"
+		pos = [
+			0.8782529830932617
+			0.4181149899959564
+			1.185716986656189
+		]
+		rot = [
+			0
+			0
+			1
+			0
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/signs/sign_emp_paper_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "19d3b32c-aedc-580a-be87-432824ccf75b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "decal_burn_mark_01_5"
+		pos = [
+			1.6980140209197998
+			4.842127799987793
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			2.624587059020996
+			2.624587059020996
+			2.624587059020996
+		]
+		type = "units/decals/decal_burn_mark_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "e61d284a-b22a-56b1-8afd-dfca7404baa3"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_brick_small_01_2"
+		pos = [
+			2.1105871200561523
+			6.959260940551758
+			1.176198959350586
+		]
+		rot = [
+			0
+			0
+			-0.3420200049877167
+			-0.9396929144859314
+		]
+		scl = [
+			1.1370799541473389
+			1.1370799541473389
+			1.1370799541473389
+		]
+		type = "units/brushes/brush_brick_small_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "d51a56f8-b6f5-5852-aab3-ea728d3e0ce1"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_brick_small_01_3"
+		pos = [
+			2.2888360023498535
+			6.783380031585693
+			1.1553690433502197
+		]
+		rot = [
+			0
+			0
+			-0.3420200049877167
+			-0.9396929144859314
+		]
+		scl = [
+			1.2544950246810913
+			1.2544950246810913
+			1.2544950246810913
+		]
+		type = "units/brushes/brush_brick_small_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "4735b977-641d-5dea-aa2c-c5dd098cf8cf"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_brick_small_01_4"
+		pos = [
+			2.2103919982910156
+			6.876866817474365
+			1.2832039594650269
+		]
+		rot = [
+			0
+			0
+			-0.3420200049877167
+			-0.9396929144859314
+		]
+		scl = [
+			1.13788902759552
+			1.13788902759552
+			1.13788902759552
+		]
+		type = "units/brushes/brush_brick_small_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "3da3ce90-e466-54a1-b04a-a86fcc1d2307"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_brick_small_01_5"
+		pos = [
+			2.041033983230591
+			7.042150020599365
+			1.2878140211105347
+		]
+		rot = [
+			0
+			0
+			-0.3420200049877167
+			-0.9396929144859314
+		]
+		scl = [
+			1.0910580158233643
+			1.0910580158233643
+			1.0910580158233643
+		]
+		type = "units/brushes/brush_brick_small_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "55116283-17ec-5cea-93d7-248783547d83"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_brick_small_01_6"
+		pos = [
+			2.552886962890625
+			6.525024890899658
+			1.2670899629592896
+		]
+		rot = [
+			0
+			0
+			-0.3420200049877167
+			-0.9396929144859314
+		]
+		scl = [
+			1.0910580158233643
+			1.0910580158233643
+			1.0910580158233643
+		]
+		type = "units/brushes/brush_brick_small_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "1b022b78-349a-5b67-a327-f9c9b0b14228"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_brick_small_01_7"
+		pos = [
+			2.379826068878174
+			6.694723129272461
+			1.2725980281829834
+		]
+		rot = [
+			0
+			0
+			-0.3420200049877167
+			-0.9396929144859314
+		]
+		scl = [
+			1.1831640005111694
+			1.1831640005111694
+			1.1831640005111694
+		]
+		type = "units/brushes/brush_brick_small_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "93f73ffe-11e1-509d-9915-9a53bffb8c17"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_brick_small_01_8"
+		pos = [
+			2.461885929107666
+			6.596928119659424
+			1.1511839628219604
+		]
+		rot = [
+			0
+			0
+			-0.3420200049877167
+			-0.9396929144859314
+		]
+		scl = [
+			1.213062047958374
+			1.213062047958374
+			1.213062047958374
+		]
+		type = "units/brushes/brush_brick_small_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "02ee86f6-3500-510e-a44e-cd083938f296"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_basket_wicker_3"
+		pos = [
+			0.3466640114784241
+			6.490914821624756
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			-0.6427879929542542
+			-0.7660439610481262
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_basket_wicker"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "21a6823e-44df-53d1-9575-fed7f9dea553"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_apple_01_6"
+		pos = [
+			0.3466640114784241
+			6.490914821624756
+			0.12200000137090683
+		]
+		rot = [
+			-0.522322952747345
+			-0.43828099966049194
+			-0.47019699215888977
+			-0.560359001159668
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_apple_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "0ac4623a-55be-5a9c-963e-9b318a83e975"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_apple_01_7"
+		pos = [
+			1.856603980064392
+			6.2747979164123535
+			0.16065698862075806
+		]
+		rot = [
+			0.08280499279499054
+			-0.702242910861969
+			-0.08276699483394623
+			-0.7022449374198914
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_apple_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "bbff4f45-9094-5112-ad37-5dceedc3d357"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_apple_01_8"
+		pos = [
+			0.17558099329471588
+			5.99963903427124
+			0.16050998866558075
+		]
+		rot = [
+			-0.32880303263664246
+			0.6260049939155579
+			-0.32883402705192566
+			-0.6259989738464355
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_apple_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "1f6cfc25-358f-5af5-a351-28dc02727617"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_apple_01_9"
+		pos = [
+			0.20352600514888763
+			6.540712833404541
+			0.16050799190998077
+		]
+		rot = [
+			0.6850640177726746
+			0.17511799931526184
+			0.6850869655609131
+			-0.17514799535274506
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_apple_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "22fa691d-9d27-5112-ad55-6854fff12bb2"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_apple_01_10"
+		pos = [
+			0.2672170102596283
+			6.466242790222168
+			0.1606689989566803
+		]
+		rot = [
+			-0.5554050207138062
+			-0.43764200806617737
+			0.5554200410842896
+			-0.43761104345321655
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_apple_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "a4a50dd5-ef84-525c-ab33-483e3414c440"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_apple_01_vt1_97"
+		pos = [
+			2.718392848968506
+			2.8673229217529297
+			0.9508650302886963
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_apple_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "42bff297-2a57-58da-a0e6-3215ce712eb6"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_apple_01_vt1_98"
+		pos = [
+			2.0038130283355713
+			2.226686954498291
+			1.0027940273284912
+		]
+		rot = [
+			-0.6903460621833801
+			-0.11224900186061859
+			0.13907501101493835
+			-0.701056957244873
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_apple_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "21969006-8256-5f3d-9de5-f4f250a884dc"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_pie_01_1"
+		pos = [
+			2.653510093688965
+			2.4974520206451416
+			0.9582859873771667
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_pie_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "fd3d524d-c6c0-5217-b016-ca97f1d00963"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_fork_01_1"
+		pos = [
+			1.9487769603729248
+			2.2840518951416016
+			0.9348469376564026
+		]
+		rot = [
+			-0.08418599516153336
+			0.022557999938726425
+			-0.2578340172767639
+			-0.9622499346733093
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_fork_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "c7bd7860-acad-5f94-8782-f98d1cda8250"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_potatoe_01_1"
+		pos = [
+			1.4848710298538208
+			3.8143811225891113
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0.25881901383399963
+			-0.9659259915351868
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_potatoe_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "fe26a83d-c2bc-5413-b4d0-3747c6464928"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_potatoe_02_1"
+		pos = [
+			1.9166159629821777
+			3.3935608863830566
+			0.14800000190734863
+		]
+		rot = [
+			0
+			0
+			0.5
+			-0.8660250306129456
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_potatoe_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "570caf17-0d43-5bbc-831e-ac937dde804d"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_potatoe_02_2"
+		pos = [
+			2.263097047805786
+			2.2832860946655273
+			0.966090977191925
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_potatoe_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "c0984c0c-25cb-51ed-b31c-16ccf6941cfd"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_apple_01_vt1_104"
+		pos = [
+			1.752384901046753
+			3.512134075164795
+			0.23579099774360657
+		]
+		rot = [
+			-0.43045902252197266
+			0.5609859824180603
+			0.5609859824180603
+			-0.43045902252197266
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_apple_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "856c4f21-1f76-53f9-8638-3ff6d7eddb98"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_apple_01_vt1_105"
+		pos = [
+			-1.2000000424450263e-05
+			2.0000948905944824
+			0.16066500544548035
+		]
+		rot = [
+			-0.0001049999991664663
+			-0.7071150541305542
+			8.699999307282269e-05
+			-0.7070990204811096
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_apple_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "ef6396ff-ee83-5a37-8f98-a20ea3b0865a"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_stein_01_vt1_106"
+		pos = [
+			-1.0815199613571167
+			2.4483120441436768
+			1.1490000486373901
+		]
+		rot = [
+			0
+			0
+			-0.5
+			-0.8660250306129456
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_stein_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "43d1661b-9174-565b-82ee-b18d7e44ab3d"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_brick_small_01_10"
+		pos = [
+			2.638282060623169
+			6.4251837730407715
+			1.1491169929504395
+		]
+		rot = [
+			0
+			0
+			-0.3420200049877167
+			-0.9396929144859314
+		]
+		scl = [
+			1.0910580158233643
+			1.0910580158233643
+			1.0910580158233643
+		]
+		type = "units/brushes/brush_brick_small_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "c1e679ef-ba4f-582b-a7ae-0dfefaacc01b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_19"
+		pos = [
+			2.385295867919922
+			6.7031168937683105
+			2.483591079711914
+		]
+		rot = [
+			0.25221800804138184
+			-0.6663399934768677
+			-0.2759310305118561
+			-0.6451660990715027
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "dd661d48-4aee-59f4-b49a-ef52e058b56e"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_18"
+		pos = [
+			2.377340078353882
+			6.71054220199585
+			2.2451229095458984
+		]
+		rot = [
+			0.6663399934768677
+			0.25221800804138184
+			0.6451660990715027
+			-0.2759310305118561
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "3501c5fe-797e-5bc7-8e38-25031f876dc4"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_17"
+		pos = [
+			2.383362054824829
+			6.704783916473389
+			2.0084118843078613
+		]
+		rot = [
+			-0.2759310305118561
+			0.6451660990715027
+			-0.25221800804138184
+			-0.6663399934768677
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "74ae41a6-b21e-5e26-96e6-bc3b132550ae"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_16"
+		pos = [
+			2.328313112258911
+			6.754164218902588
+			1.7672760486602783
+		]
+		rot = [
+			-0.6439690589904785
+			-0.2735610008239746
+			0.6697100400924683
+			-0.2489130049943924
+		]
+		scl = [
+			0.5110309720039368
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "003f5a2a-5bdd-59dd-a3d2-a0257490c4ae"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_15"
+		pos = [
+			2.360629081726074
+			6.726274013519287
+			1.508952021598816
+		]
+		rot = [
+			0.2489130049943924
+			-0.6697100400924683
+			-0.2735610008239746
+			-0.6439690589904785
+		]
+		scl = [
+			0.5216899514198303
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "bac1216f-ae9b-5a02-8294-2d68704e6301"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_20"
+		pos = [
+			1.0606420040130615
+			7.147132873535156
+			1.906785011291504
+		]
+		rot = [
+			0.6821600198745728
+			0.1292240023612976
+			0.1533920168876648
+			-0.7031570076942444
+		]
+		scl = [
+			0.4902770221233368
+			0.369022011756897
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "b62e8680-cd0a-56f4-b403-afbc1083bc6e"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_11"
+		pos = [
+			1.2657380104064941
+			7.215392112731934
+			1.794255018234253
+		]
+		rot = [
+			0.4911389946937561
+			-0.49073702096939087
+			-0.49446600675582886
+			-0.5229359269142151
+		]
+		scl = [
+			0.511031985282898
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "7ea0b6b0-313c-599e-954e-5e23075160dd"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_10"
+		pos = [
+			1.197793960571289
+			7.199090003967285
+			2.0290980339050293
+		]
+		rot = [
+			0.49073800444602966
+			0.4911389946937561
+			0.5229359269142151
+			-0.49446600675582886
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "52b0143a-aab6-5216-8d7c-b4bd5e2844ba"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_9"
+		pos = [
+			1.2092820405960083
+			7.1942291259765625
+			2.265626907348633
+		]
+		rot = [
+			-0.49446600675582886
+			0.5229359269142151
+			-0.4911389946937561
+			-0.49073702096939087
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "bbb3c25e-fc3e-5ad4-96f0-a7a1ccb43bd4"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_8"
+		pos = [
+			1.201583981513977
+			7.188918113708496
+			2.504159927368164
+		]
+		rot = [
+			0.5229359269142151
+			0.49446702003479004
+			-0.49073800444602966
+			0.4911389946937561
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "27884a50-bc4b-549d-bd71-e2c307f4604f"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_12"
+		pos = [
+			1.218616008758545
+			7.216031074523926
+			1.5419280529022217
+		]
+		rot = [
+			0.5229359269142151
+			0.49446702003479004
+			-0.49073800444602966
+			0.4911389946937561
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "d246c3c6-28c3-5848-90d6-d33617e7c83b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_13"
+		pos = [
+			1.2376559972763062
+			7.232025146484375
+			1.304103970527649
+		]
+		rot = [
+			-0.49446600675582886
+			0.5229359269142151
+			-0.4911389946937561
+			-0.49073702096939087
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "de732824-f725-561f-bbfc-d9cf4b72535d"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_7"
+		pos = [
+			-0.029096998274326324
+			6.674962997436523
+			1.9433300495147705
+		]
+		rot = [
+			-0.08331099152565002
+			0.6964840292930603
+			0.5748040080070496
+			-0.42138898372650146
+		]
+		scl = [
+			0.4541679918766022
+			0.4429120123386383
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "05e3ab8f-9562-58db-95de-1ed437be5293"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_3"
+		pos = [
+			-0.007156999781727791
+			6.752570152282715
+			1.7090719938278198
+		]
+		rot = [
+			-0.6482210755348206
+			0.2680310010910034
+			0.6487050652503967
+			0.2952120304107666
+		]
+		scl = [
+			0.511031985282898
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "a594ed72-02c2-54d1-a76c-dbc46204da66"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_4"
+		pos = [
+			-0.04838800057768822
+			6.695601940155029
+			1.9437799453735352
+		]
+		rot = [
+			0.2680310010910034
+			0.6482210755348206
+			0.2952120304107666
+			-0.6487050652503967
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "1a4c0f2d-d37c-53df-95f6-71e05c489321"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_6"
+		pos = [
+			-0.041168998926877975
+			6.702603816986084
+			2.1804239749908447
+		]
+		rot = [
+			0.6487050652503967
+			-0.2952120304107666
+			0.6482210755348206
+			0.2680310010910034
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "b819cfd1-0ed6-5b71-801e-3b484d596998"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_5"
+		pos = [
+			-0.047322001308202744
+			6.695824146270752
+			2.4189648628234863
+		]
+		rot = [
+			-0.2952120304107666
+			-0.6487050652503967
+			0.2680310010910034
+			-0.6482210755348206
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "cbde2ed0-0218-5ac5-9176-a6edbbe47cdf"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_2"
+		pos = [
+			-0.0418269969522953
+			6.712371826171875
+			1.456247091293335
+		]
+		rot = [
+			-0.2952120304107666
+			-0.6487050652503967
+			0.2680310010910034
+			-0.6482210755348206
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "1021b2f0-d1e9-5fe1-be71-a8bda8791321"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "docks_wood_scaffold_plank_01_1"
+		pos = [
+			-0.029767999425530434
+			6.7397260665893555
+			1.2185239791870117
+		]
+		rot = [
+			0.6487050652503967
+			-0.2952120304107666
+			0.6482210755348206
+			0.2680310010910034
+		]
+		scl = [
+			0.4833320081233978
+			0.30587103962898254
+			0.37108999490737915
+		]
+		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "95da8eaa-5329-53cb-a7e2-0e95df3223ab"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_brick_small_01_9"
+		pos = [
+			2.0705039501190186
+			6.623615264892578
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/brushes/brush_brick_small_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "545e574b-5e3f-5f9f-a909-501b7edd7cb9"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_brick_small_01_vt1_128"
+		pos = [
+			2.277301073074341
+			6.5131659507751465
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0.4514240026473999
+			-0.8923099637031555
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/brushes/brush_brick_small_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "02994ebc-3a7a-5728-a3b7-431081433916"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_brick_small_01_11"
+		pos = [
+			2.0755550861358643
+			6.636654853820801
+			0.20100000500679016
+		]
+		rot = [
+			0
+			0
+			-0.7612359523773193
+			-0.6484750509262085
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/brushes/brush_brick_small_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "0e57cae2-8037-5e7d-ba18-78c10dcc6f82"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_brick_small_01_12"
+		pos = [
+			1.3276760578155518
+			6.948451995849609
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/brushes/brush_brick_small_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "1b8e0709-3cc3-56f1-af3c-a5391419c964"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "rope_pile_01_1"
+		pos = [
+			2.1836509704589844
+			1.4149940013885498
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			0.6114769577980042
+			0.6114769577980042
+			0.6114769577980042
+		]
+		type = "units/props/rope_pile_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "4b47887c-a823-5dbb-9364-1ab39374fa44"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_cup_01_1"
+		pos = [
+			0.18792200088500977
+			5.463037014007568
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_cup_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "90a0511f-c39e-59f4-a17a-a507dc504396"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_cup_01_2"
+		pos = [
+			0.5222499370574951
+			5.7427191734313965
+			0.628000020980835
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_cup_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "ba91f698-feb4-5704-ab3e-a9b06ecbee54"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_cup_01_3"
+		pos = [
+			-0.00044599996181204915
+			5.301329135894775
+			0.09800000488758087
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_cup_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "a70cdb6b-1c3c-5165-88ee-1d770622dac1"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_cup_01_4"
+		pos = [
+			0.1177239939570427
+			4.363646984100342
+			0.1655929833650589
+		]
+		rot = [
+			-0.7071070075035095
+			0
+			0
+			-0.7071070075035095
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_cup_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "38a7ba26-7d00-536b-98d3-67993400a9c8"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_jar_2"
+		pos = [
+			-0.6379299759864807
+			2.591202974319458
+			0.09784800559282303
+		]
+		rot = [
+			1.1000000085914508e-05
+			-9.999999974752427e-07
+			9.999999974752427e-07
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_jar"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "3d439263-a0a8-5380-8a3c-77351fb00807"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_jar_02_8"
+		pos = [
+			-0.8275930285453796
+			2.8096160888671875
+			0.11633700132369995
+		]
+		rot = [
+			0
+			0
+			0.5735769867897034
+			-0.8191520571708679
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_jar_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "329d329d-5282-5226-9d27-332c08ea11fc"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_book_05_2"
+		pos = [
+			-0.8642110228538513
+			2.1128549575805664
+			0.3942210376262665
+		]
+		rot = [
+			0
+			-0.07549300789833069
+			0
+			-0.9971460700035095
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_book_05"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "3cfe4b5f-6d11-560b-91f2-8c88f4e9310d"
+		lights = {
+			omni = {
+				box_max = [
+					10
+					10
+					10
+				]
+				box_min = [
+					-10
+					0
+					-10
+				]
+				cast_shadows = true
+				color = [
+					1
+					0.5529411435127258
+					0.2196078598499298
+				]
+				falloff_end = 2.799999952316284
+				falloff_exponent = 2
+				falloff_start = 0
+				intensity = 0.25
+				material = ""
+				spot_angle_end = 1.0471975803375244
+				spot_angle_start = 0
+				type = "omni"
+				volumetric_intensity = 0
+			}
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_lantern_02_2"
+		pos = [
+			0.2213210016489029
+			5.629082202911377
+			2.0096359252929688
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/lanterns/lantern_02/prop_lantern_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "5d49cd0d-3672-59c1-8684-2093df4764d2"
+		lights = {
+			omni = {
+				box_max = [
+					10
+					10
+					10
+				]
+				box_min = [
+					-10
+					0
+					-10
+				]
+				cast_shadows = true
+				color = [
+					1
+					0.5529411435127258
+					0.2196078598499298
+				]
+				falloff_end = 2
+				falloff_exponent = 2
+				falloff_start = 0
+				intensity = 0.15000000596046448
+				material = ""
+				spot_angle_end = 1.0471975803375244
+				spot_angle_start = 0
+				type = "omni"
+				volumetric_intensity = 0
+			}
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_lantern_02_3"
+		pos = [
+			2.2408790588378906
+			2.4461610317230225
+			1.8898210525512695
+		]
+		rot = [
+			0
+			0
+			0.3420200049877167
+			-0.9396929144859314
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/lanterns/lantern_02/prop_lantern_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "80336bf6-a9e2-5e9c-ab8d-418661038bf3"
+		lights = {
+			omni = {
+				box_max = [
+					10
+					10
+					10
+				]
+				box_min = [
+					-10
+					0
+					-10
+				]
+				cast_shadows = false
+				color = [
+					1
+					0.4941176474094391
+					0.17647063732147217
+				]
+				falloff_end = 6
+				falloff_exponent = 0
+				falloff_start = 1
+				intensity = 0.03999999910593033
+				material = ""
+				spot_angle_end = 0
+				spot_angle_start = 0
+				type = "omni"
+				volumetric_intensity = 0
+			}
+		}
+		material = ""
+		materials = {
+		}
+		name = "light_2"
+		pos = [
+			0.8791550397872925
+			3.2195379734039307
+			1.8472449779510498
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/lights/light"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "5b801435-4bee-5cb9-aed8-88985334a947"
+		lights = {
+		}
+		material = "units/skydome/skydome_hdr"
+		materials = {
+		}
+		name = "skydome_hdr_vt1_142"
+		pos = [
+			0
+			0
+			0
+		]
+		rot = [
+			0
+			0
+			0
+			1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/skydome/skydome_hdr"
+	}
+]
+volumes = [
+	{
+		bottom = 0
+		cap_triangulation = [
+			4
+			1
+			2
+			3
+			4
+			2
+		]
+		id = "4c280074-b492-5d35-b7b3-622cedb2f1c5"
+		name = "volume_3"
+		points = [
+			[
+				-1
+				-1
+				0
+			]
+			[
+				4
+				-1
+				0
+			]
+			[
+				4
+				7
+				0
+			]
+			[
+				-1
+				7
+				0
+			]
+		]
+		pos = [
+			-0.7516739368438721
+			1.0687990188598633
+			2.940985918045044
+		]
+		rot = [
+			0
+			0
+			0
+			1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		top = 0.20000001788139343
+		type = "default"
+	}
+	{
+		bottom = 0
+		cap_triangulation = [
+			15
+			1
+			2
+			15
+			2
+			3
+			15
+			3
+			4
+			14
+			15
+			4
+			14
+			4
+			5
+			13
+			14
+			5
+			13
+			5
+			6
+			12
+			13
+			6
+			12
+			6
+			7
+			11
+			12
+			7
+			11
+			7
+			8
+			10
+			11
+			8
+			9
+			10
+			8
+		]
+		id = "4c92c33a-ba35-5d6a-9dbd-b3511a7bd09a"
+		name = "volume_1"
+		points = [
+			[
+				-1.197121024131775
+				-1.8451800346374512
+				0
+			]
+			[
+				-1.1446959972381592
+				-8.116257667541504
+				0
+			]
+			[
+				-1.089257001876831
+				-8.135698318481445
+				0
+			]
+			[
+				-1.094020962715149
+				-1.8175420761108398
+				0
+			]
+			[
+				-0.6837530136108398
+				-1.7075610160827637
+				0
+			]
+			[
+				-0.4204850196838379
+				-1
+				0
+			]
+			[
+				0.2801550030708313
+				-1
+				0
+			]
+			[
+				0.6028140187263489
+				-1.9070699214935303
+				0
+			]
+			[
+				0.6196879744529724
+				-8.137664794921875
+				0
+			]
+			[
+				0.6776690483093262
+				-8.117457389831543
+				0
+			]
+			[
+				0.6490810513496399
+				-1.846832036972046
+				0
+			]
+			[
+				0.2214980125427246
+				-0.7212599515914917
+				0
+			]
+			[
+				-0.3730269968509674
+				-0.696712076663971
+				0
+			]
+			[
+				-0.728486955165863
+				-1.4446110725402832
+				0
+			]
+			[
+				-1.173266053199768
+				-1.6091840267181396
+				0
+			]
+		]
+		pos = [
+			1.3438340425491333
+			8.3463716506958
+			-0.32322901487350464
+		]
+		rot = [
+			0
+			0
+			0
+			1
+		]
+		scl = [
+			2.8514280319213867
+			1
+			1.562520980834961
+		]
+		top = 2
+		type = "default"
+	}
+	{
+		bottom = 0
+		cap_triangulation = [
+			4
+			1
+			2
+			3
+			4
+			2
+		]
+		id = "f56f476b-aa77-5f22-94a0-dd5bd330ed90"
+		name = "volume_2"
+		points = [
+			[
+				-1
+				-1
+				0
+			]
+			[
+				4
+				-1
+				0
+			]
+			[
+				4
+				7
+				0
+			]
+			[
+				-1
+				7
+				0
+			]
+		]
+		pos = [
+			-0.7516739368438721
+			1.0687990188598633
+			-0.1699260026216507
+		]
+		rot = [
+			0
+			0
+			0
+			1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		top = 0.20000001788139343
+		type = "default"
+	}
+	{
+		bottom = 0
+		cap_triangulation = [
+			4
+			1
+			2
+			3
+			4
+			2
+		]
+		id = "6cf1bb23-627d-58d9-87b8-7ace74c12611"
+		name = "room_volume"
+		points = [
+			[
+				-1
+				-1.4152230024337769
+				0
+			]
+			[
+				0.7909579277038574
+				-1.4152230024337769
+				0
+			]
+			[
+				0.7909579277038574
+				1
+				0
+			]
+			[
+				-1
+				1
+				0
+			]
+		]
+		pos = [
+			1
+			4
+			-0.36197900772094727
+		]
+		rot = [
+			0
+			0
+			0
+			1
+		]
+		scl = [
+			2.8525869846343994
+			4.096253871917725
+			1.7668559551239014
+		]
+		top = 2
+		type = "default"
+	}
+]

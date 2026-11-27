@@ -1,0 +1,23 @@
+levels/red_moon_inn/rooms/witch_hunter/world: what the conversion left out
+
+From levels/inn/rooms/witch_hunter/world, 8e0929053dd7ecd0.patch_001 in resource_packages/levels/inn.
+Kept: 154 of 155 units, 0 of 0 particle effects, 4 volumes, 1 object sets.
+
+11 units have a name made here: their names in Vermintide 1 are not found from their hashes.
+The shading environment environment/red_moon_inn is not in Vermintide 2: environment/honduras_keep_02 is used.
+Level setting sound_environment = "" is left out.
+Level setting timpani_sound_environment = "default" is left out.
+units/architecture/generic/generic_wood_beam_4m_01 has another shape in Vermintide 2: units/architecture/wizard/wizard_wood_beam_4m_01, which has the inn's, is used.
+units/architecture/generic/generic_wood_beam_4m_02 has another shape in Vermintide 2: units/architecture/wizard/wizard_wood_beam_4m_02, which has the inn's, is used.
+units/architecture/generic/generic_wood_beam_4m_03 has another shape in Vermintide 2: units/architecture/wizard/wizard_wood_beam_4m_03, which has the inn's, is used.
+Units keep their own materials: the material Vermintide 1 gives 142 units is one of their own, or the one of their Vermintide 1 version.
+Not converted: scatter (how many is not known).
+Not converted: flow bytes (120).
+units/skydome/skydome is not in Vermintide 2: units/skydome/skydome_hdr is used.
+
+Not in Vermintide 2 (shading environment):
+  environment/red_moon_inn
+
+Not in Vermintide 2 (unit):
+  cdbe953451525322
+    at 0.52 3.94 -0.03
