@@ -30,12 +30,12 @@ Variables Vermintide 2's template doesn't have (left out):
   secondary_sun_blend
   temporal_effects_enabled
 
-Textures Vermintide 2 doesn't have (the template's default is used, or the texture of TEXTURE_STAND_INS):
-  global_diffuse_map: 0e19b28f0d2d33d2
-  global_diffuse_map: 8863cee99545d454
-  global_specular_map: 153eee00bad66198
-  global_specular_map: e4bfd231bf998892
+Textures Vermintide 2 doesn't have (the template's default is used):
   skydome_map: 3493e2833ea0d84f
   skydome_map: 5997e38d55de9290
-global_diffuse_map: levels/honduras/bell/world_bake_result_global_02_diffuse is used.
-global_specular_map: levels/honduras/bell/world_bake_result_global_02_specular is used.
+
+Textures taken from Vermintide 1:
+  levels/red_moon_inn/environment/textures/global_diffuse_map_0e19b28f (0e19b28f0d2d33d2)
+  levels/red_moon_inn/environment/textures/global_diffuse_map_8863cee9 (8863cee99545d454)
+  levels/red_moon_inn/environment/textures/global_specular_map_153eee00 (153eee00bad66198)
+  levels/red_moon_inn/environment/textures/global_specular_map_e4bfd231 (e4bfd231bf998892)

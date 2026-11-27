@@ -28,7 +28,8 @@ inn's units with `room_id` script data. `convert_level.py` converts them with th
     python convert_level.py ... ../levels/red_moon_inn/rooms/<hero>/world.level ../missing_rooms/<hero>.txt --vt1-level levels/inn/rooms/<hero>/world --level-resource levels/red_moon_inn/rooms/<hero>/world
 
 The inn's environment is converted the same way, to `levels/red_moon_inn/environment/red_moon_inn.shading_environment`. What
-Vermintide 2's template doesn't have is listed in `environment_missing.txt`:
+Vermintide 2's template doesn't have is listed in `environment_missing.txt`. The inn's baked global probes, which give its
+ambient light, are taken from Vermintide 1's bundle into `levels/red_moon_inn/environment/textures`:
 
     python convert_environment.py "<Vermintide 1>" "<Modding Tools Content>/content" "<Vermintide 2 SDK>" vt1_strings.txt ../levels/red_moon_inn/environment/red_moon_inn.shading_environment ../environment_missing.txt
 

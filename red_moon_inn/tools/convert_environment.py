@@ -35,12 +35,33 @@ RENAMED = {
     'light_shaft_weigth': 'light_shafts_weigth',
 }
 
-# Textures used where Vermintide 2 doesn't have the inn's. The global probes give the ambient light and reflections, and
-# without them only what the lights reach is lit: the probes Horn of Magnus uses, baked in Ubersreik, where the inn is.
-TEXTURE_STAND_INS = {
-    'global_diffuse_map': 'levels/honduras/bell/world_bake_result_global_02_diffuse',
-    'global_specular_map': 'levels/honduras/bell/world_bake_result_global_02_specular',
+# Textures of the inn's that are taken from Vermintide 1's bundle where Vermintide 2 doesn't have them, and the folder of the
+# mod they are written to, by their resource name. The global probes give the ambient light and reflections, and the inn's
+# ambient_tint is set for the inn's own. They are 8 bit cubemaps encoded as RGBM, as Vermintide 2's default probes, whose
+# texture settings they get (and global_probe_rgbm_encoded is left at the template's 1).
+PORTED_TEXTURES = {'global_diffuse_map', 'global_specular_map'}
+TEXTURE_FOLDER = 'levels/red_moon_inn/environment/textures'
+PROBE_TEXTURE = '''common = {
+	input = {
+		filename = "%s"
+	}
+	output = {
+		apply_processing = false
+		category = "texture_categories/cubemap_probes"
+		cut_alpha_threshold = 0.5
+		enable_cut_alpha_threshold = false
+		format = "A8R8G8B8"
+		mipmap_filter = "box"
+		mipmap_filter_wrap_mode = "mirror"
+		mipmap_keep_original = false
+		mipmap_num_largest_steps_to_discard = 0
+		mipmap_num_smallest_steps_to_discard = 0
+		resident_mips = 0
+		srgb = true
+		streamable = false
+	}
 }
+'''
 
 # Settings Vermintide 2's game looks for that Vermintide 1's inn doesn't have, and the inn's setting that is copied for them.
 # An end zone blends the level's environment to waystone_environment_01 when it opens.
@@ -119,6 +140,7 @@ def convert(vt1_dir, content_dir, sdk_dir, strings_path):
     report = ['Red Moon Inn environment: what the conversion left out', '',
               'From %s, %s in %s.' % (ENVIRONMENT, os.path.basename(source), INN_PACKAGE), '']
     left_out, missing_textures = set(), set()
+    ported = {}
     settings = {}
 
     for name_h, values, weights in env.settings:
@@ -143,9 +165,12 @@ def convert(vt1_dir, content_dir, sdk_dir, strings_path):
                 h = struct.unpack_from('<Q', raw)[0]
                 value = textures.get(h)
 
-                if value is None:
+                if value is None and name in PORTED_TEXTURES:
+                    value = '%s/%s_%08x' % (TEXTURE_FOLDER, name, h >> 32)
+                    ported[value] = h
+                elif value is None:
                     missing_textures.add((name, strings.get(h, '%016x' % h)))
-                    value = TEXTURE_STAND_INS.get(name, template[name].get('value', ''))
+                    value = template[name].get('value', '')
             elif type_id == 11:
                 value = int(round(struct.unpack('<f', raw)[0]))
             elif name in WORKED_OUT:
@@ -182,13 +207,22 @@ def convert(vt1_dir, content_dir, sdk_dir, strings_path):
     report.append('Variables Vermintide 2\'s template doesn\'t have (left out):')
     report.extend('  ' + n for n in sorted(left_out))
     report.append('')
-    report.append('Textures Vermintide 2 doesn\'t have (the template\'s default is used, or the texture of TEXTURE_STAND_INS):')
+    report.append('Textures Vermintide 2 doesn\'t have (the template\'s default is used):')
     report.extend('  %s: %s' % kv for kv in sorted(missing_textures))
+    report.append('')
+    report.append('Textures taken from Vermintide 1:')
+    report.extend('  %s (%016x)' % (resource, h) for resource, h in sorted(ported.items()))
 
-    for name, texture in sorted(TEXTURE_STAND_INS.items()):
-        report.append('%s: %s is used.' % (name, texture))
+    # The newest version of each ported texture, from the inn's bundle and its patches: a DDS file as it is
+    wanted = {h: resource for resource, h in ported.items()}
+    dds = {}
 
-    return {'settings': settings, 'template': TEMPLATE}, '\n'.join(report) + '\n'
+    for path in vt1_bundles.bundle_files(os.path.join(vt1_dir, 'bundle'), '%016x' % name_hash(INN_PACKAGE)):
+        for type_h, name_h, variants in vt1_bundles.resources(path):
+            if type_h == name_hash('texture') and name_h in wanted and variants:
+                dds[wanted[name_h]] = variants[0]
+
+    return {'settings': settings, 'template': TEMPLATE}, dds, '\n'.join(report) + '\n'
 
 
 def main():
@@ -199,13 +233,24 @@ def main():
     parser.add_argument('strings')
     parser.add_argument('environment', help='the .shading_environment to write')
     parser.add_argument('report', help='the report of what was left out, to write')
+    parser.add_argument('--mod-dir', default='..', help='the mod\'s folder, where textures taken from Vermintide 1 are written')
     args = parser.parse_args()
 
-    environment, report = convert(args.vt1_dir, args.content_dir, args.sdk_dir, args.strings)
+    environment, dds, report = convert(args.vt1_dir, args.content_dir, args.sdk_dir, args.strings)
     os.makedirs(os.path.dirname(os.path.abspath(args.environment)), exist_ok=True)
 
     with open(args.environment, 'w', encoding='utf8', newline='\n') as f:
         f.write(sjson.dumps(environment))
+
+    for resource, data in dds.items():
+        path = os.path.join(args.mod_dir, resource)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        with open(path + '.dds', 'wb') as f:
+            f.write(data)
+
+        with open(path + '.texture', 'w', encoding='utf8', newline='\n') as f:
+            f.write(PROBE_TEXTURE % resource)
 
     with open(args.report, 'w', encoding='utf8', newline='\n') as f:
         f.write(report)
