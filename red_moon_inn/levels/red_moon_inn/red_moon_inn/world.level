@@ -1,3 +1,4 @@
+
 editor_metadata = {
 	Flow = {
 		Connections = [
@@ -63,6 +64,15 @@ editor_metadata = {
 				Priority = 0
 				ToItem = "In"
 				ToNode = "7d4e0e13-6a8f-493f-9357-1b85c0418292"
+			}
+			{
+				Class = "Stingray.Flow.EventConnection"
+				FromItem = "Out"
+				FromNode = "e5b7be3b-06e7-4905-a665-4a722d5c573c"
+				Id = "cbee37eb-b6e6-447a-b912-cda48bcb923b"
+				Priority = 0
+				ToItem = "In"
+				ToNode = "ac892205-c24b-4ef1-bffe-8a705bc3499f"
 			}
 		]
 		Groups = [
@@ -190,50 +200,6 @@ editor_metadata = {
 				NodeLocation = {
 					X = 420
 					Y = 380
-				}
-				OutEvents = [
-					"Out"
-				]
-				Resources = [
-				]
-				ReturnValues = [
-				]
-				Width = 160
-			}
-			{
-				Arguments = [
-					{
-						Name = "Set"
-						Type = "string"
-						Variable = {
-							Class = "Stingray.Flow.InVariableString"
-							Value = "act_01"
-						}
-					}
-					{
-						Name = "Enabled"
-						Type = "bool"
-						Variable = {
-							Class = "Stingray.Flow.InVariableBoolean"
-							Value = true
-						}
-					}
-				]
-				Class = "Stingray.Flow.CustomScriptNode"
-				CustomCategory = "Game Mode/Object Set"
-				EnumArguments = [
-				]
-				FlowNodesResource = "global"
-				FlowNodesResourceKey = "flow_nodes_resource"
-				Id = "75f98848-0a51-4991-80f2-48adc55ef00c"
-				InEvents = [
-					"In"
-				]
-				IsQuery = false
-				Name = "Set Flow Object Set Enabled"
-				NodeLocation = {
-					X = 420
-					Y = 500
 				}
 				OutEvents = [
 					"Out"
@@ -429,6 +395,94 @@ editor_metadata = {
 				}
 				Out = {
 				}
+				Width = 160
+			}
+			{
+				Arguments = [
+					{
+						Name = "Set"
+						Type = "string"
+						Variable = {
+							Class = "Stingray.Flow.InVariableString"
+							Value = "act_01"
+						}
+					}
+					{
+						Name = "Enabled"
+						Type = "bool"
+						Variable = {
+							Class = "Stingray.Flow.InVariableBoolean"
+							Value = true
+						}
+					}
+				]
+				Class = "Stingray.Flow.CustomScriptNode"
+				CustomCategory = "Game Mode/Object Set"
+				EnumArguments = [
+				]
+				FlowNodesResource = "global"
+				FlowNodesResourceKey = "flow_nodes_resource"
+				Id = "75f98848-0a51-4991-80f2-48adc55ef00c"
+				InEvents = [
+					"In"
+				]
+				IsQuery = false
+				Name = "Set Flow Object Set Enabled"
+				NodeLocation = {
+					X = 420
+					Y = 500
+				}
+				OutEvents = [
+					"Out"
+				]
+				Resources = [
+				]
+				ReturnValues = [
+				]
+				Width = 160
+			}
+			{
+				Arguments = [
+					{
+						Name = "Set"
+						Type = "string"
+						Variable = {
+							Class = "Stingray.Flow.InVariableString"
+							Value = "act_02"
+						}
+					}
+					{
+						Name = "Enabled"
+						Type = "bool"
+						Variable = {
+							Class = "Stingray.Flow.InVariableBoolean"
+							Value = true
+						}
+					}
+				]
+				Class = "Stingray.Flow.CustomScriptNode"
+				CustomCategory = "Game Mode/Object Set"
+				EnumArguments = [
+				]
+				FlowNodesResource = "global"
+				FlowNodesResourceKey = "flow_nodes_resource"
+				Id = "ac892205-c24b-4ef1-bffe-8a705bc3499f"
+				InEvents = [
+					"In"
+				]
+				IsQuery = false
+				Name = "Set Flow Object Set Particles Enabled"
+				NodeLocation = {
+					X = 640
+					Y = 0
+				}
+				OutEvents = [
+					"Out"
+				]
+				Resources = [
+				]
+				ReturnValues = [
+				]
 				Width = 160
 			}
 		]
@@ -1270,7 +1324,7 @@ editor_metadata = {
 		]
 		LastHiddenObjects = [
 		]
-		ShadingEnvironment = "environment/bulldozer_magnus_01"
+		ShadingEnvironment = "levels/red_moon_inn/environment/red_moon_inn"
 		SkydomeUnit = "units/skydome/skydome_hdr"
 	}
 	Sounds = [
@@ -1291,16 +1345,16 @@ editor_metadata = {
 			}
 			OrthographicZoom = 10
 			Pos = {
-				X = -0.08595
-				Y = 0.440623
-				Z = 2.824355
+				X = -2.346508
+				Y = 0.746472
+				Z = 5.506646
 			}
 			ProjectionType = 1
 			Rot = {
-				W = -0.557933
-				X = 0.009374
-				Y = 0.013934
-				Z = -0.829716
+				W = -0.589311
+				X = 0.077517
+				Y = -0.104884
+				Z = 0.79731
 			}
 			RotationSpeed = 0.003
 			TranslationSpeed = 0.1973
@@ -2489,7 +2543,7 @@ editor_metadata = {
 			}
 			Pos = {
 				X = 10
-				Y = 3e-06
+				Y = 3E-06
 				Z = 3.43492
 			}
 			Rot = {
@@ -2893,7 +2947,7 @@ editor_metadata = {
 				Z = 5.92622
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.721793
 				Z = 0.692109
@@ -2933,7 +2987,7 @@ editor_metadata = {
 				Z = 5.92622
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.721793
 				Z = 0.692109
@@ -2973,7 +3027,7 @@ editor_metadata = {
 				Z = 5.92622
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.721793
 				Z = 0.692109
@@ -3013,7 +3067,7 @@ editor_metadata = {
 				Z = 5.8
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.02099
 				Z = 0.99978
@@ -3053,7 +3107,7 @@ editor_metadata = {
 				Z = 5.81918
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.02099
 				Z = 0.99978
@@ -3093,7 +3147,7 @@ editor_metadata = {
 				Z = 5.8
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.02099
 				Z = 0.99978
@@ -14540,7 +14594,7 @@ editor_metadata = {
 			}
 			Scl = {
 				X = 1
-				Y = 0.974246
+				Y = 0.990934
 				Z = 1
 			}
 			ScriptData = {
@@ -15419,9 +15473,9 @@ editor_metadata = {
 				Z = 0.707107
 			}
 			Scl = {
-				X = 1
-				Y = 1.012982
-				Z = 1
+				X = 0.993769
+				Y = 1.08055
+				Z = 0.993769
 			}
 			ScriptData = {
 			}
@@ -17054,7 +17108,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.996312
-				X = -7.5e-05
+				X = -7.5E-05
 				Y = 0.000875
 				Z = 0.085797
 			}
@@ -17173,7 +17227,7 @@ editor_metadata = {
 				Z = 0.848153
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = -0.000878
 				Y = 0
 				Z = 1
@@ -17213,7 +17267,7 @@ editor_metadata = {
 				Z = 0.848153
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = -0.000878
 				Y = 0
 				Z = 1
@@ -21576,7 +21630,7 @@ editor_metadata = {
 				W = -0.707107
 				X = 0.51466
 				Y = -0.484897
-				Z = 3.8e-05
+				Z = 3.8E-05
 			}
 			Scl = {
 				X = 0.484414
@@ -29896,7 +29950,7 @@ editor_metadata = {
 				W = -1
 				X = 0
 				Y = 0
-				Z = -1e-06
+				Z = -1E-06
 			}
 			Scl = {
 				X = 1
@@ -30735,7 +30789,7 @@ editor_metadata = {
 			Rot = {
 				W = -0.720745
 				X = -0.001566
-				Y = 8.3e-05
+				Y = 8.3E-05
 				Z = 0.693198
 			}
 			Scl = {
@@ -35431,7 +35485,7 @@ editor_metadata = {
 				Z = 5.88327
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.707107
 				Z = 0.707107
@@ -35557,9 +35611,9 @@ editor_metadata = {
 				Z = 0.707107
 			}
 			Scl = {
-				X = 0.56959
+				X = 0.704177
 				Y = 0.954923
-				Z = 0.56959
+				Z = 0.704177
 			}
 			ScriptData = {
 			}
@@ -37382,7 +37436,7 @@ editor_metadata = {
 			Rot = {
 				W = -0.707107
 				X = 0
-				Y = 1e-06
+				Y = 1E-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -37810,7 +37864,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -1
-				X = -1e-06
+				X = -1E-06
 				Y = 0
 				Z = 0
 			}
@@ -49719,7 +49773,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -1
-				X = -2e-06
+				X = -2E-06
 				Y = 0
 				Z = 0
 			}
@@ -49789,8 +49843,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = 0
-				X = 2e-06
-				Y = -2e-06
+				X = 2E-06
+				Y = -2E-06
 				Z = 1
 			}
 			Scl = {
@@ -50038,8 +50092,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = 0
-				X = 2e-06
-				Y = -2e-06
+				X = 2E-06
+				Y = -2E-06
 				Z = 1
 			}
 			Scl = {
@@ -50107,8 +50161,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = 0
-				X = 2e-06
-				Y = -2e-06
+				X = 2E-06
+				Y = -2E-06
 				Z = 1
 			}
 			Scl = {
@@ -50316,8 +50370,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707107
-				X = -1e-06
-				Y = -1e-06
+				X = -1E-06
+				Y = -1E-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -50386,8 +50440,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707107
-				X = -1e-06
-				Y = -1e-06
+				X = -1E-06
+				Y = -1E-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -50456,8 +50510,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707107
-				X = -1e-06
-				Y = -1e-06
+				X = -1E-06
+				Y = -1E-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -50768,7 +50822,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -1
-				X = -2e-06
+				X = -2E-06
 				Y = 0
 				Z = 0
 			}
@@ -51418,8 +51472,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707106
-				X = -1e-06
-				Y = 1e-06
+				X = -1E-06
+				Y = 1E-06
 				Z = 0.707108
 			}
 			Scl = {
@@ -53696,37 +53750,6 @@ flow = {
 		}
 		{
 			flow_nodes_resource = "global"
-			id = "75f98848-0a51-4991-80f2-48adc55ef00c"
-			in_variables = {
-				enabled = {
-					type = "bool"
-				}
-				set = {
-					type = "string"
-				}
-			}
-			name = "Set Flow Object Set Enabled"
-			query = false
-			return_values = [
-			]
-			type = "custom_script_node"
-			variable_values = {
-				enabled = true
-				set = "act_01"
-			}
-			variables = [
-				{
-					name = "set"
-					type = "string"
-				}
-				{
-					name = "enabled"
-					type = "bool"
-				}
-			]
-		}
-		{
-			flow_nodes_resource = "global"
 			id = "7d4e0e13-6a8f-493f-9357-1b85c0418292"
 			in_variables = {
 				enabled = {
@@ -53888,9 +53911,76 @@ flow = {
 						id = "7d4e0e13-6a8f-493f-9357-1b85c0418292:0"
 						node = "7d4e0e13-6a8f-493f-9357-1b85c0418292"
 					}
+					{
+						event = 0
+						id = "ac892205-c24b-4ef1-bffe-8a705bc3499f:0"
+						node = "ac892205-c24b-4ef1-bffe-8a705bc3499f"
+					}
 				]
 			}
 			type = "level_loaded"
+		}
+		{
+			flow_nodes_resource = "global"
+			id = "75f98848-0a51-4991-80f2-48adc55ef00c"
+			in_variables = {
+				enabled = {
+					type = "bool"
+				}
+				set = {
+					type = "string"
+				}
+			}
+			name = "Set Flow Object Set Enabled"
+			query = false
+			return_values = [
+			]
+			type = "custom_script_node"
+			variable_values = {
+				enabled = true
+				set = "act_01"
+			}
+			variables = [
+				{
+					name = "set"
+					type = "string"
+				}
+				{
+					name = "enabled"
+					type = "bool"
+				}
+			]
+		}
+		{
+			flow_nodes_resource = "global"
+			id = "ac892205-c24b-4ef1-bffe-8a705bc3499f"
+			in_variables = {
+				enabled = {
+					type = "bool"
+				}
+				set = {
+					type = "string"
+				}
+			}
+			name = "Set Flow Object Set Particles Enabled"
+			query = false
+			return_values = [
+			]
+			type = "custom_script_node"
+			variable_values = {
+				enabled = true
+				set = "act_02"
+			}
+			variables = [
+				{
+					name = "set"
+					type = "string"
+				}
+				{
+					name = "enabled"
+					type = "bool"
+				}
+			]
 		}
 	]
 }
@@ -53898,7 +53988,7 @@ level_references = [
 ]
 level_settings = {
 	num_background_units = 1
-	shading_environment = "environment/bulldozer_magnus_01"
+	shading_environment = "levels/red_moon_inn/environment/red_moon_inn"
 }
 object_sets = {
 	flow_act_01 = [
@@ -55425,7 +55515,7 @@ units = [
 		name = "inn_floor_wood_4x4m_01_23"
 		pos = [
 			10
-			3e-06
+			3E-06
 			3.43492
 		]
 		rot = [
@@ -55732,7 +55822,7 @@ units = [
 			0
 			0.721793
 			0.692109
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -55762,7 +55852,7 @@ units = [
 			0
 			0.721793
 			0.692109
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -55792,7 +55882,7 @@ units = [
 			0
 			0.721793
 			0.692109
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -55822,7 +55912,7 @@ units = [
 			0
 			0.02099
 			0.99978
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -55852,7 +55942,7 @@ units = [
 			0
 			0.02099
 			0.99978
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -55882,7 +55972,7 @@ units = [
 			0
 			0.02099
 			0.99978
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -64466,7 +64556,7 @@ units = [
 		]
 		scl = [
 			1
-			0.974246
+			0.990934
 			1
 		]
 		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
@@ -65125,9 +65215,9 @@ units = [
 			-0.707107
 		]
 		scl = [
-			1
-			1.012982
-			1
+			0.993769
+			1.08055
+			0.993769
 		]
 		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
@@ -66349,7 +66439,7 @@ units = [
 			0.641384
 		]
 		rot = [
-			-7.5e-05
+			-7.5E-05
 			0.000875
 			0.085797
 			-0.996312
@@ -66442,7 +66532,7 @@ units = [
 			-0.000878
 			0
 			1
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -66472,7 +66562,7 @@ units = [
 			-0.000878
 			0
 			1
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -69741,7 +69831,7 @@ units = [
 		rot = [
 			0.51466
 			-0.484897
-			3.8e-05
+			3.8E-05
 			-0.707107
 		]
 		scl = [
@@ -75981,7 +76071,7 @@ units = [
 		rot = [
 			0
 			0
-			-1e-06
+			-1E-06
 			-1
 		]
 		scl = [
@@ -76610,7 +76700,7 @@ units = [
 		]
 		rot = [
 			-0.001566
-			8.3e-05
+			8.3E-05
 			0.693198
 			-0.720745
 		]
@@ -80146,7 +80236,7 @@ units = [
 			0
 			0.707107
 			0.707107
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -80239,9 +80329,9 @@ units = [
 			-0.707107
 		]
 		scl = [
-			0.56959
+			0.704177
 			0.954923
-			0.56959
+			0.704177
 		]
 		type = "units/architecture/generic/ornaments/generic_ornament_wall_skull_02"
 	}
@@ -81611,7 +81701,7 @@ units = [
 		]
 		rot = [
 			0
-			1e-06
+			1E-06
 			0.707107
 			-0.707107
 		]
@@ -81937,7 +82027,7 @@ units = [
 			3.76244
 		]
 		rot = [
-			-1e-06
+			-1E-06
 			0
 			0
 			-1
@@ -91317,7 +91407,7 @@ units = [
 			4.48498
 		]
 		rot = [
-			-2e-06
+			-2E-06
 			0
 			0
 			-1
@@ -91374,8 +91464,8 @@ units = [
 			2.12696
 		]
 		rot = [
-			2e-06
-			-2e-06
+			2E-06
+			-2E-06
 			1
 			0
 		]
@@ -91577,8 +91667,8 @@ units = [
 			2.06178
 		]
 		rot = [
-			2e-06
-			-2e-06
+			2E-06
+			-2E-06
 			1
 			0
 		]
@@ -91634,8 +91724,8 @@ units = [
 			2.07534
 		]
 		rot = [
-			2e-06
-			-2e-06
+			2E-06
+			-2E-06
 			1
 			0
 		]
@@ -91808,8 +91898,8 @@ units = [
 			2.40859
 		]
 		rot = [
-			-1e-06
-			-1e-06
+			-1E-06
+			-1E-06
 			0.707107
 			-0.707107
 		]
@@ -91866,8 +91956,8 @@ units = [
 			2.45484
 		]
 		rot = [
-			-1e-06
-			-1e-06
+			-1E-06
+			-1E-06
 			0.707107
 			-0.707107
 		]
@@ -91924,8 +92014,8 @@ units = [
 			2.58995
 		]
 		rot = [
-			-1e-06
-			-1e-06
+			-1E-06
+			-1E-06
 			0.707107
 			-0.707107
 		]
@@ -92164,7 +92254,7 @@ units = [
 			1.74383
 		]
 		rot = [
-			-2e-06
+			-2E-06
 			0
 			0
 			-1
@@ -92653,8 +92743,8 @@ units = [
 			5.88232
 		]
 		rot = [
-			-1e-06
-			1e-06
+			-1E-06
+			1E-06
 			0.707108
 			-0.707106
 		]
