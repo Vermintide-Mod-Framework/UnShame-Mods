@@ -78,6 +78,16 @@ SUBSTITUTES = {
     'units/skydome/skydome': SKYDOME,
 }
 
+# Units Vermintide 2 has under the inn's names but made again in another shape, and the unit of Vermintide 2 that has the inn's
+# shape, with the materials to give it. Vermintide 2's 4 m beams are thicker uneven logs of other lengths, so what was put
+# against the inn's straight beams doesn't meet them; the wizard tower's beams are the inn's, square and 4 m long, with the
+# same origin. They are given the material the inn's beams had.
+REPLACEMENTS = {
+    'units/architecture/generic/generic_wood_beam_4m_%02d' % n: (
+        'units/architecture/wizard/wizard_wood_beam_4m_%02d' % n, {'beams': 'units/materials/g/generic_wood_beams_01'})
+    for n in (1, 2, 3)
+}
+
 # Pieces of the inn that Vermintide 2 doesn't have, and the pieces of Vermintide 2's inn put in their place: for each, its unit,
 # its position in the inn piece's own space, its scale along its own axes, and how far it is turned about z, in degrees. The inn pieces of both games have their origin at a corner: x along
 # the piece, y through it and z up. The sizes are from Vermintide 1's compiled meshes and Vermintide 2's .bsi files.
@@ -569,6 +579,11 @@ class Converter:
             'volumes': self.volumes(),
         }
         level['editor_metadata'] = editor_metadata(level)
+
+        for old, (new, _) in sorted(REPLACEMENTS.items()):
+            self.notes.append('%s has another shape in Vermintide 2: %s, which has the inn\'s, is used.' % (old, new))
+
+        replace_units(level)
         self.notes.append('Units keep their own materials: the material Vermintide 1 gives %d units is one of their own, '
                           'or the one of their Vermintide 1 version.' % sum(1 for u in self.level.units() if u['material']))
 
@@ -611,6 +626,26 @@ class Converter:
                     lines.extend('    ' + w for w in self.where[name])
 
         return '\n'.join(lines) + '\n'
+
+
+def replace_units(level):
+    """Gives the units of REPLACEMENTS their replacement, in what the game reads and in what the editor reads.
+    Returns how many units were changed; units replaced already are left as they are."""
+    changed = 0
+
+    for u in level['units']:
+        if u['type'] in REPLACEMENTS:
+            u['type'], slots = REPLACEMENTS[u['type']]
+            u['materials'] = dict(slots)
+            changed += 1
+
+    for u in level['editor_metadata']['Units']:
+        if u['Type'] in REPLACEMENTS:
+            u['Type'], slots = REPLACEMENTS[u['Type']]
+            u['Path'] = u['Type']
+            u['MaterialSlots'] = dict(slots)
+
+    return changed
 
 
 def _vector(v):

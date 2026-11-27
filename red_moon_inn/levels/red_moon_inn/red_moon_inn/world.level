@@ -1,4 +1,3 @@
-
 editor_metadata = {
 	Flow = {
 		Connections = [
@@ -2490,7 +2489,7 @@ editor_metadata = {
 			}
 			Pos = {
 				X = 10
-				Y = 3E-06
+				Y = 3e-06
 				Z = 3.43492
 			}
 			Rot = {
@@ -2894,7 +2893,7 @@ editor_metadata = {
 				Z = 5.92622
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.721793
 				Z = 0.692109
@@ -2934,7 +2933,7 @@ editor_metadata = {
 				Z = 5.92622
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.721793
 				Z = 0.692109
@@ -2974,7 +2973,7 @@ editor_metadata = {
 				Z = 5.92622
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.721793
 				Z = 0.692109
@@ -3014,7 +3013,7 @@ editor_metadata = {
 				Z = 5.8
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.02099
 				Z = 0.99978
@@ -3054,7 +3053,7 @@ editor_metadata = {
 				Z = 5.81918
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.02099
 				Z = 0.99978
@@ -3094,7 +3093,7 @@ editor_metadata = {
 				Z = 5.8
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.02099
 				Z = 0.99978
@@ -3318,11 +3317,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_1"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -3348,7 +3348,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -3358,11 +3358,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_2"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -3388,7 +3389,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -3398,11 +3399,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_3"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -3428,7 +3430,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -3438,11 +3440,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_4"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -3468,7 +3471,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -3478,11 +3481,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_5"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -3508,7 +3512,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -3518,11 +3522,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_6"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -3548,7 +3553,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -3558,11 +3563,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_7"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -3588,7 +3594,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -3598,11 +3604,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_8"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -3628,7 +3635,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -3638,11 +3645,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_1"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -3668,7 +3676,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -3678,11 +3686,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_5"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -3708,7 +3717,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -3918,11 +3927,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_6"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -3948,7 +3958,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -3958,11 +3968,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_7"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -3988,7 +3999,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -3998,11 +4009,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_8"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4028,7 +4040,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -4038,11 +4050,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_9"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4068,7 +4081,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -4078,11 +4091,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_10"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4108,7 +4122,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -4118,11 +4132,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_11"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4148,7 +4163,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -4158,11 +4173,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_12"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4188,7 +4204,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -4318,11 +4334,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_10"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4348,7 +4365,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -4518,11 +4535,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_13"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4548,7 +4566,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -4558,11 +4576,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_14"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4588,7 +4607,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -4598,11 +4617,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_15"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4628,7 +4648,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -4638,11 +4658,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_16"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4668,7 +4689,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -4678,11 +4699,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_17"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4708,7 +4730,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -4718,11 +4740,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_20"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4748,7 +4771,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -4758,11 +4781,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_21"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4788,7 +4812,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -4798,11 +4822,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_3"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4828,7 +4853,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -4838,11 +4863,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_4"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4868,7 +4894,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -4918,11 +4944,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_5"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4948,7 +4975,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -4958,11 +4985,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_7"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -4988,7 +5016,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5278,11 +5306,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_10"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5308,7 +5337,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5318,11 +5347,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_11"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5348,7 +5378,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5358,11 +5388,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_13"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5388,7 +5419,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5398,11 +5429,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_14"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5428,7 +5460,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5438,11 +5470,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_16"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5468,7 +5501,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5478,11 +5511,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_17"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5508,7 +5542,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5518,11 +5552,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_18"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5548,7 +5583,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5558,11 +5593,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_19"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5588,7 +5624,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5598,11 +5634,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_20"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5628,7 +5665,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5638,11 +5675,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_21"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5668,7 +5706,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5678,11 +5716,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_22"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5708,7 +5747,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5718,11 +5757,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_23"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5748,7 +5788,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5758,11 +5798,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_24"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5788,7 +5829,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5798,11 +5839,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_25"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5828,7 +5870,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5838,11 +5880,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_26"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5868,7 +5911,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5878,11 +5921,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_27"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5908,7 +5952,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -5958,11 +6002,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_vt1_120"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -5988,7 +6033,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -6118,11 +6163,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_32"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6148,7 +6194,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -6158,11 +6204,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_33"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6188,7 +6235,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -6198,11 +6245,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_34"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6228,7 +6276,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -6398,11 +6446,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_35"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6428,7 +6477,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -6438,11 +6487,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_36"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6468,7 +6518,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -6558,11 +6608,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_41"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6588,7 +6639,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -6598,11 +6649,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_42"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6628,7 +6680,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -6638,11 +6690,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_137"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6668,7 +6721,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -6678,11 +6731,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_138"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6708,7 +6762,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -6718,11 +6772,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_139"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6748,7 +6803,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -6758,11 +6813,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_24"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6788,7 +6844,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -6798,11 +6854,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_25"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6828,7 +6885,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -6838,11 +6895,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_26"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -6868,7 +6926,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -7438,11 +7496,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_43"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -7468,7 +7527,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -7478,11 +7537,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_44"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -7508,7 +7568,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -7518,11 +7578,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_45"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -7548,7 +7609,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -7558,11 +7619,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_46"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -7588,7 +7650,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -7598,11 +7660,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_47"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -7628,7 +7691,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -8678,11 +8741,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_27"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -8708,7 +8772,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -8718,11 +8782,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_28"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -8748,7 +8813,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -8798,11 +8863,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_vt1_196"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -8828,7 +8894,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -8838,11 +8904,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_vt1_197"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -8868,7 +8935,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -8878,11 +8945,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_vt1_198"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -8908,7 +8976,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -8918,11 +8986,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_48"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -8948,7 +9017,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -8958,11 +9027,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_49"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -8988,7 +9058,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -9038,11 +9108,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_vt1_202"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -9068,7 +9139,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -9078,11 +9149,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_203"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -9108,7 +9180,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -9118,11 +9190,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_204"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -9148,7 +9221,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -9158,11 +9231,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_29"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -9188,7 +9262,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -9718,11 +9792,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_30"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -9748,7 +9823,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -9758,11 +9833,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_31"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -9788,7 +9864,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -9798,11 +9874,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_32"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -9828,7 +9905,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -9838,11 +9915,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_33"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -9868,7 +9946,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -9918,11 +9996,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_36"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -9948,7 +10027,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -9958,11 +10037,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_37"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -9988,7 +10068,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -10078,11 +10158,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_39"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -10108,7 +10189,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -10118,11 +10199,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_34"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -10148,7 +10230,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -10158,11 +10240,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_35"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -10188,7 +10271,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -10318,11 +10401,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_50"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -10348,7 +10432,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -10478,11 +10562,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_vt1_238"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -10508,7 +10593,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -10518,11 +10603,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_vt1_239"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -10548,7 +10634,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -10558,11 +10644,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_vt1_240"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -10588,7 +10675,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -11478,11 +11565,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_263"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -11508,7 +11596,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -11518,11 +11606,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_42"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -11548,7 +11637,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -11558,11 +11647,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_43"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -11588,7 +11678,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -14238,11 +14328,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_45"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -14268,7 +14359,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -14278,11 +14369,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_47"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -14308,7 +14400,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -14318,11 +14410,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_48"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -14348,7 +14441,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -14478,11 +14571,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_vt1_338"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -14508,7 +14602,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -14518,11 +14612,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_13"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -14548,7 +14643,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -14918,11 +15013,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_49"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -14948,7 +15044,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -15318,11 +15414,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_15"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15348,7 +15445,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15358,11 +15455,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_vt1_363"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15388,7 +15486,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15398,11 +15496,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_vt1_364"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15428,7 +15527,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15438,11 +15537,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_vt1_365"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15468,7 +15568,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15478,11 +15578,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_51"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15508,7 +15609,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15518,11 +15619,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_52"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15548,7 +15650,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15558,11 +15660,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_53"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15588,7 +15691,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15598,11 +15701,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_54"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15628,7 +15732,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15638,11 +15742,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_55"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15668,7 +15773,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15678,11 +15783,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_56"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15708,7 +15814,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15718,11 +15824,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_57"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15748,7 +15855,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15758,11 +15865,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_58"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15788,7 +15896,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15798,11 +15906,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_59"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15828,7 +15937,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -15838,11 +15947,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_14"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15868,7 +15978,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -15878,11 +15988,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_15"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15908,7 +16019,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -15918,11 +16029,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_16"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15948,7 +16060,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -15958,11 +16070,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_17"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -15988,7 +16101,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -16038,11 +16151,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_18"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -16068,7 +16182,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -16158,11 +16272,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_53"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -16188,7 +16303,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -16238,11 +16353,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_60"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -16268,7 +16384,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -16518,11 +16634,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_55"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -16548,7 +16665,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -17055,7 +17172,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.996312
-				X = -7.5E-05
+				X = -7.5e-05
 				Y = 0.000875
 				Z = 0.085797
 			}
@@ -17174,7 +17291,7 @@ editor_metadata = {
 				Z = 0.848153
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = -0.000878
 				Y = 0
 				Z = 1
@@ -17214,7 +17331,7 @@ editor_metadata = {
 				Z = 0.848153
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = -0.000878
 				Y = 0
 				Z = 1
@@ -19318,11 +19435,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_20"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -19348,7 +19466,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -19358,11 +19476,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_vt1_463"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -19388,7 +19507,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -19518,11 +19637,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_56"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -19548,7 +19668,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -19558,11 +19678,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_23"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -19588,7 +19709,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -19638,11 +19759,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_24"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -19668,7 +19790,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -19918,11 +20040,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_57"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -19948,7 +20071,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -19958,11 +20081,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_58"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -19988,7 +20112,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -20078,11 +20202,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_59"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -20108,7 +20233,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -20118,11 +20243,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_60"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -20148,7 +20274,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -20158,11 +20284,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_61"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -20188,7 +20315,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -20198,11 +20325,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_62"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -20228,7 +20356,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -20238,11 +20366,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_64"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -20268,7 +20397,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -20278,11 +20407,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_65"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -20308,7 +20438,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -20318,11 +20448,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_66"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -20348,7 +20479,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -20358,11 +20489,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_67"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -20388,7 +20520,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -20398,11 +20530,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_68"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -20428,7 +20561,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -20438,11 +20571,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_71"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -20468,7 +20602,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -20518,11 +20652,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_73"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -20548,7 +20683,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -21577,7 +21712,7 @@ editor_metadata = {
 				W = -0.707107
 				X = 0.51466
 				Y = -0.484897
-				Z = 3.8E-05
+				Z = 3.8e-05
 			}
 			Scl = {
 				X = 0.484414
@@ -29897,7 +30032,7 @@ editor_metadata = {
 				W = -1
 				X = 0
 				Y = 0
-				Z = -1E-06
+				Z = -1e-06
 			}
 			Scl = {
 				X = 1
@@ -30736,7 +30871,7 @@ editor_metadata = {
 			Rot = {
 				W = -0.720745
 				X = -0.001566
-				Y = 8.3E-05
+				Y = 8.3e-05
 				Z = 0.693198
 			}
 			Scl = {
@@ -31118,11 +31253,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_vt1_759"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -31148,7 +31284,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -31158,11 +31294,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_61"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -31188,7 +31325,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -31198,11 +31335,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_62"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -31228,7 +31366,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -31358,11 +31496,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_63"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -31388,7 +31527,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -31398,11 +31537,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_64"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -31428,7 +31568,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -31438,11 +31578,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_65"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -31468,7 +31609,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -31518,11 +31659,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_vt1_769"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -31548,7 +31690,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -31558,11 +31700,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_25"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -31588,7 +31731,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -31678,11 +31821,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_66"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -31708,7 +31852,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -31718,11 +31862,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_67"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -31748,7 +31893,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -31958,11 +32103,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_68"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -31988,7 +32134,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -31998,11 +32144,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_69"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32028,7 +32175,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -32038,11 +32185,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_70"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32068,7 +32216,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -32238,11 +32386,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_71"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32268,7 +32417,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -32278,11 +32427,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_72"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32308,7 +32458,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -32438,11 +32588,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_74"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32468,7 +32619,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -32478,11 +32629,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_75"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32508,7 +32660,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -32518,11 +32670,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_76"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32548,7 +32701,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -32558,11 +32711,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_77"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32588,7 +32742,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -32598,11 +32752,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_78"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32628,7 +32783,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -32638,11 +32793,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_79"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32668,7 +32824,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -32838,11 +32994,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_46"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32868,7 +33025,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -32878,11 +33035,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_803"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32908,7 +33066,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -32918,11 +33076,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_80"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32948,7 +33107,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -32958,11 +33117,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_81"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -32988,7 +33148,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -32998,11 +33158,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_82"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -33028,7 +33189,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -33038,11 +33199,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_83"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -33068,7 +33230,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -34096,11 +34258,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_74"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -34126,7 +34289,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -34216,11 +34379,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_26"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -34246,7 +34410,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -34416,11 +34580,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_75"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -34446,7 +34611,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -34456,11 +34621,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_76"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -34486,7 +34652,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -34496,11 +34662,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_77"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -34526,7 +34693,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -34536,11 +34703,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_vt1_844"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -34566,7 +34734,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -34856,11 +35024,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_89"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -34886,7 +35055,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -34896,11 +35065,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_90"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -34926,7 +35096,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -34936,11 +35106,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_92"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -34966,7 +35137,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -35056,11 +35227,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_27"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -35086,7 +35258,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -35432,7 +35604,7 @@ editor_metadata = {
 				Z = 5.88327
 			}
 			Rot = {
-				W = -1E-06
+				W = -1e-06
 				X = 0
 				Y = 0.707107
 				Z = 0.707107
@@ -36096,11 +36268,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_28"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -36126,7 +36299,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -36616,11 +36789,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_898"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -36646,7 +36820,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -36656,11 +36830,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_899"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -36686,7 +36861,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -36696,11 +36871,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_900"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -36726,7 +36902,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -36736,11 +36912,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_901"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -36766,7 +36943,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -36816,11 +36993,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_903"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -36846,7 +37024,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -36856,11 +37034,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_03_79"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_03"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -36886,7 +37065,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_03"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 		}
 		{
 			Cameras = {
@@ -36896,11 +37075,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_113"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -36926,7 +37106,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -36936,11 +37116,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_114"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -36966,7 +37147,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -36976,11 +37157,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_115"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -37006,7 +37188,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -37056,11 +37238,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_116"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -37086,7 +37269,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -37176,11 +37359,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_02_22"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_02"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_02"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -37206,7 +37390,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_02"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 		}
 		{
 			Cameras = {
@@ -37383,7 +37567,7 @@ editor_metadata = {
 			Rot = {
 				W = -0.707107
 				X = 0
-				Y = 1E-06
+				Y = 1e-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -37811,7 +37995,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -1
-				X = -1E-06
+				X = -1e-06
 				Y = 0
 				Z = 0
 			}
@@ -48686,11 +48870,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_84"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -48716,7 +48901,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -49720,7 +49905,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -1
-				X = -2E-06
+				X = -2e-06
 				Y = 0
 				Z = 0
 			}
@@ -49790,8 +49975,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = 0
-				X = 2E-06
-				Y = -2E-06
+				X = 2e-06
+				Y = -2e-06
 				Z = 1
 			}
 			Scl = {
@@ -50039,8 +50224,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = 0
-				X = 2E-06
-				Y = -2E-06
+				X = 2e-06
+				Y = -2e-06
 				Z = 1
 			}
 			Scl = {
@@ -50108,8 +50293,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = 0
-				X = 2E-06
-				Y = -2E-06
+				X = 2e-06
+				Y = -2e-06
 				Z = 1
 			}
 			Scl = {
@@ -50317,8 +50502,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707107
-				X = -1E-06
-				Y = -1E-06
+				X = -1e-06
+				Y = -1e-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -50387,8 +50572,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707107
-				X = -1E-06
-				Y = -1E-06
+				X = -1e-06
+				Y = -1e-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -50457,8 +50642,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707107
-				X = -1E-06
-				Y = -1E-06
+				X = -1e-06
+				Y = -1e-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -50769,7 +50954,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -1
-				X = -2E-06
+				X = -2e-06
 				Y = 0
 				Z = 0
 			}
@@ -51402,11 +51587,12 @@ editor_metadata = {
 			Lights = {
 			}
 			MaterialSlots = {
+				beams = "units/materials/g/generic_wood_beams_01"
 			}
 			Name = "generic_wood_beam_4m_01_vt1_1230"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/generic_wood_beam_4m_01"
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -51419,8 +51605,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707106
-				X = -1E-06
-				Y = 1E-06
+				X = -1e-06
+				Y = 1e-06
 				Z = 0.707108
 			}
 			Scl = {
@@ -51432,7 +51618,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/generic_wood_beam_4m_01"
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 		}
 		{
 			Cameras = {
@@ -55426,7 +55612,7 @@ units = [
 		name = "inn_floor_wood_4x4m_01_23"
 		pos = [
 			10
-			3E-06
+			3e-06
 			3.43492
 		]
 		rot = [
@@ -55733,7 +55919,7 @@ units = [
 			0
 			0.721793
 			0.692109
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -55763,7 +55949,7 @@ units = [
 			0
 			0.721793
 			0.692109
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -55793,7 +55979,7 @@ units = [
 			0
 			0.721793
 			0.692109
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -55823,7 +56009,7 @@ units = [
 			0
 			0.02099
 			0.99978
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -55853,7 +56039,7 @@ units = [
 			0
 			0.02099
 			0.99978
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -55883,7 +56069,7 @@ units = [
 			0
 			0.02099
 			0.99978
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -56052,6 +56238,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_1"
 		pos = [
@@ -56070,7 +56257,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -56082,6 +56269,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_2"
 		pos = [
@@ -56100,7 +56288,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -56112,6 +56300,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_3"
 		pos = [
@@ -56130,7 +56319,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -56142,6 +56331,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_4"
 		pos = [
@@ -56160,7 +56350,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -56172,6 +56362,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_5"
 		pos = [
@@ -56190,7 +56381,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -56202,6 +56393,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_6"
 		pos = [
@@ -56220,7 +56412,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -56232,6 +56424,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_7"
 		pos = [
@@ -56250,7 +56443,7 @@ units = [
 			1.19766
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -56262,6 +56455,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_8"
 		pos = [
@@ -56280,7 +56474,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -56292,6 +56486,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_1"
 		pos = [
@@ -56310,7 +56505,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -56322,6 +56517,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_5"
 		pos = [
@@ -56340,7 +56536,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -56502,6 +56698,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_6"
 		pos = [
@@ -56520,7 +56717,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -56532,6 +56729,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_7"
 		pos = [
@@ -56550,7 +56748,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -56562,6 +56760,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_8"
 		pos = [
@@ -56580,7 +56779,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -56592,6 +56791,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_9"
 		pos = [
@@ -56610,7 +56810,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -56622,6 +56822,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_10"
 		pos = [
@@ -56640,7 +56841,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -56652,6 +56853,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_11"
 		pos = [
@@ -56670,7 +56872,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -56682,6 +56884,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_12"
 		pos = [
@@ -56700,7 +56903,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -56802,6 +57005,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_10"
 		pos = [
@@ -56820,7 +57024,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -56952,6 +57156,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_13"
 		pos = [
@@ -56970,7 +57175,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -56982,6 +57187,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_14"
 		pos = [
@@ -57000,7 +57206,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -57012,6 +57218,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_15"
 		pos = [
@@ -57030,7 +57237,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -57042,6 +57249,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_16"
 		pos = [
@@ -57060,7 +57268,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -57072,6 +57280,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_17"
 		pos = [
@@ -57090,7 +57299,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -57102,6 +57311,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_20"
 		pos = [
@@ -57120,7 +57330,7 @@ units = [
 			1.22532
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -57132,6 +57342,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_21"
 		pos = [
@@ -57150,7 +57361,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -57162,6 +57373,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_3"
 		pos = [
@@ -57180,7 +57392,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57192,6 +57404,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_4"
 		pos = [
@@ -57210,7 +57423,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57252,6 +57465,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_5"
 		pos = [
@@ -57270,7 +57484,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57282,6 +57496,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_7"
 		pos = [
@@ -57300,7 +57515,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57522,6 +57737,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_10"
 		pos = [
@@ -57540,7 +57756,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57552,6 +57768,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_11"
 		pos = [
@@ -57570,7 +57787,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57582,6 +57799,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_13"
 		pos = [
@@ -57600,7 +57818,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57612,6 +57830,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_14"
 		pos = [
@@ -57630,7 +57849,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57642,6 +57861,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_16"
 		pos = [
@@ -57660,7 +57880,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57672,6 +57892,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_17"
 		pos = [
@@ -57690,7 +57911,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57702,6 +57923,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_18"
 		pos = [
@@ -57720,7 +57942,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57732,6 +57954,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_19"
 		pos = [
@@ -57750,7 +57973,7 @@ units = [
 			1
 			1.26293
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57762,6 +57985,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_20"
 		pos = [
@@ -57780,7 +58004,7 @@ units = [
 			1
 			1.26293
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57792,6 +58016,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_21"
 		pos = [
@@ -57810,7 +58035,7 @@ units = [
 			1
 			1.26293
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57822,6 +58047,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_22"
 		pos = [
@@ -57840,7 +58066,7 @@ units = [
 			1
 			1.26293
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57852,6 +58078,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_23"
 		pos = [
@@ -57870,7 +58097,7 @@ units = [
 			1
 			1.26293
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57882,6 +58109,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_24"
 		pos = [
@@ -57900,7 +58128,7 @@ units = [
 			1
 			1.26293
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57912,6 +58140,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_25"
 		pos = [
@@ -57930,7 +58159,7 @@ units = [
 			1
 			1.26293
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57942,6 +58171,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_26"
 		pos = [
@@ -57960,7 +58190,7 @@ units = [
 			1
 			1.26293
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -57972,6 +58202,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_27"
 		pos = [
@@ -57990,7 +58221,7 @@ units = [
 			1
 			1.26293
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -58032,6 +58263,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_vt1_120"
 		pos = [
@@ -58050,7 +58282,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -58152,6 +58384,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_32"
 		pos = [
@@ -58170,7 +58403,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -58182,6 +58415,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_33"
 		pos = [
@@ -58200,7 +58434,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -58212,6 +58446,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_34"
 		pos = [
@@ -58230,7 +58465,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -58362,6 +58597,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_35"
 		pos = [
@@ -58380,7 +58616,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -58392,6 +58628,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_36"
 		pos = [
@@ -58410,7 +58647,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -58482,6 +58719,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_41"
 		pos = [
@@ -58500,7 +58738,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -58512,6 +58750,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_42"
 		pos = [
@@ -58530,7 +58769,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -58542,6 +58781,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_137"
 		pos = [
@@ -58560,7 +58800,7 @@ units = [
 			0.830028
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -58572,6 +58812,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_138"
 		pos = [
@@ -58590,7 +58831,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -58602,6 +58843,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_139"
 		pos = [
@@ -58620,7 +58862,7 @@ units = [
 			0.830028
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -58632,6 +58874,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_24"
 		pos = [
@@ -58650,7 +58893,7 @@ units = [
 			0.506636
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -58662,6 +58905,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_25"
 		pos = [
@@ -58680,7 +58924,7 @@ units = [
 			0.642506
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -58692,6 +58936,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_26"
 		pos = [
@@ -58710,7 +58955,7 @@ units = [
 			0.855146
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -59142,6 +59387,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_43"
 		pos = [
@@ -59160,7 +59406,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -59172,6 +59418,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_44"
 		pos = [
@@ -59190,7 +59437,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -59202,6 +59449,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_45"
 		pos = [
@@ -59220,7 +59468,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -59232,6 +59480,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_46"
 		pos = [
@@ -59250,7 +59499,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -59262,6 +59511,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_47"
 		pos = [
@@ -59280,7 +59530,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -60072,6 +60322,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_27"
 		pos = [
@@ -60090,7 +60341,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -60102,6 +60353,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_28"
 		pos = [
@@ -60120,7 +60372,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -60162,6 +60414,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_vt1_196"
 		pos = [
@@ -60180,7 +60433,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -60192,6 +60445,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_vt1_197"
 		pos = [
@@ -60210,7 +60464,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -60222,6 +60476,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_vt1_198"
 		pos = [
@@ -60240,7 +60495,7 @@ units = [
 			1
 			1.569551
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -60252,6 +60507,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_48"
 		pos = [
@@ -60270,7 +60526,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -60282,6 +60538,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_49"
 		pos = [
@@ -60300,7 +60557,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -60342,6 +60599,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_vt1_202"
 		pos = [
@@ -60360,7 +60618,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -60372,6 +60630,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_203"
 		pos = [
@@ -60390,7 +60649,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -60402,6 +60661,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_204"
 		pos = [
@@ -60420,7 +60680,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -60432,6 +60692,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_29"
 		pos = [
@@ -60450,7 +60711,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -60852,6 +61113,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_30"
 		pos = [
@@ -60870,7 +61132,7 @@ units = [
 			0.692595
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -60882,6 +61144,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_31"
 		pos = [
@@ -60900,7 +61163,7 @@ units = [
 			0.699701
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -60912,6 +61175,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_32"
 		pos = [
@@ -60930,7 +61194,7 @@ units = [
 			0.732143
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -60942,6 +61206,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_33"
 		pos = [
@@ -60960,7 +61225,7 @@ units = [
 			0.732143
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -61002,6 +61267,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_36"
 		pos = [
@@ -61020,7 +61286,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -61032,6 +61298,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_37"
 		pos = [
@@ -61050,7 +61317,7 @@ units = [
 			0.732143
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -61122,6 +61389,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_39"
 		pos = [
@@ -61140,7 +61408,7 @@ units = [
 			1.03028
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -61152,6 +61420,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_34"
 		pos = [
@@ -61170,7 +61439,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -61182,6 +61451,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_35"
 		pos = [
@@ -61200,7 +61470,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -61302,6 +61572,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_50"
 		pos = [
@@ -61320,7 +61591,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -61422,6 +61693,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_vt1_238"
 		pos = [
@@ -61440,7 +61712,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -61452,6 +61724,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_vt1_239"
 		pos = [
@@ -61470,7 +61743,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -61482,6 +61755,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_vt1_240"
 		pos = [
@@ -61500,7 +61774,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -62172,6 +62446,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_263"
 		pos = [
@@ -62190,7 +62465,7 @@ units = [
 			1.22532
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -62202,6 +62477,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_42"
 		pos = [
@@ -62220,7 +62496,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -62232,6 +62508,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_43"
 		pos = [
@@ -62250,7 +62527,7 @@ units = [
 			1.05603
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -64242,6 +64519,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_45"
 		pos = [
@@ -64260,7 +64538,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -64272,6 +64550,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_47"
 		pos = [
@@ -64290,7 +64569,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -64302,6 +64581,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_48"
 		pos = [
@@ -64320,7 +64600,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -64422,6 +64702,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_vt1_338"
 		pos = [
@@ -64440,7 +64721,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -64452,6 +64733,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_13"
 		pos = [
@@ -64470,7 +64752,7 @@ units = [
 			0.974246
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -64752,6 +65034,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_49"
 		pos = [
@@ -64770,7 +65053,7 @@ units = [
 			1.05603
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -65052,6 +65335,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_15"
 		pos = [
@@ -65070,7 +65354,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65082,6 +65366,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_vt1_363"
 		pos = [
@@ -65100,7 +65385,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65112,6 +65397,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_vt1_364"
 		pos = [
@@ -65130,7 +65416,7 @@ units = [
 			1.012982
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65142,6 +65428,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_vt1_365"
 		pos = [
@@ -65160,7 +65447,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65172,6 +65459,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_51"
 		pos = [
@@ -65190,7 +65478,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65202,6 +65490,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_52"
 		pos = [
@@ -65220,7 +65509,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65232,6 +65521,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_53"
 		pos = [
@@ -65250,7 +65540,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65262,6 +65552,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_54"
 		pos = [
@@ -65280,7 +65571,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65292,6 +65583,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_55"
 		pos = [
@@ -65310,7 +65602,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65322,6 +65614,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_56"
 		pos = [
@@ -65340,7 +65633,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65352,6 +65645,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_57"
 		pos = [
@@ -65370,7 +65664,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65382,6 +65676,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_58"
 		pos = [
@@ -65400,7 +65695,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65412,6 +65707,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_59"
 		pos = [
@@ -65430,7 +65726,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65442,6 +65738,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_14"
 		pos = [
@@ -65460,7 +65757,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -65472,6 +65769,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_15"
 		pos = [
@@ -65490,7 +65788,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -65502,6 +65800,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_16"
 		pos = [
@@ -65520,7 +65819,7 @@ units = [
 			0.852228
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -65532,6 +65831,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_17"
 		pos = [
@@ -65550,7 +65850,7 @@ units = [
 			0.895955
 			0.817362
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -65592,6 +65892,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_18"
 		pos = [
@@ -65610,7 +65911,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -65682,6 +65983,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_53"
 		pos = [
@@ -65700,7 +66002,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -65742,6 +66044,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_60"
 		pos = [
@@ -65760,7 +66063,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -65952,6 +66255,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_55"
 		pos = [
@@ -65970,7 +66274,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -66350,7 +66654,7 @@ units = [
 			0.641384
 		]
 		rot = [
-			-7.5E-05
+			-7.5e-05
 			0.000875
 			0.085797
 			-0.996312
@@ -66443,7 +66747,7 @@ units = [
 			-0.000878
 			0
 			1
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -66473,7 +66777,7 @@ units = [
 			-0.000878
 			0
 			1
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -68052,6 +68356,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_20"
 		pos = [
@@ -68070,7 +68375,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -68082,6 +68387,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_vt1_463"
 		pos = [
@@ -68100,7 +68406,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -68202,6 +68508,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_56"
 		pos = [
@@ -68220,7 +68527,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68232,6 +68539,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_23"
 		pos = [
@@ -68250,7 +68558,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -68292,6 +68600,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_24"
 		pos = [
@@ -68310,7 +68619,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -68502,6 +68811,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_57"
 		pos = [
@@ -68520,7 +68830,7 @@ units = [
 			1.03671
 			1.03671
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68532,6 +68842,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_58"
 		pos = [
@@ -68550,7 +68861,7 @@ units = [
 			1.03671
 			1.03671
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68622,6 +68933,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_59"
 		pos = [
@@ -68640,7 +68952,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68652,6 +68964,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_60"
 		pos = [
@@ -68670,7 +68983,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68682,6 +68995,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_61"
 		pos = [
@@ -68700,7 +69014,7 @@ units = [
 			1
 			0.806984
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68712,6 +69026,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_62"
 		pos = [
@@ -68730,7 +69045,7 @@ units = [
 			1
 			0.806984
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68742,6 +69057,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_64"
 		pos = [
@@ -68760,7 +69076,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68772,6 +69088,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_65"
 		pos = [
@@ -68790,7 +69107,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68802,6 +69119,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_66"
 		pos = [
@@ -68820,7 +69138,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68832,6 +69150,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_67"
 		pos = [
@@ -68850,7 +69169,7 @@ units = [
 			1.05384
 			1.05384
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68862,6 +69181,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_68"
 		pos = [
@@ -68880,7 +69200,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68892,6 +69212,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_71"
 		pos = [
@@ -68910,7 +69231,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -68952,6 +69273,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_73"
 		pos = [
@@ -68970,7 +69292,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -69742,7 +70064,7 @@ units = [
 		rot = [
 			0.51466
 			-0.484897
-			3.8E-05
+			3.8e-05
 			-0.707107
 		]
 		scl = [
@@ -75982,7 +76304,7 @@ units = [
 		rot = [
 			0
 			0
-			-1E-06
+			-1e-06
 			-1
 		]
 		scl = [
@@ -76611,7 +76933,7 @@ units = [
 		]
 		rot = [
 			-0.001566
-			8.3E-05
+			8.3e-05
 			0.693198
 			-0.720745
 		]
@@ -76902,6 +77224,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_vt1_759"
 		pos = [
@@ -76920,7 +77243,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -76932,6 +77255,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_61"
 		pos = [
@@ -76950,7 +77274,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -76962,6 +77286,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_62"
 		pos = [
@@ -76980,7 +77305,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -77082,6 +77407,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_63"
 		pos = [
@@ -77100,7 +77426,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -77112,6 +77438,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_64"
 		pos = [
@@ -77130,7 +77457,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -77142,6 +77469,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_65"
 		pos = [
@@ -77160,7 +77488,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -77202,6 +77530,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_vt1_769"
 		pos = [
@@ -77220,7 +77549,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -77232,6 +77561,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_25"
 		pos = [
@@ -77250,7 +77580,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -77322,6 +77652,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_66"
 		pos = [
@@ -77340,7 +77671,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -77352,6 +77683,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_67"
 		pos = [
@@ -77370,7 +77702,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -77532,6 +77864,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_68"
 		pos = [
@@ -77550,7 +77883,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -77562,6 +77895,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_69"
 		pos = [
@@ -77580,7 +77914,7 @@ units = [
 			1
 			1.26293
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -77592,6 +77926,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_70"
 		pos = [
@@ -77610,7 +77945,7 @@ units = [
 			1
 			1.26293
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -77742,6 +78077,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_71"
 		pos = [
@@ -77760,7 +78096,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -77772,6 +78108,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_72"
 		pos = [
@@ -77790,7 +78127,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -77892,6 +78229,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_74"
 		pos = [
@@ -77910,7 +78248,7 @@ units = [
 			1.03671
 			1.03671
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -77922,6 +78260,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_75"
 		pos = [
@@ -77940,7 +78279,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -77952,6 +78291,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_76"
 		pos = [
@@ -77970,7 +78310,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -77982,6 +78322,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_77"
 		pos = [
@@ -78000,7 +78341,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -78012,6 +78353,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_78"
 		pos = [
@@ -78030,7 +78372,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -78042,6 +78384,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_79"
 		pos = [
@@ -78060,7 +78403,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -78192,6 +78535,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_46"
 		pos = [
@@ -78210,7 +78554,7 @@ units = [
 			1.17176
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -78222,6 +78566,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_803"
 		pos = [
@@ -78240,7 +78585,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -78252,6 +78597,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_80"
 		pos = [
@@ -78270,7 +78616,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -78282,6 +78628,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_81"
 		pos = [
@@ -78300,7 +78647,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -78312,6 +78659,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_82"
 		pos = [
@@ -78330,7 +78678,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -78342,6 +78690,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_83"
 		pos = [
@@ -78360,7 +78709,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -79146,6 +79495,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_74"
 		pos = [
@@ -79164,7 +79514,7 @@ units = [
 			1
 			1.26293
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -79236,6 +79586,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_26"
 		pos = [
@@ -79254,7 +79605,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -79386,6 +79737,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_75"
 		pos = [
@@ -79404,7 +79756,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -79416,6 +79768,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_76"
 		pos = [
@@ -79434,7 +79787,7 @@ units = [
 			1
 			1.735415
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -79446,6 +79799,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_77"
 		pos = [
@@ -79464,7 +79818,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -79476,6 +79830,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_vt1_844"
 		pos = [
@@ -79494,7 +79849,7 @@ units = [
 			1
 			2.214142
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -79716,6 +80071,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_89"
 		pos = [
@@ -79734,7 +80090,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -79746,6 +80102,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_90"
 		pos = [
@@ -79764,7 +80121,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -79776,6 +80133,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_92"
 		pos = [
@@ -79794,7 +80152,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -79866,6 +80224,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_27"
 		pos = [
@@ -79884,7 +80243,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -80147,7 +80506,7 @@ units = [
 			0
 			0.707107
 			0.707107
-			-1E-06
+			-1e-06
 		]
 		scl = [
 			1
@@ -80646,6 +81005,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_28"
 		pos = [
@@ -80664,7 +81024,7 @@ units = [
 			0.852228
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -81036,6 +81396,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_898"
 		pos = [
@@ -81054,7 +81415,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -81066,6 +81427,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_899"
 		pos = [
@@ -81084,7 +81446,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -81096,6 +81458,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_900"
 		pos = [
@@ -81114,7 +81477,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -81126,6 +81489,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_901"
 		pos = [
@@ -81144,7 +81508,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -81186,6 +81550,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_903"
 		pos = [
@@ -81204,7 +81569,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -81216,6 +81581,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_03_79"
 		pos = [
@@ -81234,7 +81600,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_03"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
 	}
 	{
 		cameras = {
@@ -81246,6 +81612,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_113"
 		pos = [
@@ -81264,7 +81631,7 @@ units = [
 			1.05384
 			1.05384
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -81276,6 +81643,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_114"
 		pos = [
@@ -81294,7 +81662,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -81306,6 +81674,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_115"
 		pos = [
@@ -81324,7 +81693,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -81366,6 +81735,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_116"
 		pos = [
@@ -81384,7 +81754,7 @@ units = [
 			1.13842
 			1.13842
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -81456,6 +81826,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_02_22"
 		pos = [
@@ -81474,7 +81845,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_02"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_02"
 	}
 	{
 		cameras = {
@@ -81612,7 +81983,7 @@ units = [
 		]
 		rot = [
 			0
-			1E-06
+			1e-06
 			0.707107
 			-0.707107
 		]
@@ -81938,7 +82309,7 @@ units = [
 			3.76244
 		]
 		rot = [
-			-1E-06
+			-1e-06
 			0
 			0
 			-1
@@ -90492,6 +90863,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_84"
 		pos = [
@@ -90510,7 +90882,7 @@ units = [
 			1.37553
 			1.37553
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {
@@ -91318,7 +91690,7 @@ units = [
 			4.48498
 		]
 		rot = [
-			-2E-06
+			-2e-06
 			0
 			0
 			-1
@@ -91375,8 +91747,8 @@ units = [
 			2.12696
 		]
 		rot = [
-			2E-06
-			-2E-06
+			2e-06
+			-2e-06
 			1
 			0
 		]
@@ -91578,8 +91950,8 @@ units = [
 			2.06178
 		]
 		rot = [
-			2E-06
-			-2E-06
+			2e-06
+			-2e-06
 			1
 			0
 		]
@@ -91635,8 +92007,8 @@ units = [
 			2.07534
 		]
 		rot = [
-			2E-06
-			-2E-06
+			2e-06
+			-2e-06
 			1
 			0
 		]
@@ -91809,8 +92181,8 @@ units = [
 			2.40859
 		]
 		rot = [
-			-1E-06
-			-1E-06
+			-1e-06
+			-1e-06
 			0.707107
 			-0.707107
 		]
@@ -91867,8 +92239,8 @@ units = [
 			2.45484
 		]
 		rot = [
-			-1E-06
-			-1E-06
+			-1e-06
+			-1e-06
 			0.707107
 			-0.707107
 		]
@@ -91925,8 +92297,8 @@ units = [
 			2.58995
 		]
 		rot = [
-			-1E-06
-			-1E-06
+			-1e-06
+			-1e-06
 			0.707107
 			-0.707107
 		]
@@ -92165,7 +92537,7 @@ units = [
 			1.74383
 		]
 		rot = [
-			-2E-06
+			-2e-06
 			0
 			0
 			-1
@@ -92646,6 +93018,7 @@ units = [
 		}
 		material = ""
 		materials = {
+			beams = "units/materials/g/generic_wood_beams_01"
 		}
 		name = "generic_wood_beam_4m_01_vt1_1230"
 		pos = [
@@ -92654,8 +93027,8 @@ units = [
 			5.88232
 		]
 		rot = [
-			-1E-06
-			1E-06
+			-1e-06
+			1e-06
 			0.707108
 			-0.707106
 		]
@@ -92664,7 +93037,7 @@ units = [
 			1.125
 			1
 		]
-		type = "units/architecture/generic/generic_wood_beam_4m_01"
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
 	}
 	{
 		cameras = {

@@ -5,7 +5,8 @@ import sjson
 
 # Adds the stand-ins for the inn's missing pieces (STAND_INS in convert_level.py) to a level that has been worked on in the
 # editor, and changes nothing else in it. A stand-in has the id the conversion gives it, so one already in the level is
-# not added again, and one whose stand-in unit has changed in STAND_INS is replaced.
+# not added again, and one whose stand-in unit has changed in STAND_INS is replaced. Units of REPLACEMENTS are given their
+# replacement.
 #
 # Usage:
 #   add_stand_ins.py <Vermintide 1 dir> <Content dir> <SDK dir> <vt1 strings file> <world.level> <out report>
@@ -45,6 +46,8 @@ def main():
             level['editor_metadata']['Units'][present_editor[unit['id']]] = editor_units[unit['id']]
             replaced += 1
 
+    replaced_units = convert_level.replace_units(level)
+
     with open(args.level, 'w', encoding='utf8', newline='\n') as f:
         f.write(sjson.dumps(level))
 
@@ -52,6 +55,7 @@ def main():
         f.write(converter.report(converted))
 
     print('added %d stand-ins, replaced %d, %d were in the level already' % (added, replaced, len(converter.stand_in_ids) - added - replaced))
+    print('gave %d units their replacement (REPLACEMENTS)' % replaced_units)
 
 
 if __name__ == '__main__':

@@ -8,6 +8,9 @@ inn_bannister_stairs_wood_01_vt1_476 is a copy of inn_bannister_stairs_wood_01_1
 The shading environment environment/red_moon_inn is not in Vermintide 2: environment/honduras_keep_02 is used.
 Level setting sound_environment = "" is left out.
 Level setting timpani_sound_environment = "default" is left out.
+units/architecture/generic/generic_wood_beam_4m_01 has another shape in Vermintide 2: units/architecture/wizard/wizard_wood_beam_4m_01, which has the inn's, is used.
+units/architecture/generic/generic_wood_beam_4m_02 has another shape in Vermintide 2: units/architecture/wizard/wizard_wood_beam_4m_02, which has the inn's, is used.
+units/architecture/generic/generic_wood_beam_4m_03 has another shape in Vermintide 2: units/architecture/wizard/wizard_wood_beam_4m_03, which has the inn's, is used.
 Units keep their own materials: the material Vermintide 1 gives 1014 units is one of their own, or the one of their Vermintide 1 version.
 Not converted: triggers (9).
 Not converted: stories (8).
