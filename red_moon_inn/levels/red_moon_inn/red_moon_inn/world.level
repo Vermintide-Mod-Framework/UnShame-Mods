@@ -19448,46 +19448,6 @@ editor_metadata = {
 		{
 			Cameras = {
 			}
-			Id = "c85e9a1c-30e2-573c-abef-4bbcc21fdfed"
-			Layer = "Default"
-			Lights = {
-			}
-			MaterialSlots = {
-			}
-			Name = "inn_bannister_stairs_wood_01_vt1_476"
-			OverridePoses = {
-			}
-			Path = "units/architecture/inn/modular_assets/inn_bannister_stairs_wood_01"
-			Pivot = {
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Pos = {
-				X = -6.87354
-				Y = 3.64706
-				Z = 1.01323
-			}
-			Rot = {
-				W = -0.681004
-				X = 0.007393
-				Y = -0.006876
-				Z = -0.73221
-			}
-			Scl = {
-				X = 1
-				Y = 1
-				Z = 1
-			}
-			ScriptData = {
-			}
-			StoryOverridePoses = {
-			}
-			Type = "units/architecture/inn/modular_assets/inn_bannister_stairs_wood_01"
-		}
-		{
-			Cameras = {
-			}
 			Id = "d4850e92-11af-58d0-812f-dc339bd15803"
 			Layer = "Default"
 			Lights = {
@@ -66187,36 +66147,6 @@ units = [
 			1
 		]
 		type = "units/props/candles/prop_candle_01"
-	}
-	{
-		cameras = {
-		}
-		data = {
-		}
-		id = "c85e9a1c-30e2-573c-abef-4bbcc21fdfed"
-		lights = {
-		}
-		material = ""
-		materials = {
-		}
-		name = "inn_bannister_stairs_wood_01_vt1_476"
-		pos = [
-			-6.87354
-			3.64706
-			1.01323
-		]
-		rot = [
-			0.007393
-			-0.006876
-			-0.73221
-			-0.681004
-		]
-		scl = [
-			1
-			1
-			1
-		]
-		type = "units/architecture/inn/modular_assets/inn_bannister_stairs_wood_01"
 	}
 	{
 		cameras = {

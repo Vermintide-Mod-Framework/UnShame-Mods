@@ -1,4 +1,4 @@
-import argparse, math, os, re, sys, uuid, collections
+import argparse, json, math, os, re, sys, uuid, collections
 
 import compiled_level
 import sjson
@@ -314,7 +314,26 @@ class Converter:
             })
 
         self.add_lights(out, index)
-        return out, index
+        return self.without_duplicates(out, index)
+
+    def without_duplicates(self, units, index):
+        """The units without the inn's exact copies of others: the same unit in the same place with the same settings.
+        The editor's level check reports them as duplicate units."""
+        kept, first, out_of = [], {}, {}
+
+        for k, u in enumerate(units):
+            key = json.dumps([u['type'], [round(v, 4) for v in u['pos'] + u['rot'] + u['scl']], u['data'], u['lights']], sort_keys=True)
+
+            if key in first:
+                self.notes.append('%s is a copy of %s, in the same place: it is left out.' % (u['name'], kept[first[key]]['name']))
+                out_of[k] = first[key]
+                continue
+
+            first[key] = len(kept)
+            out_of[k] = len(kept)
+            kept.append(u)
+
+        return kept, {vt1: out_of[k] for vt1, k in index.items()}
 
     def add_lights(self, units, index):
         for unit_index, name_h, light in self.level.lights():
@@ -412,7 +431,8 @@ class Converter:
 
         for k, sets in enumerate(unit_sets):
             for s in sets:
-                if k in unit_index:
+                # A unit left out as a copy is in its sets as the unit it is a copy of
+                if k in unit_index and units[unit_index[k]]['id'] not in out[by_hash[s]]:
                     out[by_hash[s]].append(units[unit_index[k]]['id'])
 
         for k, sets in enumerate(effect_sets):

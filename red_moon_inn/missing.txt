@@ -1,9 +1,10 @@
 Red Moon Inn: what the conversion left out
 
 From levels/inn/world, 8e0929053dd7ecd0.patch_029 in resource_packages/levels/inn.
-Kept: 1186 of 1236 units, 16 of 31 particle effects, 4 volumes, 12 object sets.
+Kept: 1185 of 1236 units, 16 of 31 particle effects, 4 volumes, 12 object sets.
 
 214 units have a name made here: their names in Vermintide 1 are not found from their hashes.
+inn_bannister_stairs_wood_01_vt1_476 is a copy of inn_bannister_stairs_wood_01_1, in the same place: it is left out.
 The shading environment environment/red_moon_inn is not in Vermintide 2: environment/honduras_keep_02 is used.
 Level setting sound_environment = "" is left out.
 Level setting timpani_sound_environment = "default" is left out.
