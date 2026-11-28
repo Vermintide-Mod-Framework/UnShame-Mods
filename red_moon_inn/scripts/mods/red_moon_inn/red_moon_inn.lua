@@ -1,9 +1,12 @@
 local mod = get_mod("red_moon_inn")
 
 -- The inn takes the keep's place. The keep's level settings, and those of the keeps the game loads during events,
--- load the inn's level instead. The game's checks for the keep use the settings' keys, so they keep working.
--- The keep's packages stay as they are: the game unloads a level's packages by the list in its settings, so changing
--- the list while the level is loaded would unload packages that were never loaded.
+-- load the inn's level and its packages instead. The game's checks for the keep use the settings' keys, so they keep
+-- working.
+--
+-- The settings only change right before the loading screen loads a level. The game finds the level it is in by the
+-- name in the settings, and unloads a level's packages by the list in them, so they have to stay as they were for as
+-- long as that level is loaded.
 --
 -- In multiplayer the host decides. Every game picks the keep's level from its own settings when it loads it, so the host
 -- puts whether it uses the inn in its lobby's data, and a client loads the inn only when the host does. The host removes
@@ -20,6 +23,12 @@ local KEEP_KEYS = {
 	"inn_level_sonnstill",
 }
 
+-- The keep's packages the inn needs too. The others are the keep's level, its occlusion data (tome) and the event
+-- decorations: the keep's occlusion data hides parts of the inn.
+local INN_PACKAGES = {
+	["resource_packages/levels/inn_dependencies"] = true,
+}
+
 -- The key of the host's lobby data that says whether the host uses the inn
 local LOBBY_KEY = "red_moon_inn"
 
@@ -27,21 +36,51 @@ local LOBBY_KEY = "red_moon_inn"
 -- VMF learns which mods a player has once they are in the game, and the answer comes right after that.
 local CONFIRM_TIME = 10
 
--- The keeps' own levels, kept when the mod is reloaded, when the settings may already have the inn
-local keep_levels = mod:persistent_table("keep_levels")
+-- The keeps' own settings, and whether the settings have the inn now. Kept when the mod is reloaded.
+local keep = mod:persistent_table("keep")
+keep.levels = keep.levels or {}
+keep.packages = keep.packages or {}
 
 for _, key in ipairs(KEEP_KEYS) do
 	local settings = LevelSettings[key]
 
-	if settings and not keep_levels[key] then
-		keep_levels[key] = settings.level_name
+	if settings and not keep.levels[key] then
+		keep.levels[key] = settings.level_name
+		keep.packages[key] = settings.packages
 	end
 end
 
-local function use_inn(use)
-	for key, keep_level in pairs(keep_levels) do
-		LevelSettings[key].level_name = use and INN_LEVEL or keep_level
+local function inn_packages(packages)
+	local kept = {}
+
+	for _, package in ipairs(packages) do
+		if INN_PACKAGES[package] then
+			kept[#kept + 1] = package
+		end
 	end
+
+	return kept
+end
+
+-- Gives the keeps' settings the inn or the keep. If a keep is loaded, its packages are released first, by the list
+-- they were loaded by. Only called when no level is in the world.
+local function use_inn(use)
+	if keep.uses_inn == use then
+		return
+	end
+
+	local handler = Managers.level_transition_handler
+
+	if handler and keep.levels[handler._currently_loaded_level_key] then
+		handler:release_level_resources()
+	end
+
+	for key, level_name in pairs(keep.levels) do
+		LevelSettings[key].level_name = use and INN_LEVEL or level_name
+		LevelSettings[key].packages = use and inn_packages(keep.packages[key]) or keep.packages[key]
+	end
+
+	keep.uses_inn = use
 end
 
 -- The lobby of the game this one is in, as host or client
@@ -69,14 +108,19 @@ local function loads_inn()
 	return true
 end
 
--- The level is chosen when the loading screen starts spawning it
-mod:hook(StateLoading, "_try_next_state", function (func, self, ...)
-	if not self._async_level_spawner then
-		use_inn(loads_inn())
-	end
+-- Right before the loading screen loads the level. A client is in the host's lobby by then.
+mod:hook(LevelTransitionHandler, "load_current_level", function (func, self, ...)
+	use_inn(loads_inn())
 
 	return func(self, ...)
 end)
+
+-- The hook above is off while the mod is off, and this runs anyway. The previous level's world is gone by then.
+mod.on_game_state_changed = function (status, state_name)
+	if status == "enter" and state_name == "StateLoading" and not mod:is_enabled() then
+		use_inn(false)
+	end
+end
 
 -- The host's lobby data says whether it uses the inn, each time the game sets it
 mod:hook(LobbyHost, "set_lobby_data", function (func, self, lobby_data_table)
@@ -100,7 +144,7 @@ end
 local function reload_keep()
 	local level_key = Managers.level_transition_handler and Managers.level_transition_handler:get_current_level_key()
 
-	if keep_levels[level_key] and Managers.player.is_server and Managers.state.game_mode then
+	if keep.levels[level_key] and Managers.player.is_server and Managers.state.game_mode then
 		Managers.state.game_mode:retry_level()
 	end
 end
@@ -168,10 +212,18 @@ mod.update = function (dt)
 	end
 end
 
-mod.on_enabled = function (initial_call)
-	use_inn(loads_inn())
+-- When the game starts, no level is loaded yet. Afterwards the settings change when the next level loads. A mod
+-- reloaded in a level leaves them to the next level too.
+local function no_level_loaded()
+	return not (Managers.state and Managers.state.game_mode)
+end
 
-	if not initial_call then
+mod.on_enabled = function (initial_call)
+	if initial_call then
+		if no_level_loaded() then
+			use_inn(loads_inn())
+		end
+	else
 		update_lobby_data(true)
 		tell_host()
 		reload_keep()
@@ -179,9 +231,11 @@ mod.on_enabled = function (initial_call)
 end
 
 mod.on_disabled = function (initial_call)
-	use_inn(false)
-
-	if not initial_call then
+	if initial_call then
+		if no_level_loaded() then
+			use_inn(false)
+		end
+	else
 		update_lobby_data(false)
 		tell_host()
 		reload_keep()
