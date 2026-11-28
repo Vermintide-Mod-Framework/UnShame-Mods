@@ -1392,7 +1392,7 @@ editor_metadata = {
 	Transients = {
 		Camera = {
 			FarRange = 1000
-			InterestPointDistance = 13.530181
+			InterestPointDistance = 13.760524
 			OrthographicPlane = {
 				W = 1
 				X = 0
@@ -1401,16 +1401,16 @@ editor_metadata = {
 			}
 			OrthographicZoom = 10
 			Pos = {
-				X = -4.370325
-				Y = -1.889564
-				Z = 3.266523
+				X = -5.904497
+				Y = -5.623677
+				Z = 3.137803
 			}
 			ProjectionType = 1
 			Rot = {
-				W = 0.205059
-				X = -0.01609
-				Y = -0.076553
-				Z = 0.975618
+				W = 0.256338
+				X = -0.014706
+				Y = -0.055355
+				Z = 0.964889
 			}
 			RotationSpeed = 0.003
 			TranslationSpeed = 0.2959
@@ -53687,7 +53687,7 @@ editor_metadata = {
 			Pos = {
 				X = -10.467323
 				Y = -11.26462
-				Z = 0.633
+				Z = 1.532999
 			}
 			Rot = {
 				W = -0.928986
@@ -53771,7 +53771,7 @@ editor_metadata = {
 			Pos = {
 				X = -10.467323
 				Y = -11.26462
-				Z = 0.633
+				Z = 1.532999
 			}
 			Rot = {
 				W = -1
@@ -94920,7 +94920,7 @@ units = [
 		pos = [
 			-10.467323
 			-11.26462
-			0.633
+			1.532999
 		]
 		rot = [
 			0
@@ -94987,7 +94987,7 @@ units = [
 		pos = [
 			-10.467323
 			-11.26462
-			0.633
+			1.532999
 		]
 		rot = [
 			0
