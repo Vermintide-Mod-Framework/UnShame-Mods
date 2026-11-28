@@ -1,3 +1,4 @@
+
 editor_metadata = {
 	Flow = {
 		Connections = [
@@ -1387,7 +1388,7 @@ editor_metadata = {
 	Transients = {
 		Camera = {
 			FarRange = 1000
-			InterestPointDistance = 4.1372
+			InterestPointDistance = 14.720136
 			OrthographicPlane = {
 				W = 1
 				X = 0
@@ -1396,19 +1397,19 @@ editor_metadata = {
 			}
 			OrthographicZoom = 10
 			Pos = {
-				X = -4.232348
-				Y = 1.303806
-				Z = 7.125604
+				X = 7.021966
+				Y = 1.495196
+				Z = 2.320168
 			}
 			ProjectionType = 1
 			Rot = {
-				W = -0.959216
-				X = -0.14174
-				Y = -0.035756
-				Z = -0.241943
+				W = -0.226976
+				X = 0.013018
+				Y = -0.05577
+				Z = 0.972215
 			}
 			RotationSpeed = 0.003
-			TranslationSpeed = 0.1973
+			TranslationSpeed = 0.29595
 		}
 	}
 	Triggers = [
@@ -2594,7 +2595,7 @@ editor_metadata = {
 			}
 			Pos = {
 				X = 10
-				Y = 3e-06
+				Y = 3E-06
 				Z = 3.43492
 			}
 			Rot = {
@@ -2998,7 +2999,7 @@ editor_metadata = {
 				Z = 5.92622
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.721793
 				Z = 0.692109
@@ -3038,7 +3039,7 @@ editor_metadata = {
 				Z = 5.92622
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.721793
 				Z = 0.692109
@@ -3078,7 +3079,7 @@ editor_metadata = {
 				Z = 5.92622
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.721793
 				Z = 0.692109
@@ -3118,7 +3119,7 @@ editor_metadata = {
 				Z = 5.8
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.02099
 				Z = 0.99978
@@ -3158,7 +3159,7 @@ editor_metadata = {
 				Z = 5.81918
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.02099
 				Z = 0.99978
@@ -3198,7 +3199,7 @@ editor_metadata = {
 				Z = 5.8
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.02099
 				Z = 0.99978
@@ -17159,7 +17160,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.996312
-				X = -7.5e-05
+				X = -7.5E-05
 				Y = 0.000875
 				Z = 0.085797
 			}
@@ -17278,7 +17279,7 @@ editor_metadata = {
 				Z = 0.848153
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = -0.000878
 				Y = 0
 				Z = 1
@@ -17318,7 +17319,7 @@ editor_metadata = {
 				Z = 0.848153
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = -0.000878
 				Y = 0
 				Z = 1
@@ -21681,7 +21682,7 @@ editor_metadata = {
 				W = -0.707107
 				X = 0.51466
 				Y = -0.484897
-				Z = 3.8e-05
+				Z = 3.8E-05
 			}
 			Scl = {
 				X = 0.484414
@@ -30001,7 +30002,7 @@ editor_metadata = {
 				W = -1
 				X = 0
 				Y = 0
-				Z = -1e-06
+				Z = -1E-06
 			}
 			Scl = {
 				X = 1
@@ -30840,7 +30841,7 @@ editor_metadata = {
 			Rot = {
 				W = -0.720745
 				X = -0.001566
-				Y = 8.3e-05
+				Y = 8.3E-05
 				Z = 0.693198
 			}
 			Scl = {
@@ -35536,7 +35537,7 @@ editor_metadata = {
 				Z = 5.88327
 			}
 			Rot = {
-				W = -1e-06
+				W = -1E-06
 				X = 0
 				Y = 0.707107
 				Z = 0.707107
@@ -37487,7 +37488,7 @@ editor_metadata = {
 			Rot = {
 				W = -0.707107
 				X = 0
-				Y = 1e-06
+				Y = 1E-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -37620,46 +37621,6 @@ editor_metadata = {
 			StoryOverridePoses = {
 			}
 			Type = "units/props/inn/props_generic_bottle_01"
-		}
-		{
-			Cameras = {
-			}
-			Id = "079c626f-ffa1-5034-8957-b0c12338e4bc"
-			Layer = "Default"
-			Lights = {
-			}
-			MaterialSlots = {
-			}
-			Name = "prop_inventory_chest_1"
-			OverridePoses = {
-			}
-			Path = "units/gameplay/prop_inventory_chest"
-			Pivot = {
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Pos = {
-				X = -1.05771
-				Y = 3.91594
-				Z = 0.898
-			}
-			Rot = {
-				W = -1
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Scl = {
-				X = 1
-				Y = 1
-				Z = 1
-			}
-			ScriptData = {
-			}
-			StoryOverridePoses = {
-			}
-			Type = "units/gameplay/prop_inventory_chest"
 		}
 		{
 			Cameras = {
@@ -37915,7 +37876,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -1
-				X = -1e-06
+				X = -1E-06
 				Y = 0
 				Z = 0
 			}
@@ -42352,58 +42313,6 @@ editor_metadata = {
 			StoryOverridePoses = {
 			}
 			Type = "units/lights/light"
-		}
-		{
-			Cameras = {
-			}
-			Id = "fe35a630-6d5a-5136-a38c-ebde10c61dec"
-			Layer = "Default"
-			Lights = {
-			}
-			MaterialSlots = {
-			}
-			Name = "pickup_spawner_1"
-			OverridePoses = {
-			}
-			Path = "units/hub_elements/pickup_spawner"
-			Pivot = {
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Pos = {
-				X = 2.05989
-				Y = 4.17277
-				Z = 1.41474
-			}
-			Rot = {
-				W = -0.866025
-				X = 0
-				Y = 0
-				Z = 0.5
-			}
-			Scl = {
-				X = 1
-				Y = 1
-				Z = 1
-			}
-			ScriptData = {
-				damage_boost_potion = false
-				fire_grenade_t1 = false
-				fire_grenade_t2 = false
-				first_aid_kit = false
-				frag_grenade_t1 = false
-				frag_grenade_t2 = false
-				guaranteed_spawn = true
-				healing_draught = false
-				percentage_through_level = 0
-				smoke_grenade_t1 = false
-				smoke_grenade_t2 = false
-				speed_boost_potion = false
-			}
-			StoryOverridePoses = {
-			}
-			Type = "units/hub_elements/pickup_spawner"
 		}
 		{
 			Cameras = {
@@ -49813,7 +49722,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -1
-				X = -2e-06
+				X = -2E-06
 				Y = 0
 				Z = 0
 			}
@@ -49883,8 +49792,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = 0
-				X = 2e-06
-				Y = -2e-06
+				X = 2E-06
+				Y = -2E-06
 				Z = 1
 			}
 			Scl = {
@@ -50132,8 +50041,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = 0
-				X = 2e-06
-				Y = -2e-06
+				X = 2E-06
+				Y = -2E-06
 				Z = 1
 			}
 			Scl = {
@@ -50201,8 +50110,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = 0
-				X = 2e-06
-				Y = -2e-06
+				X = 2E-06
+				Y = -2E-06
 				Z = 1
 			}
 			Scl = {
@@ -50410,8 +50319,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707107
-				X = -1e-06
-				Y = -1e-06
+				X = -1E-06
+				Y = -1E-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -50480,8 +50389,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707107
-				X = -1e-06
-				Y = -1e-06
+				X = -1E-06
+				Y = -1E-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -50550,8 +50459,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707107
-				X = -1e-06
-				Y = -1e-06
+				X = -1E-06
+				Y = -1E-06
 				Z = 0.707107
 			}
 			Scl = {
@@ -50862,7 +50771,7 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -1
-				X = -2e-06
+				X = -2E-06
 				Y = 0
 				Z = 0
 			}
@@ -51512,8 +51421,8 @@ editor_metadata = {
 			}
 			Rot = {
 				W = -0.707106
-				X = -1e-06
-				Y = 1e-06
+				X = -1E-06
+				Y = 1E-06
 				Z = 0.707108
 			}
 			Scl = {
@@ -53521,8 +53430,8 @@ editor_metadata = {
 				Z = 5.69608688354492
 			}
 			Rot = {
-				W = 9.99999997475243e-07
-				X = -9.99999997475243e-07
+				W = 9.99999997475243E-07
+				X = -9.99999997475243E-07
 				Y = 0
 				Z = 1
 			}
@@ -53558,13 +53467,13 @@ editor_metadata = {
 			Pos = {
 				X = -6.49425379636139
 				Y = -8.24561885974341
-				Z = 0.9261859739303588
+				Z = 0.926185973930359
 			}
 			Rot = {
-				W = -0.42424502968788147
+				W = -0.424245029687881
 				X = 0
 				Y = 0
-				Z = 0.9055479764938354
+				Z = 0.905547976493835
 			}
 			Scl = {
 				X = 1
@@ -53577,6 +53486,137 @@ editor_metadata = {
 			StoryOverridePoses = {
 			}
 			Type = "units/architecture/generic/doors/generic_wood_door_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "079c626f-ffa1-5034-8957-b0c12338e4bc"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_inventory_chest_1"
+			OverridePoses = {
+			}
+			Path = "units/gameplay/prop_inventory_chest"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -1.05771
+				Y = 3.91594
+				Z = 0.898
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				"extensions[1]" = "GenericOutlineExtension"
+				"interaction_data.hud_description" = "interact_inventory"
+			}
+			Type = "units/gameplay/prop_inventory_chest"
+		}
+		{
+			Cameras = {
+			}
+			Id = "96f95f89-bb8a-4276-91f6-634ee045b1c5"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "pickup_spawner_4"
+			OverridePoses = {
+			}
+			Path = "units/hub_elements/pickup_spawner"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -21.6942
+				Y = 37.2863
+				Z = 10.639
+			}
+			Rot = {
+				W = -0.740142
+				X = 0
+				Y = 0
+				Z = -0.672451
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				bonus_spawner = true
+				cooldown_reduction_potion = false
+				damage_boost_potion = false
+				fire_grenade_t1 = false
+				fire_grenade_t2 = false
+				first_aid_kit = false
+				frag_grenade_t1 = false
+				frag_grenade_t2 = false
+				guaranteed_spawn = true
+				healing_draught = false
+				percentage_through_level = 0.122887
+				smoke_grenade_t1 = false
+				smoke_grenade_t2 = false
+				speed_boost_potion = false
+			}
+			Type = "units/hub_elements/pickup_spawner"
+		}
+		{
+			Cameras = {
+			}
+			Id = "3178d670-c93a-4f93-9710-1282b135220f"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "forge_anvil_01_tier_03_1"
+			OverridePoses = {
+			}
+			Path = "units/props/forge/forge_anvil_01_tier_03"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 9.450001
+				Y = -4.009993
+				Z = 0.688001
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				umbra_no_occ = true
+			}
+			Type = "units/props/forge/forge_anvil_01_tier_03"
 		}
 	]
 	Volumes = [
@@ -55829,7 +55869,7 @@ units = [
 		name = "inn_floor_wood_4x4m_01_23"
 		pos = [
 			10
-			3e-06
+			3E-06
 			3.43492
 		]
 		rot = [
@@ -56136,7 +56176,7 @@ units = [
 			0
 			0.721793
 			0.692109
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -56166,7 +56206,7 @@ units = [
 			0
 			0.721793
 			0.692109
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -56196,7 +56236,7 @@ units = [
 			0
 			0.721793
 			0.692109
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -56226,7 +56266,7 @@ units = [
 			0
 			0.02099
 			0.99978
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -56256,7 +56296,7 @@ units = [
 			0
 			0.02099
 			0.99978
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -56286,7 +56326,7 @@ units = [
 			0
 			0.02099
 			0.99978
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -66753,7 +66793,7 @@ units = [
 			0.641384
 		]
 		rot = [
-			-7.5e-05
+			-7.5E-05
 			0.000875
 			0.085797
 			-0.996312
@@ -66846,7 +66886,7 @@ units = [
 			-0.000878
 			0
 			1
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -66876,7 +66916,7 @@ units = [
 			-0.000878
 			0
 			1
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -70145,7 +70185,7 @@ units = [
 		rot = [
 			0.51466
 			-0.484897
-			3.8e-05
+			3.8E-05
 			-0.707107
 		]
 		scl = [
@@ -76385,7 +76425,7 @@ units = [
 		rot = [
 			0
 			0
-			-1e-06
+			-1E-06
 			-1
 		]
 		scl = [
@@ -77014,7 +77054,7 @@ units = [
 		]
 		rot = [
 			-0.001566
-			8.3e-05
+			8.3E-05
 			0.693198
 			-0.720745
 		]
@@ -80550,7 +80590,7 @@ units = [
 			0
 			0.707107
 			0.707107
-			-1e-06
+			-1E-06
 		]
 		scl = [
 			1
@@ -82015,7 +82055,7 @@ units = [
 		]
 		rot = [
 			0
-			1e-06
+			1E-06
 			0.707107
 			-0.707107
 		]
@@ -82115,36 +82155,6 @@ units = [
 			1
 		]
 		type = "units/props/inn/props_generic_bottle_01"
-	}
-	{
-		cameras = {
-		}
-		data = {
-		}
-		id = "079c626f-ffa1-5034-8957-b0c12338e4bc"
-		lights = {
-		}
-		material = ""
-		materials = {
-		}
-		name = "prop_inventory_chest_1"
-		pos = [
-			-1.05771
-			3.91594
-			0.898
-		]
-		rot = [
-			0
-			0
-			0
-			-1
-		]
-		scl = [
-			1
-			1
-			1
-		]
-		type = "units/gameplay/prop_inventory_chest"
 	}
 	{
 		cameras = {
@@ -82341,7 +82351,7 @@ units = [
 			3.76244
 		]
 		rot = [
-			-1e-06
+			-1E-06
 			0
 			0
 			-1
@@ -85705,48 +85715,6 @@ units = [
 			1
 		]
 		type = "units/lights/light"
-	}
-	{
-		cameras = {
-		}
-		data = {
-			damage_boost_potion = false
-			fire_grenade_t1 = false
-			fire_grenade_t2 = false
-			first_aid_kit = false
-			frag_grenade_t1 = false
-			frag_grenade_t2 = false
-			guaranteed_spawn = true
-			healing_draught = false
-			percentage_through_level = 0
-			smoke_grenade_t1 = false
-			smoke_grenade_t2 = false
-			speed_boost_potion = false
-		}
-		id = "fe35a630-6d5a-5136-a38c-ebde10c61dec"
-		lights = {
-		}
-		material = ""
-		materials = {
-		}
-		name = "pickup_spawner_1"
-		pos = [
-			2.05989
-			4.17277
-			1.41474
-		]
-		rot = [
-			0
-			0
-			0.5
-			-0.866025
-		]
-		scl = [
-			1
-			1
-			1
-		]
-		type = "units/hub_elements/pickup_spawner"
 	}
 	{
 		cameras = {
@@ -91718,7 +91686,7 @@ units = [
 			4.48498
 		]
 		rot = [
-			-2e-06
+			-2E-06
 			0
 			0
 			-1
@@ -91775,8 +91743,8 @@ units = [
 			2.12696
 		]
 		rot = [
-			2e-06
-			-2e-06
+			2E-06
+			-2E-06
 			1
 			0
 		]
@@ -91978,8 +91946,8 @@ units = [
 			2.06178
 		]
 		rot = [
-			2e-06
-			-2e-06
+			2E-06
+			-2E-06
 			1
 			0
 		]
@@ -92035,8 +92003,8 @@ units = [
 			2.07534
 		]
 		rot = [
-			2e-06
-			-2e-06
+			2E-06
+			-2E-06
 			1
 			0
 		]
@@ -92209,8 +92177,8 @@ units = [
 			2.40859
 		]
 		rot = [
-			-1e-06
-			-1e-06
+			-1E-06
+			-1E-06
 			0.707107
 			-0.707107
 		]
@@ -92267,8 +92235,8 @@ units = [
 			2.45484
 		]
 		rot = [
-			-1e-06
-			-1e-06
+			-1E-06
+			-1E-06
 			0.707107
 			-0.707107
 		]
@@ -92325,8 +92293,8 @@ units = [
 			2.58995
 		]
 		rot = [
-			-1e-06
-			-1e-06
+			-1E-06
+			-1E-06
 			0.707107
 			-0.707107
 		]
@@ -92565,7 +92533,7 @@ units = [
 			1.74383
 		]
 		rot = [
-			-2e-06
+			-2E-06
 			0
 			0
 			-1
@@ -93054,8 +93022,8 @@ units = [
 			5.88232
 		]
 		rot = [
-			-1e-06
-			1e-06
+			-1E-06
+			1E-06
 			0.707108
 			-0.707106
 		]
@@ -94578,10 +94546,10 @@ units = [
 			5.69608688354492
 		]
 		rot = [
-			-9.99999997475243e-07
+			-9.99999997475243E-07
 			0
 			1
-			9.99999997475243e-07
+			9.99999997475243E-07
 		]
 		scl = [
 			1
@@ -94589,6 +94557,144 @@ units = [
 			1
 		]
 		type = "units/props/signs/sign_emp_round_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			inn_lobby_door_open = false
+		}
+		id = "4999a4e6-8e75-58b8-b66a-2e1edbda626e"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_door_01_vt1_1144"
+		pos = [
+			-6.49425379636139
+			-8.24561885974341
+			0.926185973930359
+		]
+		rot = [
+			0
+			0
+			0.905547976493835
+			-0.424245029687881
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/generic/doors/generic_wood_door_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			"extensions[1]" = "GenericOutlineExtension"
+			"interaction_data.hud_description" = "interact_inventory"
+		}
+		id = "079c626f-ffa1-5034-8957-b0c12338e4bc"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_inventory_chest_1"
+		pos = [
+			-1.05771
+			3.91594
+			0.898
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/gameplay/prop_inventory_chest"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			bonus_spawner = true
+			cooldown_reduction_potion = false
+			damage_boost_potion = false
+			fire_grenade_t1 = false
+			fire_grenade_t2 = false
+			first_aid_kit = false
+			frag_grenade_t1 = false
+			frag_grenade_t2 = false
+			guaranteed_spawn = true
+			healing_draught = false
+			percentage_through_level = 0.122887
+			smoke_grenade_t1 = false
+			smoke_grenade_t2 = false
+			speed_boost_potion = false
+		}
+		id = "96f95f89-bb8a-4276-91f6-634ee045b1c5"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "pickup_spawner_4"
+		pos = [
+			-21.6942
+			37.2863
+			10.639
+		]
+		rot = [
+			0
+			0
+			-0.672451
+			-0.740142
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/hub_elements/pickup_spawner"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			umbra_no_occ = true
+		}
+		id = "3178d670-c93a-4f93-9710-1282b135220f"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "forge_anvil_01_tier_03_1"
+		pos = [
+			9.450001
+			-4.009993
+			0.688001
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/forge/forge_anvil_01_tier_03"
 	}
 	{
 		cameras = {
@@ -94619,37 +94725,6 @@ units = [
 			1
 		]
 		type = "units/skydome/skydome_hdr"
-	}
-	{
-		cameras = {
-		}
-		data = {
-			inn_lobby_door_open = false
-		}
-		id = "4999a4e6-8e75-58b8-b66a-2e1edbda626e"
-		lights = {
-		}
-		material = ""
-		materials = {
-		}
-		name = "generic_wood_door_01_vt1_1144"
-		pos = [
-			-6.49425379636139
-			-8.24561885974341
-			0.9261859739303588
-		]
-		rot = [
-			0
-			0
-			0.9055479764938354
-			-0.42424502968788147
-		]
-		scl = [
-			1
-			1
-			1
-		]
-		type = "units/architecture/generic/doors/generic_wood_door_01"
 	}
 ]
 volumes = [
