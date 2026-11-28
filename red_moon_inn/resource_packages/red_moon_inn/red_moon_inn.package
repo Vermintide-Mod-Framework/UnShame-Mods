@@ -8,4 +8,11 @@ package = [
 
 lua = [
 	"scripts/mods/red_moon_inn/*"
+	"levels/red_moon_inn/red_moon_inn/world_nav_tag_volumes"
+	"levels/red_moon_inn/red_moon_inn/world_smartobjects"
+	"levels/red_moon_inn/red_moon_inn/world_spawn_zones"
+]
+
+level = [
+	"levels/red_moon_inn/red_moon_inn/world"
 ]
