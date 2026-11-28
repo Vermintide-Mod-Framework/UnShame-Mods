@@ -302,6 +302,8 @@ levels/red_moon_inn/red_moon_inn/world.NavData
 levels/red_moon_inn/red_moon_inn/world.level
 levels/red_moon_inn/units/generic_door_01_chaos_wastes.physics
 levels/red_moon_inn/units/generic_door_01_chaos_wastes.unit
+levels/red_moon_inn/units/generic_wood_door_01_versus.physics
+levels/red_moon_inn/units/generic_wood_door_01_versus.unit
 levels/red_moon_inn/units/props_generic_chandelier_inn_01.bsi
 levels/red_moon_inn/units/props_generic_chandelier_inn_01.flow
 levels/red_moon_inn/units/props_generic_chandelier_inn_01.flow_editor

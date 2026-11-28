@@ -1,0 +1,33 @@
+
+actors = [
+	{
+		enabled = true
+		mass = 0
+		name = "c_simple"
+		node = "g_generic_wood_door_01"
+		shapes = [
+			{
+				material = "wood"
+				shape = "g_generic_wood_door_01"
+				template = "simple"
+				type = "box"
+			}
+		]
+		template = "keyframed"
+	}
+	{
+		enabled = true
+		mass = 0
+		name = "c_detailed"
+		node = "g_generic_wood_door_01"
+		shapes = [
+			{
+				material = "wood"
+				shape = "g_generic_wood_door_01"
+				template = "detailed"
+				type = "mesh"
+			}
+		]
+		template = "keyframed"
+	}
+]

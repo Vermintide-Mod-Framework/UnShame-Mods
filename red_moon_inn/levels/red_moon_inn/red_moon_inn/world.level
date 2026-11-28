@@ -35884,7 +35884,7 @@ editor_metadata = {
 			Name = "generic_wood_door_01_7"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/doors/generic_wood_door_01"
+			Path = "levels/red_moon_inn/units/generic_wood_door_01_versus"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -35910,7 +35910,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/doors/generic_wood_door_01"
+			Type = "levels/red_moon_inn/units/generic_wood_door_01_versus"
 		}
 		{
 			Cameras = {
@@ -36393,7 +36393,7 @@ editor_metadata = {
 			Name = "generic_door_01_1"
 			OverridePoses = {
 			}
-			Path = "units/architecture/generic/doors/generic_door_01"
+			Path = "levels/red_moon_inn/units/generic_door_01_chaos_wastes"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -36419,7 +36419,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/architecture/generic/doors/generic_door_01"
+			Type = "levels/red_moon_inn/units/generic_door_01_chaos_wastes"
 		}
 		{
 			Cameras = {
@@ -79275,7 +79275,7 @@ units = [
 			1
 			1
 		]
-		type = "units/architecture/generic/doors/generic_wood_door_01"
+		type = "levels/red_moon_inn/units/generic_wood_door_01_versus"
 	}
 	{
 		cameras = {
@@ -79662,7 +79662,7 @@ units = [
 			1.04745
 			1.04745
 		]
-		type = "units/architecture/generic/doors/generic_door_01"
+		type = "levels/red_moon_inn/units/generic_door_01_chaos_wastes"
 	}
 	{
 		cameras = {

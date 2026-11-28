@@ -1,0 +1,69 @@
+
+data = {
+	extensions = [
+		"GenericUnitInteractableExtension"
+		"GenericOutlineExtension"
+	]
+	gwnavgenexcluded = false
+	interaction_data = {
+		enabled_on_start = true
+		hud_description = "carousel_keep_info"
+		hud_interaction_action = "interact_action_enter"
+		interaction_length = 1
+		interaction_type = "carousel_door_transition"
+		only_once = false
+	}
+}
+editor_metadata = {
+	camera_settings = {
+		far_range = 1000
+		interest_point_distance = 2.73971
+		orthographic_plane = [
+			0
+			0
+			1
+			0
+		]
+		orthographic_zoom = 10
+		position = [
+			-0.154029
+			-2.59588
+			1.85558
+		]
+		projection_type = "perspective"
+		rotation = [
+			0.122171
+			0.013618
+			-0.109938
+			-0.986308
+		]
+		rotation_speed = 0.003
+		translation_speed = 0.05
+	}
+	flow_framing = {
+		scale = 0.04
+		x = 619.533
+		y = 469.822
+	}
+}
+materials = {
+	iron_trim1 = "units/materials/c/cast_iron_trims_01"
+	wood_planks2 = "units/materials/g/generic_floor_wood_planks_02"
+}
+mesh = "units/architecture/generic/doors/generic_wood_door_01"
+renderables = {
+	g_generic_wood_door_01 = {
+		always_keep = false
+		culling = "bounding_volume"
+		double_sided = false
+		generate_uv_unwrap = false
+		not_occluder = false
+		not_target = false
+		occluder = false
+		particle_mesh_spawning = false
+		shadow_caster = true
+		surface_queries = true
+		umbra_updated = true
+		viewport_visible = true
+	}
+}
