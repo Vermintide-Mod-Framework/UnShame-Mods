@@ -87,6 +87,12 @@ REPLACEMENTS = {
     for n in (1, 2, 3)
 }
 
+# Effects of Vermintide 2 that the mod has its own copy of. The fireplace's copy keeps animating and showing at any distance:
+# Vermintide 2's stops animating 5 m from the camera and hides at 35 m.
+EFFECT_REPLACEMENTS = {
+    'fx/environment_inn_fireplace': 'levels/red_moon_inn/fx/environment_inn_fireplace',
+}
+
 # Pieces of the inn that Vermintide 2 doesn't have, and the pieces of Vermintide 2's inn put in their place: for each, its unit,
 # its position in the inn piece's own space, its scale along its own axes, and how far it is turned about z, in degrees. The inn pieces of both games have their origin at a corner: x along
 # the piece, y through it and z up. The sizes are from Vermintide 1's compiled meshes and Vermintide 2's .bsi files.
@@ -485,7 +491,7 @@ class Converter:
 
             index[k] = len(out)
             out.append({
-                'effect': effect,
+                'effect': EFFECT_REPLACEMENTS.get(effect, effect),
                 'id': str(uuid.uuid5(ID_NAMESPACE, 'particle %d' % k)),
                 'pos': p['pos'],
                 'rot': p['rot'],

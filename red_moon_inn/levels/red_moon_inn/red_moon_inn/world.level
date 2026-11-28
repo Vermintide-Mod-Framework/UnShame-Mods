@@ -1246,7 +1246,7 @@ editor_metadata = {
 			Spawn = true
 		}
 		{
-			Effect = "fx/environment_inn_fireplace"
+			Effect = "levels/red_moon_inn/fx/environment_inn_fireplace"
 			Id = "81f26922-75b0-507d-8ca6-331e10a582b9"
 			Layer = "fx"
 			Name = "particle_effect_15"
@@ -54576,7 +54576,7 @@ particle_effects = [
 		spawn = true
 	}
 	{
-		effect = "fx/environment_inn_fireplace"
+		effect = "levels/red_moon_inn/fx/environment_inn_fireplace"
 		id = "81f26922-75b0-507d-8ca6-331e10a582b9"
 		pos = [
 			7.2

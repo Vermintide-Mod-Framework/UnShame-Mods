@@ -1,0 +1,1311 @@
+
+particle_system = {
+	CameraDistance = 5
+	Level = "core/editor_slave/levels/animation_preview_level/animation_preview_level"
+	ShowRuler = false
+	SpawnHeight = 1
+	UseRandomSeed = true
+	Variables = {
+		Variables = [
+		]
+	}
+	clouds = [
+		{
+			CloudColor = "#C8FF86"
+			IsColorized = true
+			MaxParticleID = 0
+			MinParticleID = 0
+			Mute = false
+			OffsetX = 0
+			OffsetY = 0
+			OffsetZ = 0
+			Pitch = 0
+			Roll = 0
+			Yaw = 0
+			controllers = [
+				{
+					ImageKey = "Controller"
+					Name = "Emitter: Rate"
+					RateMax = 10
+					RateMin = 10
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					type = "rate_emitter"
+				}
+				{
+					CustomHeight = false
+					ImageKey = "Controller"
+					InitialMax = 2
+					InitialMaxHeight = 1
+					InitialMin = 2
+					InitialMinHeight = 1
+					Name = "Size"
+					Scale = [
+						[
+							0
+							0.200455
+						]
+						[
+							1
+							1
+						]
+					]
+					ScaleHeight = [
+						[
+							0
+							0.410455
+						]
+						[
+							1
+							1
+						]
+					]
+					UseSystemLifetime = false
+					UseSystemLifetimeHeight = false
+					type = "size"
+				}
+				{
+					Gradient = [
+						[
+							0.217949
+							[
+								180
+								180
+								177
+							]
+						]
+						[
+							1
+							[
+								109
+								109
+								105
+							]
+						]
+					]
+					ImageKey = "Controller"
+					LuminanceMax = 0.4
+					LuminanceMin = 0.2
+					Name = "Color"
+					Opacity = [
+						[
+							0
+							0
+						]
+						[
+							0.25
+							0.8
+						]
+						[
+							1
+							0
+						]
+					]
+					type = "color_controller"
+				}
+				{
+					ImageKey = "Controller"
+					MaterialResource = "fx/environment_inn_fireplace/firesmoke"
+					Name = "Billboard: Material Slot"
+					type = "billboard_slot_material"
+				}
+				{
+					Fps = 0
+					ImageKey = "Controller"
+					Loop = false
+					Name = "UV Animation"
+					RandomStartFrame = true
+					RangeMax = 3
+					RangeMin = 0
+					type = "uv_animation"
+				}
+				{
+					axis = [
+						0
+						0
+						1
+					]
+					max_theta = 10
+					max_velocity = 0.4
+					min_theta = -10
+					min_velocity = 0.4
+					type = "velocity_cone"
+				}
+				{
+					MaxDegrees = 360
+					MinDegrees = 0
+					type = "rotation_random"
+				}
+				{
+					ImageKey = "Controller"
+					MaxAngle = 360
+					MaxHeight = 0.2
+					MaxRadius = 0.6
+					MinAngle = 0
+					MinHeight = 0.2
+					MinRadius = 0.3
+					Name = "Position: Cylinder"
+					type = "position_cylinder"
+				}
+				{
+					CurvePoints = [
+						[
+							0
+							1
+						]
+						[
+							0.550849
+							1
+						]
+						[
+							1
+							0
+						]
+					]
+					ImageKey = "Controller"
+					Name = "Velocity: Scale"
+					OverSystemLifetime = false
+					type = "velocity_scale"
+				}
+				{
+					ImageKey = "Controller"
+					MaxSpin = 90
+					MinSpin = -90
+					Name = "Rotation: Spin"
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							1
+							0
+						]
+					]
+					type = "rotation_spin"
+				}
+			]
+			max_particle_life = 2
+			min_capacity_scaling = 0
+			min_particle_life = 2
+			name = "firesmoke"
+			total = 20
+		}
+		{
+			CloudColor = "#FF8AF4"
+			IsColorized = true
+			MaxParticleID = 0
+			MinParticleID = 0
+			Mute = false
+			OffsetX = 0
+			OffsetY = 0
+			OffsetZ = 0.2
+			Pitch = 0
+			Roll = 0
+			Yaw = 0
+			controllers = [
+				{
+					ImageKey = "Controller"
+					Name = "Emitter: Rate"
+					RateMax = 60
+					RateMin = 60
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					type = "rate_emitter"
+				}
+				{
+					ImageKey = "Controller"
+					MaxSpin = 360
+					MinSpin = 180
+					Name = "Rotation: Spin"
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					type = "rotation_spin"
+				}
+				{
+					axis = [
+						0
+						0
+						1
+					]
+					max_theta = 45
+					max_velocity = 1.5
+					min_theta = -45
+					min_velocity = 0.5
+					type = "velocity_cone"
+				}
+				{
+					CustomHeight = false
+					ImageKey = "Controller"
+					InitialMax = 0.02
+					InitialMaxHeight = 3
+					InitialMin = 0.01
+					InitialMinHeight = 3
+					Name = "Size"
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							0.676589
+							0.859091
+						]
+						[
+							1
+							0
+						]
+					]
+					ScaleHeight = [
+						[
+							0
+							1.03911
+						]
+						[
+							1
+							3.03926
+						]
+					]
+					UseSystemLifetime = false
+					UseSystemLifetimeHeight = false
+					type = "size"
+				}
+				{
+					Gradient = [
+						[
+							0.153584
+							[
+								255
+								247
+								187
+							]
+						]
+						[
+							0.281001
+							[
+								255
+								218
+								4
+							]
+						]
+						[
+							0.30603
+							[
+								255
+								255
+								128
+							]
+						]
+						[
+							0.617747
+							[
+								245
+								123
+								0
+							]
+						]
+						[
+							1
+							[
+								0
+								0
+								0
+							]
+						]
+					]
+					ImageKey = "Controller"
+					LuminanceMax = 1
+					LuminanceMin = 0.8
+					Name = "Color"
+					Opacity = [
+						[
+							0
+							0
+						]
+						[
+							0.0910256
+							1
+						]
+						[
+							0.276923
+							0.124091
+						]
+						[
+							0.515385
+							1
+						]
+						[
+							1
+							0
+						]
+					]
+					type = "color_controller"
+				}
+				{
+					ImageKey = "Controller"
+					MaterialResource = "fx/dwarf_wall_torch_01/sparks"
+					Name = "Billboard: Material Slot"
+					type = "billboard_slot_material"
+				}
+				{
+					strength = [
+						0
+						0
+						1
+					]
+					type = "acceleration_gravity"
+				}
+				{
+					ImageKey = "Controller"
+					MaxRadius = 0.3
+					MinRadius = 0.3
+					Name = "Position: Sphere"
+					type = "position_sphere"
+				}
+				{
+					FarFade = 20
+					FarRange = 100
+					ImageKey = "Controller"
+					Name = "Distance Fade"
+					NearFade = 0.4
+					NearRange = 0.8
+					type = "distance_fade"
+				}
+				{
+					ImageKey = "Controller"
+					Name = "Pivot"
+					PivotX = 5
+					PivotY = 0.5
+					PivotZ = 0
+					type = "pivot"
+				}
+				{
+					ImageKey = "Controller"
+					Name = "Wind: From Vector Field"
+					NoiseAmplitude = 0
+					VectorField = "wind"
+					WindCoefficient = 1
+					type = "vector_field_wind"
+				}
+			]
+			max_particle_life = 1
+			min_capacity_scaling = 0
+			min_particle_life = 1
+			name = "sparks"
+			total = 60
+		}
+		{
+			CloudColor = "#71D7FF"
+			IsColorized = true
+			MaxParticleID = 0
+			MinParticleID = 0
+			Mute = false
+			OffsetX = 0
+			OffsetY = 0
+			OffsetZ = 0
+			Pitch = 0
+			Roll = 0
+			Yaw = 0
+			controllers = [
+				{
+					ImageKey = "Controller"
+					Name = "Emitter: Rate"
+					RateMax = 2
+					RateMin = 2
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					type = "rate_emitter"
+				}
+				{
+					CustomHeight = false
+					ImageKey = "Controller"
+					InitialMax = 3
+					InitialMaxHeight = 3
+					InitialMin = 3
+					InitialMinHeight = 3
+					Name = "Size"
+					Scale = [
+						[
+							0
+							0.171818
+						]
+						[
+							0.147521
+							0.687273
+						]
+						[
+							1
+							1
+						]
+					]
+					ScaleHeight = [
+						[
+							0
+							0.162273
+						]
+						[
+							1
+							1
+						]
+					]
+					UseSystemLifetime = false
+					UseSystemLifetimeHeight = false
+					type = "size"
+				}
+				{
+					Gradient = [
+						[
+							0
+							[
+								255
+								255
+								255
+							]
+						]
+					]
+					ImageKey = "Controller"
+					LuminanceMax = 1
+					LuminanceMin = 1
+					Name = "Color"
+					Opacity = [
+						[
+							0
+							0
+						]
+						[
+							0.131499
+							0.649091
+						]
+						[
+							0.886622
+							0.610909
+						]
+						[
+							1
+							0
+						]
+					]
+					type = "color_controller"
+				}
+				{
+					ImageKey = "Controller"
+					MaterialResource = "fx/cata_torch_hanging_large_01/distortion"
+					Name = "Billboard: Material Slot"
+					type = "billboard_slot_material"
+				}
+				{
+					axis = [
+						0
+						0
+						1
+					]
+					max_theta = 0
+					max_velocity = 1
+					min_theta = 0
+					min_velocity = 0.9
+					type = "velocity_cone"
+				}
+				{
+					ImageKey = "Controller"
+					Name = "Pivot"
+					PivotX = 0.5
+					PivotY = 0.6
+					PivotZ = 0
+					type = "pivot"
+				}
+				{
+					MaxDegrees = 360
+					MinDegrees = 0
+					type = "rotation_random"
+				}
+			]
+			max_particle_life = 2
+			min_capacity_scaling = 0
+			min_particle_life = 2
+			name = "distortion"
+			total = 4
+		}
+		{
+			CloudColor = "#FFF465"
+			IsColorized = true
+			MaxParticleID = 0
+			MinParticleID = 0
+			Mute = false
+			OffsetX = 0
+			OffsetY = 0
+			OffsetZ = 0
+			Pitch = 0
+			Roll = 0
+			Yaw = 0
+			controllers = [
+				{
+					ImageKey = "Controller"
+					Name = "Emitter: Rate"
+					RateMax = 5
+					RateMin = 5
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					type = "rate_emitter"
+				}
+				{
+					CustomHeight = false
+					ImageKey = "Controller"
+					InitialMax = 1
+					InitialMaxHeight = 3
+					InitialMin = 0.8
+					InitialMinHeight = 3
+					Name = "Size"
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					ScaleHeight = [
+						[
+							0
+							0
+						]
+						[
+							0.253388
+							0.496364
+						]
+						[
+							0.621322
+							0.820909
+						]
+						[
+							1
+							1
+						]
+					]
+					UseSystemLifetime = false
+					UseSystemLifetimeHeight = false
+					type = "size"
+				}
+				{
+					Gradient = [
+						[
+							0.997863
+							[
+								255
+								255
+								255
+							]
+						]
+					]
+					ImageKey = "Controller"
+					LuminanceMax = 1
+					LuminanceMin = 1
+					Name = "Color"
+					Opacity = [
+						[
+							0
+							0
+						]
+						[
+							0.202458
+							1
+						]
+						[
+							0.799905
+							1
+						]
+						[
+							0.871361
+							0.124091
+						]
+						[
+							1
+							0
+						]
+					]
+					type = "color_controller"
+				}
+				{
+					Fps = 24
+					ImageKey = "Controller"
+					Loop = true
+					Name = "UV Animation"
+					RandomStartFrame = true
+					RangeMax = 31
+					RangeMin = 0
+					type = "uv_animation"
+				}
+				{
+					MaxDegrees = 20
+					MinDegrees = -20
+					type = "rotation_random"
+				}
+				{
+					strength = [
+						0
+						0
+						0.2
+					]
+					type = "acceleration_gravity"
+				}
+				{
+					ImageKey = "Controller"
+					MaxAngle = 360
+					MaxHeight = 0
+					MaxRadius = 0.1
+					MinAngle = 0
+					MinHeight = 0
+					MinRadius = 0.1
+					Name = "Position: Cylinder"
+					type = "position_cylinder"
+				}
+				{
+					Bursts = [
+						[
+							0
+							1
+						]
+					]
+					ImageKey = "Controller"
+					Name = "Emitter: Bursts"
+					type = "burst_emitter"
+				}
+				{
+					ImageKey = "Controller"
+					MaterialResource = "fx/environment_inn_fireplace/wildfire"
+					Name = "Billboard: Material Slot"
+					type = "billboard_slot_material"
+				}
+			]
+			max_particle_life = 3
+			min_capacity_scaling = 0
+			min_particle_life = 2
+			name = "wildfire"
+			total = 20
+		}
+		{
+			CloudColor = "#FF7D7D"
+			IsColorized = true
+			MaxParticleID = 0
+			MinParticleID = 0
+			Mute = false
+			OffsetX = 0
+			OffsetY = 0
+			OffsetZ = 0.4
+			Pitch = 0
+			Roll = 0
+			Yaw = 0
+			controllers = [
+				{
+					CastsShadows = false
+					FalloffEnd = 0.8
+					FalloffExponent = 0
+					FalloffStart = 0
+					ImageKey = "Controller"
+					LightType = "Omni"
+					Name = "Light Visualizer"
+					SpotAngleEnd = 175
+					SpotAngleStart = 0
+					VolumetricIntensity = 1
+					type = "light_visualizer"
+				}
+				{
+					Gradient = [
+						[
+							0.5
+							[
+								223
+								72
+								0
+							]
+						]
+					]
+					ImageKey = "Controller"
+					LuminanceMax = 0.2
+					LuminanceMin = 0.2
+					Name = "Color"
+					Opacity = [
+						[
+							0
+							0
+						]
+						[
+							0.185294
+							0.439091
+						]
+						[
+							0.470209
+							0.248182
+						]
+						[
+							0.808918
+							0.458182
+						]
+						[
+							1
+							0
+						]
+					]
+					type = "color_controller"
+				}
+				{
+					ImageKey = "Controller"
+					Name = "Emitter: Rate"
+					RateMax = 2
+					RateMin = 1
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					type = "rate_emitter"
+				}
+				{
+					ImageKey = "Controller"
+					MaxRadius = 0.2
+					MinRadius = 0
+					Name = "Position: Sphere"
+					type = "position_sphere"
+				}
+				{
+					CustomHeight = false
+					ImageKey = "Controller"
+					InitialMax = 0.5
+					InitialMaxHeight = 0.1
+					InitialMin = 0.5
+					InitialMinHeight = 0.1
+					Name = "Size"
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							0.185703
+							0.83
+						]
+						[
+							0.498099
+							1.05
+						]
+						[
+							0.671653
+							0.86
+						]
+						[
+							0.831322
+							0.96
+						]
+						[
+							1
+							0.391364
+						]
+					]
+					ScaleHeight = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					UseSystemLifetime = false
+					UseSystemLifetimeHeight = false
+					type = "size"
+				}
+			]
+			max_particle_life = 2
+			min_capacity_scaling = 0
+			min_particle_life = 1
+			name = "light"
+			total = 3
+		}
+		{
+			CloudColor = "#C8FF86"
+			IsColorized = true
+			MaxParticleID = 0
+			MinParticleID = 0
+			Mute = false
+			OffsetX = 0
+			OffsetY = 0
+			OffsetZ = -0.5
+			Pitch = 0
+			Roll = 0
+			Yaw = 0
+			controllers = [
+				{
+					ImageKey = "Controller"
+					Name = "Emitter: Rate"
+					RateMax = 3
+					RateMin = 2
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					type = "rate_emitter"
+				}
+				{
+					CustomHeight = true
+					ImageKey = "Controller"
+					InitialMax = 0.4
+					InitialMaxHeight = 0.6
+					InitialMin = 0.4
+					InitialMinHeight = 0.6
+					Name = "Size"
+					Scale = [
+						[
+							0
+							0
+						]
+						[
+							0.1
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					ScaleHeight = [
+						[
+							0
+							0
+						]
+						[
+							0.1
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					UseSystemLifetime = false
+					UseSystemLifetimeHeight = false
+					type = "size"
+				}
+				{
+					Gradient = [
+						[
+							0.5
+							[
+								255
+								234
+								204
+							]
+						]
+					]
+					ImageKey = "Controller"
+					LuminanceMax = 1
+					LuminanceMin = 1
+					Name = "Color"
+					Opacity = [
+						[
+							0
+							0
+						]
+						[
+							0.101613
+							1
+						]
+						[
+							0.954364
+							1
+						]
+						[
+							1
+							0
+						]
+					]
+					type = "color_controller"
+				}
+				{
+					ImageKey = "Controller"
+					MaxX = 0
+					MaxY = 0
+					MaxZ = 1
+					MinX = 0
+					MinY = 0
+					MinZ = 1
+					Name = "Rotation: Align Box"
+					type = "rotation_align_box"
+				}
+				{
+					Fps = 32
+					ImageKey = "Controller"
+					Loop = true
+					Name = "UV Animation"
+					RandomStartFrame = true
+					RangeMax = 31
+					RangeMin = 0
+					type = "uv_animation"
+				}
+				{
+					ImageKey = "Controller"
+					MaxAngle = 360
+					MaxHeight = 0
+					MaxRadius = 0.5
+					MinAngle = 0
+					MinHeight = 0
+					MinRadius = 0.4
+					Name = "Position: Cylinder"
+					type = "position_cylinder"
+				}
+				{
+					ImageKey = "Controller"
+					Name = "Pivot"
+					PivotX = 0.5
+					PivotY = 0.85
+					PivotZ = 0
+					type = "pivot"
+				}
+				{
+					ImageKey = "Controller"
+					MaterialResource = "fx/environment_inn_fireplace/fire3"
+					Name = "Billboard: Material Slot"
+					type = "billboard_slot_material"
+				}
+			]
+			max_particle_life = 10
+			min_capacity_scaling = 0
+			min_particle_life = 8
+			name = "fire2"
+			total = 10
+		}
+		{
+			CloudColor = "#FF8AF4"
+			IsColorized = true
+			MaxParticleID = 0
+			MinParticleID = 0
+			Mute = false
+			OffsetX = 0
+			OffsetY = 0
+			OffsetZ = -0.3
+			Pitch = 0
+			Roll = 0
+			Yaw = 0
+			controllers = [
+				{
+					ImageKey = "Controller"
+					Name = "Emitter: Rate"
+					RateMax = 3
+					RateMin = 2
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					type = "rate_emitter"
+				}
+				{
+					CustomHeight = true
+					ImageKey = "Controller"
+					InitialMax = 0.8
+					InitialMaxHeight = 1.2
+					InitialMin = 0.6
+					InitialMinHeight = 0.8
+					Name = "Size"
+					Scale = [
+						[
+							0
+							0
+						]
+						[
+							0.1
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					ScaleHeight = [
+						[
+							0
+							0
+						]
+						[
+							0.1
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					UseSystemLifetime = false
+					UseSystemLifetimeHeight = false
+					type = "size"
+				}
+				{
+					Gradient = [
+						[
+							0.5
+							[
+								255
+								234
+								204
+							]
+						]
+					]
+					ImageKey = "Controller"
+					LuminanceMax = 1
+					LuminanceMin = 1
+					Name = "Color"
+					Opacity = [
+						[
+							0
+							0
+						]
+						[
+							0.101613
+							1
+						]
+						[
+							0.954364
+							1
+						]
+						[
+							1
+							0
+						]
+					]
+					type = "color_controller"
+				}
+				{
+					ImageKey = "Controller"
+					MaxX = 0
+					MaxY = 0
+					MaxZ = 1
+					MinX = 0
+					MinY = 0
+					MinZ = 1
+					Name = "Rotation: Align Box"
+					type = "rotation_align_box"
+				}
+				{
+					Fps = 30
+					ImageKey = "Controller"
+					Loop = true
+					Name = "UV Animation"
+					RandomStartFrame = true
+					RangeMax = 31
+					RangeMin = 0
+					type = "uv_animation"
+				}
+				{
+					ImageKey = "Controller"
+					MaxAngle = 360
+					MaxHeight = 0
+					MaxRadius = 0.4
+					MinAngle = 0
+					MinHeight = 0
+					MinRadius = 0.1
+					Name = "Position: Cylinder"
+					type = "position_cylinder"
+				}
+				{
+					ImageKey = "Controller"
+					Name = "Pivot"
+					PivotX = 0.5
+					PivotY = 0.85
+					PivotZ = 0
+					type = "pivot"
+				}
+				{
+					ImageKey = "Controller"
+					MaterialResource = "fx/environment_inn_fireplace/fire3"
+					Name = "Billboard: Material Slot"
+					type = "billboard_slot_material"
+				}
+			]
+			max_particle_life = 10
+			min_capacity_scaling = 0
+			min_particle_life = 8
+			name = "fire3"
+			total = 10
+		}
+		{
+			CloudColor = "#71D7FF"
+			IsColorized = true
+			MaxParticleID = 0
+			MinParticleID = 0
+			Mute = false
+			OffsetX = 0
+			OffsetY = 0
+			OffsetZ = 0
+			Pitch = 0
+			Roll = 0
+			Yaw = 0
+			controllers = [
+				{
+					ImageKey = "Controller"
+					Name = "Emitter: Rate"
+					RateMax = 1
+					RateMin = 1
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					type = "rate_emitter"
+				}
+				{
+					CustomHeight = false
+					ImageKey = "Controller"
+					InitialMax = 1
+					InitialMaxHeight = 0.6
+					InitialMin = 1
+					InitialMinHeight = 0.6
+					Name = "Size"
+					Scale = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					ScaleHeight = [
+						[
+							0
+							1
+						]
+						[
+							1
+							1
+						]
+					]
+					UseSystemLifetime = false
+					UseSystemLifetimeHeight = false
+					type = "size"
+				}
+				{
+					Gradient = [
+						[
+							0.502408
+							[
+								255
+								128
+								64
+							]
+						]
+					]
+					ImageKey = "Controller"
+					LuminanceMax = 1
+					LuminanceMin = 1
+					Name = "Color"
+					Opacity = [
+						[
+							0
+							0
+						]
+						[
+							0.0795181
+							1
+						]
+						[
+							0.927108
+							1
+						]
+						[
+							1
+							0
+						]
+					]
+					type = "color_controller"
+				}
+				{
+					ImageKey = "Controller"
+					MaterialResource = "fx/environment_fire_1dm_no_light/glow"
+					Name = "Billboard: Material Slot"
+					type = "billboard_slot_material"
+				}
+				{
+					FarFade = 5
+					FarRange = 50
+					ImageKey = "Controller"
+					Name = "Distance Fade"
+					NearFade = 1
+					NearRange = 1
+					type = "distance_fade"
+				}
+			]
+			max_particle_life = 10
+			min_capacity_scaling = 0
+			min_particle_life = 10
+			name = "glow"
+			total = 2
+		}
+	]
+	culling_distance = 35
+	life_time = 1410065408
+	min_simulation_distance = 5
+	min_simulation_time = 5
+}

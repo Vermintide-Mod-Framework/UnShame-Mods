@@ -1,0 +1,2083 @@
+
+clouds = [
+	{
+		capacity = 20
+		casts_shadows = false
+		disable_culling = false
+		float_channels = [
+			"age"
+			"life"
+			"size"
+			"rotation"
+			"frame"
+			"luminance"
+			"spin"
+		]
+		initializers = [
+			{
+				channel = "size"
+				range = [
+					2
+					2
+				]
+				type = "random_float"
+			}
+			{
+				channel = "luminance"
+				range = [
+					0.2
+					0.4
+				]
+				type = "random_float"
+			}
+			{
+				channel = "frame"
+				range = [
+					0
+					3
+				]
+				type = "random_int"
+			}
+			{
+				axis = [
+					0
+					0
+					1
+				]
+				theta = [
+					-0.174533
+					0.174533
+				]
+				type = "velocity_cone"
+				velocity = [
+					0.4
+					0.4
+				]
+			}
+			{
+				channel = "rotation"
+				range = [
+					0
+					6.28319
+				]
+				type = "random_float"
+			}
+			{
+				angle = [
+					0
+					6.28319
+				]
+				height = [
+					0.2
+					0.2
+				]
+				radius = [
+					0.3
+					0.6
+				]
+				type = "position_cylinder"
+			}
+			{
+				channel = "spin"
+				range = [
+					-1.5708
+					1.5708
+				]
+				type = "random_float"
+			}
+			{
+				channel = "life"
+				range = [
+					2
+					2
+				]
+				type = "random_float"
+			}
+			{
+				channel = "age"
+				type = "zero"
+			}
+		]
+		max_radius = 1
+		min_capacity_scaling = 0
+		name = "firesmoke"
+		offset = [
+			0
+			0
+			0
+			0
+			0
+			0
+		]
+		simulators = [
+			{
+				type = "age_age"
+			}
+			{
+				rate_max = 10
+				rate_min = 10
+				scale = [
+					[
+						0
+						1
+					]
+					[
+						1
+						1
+					]
+				]
+				type = "rate_emitter"
+			}
+			{
+				channel = "frame"
+				fps = 0
+				loop = false
+				range = [
+					0
+					3
+				]
+				type = "advance_frame"
+			}
+			{
+				over_system_lifetime = false
+				points = [
+					[
+						0
+						1
+					]
+					[
+						0.550849
+						1
+					]
+					[
+						1
+						0
+					]
+				]
+				type = "position_integrate_scaled"
+			}
+			{
+				position_channel = "rotation"
+				scale = [
+					[
+						0
+						1
+					]
+					[
+						1
+						0
+					]
+				]
+				type = "integrate_float_scaled"
+				velocity_channel = "spin"
+			}
+		]
+		vector3_channels = [
+			"position"
+			"velocity"
+		]
+		visualizers = [
+			{
+				channels = [
+					{
+						component = "position"
+						name = "position"
+						set = 0
+						type = "float3"
+					}
+					{
+						component = "color"
+						name = "color"
+						set = 0
+						type = "ubyte4"
+					}
+					{
+						component = "texcoord"
+						name = "size"
+						set = 7
+						type = "float2"
+					}
+					{
+						component = "texcoord"
+						name = "rotation"
+						set = 1
+						type = "float1"
+					}
+					{
+						component = "texcoord"
+						name = "local_age"
+						set = 8
+						type = "float1"
+					}
+					{
+						component = "texcoord"
+						name = "frame"
+						set = 0
+						type = "float1"
+					}
+				]
+				material_resource = "fx/environment_inn_fireplace/firesmoke"
+				sort = false
+				type = "billboard"
+				vertex_writers = [
+					{
+						over_system_lifetime = false
+						scale = [
+							[
+								0
+								0.200455
+							]
+							[
+								1
+								1
+							]
+						]
+						type = "size"
+					}
+					{
+						gradient = [
+							[
+								0.217949
+								[
+									180
+									180
+									177
+								]
+							]
+							[
+								1
+								[
+									109
+									109
+									105
+								]
+							]
+						]
+						luminance = true
+						opacity = [
+							[
+								0
+								0
+							]
+							[
+								0.25
+								0.8
+							]
+							[
+								1
+								0
+							]
+						]
+						type = "color"
+					}
+					{
+						dest = "frame"
+						source = "frame"
+						type = "copy_float"
+					}
+					{
+						dest = "position"
+						source = "position"
+						type = "copy_vector3"
+					}
+					{
+						dest = "local_age"
+						type = "local_age"
+					}
+					{
+						dest = "rotation"
+						source = "rotation"
+						type = "copy_float"
+					}
+				]
+			}
+		]
+	}
+	{
+		capacity = 60
+		casts_shadows = false
+		disable_culling = false
+		float_channels = [
+			"age"
+			"life"
+			"size"
+			"rotation"
+			"luminance"
+			"spin"
+		]
+		initializers = [
+			{
+				channel = "spin"
+				range = [
+					3.14159
+					6.28319
+				]
+				type = "random_float"
+			}
+			{
+				axis = [
+					0
+					0
+					1
+				]
+				theta = [
+					-0.785398
+					0.785398
+				]
+				type = "velocity_cone"
+				velocity = [
+					0.5
+					1.5
+				]
+			}
+			{
+				channel = "size"
+				range = [
+					0.01
+					0.02
+				]
+				type = "random_float"
+			}
+			{
+				channel = "luminance"
+				range = [
+					0.8
+					1
+				]
+				type = "random_float"
+			}
+			{
+				radius = [
+					0.3
+					0.3
+				]
+				type = "position_sphere"
+			}
+			{
+				channel = "life"
+				range = [
+					1
+					1
+				]
+				type = "random_float"
+			}
+			{
+				channel = "rotation"
+				type = "zero"
+			}
+			{
+				channel = "age"
+				type = "zero"
+			}
+			{
+				channel = "wind_velocity"
+				type = "zero"
+			}
+		]
+		max_radius = 0.01
+		min_capacity_scaling = 0
+		name = "sparks"
+		offset = [
+			0
+			0
+			0.2
+			0
+			0
+			0
+		]
+		simulators = [
+			{
+				type = "age_age"
+			}
+			{
+				rate_max = 60
+				rate_min = 60
+				scale = [
+					[
+						0
+						1
+					]
+					[
+						1
+						1
+					]
+				]
+				type = "rate_emitter"
+			}
+			{
+				position_channel = "rotation"
+				scale = [
+					[
+						0
+						1
+					]
+					[
+						1
+						1
+					]
+				]
+				type = "integrate_float_scaled"
+				velocity_channel = "spin"
+			}
+			{
+				acceleration = [
+					0
+					0
+					1
+				]
+				type = "velocity_accelerate"
+			}
+			{
+				output_channel = "wind_velocity"
+				type = "query_vector_field"
+				vector_field = "wind"
+			}
+			{
+				noise_amplitude = 0
+				type = "air_resistance"
+				wind_coefficient = 1
+				wind_velocity_channel = "wind_velocity"
+			}
+			{
+				type = "position_integrate"
+			}
+		]
+		vector3_channels = [
+			"position"
+			"velocity"
+			"wind_velocity"
+		]
+		visualizers = [
+			{
+				channels = [
+					{
+						component = "position"
+						name = "position"
+						set = 0
+						type = "float3"
+					}
+					{
+						component = "color"
+						name = "color"
+						set = 0
+						type = "ubyte4"
+					}
+					{
+						component = "texcoord"
+						name = "size"
+						set = 7
+						type = "float2"
+					}
+					{
+						component = "texcoord"
+						name = "rotation"
+						set = 1
+						type = "float1"
+					}
+					{
+						component = "texcoord"
+						name = "local_age"
+						set = 8
+						type = "float1"
+					}
+					{
+						component = "texcoord"
+						name = "pivot"
+						set = 6
+						type = "float3"
+					}
+				]
+				material_resource = "fx/dwarf_wall_torch_01/sparks"
+				sort = false
+				type = "billboard"
+				vertex_writers = [
+					{
+						over_system_lifetime = false
+						scale = [
+							[
+								0
+								1
+							]
+							[
+								0.676589
+								0.859091
+							]
+							[
+								1
+								0
+							]
+						]
+						type = "size"
+					}
+					{
+						gradient = [
+							[
+								0.153584
+								[
+									255
+									247
+									187
+								]
+							]
+							[
+								0.281001
+								[
+									255
+									218
+									4
+								]
+							]
+							[
+								0.30603
+								[
+									255
+									255
+									128
+								]
+							]
+							[
+								0.617747
+								[
+									245
+									123
+									0
+								]
+							]
+							[
+								1
+								[
+									0
+									0
+									0
+								]
+							]
+						]
+						luminance = true
+						opacity = [
+							[
+								0
+								0
+							]
+							[
+								0.0910256
+								1
+							]
+							[
+								0.276923
+								0.124091
+							]
+							[
+								0.515385
+								1
+							]
+							[
+								1
+								0
+							]
+						]
+						type = "color"
+					}
+					{
+						dest = "pivot"
+						offset = 0
+						type = "write_float"
+						value = 5
+					}
+					{
+						dest = "pivot"
+						offset = 1
+						type = "write_float"
+						value = 0.5
+					}
+					{
+						dest = "pivot"
+						offset = 2
+						type = "write_float"
+						value = 0
+					}
+					{
+						dest = "position"
+						source = "position"
+						type = "copy_vector3"
+					}
+					{
+						dest = "local_age"
+						type = "local_age"
+					}
+					{
+						dest = "rotation"
+						source = "rotation"
+						type = "copy_float"
+					}
+					{
+						far_fade = 20
+						far_range = 100
+						near_fade = 0.4
+						near_range = 0.8
+						sort_order = 100
+						type = "distance_fade"
+					}
+					{
+						sort_order = 1000
+						type = "opacity_kill"
+					}
+				]
+			}
+		]
+	}
+	{
+		capacity = 4
+		casts_shadows = false
+		disable_culling = false
+		float_channels = [
+			"age"
+			"life"
+			"size"
+			"rotation"
+		]
+		initializers = [
+			{
+				radius = [
+					0
+					0
+				]
+				type = "position_sphere"
+			}
+			{
+				channel = "size"
+				range = [
+					3
+					3
+				]
+				type = "random_float"
+			}
+			{
+				axis = [
+					0
+					0
+					1
+				]
+				theta = [
+					0
+					0
+				]
+				type = "velocity_cone"
+				velocity = [
+					0.9
+					1
+				]
+			}
+			{
+				channel = "rotation"
+				range = [
+					0
+					6.28319
+				]
+				type = "random_float"
+			}
+			{
+				channel = "life"
+				range = [
+					2
+					2
+				]
+				type = "random_float"
+			}
+			{
+				channel = "age"
+				type = "zero"
+			}
+		]
+		max_radius = 1.5
+		min_capacity_scaling = 0
+		name = "distortion"
+		offset = [
+			0
+			0
+			0
+			0
+			0
+			0
+		]
+		simulators = [
+			{
+				type = "age_age"
+			}
+			{
+				rate_max = 2
+				rate_min = 2
+				scale = [
+					[
+						0
+						1
+					]
+					[
+						1
+						1
+					]
+				]
+				type = "rate_emitter"
+			}
+			{
+				type = "position_integrate"
+			}
+		]
+		vector3_channels = [
+			"position"
+			"velocity"
+		]
+		visualizers = [
+			{
+				channels = [
+					{
+						component = "position"
+						name = "position"
+						set = 0
+						type = "float3"
+					}
+					{
+						component = "color"
+						name = "color"
+						set = 0
+						type = "ubyte4"
+					}
+					{
+						component = "texcoord"
+						name = "size"
+						set = 7
+						type = "float2"
+					}
+					{
+						component = "texcoord"
+						name = "rotation"
+						set = 1
+						type = "float1"
+					}
+					{
+						component = "texcoord"
+						name = "local_age"
+						set = 8
+						type = "float1"
+					}
+					{
+						component = "texcoord"
+						name = "pivot"
+						set = 6
+						type = "float3"
+					}
+				]
+				material_resource = "fx/cata_torch_hanging_large_01/distortion"
+				sort = false
+				type = "billboard"
+				vertex_writers = [
+					{
+						over_system_lifetime = false
+						scale = [
+							[
+								0
+								0.171818
+							]
+							[
+								0.147521
+								0.687273
+							]
+							[
+								1
+								1
+							]
+						]
+						type = "size"
+					}
+					{
+						gradient = [
+							[
+								0
+								[
+									255
+									255
+									255
+								]
+							]
+						]
+						opacity = [
+							[
+								0
+								0
+							]
+							[
+								0.131499
+								0.649091
+							]
+							[
+								0.886622
+								0.610909
+							]
+							[
+								1
+								0
+							]
+						]
+						type = "color"
+					}
+					{
+						dest = "pivot"
+						offset = 0
+						type = "write_float"
+						value = 0.5
+					}
+					{
+						dest = "pivot"
+						offset = 1
+						type = "write_float"
+						value = 0.6
+					}
+					{
+						dest = "pivot"
+						offset = 2
+						type = "write_float"
+						value = 0
+					}
+					{
+						dest = "position"
+						source = "position"
+						type = "copy_vector3"
+					}
+					{
+						dest = "local_age"
+						type = "local_age"
+					}
+					{
+						dest = "rotation"
+						source = "rotation"
+						type = "copy_float"
+					}
+				]
+			}
+		]
+	}
+	{
+		capacity = 20
+		casts_shadows = false
+		disable_culling = false
+		float_channels = [
+			"age"
+			"life"
+			"size"
+			"rotation"
+			"frame"
+		]
+		initializers = [
+			{
+				channel = "size"
+				range = [
+					0.8
+					1
+				]
+				type = "random_float"
+			}
+			{
+				channel = "frame"
+				range = [
+					0
+					31
+				]
+				type = "random_int"
+			}
+			{
+				channel = "rotation"
+				range = [
+					-0.349066
+					0.349066
+				]
+				type = "random_float"
+			}
+			{
+				angle = [
+					0
+					6.28319
+				]
+				height = [
+					0
+					0
+				]
+				radius = [
+					0.1
+					0.1
+				]
+				type = "position_cylinder"
+			}
+			{
+				channel = "life"
+				range = [
+					2
+					3
+				]
+				type = "random_float"
+			}
+			{
+				type = "zero_velocity"
+			}
+			{
+				channel = "age"
+				type = "zero"
+			}
+		]
+		max_radius = 0.5
+		min_capacity_scaling = 0
+		name = "wildfire"
+		offset = [
+			0
+			0
+			0
+			0
+			0
+			0
+		]
+		simulators = [
+			{
+				type = "age_age"
+			}
+			{
+				rate_max = 5
+				rate_min = 5
+				scale = [
+					[
+						0
+						1
+					]
+					[
+						1
+						1
+					]
+				]
+				type = "rate_emitter"
+			}
+			{
+				channel = "frame"
+				fps = 24
+				loop = true
+				range = [
+					0
+					31
+				]
+				type = "advance_frame"
+			}
+			{
+				acceleration = [
+					0
+					0
+					0.2
+				]
+				type = "velocity_accelerate"
+			}
+			{
+				bursts = [
+					[
+						0
+						1
+					]
+				]
+				type = "burst_emitter"
+			}
+			{
+				type = "position_integrate"
+			}
+		]
+		vector3_channels = [
+			"position"
+			"velocity"
+		]
+		visualizers = [
+			{
+				channels = [
+					{
+						component = "position"
+						name = "position"
+						set = 0
+						type = "float3"
+					}
+					{
+						component = "color"
+						name = "color"
+						set = 0
+						type = "ubyte4"
+					}
+					{
+						component = "texcoord"
+						name = "size"
+						set = 7
+						type = "float2"
+					}
+					{
+						component = "texcoord"
+						name = "rotation"
+						set = 1
+						type = "float1"
+					}
+					{
+						component = "texcoord"
+						name = "local_age"
+						set = 8
+						type = "float1"
+					}
+					{
+						component = "texcoord"
+						name = "frame"
+						set = 0
+						type = "float1"
+					}
+				]
+				material_resource = "fx/environment_inn_fireplace/wildfire"
+				sort = false
+				type = "billboard"
+				vertex_writers = [
+					{
+						over_system_lifetime = false
+						scale = [
+							[
+								0
+								1
+							]
+							[
+								1
+								1
+							]
+						]
+						type = "size"
+					}
+					{
+						gradient = [
+							[
+								0.997863
+								[
+									255
+									255
+									255
+								]
+							]
+						]
+						opacity = [
+							[
+								0
+								0
+							]
+							[
+								0.202458
+								1
+							]
+							[
+								0.799905
+								1
+							]
+							[
+								0.871361
+								0.124091
+							]
+							[
+								1
+								0
+							]
+						]
+						type = "color"
+					}
+					{
+						dest = "frame"
+						source = "frame"
+						type = "copy_float"
+					}
+					{
+						dest = "position"
+						source = "position"
+						type = "copy_vector3"
+					}
+					{
+						dest = "local_age"
+						type = "local_age"
+					}
+					{
+						dest = "rotation"
+						source = "rotation"
+						type = "copy_float"
+					}
+				]
+			}
+		]
+	}
+	{
+		capacity = 3
+		casts_shadows = false
+		disable_culling = false
+		float_channels = [
+			"age"
+			"life"
+			"size"
+			"luminance"
+		]
+		initializers = [
+			{
+				channel = "luminance"
+				range = [
+					0.2
+					0.2
+				]
+				type = "random_float"
+			}
+			{
+				radius = [
+					0
+					0.2
+				]
+				type = "position_sphere"
+			}
+			{
+				channel = "size"
+				range = [
+					0.5
+					0.5
+				]
+				type = "random_float"
+			}
+			{
+				channel = "life"
+				range = [
+					1
+					2
+				]
+				type = "random_float"
+			}
+			{
+				type = "zero_velocity"
+			}
+			{
+				channel = "age"
+				type = "zero"
+			}
+		]
+		max_radius = 0.2625
+		min_capacity_scaling = 0
+		name = "light"
+		offset = [
+			0
+			0
+			0.4
+			0
+			0
+			0
+		]
+		simulators = [
+			{
+				type = "age_age"
+			}
+			{
+				rate_max = 2
+				rate_min = 1
+				scale = [
+					[
+						0
+						1
+					]
+					[
+						1
+						1
+					]
+				]
+				type = "rate_emitter"
+			}
+			{
+				type = "position_integrate"
+			}
+		]
+		vector3_channels = [
+			"position"
+			"velocity"
+		]
+		visualizers = [
+			{
+				casts_shadows = false
+				channels = [
+					{
+						component = "position"
+						name = "position"
+						set = 0
+						type = "float3"
+					}
+					{
+						component = "color"
+						name = "hdr_color"
+						set = 0
+						type = "float4"
+					}
+					{
+						component = "texcoord"
+						name = "size"
+						set = 7
+						type = "float2"
+					}
+					{
+						component = "texcoord"
+						name = "local_age"
+						set = 8
+						type = "float1"
+					}
+				]
+				falloff_end = 0.8
+				falloff_exponent = 0
+				falloff_start = 0
+				light_type = "omni"
+				spot_angle_end = 3.05433
+				spot_angle_start = 0
+				type = "light"
+				vertex_writers = [
+					{
+						gradient = [
+							[
+								0.5
+								[
+									223
+									72
+									0
+								]
+							]
+						]
+						luminance = true
+						opacity = [
+							[
+								0
+								0
+							]
+							[
+								0.185294
+								0.439091
+							]
+							[
+								0.470209
+								0.248182
+							]
+							[
+								0.808918
+								0.458182
+							]
+							[
+								1
+								0
+							]
+						]
+						type = "hdr_color"
+					}
+					{
+						over_system_lifetime = false
+						scale = [
+							[
+								0
+								1
+							]
+							[
+								0.185703
+								0.83
+							]
+							[
+								0.498099
+								1.05
+							]
+							[
+								0.671653
+								0.86
+							]
+							[
+								0.831322
+								0.96
+							]
+							[
+								1
+								0.391364
+							]
+						]
+						type = "size"
+					}
+					{
+						dest = "position"
+						source = "position"
+						type = "copy_vector3"
+					}
+					{
+						dest = "local_age"
+						type = "local_age"
+					}
+				]
+				volumetric_intensity = 1
+			}
+		]
+	}
+	{
+		capacity = 10
+		casts_shadows = false
+		disable_culling = false
+		float_channels = [
+			"age"
+			"life"
+			"size"
+			"size_y"
+			"frame"
+		]
+		initializers = [
+			{
+				channel = "size"
+				range = [
+					0.4
+					0.4
+				]
+				type = "random_float"
+			}
+			{
+				channel = "size_y"
+				range = [
+					0.6
+					0.6
+				]
+				type = "random_float"
+			}
+			{
+				type = "tangent_box"
+				x = [
+					0
+					0
+				]
+				y = [
+					0
+					0
+				]
+				z = [
+					1
+					1
+				]
+			}
+			{
+				channel = "frame"
+				range = [
+					0
+					31
+				]
+				type = "random_int"
+			}
+			{
+				angle = [
+					0
+					6.28319
+				]
+				height = [
+					0
+					0
+				]
+				radius = [
+					0.4
+					0.5
+				]
+				type = "position_cylinder"
+			}
+			{
+				channel = "life"
+				range = [
+					8
+					10
+				]
+				type = "random_float"
+			}
+			{
+				type = "zero_velocity"
+			}
+			{
+				channel = "age"
+				type = "zero"
+			}
+		]
+		max_radius = 0.3
+		min_capacity_scaling = 0
+		name = "fire2"
+		offset = [
+			0
+			0
+			-0.5
+			0
+			0
+			0
+		]
+		simulators = [
+			{
+				type = "age_age"
+			}
+			{
+				rate_max = 3
+				rate_min = 2
+				scale = [
+					[
+						0
+						1
+					]
+					[
+						1
+						1
+					]
+				]
+				type = "rate_emitter"
+			}
+			{
+				channel = "frame"
+				fps = 32
+				loop = true
+				range = [
+					0
+					31
+				]
+				type = "advance_frame"
+			}
+			{
+				type = "position_integrate"
+			}
+		]
+		vector3_channels = [
+			"position"
+			"velocity"
+			"tangent"
+		]
+		visualizers = [
+			{
+				channels = [
+					{
+						component = "position"
+						name = "position"
+						set = 0
+						type = "float3"
+					}
+					{
+						component = "color"
+						name = "color"
+						set = 0
+						type = "ubyte4"
+					}
+					{
+						component = "texcoord"
+						name = "size"
+						set = 7
+						type = "float2"
+					}
+					{
+						component = "texcoord"
+						name = "local_age"
+						set = 8
+						type = "float1"
+					}
+					{
+						component = "texcoord"
+						name = "frame"
+						set = 0
+						type = "float1"
+					}
+					{
+						component = "texcoord"
+						name = "pivot"
+						set = 6
+						type = "float3"
+					}
+					{
+						component = "tangent"
+						name = "tangent"
+						set = 0
+						type = "float3"
+					}
+				]
+				material_resource = "fx/environment_inn_fireplace/fire3"
+				sort = false
+				type = "billboard"
+				vertex_writers = [
+					{
+						component = 0
+						over_system_lifetime = false
+						scale = [
+							[
+								0
+								0
+							]
+							[
+								0.1
+								1
+							]
+							[
+								1
+								1
+							]
+						]
+						type = "size"
+					}
+					{
+						component = 1
+						over_system_lifetime = false
+						scale = [
+							[
+								0
+								0
+							]
+							[
+								0.1
+								1
+							]
+							[
+								1
+								1
+							]
+						]
+						source = "size_y"
+						type = "size"
+					}
+					{
+						gradient = [
+							[
+								0.5
+								[
+									255
+									234
+									204
+								]
+							]
+						]
+						opacity = [
+							[
+								0
+								0
+							]
+							[
+								0.101613
+								1
+							]
+							[
+								0.954364
+								1
+							]
+							[
+								1
+								0
+							]
+						]
+						type = "color"
+					}
+					{
+						dest = "frame"
+						source = "frame"
+						type = "copy_float"
+					}
+					{
+						dest = "pivot"
+						offset = 0
+						type = "write_float"
+						value = 0.5
+					}
+					{
+						dest = "pivot"
+						offset = 1
+						type = "write_float"
+						value = 0.85
+					}
+					{
+						dest = "pivot"
+						offset = 2
+						type = "write_float"
+						value = 0
+					}
+					{
+						dest = "position"
+						source = "position"
+						type = "copy_vector3"
+					}
+					{
+						dest = "local_age"
+						type = "local_age"
+					}
+					{
+						dest = "tangent"
+						source = "tangent"
+						type = "copy_vector3"
+					}
+				]
+			}
+		]
+	}
+	{
+		capacity = 10
+		casts_shadows = false
+		disable_culling = false
+		float_channels = [
+			"age"
+			"life"
+			"size"
+			"size_y"
+			"frame"
+		]
+		initializers = [
+			{
+				channel = "size"
+				range = [
+					0.6
+					0.8
+				]
+				type = "random_float"
+			}
+			{
+				channel = "size_y"
+				range = [
+					0.8
+					1.2
+				]
+				type = "random_float"
+			}
+			{
+				type = "tangent_box"
+				x = [
+					0
+					0
+				]
+				y = [
+					0
+					0
+				]
+				z = [
+					1
+					1
+				]
+			}
+			{
+				channel = "frame"
+				range = [
+					0
+					31
+				]
+				type = "random_int"
+			}
+			{
+				angle = [
+					0
+					6.28319
+				]
+				height = [
+					0
+					0
+				]
+				radius = [
+					0.1
+					0.4
+				]
+				type = "position_cylinder"
+			}
+			{
+				channel = "life"
+				range = [
+					8
+					10
+				]
+				type = "random_float"
+			}
+			{
+				type = "zero_velocity"
+			}
+			{
+				channel = "age"
+				type = "zero"
+			}
+		]
+		max_radius = 0.6
+		min_capacity_scaling = 0
+		name = "fire3"
+		offset = [
+			0
+			0
+			-0.3
+			0
+			0
+			0
+		]
+		simulators = [
+			{
+				type = "age_age"
+			}
+			{
+				rate_max = 3
+				rate_min = 2
+				scale = [
+					[
+						0
+						1
+					]
+					[
+						1
+						1
+					]
+				]
+				type = "rate_emitter"
+			}
+			{
+				channel = "frame"
+				fps = 30
+				loop = true
+				range = [
+					0
+					31
+				]
+				type = "advance_frame"
+			}
+			{
+				type = "position_integrate"
+			}
+		]
+		vector3_channels = [
+			"position"
+			"velocity"
+			"tangent"
+		]
+		visualizers = [
+			{
+				channels = [
+					{
+						component = "position"
+						name = "position"
+						set = 0
+						type = "float3"
+					}
+					{
+						component = "color"
+						name = "color"
+						set = 0
+						type = "ubyte4"
+					}
+					{
+						component = "texcoord"
+						name = "size"
+						set = 7
+						type = "float2"
+					}
+					{
+						component = "texcoord"
+						name = "local_age"
+						set = 8
+						type = "float1"
+					}
+					{
+						component = "texcoord"
+						name = "frame"
+						set = 0
+						type = "float1"
+					}
+					{
+						component = "texcoord"
+						name = "pivot"
+						set = 6
+						type = "float3"
+					}
+					{
+						component = "tangent"
+						name = "tangent"
+						set = 0
+						type = "float3"
+					}
+				]
+				material_resource = "fx/environment_inn_fireplace/fire3"
+				sort = false
+				type = "billboard"
+				vertex_writers = [
+					{
+						component = 0
+						over_system_lifetime = false
+						scale = [
+							[
+								0
+								0
+							]
+							[
+								0.1
+								1
+							]
+							[
+								1
+								1
+							]
+						]
+						type = "size"
+					}
+					{
+						component = 1
+						over_system_lifetime = false
+						scale = [
+							[
+								0
+								0
+							]
+							[
+								0.1
+								1
+							]
+							[
+								1
+								1
+							]
+						]
+						source = "size_y"
+						type = "size"
+					}
+					{
+						gradient = [
+							[
+								0.5
+								[
+									255
+									234
+									204
+								]
+							]
+						]
+						opacity = [
+							[
+								0
+								0
+							]
+							[
+								0.101613
+								1
+							]
+							[
+								0.954364
+								1
+							]
+							[
+								1
+								0
+							]
+						]
+						type = "color"
+					}
+					{
+						dest = "frame"
+						source = "frame"
+						type = "copy_float"
+					}
+					{
+						dest = "pivot"
+						offset = 0
+						type = "write_float"
+						value = 0.5
+					}
+					{
+						dest = "pivot"
+						offset = 1
+						type = "write_float"
+						value = 0.85
+					}
+					{
+						dest = "pivot"
+						offset = 2
+						type = "write_float"
+						value = 0
+					}
+					{
+						dest = "position"
+						source = "position"
+						type = "copy_vector3"
+					}
+					{
+						dest = "local_age"
+						type = "local_age"
+					}
+					{
+						dest = "tangent"
+						source = "tangent"
+						type = "copy_vector3"
+					}
+				]
+			}
+		]
+	}
+	{
+		capacity = 2
+		casts_shadows = false
+		disable_culling = false
+		float_channels = [
+			"age"
+			"life"
+			"size"
+		]
+		initializers = [
+			{
+				radius = [
+					0
+					0
+				]
+				type = "position_sphere"
+			}
+			{
+				channel = "size"
+				range = [
+					1
+					1
+				]
+				type = "random_float"
+			}
+			{
+				channel = "life"
+				range = [
+					10
+					10
+				]
+				type = "random_float"
+			}
+			{
+				type = "zero_velocity"
+			}
+			{
+				channel = "age"
+				type = "zero"
+			}
+		]
+		max_radius = 0.5
+		min_capacity_scaling = 0
+		name = "glow"
+		offset = [
+			0
+			0
+			0
+			0
+			0
+			0
+		]
+		simulators = [
+			{
+				type = "age_age"
+			}
+			{
+				rate_max = 1
+				rate_min = 1
+				scale = [
+					[
+						0
+						1
+					]
+					[
+						1
+						1
+					]
+				]
+				type = "rate_emitter"
+			}
+			{
+				type = "position_integrate"
+			}
+		]
+		vector3_channels = [
+			"position"
+			"velocity"
+		]
+		visualizers = [
+			{
+				channels = [
+					{
+						component = "position"
+						name = "position"
+						set = 0
+						type = "float3"
+					}
+					{
+						component = "color"
+						name = "color"
+						set = 0
+						type = "ubyte4"
+					}
+					{
+						component = "texcoord"
+						name = "size"
+						set = 7
+						type = "float2"
+					}
+					{
+						component = "texcoord"
+						name = "local_age"
+						set = 8
+						type = "float1"
+					}
+				]
+				material_resource = "fx/environment_fire_1dm_no_light/glow"
+				sort = false
+				type = "billboard"
+				vertex_writers = [
+					{
+						over_system_lifetime = false
+						scale = [
+							[
+								0
+								1
+							]
+							[
+								1
+								1
+							]
+						]
+						type = "size"
+					}
+					{
+						gradient = [
+							[
+								0.502408
+								[
+									255
+									128
+									64
+								]
+							]
+						]
+						opacity = [
+							[
+								0
+								0
+							]
+							[
+								0.0795181
+								1
+							]
+							[
+								0.927108
+								1
+							]
+							[
+								1
+								0
+							]
+						]
+						type = "color"
+					}
+					{
+						dest = "position"
+						source = "position"
+						type = "copy_vector3"
+					}
+					{
+						dest = "local_age"
+						type = "local_age"
+					}
+					{
+						far_fade = 5
+						far_range = 50
+						near_fade = 1
+						near_range = 1
+						sort_order = 100
+						type = "distance_fade"
+					}
+					{
+						sort_order = 1000
+						type = "opacity_kill"
+					}
+				]
+			}
+		]
+	}
+]
+culling_distance = 1410065408
+life_time = 1410065408
+min_simulation_distance = 1410065408
+min_simulation_time = 5
+use_random_seed = true
+variables = [
+]
