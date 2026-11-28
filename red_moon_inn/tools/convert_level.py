@@ -109,6 +109,9 @@ STAND_INS = {
     # The inn's Red Moon sign, half burnt, with sparks and a small fire. Vermintide 2 only has it whole: the round sign
     # that Horn of Magnus hangs over the inn's door. It has the same rig, so it goes where the burnt one is.
     'c2f0983a0f402dfb': [('units/props/signs/sign_emp_round_02', [0, 0, 0], [1, 1, 1])],
+    # The inn's inside door, which it opens with flow. Vermintide 2's wooden door stands in for the open one, at the door
+    # snap of the merchant doorframe that stands in for the inn's. Closed there, it is turned as the inn's closed door is.
+    '74196c3af84deed6': [('units/architecture/generic/doors/generic_wood_door_01', [0.2916, -0.0212, -0.0762], [1, 1, 1])],
     # A 4x4 m stone floor tile (0..4 along x, -4..0 along y). Vermintide 2's inn has a stone floor in its middle, 4.2 m wide.
     '6b9ad3bebc3d3260': [('units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01', [2, -2, 0], [1, 1, 1])],
     # The same floor, 4 m along x and 2 m along y
@@ -135,6 +138,46 @@ STAND_INS = {
         ('units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01', [0, 0, 0], [0.2175, 0.55, 1]),
         ('units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01', [3.13, 0, 0], [0.2175, 0.55, 1])],
 }
+
+# Pieces of STAND_INS that get no stand-in when they are in an object set. The inn has its inside door twice in one place:
+# closed for the prologue, and open after it. Only the open one is kept.
+NO_STAND_IN = {('74196c3af84deed6', 'flow_prologue')}
+
+# What the inn's missing pieces are and what is done about them, for the report: (what it is, what is done). Most have no
+# name, and were found from what is in them: their interactions, effects and textures.
+INTERACTABLE = "Vermintide 2's interactables take its place later"
+REWARD = "Vermintide 2's rewards take its place later"
+DROPPED = 'Left out'
+DECISIONS = {
+    '1539b52a5947cf9e': ('The forge: an anvil with a Forge interaction', INTERACTABLE),
+    '67b7f04822a93e53': ('The beer barrel, with the drink-beer interaction', INTERACTABLE),
+    'a7e6d593fbf9b950': ('The contracts board', INTERACTABLE),
+    'bba5204f40d04a30': ('The journal', INTERACTABLE),
+    '28a7608ea378d5d4': ('A weapon rack with many swords, to interact with', INTERACTABLE),
+    '74196c3af84deed6': ('The inside door, which the inn opens with flow',
+                         'The closed one, for the prologue, is left out. The open one has a stand-in'),
+    '922e9f0f7181b7ce': ('The anchors of the heroes\' rooms, with room_id 1 to 4', 'To be decided'),
+    '1d154654f8765b8e': ('A wall plaque: Ubersreik\'s arms, with notices pinned beside it', REWARD),
+    '2d76ddf99c180e8d': ('A wall plaque: towers and crossed keys, with notices pinned beside it', REWARD),
+    '8cf2303d5d610761': ('A round painted shield with a sword', REWARD),
+    '19d892bb8c0e32f9': ('A piece of the Drachenfels DLC, probably a trophy', REWARD),
+    '8c001ad7a12311f7': ('A torch with an Empire greatsword', REWARD),
+    '9d458644a1f68911': ('A torch with a dwarf helmet, axe and hammer', REWARD),
+    'adcae9212f59ccc0': ('A torch with an executioner sword', REWARD),
+    '33e8fd23dbc55619': ('A fur rug by the fireplace', 'A wizard carpet placed in the editor takes its place'),
+    '5c2918816057a706': ('Probably an invisible marker: it has no textures', DROPPED),
+    '241904ffe4a89865': ('A wall torch', DROPPED),
+    'a9a0c245db34f2b9': ('Probably light rays through the windows', DROPPED),
+    'b0e280ba2b14137d': ('Probably light rays through the windows', DROPPED),
+    'caa775dc2b2af811': ('Probably light rays through the windows', DROPPED),
+    '29ea8fb980816d15': ('Probably light rays through the windows', DROPPED),
+    'c6dc7fac3e97651d': ('Probably smoke or dust', DROPPED),
+    '25130bc88ea78193': ('Not known', DROPPED),
+    'a9d37d9c': ('Not known', DROPPED),
+    'b8453cfe': ('A key of the inside door\'s script data', DROPPED),
+}
+DECISIONS.update({'units/gameplay/difficulty_banner_%02d' % n: (
+    "Vermintide 1's difficulty banner", "Vermintide 2's banners take its place later") for n in (1, 2, 3, 4)})
 
 # The editor names a placed unit after its type, with a number
 MAX_UNIT_NUMBER = 3000
@@ -334,6 +377,8 @@ class Converter:
         units = self.level.units()
         types = [self.resource(u['type'], 'unit') for u in units]
         extra = []
+        set_names, unit_sets, _ = self.level.object_sets()
+        set_names = {name_hash32(n): n for n in set_names}
 
         for k, u in enumerate(units):
             substitute = SUBSTITUTES.get(self.vt1_name(u['type']))
@@ -343,6 +388,9 @@ class Converter:
                 self.substituted[(self.vt1_name(u['type']), substitute)] += 1
 
             stand_ins = STAND_INS.get(self.vt1_name(u['type']))
+
+            if any((self.vt1_name(u['type']), set_names[s]) in NO_STAND_IN for s in unit_sets[k]):
+                stand_ins = None
 
             if types[k] is None and stand_ins:
                 # The first stand-in takes the inn piece's place in the level, the others are added after the inn's units.
@@ -367,8 +415,6 @@ class Converter:
 
         names = self.unit_names(units, types)
         unit_data = self.level.unit_data()
-        set_names, unit_sets, _ = self.level.object_sets()
-        set_names = {name_hash32(n): n for n in set_names}
         out, index = [], {}
 
         for k, u in enumerate(units):
@@ -705,6 +751,9 @@ class Converter:
 
             for name, count in sorted(self.missing[kind].items()):
                 lines.append('  %s%s' % (name, ' (x%d)' % count if count > 1 else ''))
+
+                if name in DECISIONS:
+                    lines.append('    %s. %s.' % DECISIONS[name])
 
                 if kind in ('unit', 'particle effect'):
                     lines.extend('    ' + w for w in self.where[name])
