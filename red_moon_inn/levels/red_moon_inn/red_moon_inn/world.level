@@ -541,6 +541,124 @@ editor_metadata = {
 		]
 	}
 	Groups = [
+		{
+			Children = [
+				"10fa212f-3eab-4b90-862f-acbc0bfae52c"
+				"63033388-32a2-4a8a-88b6-dbb2873c230b"
+				"c810cb3c-9024-4622-9bef-3d0e4150cd01"
+				"c64d2b19-a843-4eb6-af52-3071c0bd3c7a"
+				"293923c3-5a67-4944-88d1-4f917a662f74"
+				"aa4f4f05-2ca4-4ce9-bdfb-92f4e1e9529a"
+				"494f3128-8686-4f4b-965f-cff129ae8158"
+				"9074679c-2e4c-4d9c-8f8e-7b569483fc15"
+				"13bae5a2-6fec-4985-aa13-38918f014e88"
+				"adc81337-f47b-43d8-ab39-240897fd00b7"
+				"2dbbb7b5-0c12-4a76-885f-b167c931db55"
+				"0c1d5fb2-cf33-422c-a4f2-30a5f484c567"
+				"39f8dd52-473b-4448-a18a-72a9e71ca0d4"
+				"6b48f2fd-7f13-4021-9b35-cedfb7120485"
+				"35504e58-48e8-4391-92e1-031181ead49c"
+				"28d06e67-deee-4a12-b24b-d0bb32a8e902"
+				"4944faeb-361e-49e4-b8be-7b39b0639e98"
+				"c11d6bdb-c713-4b5e-b13d-043e8d040a50"
+				"0473e6f5-8bb7-4859-8cc1-a4a07ba5f7ec"
+				"9ea3c1c5-9bcf-4c6c-9df2-6118ec22702e"
+			]
+			Id = "bc4415ba-4263-40b9-8ade-dbe321f10773"
+			Layer = "wom_Stuff"
+			Name = "group_208"
+			Path = "group"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.109992
+				Y = 6.589994
+				Z = 1.618999
+			}
+			Rot = {
+				W = -0.707107
+				X = 0
+				Y = 0
+				Z = -0.707107
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+		}
+		{
+			Children = [
+				"d2f80b68-fba4-4c5b-8052-55025c1b9fb9"
+				"a64554b1-20a1-454e-aafc-fac755aa371d"
+				"6f85e7ed-9a46-4d7b-b47e-123313b1dfa2"
+				"e63385b4-75fe-4b02-93c6-bfabe3be681a"
+				"955cf12d-5e75-4d67-9db6-6b9649cf0c95"
+				"170c07db-f70b-4e88-a8bb-381eb03505fa"
+				"e7d5296c-fad0-49bb-8e0d-ae0fb1089822"
+				"1ef31547-2a7d-4c59-8eba-81af1563a189"
+				"251703f2-ff7c-4509-92ba-9335d0d8b5b0"
+			]
+			Id = "c65e23f6-bb90-45c4-b13f-a8f9ae532561"
+			Layer = "wom_Stuff"
+			Name = "group_209"
+			Path = "group"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.639992
+				Y = 7.669994
+				Z = 1.449
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+		}
+		{
+			Children = [
+				"fc83d66e-377c-4b10-9357-febcb7325daf"
+				"884e2769-f3c7-49cc-aed7-6c9f57fea02e"
+			]
+			Id = "82e1f83c-9723-40ce-ab44-ec4bfa24fe5b"
+			Layer = "wom_Stuff"
+			Name = "group_210"
+			Path = "group"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 8.322529
+				Y = 9.629586
+				Z = 3.391612
+			}
+			Rot = {
+				W = -0.68528
+				X = 0
+				Y = 0
+				Z = -0.72828
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+		}
 	]
 	GwNavGenSettings = {
 		altitudeTolerance = 0.5
@@ -567,6 +685,8 @@ editor_metadata = {
 		"fx"
 		"volumes"
 		"room_armory"
+		"wom_Stuff"
+		"fog"
 	]
 	LevelObjectSets = {
 		NestedSetNamesBySetName = {
@@ -788,6 +908,8 @@ editor_metadata = {
 				"4a0cb651-573a-5d3c-9817-de6674c38454"
 				"3d64b40e-cffe-5779-a723-d06143c0fc8b"
 				"81f26922-75b0-507d-8ca6-331e10a582b9"
+				"e2c68502-ea44-4922-b6e7-1868be3c94d5"
+				"a14e2b23-b519-4b86-9477-9edc44a8db31"
 			]
 			flow_act_03 = [
 				"e54e5e99-0014-59a6-aad7-e2cc8de9a98a"
@@ -1314,6 +1436,35 @@ editor_metadata = {
 			}
 			Spawn = true
 		}
+		{
+			Effect = "fx/environment_rain_01"
+			Id = "a3155018-d0ae-4d73-a469-6c15780f2f68"
+			Layer = "fx"
+			Name = "particle_effect_23"
+			Path = "particleeffect"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -9.57
+				Y = -12.770007
+				Z = 2.105
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			Spawn = false
+		}
 	]
 	PositionMarkers = [
 	]
@@ -1347,7 +1498,7 @@ editor_metadata = {
 	Transients = {
 		Camera = {
 			FarRange = 1000
-			InterestPointDistance = 4.956609
+			InterestPointDistance = 24.505404
 			OrthographicPlane = {
 				W = 1
 				X = 0
@@ -1356,19 +1507,19 @@ editor_metadata = {
 			}
 			OrthographicZoom = 10
 			Pos = {
-				X = 4.788579
-				Y = 9.423924
-				Z = 1.662126
+				X = -3.165484
+				Y = 1.703479
+				Z = 1.444767
 			}
 			ProjectionType = 1
 			Rot = {
-				W = -0.963011
-				X = -0.051729
-				Y = 0.014194
-				Z = 0.26407
+				W = -0.050381
+				X = -0.002403
+				Y = 0.047583
+				Z = 0.997593
 			}
 			RotationSpeed = 0.003
-			TranslationSpeed = 0.197267
+			TranslationSpeed = 0.2958
 		}
 	}
 	Triggers = [
@@ -32743,7 +32894,7 @@ editor_metadata = {
 			}
 			Scl = {
 				X = 1
-				Y = 1
+				Y = 1.065317
 				Z = 1
 			}
 			ScriptData = {
@@ -32772,7 +32923,7 @@ editor_metadata = {
 			}
 			Pos = {
 				X = 8.56124
-				Y = 10.1301
+				Y = 10.1001
 				Z = 0.301304
 			}
 			Rot = {
@@ -33692,7 +33843,7 @@ editor_metadata = {
 			}
 			Pos = {
 				X = 4.76277
-				Y = 7.71827
+				Y = 5.718258
 				Z = -0.068353
 			}
 			Rot = {
@@ -33811,8 +33962,8 @@ editor_metadata = {
 				Z = 0
 			}
 			Pos = {
-				X = 7.91226
-				Y = 8.10662
+				X = 8.452268
+				Y = 10.376633
 				Z = -0.063297
 			}
 			Rot = {
@@ -33852,7 +34003,7 @@ editor_metadata = {
 			}
 			Pos = {
 				X = 4.97081
-				Y = 11.4172
+				Y = 13.657208
 				Z = 3.31641
 			}
 			Rot = {
@@ -46753,46 +46904,6 @@ editor_metadata = {
 		{
 			Cameras = {
 			}
-			Id = "eef1e4ab-e308-5a9d-ad7c-9c1fdfdf2faa"
-			Layer = "Default"
-			Lights = {
-			}
-			MaterialSlots = {
-			}
-			Name = "generic_rubble_planks_wall_01_1"
-			OverridePoses = {
-			}
-			Path = "units/generic/generic_rubble_planks_wall_01"
-			Pivot = {
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Pos = {
-				X = 7.98189
-				Y = 9.25174
-				Z = 0.309
-			}
-			Rot = {
-				W = -1
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Scl = {
-				X = 1
-				Y = 1
-				Z = 1
-			}
-			ScriptData = {
-			}
-			StoryOverridePoses = {
-			}
-			Type = "units/generic/generic_rubble_planks_wall_01"
-		}
-		{
-			Cameras = {
-			}
 			Id = "a1166e38-c2ec-552a-9ddf-cc346dc5eda9"
 			Layer = "Default"
 			Lights = {
@@ -51375,6 +51486,8 @@ editor_metadata = {
 			}
 			ScriptData = {
 			}
+			StoryOverridePoses = {
+			}
 			Type = "units/hub_elements/mission_unit"
 		}
 		{
@@ -51418,6 +51531,8 @@ editor_metadata = {
 				game_start_time = 4
 				game_start_waystone = true
 			}
+			StoryOverridePoses = {
+			}
 			Type = "units/gameplay/end_zone/end_zone_01_inn"
 		}
 		{
@@ -51458,6 +51573,8 @@ editor_metadata = {
 				network_synced = false
 				objective_id = "waystone"
 				tutorial_text_id = "objective_keep_waystone"
+			}
+			StoryOverridePoses = {
 			}
 			Type = "units/hub_elements/objective_unit"
 		}
@@ -51500,6 +51617,8 @@ editor_metadata = {
 				disable_check_joining_players = false
 				disable_complete_level = true
 				game_start_time = 4
+			}
+			StoryOverridePoses = {
 			}
 			Type = "units/gameplay/end_zone/end_zone_02_inn"
 		}
@@ -51553,6 +51672,8 @@ editor_metadata = {
 				smoke_grenade_t2 = false
 				speed_boost_potion = false
 			}
+			StoryOverridePoses = {
+			}
 			Type = "units/hub_elements/pickup_spawner"
 		}
 		{
@@ -51590,6 +51711,8 @@ editor_metadata = {
 				Z = 1
 			}
 			ScriptData = {
+			}
+			StoryOverridePoses = {
 			}
 			Type = "units/gameplay/talents_interactable"
 		}
@@ -51634,6 +51757,8 @@ editor_metadata = {
 			}
 			ScriptData = {
 			}
+			StoryOverridePoses = {
+			}
 			Type = "units/gameplay/hub_interactive/interactive_cosmetic"
 		}
 		{
@@ -51671,6 +51796,8 @@ editor_metadata = {
 				Z = 0.9
 			}
 			ScriptData = {
+			}
+			StoryOverridePoses = {
 			}
 			Type = "units/gameplay/hub_interactive/interactive_tutorial"
 		}
@@ -51710,6 +51837,8 @@ editor_metadata = {
 			}
 			ScriptData = {
 			}
+			StoryOverridePoses = {
+			}
 			Type = "units/architecture/inn/modular_assets/inn_stairs_wood_step_01"
 		}
 		{
@@ -51748,6 +51877,8 @@ editor_metadata = {
 			}
 			ScriptData = {
 			}
+			StoryOverridePoses = {
+			}
 			Type = "units/props/beds/prop_pillow_01"
 		}
 		{
@@ -51785,6 +51916,8 @@ editor_metadata = {
 				Z = 1.26148
 			}
 			ScriptData = {
+			}
+			StoryOverridePoses = {
 			}
 			Type = "units/gameplay/prestige/gameplay_prestige_skull_01"
 		}
@@ -51834,6 +51967,8 @@ editor_metadata = {
 			ScriptData = {
 				umbra_no_occ = true
 			}
+			StoryOverridePoses = {
+			}
 			Type = "units/gameplay/hub_interactive/achievment_interactable"
 		}
 		{
@@ -51876,6 +52011,8 @@ editor_metadata = {
 				"interaction_data.hud_interaction_action" = "interaction_action_open"
 				"interaction_data.interaction_type" = "store_access"
 			}
+			StoryOverridePoses = {
+			}
 			Type = "units/gameplay/interactable_store_trigger"
 		}
 		{
@@ -51913,6 +52050,8 @@ editor_metadata = {
 				Z = 0.585123
 			}
 			ScriptData = {
+			}
+			StoryOverridePoses = {
 			}
 			Type = "units/gameplay/interactable_dialogue_trigger"
 		}
@@ -51953,6 +52092,8 @@ editor_metadata = {
 			ScriptData = {
 				"interaction_data.hud_description" = "active_event_interaction"
 			}
+			StoryOverridePoses = {
+			}
 			Type = "units/gameplay/keep_event_interaction"
 		}
 		{
@@ -51991,30 +52132,691 @@ editor_metadata = {
 			}
 			ScriptData = {
 			}
+			StoryOverridePoses = {
+			}
 			Type = "units/ladders/generic_ladder_6m"
 		}
 		{
 			Cameras = {
 			}
-			Id = "e3a9fcf9-e989-4722-9b1d-df3dea314004"
+			Id = "9bb0174b-e8aa-47a9-891a-66608b922841"
 			Layer = "Default"
 			Lights = {
+				omni = {
+					BoxMax = {
+						X = 10
+						Y = 10
+						Z = 10
+					}
+					BoxMin = {
+						X = -10
+						Y = 0
+						Z = -10
+					}
+					CastShadows = false
+					Color = {
+						A = 255
+						B = 121
+						G = 170
+						R = 255
+					}
+					FalloffEnd = 1
+					FalloffExponent = 0
+					FalloffStart = 0
+					Intensity = 0.05
+					Material = ""
+					MaterialResource = ""
+					SpotAngleEnd = 140
+					SpotAngleStart = 0
+					Type = "omni"
+					VolumetricIntensity = 0
+				}
 			}
 			MaterialSlots = {
 			}
-			Name = "interactable_generic_02"
+			Name = "light_001"
 			OverridePoses = {
 			}
-			Path = "units/gamemode/interactable_generic_02"
+			Path = "units/lights/light"
 			Pivot = {
 				X = 0
 				Y = 0
 				Z = 0
 			}
 			Pos = {
-				X = 3.62
-				Y = 8.690005
-				Z = -4.789
+				X = 6.695197
+				Y = 4.29348
+				Z = 2.455658
+			}
+			Rot = {
+				W = -0.70687
+				X = 0.018288
+				Y = -0.01829
+				Z = 0.70687
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				"LevelEditor.is_gizmo_unit" = true
+			}
+			Type = "units/lights/light"
+		}
+		{
+			Cameras = {
+			}
+			Id = "0917bb43-01ca-45cb-b321-f1e4d62d3eeb"
+			Layer = "Default"
+			Lights = {
+				omni = {
+					BoxMax = {
+						X = 10
+						Y = 10
+						Z = 10
+					}
+					BoxMin = {
+						X = -10
+						Y = 0
+						Z = -10
+					}
+					CastShadows = true
+					Color = {
+						A = 255
+						B = 44
+						G = 119
+						R = 251
+					}
+					FalloffEnd = 3
+					FalloffExponent = 0
+					FalloffStart = 0
+					Intensity = 0.15
+					Material = ""
+					MaterialResource = ""
+					SpotAngleEnd = 140
+					SpotAngleStart = 0
+					Type = "omni"
+					VolumetricIntensity = 0
+				}
+			}
+			MaterialSlots = {
+			}
+			Name = "light_006"
+			OverridePoses = {
+			}
+			Path = "units/lights/light"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.975284
+				Y = 4.35661
+				Z = 2.45484
+			}
+			Rot = {
+				W = -0.707107
+				X = -1E-06
+				Y = -1E-06
+				Z = 0.707107
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				"LevelEditor.is_gizmo_unit" = true
+			}
+			Type = "units/lights/light"
+		}
+		{
+			Cameras = {
+			}
+			Id = "91fc07e2-0531-415b-86a0-bc8f52b967f8"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_candle_01_vt1_001"
+			OverridePoses = {
+			}
+			Path = "units/props/candles/prop_candle_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 0.206508
+				Y = 1.28916
+				Z = 1.75762
+			}
+			Rot = {
+				W = -0.103772
+				X = 0
+				Y = 0
+				Z = 0.994601
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/candles/prop_candle_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "91ac97f3-3eeb-4c6b-84e5-9c113c373a76"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_candle_01_vt1_002"
+			OverridePoses = {
+			}
+			Path = "units/props/candles/prop_candle_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 13.986757
+				Y = -1.528064
+				Z = 1.331
+			}
+			Rot = {
+				W = -0.721113
+				X = 0
+				Y = 0
+				Z = 0.692817
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/candles/prop_candle_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "61805ec1-bafc-4bad-a4e1-12b9416fbbf7"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_candle_01_vt1_004"
+			OverridePoses = {
+			}
+			Path = "units/props/candles/prop_candle_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 13.52122
+				Y = -3.64839
+				Z = 1.331
+			}
+			Rot = {
+				W = -0.228336
+				X = 0
+				Y = 0
+				Z = 0.973582
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/candles/prop_candle_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "fc83d66e-377c-4b10-9357-febcb7325daf"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_hanging_skulls_02_005"
+			OverridePoses = {
+			}
+			Path = "units/props/skulls/prop_hanging_skulls_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.938853
+				Y = 9.50009
+				Z = 3.183691
+			}
+			Rot = {
+				W = -0.030407
+				X = 0
+				Y = 0
+				Z = 0.999538
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/skulls/prop_hanging_skulls_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "884e2769-f3c7-49cc-aed7-6c9f57fea02e"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "keep_vom_magic_forge"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/wom/keep_vom_magic_forge"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 9.941752
+				Y = 9.603432
+				Z = 0.061892
+			}
+			Rot = {
+				W = -0.68528
+				X = 0
+				Y = 0
+				Z = -0.72828
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/inn/wom/keep_vom_magic_forge"
+		}
+		{
+			Cameras = {
+			}
+			Id = "d2f80b68-fba4-4c5b-8052-55025c1b9fb9"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "helmgart_prop_table_02_006"
+			OverridePoses = {
+			}
+			Path = "units/props/helmgart_props/helmgart_prop_table_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.700139
+				Y = 7.844275
+				Z = -0.173107
+			}
+			Rot = {
+				W = -0.663309
+				X = 0
+				Y = 0
+				Z = -0.748346
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/helmgart_props/helmgart_prop_table_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "a64554b1-20a1-454e-aafc-fac755aa371d"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_wizard_paper_08_009"
+			OverridePoses = {
+			}
+			Path = "units/brushes/wizard/brush_wizard_paper_08"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.987263
+				Y = 8.029725
+				Z = 0.319092
+			}
+			Rot = {
+				W = -0.890216
+				X = 0
+				Y = 0
+				Z = -0.455539
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/brushes/wizard/brush_wizard_paper_08"
+		}
+		{
+			Cameras = {
+			}
+			Id = "6f85e7ed-9a46-4d7b-b47e-123313b1dfa2"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_library_book_017"
+			OverridePoses = {
+			}
+			Path = "units/props/library/prop_library_book_05"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.63979
+				Y = 7.495437
+				Z = 0.384093
+			}
+			Rot = {
+				W = -0.092995
+				X = 0.700965
+				Y = 0.092995
+				Z = 0.700965
+			}
+			Scl = {
+				X = 0.752267
+				Y = 0.752267
+				Z = 0.752267
+			}
+			ScriptData = {
+			}
+			Type = "units/props/library/prop_library_book_05"
+		}
+		{
+			Cameras = {
+			}
+			Id = "e63385b4-75fe-4b02-93c6-bfabe3be681a"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "chaos_prop_wooden_crate_04"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/chaos_prop_wooden_crate_04"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.580807
+				Y = 7.621411
+				Z = 0.478892
+			}
+			Rot = {
+				W = 0.408019
+				X = 0.408019
+				Y = 0.577512
+				Z = 0.577512
+			}
+			Scl = {
+				X = 0.651215
+				Y = 0.651215
+				Z = 0.651215
+			}
+			ScriptData = {
+			}
+			Type = "units/props/generic/chaos_prop_wooden_crate_04"
+		}
+		{
+			Cameras = {
+			}
+			Id = "955cf12d-5e75-4d67-9db6-6b9649cf0c95"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_library_book_018"
+			OverridePoses = {
+			}
+			Path = "units/props/library/prop_library_book_08"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.624047
+				Y = 7.804446
+				Z = 0.341792
+			}
+			Rot = {
+				W = -0.56569
+				X = 0.1611
+				Y = -0.113819
+				Z = -0.800679
+			}
+			Scl = {
+				X = 0.515902
+				Y = 0.515902
+				Z = 0.515902
+			}
+			ScriptData = {
+			}
+			Type = "units/props/library/prop_library_book_08"
+		}
+		{
+			Cameras = {
+			}
+			Id = "170c07db-f70b-4e88-a8bb-381eb03505fa"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_library_book_09_005"
+			OverridePoses = {
+			}
+			Path = "units/props/library/prop_library_book_09"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.681424
+				Y = 8.330573
+				Z = 0.767892
+			}
+			Rot = {
+				W = 0.368564
+				X = 0
+				Y = 0
+				Z = 0.929602
+			}
+			Scl = {
+				X = 0.758777
+				Y = 0.758777
+				Z = 0.758777
+			}
+			ScriptData = {
+			}
+			Type = "units/props/library/prop_library_book_09"
+		}
+		{
+			Cameras = {
+			}
+			Id = "e7d5296c-fad0-49bb-8e0d-ae0fb1089822"
+			Layer = "wom_Stuff"
+			Lights = {
+				light2 = {
+					BoxMax = {
+						X = 10
+						Y = 10
+						Z = 10
+					}
+					BoxMin = {
+						X = -10
+						Y = 0
+						Z = -10
+					}
+					CastShadows = false
+					Color = {
+						A = 255
+						B = 44
+						G = 118
+						R = 255
+					}
+					FalloffEnd = 3
+					FalloffExponent = 2
+					FalloffStart = 0
+					Intensity = 0.25
+					Material = ""
+					MaterialResource = ""
+					SpotAngleEnd = 45
+					SpotAngleStart = 0
+					Type = "omni"
+					VolumetricIntensity = 1
+				}
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_candles_013"
+			OverridePoses = {
+			}
+			Path = "units/props/merchant/prop_candles_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.715542
+				Y = 7.810355
+				Z = 0.737593
+			}
+			Rot = {
+				W = -0.854602
+				X = 0
+				Y = 0
+				Z = -0.519284
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/merchant/prop_candles_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "1ef31547-2a7d-4c59-8eba-81af1563a189"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "brush_wizard_paper_07_006"
+			OverridePoses = {
+			}
+			Path = "units/brushes/wizard/brush_wizard_paper_07"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.731343
+				Y = 7.379224
+				Z = 0.763892
+			}
+			Rot = {
+				W = -0.934896
+				X = 0
+				Y = 0
+				Z = -0.354922
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/brushes/wizard/brush_wizard_paper_07"
+		}
+		{
+			Cameras = {
+			}
+			Id = "251703f2-ff7c-4509-92ba-9335d0d8b5b0"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "keep_vom_leaderboard"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/wom/keep_vom_leaderboard"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.250748
+				Y = 7.592872
+				Z = 0.270592
 			}
 			Rot = {
 				W = -1
@@ -52029,7 +52831,1457 @@ editor_metadata = {
 			}
 			ScriptData = {
 			}
-			Type = "units/gamemode/interactable_generic_02"
+			Type = "units/props/inn/wom/keep_vom_leaderboard"
+		}
+		{
+			Cameras = {
+			}
+			Id = "10fa212f-3eab-4b90-862f-acbc0bfae52c"
+			Layer = "wom_Stuff"
+			Lights = {
+				light2 = {
+					BoxMax = {
+						X = 10
+						Y = 10
+						Z = 10
+					}
+					BoxMin = {
+						X = -10
+						Y = 0
+						Z = -10
+					}
+					CastShadows = false
+					Color = {
+						A = 255
+						B = 44
+						G = 118
+						R = 255
+					}
+					FalloffEnd = 3
+					FalloffExponent = 2
+					FalloffStart = 0
+					Intensity = 0.25
+					Material = ""
+					MaterialResource = ""
+					SpotAngleEnd = 45
+					SpotAngleStart = 0
+					Type = "omni"
+					VolumetricIntensity = 1
+				}
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_candles_02"
+			OverridePoses = {
+			}
+			Path = "units/props/merchant/prop_candles_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 8.057487
+				Y = 6.493444
+				Z = 1.39035
+			}
+			Rot = {
+				W = -0.000331
+				X = 0
+				Y = 0
+				Z = 1
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/merchant/prop_candles_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "63033388-32a2-4a8a-88b6-dbb2873c230b"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "wizard_prop_scroll_04"
+			OverridePoses = {
+			}
+			Path = "units/architecture/wizard/wizard_prop_scroll_04"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.970055
+				Y = 6.900609
+				Z = 1.42255
+			}
+			Rot = {
+				W = -0.831961
+				X = -0.020471
+				Y = 0.167515
+				Z = -0.528545
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/architecture/wizard/wizard_prop_scroll_04"
+		}
+		{
+			Cameras = {
+			}
+			Id = "c810cb3c-9024-4622-9bef-3d0e4150cd01"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "wizard_prop_scroll_01"
+			OverridePoses = {
+			}
+			Path = "units/architecture/wizard/wizard_prop_scroll_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.973092
+				Y = 6.879083
+				Z = 1.387149
+			}
+			Rot = {
+				W = 0.453786
+				X = 0
+				Y = 1E-06
+				Z = 0.891111
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/architecture/wizard/wizard_prop_scroll_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "c64d2b19-a843-4eb6-af52-3071c0bd3c7a"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_015"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_08"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.803101
+				Y = 6.45807
+				Z = 1.356248
+			}
+			Rot = {
+				W = -0.826874
+				X = 0
+				Y = 0
+				Z = 0.562387
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/inn/props_generic_bottle_08"
+		}
+		{
+			Cameras = {
+			}
+			Id = "293923c3-5a67-4944-88d1-4f917a662f74"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_013"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_07"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 6.496167
+				Y = 6.55792
+				Z = 1.356248
+			}
+			Rot = {
+				W = -0.589083
+				X = 0
+				Y = 1E-06
+				Z = 0.808072
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/inn/props_generic_bottle_07"
+		}
+		{
+			Cameras = {
+			}
+			Id = "aa4f4f05-2ca4-4ce9-bdfb-92f4e1e9529a"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_011"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_05"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 6.639191
+				Y = 6.512048
+				Z = 1.356248
+			}
+			Rot = {
+				W = -0.589083
+				X = 0
+				Y = 1E-06
+				Z = 0.808072
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/inn/props_generic_bottle_05"
+		}
+		{
+			Cameras = {
+			}
+			Id = "494f3128-8686-4f4b-965f-cff129ae8158"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_012"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_04"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 6.454562
+				Y = 6.43662
+				Z = 1.356248
+			}
+			Rot = {
+				W = -0.826874
+				X = 0
+				Y = 0
+				Z = 0.562387
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/inn/props_generic_bottle_04"
+		}
+		{
+			Cameras = {
+			}
+			Id = "9074679c-2e4c-4d9c-8f8e-7b569483fc15"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "props_generic_bottle_08"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/props_generic_bottle_08"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 6.299363
+				Y = 6.372945
+				Z = 1.356248
+			}
+			Rot = {
+				W = -0.826874
+				X = 0
+				Y = 0
+				Z = 0.562387
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/inn/props_generic_bottle_08"
+		}
+		{
+			Cameras = {
+			}
+			Id = "13bae5a2-6fec-4985-aa13-38918f014e88"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_util_skull_01_027"
+			OverridePoses = {
+			}
+			Path = "units/props/skulls/prop_util_skull_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 6.326787
+				Y = 6.88133
+				Z = 1.492849
+			}
+			Rot = {
+				W = 0.222886
+				X = 0.047983
+				Y = -0.025677
+				Z = 0.973324
+			}
+			Scl = {
+				X = 0.847695
+				Y = 0.847695
+				Z = 0.847695
+			}
+			ScriptData = {
+			}
+			Type = "units/props/skulls/prop_util_skull_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "adc81337-f47b-43d8-ab39-240897fd00b7"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_library_book_016"
+			OverridePoses = {
+			}
+			Path = "units/props/library/prop_library_book_06"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 6.343365
+				Y = 7.073926
+				Z = 1.45305
+			}
+			Rot = {
+				W = -0.598123
+				X = -0.415332
+				Y = 0.564807
+				Z = -0.388255
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/library/prop_library_book_06"
+		}
+		{
+			Cameras = {
+			}
+			Id = "2dbbb7b5-0c12-4a76-885f-b167c931db55"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "keep_dagger_002"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/keep_dagger_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 6.756093
+				Y = 6.848341
+				Z = 1.38895
+			}
+			Rot = {
+				W = -0.204361
+				X = -0.192698
+				Y = 0.664359
+				Z = 0.692626
+			}
+			Scl = {
+				X = 0.814258
+				Y = 0.814258
+				Z = 0.814258
+			}
+			ScriptData = {
+			}
+			Type = "units/props/inn/keep_dagger_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "0c1d5fb2-cf33-422c-a4f2-30a5f484c567"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_util_skull_01_034"
+			OverridePoses = {
+			}
+			Path = "units/props/skulls/prop_util_skull_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.017663
+				Y = 6.653589
+				Z = 0.604749
+			}
+			Rot = {
+				W = 0.216736
+				X = 0.046317
+				Y = -0.027951
+				Z = 0.97473
+			}
+			Scl = {
+				X = 0.847695
+				Y = 0.847695
+				Z = 0.847695
+			}
+			ScriptData = {
+			}
+			Type = "units/props/skulls/prop_util_skull_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "39f8dd52-473b-4448-a18a-72a9e71ca0d4"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_util_skull_01_035"
+			OverridePoses = {
+			}
+			Path = "units/props/skulls/prop_util_skull_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 6.925274
+				Y = 6.752954
+				Z = 0.501049
+			}
+			Rot = {
+				W = 0.197355
+				X = 0
+				Y = 0
+				Z = 0.980332
+			}
+			Scl = {
+				X = 0.847695
+				Y = 0.847695
+				Z = 0.847695
+			}
+			ScriptData = {
+			}
+			Type = "units/props/skulls/prop_util_skull_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "6b48f2fd-7f13-4021-9b35-cedfb7120485"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_util_skull_01_033"
+			OverridePoses = {
+			}
+			Path = "units/props/skulls/prop_util_skull_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.223851
+				Y = 6.669618
+				Z = 0.54895
+			}
+			Rot = {
+				W = 0.020635
+				X = -0.638843
+				Y = -0.247622
+				Z = 0.728105
+			}
+			Scl = {
+				X = 0.847695
+				Y = 0.847695
+				Z = 0.847695
+			}
+			ScriptData = {
+			}
+			Type = "units/props/skulls/prop_util_skull_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "35504e58-48e8-4391-92e1-031181ead49c"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_util_skull_01_032"
+			OverridePoses = {
+			}
+			Path = "units/props/skulls/prop_util_skull_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.399533
+				Y = 6.74925
+				Z = 0.501049
+			}
+			Rot = {
+				W = -0.202122
+				X = 0
+				Y = 0
+				Z = 0.97936
+			}
+			Scl = {
+				X = 0.847695
+				Y = 0.847695
+				Z = 0.847695
+			}
+			ScriptData = {
+			}
+			Type = "units/props/skulls/prop_util_skull_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "28d06e67-deee-4a12-b24b-d0bb32a8e902"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "trophy_duellist_seal_002"
+			OverridePoses = {
+			}
+			Path = "units/beings/player/generic_trophies/trophy_duellist_seal_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 6.286347
+				Y = 7.219671
+				Z = 1.345449
+			}
+			Rot = {
+				W = -0.999866
+				X = 0
+				Y = 0
+				Z = 0.016348
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/beings/player/generic_trophies/trophy_duellist_seal_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "4944faeb-361e-49e4-b8be-7b39b0639e98"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "trophy_duellist_seal_01"
+			OverridePoses = {
+			}
+			Path = "units/beings/player/generic_trophies/trophy_duellist_seal_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 6.187054
+				Y = 7.223146
+				Z = 1.327049
+			}
+			Rot = {
+				W = -0.999866
+				X = 0
+				Y = 0
+				Z = 0.016348
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/beings/player/generic_trophies/trophy_duellist_seal_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "c11d6bdb-c713-4b5e-b13d-043e8d040a50"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_util_skull_01_028"
+			OverridePoses = {
+			}
+			Path = "units/props/skulls/prop_util_skull_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 6.341439
+				Y = 6.211172
+				Z = 2.528249
+			}
+			Rot = {
+				W = -0.652283
+				X = -0.155114
+				Y = 0.171647
+				Z = 0.721806
+			}
+			Scl = {
+				X = 0.847695
+				Y = 0.847695
+				Z = 0.847695
+			}
+			ScriptData = {
+			}
+			Type = "units/props/skulls/prop_util_skull_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "0473e6f5-8bb7-4859-8cc1-a4a07ba5f7ec"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "prop_util_skull_01_031"
+			OverridePoses = {
+			}
+			Path = "units/props/skulls/prop_util_skull_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 8.02906
+				Y = 6.214174
+				Z = 2.52075
+			}
+			Rot = {
+				W = -0.687478
+				X = -0.068806
+				Y = -0.003517
+				Z = -0.72293
+			}
+			Scl = {
+				X = 0.847695
+				Y = 0.847695
+				Z = 0.847695
+			}
+			ScriptData = {
+			}
+			Type = "units/props/skulls/prop_util_skull_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "9ea3c1c5-9bcf-4c6c-9df2-6118ec22702e"
+			Layer = "wom_Stuff"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "keep_vom_level_select"
+			OverridePoses = {
+			}
+			Path = "units/props/inn/wom/keep_vom_level_select"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.177788
+				Y = 6.632192
+				Z = 0.422948
+			}
+			Rot = {
+				W = -0.707107
+				X = 0
+				Y = 0
+				Z = -0.707107
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				"interaction_data.interaction_type" = "weave_level_select_access"
+			}
+			Type = "units/props/inn/wom/keep_vom_level_select"
+		}
+		{
+			Cameras = {
+			}
+			Id = "e0c5cdf4-f946-4659-be85-b29ef3efb460"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_floor_wood_4x4m_01_001"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.2618
+				Y = 7.795986
+				Z = 0.308652
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "a93c4e09-858f-4618-99c9-24e45875f7ba"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_wall_wood_4x4m_01_001"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_wall_wood_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.171239
+				Y = 8.780102
+				Z = 0.301304
+			}
+			Rot = {
+				W = -0.707107
+				X = 0
+				Y = 0
+				Z = 0.707107
+			}
+			Scl = {
+				X = 0.681586
+				Y = 1
+				Z = 0.77066
+			}
+			ScriptData = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_wall_wood_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "921cf5b5-e97b-4ea6-869b-7c4253599c44"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_wall_stone_4x4m_01_001"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 4.97081
+				Y = 9.657209
+				Z = 3.31641
+			}
+			Rot = {
+				W = -0.707107
+				X = -0.707107
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "66758a52-fad8-45ab-a30a-8eff732997e0"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "inn_stone_pillar_02_007"
+			OverridePoses = {
+			}
+			Path = "units/architecture/inn/modular_assets/inn_stone_pillar_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 8.719805
+				Y = 11.800012
+				Z = 0.301304
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/architecture/inn/modular_assets/inn_stone_pillar_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "fb833cf6-3b51-45e5-855a-e416f29a0834"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_4m_01_001"
+			OverridePoses = {
+			}
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 4.830096
+				Y = 8.84546
+				Z = -0.063297
+			}
+			Rot = {
+				W = -0.707107
+				X = 0.707107
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "713c8b04-a6c1-40fb-95db-f2ca43e1d99c"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_4m_03_006"
+			OverridePoses = {
+			}
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_03"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 8.63
+				Y = 6.420003
+				Z = 3.470999
+			}
+			Rot = {
+				W = 0
+				X = 0
+				Y = 0
+				Z = 1
+			}
+			Scl = {
+				X = 1.26293
+				Y = 0.958938
+				Z = 1.26293
+			}
+			ScriptData = {
+			}
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_03"
+		}
+		{
+			Cameras = {
+			}
+			Id = "73a4d531-b761-4756-a03f-5de935bc88dd"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_4m_01_002"
+			OverridePoses = {
+			}
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 8.462268
+				Y = 6.32662
+				Z = -0.063297
+			}
+			Rot = {
+				W = -0.707107
+				X = 0.707107
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "6c1f968e-6ba5-46fc-aba7-61da844db595"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_wood_beam_4m_01_003"
+			OverridePoses = {
+			}
+			Path = "units/architecture/wizard/wizard_wood_beam_4m_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 4.522265
+				Y = 6.326612
+				Z = 3.346705
+			}
+			Rot = {
+				W = 0.5
+				X = -0.5
+				Y = 0.5
+				Z = 0.500001
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/architecture/wizard/wizard_wood_beam_4m_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "e2c68502-ea44-4922-b6e7-1868be3c94d5"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_crate_02_002"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_crate_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 8.08924
+				Y = 7.813413
+				Z = 0.812
+			}
+			Rot = {
+				W = -0.829586
+				X = 0
+				Y = 0
+				Z = -0.558378
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/generic/generic_prop_crate_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "a14e2b23-b519-4b86-9477-9edc44a8db31"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_crate_02_002"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_crate_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 8.03
+				Y = 7.87
+				Z = 0.309
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/generic/generic_prop_crate_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "16ee34de-6248-4805-a121-eee6b4b662ba"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "spawner_floor_town_chimney_01"
+			OverridePoses = {
+			}
+			Path = "units/spawners/spawner_floor_town_chimney_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.549982
+				Y = 9.510005
+				Z = 3.255999
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/spawners/spawner_floor_town_chimney_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "91ef8f4d-0cd4-4d23-9ba8-65f6cdc1b0fc"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "spawner_floor_town_chimney_01_001"
+			OverridePoses = {
+			}
+			Path = "units/spawners/spawner_floor_town_chimney_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.769985
+				Y = 9.550006
+				Z = -3.133997
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1.12446
+				Y = 1.12446
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/spawners/spawner_floor_town_chimney_01"
+		}
+		{
+			Cameras = {
+			}
+			Id = "87ad7046-d47b-459d-98a5-f53499e168de"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_prop_wood_bench_02_005"
+			OverridePoses = {
+			}
+			Path = "units/props/generic/generic_prop_wood_bench_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 5.344891
+				Y = 6.179402
+				Z = 1.110065
+			}
+			Rot = {
+				W = -0.420764
+				X = 0.504083
+				Y = 0.324999
+				Z = 0.680612
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/props/generic/generic_prop_wood_bench_02"
+		}
+		{
+			Cameras = {
+			}
+			Id = "08cba845-559a-4086-b2d4-f11a65dc16e9"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "objective_unit_waystone_weave"
+			OverridePoses = {
+			}
+			Path = "units/hub_elements/objective_unit"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -8.27436
+				Y = -10.475342
+				Z = 1.013999
+			}
+			Rot = {
+				W = -0.580431
+				X = 0
+				Y = 0
+				Z = -0.814309
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				icon = "hud_weaves_icon_mission"
+				network_synced = false
+				objective_id = "waystone_weave"
+				tutorial_text_id = "objective_keep_waystone_weave"
+			}
+			Type = "units/hub_elements/objective_unit"
+		}
+		{
+			Cameras = {
+			}
+			Id = "bc110fbf-2042-489b-b952-cd67b1cf47b7"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "end_zone_03_inn"
+			OverridePoses = {
+			}
+			Path = "units/gameplay/end_zone/end_zone_03_inn"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -9.63731
+				Y = -10.464603
+				Z = 0.963
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 0.990584
+				Y = 0.990584
+				Z = 0.990584
+			}
+			ScriptData = {
+				always_activated = true
+				disable_check_joining_players = false
+				disable_complete_level = true
+				game_start_time = 4
+			}
+			Type = "units/gameplay/end_zone/end_zone_03_inn"
+		}
+		{
+			Cameras = {
+			}
+			Id = "6ff937c6-6c53-49fb-9e2d-fc6c2280ce7e"
+			Layer = "fog"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "fog_volume_1"
+			OverridePoses = {
+			}
+			Path = "core/volumetrics/units/fog_volume"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -7.65
+				Y = -8.929999
+				Z = 1.475999
+			}
+			Rot = {
+				W = 0.370115
+				X = 0
+				Y = 0
+				Z = 0.928986
+			}
+			Scl = {
+				X = 1
+				Y = 1.6867
+				Z = 1.95278
+			}
+			ScriptData = {
+				"FogProperties.albedo[0]" = 1.2
+				"FogProperties.albedo[1]" = 1
+				"FogProperties.albedo[2]" = 1
+				"FogProperties.falloff[0]" = 0.1
+				"FogProperties.falloff[1]" = 0.1
+				"FogProperties.falloff[2]" = 0.1
+			}
+			Type = "core/volumetrics/units/fog_volume"
+		}
+		{
+			Cameras = {
+			}
+			Id = "958d1c84-afe2-49a0-a7a0-5a570dc96a07"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "black_fog_plane_01"
+			OverridePoses = {
+			}
+			Path = "units/fog/black_fog_plane_01"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 7.67
+				Y = 9.479999
+				Z = 2.965999
+			}
+			Rot = {
+				W = -0.707107
+				X = -0.707107
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 0.583225
+				Y = 1
+				Z = 0.583225
+			}
+			ScriptData = {
+			}
+			Type = "units/fog/black_fog_plane_01"
 		}
 	]
 	Volumes = [
@@ -52929,6 +55181,7 @@ object_sets = {
 		"9eb915f4-dda2-5557-a98d-cfb1380d0624"
 		"9f152f08-e4ad-5509-bc21-87e87bcb6cc9"
 		"a073cdf1-5364-5237-a43f-e32ddacd1946"
+		"a14e2b23-b519-4b86-9477-9edc44a8db31"
 		"a172806d-d8c4-56e2-a02c-72fd2d0d2c43"
 		"a2671dd1-61a8-55a2-8c9b-8b14c186bf6d"
 		"a3387539-4a46-5a98-a611-563416848a8b"
@@ -52964,6 +55217,7 @@ object_sets = {
 		"dcbdc088-ca30-50f9-a746-d2ae8edadf80"
 		"df5728eb-bbde-5532-a436-7249ed13b67a"
 		"e0e92a33-3645-5aad-a66e-57b1807fb002"
+		"e2c68502-ea44-4922-b6e7-1868be3c94d5"
 		"e4b6b7f5-e71a-5fab-91de-805c592cbe89"
 		"e4de4c6b-914a-560e-8287-cf12148706df"
 		"e69b7262-e367-51c3-8aa3-e536ff3dc9b5"
@@ -53348,6 +55602,27 @@ particle_effects = [
 			1
 		]
 		spawn = true
+	}
+	{
+		effect = "fx/environment_rain_01"
+		id = "a3155018-d0ae-4d73-a469-6c15780f2f68"
+		pos = [
+			-9.57
+			-12.770007
+			2.105
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		spawn = false
 	}
 ]
 prototypes = [
@@ -76902,7 +79177,7 @@ units = [
 		]
 		scl = [
 			1
-			1
+			1.065317
 			1
 		]
 		type = "units/architecture/inn/modular_assets/inn_wall_wood_pillar_01"
@@ -76921,7 +79196,7 @@ units = [
 		name = "inn_wall_wood_4x4m_01_36"
 		pos = [
 			8.56124
-			10.1301
+			10.1001
 			0.301304
 		]
 		rot = [
@@ -77611,7 +79886,7 @@ units = [
 		name = "inn_wall_stone_4x4m_01_vt1_852"
 		pos = [
 			4.76277
-			7.71827
+			5.718258
 			-0.068353
 		]
 		rot = [
@@ -77700,8 +79975,8 @@ units = [
 		}
 		name = "generic_wood_beam_4m_01_92"
 		pos = [
-			7.91226
-			8.10662
+			8.452268
+			10.376633
 			-0.063297
 		]
 		rot = [
@@ -77731,7 +80006,7 @@ units = [
 		name = "inn_wall_stone_4x4m_01_16"
 		pos = [
 			4.97081
-			11.4172
+			13.657208
 			3.31641
 		]
 		rot = [
@@ -87800,36 +90075,6 @@ units = [
 		}
 		data = {
 		}
-		id = "eef1e4ab-e308-5a9d-ad7c-9c1fdfdf2faa"
-		lights = {
-		}
-		material = ""
-		materials = {
-		}
-		name = "generic_rubble_planks_wall_01_1"
-		pos = [
-			7.98189
-			9.25174
-			0.309
-		]
-		rot = [
-			0
-			0
-			0
-			-1
-		]
-		scl = [
-			1
-			1
-			1
-		]
-		type = "units/generic/generic_rubble_planks_wall_01"
-	}
-	{
-		cameras = {
-		}
-		data = {
-		}
 		id = "a1166e38-c2ec-552a-9ddf-cc346dc5eda9"
 		lights = {
 		}
@@ -91868,18 +94113,551 @@ units = [
 		cameras = {
 		}
 		data = {
+			"LevelEditor.is_gizmo_unit" = true
 		}
-		id = "e3a9fcf9-e989-4722-9b1d-df3dea314004"
+		id = "9bb0174b-e8aa-47a9-891a-66608b922841"
+		lights = {
+			omni = {
+				box_max = [
+					10
+					10
+					10
+				]
+				box_min = [
+					-10
+					0
+					-10
+				]
+				cast_shadows = false
+				color = [
+					1
+					0.666666666666667
+					0.474509803921569
+				]
+				falloff_end = 1
+				falloff_exponent = 0
+				falloff_start = 0
+				intensity = 0.05
+				material = ""
+				spot_angle_end = 2.44346095279206
+				spot_angle_start = 0
+				type = "omni"
+				volumetric_intensity = 0
+			}
+		}
+		material = ""
+		materials = {
+		}
+		name = "light_001"
+		pos = [
+			6.695197
+			4.29348
+			2.455658
+		]
+		rot = [
+			0.018288
+			-0.01829
+			0.70687
+			-0.70687
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/lights/light"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			"LevelEditor.is_gizmo_unit" = true
+		}
+		id = "0917bb43-01ca-45cb-b321-f1e4d62d3eeb"
+		lights = {
+			omni = {
+				box_max = [
+					10
+					10
+					10
+				]
+				box_min = [
+					-10
+					0
+					-10
+				]
+				cast_shadows = true
+				color = [
+					0.984313725490196
+					0.466666666666667
+					0.172549019607843
+				]
+				falloff_end = 3
+				falloff_exponent = 0
+				falloff_start = 0
+				intensity = 0.15
+				material = ""
+				spot_angle_end = 2.44346095279206
+				spot_angle_start = 0
+				type = "omni"
+				volumetric_intensity = 0
+			}
+		}
+		material = ""
+		materials = {
+		}
+		name = "light_006"
+		pos = [
+			7.975284
+			4.35661
+			2.45484
+		]
+		rot = [
+			-1E-06
+			-1E-06
+			0.707107
+			-0.707107
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/lights/light"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "91fc07e2-0531-415b-86a0-bc8f52b967f8"
 		lights = {
 		}
 		material = ""
 		materials = {
 		}
-		name = "interactable_generic_02"
+		name = "prop_candle_01_vt1_001"
 		pos = [
-			3.62
-			8.690005
-			-4.789
+			0.206508
+			1.28916
+			1.75762
+		]
+		rot = [
+			0
+			0
+			0.994601
+			-0.103772
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/candles/prop_candle_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "91ac97f3-3eeb-4c6b-84e5-9c113c373a76"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_candle_01_vt1_002"
+		pos = [
+			13.986757
+			-1.528064
+			1.331
+		]
+		rot = [
+			0
+			0
+			0.692817
+			-0.721113
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/candles/prop_candle_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "61805ec1-bafc-4bad-a4e1-12b9416fbbf7"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_candle_01_vt1_004"
+		pos = [
+			13.52122
+			-3.64839
+			1.331
+		]
+		rot = [
+			0
+			0
+			0.973582
+			-0.228336
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/candles/prop_candle_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "fc83d66e-377c-4b10-9357-febcb7325daf"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_hanging_skulls_02_005"
+		pos = [
+			7.938853
+			9.50009
+			3.183691
+		]
+		rot = [
+			0
+			0
+			0.999538
+			-0.030407
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/skulls/prop_hanging_skulls_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "884e2769-f3c7-49cc-aed7-6c9f57fea02e"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "keep_vom_magic_forge"
+		pos = [
+			9.941752
+			9.603432
+			0.061892
+		]
+		rot = [
+			0
+			0
+			-0.72828
+			-0.68528
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/wom/keep_vom_magic_forge"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "d2f80b68-fba4-4c5b-8052-55025c1b9fb9"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "helmgart_prop_table_02_006"
+		pos = [
+			5.700139
+			7.844275
+			-0.173107
+		]
+		rot = [
+			0
+			0
+			-0.748346
+			-0.663309
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/helmgart_props/helmgart_prop_table_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "a64554b1-20a1-454e-aafc-fac755aa371d"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_wizard_paper_08_009"
+		pos = [
+			5.987263
+			8.029725
+			0.319092
+		]
+		rot = [
+			0
+			0
+			-0.455539
+			-0.890216
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/brushes/wizard/brush_wizard_paper_08"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "6f85e7ed-9a46-4d7b-b47e-123313b1dfa2"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_library_book_017"
+		pos = [
+			5.63979
+			7.495437
+			0.384093
+		]
+		rot = [
+			0.700965
+			0.092995
+			0.700965
+			-0.092995
+		]
+		scl = [
+			0.752267
+			0.752267
+			0.752267
+		]
+		type = "units/props/library/prop_library_book_05"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "e63385b4-75fe-4b02-93c6-bfabe3be681a"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "chaos_prop_wooden_crate_04"
+		pos = [
+			5.580807
+			7.621411
+			0.478892
+		]
+		rot = [
+			0.408019
+			0.577512
+			0.577512
+			0.408019
+		]
+		scl = [
+			0.651215
+			0.651215
+			0.651215
+		]
+		type = "units/props/generic/chaos_prop_wooden_crate_04"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "955cf12d-5e75-4d67-9db6-6b9649cf0c95"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_library_book_018"
+		pos = [
+			5.624047
+			7.804446
+			0.341792
+		]
+		rot = [
+			0.1611
+			-0.113819
+			-0.800679
+			-0.56569
+		]
+		scl = [
+			0.515902
+			0.515902
+			0.515902
+		]
+		type = "units/props/library/prop_library_book_08"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "170c07db-f70b-4e88-a8bb-381eb03505fa"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_library_book_09_005"
+		pos = [
+			5.681424
+			8.330573
+			0.767892
+		]
+		rot = [
+			0
+			0
+			0.929602
+			0.368564
+		]
+		scl = [
+			0.758777
+			0.758777
+			0.758777
+		]
+		type = "units/props/library/prop_library_book_09"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "e7d5296c-fad0-49bb-8e0d-ae0fb1089822"
+		lights = {
+			light2 = {
+				box_max = [
+					10
+					10
+					10
+				]
+				box_min = [
+					-10
+					0
+					-10
+				]
+				cast_shadows = false
+				color = [
+					1
+					0.462745098039216
+					0.172549019607843
+				]
+				falloff_end = 3
+				falloff_exponent = 2
+				falloff_start = 0
+				intensity = 0.25
+				material = ""
+				spot_angle_end = 0.785398163397448
+				spot_angle_start = 0
+				type = "omni"
+				volumetric_intensity = 1
+			}
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_candles_013"
+		pos = [
+			5.715542
+			7.810355
+			0.737593
+		]
+		rot = [
+			0
+			0
+			-0.519284
+			-0.854602
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/merchant/prop_candles_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "1ef31547-2a7d-4c59-8eba-81af1563a189"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "brush_wizard_paper_07_006"
+		pos = [
+			5.731343
+			7.379224
+			0.763892
+		]
+		rot = [
+			0
+			0
+			-0.354922
+			-0.934896
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/brushes/wizard/brush_wizard_paper_07"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "251703f2-ff7c-4509-92ba-9335d0d8b5b0"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "keep_vom_leaderboard"
+		pos = [
+			5.250748
+			7.592872
+			0.270592
 		]
 		rot = [
 			0
@@ -91892,7 +94670,1159 @@ units = [
 			1
 			1
 		]
-		type = "units/gamemode/interactable_generic_02"
+		type = "units/props/inn/wom/keep_vom_leaderboard"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "10fa212f-3eab-4b90-862f-acbc0bfae52c"
+		lights = {
+			light2 = {
+				box_max = [
+					10
+					10
+					10
+				]
+				box_min = [
+					-10
+					0
+					-10
+				]
+				cast_shadows = false
+				color = [
+					1
+					0.462745098039216
+					0.172549019607843
+				]
+				falloff_end = 3
+				falloff_exponent = 2
+				falloff_start = 0
+				intensity = 0.25
+				material = ""
+				spot_angle_end = 0.785398163397448
+				spot_angle_start = 0
+				type = "omni"
+				volumetric_intensity = 1
+			}
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_candles_02"
+		pos = [
+			8.057487
+			6.493444
+			1.39035
+		]
+		rot = [
+			0
+			0
+			1
+			-0.000331
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/merchant/prop_candles_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "63033388-32a2-4a8a-88b6-dbb2873c230b"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "wizard_prop_scroll_04"
+		pos = [
+			7.970055
+			6.900609
+			1.42255
+		]
+		rot = [
+			-0.020471
+			0.167515
+			-0.528545
+			-0.831961
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/wizard/wizard_prop_scroll_04"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "c810cb3c-9024-4622-9bef-3d0e4150cd01"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "wizard_prop_scroll_01"
+		pos = [
+			7.973092
+			6.879083
+			1.387149
+		]
+		rot = [
+			0
+			1E-06
+			0.891111
+			0.453786
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/wizard/wizard_prop_scroll_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "c64d2b19-a843-4eb6-af52-3071c0bd3c7a"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_015"
+		pos = [
+			7.803101
+			6.45807
+			1.356248
+		]
+		rot = [
+			0
+			0
+			0.562387
+			-0.826874
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_08"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "293923c3-5a67-4944-88d1-4f917a662f74"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_013"
+		pos = [
+			6.496167
+			6.55792
+			1.356248
+		]
+		rot = [
+			0
+			1E-06
+			0.808072
+			-0.589083
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_07"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "aa4f4f05-2ca4-4ce9-bdfb-92f4e1e9529a"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_011"
+		pos = [
+			6.639191
+			6.512048
+			1.356248
+		]
+		rot = [
+			0
+			1E-06
+			0.808072
+			-0.589083
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_05"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "494f3128-8686-4f4b-965f-cff129ae8158"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_012"
+		pos = [
+			6.454562
+			6.43662
+			1.356248
+		]
+		rot = [
+			0
+			0
+			0.562387
+			-0.826874
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_04"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "9074679c-2e4c-4d9c-8f8e-7b569483fc15"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "props_generic_bottle_08"
+		pos = [
+			6.299363
+			6.372945
+			1.356248
+		]
+		rot = [
+			0
+			0
+			0.562387
+			-0.826874
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/props_generic_bottle_08"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "13bae5a2-6fec-4985-aa13-38918f014e88"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_util_skull_01_027"
+		pos = [
+			6.326787
+			6.88133
+			1.492849
+		]
+		rot = [
+			0.047983
+			-0.025677
+			0.973324
+			0.222886
+		]
+		scl = [
+			0.847695
+			0.847695
+			0.847695
+		]
+		type = "units/props/skulls/prop_util_skull_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "adc81337-f47b-43d8-ab39-240897fd00b7"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_library_book_016"
+		pos = [
+			6.343365
+			7.073926
+			1.45305
+		]
+		rot = [
+			-0.415332
+			0.564807
+			-0.388255
+			-0.598123
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/library/prop_library_book_06"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "2dbbb7b5-0c12-4a76-885f-b167c931db55"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "keep_dagger_002"
+		pos = [
+			6.756093
+			6.848341
+			1.38895
+		]
+		rot = [
+			-0.192698
+			0.664359
+			0.692626
+			-0.204361
+		]
+		scl = [
+			0.814258
+			0.814258
+			0.814258
+		]
+		type = "units/props/inn/keep_dagger_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "0c1d5fb2-cf33-422c-a4f2-30a5f484c567"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_util_skull_01_034"
+		pos = [
+			7.017663
+			6.653589
+			0.604749
+		]
+		rot = [
+			0.046317
+			-0.027951
+			0.97473
+			0.216736
+		]
+		scl = [
+			0.847695
+			0.847695
+			0.847695
+		]
+		type = "units/props/skulls/prop_util_skull_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "39f8dd52-473b-4448-a18a-72a9e71ca0d4"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_util_skull_01_035"
+		pos = [
+			6.925274
+			6.752954
+			0.501049
+		]
+		rot = [
+			0
+			0
+			0.980332
+			0.197355
+		]
+		scl = [
+			0.847695
+			0.847695
+			0.847695
+		]
+		type = "units/props/skulls/prop_util_skull_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "6b48f2fd-7f13-4021-9b35-cedfb7120485"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_util_skull_01_033"
+		pos = [
+			7.223851
+			6.669618
+			0.54895
+		]
+		rot = [
+			-0.638843
+			-0.247622
+			0.728105
+			0.020635
+		]
+		scl = [
+			0.847695
+			0.847695
+			0.847695
+		]
+		type = "units/props/skulls/prop_util_skull_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "35504e58-48e8-4391-92e1-031181ead49c"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_util_skull_01_032"
+		pos = [
+			7.399533
+			6.74925
+			0.501049
+		]
+		rot = [
+			0
+			0
+			0.97936
+			-0.202122
+		]
+		scl = [
+			0.847695
+			0.847695
+			0.847695
+		]
+		type = "units/props/skulls/prop_util_skull_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "28d06e67-deee-4a12-b24b-d0bb32a8e902"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "trophy_duellist_seal_002"
+		pos = [
+			6.286347
+			7.219671
+			1.345449
+		]
+		rot = [
+			0
+			0
+			0.016348
+			-0.999866
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/beings/player/generic_trophies/trophy_duellist_seal_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "4944faeb-361e-49e4-b8be-7b39b0639e98"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "trophy_duellist_seal_01"
+		pos = [
+			6.187054
+			7.223146
+			1.327049
+		]
+		rot = [
+			0
+			0
+			0.016348
+			-0.999866
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/beings/player/generic_trophies/trophy_duellist_seal_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "c11d6bdb-c713-4b5e-b13d-043e8d040a50"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_util_skull_01_028"
+		pos = [
+			6.341439
+			6.211172
+			2.528249
+		]
+		rot = [
+			-0.155114
+			0.171647
+			0.721806
+			-0.652283
+		]
+		scl = [
+			0.847695
+			0.847695
+			0.847695
+		]
+		type = "units/props/skulls/prop_util_skull_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "0473e6f5-8bb7-4859-8cc1-a4a07ba5f7ec"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "prop_util_skull_01_031"
+		pos = [
+			8.02906
+			6.214174
+			2.52075
+		]
+		rot = [
+			-0.068806
+			-0.003517
+			-0.72293
+			-0.687478
+		]
+		scl = [
+			0.847695
+			0.847695
+			0.847695
+		]
+		type = "units/props/skulls/prop_util_skull_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			"interaction_data.interaction_type" = "weave_level_select_access"
+		}
+		id = "9ea3c1c5-9bcf-4c6c-9df2-6118ec22702e"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "keep_vom_level_select"
+		pos = [
+			7.177788
+			6.632192
+			0.422948
+		]
+		rot = [
+			0
+			0
+			-0.707107
+			-0.707107
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/inn/wom/keep_vom_level_select"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "e0c5cdf4-f946-4659-be85-b29ef3efb460"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_floor_wood_4x4m_01_001"
+		pos = [
+			5.2618
+			7.795986
+			0.308652
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_floor_wood_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "a93c4e09-858f-4618-99c9-24e45875f7ba"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_wall_wood_4x4m_01_001"
+		pos = [
+			5.171239
+			8.780102
+			0.301304
+		]
+		rot = [
+			0
+			0
+			0.707107
+			-0.707107
+		]
+		scl = [
+			0.681586
+			1
+			0.77066
+		]
+		type = "units/architecture/inn/modular_assets/inn_wall_wood_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "921cf5b5-e97b-4ea6-869b-7c4253599c44"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_wall_stone_4x4m_01_001"
+		pos = [
+			4.97081
+			9.657209
+			3.31641
+		]
+		rot = [
+			-0.707107
+			0
+			0
+			-0.707107
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_wall_stone_4x4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "66758a52-fad8-45ab-a30a-8eff732997e0"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "inn_stone_pillar_02_007"
+		pos = [
+			8.719805
+			11.800012
+			0.301304
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/inn/modular_assets/inn_stone_pillar_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "fb833cf6-3b51-45e5-855a-e416f29a0834"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_4m_01_001"
+		pos = [
+			4.830096
+			8.84546
+			-0.063297
+		]
+		rot = [
+			0.707107
+			0
+			0
+			-0.707107
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "713c8b04-a6c1-40fb-95db-f2ca43e1d99c"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_4m_03_006"
+		pos = [
+			8.63
+			6.420003
+			3.470999
+		]
+		rot = [
+			0
+			0
+			1
+			0
+		]
+		scl = [
+			1.26293
+			0.958938
+			1.26293
+		]
+		type = "units/architecture/wizard/wizard_wood_beam_4m_03"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "73a4d531-b761-4756-a03f-5de935bc88dd"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_4m_01_002"
+		pos = [
+			8.462268
+			6.32662
+			-0.063297
+		]
+		rot = [
+			0.707107
+			0
+			0
+			-0.707107
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "6c1f968e-6ba5-46fc-aba7-61da844db595"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_wood_beam_4m_01_003"
+		pos = [
+			4.522265
+			6.326612
+			3.346705
+		]
+		rot = [
+			-0.5
+			0.5
+			0.500001
+			0.5
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/architecture/wizard/wizard_wood_beam_4m_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "e2c68502-ea44-4922-b6e7-1868be3c94d5"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_crate_02_002"
+		pos = [
+			8.08924
+			7.813413
+			0.812
+		]
+		rot = [
+			0
+			0
+			-0.558378
+			-0.829586
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_crate_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "a14e2b23-b519-4b86-9477-9edc44a8db31"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_crate_02_002"
+		pos = [
+			8.03
+			7.87
+			0.309
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_crate_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "16ee34de-6248-4805-a121-eee6b4b662ba"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "spawner_floor_town_chimney_01"
+		pos = [
+			7.549982
+			9.510005
+			3.255999
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/spawners/spawner_floor_town_chimney_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "91ef8f4d-0cd4-4d23-9ba8-65f6cdc1b0fc"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "spawner_floor_town_chimney_01_001"
+		pos = [
+			7.769985
+			9.550006
+			-3.133997
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1.12446
+			1.12446
+			1
+		]
+		type = "units/spawners/spawner_floor_town_chimney_01"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "87ad7046-d47b-459d-98a5-f53499e168de"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_prop_wood_bench_02_005"
+		pos = [
+			5.344891
+			6.179402
+			1.110065
+		]
+		rot = [
+			0.504083
+			0.324999
+			0.680612
+			-0.420764
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/props/generic/generic_prop_wood_bench_02"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			icon = "hud_weaves_icon_mission"
+			network_synced = false
+			objective_id = "waystone_weave"
+			tutorial_text_id = "objective_keep_waystone_weave"
+		}
+		id = "08cba845-559a-4086-b2d4-f11a65dc16e9"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "objective_unit_waystone_weave"
+		pos = [
+			-8.27436
+			-10.475342
+			1.013999
+		]
+		rot = [
+			0
+			0
+			-0.814309
+			-0.580431
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/hub_elements/objective_unit"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			always_activated = true
+			disable_check_joining_players = false
+			disable_complete_level = true
+			game_start_time = 4
+		}
+		id = "bc110fbf-2042-489b-b952-cd67b1cf47b7"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "end_zone_03_inn"
+		pos = [
+			-9.63731
+			-10.464603
+			0.963
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			0.990584
+			0.990584
+			0.990584
+		]
+		type = "units/gameplay/end_zone/end_zone_03_inn"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			"FogProperties.albedo[0]" = 1.2
+			"FogProperties.albedo[1]" = 1
+			"FogProperties.albedo[2]" = 1
+			"FogProperties.falloff[0]" = 0.1
+			"FogProperties.falloff[1]" = 0.1
+			"FogProperties.falloff[2]" = 0.1
+		}
+		id = "6ff937c6-6c53-49fb-9e2d-fc6c2280ce7e"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "fog_volume_1"
+		pos = [
+			-7.65
+			-8.929999
+			1.475999
+		]
+		rot = [
+			0
+			0
+			0.928986
+			0.370115
+		]
+		scl = [
+			1
+			1.6867
+			1.95278
+		]
+		type = "core/volumetrics/units/fog_volume"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "958d1c84-afe2-49a0-a7a0-5a570dc96a07"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "black_fog_plane_01"
+		pos = [
+			7.67
+			9.479999
+			2.965999
+		]
+		rot = [
+			-0.707107
+			0
+			0
+			-0.707107
+		]
+		scl = [
+			0.583225
+			1
+			0.583225
+		]
+		type = "units/fog/black_fog_plane_01"
 	}
 	{
 		cameras = {
