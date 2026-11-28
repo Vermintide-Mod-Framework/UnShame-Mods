@@ -1345,16 +1345,16 @@ editor_metadata = {
 			}
 			OrthographicZoom = 10
 			Pos = {
-				X = -2.346508
-				Y = 0.746472
-				Z = 5.506646
+				X = 2.287042
+				Y = 0.930569
+				Z = 1.873896
 			}
 			ProjectionType = 1
 			Rot = {
-				W = -0.589311
-				X = 0.077517
-				Y = -0.104884
-				Z = 0.79731
+				W = -0.666445
+				X = 0.00819
+				Y = -0.009167
+				Z = 0.745453
 			}
 			RotationSpeed = 0.003
 			TranslationSpeed = 0.1973
