@@ -1345,16 +1345,16 @@ editor_metadata = {
 			}
 			OrthographicZoom = 10
 			Pos = {
-				X = 2.287042
-				Y = 0.930569
-				Z = 1.873896
+				X = -4.237769
+				Y = -0.354563
+				Z = 3.33985
 			}
 			ProjectionType = 1
 			Rot = {
-				W = -0.666445
-				X = 0.00819
-				Y = -0.009167
-				Z = 0.745453
+				W = -0.846484
+				X = -0.023886
+				Y = 0.014997
+				Z = 0.531666
 			}
 			RotationSpeed = 0.003
 			TranslationSpeed = 0.1973
@@ -14143,7 +14143,7 @@ editor_metadata = {
 			}
 			Pos = {
 				X = -1.82269
-				Y = 5.00719
+				Y = 4.947189
 				Z = 7.34534
 			}
 			Rot = {
@@ -14223,7 +14223,7 @@ editor_metadata = {
 			}
 			Pos = {
 				X = 1.23412
-				Y = 5.00719
+				Y = 4.947189
 				Z = 7.61012
 			}
 			Rot = {
@@ -64215,7 +64215,7 @@ units = [
 		name = "generic_wood_beam_truss_01_11"
 		pos = [
 			-1.82269
-			5.00719
+			4.947189
 			7.34534
 		]
 		rot = [
@@ -64275,7 +64275,7 @@ units = [
 		name = "generic_wood_beam_truss_01_13"
 		pos = [
 			1.23412
-			5.00719
+			4.947189
 			7.61012
 		]
 		rot = [
