@@ -106,6 +106,9 @@ EFFECT_REPLACEMENTS = {
 # its position in the inn piece's own space, its scale along its own axes, and how far it is turned about z, in degrees. The inn pieces of both games have their origin at a corner: x along
 # the piece, y through it and z up. The sizes are from Vermintide 1's compiled meshes and Vermintide 2's .bsi files.
 STAND_INS = {
+    # The inn's Red Moon sign, half burnt, with sparks and a small fire. Vermintide 2 only has it whole: the round sign
+    # that Horn of Magnus hangs over the inn's door. It has the same rig, so it goes where the burnt one is.
+    'c2f0983a0f402dfb': [('units/props/signs/sign_emp_round_02', [0, 0, 0], [1, 1, 1])],
     # A 4x4 m stone floor tile (0..4 along x, -4..0 along y). Vermintide 2's inn has a stone floor in its middle, 4.2 m wide.
     '6b9ad3bebc3d3260': [('units/architecture/inn/modular_assets/inn_mud_floor_4x4m_01', [2, -2, 0], [1, 1, 1])],
     # The same floor, 4 m along x and 2 m along y
