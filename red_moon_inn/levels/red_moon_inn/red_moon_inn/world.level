@@ -1373,8 +1373,12 @@ editor_metadata = {
 		HiddenLayers = [
 		]
 		HiddenObjects = [
+			"11833df7-b8ae-41b4-a2d5-f4ae6079eef5"
 		]
 		LastHiddenObjects = [
+			[
+				"11833df7-b8ae-41b4-a2d5-f4ae6079eef5"
+			]
 		]
 		ShadingEnvironment = "levels/red_moon_inn/environment/red_moon_inn"
 		SkydomeUnit = "units/skydome/skydome_hdr"
@@ -1388,7 +1392,7 @@ editor_metadata = {
 	Transients = {
 		Camera = {
 			FarRange = 1000
-			InterestPointDistance = 14.720136
+			InterestPointDistance = 13.530181
 			OrthographicPlane = {
 				W = 1
 				X = 0
@@ -1397,19 +1401,19 @@ editor_metadata = {
 			}
 			OrthographicZoom = 10
 			Pos = {
-				X = 7.021966
-				Y = 1.495196
-				Z = 2.320168
+				X = -4.370325
+				Y = -1.889564
+				Z = 3.266523
 			}
 			ProjectionType = 1
 			Rot = {
-				W = -0.226976
-				X = 0.013018
-				Y = -0.05577
-				Z = 0.972215
+				W = 0.205059
+				X = -0.01609
+				Y = -0.076553
+				Z = 0.975618
 			}
 			RotationSpeed = 0.003
-			TranslationSpeed = 0.29595
+			TranslationSpeed = 0.2959
 		}
 	}
 	Triggers = [
@@ -51903,15 +51907,15 @@ editor_metadata = {
 				Z = 0
 			}
 			Pos = {
-				X = 2
-				Y = 0
-				Z = 1.69
+				X = 3.35632
+				Y = 4.05773
+				Z = 4.29414
 			}
 			Rot = {
-				W = -1
+				W = -0.705349
 				X = 0
 				Y = 0
-				Z = 0
+				Z = -0.708861
 			}
 			Scl = {
 				X = 1
@@ -53525,6 +53529,8 @@ editor_metadata = {
 				"extensions[1]" = "GenericOutlineExtension"
 				"interaction_data.hud_description" = "interact_inventory"
 			}
+			StoryOverridePoses = {
+			}
 			Type = "units/gameplay/prop_inventory_chest"
 		}
 		{
@@ -53546,15 +53552,15 @@ editor_metadata = {
 				Z = 0
 			}
 			Pos = {
-				X = -21.6942
-				Y = 37.2863
-				Z = 10.639
+				X = 1.970001
+				Y = 4.000002
+				Z = 1.433999
 			}
 			Rot = {
-				W = -0.740142
+				W = -0.636734
 				X = 0
 				Y = 0
-				Z = -0.672451
+				Z = -0.771083
 			}
 			Scl = {
 				X = 1
@@ -53576,6 +53582,8 @@ editor_metadata = {
 				smoke_grenade_t1 = false
 				smoke_grenade_t2 = false
 				speed_boost_potion = false
+			}
+			StoryOverridePoses = {
 			}
 			Type = "units/hub_elements/pickup_spawner"
 		}
@@ -53616,7 +53624,173 @@ editor_metadata = {
 			ScriptData = {
 				umbra_no_occ = true
 			}
+			StoryOverridePoses = {
+			}
 			Type = "units/props/forge/forge_anvil_01_tier_03"
+		}
+		{
+			Cameras = {
+			}
+			Id = "28191d9e-27e5-4def-ae62-1011b7bb9d55"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "mission_unit_keep_enter_portal"
+			OverridePoses = {
+			}
+			Path = "units/hub_elements/mission_unit"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -10.467323
+				Y = -11.26462
+				Z = 4.63299
+			}
+			Rot = {
+				W = -0.928986
+				X = 0
+				Y = 0
+				Z = 0.370115
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/hub_elements/mission_unit"
+		}
+		{
+			Cameras = {
+			}
+			Id = "c836166d-98db-426d-b50c-402f6f597726"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "end_zone_01_inn"
+			OverridePoses = {
+			}
+			Path = "units/gameplay/end_zone/end_zone_01_inn"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -10.467323
+				Y = -11.26462
+				Z = 0.633
+			}
+			Rot = {
+				W = -0.928986
+				X = 0
+				Y = 0
+				Z = 0.370115
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				always_activated = true
+				disable_check_joining_players = false
+				disable_complete_level = true
+				game_start_time = 4
+				game_start_waystone = true
+			}
+			Type = "units/gameplay/end_zone/end_zone_01_inn"
+		}
+		{
+			Cameras = {
+			}
+			Id = "cb66e41c-ffa5-485c-8219-742a6bd7ef62"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "objective_unit_waystone"
+			OverridePoses = {
+			}
+			Path = "units/hub_elements/objective_unit"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -8.348766
+				Y = -10.523397
+				Z = 0.962
+			}
+			Rot = {
+				W = -0.928986
+				X = 0
+				Y = 0
+				Z = 0.370115
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				network_synced = false
+				objective_id = "waystone"
+				tutorial_text_id = "objective_keep_waystone"
+			}
+			Type = "units/hub_elements/objective_unit"
+		}
+		{
+			Cameras = {
+			}
+			Id = "11833df7-b8ae-41b4-a2d5-f4ae6079eef5"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "end_zone_02_inn"
+			OverridePoses = {
+			}
+			Path = "units/gameplay/end_zone/end_zone_02_inn"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = -10.467323
+				Y = -11.26462
+				Z = 0.633
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+				always_activated = true
+				disable_check_joining_players = false
+				disable_complete_level = true
+				game_start_time = 4
+			}
+			Type = "units/gameplay/end_zone/end_zone_02_inn"
 		}
 	]
 	Volumes = [
@@ -93400,15 +93574,15 @@ units = [
 		}
 		name = "path_marker"
 		pos = [
-			2
-			0
-			1.69
+			3.35632
+			4.05773
+			4.29414
 		]
 		rot = [
 			0
 			0
-			0
-			-1
+			-0.708861
+			-0.705349
 		]
 		scl = [
 			1
@@ -94648,15 +94822,15 @@ units = [
 		}
 		name = "pickup_spawner_4"
 		pos = [
-			-21.6942
-			37.2863
-			10.639
+			1.970001
+			4.000002
+			1.433999
 		]
 		rot = [
 			0
 			0
-			-0.672451
-			-0.740142
+			-0.771083
+			-0.636734
 		]
 		scl = [
 			1
@@ -94695,6 +94869,138 @@ units = [
 			1
 		]
 		type = "units/props/forge/forge_anvil_01_tier_03"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "28191d9e-27e5-4def-ae62-1011b7bb9d55"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "mission_unit_keep_enter_portal"
+		pos = [
+			-10.467323
+			-11.26462
+			4.63299
+		]
+		rot = [
+			0
+			0
+			0.370115
+			-0.928986
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/hub_elements/mission_unit"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			always_activated = true
+			disable_check_joining_players = false
+			disable_complete_level = true
+			game_start_time = 4
+			game_start_waystone = true
+		}
+		id = "c836166d-98db-426d-b50c-402f6f597726"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "end_zone_01_inn"
+		pos = [
+			-10.467323
+			-11.26462
+			0.633
+		]
+		rot = [
+			0
+			0
+			0.370115
+			-0.928986
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/gameplay/end_zone/end_zone_01_inn"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			network_synced = false
+			objective_id = "waystone"
+			tutorial_text_id = "objective_keep_waystone"
+		}
+		id = "cb66e41c-ffa5-485c-8219-742a6bd7ef62"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "objective_unit_waystone"
+		pos = [
+			-8.348766
+			-10.523397
+			0.962
+		]
+		rot = [
+			0
+			0
+			0.370115
+			-0.928986
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/hub_elements/objective_unit"
+	}
+	{
+		cameras = {
+		}
+		data = {
+			always_activated = true
+			disable_check_joining_players = false
+			disable_complete_level = true
+			game_start_time = 4
+		}
+		id = "11833df7-b8ae-41b4-a2d5-f4ae6079eef5"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "end_zone_02_inn"
+		pos = [
+			-10.467323
+			-11.26462
+			0.633
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/gameplay/end_zone/end_zone_02_inn"
 	}
 	{
 		cameras = {
