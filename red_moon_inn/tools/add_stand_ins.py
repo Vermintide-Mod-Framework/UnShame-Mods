@@ -4,9 +4,9 @@ import convert_level
 import sjson
 
 # Adds the stand-ins for the inn's missing pieces (STAND_INS in convert_level.py) to a level that has been worked on in the
-# editor, and changes nothing else in it. A stand-in has the id the conversion gives it, so one already in the level is
-# not added again, and one whose stand-in unit has changed in STAND_INS is replaced. Units of REPLACEMENTS are given their
-# replacement.
+# editor, and changes nothing else in it. The light units for lights Vermintide 2's units don't have count as stand-ins.
+# A stand-in has the id the conversion gives it, so one already in the level is not added again, and one whose stand-in
+# unit has changed in STAND_INS is replaced. Units of REPLACEMENTS are given their replacement.
 #
 # Usage:
 #   add_stand_ins.py <Vermintide 1 dir> <Content dir> <SDK dir> <vt1 strings file> <world.level> <out report>
