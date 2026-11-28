@@ -23,11 +23,9 @@ local KEEP_KEYS = {
 	"inn_level_sonnstill",
 }
 
--- The keep's packages the inn needs too. The others are the keep's level, its occlusion data (tome) and the event
--- decorations: the keep's occlusion data hides parts of the inn.
-local INN_PACKAGES = {
-	["resource_packages/levels/inn_dependencies"] = true,
-}
+-- The inn loads the keep's packages without the keep's occlusion data (tomes), which hides parts of the inn. The
+-- keep's level package is still needed: it also has the menus' preview levels, the keep's dialogue and the handbook.
+local TOME_PACKAGES = "^resource_packages/levels/tomes/"
 
 -- The key of the host's lobby data that says whether the host uses the inn
 local LOBBY_KEY = "red_moon_inn"
@@ -54,7 +52,7 @@ local function inn_packages(packages)
 	local kept = {}
 
 	for _, package in ipairs(packages) do
-		if INN_PACKAGES[package] then
+		if not package:find(TOME_PACKAGES) then
 			kept[#kept + 1] = package
 		end
 	end
