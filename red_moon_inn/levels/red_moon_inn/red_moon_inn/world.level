@@ -1347,7 +1347,7 @@ editor_metadata = {
 	Transients = {
 		Camera = {
 			FarRange = 1000
-			InterestPointDistance = 4.223773
+			InterestPointDistance = 4.956609
 			OrthographicPlane = {
 				W = 1
 				X = 0
@@ -1356,16 +1356,16 @@ editor_metadata = {
 			}
 			OrthographicZoom = 10
 			Pos = {
-				X = -5.557888
-				Y = -3.029717
-				Z = 2.273898
+				X = 4.788579
+				Y = 9.423924
+				Z = 1.662126
 			}
 			ProjectionType = 1
 			Rot = {
-				W = -0.957547
-				X = -0.021231
-				Y = 0.00638
-				Z = 0.287424
+				W = -0.963011
+				X = -0.051729
+				Y = 0.014194
+				Z = 0.26407
 			}
 			RotationSpeed = 0.003
 			TranslationSpeed = 0.197267
@@ -36393,7 +36393,7 @@ editor_metadata = {
 			Name = "generic_door_01_1"
 			OverridePoses = {
 			}
-			Path = "levels/red_moon_inn/units/generic_door_01_chaos_wastes"
+			Path = "units/architecture/generic/doors/generic_door_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -36419,7 +36419,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "levels/red_moon_inn/units/generic_door_01_chaos_wastes"
+			Type = "units/architecture/generic/doors/generic_door_01"
 		}
 		{
 			Cameras = {
@@ -42506,206 +42506,6 @@ editor_metadata = {
 		{
 			Cameras = {
 			}
-			Id = "e5ad4e4f-cb6e-5413-a0c3-1e3dadb619d6"
-			Layer = "Default"
-			Lights = {
-			}
-			MaterialSlots = {
-			}
-			Name = "docks_wood_scaffold_plank_01_vt1_1072"
-			OverridePoses = {
-			}
-			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
-			Pivot = {
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Pos = {
-				X = 3.5913
-				Y = 8.84923
-				Z = -3.74907
-			}
-			Rot = {
-				W = 0.430459
-				X = -0.430459
-				Y = 0.560986
-				Z = 0.560986
-			}
-			Scl = {
-				X = 0.54938
-				Y = 0.54938
-				Z = 0.54938
-			}
-			ScriptData = {
-			}
-			StoryOverridePoses = {
-			}
-			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
-		}
-		{
-			Cameras = {
-			}
-			Id = "91cc731b-a4cc-502b-b38c-a618b7e98962"
-			Layer = "Default"
-			Lights = {
-			}
-			MaterialSlots = {
-			}
-			Name = "docks_wood_scaffold_plank_01_29"
-			OverridePoses = {
-			}
-			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
-			Pivot = {
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Pos = {
-				X = 3.55381
-				Y = 8.81201
-				Z = -2.4205
-			}
-			Rot = {
-				W = 0.486989
-				X = 0.486989
-				Y = -0.512681
-				Z = 0.512681
-			}
-			Scl = {
-				X = 0.54938
-				Y = 0.54938
-				Z = 0.54938
-			}
-			ScriptData = {
-			}
-			StoryOverridePoses = {
-			}
-			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
-		}
-		{
-			Cameras = {
-			}
-			Id = "b41c0bf1-97ac-5afd-87f8-15d3a1259769"
-			Layer = "Default"
-			Lights = {
-			}
-			MaterialSlots = {
-			}
-			Name = "docks_wood_scaffold_plank_01_vt1_1074"
-			OverridePoses = {
-			}
-			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
-			Pivot = {
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Pos = {
-				X = 3.65447
-				Y = 8.81201
-				Z = -4.37746
-			}
-			Rot = {
-				W = -0.525693
-				X = -0.525692
-				Y = 0.472913
-				Z = -0.472914
-			}
-			Scl = {
-				X = 0.54938
-				Y = 0.54938
-				Z = 0.54938
-			}
-			ScriptData = {
-			}
-			StoryOverridePoses = {
-			}
-			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
-		}
-		{
-			Cameras = {
-			}
-			Id = "9bf996c5-8f1b-5b56-ba50-68272919f6e7"
-			Layer = "Default"
-			Lights = {
-			}
-			MaterialSlots = {
-			}
-			Name = "docks_wood_scaffold_plank_01_vt1_1075"
-			OverridePoses = {
-			}
-			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
-			Pivot = {
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Pos = {
-				X = 3.7092
-				Y = 8.82648
-				Z = -3.52708
-			}
-			Rot = {
-				W = 0.419921
-				X = 0.41992
-				Y = -0.568917
-				Z = 0.568917
-			}
-			Scl = {
-				X = 0.54938
-				Y = 0.54938
-				Z = 0.54938
-			}
-			ScriptData = {
-			}
-			StoryOverridePoses = {
-			}
-			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
-		}
-		{
-			Cameras = {
-			}
-			Id = "fb1b51cc-725b-5afc-b86e-4be076609f82"
-			Layer = "Default"
-			Lights = {
-			}
-			MaterialSlots = {
-			}
-			Name = "docks_wood_scaffold_plank_01_32"
-			OverridePoses = {
-			}
-			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
-			Pivot = {
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Pos = {
-				X = 3.63368
-				Y = 8.82783
-				Z = -2.77629
-			}
-			Rot = {
-				W = -0.534422
-				X = 0.534422
-				Y = -0.463026
-				Z = -0.463026
-			}
-			Scl = {
-				X = 0.54938
-				Y = 0.54938
-				Z = 0.54938
-			}
-			ScriptData = {
-			}
-			StoryOverridePoses = {
-			}
-			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
-		}
-		{
-			Cameras = {
-			}
 			Id = "39836d20-8c18-57a7-acf7-24dc7b27ba11"
 			Layer = "Default"
 			Lights = {
@@ -42742,46 +42542,6 @@ editor_metadata = {
 			StoryOverridePoses = {
 			}
 			Type = "units/props/generic/generic_prop_beer_keg_02"
-		}
-		{
-			Cameras = {
-			}
-			Id = "84c78ef3-ba87-5143-b78f-b716961fcf14"
-			Layer = "Default"
-			Lights = {
-			}
-			MaterialSlots = {
-			}
-			Name = "docks_wood_scaffold_plank_01_vt1_1078"
-			OverridePoses = {
-			}
-			Path = "units/architecture/docks/docks_wood_scaffold_plank_01"
-			Pivot = {
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Pos = {
-				X = 3.64439
-				Y = 9.36171
-				Z = -4.13787
-			}
-			Rot = {
-				W = -0.812474
-				X = 0.582997
-				Y = 0
-				Z = 0
-			}
-			Scl = {
-				X = 0.83616
-				Y = 0.83616
-				Z = 0.83616
-			}
-			ScriptData = {
-			}
-			StoryOverridePoses = {
-			}
-			Type = "units/architecture/docks/docks_wood_scaffold_plank_01"
 		}
 		{
 			Cameras = {
@@ -52194,6 +51954,82 @@ editor_metadata = {
 				"interaction_data.hud_description" = "active_event_interaction"
 			}
 			Type = "units/gameplay/keep_event_interaction"
+		}
+		{
+			Cameras = {
+			}
+			Id = "99f926d7-9074-4c28-9caa-42db6ed559c9"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "generic_ladder_6m"
+			OverridePoses = {
+			}
+			Path = "units/ladders/generic_ladder_6m"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 4.847028
+				Y = 10.033859
+				Z = -5.201005
+			}
+			Rot = {
+				W = -0.70683
+				X = 0
+				Y = 0
+				Z = 0.707384
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/ladders/generic_ladder_6m"
+		}
+		{
+			Cameras = {
+			}
+			Id = "e3a9fcf9-e989-4722-9b1d-df3dea314004"
+			Layer = "Default"
+			Lights = {
+			}
+			MaterialSlots = {
+			}
+			Name = "interactable_generic_02"
+			OverridePoses = {
+			}
+			Path = "units/gamemode/interactable_generic_02"
+			Pivot = {
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Pos = {
+				X = 3.62
+				Y = 8.690005
+				Z = -4.789
+			}
+			Rot = {
+				W = -1
+				X = 0
+				Y = 0
+				Z = 0
+			}
+			Scl = {
+				X = 1
+				Y = 1
+				Z = 1
+			}
+			ScriptData = {
+			}
+			Type = "units/gamemode/interactable_generic_02"
 		}
 	]
 	Volumes = [
@@ -79826,7 +79662,7 @@ units = [
 			1.04745
 			1.04745
 		]
-		type = "levels/red_moon_inn/units/generic_door_01_chaos_wastes"
+		type = "units/architecture/generic/doors/generic_door_01"
 	}
 	{
 		cameras = {
@@ -84509,156 +84345,6 @@ units = [
 		}
 		data = {
 		}
-		id = "e5ad4e4f-cb6e-5413-a0c3-1e3dadb619d6"
-		lights = {
-		}
-		material = ""
-		materials = {
-		}
-		name = "docks_wood_scaffold_plank_01_vt1_1072"
-		pos = [
-			3.5913
-			8.84923
-			-3.74907
-		]
-		rot = [
-			-0.430459
-			0.560986
-			0.560986
-			0.430459
-		]
-		scl = [
-			0.54938
-			0.54938
-			0.54938
-		]
-		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
-	}
-	{
-		cameras = {
-		}
-		data = {
-		}
-		id = "91cc731b-a4cc-502b-b38c-a618b7e98962"
-		lights = {
-		}
-		material = ""
-		materials = {
-		}
-		name = "docks_wood_scaffold_plank_01_29"
-		pos = [
-			3.55381
-			8.81201
-			-2.4205
-		]
-		rot = [
-			0.486989
-			-0.512681
-			0.512681
-			0.486989
-		]
-		scl = [
-			0.54938
-			0.54938
-			0.54938
-		]
-		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
-	}
-	{
-		cameras = {
-		}
-		data = {
-		}
-		id = "b41c0bf1-97ac-5afd-87f8-15d3a1259769"
-		lights = {
-		}
-		material = ""
-		materials = {
-		}
-		name = "docks_wood_scaffold_plank_01_vt1_1074"
-		pos = [
-			3.65447
-			8.81201
-			-4.37746
-		]
-		rot = [
-			-0.525692
-			0.472913
-			-0.472914
-			-0.525693
-		]
-		scl = [
-			0.54938
-			0.54938
-			0.54938
-		]
-		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
-	}
-	{
-		cameras = {
-		}
-		data = {
-		}
-		id = "9bf996c5-8f1b-5b56-ba50-68272919f6e7"
-		lights = {
-		}
-		material = ""
-		materials = {
-		}
-		name = "docks_wood_scaffold_plank_01_vt1_1075"
-		pos = [
-			3.7092
-			8.82648
-			-3.52708
-		]
-		rot = [
-			0.41992
-			-0.568917
-			0.568917
-			0.419921
-		]
-		scl = [
-			0.54938
-			0.54938
-			0.54938
-		]
-		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
-	}
-	{
-		cameras = {
-		}
-		data = {
-		}
-		id = "fb1b51cc-725b-5afc-b86e-4be076609f82"
-		lights = {
-		}
-		material = ""
-		materials = {
-		}
-		name = "docks_wood_scaffold_plank_01_32"
-		pos = [
-			3.63368
-			8.82783
-			-2.77629
-		]
-		rot = [
-			0.534422
-			-0.463026
-			-0.463026
-			-0.534422
-		]
-		scl = [
-			0.54938
-			0.54938
-			0.54938
-		]
-		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
-	}
-	{
-		cameras = {
-		}
-		data = {
-		}
 		id = "39836d20-8c18-57a7-acf7-24dc7b27ba11"
 		lights = {
 		}
@@ -84683,36 +84369,6 @@ units = [
 			1
 		]
 		type = "units/props/generic/generic_prop_beer_keg_02"
-	}
-	{
-		cameras = {
-		}
-		data = {
-		}
-		id = "84c78ef3-ba87-5143-b78f-b716961fcf14"
-		lights = {
-		}
-		material = ""
-		materials = {
-		}
-		name = "docks_wood_scaffold_plank_01_vt1_1078"
-		pos = [
-			3.64439
-			9.36171
-			-4.13787
-		]
-		rot = [
-			0.582997
-			0
-			0
-			-0.812474
-		]
-		scl = [
-			0.83616
-			0.83616
-			0.83616
-		]
-		type = "units/architecture/docks/docks_wood_scaffold_plank_01"
 	}
 	{
 		cameras = {
@@ -92177,6 +91833,66 @@ units = [
 			1
 		]
 		type = "units/gameplay/keep_event_interaction"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "99f926d7-9074-4c28-9caa-42db6ed559c9"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "generic_ladder_6m"
+		pos = [
+			4.847028
+			10.033859
+			-5.201005
+		]
+		rot = [
+			0
+			0
+			0.707384
+			-0.70683
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/ladders/generic_ladder_6m"
+	}
+	{
+		cameras = {
+		}
+		data = {
+		}
+		id = "e3a9fcf9-e989-4722-9b1d-df3dea314004"
+		lights = {
+		}
+		material = ""
+		materials = {
+		}
+		name = "interactable_generic_02"
+		pos = [
+			3.62
+			8.690005
+			-4.789
+		]
+		rot = [
+			0
+			0
+			0
+			-1
+		]
+		scl = [
+			1
+			1
+			1
+		]
+		type = "units/gamemode/interactable_generic_02"
 	}
 	{
 		cameras = {
