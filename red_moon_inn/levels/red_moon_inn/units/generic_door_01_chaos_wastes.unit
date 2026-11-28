@@ -1,0 +1,164 @@
+
+data = {
+	extensions = [
+		"GenericUnitInteractableExtension"
+		"GenericOutlineExtension"
+	]
+	interaction_data = {
+		enabled_on_start = true
+		hud_description = "deus_map_node_info_god_wastes"
+		hud_interaction_action = "interact_action_enter"
+		interaction_length = 1
+		interaction_type = "deus_door_transition"
+		only_once = false
+	}
+}
+editor_metadata = {
+	camera_settings = {
+		far_range = 1000
+		interest_point_distance = 4.33153
+		orthographic_plane = [
+			0
+			0
+			1
+			0
+		]
+		orthographic_zoom = 10
+		position = [
+			2.18425
+			2.13208
+			3.28001
+		]
+		projection_type = "perspective"
+		rotation = [
+			-0.104842
+			-0.220061
+			0.875548
+			0.417129
+		]
+		rotation_speed = 0.003
+		translation_speed = 0.05
+	}
+	flow_framing = {
+		scale = 1
+		x = 513
+		y = 425
+	}
+}
+lod = [
+	{
+		bounding_volume = "g_generic_door_01"
+		name = "lod"
+		orientation = "g_generic_door_01"
+		steps = [
+			{
+				renderables = [
+					"g_generic_door_01"
+					"gs_generic_door_01"
+				]
+				visible_height_range = [
+					1
+					0.3
+				]
+			}
+			{
+				renderables = [
+					"g_generic_door_01_LOD1"
+					"gs_generic_door_01"
+				]
+				visible_height_range = [
+					0.3
+					0.11
+				]
+			}
+			{
+				renderables = [
+					"g_generic_door_01_LOD2"
+				]
+				visible_height_range = [
+					0.11
+					0.03
+				]
+			}
+		]
+	}
+]
+materials = {
+	Wood = "units/materials/g/generic_wood_beams_01"
+	default_material = "units/materials/d/default_material"
+	default_shadow = "shaders/shadow"
+	generic_trim = "units/materials/m/metal_trim_steel"
+}
+mesh = "units/architecture/generic/doors/generic_door_01"
+renderables = {
+	c_generic_door_01 = {
+		always_keep = true
+		culling = "bounding_volume"
+		double_sided = false
+		generate_uv_unwrap = false
+		not_occluder = false
+		not_target = true
+		occluder = false
+		particle_mesh_spawning = false
+		shadow_caster = false
+		surface_queries = false
+		umbra_updated = true
+		viewport_visible = false
+	}
+	g_generic_door_01 = {
+		always_keep = false
+		culling = "bounding_volume"
+		double_sided = false
+		generate_uv_unwrap = false
+		not_occluder = true
+		not_target = false
+		occluder = false
+		particle_mesh_spawning = false
+		shadow_caster = false
+		surface_queries = true
+		umbra_updated = true
+		viewport_visible = true
+	}
+	g_generic_door_01_LOD1 = {
+		always_keep = false
+		culling = "bounding_volume"
+		double_sided = false
+		generate_uv_unwrap = false
+		not_occluder = true
+		not_target = false
+		occluder = false
+		particle_mesh_spawning = false
+		shadow_caster = false
+		surface_queries = false
+		umbra_updated = true
+		viewport_visible = true
+	}
+	g_generic_door_01_LOD2 = {
+		always_keep = false
+		culling = "bounding_volume"
+		double_sided = false
+		generate_uv_unwrap = false
+		not_occluder = true
+		not_target = false
+		occluder = false
+		particle_mesh_spawning = false
+		shadow_caster = false
+		surface_queries = false
+		umbra_updated = true
+		viewport_visible = true
+	}
+	gs_generic_door_01 = {
+		always_keep = false
+		culling = "bounding_volume"
+		double_sided = false
+		generate_uv_unwrap = false
+		not_occluder = true
+		not_target = false
+		occluder = false
+		particle_mesh_spawning = false
+		shadow_caster = true
+		surface_queries = false
+		umbra_updated = true
+		viewport_visible = false
+	}
+}

@@ -1,0 +1,33 @@
+
+actors = [
+	{
+		enabled = true
+		mass = 0
+		name = "c_simple"
+		node = "c_generic_door_01"
+		shapes = [
+			{
+				material = "default"
+				shape = "c_generic_door_01"
+				template = "simple"
+				type = "box"
+			}
+		]
+		template = "static"
+	}
+	{
+		enabled = true
+		mass = 0
+		name = "c_detailed"
+		node = "g_generic_door_01"
+		shapes = [
+			{
+				material = "default"
+				shape = "g_generic_door_01"
+				template = "detailed"
+				type = "mesh"
+			}
+		]
+		template = "static"
+	}
+]

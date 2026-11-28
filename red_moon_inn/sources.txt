@@ -35,6 +35,7 @@ environment/textures/skydome_military.texture
 fx/achievment_book_sparkles.particle_editor
 fx/achievment_book_sparkles.particles
 fx/achievment_book_sparkles/arrow.material
+fx/achievment_book_sparkles/arrow_event_remap.material
 fx/arrow_hit_cloth/smoke_streched_.material
 fx/arrow_hit_dirt/addsmoke.material
 fx/arrow_hit_dirt/smoke_streched_.material
@@ -105,6 +106,10 @@ fx/environment_soot_smoke_dense_01/soot_flakes.material
 fx/environment_soot_smoke_dense_02.particle_editor
 fx/environment_soot_smoke_dense_02.particles
 fx/environment_soot_smoke_dense_02/clouds.material
+fx/event_book_sparkles.particle_editor
+fx/event_book_sparkles.particles
+fx/event_skull_eye.particle_editor
+fx/event_skull_eye.particles
 fx/fire_candle_flame_01.particle_editor
 fx/fire_candle_flame_01.particles
 fx/fire_candle_flame_01/flame.material
@@ -159,6 +164,8 @@ fx/textures/flame_color_atlas_03.png
 fx/textures/flame_color_atlas_03.texture
 fx/textures/generic_gradient_01.png
 fx/textures/generic_gradient_01.texture
+fx/textures/generic_gradient_03.png
+fx/textures/generic_gradient_03.texture
 fx/textures/generic_gradient_10.png
 fx/textures/generic_gradient_10.texture
 fx/textures/generic_mask_01.png
@@ -233,9 +240,11 @@ fx/textures/wave_noise_nm_01.png
 fx/textures/wave_noise_nm_01.texture
 fx/textures/white_dot.png
 fx/textures/white_dot.texture
+fx/units/event_skull_eye_01.material
 fx/units/fx_god_01.bsi
 fx/units/fx_god_01.material
 fx/units/fx_god_01.unit
+fx/units/fx_god_01_event_remap.material
 fx/wpnfx_dwarf_hundgun_muzzlefx_01/muzzlesidesparks_remap_3p.material
 fx/wpnfx_empire_pistol_muzzlefx_3p.particle_editor
 fx/wpnfx_empire_pistol_muzzlefx_3p.particles
@@ -275,6 +284,8 @@ fx/wpnfx_staff_fireball_muzzleflash/lightsparks_remap_3p.material
 fx/wpnfx_staff_fireball_muzzleflash/muzzleside_remap_3p.material
 fx/wpnfx_staff_fireball_muzzleflash_remap_3p.particle_editor
 fx/wpnfx_staff_fireball_muzzleflash_remap_3p.particles
+gui/1080p/single_textures/horizontal_gradient.png
+gui/1080p/single_textures/horizontal_gradient.texture
 levels/red_moon_inn/environment/red_moon_inn.shading_environment
 levels/red_moon_inn/environment/textures/global_diffuse_map_0e19b28f.dds
 levels/red_moon_inn/environment/textures/global_diffuse_map_0e19b28f.texture
@@ -289,6 +300,8 @@ levels/red_moon_inn/fx/environment_inn_fireplace.particles
 levels/red_moon_inn/red_moon_inn/world.ClientInput
 levels/red_moon_inn/red_moon_inn/world.NavData
 levels/red_moon_inn/red_moon_inn/world.level
+levels/red_moon_inn/units/generic_door_01_chaos_wastes.physics
+levels/red_moon_inn/units/generic_door_01_chaos_wastes.unit
 levels/red_moon_inn/units/props_generic_chandelier_inn_01.bsi
 levels/red_moon_inn/units/props_generic_chandelier_inn_01.flow
 levels/red_moon_inn/units/props_generic_chandelier_inn_01.flow_editor
@@ -369,6 +382,9 @@ shaders/fx/basic_additive_remap.material
 shaders/fx/basic_distortion.material
 shaders/fx/clmap_animask_additive.material
 shaders/fx/end_zone_bubble_01.material
+shaders/fx/event_basic_additive_remap.material
+shaders/fx/event_flipbook_panner_emissive_gradient.material
+shaders/fx/event_magic_beam_unit_mask_01.material
 shaders/fx/fire_clouds.material
 shaders/fx/fire_clouds_remap.material
 shaders/fx/flipbook_panner_emissive.material
@@ -380,6 +396,7 @@ shaders/fx/uvdistort_fire.material
 shaders/fx/uvdistort_fire_flame.material
 shaders/hub_element.material
 shaders/hub_element_unlit.material
+shaders/hub_element_unlit_op.material
 shaders/physics.material
 shaders/props/candle.material
 shaders/props/props_tint_ds.material
@@ -956,6 +973,11 @@ units/decals/decal_explosion_impact.unit
 units/fog/black_fog_plane_01.bsi
 units/fog/black_fog_plane_01.material
 units/fog/black_fog_plane_01.unit
+units/gamemode/interactable_generic_02.bsi
+units/gamemode/interactable_generic_02.flow
+units/gamemode/interactable_generic_02.flow_editor
+units/gamemode/interactable_generic_02.physics
+units/gamemode/interactable_generic_02.unit
 units/gamemode/path_marker.bsi
 units/gamemode/path_marker.flow
 units/gamemode/path_marker.flow_editor
@@ -995,6 +1017,11 @@ units/gameplay/interactable_store_trigger.flow
 units/gameplay/interactable_store_trigger.flow_editor
 units/gameplay/interactable_store_trigger.physics
 units/gameplay/interactable_store_trigger.unit
+units/gameplay/keep_event_interaction.bsi
+units/gameplay/keep_event_interaction.flow
+units/gameplay/keep_event_interaction.flow_editor
+units/gameplay/keep_event_interaction.physics
+units/gameplay/keep_event_interaction.unit
 units/gameplay/prestige/gameplay_prestige_skull_01.bsi
 units/gameplay/prestige/gameplay_prestige_skull_01.physics
 units/gameplay/prestige/gameplay_prestige_skull_01.unit
@@ -1039,6 +1066,11 @@ units/hub_elements/pickup_spawner.bsi
 units/hub_elements/pickup_spawner.flow
 units/hub_elements/pickup_spawner.flow_editor
 units/hub_elements/pickup_spawner.unit
+units/ladders/generic_ladder_6m.bsi
+units/ladders/generic_ladder_6m.flow
+units/ladders/generic_ladder_6m.flow_editor
+units/ladders/generic_ladder_6m.physics
+units/ladders/generic_ladder_6m.unit
 units/lights/animated_fireplace_light.bsi
 units/lights/animated_fireplace_light.flow
 units/lights/animated_fireplace_light.flow_editor
@@ -1088,6 +1120,7 @@ units/materials/c/cem_reliefs_01_copper_op.material
 units/materials/c/cloth_01.material
 units/materials/c/cloth_03.material
 units/materials/d/default_gray.material
+units/materials/d/default_ladder.material
 units/materials/d/default_material.material
 units/materials/d/default_shadow.material
 units/materials/d/difficulty_banners.material
