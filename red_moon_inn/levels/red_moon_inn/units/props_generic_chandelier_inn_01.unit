@@ -1,0 +1,227 @@
+
+data = {
+	allow_ranged_damage = true
+	extensions = [
+		"ProjectileLinkerExtension"
+		"PerlinLightExtension"
+	]
+	flicker_config = "fire_small_intense"
+	perlin_light_node_name = "omni"
+}
+editor_metadata = {
+	camera_settings = {
+		far_range = 1000
+		interest_point_distance = 3.30819
+		orthographic_plane = [
+			0
+			0
+			1
+			0
+		]
+		orthographic_zoom = 10
+		position = [
+			2.38086
+			2.24165
+			-0.402305
+		]
+		projection_type = "perspective"
+		rotation = [
+			-0.036856
+			-0.087124
+			0.916853
+			0.387854
+		]
+		rotation_speed = 0.003
+		translation_speed = 0.05
+	}
+	flow_framing = {
+		scale = 0.645029
+		x = 55.0291
+		y = 596.354
+	}
+}
+lights = {
+	omni = {
+		box_max = [
+			10
+			10
+			10
+		]
+		box_min = [
+			-10
+			0
+			-10
+		]
+		cast_shadows = true
+		color = [
+			0.197702
+			0.0930363
+			0.0325627
+		]
+		falloff_end = 6
+		falloff_exponent = 2
+		falloff_start = 1.6
+		node = "omni_bottom"
+		spot_angle_end = 0
+		spot_angle_start = 0
+		type = "omni"
+		volumetric_intensity = 1
+	}
+	omni2 = {
+		box_max = [
+			10
+			10
+			10
+		]
+		box_min = [
+			-10
+			0
+			-10
+		]
+		cast_shadows = false
+		color = [
+			0.197702
+			0.0930363
+			0.0325627
+		]
+		falloff_end = 6
+		falloff_exponent = 2
+		falloff_start = 1
+		node = "omni_top"
+		spot_angle_end = 0
+		spot_angle_start = 0
+		type = "omni"
+		volumetric_intensity = 1
+	}
+}
+lod = [
+	{
+		bounding_volume = "g_generic_prop_chandelier_01"
+		name = "lod"
+		orientation = "g_generic_prop_chandelier_01"
+		steps = [
+			{
+				renderables = [
+					"g_generic_prop_chandelier_01"
+				]
+				visible_height_range = [
+					1
+					0.5
+				]
+			}
+			{
+				renderables = [
+					"g_generic_prop_chandelier_01_LOD001"
+				]
+				visible_height_range = [
+					0.5
+					0.25
+				]
+			}
+			{
+				renderables = [
+					"g_generic_prop_chandelier_01_LOD002"
+				]
+				visible_height_range = [
+					0.25
+					0.01
+				]
+			}
+		]
+	}
+	{
+		bounding_volume = "g_generic_prop_chandelier_01"
+		name = "shadow_lod"
+		orientation = "g_generic_prop_chandelier_01"
+		steps = [
+			{
+				renderables = [
+					"gs_generic_prop_chandelier_01"
+				]
+				visible_height_range = [
+					1
+					0.5
+				]
+			}
+			{
+				renderables = [
+					"gs_generic_prop_chandelier_01_lod1"
+				]
+				visible_height_range = [
+					0.5
+					0.01
+				]
+			}
+		]
+	}
+]
+materials = {
+	candle1 = "units/materials/c/candle_01"
+	metal1 = "units/materials/g/generic_metalbars_01"
+	shadow = "shaders/shadow"
+}
+renderables = {
+	b_generic_prop_chandelier_01 = {
+		always_keep = false
+		culling = "bounding_volume"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = false
+	}
+	g_generic_prop_chandelier_01 = {
+		always_keep = false
+		culling = "bounding_volume"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	g_generic_prop_chandelier_01_LOD001 = {
+		always_keep = false
+		culling = "bounding_volume"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	g_generic_prop_chandelier_01_LOD002 = {
+		always_keep = false
+		culling = "bounding_volume"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = false
+		surface_queries = false
+		viewport_visible = true
+	}
+	g_top_01 = {
+		always_keep = false
+		culling = "bounding_volume"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = true
+		surface_queries = true
+		viewport_visible = true
+	}
+	gs_generic_prop_chandelier_01 = {
+		always_keep = false
+		culling = "bounding_volume"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = true
+		surface_queries = false
+		viewport_visible = false
+	}
+	gs_generic_prop_chandelier_01_lod1 = {
+		always_keep = false
+		culling = "bounding_volume"
+		generate_uv_unwrap = false
+		occluder = false
+		shadow_caster = true
+		surface_queries = false
+		viewport_visible = false
+	}
+}

@@ -1,0 +1,84 @@
+
+actors = [
+	{
+		enabled = true
+		mass = 0
+		name = "g_generic_prop_chandelier_01"
+		node = "g_generic_prop_chandelier_01"
+		shapes = [
+			{
+				material = "default"
+				shape = "g_generic_prop_chandelier_01"
+				template = "detailed"
+				type = "mesh"
+			}
+		]
+		template = "static"
+	}
+]
+physx_scene = {
+	actors = {
+		b_generic_prop_chandelier_01 = {
+			enabled = false
+			shapes = {
+				b_generic_prop_chandelier_01 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+			}
+		}
+		g_generic_prop_chandelier_01 = {
+			enabled = true
+			shapes = {
+				c_crown02_01 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+				c_crown02_02 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+				c_crown02_03 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+				c_crown02_04 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+				c_crown02_05 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+				c_crown02_06 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+				c_crown02_07 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+				c_crown02_08 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+				c_crown02_09 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+				c_crown02_10 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+				c_crown02_11 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+				c_crown02_12 = {
+					material = "iron"
+					template = "minor_weapon_damage"
+				}
+			}
+		}
+	}
+}

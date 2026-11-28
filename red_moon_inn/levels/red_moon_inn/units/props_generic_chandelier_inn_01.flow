@@ -1,0 +1,610 @@
+
+nodes = [
+	{
+		id = "ebe46cde-bffb-44fd-ad9a-27d2ffe62650"
+		in_variables = {
+			effect = {
+				type = "string"
+			}
+			linked = {
+				type = "bool"
+			}
+			object = {
+				type = "id"
+			}
+			offset = {
+				type = "vector3"
+			}
+			orphaned_policy = {
+				type = "string"
+			}
+			rotation_offset = {
+				type = "quaternion"
+			}
+			unit = {
+				node = "c39baff5-75de-48b2-8881-8d94430e288f"
+				type = "unit"
+				variable = "unit"
+			}
+		}
+		type = "particle_effect"
+		variable_values = {
+			effect = "fx/fire_candle_flame_01"
+			linked = true
+			object = "fx_flame"
+			orphaned_policy = "destroy"
+		}
+	}
+	{
+		id = "5716d528-0928-42e3-89b4-1dda1207b054"
+		in_variables = {
+			effect = {
+				type = "string"
+			}
+			linked = {
+				type = "bool"
+			}
+			object = {
+				type = "id"
+			}
+			offset = {
+				type = "vector3"
+			}
+			orphaned_policy = {
+				type = "string"
+			}
+			rotation_offset = {
+				type = "quaternion"
+			}
+			unit = {
+				node = "c39baff5-75de-48b2-8881-8d94430e288f"
+				type = "unit"
+				variable = "unit"
+			}
+		}
+		type = "particle_effect"
+		variable_values = {
+			effect = "fx/fire_candle_flame_01"
+			linked = true
+			object = "fx_flame001"
+			orphaned_policy = "destroy"
+		}
+	}
+	{
+		id = "4466f569-4a1b-460b-8e3f-c87b6401bce5"
+		in_variables = {
+			effect = {
+				type = "string"
+			}
+			linked = {
+				type = "bool"
+			}
+			object = {
+				type = "id"
+			}
+			offset = {
+				type = "vector3"
+			}
+			orphaned_policy = {
+				type = "string"
+			}
+			rotation_offset = {
+				type = "quaternion"
+			}
+			unit = {
+				node = "c39baff5-75de-48b2-8881-8d94430e288f"
+				type = "unit"
+				variable = "unit"
+			}
+		}
+		type = "particle_effect"
+		variable_values = {
+			effect = "fx/fire_candle_flame_01"
+			linked = true
+			object = "fx_flame002"
+			orphaned_policy = "destroy"
+		}
+	}
+	{
+		id = "9917f405-c24c-4546-a370-acc34a92dcf2"
+		in_variables = {
+			effect = {
+				type = "string"
+			}
+			linked = {
+				type = "bool"
+			}
+			object = {
+				type = "id"
+			}
+			offset = {
+				type = "vector3"
+			}
+			orphaned_policy = {
+				type = "string"
+			}
+			rotation_offset = {
+				type = "quaternion"
+			}
+			unit = {
+				node = "c39baff5-75de-48b2-8881-8d94430e288f"
+				type = "unit"
+				variable = "unit"
+			}
+		}
+		type = "particle_effect"
+		variable_values = {
+			effect = "fx/fire_candle_flame_01"
+			linked = true
+			object = "fx_flame004"
+			orphaned_policy = "destroy"
+		}
+	}
+	{
+		id = "e8baf63a-c7e0-449c-8abb-89a069d11d3d"
+		in_variables = {
+			effect = {
+				type = "string"
+			}
+			linked = {
+				type = "bool"
+			}
+			object = {
+				type = "id"
+			}
+			offset = {
+				type = "vector3"
+			}
+			orphaned_policy = {
+				type = "string"
+			}
+			rotation_offset = {
+				type = "quaternion"
+			}
+			unit = {
+				node = "c39baff5-75de-48b2-8881-8d94430e288f"
+				type = "unit"
+				variable = "unit"
+			}
+		}
+		type = "particle_effect"
+		variable_values = {
+			effect = "fx/fire_candle_flame_01"
+			linked = true
+			object = "fx_flame005"
+			orphaned_policy = "destroy"
+		}
+	}
+	{
+		id = "f04f3d07-f1ad-4ca0-aa4c-45ef2889ed12"
+		in_variables = {
+			effect = {
+				type = "string"
+			}
+			linked = {
+				type = "bool"
+			}
+			object = {
+				type = "id"
+			}
+			offset = {
+				type = "vector3"
+			}
+			orphaned_policy = {
+				type = "string"
+			}
+			rotation_offset = {
+				type = "quaternion"
+			}
+			unit = {
+				node = "c39baff5-75de-48b2-8881-8d94430e288f"
+				type = "unit"
+				variable = "unit"
+			}
+		}
+		type = "particle_effect"
+		variable_values = {
+			effect = "fx/fire_candle_flame_01"
+			linked = true
+			object = "fx_flame006"
+			orphaned_policy = "destroy"
+		}
+	}
+	{
+		id = "5655e91c-1464-4ba9-8f05-c4b0cd39a32a"
+		in_variables = {
+			effect = {
+				type = "string"
+			}
+			linked = {
+				type = "bool"
+			}
+			object = {
+				type = "id"
+			}
+			offset = {
+				type = "vector3"
+			}
+			orphaned_policy = {
+				type = "string"
+			}
+			rotation_offset = {
+				type = "quaternion"
+			}
+			unit = {
+				node = "c39baff5-75de-48b2-8881-8d94430e288f"
+				type = "unit"
+				variable = "unit"
+			}
+		}
+		type = "particle_effect"
+		variable_values = {
+			effect = "fx/fire_candle_flame_01"
+			linked = true
+			object = "fx_flame003"
+			orphaned_policy = "destroy"
+		}
+	}
+	{
+		id = "0325a4ae-ad79-40e3-9aba-e9cb6561647b"
+		in_variables = {
+			effect = {
+				type = "string"
+			}
+			linked = {
+				type = "bool"
+			}
+			object = {
+				type = "id"
+			}
+			offset = {
+				type = "vector3"
+			}
+			orphaned_policy = {
+				type = "string"
+			}
+			rotation_offset = {
+				type = "quaternion"
+			}
+			unit = {
+				node = "c39baff5-75de-48b2-8881-8d94430e288f"
+				type = "unit"
+				variable = "unit"
+			}
+		}
+		type = "particle_effect"
+		variable_values = {
+			effect = "fx/fire_candle_flame_01"
+			linked = true
+			object = "fx_flame007"
+			orphaned_policy = "destroy"
+		}
+	}
+	{
+		id = "9bb3ba49-fb46-4923-b83a-8abe582c6bb7"
+		out_variables = {
+			actor = {
+				type = "actor"
+			}
+		}
+		type = "external_input_actor"
+		variable_values = {
+			name = "hit_actor"
+		}
+	}
+	{
+		id = "f824118b-144f-4c58-80f3-301b06e04fe0"
+		out_variables = {
+			vector3 = {
+				type = "vector3"
+			}
+		}
+		type = "external_input_vector3"
+		variable_values = {
+			name = "hit_direction"
+		}
+	}
+	{
+		id = "29b91571-60ca-49d3-9ef4-f1f5ec58e953"
+		out_variables = {
+			vector3 = {
+				type = "vector3"
+			}
+		}
+		type = "external_input_vector3"
+		variable_values = {
+			name = "hit_position"
+		}
+	}
+	{
+		id = "ee69c530-7e59-4c69-b0a0-67098db94b2d"
+		out_events = {
+			out = [
+				{
+					event = 0
+					id = "84b2c60e-0170-4a10-a9ac-7f00da2ec935:0"
+					node = "84b2c60e-0170-4a10-a9ac-7f00da2ec935"
+				}
+			]
+		}
+		type = "external_event"
+		variable_values = {
+			event_name = "lua_simple_damage"
+		}
+	}
+	{
+		id = "c39baff5-75de-48b2-8881-8d94430e288f"
+		out_events = {
+			out = [
+				{
+					event = 0
+					id = "ebe46cde-bffb-44fd-ad9a-27d2ffe62650:0"
+					node = "ebe46cde-bffb-44fd-ad9a-27d2ffe62650"
+				}
+				{
+					event = 0
+					id = "9917f405-c24c-4546-a370-acc34a92dcf2:0"
+					node = "9917f405-c24c-4546-a370-acc34a92dcf2"
+				}
+				{
+					event = 0
+					id = "f04f3d07-f1ad-4ca0-aa4c-45ef2889ed12:0"
+					node = "f04f3d07-f1ad-4ca0-aa4c-45ef2889ed12"
+				}
+				{
+					event = 0
+					id = "4466f569-4a1b-460b-8e3f-c87b6401bce5:0"
+					node = "4466f569-4a1b-460b-8e3f-c87b6401bce5"
+				}
+				{
+					event = 0
+					id = "5716d528-0928-42e3-89b4-1dda1207b054:0"
+					node = "5716d528-0928-42e3-89b4-1dda1207b054"
+				}
+				{
+					event = 0
+					id = "5655e91c-1464-4ba9-8f05-c4b0cd39a32a:0"
+					node = "5655e91c-1464-4ba9-8f05-c4b0cd39a32a"
+				}
+				{
+					event = 0
+					id = "e8baf63a-c7e0-449c-8abb-89a069d11d3d:0"
+					node = "e8baf63a-c7e0-449c-8abb-89a069d11d3d"
+				}
+				{
+					event = 0
+					id = "0325a4ae-ad79-40e3-9aba-e9cb6561647b:0"
+					node = "0325a4ae-ad79-40e3-9aba-e9cb6561647b"
+				}
+				{
+					event = 1
+					id = "84b2c60e-0170-4a10-a9ac-7f00da2ec935:1"
+					node = "84b2c60e-0170-4a10-a9ac-7f00da2ec935"
+				}
+			]
+		}
+		type = "unit_spawned"
+		variable_values = {
+		}
+	}
+	{
+		id = "84b2c60e-0170-4a10-a9ac-7f00da2ec935"
+		in_event_index = [
+			"lua_simple_damage"
+			"unit_spawned"
+		]
+		in_variables = {
+			hit_actor = {
+				node = "9bb3ba49-fb46-4923-b83a-8abe582c6bb7"
+				type = "actor"
+				variable = "actor"
+			}
+			hit_direction = {
+				node = "f824118b-144f-4c58-80f3-301b06e04fe0"
+				type = "vector3"
+				variable = "vector3"
+			}
+			hit_position = {
+				node = "29b91571-60ca-49d3-9ef4-f1f5ec58e953"
+				type = "vector3"
+				variable = "vector3"
+			}
+			unit = {
+				node = "c39baff5-75de-48b2-8881-8d94430e288f"
+				type = "unit"
+				variable = "unit"
+			}
+		}
+		out_event_index = [
+		]
+		type = "flow_subroutine"
+		variable_values = {
+			flow = "subflow/sign_push"
+		}
+	}
+	{
+		id = "e1759990-acc6-42c9-875d-67d1dbc98f14"
+		out_events = {
+			out = [
+				{
+					event = 0
+					id = "ebe46cde-bffb-44fd-ad9a-27d2ffe62650:0"
+					node = "ebe46cde-bffb-44fd-ad9a-27d2ffe62650"
+				}
+				{
+					event = 0
+					id = "9917f405-c24c-4546-a370-acc34a92dcf2:0"
+					node = "9917f405-c24c-4546-a370-acc34a92dcf2"
+				}
+				{
+					event = 0
+					id = "f04f3d07-f1ad-4ca0-aa4c-45ef2889ed12:0"
+					node = "f04f3d07-f1ad-4ca0-aa4c-45ef2889ed12"
+				}
+				{
+					event = 0
+					id = "4466f569-4a1b-460b-8e3f-c87b6401bce5:0"
+					node = "4466f569-4a1b-460b-8e3f-c87b6401bce5"
+				}
+				{
+					event = 0
+					id = "5716d528-0928-42e3-89b4-1dda1207b054:0"
+					node = "5716d528-0928-42e3-89b4-1dda1207b054"
+				}
+				{
+					event = 0
+					id = "5655e91c-1464-4ba9-8f05-c4b0cd39a32a:0"
+					node = "5655e91c-1464-4ba9-8f05-c4b0cd39a32a"
+				}
+				{
+					event = 0
+					id = "e8baf63a-c7e0-449c-8abb-89a069d11d3d:0"
+					node = "e8baf63a-c7e0-449c-8abb-89a069d11d3d"
+				}
+				{
+					event = 0
+					id = "0325a4ae-ad79-40e3-9aba-e9cb6561647b:0"
+					node = "0325a4ae-ad79-40e3-9aba-e9cb6561647b"
+				}
+			]
+		}
+		type = "unit_spawned_editor"
+		variable_values = {
+		}
+	}
+	{
+		id = "676a9ab0-07e4-4ce1-87b0-1d15abee2a32"
+		out_events = {
+			out = [
+				{
+					event = 0
+					id = "2a4fc3f0-f467-4ee9-9118-1b101354a142:0"
+					node = "2a4fc3f0-f467-4ee9-9118-1b101354a142"
+				}
+			]
+		}
+		type = "external_event"
+		variable_values = {
+			event_name = "unit_object_set_enabled"
+		}
+	}
+	{
+		id = "7bb09c40-9292-4354-a6e1-5f27e77cf5ee"
+		out_events = {
+			out = [
+				{
+					event = 1
+					id = "2a4fc3f0-f467-4ee9-9118-1b101354a142:1"
+					node = "2a4fc3f0-f467-4ee9-9118-1b101354a142"
+				}
+				{
+					event = 2
+					id = "5655e91c-1464-4ba9-8f05-c4b0cd39a32a:2"
+					node = "5655e91c-1464-4ba9-8f05-c4b0cd39a32a"
+				}
+				{
+					event = 2
+					id = "0325a4ae-ad79-40e3-9aba-e9cb6561647b:2"
+					node = "0325a4ae-ad79-40e3-9aba-e9cb6561647b"
+				}
+				{
+					event = 2
+					id = "f04f3d07-f1ad-4ca0-aa4c-45ef2889ed12:2"
+					node = "f04f3d07-f1ad-4ca0-aa4c-45ef2889ed12"
+				}
+				{
+					event = 2
+					id = "4466f569-4a1b-460b-8e3f-c87b6401bce5:2"
+					node = "4466f569-4a1b-460b-8e3f-c87b6401bce5"
+				}
+				{
+					event = 2
+					id = "e8baf63a-c7e0-449c-8abb-89a069d11d3d:2"
+					node = "e8baf63a-c7e0-449c-8abb-89a069d11d3d"
+				}
+				{
+					event = 2
+					id = "5716d528-0928-42e3-89b4-1dda1207b054:2"
+					node = "5716d528-0928-42e3-89b4-1dda1207b054"
+				}
+				{
+					event = 2
+					id = "9917f405-c24c-4546-a370-acc34a92dcf2:2"
+					node = "9917f405-c24c-4546-a370-acc34a92dcf2"
+				}
+				{
+					event = 2
+					id = "ebe46cde-bffb-44fd-ad9a-27d2ffe62650:2"
+					node = "ebe46cde-bffb-44fd-ad9a-27d2ffe62650"
+				}
+			]
+		}
+		type = "external_event"
+		variable_values = {
+			event_name = "unit_object_set_disabled"
+		}
+	}
+	{
+		id = "2a4fc3f0-f467-4ee9-9118-1b101354a142"
+		in_event_index = [
+			"Increase"
+			"Reset"
+		]
+		out_event_index = [
+			"Equal"
+		]
+		out_events = {
+			equal = [
+				{
+					event = 0
+					id = "5655e91c-1464-4ba9-8f05-c4b0cd39a32a:0"
+					node = "5655e91c-1464-4ba9-8f05-c4b0cd39a32a"
+				}
+				{
+					event = 0
+					id = "0325a4ae-ad79-40e3-9aba-e9cb6561647b:0"
+					node = "0325a4ae-ad79-40e3-9aba-e9cb6561647b"
+				}
+				{
+					event = 0
+					id = "f04f3d07-f1ad-4ca0-aa4c-45ef2889ed12:0"
+					node = "f04f3d07-f1ad-4ca0-aa4c-45ef2889ed12"
+				}
+				{
+					event = 0
+					id = "4466f569-4a1b-460b-8e3f-c87b6401bce5:0"
+					node = "4466f569-4a1b-460b-8e3f-c87b6401bce5"
+				}
+				{
+					event = 1
+					id = "4466f569-4a1b-460b-8e3f-c87b6401bce5:1"
+					node = "4466f569-4a1b-460b-8e3f-c87b6401bce5"
+				}
+				{
+					event = 0
+					id = "e8baf63a-c7e0-449c-8abb-89a069d11d3d:0"
+					node = "e8baf63a-c7e0-449c-8abb-89a069d11d3d"
+				}
+				{
+					event = 0
+					id = "5716d528-0928-42e3-89b4-1dda1207b054:0"
+					node = "5716d528-0928-42e3-89b4-1dda1207b054"
+				}
+				{
+					event = 0
+					id = "9917f405-c24c-4546-a370-acc34a92dcf2:0"
+					node = "9917f405-c24c-4546-a370-acc34a92dcf2"
+				}
+				{
+					event = 0
+					id = "ebe46cde-bffb-44fd-ad9a-27d2ffe62650:0"
+					node = "ebe46cde-bffb-44fd-ad9a-27d2ffe62650"
+				}
+			]
+		}
+		type = "flow_subroutine"
+		variable_values = {
+			flow = "subflow/counter_block"
+		}
+	}
+]

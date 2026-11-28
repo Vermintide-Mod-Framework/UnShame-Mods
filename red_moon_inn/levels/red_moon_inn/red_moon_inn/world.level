@@ -47184,6 +47184,35 @@ editor_metadata = {
 			Id = "c0e47da5-9a92-50ce-9cca-ef1c9fac66d4"
 			Layer = "Default"
 			Lights = {
+				omni = {
+					BoxMax = {
+						X = 10
+						Y = 10
+						Z = 10
+					}
+					BoxMin = {
+						X = -10
+						Y = 0
+						Z = -10
+					}
+					CastShadows = true
+					Color = {
+						A = 255
+						B = 36
+						G = 124
+						R = 255
+					}
+					FalloffEnd = 6
+					FalloffExponent = 2
+					FalloffStart = 1.600000023841858
+					Intensity = 0.30000001192092896
+					Material = ""
+					MaterialResource = ""
+					SpotAngleEnd = 0
+					SpotAngleStart = 0
+					Type = "omni"
+					VolumetricIntensity = 0
+				}
 				omni2 = {
 					BoxMax = {
 						X = 10
@@ -47205,7 +47234,7 @@ editor_metadata = {
 					FalloffEnd = 6
 					FalloffExponent = 2
 					FalloffStart = 0
-					Intensity = 0.15
+					Intensity = 0.15000000596046448
 					Material = ""
 					MaterialResource = ""
 					SpotAngleEnd = 0
@@ -47219,7 +47248,7 @@ editor_metadata = {
 			Name = "props_generic_chandelier_inn_01_1"
 			OverridePoses = {
 			}
-			Path = "units/props/inn/props_generic_chandelier_inn_01"
+			Path = "levels/red_moon_inn/units/props_generic_chandelier_inn_01"
 			Pivot = {
 				X = 0
 				Y = 0
@@ -47245,7 +47274,7 @@ editor_metadata = {
 			}
 			StoryOverridePoses = {
 			}
-			Type = "units/props/inn/props_generic_chandelier_inn_01"
+			Type = "levels/red_moon_inn/units/props_generic_chandelier_inn_01"
 		}
 		{
 			Cameras = {
@@ -53295,75 +53324,6 @@ editor_metadata = {
 			StoryOverridePoses = {
 			}
 			Type = "units/architecture/wizard/wizard_carpet_5x3m_02"
-		}
-		{
-			Cameras = {
-			}
-			Id = "75760cf8-dcdf-573f-9d03-2767b83569b6"
-			Layer = "Default"
-			Lights = {
-				omni = {
-					BoxMax = {
-						X = 10
-						Y = 10
-						Z = 10
-					}
-					BoxMin = {
-						X = -10
-						Y = 0
-						Z = -10
-					}
-					CastShadows = true
-					Color = {
-						A = 255
-						B = 36
-						G = 124
-						R = 255
-					}
-					FalloffEnd = 6
-					FalloffExponent = 0
-					FalloffStart = 1.600000023841858
-					Intensity = 0.30000001192092896
-					Material = ""
-					MaterialResource = ""
-					SpotAngleEnd = 0
-					SpotAngleStart = 0
-					Type = "omni"
-					VolumetricIntensity = 0
-				}
-			}
-			MaterialSlots = {
-			}
-			Name = "props_generic_chandelier_inn_01_1_omni"
-			OverridePoses = {
-			}
-			Path = "units/lights/light"
-			Pivot = {
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Pos = {
-				X = -1.8380240201950073
-				Y = 0.25
-				Z = 4.892003059387207
-			}
-			Rot = {
-				W = -1
-				X = 0
-				Y = 0
-				Z = 0
-			}
-			Scl = {
-				X = 1
-				Y = 1
-				Z = 1
-			}
-			ScriptData = {
-			}
-			StoryOverridePoses = {
-			}
-			Type = "units/lights/light"
 		}
 	]
 	Volumes = [
@@ -89382,6 +89342,33 @@ units = [
 		}
 		id = "c0e47da5-9a92-50ce-9cca-ef1c9fac66d4"
 		lights = {
+			omni = {
+				box_max = [
+					10
+					10
+					10
+				]
+				box_min = [
+					-10
+					0
+					-10
+				]
+				cast_shadows = true
+				color = [
+					1
+					0.4862745404243469
+					0.1411764919757843
+				]
+				falloff_end = 6
+				falloff_exponent = 2
+				falloff_start = 1.600000023841858
+				intensity = 0.30000001192092896
+				material = ""
+				spot_angle_end = 0
+				spot_angle_start = 0
+				type = "omni"
+				volumetric_intensity = 0
+			}
 			omni2 = {
 				box_max = [
 					10
@@ -89396,13 +89383,13 @@ units = [
 				cast_shadows = false
 				color = [
 					1
-					0.486274509803922
-					0.141176470588235
+					0.4862745404243469
+					0.1411764919757843
 				]
 				falloff_end = 6
 				falloff_exponent = 2
 				falloff_start = 0
-				intensity = 0.15
+				intensity = 0.15000000596046448
 				material = ""
 				spot_angle_end = 0
 				spot_angle_start = 0
@@ -89430,7 +89417,7 @@ units = [
 			1
 			1
 		]
-		type = "units/props/inn/props_generic_chandelier_inn_01"
+		type = "levels/red_moon_inn/units/props_generic_chandelier_inn_01"
 	}
 	{
 		cameras = {
@@ -94226,63 +94213,6 @@ units = [
 			1
 		]
 		type = "units/skydome/skydome_hdr"
-	}
-	{
-		cameras = {
-		}
-		data = {
-		}
-		id = "75760cf8-dcdf-573f-9d03-2767b83569b6"
-		lights = {
-			omni = {
-				box_max = [
-					10
-					10
-					10
-				]
-				box_min = [
-					-10
-					0
-					-10
-				]
-				cast_shadows = true
-				color = [
-					1
-					0.4862745404243469
-					0.1411764919757843
-				]
-				falloff_end = 6
-				falloff_exponent = 0
-				falloff_start = 1.600000023841858
-				intensity = 0.30000001192092896
-				material = ""
-				spot_angle_end = 0
-				spot_angle_start = 0
-				type = "omni"
-				volumetric_intensity = 0
-			}
-		}
-		material = ""
-		materials = {
-		}
-		name = "props_generic_chandelier_inn_01_1_omni"
-		pos = [
-			-1.8380240201950073
-			0.25
-			4.892003059387207
-		]
-		rot = [
-			0
-			0
-			0
-			-1
-		]
-		scl = [
-			1
-			1
-			1
-		]
-		type = "units/lights/light"
 	}
 ]
 volumes = [

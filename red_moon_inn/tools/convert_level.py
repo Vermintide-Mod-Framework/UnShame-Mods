@@ -90,6 +90,12 @@ REPLACEMENTS = {
     for n in (1, 2, 3)
 }
 
+# Vermintide 2's chandelier has one light, the dim omni2 at the top. The inn's has a second, omni, which casts the shadows
+# and sits at the centre of the rim. The mod's copy of the chandelier has both, so they swing with it: omni is at the
+# mesh's omni_bottom node, and flickers.
+REPLACEMENTS['units/props/inn/props_generic_chandelier_inn_01'] = (
+    'levels/red_moon_inn/units/props_generic_chandelier_inn_01', {})
+
 # Effects of Vermintide 2 that the mod has its own copy of. The fireplace's copy keeps animating and showing at any distance:
 # Vermintide 2's stops animating 5 m from the camera and hides at 35 m.
 EFFECT_REPLACEMENTS = {
@@ -444,37 +450,52 @@ class Converter:
         return kept, {vt1: out_of[k] for vt1, k in index.items()}
 
     def add_lights(self, units, index):
-        lights = self.level.lights()
-        lights_on = collections.Counter(unit_index for unit_index, _, _ in lights)
+        lights_of = collections.defaultdict(list)
 
-        for unit_index, name_h, light in lights:
-            if unit_index not in index:
-                continue
+        for unit_index, name_h, light in self.level.lights():
+            if unit_index in index:
+                lights_of[unit_index].append((self.word(name_h) or '%08x' % name_h, name_h, light))
 
+        for unit_index, lights in lights_of.items():
             unit = units[index[unit_index]]
-            defaults = self.unit_file(unit['type']).get('lights', {})
+            # The lights of the unit the level ends up with: a unit of REPLACEMENTS is given its replacement afterwards
+            final_type = REPLACEMENTS.get(unit['type'], (unit['type'],))[0]
+            defaults = self.unit_file(final_type).get('lights', {})
             names = {name_hash32(n): n for n in defaults}
-            name = names.get(name_h)
-            vt1_name = self.word(name_h) or '%08x' % name_h
+            given, left = {}, []
 
-            # Vermintide 2 renamed the light of some units. When the unit has one light and the inn sets one light on it,
-            # the unit's light gets that light's settings.
-            if name is None and len(defaults) == 1 and lights_on[unit_index] == 1:
-                name = next(iter(defaults))
-                self.renamed_lights[(unit['type'], vt1_name, name)] += 1
+            if len(lights) > len(defaults):
+                # Vermintide 2's unit has fewer lights than the inn sets. The unit's own lights move with it (a chandelier
+                # swings), so they get the inn's lights that show most: those that cast shadows, then the brightest.
+                ranked = sorted(lights, key=lambda l: (l[2]['cast_shadows'], l[2]['intensity']), reverse=True)
+                given = dict(zip(defaults, ranked))
+                left = ranked[len(given):]
+            else:
+                for vt1_name, name_h, light in lights:
+                    if name_h in names:
+                        given[names[name_h]] = (vt1_name, name_h, light)
+                    else:
+                        left.append((vt1_name, name_h, light))
 
-            # A light that Vermintide 2's unit doesn't have is added as a light unit, where the unit is. A light the inn
-            # turns off (intensity 0) is left out.
-            if name is None and light['intensity'] == 0:
-                self.lights_off[(unit['type'], vt1_name)] += 1
-                continue
+                # Vermintide 2 renamed the light of some units: a unit with one light that the inn sets one light on
+                # gets that light's settings
+                if len(defaults) == 1 and len(lights) == 1 and left:
+                    given[next(iter(defaults))] = left.pop()
 
-            if name is None:
-                units.append(self.light_unit(unit, vt1_name, light))
-                self.light_units[(unit['type'], vt1_name)] += 1
-                continue
+            for name, (vt1_name, name_h, light) in given.items():
+                if name_hash32(name) != name_h:
+                    self.renamed_lights[(unit['type'], vt1_name, name)] += 1
 
-            unit['lights'][name] = self.light_settings(defaults[name], light)
+                unit['lights'][name] = self.light_settings(defaults[name], light)
+
+            # The inn's other lights are added as light units, where the unit is. A light the inn turns off (intensity 0)
+            # is left out.
+            for vt1_name, _, light in left:
+                if light['intensity'] == 0:
+                    self.lights_off[(unit['type'], vt1_name)] += 1
+                else:
+                    units.append(self.light_unit(unit, vt1_name, light))
+                    self.light_units[(unit['type'], vt1_name)] += 1
 
     def light_unit(self, owner, vt1_name, light):
         """A light unit with a light the inn sets on a unit that Vermintide 2's unit doesn't have, at the unit's place."""
@@ -631,7 +652,7 @@ class Converter:
         level['editor_metadata'] = editor_metadata(level, self.level_resource)
 
         for old, (new, _) in sorted(REPLACEMENTS.items()):
-            self.notes.append('%s has another shape in Vermintide 2: %s, which has the inn\'s, is used.' % (old, new))
+            self.notes.append('%s is replaced with %s, which is closer to the inn\'s (REPLACEMENTS in convert_level.py).' % (old, new))
 
         replace_units(level)
         self.notes.append('Units keep their own materials: the material Vermintide 1 gives %d units is one of their own, '
@@ -668,11 +689,11 @@ class Converter:
                 unit_type, vt2, vt1, vt2, ' (x%d)' % count if count > 1 else ''))
 
         for (unit_type, vt1), count in sorted(self.light_units.items()):
-            lines.append('%s has no light %s in Vermintide 2: a %s with its settings is added where the unit is%s.' % (
+            lines.append('%s has too few lights in Vermintide 2 for its light %s: a %s with its settings is added where the unit is%s.' % (
                 unit_type, vt1, LIGHT_UNIT, ' (x%d)' % count if count > 1 else ''))
 
         for (unit_type, vt1), count in sorted(self.lights_off.items()):
-            lines.append('%s has no light %s in Vermintide 2: the inn turns it off, so it is left out%s.' % (
+            lines.append('%s has too few lights in Vermintide 2 for its light %s: the inn turns it off, so it is left out%s.' % (
                 unit_type, vt1, ' (x%d)' % count if count > 1 else ''))
 
         for kind in sorted(self.missing):

@@ -1,0 +1,478 @@
+<PhysX30Collection version="3.3.3" >
+	<UpVector >0 0 0</UpVector>
+	<Scale >
+		<Length >0</Length>
+		<Mass >0</Mass>
+		<Speed >0</Speed>
+	</Scale>
+	<PxConvexMesh >
+		<Id >1619688384</Id>
+		<points > -0.00775098 -0.510505 0.0520299 0.261965 -0.438235 -0.0520296&#x0A;&#x09;&#x09;&#x09;0.261965 -0.438235 0.0520298 0.255502 -0.414114 0.0520298&#x0A;&#x09;&#x09;&#x09;-0.0142142 -0.486384 0.0520299 -0.0142142 -0.486384 -0.0520296&#x0A;&#x09;&#x09;&#x09;-0.00775098 -0.510505 -0.0520296 0.255502 -0.414114 -0.0520296</points>
+	</PxConvexMesh>
+	<PxConvexMesh >
+		<Id >1619686512</Id>
+		<points > 0.00775099 -0.510505 0.0520298 0.0142142 -0.486384 -0.0520296&#x0A;&#x09;&#x09;&#x09;0.0142142 -0.486384 0.0520298 -0.255502 -0.414114 0.0520299&#x0A;&#x09;&#x09;&#x09;-0.255502 -0.414114 -0.0520296 -0.261965 -0.438235 -0.0520296&#x0A;&#x09;&#x09;&#x09;-0.261965 -0.438235 0.0520299 0.00775099 -0.510505 -0.0520296</points>
+	</PxConvexMesh>
+	<PxConvexMesh >
+		<Id >1619686720</Id>
+		<points > -0.428328 -0.230882 -0.0520296 -0.230882 -0.428328 -0.0520296&#x0A;&#x09;&#x09;&#x09;-0.445986 -0.24854 -0.0520296 -0.230882 -0.428328 0.0520298&#x0A;&#x09;&#x09;&#x09;-0.428328 -0.230882 0.0520299 -0.24854 -0.445986 0.0520298&#x0A;&#x09;&#x09;&#x09;-0.445986 -0.24854 0.0520299 -0.24854 -0.445986 -0.0520296</points>
+	</PxConvexMesh>
+	<PxConvexMesh >
+		<Id >1619689008</Id>
+		<points > -0.486384 0.0142143 0.0520299 -0.510505 0.007751 0.0520299&#x0A;&#x09;&#x09;&#x09;-0.438235 -0.261965 0.0520298 -0.486384 0.0142143 -0.0520296&#x0A;&#x09;&#x09;&#x09;-0.414114 -0.255502 0.0520298 -0.414114 -0.255502 -0.0520296&#x0A;&#x09;&#x09;&#x09;-0.510505 0.007751 -0.0520296 -0.438235 -0.261965 -0.0520296</points>
+	</PxConvexMesh>
+	<PxConvexMesh >
+		<Id >1619688592</Id>
+		<points > -0.438235 0.261965 0.0520299 -0.510505 -0.00775096 0.0520298&#x0A;&#x09;&#x09;&#x09;-0.486384 -0.0142141 0.0520298 -0.438235 0.261965 -0.0520296&#x0A;&#x09;&#x09;&#x09;-0.486384 -0.0142141 -0.0520296 -0.414114 0.255502 0.0520299&#x0A;&#x09;&#x09;&#x09;-0.414114 0.255502 -0.0520296 -0.510505 -0.00775096 -0.0520296</points>
+	</PxConvexMesh>
+	<PxConvexMesh >
+		<Id >1619688800</Id>
+		<points > -0.24854 0.445986 -0.0520296 -0.230882 0.428328 -0.0520296&#x0A;&#x09;&#x09;&#x09;-0.445986 0.24854 -0.0520296 -0.230882 0.428328 0.0520299&#x0A;&#x09;&#x09;&#x09;-0.428328 0.230882 0.0520298 -0.24854 0.445986 0.0520299&#x0A;&#x09;&#x09;&#x09;-0.428328 0.230882 -0.0520296 -0.445986 0.24854 0.0520298</points>
+	</PxConvexMesh>
+	<PxConvexMesh >
+		<Id >1619685888</Id>
+		<points > -0.255502 0.414114 0.0520298 0.0142143 0.486384 -0.0520296&#x0A;&#x09;&#x09;&#x09;0.0142143 0.486384 0.0520299 0.00775109 0.510505 0.0520299&#x0A;&#x09;&#x09;&#x09;0.00775109 0.510505 -0.0520296 -0.261965 0.438235 -0.0520296&#x0A;&#x09;&#x09;&#x09;-0.255502 0.414114 -0.0520296 -0.261965 0.438235 0.0520298</points>
+	</PxConvexMesh>
+	<PxConvexMesh >
+		<Id >1619687760</Id>
+		<points > 0.255502 0.414114 0.0520299 0.261965 0.438235 -0.0520296&#x0A;&#x09;&#x09;&#x09;0.261965 0.438235 0.0520299 -0.0142141 0.486384 0.0520298&#x0A;&#x09;&#x09;&#x09;-0.0142141 0.486384 -0.0520296 -0.00775087 0.510505 0.0520298&#x0A;&#x09;&#x09;&#x09;0.255502 0.414114 -0.0520296 -0.00775087 0.510505 -0.0520296</points>
+	</PxConvexMesh>
+	<PxConvexMesh >
+		<Id >1619688176</Id>
+		<points > 0.24854 0.445986 -0.0520296 0.428328 0.230882 -0.0520296&#x0A;&#x09;&#x09;&#x09;0.230882 0.428328 -0.0520296 0.230882 0.428328 0.0520298&#x0A;&#x09;&#x09;&#x09;0.428328 0.230882 0.0520299 0.445986 0.24854 0.0520299&#x0A;&#x09;&#x09;&#x09;0.445986 0.24854 -0.0520296 0.24854 0.445986 0.0520298</points>
+	</PxConvexMesh>
+	<PxConvexMesh >
+		<Id >1619689216</Id>
+		<points > 0.438235 0.261965 0.0520298 0.414114 0.255502 0.0520298&#x0A;&#x09;&#x09;&#x09;0.486384 -0.0142142 0.0520299 0.438235 0.261965 -0.0520296&#x0A;&#x09;&#x09;&#x09;0.510505 -0.00775093 0.0520299 0.486384 -0.0142142 -0.0520296&#x0A;&#x09;&#x09;&#x09;0.510505 -0.00775093 -0.0520296 0.414114 0.255502 -0.0520296</points>
+	</PxConvexMesh>
+	<PxConvexMesh >
+		<Id >1619687344</Id>
+		<points > 0.486384 0.0142139 0.0520298 0.414114 -0.255502 0.0520299&#x0A;&#x09;&#x09;&#x09;0.438235 -0.261965 0.0520299 0.486384 0.0142139 -0.0520296&#x0A;&#x09;&#x09;&#x09;0.414114 -0.255502 -0.0520296 0.510505 0.00775075 0.0520298&#x0A;&#x09;&#x09;&#x09;0.510505 0.00775075 -0.0520296 0.438235 -0.261965 -0.0520296</points>
+	</PxConvexMesh>
+	<PxConvexMesh >
+		<Id >1619687552</Id>
+		<points > 0.428328 -0.230882 -0.0520296 0.24854 -0.445986 -0.0520296&#x0A;&#x09;&#x09;&#x09;0.230882 -0.428328 -0.0520296 0.230882 -0.428328 0.0520299&#x0A;&#x09;&#x09;&#x09;0.24854 -0.445986 0.0520299 0.445986 -0.24854 0.0520298&#x0A;&#x09;&#x09;&#x09;0.445986 -0.24854 -0.0520296 0.428328 -0.230882 0.0520298</points>
+	</PxConvexMesh>
+	<PxMaterial >
+		<Id >1732778768</Id>
+		<DynamicFriction >0.1</DynamicFriction>
+		<StaticFriction >0.1</StaticFriction>
+		<Restitution >0.01</Restitution>
+		<FrictionCombineMode >eAVERAGE</FrictionCombineMode>
+		<RestitutionCombineMode >eAVERAGE</RestitutionCombineMode>
+	</PxMaterial>
+	<PxMaterial >
+		<Id >1732778848</Id>
+		<DynamicFriction >0.3</DynamicFriction>
+		<StaticFriction >0.3</StaticFriction>
+		<Restitution >0.5</Restitution>
+		<FrictionCombineMode >eAVERAGE</FrictionCombineMode>
+		<RestitutionCombineMode >eAVERAGE</RestitutionCombineMode>
+	</PxMaterial>
+	<PxRigidDynamic >
+		<Id >1732783136</Id>
+		<Name >g_generic_prop_chandelier_01</Name>
+		<ActorFlags >eVISUALIZATION</ActorFlags>
+		<DominanceGroup >0</DominanceGroup>
+		<OwnerClient >0</OwnerClient>
+		<GlobalPose >0 0 0 1 -0.00537109 -4.00178e-010 2.10895</GlobalPose>
+		<Shapes >
+			<PxShape >
+				<Geometry >
+					<PxConvexMeshGeometry >
+						<Scale >
+							<Scale >1 1 1</Scale>
+							<Rotation >0 0 0 1</Rotation>
+						</Scale>
+						<ConvexMesh >1619688384</ConvexMesh>
+					</PxConvexMeshGeometry>
+				</Geometry>
+				<LocalPose >0 0 -8.74228e-008 1 -0.00151169 -3.0207e-005 0.0503049</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778768</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >c_crown02_08</Name>
+			</PxShape>
+			<PxShape >
+				<Geometry >
+					<PxConvexMeshGeometry >
+						<Scale >
+							<Scale >1 1 1</Scale>
+							<Rotation >0 0 0 1</Rotation>
+						</Scale>
+						<ConvexMesh >1619686512</ConvexMesh>
+					</PxConvexMeshGeometry>
+				</Geometry>
+				<LocalPose >0 0 -8.74228e-008 1 -0.00151169 -3.0207e-005 0.0503049</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778768</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >c_crown02_11</Name>
+			</PxShape>
+			<PxShape >
+				<Geometry >
+					<PxConvexMeshGeometry >
+						<Scale >
+							<Scale >1 1 1</Scale>
+							<Rotation >0 0 0 1</Rotation>
+						</Scale>
+						<ConvexMesh >1619686720</ConvexMesh>
+					</PxConvexMeshGeometry>
+				</Geometry>
+				<LocalPose >0 0 -8.74228e-008 1 -0.00151169 -3.0207e-005 0.0503049</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778768</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >c_crown02_12</Name>
+			</PxShape>
+			<PxShape >
+				<Geometry >
+					<PxConvexMeshGeometry >
+						<Scale >
+							<Scale >1 1 1</Scale>
+							<Rotation >0 0 0 1</Rotation>
+						</Scale>
+						<ConvexMesh >1619689008</ConvexMesh>
+					</PxConvexMeshGeometry>
+				</Geometry>
+				<LocalPose >0 0 0 1 -0.00151169 -3.0207e-005 0.0503049</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778768</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >c_crown02_01</Name>
+			</PxShape>
+			<PxShape >
+				<Geometry >
+					<PxConvexMeshGeometry >
+						<Scale >
+							<Scale >1 1 1</Scale>
+							<Rotation >0 0 0 1</Rotation>
+						</Scale>
+						<ConvexMesh >1619688592</ConvexMesh>
+					</PxConvexMeshGeometry>
+				</Geometry>
+				<LocalPose >0 0 0 1 -0.00151169 -3.0207e-005 0.0503049</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778768</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >c_crown02_02</Name>
+			</PxShape>
+			<PxShape >
+				<Geometry >
+					<PxConvexMeshGeometry >
+						<Scale >
+							<Scale >1 1 1</Scale>
+							<Rotation >0 0 0 1</Rotation>
+						</Scale>
+						<ConvexMesh >1619688800</ConvexMesh>
+					</PxConvexMeshGeometry>
+				</Geometry>
+				<LocalPose >0 0 0 1 -0.00151169 -3.0207e-005 0.0503049</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778768</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >c_crown02_03</Name>
+			</PxShape>
+			<PxShape >
+				<Geometry >
+					<PxConvexMeshGeometry >
+						<Scale >
+							<Scale >1 1 1</Scale>
+							<Rotation >0 0 0 1</Rotation>
+						</Scale>
+						<ConvexMesh >1619685888</ConvexMesh>
+					</PxConvexMeshGeometry>
+				</Geometry>
+				<LocalPose >0 0 0 1 -0.00151169 -3.0207e-005 0.0503049</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778768</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >c_crown02_04</Name>
+			</PxShape>
+			<PxShape >
+				<Geometry >
+					<PxConvexMeshGeometry >
+						<Scale >
+							<Scale >1 1 1</Scale>
+							<Rotation >0 0 0 1</Rotation>
+						</Scale>
+						<ConvexMesh >1619687760</ConvexMesh>
+					</PxConvexMeshGeometry>
+				</Geometry>
+				<LocalPose >0 0 0 1 -0.00151169 -3.0207e-005 0.0503049</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778768</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >c_crown02_05</Name>
+			</PxShape>
+			<PxShape >
+				<Geometry >
+					<PxConvexMeshGeometry >
+						<Scale >
+							<Scale >1 1 1</Scale>
+							<Rotation >0 0 0 1</Rotation>
+						</Scale>
+						<ConvexMesh >1619688176</ConvexMesh>
+					</PxConvexMeshGeometry>
+				</Geometry>
+				<LocalPose >0 0 0 1 -0.00151169 -3.0207e-005 0.0503049</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778768</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >c_crown02_06</Name>
+			</PxShape>
+			<PxShape >
+				<Geometry >
+					<PxConvexMeshGeometry >
+						<Scale >
+							<Scale >1 1 1</Scale>
+							<Rotation >0 0 0 1</Rotation>
+						</Scale>
+						<ConvexMesh >1619689216</ConvexMesh>
+					</PxConvexMeshGeometry>
+				</Geometry>
+				<LocalPose >0 0 0 1 -0.00151169 -3.0207e-005 0.0503049</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778768</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >c_crown02_07</Name>
+			</PxShape>
+			<PxShape >
+				<Geometry >
+					<PxConvexMeshGeometry >
+						<Scale >
+							<Scale >1 1 1</Scale>
+							<Rotation >0 0 0 1</Rotation>
+						</Scale>
+						<ConvexMesh >1619687344</ConvexMesh>
+					</PxConvexMeshGeometry>
+				</Geometry>
+				<LocalPose >0 0 -8.74228e-008 1 -0.00151169 -3.0207e-005 0.0503049</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778768</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >c_crown02_10</Name>
+			</PxShape>
+			<PxShape >
+				<Geometry >
+					<PxConvexMeshGeometry >
+						<Scale >
+							<Scale >1 1 1</Scale>
+							<Rotation >0 0 0 1</Rotation>
+						</Scale>
+						<ConvexMesh >1619687552</ConvexMesh>
+					</PxConvexMeshGeometry>
+				</Geometry>
+				<LocalPose >0 0 -8.74228e-008 1 -0.00151169 -3.0207e-005 0.0503049</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778768</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >c_crown02_09</Name>
+			</PxShape>
+		</Shapes>
+		<CMassLocalPose >0 0 0.382684 -0.92388 -0.00151163 -3.03143e-005 0.050305</CMassLocalPose>
+		<Mass >0.912818</Mass>
+		<MassSpaceInertiaTensor >0.108365 0.108365 0.215082</MassSpaceInertiaTensor>
+		<LinearVelocity >0 0 0</LinearVelocity>
+		<AngularVelocity >0 0 0</AngularVelocity>
+		<MinCCDAdvanceCoefficient >0.15</MinCCDAdvanceCoefficient>
+		<MaxDepenetrationVelocity >1e+032</MaxDepenetrationVelocity>
+		<LinearDamping >0.5</LinearDamping>
+		<AngularDamping >0.05</AngularDamping>
+		<MaxAngularVelocity >7</MaxAngularVelocity>
+		<SleepThreshold >0.002</SleepThreshold>
+		<StabilizationThreshold >0.0024059</StabilizationThreshold>
+		<WakeCounter >0.4</WakeCounter>
+		<SolverIterationCounts >
+			<minPositionIters >30</minPositionIters>
+			<minVelocityIters >1</minVelocityIters>
+		</SolverIterationCounts>
+		<ContactReportThreshold >3.40282e+038</ContactReportThreshold>
+	</PxRigidDynamic>
+	<PxRigidStatic >
+		<Id >1733194560</Id>
+		<Name >b_generic_prop_chandelier_01</Name>
+		<ActorFlags >eVISUALIZATION</ActorFlags>
+		<DominanceGroup >0</DominanceGroup>
+		<OwnerClient >0</OwnerClient>
+		<GlobalPose >0 0 0 1 -0.00537109 -3.88433e-010 4.47086</GlobalPose>
+		<Shapes >
+			<PxShape >
+				<Geometry >
+					<PxBoxGeometry >
+						<HalfExtents >0.147647 0.147647 0.147647</HalfExtents>
+					</PxBoxGeometry>
+				</Geometry>
+				<LocalPose >0 0 0 1 0 -2.92063e-006 0.510011</LocalPose>
+				<SimulationFilterData >65537 1 0 0</SimulationFilterData>
+				<QueryFilterData >0 0 0 0</QueryFilterData>
+				<Materials >
+					<PxMaterialRef >1732778848</PxMaterialRef>
+				</Materials>
+				<ContactOffset >0.002</ContactOffset>
+				<RestOffset >0.001</RestOffset>
+				<Flags >eSIMULATION_SHAPE|eSCENE_QUERY_SHAPE|eVISUALIZATION</Flags>
+				<Name >b_generic_prop_chandelier_01</Name>
+			</PxShape>
+		</Shapes>
+	</PxRigidStatic>
+	<PxD6Joint >
+		<Id >1733135952</Id>
+		<Actors >
+			<actor0 >0</actor0>
+			<actor1 >1732783136</actor1>
+		</Actors>
+		<LocalPose >
+			<eACTOR0 >0 0.707107 0 0.707107 0 1.53937e-008 3.32855</eACTOR0>
+			<eACTOR1 >-4.56505e-009 0.708662 -4.5852e-009 0.705548 0.00537109 1.57821e-008 1.2196</eACTOR1>
+		</LocalPose>
+		<BreakForce >
+			<force >3.40282e+038</force>
+			<torque >3.40282e+038</torque>
+		</BreakForce>
+		<ConstraintFlags >ePROJECT_TO_ACTOR0|ePROJECT_TO_ACTOR1|ePROJECTION|eVISUALIZATION</ConstraintFlags>
+		<InvMassScale0 >1</InvMassScale0>
+		<InvInertiaScale0 >1</InvInertiaScale0>
+		<InvMassScale1 >1</InvMassScale1>
+		<InvInertiaScale1 >1</InvInertiaScale1>
+		<Name >RigidConstraint38</Name>
+		<Motion >
+			<eX >eLOCKED</eX>
+			<eY >eLOCKED</eY>
+			<eZ >eLOCKED</eZ>
+			<eTWIST >eLOCKED</eTWIST>
+			<eSWING1 >eLIMITED</eSWING1>
+			<eSWING2 >eLIMITED</eSWING2>
+		</Motion>
+		<LinearLimit >
+			<Restitution >0</Restitution>
+			<BounceThreshold >0</BounceThreshold>
+			<Stiffness >0</Stiffness>
+			<Damping >0</Damping>
+			<ContactDistance >0.01</ContactDistance>
+			<Value >3.40282e+038</Value>
+		</LinearLimit>
+		<TwistLimit >
+			<Restitution >0</Restitution>
+			<BounceThreshold >0.5</BounceThreshold>
+			<Stiffness >0</Stiffness>
+			<Damping >0</Damping>
+			<ContactDistance >0.1</ContactDistance>
+			<Upper >1.5708</Upper>
+			<Lower >-1.5708</Lower>
+		</TwistLimit>
+		<SwingLimit >
+			<Restitution >0.1</Restitution>
+			<BounceThreshold >0.5</BounceThreshold>
+			<Stiffness >0</Stiffness>
+			<Damping >0</Damping>
+			<ContactDistance >0.0785398</ContactDistance>
+			<YAngle >1.5708</YAngle>
+			<ZAngle >1.5708</ZAngle>
+		</SwingLimit>
+		<Drive >
+			<eX >
+				<Stiffness >0</Stiffness>
+				<Damping >0</Damping>
+				<ForceLimit >0</ForceLimit>
+				<Flags >eACCELERATION</Flags>
+			</eX>
+			<eY >
+				<Stiffness >0</Stiffness>
+				<Damping >0</Damping>
+				<ForceLimit >0</ForceLimit>
+				<Flags >eACCELERATION</Flags>
+			</eY>
+			<eZ >
+				<Stiffness >0</Stiffness>
+				<Damping >0</Damping>
+				<ForceLimit >0</ForceLimit>
+				<Flags >eACCELERATION</Flags>
+			</eZ>
+			<eSWING >
+				<Stiffness >0</Stiffness>
+				<Damping >2.86479</Damping>
+				<ForceLimit >3.40282e+038</ForceLimit>
+				<Flags >eACCELERATION</Flags>
+			</eSWING>
+			<eTWIST >
+				<Stiffness >0</Stiffness>
+				<Damping >0</Damping>
+				<ForceLimit >0</ForceLimit>
+				<Flags >eACCELERATION</Flags>
+			</eTWIST>
+			<eSLERP >
+				<Stiffness >0</Stiffness>
+				<Damping >0</Damping>
+				<ForceLimit >0</ForceLimit>
+			</eSLERP>
+		</Drive>
+		<DrivePosition >0 0 0 1 0 0 0</DrivePosition>
+		<DriveVelocity >
+			<linear >0 0 0</linear>
+			<angular >0 0 0</angular>
+		</DriveVelocity>
+		<ProjectionLinearTolerance >0.1</ProjectionLinearTolerance>
+		<ProjectionAngularTolerance >3.14159</ProjectionAngularTolerance>
+	</PxD6Joint>
+</PhysX30Collection>
