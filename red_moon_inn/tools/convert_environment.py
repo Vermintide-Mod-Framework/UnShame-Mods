@@ -86,6 +86,10 @@ WORKED_OUT = {
 # The inn's height fog starts at z 0, below its floors, and is left out.
 FOG_THICKNESS_AT_END = 3
 
+# How much brighter the inn is made than Vermintide 1's exposure gives. With eye adaptation on, exposure is the grey the
+# eye adapts to, so a higher one makes the whole level brighter.
+EXPOSURE_SCALE = 1.15
+
 # Variables the engine works out while running, which source files don't have
 NOT_IN_SOURCE ={'sun_world_to_shadow_slice0', 'sun_world_to_shadow_slice1', 'sun_world_to_shadow_slice2', 'sun_world_to_shadow_slice3'}
 
@@ -194,6 +198,9 @@ def convert(vt1_dir, content_dir, sdk_dir, strings_path):
             else:
                 value = [_float(x) for x in struct.unpack('<%df' % (size // 4), raw)]
                 value = value[0] if type_id == 0 else value
+
+            if name == 'exposure':
+                value = _float(value * EXPOSURE_SCALE)
 
             variables[name] = value
 

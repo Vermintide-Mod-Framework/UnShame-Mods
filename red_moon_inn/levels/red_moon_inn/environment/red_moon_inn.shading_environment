@@ -99,7 +99,7 @@ settings = {
 			dof_focal_region_end = 21
 			dof_focal_region_start = 0.01
 			emissive_particle_intensity = 1
-			exposure = 0.23
+			exposure = 0.2645
 			eye_adaptation_enabled = 1
 			eye_adaptation_speed_min_max = [
 				5
@@ -365,7 +365,7 @@ settings = {
 			dof_focal_region_end = 26
 			dof_focal_region_start = 5
 			emissive_particle_intensity = 1
-			exposure = 0.23
+			exposure = 0.2645
 			eye_adaptation_enabled = 1
 			eye_adaptation_speed_min_max = [
 				5
@@ -631,7 +631,7 @@ settings = {
 			dof_focal_region_end = 26
 			dof_focal_region_start = 5
 			emissive_particle_intensity = 1
-			exposure = 0.23
+			exposure = 0.2645
 			eye_adaptation_enabled = 1
 			eye_adaptation_speed_min_max = [
 				5
@@ -897,7 +897,7 @@ settings = {
 			dof_focal_region_end = 26
 			dof_focal_region_start = 5
 			emissive_particle_intensity = 1
-			exposure = 0.23
+			exposure = 0.2645
 			eye_adaptation_enabled = 1
 			eye_adaptation_speed_min_max = [
 				5
@@ -1124,7 +1124,7 @@ settings = {
 			dof_focal_region_end = 121.95
 			dof_focal_region_start = 5
 			emissive_particle_intensity = 0.001
-			exposure = 0.001
+			exposure = 0.00115
 			eye_adaptation_enabled = 1
 			eye_adaptation_speed_min_max = [
 				4.833
@@ -1335,7 +1335,7 @@ settings = {
 			dof_focal_region_end = 22
 			dof_focal_region_start = 0.01
 			emissive_particle_intensity = 1
-			exposure = 0.23
+			exposure = 0.2645
 			eye_adaptation_enabled = 1
 			eye_adaptation_speed_min_max = [
 				5
@@ -1546,7 +1546,7 @@ settings = {
 			dof_focal_region_end = 22
 			dof_focal_region_start = 0.01
 			emissive_particle_intensity = 1
-			exposure = 0.23
+			exposure = 0.2645
 			eye_adaptation_enabled = 1
 			eye_adaptation_speed_min_max = [
 				5
