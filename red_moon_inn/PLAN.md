@@ -46,11 +46,12 @@ Each one that opens a menu moves the camera to a preset: the keep has a `menu_in
    (`keep_vom_magic_forge`) where the shrine was. The weave portal is placed as the Bridge of Shadows is.
 9. The dwarf lodestone: `lodestone_difficulty_interactable` (`difficulty_selection_access`). Where it goes is still to be
    decided.
+10. Talents: the keep's table in the courtyard (`talents_interactable`, `talents_access`, which opens the talents in the hero
+    menu) in place of the inn's table on the far side.
 
 Left out: the training dummies, which the menu opens.
 
-To decide: the keep's other interactables that open menus, the talents (`talents_interactable`, `talents_access`, which opens
-the talents in the hero menu) and the cosmetics (`interactive_cosmetic`, `cosmetics_access`).
+To decide: the cosmetics (`interactive_cosmetic`, `cosmetics_access`).
 
 ## 4. Chaos Wastes and Versus in the cellar
 
